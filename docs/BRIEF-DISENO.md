@@ -32,6 +32,51 @@ referencias que entregue el cliente por separado.
 hay app nativa iOS ni Android. No diseñes patrones nativos (tab bar de iOS, navigation
 drawer de Material). Diseña web que se sienta bien en un teléfono.
 
+### 0.1 Qué entregar
+
+1. **El sistema de diseño primero**, como página navegable: tokens, tipografía, todos los
+   primitivos con sus estados, y los componentes específicos del producto del §8.
+2. **Las pantallas**, una por una, en móvil y escritorio, usando los componentes del sistema.
+   Nada de markup suelto que duplique lo que ya es un componente.
+3. Cada pantalla con sus **estados**: normal, vacío, cargando, error. No solo el caso feliz.
+
+> **Asunción a confirmar con el cliente:** el formato de entrega es HTML autocontenido
+> (`.dc.html`), una página por pantalla más la del sistema de diseño. Si prefiere otro
+> formato, que lo diga antes de empezar.
+
+### 0.2 En qué orden
+
+No entregues todo de golpe. Este orden no es capricho: la captación de usuarios empieza
+antes de que el producto exista, y el equipo interno necesita herramientas antes de que
+haya un solo usuario.
+
+| Tanda | Qué | Por qué primero |
+|---|---|---|
+| 1 | Sistema de diseño + **F1 Landing** | La landing sale a producción antes que nada. Capta lista de espera desde el día uno |
+| 2 | **F2 a F5**: acceso, datos base, cuestionario, verificación | El embudo de entrada completo |
+| 3 | **Panel de operación**: O2 verificaciones, O3 pagos, O1 tablero | Sin esto no se puede operar, aunque no haya usuarios |
+| 4 | **F6 a F8**: home, reserva, pago | El circuito de dinero |
+| 5 | **F9 a F12**: espera, revelación, mesa, feedback | La experiencia del evento |
+| 6 | **O4 a O10**: resto del panel | Lo que se puede sostener a mano las primeras semanas |
+
+**Para al terminar cada tanda y muestra lo hecho antes de seguir.**
+
+### 0.3 Alcance: solo cena
+
+El cuestionario pregunta por café de networking, correr, senderismo, pádel, yoga y ciclismo.
+**Eso solo captura demanda futura. No diseñes esos formatos.** Todo el producto se diseña
+alrededor de una cena de seis personas en un restaurante. Cuando haya datos de qué pide la
+gente, se diseñará lo que salga.
+
+Lo mismo con la cena de foco gastronómico: por ahora es una preferencia que se pregunta y
+que usa el algoritmo para elegir restaurante, no un flujo aparte.
+
+### 0.4 El nombre
+
+La marca es **Aro Club**. En uso corriente dentro del producto, **Aro** a secas ("tu próxima
+cena con Aro", "Aro no es una app de citas"). El nombre completo se reserva para la landing,
+el pie de página y los correos. El dominio es `aro.club`.
+
 ---
 
 ## 1. Qué es Aro Club
@@ -727,7 +772,48 @@ pago tiene que poder completarse solo con teclado.
 
 ---
 
-## 11. Fuera de alcance — no diseñar
+## 11. Datos de ejemplo
+
+Los mockups se llenan con esto. **Nada de "John Doe" ni de "$25.00"**: un producto venezolano
+con nombres gringos y formato de número anglosajón se lee falso de inmediato.
+
+**Formato de número.** Punto para miles, coma para decimales. `Bs 3.482,17` y no `Bs 3,482.17`.
+Los dólares se escriben `8 USD` o `$8`, siempre con dos decimales cuando hay céntimos.
+
+**Nombres de pila** (es lo único que se muestra de otra persona): María Alejandra, Daniela,
+Andrés, Ricardo, Gabriela, José Manuel, Valentina, Carlos Eduardo, Andreína, Luis Felipe,
+Mariana, Rodrigo.
+
+**Sectores y datos de conversación**, tal y como aparecen en la tarjeta de comensal:
+
+| Nombre | Sector | Dato de conversación |
+|---|---|---|
+| Daniela | Arquitectura | Volvió de Madrid hace ocho meses |
+| Andrés | Tecnología | Corre maratones los domingos |
+| Gabriela | Salud | Cocina, y lo dice en serio |
+| José Manuel | Finanzas | Toca cuatro desde los doce |
+| Andreína | Educación | Acaba de llegar de Maracaibo |
+
+**Restaurantes: inventa nombres plausibles, no uses reales.** Un mockup con el nombre de un
+restaurante que existe insinúa un acuerdo comercial que no hay. Ejemplos utilizables:
+Cardenal, La Sobremesa, Mercado 41, Casa Nueve, El Patio de Chuao. Con zona real
+(Las Mercedes, Los Palos Grandes, El Rosal).
+
+**Teléfonos.** Formato `+58 412 555 0134`. Usa siempre el rango 555 para no exponer números
+que existen. Operadoras válidas: 412, 414, 416, 424, 426.
+
+**Cédula.** `V-12.345.678`. En el panel nunca se muestra completa fuera del visor de
+documento.
+
+**Montos.** Cena suelta 8 USD. Pack de 4 encuentros. El consumo del restaurante corre aparte,
+entre 20 y 35 USD según el tramo elegido. La tasa que se muestre en los mockups es
+ilustrativa: márcala como ejemplo, no la presentes como real.
+
+**Fechas y horas.** Jueves, 7:00 p.m. La revelación al mediodía. El feedback a las 11:00 p.m.
+
+---
+
+## 12. Fuera de alcance — no diseñar
 
 Chat dentro de la app · feed social · perfiles públicos · badges, niveles o gamificación ·
 notificaciones push · app nativa · pasarela de pago · varias ciudades · varios idiomas de
@@ -735,3 +821,37 @@ interfaz · modo oscuro · fotos de perfil en cualquier forma.
 
 Si alguna parece "rápida de añadir", la respuesta es no. Cada una añade superficie de
 mantenimiento sobre un producto que todavía no sabe si retiene.
+
+---
+
+## 13. Apéndice: inventario de pantallas
+
+Lista plana para no perder ninguna. Son ~62 pantallas, no 20: conviene saberlo antes de
+empezar y no a mitad de camino.
+
+**Tanda 1 — Sistema y landing (3)**
+Sistema de diseño · Landing · Agradecimiento con pregunta opcional de arraigo
+
+**Tanda 2 — Entrada (17)**
+Correo · Revisa tu correo · Enlace expirado · Enlace abierto en otro dispositivo ·
+Datos base · Cuestionario 1 a 5 · Reanudar cuestionario · Cuestionario completado ·
+Verificación: explicación, cédula, QR a móvil, selfie, enviada, rechazada
+
+**Tanda 3 — Operación mínima (6)**
+Tablero de la semana · Cola de verificaciones · Visor de documento ·
+Cola de pagos · Detalle de pago · Tasa del día
+
+**Tanda 4 — Circuito de dinero (9)**
+Home (con las 14 variantes del bloque de siguiente paso) · Lista de eventos ·
+Detalle de evento · Confirmar reserva · Instrucciones de pago · Reportar pago ·
+Pago en revisión · Pago rechazado · Comprar pack y checkout con crédito
+
+**Tanda 5 — El evento (8)**
+Espera antes de 48h · Vista previa de la mesa · Revelación bloqueada con cuenta atrás ·
+Revelación · En la mesa · Feedback de la noche · Feedback por persona · Reportar incidente
+
+**Tanda 6 — Resto del panel y cuenta (19)**
+Restaurantes: lista y formulario · Eventos: lista y formulario · Matching: lanzar,
+previsualizar, ajuste manual, publicar · Asistencia · Incidentes · Plantillas de WhatsApp ·
+Fusión de empleadores · Métricas · Perfil · Mis respuestas · Créditos y movimientos ·
+Historial · Exclusiones · Cancelar reserva · Aviso de instalación e instrucciones iOS
