@@ -291,7 +291,7 @@ esta pregunta es la que lo evita, así que tiene que responderse con honestidad.
 
 | Pregunta | Tipo | Opciones |
 |---|---|---|
-| ¿En qué zonas puedes asistir sin problema? | múltiple | Las Mercedes · El Rosal · Chacao · Altamira · La Castellana · Los Palos Grandes · Sebucán y Los Dos Caminos · Chuao · El Cafetal y Santa Paula · Los Naranjos y Cerro Verde · La Trinidad y La Tahona · El Hatillo |
+| ¿En qué zonas puedes asistir sin problema? | múltiple | Las Mercedes · El Rosal · Bello Monte · Chacao · Altamira · La Castellana · Los Palos Grandes · Sebucán y Los Dos Caminos · Chuao · El Cafetal y Santa Paula · Los Naranjos y Cerro Verde · La Trinidad y La Tahona · El Hatillo |
 | ¿Qué días te sirven mejor? | múltiple | Martes noche · Miércoles noche · Jueves noche · Viernes noche · Sábado noche · Sábado mediodía · Domingo mediodía |
 | ¿En qué idiomas conversas cómodo? | múltiple | Español · Inglés · Portugués · Italiano · Francés · Alemán · Árabe · Chino |
 
