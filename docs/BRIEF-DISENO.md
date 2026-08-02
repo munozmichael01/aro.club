@@ -160,6 +160,12 @@ por la que alguien se sienta con seis desconocidos sin sentirse en una cita.
    ahí que ningún usuario en la app. Un panel mal diseñado se paga en errores humanos que
    afectan a comensales reales.
 
+7. **Plural o no es nuestro.** Si el resultado exitoso de una funcionalidad son dos personas
+   intercambiando un número de teléfono, esa funcionalidad no va. Un resultado uno a uno no
+   nos necesita: para eso ya existen las apps de citas. Todo lo que construimos tiene que
+   valer en plural — la mesa de seis, el segundo acto de treinta, la actividad que necesita
+   cuatro para existir. Este filtro se aplica a cualquier propuesta futura.
+
 ---
 
 ## 3. Las dos aplicaciones
@@ -527,11 +533,20 @@ intención.
 3. **Hora**, y cuánto falta.
 4. **Tus cinco acompañantes:** nombre de pila, sector, y un dato de conversación. Sin
    apellidos, sin fotos, sin contacto, sin empresa.
-5. **Sello de confianza:** *"Las seis personas de esta mesa verificaron su identidad."*
-   Esta línea es el retorno de lo que costó verificarse en F5.
-6. **Rompehielos:** tres o cuatro, construidos con lo que esa mesa tiene en común. No son
+5. **Sello de confianza, granular.** No un sello genérico que diga "verificado" — eso es lo
+   que dice también cualquier estafa. Tres afirmaciones concretas y comprobables, que es lo
+   que las hace creíbles:
+   *Las seis personas de esta mesa tienen cédula revisada · nombre que coincide con el
+   documento · edad confirmada.*
+   Esta sección es el retorno de lo que costó verificarse en F5.
+6. **Por qué esta mesa.** Una línea que haga visible el trabajo del algoritmo, construida
+   con lo que de verdad comparten: *"Los seis comparten cocina y viajes, y ninguno trabaja
+   en lo mismo."* El emparejamiento ya calcula este desglose; hoy es invisible y no debería
+   serlo. Ningún competidor enseña su razonamiento.
+7. **Rompehielos:** tres o cuatro, construidos con lo que esa mesa tiene en común. No son
    genéricos: el algoritmo ya sabe qué comparten.
-7. Botón discreto de escribir a soporte por WhatsApp.
+8. **Los viernes y sábados, aviso del segundo acto** (F16), con la hora a la que se revela.
+9. Botón discreto de escribir a soporte por WhatsApp.
 
 **Requisito técnico que afecta al diseño:** esta pantalla tiene que ser legible sin conexión.
 Diseña asumiendo que las imágenes pueden no cargar y que el usuario está en la calle con el
@@ -549,6 +564,45 @@ ella, no a mirar el teléfono.
 - Acceso al número de mesa y a quién es quién.
 - **Botón discreto pero encontrable de reportar un problema.** Es una funcionalidad de
   seguridad: tiene que poder usarse sin que el resto de la mesa lo note.
+- Viernes y sábados, la noche continúa en F16.
+
+---
+
+### F16 — El segundo acto (solo viernes y sábados)
+
+*(Numerado F16 por ser una adición posterior. Cronológicamente va aquí, entre F11 y F12.)*
+
+**Propósito.** Terminada la cena, **todas las mesas de esa noche convergen en un solo bar**.
+No es un extra decorativo: es el multiplicador de densidad del producto. Cinco mesas de seis
+personas se convierten en una red de treinta que se cruzan entre sí. Convierte encuentros
+cerrados en red abierta, que es justo lo contrario de lo que haría un grupo de chat por mesa.
+
+**Es opcional.** Quien no quiera ir, no va, y el producto no se lo reprocha.
+
+**Solo viernes y sábado.** Entre semana la cena termina temprano y no hay segundo acto: el
+horario temprano es una decisión de seguridad. Viernes y sábado hay más gente en la calle y
+salir tarde es lo normal, y ahí sí se sostiene.
+
+**Flujo.**
+1. Aviso en la pantalla de revelación (F10): esta noche hay segundo acto y a qué hora se
+   dice dónde.
+2. A la hora fijada, se revela **un único bar**, el mismo para todas las mesas. Nunca se deja
+   que cada mesa decida: eso dispersa a la gente y rompe el propósito.
+3. Confirmar si vas. La confirmación sirve para avisar al bar del volumen, no para publicar
+   una lista.
+4. Cómo llegar: el bar tiene que estar **a distancia caminable** de los restaurantes de esa
+   noche, y la pantalla lo dice.
+5. **Cómo volverte.** Va en la misma pantalla, no escondido: es la contrapartida de haber
+   movido el horario.
+
+**Qué se muestra.** Nombre y dirección del bar · a qué hora empieza · cuántas mesas
+convergen (el número, no quiénes) · si tú confirmaste.
+
+**Nunca se muestra:** la lista de quién va, ni los nombres de gente de otras mesas antes de
+llegar. La gracia del segundo acto es conocer a alguien allí, no revisarlo antes.
+
+**Estados.** Esta noche no hay segundo acto · anunciado, falta confirmar · confirmado ·
+en curso · terminado · cancelado.
 
 ---
 
@@ -636,6 +690,10 @@ ruidosos.
 ### O5 — Eventos
 CRUD: formato, fecha y hora, cierre de inscripción, hora de revelación, restaurante, plazas,
 mínimo de mesas, precio, franja de edad, zona.
+
+Los viernes y sábados, además: **bar del segundo acto y hora de revelación del mismo** (F16).
+El panel debe mostrar cuántas personas confirmaron asistencia al segundo acto, que es el dato
+que se le pasa al bar.
 
 ### O6 — Matching
 La pantalla más compleja del producto.
@@ -819,7 +877,25 @@ Chat dentro de la app · feed social · perfiles públicos · badges, niveles o 
 notificaciones push · app nativa · pasarela de pago · varias ciudades · varios idiomas de
 interfaz · modo oscuro · fotos de perfil en cualquier forma.
 
-Si alguna parece "rápida de añadir", la respuesta es no. Cada una añade superficie de
+### Dos que están prohibidas por motivo, no por falta de tiempo
+
+Estas dos van a parecer obvias dentro de tres meses y hay que poder señalar por qué no:
+
+**Grupo de chat por mesa.** Ni dentro de la app ni facilitando uno de WhatsApp. Dos razones.
+La primera: en cuanto seis personas tienen su propio grupo, dejan de necesitarnos para verse
+otra vez, y el producto se vuelve el sitio donde se conocieron una vez. Es exactamente por
+lo que la gente cancela en el referente global: porque funcionó. La segunda: un grupo cerrado
+de seis deja de conocer gente, y cada mesa que se cierra es densidad de red que se pierde
+justo donde más falta hace.
+
+**Comunidades persistentes nacidas de una mesa.** Mismo motivo, amplificado. Si la
+continuidad hace falta, viene de que **nosotros seguimos convocando** —el segundo acto (F16)
+y, más adelante, actividades recurrentes— no de que la gente se organice por su cuenta en un
+sitio donde ya no estamos.
+
+Estas dos son la aplicación directa del principio 7 (§2): plural o no es nuestro.
+
+Si alguna otra parece "rápida de añadir", la respuesta es no. Cada una añade superficie de
 mantenimiento sobre un producto que todavía no sabe si retiene.
 
 ---
@@ -846,9 +922,10 @@ Home (con las 14 variantes del bloque de siguiente paso) · Lista de eventos ·
 Detalle de evento · Confirmar reserva · Instrucciones de pago · Reportar pago ·
 Pago en revisión · Pago rechazado · Comprar pack y checkout con crédito
 
-**Tanda 5 — El evento (8)**
+**Tanda 5 — El evento (10)**
 Espera antes de 48h · Vista previa de la mesa · Revelación bloqueada con cuenta atrás ·
-Revelación · En la mesa · Feedback de la noche · Feedback por persona · Reportar incidente
+Revelación · En la mesa · Segundo acto anunciado sin confirmar · Segundo acto revelado ·
+Feedback de la noche · Feedback por persona · Reportar incidente
 
 **Tanda 6 — Resto del panel y cuenta (19)**
 Restaurantes: lista y formulario · Eventos: lista y formulario · Matching: lanzar,
