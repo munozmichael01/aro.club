@@ -46,8 +46,32 @@ por la diáspora. Gente que se fue y volvió, gente que nunca se fue y vio irse 
 que se mudó del interior, extranjeros residentes, y venezolanos que viven fuera y están de
 visita.
 
-**El posicionamiento no es "conoce desconocidos". Es "reconstruye tu círculo".** Es un
-matiz que lo cambia todo: no vendemos novedad, vendemos recuperar algo que se perdió.
+### Posicionamiento: inclusivo en la puerta, específico en cuanto sabemos quién eres
+
+**La tesis de mercado y la promesa al usuario son cosas distintas.** La diáspora explica por
+qué este producto tiene sentido en Caracas ahora, y es lo que nos diferencia del referente
+global. Pero no puede ser la promesa que se le hace a cada persona en la puerta, porque solo
+le habla a dos de los cinco segmentos:
+
+| Segmento | Qué le pasó | Qué verbo le aplica |
+|---|---|---|
+| Nunca se fue | Vio irse a todo su círculo | Reconstruir |
+| Se fue y volvió | Volvió y su gente ya no está | Reconstruir |
+| Se mudó del interior | Ciudad nueva, cero red | Construir |
+| Extranjero residente | País nuevo, cero red y barrera cultural | Construir |
+| Vive fuera, está de visita | Semanas, no meses | Ni una cosa ni la otra |
+
+Tres verbos distintos y ninguno sirve para los cinco. **El titular tiene que ser verbo-neutro:
+no puede presuponer que existía un círculo previo.** El nombre ya carga la metáfora, así que
+la promesa puede apoyarse en el mecanismo (seis personas, una mesa, cada semana) y dejar que
+cada quien ponga su verbo.
+
+**Dónde sí se es específico.** La primera pregunta del cuestionario es la de arraigo, así que
+desde muy temprano el producto sabe en cuál de los cinco casos está la persona. A partir de
+ahí, el copy de la pantalla de agradecimiento, del onboarding y de los correos debe hablarle
+a su caso concreto. Es la ventaja que un producto global no puede tener.
+
+**Lo que el posicionamiento nunca es:** "conoce desconocidos". No vendemos novedad.
 
 ### Lo que Aro Club NO es
 
@@ -179,19 +203,40 @@ Para cada flujo: propósito, pantallas, estados obligatorios y qué nunca se mue
 día uno, mucho antes de que haya eventos.
 
 **Secciones.**
-1. Hero. La promesa en una frase. Sin fotos de gente sonriendo genérica de banco de imágenes.
-2. Cómo funciona, en cuatro pasos: respondes, verificamos, reservas, cenas.
-3. Por qué no es una app de citas. Sección explícita: sin fotos, sin swipe, sin perfiles.
-4. Cómo cuidamos la mesa: verificación de identidad, zonas, hora temprana, balance de la mesa.
-5. Precio, transparente. Cuánto cuesta Aro y cuánto cuesta aparte la cena.
-6. Preguntas frecuentes.
-7. Formulario de lista de espera.
+1. Hero. La promesa en una frase, verbo-neutro (§1). Sin fotos de gente sonriendo genérica
+   de banco de imágenes.
+2. **Los cinco reconocimientos.** Justo debajo del hero, para que cada quien se encuentre.
+   Cinco frases cortas, mismo peso visual, sin jerarquía entre ellas:
+   *Volviste y ya no está tu gente · Nunca te fuiste, y se fueron todos · Llegaste a Caracas
+   hace poco · Eres de fuera y vives aquí · Vives afuera y estás de visita.*
+   Todas llevan al mismo producto. Esta sección es el diferencial frente a un producto
+   global: nadie que opere en 200 ciudades puede hablar así.
+3. Cómo funciona, en cuatro pasos: respondes, verificamos, reservas, cenas.
+4. Por qué no es una app de citas. Sección explícita: sin fotos, sin swipe, sin perfiles.
+   Ojo: el referente global también lidera con esta ausencia, así que **no es un
+   diferenciador, es la norma de la categoría.** No apoyes la diferenciación aquí.
+5. Cómo cuidamos la mesa: verificación de identidad, zonas, hora temprana, balance. **Aquí
+   sí está el diferencial.** El referente global le dedica dos líneas en toda su web.
+6. Precio, transparente. Cuánto cuesta Aro y cuánto se paga aparte en el restaurante.
+   Decisión deliberada: el referente no muestra precio en ninguna parte de su web. Nosotros
+   sí, porque en este mercado la opacidad de precio genera desconfianza, y porque no se puede
+   pedir cédula y selfie mientras se esconde cuánto cuesta.
+7. Preguntas frecuentes.
+8. Formulario de lista de espera.
 
-**Formulario.** Nombre, correo, teléfono (opcional), cómo nos conociste, zona donde te
-queda cómodo salir.
+**Formulario, en dos tiempos.**
 
-**Estados.** Vacío · enviando · éxito · correo ya registrado (no es un error, es "ya estás
-en la lista, te escribimos cuando abramos tu zona").
+*Paso 1 — solo el correo.* Máxima captación con mínima fricción. El riesgo número uno del
+negocio es no alcanzar densidad (hacen falta ~100-150 inscritos antes de la primera cena),
+así que nada puede interponerse entre la intención y el correo.
+
+*Paso 2 — la pantalla de agradecimiento, opcional.* Ahí se pregunta el arraigo (la misma
+pregunta que abre el cuestionario) y la zona donde le queda cómodo salir. Quien la responde
+siembra el dato más valioso del perfil; quien no, ya está capturado igual. **Nunca al revés.**
+
+**Estados.** Vacío · enviando · éxito con la pregunta opcional · éxito sin responderla ·
+correo ya registrado (no es un error, es "ya estás en la lista, te escribimos cuando abramos
+tu zona").
 
 **Detalle con intención.** Un indicador de densidad del tipo *"faltan 34 personas para abrir
 la primera mesa en Las Mercedes"*. Hace dos cosas: da prueba social y explica por qué hay
@@ -594,6 +639,14 @@ Las dos últimas van destacadas: son las que deciden si el producto continúa. L
 entre mesas es la única forma de saber si el algoritmo aporta algo, porque con el mismo
 restaurante y la misma noche, toda la diferencia viene del emparejamiento.
 
+**La segunda asistencia se segmenta por arraigo, y el número de titular excluye a quien está
+de visita.** Alguien que vive en el exterior y vino tres semanas no va a volver a los 60
+días, y eso no es un fallo de retención: es lo esperado. Si son el 20% del pool, el número
+global sale deprimido y se podría matar un producto que funciona. La interfaz tiene que
+mostrar el número limpio como titular y el desglose por segmento debajo, nunca al revés.
+A quien está de visita se le reporta aparte por lo que aporta de verdad: llena mesas, paga
+completo, trae novedad a la conversación y hace boca a boca hacia la diáspora.
+
 ---
 
 ## 8. Inventario mínimo de componentes
@@ -647,6 +700,12 @@ auditoría.
 - **Los tiempos son concretos.** "Menos de 24 horas", no "pronto".
 - **Nunca lenguaje de citas.** No "match", no "conexión", no "química". La mesa se "arma",
   no se "empareja".
+- **No prometemos resultados que dependen de las otras cinco personas.** El referente global
+  promete convertir extraños en amigos; eso no lo controla nadie. Nosotros prometemos lo que
+  sí controlamos: la curaduría de la mesa, la verificación, el sitio y la hora.
+- **Ningún verbo que presuponga un círculo previo.** "Reconstruye" excluye al que llegó de
+  fuera; "amplía" no le hace justicia al que lo perdió todo. Cuando haya que usar un verbo,
+  que sea después del cuestionario, cuando ya se sabe a quién se le está hablando (§1).
 - **La verificación se pide explicando, no exigiendo.**
 - Cuando hables de dinero, siempre queda claro qué paga el usuario a Aro y qué paga en el
   restaurante.
