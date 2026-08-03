@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
  *
  * Se reemplaza por la landing (F1) en cuanto llegue el sistema de diseño.
  */
-export default async function Home() {
+export default async function Estado() {
   const supabase = await createClient()
 
   const [zones, questions, products] = await Promise.all([

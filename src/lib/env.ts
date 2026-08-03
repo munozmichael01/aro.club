@@ -10,8 +10,10 @@ import { z } from 'zod'
 const publicSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().min(1),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-  NEXT_PUBLIC_SITE_URL: z.string().min(1),
-  NEXT_PUBLIC_APP_NAME: z.string().min(1),
+  // Con valor por defecto: en Vercel solo hacen falta las dos de Supabase
+  // para que el despliegue levante.
+  NEXT_PUBLIC_SITE_URL: z.string().min(1).default('http://localhost:3000'),
+  NEXT_PUBLIC_APP_NAME: z.string().min(1).default('Aro Club'),
 })
 
 const parsedPublic = publicSchema.safeParse({
