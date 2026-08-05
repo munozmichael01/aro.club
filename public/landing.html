@@ -545,11 +545,14 @@ class Component extends DCLogic {
     const foto = (u, ar) => 'position:relative;aspect-ratio:' + (ar || '1') + ';overflow:hidden;border-radius:6px;background:#DCD3BC;background-image:url(\'' + u + '\');background-size:cover;background-position:center;' + FILTRO;
     const marco = (rot, extra) => 'background:#FFFBF0;padding:9px 9px 0;border-radius:12px;box-shadow:0 14px 34px -18px rgba(20,52,42,.45);transform:rotate(' + rot + ');' + (extra || '');
 
+    // El heroe habla SOLO de la cena. Drinks, movimiento y coffee viven mas
+    // abajo en planDefs, que es donde se explican: aqui solo confundian,
+    // porque la foto insinuaba un formato que el texto no describe.
     const polDefs = [
-      [uns('photo-1528605105345-5344ea20e269'), 'cenas · jueves y viernes', '-2.2deg'],
-      [uns('photo-1541532713592-79a0317b6b77'), 'drinks · viernes y sábado', '1.8deg'],
-      [uns('photo-1552674605-db6ffd4facb5'), 'movimiento · sábado y domingo', '1.4deg'],
-      [uns('photo-1495474472287-4d71bcdd2085'), 'coffee · sábado y domingo', '-1.6deg']
+      [uns('photo-1528605105345-5344ea20e269'), 'la mesa de seis · jueves', '-2.2deg'],
+      [uns('photo-1528605248644-14dd04022da1'), 'la sobremesa · donde pasa todo', '1.8deg'],
+      [uns('photo-1511795409834-ef04bbd61622'), 'mesa puesta · 7:00 p.m.', '1.4deg'],
+      [uns('photo-1414235077428-338989a2e8c0'), 'el sitio · lo elegimos nosotros', '-1.6deg']
     ];
     const polaroids = polDefs.map((p) => ({
       texto: p[1], marco: marco(p[2]), foto: foto(p[0]), tinte: TINTE
