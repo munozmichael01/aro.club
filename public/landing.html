@@ -515,6 +515,18 @@ class Component extends DCLogic {
     return Math.floor(s / 86400) + 'd ' + p(Math.floor(s / 3600) % 24) + ':' + p(Math.floor(s / 60) % 60);
   }
 
+  // Traduccion de indice de opcion al valor canonico de la base de datos.
+  // El orden TIENE que seguir al de los arrays de arriba: si se reordena una
+  // pregunta hay que reordenar esto o se guardan respuestas cambiadas.
+  static VAL = {
+    arraigo: ['returnee', 'stayed', 'relocated', 'foreigner', 'visiting'],
+    zonas: ['las_mercedes', 'los_palos_grandes', 'altamira', 'chacao', 'el_rosal',
+            'la_castellana', 'sebucan', 'chuao', 'bello_monte', 'el_cafetal'],
+    planes: ['dinner', 'drinks', 'movement', 'coffee'],
+    temas: ['food', 'travel', 'film', 'music', 'books', 'sports',
+            'entrepreneurship', 'art', 'ai', 'parenting']
+  };
+
   enviarCorreo = () => {
     const c = (this.state.correo || '').trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)) {
@@ -522,9 +534,42 @@ class Component extends DCLogic {
       return;
     }
     this.setState({ fase: 'enviando', error: '' });
-    const rep = /^ya@/i.test(c);
-    this._env = setTimeout(() => this.setState({ fase: rep ? 'repetido' : 'quiz', paso: 0 }), 1100);
+
+    fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: c })
+    })
+      .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
+      .then(({ ok, j }) => {
+        if (!ok) { this.setState({ fase: 'correo', error: j.error || 'No pudimos guardar tu correo.' }); return; }
+        // Quien ya completo el quiz no lo repite; quien solo dejo el correo si.
+        const repetir = j.status === 'repetido' && j.quizCompletado;
+        this.setState({ fase: repetir ? 'repetido' : 'quiz', paso: 0 });
+      })
+      .catch(() => this.setState({
+        fase: 'correo',
+        error: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
+      }));
   };
+
+  guardarQuiz() {
+    const V = Component.VAL;
+    const idx = (clave, lista) => (this.state[clave] || []).map((i) => lista[i]).filter(Boolean);
+    fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: (this.state.correo || '').trim(),
+        rootedness: V.arraigo[this.state.arraigo] || undefined,
+        zones: idx('zonas', V.zonas),
+        formats: idx('planes', V.planes),
+        conversationTopics: idx('temas', V.temas)
+      })
+      // Si falla, la persona ya esta capturada por el correo del paso 1:
+      // no se le corta el flujo por perder las respuestas del quiz.
+    }).catch(() => {});
+  }
 
   alterna(clave, i, max) {
     this.setState((s) => {
@@ -788,7 +833,7 @@ class Component extends DCLogic {
       esOpcional: !completa && this.state.paso === 3,
       siguiente: () => {
         if (!completa && this.state.paso !== 3) return;
-        if (ultimo) { this.setState({ fase: 'final' }); return; }
+        if (ultimo) { this.guardarQuiz(); this.setState({ fase: 'final' }); return; }
         this.setState((s) => ({ paso: s.paso + 1 }));
       },
       atras: () => this.setState((s) => ({ paso: Math.max(0, s.paso - 1) })),

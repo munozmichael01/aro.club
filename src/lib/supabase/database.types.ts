@@ -1888,12 +1888,15 @@ export type Database = {
       waitlist: {
         Row: {
           city: string | null
+          conversation_topics: string[]
           converted_profile_id: string | null
           created_at: string
           email: string
+          formats: string[]
           full_name: string | null
           id: string
           phone_e164: string | null
+          quiz_completed_at: string | null
           referral_code: string | null
           rootedness: Database["public"]["Enums"]["rootedness_t"] | null
           source: string | null
@@ -1901,12 +1904,15 @@ export type Database = {
         }
         Insert: {
           city?: string | null
+          conversation_topics?: string[]
           converted_profile_id?: string | null
           created_at?: string
           email: string
+          formats?: string[]
           full_name?: string | null
           id?: string
           phone_e164?: string | null
+          quiz_completed_at?: string | null
           referral_code?: string | null
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
           source?: string | null
@@ -1914,12 +1920,15 @@ export type Database = {
         }
         Update: {
           city?: string | null
+          conversation_topics?: string[]
           converted_profile_id?: string | null
           created_at?: string
           email?: string
+          formats?: string[]
           full_name?: string | null
           id?: string
           phone_e164?: string | null
+          quiz_completed_at?: string | null
           referral_code?: string | null
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
           source?: string | null
