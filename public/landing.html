@@ -538,6 +538,9 @@ class Component extends DCLogic {
   renderVals() {
     const uns = (id, w) => 'https://images.unsplash.com/' + id + '?auto=format&fit=crop&w=' + (w || 800) + '&q=76';
     const wiki = (f, w) => 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(f) + '?width=' + (w || 800);
+    // Pexels: las fotos de gente sonriendo cenando que sirven en Unsplash
+    // estan detras de Unsplash+ de pago. Pexels las tiene con licencia libre.
+    const px = (id, w) => 'https://images.pexels.com/photos/' + id + '/pexels-photo-' + id + '.jpeg?auto=compress&cs=tinysrgb&w=' + (w || 800);
 
     // un solo tratamiento para toda la fotografía del sitio
     const FILTRO = 'filter:grayscale(.24) contrast(1.16) saturate(.74) brightness(.9)';
@@ -549,10 +552,12 @@ class Component extends DCLogic {
     // abajo en planDefs, que es donde se explican: aqui solo confundian,
     // porque la foto insinuaba un formato que el texto no describe.
     const polDefs = [
-      [uns('photo-1494346480775-936a9f0d0877'), 'la mesa de seis · jueves', '-2.2deg'],
+      // Grupo mixto a proposito: la pagina promete mesas balanceadas 3/3,
+      // asi que un heroe de solo mujeres se contradice con lo que se vende.
+      [px(5738245), 'la mesa de seis · jueves', '-2.2deg'],
       [uns('photo-1528605248644-14dd04022da1'), 'la sobremesa · donde pasa todo', '1.8deg'],
       [uns('photo-1519671482749-fd09be7ccebf'), 'nadie llega conociendo a nadie', '1.4deg'],
-      [uns('photo-1414235077428-338989a2e8c0'), 'el sitio · lo elegimos nosotros', '-1.6deg']
+      [uns('photo-1471967183320-ee018f6e114a'), 'el sitio · lo elegimos nosotros', '-1.6deg']
     ];
     const polaroids = polDefs.map((p) => ({
       texto: p[1], marco: marco(p[2]), foto: foto(p[0]), tinte: TINTE
