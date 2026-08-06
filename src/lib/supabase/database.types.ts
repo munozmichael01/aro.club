@@ -2176,6 +2176,16 @@ export type Database = {
     }
     Functions: {
       age_years: { Args: { d: string }; Returns: number }
+      guardar_respuesta: {
+        Args: {
+          p_clave: string
+          p_email: string
+          p_fin?: boolean
+          p_pantalla?: number
+          p_valor: Json
+        }
+        Returns: undefined
+      }
       is_ops: { Args: never; Returns: boolean }
       normalize_employer: { Args: { raw: string }; Returns: string }
       show_limit: { Args: never; Returns: number }

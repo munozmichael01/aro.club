@@ -132,42 +132,36 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient()
 
-  const { data: actual, error: errorLectura } = await supabase
-    .from('waitlist')
-    .select('profile_answers, questionnaire_screen')
-    .eq('email', correo)
-    .maybeSingle<{ profile_answers: Record<string, unknown> | null; questionnaire_screen: number }>()
-
-  if (errorLectura || !actual) {
-    return NextResponse.json({ error: 'Sesión no válida.' }, { status: 403 })
-  }
-
-  const respuestas = { ...(actual.profile_answers ?? {}) }
-
   // Las cuatro de la landing tienen columna propia: se escriben ahí para que
   // el panel y el matcher las vean donde esperan, no duplicadas en el jsonb.
-  const enColumna: Record<string, unknown> = {}
   if ((HEREDABLES as readonly string[]).includes(clave)) {
-    if (clave === 'arraigo') enColumna.rootedness = valor
-    if (clave === 'zonas') enColumna.zones = valor ?? []
-    if (clave === 'dias') enColumna.days = valor ?? []
-    if (clave === 'temas') enColumna.conversation_topics = valor ?? []
-    delete respuestas[clave]
-  } else if (valor === null) {
-    delete respuestas[clave]
-  } else {
-    respuestas[clave] = valor
+    const columna: Record<string, unknown> = {}
+    if (clave === 'arraigo') columna.rootedness = valor
+    if (clave === 'zonas') columna.zones = valor ?? []
+    if (clave === 'dias') columna.days = valor ?? []
+    if (clave === 'temas') columna.conversation_topics = valor ?? []
+
+    const { error } = await supabase
+      .from('waitlist')
+      .update(columna as never)
+      .eq('email', correo)
+
+    if (error) {
+      console.error('[cuestionario] no se guardó', error)
+      return NextResponse.json({ error: 'No pudimos guardar tu respuesta.' }, { status: 500 })
+    }
   }
 
-  const { error } = await supabase
-    .from('waitlist')
-    .update({
-      ...enColumna,
-      profile_answers: respuestas as never,
-      questionnaire_screen: Math.max(pantalla ?? 0, actual.questionnaire_screen),
-      ...(fin ? { profile_completed_at: new Date().toISOString() } : {}),
-    })
-    .eq('email', correo)
+  // El resto va al jsonb, y la fusión la hace Postgres. Leer-modificar-
+  // escribir aquí perdía respuestas: dos guardados seguidos leían el mismo
+  // estado y el segundo borraba al primero.
+  const { error } = await supabase.rpc('guardar_respuesta', {
+    p_email: correo,
+    p_clave: clave,
+    p_valor: (HEREDABLES as readonly string[]).includes(clave) ? null : (valor as never),
+    p_pantalla: pantalla ?? 0,
+    p_fin: fin ?? false,
+  })
 
   if (error) {
     console.error('[cuestionario] no se guardó', error)

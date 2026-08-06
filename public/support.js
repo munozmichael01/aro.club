@@ -114,7 +114,7 @@
     .sc-logic-error{position:absolute;top:8px;left:8px;z-index:2147483647;max-width:60ch;
       padding:6px 10px;background:#b00020;color:#fff;font:12px/1.4 ui-monospace,monospace;
       border-radius:4px;white-space:pre-wrap;pointer-events:none}
-    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts — keep both
+    /* Mirrors PRINT_BASELINE_CSS in apps/web deck-stage-export.ts \u2014 keep both
        in sync until dc-runtime regains a build step. */
     @media print {
       @page { margin: 0.5cm; }
@@ -590,7 +590,7 @@
             }
             warnUnresolved(
               ctx,
-              "{{ " + p.trim() + " }} never resolved — rendered as empty"
+              "{{ " + p.trim() + " }} never resolved \u2014 rendered as empty"
             );
             return null;
           }
@@ -730,7 +730,7 @@
         style: hostStyle || { display: "contents" }
       } : null;
       if (!C) {
-        const error = urlBindable ? "x-import `from` cannot contain {{ … }} — module URLs are resolved at parse time; use a literal URL" : host.resolveExternalError(url, name);
+        const error = urlBindable ? "x-import `from` cannot contain {{ \u2026 }} \u2014 module URLs are resolved at parse time; use a literal URL" : host.resolveExternalError(url, name);
         const ph = host.placeholder({
           key: wrapper ? void 0 : key,
           name,
@@ -1042,7 +1042,7 @@
           const cycle = [
             ...chain.slice(chain.indexOf(this.__name)),
             this.__name
-          ].join(" → ");
+          ].join(" \u2192 ");
           return h(
             "div",
             { ...hostBase, className: cls + " sc-has-error" },
@@ -1231,7 +1231,7 @@
         console.info(
           "[dc-runtime] x-import: loaded",
           url,
-          "— exports:",
+          "\u2014 exports:",
           Object.keys(module.exports),
           "window globals:",
           Object.keys(globals)
@@ -1271,7 +1271,7 @@
           url,
           "loaded but has no component named",
           JSON.stringify(name),
-          "— available exports:",
+          "\u2014 available exports:",
           Object.keys(mod),
           "window globals:",
           Object.keys(globals),
@@ -1332,7 +1332,7 @@
             url,
             "loaded but no custom element",
             JSON.stringify(name),
-            "is registered and window." + name + " is not a function — rendering <" + name + "> as an unknown element."
+            "is registered and window." + name + " is not a function \u2014 rendering <" + name + "> as an unknown element."
           );
         }
       }
@@ -1655,7 +1655,7 @@
             url,
             "returned",
             res2.status,
-            "— the reference renders as an empty placeholder."
+            "\u2014 the reference renders as an empty placeholder."
           );
           return "";
         }
@@ -1667,7 +1667,7 @@
           console.error(
             '[dc-runtime] sibling fetch for "' + name + '":',
             url,
-            "has no <x-dc> block — not a Design Component."
+            "has no <x-dc> block \u2014 not a Design Component."
           );
           return;
         }
@@ -1715,7 +1715,7 @@
         console.error(
           "[dc-runtime] logic class eval FAILED for",
           name,
-          "— the template renders with props only.",
+          "\u2014 the template renders with props only.",
           e
         );
         r.logicError = name + ": " + (e instanceof Error && e.message ? e.message : String(e));
