@@ -194,6 +194,27 @@ export type Database = {
           },
         ]
       }
+      cities: {
+        Row: {
+          is_open: boolean
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          is_open?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          is_open?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       credit_ledger: {
         Row: {
           booking_id: string | null
@@ -1525,12 +1546,15 @@ export type Database = {
       }
       questions: {
         Row: {
+          autocomplete: Json | null
+          exclusive_value: string | null
           help_text: string | null
           id: string
           input_type: string
           is_matching_input: boolean
           is_required: boolean
           key: string
+          layout: string | null
           max_select: number | null
           min_select: number | null
           options: Json | null
@@ -1540,12 +1564,15 @@ export type Database = {
           version_id: number
         }
         Insert: {
+          autocomplete?: Json | null
+          exclusive_value?: string | null
           help_text?: string | null
           id?: string
           input_type: string
           is_matching_input?: boolean
           is_required?: boolean
           key: string
+          layout?: string | null
           max_select?: number | null
           min_select?: number | null
           options?: Json | null
@@ -1555,12 +1582,15 @@ export type Database = {
           version_id: number
         }
         Update: {
+          autocomplete?: Json | null
+          exclusive_value?: string | null
           help_text?: string | null
           id?: string
           input_type?: string
           is_matching_input?: boolean
           is_required?: boolean
           key?: string
+          layout?: string | null
           max_select?: number | null
           min_select?: number | null
           options?: Json | null
@@ -1887,17 +1917,18 @@ export type Database = {
       }
       waitlist: {
         Row: {
-          city: string | null
+          city: string
           conversation_topics: string[]
           converted_profile_id: string | null
           created_at: string
+          days: string[]
           email: string
-          formats: string[]
           full_name: string | null
           id: string
           phone_e164: string | null
           profile_answers: Json
           profile_completed_at: string | null
+          questionnaire_screen: number
           quiz_completed_at: string | null
           referral_code: string | null
           rootedness: Database["public"]["Enums"]["rootedness_t"] | null
@@ -1905,17 +1936,18 @@ export type Database = {
           zones: string[]
         }
         Insert: {
-          city?: string | null
+          city?: string
           conversation_topics?: string[]
           converted_profile_id?: string | null
           created_at?: string
+          days?: string[]
           email: string
-          formats?: string[]
           full_name?: string | null
           id?: string
           phone_e164?: string | null
           profile_answers?: Json
           profile_completed_at?: string | null
+          questionnaire_screen?: number
           quiz_completed_at?: string | null
           referral_code?: string | null
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
@@ -1923,17 +1955,18 @@ export type Database = {
           zones?: string[]
         }
         Update: {
-          city?: string | null
+          city?: string
           conversation_topics?: string[]
           converted_profile_id?: string | null
           created_at?: string
+          days?: string[]
           email?: string
-          formats?: string[]
           full_name?: string | null
           id?: string
           phone_e164?: string | null
           profile_answers?: Json
           profile_completed_at?: string | null
+          questionnaire_screen?: number
           quiz_completed_at?: string | null
           referral_code?: string | null
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
@@ -1941,6 +1974,20 @@ export type Database = {
           zones?: string[]
         }
         Relationships: [
+          {
+            foreignKeyName: "waitlist_city_fkey"
+            columns: ["city"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "waitlist_city_fkey"
+            columns: ["city"]
+            isOneToOne: false
+            referencedRelation: "v_city_demand"
+            referencedColumns: ["slug"]
+          },
           {
             foreignKeyName: "waitlist_converted_profile_id_fkey"
             columns: ["converted_profile_id"]
@@ -1990,6 +2037,18 @@ export type Database = {
       }
     }
     Views: {
+      v_city_demand: {
+        Row: {
+          con_quiz: number | null
+          is_open: boolean | null
+          leads: number | null
+          name: string | null
+          slug: string | null
+          ultimo_lead: string | null
+          ultimos_7d: number | null
+        }
+        Relationships: []
+      }
       v_credit_balance: {
         Row: {
           balance: number | null
@@ -2188,12 +2247,7 @@ export type Database = {
         | "confirmed"
         | "rejected"
         | "refunded"
-      rootedness_t:
-        | "returnee"
-        | "stayed"
-        | "relocated"
-        | "foreigner"
-        | "visiting"
+      rootedness_t: "volvio" | "se-quedo" | "interior" | "extranjero" | "visita"
       social_energy_t: "listener" | "balanced" | "driver"
       verification_kind_t:
         | "id_document"
@@ -2403,13 +2457,7 @@ export const Constants = {
         "rejected",
         "refunded",
       ],
-      rootedness_t: [
-        "returnee",
-        "stayed",
-        "relocated",
-        "foreigner",
-        "visiting",
-      ],
+      rootedness_t: ["volvio", "se-quedo", "interior", "extranjero", "visita"],
       social_energy_t: ["listener", "balanced", "driver"],
       verification_kind_t: [
         "id_document",
