@@ -38,9 +38,73 @@ const schema = z.object({
   zones: z.array(z.enum(ZONAS)).max(3).optional(),
   formats: z.array(z.enum(FORMATOS)).max(4).optional(),
   conversationTopics: z.array(z.enum(TEMAS)).max(4).optional(),
+  // Bloque de perfil: claves y valores se validan contra el catálogo de la
+  // base, no contra una copia aquí. Así no pueden desincronizarse.
+  profileAnswers: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(),
   // Trampa para robots: es un campo oculto, una persona nunca lo rellena.
   website: z.string().max(0).optional(),
 })
+
+type Catalogo = Map<string, { tipo: string; valores: Set<string>; max: number | null }>
+
+/** Lee el cuestionario activo y arma el mapa de valores permitidos. */
+async function leerCatalogo(
+  supabase: ReturnType<typeof createAdminClient>,
+): Promise<Catalogo | null> {
+  const { data: version } = await supabase
+    .from('questionnaire_versions')
+    .select('id')
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (!version) return null
+
+  const { data, error } = await supabase
+    .from('questions')
+    .select('key, input_type, options, max_select')
+    .eq('version_id', version.id)
+
+  if (error || !data) return null
+
+  const catalogo: Catalogo = new Map()
+  for (const q of data) {
+    const opciones = (q.options ?? []) as Array<{ value: string }>
+    catalogo.set(q.key, {
+      tipo: q.input_type,
+      valores: new Set(opciones.map((o) => o.value)),
+      max: q.max_select,
+    })
+  }
+  return catalogo
+}
+
+/** Devuelve la lista de problemas; vacía si todo cuadra. */
+function validarPerfil(
+  respuestas: Record<string, string | string[]>,
+  catalogo: Catalogo,
+): string[] {
+  const problemas: string[] = []
+
+  for (const [clave, valor] of Object.entries(respuestas)) {
+    const def = catalogo.get(clave)
+    if (!def) {
+      problemas.push(`clave desconocida: ${clave}`)
+      continue
+    }
+    const valores = Array.isArray(valor) ? valor : [valor]
+
+    if (def.tipo === 'single' && valores.length > 1) {
+      problemas.push(`${clave}: admite una sola respuesta`)
+    }
+    if (def.max && valores.length > def.max) {
+      problemas.push(`${clave}: máximo ${def.max}`)
+    }
+    for (const v of valores) {
+      if (!def.valores.has(v)) problemas.push(`${clave}: valor fuera de catálogo (${v})`)
+    }
+  }
+  return problemas
+}
 
 export async function POST(request: Request) {
   let body: unknown
@@ -69,8 +133,39 @@ export async function POST(request: Request) {
     )
   }
 
-  const { email, rootedness, zones, formats, conversationTopics } = parsed.data
+  const { email, rootedness, zones, formats, conversationTopics, profileAnswers } = parsed.data
   const supabase = createAdminClient()
+
+  // Bloque de perfil: se valida contra el catálogo vivo antes de tocar nada.
+  if (profileAnswers) {
+    const catalogo = await leerCatalogo(supabase)
+    if (!catalogo) {
+      return NextResponse.json({ error: 'No pudimos validar tus respuestas.' }, { status: 500 })
+    }
+    const problemas = validarPerfil(profileAnswers, catalogo)
+    if (problemas.length) {
+      console.error('[waitlist] perfil fuera de catálogo', problemas)
+      return NextResponse.json(
+        { error: 'Algo no cuadró de nuestro lado. Vuelve a intentarlo en un momento.' },
+        { status: 400 },
+      )
+    }
+
+    const { error } = await supabase
+      .from('waitlist')
+      .update({
+        profile_answers: profileAnswers,
+        profile_completed_at: new Date().toISOString(),
+      })
+      .eq('email', email)
+
+    if (error) {
+      console.error('[waitlist] perfil no se guardó', error)
+      return NextResponse.json({ error: 'No pudimos guardar tus respuestas.' }, { status: 500 })
+    }
+
+    return NextResponse.json({ status: 'perfil_completado' })
+  }
 
   const { data: existente, error: errorLectura } = await supabase
     .from('waitlist')

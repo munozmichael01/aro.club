@@ -1896,6 +1896,8 @@ export type Database = {
           full_name: string | null
           id: string
           phone_e164: string | null
+          profile_answers: Json
+          profile_completed_at: string | null
           quiz_completed_at: string | null
           referral_code: string | null
           rootedness: Database["public"]["Enums"]["rootedness_t"] | null
@@ -1912,6 +1914,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone_e164?: string | null
+          profile_answers?: Json
+          profile_completed_at?: string | null
           quiz_completed_at?: string | null
           referral_code?: string | null
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
@@ -1928,6 +1932,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone_e164?: string | null
+          profile_answers?: Json
+          profile_completed_at?: string | null
           quiz_completed_at?: string | null
           referral_code?: string | null
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null

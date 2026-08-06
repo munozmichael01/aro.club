@@ -297,6 +297,9 @@
         </sc-for>
       </div>
       <div data-reveal="11" style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:20px;max-width:52ch">{{ notaZonas }}</div>
+      <sc-if value="{{ hayZonas }}" hint-placeholder-val="{{ false }}">
+        <a href="#registro" style="display:inline-flex;align-items:center;min-height:58px;padding:0 30px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 17px/1 'Inter Tight',sans-serif;margin-top:22px;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Completar mi perfil</a>
+      </sc-if>
     </div>
   </div>
 
@@ -712,7 +715,7 @@ class Component extends DCLogic {
     });
 
     // --- quiz ---
-    const preguntas = [
+    const todasLasPreguntas = [
       {
         etiqueta: 'ARRAIGO',
         pregunta: '¿Cuál de estas eres tú?',
@@ -742,7 +745,14 @@ class Component extends DCLogic {
         opciones: ['Cocina', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios', 'Arte y diseño', 'Tecnología', 'Crianza']
       }
     ];
-    const q = preguntas[Math.min(this.state.paso, 3)];
+    // Si ya marco zonas en la seccion de arriba, ese paso sobra. Preguntarlo
+    // dos veces hace sentir que lo anterior no sirvio de nada.
+    const preguntas = nz
+      ? todasLasPreguntas.filter((p) => p.clave !== 'zonas')
+      : todasLasPreguntas;
+    const ultimoIdx = preguntas.length - 1;
+
+    const q = preguntas[Math.min(this.state.paso, ultimoIdx)];
     const esUnica = q.tipo === 'unica';
     const sel = esUnica ? this.state.arraigo : this.state[q.clave];
 
@@ -765,9 +775,9 @@ class Component extends DCLogic {
     });
 
     const completa = esUnica ? sel >= 0 : (sel.length >= (q.min || 1));
-    const ultimo = this.state.paso >= 3;
+    const ultimo = this.state.paso >= ultimoIdx;
 
-    const progreso = [0, 1, 2, 3].map((i) => ({
+    const progreso = preguntas.map((_, i) => ({
       punto: 'width:' + (i === this.state.paso ? '26px' : '8px') + ';height:8px;border-radius:999px;background:' + (i <= this.state.paso ? '#E39C63' : 'rgba(250,243,228,.24)') + ';transition:all 260ms ease'
     }));
 
@@ -802,6 +812,7 @@ class Component extends DCLogic {
 
       chipZonas: 'display:inline-flex;align-items:center;gap:9px;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid ' + (nz ? '#8F4515' : 'rgba(27,81,56,.22)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:' + (nz ? '#8F4515' : '#1B5138') + ';white-space:nowrap',
       textoChipZonas: nz ? nz + ' DE 3 MARCADAS' : 'MARCA HASTA 3',
+      hayZonas: nz > 0,
       notaZonas: nz
         ? 'Anotado: ' + listaZonas + '. Te escribimos en cuanto abramos mesa ahí.'
         : 'El anillo muestra cómo va cada zona hacia su primera mesa. Las Mercedes es la que va más adelantada.',
@@ -819,7 +830,7 @@ class Component extends DCLogic {
       enviarCorreo: this.enviarCorreo,
 
       progreso,
-      textoProgreso: 'PREGUNTA ' + (this.state.paso + 1) + ' DE 4',
+      textoProgreso: 'PREGUNTA ' + (this.state.paso + 1) + ' DE ' + preguntas.length,
       quizEtiqueta: q.etiqueta,
       quizPregunta: q.pregunta,
       quizAyuda: q.ayuda,
@@ -830,9 +841,9 @@ class Component extends DCLogic {
       botonSiguiente: 'display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;border:none;background:' + (completa ? '#FAF3E4' : 'rgba(250,243,228,.14)') + ';color:' + (completa ? '#14342A' : '#7E9A8B') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (completa ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
       textoSiguiente: ultimo ? 'Terminar' : 'Siguiente',
       puedeAtras: this.state.paso > 0,
-      esOpcional: !completa && this.state.paso === 3,
+      esOpcional: !completa && this.state.paso === ultimoIdx,
       siguiente: () => {
-        if (!completa && this.state.paso !== 3) return;
+        if (!completa && this.state.paso !== ultimoIdx) return;
         if (ultimo) { this.guardarQuiz(); this.setState({ fase: 'final' }); return; }
         this.setState((s) => ({ paso: s.paso + 1 }));
       },
