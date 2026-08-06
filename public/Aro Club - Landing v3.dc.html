@@ -550,7 +550,14 @@ class Component extends DCLogic {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cuerpo)
-    }).then((r) => r.json().then((j) => ({ ok: r.ok, j })));
+      // Si el servidor devuelve algo que no es JSON (un 500, por ejemplo),
+      // no se cuela por el catch de red: culpar a la conexión de la persona
+      // cuando el que falla somos nosotros manda a revisar el wifi en vano.
+    }).then((r) => r.text().then((t) => {
+      let j = {};
+      try { j = JSON.parse(t); } catch (e) { j = { error: null }; }
+      return { ok: r.ok, servidor: !r.ok, j: j };
+    }));
   }
 
   recordarSesion(j) {
@@ -572,8 +579,16 @@ class Component extends DCLogic {
 
     // Se guarda ANTES de la primera pregunta: quien abandona en la dos ya
     // quedó capturado.
-    this.guardarLead().then(({ ok, j }) => {
-      if (!ok) { this.setState({ fase: 'correo', error: j.error || 'No pudimos guardar tu correo.' }); return; }
+    this.guardarLead().then(({ ok, servidor, j }) => {
+      if (!ok) {
+        this.setState({
+          fase: 'correo',
+          error: j.error || (servidor
+            ? 'No pudimos guardar tu correo. Es cosa nuestra, no tuya: vuelve a intentarlo en un momento.'
+            : 'No pudimos guardar tu correo.')
+        });
+        return;
+      }
       this.recordarSesion(j);
       // Repetido solo si además ya pasó por el quiz: quien dejó el correo y
       // se fue vuelve a entrar donde lo dejó.
