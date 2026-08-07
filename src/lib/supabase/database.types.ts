@@ -1917,13 +1917,17 @@ export type Database = {
       }
       waitlist: {
         Row: {
+          base_completed_at: string | null
+          birthdate: string | null
           city: string
           conversation_topics: string[]
           converted_profile_id: string | null
           created_at: string
           days: string[]
+          display_name: string | null
           email: string
           full_name: string | null
+          gender: Database["public"]["Enums"]["gender_t"] | null
           id: string
           phone_e164: string | null
           profile_answers: Json
@@ -1936,13 +1940,17 @@ export type Database = {
           zones: string[]
         }
         Insert: {
+          base_completed_at?: string | null
+          birthdate?: string | null
           city?: string
           conversation_topics?: string[]
           converted_profile_id?: string | null
           created_at?: string
           days?: string[]
+          display_name?: string | null
           email: string
           full_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_t"] | null
           id?: string
           phone_e164?: string | null
           profile_answers?: Json
@@ -1955,13 +1963,17 @@ export type Database = {
           zones?: string[]
         }
         Update: {
+          base_completed_at?: string | null
+          birthdate?: string | null
           city?: string
           conversation_topics?: string[]
           converted_profile_id?: string | null
           created_at?: string
           days?: string[]
+          display_name?: string | null
           email?: string
           full_name?: string | null
+          gender?: Database["public"]["Enums"]["gender_t"] | null
           id?: string
           phone_e164?: string | null
           profile_answers?: Json
@@ -2075,6 +2087,54 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_verified_profiles"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_lead_progreso: {
+        Row: {
+          city: string | null
+          cuestionario_hecho: boolean | null
+          datos_base_hechos: boolean | null
+          email: string | null
+          questionnaire_screen: number | null
+          quiz_hecho: boolean | null
+          respuestas: number | null
+          tiene_cuenta: boolean | null
+        }
+        Insert: {
+          city?: string | null
+          cuestionario_hecho?: never
+          datos_base_hechos?: never
+          email?: string | null
+          questionnaire_screen?: number | null
+          quiz_hecho?: never
+          respuestas?: never
+          tiene_cuenta?: never
+        }
+        Update: {
+          city?: string | null
+          cuestionario_hecho?: never
+          datos_base_hechos?: never
+          email?: string | null
+          questionnaire_screen?: number | null
+          quiz_hecho?: never
+          respuestas?: never
+          tiene_cuenta?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_city_fkey"
+            columns: ["city"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "waitlist_city_fkey"
+            columns: ["city"]
+            isOneToOne: false
+            referencedRelation: "v_city_demand"
+            referencedColumns: ["slug"]
           },
         ]
       }
@@ -2231,7 +2291,7 @@ export type Database = {
         | "running"
         | "completed"
         | "cancelled"
-      gender_t: "female" | "male" | "non_binary" | "undisclosed"
+      gender_t: "mujer" | "hombre" | "no-binario" | "sin-decir"
       incident_severity_t: "low" | "medium" | "high" | "critical"
       member_status_t:
         | "lead"
@@ -2438,7 +2498,7 @@ export const Constants = {
         "completed",
         "cancelled",
       ],
-      gender_t: ["female", "male", "non_binary", "undisclosed"],
+      gender_t: ["mujer", "hombre", "no-binario", "sin-decir"],
       incident_severity_t: ["low", "medium", "high", "critical"],
       member_status_t: [
         "lead",

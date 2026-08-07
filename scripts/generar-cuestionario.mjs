@@ -141,7 +141,6 @@ const PANTALLAS = [
       { id: 'arraigo', tipo: 'single' },
       { id: 'sector', tipo: 'single', layout: 'compacta' },
       { id: 'empleador', tipo: 'text', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.', autocomplete: EMPRESAS },
-      { id: 'momento', tipo: 'single' },
     ],
   },
   {
@@ -149,10 +148,10 @@ const PANTALLAS = [
     titulo: 'Cómo eres en la mesa',
     proposito: 'Una mesa donde todos llevan la conversación no funciona, y una donde nadie la lleva tampoco.',
     preguntas: [
+      { id: 'momento', tipo: 'single' },
       { id: 'rol', tipo: 'single' },
       { id: 'motivo', tipo: 'single' },
       { id: 'romance', tipo: 'single', opcional: true, ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla del producto. Solo la usa el algoritmo para no juntar expectativas opuestas.' },
-      { id: 'actividades', tipo: 'multi', min: 3, max: 6 },
     ],
   },
   {
@@ -162,6 +161,7 @@ const PANTALLAS = [
     preguntas: [
       { id: 'temas', tipo: 'multi', min: 2, max: 4 },
       { id: 'evitar', tipo: 'multi', opcional: true, exclusiva: 'ninguno', ayuda: 'Se lo decimos al anfitrión de la mesa, sin decir de quién viene.' },
+      { id: 'actividades', tipo: 'multi', min: 3, max: 6 },
     ],
   },
   {
@@ -172,7 +172,6 @@ const PANTALLAS = [
       { id: 'planes', tipo: 'multi', ayuda: 'Hoy solo hay cenas. Lo demás lo abrimos según lo que pida la gente.' },
       { id: 'peso', tipo: 'single' },
       { id: 'gasto', tipo: 'single', ayuda: 'Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa, así que marcar de más solo hace que la noche te salga cara.' },
-      { id: 'dieta', tipo: 'multi', opcional: true, exclusiva: 'ninguna' },
     ],
   },
   {
@@ -183,6 +182,7 @@ const PANTALLAS = [
       { id: 'zonas', tipo: 'multi', min: 1 },
       { id: 'dias', tipo: 'multi', min: 1 },
       { id: 'idiomas', tipo: 'multi', min: 1 },
+      { id: 'dieta', tipo: 'multi', opcional: true, exclusiva: 'ninguna' },
     ],
   },
 ]
@@ -219,6 +219,10 @@ for (const [clave, opciones] of Object.entries(P)) {
 }
 const ids = PANTALLAS.flatMap((p) => p.preguntas.map((q) => q.id))
 if (ids.length !== 17) problemas.push(`son ${ids.length} preguntas, deberían ser 17`)
+// HANDOFF-3 §3 dice 4/4/3/3/3, pero los tres movimientos que describe dan
+// 3/4/3/3/4, que es lo que trae el archivo entregado. Manda el archivo.
+const reparto = PANTALLAS.map((p) => p.preguntas.length).join('/')
+if (reparto !== '3/4/3/3/4') problemas.push(`el reparto es ${reparto}, debería ser 3/4/3/3/4`)
 for (const q of PANTALLAS.flatMap((p) => p.preguntas)) {
   if (!ENUNCIADOS[q.id]) problemas.push(`${q.id}: sin enunciado`)
   if (q.tipo !== 'text' && !P[q.id]) problemas.push(`${q.id}: sin opciones`)
@@ -291,7 +295,7 @@ delete from questions where version_id in (select id from questionnaire_versions
 update questionnaire_versions set is_active = false;
 
 insert into questionnaire_versions (version, is_active, published_at)
-values ('v2', true, now())
+values ('v3', true, now())
 on conflict (version) do update set is_active = true, published_at = now();
 
 insert into questions (
@@ -305,8 +309,8 @@ select v.id, x.* from questionnaire_versions v,
 ) as x(key, prompt, help_text, input_type, options,
        min_select, max_select, is_required, is_matching_input,
        exclusive_value, layout, autocomplete, screen, sort_order)
-where v.version = 'v2';
+where v.version = 'v3';
 `
 
-writeFileSync('supabase/migrations/20260806100000_cuestionario_v2.sql', salida)
+writeFileSync('supabase/migrations/20260807100000_cuestionario_v3.sql', salida)
 console.log(`Generado: 17 preguntas, ${Object.values(P).reduce((n, o) => n + o.length, 0)} opciones, 5 pantallas.`)

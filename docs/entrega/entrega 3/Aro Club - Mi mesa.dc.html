@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#FAF3E4; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#14342A; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  button { font: inherit; color: inherit; }
+  ::selection { background:#14342A; color:#FAF3E4; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:none } }
+  @keyframes aro-spin { to { transform: rotate(360deg) } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh">
+
+  <div style="max-width:560px;margin:0 auto;padding:clamp(16px,4vw,26px) clamp(16px,4vw,24px) 0;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <a href="Aro Club - Mi cuenta.dc.html" style="display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:-10px 0">
+      <span style="font:500 19px/1 'Inter Tight',sans-serif;color:#33513F">←</span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="1.8"></circle><circle cx="20.6" cy="12" r="1.9" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="3.4" cy="12" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#14342A"></circle></svg>
+      <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
+    </a>
+    <button onClick="{{ ciclar }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:999px;border:1px dashed rgba(20,52,42,.3);background:transparent;font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;color:#33513F;cursor:pointer">{{ etiquetaDemo }}</button>
+
+  </div>
+
+  <div style="max-width:560px;margin:0 auto;padding:clamp(22px,4vw,34px) clamp(16px,4vw,24px) clamp(40px,7vw,64px)">
+
+    <sc-if value="{{ esCerrada }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 380ms ease both">
+        <div style="{{ selloEspera }}">{{ textoEspera }}</div>
+        <h1 style="{{ h1 }}">Tienes puesto el jueves.</h1>
+        <p style="{{ bajada }}">A mediodía se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
+
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(24px,3.4vw,32px)">
+          <div style="font:700 clamp(38px,10vw,54px)/1 'Inter Tight',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:#14342A">{{ cuenta }}</div>
+          <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:8px">para que se abra</div>
+          <div style="height:1px;background:rgba(20,52,42,.12);margin:18px 0"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline">
+            <span style="font:400 clamp(20px,2.4vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cena · jueves 14</span>
+            <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F">7:00 p.m. · Las Mercedes</span>
+          </div>
+        </div>
+
+        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:20px;max-width:46ch;text-wrap:pretty">Cenas con cinco personas. Te avisamos por correo en cuanto se abra.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esAbierta }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:aro-open 460ms ease both">
+
+        <div style="{{ selloAbierto }}">ABIERTO</div>
+
+        <div style="border-radius:30px;background:#14342A;color:#FAF3E4;padding:clamp(24px,4vw,34px);margin-top:14px">
+          <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.18em;color:#C5D8CA">TU MESA</div>
+          <div style="font:700 clamp(96px,30vw,150px)/0.86 'Inter Tight',sans-serif;letter-spacing:-.05em;font-variant-numeric:tabular-nums;margin:10px 0 0">04</div>
+          <div style="height:1px;background:rgba(250,243,228,.22);margin:clamp(20px,3vw,26px) 0"></div>
+          <div style="font:400 clamp(34px,8vw,46px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.03em">Cardenal</div>
+          <div style="font:500 clamp(17px,4.4vw,20px)/1.45 'Inter Tight',sans-serif;color:#FAF3E4;margin-top:10px">Calle Madrid con avenida Principal<br />Las Mercedes, Caracas</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:clamp(20px,3vw,26px)">
+            <span style="{{ pastillaClara }}">Hoy · 7:00 p.m.</span>
+            <span style="{{ pastillaClara }}">Reserva a tu nombre</span>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:11px;margin-top:16px">
+          <a href="https://maps.google.com/?q=Calle+Madrid+Las+Mercedes+Caracas" style="{{ botonPrimario }}">Cómo llegar</a>
+          <button onClick="{{ abrirTarde }}" style="{{ botonBorde }}">Voy tarde</button>
+        </div>
+
+        <sc-if value="{{ tardeAbierto }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:26px;background:#F2E9D5;padding:clamp(20px,3vw,26px);margin-top:14px;animation:aro-open 260ms ease both">
+            <div style="font:400 clamp(21px,2.4vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">¿Cuánto te falta?</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:7px;max-width:44ch;text-wrap:pretty">Se lo decimos a la mesa. Nadie se queda mirando la puerta.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
+              <sc-for list="{{ retrasos }}" as="r" hint-placeholder-count="3">
+                <button onClick="{{ r.pick }}" style="{{ r.btn }}">
+                  <span style="{{ r.aro }}">{{ r.icono }}</span>
+                  <span style="{{ r.txt }}">{{ r.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:center;margin-top:18px">
+              <button onClick="{{ avisar }}" style="{{ botonPrimario }}">Avisar a la mesa</button>
+              <button onClick="{{ abrirTarde }}" style="{{ botonFantasma }}">Cancelar</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ avisado }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:26px;background:rgba(27,81,56,.1);padding:clamp(17px,2.4vw,21px);margin-top:14px;animation:aro-open 260ms ease both">
+            <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ textoAvisado }}</span>
+              <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px">Ya lo saben. Ve con calma.</span>
+            </span>
+          </div>
+        </sc-if>
+
+        <div style="margin-top:clamp(30px,4.4vw,42px)">
+          <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin-bottom:16px">CON QUIÉN CENAS</div>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <sc-for list="{{ comensales }}" as="c" hint-placeholder-count="5">
+              <div style="display:flex;gap:14px;align-items:center;padding:clamp(13px,2vw,16px) 0;border-bottom:1px solid rgba(20,52,42,.13)">
+                <span style="{{ c.avatar }}">{{ c.inicial }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font:400 clamp(21px,2.4vw,25px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.nombre }}</span>
+                  <span style="display:block;font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ c.sector }}</span>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:16px;max-width:48ch;text-wrap:pretty">Todos con identidad verificada. No hay fotos ni apellidos: eso lo cuenta cada quien en la mesa si quiere.</div>
+        </div>
+
+        <div style="border-radius:26px;border:1px solid rgba(20,52,42,.18);padding:clamp(19px,2.6vw,24px);margin-top:clamp(26px,3.6vw,36px)">
+          <div style="font:400 clamp(21px,2.4vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Al llegar</div>
+          <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:9px;max-width:46ch;text-wrap:pretty">Di que vas a la mesa de Aro, la 04. Está reservada a tu nombre y el restaurante ya sabe que son seis.</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esPasada }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 380ms ease both">
+        <div style="{{ selloEspera }}">ANOCHE</div>
+        <h1 style="{{ h1 }}">¿Qué tal estuvo?</h1>
+        <p style="{{ bajada }}">Cenaste en Cardenal, mesa 04. Lo que nos cuentes entra en el emparejamiento de la próxima, y nadie más lo ve.</p>
+        <sc-if value="{{ sinContar }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:clamp(26px,3.6vw,36px)">
+            <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin-bottom:14px">¿VOLVERÍAS A ESA MESA?</div>
+            <div style="display:flex;flex-wrap:wrap;gap:9px">
+              <sc-for list="{{ valoraciones }}" as="v" hint-placeholder-count="3">
+                <button onClick="{{ v.pick }}" style="{{ v.btn }}">
+                  <span style="{{ v.aro }}">{{ v.icono }}</span>
+                  <span style="{{ v.txt }}">{{ v.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+
+            <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin:clamp(26px,3.4vw,34px) 0 6px">¿CON QUIÉN NO QUIERES VOLVER A COINCIDIR?</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-bottom:14px;max-width:46ch;text-wrap:pretty">Opcional, y no se le avisa nunca. Solo deja de salir en tus mesas.</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ bloqueables }}" as="b" hint-placeholder-count="5">
+                <button onClick="{{ b.pick }}" aria-disabled="{{ b.inerte }}" style="{{ b.btn }}">
+                  <span style="{{ b.aro }}">{{ b.icono }}</span>
+                  <span style="{{ b.txt }}">{{ b.nombre }}</span>
+                  <span style="{{ b.pie }}">{{ b.sector }}</span>
+                </button>
+              </sc-for>
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
+              <button onClick="{{ enviarValoracion }}" aria-disabled="{{ enviarInerte }}" style="{{ botonEnviar }}">{{ textoEnviar }}</button>
+              <a href="Aro Club - Mi cuenta.dc.html" style="{{ botonFantasma }}">Ahora no</a>
+            </div>
+          </div>
+
+        </sc-if>
+
+        <sc-if value="{{ puedeReportar }}" hint-placeholder-val="{{ true }}">
+          <div style="border-radius:26px;border:1px solid rgba(143,69,21,.34);padding:clamp(19px,2.6vw,24px);margin-top:clamp(26px,3.6vw,36px)">
+            <div style="font:400 clamp(21px,2.4vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#6E340F">¿Pasó algo grave?</div>
+            <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:9px;max-width:46ch;text-wrap:pretty">Bloquear no es lo mismo que reportar. Si alguien se pasó de la raya, lo lee una persona de nuestro equipo hoy mismo.</div>
+            <button onClick="{{ abrirReporte }}" style="{{ botonBordeSuelto }}">Reportar algo</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ contado }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:26px;background:rgba(27,81,56,.1);padding:clamp(19px,2.6vw,24px);margin-top:clamp(24px,3.4vw,32px);animation:aro-open 300ms ease both">
+            <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">Anotado, gracias.</span>
+              <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px">{{ resumenValoracion }}</span>
+            </span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ reporteAbierto }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:26px;background:#F2E9D5;padding:clamp(20px,3vw,26px);margin-top:14px;animation:aro-open 260ms ease both">
+            <div style="font:400 clamp(21px,2.4vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">¿Qué pasó?</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:7px;max-width:46ch;text-wrap:pretty">Lo lee una persona hoy mismo. Quien acumula reportes sale del club.</div>
+
+            <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin:20px 0 10px">SOBRE QUIÉN</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ reportables }}" as="p" hint-placeholder-count="5">
+                <button onClick="{{ p.pick }}" style="{{ p.btn }}">
+                  <span style="{{ p.aro }}">{{ p.icono }}</span>
+                  <span style="{{ p.txt }}">{{ p.nombre }}</span>
+                  <span style="{{ p.pie }}">{{ p.sector }}</span>
+                </button>
+              </sc-for>
+            </div>
+
+            <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin:20px 0 10px">QUÉ PASÓ</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ motivos }}" as="m" hint-placeholder-count="4">
+                <button onClick="{{ m.pick }}" style="{{ m.btn }}">
+                  <span style="{{ m.aro }}">{{ m.icono }}</span>
+                  <span style="{{ m.txt }}">{{ m.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:18px">
+              <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+              <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ avisoBloqueo }}</span>
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:18px">
+              <button onClick="{{ enviarReporte }}" aria-disabled="{{ reporteInerte }}" style="{{ botonReportar }}">{{ textoReportar }}</button>
+              <button onClick="{{ abrirReporte }}" style="{{ botonFantasma }}">Cancelar</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ reportado }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:26px;border:1px solid rgba(143,69,21,.34);padding:clamp(19px,2.6vw,24px);margin-top:14px;animation:aro-open 300ms ease both">
+            <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">Reporte enviado</span>
+              <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px">{{ resumenReporte }}</span>
+            </span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hayCierre }}" hint-placeholder-val="{{ false }}">
+          <a href="Aro Club - Mi cuenta.dc.html" style="{{ botonPrimarioSuelto }}">Volver al inicio</a>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = {
+    fase: 1, ahora: Date.now(), tarde: false, retraso: 1, avisado: false,
+    valor: -1, bloqueados: [], contado: false,
+    reporte: false, motivo: -1, quien: -1, reportado: false
+  };
+
+  componentDidMount() {
+    // el reloj solo corre en el estado que lo muestra
+    this._t = setInterval(() => {
+      if (this.state.fase === 0) this.setState({ ahora: Date.now() });
+    }, 1000);
+    // los tres estados se recorren por hash, sin cromo de demostración en pantalla
+    const lee = () => {
+      const h = (window.location.hash || '').replace('#', '');
+      const i = { cerrada: 0, abierta: 1, pasada: 2 }[h];
+      if (i !== undefined && i !== this.state.fase) this.setState({ fase: i, tarde: false, avisado: false });
+    };
+    lee();
+    this._h = lee;
+    window.addEventListener('hashchange', lee);
+  }
+  componentWillUnmount() {
+    clearInterval(this._t);
+    if (this._h) window.removeEventListener('hashchange', this._h);
+  }
+
+  renderVals() {
+    const f = this.state.fase;
+    const fases = ['CERRADA', 'ABIERTA', 'PASADA'];
+
+    // cuenta atrás al JUEVES a las 12:00, no al próximo mediodía
+    const d = new Date(this.state.ahora);
+    const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0);
+    let dias = (4 - d.getDay() + 7) % 7;
+    if (dias === 0 && d.getTime() >= t.getTime()) dias = 7;
+    t.setDate(t.getDate() + dias);
+    const s = Math.max(0, Math.floor((t.getTime() - d.getTime()) / 1000));
+    const p = (n) => (n < 10 ? '0' + n : '' + n);
+    const hh = Math.floor(s / 3600);
+    // más de un día: días y horas, no un hh:mm:ss de tres cifras
+    const cuenta = hh >= 24
+      ? Math.floor(s / 86400) + 'd ' + p(hh % 24) + 'h ' + p(Math.floor(s / 60) % 60) + 'm'
+      : p(hh) + ':' + p(Math.floor(s / 60) % 60) + ':' + p(s % 60);
+    const hoy = dias === 0;
+
+    const comensales = [
+      ['Daniela', 'D', 'Arquitectura'], ['Andrés', 'A', 'Tecnología'], ['Gabriela', 'G', 'Salud'],
+      ['José Manuel', 'J', 'Finanzas'], ['Andreína', 'A', 'Educación']
+    ].map((g, i) => ({
+      nombre: g[0], inicial: g[1], sector: g[2],
+      avatar: 'flex:0 0 auto;width:44px;height:44px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 17px/1 \'Inter Tight\',sans-serif'
+    }));
+
+    const retrasos = ['10 minutos', '20 minutos', 'Media hora'].map((label, i) => {
+      const on = this.state.retraso === i;
+      return {
+        label, icono: on ? '✓' : '',
+        pick: () => this.setState({ retraso: i }),
+        aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif',
+        btn: 'display:inline-flex;align-items:center;gap:10px;min-height:50px;padding:0 18px 0 13px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A;white-space:nowrap'
+      };
+    });
+
+    const aroDe = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
+
+    const valoraciones = ['Sí, sin dudarlo', 'Estuvo bien', 'No del todo'].map((label, i) => {
+      const on = this.state.valor === i;
+      return {
+        label, icono: on ? '✓' : '', aro: aroDe(on),
+        pick: () => this.setState({ valor: i }),
+        btn: 'display:inline-flex;align-items:center;gap:10px;min-height:50px;padding:0 18px 0 13px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A;white-space:nowrap'
+      };
+    });
+
+    const bloqueables = comensales.map((c, i) => {
+      const on = this.state.bloqueados.indexOf(i) >= 0;
+      const fijo = this.state.reportado && this.state.quien === i;
+      return {
+        nombre: c.nombre, sector: fijo ? 'Bloqueada por tu reporte' : c.sector,
+        icono: on ? '✓' : '', aro: aroDe(on),
+        pick: fijo ? (() => {}) : (() => this.setState((s) => ({
+          bloqueados: s.bloqueados.indexOf(i) >= 0 ? s.bloqueados.filter((x) => x !== i) : s.bloqueados.concat([i])
+        }))),
+        inerte: fijo ? 'true' : null,
+        btn: 'display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;padding:0 18px 0 14px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.16)') + ';cursor:' + (fijo ? 'default' : 'pointer') + ';transition:all 180ms ease',
+        txt: 'flex:1;min-width:0;font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A',
+        pie: 'flex:0 0 auto;font:' + (fijo ? '500' : '400') + ' 13px/1.2 \'Inter Tight\',sans-serif;color:' + (fijo ? '#6E340F' : '#33513F')
+      };
+    });
+
+    const reportables = comensales.map((c, i) => {
+      const on = this.state.quien === i;
+      return {
+        nombre: c.nombre, sector: c.sector, icono: on ? '✓' : '', aro: aroDe(on),
+        pick: () => this.setState({ quien: i }),
+        btn: 'display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;padding:0 18px 0 14px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'flex:1;min-width:0;font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A',
+        pie: 'flex:0 0 auto;font:400 13px/1.2 \'Inter Tight\',sans-serif;color:#33513F'
+      };
+    });
+
+    const motivos = ['Comentarios sobre el cuerpo o insistencia', 'No aceptó un no', 'Vino a vender o a reclutar', 'No era quien decía ser', 'Otra cosa'].map((label, i) => {
+      const on = this.state.motivo === i;
+      return {
+        label, icono: on ? '✓' : '', aro: aroDe(on),
+        pick: () => this.setState({ motivo: i }),
+        btn: 'display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;padding:12px 18px 12px 14px;border-radius:26px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'flex:1;min-width:0;font:' + (on ? '600' : '400') + ' 15px/1.35 \'Inter Tight\',sans-serif;color:#14342A'
+      };
+    });
+
+    const listoReporte = this.state.quien >= 0 && this.state.motivo >= 0;
+
+    const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
+
+    return {
+      esCerrada: f === 0, esAbierta: f === 1, esPasada: f === 2,
+      etiquetaDemo: 'DEMO · ' + fases[f],
+      ciclar: () => this.setState((st) => ({ fase: (st.fase + 1) % 3, tarde: false, avisado: false })),
+
+      cuenta, comensales, retrasos, valoraciones, bloqueables, motivos, reportables,
+      sinContar: !this.state.contado,
+      contado: this.state.contado,
+      resumenValoracion: this.state.bloqueados.length
+        ? 'Entra en tu próxima mesa. ' + (this.state.bloqueados.length === 1 ? 'La persona que marcaste no' : 'Las personas que marcaste no') + ' volverá a coincidir contigo.'
+        : 'Entra en el emparejamiento de tu próxima mesa.',
+      textoEnviar: this.state.valor >= 0 ? 'Enviar' : 'Elige una respuesta',
+      botonEnviar: btn(this.state.valor >= 0 ? '#14342A' : 'rgba(20,52,42,.12)', this.state.valor >= 0 ? '#FAF3E4' : '#2C4A38', 'none', this.state.valor >= 0 ? '' : 'cursor:not-allowed'),
+      // no está `disabled`: sigue siendo enfocable y anuncia por qué no responde
+      enviarInerte: this.state.valor >= 0 ? null : 'true',
+      reporteInerte: listoReporte ? null : 'true',
+      botonPrimarioSuelto: btn('#14342A', '#FAF3E4', 'none', 'margin-top:16px'),
+      botonReportar: btn(listoReporte ? '#6E340F' : 'rgba(20,52,42,.12)', listoReporte ? '#FFF8EA' : '#2C4A38', 'none', listoReporte ? '' : 'cursor:not-allowed'),
+      enviarValoracion: () => { if (this.state.valor >= 0) this.setState({ contado: true }); },
+      reporteAbierto: this.state.reporte,
+      reportado: this.state.reportado,
+      // valorar y reportar son independientes: enviar una no cierra la otra
+      puedeReportar: !this.state.reportado,
+      hayCierre: this.state.contado || this.state.reportado,
+      abrirReporte: () => this.setState((s) => ({ reporte: !s.reporte })),
+      avisoBloqueo: this.state.quien >= 0
+        ? 'Al enviarlo, ' + comensales[this.state.quien].nombre + ' deja de coincidir contigo para siempre. No se le avisa de que fuiste tú.'
+        : 'Quien reportes deja de coincidir contigo para siempre. No se le avisa de que fuiste tú.',
+      resumenReporte: 'Reportaste a ' + (this.state.quien >= 0 ? comensales[this.state.quien].nombre : 'alguien') + ', así que ya no volverá a coincidir contigo. Lo lee una persona hoy y te escribimos cuando esté revisado.',
+      enviarReporte: () => { if (!listoReporte) return; this.setState((st) => ({
+        reporte: false, reportado: true,
+        bloqueados: st.bloqueados.indexOf(st.quien) >= 0 ? st.bloqueados : st.bloqueados.concat([st.quien])
+      })); },
+      textoReportar: listoReporte ? 'Enviar el reporte' : (this.state.quien < 0 ? 'Elige sobre quién' : 'Elige qué pasó'),
+
+      textoEspera: hoy ? 'SE ABRE HOY A LAS 12:00' : 'SE ABRE EL JUEVES A LAS 12:00',
+      tardeAbierto: this.state.tarde,
+      avisado: this.state.avisado,
+      textoAvisado: 'Avisamos que llegas ' + ['10 minutos', '20 minutos', 'media hora'][this.state.retraso] + ' tarde',
+      abrirTarde: () => this.setState((st) => ({ tarde: !st.tarde })),
+      avisar: () => this.setState({ tarde: false, avisado: true }),
+
+      h1: 'font:400 clamp(34px,8vw,50px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:14px 0 0;max-width:14ch;text-wrap:balance',
+      bajada: 'font:400 17px/1.55 \'Inter Tight\',sans-serif;color:#2C4A38;max-width:44ch;margin:14px 0 0;text-wrap:pretty',
+      selloEspera: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.24);font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;color:#33513F',
+      selloAbierto: 'display:inline-flex;align-items:center;min-height:38px;padding:0 17px;border-radius:999px;background:#6E340F;color:#FFF8EA;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.16em',
+      pastillaClara: 'display:inline-flex;align-items:center;min-height:38px;padding:0 15px;border-radius:999px;border:1px solid rgba(250,243,228,.3);font:500 14px/1 \'Inter Tight\',sans-serif;color:#FAF3E4',
+      botonPrimario: btn('#14342A', '#FAF3E4', 'none'),
+      botonBorde: btn('transparent', '#14342A', '1px solid rgba(20,52,42,.26)'),
+      botonBordeSuelto: btn('transparent', '#14342A', '1px solid rgba(20,52,42,.26)', 'margin-top:16px'),
+      botonFantasma: btn('transparent', '#33513F', 'none', 'font-weight:500;padding:0 10px;text-decoration:underline;text-underline-offset:6px')
+    };
+  }
+}
+</script>
+</body>
+</html>
