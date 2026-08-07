@@ -35,7 +35,7 @@
 
   <div style="max-width:680px;margin:0 auto;padding:clamp(24px,4.5vw,42px) clamp(16px,4vw,28px) clamp(48px,8vw,90px)">
 
-    <h1 style="font:400 clamp(30px,5vw,44px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0">Daniela.</h1>
+    <h1 style="font:400 clamp(30px,5vw,44px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0">{{ saludo }}</h1>
     <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:16px">
       <sc-for list="{{ credenciales }}" as="c" hint-placeholder-count="3">
         <span style="{{ c.chip }}">{{ c.texto }}</span>
@@ -66,6 +66,28 @@
                   <sc-if value="{{ f.hayAyuda }}" hint-placeholder-val="{{ false }}">
                     <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:14px;max-width:52ch;text-wrap:pretty">{{ f.ayuda }}</div>
                   </sc-if>
+                  <sc-if value="{{ f.esTexto }}" hint-placeholder-val="{{ false }}">
+                    <input type="text" value="{{ f.borradorTexto }}" onChange="{{ f.onTexto }}" aria-label="{{ f.etiqueta }}" style="{{ f.campo }}" />
+                  </sc-if>
+
+                  <sc-if value="{{ f.esFecha }}" hint-placeholder-val="{{ false }}">
+                    <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:9px">DÍA</div>
+                    <input type="text" value="{{ f.dia }}" onChange="{{ f.onDia }}" placeholder="14" inputmode="numeric" maxlength="2" aria-label="Día" style="{{ f.campoCifra }}" />
+
+                    <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin:18px 0 9px">MES</div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(30%,96px),1fr));gap:8px">
+                      <sc-for list="{{ f.meses }}" as="m" hint-placeholder-count="12">
+                        <button onClick="{{ m.pick }}" style="{{ m.btn }}">
+                          <span style="{{ m.aro }}">{{ m.icono }}</span>
+                          <span style="{{ m.txt }}">{{ m.nombre }}</span>
+                        </button>
+                      </sc-for>
+                    </div>
+
+                    <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin:18px 0 9px">AÑO</div>
+                    <input type="text" value="{{ f.anio }}" onChange="{{ f.onAnio }}" placeholder="1992" inputmode="numeric" maxlength="4" aria-label="Año" style="{{ f.campoAnio }}" />
+                  </sc-if>
+
                   <div style="{{ f.contenedorOpciones }}">
                     <sc-for list="{{ f.opciones }}" as="o" hint-placeholder-count="4">
                       <button onClick="{{ o.pick }}" style="{{ o.btn }}">
@@ -106,7 +128,9 @@ class Component extends DCLogic {
     abierta: null,
     borrador: null,
     r: {
+      nombre: 'Daniela Pérez', trato: 'Daniela', nacimiento: '1992-03-14', genero: 0, telefono: '4241234567',
       arraigo: 0, sector: 0, momento: 2, rol: 1, motivo: 0, romance: 1,
+      empleador: 'Banesco', actividades: [1, 2, 7], planes: [0, 3],
       temas: [0, 1, 5], evitar: [3], peso: 1, gasto: 1, dieta: [0],
       zonas: [0, 4, 3], dias: [2, 3], idiomas: [0, 1]
     }
@@ -114,27 +138,39 @@ class Component extends DCLogic {
 
   campos() {
     return {
-      // — quién eres —
-      arraigo: { s: 0, etiqueta: 'Tu historia', tipo: 'unica', opciones: ['Me fui del país y volví', 'Nunca me fui de Venezuela', 'Me mudé a Caracas desde el interior', 'Soy extranjero viviendo aquí', 'Vivo en el exterior y estoy de visita'] },
-      sector: { s: 0, etiqueta: 'Sector', tipo: 'unica', compacta: true, opciones: ['Tecnología', 'Finanzas', 'Salud', 'Educación', 'Consultoría', 'Legal', 'Marketing', 'Medios', 'Diseño', 'Comercio', 'Gastronomía', 'ONG', 'Gobierno', 'Emprendo por mi cuenta', 'Estudio', 'Otro'], visible: true },
-      momento: { s: 0, etiqueta: 'En qué momento estás', tipo: 'unica', opciones: ['Soltera sin hijos', 'Soltera con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
+      // — datos base —
+      trato: { s: 0, etiqueta: 'Cómo te llamamos en la mesa', tipo: 'texto', visible: true, ayuda: 'Es lo único que ven los otros cinco, junto con tu sector.' },
+      nombre: { s: 0, etiqueta: 'Tu nombre completo', tipo: 'texto', ayuda: 'Como aparece en tu cédula. Solo lo ve nuestro equipo al verificarte.' },
+      nacimiento: { s: 0, etiqueta: 'Fecha de nacimiento', tipo: 'fecha', ayuda: 'Nadie ve tu edad. La usamos para que en tu mesa no haya más de diez años de diferencia.' },
+      genero: { s: 0, etiqueta: 'Género', tipo: 'unica', privada: true, ayuda: 'No se muestra a nadie. Sirve para que la mesa quede balanceada.', opciones: ['Mujer', 'Hombre', 'No binario', 'Prefiero no decirlo'] },
+      telefono: { s: 0, etiqueta: 'Teléfono', tipo: 'texto', ayuda: 'Solo lo usamos el día del encuentro, por WhatsApp. No lo ve nadie de tu mesa.' },
 
-      // — cómo eres en la mesa —
-      rol: { s: 1, etiqueta: 'En una mesa con desconocidos', tipo: 'unica', opciones: ['Escucho más de lo que hablo', 'Depende del momento', 'Suelo llevar la conversación'] },
-      motivo: { s: 1, etiqueta: 'Qué te trae', tipo: 'unica', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con Caracas después de volver', 'Red profesional'] },
-      romance: { s: 1, etiqueta: 'Sobre que surja algo', tipo: 'unica', privada: true, ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: ['Abierta, si surge algo bienvenido', 'Me da igual, vengo por la conversación', 'Prefiero una mesa sin esa energía'] },
+      // — quién eres —
+      arraigo: { s: 1, etiqueta: 'Tu historia', tipo: 'unica', opciones: ['Me fui del país y volví', 'Nunca me fui de Venezuela', 'Me mudé a Caracas desde el interior', 'Soy extranjero viviendo aquí', 'Vivo en el exterior y estoy de visita'] },
+      empleador: { s: 1, etiqueta: 'Dónde trabajas', tipo: 'texto', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.' },
+
+      momento: { s: 2, etiqueta: 'En qué momento estás', tipo: 'unica', opciones: ['Soltera sin hijos', 'Soltera con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
+      sector: { s: 1, etiqueta: 'Sector', tipo: 'unica', compacta: true, opciones: ['Tecnología', 'Finanzas', 'Salud', 'Educación', 'Consultoría', 'Legal', 'Marketing', 'Medios', 'Diseño', 'Comercio', 'Gastronomía', 'ONG', 'Gobierno', 'Emprendo por mi cuenta', 'Estudio', 'Otro'], visible: true },
+
+      rol: { s: 2, etiqueta: 'En una mesa con desconocidos', tipo: 'unica', opciones: ['Escucho más de lo que hablo', 'Depende del momento', 'Suelo llevar la conversación'] },
+      motivo: { s: 2, etiqueta: 'Qué te trae', tipo: 'unica', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con Caracas después de volver', 'Red profesional'] },
+      romance: { s: 2, etiqueta: 'Sobre que surja algo', tipo: 'unica', privada: true, ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: ['Abierta, si surge algo bienvenido', 'Me da igual, vengo por la conversación', 'Prefiero una mesa sin esa energía'] },
 
       // — de qué hablas —
-      temas: { s: 2, etiqueta: 'De qué hablas dos horas', tipo: 'multi', min: 2, max: 4, opciones: ['Cocina y restaurantes', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios y emprender', 'Tecnología', 'Arte y diseño', 'Arquitectura', 'Ciencia', 'Historia', 'Psicología', 'Política', 'Economía', 'Crianza', 'Salud y bienestar', 'Humor y absurdos'] },
-      evitar: { s: 2, etiqueta: 'Temas que prefieres esquivar', tipo: 'multi', exclusiva: 6, opciones: ['Política y situación del país', 'Religión y fe', 'Dinero, sueldos y precios', 'Vida amorosa y relaciones', 'Crianza e hijos', 'Trabajo, vengo a desconectarme', 'Ninguno, hablo de todo'] },
-      peso: { s: 2, etiqueta: 'Qué pesa más en una cena', tipo: 'unica', opciones: ['La conversación, el restaurante es la excusa', 'Las dos cosas por igual', 'La comida, vengo por la experiencia'] },
+      temas: { s: 3, etiqueta: 'De qué hablas dos horas', tipo: 'multi', min: 2, max: 4, opciones: ['Cocina y restaurantes', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios y emprender', 'Tecnología', 'Arte y diseño', 'Arquitectura', 'Ciencia', 'Historia', 'Psicología', 'Política', 'Economía', 'Crianza', 'Salud y bienestar', 'Humor y absurdos'] },
 
       // — logística —
-      gasto: { s: 3, etiqueta: 'Cuánto piensas gastar', tipo: 'unica', ayuda: 'Elegimos el restaurante con el número más bajo de la mesa. Marcar de más solo hace que la noche te salga cara.', opciones: ['Hasta 20 USD', '20 a 35 USD', '35 a 50 USD', 'Más de 50 USD'] },
-      zonas: { s: 3, etiqueta: 'Zonas donde puedes ir', tipo: 'multi', opciones: ['Las Mercedes', 'El Rosal', 'Bello Monte', 'Chacao', 'Altamira', 'La Castellana', 'Los Palos Grandes', 'Sebucán y Los Dos Caminos', 'Chuao', 'El Cafetal y Santa Paula', 'Los Naranjos y Cerro Verde', 'La Trinidad y La Tahona', 'El Hatillo'] },
-      dias: { s: 3, etiqueta: 'Días que te sirven', tipo: 'multi', opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía'] },
-      dieta: { s: 3, etiqueta: 'Restricciones alimentarias', tipo: 'multi', exclusiva: 0, opciones: ['Ninguna', 'Vegetariana', 'Vegana', 'Pescetariana', 'Sin gluten', 'Sin lactosa', 'No como cerdo', 'No como carnes rojas', 'Diabética', 'Alergias'] },
-      idiomas: { s: 3, etiqueta: 'Idiomas', tipo: 'multi', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] }
+      evitar: { s: 3, etiqueta: 'Temas que prefieres esquivar', tipo: 'multi', exclusiva: 6, opciones: ['Política y situación del país', 'Religión y fe', 'Dinero, sueldos y precios', 'Vida amorosa y relaciones', 'Crianza e hijos', 'Trabajo, vengo a desconectarme', 'Ninguno, hablo de todo'] },
+      actividades: { s: 3, etiqueta: 'Lo que de verdad haces', tipo: 'multi', min: 3, max: 6, opciones: ['Cocinar', 'Salir a comer', 'Correr', 'Gimnasio', 'Yoga o pilates', 'Ciclismo', 'Senderismo', 'Playa', 'Pádel o tenis', 'Fútbol', 'Béisbol', 'Nadar', 'Bailar', 'Conciertos', 'Cine', 'Museos', 'Leer', 'Videojuegos'] },
+
+      planes: { s: 4, etiqueta: 'Planes que te interesan', tipo: 'multi', opciones: ['Cena en restaurante', 'Cena con foco gastronómico', 'Café o desayuno de networking', 'Drinks / after office', 'Correr', 'Senderismo', 'Pádel o tenis', 'Yoga o pilates', 'Ciclismo'] },
+      peso: { s: 4, etiqueta: 'Qué pesa más en una cena', tipo: 'unica', opciones: ['La conversación, el restaurante es la excusa', 'Las dos cosas por igual', 'La comida, vengo por la experiencia'] },
+
+      gasto: { s: 4, etiqueta: 'Cuánto piensas gastar', tipo: 'unica', ayuda: 'Elegimos el restaurante con el número más bajo de la mesa. Marcar de más solo hace que la noche te salga cara.', opciones: ['Hasta 20 USD', '20 a 35 USD', '35 a 50 USD', 'Más de 50 USD'] },
+      zonas: { s: 5, etiqueta: 'Zonas donde puedes ir', tipo: 'multi', opciones: ['Las Mercedes', 'El Rosal', 'Bello Monte', 'Chacao', 'Altamira', 'La Castellana', 'Los Palos Grandes', 'Sebucán y Los Dos Caminos', 'Chuao', 'El Cafetal y Santa Paula', 'Los Naranjos y Cerro Verde', 'La Trinidad y La Tahona', 'El Hatillo'] },
+      dias: { s: 5, etiqueta: 'Días que te sirven', tipo: 'multi', opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía'] },
+      dieta: { s: 5, etiqueta: 'Restricciones alimentarias', tipo: 'multi', exclusiva: 0, opciones: ['Ninguna', 'Vegetariana', 'Vegana', 'Pescetariana', 'Sin gluten', 'Sin lactosa', 'No como cerdo', 'No como carnes rojas', 'Diabética', 'Alergias'] },
+      idiomas: { s: 5, etiqueta: 'Idiomas', tipo: 'multi', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] }
     };
   }
 
@@ -147,6 +183,15 @@ class Component extends DCLogic {
 
     const nombres = (id, v) => {
       const c = campos[id];
+      if (c.tipo === 'fecha') {
+        const p = String(v || '').split('-');
+        const ms = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+        return p.length === 3 ? parseInt(p[2], 10) + ' de ' + ms[parseInt(p[1], 10) - 1] + ' de ' + p[0] : 'Sin responder';
+      }
+      if (c.tipo === 'texto') {
+        if (id === 'telefono' && v) return '+58 ' + String(v).slice(0, 3) + ' ' + String(v).slice(3);
+        return v || 'Sin responder';
+      }
       if (c.tipo === 'unica') return c.opciones[v];
       const l = (v || []).map((i) => c.opciones[i]);
       return l.length ? l.join(' · ') : 'Sin responder';
@@ -157,10 +202,21 @@ class Component extends DCLogic {
       const on = abierta === id;
       const val = on ? borrador : this.state.r[id];
       const esUnica = c.tipo === 'unica';
+      const esTexto = c.tipo === 'texto';
+      const esFecha = c.tipo === 'fecha';
+      const soloLectura = false;
+      const partes = String((on ? borrador : this.state.r[id]) || '').split('-');
+      const campoBase = 'min-height:54px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 16px/1 \'Inter Tight\',sans-serif;outline:none';
+      const ponFecha = (i, v) => this.setState((st) => {
+        const p = String(st.borrador || '--').split('-');
+        while (p.length < 3) p.push('');
+        p[i] = v;
+        return { borrador: p.join('-') };
+      });
       const sel = esUnica ? val : (val || []);
       const bajo = !esUnica && c.min && sel.length < c.min;
 
-      const opciones = c.opciones.map((label, i) => {
+      const opciones = (c.opciones || []).map((label, i) => {
         const marcada = esUnica ? sel === i : sel.indexOf(i) >= 0;
         const tope = !esUnica && c.max && sel.length >= c.max && !marcada;
         return {
@@ -188,8 +244,27 @@ class Component extends DCLogic {
         icono: on ? '×' : '›',
         flecha: 'flex:0 0 auto;width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 17px/1 \'Inter Tight\',sans-serif;background:' + (on ? '#1B5138' : 'rgba(27,81,56,.09)') + ';color:' + (on ? '#FAF3E4' : '#1B5138'),
         contenedor: 'border-bottom:1px solid rgba(20,52,42,.1);background:' + (on ? '#F2E9D5' : 'transparent'),
-        fila: 'display:flex;gap:14px;align-items:center;width:100%;min-height:66px;padding:14px clamp(16px,2.4vw,22px);background:transparent;border:none;cursor:pointer',
+        fila: 'display:flex;gap:14px;align-items:center;width:100%;text-align:left;min-height:66px;padding:14px clamp(16px,2.4vw,22px);background:transparent;border:none;cursor:pointer',
         abierta: on,
+        esTexto, esFecha,
+        borradorTexto: on && esTexto ? (borrador || '') : '',
+        onTexto: (e) => { const v = e.target.value; this.setState({ borrador: id === 'telefono' ? v.replace(/\D/g, '').slice(0, 10) : v }); },
+        anio: partes[0] || '', dia: partes[2] || '',
+        // mismo control que en Datos base: un mes no se teclea, se elige
+        meses: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'].map((nombre, k) => {
+          const marcada = parseInt(partes[1], 10) === k + 1;
+          return {
+            nombre, icono: marcada ? '✓' : '', aro: aro(marcada),
+            pick: () => ponFecha(1, String(k + 1).length === 1 ? '0' + (k + 1) : String(k + 1)),
+            btn: 'display:flex;align-items:center;gap:8px;min-height:50px;padding:0 10px 0 9px;border-radius:999px;background:' + (marcada ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (marcada ? '#8F4515' : 'rgba(20,52,42,.18)') + ';cursor:pointer;transition:all 180ms ease',
+            txt: 'flex:1;min-width:0;text-align:left;font:' + (marcada ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A'
+          };
+        }),
+        onAnio: (e) => ponFecha(0, e.target.value.replace(/\D/g, '').slice(0, 4)),
+        onDia: (e) => ponFecha(2, e.target.value.replace(/\D/g, '').slice(0, 2)),
+        campo: campoBase + ';width:100%',
+        campoCifra: campoBase + ';width:88px;text-align:center;font-variant-numeric:tabular-nums',
+        campoAnio: campoBase + ';width:106px;text-align:center;font-variant-numeric:tabular-nums',
         hayAyuda: !!c.ayuda,
         ayuda: c.ayuda || '',
         opciones,
@@ -209,10 +284,12 @@ class Component extends DCLogic {
     };
 
     const titulos = [
-      ['Quién eres', 'Lo usa el algoritmo. Nadie más lo ve.'],
-      ['Cómo eres en la mesa', 'Lo que más pesa al armar el grupo.'],
+      ['Datos base', 'Lo que diste al entrar. Edad y género sostienen el reparto.'],
+      ['Tu contexto', 'Con esto evitamos sentarte con alguien de tu empresa.'],
+      ['Cómo eres en la mesa', 'Lo que más pesa al armar el grupo. Nada de esto se le muestra a nadie.'],
       ['De qué hablas', 'Dos horas se sostienen con temas.'],
-      ['Logística', 'A qué mesa puedes llegar de verdad.']
+      ['Qué buscas y cuánto', 'El rango que marques es el techo del sitio que elegimos.'],
+      ['Logística', 'A qué mesa puedes llegar de verdad y qué sitio elegir.']
     ];
     const secciones = titulos.map((t, i) => ({
       titulo: t[0], nota: t[1],
@@ -228,6 +305,7 @@ class Component extends DCLogic {
 
     return {
       secciones, credenciales,
+      saludo: (this.state.r.trato || 'Tu perfil') + '.',
       botonFantasma: 'display:inline-flex;align-items:center;min-height:48px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
       enlacePie: 'display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.18);font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138'
     };

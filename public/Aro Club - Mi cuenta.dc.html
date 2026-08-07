@@ -34,7 +34,6 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
         <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
       </a>
-      <button onClick="{{ ciclarEstado }}" style="{{ botonEstado }}">{{ textoEstado }}</button>
     </div>
   </div>
 
@@ -86,7 +85,6 @@
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
           <a href="{{ accionEnlace }}" style="{{ botonAccion }}">{{ textoAccion }}</a>
           <sc-if value="{{ haySecundaria }}" hint-placeholder-val="{{ false }}">
-            <button onClick="{{ ciclarEstado }}" style="{{ botonFantasmaClaro }}">{{ textoSecundaria }}</button>
           </sc-if>
         </div>
       </div>
@@ -457,16 +455,12 @@ class Component extends DCLogic {
       accionEnlace: e.enlace,
       botonAccion: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 26px;border-radius:999px;background:' + (oscuro ? '#FAF3E4' : '#1B5138') + ';color:' + (oscuro ? '#14342A' : '#FAF3E4') + ';font:600 16px/1 \'Inter Tight\',sans-serif;transition:background 200ms ease',
       haySecundaria: !!e.secundaria,
-      textoSecundaria: e.secundaria || '',
       botonFantasmaClaro: 'display:inline-flex;align-items:center;min-height:56px;padding:0 10px;background:transparent;border:none;color:' + (oscuro ? '#9CBBA6' : '#566A5D') + ';font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
 
       mios,
       hayMios: mios.length > 0,
       sinMios: mios.length === 0,
 
-      textoEstado: 'Estado ' + ((this.state.i % estados.length) + 1) + ' de 6',
-      botonEstado: 'display:inline-flex;align-items:center;min-height:44px;margin:-8px 0;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:transparent;color:#1B5138;font:500 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
-      ciclarEstado: () => this.setState((s) => ({ i: (s.i + 1) % 6 }))
     };
   }
 }
