@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#FAF3E4; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#1B5138; color:#FAF3E4; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(-6px) } to { opacity:1; transform:none } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh">
+
+  <div style="position:sticky;top:0;z-index:30;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.1)">
+    <div style="max-width:680px;margin:0 auto;padding:12px clamp(16px,4vw,28px);display:flex;align-items:center;justify-content:space-between;gap:14px">
+      <a href="Aro Club - Mi cuenta.dc.html" style="display:inline-flex;align-items:center;gap:9px;min-height:44px;margin:-11px 0;color:#1B5138;font:500 15px/1 'Inter Tight',sans-serif">← Mi cuenta</a>
+      <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">PERFIL</span>
+    </div>
+  </div>
+
+  <div style="max-width:680px;margin:0 auto;padding:clamp(24px,4.5vw,42px) clamp(16px,4vw,28px) clamp(48px,8vw,90px)">
+
+    <h1 style="font:400 clamp(30px,5vw,44px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0">Daniela.</h1>
+    <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:16px">
+      <sc-for list="{{ credenciales }}" as="c" hint-placeholder-count="3">
+        <span style="{{ c.chip }}">{{ c.texto }}</span>
+      </sc-for>
+    </div>
+    <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:52ch;margin:18px 0 0;text-wrap:pretty">De ti, los otros cinco solo ven tu nombre y tu sector. Todo lo demás vive aquí y no se le muestra a nadie.</p>
+
+    <sc-for list="{{ secciones }}" as="s" hint-placeholder-count="4">
+      <div style="margin-top:clamp(30px,4vw,44px)">
+        <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:14px">
+          <span style="font:400 clamp(22px,2.6vw,28px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A">{{ s.titulo }}</span>
+          <span style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#566A5D">{{ s.nota }}</span>
+        </div>
+
+        <div style="border-radius:24px;background:#FFFBF0;overflow:hidden">
+          <sc-for list="{{ s.filas }}" as="f" hint-placeholder-count="4">
+            <div style="{{ f.contenedor }}">
+              <button onClick="{{ f.abrir }}" style="{{ f.fila }}">
+                <span style="flex:1;min-width:0;text-align:left">
+                  <span style="display:block;font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ f.etiqueta }}</span>
+                  <span style="{{ f.valorEstilo }}">{{ f.valor }}</span>
+                </span>
+                <span style="{{ f.flecha }}">{{ f.icono }}</span>
+              </button>
+
+              <sc-if value="{{ f.abierta }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:0 clamp(16px,2.4vw,22px) clamp(18px,2.4vw,22px);animation:aro-open 240ms ease both">
+                  <sc-if value="{{ f.hayAyuda }}" hint-placeholder-val="{{ false }}">
+                    <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:14px;max-width:52ch;text-wrap:pretty">{{ f.ayuda }}</div>
+                  </sc-if>
+                  <div style="{{ f.contenedorOpciones }}">
+                    <sc-for list="{{ f.opciones }}" as="o" hint-placeholder-count="4">
+                      <button onClick="{{ o.pick }}" style="{{ o.btn }}">
+                        <span style="{{ o.aro }}">{{ o.icono }}</span>
+                        <span style="{{ o.txt }}">{{ o.label }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px">
+                    <button onClick="{{ f.guardar }}" style="{{ f.botonGuardar }}">Guardar</button>
+                    <button onClick="{{ f.cerrar }}" style="{{ botonFantasma }}">Cancelar</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+
+    <div style="margin-top:clamp(30px,4vw,44px);border-radius:24px;border:1px solid rgba(20,52,42,.16);padding:clamp(20px,2.6vw,26px)">
+      <div style="font:400 clamp(20px,2.3vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cambiar respuestas no toca la mesa que ya tienes</div>
+      <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#456352;margin-top:8px;max-width:56ch;text-wrap:pretty">Lo que edites aquí entra en el emparejamiento de las próximas. La mesa del jueves ya está armada con lo que respondiste antes.</div>
+    </div>
+
+    <div style="margin-top:clamp(26px,3.4vw,36px);padding-top:24px;border-top:1px solid rgba(20,52,42,.13);display:flex;flex-wrap:wrap;gap:10px">
+      <a href="Aro Club - Verificacion.dc.html" style="{{ enlacePie }}">Mi verificación</a>
+      <a href="Aro Club - Legal.dc.html#privacidad" style="{{ enlacePie }}">Qué hacemos con esto</a>
+      <a href="Aro Club - Mi cuenta.dc.html" style="{{ enlacePie }}">Volver</a>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = {
+    abierta: null,
+    borrador: null,
+    r: {
+      arraigo: 0, sector: 0, momento: 2, rol: 1, motivo: 0, romance: 1,
+      temas: [0, 1, 5], evitar: [3], peso: 1, gasto: 1, dieta: [0],
+      zonas: [0, 4, 3], dias: [2, 3], idiomas: [0, 1]
+    }
+  };
+
+  campos() {
+    return {
+      // — quién eres —
+      arraigo: { s: 0, etiqueta: 'Tu historia', tipo: 'unica', opciones: ['Me fui del país y volví', 'Nunca me fui de Venezuela', 'Me mudé a Caracas desde el interior', 'Soy extranjero viviendo aquí', 'Vivo en el exterior y estoy de visita'] },
+      sector: { s: 0, etiqueta: 'Sector', tipo: 'unica', compacta: true, opciones: ['Tecnología', 'Finanzas', 'Salud', 'Educación', 'Consultoría', 'Legal', 'Marketing', 'Medios', 'Diseño', 'Comercio', 'Gastronomía', 'ONG', 'Gobierno', 'Emprendo por mi cuenta', 'Estudio', 'Otro'], visible: true },
+      momento: { s: 0, etiqueta: 'En qué momento estás', tipo: 'unica', opciones: ['Soltera sin hijos', 'Soltera con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
+
+      // — cómo eres en la mesa —
+      rol: { s: 1, etiqueta: 'En una mesa con desconocidos', tipo: 'unica', opciones: ['Escucho más de lo que hablo', 'Depende del momento', 'Suelo llevar la conversación'] },
+      motivo: { s: 1, etiqueta: 'Qué te trae', tipo: 'unica', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con Caracas después de volver', 'Red profesional'] },
+      romance: { s: 1, etiqueta: 'Sobre que surja algo', tipo: 'unica', privada: true, ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: ['Abierta, si surge algo bienvenido', 'Me da igual, vengo por la conversación', 'Prefiero una mesa sin esa energía'] },
+
+      // — de qué hablas —
+      temas: { s: 2, etiqueta: 'De qué hablas dos horas', tipo: 'multi', min: 2, max: 4, opciones: ['Cocina y restaurantes', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios y emprender', 'Tecnología', 'Arte y diseño', 'Arquitectura', 'Ciencia', 'Historia', 'Psicología', 'Política', 'Economía', 'Crianza', 'Salud y bienestar', 'Humor y absurdos'] },
+      evitar: { s: 2, etiqueta: 'Temas que prefieres esquivar', tipo: 'multi', exclusiva: 6, opciones: ['Política y situación del país', 'Religión y fe', 'Dinero, sueldos y precios', 'Vida amorosa y relaciones', 'Crianza e hijos', 'Trabajo, vengo a desconectarme', 'Ninguno, hablo de todo'] },
+      peso: { s: 2, etiqueta: 'Qué pesa más en una cena', tipo: 'unica', opciones: ['La conversación, el restaurante es la excusa', 'Las dos cosas por igual', 'La comida, vengo por la experiencia'] },
+
+      // — logística —
+      gasto: { s: 3, etiqueta: 'Cuánto piensas gastar', tipo: 'unica', ayuda: 'Elegimos el restaurante con el número más bajo de la mesa. Marcar de más solo hace que la noche te salga cara.', opciones: ['Hasta 20 USD', '20 a 35 USD', '35 a 50 USD', 'Más de 50 USD'] },
+      zonas: { s: 3, etiqueta: 'Zonas donde puedes ir', tipo: 'multi', opciones: ['Las Mercedes', 'El Rosal', 'Bello Monte', 'Chacao', 'Altamira', 'La Castellana', 'Los Palos Grandes', 'Sebucán y Los Dos Caminos', 'Chuao', 'El Cafetal y Santa Paula', 'Los Naranjos y Cerro Verde', 'La Trinidad y La Tahona', 'El Hatillo'] },
+      dias: { s: 3, etiqueta: 'Días que te sirven', tipo: 'multi', opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía'] },
+      dieta: { s: 3, etiqueta: 'Restricciones alimentarias', tipo: 'multi', exclusiva: 0, opciones: ['Ninguna', 'Vegetariana', 'Vegana', 'Pescetariana', 'Sin gluten', 'Sin lactosa', 'No como cerdo', 'No como carnes rojas', 'Diabética', 'Alergias'] },
+      idiomas: { s: 3, etiqueta: 'Idiomas', tipo: 'multi', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] }
+    };
+  }
+
+  renderVals() {
+    const campos = this.campos();
+    const abierta = this.state.abierta;
+    const borrador = this.state.borrador;
+
+    const aro = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
+
+    const nombres = (id, v) => {
+      const c = campos[id];
+      if (c.tipo === 'unica') return c.opciones[v];
+      const l = (v || []).map((i) => c.opciones[i]);
+      return l.length ? l.join(' · ') : 'Sin responder';
+    };
+
+    const construir = (id) => {
+      const c = campos[id];
+      const on = abierta === id;
+      const val = on ? borrador : this.state.r[id];
+      const esUnica = c.tipo === 'unica';
+      const sel = esUnica ? val : (val || []);
+      const bajo = !esUnica && c.min && sel.length < c.min;
+
+      const opciones = c.opciones.map((label, i) => {
+        const marcada = esUnica ? sel === i : sel.indexOf(i) >= 0;
+        const tope = !esUnica && c.max && sel.length >= c.max && !marcada;
+        return {
+          label, icono: marcada ? '✓' : '', aro: aro(marcada),
+          pick: () => this.setState((s) => {
+            if (esUnica) return { borrador: i };
+            const a = (s.borrador || []).slice();
+            if (a.indexOf(i) >= 0) return { borrador: a.filter((x) => x !== i) };
+            if (c.exclusiva != null && i === c.exclusiva) return { borrador: [i] };
+            const limpio = c.exclusiva != null ? a.filter((x) => x !== c.exclusiva) : a;
+            if (c.max && limpio.length >= c.max) return {};
+            return { borrador: limpio.concat([i]) };
+          }),
+          btn: (esUnica && !c.compacta)
+            ? 'display:flex;align-items:center;gap:12px;width:100%;padding:13px 17px;border-radius:999px;background:' + (marcada ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (marcada ? '#8F4515' : 'rgba(20,52,42,.18)') + ';cursor:pointer;text-align:left;min-height:52px;transition:all 180ms ease'
+            : 'display:inline-flex;align-items:center;gap:9px;min-height:46px;padding:0 16px 0 12px;border-radius:999px;background:' + (marcada ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (marcada ? '#8F4515' : 'rgba(20,52,42,.18)') + ';cursor:pointer;transition:all 180ms ease;opacity:' + (tope ? '.45' : '1'),
+          txt: 'font:' + (marcada ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A;white-space:' + (esUnica && !c.compacta ? 'normal' : 'nowrap')
+        };
+      });
+
+      return {
+        etiqueta: c.etiqueta,
+        valor: on ? (bajo ? 'Elige al menos ' + c.min : 'Editando') : nombres(id, this.state.r[id]),
+        valorEstilo: 'display:block;font:400 14px/1.5 \'Inter Tight\',sans-serif;color:' + (c.privada ? '#8F4515' : '#566A5D') + ';margin-top:4px;text-wrap:pretty',
+        icono: on ? '×' : '›',
+        flecha: 'flex:0 0 auto;width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 17px/1 \'Inter Tight\',sans-serif;background:' + (on ? '#1B5138' : 'rgba(27,81,56,.09)') + ';color:' + (on ? '#FAF3E4' : '#1B5138'),
+        contenedor: 'border-bottom:1px solid rgba(20,52,42,.1);background:' + (on ? '#F2E9D5' : 'transparent'),
+        fila: 'display:flex;gap:14px;align-items:center;width:100%;min-height:66px;padding:14px clamp(16px,2.4vw,22px);background:transparent;border:none;cursor:pointer',
+        abierta: on,
+        hayAyuda: !!c.ayuda,
+        ayuda: c.ayuda || '',
+        opciones,
+        contenedorOpciones: (esUnica && !c.compacta)
+          ? 'display:flex;flex-direction:column;gap:8px'
+          : 'display:flex;flex-wrap:wrap;gap:8px',
+        botonGuardar: 'display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;border:none;background:' + (bajo ? 'rgba(27,81,56,.13)' : '#1B5138') + ';color:' + (bajo ? '#7E9A8B' : '#FAF3E4') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (bajo ? 'not-allowed' : 'pointer'),
+        guardar: () => {
+          if (bajo) return;
+          this.setState((s) => ({ r: Object.assign({}, s.r, { [id]: s.borrador }), abierta: null, borrador: null }));
+        },
+        cerrar: () => this.setState({ abierta: null, borrador: null }),
+        abrir: () => this.setState((s) => (s.abierta === id
+          ? { abierta: null, borrador: null }
+          : { abierta: id, borrador: Array.isArray(s.r[id]) ? s.r[id].slice() : s.r[id] }))
+      };
+    };
+
+    const titulos = [
+      ['Quién eres', 'Lo usa el algoritmo. Nadie más lo ve.'],
+      ['Cómo eres en la mesa', 'Lo que más pesa al armar el grupo.'],
+      ['De qué hablas', 'Dos horas se sostienen con temas.'],
+      ['Logística', 'A qué mesa puedes llegar de verdad.']
+    ];
+    const secciones = titulos.map((t, i) => ({
+      titulo: t[0], nota: t[1],
+      filas: Object.keys(campos).filter((k) => campos[k].s === i).map(construir)
+    }));
+
+    const credenciales = [
+      ['Identidad verificada', true], ['Perfil completo', true], ['3 créditos', false]
+    ].map((c) => ({
+      texto: c[0],
+      chip: 'display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.04em;background:' + (c[1] ? 'rgba(27,81,56,.11)' : 'transparent') + ';border:1px solid ' + (c[1] ? 'transparent' : 'rgba(20,52,42,.18)') + ';color:' + (c[1] ? '#1B5138' : '#566A5D')
+    }));
+
+    return {
+      secciones, credenciales,
+      botonFantasma: 'display:inline-flex;align-items:center;min-height:48px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
+      enlacePie: 'display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.18);font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138'
+    };
+  }
+}
+</script>
+</body>
+</html>

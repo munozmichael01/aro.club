@@ -9,11 +9,17 @@ import type { NextConfig } from 'next'
  * internos siguen resolviendo contra la raíz, así que no hay que tocarlos.
  */
 const PANTALLAS: Array<[string, string]> = [
+  // Entrega 1 · captación
   ['/', '/Aro Club - Landing v3.dc.html'],
   ['/cuestionario', '/Aro Club - Cuestionario.dc.html'],
   ['/gracias', '/Aro Club - Agradecimiento.dc.html'],
   ['/legal', '/Aro Club - Legal.dc.html'],
   ['/sistema', '/Aro Club - Sistema v3.dc.html'],
+  // Entrega 2 · área de miembro
+  ['/entrar', '/Aro Club - Entrar.dc.html'],
+  ['/verificacion', '/Aro Club - Verificacion.dc.html'],
+  ['/cuenta', '/Aro Club - Mi cuenta.dc.html'],
+  ['/perfil', '/Aro Club - Mi perfil.dc.html'],
 ]
 
 const nextConfig: NextConfig = {
