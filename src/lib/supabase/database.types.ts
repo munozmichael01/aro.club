@@ -95,6 +95,27 @@ export type Database = {
           },
         ]
       }
+      auth_envios: {
+        Row: {
+          created_at: string
+          email: string
+          id: number
+          kind: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: number
+          kind: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: number
+          kind?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           after_rsvp: boolean | null

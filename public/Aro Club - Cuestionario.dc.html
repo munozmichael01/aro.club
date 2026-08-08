@@ -509,7 +509,29 @@ class Component extends DCLogic {
       // pointer-events no bloquea el teclado: la inercia va en el handler
       enlaceLogo: fin ? 'Aro Club - Mi cuenta.dc.html' : 'Aro Club - Agradecimiento.dc.html',
       inerteClave: (this.state.clave || '').length >= 8 ? null : 'true',
-      crearCuenta: () => { if ((this.state.clave || '').length >= 8) window.location.href = 'Aro Club - Verificacion.dc.html'; },
+      // La cuenta se crea aqui, al cerrar el cuestionario: es cuando ya hay
+      // algo que guardar. El servidor abre la sesion en la misma respuesta.
+      crearCuenta: () => {
+        const clave = this.state.clave || '';
+        const s = this._sesion;
+        if (clave.length < 8 || !s) return;
+        fetch('/api/cuenta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ correo: s.correo, token: s.token, clave: clave })
+        }).then((r) => r.text().then((t) => {
+          let j = {}; try { j = JSON.parse(t); } catch (e) { j = {}; }
+          if (j.estado === 'creada' || j.estado === 'ya_existe') {
+            window.location.href = 'Aro Club - Verificacion.dc.html';
+            return;
+          }
+          this.setState({ errorCuenta: j.error || 'No pudimos crear tu cuenta. Es cosa nuestra: inténtalo otra vez.' });
+        })).catch(() => this.setState({
+          errorCuenta: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
+        }));
+      },
+      errorCuenta: this.state.errorCuenta || '',
+      hayErrorCuenta: !!this.state.errorCuenta,
       botonClave: 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease;background:' + ((this.state.clave || '').length >= 8 ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + ((this.state.clave || '').length >= 8 ? '#FAF3E4' : '#456352') + ';cursor:' + ((this.state.clave || '').length >= 8 ? 'pointer' : 'not-allowed'),
       botonProveedor: 'display:inline-flex;align-items:center;justify-content:center;gap:11px;width:100%;min-height:58px;padding:0 26px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease',
 

@@ -180,17 +180,24 @@ class Component extends DCLogic {
   componentWillUnmount() { clearTimeout(this._t); }
 
   entrar = () => {
-    const c = (this.state.correo || '').trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)) {
-      this.setState({ error: 'Ese correo no se ve completo. Revisa que tenga arroba y punto.' });
-      return;
-    }
-    if (this.state.clave.length < 8) {
-      this.setState({ error: 'La contraseña tiene al menos ocho caracteres. Si no la recuerdas, te mandamos un enlace.' });
+    const correo = (this.state.correo || '').trim();
+    const clave = this.state.clave || '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo) || !clave) {
+      this.setState({ error: 'Escribe tu correo y tu contraseña.' });
       return;
     }
     this.setState({ fase: 'entrando', error: '' });
-    this._t = setTimeout(() => { window.location.href = 'Aro Club - Mi cuenta.dc.html'; }, 1100);
+    fetch('/api/entrar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accion: 'entrar', correo: correo, clave: clave })
+    }).then((r) => r.text().then((t) => {
+      let j = {}; try { j = JSON.parse(t); } catch (e) { j = {}; }
+      if (j.estado === 'dentro') { window.location.href = 'Aro Club - Mi cuenta.dc.html'; return; }
+      this.setState({ fase: 'correo', error: j.error || 'Ese correo y esa contraseña no coinciden.' });
+    })).catch(() => this.setState({
+      fase: 'correo', error: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
+    }));
   };
 
   renderVals() {
@@ -258,7 +265,15 @@ class Component extends DCLogic {
           this.setState({ error: 'Escribe primero tu correo y te mandamos el enlace ahí.' });
           return;
         }
+        // La pantalla de confirmacion es la misma exista o no la cuenta:
+        // decir cual es cual la convierte en un comprobador de quien esta
+        // registrado. El servidor decide si manda algo.
         this.setState({ fase: 'recuperar', error: '' });
+        fetch('/api/entrar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accion: 'recuperar', correo: c })
+        }).catch(() => { /* la pantalla ya dice lo mismo pase lo que pase */ });
       },
       conApple: () => this.setState({ fase: 'relay' }),
       conGoogle: () => this.setState({ fase: 'otroCorreo' }),
