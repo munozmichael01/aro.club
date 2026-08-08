@@ -30,7 +30,7 @@
 
   <div style="position:sticky;top:0;z-index:30;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.1)">
     <div style="max-width:720px;margin:0 auto;padding:12px clamp(16px,4vw,28px) 0;display:flex;align-items:center;justify-content:space-between;gap:14px">
-      <a href="Aro Club - Agradecimiento.dc.html" style="display:flex;align-items:center;gap:8px;color:#14342A;min-height:44px;margin:-11px 0">
+      <a href="{{ enlaceLogo }}" style="display:flex;align-items:center;gap:8px;color:#14342A;min-height:44px;margin:-11px 0">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
         <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
       </a>
@@ -144,8 +144,36 @@
         <h1 style="font:400 clamp(32px,6.4vw,54px)/1 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance">Listo. Ya podemos sentarte.</h1>
         <p style="font:400 clamp(16px,1.6vw,19px)/1.55 'Inter Tight',sans-serif;color:#456352;max-width:44ch;margin:16px 0 0;text-wrap:pretty">{{ textoCierre }} Con esto el algoritmo ya puede armar una mesa donde encajes, no una mesa cualquiera con un puesto libre.</p>
 
-        <div style="border-radius:26px;border:1px solid rgba(20,52,42,.16);padding:clamp(20px,3vw,28px);margin-top:clamp(28px,4vw,38px)">
-          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:16px">LO QUE SIGUE</div>
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(28px,4vw,38px);max-width:460px">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:6px">CÓMO QUIERES ENTRAR A PARTIR DE AHORA</div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar el jueves para ver tu mesa.</div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;max-width:400px">
+            <a href="Aro Club - Entrar.dc.html#relay" style="{{ botonProveedor }}">
+              <svg width="19" height="22" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.8-1.6 0-3.1 1-3.9 2.4C.2 10.4 1.4 14.7 3 17c.8 1.1 1.7 2.4 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.8zM11.7 3.3c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"></path></svg>
+              <span>Continuar con Apple</span>
+            </a>
+            <a href="Aro Club - Entrar.dc.html#otroCorreo" style="{{ botonProveedor }}">
+              <svg width="19" height="19" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
+              <span>Continuar con Google</span>
+            </a>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:14px;margin:20px 0;max-width:400px">
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
+            <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">O</span>
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
+            <input type="password" placeholder="Crea una contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
+            <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
+          </div>
+          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
+        </div>
+
+        <div style="border-radius:26px;border:1px solid rgba(20,52,42,.16);padding:clamp(20px,3vw,28px);margin-top:14px;max-width:460px">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:16px">DESPUÉS DE ESTO</div>
           <div style="display:flex;gap:14px;align-items:flex-start">
             <span style="flex:0 0 auto;width:34px;height:34px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Inter Tight',sans-serif;margin-top:2px">1</span>
             <span style="flex:1;min-width:0">
@@ -156,8 +184,7 @@
           </div>
         </div>
 
-        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
-          <a href="Aro Club - Landing v3.dc.html" style="display:inline-flex;align-items:center;min-height:58px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Verificar mi identidad</a>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(22px,3vw,30px)">
           <button onClick="{{ reiniciar }}" style="min-height:58px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Repasar mis respuestas</button>
         </div>
       </div>
@@ -170,7 +197,7 @@
         <sc-if value="{{ puedeAtras }}" hint-placeholder-val="{{ false }}">
           <button onClick="{{ atras }}" aria-label="Atrás" style="flex:0 0 auto;width:58px;height:58px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#1B5138;font:400 19px/1 'Inter Tight',sans-serif;cursor:pointer">←</button>
         </sc-if>
-        <button onClick="{{ continuar }}" style="{{ botonContinuar }}">{{ textoContinuar }}</button>
+        <button onClick="{{ continuar }}" aria-disabled="{{ inerteContinuar }}" style="{{ botonContinuar }}">{{ textoContinuar }}</button>
       </div>
       <div style="max-width:720px;margin:0 auto;padding:0 clamp(16px,4vw,28px) 12px;font:400 12px/1.4 'Inter Tight',sans-serif;color:#566A5D">{{ pieGuardado }}</div>
     </div>
@@ -471,6 +498,21 @@ class Component extends DCLogic {
         const t = letras[n] || String(n);
         return t.charAt(0).toUpperCase() + t.slice(1) + (n === 1 ? ' respuesta.' : ' respuestas.');
       })(),
+      // el acceso se elige aquí, cuando ya hay algo que guardar
+      clave: this.state.clave || '',
+      onClave: (e) => this.setState({ clave: e.target.value }),
+      campoClave: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none',
+      textoClave: (this.state.clave || '').length >= 8 ? 'Crear mi cuenta' : 'Al menos ocho caracteres',
+      pistaClave: (this.state.clave || '').length >= 8
+        ? 'Entrarás con tu correo y esta contraseña.'
+        : 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Apple o Google.',
+      // pointer-events no bloquea el teclado: la inercia va en el handler
+      enlaceLogo: fin ? 'Aro Club - Mi cuenta.dc.html' : 'Aro Club - Agradecimiento.dc.html',
+      inerteClave: (this.state.clave || '').length >= 8 ? null : 'true',
+      crearCuenta: () => { if ((this.state.clave || '').length >= 8) window.location.href = 'Aro Club - Verificacion.dc.html'; },
+      botonClave: 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease;background:' + ((this.state.clave || '').length >= 8 ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + ((this.state.clave || '').length >= 8 ? '#FAF3E4' : '#456352') + ';cursor:' + ((this.state.clave || '').length >= 8 ? 'pointer' : 'not-allowed'),
+      botonProveedor: 'display:inline-flex;align-items:center;justify-content:center;gap:11px;width:100%;min-height:58px;padding:0 26px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease',
+
       tituloPantalla: p.titulo,
       propositoPantalla: p.proposito,
       preguntas,
@@ -485,8 +527,9 @@ class Component extends DCLogic {
 
       puedeAtras: this.state.pantalla > 0,
       atras: () => this.setState((s) => ({ pantalla: Math.max(0, s.pantalla - 1), retomada: false })),
+      inerteContinuar: completa ? null : 'true',
       textoContinuar: ultima ? 'Terminar' : 'Continuar',
-      botonContinuar: 'flex:1;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + (completa ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (completa ? '#FAF3E4' : '#7E9A8B') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (completa ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
+      botonContinuar: 'flex:1;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + (completa ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (completa ? '#FAF3E4' : '#456352') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (completa ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
       continuar: () => {
         if (!completa) return;
         if (ultima) { this.enviar('__fin', null); this.setState({ fin: true }); return; }

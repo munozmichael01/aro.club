@@ -33,6 +33,7 @@
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#FAF3E4" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#E39C63"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#FAF3E4"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#FAF3E4"></circle><circle cx="3.4" cy="12" r="1.9" fill="#FAF3E4"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#FAF3E4"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#FAF3E4"></circle></svg>
       <span style="font:400 21px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
     </a>
+    <button onClick="{{ ciclar }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:999px;border:1px dashed rgba(250,243,228,.32);background:transparent;font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;color:#9CBBA6;cursor:pointer">{{ etiquetaDemo }}</button>
   </div>
 
   <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,52px) clamp(16px,4vw,28px)">
@@ -215,6 +216,8 @@ class Component extends DCLogic {
     return {
       esInicio: f === 'inicio', esCorreo: f === 'correo', esRecuperar: f === 'recuperar',
       esOtroCorreo: f === 'otroCorreo', esRelay: f === 'relay', esEntrando: f === 'entrando',
+      etiquetaDemo: 'DEMO · ' + f.toUpperCase(),
+      ciclar: () => this.setState((s) => ({ fase: fases[(fases.indexOf(s.fase) + 1) % fases.length], error: '' })),
 
       h1: 'font:400 clamp(32px,6vw,52px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#FAF3E4;margin:0;max-width:15ch;text-wrap:balance',
       bajada: 'font:400 17px/1.55 \'Inter Tight\',sans-serif;color:#C5D8CA;max-width:46ch;margin:14px 0 0;text-wrap:pretty',
