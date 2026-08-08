@@ -776,6 +776,9 @@ export type Database = {
           is_published: boolean
           min_score: number | null
           pool_size: number
+          proposal: Json | null
+          published_at: string | null
+          published_by: string | null
           runtime_ms: number | null
           tables_created: number
           unmatched: Json | null
@@ -791,6 +794,9 @@ export type Database = {
           is_published?: boolean
           min_score?: number | null
           pool_size: number
+          proposal?: Json | null
+          published_at?: string | null
+          published_by?: string | null
           runtime_ms?: number | null
           tables_created: number
           unmatched?: Json | null
@@ -806,6 +812,9 @@ export type Database = {
           is_published?: boolean
           min_score?: number | null
           pool_size?: number
+          proposal?: Json | null
+          published_at?: string | null
+          published_by?: string | null
           runtime_ms?: number | null
           tables_created?: number
           unmatched?: Json | null
@@ -846,6 +855,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_matching_signal"
             referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "matching_runs_published_by_fkey"
+            columns: ["published_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matching_runs_published_by_fkey"
+            columns: ["published_by"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "matching_runs_published_by_fkey"
+            columns: ["published_by"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1769,6 +1799,75 @@ export type Database = {
           },
         ]
       }
+      scheduled_emails: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          id: string
+          kind: Database["public"]["Enums"]["email_kind_t"]
+          payload: Json
+          profile_id: string
+          send_at: string
+          sent_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["email_kind_t"]
+          payload?: Json
+          profile_id: string
+          send_at: string
+          sent_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["email_kind_t"]
+          payload?: Json
+          profile_id?: string
+          send_at?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_emails_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_emails_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_signal"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "scheduled_emails_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_emails_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "scheduled_emails_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       table_feedback: {
         Row: {
           attended_after: boolean | null
@@ -2426,6 +2525,12 @@ export type Database = {
         | "no_show_penalty"
         | "expiry"
         | "manual_adjustment"
+      email_kind_t:
+        | "bienvenida"
+        | "verificacion"
+        | "mesa_asignada"
+        | "recordatorio"
+        | "comprobante"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -2631,6 +2736,13 @@ export const Constants = {
         "no_show_penalty",
         "expiry",
         "manual_adjustment",
+      ],
+      email_kind_t: [
+        "bienvenida",
+        "verificacion",
+        "mesa_asignada",
+        "recordatorio",
+        "comprobante",
       ],
       event_format_t: [
         "dinner",
