@@ -39,7 +39,7 @@
 
   <div style="flex:1;max-width:720px;width:100%;margin:0 auto;padding:clamp(24px,4.5vw,44px) clamp(16px,4vw,28px) clamp(48px,8vw,90px)">
 
-    <div style="font:400 clamp(26px,4.6vw,38px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:clamp(20px,3vw,28px)">Hola, Daniela.</div>
+    <div style="font:400 clamp(26px,4.6vw,38px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:clamp(20px,3vw,28px)">{{ saludo }}</div>
 
     <div style="{{ bloque }}">
       <div style="animation:aro-open 420ms ease both">
@@ -214,9 +214,20 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {} };
+  state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {}, datos: null };
 
-  componentDidMount() { this._t = setInterval(() => this.setState({ ahora: Date.now() }), 1000); }
+  componentDidMount() {
+    this._t = setInterval(() => this.setState({ ahora: Date.now() }), 1000);
+    // Los seis estados los decide el servidor. La pantalla solo elige qué
+    // copy enseñar: si decidiera ella, dos pantallas podrían discrepar
+    // sobre en qué punto está la misma persona.
+    fetch('/api/mi-cuenta')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
+      .then((datos) => this.setState({ datos: datos }))
+      .catch(() => { window.location.href = 'Aro Club - Entrar.dc.html'; });
+  }
+
+  componentWillUnmount() { clearInterval(this._t); }
   componentWillUnmount() { clearInterval(this._t); }
 
   reloj() {
@@ -282,7 +293,35 @@ class Component extends DCLogic {
         accion: 'Cómo llegar', enlace: 'Aro Club - Landing v3.dc.html', secundaria: 'Volver al principio'
       }
     ];
-    const e = estados[this.state.i % estados.length];
+    const d = this.state.datos;
+    const base = (d && estados.find((x) => x.id === d.estado)) || estados[0];
+    // El copy es de Design; las cifras son del servidor. Ninguna se escribe
+    // a mano: el sello y los atajos salen de lo que respondió esta persona.
+    const e = !d ? base : Object.assign({}, base, {
+      verif: d.verif,
+      respuestas: d.respuestas.faltan === 0
+        ? 'Completas'
+        : d.respuestas.faltan + (d.respuestas.faltan === 1 ? ' pendiente' : ' pendientes'),
+      creditos: d.creditos + ' de ' + (d.creditos + (d.reserva ? 1 : 0)),
+      sello: d.estado === 'perfil'
+        ? 'TE FALTAN ' + d.respuestas.faltan + (d.respuestas.faltan === 1 ? ' PREGUNTA' : ' PREGUNTAS')
+        : base.sello,
+      // La fecha venía escrita a mano en el copy y decía "Jueves 14" con la
+      // cena el 13. Ninguna cifra derivable se escribe a mano (regla 4).
+      titulo: d.reserva && (d.estado === 'reservada' || d.estado === 'abierta')
+        ? (() => {
+            const f = new Date(d.reserva.empiezaEn);
+            const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+            const h = f.getHours();
+            const letras = ['doce','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once'];
+            const enLetra = letras[h % 12];
+            return dias[f.getDay()] + ' ' + f.getDate() + ', ' + enLetra +
+              // Las siete son de la noche, no de la tarde: es como lo dice
+              // el copy original y como se dice en Caracas.
+              (h >= 19 || h < 6 ? ' de la noche.' : h >= 12 ? ' de la tarde.' : ' de la mañana.');
+          })()
+        : base.titulo
+    });
     const oscuro = e.id === 'abierta' || e.id === 'reservada';
 
     const gente = [
@@ -436,6 +475,9 @@ class Component extends DCLogic {
       hayFiltro: this.state.filtro !== 0,
       quitarFiltro: () => this.setState({ filtro: 0, reservando: null }),
       botonFantasmaOscuro: 'display:inline-flex;align-items:center;min-height:50px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
+      saludo: this.state.datos && this.state.datos.nombre
+        ? 'Hola, ' + this.state.datos.nombre + '.'
+        : 'Hola.',
       agenda: semanas,
       agendaVacia: semanas.length === 0,
 
