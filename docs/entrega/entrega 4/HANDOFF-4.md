@@ -104,7 +104,22 @@ Documento y selfie lado a lado, los datos extraídos, y los avisos donde algo no
 
 - Cada decisión queda **con el nombre de quien la tomó**. Acceso nominal y registrado.
 - Documento y selfie **se borran a los 90 días** de aprobar. Después solo queda la marca de que ocurrió y quién la aprobó.
-- Un rechazo tiene que poder explicarse. Hoy la pantalla no pide motivo: **añádelo** cuando lo montes, porque la persona necesita saber qué repetir.
+**El motivo de rechazo ya está diseñado.** Rechazar abre seis motivos y muestra el mensaje exacto que le llegará a la persona antes de confirmar.
+
+| Motivo | ¿Reintenta? |
+|---|---|
+| Foto movida o cortada | Sí |
+| Documento vencido | Sí |
+| Selfie poco clara | Sí |
+| Documento no válido aquí | Sí |
+| Selfie y documento no coinciden | No |
+| Sospecha de suplantación | No |
+
+Tres cosas que no pueden hacerse de otra forma:
+
+1. **Los dos motivos de sospecha comparten un mensaje genérico** («no pudimos verificar tu identidad, escríbenos»). Es deliberado: un mensaje específico le enseña a quien suplanta qué corregir. El motivo real se guarda internamente y **nunca se envía**.
+2. **Guarda el motivo junto a la decisión y a quién la tomó.** Es lo que permite detectar a alguien que reintenta cinco veces con documentos distintos.
+3. **El reintento solo se habilita en los cuatro primeros.** Los de sospecha lo bloquean y abren un caso para revisión humana.
 
 ### 4.5 Pagos
 
@@ -139,4 +154,3 @@ Sigue en pie lo del `HANDOFF-3.md` §5.1: quitar los botones `DEMO ·` de `Mi cu
 - **Términos y privacidad siguen siendo el borrador.** Necesitan abogado y ya se capturan correos reales.
 - **Dos fotos de la landing** siguen cargando de Wikimedia: «conoces la ciudad» y «vienes de visita». Pendiente de foto propia.
 - **Los cinco correos** llegan en la siguiente entrega.
-- **Motivo de rechazo** en la cola de verificaciones: falta diseñarlo.

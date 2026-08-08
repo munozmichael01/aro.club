@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#FAF3E4; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#14342A; color:#FAF3E4; }
+  ::placeholder { color:#7E9A8B; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+  @keyframes aro-spin { to { transform: rotate(360deg) } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh">
+
+  <div style="max-width:620px;margin:0 auto;padding:clamp(16px,4vw,26px) clamp(16px,4vw,24px) 0;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <a href="Aro Club - Mi cuenta.dc.html" style="display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:-10px 0">
+      <span style="font:500 19px/1 'Inter Tight',sans-serif;color:#33513F">←</span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="1.8"></circle><circle cx="20.6" cy="12" r="1.9" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="3.4" cy="12" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#14342A"></circle></svg>
+      <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
+    </a>
+  </div>
+
+  <div style="max-width:620px;margin:0 auto;padding:clamp(22px,4vw,34px) clamp(16px,4vw,24px) clamp(40px,7vw,64px)">
+
+    <sc-if value="{{ esElegir }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:aro-open 340ms ease both">
+        <h1 style="{{ h1 }}">Tu puesto.</h1>
+        <p style="{{ bajada }}">Se paga en bolívares a la tasa oficial del día. El crédito no caduca.</p>
+
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,26px);margin-top:clamp(24px,3.4vw,32px)">
+          <div style="display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline">
+            <span style="flex:1 1 auto;font:400 clamp(21px,2.4vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ nombreEv }}</span>
+            <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ detalleEv }}</span>
+          </div>
+          <div style="height:1px;background:rgba(20,52,42,.12);margin:16px 0"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline">
+            <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">Un puesto</span>
+            <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">8,00 USD</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-top:9px">
+            <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">Tasa BCV de hoy</span>
+            <span style="font:500 15px/1.4 'Inter Tight',sans-serif;color:#33513F;font-variant-numeric:tabular-nums">1 USD = 62,40 Bs</span>
+          </div>
+          <div style="height:1px;background:rgba(20,52,42,.12);margin:16px 0"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline">
+            <span style="flex:1 1 auto;font:600 16px/1.4 'Inter Tight',sans-serif;color:#14342A">Total a pagar</span>
+            <span style="font:700 clamp(24px,3vw,30px)/1 'Inter Tight',sans-serif;letter-spacing:-.03em;color:#14342A;font-variant-numeric:tabular-nums">499,20 Bs</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:14px 16px;margin-top:14px">
+          <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+          <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">Esto no incluye tu consumo. La comida y la bebida las pagas en el restaurante, como en cualquier salida.</span>
+        </div>
+
+        <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin:clamp(26px,3.4vw,34px) 0 12px">CÓMO PAGAS</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <sc-for list="{{ metodos }}" as="m" hint-placeholder-count="3">
+            <button onClick="{{ m.pick }}" style="{{ m.btn }}">
+              <span style="{{ m.aro }}">{{ m.icono }}</span>
+              <span style="flex:1;min-width:0;text-align:left">
+                <span style="{{ m.txt }}">{{ m.nombre }}</span>
+                <span style="display:block;font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ m.nota }}</span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+
+        <button onClick="{{ pagar }}" style="{{ botonPagar }}">Pagar 499,20 Bs</button>
+        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;max-width:48ch;text-wrap:pretty">Cancelas con más de 24 horas y recuperas el crédito completo. Con menos, se pierde: la mesa ya está armada.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esPagando }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 320ms ease both">
+        <h1 style="{{ h1 }}">Confirmando el pago.</h1>
+        <div style="display:inline-flex;align-items:center;gap:15px;border-radius:999px;border:1px solid rgba(20,52,42,.24);min-height:58px;padding:0 25px;margin-top:22px">
+          <span style="flex:0 0 auto;width:17px;height:17px;border:2px solid rgba(20,52,42,.2);border-top-color:#14342A;border-radius:999px;animation:aro-spin 800ms linear infinite"></span>
+          <span style="font:500 16px/1 'Inter Tight',sans-serif;color:#2C4A38">499,20 Bs · {{ metodoElegido }}</span>
+        </div>
+        <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:16px;max-width:44ch">No cierres esta pantalla. Suele tardar unos segundos.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esListo }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 420ms ease both">
+        <div style="{{ selloListo }}">PUESTO RESERVADO</div>
+        <h1 style="{{ h1 }}">{{ tituloListo }}</h1>
+        <p style="{{ bajada }}">A las doce del mediodía se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
+
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,26px);margin-top:clamp(24px,3.4vw,32px)">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:16px">COMPROBANTE</div>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <sc-for list="{{ comprobante }}" as="c" hint-placeholder-count="6">
+              <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:10px 0;border-bottom:1px solid rgba(20,52,42,.12)">
+                <span style="flex:1 1 130px;font:400 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ c.campo }}</span>
+                <span style="{{ c.valorEstilo }}">{{ c.valor }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;text-wrap:pretty">Te lo mandamos también por correo. Guárdalo: es lo que necesitas si algo no cuadra.</div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
+          <a href="Aro Club - Mi cuenta.dc.html" style="{{ botonPrimario }}">Ir a mi cuenta</a>
+          <a href="Aro Club - Mi mesa.dc.html#cerrada" style="{{ botonFantasma }}">Ver mi reserva</a>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esFallo }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 380ms ease both">
+        <div style="{{ selloFallo }}">EL PAGO NO PASÓ</div>
+        <h1 style="{{ h1 }}">El banco rechazó el pago.</h1>
+        <p style="{{ bajada }}">No te cobramos nada y tu puesto sigue apartado durante quince minutos. Suele ser saldo o el límite diario de la tarjeta.</p>
+
+        <div style="border-radius:26px;border:1px solid rgba(20,52,42,.18);padding:clamp(19px,2.6vw,24px);margin-top:clamp(24px,3vw,30px)">
+          <div style="font:400 clamp(20px,2.3vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Qué puedes hacer</div>
+          <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px">
+            <sc-for list="{{ salidas }}" as="s" hint-placeholder-count="3">
+              <div style="display:flex;gap:11px;align-items:flex-start">
+                <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;border:1px solid rgba(20,52,42,.26);display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;color:#8F4515;margin-top:1px">{{ s.n }}</span>
+                <span style="flex:1;min-width:0;font:400 15px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ s.texto }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
+          <button onClick="{{ reintentar }}" style="{{ botonPrimario }}">Intentar otra vez</button>
+          <a href="mailto:hola@aro.club" style="{{ botonFantasma }}">Escribirnos</a>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { fase: 0, metodo: 0, ev: null };
+
+  componentDidMount() {
+    // el detalle viene de la agenda: no puede estar escrito a mano
+    try {
+      const q = new URLSearchParams(window.location.search);
+      if (q.get('tipo')) {
+        this.setState({ ev: { tipo: q.get('tipo'), cuando: q.get('cuando') || '', zona: q.get('zona') || '', hora: q.get('hora') || '' } });
+      }
+    } catch (e) { /* sin parámetros */ }
+  }
+
+  componentWillUnmount() { clearTimeout(this._t); }
+
+  renderVals() {
+    const f = this.state.fase;
+    const fases = ['ELEGIR', 'PAGANDO', 'LISTO', 'FALLO'];
+    const ev = this.state.ev || { tipo: 'Cenas', cuando: 'Jueves 14 · 7:00 p.m.', zona: 'Las Mercedes', hora: '7:00 p.m.' };
+    const titulos = { Cenas: 'Cena', Drinks: 'Drinks', Movimiento: 'Movimiento', Coffee: 'Coffee' };
+    const nombreEv = (titulos[ev.tipo] || ev.tipo) + ' · ' + ev.cuando.split(' · ')[0];
+    const detalleEv = ev.hora + ' · ' + ev.zona;
+
+    const btn = (fondo, color, extra) => 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + fondo + ';color:' + color + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
+    const aroDe = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
+
+    const defs = [
+      ['Pago móvil', 'Banesco · 0134 · el más rápido'],
+      ['Transferencia', 'Llega en minutos, no al instante'],
+      ['Tarjeta de débito', 'Nacional, en bolívares']
+    ];
+    const metodos = defs.map((m, i) => {
+      const on = this.state.metodo === i;
+      return {
+        nombre: m[0], nota: m[1], icono: on ? '✓' : '', aro: aroDe(on),
+        pick: () => this.setState({ metodo: i }),
+        btn: 'display:flex;align-items:center;gap:13px;width:100%;min-height:66px;padding:13px 20px 13px 15px;border-radius:26px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'display:block;font:' + (on ? '600' : '500') + ' 16px/1.3 \'Inter Tight\',sans-serif;color:#14342A'
+      };
+    });
+
+    const comprobante = [
+      ['Referencia', 'ARO-4471-K2', true],
+      [titulos[ev.tipo] || ev.tipo, ev.cuando.split(' · ')[0] + ', ' + ev.hora, false],
+      ['Zona', ev.zona, false],
+      ['Método', defs[this.state.metodo][0], false],
+      ['Tasa aplicada', '62,40 Bs por USD', false],
+      ['Pagado', '499,20 Bs · 8,00 USD', true]
+    ].map((c) => ({
+      campo: c[0], valor: c[1],
+      valorEstilo: 'flex:2 1 170px;font:' + (c[2] ? '600' : '500') + ' 15px/1.4 \'Inter Tight\',sans-serif;color:#14342A;font-variant-numeric:tabular-nums'
+    }));
+
+    const salidas = [
+      'Prueba con otro método. El pago móvil suele pasar cuando la tarjeta falla.',
+      'Revisa el límite diario con tu banco: ocho dólares en bolívares puede pasarlo.',
+      'Si nada funciona, escríbenos y te apartamos el puesto a mano.'
+    ].map((texto, i) => ({ n: i + 1, texto }));
+
+    return {
+      esElegir: f === 0, esPagando: f === 1, esListo: f === 2, esFallo: f === 3,
+
+      metodos, comprobante, salidas, nombreEv, detalleEv,
+      tituloListo: 'Nos vemos el ' + (ev.cuando.split(' ')[0] || 'jueves').toLowerCase() + '.',
+      metodoElegido: defs[this.state.metodo][0],
+
+      h1: 'font:400 clamp(30px,6.4vw,46px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance',
+      bajada: 'font:400 17px/1.55 \'Inter Tight\',sans-serif;color:#2C4A38;max-width:44ch;margin:14px 0 0;text-wrap:pretty',
+      selloListo: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;margin-bottom:16px',
+      selloFallo: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;background:#6E340F;color:#FFF8EA;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;margin-bottom:16px',
+      botonPagar: btn('#1B5138', '#FAF3E4', 'width:100%;margin-top:clamp(24px,3vw,30px)'),
+      botonPrimario: btn('#14342A', '#FAF3E4'),
+      botonFantasma: btn('transparent', '#33513F', 'font-weight:500;padding:0 8px;text-decoration:underline;text-underline-offset:6px'),
+
+      pagar: () => {
+        this.setState({ fase: 1 });
+        this._t = setTimeout(() => this.setState({ fase: 2 }), 1300);
+      },
+      reintentar: () => this.setState({ fase: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>

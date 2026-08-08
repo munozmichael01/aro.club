@@ -1904,6 +1904,30 @@ export type Database = {
           },
         ]
       }
+      verification_rejection_reasons: {
+        Row: {
+          allows_retry: boolean
+          code: string
+          label: string
+          message: string
+          sort_order: number
+        }
+        Insert: {
+          allows_retry: boolean
+          code: string
+          label: string
+          message: string
+          sort_order: number
+        }
+        Update: {
+          allows_retry?: boolean
+          code?: string
+          label?: string
+          message?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       verifications: {
         Row: {
           age_confirmed: boolean | null
@@ -1915,6 +1939,7 @@ export type Database = {
           name_matches: boolean | null
           profile_id: string
           rejection_note: string | null
+          rejection_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["verification_status_t"]
@@ -1930,6 +1955,7 @@ export type Database = {
           name_matches?: boolean | null
           profile_id: string
           rejection_note?: string | null
+          rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["verification_status_t"]
@@ -1945,6 +1971,7 @@ export type Database = {
           name_matches?: boolean | null
           profile_id?: string
           rejection_note?: string | null
+          rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["verification_status_t"]
@@ -1971,6 +1998,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_verified_profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verifications_rejection_reason_fkey"
+            columns: ["rejection_reason"]
+            isOneToOne: false
+            referencedRelation: "verification_rejection_reasons"
+            referencedColumns: ["code"]
           },
           {
             foreignKeyName: "verifications_reviewed_by_fkey"
@@ -2267,6 +2301,38 @@ export type Database = {
           tables_count: number | null
         }
         Relationships: []
+      }
+      v_rechazos_por_perfil: {
+        Row: {
+          motivos: string[] | null
+          profile_id: string | null
+          rechazos: number | null
+          sin_reintento: number | null
+          ultimo: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "verifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_second_attendance: {
         Row: {

@@ -23,6 +23,10 @@ const PANTALLAS: Array<[string, string]> = [
   // Entrega 3 · datos base y la revelación
   ['/datos', '/Aro Club - Datos base.dc.html'],
   ['/mesa', '/Aro Club - Mi mesa.dc.html'],
+  // Entrega 4 · la transacción y la operación
+  ['/pago', '/Aro Club - Pago.dc.html'],
+  ['/cancelar', '/Aro Club - Cancelar.dc.html'],
+  ['/operacion', '/Aro Club - Operacion.dc.html'],
 ]
 
 const nextConfig: NextConfig = {
