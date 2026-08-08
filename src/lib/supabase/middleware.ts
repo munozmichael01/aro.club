@@ -35,7 +35,30 @@ export async function updateSession(request: NextRequest) {
 
   // getUser() y no getSession(): valida el token contra el servidor de auth
   // en vez de confiar en lo que venga en la cookie.
-  await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // El panel no puede quedar detrás de una URL difícil de adivinar: eso no
+  // es una puerta, es un cartel tapado. Se comprueba el rol de verdad.
+  if (request.nextUrl.pathname.startsWith('/operacion')) {
+    if (!user) {
+      const destino = request.nextUrl.clone()
+      destino.pathname = '/entrar'
+      return NextResponse.redirect(destino)
+    }
+
+    const { data: perfil } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (perfil?.role !== 'ops' && perfil?.role !== 'admin') {
+      // 404 y no 403: un 403 confirma que la ruta existe.
+      return new NextResponse(null, { status: 404 })
+    }
+  }
 
   return response
 }
