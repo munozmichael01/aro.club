@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#FAF3E4; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#14342A; color:#FAF3E4; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh">
+
+  <div style="max-width:620px;margin:0 auto;padding:clamp(16px,4vw,26px) clamp(16px,4vw,24px) 0;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <a href="Aro Club - Mi cuenta.dc.html" style="display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:-10px 0">
+      <span style="font:500 19px/1 'Inter Tight',sans-serif;color:#33513F">←</span>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="1.8"></circle><circle cx="20.6" cy="12" r="1.9" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="3.4" cy="12" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#14342A"></circle></svg>
+      <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
+    </a>
+    <button onClick="{{ ciclar }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:999px;border:1px dashed rgba(20,52,42,.3);background:transparent;font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;color:#33513F;cursor:pointer">{{ etiquetaDemo }}</button>
+  </div>
+
+  <div style="max-width:620px;margin:0 auto;padding:clamp(22px,4vw,34px) clamp(16px,4vw,24px) clamp(40px,7vw,64px)">
+
+    <sc-if value="{{ esPreguntar }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:aro-open 340ms ease both">
+        <h1 style="{{ h1 }}">¿Cancelas tu puesto?</h1>
+        <p style="{{ bajada }}">{{ bajadaTexto }}</p>
+
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,26px);margin-top:clamp(24px,3.4vw,32px)">
+          <div style="display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline">
+            <span style="flex:1 1 auto;font:400 clamp(21px,2.4vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cena · jueves 14</span>
+            <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F">7:00 p.m. · Las Mercedes</span>
+          </div>
+          <div style="height:1px;background:rgba(20,52,42,.12);margin:16px 0"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline">
+            <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ etiquetaCredito }}</span>
+            <span style="{{ estiloCredito }}">{{ valorCredito }}</span>
+          </div>
+        </div>
+
+        <div style="{{ cajaAviso }}">
+          <span style="{{ iconoAviso }}">{{ glifoAviso }}</span>
+          <span style="flex:1;min-width:0;font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ textoAviso }}</span>
+        </div>
+
+        <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin:clamp(26px,3.4vw,34px) 0 6px">¿POR QUÉ CANCELAS?</div>
+        <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-bottom:14px;max-width:46ch;text-wrap:pretty">Opcional, y nos sirve de verdad: si el problema es la zona o la hora, lo arreglamos para la próxima.</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ motivos }}" as="m" hint-placeholder-count="5">
+            <button onClick="{{ m.pick }}" style="{{ m.btn }}">
+              <span style="{{ m.aro }}">{{ m.icono }}</span>
+              <span style="{{ m.txt }}">{{ m.label }}</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
+          <button onClick="{{ cancelar }}" style="{{ botonCancelar }}">Sí, cancelar mi puesto</button>
+          <a href="Aro Club - Mi cuenta.dc.html" style="{{ botonFantasma }}">Mantener mi puesto</a>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esHecho }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 420ms ease both">
+        <div style="{{ selloHecho }}">PUESTO CANCELADO</div>
+        <h1 style="{{ h1 }}">Listo, no cuentan contigo el jueves.</h1>
+        <p style="{{ bajada }}">{{ resumenHecho }}</p>
+
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,26px);margin-top:clamp(24px,3.4vw,32px)">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:16px">TUS CRÉDITOS</div>
+          <div style="display:flex;align-items:baseline;gap:10px">
+            <span style="font:700 clamp(30px,4vw,38px)/1 'Inter Tight',sans-serif;letter-spacing:-.03em;color:#14342A;font-variant-numeric:tabular-nums">{{ creditosRestantes }}</span>
+            <span style="font:400 16px/1.4 'Inter Tight',sans-serif;color:#2C4A38">disponibles</span>
+          </div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:10px;max-width:44ch;text-wrap:pretty">No caducan. Los usas cuando quieras, en cualquier plan.</div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
+          <a href="Aro Club - Mi cuenta.dc.html#agenda" style="{{ botonPrimario }}">Ver otras fechas</a>
+          <a href="Aro Club - Mi cuenta.dc.html" style="{{ botonFantasma }}">Ir a mi cuenta</a>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { fase: 0, tarde: false, motivo: -1 };
+
+  renderVals() {
+    const f = this.state.fase;
+    const tarde = this.state.tarde;
+    const fases = ['CON MARGEN', 'MENOS DE 24 H', 'CANCELADO'];
+
+    const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
+    const aroDe = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
+
+    const motivos = ['Me surgió algo', 'La zona no me queda bien', 'La hora no me sirve', 'Ya no me apetece', 'Otra cosa'].map((label, i) => {
+      const on = this.state.motivo === i;
+      return {
+        label, icono: on ? '✓' : '', aro: aroDe(on),
+        pick: () => this.setState({ motivo: i }),
+        btn: 'display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;padding:0 20px 0 15px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'font:' + (on ? '600' : '400') + ' 16px/1.3 \'Inter Tight\',sans-serif;color:#14342A'
+      };
+    });
+
+    return {
+      esPreguntar: f < 2, esHecho: f === 2,
+      etiquetaDemo: 'DEMO · ' + fases[f],
+      ciclar: () => this.setState((s) => {
+        const n = (s.fase + 1) % 3;
+        return { fase: n, tarde: n === 1 };
+      }),
+
+      motivos,
+      h1: 'font:400 clamp(30px,6.4vw,46px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance',
+      bajada: 'font:400 17px/1.55 \'Inter Tight\',sans-serif;color:#2C4A38;max-width:46ch;margin:14px 0 0;text-wrap:pretty',
+      bajadaTexto: tarde
+        ? 'Faltan menos de 24 horas y la mesa ya está armada con tu nombre.'
+        : 'Todavía estás a tiempo de recuperar el crédito completo.',
+
+      etiquetaCredito: tarde ? 'Tu crédito' : 'Tu crédito',
+      valorCredito: tarde ? 'Se pierde' : 'Vuelve entero',
+      estiloCredito: 'font:600 16px/1.4 \'Inter Tight\',sans-serif;color:' + (tarde ? '#6E340F' : '#1B5138'),
+
+      cajaAviso: 'display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:' + (tarde ? 'rgba(143,69,21,.1)' : 'rgba(27,81,56,.09)') + ';padding:14px 16px;margin-top:14px',
+      iconoAviso: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:' + (tarde ? '#6E340F' : '#1B5138') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px',
+      glifoAviso: tarde ? '!' : '✓',
+      textoAviso: tarde
+        ? 'Con menos de 24 horas el crédito no se devuelve: el restaurante ya tiene la reserva y los otros cinco cuentan con seis. Aun así, cancelar es mejor que no aparecer — un puesto vacío se nota en una mesa de seis.'
+        : 'Cancelas con margen, así que el crédito vuelve entero a tu cuenta y no pasa nada. Nadie de la mesa se entera.',
+
+      botonCancelar: btn(tarde ? '#6E340F' : '#14342A', '#FFF8EA', 'none'),
+      botonPrimario: btn('#14342A', '#FAF3E4', 'none'),
+      botonFantasma: btn('transparent', '#33513F', 'none', 'font-weight:500;padding:0 8px;text-decoration:underline;text-underline-offset:6px'),
+      selloHecho: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;margin-bottom:16px',
+
+      cancelar: () => this.setState({ fase: 2 }),
+      creditosRestantes: tarde ? '3' : '4',
+      resumenHecho: tarde
+        ? 'Avisaste con menos de 24 horas, así que ese crédito se pierde. Gracias por decirlo igual: preferimos una mesa de cinco a un puesto vacío.'
+        : 'Tu crédito volvió entero. Puedes apuntarte a otra fecha cuando quieras.'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1319,6 +1319,52 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_identities: {
+        Row: {
+          created_at: string
+          profile_id: string
+          provider: Database["public"]["Enums"]["auth_provider_t"]
+          provider_email: string | null
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string
+          profile_id: string
+          provider: Database["public"]["Enums"]["auth_provider_t"]
+          provider_email?: string | null
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string
+          profile_id?: string
+          provider?: Database["public"]["Enums"]["auth_provider_t"]
+          provider_email?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_identities_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_identities_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "profile_identities_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_traits: {
         Row: {
           age: number | null
@@ -1429,12 +1475,13 @@ export type Database = {
       profiles: {
         Row: {
           birthdate: string | null
+          contact_email: string | null
           created_at: string
           display_name: string | null
           email: string
           events_attended: number
           first_event_at: string | null
-          full_name: string
+          full_name: string | null
           gender: Database["public"]["Enums"]["gender_t"]
           id: string
           invite_depth: number
@@ -1448,16 +1495,18 @@ export type Database = {
           rootedness: Database["public"]["Enums"]["rootedness_t"] | null
           status: Database["public"]["Enums"]["member_status_t"]
           updated_at: string
+          waitlist_id: string | null
           whatsapp_opt_in: boolean
         }
         Insert: {
           birthdate?: string | null
+          contact_email?: string | null
           created_at?: string
           display_name?: string | null
           email: string
           events_attended?: number
           first_event_at?: string | null
-          full_name: string
+          full_name?: string | null
           gender?: Database["public"]["Enums"]["gender_t"]
           id: string
           invite_depth?: number
@@ -1471,16 +1520,18 @@ export type Database = {
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
           status?: Database["public"]["Enums"]["member_status_t"]
           updated_at?: string
+          waitlist_id?: string | null
           whatsapp_opt_in?: boolean
         }
         Update: {
           birthdate?: string | null
+          contact_email?: string | null
           created_at?: string
           display_name?: string | null
           email?: string
           events_attended?: number
           first_event_at?: string | null
-          full_name?: string
+          full_name?: string | null
           gender?: Database["public"]["Enums"]["gender_t"]
           id?: string
           invite_depth?: number
@@ -1494,6 +1545,7 @@ export type Database = {
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
           status?: Database["public"]["Enums"]["member_status_t"]
           updated_at?: string
+          waitlist_id?: string | null
           whatsapp_opt_in?: boolean
         }
         Relationships: [
@@ -1516,6 +1568,13 @@ export type Database = {
             columns: ["invited_by"]
             isOneToOne: false
             referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_waitlist_id_fkey"
+            columns: ["waitlist_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist"
             referencedColumns: ["id"]
           },
         ]
@@ -2236,6 +2295,14 @@ export type Database = {
     }
     Functions: {
       age_years: { Args: { d: string }; Returns: number }
+      convertir_lead: {
+        Args: {
+          p_auth_email: string
+          p_lead_email: string
+          p_profile_id: string
+        }
+        Returns: undefined
+      }
       guardar_respuesta: {
         Args: {
           p_clave: string
@@ -2253,6 +2320,7 @@ export type Database = {
     }
     Enums: {
       app_role_t: "member" | "ops" | "admin"
+      auth_provider_t: "password" | "apple" | "google"
       booking_status_t:
         | "held"
         | "pending_payment"
@@ -2456,6 +2524,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role_t: ["member", "ops", "admin"],
+      auth_provider_t: ["password", "apple", "google"],
       booking_status_t: [
         "held",
         "pending_payment",
