@@ -127,6 +127,27 @@ dos mesas: mover sin revalidar convertiría el freno en decorado.
 mismo no lleva a ningún sitio** porque esa pantalla es justo la que te
 estamos pidiendo (`PARA-DESIGN-perfil-miembro.md`).
 
+### 14 · Publicar y deshacer por mesa
+**Qué es:** un botón dentro de cada tarjeta. Verde sólido para publicar; en
+borde marrón para deshacer una ya cerrada.
+
+**Por qué:** publicar era todo o nada, y volver a repartir rehacía mesas que
+ya estaban bien. Deshacer va en borde porque no es el camino normal.
+
+### 15 · Sello CALCULANDO y cuerpo atenuado
+**Qué es:** al mover a alguien, las dos mesas afectadas cambian el sello a
+`CALCULANDO` y atenúan su contenido hasta que el servidor responde.
+
+**Por qué:** la puntuación y las señales visibles son las de antes del
+movimiento. Atenuarlas dice que no son de fiar todavía.
+
+### 16 · Nota bajo el selector de sitio
+**Qué es:** una línea que explica por qué no hay alternativa cuando solo
+hay un sitio posible.
+
+**Por qué:** un selector con una sola opción parece un adorno roto. El
+problema no es la pantalla: es que no hemos abierto más sitios en esa zona.
+
 ---
 
 ## Lo que quiero de ti
