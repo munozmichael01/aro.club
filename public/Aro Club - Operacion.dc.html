@@ -47,7 +47,7 @@
     <sc-if value="{{ esMesas }}" hint-placeholder-val="{{ true }}">
       <div style="animation:aro-open 300ms ease both">
         <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;margin-bottom:6px">
-          <h1 style="{{ h1 }}">Cena · jueves 14 · Las Mercedes</h1>
+          <h1 style="{{ h1 }}">{{ tituloFecha }}</h1>
           <span style="{{ selloCierre }}">CIERRA EN 6 H 12 M</span>
         </div>
         <p style="{{ bajada }}">{{ textoBajada }}</p>
@@ -107,6 +107,38 @@
           <button onClick="{{ publicar }}" style="{{ botonPrimario }}">{{ textoPublicar }}</button>
           <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
         </div>
+        <sc-if value="{{ hayFreno }}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="border-radius:22px;border:1px solid rgba(143,69,21,.42);background:rgba(143,69,21,.07);padding:clamp(16px,2.2vw,20px);margin-top:14px;animation:aro-open 260ms ease both">
+            <div style="display:flex;gap:11px;align-items:flex-start">
+              <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A">Esto rompe reglas duras.</span>
+                <span style="display:block;font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:4px">Puedes publicar igualmente, pero queda escrito qué aceptaste y quién lo aceptó.</span>
+              </span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px;margin-top:13px">
+              <sc-for list="{{ frenoMesas }}" as="m" hint-placeholder-count="2">
+                <div style="border-radius:16px;background:#FFFBF0;padding:10px 13px">
+                  <span style="display:block;font:600 13px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ m.titulo }}</span>
+                  <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-top:2px">{{ m.detalle }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px">
+              <button onClick="{{ forzar }}" style="{{ botonForzar }}">Publicar igualmente</button>
+              <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
+              <button onClick="{{ cerrarFreno }}" style="{{ botonFantasmaOps }}">Cancelar</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hayAvisosPublicados }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:16px 18px;margin-top:14px">
+            <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+            <span style="flex:1;min-width:0;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ textoAvisosPublicados }}</span>
+          </div>
+        </sc-if>
+
         <sc-if value="{{ publicado }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:rgba(27,81,56,.11);padding:16px 18px;margin-top:14px;animation:aro-open 260ms ease both">
             <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
@@ -236,9 +268,50 @@
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   state = { vista: 0, publicado: false, decididas: {}, abriendo: null, motivos: {},
-            cola: null, catalogo: [], trabajando: false, fallo: '' };
+            cola: null, catalogo: [], trabajando: false, fallo: '',
+            reparto: null, roturasFreno: null, avisosPublicados: null };
 
-  componentDidMount() { this.cargarCola(); }
+  componentDidMount() { this.cargarCola(); this.cargarReparto(); }
+
+  cargarReparto() {
+    fetch('/api/operacion/repartir')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin permiso'))))
+      .then((d) => this.setState({ reparto: d }))
+      .catch(() => this.setState({ reparto: { evento: null } }));
+  }
+
+  repartirDeNuevo() {
+    const ev = this.state.reparto && this.state.reparto.evento;
+    if (!ev || this.state.trabajando) return;
+    this.setState({ trabajando: true, fallo: '', roturasFreno: null, avisosPublicados: null });
+    fetch('/api/operacion/repartir', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventoId: ev.id })
+    })
+      .then((r) => r.json())
+      .then(() => { this.setState({ trabajando: false, publicado: false }); this.cargarReparto(); })
+      .catch(() => this.setState({ trabajando: false, fallo: 'No se pudo repartir.' }));
+  }
+
+  // El freno: si la propuesta rompe reglas duras, el servidor devuelve 409
+  // con lo que esta roto. Forzar es otra llamada, a proposito.
+  publicarMesas(forzar) {
+    const c = this.state.reparto && this.state.reparto.corrida;
+    if (!c || this.state.trabajando) return;
+    this.setState({ trabajando: true, fallo: '' });
+    fetch('/api/operacion/publicar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(forzar ? { corridaId: c.id, forzar: true } : { corridaId: c.id })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, code: r.status, d })))
+      .then(({ ok, code, d }) => {
+        if (!ok && code === 409 && d.roturas) { this.setState({ trabajando: false, roturasFreno: d.roturas }); return; }
+        if (!ok) { this.setState({ trabajando: false, fallo: d.error || 'No se pudo publicar.' }); return; }
+        this.setState({ trabajando: false, publicado: true, roturasFreno: null, avisosPublicados: d.publicadoConAvisos });
+        this.cargarReparto();
+      })
+      .catch(() => this.setState({ trabajando: false, fallo: 'No se pudo publicar.' }));
+  }
 
   cargarCola() {
     fetch('/api/operacion/verificaciones')
@@ -295,26 +368,34 @@ class Component extends DCLogic {
       ['Carolina', 'Educación', 30, 'Unimet', 'M'], ['Luis', 'Tecnología', 36, 'Yummy', 'H']
     ];
 
-    const APUNTADOS = 34;
-    // Sin verificar = los que estan en la cola. Era un 2 escrito a mano.
-    const SIN_VERIFICAR = (this.state.cola || []).length;
-    const elegibles = POOL.length;      // 32
-    const nMesas = Math.floor(elegibles / 6);
-    const enEspera = elegibles - nMesas * 6;
+    // El POOL de arriba era el maniqui. Lo real viene del servidor: la
+    // propuesta que el reparto guardo, con sus roturas ya calculadas.
+    const R = this.state.reparto || {};
+    const corrida = R.corrida || null;
+    const propuesta = (corrida && corrida.propuesta) || [];
+    const hayReparto = propuesta.length > 0;
 
-    const restaurantes = [
-      ['Cardenal', '7:00 p.m.'], ['Alto', '7:00 p.m.'], ['Malabar', '7:30 p.m.'],
-      ['Casa Bistró', '7:00 p.m.'], ['La Cita', '8:00 p.m.'], ['Miga', '7:30 p.m.']
-    ];
+    const APUNTADOS = R.apuntados != null ? R.apuntados : 0;
+    const SIN_VERIFICAR = R.fueraDelPool != null ? R.fueraDelPool : 0;
+    const nMesas = hayReparto ? propuesta.length : 0;
+    const enEspera = ((corrida && corrida.espera) || []).length;
 
-    const grupos = [];
-    for (let k = 0; k < nMesas; k++) grupos.push(POOL.slice(k * 6, k * 6 + 6));
-    const sobrantes = POOL.slice(nMesas * 6);
+    const grupos = hayReparto
+      ? propuesta.map((m) => (m.integrantes || []).map((p) => [
+          p.nombre || '—', p.sector || '—', p.edad, p.empresa || '—',
+          p.genero === 'mujer' ? 'M' : (p.genero === 'hombre' ? 'H' : 'X')
+        ]))
+      : [];
+    const sobrantes = ((corrida && corrida.espera) || []).map((p) => [p.nombre || '—']);
 
     const avatar = (i, chico) => 'flex:0 0 auto;width:' + (chico ? '24px' : '30px') + ';height:' + (chico ? '24px' : '30px') + ';border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 ' + (chico ? '11px' : '13px') + '/1 \'Inter Tight\',sans-serif';
     const cifra = (col) => 'font:700 clamp(26px,3vw,34px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:' + (col || '#14342A') + ';margin-top:9px';
 
     const mesas = grupos.map((g, k) => {
+      // Las roturas las decide el matcher, no esta pantalla: recalcularlas
+      // aqui seria una segunda opinion que puede discrepar de la que el
+      // freno usa para dejar publicar o no.
+      const rotSrv = (propuesta[k] && propuesta[k].roturas) || [];
       // las señales salen del grupo, no de un literal
       const edades = g.map((p) => p[2]);
       const min = Math.min.apply(null, edades), max = Math.max.apply(null, edades);
@@ -326,19 +407,33 @@ class Component extends DCLogic {
       const balanceMal = Math.abs(mujeres - hombres) > 2;
       const rangoMal = rango > 10;
       const empresaMal = repes.length > 0;
-      const ojo = balanceMal || rangoMal || empresaMal;
+      // REVISAR lo dice el servidor. La pantalla recalculaba genero, edad y
+      // empresa por su cuenta, asi que podia decir CUADRA sobre una mesa que
+      // el freno rechaza —o al reves— y entonces el sello miente.
+      const ojo = rotSrv.length > 0;
 
+      const rotasDe = (regla) => rotSrv.some((r) => r.regla === regla);
       const senales = [
-        [mujeres + ' y ' + hombres, balanceMal],
-        [min + '–' + max + ' años', rangoMal],
-        [empresaMal ? 'Dos de ' + repes[0] : 'Sin empresa repetida', empresaMal]
-      ].map((x) => ({
+        [mujeres + ' y ' + hombres, rotasDe('genero')],
+        [min + '–' + max + ' años', rotasDe('edad')],
+        [rotasDe('empresa') ? 'Dos de ' + repes[0] : 'Sin empresa repetida', rotasDe('empresa')],
+        // Las que la pantalla no sabia mirar: veto, gasto, idioma, visita.
+      ].concat(rotSrv.filter((r) => ['veto','gasto','idioma','visita'].indexOf(r.regla) >= 0)
+        .map((r) => [r.regla + ': ' + r.detalle, true]))
+      .map((x) => ({
         texto: x[0],
         chip: 'display:inline-flex;align-items:center;min-height:30px;padding:0 11px;border-radius:999px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + (x[1] ? 'rgba(143,69,21,.12)' : 'rgba(20,52,42,.07)') + ';color:' + (x[1] ? '#8F4515' : '#2C4A38')
       }));
 
       return {
-        n: String(k + 1).padStart(2, '0'), sitio: restaurantes[k][0], hora: restaurantes[k][1],
+        n: String(k + 1).padStart(2, '0'),
+        // El sitio y la hora salen de la fecha, no de una lista de seis
+        // restaurantes inventados que se repetia mesa a mesa.
+        sitio: (R.evento && R.evento.restaurante) || 'Sin restaurante',
+        hora: R.evento && R.evento.empiezaEn
+          ? (() => { const d = new Date(R.evento.empiezaEn); const h = d.getHours();
+              return (h % 12 || 12) + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes() + ' ' + (h < 12 ? 'a.m.' : 'p.m.'); })()
+          : '',
         estado: ojo ? 'REVISAR' : 'CUADRA',
         caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (ojo ? '#C0662F' : 'transparent'),
         numero: 'flex:0 0 auto;width:42px;height:42px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:700 15px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums',
@@ -501,6 +596,10 @@ class Component extends DCLogic {
       selloCierre: 'display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:rgba(143,69,21,.13);font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;color:#8F4515;white-space:nowrap',
       selloTasa: 'display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.22);font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:#2C4A38;white-space:nowrap',
       botonPrimario: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 26px;border-radius:999px;border:none;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      // Forzar va en el color de aviso, no en el primario: no puede parecer
+      // el camino normal.
+      botonForzar: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 26px;border-radius:999px;border:none;background:#6E340F;color:#FFF8EA;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      botonFantasmaOps: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 12px;border-radius:999px;border:none;background:transparent;color:#33513F;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
       botonBorde: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:999px;border:1px solid rgba(20,52,42,.24);background:transparent;color:#1B5138;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer',
 
       publicado: this.state.publicado,
@@ -508,9 +607,37 @@ class Component extends DCLogic {
       tituloEspera: (enEspera === 1 ? 'Una' : letra(enEspera)) + ' en espera',
       notaEspera: 'Faltan ' + letra(6 - enEspera) + ' para llenar la mesa ' + letra(nMesas + 1) + '. Se les avisa hoy y su crédito no se toca.',
       textoPublicado: letra(nMesas).charAt(0).toUpperCase() + letra(nMesas).slice(1) + ' mesas publicadas. Los correos salen el jueves a las 12:00 en punto, no antes.',
-      textoPublicar: this.state.publicado ? 'Publicadas' : 'Publicar las ' + letra(nMesas) + ' mesas',
-      publicar: () => this.setState({ publicado: true }),
-      rebarajar: () => this.setState({ publicado: false })
+      textoPublicar: this.state.trabajando ? 'Publicando' : (this.state.publicado ? 'Publicadas' : 'Publicar las ' + letra(nMesas) + ' mesas'),
+      publicar: () => this.publicarMesas(false),
+      forzar: () => this.publicarMesas(true),
+      rebarajar: () => this.repartirDeNuevo(),
+      // El freno, con lo que esta roto delante.
+      hayFreno: !!this.state.roturasFreno,
+      frenoMesas: (this.state.roturasFreno || []).map((r) => ({
+        titulo: 'Mesa ' + String(r.mesa).padStart(2, '0'),
+        detalle: r.roturas.map((x) => x.regla + ': ' + x.detalle).join(' · ')
+      })),
+      cerrarFreno: () => this.setState({ roturasFreno: null }),
+      hayAvisosPublicados: !!this.state.avisosPublicados,
+      textoAvisosPublicados: this.state.avisosPublicados
+        ? 'Publicadas con avisos aceptados en ' + this.state.avisosPublicados.length +
+          (this.state.avisosPublicados.length === 1 ? ' mesa. Queda registrado.' : ' mesas. Queda registrado.')
+        : '',
+      // "Cena · jueves 14 · Las Mercedes" estaba escrito a mano, con la cena
+      // el 13. Sale de la fecha o no se dice.
+      tituloFecha: R.evento && R.evento.empiezaEn
+        ? (() => {
+            const d = new Date(R.evento.empiezaEn);
+            const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+            return 'Cena · ' + dias[d.getDay()] + ' ' + d.getDate() +
+              (R.evento.restaurante ? ' · ' + R.evento.restaurante : '');
+          })()
+        : 'Sin fecha abierta',
+      hayMesas: nMesas > 0,
+      sinMesas: nMesas === 0,
+      trabajando: this.state.trabajando,
+      hayFalloOps: !!this.state.fallo,
+      falloOps: this.state.fallo
     };
   }
 }

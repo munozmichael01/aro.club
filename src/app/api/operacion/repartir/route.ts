@@ -28,6 +28,98 @@ const cuerpo = z.object({
     .optional(),
 })
 
+/**
+ * El estado actual: la próxima fecha, quién está apuntado y la última
+ * propuesta sin publicar. El panel lo lee de aquí en vez de traerse su
+ * propia idea de cuánta gente hay.
+ */
+export async function GET() {
+  const actor = await exigirOps()
+  if (!actor) return new NextResponse(null, { status: 404 })
+
+  const admin = createAdminClient()
+
+  const { data: evento } = await admin
+    .from('events')
+    .select('id, starts_at, booking_closes_at, seats_per_table, status, restaurants!events_restaurant_id_fkey(name)')
+    .in('status', ['draft', 'open', 'locked', 'matched'])
+    .order('starts_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (!evento) return NextResponse.json({ evento: null })
+
+  const { data: pool } = await admin
+    .from('v_matching_pool')
+    .select('profile_id')
+    .eq('event_id', evento.id)
+
+  const { count: reservas } = await admin
+    .from('bookings')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', evento.id)
+    .eq('status', 'confirmed')
+
+  // Los sectores viajan por codigo estable. La etiqueta vive en las
+  // opciones de la pregunta y se resuelve ahi, igual que en Mi mesa: un
+  // mapa aqui seria un segundo catalogo que se desincroniza.
+  const { data: preguntaSector } = await admin
+    .from('questions')
+    .select('options, questionnaire_versions!inner(is_active)')
+    .eq('key', 'sector')
+    .eq('questionnaire_versions.is_active', true)
+    .maybeSingle()
+
+  const etiquetaDe = new Map(
+    ((preguntaSector?.options ?? []) as { value: string; label: string }[]).map((o) => [
+      o.value,
+      o.label,
+    ]),
+  )
+
+  const { data: corrida } = await admin
+    .from('matching_runs')
+    .select('id, proposal, unmatched, avg_score, is_published, created_at')
+    .eq('event_id', evento.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  return NextResponse.json({
+    evento: {
+      id: evento.id,
+      empiezaEn: evento.starts_at,
+      cierraEn: evento.booking_closes_at,
+      estado: evento.status,
+      // Hoy hay un restaurante por fecha. Con el modelo de zonas sera uno
+      // por zona, y esto pasara a salir de la mesa.
+      restaurante:
+        (evento.restaurants as unknown as { name: string } | null)?.name ?? null,
+    },
+    apuntados: reservas ?? 0,
+    // Apuntados que NO entran al reparto: sin verificar o sin rasgos. Es la
+    // diferencia entre quien se apuntó y quien puede sentarse.
+    fueraDelPool: Math.max(0, (reservas ?? 0) - (pool ?? []).length),
+    corrida: corrida
+      ? {
+          id: corrida.id,
+          publicada: corrida.is_published,
+          propuesta: ((corrida.proposal ?? []) as unknown as {
+            integrantes: { sector: string | null }[]
+          }[]).map((m) => ({
+            ...m,
+            integrantes: (m.integrantes ?? []).map((p) => ({
+              ...p,
+              sector: p.sector ? (etiquetaDe.get(p.sector) ?? p.sector) : null,
+            })),
+          })),
+          espera: corrida.unmatched,
+          media: corrida.avg_score,
+        }
+      : null,
+  })
+}
+
 export async function POST(request: Request) {
   const actor = await exigirOps()
   if (!actor) return new NextResponse(null, { status: 404 })

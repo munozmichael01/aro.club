@@ -856,12 +856,15 @@ export type Database = {
           created_at: string
           created_by: string | null
           event_id: string
+          forced_at: string | null
+          forced_by: string | null
           id: string
           is_published: boolean
           min_score: number | null
           pool_size: number
           proposal: Json | null
           published_at: string | null
+          published_breaks: Json | null
           published_by: string | null
           runtime_ms: number | null
           tables_created: number
@@ -874,12 +877,15 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           event_id: string
+          forced_at?: string | null
+          forced_by?: string | null
           id?: string
           is_published?: boolean
           min_score?: number | null
           pool_size: number
           proposal?: Json | null
           published_at?: string | null
+          published_breaks?: Json | null
           published_by?: string | null
           runtime_ms?: number | null
           tables_created: number
@@ -892,12 +898,15 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           event_id?: string
+          forced_at?: string | null
+          forced_by?: string | null
           id?: string
           is_published?: boolean
           min_score?: number | null
           pool_size?: number
           proposal?: Json | null
           published_at?: string | null
+          published_breaks?: Json | null
           published_by?: string | null
           runtime_ms?: number | null
           tables_created?: number
@@ -946,6 +955,34 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_matching_signal"
             referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "matching_runs_forced_by_fkey"
+            columns: ["forced_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matching_runs_forced_by_fkey"
+            columns: ["forced_by"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "matching_runs_forced_by_fkey"
+            columns: ["forced_by"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "matching_runs_forced_by_fkey"
+            columns: ["forced_by"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "matching_runs_published_by_fkey"

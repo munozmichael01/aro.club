@@ -16,12 +16,19 @@ import { createAdminClient } from '@/lib/supabase/admin'
  *    rompe.
  */
 
-const cuerpo = z.object({ corridaId: z.string().uuid() })
+const cuerpo = z.object({
+  corridaId: z.string().uuid(),
+  // Publicar con avisos es una decisión, no un descuido: hay que pedirlo.
+  forzar: z.boolean().optional(),
+})
+
+type Rotura = { regla: string; detalle: string }
 
 type MesaPropuesta = {
   numero: number
   puntuacion: number
   desglose: Record<string, number>
+  roturas?: Rotura[]
   integrantes: { profileId: string; bookingId: string }[]
 }
 
@@ -58,6 +65,25 @@ export async function POST(request: Request) {
   const mesas = (corrida.proposal ?? []) as unknown as MesaPropuesta[]
   if (!mesas.length) {
     return NextResponse.json({ error: 'La propuesta está vacía.' }, { status: 400 })
+  }
+
+  // El freno. El reparto ya apuntó qué reglas duras no pudo cumplir; hasta
+  // ahora nadie leía ese campo y se publicaba igual.
+  const conRoturas = mesas
+    .filter((m) => (m.roturas ?? []).length > 0)
+    .map((m) => ({ mesa: m.numero, roturas: m.roturas ?? [] }))
+
+  if (conRoturas.length && !parsed.data.forzar) {
+    return NextResponse.json(
+      {
+        error: 'Esta propuesta rompe reglas duras.',
+        // Qué está roto, para poder decidir con el dato delante y no a ciegas.
+        roturas: conRoturas,
+        // El camino existe: la decisión es de quien lleva la operación.
+        sePuedeForzar: true,
+      },
+      { status: 409 },
+    )
   }
 
   // Publicar dos veces duplicaba los encuentros: borrar las mesas arrastra
@@ -138,7 +164,17 @@ export async function POST(request: Request) {
 
   await admin
     .from('matching_runs')
-    .update({ is_published: true, published_at: new Date().toISOString(), published_by: actor })
+    .update({
+      is_published: true,
+      published_at: new Date().toISOString(),
+      published_by: actor,
+      // Si se forzó, queda escrito qué se aceptó y quién lo aceptó. Dentro
+      // de un mes, ante una mesa que salió mal, la pregunta es si veníamos
+      // avisados; sin esto no hay forma de responderla.
+      published_breaks: conRoturas.length ? (conRoturas as never) : null,
+      forced_by: conRoturas.length ? actor : null,
+      forced_at: conRoturas.length ? new Date().toISOString() : null,
+    })
     .eq('id', corrida.id)
 
   await admin.from('events').update({ status: 'matched' }).eq('id', corrida.event_id)
@@ -149,6 +185,9 @@ export async function POST(request: Request) {
     // El número real de filas encoladas, no el de la lista que se intentó:
     // reportar 12 habiendo guardado 0 es peor que fallar.
     correosProgramados: encolados?.length ?? 0,
+    // Se devuelve lo aceptado para que el panel pueda decirlo, no para
+    // enterrarlo en el registro.
+    publicadoConAvisos: conRoturas.length ? conRoturas : null,
     // La hora exacta a la que saldrán, para que el panel la enseñe.
     saldranEn: evento.reveal_at,
   })
