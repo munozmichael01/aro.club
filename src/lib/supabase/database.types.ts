@@ -560,6 +560,7 @@ export type Database = {
           age_band_min: number | null
           booking_closes_at: string
           city: string
+          city_slug: string
           created_at: string
           credit_cost: number
           format: Database["public"]["Enums"]["event_format_t"]
@@ -582,6 +583,7 @@ export type Database = {
           age_band_min?: number | null
           booking_closes_at: string
           city?: string
+          city_slug: string
           created_at?: string
           credit_cost?: number
           format?: Database["public"]["Enums"]["event_format_t"]
@@ -604,6 +606,7 @@ export type Database = {
           age_band_min?: number | null
           booking_closes_at?: string
           city?: string
+          city_slug?: string
           created_at?: string
           credit_cost?: number
           format?: Database["public"]["Enums"]["event_format_t"]
@@ -625,6 +628,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_city_slug_fkey"
+            columns: ["city_slug"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "events_city_slug_fkey"
+            columns: ["city_slug"]
+            isOneToOne: false
+            referencedRelation: "v_city_demand"
+            referencedColumns: ["slug"]
           },
           {
             foreignKeyName: "events_restaurant_id_fkey"
@@ -1824,6 +1841,7 @@ export type Database = {
       profiles: {
         Row: {
           birthdate: string | null
+          city_slug: string | null
           contact_email: string | null
           created_at: string
           display_name: string | null
@@ -1849,6 +1867,7 @@ export type Database = {
         }
         Insert: {
           birthdate?: string | null
+          city_slug?: string | null
           contact_email?: string | null
           created_at?: string
           display_name?: string | null
@@ -1874,6 +1893,7 @@ export type Database = {
         }
         Update: {
           birthdate?: string | null
+          city_slug?: string | null
           contact_email?: string | null
           created_at?: string
           display_name?: string | null
@@ -1898,6 +1918,20 @@ export type Database = {
           whatsapp_opt_in?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_city_slug_fkey"
+            columns: ["city_slug"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "profiles_city_slug_fkey"
+            columns: ["city_slug"]
+            isOneToOne: false
+            referencedRelation: "v_city_demand"
+            referencedColumns: ["slug"]
+          },
           {
             foreignKeyName: "profiles_invited_by_fkey"
             columns: ["invited_by"]
@@ -2532,6 +2566,7 @@ export type Database = {
           base_completed_at: string | null
           birthdate: string | null
           city: string
+          city_slug: string | null
           conversation_topics: string[]
           converted_profile_id: string | null
           created_at: string
@@ -2555,6 +2590,7 @@ export type Database = {
           base_completed_at?: string | null
           birthdate?: string | null
           city?: string
+          city_slug?: string | null
           conversation_topics?: string[]
           converted_profile_id?: string | null
           created_at?: string
@@ -2578,6 +2614,7 @@ export type Database = {
           base_completed_at?: string | null
           birthdate?: string | null
           city?: string
+          city_slug?: string | null
           conversation_topics?: string[]
           converted_profile_id?: string | null
           created_at?: string
@@ -2608,6 +2645,20 @@ export type Database = {
           {
             foreignKeyName: "waitlist_city_fkey"
             columns: ["city"]
+            isOneToOne: false
+            referencedRelation: "v_city_demand"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "waitlist_city_slug_fkey"
+            columns: ["city_slug"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "waitlist_city_slug_fkey"
+            columns: ["city_slug"]
             isOneToOne: false
             referencedRelation: "v_city_demand"
             referencedColumns: ["slug"]
@@ -2644,6 +2695,7 @@ export type Database = {
       }
       zones: {
         Row: {
+          city_slug: string
           is_active: boolean
           municipality: string | null
           name: string
@@ -2651,6 +2703,7 @@ export type Database = {
           sort_order: number
         }
         Insert: {
+          city_slug: string
           is_active?: boolean
           municipality?: string | null
           name: string
@@ -2658,13 +2711,29 @@ export type Database = {
           sort_order?: number
         }
         Update: {
+          city_slug?: string
           is_active?: boolean
           municipality?: string | null
           name?: string
           slug?: string
           sort_order?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "zones_city_slug_fkey"
+            columns: ["city_slug"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "zones_city_slug_fkey"
+            columns: ["city_slug"]
+            isOneToOne: false
+            referencedRelation: "v_city_demand"
+            referencedColumns: ["slug"]
+          },
+        ]
       }
     }
     Views: {
@@ -2924,14 +2993,19 @@ export type Database = {
     Functions: {
       a_texto: { Args: { v: Json }; Returns: string[] }
       age_years: { Args: { d: string }; Returns: number }
-      convertir_lead: {
-        Args: {
-          p_auth_email: string
-          p_lead_email: string
-          p_profile_id: string
-        }
-        Returns: undefined
-      }
+      convertir_lead:
+        | {
+            Args: { p_email: string; p_profile_id: string }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_auth_email: string
+              p_lead_email: string
+              p_profile_id: string
+            }
+            Returns: undefined
+          }
       despublicar_evento: { Args: { p_event_id: string }; Returns: undefined }
       despublicar_mesa: {
         Args: { p_table_id: string }
@@ -3035,7 +3109,13 @@ export type Database = {
         | "confirmed"
         | "rejected"
         | "refunded"
-      rootedness_t: "volvio" | "se-quedo" | "interior" | "extranjero" | "visita"
+      rootedness_t:
+        | "volvio"
+        | "se-quedo"
+        | "interior"
+        | "visita"
+        | "mismos"
+        | "remoto"
       social_energy_t: "escucha" | "depende" | "lleva"
       verification_kind_t:
         | "id_document"
@@ -3253,7 +3333,14 @@ export const Constants = {
         "rejected",
         "refunded",
       ],
-      rootedness_t: ["volvio", "se-quedo", "interior", "extranjero", "visita"],
+      rootedness_t: [
+        "volvio",
+        "se-quedo",
+        "interior",
+        "visita",
+        "mismos",
+        "remoto",
+      ],
       social_energy_t: ["escucha", "depende", "lleva"],
       verification_kind_t: [
         "id_document",

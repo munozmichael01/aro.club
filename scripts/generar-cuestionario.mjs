@@ -15,12 +15,20 @@ import { writeFileSync } from 'node:fs'
 
 /** [código, etiqueta] */
 const P = {
+  // Seis, no cinco. `extranjero` se fusiono en `interior` —quien llego de
+  // Bogota y quien llego de Maracaibo tienen el mismo problema: no conocen
+  // a nadie aqui— y entran `mismos` y `remoto`, que no exigen haber
+  // emigrado. Ese requisito sesgaba el producto hacia los treinta y muchos.
+  //
+  // Los dos nuevos van AL FINAL aunque en la landing salgan en otro orden:
+  // el orden de este array no es el de pantalla, es el del contrato.
   arraigo: [
     ['volvio', 'Me fui del país y volví'],
     ['se-quedo', 'Nunca me fui de Venezuela'],
-    ['interior', 'Me mudé a Caracas desde el interior'],
-    ['extranjero', 'Soy extranjero viviendo aquí'],
-    ['visita', 'Vivo en el exterior y estoy de visita'],
+    ['interior', 'Llegué de otra ciudad y no conozco a nadie'],
+    ['visita', 'Estoy de paso'],
+    ['mismos', 'Sigo con la gente de siempre'],
+    ['remoto', 'Trabajo remoto y casi no veo gente'],
   ],
   sector: [
     ['tecnologia', 'Tecnología'], ['finanzas', 'Finanzas'], ['salud', 'Salud'],
@@ -188,7 +196,7 @@ const PANTALLAS = [
 ]
 
 const ENUNCIADOS = {
-  arraigo: '¿Cuál de estas se parece más a tu historia?',
+  arraigo: '¿Te suena alguna de estas?',
   sector: '¿En qué sector trabajas?',
   empleador: '¿Dónde trabajas actualmente?',
   momento: '¿En qué momento estás?',
@@ -288,12 +296,18 @@ comment on column questions.exclusive_value is
   'Codigo de la opcion que se excluye con el resto ("ninguno", "ninguna"): '
   'marcarla desmarca las demas y viceversa.';
 
--- Fuera el cuestionario anterior: sus claves y valores estaban en ingles y
--- no son los del contrato. No hay respuestas que preservar todavia.
-delete from answers where version_id in (select id from questionnaire_versions);
-delete from questions where version_id in (select id from questionnaire_versions);
-update questionnaire_versions set is_active = false;
-
+-- El catalogo se ACTUALIZA, no se reconstruye.
+--
+-- La primera version borraba answers y questions enteras. Entonces no habia
+-- nada que perder; ahora si: veinte personas con sus diecisiete respuestas.
+-- Un generador que se ejecuta dos veces y borra los datos reales es una
+-- bomba con temporizador, y el temporizador es la proxima vez que alguien
+-- cambie una etiqueta.
+--
+-- Las respuestas viven por su clave de pregunta, asi que cambiar el enunciado o
+-- las opciones de una pregunta no las invalida. Lo que si invalidaria seria
+-- quitar un codigo, y eso se migra a mano antes (ver la migracion del
+-- arraigo).
 insert into questionnaire_versions (version, is_active, published_at)
 values ('v3', true, now())
 on conflict (version) do update set is_active = true, published_at = now();
@@ -309,8 +323,41 @@ select v.id, x.* from questionnaire_versions v,
 ) as x(key, prompt, help_text, input_type, options,
        min_select, max_select, is_required, is_matching_input,
        exclusive_value, layout, autocomplete, screen, sort_order)
-where v.version = 'v3';
+where v.version = 'v3'
+on conflict (version_id, key) do update set
+  prompt = excluded.prompt,
+  help_text = excluded.help_text,
+  input_type = excluded.input_type,
+  options = excluded.options,
+  min_select = excluded.min_select,
+  max_select = excluded.max_select,
+  is_required = excluded.is_required,
+  is_matching_input = excluded.is_matching_input,
+  exclusive_value = excluded.exclusive_value,
+  layout = excluded.layout,
+  autocomplete = excluded.autocomplete,
+  screen = excluded.screen,
+  sort_order = excluded.sort_order;
+
+-- Y las preguntas que ya no estan en el catalogo se van, con sus
+-- respuestas: si la pregunta no existe, la respuesta no significa nada.
+delete from answers a
+ using questionnaire_versions v
+ where a.version_id = v.id and v.version = 'v3'
+   and a.question_key not in (${filas.map((f) => f.split(',')[0].trim()).join(', ')});
+
+delete from questions q
+ using questionnaire_versions v
+ where q.version_id = v.id and v.version = 'v3'
+   and q.key not in (${filas.map((f) => f.split(',')[0].trim()).join(', ')});
 `
 
-writeFileSync('supabase/migrations/20260807100000_cuestionario_v3.sql', salida)
-console.log(`Generado: 17 preguntas, ${Object.values(P).reduce((n, o) => n + o.length, 0)} opciones, 5 pantallas.`)
+const VERSION = 'v3'
+const SELLO = '20260809190000'
+
+// Cada tanda emite su PROPIA migracion. Sobrescribir la anterior no
+// cambia nada en la base —ya se aplico— y deja el historial diciendo algo
+// que no ocurrio. El nombre lleva la version para que se vea cual manda.
+const destino = `supabase/migrations/${SELLO}_cuestionario_${VERSION}.sql`
+writeFileSync(destino, salida)
+console.log(`${destino}\nGenerado: 17 preguntas, ${Object.values(P).reduce((n, o) => n + o.length, 0)} opciones, 5 pantallas.`)

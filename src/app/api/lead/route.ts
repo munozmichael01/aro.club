@@ -132,7 +132,10 @@ export async function POST(request: Request) {
   if (existente) {
     // Correo ya registrado no es un error (§3.8). Se actualiza la ciudad por
     // si volvió desde otra, y se le dice por dónde va.
-    await supabase.from('waitlist').update({ city: ciudadFinal }).eq('email', correo)
+    await supabase
+      .from('waitlist')
+      .update({ city: ciudadFinal, city_slug: ciudadFinal })
+      .eq('email', correo)
     return NextResponse.json({
       estado: 'repetido',
       token: firmar(correo),
@@ -143,7 +146,10 @@ export async function POST(request: Request) {
 
   const { error } = await supabase
     .from('waitlist')
-    .insert({ email: correo, city: ciudadFinal, source: 'landing' })
+    // `city` es texto libre heredado y `city_slug` apunta al catalogo. Se
+    // escriben los dos hasta que el viejo se pueda retirar: una ciudad
+    // escrita a mano no se puede cruzar con sus zonas.
+    .insert({ email: correo, city: ciudadFinal, city_slug: ciudadFinal, source: 'landing' })
 
   if (error) {
     console.error('[lead] inserción falló', error)

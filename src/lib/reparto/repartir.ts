@@ -46,11 +46,26 @@ export type Pesos = {
   novedad: number
 }
 
+/**
+ * El arraigo YA NO PUNTUA.
+ *
+ * Pesaba 0.2 empujando hacia mesas con al menos un `volvio` y dos
+ * `se-quedo`. Eso era una teoria sobre quien conecta con quien —el que
+ * volvio y el que se quedo tienen de que hablar— que nunca comprobamos, y
+ * mientras tanto le quitaba sitio a lo que si sabemos que importa.
+ *
+ * El arraigo se sigue guardando: es espejo en la landing y segmento en
+ * operacion —a quien viene de visita no se le ofrece pack ni recurrencia—.
+ * Guardarlo y no aplicarlo al reparto son dos cosas distintas.
+ *
+ * Su 0.2 se reparte entre cohesion y sector, que son los dos terminos que
+ * miden algo observable: si tienen de que hablar y si la mesa es diversa.
+ */
 export const PESOS: Pesos = {
-  cohesion: 0.3,
-  sector: 0.25,
-  arraigo: 0.2,
-  energia: 0.15,
+  cohesion: 0.4,
+  sector: 0.3,
+  arraigo: 0,
+  energia: 0.2,
   novedad: 0.1,
 }
 
@@ -198,7 +213,9 @@ export function desglose(mesa: Persona[]): Record<keyof Pesos, number> {
   const exceso = [...porSector.values()].reduce((t, c) => t + Math.max(0, c - 2), 0)
   const sector = Math.max(0, 1 - exceso / n)
 
-  // Mezcla de arraigo: al menos un returnee y dos que se quedaron.
+  // Se mantiene calculado pero con peso cero: el desglose lo sigue
+  // enseñando en el panel como dato de la mesa, no como algo que la
+  // puntuacion premie.
   const volvio = mesa.filter((p) => p.arraigo === 'volvio').length
   const seQuedo = mesa.filter((p) => p.arraigo === 'se-quedo').length
   const arraigo = (Math.min(volvio, 1) + Math.min(seQuedo, 2) / 2) / 2
