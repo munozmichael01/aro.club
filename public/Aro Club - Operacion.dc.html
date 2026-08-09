@@ -25,6 +25,8 @@
      otra pintaba de verde etiquetas, chips y el resumen entero. Aqui no hay
      nada que copiar; lo que hay es una superficie que se manipula. */
   .aro-mesa, .aro-mesa * { user-select:none; -webkit-user-select:none; }
+  /* La barra de abajo es fija: sin este hueco tapa la ultima tarjeta. */
+  .aro-fondo { padding-bottom: 0; }
   @keyframes aro-latido { 0%,100% { opacity:1 } 50% { opacity:.45 } }
   @keyframes aro-open { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
@@ -140,22 +142,6 @@
           </sc-for>
         </div>
 
-        <div style="border-radius:22px;border:1px dashed rgba(20,52,42,.3);padding:clamp(18px,2.4vw,24px);margin-top:12px">
-          <div style="font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloEspera }}</div>
-          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:7px;max-width:56ch;text-wrap:pretty">{{ notaEspera }}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
-            <sc-for list="{{ espera }}" as="e" hint-placeholder-count="4">
-              <span style="display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px 0 8px;border-radius:999px;background:#FAF3E4;font:500 14px/1 'Inter Tight',sans-serif;color:#14342A">
-                <span style="{{ e.avatar }}">{{ e.inicial }}</span>{{ e.nombre }}
-              </span>
-            </sc-for>
-          </div>
-        </div>
-
-        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(22px,3vw,30px)">
-          <button onClick="{{ publicar }}" aria-disabled="{{ publicarInerte }}" style="{{ botonPrimario }}">{{ textoPublicar }}</button>
-          <button onClick="{{ rebarajar }}" style="{{ botonRepartir }}">{{ textoRepartir }}</button>
-        </div>
         <sc-if value="{{ hayAviso }}" hint-placeholder-val="{{ false }}">
           <div role="status" style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:rgba(27,81,56,.1);padding:15px 18px;margin-top:14px;animation:aro-open 240ms ease both">
             <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
@@ -163,45 +149,9 @@
           </div>
         </sc-if>
 
-        <sc-if value="{{ hayFreno }}" hint-placeholder-val="{{ false }}">
-          <div role="alert" style="border-radius:22px;border:1px solid rgba(143,69,21,.42);background:rgba(143,69,21,.07);padding:clamp(16px,2.2vw,20px);margin-top:14px;animation:aro-open 260ms ease both">
-            <div style="display:flex;gap:11px;align-items:flex-start">
-              <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
-              <span style="flex:1;min-width:0">
-                <span style="display:block;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ tituloFreno }}</span>
-                <span style="display:block;font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:4px">Puedes publicar igualmente, pero queda escrito qué aceptaste y quién lo aceptó.</span>
-              </span>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:7px;margin-top:13px">
-              <sc-for list="{{ frenoMesas }}" as="m" hint-placeholder-count="2">
-                <div style="border-radius:16px;background:#FFFBF0;padding:10px 13px">
-                  <span style="display:block;font:600 13px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ m.titulo }}</span>
-                  <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-top:2px">{{ m.detalle }}</span>
-                </div>
-              </sc-for>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px">
-              <button onClick="{{ forzar }}" style="{{ botonForzar }}">{{ textoForzar }}</button>
-              <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
-              <button onClick="{{ cerrarFreno }}" style="{{ botonFantasmaOps }}">Cancelar</button>
-            </div>
-          </div>
-        </sc-if>
 
-        <sc-if value="{{ hayAvisosPublicados }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:16px 18px;margin-top:14px">
-            <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
-            <span style="flex:1;min-width:0;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ textoAvisosPublicados }}</span>
-          </div>
-        </sc-if>
-
-        <sc-if value="{{ publicado }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:rgba(27,81,56,.11);padding:16px 18px;margin-top:14px;animation:aro-open 260ms ease both">
-            <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
-            <span style="flex:1;min-width:0;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ textoPublicado }}</span>
-          </div>
-        </sc-if>
-      </div>
+        
+              </div>
     </sc-if>
 
     <sc-if value="{{ esVerificaciones }}" hint-placeholder-val="{{ false }}">
@@ -317,6 +267,59 @@
         </div>
       </div>
     </sc-if>
+
+    <sc-if value="{{ hayFreno }}" hint-placeholder-val="{{ false }}">
+      <div role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:60;background:rgba(20,52,42,.45);display:flex;align-items:center;justify-content:center;padding:clamp(16px,4vw,32px);animation:aro-open 180ms ease both">
+        <div style="width:min(560px,100%);max-height:82vh;overflow:auto;border-radius:26px;background:#FAF3E4;padding:clamp(20px,3vw,28px);box-shadow:0 24px 60px rgba(20,52,42,.28)">
+          <div style="display:flex;gap:11px;align-items:flex-start">
+            <span style="flex:0 0 auto;width:26px;height:26px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 13px/1 'Inter Tight',sans-serif;margin-top:2px">!</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:400 clamp(21px,2.4vw,26px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloFreno }}</span>
+              <span style="display:block;font:400 15px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:7px;text-wrap:pretty">Puedes publicar igualmente, pero queda escrito qué aceptaste y quién lo aceptó.</span>
+            </span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+            <sc-for list="{{ frenoMesas }}" as="m" hint-placeholder-count="2">
+              <div style="border-radius:18px;background:#FFFBF0;padding:13px 15px">
+                <span style="display:block;font:600 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ m.titulo }}</span>
+                <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-top:3px">{{ m.detalle }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px">
+            <button onClick="{{ forzar }}" style="{{ botonForzar }}">{{ textoForzar }}</button>
+            <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
+            <button onClick="{{ cerrarFreno }}" style="{{ botonFantasmaOps }}">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esMesas }}" hint-placeholder-val="{{ true }}">
+      <div style="position:sticky;bottom:0;z-index:30;margin:0 -100vw;padding:0 100vw;background:rgba(242,233,213,.97);backdrop-filter:blur(10px);border-top:1px solid rgba(20,52,42,.16)">
+        <div data-mesa="0" class="aro-mesa" style="{{ cajaEspera }}">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 0">
+            <span style="flex:1 1 240px;min-width:0">
+              <span style="display:block;font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">{{ tituloEspera }}</span>
+              <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:5px">{{ notaEspera }}</span>
+              <sc-if value="{{ hayEspera }}" hint-placeholder-val="{{ false }}">
+                <span style="display:flex;flex-wrap:wrap;gap:7px;margin-top:9px">
+                  <sc-for list="{{ espera }}" as="e" hint-placeholder-count="4">
+                    <span onPointerDown="{{ e.tomar }}" style="{{ e.pastilla }}">
+                      <span style="{{ e.avatar }}">{{ e.inicial }}</span>{{ e.nombre }}
+                    </span>
+                  </sc-for>
+                </span>
+              </sc-if>
+            </span>
+            <span style="flex:0 0 auto;display:flex;flex-wrap:wrap;gap:10px">
+              <button onClick="{{ publicar }}" aria-disabled="{{ publicarInerte }}" style="{{ botonPrimario }}">{{ textoPublicar }}</button>
+              <button onClick="{{ rebarajar }}" style="{{ botonRepartir }}">{{ textoRepartir }}</button>
+            </span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
   </div>
 </div>
 
@@ -360,6 +363,11 @@ class Component extends DCLogic {
       const bajo = document.elementFromPoint(e.clientX, e.clientY);
       const caja = bajo && bajo.closest ? bajo.closest('[data-mesa]') : null;
       const n = caja ? parseInt(caja.getAttribute('data-mesa'), 10) : null;
+      // Igual que el id: en una referencia del objeto, no solo en el estado.
+      // Ya me pasó con `arrastrando` y no lo generalicé: setState es
+      // asincrono, asi que al soltar rapido `sobreMesa` todavia era la de
+      // antes —o null— y el movimiento se perdia sin decir nada.
+      this._sobre = n;
       if (this.state.sobreMesa !== n) this.setState({ sobreMesa: n });
     };
 
@@ -369,7 +377,8 @@ class Component extends DCLogic {
       document.body.style.userSelect = '';
       document.body.style.webkitUserSelect = '';
       if (!d || !d.activo) { this.setState({ arrastrando: null, sobreMesa: null }); return; }
-      const destino = this.state.sobreMesa;
+      const destino = this._sobre;
+      this._sobre = null;
       this.setState({ arrastrando: null, sobreMesa: null });
       if (destino != null && destino !== d.desde) this.moverPersona(d.pid, destino);
     };
@@ -436,13 +445,22 @@ class Component extends DCLogic {
       if (i >= 0) { desde = m.numero; persona = m.integrantes.splice(i, 1)[0]; }
     });
     const destino = prop.find((m) => m.numero === aMesa);
-    if (persona && destino) destino.integrantes.push(persona);
+    const cola = this.state.reparto.corrida.espera || [];
+    const enCola = cola.findIndex((x) => x.profileId === profileId);
+    if (enCola >= 0) { desde = 0; persona = cola.splice(enCola, 1)[0]; }
+    if (persona) {
+      if (destino) destino.integrantes.push(persona);
+      // A la espera: sale de su mesa y aparece abajo en el momento.
+      else if (aMesa === 0) cola.push(persona);
+    }
+    this.state.reparto.corrida.espera = cola;
 
     this.setState({
       trabajando: true, fallo: '',
       reparto: this.state.reparto,
       // Las dos: de la que sale cambia tanto como la que recibe.
-      recalculando: [desde, aMesa].filter((n) => n != null),
+      // La espera no "recalcula": no tiene puntuacion ni roturas.
+      recalculando: [desde, aMesa].filter((n) => n != null && n !== 0),
       antesDeMover: antes
     });
     fetch('/api/operacion/propuesta', {
@@ -551,7 +569,8 @@ class Component extends DCLogic {
         if (!ok) { this.setState({ trabajando: false, publicando: null, fallo: d.error || 'No se pudo publicar.' }); return; }
         this.setState({
           trabajando: false, publicando: null, roturasFreno: null, frenoMesa: null,
-          aviso: 'Mesa ' + String(numero).padStart(2, '0') + ' publicada. ' +
+          aviso: 'Mesa ' + String(numero).padStart(2, '0') + ' publicada' +
+                 (d.publicadoConAvisos ? ' con avisos aceptados, y queda registrado' : '') + '. ' +
                  (d.quedanPorPublicar ? d.quedanPorPublicar + ' por cerrar; volver a repartir ya no la toca.' : 'No queda ninguna.')
         });
         this.cargarReparto();
@@ -574,7 +593,8 @@ class Component extends DCLogic {
         this.setState({
           trabajando: false, publicado: true, roturasFreno: null,
           avisosPublicados: d.publicadoConAvisos,
-          aviso: 'Publicadas ' + d.mesas + (d.mesas === 1 ? ' mesa' : ' mesas') + '. ' +
+          aviso: 'Publicadas ' + d.mesas + (d.mesas === 1 ? ' mesa' : ' mesas') +
+                 (d.publicadoConAvisos ? ' con avisos aceptados, y queda registrado' : '') + '. ' +
                  d.correosProgramados + ' correos en cola para la revelación; no salen antes.'
         });
         this.cargarReparto();
@@ -871,9 +891,23 @@ class Component extends DCLogic {
       ['SIN VERIFICAR', String(SIN_VERIFICAR), 'No entran al reparto', '#8F4515']
     ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) }));
 
-    const espera = sobrantes.map((p, i) => ({
-      nombre: p[0], inicial: p[0].charAt(0), avatar: avatar(i, true)
-    }));
+    // La espera es una mesa mas a efectos de arrastre: se puede sacar a
+    // alguien de una mesa y dejarlo aqui, y traerlo de vuelta. Por eso
+    // lleva data-mesa="0" y sus pastillas arrancan el mismo gesto.
+    const enEsperaIds = ((corrida && corrida.espera) || []);
+    const espera = sobrantes.map((p, i) => {
+      const pid = (enEsperaIds[i] && enEsperaIds[i].profileId) || null;
+      const arrastrando = this.state.arrastrando === pid;
+      return {
+        nombre: p[0], inicial: p[0].charAt(0), avatar: avatar(i, true),
+        tomar: (e) => {
+          if (e.preventDefault) e.preventDefault();
+          this._drag = { pid: pid, desde: 0, x: e.clientX, y: e.clientY, activo: false };
+        },
+        pastilla: 'display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px 0 8px;border-radius:999px;background:#FAF3E4;border:1px solid rgba(20,52,42,.16);font:500 14px/1 \'Inter Tight\',sans-serif;color:#14342A;cursor:grab;touch-action:none;opacity:' +
+          (arrastrando ? '.4' : '1')
+      };
+    });
 
     // La cola sale de la base. Los cuatro nombres de ejemplo se quedaban
     // igual con la cola vacia, asi que operacion revisaba gente inventada.
@@ -1014,7 +1048,7 @@ class Component extends DCLogic {
 
       publicado: this.state.publicado,
       textoBajada: APUNTADOS + ' apuntados. El reparto propone ' + letra(nMesas) + ' mesas y deja ' + (enEspera === 1 ? 'una' : letra(enEspera)) + ' en espera. Nada se publica hasta que lo confirmes.',
-      tituloEspera: (enEspera === 1 ? 'Una' : letra(enEspera)) + ' en espera',
+      tituloEspera: ((enEspera === 1 ? 'Una' : letra(enEspera)) + ' en espera').toUpperCase(),
       // Con cero en espera no falta nadie para nada: decir "faltan seis para
       // llenar la mesa tres" cuando no hay ni una persona esperando es
       // inventarse una mesa que nadie ha pedido.
@@ -1078,6 +1112,11 @@ class Component extends DCLogic {
             return 'Cena · ' + dias[d.getDay()] + ' ' + d.getDate();
           })()
         : 'Sin fecha abierta',
+      hayEspera: enEspera > 0,
+      // La barra se ilumina cuando se arrastra algo encima, igual que las
+      // mesas: hay que ver que soltar ahi es una opcion.
+      cajaEspera: 'border-radius:0;background:' + (this.state.sobreMesa === 0 ? 'rgba(27,81,56,.09)' : 'transparent') +
+        ';max-width:1180px;margin:0 auto;transition:background 140ms ease',
       hayMesas: nMesas > 0,
       sinMesas: nMesas === 0,
       trabajando: this.state.trabajando,

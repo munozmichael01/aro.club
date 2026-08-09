@@ -148,6 +148,25 @@ hay un sitio posible.
 **Por qué:** un selector con una sola opción parece un adorno roto. El
 problema no es la pantalla: es que no hemos abierto más sitios en esa zona.
 
+### 17 · El freno pasa a modal
+**Qué es:** el aviso de reglas rotas ya no va en el flujo de la página, sino
+en una capa centrada sobre un velo.
+
+**Por qué:** con seis mesas, un aviso al final de la página queda fuera de
+pantalla. Y es una decisión que bloquea: interrumpir es lo correcto.
+
+### 18 · Barra fija abajo: espera + acciones
+**Qué es:** una barra pegada al fondo con la lista de espera a la izquierda
+y "publicar" y "volver a repartir" a la derecha.
+
+**Por qué:** las acciones que deciden la fecha estaban al final de una
+página que crece con cada mesa. Y la espera **es un sitio donde soltar
+gente**: hay que poder sacar a alguien de una mesa y dejarlo esperando sin
+buscar dónde. Sus pastillas se arrastran igual que las filas.
+
+Es el punto donde más me meto en tu terreno. Si la barra te parece mal,
+dilo: lo que no puede volver es que decidir exija hacer scroll.
+
 ---
 
 ## Lo que quiero de ti
