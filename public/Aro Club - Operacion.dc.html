@@ -28,7 +28,8 @@
   /* La barra de abajo es fija: sin este hueco tapa lo ultimo de la pagina.
      Y el documento no se ensancha: el fondo a todo lo ancho se hacia con
      margin:0 -100vw, que es lo que provocaba el scroll horizontal. */
-  .aro-conbarra { padding-bottom: 148px; }
+  /* Valor de arranque; el real se mide al montar. */
+  .aro-conbarra { padding-bottom: 160px; }
   body { overflow-x: hidden; }
   @keyframes aro-latido { 0%,100% { opacity:1 } 50% { opacity:.45 } }
   @keyframes aro-open { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
@@ -145,12 +146,6 @@
           </sc-for>
         </div>
 
-        <sc-if value="{{ hayAviso }}" hint-placeholder-val="{{ false }}">
-          <div role="status" style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:rgba(27,81,56,.1);padding:15px 18px;margin-top:14px;animation:aro-open 240ms ease both">
-            <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
-            <span style="flex:1;min-width:0;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ aviso }}</span>
-          </div>
-        </sc-if>
 
 
         
@@ -299,7 +294,13 @@
     </sc-if>
 
     <sc-if value="{{ esMesas }}" hint-placeholder-val="{{ true }}">
-      <div style="position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(242,233,213,.97);backdrop-filter:blur(10px);border-top:1px solid rgba(20,52,42,.16)">
+      <div class="aro-barra" style="position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(242,233,213,.97);backdrop-filter:blur(10px);border-top:1px solid rgba(20,52,42,.16)">
+        <sc-if value="{{ hayAviso }}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="max-width:1180px;margin:0 auto;padding:10px clamp(16px,4vw,30px) 0;display:flex;gap:10px;align-items:flex-start">
+            <span style="flex:0 0 auto;width:20px;height:20px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+            <span style="flex:1;min-width:0;font:400 14px/1.45 'Inter Tight',sans-serif;color:#2C4A38">{{ aviso }}</span>
+          </div>
+        </sc-if>
         <div data-mesa="0" class="aro-mesa" style="{{ cajaEspera }}">
           <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px clamp(16px,4vw,30px)">
             <span style="flex:1 1 240px;min-width:0">
@@ -386,12 +387,36 @@ class Component extends DCLogic {
       if (destino != null && destino !== d.desde) this.moverPersona(d.pid, destino);
     };
 
+    // El hueco de abajo se MIDE. La barra cambia de alto segun cuanta gente
+    // hay en espera y si hay aviso, asi que un padding fijo tapa contenido
+    // en unos estados y sobra en otros. Es lo que pasaba con 148px.
+    this._ajustarHueco = () => {
+      // Por clase y no por el atributo style: el runtime lo normaliza a
+      // "position: fixed" con espacio, asi que el selector no encontraba
+      // nada y se medía solo la fila de dentro, no la barra entera.
+      const barra = document.querySelector('.aro-barra');
+      const fondo = document.querySelector('.aro-conbarra');
+      if (!barra || !fondo) return;
+      fondo.style.paddingBottom = Math.ceil(barra.getBoundingClientRect().height + 24) + 'px';
+    };
+    this._ajustarHueco();
+    if (window.ResizeObserver) {
+      this._ro = new ResizeObserver(() => this._ajustarHueco());
+      const barra = document.querySelector('.aro-barra');
+      if (barra) this._ro.observe(barra);
+    }
+    window.addEventListener('resize', this._ajustarHueco);
+
     window.addEventListener('pointermove', this._mover, { passive: false });
     window.addEventListener('pointerup', this._levantar);
     window.addEventListener('pointercancel', this._levantar);
   }
 
+  componentDidUpdate() { if (this._ajustarHueco) this._ajustarHueco(); }
+
   componentWillUnmount() {
+    if (this._ro) this._ro.disconnect();
+    window.removeEventListener('resize', this._ajustarHueco);
     document.body.style.userSelect = '';
     window.removeEventListener('pointermove', this._mover);
     window.removeEventListener('pointerup', this._levantar);
@@ -488,7 +513,7 @@ class Component extends DCLogic {
           aviso: aMesa === 0
             ? 'Movido a la espera. ' + (rotas ? (rotas === 1 ? 'Queda un aviso en el reparto.' : 'Quedan ' + rotas + ' avisos en el reparto.') : 'Todas las mesas cuadran.')
             : 'Movido a la mesa ' + String(aMesa).padStart(2, '0') + '. ' +
-              (rotas ? rotas + ' aviso(s) en el reparto.' : 'Todas las mesas cuadran.')
+              (rotas ? (rotas === 1 ? 'Queda un aviso en el reparto.' : 'Quedan ' + rotas + ' avisos en el reparto.') : 'Todas las mesas cuadran.')
         });
         this.cargarReparto();
       })
