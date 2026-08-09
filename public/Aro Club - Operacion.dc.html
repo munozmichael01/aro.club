@@ -19,6 +19,12 @@
   a:hover { color:#8F4515; }
   input, button { font: inherit; color: inherit; }
   ::selection { background:#14342A; color:#FAF3E4; }
+  /* Las tarjetas de mesa no se seleccionan nunca.
+     Bloquearlo al detectar el arrastre llegaba tarde: el navegador ya habia
+     empezado a seleccionar en el pointerdown, y al cruzar de una tarjeta a
+     otra pintaba de verde etiquetas, chips y el resumen entero. Aqui no hay
+     nada que copiar; lo que hay es una superficie que se manipula. */
+  .aro-mesa, .aro-mesa * { user-select:none; -webkit-user-select:none; }
   @keyframes aro-latido { 0%,100% { opacity:1 } 50% { opacity:.45 } }
   @keyframes aro-open { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
@@ -65,7 +71,7 @@
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));align-items:start;gap:12px">
           <sc-for list="{{ mesas }}" as="t" hint-placeholder-count="6">
-            <div data-mesa="{{ t.nReal }}" style="{{ t.caja }}">
+            <div class="aro-mesa" data-mesa="{{ t.nReal }}" style="{{ t.caja }}">
               <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
                 <span style="{{ t.numero }}">{{ t.n }}</span>
                 <span style="flex:1;min-width:0">
@@ -761,6 +767,9 @@ class Component extends DCLogic {
               (arrastrando ? '.4' : '1') + ';transition:opacity 140ms ease',
             tomar: (e) => {
               if (cerrada) return;
+              // Cortar aqui y no al activarse el arrastre: para cuando se
+              // detecta el gesto, la seleccion del navegador ya empezo.
+              if (e.preventDefault) e.preventDefault();
               // Solo se guarda la intencion: hasta que no se mueven seis
               // pixeles no es un arrastre, es un clic.
               this._drag = { pid: pid, desde: propuesta[k].numero, x: e.clientX, y: e.clientY, activo: false };

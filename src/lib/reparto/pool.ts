@@ -65,12 +65,20 @@ export async function construirPool(
     .select('id, display_name, full_name')
     .in('id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
 
-  // Seis meses. Quien cenó con alguien en marzo no vuelve a coincidir en
+  // Tres meses. Quien cenó con alguien en mayo no vuelve a coincidir hasta
   // agosto: es lo que hace que la siguiente mesa sea gente nueva.
+  //
+  // Empezó en seis y se bajó a tres a propósito, para ver qué pasa: con
+  // poca gente, seis meses de veto agota el pool y deja mesas sin armar.
+  // Es el número que hay que vigilar cuando crezca la base.
+  const MESES_SIN_REPETIR = 3
   const { data: encuentros } = await admin
     .from('pair_encounters')
     .select('profile_a, profile_b')
-    .gt('last_met_at', new Date(Date.now() - 182 * 86400_000).toISOString())
+    .gt(
+      'last_met_at',
+      new Date(Date.now() - MESES_SIN_REPETIR * 30 * 86400_000).toISOString(),
+    )
 
   const { data: exclusiones } = await admin.from('exclusions').select('profile_a, profile_b')
 
