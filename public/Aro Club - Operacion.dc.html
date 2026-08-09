@@ -110,6 +110,7 @@
                       <button onClick="{{ v.pick }}" style="{{ v.btn }}">{{ v.nombre }}</button>
                     </sc-for>
                   </div>
+                  <div style="font:400 12px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:8px;text-wrap:pretty">{{ t.notaSedes }}</div>
                 </div>
               </sc-if>
 
@@ -161,7 +162,7 @@
             <div style="display:flex;gap:11px;align-items:flex-start">
               <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
               <span style="flex:1;min-width:0">
-                <span style="display:block;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A">Esto rompe reglas duras.</span>
+                <span style="display:block;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ tituloFreno }}</span>
                 <span style="display:block;font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:4px">Puedes publicar igualmente, pero queda escrito qué aceptaste y quién lo aceptó.</span>
               </span>
             </div>
@@ -174,7 +175,7 @@
               </sc-for>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px">
-              <button onClick="{{ forzar }}" style="{{ botonForzar }}">Publicar igualmente</button>
+              <button onClick="{{ forzar }}" style="{{ botonForzar }}">{{ textoForzar }}</button>
               <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
               <button onClick="{{ cerrarFreno }}" style="{{ botonFantasmaOps }}">Cancelar</button>
             </div>
@@ -339,6 +340,14 @@ class Component extends DCLogic {
       if (!d.activo) {
         if (Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) < 6) return;
         d.activo = true;
+        // La seleccion se bloquea en TODA la pagina, no solo en la fila.
+        // Al cruzar de una tarjeta a otra el navegador iba seleccionando
+        // todo lo que pillaba por el camino —etiquetas, chips, el resumen
+        // entero— y el panel se veia roto justo mientras se usa.
+        document.body.style.userSelect = 'none';
+        document.body.style.webkitUserSelect = 'none';
+        const sel = window.getSelection && window.getSelection();
+        if (sel && sel.removeAllRanges) sel.removeAllRanges();
         this.setState({ arrastrando: d.pid });
       }
       e.preventDefault();
@@ -351,6 +360,8 @@ class Component extends DCLogic {
     this._levantar = () => {
       const d = this._drag;
       this._drag = null;
+      document.body.style.userSelect = '';
+      document.body.style.webkitUserSelect = '';
       if (!d || !d.activo) { this.setState({ arrastrando: null, sobreMesa: null }); return; }
       const destino = this.state.sobreMesa;
       this.setState({ arrastrando: null, sobreMesa: null });
@@ -363,6 +374,7 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
+    document.body.style.userSelect = '';
     window.removeEventListener('pointermove', this._mover);
     window.removeEventListener('pointerup', this._levantar);
     window.removeEventListener('pointercancel', this._levantar);
@@ -544,14 +556,14 @@ class Component extends DCLogic {
   publicarMesas(forzar) {
     const c = this.state.reparto && this.state.reparto.corrida;
     if (!c || this.state.trabajando) return;
-    this.setState({ trabajando: true, fallo: '' });
+    this.setState({ trabajando: true, fallo: '', frenoMesa: null });
     fetch('/api/operacion/publicar', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(forzar ? { corridaId: c.id, forzar: true } : { corridaId: c.id })
     })
       .then((r) => r.json().then((d) => ({ ok: r.ok, code: r.status, d })))
       .then(({ ok, code, d }) => {
-        if (!ok && code === 409 && d.roturas) { this.setState({ trabajando: false, roturasFreno: d.roturas }); return; }
+        if (!ok && code === 409 && d.roturas) { this.setState({ trabajando: false, roturasFreno: d.roturas, frenoMesa: null }); return; }
         if (!ok) { this.setState({ trabajando: false, fallo: d.error || 'No se pudo publicar.' }); return; }
         this.setState({
           trabajando: false, publicado: true, roturasFreno: null,
@@ -815,6 +827,16 @@ class Component extends DCLogic {
         // Siempre visible aunque solo haya un sitio posible: saber que no
         // hay alternativa es tan util como poder elegir.
         haySedes: ((R.sedes) || []).filter((v) => (propuesta[k] && propuesta[k].zonasPosibles || []).indexOf(v.zona) >= 0).length > 0,
+        // Cuando solo hay un sitio, el problema no es la pantalla: es que no
+        // hemos abierto mas sitios en esa zona. Decirlo evita buscar un
+        // selector que no puede existir.
+        notaSedes: (() => {
+          const posibles = ((R.sedes) || []).filter((v) => (propuesta[k] && propuesta[k].zonasPosibles || []).indexOf(v.zona) >= 0);
+          const zonas = (propuesta[k] && propuesta[k].zonasPosibles) || [];
+          if (posibles.length > 1) return 'Elige uno. Todos están en zonas que les sirven.';
+          if (posibles.length === 1) return 'Es el único abierto en ' + zonas.map((z) => zonaNombre(z)).join(' o ') + '. Para tener alternativa hay que abrir otro sitio en esa zona.';
+          return 'No hay ningún sitio abierto en las zonas que les sirven.';
+        })(),
         senales
       };
     });
@@ -1008,7 +1030,20 @@ class Component extends DCLogic {
       botonRepartir: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:999px;border:1px solid rgba(20,52,42,.24);background:transparent;color:#1B5138;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' +
         (this.state.repartiendo ? 'progress' : 'pointer') + ';opacity:' + (this.state.repartiendo ? '.6' : '1'),
       publicar: () => this.publicarMesas(false),
-      forzar: () => this.publicarMesas(true),
+      // Forzar tiene que forzar LO MISMO que se intentó. El freno de una
+      // mesa concreta acababa publicandolas todas porque esto llamaba
+      // siempre a la version global.
+      forzar: () => {
+        if (this.state.frenoMesa != null) this.publicarUna(this.state.frenoMesa, true);
+        else this.publicarMesas(true);
+      },
+      // Y el aviso dice a que se refiere, para que no haya duda.
+      tituloFreno: this.state.frenoMesa != null
+        ? 'La mesa ' + String(this.state.frenoMesa).padStart(2, '0') + ' rompe reglas duras.'
+        : 'Esto rompe reglas duras.',
+      textoForzar: this.state.frenoMesa != null
+        ? 'Publicar la ' + String(this.state.frenoMesa).padStart(2, '0') + ' igualmente'
+        : 'Publicar todas igualmente',
       rebarajar: () => this.repartirDeNuevo(),
       // El freno, con lo que esta roto delante.
       hayFreno: !!this.state.roturasFreno,
@@ -1016,7 +1051,7 @@ class Component extends DCLogic {
         titulo: 'Mesa ' + String(r.mesa).padStart(2, '0'),
         detalle: r.roturas.map((x) => x.regla + ': ' + x.detalle).join(' · ')
       })),
-      cerrarFreno: () => this.setState({ roturasFreno: null }),
+      cerrarFreno: () => this.setState({ roturasFreno: null, frenoMesa: null }),
       hayAvisosPublicados: !!this.state.avisosPublicados,
       textoAvisosPublicados: this.state.avisosPublicados
         ? 'Publicadas con avisos aceptados en ' + this.state.avisosPublicados.length +
