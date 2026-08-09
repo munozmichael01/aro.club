@@ -316,7 +316,11 @@ class Component extends DCLogic {
       body: JSON.stringify({
         eventoId: this._evento,
         metodo: (this.state.datos.metodos[this.state.metodo] || {}).id,
-        datos: this.state.rep || {}
+        datos: this.state.rep || {},
+        // La tasa que esta pantalla le enseño, que es con la que hizo la
+        // transferencia. Si el cron la cambio mientras estaba en el banco,
+        // vale la suya y no la de ahora.
+        tasaVista: this.state.datos.tasa || undefined
       })
     })
       .then((r) => r.json().then((x) => ({ ok: r.ok, x })))

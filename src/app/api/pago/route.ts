@@ -25,6 +25,9 @@ const cuerpo = z.object({
   eventoId: z.string().uuid(),
   metodo: z.string().min(1),
   datos: z.record(z.string(), z.string()),
+  // La tasa que la pantalla le ENSEÑÓ. No es un dato de adorno: es con la
+  // que hizo la transferencia.
+  tasaVista: z.number().positive().optional(),
 })
 
 /**
@@ -193,6 +196,47 @@ export async function POST(request: Request) {
   const usd = Number(evento.price_usd ?? 8)
   const ahora = new Date().toISOString()
 
+  // Vale la tasa que VIO, no la que hay cuando vuelve.
+  //
+  // Congelarla al reportar tiene un hueco que no salta a la vista: entre
+  // que la pantalla le dice "transfiere 6.053,78" y que vuelve del banco a
+  // reportar, el cron de medianoche puede haber cambiado la tasa. Entonces
+  // ella transfirio un importe y nosotros registrabamos otro, y operacion
+  // se pondria a buscar en el banco un movimiento que no existe.
+  //
+  // Asi que se acepta la suya, comprobando que sea una que publicamos de
+  // verdad: si no, no es "la que vio", es una inventada.
+  let tasaAplicada = tasa ? Number(tasa.usd_to_ves) : null
+
+  if (m.moneda === 'VES' && parsed.data.tasaVista) {
+    const { data: publicadas } = await admin
+      .from('fx_rates')
+      .select('usd_to_ves')
+      .order('rate_date', { ascending: false })
+      .limit(3)
+
+    const vale = (publicadas ?? []).some(
+      (r) => Math.abs(Number(r.usd_to_ves) - parsed.data.tasaVista!) < 0.0001,
+    )
+
+    if (vale) {
+      tasaAplicada = parsed.data.tasaVista
+    } else {
+      // Ni la de ahora ni ninguna reciente: se para y se le dice el importe
+      // nuevo, en vez de registrar en silencio uno que no pagó.
+      return NextResponse.json(
+        {
+          error: 'La tasa cambió mientras pagabas. Revisa el monto y vuelve a reportarlo.',
+          tasa: tasaAplicada,
+          montoLocal: tasaAplicada
+            ? Number((usd * tasaAplicada + centimosDe(user.id, evento.id) / 100).toFixed(2))
+            : null,
+        },
+        { status: 409 },
+      )
+    }
+  }
+
   // El puesto se aparta AQUÍ. Es lo primero que pasa, antes que el pago:
   // si el orden fuera al revés y algo fallara, habría pagado sin sitio.
   const { data: yaTiene } = await admin
@@ -233,11 +277,11 @@ export async function POST(request: Request) {
     // Con los céntimos dentro: es el importe exacto que sale de su cuenta,
     // y el que operación busca en el banco.
     amount_local:
-      m.moneda === 'VES' && tasa
-        ? Number((usd * Number(tasa.usd_to_ves) + centimosDe(user.id, evento.id) / 100).toFixed(2))
+      m.moneda === 'VES' && tasaAplicada
+        ? Number((usd * tasaAplicada + centimosDe(user.id, evento.id) / 100).toFixed(2))
         : null,
     cents_token: centimosDe(user.id, evento.id),
-    fx_rate: m.moneda === 'VES' && tasa ? Number(tasa.usd_to_ves) : null,
+    fx_rate: m.moneda === 'VES' ? tasaAplicada : null,
     fx_congelado_en: m.moneda === 'VES' ? ahora : null,
     reportado_en: ahora,
     datos: datos as never,
@@ -257,6 +301,16 @@ export async function POST(request: Request) {
       .update({ status: 'confirmed', confirmed_at: ahora })
       .eq('id', bookingId)
   }
+
+  // El aviso queda EN COLA. Hoy no hay remitente y no sale nada, pero el
+  // dia que exista, esto ya funciona sin volver a tocar el flujo.
+  await admin.from('scheduled_emails').insert({
+    profile_id: user.id,
+    kind: m.manual ? 'pago_en_revision' : 'pago_confirmado',
+    event_id: evento.id,
+    send_at: ahora,
+    payload: { metodo: m.id, monto: usd } as never,
+  } as never)
 
   return NextResponse.json({
     estado: m.manual ? 'reportado' : 'confirmado',

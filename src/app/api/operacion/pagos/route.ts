@@ -16,6 +16,31 @@ import { createAdminClient } from '@/lib/supabase/admin'
  *    suyo: mal tecleada una referencia, o el banco tardó.
  */
 
+/**
+ * Encola el aviso. Hoy no hay remitente, asi que esto no manda nada: es el
+ * registro de lo que habria que mandar. Cuando el remitente exista, este
+ * flujo ya funciona.
+ */
+async function encolar(
+  admin: ReturnType<typeof createAdminClient>,
+  profileId: string,
+  bookingId: string | null,
+  kind: 'pago_confirmado' | 'pago_no_cuadra',
+  payload: Record<string, unknown>,
+) {
+  const { data: reserva } = bookingId
+    ? await admin.from('bookings').select('event_id').eq('id', bookingId).maybeSingle()
+    : { data: null }
+
+  await admin.from('scheduled_emails').insert({
+    profile_id: profileId,
+    kind,
+    event_id: reserva?.event_id ?? null,
+    send_at: new Date().toISOString(),
+    payload: payload as never,
+  } as never)
+}
+
 const decision = z.discriminatedUnion('accion', [
   z.object({ accion: z.literal('confirmar'), pagoId: z.string().uuid() }),
   z.object({
@@ -156,7 +181,7 @@ export async function POST(request: Request) {
 
   const { data: pago } = await admin
     .from('payments')
-    .select('id, booking_id, status')
+    .select('id, booking_id, status, profile_id')
     .eq('id', d.pagoId)
     .maybeSingle()
 
@@ -184,6 +209,8 @@ export async function POST(request: Request) {
         .eq('id', pago.booking_id)
     }
 
+    await encolar(admin, pago.profile_id, pago.booking_id, 'pago_confirmado', {})
+
     return NextResponse.json({ estado: 'confirmado' })
   }
 
@@ -204,6 +231,13 @@ export async function POST(request: Request) {
   if (pago.booking_id) {
     await admin.from('bookings').update({ hold_until: limite }).eq('id', pago.booking_id)
   }
+
+  // El aviso, con el motivo dentro. Es el unico de los tres del que Design
+  // no tiene plantilla, y el correo 06 le promete que se lo diriamos.
+  await encolar(admin, pago.profile_id, pago.booking_id, 'pago_no_cuadra', {
+    motivo: d.motivo,
+    guardadoHasta: limite,
+  })
 
   return NextResponse.json({ estado: 'no-cuadra', guardadoHasta: limite })
 }

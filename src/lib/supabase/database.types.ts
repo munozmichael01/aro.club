@@ -3130,6 +3130,10 @@ export type Database = {
         | "mesa_asignada"
         | "recordatorio"
         | "comprobante"
+        | "pago_en_revision"
+        | "pago_confirmado"
+        | "pago_no_cuadra"
+        | "cancelacion"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -3348,6 +3352,10 @@ export const Constants = {
         "mesa_asignada",
         "recordatorio",
         "comprobante",
+        "pago_en_revision",
+        "pago_confirmado",
+        "pago_no_cuadra",
+        "cancelacion",
       ],
       event_format_t: [
         "dinner",
