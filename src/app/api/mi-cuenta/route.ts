@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/server'
 
 type Estado =
   | 'perfil'
+  | 'datos'
   | 'verificar'
   | 'revision'
   | 'reservar'
@@ -34,7 +35,9 @@ export async function GET() {
 
   const { data: perfil } = await admin
     .from('profiles')
-    .select('id, full_name, display_name, email, contact_email, status, role, waitlist_id')
+    .select(
+      'id, full_name, display_name, email, contact_email, status, role, waitlist_id, birthdate, gender, phone_e164',
+    )
     .eq('id', user.id)
     .maybeSingle()
 
@@ -49,18 +52,26 @@ export async function GET() {
     .eq('is_active', true)
     .maybeSingle()
 
-  const { count: totalPreguntas } = await admin
+  // Solo las OBLIGATORIAS. Contra las 17 a secas, quien salta una opcional
+  // —dieta, evitar, romance— se quedaba en 16 de 17 y Mi cuenta le pedia
+  // terminar el perfil para siempre por no contestar algo que decia
+  // OPCIONAL en pantalla.
+  const { data: obligatorias } = await admin
     .from('questions')
-    .select('*', { count: 'exact', head: true })
+    .select('key')
     .eq('version_id', version?.id ?? 0)
+    .eq('is_required', true)
 
-  const { count: respondidas } = await admin
+  const { data: dadas } = await admin
     .from('answers')
-    .select('*', { count: 'exact', head: true })
+    .select('question_key')
     .eq('profile_id', user.id)
     .eq('version_id', version?.id ?? 0)
 
-  const faltan = Math.max(0, (totalPreguntas ?? 0) - (respondidas ?? 0))
+  const respondidasSet = new Set((dadas ?? []).map((a) => a.question_key))
+  const pendientes = (obligatorias ?? []).filter((q) => !respondidasSet.has(q.key))
+  const totalPreguntas = obligatorias?.length ?? 0
+  const faltan = pendientes.length
 
   // --- verificación ----------------------------------------------------
   const { data: verificaciones } = await admin
@@ -114,8 +125,15 @@ export async function GET() {
 
   // El orden de esta cadena ES el recorrido: cada estado tiene un solo
   // paso siguiente y no puede haber dos a la vez.
+  // Nombre, nacimiento, genero y telefono. La pantalla existia desde la
+  // entrega 3 pero no la enlazaba nadie, asi que nadie los daba: `age` y
+  // `gender` llegaban nulos al reparto y las dos restricciones mas duras
+  // —diez anos de horquilla y equilibrio de genero— no filtraban nada.
+  const datosBase = Boolean(perfil.full_name && perfil.birthdate && perfil.phone_e164)
+
   let estado: Estado
   if (faltan > 0) estado = 'perfil'
+  else if (!datosBase) estado = 'datos'
   else if (!verificada && !enRevision) estado = 'verificar'
   else if (enRevision) estado = 'revision'
   else if (!reserva) estado = 'reservar'
@@ -128,7 +146,7 @@ export async function GET() {
     estado,
     verif,
     motivoRechazo: rechazada?.rejection_reason ?? null,
-    respuestas: { faltan, total: totalPreguntas ?? 0 },
+    respuestas: { faltan, total: totalPreguntas },
     creditos,
     reserva: reserva
       ? {

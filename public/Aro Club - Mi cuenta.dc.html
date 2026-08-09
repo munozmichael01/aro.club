@@ -39,6 +39,7 @@
 
   <div style="flex:1;max-width:720px;width:100%;margin:0 auto;padding:clamp(24px,4.5vw,44px) clamp(16px,4vw,28px) clamp(48px,8vw,90px)">
 
+    <sc-if value="{{ hayDatos }}" hint-placeholder-val="{{ true }}">
     <div style="font:400 clamp(26px,4.6vw,38px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:clamp(20px,3vw,28px)">{{ saludo }}</div>
 
     <div style="{{ bloque }}">
@@ -89,6 +90,7 @@
         </div>
       </div>
     </div>
+    </sc-if>
 
     <div id="agenda" style="margin-top:clamp(32px,4.4vw,48px);scroll-margin-top:80px">
       <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:12px">Lo que viene en Caracas</div>
@@ -253,6 +255,17 @@ class Component extends DCLogic {
         accion: 'Continuar el perfil', enlace: 'Aro Club - Cuestionario.dc.html'
       },
       {
+        // Estado nuevo. El copy sale de la propia pantalla de Datos base de
+        // Design ("Cuatro preguntas rápidas que no estaban en el cuestionario
+        // y sin las cuales no podemos armar tu mesa"), no inventado aquí.
+        id: 'datos', sello: 'FALTAN TUS DATOS BASE',
+        verif: 'sin', respuestas: 'Completas', creditos: '4 de 4',
+        creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
+        titulo: 'Faltan cuatro datos para poder sentarte.',
+        cuerpo: 'Tu nombre, cuándo naciste, tu género y un teléfono. No estaban en el cuestionario y sin ellos no podemos armar tu mesa: la edad y el género son lo que más pesa al formar el grupo.',
+        accion: 'Completar mis datos', enlace: 'Aro Club - Datos base.dc.html'
+      },
+      {
         id: 'verificar', sello: 'FALTA VERIFICAR',
         verif: 'sin', respuestas: 'Completas', creditos: '4 de 4',
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
@@ -323,6 +336,9 @@ class Component extends DCLogic {
         : base.titulo
     });
     const oscuro = e.id === 'abierta' || e.id === 'reservada';
+    // Igual que en Mi mesa: hasta que el servidor no dice en que estado
+    // esta, no se pinta ninguno. Se veia medio segundo de "TE FALTAN 13
+    // PREGUNTAS" a gente que las tenia todas contestadas.
 
     const gente = [
       ['Andrés', 'A', 'Tecnología'], ['Gabriela', 'G', 'Salud'], ['José Manuel', 'J', 'Finanzas'],
@@ -475,6 +491,7 @@ class Component extends DCLogic {
       hayFiltro: this.state.filtro !== 0,
       quitarFiltro: () => this.setState({ filtro: 0, reservando: null }),
       botonFantasmaOscuro: 'display:inline-flex;align-items:center;min-height:50px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
+      hayDatos: !!this.state.datos,
       saludo: this.state.datos && this.state.datos.nombre
         ? 'Hola, ' + this.state.datos.nombre + '.'
         : 'Hola.',

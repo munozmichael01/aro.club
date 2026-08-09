@@ -140,6 +140,13 @@
       </div>
     </sc-if>
 
+    <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
+      <div role="alert" style="display:flex;gap:12px;align-items:flex-start;border-radius:26px;background:rgba(110,52,15,.09);padding:clamp(15px,2.2vw,19px);margin-top:16px">
+        <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+        <span style="flex:1;min-width:0;font:400 15px/1.45 'Inter Tight',sans-serif;color:#14342A">{{ fallo }}</span>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ hayNav }}" hint-placeholder-val="{{ true }}">
       <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
         <button onClick="{{ siguiente }}" aria-disabled="{{ inerte }}" style="{{ botonSiguiente }}">{{ textoSiguiente }}</button>
@@ -154,7 +161,52 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { paso: 0, nombre: '', trato: '', dia: '', mes: '', anio: '', genero: -1, telefono: '' };
+  state = { paso: 0, nombre: '', trato: '', dia: '', mes: '', anio: '', genero: -1, telefono: '', guardando: false, fallo: '' };
+
+  GENEROS = ['mujer', 'hombre', 'no-binario', 'sin-decir'];
+
+  componentDidMount() {
+    // Se rellena con lo que ya haya: quien vuelve a esta pantalla no
+    // reescribe su nombre para cambiar el telefono.
+    fetch('/api/datos-base')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
+      .then((d) => {
+        const est = { nombre: d.nombre || '', trato: d.trato || '', telefono: d.telefono || '' };
+        if (d.nacimiento) {
+          const p = String(d.nacimiento).split('-');
+          est.anio = p[0]; est.mes = String(parseInt(p[1], 10)); est.dia = String(parseInt(p[2], 10));
+        }
+        if (d.genero) est.genero = this.GENEROS.indexOf(d.genero);
+        this.setState(est);
+      })
+      .catch(() => { window.location.href = 'Aro Club - Entrar.dc.html'; });
+  }
+
+  // Se guarda entero al terminar, no pregunta a pregunta: aqui las cuatro
+  // se validan entre si —la edad depende de dia, mes y anio a la vez— y
+  // media fecha guardada no es media respuesta, es una fecha que miente.
+  guardar() {
+    if (this.state.guardando) return;
+    const p2 = (n) => (String(n).length < 2 ? '0' + n : String(n));
+    this.setState({ guardando: true, fallo: '' });
+    fetch('/api/datos-base', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: this.state.nombre.trim(),
+        trato: this.state.trato.trim(),
+        nacimiento: this.state.anio + '-' + p2(this.state.mes) + '-' + p2(this.state.dia),
+        genero: this.GENEROS[this.state.genero],
+        telefono: '+58' + this.telLimpio()
+      })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) { this.setState({ guardando: false, fallo: d.error || 'Revisa los datos.' }); return; }
+        this.setState({ paso: 4, guardando: false });
+      })
+      .catch(() => this.setState({ guardando: false, fallo: 'No pudimos guardar. Vuelve a intentarlo.' }));
+  }
 
   edad() {
     const d = parseInt(this.state.dia, 10);
@@ -301,10 +353,18 @@ class Component extends DCLogic {
       eyebrow: 'font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.16em;color:#8F4515;margin-bottom:13px',
       h1: 'font:400 clamp(30px,6.4vw,44px)/1.04 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:16ch;text-wrap:balance',
 
-      textoSiguiente: q.listo ? (p === 3 ? 'Terminar' : 'Continuar') : 'Falta este dato',
+      textoSiguiente: this.state.guardando ? 'Guardando' : (q.listo ? (p === 3 ? 'Terminar' : 'Continuar') : 'Falta este dato'),
       inerte: q.listo ? null : 'true',
       botonSiguiente: btn(q.listo ? '#14342A' : 'rgba(20,52,42,.12)', q.listo ? '#FAF3E4' : '#2C4A38', q.listo ? '' : 'cursor:not-allowed'),
-      siguiente: () => { if (q.listo) this.setState((s) => ({ paso: Math.min(4, s.paso + 1) })); },
+      // Del paso 4 al resumen se pasa GUARDANDO. Antes avanzaba solo, asi
+      // que la pantalla decia "Ya podemos sentarte" sin haber guardado nada.
+      siguiente: () => {
+        if (!q.listo || this.state.guardando) return;
+        if (p === 3) { this.guardar(); return; }
+        this.setState((s) => ({ paso: Math.min(4, s.paso + 1) }));
+      },
+      fallo: this.state.fallo,
+      hayFallo: !!this.state.fallo,
       puedeAtras: p > 0,
       atras: () => this.setState((s) => ({ paso: Math.max(0, s.paso - 1) })),
       botonFantasma: btn('transparent', '#33513F', 'font-weight:500;padding:0 10px;text-decoration:underline;text-underline-offset:6px'),
