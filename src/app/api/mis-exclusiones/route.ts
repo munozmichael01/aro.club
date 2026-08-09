@@ -105,14 +105,5 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Ese bloqueo no se puede quitar.' }, { status: 409 })
   }
 
-  // Y la señal de la mesa, que es lo otro que mira el reparto.
-  await admin
-    .from('peer_feedback')
-    .delete()
-    .eq('rater_id', user.id)
-    .eq('rated_id', parsed.data.aQuien)
-    .eq('signal', 'avoid')
-    .eq('flag_conduct', false)
-
   return NextResponse.json({ estado: 'quitado' })
 }

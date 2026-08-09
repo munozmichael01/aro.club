@@ -2136,8 +2136,11 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           created_at: string
+          deactivated_at: string | null
+          deactivated_by: string | null
           facade_photo_path: string | null
           fixed_menu_usd: number | null
+          formats: Database["public"]["Enums"]["event_format_t"][]
           has_parking: boolean
           id: string
           is_active: boolean
@@ -2159,8 +2162,11 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           facade_photo_path?: string | null
           fixed_menu_usd?: number | null
+          formats?: Database["public"]["Enums"]["event_format_t"][]
           has_parking?: boolean
           id?: string
           is_active?: boolean
@@ -2182,8 +2188,11 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           facade_photo_path?: string | null
           fixed_menu_usd?: number | null
+          formats?: Database["public"]["Enums"]["event_format_t"][]
           has_parking?: boolean
           id?: string
           is_active?: boolean
@@ -2196,6 +2205,34 @@ export type Database = {
           zone_slug?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "restaurants_deactivated_by_fkey"
+            columns: ["deactivated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "restaurants_deactivated_by_fkey"
+            columns: ["deactivated_by"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "restaurants_deactivated_by_fkey"
+            columns: ["deactivated_by"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "restaurants_deactivated_by_fkey"
+            columns: ["deactivated_by"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "restaurants_zone_slug_fkey"
             columns: ["zone_slug"]

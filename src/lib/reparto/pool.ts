@@ -36,23 +36,59 @@ export async function construirPool(
 ): Promise<Pool> {
   const { data: evento } = await admin
     .from('events')
-    .select('seats_per_table')
+    .select('seats_per_table, format')
     .eq('id', eventoId)
     .maybeSingle()
 
   const { data: sedesRaw } = await admin
     .from('event_venues')
-    .select('zone_slug, restaurant_id, max_tables, restaurants(name, max_tables), zones(name)')
+    .select('zone_slug, restaurant_id, max_tables, restaurants(name, max_tables, is_active, formats, noise_level, address, contact_name, contact_phone), zones(name)')
     .eq('event_id', eventoId)
 
-  const sedes: Sede[] = (sedesRaw ?? []).map((v) => ({
-    zona: v.zone_slug,
-    zonaNombre: (v.zones as unknown as { name: string } | null)?.name ?? v.zone_slug,
-    restaurantId: v.restaurant_id,
-    nombre: (v.restaurants as unknown as { name: string } | null)?.name ?? null,
-    maxMesas:
-      v.max_tables ?? (v.restaurants as unknown as { max_tables: number } | null)?.max_tables ?? 4,
-  }))
+  type Local = {
+    name: string
+    max_tables: number
+    is_active: boolean
+    formats: string[] | null
+    noise_level: number | null
+    address: string | null
+    contact_name: string | null
+    contact_phone: string | null
+  }
+
+  const formato = evento?.format ?? 'dinner'
+  const esCena = ['dinner', 'foodie_dinner', 'women_dinner'].includes(formato)
+
+  /**
+   * Un sitio abierto para una fecha no basta: tiene que poder recibirla. Sin
+   * esto, abrir una zona con un local de solo drinks sentaba una cena en un
+   * bar, y un sitio desactivado seguia recibiendo mesas hasta que alguien se
+   * acordara de quitarlo de la fecha.
+   *
+   * El ruido 3 no sirve para cenas: es la unica regla del local que arruina
+   * la mesa entera aunque todo lo demas cuadre.
+   */
+  const puedeRecibir = (l: Local | null) => {
+    if (!l) return false
+    if (!l.is_active) return false
+    if (!(l.formats ?? []).includes(formato)) return false
+    if (esCena && l.noise_level === 3) return false
+    // Un sitio sin direccion ni telefono no se le puede dar a nadie: la
+    // direccion va en Mi mesa y el telefono es a quien se llama esa noche.
+    if (!l.address || !l.contact_phone) return false
+    return true
+  }
+
+  const sedes: Sede[] = (sedesRaw ?? [])
+    .filter((v) => puedeRecibir(v.restaurants as unknown as Local | null))
+    .map((v) => ({
+      zona: v.zone_slug,
+      zonaNombre: (v.zones as unknown as { name: string } | null)?.name ?? v.zone_slug,
+      restaurantId: v.restaurant_id,
+      nombre: (v.restaurants as unknown as Local | null)?.name ?? null,
+      maxMesas:
+        v.max_tables ?? (v.restaurants as unknown as Local | null)?.max_tables ?? 4,
+    }))
 
   const zonasAbiertas = new Set(sedes.map((v) => v.zona))
 

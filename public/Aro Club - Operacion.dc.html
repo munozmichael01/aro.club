@@ -469,6 +469,7 @@ class Component extends DCLogic {
   state = { vista: 0, publicado: false, decididas: {}, abriendo: null, motivos: {},
             cola: null, catalogo: [], trabajando: false, fallo: '',
             incidencias: null, accionesIncidencia: [], accionElegida: {}, cerrando: null,
+            nLocales: null,
             reparto: null, roturasFreno: null, avisosPublicados: null, aviso: '',
             arrastrando: null, desdeMesa: null, sobreMesa: null,
             recalculando: [], antesDeMover: null, repartiendo: false,
@@ -805,6 +806,11 @@ class Component extends DCLogic {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin permiso'))))
       .then((d) => this.setState({ cola: d.cola, catalogo: d.motivos }))
       .catch(() => this.setState({ cola: [], catalogo: [] }));
+
+    fetch('/api/operacion/locales')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin permiso'))))
+      .then((d) => this.setState({ nLocales: d.resumen.activos }))
+      .catch(() => {});
 
     fetch('/api/operacion/incidencias')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin permiso'))))
@@ -1155,11 +1161,12 @@ class Component extends DCLogic {
     const botonFicha = 'display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.2);font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138';
 
     const sinResolver = (this.state.incidencias || []).filter((n) => !n.resuelta).length;
-    const pestanas = [['Mesas', String(nMesas)], ['Verificaciones', String(pendientes)], ['Pagos', String((this.state.pagosResumen && this.state.pagosResumen.pendientes) || 0)], ['Reportes', String(sinResolver)]].map((p, i) => {
+    const pestanas = [['Mesas', String(nMesas)], ['Verificaciones', String(pendientes)], ['Pagos', String((this.state.pagosResumen && this.state.pagosResumen.pendientes) || 0)], ['Reportes', String(sinResolver)], ['Locales', String(this.state.nLocales == null ? '·' : this.state.nLocales)]].map((p, i) => {
       const on = v === i;
       return {
         nombre: p[0], n: p[1],
-        pick: () => this.setState({ vista: i }),
+        // Locales vive en su propia pantalla; el resto son vistas de esta.
+        pick: () => { if (i === 4) { window.location.href = 'Aro Club - Locales.dc.html'; return; } this.setState({ vista: i }); },
         btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#1B5138') + ';font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease',
         contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.22)' : 'rgba(20,52,42,.09)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#33513F') + ';font-variant-numeric:tabular-nums'
       };

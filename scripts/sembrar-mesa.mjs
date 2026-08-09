@@ -103,6 +103,11 @@ async function sembrar() {
       address: 'Calle Madrid con avenida Principal, Las Mercedes',
       avg_check_usd: 28, budget_tier: 2, noise_level: 2,
       max_tables: 4, is_active: true,
+      // Sin contacto ni formatos el pool lo descarta —un sitio al que no se
+      // puede llamar esa noche no se le da a nadie— y la fecha se queda sin
+      // ninguna zona abierta.
+      contact_name: 'Marielena Ruiz', contact_phone: '+58 212 993 4410',
+      formats: ['dinner'],
     }),
   })
 

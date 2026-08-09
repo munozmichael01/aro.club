@@ -169,19 +169,33 @@ export async function GET(request: Request) {
     .select('table_id, would_repeat, conversation_rating')
     .eq('profile_id', id)
 
-  const { data: bloqueosSuyos } = await admin
-    .from('peer_feedback')
-    .select('table_id, rated_id, flag_conduct')
-    .eq('rater_id', id)
-    .eq('signal', 'avoid')
+  // Los bloqueos viven en `exclusions` y solo ahí. `created_by` distingue
+  // los que puso ella de los que le pusieron a ella.
+  const { data: exclusiones } = await admin
+    .from('exclusions')
+    .select('profile_a, profile_b, reason, created_by')
+    .or(`profile_a.eq.${id},profile_b.eq.${id}`)
+
+  const conQuien = (exclusiones ?? []).map((e) => ({
+    otro: e.profile_a === id ? e.profile_b : e.profile_a,
+    reason: e.reason,
+    mia: e.created_by === id,
+  }))
+  const bloqueosSuyos = conQuien.filter((e) => e.mia)
 
   const { data: zonas } = await admin.from('zones').select('slug, name')
   const nombreZona = new Map((zonas ?? []).map((z) => [z.slug, z.name]))
 
   const valorDe = new Map((valoraciones ?? []).map((v) => [v.table_id, v]))
+
+  // Un bloqueo no pertenece a una mesa: es de una pareja y es permanente.
+  // «Bloqueó a una persona de esa mesa» se deriva cruzando sus bloqueos con
+  // quién se sentó con ella cada vez.
+  const suyos = new Set(bloqueosSuyos.map((e) => e.otro))
   const bloqueosPorMesa = new Map<string, number>()
-  for (const b of bloqueosSuyos ?? []) {
-    bloqueosPorMesa.set(b.table_id, (bloqueosPorMesa.get(b.table_id) ?? 0) + 1)
+  for (const c of comensales ?? []) {
+    if (!suyos.has(c.profile_id)) continue
+    bloqueosPorMesa.set(c.table_id, (bloqueosPorMesa.get(c.table_id) ?? 0) + 1)
   }
 
   // `confirmed` no es «fue»: es «tiene puesto». Contarlo como cena inflaba
@@ -290,12 +304,6 @@ export async function GET(request: Request) {
   })
 
   // --- señales ----------------------------------------------------------
-  const { data: contraElla } = await admin
-    .from('peer_feedback')
-    .select('rater_id, flag_conduct')
-    .eq('rated_id', id)
-    .eq('signal', 'avoid')
-
   const { data: reportesSuyos } = await admin
     .from('incident_reports')
     .select('id')
@@ -306,17 +314,17 @@ export async function GET(request: Request) {
     .select('id, severity, resolved_at')
     .eq('subject_id', id)
 
-  const suyos = (bloqueosSuyos ?? []).length
-  const recibidos = (contraElla ?? []).length
+  const nSuyos = bloqueosSuyos.length
+  const recibidos = conQuien.filter((e) => !e.mia).length
   const mesas = historial.filter((h) => h.estado === 'Fue').length
   const enMesas = mesas === 0 ? 'Todavía no ha ido a ninguna mesa.' : `En ${mesas === 1 ? 'una mesa' : mesas + ' mesas'}.`
 
   const senales: { tono: 'bloqueo' | 'limpio' | 'aviso'; titulo: string; cuerpo: string; interno: boolean }[] = [
-    suyos === 0
+    nSuyos === 0
       ? { tono: 'limpio', titulo: 'Sin bloqueos', cuerpo: enMesas, interno: false }
       : {
           tono: 'bloqueo',
-          titulo: suyos === 1 ? 'Bloqueó a una persona' : `Bloqueó a ${suyos} personas`,
+          titulo: nSuyos === 1 ? 'Bloqueó a una persona' : `Bloqueó a ${nSuyos} personas`,
           cuerpo: 'No vuelve a coincidir con ellas y ellas no lo saben.',
           interno: true,
         },

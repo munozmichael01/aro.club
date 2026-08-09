@@ -333,7 +333,15 @@ export type Resultado = {
  * es que ninguna mesa devuelta rompe una restricción dura.
  */
 export function repartir(pool: Persona[], porMesa = 6, pesos: Pesos = PESOS): Resultado {
-  const cuantas = Math.floor(pool.length / porMesa)
+  // Quien no acepta NINGUNA de las zonas abiertas no se puede sentar en
+  // ningun sitio, y ordenar por "menos zonas primero" lo hacia justo lo
+  // contrario: entraba el primero a sembrar mesas —cero es el minimo— y
+  // arrastraba la mesa entera a una rotura de zona que no tiene arreglo.
+  // Va a espera, que es lo que es: alguien para quien no abrimos su zona.
+  const sentables = pool.filter((p) => p.zonas.length > 0)
+  const sinZona = pool.filter((p) => p.zonas.length === 0)
+
+  const cuantas = Math.floor(sentables.length / porMesa)
   if (cuantas === 0) return { mesas: [], espera: [...pool], puntuaciones: [], media: 0 }
 
   // Semilla por edad, y el id como desempate para que sea estable: mismo
@@ -344,7 +352,7 @@ export function repartir(pool: Persona[], porMesa = 6, pesos: Pesos = PESOS): Re
   // cada grupo —el spread de diez años es lo mas dificil de arreglar
   // despues— pero quien solo acepta una zona entra antes que quien acepta
   // tres, porque tiene menos huecos donde caber.
-  const orden = [...pool].sort(
+  const orden = [...sentables].sort(
     (a, b) =>
       a.zonas.length - b.zonas.length ||
       (a.edad ?? 999) - (b.edad ?? 999) ||
@@ -453,7 +461,9 @@ export function repartir(pool: Persona[], porMesa = 6, pesos: Pesos = PESOS): Re
   const puntuaciones = mesas.map((m) => puntuar(m, pesos))
   return {
     mesas,
-    espera: libres,
+    // Los que sobran del reparto MAS los que no tienen zona abierta: la
+    // espera es "quien no se sienta esta fecha", venga de donde venga.
+    espera: [...libres, ...sinZona],
     puntuaciones,
     media: puntuaciones.reduce((t, p) => t + p, 0) / (puntuaciones.length || 1),
   }

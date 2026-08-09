@@ -149,11 +149,21 @@ export async function GET() {
     .eq('profile_id', user.id)
     .maybeSingle()
 
-  const { data: bloqueados } = await admin
-    .from('peer_feedback')
-    .select('rated_id, flag_conduct')
-    .eq('table_id', miembro.table_id)
-    .eq('rater_id', user.id)
+  // De `exclusions`, que es donde vive el bloqueo. Se cruza con quienes
+  // estuvieron en esta mesa para saber a cuáles de ellos bloqueó.
+  const idsMesa = (companeros ?? []).map((c) => c.profile_id)
+  const { data: exclusiones } = await admin
+    .from('exclusions')
+    .select('profile_a, profile_b, reason, created_by')
+    .or(`profile_a.eq.${user.id},profile_b.eq.${user.id}`)
+
+  const suyas = (exclusiones ?? [])
+    .map((e) => ({
+      otro: e.profile_a === user.id ? e.profile_b : e.profile_a,
+      reason: e.reason,
+      mia: e.created_by === user.id,
+    }))
+    .filter((e) => e.mia && idsMesa.includes(e.otro))
 
   const sectorDe = new Map(
     (traits ?? []).map((t) => [
@@ -185,9 +195,9 @@ export async function GET() {
     // Lo que ya hizo. Los tres caminos son independientes, asi que se
     // devuelven por separado: haber valorado no cierra reportar.
     yaValoro: !!yaValoro,
-    yaBloqueados: (bloqueados ?? []).map((b) => b.rated_id),
+    yaBloqueados: suyas.map((e) => e.otro),
     // A quién reportó, no un sí/no: al recargar, la pantalla decía
     // «Reportaste a alguien». Con el id puede volver a decir su nombre.
-    yaReporto: (bloqueados ?? []).find((b) => b.flag_conduct)?.rated_id ?? null,
+    yaReporto: suyas.find((e) => e.reason === 'reporte')?.otro ?? null,
   })
 }

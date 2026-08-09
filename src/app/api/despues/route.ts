@@ -18,6 +18,14 @@ import { createClient } from '@/lib/supabase/server'
  *
  * Enviar uno no cierra los otros. Quien valora puede reportar después, y
  * quien reporta no tiene por qué valorar.
+ *
+ * Un bloqueo se guarda en `exclusions` y SOLO ahí. Antes se escribía también
+ * en `peer_feedback` con `signal: 'avoid'`, que era la misma verdad en dos
+ * sitios: el reparto leía una y la otra podía quedarse atrás sin que nadie
+ * lo notara —quitar un bloqueo tenía que acordarse de borrar las dos—. Un
+ * bloqueo no es de una mesa, es de una pareja y es permanente, así que
+ * `exclusions` es su sitio. `created_by` dice quién lo puso y `reason`
+ * distingue el bloqueo del reporte.
  */
 
 const accion = z.discriminatedUnion('accion', [
@@ -115,13 +123,6 @@ export async function POST(request: Request) {
         },
         { onConflict: 'profile_a,profile_b' },
       )
-
-      // Y se anota en el feedback de la mesa, que es lo que el reparto
-      // mira además de la exclusión.
-      await admin.from('peer_feedback').upsert(
-        { table_id: d.mesaId, rater_id: user.id, rated_id: otro, signal: 'avoid' },
-        { onConflict: 'table_id,rater_id,rated_id' },
-      )
     }
 
     return NextResponse.json({ estado: 'bloqueados', cuantos: d.aQuien.length })
@@ -159,11 +160,6 @@ export async function POST(request: Request) {
   await admin.from('exclusions').upsert(
     { profile_a: a, profile_b: b, reason: 'reporte', created_by: user.id },
     { onConflict: 'profile_a,profile_b' },
-  )
-
-  await admin.from('peer_feedback').upsert(
-    { table_id: d.mesaId, rater_id: user.id, rated_id: d.aQuien, signal: 'avoid', flag_conduct: true },
-    { onConflict: 'table_id,rater_id,rated_id' },
   )
 
   return NextResponse.json({ estado: 'reportado' })
