@@ -64,7 +64,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, price_usd, booking_closes_at')
+    .select('id, starts_at, price_usd, booking_closes_at, zone_slug')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -72,10 +72,28 @@ export async function GET(request: Request) {
 
   // Todos, encendidos y apagados: los apagados se enseñan atenuados con
   // "Pronto". Esconderlos haría creer que no existen.
-  const { data: metodos } = await admin
+  const { data: metodosRaw } = await admin
     .from('payment_methods')
     .select('id, nombre, moneda, manual, activo, datos_cuenta, campos, captura_obligatoria')
     .order('orden')
+
+  // `pendiente_de_datos_reales` era una nota para mí y no impedía nada: la
+  // pantalla enseñaba un teléfono de Pago Móvil que me inventé como si
+  // fuera una cuenta a la que transferir. Un método con la cuenta de
+  // mentira NO cobra —sale como «Pronto», igual que los apagados— hasta
+  // que los datos sean los de verdad.
+  const metodos = (metodosRaw ?? []).map((m) => {
+    const datos = (m.datos_cuenta ?? {}) as Record<string, unknown>
+    const deMentira = datos.pendiente_de_datos_reales === true
+    return deMentira
+      ? { ...m, activo: false, datos_cuenta: {} }
+      : m
+  })
+
+  const { data: zona } = evento.zone_slug
+    ? await admin.from('zones').select('name').eq('slug', evento.zone_slug).maybeSingle()
+    : { data: null }
+  const nombreZona = zona?.name ?? null
 
   const tasa = await tasaDelDia(admin)
   const usd = Number(evento.price_usd ?? 8)
@@ -108,7 +126,15 @@ export async function GET(request: Request) {
     : { data: null }
 
   return NextResponse.json({
-    evento: { id: evento.id, empiezaEn: evento.starts_at, cierraEn: evento.booking_closes_at },
+    // La zona por nombre. La pantalla la sacaba de un parametro de la URL y,
+    // sin el, caia en «Jueves 14 · Las Mercedes» de la maqueta: una fecha y
+    // un sitio inventados encima del importe que va a transferir.
+    evento: {
+      id: evento.id,
+      empiezaEn: evento.starts_at,
+      cierraEn: evento.booking_closes_at,
+      zona: nombreZona,
+    },
     montoUsd: usd,
     tasa: tasa ? Number(tasa.usd_to_ves) : null,
     // El monto exacto con los céntimos ya dentro: es el que tiene que
@@ -150,12 +176,14 @@ export async function POST(request: Request) {
 
   const { data: m } = await admin
     .from('payment_methods')
-    .select('id, nombre, moneda, activo, manual, campos, captura_obligatoria')
+    .select('id, nombre, moneda, activo, manual, campos, captura_obligatoria, datos_cuenta')
     .eq('id', metodo)
     .maybeSingle()
 
   if (!m) return NextResponse.json({ error: 'Ese método no existe.' }, { status: 400 })
-  if (!m.activo) {
+
+  const cuenta = (m.datos_cuenta ?? {}) as Record<string, unknown>
+  if (!m.activo || cuenta.pendiente_de_datos_reales === true) {
     // Ni por API. Si solo lo impidiera la pantalla, el interruptor sería
     // decorativo.
     return NextResponse.json({ error: 'Ese método no está disponible.' }, { status: 409 })

@@ -51,11 +51,11 @@
           <div style="height:1px;background:rgba(20,52,42,.12);margin:16px 0"></div>
           <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline">
             <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">Un puesto</span>
-            <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">8,00 USD</span>
+            <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ precioTexto }}</span>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-top:9px">
             <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">Tasa BCV de hoy</span>
-            <span style="font:500 15px/1.4 'Inter Tight',sans-serif;color:#33513F;font-variant-numeric:tabular-nums">1 USD = 62,40 Bs</span>
+            <span style="font:500 15px/1.4 'Inter Tight',sans-serif;color:#33513F;font-variant-numeric:tabular-nums">{{ tasaTexto }}</span>
           </div>
           <div style="height:1px;background:rgba(20,52,42,.12);margin:16px 0"></div>
           <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline">
@@ -340,10 +340,24 @@ class Component extends DCLogic {
     // confirmar». Siete fases, y la etiqueta DEMO que las recorria en la
     // cabecera se fue: es cromo de maqueta, como los anteriores.
 
-    const ev = S.ev || { tipo: 'Cenas', cuando: 'Jueves 14 · 7:00 p.m.', zona: 'Las Mercedes', hora: '7:00 p.m.' };
+    const D = S.datos || {};
+    const dinero = (n, moneda) => n == null ? '—'
+      : n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' ' + moneda;
+
+    // La cabecera sale de la fecha de verdad. Antes venia de parametros de
+    // la URL y, sin ellos, de «Jueves 14 · Las Mercedes»: una fecha y un
+    // sitio inventados justo encima del importe que va a transferir.
+    const ev = S.ev || { tipo: 'Cenas' };
     const titulos = { Cenas: 'Cena', Drinks: 'Drinks', Movimiento: 'Movimiento', Coffee: 'Coffee' };
-    const nombreEv = (titulos[ev.tipo] || ev.tipo) + ' · ' + ev.cuando.split(' · ')[0];
-    const detalleEv = ev.hora + ' · ' + ev.zona;
+    const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    const dosCifras = (n) => (n < 10 ? '0' + n : '' + n);
+    const cuandoEv = (D.evento && D.evento.empiezaEn) ? new Date(D.evento.empiezaEn) : null;
+    const horaEv = cuandoEv
+      ? (cuandoEv.getHours() % 12 || 12) + ':' + dosCifras(cuandoEv.getMinutes()) + ' ' + (cuandoEv.getHours() < 12 ? 'a.m.' : 'p.m.')
+      : '';
+    const nombreEv = (titulos[ev.tipo] || 'Cena') +
+      (cuandoEv ? ' · ' + DIAS[cuandoEv.getDay()] + ' ' + cuandoEv.getDate() : '');
+    const detalleEv = [horaEv, (D.evento && D.evento.zona) || null].filter(Boolean).join(' · ');
 
     const btn = (fondo, color, extra) => 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + fondo + ';color:' + color + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
     const aroDe = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
@@ -352,9 +366,6 @@ class Component extends DCLogic {
     // Salen de la tabla `payment_methods`: `activo` lo enciende operación y
     // `manual` decide si lo cuadra una persona. En una constante del código,
     // encender Zelle un sábado exigiría un despliegue.
-    const D = S.datos || {};
-    const dinero = (n, moneda) => n == null ? '—'
-      : n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' ' + moneda;
     const METODOS = (D.metodos || []).map((m) => ({
       id: m.id, nombre: m.nombre, activo: m.activo, manual: m.manual,
       cuenta: m.cuenta, capturaObligatoria: m.capturaObligatoria,
@@ -465,8 +476,8 @@ class Component extends DCLogic {
     const repOk = camposOk && (!capturaObligatoria || conCaptura);
 
     const comprobante = [
-      [titulos[ev.tipo] || ev.tipo, ev.cuando.split(' · ')[0] + ', ' + ev.hora, false],
-      ['Zona', ev.zona, false],
+      [titulos[ev.tipo] || 'Cena', [cuandoEv ? DIAS[cuandoEv.getDay()] + ' ' + cuandoEv.getDate() : null, horaEv].filter(Boolean).join(', '), false],
+      ['Zona', (D.evento && D.evento.zona) || 'Se sabe al abrirse', false],
       ['Método', mSel.nombre, false],
       // La tasa que se CONGELO al reportar, no la de ahora: entre reportar
       // y confirmar pasan horas y la tasa se mueve.
@@ -498,6 +509,10 @@ class Component extends DCLogic {
       nombreEv, detalleEv,
       metodoElegido: mSel.nombre,
       totalTexto: mSel.moneda,
+      // Las dos salian escritas en el marcado: «8,00 USD» y «1 USD = 62,40
+      // Bs». La segunda mentia por un factor de doce.
+      precioTexto: D.montoUsd != null ? dinero(D.montoUsd, 'USD') : '—',
+      tasaTexto: D.tasa ? '1 USD = ' + dinero(D.tasa, 'Bs') : 'Sin tasa de hoy',
       totalEstilo: 'font:700 clamp(24px,3vw,30px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;color:#14342A;font-variant-numeric:tabular-nums',
 
       h1: 'font:400 clamp(30px,6.4vw,46px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance',
@@ -541,7 +556,7 @@ class Component extends DCLogic {
         ? 'Lo revisa una persona. Si algo no cuadra te escribimos, y tu puesto sigue apartado mientras tanto.'
         : 'Se cobra al confirmar. Si cancelas con margen, vuelve a tu cuenta sola.',
       tituloEnviando: mSel.manual ? 'Enviando tu reporte.' : 'Confirmando el cobro.',
-      tituloListo: 'Nos vemos el ' + ev.cuando.split(' · ')[0].toLowerCase() + '.',
+      tituloListo: cuandoEv ? 'Nos vemos el ' + DIAS[cuandoEv.getDay()].toLowerCase() + ' ' + cuandoEv.getDate() + '.' : 'Nos vemos.',
 
       irDatos: () => this.setState({ fase: 1, copiado: -1 }),
       volverElegir: () => this.setState({ fase: 0 }),
