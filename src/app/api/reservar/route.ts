@@ -7,18 +7,25 @@ import { createClient } from '@/lib/supabase/server'
 /**
  * F6 · Apuntarse a una fecha.
  *
- * Se elige la FECHA y las ZONAS que le sirven, en plural. Con selección
- * única el pool se parte en tantos trozos como zonas y con poca gente no se
- * llena ninguna mesa; además ya preguntamos en el cuestionario a qué zonas
- * puede ir, así que pedirle una sola es tirar lo que ya nos dijo.
+ * Se elige la FECHA. Las zonas NO se preguntan aquí.
  *
- * Lo que se pierde: hasta la revelación sabe "Chacao o Las Mercedes" en vez
- * de una respuesta cerrada. Es el precio de poder sentarla.
+ * Ya nos dijo en el cuestionario a qué zonas puede ir sin problema, así que
+ * volver a preguntárselo cada semana es pedirle dos veces lo mismo. Se
+ * cruzan las suyas con las que abrimos esa fecha, y nosotros decidimos
+ * dónde se sienta dentro de ese conjunto.
+ *
+ * Esto es deliberado y va contra la pantalla de Timeleft, que hace elegir
+ * una zona: con poco volumen, partir el pool en tantos trozos como zonas
+ * deja mesas sin llenar. El parametro `zonas` existe para el dia que se
+ * quiera acotar una fecha concreta desde operacion, no para pedirselo a
+ * ella.
  */
 
 const cuerpo = z.object({
   eventoId: z.string().uuid(),
-  zonas: z.array(z.string().regex(/^[a-z-]+$/)).min(1, 'Elige al menos una zona.'),
+  // Opcional a propósito. Por defecto valen las zonas que ya declaró en el
+  // cuestionario: no se le vuelve a preguntar.
+  zonas: z.array(z.string().regex(/^[a-z-]+$/)).optional(),
 })
 
 export async function GET(request: Request) {
@@ -132,12 +139,27 @@ export async function POST(request: Request) {
     .eq('event_id', evento.id)
 
   const abiertas = new Set((sedes ?? []).map((v) => v.zone_slug))
-  const validas = zonas.filter((z) => abiertas.has(z))
+
+  // Las suyas, salvo que se pasen otras a propósito.
+  const { data: rasgos } = await admin
+    .from('profile_traits')
+    .select('zones')
+    .eq('profile_id', user.id)
+    .maybeSingle()
+
+  const suyas = zonas ?? rasgos?.zones ?? []
+  const validas = suyas.filter((z: string) => abiertas.has(z))
 
   if (!validas.length) {
+    // No es un error suyo: es que esta fecha no abre ninguna de las zonas a
+    // las que dijo que puede ir. Se dice cual es el caso, no "revisa tus
+    // datos".
     return NextResponse.json(
-      { error: 'Ninguna de esas zonas está abierta en esta fecha.' },
-      { status: 400 },
+      {
+        error: 'Esta fecha no abre ninguna de tus zonas. Te avisamos cuando haya una que te sirva.',
+        motivo: 'sin-zona',
+      },
+      { status: 409 },
     )
   }
 

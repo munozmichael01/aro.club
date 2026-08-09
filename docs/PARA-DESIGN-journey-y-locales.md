@@ -17,22 +17,22 @@ al crear la fecha **nosotros decidimos qué zonas abrimos** y en qué
 restaurante se cena en cada una. Dos mesas del mismo jueves pueden estar en
 Las Mercedes y en El Rosal.
 
-Del lado del miembro, en el paso 06, hay que ser precisos con quién elige
-qué, porque es fácil contarlo mal:
+Del lado del miembro, en el paso 06, **no hay nada nuevo que diseñar**, y
+conviene decirlo para que no se diseñe de más:
 
-- **Nosotros ofrecemos.** Solo ve las zonas que abrimos esa fecha. Las demás
-  ni se enseñan apagadas: una opción que no se puede elegir es ruido.
-- **Él marca en cuáles le sirve**, en plural. Vienen premarcadas con las que
-  ya contestó en el cuestionario.
-- **Nosotros decidimos dónde se sienta.** Él nunca elige restaurante, y
-  hasta la revelación no sabe cuál es.
+- Ya nos dijo en el cuestionario a qué zonas puede ir sin problema.
+- Al apuntarse a una fecha se cruzan las suyas con las que abrimos, sin
+  volver a preguntarle.
+- **Nosotros decidimos dónde se sienta** dentro de ese conjunto.
 
-O sea: no elige zona, **acepta zonas**. Y esa diferencia es todo el producto,
-porque es lo que permite armar mesas con poca gente.
+Es deliberado y va contra la pantalla de Timeleft, que hace elegir una zona:
+con poco volumen, partir el pool en tantos trozos como zonas deja mesas sin
+llenar.
 
-Lo que pierde: si aceptó dos zonas, hasta el jueves a las doce sabe "Las
-Mercedes o El Rosal" en vez de una respuesta cerrada. Es el precio de poder
-sentarlo, y está decidido.
+Lo único que cambia en pantalla es lo que ve **antes de la revelación**: si
+sus zonas eran dos, sabe "Chacao o Las Mercedes" en vez de una respuesta
+cerrada. Y el caso nuevo: una fecha que no abre ninguna de sus zonas. Ahí no
+puede apuntarse, y hay que decírselo sin que parezca un error suyo.
 
 ## b) Paso 08: no son "tres señales", son siete reglas duras
 

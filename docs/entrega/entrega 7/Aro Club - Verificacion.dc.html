@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#FAF3E4; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#1B5138; color:#FAF3E4; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+  @keyframes aro-trace { from { stroke-dashoffset:96 } to { stroke-dashoffset:0 } }
+  @keyframes aro-pulso { 0%,100% { opacity:.35 } 50% { opacity:1 } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column">
+
+  <div style="position:sticky;top:0;z-index:30;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.1)">
+    <div style="max-width:660px;margin:0 auto;padding:12px clamp(16px,4vw,28px);display:flex;align-items:center;justify-content:space-between;gap:14px">
+      <a href="Aro Club - Cuestionario.dc.html" style="display:flex;align-items:center;gap:8px;color:#14342A;min-height:44px;margin:-11px 0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
+        <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
+      </a>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onClick="{{ alternarDispositivo }}" style="{{ botonDispositivo }}">{{ textoDispositivo }}</button>
+        <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">{{ etiquetaPaso }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1;max-width:660px;width:100%;margin:0 auto;padding:clamp(26px,5vw,48px) clamp(16px,4vw,28px) clamp(48px,8vw,90px)">
+
+    <sc-if value="{{ esIntro }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:aro-open 400ms ease both">
+        <div style="{{ eyebrow }}">ÚLTIMO PASO</div>
+        <h1 style="{{ h1 }}">Antes de pedirte nada, esto es lo que hacemos con ello.</h1>
+        <p style="{{ bajada }}">Verificar identidad es la promesa central del club: los otros cinco pasaron por lo mismo que tú. Aquí está todo, antes de que subas nada.</p>
+
+        <div style="display:flex;flex-direction:column;gap:0;margin-top:clamp(26px,3.4vw,36px)">
+          <sc-for list="{{ explicacion }}" as="e" hint-placeholder-count="5">
+            <div style="display:flex;gap:14px;align-items:flex-start;padding:clamp(15px,2vw,19px) 0;border-bottom:1px solid rgba(20,52,42,.13)">
+              <span style="flex:0 0 auto;min-width:104px;font:500 12px/1.4 'Inter Tight',sans-serif;letter-spacing:.08em;color:#566A5D;padding-top:2px">{{ e.clave }}</span>
+              <span style="flex:1;min-width:0;font:400 15px/1.6 'Inter Tight',sans-serif;color:#14342A;text-wrap:pretty">{{ e.valor }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="border-radius:22px;background:#14342A;color:#FAF3E4;padding:clamp(18px,2.4vw,24px);margin-top:20px">
+          <div style="font:400 clamp(19px,2.2vw,23px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em">Nadie más ve tu documento</div>
+          <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:8px;text-wrap:pretty">Ni los otros cinco de tu mesa, ni el restaurante, ni el resto del equipo. Solo quien hace la revisión, con acceso registrado y nominal.</div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
+          <button onClick="{{ empezar }}" style="{{ botonPrimario }}">{{ textoEmpezar }}</button>
+          <a href="Aro Club - Cuestionario.dc.html" style="{{ botonFantasma }}">Ahora no</a>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esQr }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 400ms ease both">
+        <div style="{{ eyebrow }}">SIGUE EN TU TELÉFONO</div>
+        <h1 style="{{ h1 }}">La cámara del teléfono hace mejor esta foto.</h1>
+        <p style="{{ bajada }}">Escanea el código y termina ahí. Esta pantalla avanza sola cuando lo hagas: no la cierres.</p>
+
+        <div style="display:flex;flex-wrap:wrap;gap:clamp(20px,3vw,32px);align-items:center;margin-top:clamp(28px,3.6vw,40px)">
+          <div style="flex:0 0 auto;background:#FFFBF0;border-radius:26px;padding:22px">
+            <div style="{{ qrCaja }}">
+              <sc-for list="{{ qr }}" as="p" hint-placeholder-count="120">
+                <span style="{{ p.celda }}"></span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="flex:1 1 240px;min-width:0">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <sc-for list="{{ pasosQr }}" as="p" hint-placeholder-count="3">
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                  <span style="flex:0 0 auto;width:26px;height:26px;border-radius:999px;background:rgba(27,81,56,.11);color:#1B5138;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif">{{ p.n }}</span>
+                  <span style="flex:1;font:400 15px/1.55 'Inter Tight',sans-serif;color:#456352;text-wrap:pretty">{{ p.texto }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;margin-top:22px;padding:13px 16px;border-radius:999px;background:rgba(27,81,56,.08);max-width:fit-content">
+              <span style="width:8px;height:8px;border-radius:999px;background:#1B5138;animation:aro-pulso 1.6s ease-in-out infinite"></span>
+              <span style="font:500 13px/1.4 'Inter Tight',sans-serif;color:#1B5138">Esperando a tu teléfono</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
+          <button onClick="{{ simularTelefono }}" style="{{ botonSecundario }}">Ya terminé en el teléfono</button>
+          <button onClick="{{ seguirAqui }}" style="{{ botonFantasma }}">Subir archivos desde aquí</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esCaptura }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 400ms ease both">
+        <div style="display:flex;gap:6px;margin-bottom:clamp(22px,3vw,30px)">
+          <sc-for list="{{ barras }}" as="b" hint-placeholder-count="3">
+            <span style="{{ b.estilo }}"></span>
+          </sc-for>
+        </div>
+
+        <div style="{{ eyebrow }}">{{ capturaEtiqueta }}</div>
+        <h1 style="{{ h1 }}">{{ capturaTitulo }}</h1>
+        <p style="{{ bajada }}">{{ capturaAyuda }}</p>
+
+        <div style="{{ visor }}">
+          <sc-if value="{{ hayToma }}" hint-placeholder-val="{{ false }}">
+            <div style="{{ tomaHecha }}">
+              <svg width="34" height="34" viewBox="0 0 40 40" fill="none"><path d="M12 20.5l5 5L28 14.8" stroke="#FAF3E4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="96" style="animation:aro-trace 560ms cubic-bezier(.2,.7,.3,1) both"></path></svg>
+              <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#FAF3E4;margin-top:12px">{{ textoToma }}</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ sinToma }}" hint-placeholder-val="{{ true }}">
+            <div style="{{ guia }}"></div>
+            <span style="position:absolute;left:0;right:0;bottom:18px;text-align:center;font:500 13px/1.4 'Inter Tight',sans-serif;color:rgba(250,243,228,.86);padding:0 20px">{{ pistaVisor }}</span>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:20px">
+          <sc-if value="{{ sinToma }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ tomar }}" style="{{ botonPrimario }}">{{ textoTomar }}</button>
+            <sc-if value="{{ enMovil }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ tomar }}" style="{{ botonFantasma }}">Elegir de la galería</button>
+            </sc-if>
+          </sc-if>
+          <sc-if value="{{ hayToma }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ continuar }}" style="{{ botonPrimario }}">{{ textoContinuar }}</button>
+            <button onClick="{{ repetir }}" style="{{ botonFantasma }}">Repetir</button>
+          </sc-if>
+        </div>
+
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:18px;max-width:52ch;text-wrap:pretty">{{ notaCaptura }}</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esRevision }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 460ms ease both">
+        <div style="display:flex;align-items:center;gap:13px;margin-bottom:clamp(20px,2.6vw,28px)">
+          <span style="flex:0 0 auto;width:44px;height:44px;border-radius:999px;border:1px solid rgba(27,81,56,.28);display:flex;align-items:center;justify-content:center">
+            <svg width="24" height="24" viewBox="0 0 40 40" fill="none"><path d="M12 20.5l5 5L28 14.8" stroke="#8F4515" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="96" style="animation:aro-trace 620ms cubic-bezier(.2,.7,.3,1) both"></path></svg>
+          </span>
+          <span style="font:500 12px/1.3 'Inter Tight',sans-serif;letter-spacing:.14em;color:#1B5138">RECIBIDO</span>
+        </div>
+
+        <h1 style="{{ h1 }}">Lo está revisando una persona.</h1>
+        <p style="{{ bajada }}">Menos de 24 horas, casi siempre el mismo día. Te escribimos al correo en cuanto esté. No hace falta que dejes esto abierto.</p>
+
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,2.6vw,28px);margin-top:clamp(26px,3.4vw,36px)">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:18px">MIENTRAS TANTO</div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <sc-for list="{{ mientras }}" as="m" hint-placeholder-count="2">
+              <div style="display:flex;gap:13px;align-items:flex-start">
+                <span style="{{ m.marca }}">{{ m.icono }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ m.titulo }}</span>
+                  <span style="display:block;font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-top:3px;text-wrap:pretty">{{ m.cuerpo }}</span>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
+          <a href="Aro Club - Mi cuenta.dc.html" style="{{ botonPrimario }}">Ir a mi cuenta</a>
+          <button onClick="{{ verRechazo }}" style="{{ botonFantasma }}">Ver qué pasa si algo falla</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esRechazo }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 460ms ease both">
+        <div style="{{ eyebrow }}">HAY QUE REPETIR UNA FOTO</div>
+        <h1 style="{{ h1 }}">La cédula salió movida.</h1>
+        <p style="{{ bajada }}">No es un rechazo: es que no se lee el número. Repite solo esa foto, lo demás sigue guardado.</p>
+
+        <div style="border-radius:26px;border:1px solid rgba(143,69,21,.32);padding:clamp(20px,2.6vw,28px);margin-top:clamp(24px,3vw,32px)">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:16px">LO QUE VIO QUIEN REVISÓ</div>
+          <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;max-width:56ch;text-wrap:pretty">«El número de cédula está borroso en la esquina inferior. Todo lo demás se ve bien.» — Revisión del 5 de agosto, 9:12 a.m.</div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
+          <button onClick="{{ repetirCedula }}" style="{{ botonPrimario }}">Repetir la foto de la cédula</button>
+          <button onClick="{{ volverRevision }}" style="{{ botonFantasma }}">Volver</button>
+        </div>
+
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:20px;max-width:54ch;text-wrap:pretty">Si vuelve a fallar dos veces, te escribimos por WhatsApp y lo resolvemos con una persona. Nunca te dejamos con un error y sin salida.</div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { fase: 'intro', movil: true, toma: 0, tomas: {}, repetirSolo: null };
+
+  componentDidMount() {
+    if (window.innerWidth > 780) this.setState({ movil: false });
+  }
+
+  renderVals() {
+    const f = this.state.fase;
+    const movil = this.state.movil;
+
+    const explicacion = [
+      ['QUÉ PEDIMOS', 'La cédula o el pasaporte por delante, y una selfie. Nada más.'],
+      ['PARA QUÉ', 'Confirmar que eres quien dices y que eres mayor de edad. Es lo único que hace que cinco desconocidos se sienten contigo.'],
+      ['QUIÉN LO VE', 'Una persona del equipo de operación. Ni los otros cinco, ni el restaurante, ni el resto del equipo.'],
+      ['DÓNDE SE GUARDA', 'Cifrado, en nuestros servidores. No se guarda en el teléfono de nadie ni en carpetas compartidas.'],
+      ['CUÁNTO DURA', 'Se borra a los 90 días de aprobarse. Solo queda la marca de que la verificación ocurrió.']
+    ].map((e) => ({ clave: e[0], valor: e[1] }));
+
+    // patrón de QR: decorativo y estable, no un código real
+    const qr = [];
+    for (let i = 0; i < 441; i++) {
+      const x = i % 21, y = Math.floor(i / 21);
+      const esquina = (cx, cy) => x >= cx && x < cx + 7 && y >= cy && y < cy + 7 &&
+        (x === cx || x === cx + 6 || y === cy || y === cy + 6 || (x >= cx + 2 && x <= cx + 4 && y >= cy + 2 && y <= cy + 4));
+      const marco = esquina(0, 0) || esquina(14, 0) || esquina(0, 14);
+      const zona = (x < 8 && y < 8) || (x > 12 && y < 8) || (x < 8 && y > 12);
+      const on = marco || (!zona && ((x * 7 + y * 13 + ((x * y) % 5)) % 3 === 0));
+      qr.push({ celda: 'width:100%;aspect-ratio:1;background:' + (on ? '#14342A' : 'transparent') });
+    }
+
+    const pasosQr = [
+      ['1', 'Abre la cámara del teléfono y apúntala al código.'],
+      ['2', 'Haz la foto de la cédula y la selfie ahí.'],
+      ['3', 'Esta pantalla avanza sola. No la cierres.']
+    ].map((p) => ({ n: p[0], texto: p[1] }));
+
+    const capturas = [
+      {
+        etiqueta: 'PASO 1 DE 2',
+        titulo: 'La cédula, por delante.',
+        ayuda: movil ? 'Ponla sobre una superficie plana, sin reflejos, y que entre entera en el recuadro.' : 'Sube una foto o un escaneo. Que se lea el número y que no esté cortada.',
+        pista: 'Que las cuatro esquinas queden dentro',
+        boton: movil ? 'Tomar la foto' : 'Subir la cédula',
+        hecho: 'Cédula lista',
+        nota: 'Vale la cédula venezolana o el pasaporte. Si usas pasaporte, la página de la foto.'
+      },
+      {
+        etiqueta: 'PASO 2 DE 2',
+        titulo: 'Ahora una selfie.',
+        ayuda: 'Cara despejada, sin gorra ni lentes de sol. Es para comparar con el documento, y no se le muestra a nadie.',
+        pista: 'Mira al frente, con buena luz',
+        boton: movil ? 'Tomar la selfie' : 'Subir la selfie',
+        hecho: 'Selfie lista',
+        nota: 'Esta foto no es tu foto de perfil. En Aro no hay fotos de perfil, en ninguna pantalla.'
+      }
+    ];
+    const c = capturas[Math.min(this.state.toma, 1)];
+    const hecha = !!this.state.tomas[this.state.toma];
+
+    // dos segmentos, dos pasos: el contador y la barra cuentan lo mismo
+    const barras = [0, 1].map((i) => ({
+      estilo: 'flex:1;height:4px;border-radius:999px;background:' +
+        (i < this.state.toma + (hecha ? 1 : 0) ? '#1B5138' : (i === this.state.toma ? '#A0511F' : 'rgba(20,52,42,.13)')) +
+        ';transition:background 260ms ease'
+    }));
+
+    const mientras = [
+      ['✓', 'Tu perfil está completo', 'Las diecisiete respuestas ya están guardadas. No hay que tocar nada más.'],
+      ['·', 'Te avisamos cuando haya mesa', 'En cuanto se apruebe y se abra mesa en tu zona, llega un solo correo con el día y la hora.']
+    ].map((m) => ({
+      icono: m[0], titulo: m[1], cuerpo: m[2],
+      marca: 'flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:' + (m[0] === '✓' ? '#1B5138' : 'rgba(27,81,56,.14)') + ';color:' + (m[0] === '✓' ? '#FAF3E4' : '#1B5138') + ';display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px'
+    }));
+
+    const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 26px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
+
+    return {
+      esIntro: f === 'intro',
+      esQr: f === 'qr',
+      esCaptura: f === 'captura',
+      esRevision: f === 'revision',
+      esRechazo: f === 'rechazo',
+      enMovil: movil,
+
+      explicacion, qr, pasosQr, barras, mientras,
+
+      eyebrow: 'font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.16em;color:#8F4515;margin-bottom:14px',
+      h1: 'font:400 clamp(29px,5.4vw,46px)/1.03 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:19ch;text-wrap:balance',
+      bajada: 'font:400 17px/1.55 \'Inter Tight\',sans-serif;color:#456352;max-width:50ch;margin:14px 0 0;text-wrap:pretty',
+      botonPrimario: btn('#1B5138', '#FAF3E4', 'none'),
+      botonSecundario: btn('transparent', '#1B5138', '1px solid rgba(20,52,42,.22)'),
+      botonFantasma: btn('transparent', '#566A5D', 'none', 'font-weight:500;font-size:15px;text-decoration:underline;text-underline-offset:6px;padding:0 10px'),
+
+      textoDispositivo: movil ? 'Ver en escritorio' : 'Ver en móvil',
+      botonDispositivo: 'display:inline-flex;align-items:center;min-height:44px;margin:-8px 0;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:transparent;color:#1B5138;font:500 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      alternarDispositivo: () => this.setState({ movil: !movil, fase: 'intro', toma: 0, tomas: {} }),
+
+      etiquetaPaso: { intro: 'VERIFICACIÓN', qr: 'TRASPASO', captura: 'VERIFICACIÓN', revision: 'EN REVISIÓN', rechazo: 'ACCIÓN REQUERIDA' }[f],
+
+      textoEmpezar: movil ? 'Empezar, son dos fotos' : 'Empezar',
+      empezar: () => this.setState({ fase: movil ? 'captura' : 'qr', toma: 0 }),
+      seguirAqui: () => this.setState({ fase: 'captura', toma: 0 }),
+      simularTelefono: () => this.setState({ fase: 'revision' }),
+
+      capturaEtiqueta: c.etiqueta,
+      capturaTitulo: c.titulo,
+      capturaAyuda: c.ayuda,
+      pistaVisor: c.pista,
+      textoTomar: c.boton,
+      textoToma: c.hecho,
+      notaCaptura: c.nota,
+      hayToma: hecha,
+      sinToma: !hecha,
+      textoContinuar: this.state.toma === 1 || this.state.repetirSolo != null ? 'Enviar a revisión' : 'Continuar',
+
+      // en escritorio el ancho manda; si no, la altura recortada encogía el visor a una tira
+      visor: 'position:relative;display:flex;align-items:center;justify-content:center;margin:clamp(22px,3vw,30px) auto 0;border-radius:26px;overflow:hidden;background:#14342A;width:100%;max-width:' + (this.state.toma === 1 ? '420px' : '100%') + ';aspect-ratio:' + (this.state.toma === 1 ? '3/4' : '4/3'),
+      guia: 'width:' + (this.state.toma === 1 ? '55%' : '82%') + ';aspect-ratio:' + (this.state.toma === 1 ? '3/4' : '1.586') + ';border:2px dashed rgba(250,243,228,.5);border-radius:' + (this.state.toma === 1 ? '999px' : '14px'),
+      tomaHecha: 'display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;background:#1B5138',
+
+      tomar: () => this.setState((s) => ({ tomas: Object.assign({}, s.tomas, { [s.toma]: true }) })),
+      repetir: () => this.setState((s) => {
+        const t = Object.assign({}, s.tomas); delete t[s.toma]; return { tomas: t };
+      }),
+      continuar: () => {
+        if (this.state.toma === 1 || this.state.repetirSolo != null) { this.setState({ fase: 'revision', repetirSolo: null }); return; }
+        this.setState({ toma: 1 });
+      },
+
+      verRechazo: () => this.setState({ fase: 'rechazo' }),
+      volverRevision: () => this.setState({ fase: 'revision' }),
+      repetirCedula: () => this.setState({ fase: 'captura', toma: 0, tomas: {}, repetirSolo: 0 }),
+
+      qrCaja: 'display:grid;grid-template-columns:repeat(21,1fr);width:clamp(160px,44vw,196px);height:clamp(160px,44vw,196px)'
+    };
+  }
+}
+</script>
+</body>
+</html>

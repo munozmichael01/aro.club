@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#FAF3E4; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#1B5138; color:#FAF3E4; }
+  ::placeholder { color:#7E9A8B; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+  @keyframes aro-trace { from { stroke-dashoffset:96 } to { stroke-dashoffset:0 } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column">
+
+  <div style="position:sticky;top:0;z-index:30;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.1)">
+    <div style="max-width:720px;margin:0 auto;padding:12px clamp(16px,4vw,28px) 0;display:flex;align-items:center;justify-content:space-between;gap:14px">
+      <a href="{{ enlaceLogo }}" style="display:flex;align-items:center;gap:8px;color:#14342A;min-height:44px;margin:-11px 0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
+        <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
+      </a>
+      <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">{{ etiquetaProgreso }}</span>
+    </div>
+    <div style="max-width:720px;margin:0 auto;padding:11px clamp(16px,4vw,28px) 12px;display:flex;gap:5px">
+      <sc-for list="{{ barras }}" as="b" hint-placeholder-count="5">
+        <span style="{{ b.estilo }}"></span>
+      </sc-for>
+    </div>
+  </div>
+
+  <sc-if value="{{ hayRetomada }}" hint-placeholder-val="{{ true }}">
+    <div style="max-width:720px;width:100%;margin:0 auto;padding:16px clamp(16px,4vw,28px) 0">
+      <div style="display:flex;gap:12px;align-items:flex-start;border-radius:20px;background:#FFFBF0;padding:15px 17px">
+        <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:rgba(27,81,56,.11);color:#1B5138;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">↩</span>
+        <span style="flex:1;font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352">{{ textoRetomada }}</span>
+        <button onClick="{{ cerrarRetomada }}" aria-label="Cerrar" style="flex:0 0 auto;width:44px;height:44px;margin:-8px -10px -8px 0;border-radius:999px;border:none;background:transparent;color:#566A5D;font:400 19px/1 'Inter Tight',sans-serif;cursor:pointer">×</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="flex:1;max-width:720px;width:100%;margin:0 auto;padding:clamp(22px,4vw,40px) clamp(16px,4vw,28px) 130px">
+
+    <sc-if value="{{ enPreguntas }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:aro-open 380ms ease both">
+        <h1 style="font:400 clamp(29px,6vw,46px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:16ch;text-wrap:balance">{{ tituloPantalla }}</h1>
+        <p style="font:400 clamp(15px,1.5vw,17px)/1.55 'Inter Tight',sans-serif;color:#566A5D;max-width:44ch;margin:12px 0 0;text-wrap:pretty">{{ propositoPantalla }}</p>
+
+        <sc-if value="{{ hayHeredadas }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:10px;align-items:center;margin-top:20px;padding:12px 16px;border-radius:999px;background:rgba(27,81,56,.08);max-width:fit-content">
+            <span style="flex:0 0 auto;width:18px;height:18px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 10px/1 'Inter Tight',sans-serif">✓</span>
+            <span style="font:500 13px/1.4 'Inter Tight',sans-serif;color:#1B5138">{{ textoHeredadas }}</span>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;flex-direction:column;gap:clamp(34px,5vw,52px);margin-top:clamp(30px,4.4vw,46px)">
+          <sc-for list="{{ preguntas }}" as="q" hint-placeholder-count="4">
+            <div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:baseline;margin-bottom:5px">
+                <span style="font:400 clamp(20px,2.6vw,26px)/1.2 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A;flex:1 1 auto;min-width:0;text-wrap:pretty">{{ q.pregunta }}</span>
+                <sc-if value="{{ q.esOpcional }}" hint-placeholder-val="{{ false }}">
+                  <span style="flex:0 0 auto;font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D;border:1px solid rgba(20,52,42,.2);border-radius:999px;padding:6px 10px">OPCIONAL</span>
+                </sc-if>
+              </div>
+
+              <sc-if value="{{ q.hayAyuda }}" hint-placeholder-val="{{ false }}">
+                <p style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin:0 0 4px;max-width:46ch;text-wrap:pretty">{{ q.ayuda }}</p>
+              </sc-if>
+
+              <sc-if value="{{ q.hayContador }}" hint-placeholder-val="{{ false }}">
+                <div style="{{ q.contadorEstilo }}">{{ q.contador }}</div>
+              </sc-if>
+
+              <sc-if value="{{ q.esTexto }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:16px;max-width:460px">
+                  <input type="text" value="{{ q.valorTexto }}" onChange="{{ q.onTexto }}" placeholder="Empieza a escribir" aria-label="{{ q.pregunta }}" style="width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:400 16px/1 'Inter Tight',sans-serif;outline:none" />
+                  <sc-if value="{{ q.haySugerencias }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:11px">
+                      <sc-for list="{{ q.sugerencias }}" as="s" hint-placeholder-count="3">
+                        <button onClick="{{ s.pick }}" style="display:inline-flex;align-items:center;min-height:42px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:transparent;color:#1B5138;font:500 14px/1 'Inter Tight',sans-serif;cursor:pointer">{{ s.label }}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ q.esUnica }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;max-width:560px">
+                  <sc-for list="{{ q.opciones }}" as="o" hint-placeholder-count="4">
+                    <button onClick="{{ o.pick }}" style="{{ o.btnUnica }}">
+                      <span style="{{ o.radio }}">{{ o.icono }}</span>
+                      <span style="{{ o.txtUnica }}">{{ o.label }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ q.esFicha }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
+                  <sc-for list="{{ q.opciones }}" as="o" hint-placeholder-count="10">
+                    <button onClick="{{ o.pick }}" style="{{ o.btnMulti }}">
+                      <span style="{{ o.check }}">{{ o.icono }}</span>
+                      <span style="{{ o.txtMulti }}">{{ o.label }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ q.esMulti }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
+                  <sc-for list="{{ q.opciones }}" as="o" hint-placeholder-count="8">
+                    <button onClick="{{ o.pick }}" style="{{ o.btnMulti }}">
+                      <span style="{{ o.check }}">{{ o.icono }}</span>
+                      <span style="{{ o.txtMulti }}">{{ o.label }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ enCierre }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 480ms ease both;padding-top:clamp(10px,3vw,30px)">
+        <span style="display:flex;width:52px;height:52px;border-radius:999px;border:1px solid rgba(27,81,56,.28);align-items:center;justify-content:center;margin-bottom:24px">
+          <svg width="27" height="27" viewBox="0 0 40 40" fill="none"><path d="M12 20.5l5 5L28 14.8" stroke="#8F4515" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="96" style="animation:aro-trace 620ms cubic-bezier(.2,.7,.3,1) both"></path></svg>
+        </span>
+        <h1 style="font:400 clamp(32px,6.4vw,54px)/1 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance">Listo. Ya podemos sentarte.</h1>
+        <p style="font:400 clamp(16px,1.6vw,19px)/1.55 'Inter Tight',sans-serif;color:#456352;max-width:44ch;margin:16px 0 0;text-wrap:pretty">{{ textoCierre }} Con esto el algoritmo ya puede armar una mesa donde encajes, no una mesa cualquiera con un puesto libre.</p>
+
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(28px,4vw,38px);max-width:460px">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:6px">CÓMO QUIERES ENTRAR A PARTIR DE AHORA</div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar el jueves para ver tu mesa.</div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;max-width:400px">
+            <a href="Aro Club - Entrar.dc.html#relay" style="{{ botonProveedor }}">
+              <svg width="19" height="22" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.8-1.6 0-3.1 1-3.9 2.4C.2 10.4 1.4 14.7 3 17c.8 1.1 1.7 2.4 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.8zM11.7 3.3c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"></path></svg>
+              <span>Continuar con Apple</span>
+            </a>
+            <a href="Aro Club - Entrar.dc.html#otroCorreo" style="{{ botonProveedor }}">
+              <svg width="19" height="19" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
+              <span>Continuar con Google</span>
+            </a>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:14px;margin:20px 0;max-width:400px">
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
+            <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">O</span>
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
+            <input type="password" placeholder="Crea una contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
+            <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
+          </div>
+          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
+        </div>
+
+        <div style="border-radius:26px;border:1px solid rgba(20,52,42,.16);padding:clamp(20px,3vw,28px);margin-top:14px;max-width:460px">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:16px">DESPUÉS DE ESTO</div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="flex:0 0 auto;width:34px;height:34px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Inter Tight',sans-serif;margin-top:2px">1</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:400 clamp(20px,2.3vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Verificar tu identidad</span>
+              <span style="display:block;font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-top:6px;text-wrap:pretty">Cédula y una selfie. Lo revisa una persona y no se le muestra a nadie más. Es lo que hace que los otros cinco confíen.</span>
+              <span style="display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;background:rgba(27,81,56,.09);font:500 12px/1 'Inter Tight',sans-serif;color:#1B5138;margin-top:12px">Menos de 24 horas</span>
+            </span>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(22px,3vw,30px)">
+          <button onClick="{{ reiniciar }}" style="min-height:58px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Repasar mis respuestas</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ enPreguntas }}" hint-placeholder-val="{{ true }}">
+    <div style="position:sticky;bottom:0;z-index:30;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-top:1px solid rgba(20,52,42,.1)">
+      <div style="max-width:720px;margin:0 auto;padding:12px clamp(16px,4vw,28px) calc(12px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px">
+        <sc-if value="{{ puedeAtras }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ atras }}" aria-label="Atrás" style="flex:0 0 auto;width:58px;height:58px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#1B5138;font:400 19px/1 'Inter Tight',sans-serif;cursor:pointer">←</button>
+        </sc-if>
+        <button onClick="{{ continuar }}" aria-disabled="{{ inerteContinuar }}" style="{{ botonContinuar }}">{{ textoContinuar }}</button>
+      </div>
+      <div style="max-width:720px;margin:0 auto;padding:0 clamp(16px,4vw,28px) 12px;font:400 12px/1.4 'Inter Tight',sans-serif;color:#566A5D">{{ pieGuardado }}</div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { pantalla: 0, r: { idiomas: [0] }, empleador: '', retomada: false, cerrada: false, fin: false, heredadas: [] };
+
+  LLAVE = 'aro-cuestionario';
+
+  // identificadores estables, en el mismo orden que las opciones de cada pregunta.
+  // El texto visible puede reescribirse sin romper la herencia.
+  COD = {
+    arraigo: ['volvio', 'se-quedo', 'mismos', 'remoto', 'interior', 'visita'],
+    zonas: ['mercedes', 'rosal', 'bello-monte', 'chacao', 'altamira', 'castellana', 'palos-grandes', 'sebucan', 'chuao', 'cafetal', 'naranjos', 'trinidad', 'hatillo'],
+    dias: ['mar', 'mie', 'jue', 'vie', 'sab-am', 'sab-md', 'sab', 'dom-am', 'dom-md'],
+    temas: ['cocina', 'viajes', 'cine', 'musica', 'libros', 'deporte', 'negocios', 'tecnologia', 'arte', 'arquitectura', 'ciencia', 'historia', 'psicologia', 'politica', 'economia', 'crianza', 'salud', 'humor']
+  };
+
+  MINIMOS = { temas: 2 };
+
+  componentDidMount() {
+    let g = null, prev = null;
+    try { g = JSON.parse(window.localStorage.getItem(this.LLAVE) || 'null'); } catch (e) { g = null; }
+    try { prev = JSON.parse(window.localStorage.getItem('aro-landing') || 'null'); } catch (e) { prev = null; }
+
+    const retomable = g && typeof g.pantalla === 'number' && g.pantalla > 0 && !g.fin;
+    // partimos de lo guardado aquí, y encima aplicamos lo que ya se respondió en la landing
+    const base = retomable ? (g.r || { idiomas: [0] }) : this.state.r;
+    const r = Object.assign({}, base);
+    const ya = [];
+
+    // Los leads ya capturados se guardaron sin `v`: por índice primero, por etiqueta después.
+    // Se normalizan a códigos aquí y se reescriben, para no perder ni un registro.
+    if (prev && prev.v !== 2) {
+      const LEG = {
+        arraigo: ['Volví a Caracas después de años fuera', 'Nunca me fui, y se fue casi toda mi gente', 'Llegué hace poco, desde otra ciudad del país', 'Soy de otro país y vivo aquí', 'Vivo afuera y estoy de visita'],
+        zonas: ['Las Mercedes', 'Los Palos Grandes', 'Altamira', 'Chacao', 'El Rosal', 'La Castellana', 'Sebucán y Los Dos Caminos', 'Chuao', 'Bello Monte', 'El Cafetal y Santa Paula'],
+        dias: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía'],
+        temas: ['Cocina', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios', 'Arte y diseño', 'Tecnología', 'Crianza']
+      };
+      const COD_LAND = {
+        arraigo: ['volvio', 'se-quedo', 'interior', 'extranjero', 'visita'],
+        zonas: ['mercedes', 'palos-grandes', 'altamira', 'chacao', 'rosal', 'castellana', 'sebucan', 'chuao', 'bello-monte', 'cafetal'],
+        dias: ['mar', 'mie', 'jue', 'vie', 'sab', 'sab-md', 'dom-md'],
+        temas: ['cocina', 'viajes', 'cine', 'musica', 'libros', 'deporte', 'negocios', 'arte', 'tecnologia', 'crianza']
+      };
+      // `extranjero` se fusionó en `interior`: los perfiles ya capturados se reasignan
+      const FUSION = { extranjero: 'interior' };
+      const aCod = (campo, v) => {
+        if (typeof v === 'number') return COD_LAND[campo][v] || null;
+        if (typeof v !== 'string') return null;
+        if (FUSION[v]) return FUSION[v];
+        if (COD_LAND[campo].indexOf(v) >= 0) return v;
+        const i = LEG[campo].indexOf(v);
+        return i >= 0 ? COD_LAND[campo][i] : null;
+      };
+      const lista = (campo) => (prev[campo] || []).map((v) => aCod(campo, v)).filter(Boolean);
+
+      prev = {
+        v: 2,
+        arraigo: aCod('arraigo', prev.arraigo),
+        zonas: lista('zonas'),
+        dias: lista('dias'),
+        temas: lista('temas')
+      };
+      try { window.localStorage.setItem('aro-landing', JSON.stringify(prev)); } catch (e) { /* modo privado */ }
+    }
+
+    // `extranjero` viajó con v:2 durante varias rondas: la fusión va ANTES de
+    // bifurcar por versión, o esos perfiles pierden el arraigo en silencio.
+    if (prev && prev.arraigo === 'extranjero') prev.arraigo = 'interior';
+
+    if (prev && prev.v === 2) {
+      const C = this.COD;
+      // una multi solo se da por respondida si TODO lo guardado se resolvió
+      // y alcanza el mínimo; si no, se muestra con lo recuperado ya marcado.
+      const heredarMulti = (id) => {
+        const vs = prev[id] || [];
+        if (!vs.length) return;
+        const idxs = vs.map((v) => C[id].indexOf(v));
+        const ok = idxs.filter((i) => i >= 0);
+        if (!ok.length) return;
+        r[id] = ok;
+        const completa = ok.length === idxs.length && ok.length >= (this.MINIMOS[id] || 1);
+        if (completa) ya.push(id);
+      };
+
+      const iA = typeof prev.arraigo === 'string' ? C.arraigo.indexOf(prev.arraigo) : -1;
+      if (iA >= 0) { r.arraigo = iA; ya.push('arraigo'); }
+
+      heredarMulti('zonas');
+      heredarMulti('dias');
+      heredarMulti('temas');
+    }
+
+    const est = { r, heredadas: ya };
+    if (retomable) {
+      est.pantalla = g.pantalla;
+      est.empleador = g.empleador || '';
+      est.retomada = true;
+    }
+    this.setState(est);
+  }
+
+  componentDidUpdate() {
+    try {
+      window.localStorage.setItem(this.LLAVE, JSON.stringify({
+        pantalla: this.state.pantalla, r: this.state.r, empleador: this.state.empleador, fin: this.state.fin
+      }));
+    } catch (e) { /* modo privado */ }
+  }
+
+  set(id, v) { this.setState((s) => ({ r: Object.assign({}, s.r, { [id]: v }) })); }
+
+  multi(id, i, max, exclusiva) {
+    this.setState((s) => {
+      const a = (s.r[id] || []).slice();
+      const tieneEx = exclusiva != null;
+      let out;
+      if (a.indexOf(i) >= 0) out = a.filter((x) => x !== i);
+      else if (tieneEx && i === exclusiva) out = [i];
+      else {
+        const limpio = tieneEx ? a.filter((x) => x !== exclusiva) : a;
+        if (max && limpio.length >= max) return {};
+        out = limpio.concat([i]);
+      }
+      return { r: Object.assign({}, s.r, { [id]: out }) };
+    });
+  }
+
+  renderVals() {
+    const S = (a) => a;
+    const sectores = S(['Tecnología', 'Finanzas', 'Salud', 'Educación', 'Consultoría', 'Legal', 'Marketing', 'Medios', 'Diseño', 'Comercio', 'Manufactura', 'Energía', 'Construcción', 'Gastronomía', 'ONG', 'Gobierno', 'Emprendo por mi cuenta', 'Estudio', 'Entre trabajos', 'Otro']);
+    const actividades = S(['Cocinar', 'Salir a comer', 'Correr', 'Gimnasio', 'Yoga o pilates', 'Ciclismo', 'Senderismo', 'Playa', 'Pádel o tenis', 'Fútbol', 'Béisbol', 'Nadar', 'Bailar', 'Conciertos', 'Cine', 'Teatro', 'Museos', 'Leer', 'Escribir', 'Fotografía', 'Tocar un instrumento', 'Videojuegos', 'Juegos de mesa', 'Viajar', 'Voluntariado', 'Estudiar algo por mi cuenta', 'Cuidar plantas']);
+    const temas = S(['Cocina y restaurantes', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios y emprender', 'Tecnología', 'Arte y diseño', 'Arquitectura', 'Ciencia', 'Historia', 'Psicología', 'Política', 'Economía', 'Crianza', 'Salud y bienestar', 'Humor y absurdos']);
+    const zonas = S(['Las Mercedes', 'El Rosal', 'Bello Monte', 'Chacao', 'Altamira', 'La Castellana', 'Los Palos Grandes', 'Sebucán y Los Dos Caminos', 'Chuao', 'El Cafetal y Santa Paula', 'Los Naranjos y Cerro Verde', 'La Trinidad y La Tahona', 'El Hatillo']);
+
+    const empresas = S(['Banesco', 'Mercantil', 'BBVA Provincial', 'Polar', 'Farmatodo', 'Locatel', 'Movistar', 'Digitel', 'Ridery', 'Yummy', 'PDVSA', 'Deloitte', 'EY', 'KPMG', 'Universidad Metropolitana', 'Universidad Católica Andrés Bello']);
+
+    const pantallas = [
+      {
+        titulo: 'Tu contexto',
+        proposito: 'Con esto evitamos sentarte con alguien de tu misma empresa, y sabemos quién está llegando a Aro y por dónde abrir.',
+        preguntas: [
+          { id: 'arraigo', tipo: 'unica', pregunta: '¿Cuál de estas se parece más a tu historia?', opciones: ['Volví después de años fuera', 'Nunca me fui, y se fue casi toda mi gente', 'Sigo con la gente de siempre', 'Trabajo remoto y casi no veo gente', 'Llegué y no conozco a nadie', 'Estoy de paso'] },
+          { id: 'sector', tipo: 'unica', pregunta: '¿En qué sector trabajas?', opciones: sectores, compacta: true },
+          { id: 'empleador', tipo: 'texto', pregunta: '¿Dónde trabajas actualmente?', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.', fuente: empresas }
+        ]
+      },
+      {
+        titulo: 'Cómo eres en la mesa',
+        proposito: 'Una mesa donde todos llevan la conversación no funciona, y una donde nadie la lleva tampoco. Nada de esto se le muestra a nadie.',
+        preguntas: [
+          { id: 'momento', tipo: 'unica', pregunta: '¿En qué momento estás?', opciones: ['Soltero sin hijos', 'Soltero con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
+          { id: 'rol', tipo: 'unica', pregunta: 'En una mesa con gente que no conoces, ¿cómo eres?', opciones: ['Escucho más de lo que hablo', 'Depende del momento', 'Suelo llevar la conversación'] },
+          { id: 'motivo', tipo: 'unica', pregunta: '¿Qué te trae?', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con Caracas después de volver', 'Red profesional'] },
+          { id: 'romance', tipo: 'unica', opcional: true, pregunta: 'Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?', ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla del producto. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: ['Abierto, si surge algo bienvenido', 'Me da igual, vengo por la conversación', 'Prefiero una mesa sin esa energía'] }
+        ]
+      },
+      {
+        titulo: 'De qué hablas',
+        proposito: 'Es lo que más pesa a la hora de armar el grupo: dos horas se sostienen con temas, no con datos.',
+        preguntas: [
+          { id: 'temas', tipo: 'multi', min: 2, max: 4, pregunta: '¿De qué podrías hablar dos horas seguidas?', opciones: temas },
+          { id: 'evitar', tipo: 'multi', opcional: true, exclusiva: 6, pregunta: '¿Hay algún tema que prefieras que no salga?', ayuda: 'Se lo decimos al anfitrión de la mesa, sin decir de quién viene.', opciones: ['Política y situación del país', 'Religión y fe', 'Dinero, sueldos y precios', 'Vida amorosa y relaciones', 'Crianza e hijos', 'Trabajo, vengo a desconectarme', 'Ninguno, hablo de todo'] },
+          { id: 'actividades', tipo: 'multi', min: 3, max: 6, pregunta: 'Escoge lo que de verdad haces, no lo que te gustaría hacer', opciones: actividades }
+        ]
+      },
+      {
+        titulo: 'Qué buscas y cuánto',
+        proposito: 'El rango que marques es el techo del sitio que elegimos. Nadie ve tu respuesta y no hay mesa mejor por gastar más.',
+        preguntas: [
+          { id: 'planes', tipo: 'multi', pregunta: '¿Qué planes te interesan?', ayuda: 'Hoy solo hay cenas. Lo demás lo abrimos según lo que pida la gente.', opciones: ['Cena en restaurante', 'Cena con foco gastronómico', 'Café o desayuno de networking', 'Drinks / after office', 'Correr', 'Senderismo', 'Pádel o tenis', 'Yoga o pilates', 'Ciclismo'] },
+          { id: 'peso', tipo: 'unica', pregunta: 'En una cena, ¿qué pesa más para ti?', opciones: ['La conversación, el restaurante es la excusa', 'Las dos cosas por igual', 'La comida, vengo por la experiencia gastronómica'] },
+          { id: 'gasto', tipo: 'unica', pregunta: '¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?', ayuda: 'Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa, así que marcar de más solo hace que la noche te salga cara.', opciones: ['Hasta 20 USD', '20 a 35 USD', '35 a 50 USD', 'Más de 50 USD'] },
+        ]
+      },
+      {
+        titulo: 'Logística',
+        proposito: 'Lo último. Con esto sabemos a qué mesa puedes llegar de verdad y qué sitio elegir.',
+        preguntas: [
+          { id: 'zonas', tipo: 'multi', pregunta: '¿En qué zonas puedes asistir sin problema?', opciones: zonas },
+          { id: 'dias', tipo: 'multi', ayuda: 'No todo es cena: también hay café de sábado por la mañana y planes de domingo temprano.', pregunta: '¿Qué días te sirven mejor?', opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado mañana', 'Sábado mediodía', 'Sábado noche', 'Domingo mañana', 'Domingo mediodía'] },
+          { id: 'idiomas', tipo: 'multi', pregunta: '¿En qué idiomas conversas cómodo?', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] },
+          { id: 'dieta', tipo: 'multi', opcional: true, exclusiva: 0, pregunta: '¿Alguna restricción alimentaria?', opciones: ['Ninguna', 'Vegetariano', 'Vegano', 'Pescetariano', 'Sin gluten', 'Sin lactosa', 'Kosher', 'Halal', 'No como cerdo', 'No como carnes rojas', 'Diabético', 'Alergias'] }
+        ]
+      }
+    ];
+
+    const her = this.state.heredadas;
+    const heredada = (id) => her.indexOf(id) >= 0;
+    const p = pantallas[Math.min(this.state.pantalla, 4)];
+    const r = this.state.r;
+    const visibles = p.preguntas.filter((q) => !heredada(q.id));
+    const ocultas = p.preguntas.length - visibles.length;
+
+    const preguntas = visibles.map((q) => {
+      const val = r[q.id];
+      const base = {
+        pregunta: q.pregunta,
+        ayuda: q.ayuda || '',
+        hayAyuda: !!q.ayuda,
+        esOpcional: !!q.opcional,
+        esUnica: q.tipo === 'unica' && !q.compacta,
+        esFicha: q.tipo === 'unica' && !!q.compacta,
+        esMulti: q.tipo === 'multi',
+        esTexto: q.tipo === 'texto',
+        hayContador: false,
+        contador: '',
+        contadorEstilo: '',
+        opciones: [],
+        sugerencias: [],
+        haySugerencias: false,
+        valorTexto: '',
+        onTexto: () => {}
+      };
+
+      if (q.tipo === 'texto') {
+        const t = this.state.empleador;
+        const sug = t.length >= 2
+          ? q.fuente.filter((e) => e.toLowerCase().indexOf(t.toLowerCase()) >= 0).slice(0, 4)
+          : [];
+        base.valorTexto = t;
+        base.onTexto = (e) => this.setState({ empleador: e.target.value });
+        base.sugerencias = sug.map((label) => ({ label, pick: () => this.setState({ empleador: label }) }));
+        base.haySugerencias = sug.length > 0 && sug.indexOf(t) < 0;
+        return base;
+      }
+
+      const sel = q.tipo === 'unica' ? (val == null ? -1 : val) : (val || []);
+
+      if (q.tipo === 'multi' && (q.min || q.max)) {
+        const n = sel.length;
+        const falta = q.min ? Math.max(0, q.min - n) : 0;
+        const lleno = q.max && n >= q.max;
+        base.hayContador = true;
+        base.contador = falta > 0
+          ? (n === 0 ? 'Elige entre ' + q.min + ' y ' + q.max : 'Te ' + (falta === 1 ? 'falta 1' : 'faltan ' + falta))
+          : (lleno ? 'Llegaste al máximo de ' + q.max : n + ' de ' + q.max);
+        base.contadorEstilo = 'display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;margin-top:9px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + (falta > 0 ? 'rgba(20,52,42,.07)' : 'rgba(27,81,56,.12)') + ';color:' + (falta > 0 ? '#566A5D' : '#1B5138');
+      }
+
+      base.opciones = q.opciones.map((label, i) => {
+        const on = q.tipo === 'unica' ? sel === i : sel.indexOf(i) >= 0;
+        const tope = q.tipo === 'multi' && q.max && sel.length >= q.max && !on;
+        return {
+          label,
+          icono: on ? '✓' : '',
+          pick: q.tipo === 'unica'
+            ? () => this.set(q.id, i)
+            : () => this.multi(q.id, i, q.max, q.exclusiva),
+          btnUnica: 'display:flex;align-items:center;gap:13px;width:100%;padding:14px 18px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.18)') + ';cursor:pointer;text-align:left;min-height:56px;transition:all 180ms ease',
+          radio: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif',
+          txtUnica: 'font:' + (on ? '600' : '400') + ' clamp(15px,1.5vw,17px)/1.3 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A',
+          btnMulti: 'display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 17px 0 13px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : (tope ? 'rgba(20,52,42,.1)' : 'rgba(20,52,42,.18)')) + ';cursor:pointer;transition:all 180ms ease;opacity:' + (tope ? '.45' : '1'),
+          check: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease',
+          txtMulti: 'font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A;white-space:nowrap'
+        };
+      });
+
+      return base;
+    });
+
+    const completa = visibles.every((q) => {
+      if (q.opcional) return true;
+      const v = r[q.id];
+      if (q.tipo === 'texto') return this.state.empleador.trim().length > 0;
+      if (q.tipo === 'unica') return v != null;
+      return (v || []).length >= (q.min || 1);
+    });
+
+    const barras = [0, 1, 2, 3, 4].map((i) => ({
+      estilo: 'flex:1;height:4px;border-radius:999px;background:' + (i < this.state.pantalla ? '#1B5138' : (i === this.state.pantalla ? '#A0511F' : 'rgba(20,52,42,.13)')) + ';transition:background 260ms ease'
+    }));
+
+    const fin = this.state.fin;
+    const ultima = this.state.pantalla >= 4;
+
+    return {
+      enPreguntas: !fin,
+      enCierre: fin,
+      barras,
+      etiquetaProgreso: fin ? 'COMPLETO' : 'PANTALLA ' + (this.state.pantalla + 1) + ' DE 5',
+      // derivada del propio array: no vuelve a desincronizarse en el siguiente recorte
+      textoCierre: (() => {
+        const n = pantallas.reduce((t, x) => t + x.preguntas.length, 0);
+        const letras = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho'];
+        const t = letras[n] || String(n);
+        return t.charAt(0).toUpperCase() + t.slice(1) + (n === 1 ? ' respuesta.' : ' respuestas.');
+      })(),
+      // el acceso se elige aquí, cuando ya hay algo que guardar
+      clave: this.state.clave || '',
+      onClave: (e) => this.setState({ clave: e.target.value }),
+      campoClave: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none',
+      textoClave: (this.state.clave || '').length >= 8 ? 'Crear mi cuenta' : 'Al menos ocho caracteres',
+      pistaClave: (this.state.clave || '').length >= 8
+        ? 'Entrarás con tu correo y esta contraseña.'
+        : 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Apple o Google.',
+      // pointer-events no bloquea el teclado: la inercia va en el handler
+      enlaceLogo: fin ? 'Aro Club - Mi cuenta.dc.html' : 'Aro Club - Agradecimiento.dc.html',
+      inerteClave: (this.state.clave || '').length >= 8 ? null : 'true',
+      crearCuenta: () => { if ((this.state.clave || '').length >= 8) window.location.href = 'Aro Club - Verificacion.dc.html'; },
+      botonClave: 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease;background:' + ((this.state.clave || '').length >= 8 ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + ((this.state.clave || '').length >= 8 ? '#FAF3E4' : '#456352') + ';cursor:' + ((this.state.clave || '').length >= 8 ? 'pointer' : 'not-allowed'),
+      botonProveedor: 'display:inline-flex;align-items:center;justify-content:center;gap:11px;width:100%;min-height:58px;padding:0 26px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease',
+
+      tituloPantalla: p.titulo,
+      propositoPantalla: p.proposito,
+      preguntas,
+      hayHeredadas: ocultas > 0,
+      textoHeredadas: ocultas === 1
+        ? 'Una pregunta de esta pantalla ya la respondiste al registrarte. La saltamos.'
+        : ocultas + ' preguntas de esta pantalla ya las respondiste al registrarte. Las saltamos.',
+
+      hayRetomada: this.state.retomada && this.state.pantalla > 0 && !this.state.cerrada && !fin,
+      textoRetomada: 'Te quedaste en la pantalla ' + (this.state.pantalla + 1) + '. Lo anterior está guardado.',
+      cerrarRetomada: () => this.setState({ cerrada: true }),
+
+      puedeAtras: this.state.pantalla > 0,
+      atras: () => this.setState((s) => ({ pantalla: Math.max(0, s.pantalla - 1), retomada: false })),
+      inerteContinuar: completa ? null : 'true',
+      textoContinuar: ultima ? 'Terminar' : 'Continuar',
+      botonContinuar: 'flex:1;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + (completa ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (completa ? '#FAF3E4' : '#456352') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (completa ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
+      continuar: () => {
+        if (!completa) return;
+        if (ultima) { this.setState({ fin: true }); return; }
+        this.setState((s) => ({ pantalla: s.pantalla + 1, retomada: false }));
+        window.scrollTo(0, 0);
+      },
+      pieGuardado: completa ? 'Guardado. Puedes salir y volver cuando quieras.' : 'Guardamos cada respuesta al momento.',
+      reiniciar: () => this.setState({ fin: false, pantalla: 0, retomada: false })
+    };
+  }
+}
+</script>
+</body>
+</html>
