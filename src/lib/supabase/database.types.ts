@@ -2489,6 +2489,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      despublicar_evento: { Args: { p_event_id: string }; Returns: undefined }
       guardar_respuesta: {
         Args: {
           p_clave: string
