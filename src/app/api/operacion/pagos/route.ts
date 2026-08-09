@@ -61,7 +61,44 @@ export async function GET() {
     if (data?.signedUrl) firmadas.set(p.id, data.signedUrl)
   }
 
+  // El resumen del dia. Estaba escrito a mano en la pantalla —"14.976 Bs",
+  // "12 puestos", "tasa 62,40"— justo donde se mira cuanto ha entrado.
+  const hoy = new Date(Date.now() - 4 * 3600_000).toISOString().slice(0, 10)
+
+  const { data: delDia } = await admin
+    .from('payments')
+    .select('amount_usd, amount_local, moneda, status')
+    .gte('created_at', hoy + 'T00:00:00Z')
+
+  const confirmados = (delDia ?? []).filter((p) => p.status === 'confirmed')
+  const { data: tasaHoy } = await admin
+    .from('fx_rates')
+    .select('rate_date, usd_to_ves')
+    .order('rate_date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const { count: pendientes } = await admin
+    .from('payments')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'under_review')
+
+  const { data: devueltos } = await admin
+    .from('payments')
+    .select('amount_local')
+    .eq('status', 'refunded')
+    .gte('created_at', hoy + 'T00:00:00Z')
+
   return NextResponse.json({
+    resumen: {
+      tasa: tasaHoy ? Number(tasaHoy.usd_to_ves) : null,
+      tasaFecha: tasaHoy?.rate_date ?? null,
+      cobradoLocal: confirmados.reduce((t, p) => t + Number(p.amount_local ?? 0), 0),
+      cobradoUsd: confirmados.reduce((t, p) => t + Number(p.amount_usd ?? 0), 0),
+      puestos: confirmados.length,
+      pendientes: pendientes ?? 0,
+      devueltoLocal: (devueltos ?? []).reduce((t, p) => t + Number(p.amount_local ?? 0), 0),
+    },
     cola: (pagos ?? []).map((p) => {
       const quien = p.profiles as unknown as {
         display_name: string | null

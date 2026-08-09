@@ -232,9 +232,9 @@
       <div style="animation:aro-open 300ms ease both">
         <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;margin-bottom:6px">
           <h1 style="{{ h1 }}">Pagos de hoy</h1>
-          <span style="{{ selloTasa }}">TASA BCV · 62,40 Bs</span>
+          <span style="{{ selloTasa }}">{{ textoTasa }}</span>
         </div>
-        <p style="{{ bajada }}">Todo se cobra en bolívares. La tasa se congela al confirmar el pago, no al reservar.</p>
+        <p style="{{ bajada }}">Todo se cobra en bolívares. La tasa se congela al REPORTAR el pago, no al confirmarlo: entre una cosa y otra pasan horas y la tasa se mueve.</p>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:clamp(20px,2.6vw,26px) 0">
           <sc-for list="{{ metricasPago }}" as="m" hint-placeholder-count="4">
@@ -245,6 +245,72 @@
             </div>
           </sc-for>
         </div>
+
+        <sc-if value="{{ hayConciliar }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-bottom:clamp(20px,2.6vw,28px)">
+            <div style="font:400 clamp(21px,2.4vw,26px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A;margin-bottom:6px">Por cuadrar con el banco</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-bottom:14px;max-width:60ch;text-wrap:pretty">El puesto ya está apartado. Busca el monto exacto y la referencia en el estado de cuenta; los céntimos son distintos para cada persona a propósito.</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));align-items:start;gap:12px">
+              <sc-for list="{{ conciliar }}" as="c" hint-placeholder-count="2">
+                <div style="{{ c.caja }}">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <span style="{{ c.avatar }}">{{ c.inicial }}</span>
+                    <span style="flex:1;min-width:0">
+                      <span style="display:block;font:400 clamp(19px,2vw,22px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.nombre }}</span>
+                      <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ c.cuando }}</span>
+                    </span>
+                    <span style="{{ c.sello }}">{{ c.estado }}</span>
+                  </div>
+                  <div style="border-radius:18px;background:#FFFBF0;padding:13px 15px;margin-top:13px">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                      <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F">{{ c.metodo }}</span>
+                      <span style="font:700 clamp(19px,2.2vw,23px)/1 'Inter Tight',sans-serif;letter-spacing:-.02em;color:#14342A;font-variant-numeric:tabular-nums">{{ c.monto }}</span>
+                    </div>
+                    <sc-for list="{{ c.campos }}" as="d" hint-placeholder-count="4">
+                      <div style="display:flex;gap:10px;align-items:baseline;margin-top:7px">
+                        <span style="flex:0 0 42%;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ d.clave }}</span>
+                        <span style="flex:1;min-width:0;font:600 13px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ d.valor }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ c.hayCaptura }}" hint-placeholder-val="{{ false }}">
+                    <a href="{{ c.captura }}" target="_blank" style="display:inline-flex;align-items:center;min-height:44px;margin-top:11px;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:5px">Ver la captura →</a>
+                  </sc-if>
+                  <sc-if value="{{ c.hayMotivo }}" hint-placeholder-val="{{ false }}">
+                    <div style="border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:11px">
+                      <span style="display:block;font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#8F4515;margin-bottom:5px">NO CUADRÓ</span>
+                      <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ c.motivo }}</span>
+                      <span style="display:block;font:400 12px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:5px">{{ c.guardado }}</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ c.eligiendo }}" hint-placeholder-val="{{ false }}">
+                    <div style="border-top:1px solid rgba(20,52,42,.12);margin-top:13px;padding-top:13px">
+                      <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:9px">QUÉ LE DECIMOS</div>
+                      <div style="display:flex;flex-direction:column;gap:7px">
+                        <sc-for list="{{ c.motivos }}" as="m" hint-placeholder-count="3">
+                          <button onClick="{{ m.pick }}" style="{{ m.btn }}">
+                            <span style="{{ m.aro }}">{{ m.icono }}</span>
+                            <span style="{{ m.txt }}">{{ m.label }}</span>
+                          </button>
+                        </sc-for>
+                      </div>
+                      <div style="display:flex;gap:9px;margin-top:13px">
+                        <button onClick="{{ c.confirmarNoCuadra }}" style="{{ c.botonNoCuadra }}">{{ c.textoNoCuadra }}</button>
+                        <button onClick="{{ c.abrirNoCuadra }}" style="{{ c.botonVolver }}">Volver</button>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ c.decidiendo }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;gap:9px;margin-top:13px">
+                      <button onClick="{{ c.confirmar }}" style="{{ c.botonConfirmar }}">Cuadra, confirmar</button>
+                      <button onClick="{{ c.abrirNoCuadra }}" style="{{ c.botonRechazar }}">No cuadra</button>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
 
         <div style="border-radius:22px;background:#FAF3E4;overflow:hidden">
           <div style="display:flex;gap:14px;padding:13px clamp(16px,2vw,20px);border-bottom:1px solid rgba(20,52,42,.14);font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F">
@@ -335,11 +401,14 @@ class Component extends DCLogic {
             reparto: null, roturasFreno: null, avisosPublicados: null, aviso: '',
             arrastrando: null, desdeMesa: null, sobreMesa: null,
             recalculando: [], antesDeMover: null, repartiendo: false,
-            publicando: null, frenoMesa: null };
+            publicando: null, frenoMesa: null,
+            pagosCola: null, metodosPago: [], abriendoPago: null, motivoPago: {},
+            pagosResumen: null };
 
   componentDidMount() {
     this.cargarCola();
     this.cargarReparto();
+    this.cargarPagos();
 
     // Arrastre con eventos de puntero y no con drag-and-drop de HTML5.
     //
@@ -421,6 +490,36 @@ class Component extends DCLogic {
     window.removeEventListener('pointermove', this._mover);
     window.removeEventListener('pointerup', this._levantar);
     window.removeEventListener('pointercancel', this._levantar);
+  }
+
+  cargarPagos() {
+    fetch('/api/operacion/pagos')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin permiso'))))
+      .then((d) => this.setState({ pagosCola: d.cola, metodosPago: d.metodos, pagosResumen: d.resumen }))
+      .catch(() => this.setState({ pagosCola: [], metodosPago: [], pagosResumen: {} }));
+  }
+
+  // Cuadrar un reporte con el banco. Confirmar pasa la reserva a
+  // confirmada; "no cuadra" NO libera el puesto, lo guarda 24 h.
+  decidirPago(cuerpo) {
+    if (this.state.trabajando) return;
+    this.setState({ trabajando: true, fallo: '' });
+    fetch('/api/operacion/pagos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cuerpo)
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) { this.setState({ trabajando: false, fallo: d.error || 'No se pudo.' }); return; }
+        this.setState({
+          trabajando: false, abriendoPago: null,
+          aviso: cuerpo.accion === 'confirmar'
+            ? 'Pago confirmado. Su reserva pasa a confirmada.'
+            : 'Marcado como que no cuadra. Se le guarda el puesto 24 h para que corrija.'
+        });
+        this.cargarPagos();
+      })
+      .catch(() => this.setState({ trabajando: false, fallo: 'No se pudo.' }));
   }
 
   cargarReparto() {
@@ -899,7 +998,7 @@ class Component extends DCLogic {
       };
     });
 
-    const pestanas = [['Mesas', String(nMesas)], ['Verificaciones', String(pendientes)], ['Pagos', String(APUNTADOS)]].map((p, i) => {
+    const pestanas = [['Mesas', String(nMesas)], ['Verificaciones', String(pendientes)], ['Pagos', String((this.state.pagosResumen && this.state.pagosResumen.pendientes) || 0)]].map((p, i) => {
       const on = v === i;
       return {
         nombre: p[0], n: p[1],
@@ -1040,11 +1139,87 @@ class Component extends DCLogic {
       };
     });
 
+    // La cola de conciliacion. Los motivos van cerrados: el mensaje que le
+    // llega sale de aqui y no de un texto libre que cada dia se escribe
+    // distinto.
+    const MOTIVOS_PAGO = [
+      'No encuentro ese movimiento en el banco',
+      'El monto no coincide',
+      'La referencia no coincide',
+      'Llegó de otra cuenta'
+    ];
+    const conciliar = ((this.state.pagosCola) || []).map((p, i) => {
+      const abierta = this.state.abriendoPago === i;
+      const mSel = this.state.motivoPago[i] === undefined ? -1 : this.state.motivoPago[i];
+      const cuando = (() => {
+        if (!p.reportadoEn) return '';
+        const m = Math.floor((Date.now() - new Date(p.reportadoEn).getTime()) / 60000);
+        if (m < 60) return 'Reportado hace ' + Math.max(1, m) + ' min';
+        const h = Math.floor(m / 60);
+        return h < 24 ? 'Reportado hace ' + h + ' h' : 'Reportado hace ' + Math.floor(h / 24) + ' días';
+      })();
+      const noCuadra = p.estado === 'no-cuadra';
+      return {
+        nombre: p.nombre, inicial: (p.nombre || '?').charAt(0), avatar: avatar(i),
+        cuando,
+        estado: noCuadra ? 'NO CUADRA' : 'PENDIENTE',
+        sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;background:' +
+          (noCuadra ? 'rgba(143,69,21,.13)' : 'rgba(20,52,42,.08)') + ';color:' + (noCuadra ? '#8F4515' : '#33513F'),
+        caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (noCuadra ? '#C0662F' : 'transparent'),
+        metodo: (((this.state.metodosPago) || []).find((m) => m.id === p.metodo) || {}).nombre || p.metodo,
+        // El monto EXACTO, con sus centimos: es lo que hay que buscar.
+        monto: p.montoLocal != null
+          ? p.montoLocal.toFixed(2).replace('.', ',') + ' ' + (p.moneda === 'VES' ? 'Bs' : p.moneda)
+          : (p.montoUsd || 0).toFixed(2).replace('.', ',') + ' ' + (p.moneda || 'USD'),
+        campos: Object.keys(p.datos || {}).map((k) => ({
+          clave: { tel: 'Teléfono', doc: 'Documento', banco: 'Banco', ref: 'Referencia',
+                   fecha: 'Fecha', titular: 'Titular', contacto: 'Contacto', otp: 'Código' }[k] || k,
+          valor: String(p.datos[k])
+        })),
+        hayCaptura: !!p.captura, captura: p.captura,
+        hayMotivo: noCuadra && !!p.motivo, motivo: p.motivo,
+        guardado: p.guardadoHasta
+          ? 'Se le guarda el puesto hasta ' + new Date(p.guardadoHasta).toLocaleString('es-VE', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' })
+          : '',
+        decidiendo: !abierta,
+        eligiendo: abierta,
+        motivos: MOTIVOS_PAGO.map((label, k) => {
+          const on = mSel === k;
+          return {
+            label, icono: on ? '✓' : '',
+            pick: () => this.setState((st) => ({ motivoPago: Object.assign({}, st.motivoPago, { [i]: k }) })),
+            aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif',
+            btn: 'display:flex;align-items:center;gap:11px;width:100%;min-height:48px;padding:8px 15px 8px 12px;border-radius:20px;background:' + (on ? '#F2E9D5' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.16)') + ';cursor:pointer',
+            txt: 'flex:1;min-width:0;text-align:left;font:' + (on ? '600' : '500') + ' 14px/1.3 \'Inter Tight\',sans-serif;color:#14342A'
+          };
+        }),
+        botonConfirmar: btnCola('#1B5138', '#FAF3E4', 'none'),
+        botonRechazar: btnCola('transparent', '#8F4515', '1px solid rgba(143,69,21,.44)'),
+        botonVolver: btnCola('transparent', '#33513F', '1px solid rgba(20,52,42,.22)'),
+        botonNoCuadra: btnCola(mSel >= 0 ? '#6E340F' : 'rgba(20,52,42,.1)', mSel >= 0 ? '#FFF8EA' : '#5A7264', 'none'),
+        textoNoCuadra: mSel >= 0 ? 'Avisarle' : 'Elige el motivo',
+        confirmar: () => this.decidirPago({ accion: 'confirmar', pagoId: p.id }),
+        abrirNoCuadra: () => this.setState((st) => ({ abriendoPago: st.abriendoPago === i ? null : i })),
+        confirmarNoCuadra: () => {
+          if (mSel < 0) return;
+          this.decidirPago({ accion: 'no-cuadra', pagoId: p.id, motivo: MOTIVOS_PAGO[mSel] });
+        }
+      };
+    });
+
+    // Las cuatro cifras del dinero, del servidor. Estaban escritas a mano
+    // —"14.976 Bs", "12 puestos", "240,00"— justo en la pantalla donde se
+    // mira cuanto ha entrado hoy.
+    const R$ = (this.state.pagosResumen) || {};
+    const bs = (n) => (n == null ? '—' : Math.round(n).toLocaleString('es-VE') + ' Bs');
     const metricasPago = [
-      ['COBRADO HOY', '14.976 Bs', nMesas * 6 + ' puestos a 8 USD', null],
-      ['EN DÓLARES', '240,00', 'A la tasa de hoy, sin la devolución', null],
-      ['PENDIENTES', '2', 'Transferencias sin conciliar', '#8F4515'],
-      ['DEVUELTO', '499 Bs', 'Una cancelación con margen', null]
+      ['COBRADO HOY', bs(R$.cobradoLocal),
+        (R$.puestos || 0) + ((R$.puestos === 1) ? ' puesto' : ' puestos') + ' a 8 USD', null],
+      ['EN DÓLARES', (R$.cobradoUsd || 0).toFixed(2).replace('.', ','),
+        'A la tasa de hoy, sin la devolución', null],
+      ['PENDIENTES', String(R$.pendientes || 0), 'Transferencias sin conciliar',
+        (R$.pendientes || 0) > 0 ? '#8F4515' : null],
+      ['DEVUELTO', bs(R$.devueltoLocal), 'Cancelaciones con margen', null]
     ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) }));
 
     const chipPago = (e) => {
@@ -1066,6 +1241,12 @@ class Component extends DCLogic {
 
     return {
       pestanas, metricas, mesas, espera, colas, metricasPago, pagos,
+      conciliar, hayConciliar: conciliar.length > 0,
+      // La tasa de VERDAD, con su fecha: enseñar 62,40 cuando son 756 no es
+      // un dato desactualizado, es un precio equivocado.
+      textoTasa: R$.tasa
+        ? 'TASA BCV · ' + R$.tasa.toFixed(2).replace('.', ',') + ' Bs'
+        : 'SIN TASA DE HOY',
       esMesas: v === 0, esVerificaciones: v === 1, esPagos: v === 2,
 
       h1: 'font:400 clamp(26px,3.4vw,38px)/1.05 \'Young Serif\',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:0',
