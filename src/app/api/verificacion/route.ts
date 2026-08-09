@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { cerrarTraspasos, perfilDeTraspaso } from '@/lib/traspaso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -22,17 +23,28 @@ const TIPOS = { cedula: 'id_document', selfie: 'selfie' } as const
 const MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic']
 const MAXIMO = 8 * 1024 * 1024
 
-export async function GET() {
+/**
+ * De quién es esta verificación: de quien tiene sesión, o de quien llega
+ * con el código del QR desde el teléfono. El código no abre sesión ni sirve
+ * para nada más que estas dos rutas.
+ */
+async function deQuien(token: string | null): Promise<string | null> {
+  if (token) return perfilDeTraspaso(token)
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
+  return user?.id ?? null
+}
+
+export async function GET(request: Request) {
+  const user = await deQuien(new URL(request.url).searchParams.get('t'))
   if (!user) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
 
   const { data: filas } = await createAdminClient()
     .from('verifications')
     .select('kind, status, rejection_reason, created_at')
-    .eq('profile_id', user.id)
+    .eq('profile_id', user)
     .order('created_at', { ascending: false })
 
   const viva = (kind: string) =>
@@ -80,13 +92,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const form = await request.formData().catch(() => null)
+  const user = await deQuien((form?.get('token') as string) || null)
   if (!user) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
 
-  const form = await request.formData().catch(() => null)
   const tipo = String(form?.get('tipo') ?? '')
   const archivo = form?.get('archivo')
 
@@ -108,7 +117,7 @@ export async function POST(request: Request) {
   const { data: previa } = await admin
     .from('verifications')
     .select('id, status, rejection_reason')
-    .eq('profile_id', user.id)
+    .eq('profile_id', user)
     .eq('kind', kind)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -133,7 +142,7 @@ export async function POST(request: Request) {
 
   // La ruta la decide el servidor, con el id de la persona por delante.
   const ext = archivo.type === 'image/png' ? 'png' : archivo.type === 'image/webp' ? 'webp' : 'jpg'
-  const ruta = `${user.id}/${kind}-${Date.now()}.${ext}`
+  const ruta = `${user}/${kind}-${Date.now()}.${ext}`
 
   const { error: errorSubida } = await admin.storage
     .from('verificaciones')
@@ -153,7 +162,7 @@ export async function POST(request: Request) {
   }
 
   const { error } = await admin.from('verifications').insert({
-    profile_id: user.id,
+    profile_id: user,
     kind,
     status: 'pending',
     storage_path: ruta,
@@ -165,6 +174,16 @@ export async function POST(request: Request) {
     console.error('[verificacion] no se registró', error)
     return NextResponse.json({ error: 'No pudimos registrar tu envío.' }, { status: 500 })
   }
+
+  // Con las dos dentro, la llave del QR sobra. Lo que sobra se cierra.
+  const { data: entregadas } = await admin
+    .from('verifications')
+    .select('kind')
+    .eq('profile_id', user)
+    .in('status', ['pending', 'approved'])
+
+  const tipos = new Set((entregadas ?? []).map((v) => v.kind))
+  if (tipos.has('id_document') && tipos.has('selfie')) await cerrarTraspasos(user)
 
   return NextResponse.json({ estado: 'recibida' })
 }

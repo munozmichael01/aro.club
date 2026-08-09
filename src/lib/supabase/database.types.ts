@@ -2199,6 +2199,65 @@ export type Database = {
           },
         ]
       }
+      verification_handoffs: {
+        Row: {
+          claimed_at: string | null
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          profile_id: string
+          token_hash: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          profile_id: string
+          token_hash: string
+        }
+        Update: {
+          claimed_at?: string | null
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          profile_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_handoffs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_handoffs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "verification_handoffs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "verification_handoffs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_rejection_reasons: {
         Row: {
           allows_retry: boolean
@@ -2755,6 +2814,7 @@ export type Database = {
         Returns: undefined
       }
       is_ops: { Args: never; Returns: boolean }
+      limpiar_traspasos: { Args: never; Returns: undefined }
       normalize_employer: { Args: { raw: string }; Returns: string }
       purgar_documentos_verificacion: {
         Args: never

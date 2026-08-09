@@ -217,7 +217,8 @@
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
   state = { fase: 'intro', movil: true, toma: 0, tomas: {}, repetirSolo: null,
-            subiendo: false, fallo: '', motivo: null };
+            subiendo: false, fallo: '', motivo: null,
+            celdas: [], ladoQr: 0, traspaso: null };
 
   TIPOS = ['cedula', 'selfie'];
 
@@ -228,8 +229,18 @@ class Component extends DCLogic {
     const dedo = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
     if (!dedo && window.innerWidth > 780) this.setState({ movil: false });
 
+    // Quien llega por el QR trae la llave en la URL y no tiene sesion aqui.
+    // Se guarda en memoria y no se toca la barra de direcciones: una llave
+    // en el historial del navegador es una llave que sobrevive al traspaso.
+    const t = new URLSearchParams(window.location.search).get('t');
+    if (t) {
+      this._llave = t;
+      history.replaceState(null, '', window.location.pathname);
+      this.setState({ fase: 'captura', toma: 0 });
+    }
+
     // Quien vuelve no repite lo que ya mando.
-    fetch('/api/verificacion')
+    fetch('/api/verificacion' + (t ? '?t=' + encodeURIComponent(t) : ''))
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((d) => {
         if (d.estado === 'revision') { this.setState({ fase: 'revision' }); return; }
@@ -245,8 +256,44 @@ class Component extends DCLogic {
           this.setState({ tomas: t, fase: 'captura', toma: d.cedulaLista && !d.selfieLista ? 1 : 0 });
         }
       })
-      .catch(() => { window.location.href = 'Aro Club - Entrar.dc.html'; });
+      .catch(() => {
+        if (t) { this.setState({ fase: 'captura', fallo: 'Este codigo ya caduco. Vuelve al ordenador y pide uno nuevo.' }); return; }
+        window.location.href = 'Aro Club - Entrar.dc.html';
+      });
   }
+
+  // El QR se pide al entrar en el traspaso, no al cargar: quien verifica
+  // desde el telefono nunca pasa por aqui y no hay por que crearle una
+  // llave que no va a usar.
+  pedirQr() {
+    fetch('/api/verificacion/traspaso', { method: 'POST' })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin qr'))))
+      .then((d) => { this.setState({ celdas: d.celdas, ladoQr: d.lado }); this.vigilar(); })
+      .catch(() => this.setState({ fallo: 'No pudimos preparar el traspaso. Sigue aqui y sube las fotos.' }));
+  }
+
+  // "Esta pantalla avanza sola. No la cierres." Lo dice el diseño, asi que
+  // tiene que ser verdad: cada tres segundos pregunta si ya llegaron.
+  vigilar() {
+    clearInterval(this._vig);
+    this._vig = setInterval(() => {
+      fetch('/api/verificacion')
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.estado === 'revision' || d.estado === 'aprobada') {
+            clearInterval(this._vig);
+            this.setState({ fase: 'revision' });
+          } else if (d.cedulaLista || d.selfieLista) {
+            // Se ve llegar la primera foto antes que la segunda: quien mira
+            // la pantalla sabe que el telefono esta haciendo algo.
+            this.setState({ tomas: Object.assign({}, d.cedulaLista ? { 0: true } : {}, d.selfieLista ? { 1: true } : {}) });
+          }
+        })
+        .catch(() => {});
+    }, 3000);
+  }
+
+  componentWillUnmount() { clearInterval(this._vig); }
 
   // La camara del telefono, sin app. `capture` la abre directamente:
   // trasera para la cedula, frontal para la selfie. Sin `capture` es el
@@ -269,6 +316,7 @@ class Component extends DCLogic {
     const cuerpo = new FormData();
     cuerpo.append('tipo', this.TIPOS[idx]);
     cuerpo.append('archivo', archivo);
+    if (this._llave) cuerpo.append('token', this._llave);
     this.setState({ subiendo: true, fallo: '' });
     fetch('/api/verificacion', { method: 'POST', body: cuerpo })
       .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
@@ -296,17 +344,11 @@ class Component extends DCLogic {
       ['CUÁNTO DURA', 'Se borra a los 90 días de aprobarse. Solo queda la marca de que la verificación ocurrió.']
     ].map((e) => ({ clave: e[0], valor: e[1] }));
 
-    // patrón de QR: decorativo y estable, no un código real
-    const qr = [];
-    for (let i = 0; i < 441; i++) {
-      const x = i % 21, y = Math.floor(i / 21);
-      const esquina = (cx, cy) => x >= cx && x < cx + 7 && y >= cy && y < cy + 7 &&
-        (x === cx || x === cx + 6 || y === cy || y === cy + 6 || (x >= cx + 2 && x <= cx + 4 && y >= cy + 2 && y <= cy + 4));
-      const marco = esquina(0, 0) || esquina(14, 0) || esquina(0, 14);
-      const zona = (x < 8 && y < 8) || (x > 12 && y < 8) || (x < 8 && y > 12);
-      const on = marco || (!zona && ((x * 7 + y * 13 + ((x * y) % 5)) % 3 === 0));
-      qr.push({ celda: 'width:100%;aspect-ratio:1;background:' + (on ? '#14342A' : 'transparent') });
-    }
+    // El codigo de verdad, con la llave dentro. Antes era un patron
+    // decorativo: bonito y completamente inutil apuntandole la camara.
+    const qr = (this.state.celdas || []).map((on) => ({
+      celda: 'width:100%;aspect-ratio:1;background:' + (on ? '#14342A' : 'transparent')
+    }));
 
     const pasosQr = [
       ['1', 'Abre la cámara del teléfono y apúntala al código.'],
@@ -380,10 +422,13 @@ class Component extends DCLogic {
       textoEmpezar: movil ? 'Empezar, son dos fotos' : 'Empezar',
       // Arranca en la que falta, no siempre en la primera: si ya subio la
       // cedula, "Empezar" la mandaba a repetirla.
-      empezar: () => this.setState((st) => ({
-        fase: movil ? 'captura' : 'qr',
-        toma: st.tomas[0] && !st.tomas[1] ? 1 : 0
-      })),
+      empezar: () => {
+        this.setState((st) => ({
+          fase: movil ? 'captura' : 'qr',
+          toma: st.tomas[0] && !st.tomas[1] ? 1 : 0
+        }));
+        if (!movil) this.pedirQr();
+      },
       seguirAqui: () => this.setState({ fase: 'captura', toma: 0 }),
       // Antes saltaba a "en revision" sin mirar nada. Ahora pregunta si las
       // fotos llegaron de verdad desde el telefono.
@@ -446,7 +491,11 @@ class Component extends DCLogic {
       volverRevision: () => this.setState({ fase: 'revision' }),
       repetirCedula: () => this.setState({ fase: 'captura', toma: 0, tomas: {}, repetirSolo: 0 }),
 
-      qrCaja: 'display:grid;grid-template-columns:repeat(21,1fr);width:clamp(160px,44vw,196px);height:clamp(160px,44vw,196px)'
+      // El lado lo dice el codigo, no el maquetado: si la URL crece, el QR
+      // pasa de 29 a 33 modulos y una rejilla de 21 lo dibujaria torcido.
+      qrCaja: 'display:grid;grid-template-columns:repeat(' + (this.state.ladoQr || 29) + ',1fr);width:clamp(160px,44vw,196px);height:clamp(160px,44vw,196px)',
+      hayQr: (this.state.celdas || []).length > 0,
+      sinQr: (this.state.celdas || []).length === 0
     };
   }
 }

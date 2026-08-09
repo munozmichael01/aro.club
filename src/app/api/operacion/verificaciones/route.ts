@@ -63,7 +63,7 @@ export async function GET() {
 
   const { data: motivos } = await admin
     .from('verification_rejection_reasons')
-    .select('code, label, allows_retry')
+    .select('code, label, allows_retry, message')
     .order('sort_order')
 
   return NextResponse.json({
@@ -83,6 +83,9 @@ export async function GET() {
       codigo: m.code,
       label: m.label,
       permiteReintento: m.allows_retry,
+      // Lo que le llegará a ella. El panel lo enseña antes de confirmar,
+      // para que quien rechaza vea qué está mandando.
+      mensaje: m.message,
     })),
   })
 }

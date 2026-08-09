@@ -132,8 +132,8 @@
                 </span>
               </div>
               <div style="display:flex;gap:9px;margin-top:14px">
-                <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Cédula</div>
-                <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Selfie</div>
+                <img src="{{ c.cedula }}" alt="Documento" style="flex:1;min-width:0;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;object-fit:cover" />
+                <img src="{{ c.selfie }}" alt="Selfie" style="flex:1;min-width:0;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;object-fit:cover" />
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
                 <sc-for list="{{ c.datos }}" as="d" hint-placeholder-count="3">
@@ -235,14 +235,44 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { vista: 0, publicado: false, decididas: {}, abriendo: null, motivos: {} };
+  state = { vista: 0, publicado: false, decididas: {}, abriendo: null, motivos: {},
+            cola: null, catalogo: [], trabajando: false, fallo: '' };
+
+  componentDidMount() { this.cargarCola(); }
+
+  cargarCola() {
+    fetch('/api/operacion/verificaciones')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin permiso'))))
+      .then((d) => this.setState({ cola: d.cola, catalogo: d.motivos }))
+      .catch(() => this.setState({ cola: [], catalogo: [] }));
+  }
+
+  decidir(cuerpo, i) {
+    if (this.state.trabajando) return;
+    this.setState({ trabajando: true, fallo: '' });
+    fetch('/api/operacion/verificaciones', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cuerpo)
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) { this.setState({ trabajando: false, fallo: d.error || 'No se pudo.' }); return; }
+        this.setState((st) => ({
+          trabajando: false, abriendo: null,
+          decididas: Object.assign({}, st.decididas, { [i]: cuerpo.accion === 'aprobar' ? 'ok' : 'no' })
+        }));
+      })
+      .catch(() => this.setState({ trabajando: false, fallo: 'No se pudo. Reintenta.' }));
+  }
 
   renderVals() {
     const v = this.state.vista;
     // en letra, como el resto del producto
     const LETRAS = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
     const letra = (n) => LETRAS[n] || String(n);
-    const pendientes = 4 - Object.keys(this.state.decididas).length;
+    // El contador de la pestaña sale de la cola real, no de un 4 fijo.
+    const pendientes = (this.state.cola || []).length - Object.keys(this.state.decididas).length;
 
     // Un solo pool real. Todo lo demás —mesas, señales y métricas— se deriva de aquí,
     // así que no puede volver a desincronizarse.
@@ -266,7 +296,8 @@ class Component extends DCLogic {
     ];
 
     const APUNTADOS = 34;
-    const SIN_VERIFICAR = 2;            // no entran al reparto
+    // Sin verificar = los que estan en la cola. Era un 2 escrito a mano.
+    const SIN_VERIFICAR = (this.state.cola || []).length;
     const elegibles = POOL.length;      // 32
     const nMesas = Math.floor(elegibles / 6);
     const enEspera = elegibles - nMesas * 6;
@@ -339,23 +370,41 @@ class Component extends DCLogic {
       nombre: p[0], inicial: p[0].charAt(0), avatar: avatar(i, true)
     }));
 
-    const colasDefs = [
-      ['María Fernanda', 'Hace 40 minutos', ['V-18.442.019', '31 años', 'Chacao'], null],
-      ['Ricardo', 'Hace 2 horas', ['V-14.007.556', '39 años', 'Altamira'], 'La foto del documento está movida. Se lee el número, no la fecha.'],
-      ['Sofía', 'Hace 3 horas', ['E-84.221.310', '27 años', 'Las Mercedes'], null],
-      ['Gustavo', 'Ayer', ['V-21.556.884', '24 años', 'Bello Monte'], 'La selfie y el documento no parecen la misma persona.']
-    ];
+    // La cola sale de la base. Los cuatro nombres de ejemplo se quedaban
+    // igual con la cola vacia, asi que operacion revisaba gente inventada.
+    const hace = (iso) => {
+      if (!iso) return '';
+      const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+      if (m < 60) return 'Hace ' + Math.max(1, m) + ' minuto' + (m === 1 ? '' : 's');
+      const h = Math.floor(m / 60);
+      if (h < 24) return 'Hace ' + h + ' hora' + (h === 1 ? '' : 's');
+      const d = Math.floor(h / 24);
+      return d === 1 ? 'Ayer' : 'Hace ' + d + ' dias';
+    };
+    const edadDe = (iso) => {
+      if (!iso) return null;
+      const n = new Date(iso), hoy = new Date();
+      let e = hoy.getFullYear() - n.getFullYear();
+      const dm = hoy.getMonth() - n.getMonth();
+      if (dm < 0 || (dm === 0 && hoy.getDate() < n.getDate())) e--;
+      return e;
+    };
+    const colasDefs = (this.state.cola || []).map((c) => [
+      c.nombre || c.trato || 'Sin nombre',
+      hace(c.esperaDesde),
+      // Lo que hay que contrastar con el documento: el nombre declarado y
+      // la edad declarada. El numero de cedula no lo guardamos.
+      [c.trato ? 'Le llaman ' + c.trato : 'Sin trato',
+       edadDe(c.nacimiento) != null ? edadDe(c.nacimiento) + ' años declarados' : 'Sin fecha de nacimiento'],
+      c.rechazosPrevios > 0
+        ? 'Ya se le rechazo ' + c.rechazosPrevios + ' vez' + (c.rechazosPrevios === 1 ? '' : 'es') + ' antes.'
+        : null,
+      c
+    ]);
     const btnCola = (fondo, color, borde) => 'flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease';
     // Cada motivo dice qué ve ella y si puede reintentar. Los de sospecha
     // no se explican: enseñarían a quien suplanta qué corregir.
-    const MOTIVOS = [
-      ['La foto salió movida o cortada', 'No se lee bien tu documento. Vuelve a hacer la foto con más luz y sin recortar los bordes.', true],
-      ['Documento vencido', 'Tu documento está vencido. Sube uno vigente y lo revisamos el mismo día.', true],
-      ['La selfie no se ve clara', 'La selfie salió muy oscura o borrosa. Repítela de frente y con luz natural.', true],
-      ['El documento no es válido aquí', 'Aceptamos cédula venezolana o pasaporte vigente. Sube uno de los dos.', true],
-      ['La selfie y el documento no coinciden', 'No pudimos verificar tu identidad. Escríbenos a hola@aro.club y lo revisamos contigo.', false],
-      ['Sospecha de suplantación', 'No pudimos verificar tu identidad. Escríbenos a hola@aro.club y lo revisamos contigo.', false]
-    ];
+    const MOTIVOS = (this.state.catalogo || []).map((m) => [m.label, m.mensaje, m.permiteReintento, m.codigo]);
 
     const colas = colasDefs.map((c, i) => {
       const d = this.state.decididas[i];
@@ -400,9 +449,22 @@ class Component extends DCLogic {
         fondoResuelto: d === 'ok' ? 'rgba(27,81,56,.11)' : 'rgba(143,69,21,.09)',
         iconoResuelto: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:' + (d === 'ok' ? '#1B5138' : '#6E340F') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;margin-top:1px',
 
-        aprobar: () => this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [i]: 'ok' }), abriendo: null })),
+        // Antes solo pintaban la tarjeta de verde. Ahora deciden de verdad,
+        // y la tarjeta no cambia hasta que el servidor lo confirma.
+        aprobar: () => this.decidir({
+          accion: 'aprobar', profileId: c[4].profileId,
+          // Quien aprueba esta diciendo que miro las dos cosas. Se guardan
+          // aunque sean true: la pregunta dentro de un mes es si alguien miro.
+          nombreCoincide: true, edadCoincide: true
+        }, i),
         rechazar: () => this.setState((st) => ({ abriendo: st.abriendo === i ? null : i })),
-        confirmarRechazo: () => { if (mSel >= 0) this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [i]: 'no' }), abriendo: null })); }
+        confirmarRechazo: () => {
+          if (mSel < 0) return;
+          this.decidir({ accion: 'rechazar', profileId: c[4].profileId, motivo: MOTIVOS[mSel][3] }, i);
+        },
+        // Las fotos, con URL firmada de cinco minutos.
+        cedula: c[4].cedula, selfie: c[4].selfie,
+        hayFotos: !!(c[4].cedula && c[4].selfie)
       };
     });
 
