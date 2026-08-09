@@ -183,6 +183,13 @@
         </div>
       </sc-for>
 
+      <sc-if value="{{ hayFalloReserva }}" hint-placeholder-val="{{ false }}">
+        <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:15px 18px;margin-top:12px">
+          <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+          <span style="flex:1;min-width:0;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ falloReserva }}</span>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ agendaVacia }}" hint-placeholder-val="{{ false }}">
         <div style="border-radius:22px;border:1px dashed rgba(20,52,42,.26);padding:clamp(20px,2.6vw,26px);font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:52ch;text-wrap:pretty">Nada de ese tipo abierto ahora mismo. Abrimos según lo que pida la gente: marca ese plan en tu perfil y cuentas para que salga.</div>
       </sc-if>
@@ -236,7 +243,8 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {}, datos: null, sinCuenta: false };
+  state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {}, datos: null, sinCuenta: false,
+            reservandoYa: false, falloReserva: '' };
 
   componentDidMount() {
     this._t = setInterval(() => this.setState({ ahora: Date.now() }), 1000);
@@ -326,6 +334,16 @@ class Component extends DCLogic {
         accion: 'Cómo llegar', enlace: 'Aro Club - Landing v3.dc.html', secundaria: 'Volver al principio'
       }
     ];
+    const FORMATOS = { dinner: 'Cenas', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' };
+    const DIASEM = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    const hhmm = (f) => {
+      const h = f.getHours();
+      return (h % 12 || 12) + ':' + (f.getMinutes() < 10 ? '0' : '') + f.getMinutes() + ' ' + (h < 12 ? 'a.m.' : 'p.m.');
+    };
+    const semanaDe = (f) => {
+      const dias = Math.floor((f - new Date()) / 86400000);
+      return dias < 7 ? 'Esta semana' : (dias < 14 ? 'La semana que viene' : 'Más adelante');
+    };
     const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
     // "Hay cena el jueves en Las Mercedes" y "Ya van 34 apuntados y se
     // cierra el martes" estaban escritos a mano. Con doce apuntados y otra
@@ -408,17 +426,23 @@ class Component extends DCLogic {
     // planes propios: futuros y pasados en la misma lista, con su estado
     const conMesa = e.id === 'reservada' || e.id === 'abierta';
     // lo que se acaba de apuntar entra aquí, no solo lo que trae el estado
-    const recien = Object.keys(this.state.hechas).map((k) => {
-      const d = this.state.hechas[k];
-      return [d.tipo + ' en ' + d.zona, d.cuando + ' · ' + d.hora, 'Apuntada, se cierra 48 h antes', 'Próxima'];
+    // Sus planes de verdad. Antes eran tres lineas fijas —una cena en
+    // Malabar que nadie tuvo— en la pantalla que hace de historial.
+    const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const crudosMios = ((d && d.planes) || []).map((p) => {
+      const f = p.empiezaEn ? new Date(p.empiezaEn) : null;
+      const cuando = f
+        ? DIASEM[f.getDay()] + ' ' + f.getDate() + ' de ' + MESES[f.getMonth()] + ' · ' + hhmm(f)
+        : '';
+      const titulo = p.restaurante
+        ? p.restaurante + (p.numeroMesa != null ? ' · mesa ' + String(p.numeroMesa).padStart(2, '0') : '')
+        // En singular: es UNA cena suya, no la categoria del calendario.
+        : ({ dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' }[p.formato] || 'Cena');
+      if (p.cancelada || p.estado === 'cancelled') return [titulo, cuando, 'Cancelaste', 'Cancelaste'];
+      if (p.estado === 'attended') return [titulo, cuando, 'Fuiste', 'Fuiste'];
+      if (p.pasada) return [titulo, cuando, 'Ya pasó', 'Pasada'];
+      return [titulo, cuando, 'Apuntada, se cierra 48 h antes', 'Próxima'];
     });
-    const crudosMios = recien.concat(conMesa
-      ? [
-        [e.id === 'abierta' ? 'Cardenal · mesa 04' : 'Cena en Las Mercedes', 'Jueves 14 de agosto · 7:00 p.m.', e.id === 'abierta' ? 'Se abre a las 12:00' : 'Apuntada, se cierra el martes', e.id === 'abierta' ? 'Hoy' : 'Próxima'],
-        ['Alto', 'Jueves 31 de julio · 7:00 p.m.', 'Mesa 02 · cinco personas', 'Fuiste'],
-        ['Malabar', 'Jueves 17 de julio · 7:00 p.m.', 'Cancelaste con menos de 24 h', 'Cancelaste']
-      ]
-      : []);
     const mios = crudosMios.map((h) => {
       const activo = h[3] === 'Hoy' || h[3] === 'Próxima';
       return {
@@ -454,31 +478,49 @@ class Component extends DCLogic {
       Movimiento: ['◢', '#2D6A4F', 'rgba(45,106,79,.14)'],
       Coffee: ['◉', '#566A5D', 'rgba(86,106,93,.14)']
     };
-    // el evento que ya tienes reservado no se ofrece otra vez
-    const yaApuntada = (e.id === 'reservada' || e.id === 'abierta') ? 'Jueves 14 · 7:00 p.m.' : null;
     // El apuntado es a una FECHA, no a una mesa. Las mesas se arman al cerrar,
     // repartiendo a todo el que se apuntó. Por eso el contador es de gente en la fecha
     // y el umbral es el mínimo para que esa fecha salga adelante.
     const MINIMO = 12;
-    const crudos = [
-      ['Esta semana', 'Cenas', 'Jueves 14 · 7:00 p.m.', 'Las Mercedes', 34],
-      ['Esta semana', 'Drinks', 'Viernes 15 · 8:00 p.m.', 'El Rosal', 19],
-      ['Esta semana', 'Movimiento', 'Domingo 17 · 7:00 a.m.', 'El Ávila, Sabas Nieves', 8],
-      ['La semana que viene', 'Cenas', 'Jueves 21 · 7:00 p.m.', 'Los Palos Grandes', 11],
-      ['La semana que viene', 'Cenas', 'Viernes 22 · 8:00 p.m.', 'Chacao', 6],
-      ['La semana que viene', 'Coffee', 'Sábado 23 · 10:00 a.m.', 'Altamira', 4]
-    ];
+
+    // Seis fechas escritas a mano —con "Jueves 14" y 34 apuntados— en la
+    // pantalla donde se decide si vas a cenar. Ahora salen de la base.
+    const agendaSrv = (d && d.agenda) || [];
+    const yaApuntada = (() => {
+      const m = agendaSrv.find((a) => a.mia);
+      if (!m) return null;
+      const f = new Date(m.empiezaEn);
+      return DIASEM[f.getDay()] + ' ' + f.getDate() + ' · ' + hhmm(f);
+    })();
+    const crudos = agendaSrv.map((a) => {
+      const f = new Date(a.empiezaEn);
+      return [
+        semanaDe(f),
+        FORMATOS[a.formato] || 'Cenas',
+        DIASEM[f.getDay()] + ' ' + f.getDate() + ' · ' + hhmm(f),
+        // Las zonas ABIERTAS de esa fecha, no un sitio: el sitio se decide
+        // al armar la mesa y ella no lo sabe hasta la revelación.
+        a.zonas.join(' o ') || 'Zona por confirmar',
+        a.apuntados,
+        a.id,
+        a.mia
+      ];
+    });
     const filtrados = crudos.filter((c) => this.state.filtro === 0 || c[1] === tipos[this.state.filtro]);
     const semanas = [];
     filtrados.forEach((c) => {
       const n = c[4];
       const va = n >= 6;
       const clave = c[1] + c[2];
-      const yaHecha = !!this.state.hechas[clave];
-      const mia = yaApuntada === c[2] || yaHecha;
+      // Lo dice el servidor, no una marca local que se pierde al recargar.
+      const mia = !!c[6];
       const abierta = this.state.reservando === clave;
       const m = marcas[c[1]];
-      const horasDe = { Cenas: ['7:00 p.m.', '8:30 p.m.'], Drinks: ['8:00 p.m.', '9:30 p.m.'], Movimiento: ['7:00 a.m.', '9:00 a.m.'], Coffee: ['10:00 a.m.', '4:00 p.m.'] }[c[1]];
+      // La hora REAL de la fecha, una sola. Habia dos opciones por formato
+      // —"7:00 p.m." y "8:30 p.m."— pero un evento tiene una hora y nadie
+      // elige turno: era un selector que no cambiaba nada. Si algun dia hay
+      // dos turnos, seran dos fechas distintas.
+      const horasDe = [c[2].split(' · ')[1] || ''];
       const horas = horasDe.map((label, hi) => {
         const on = this.state.hora === hi;
         return {
@@ -497,8 +539,8 @@ class Component extends DCLogic {
         estado: mia
           ? 'Ya estás apuntada'
           : (n >= 6
-            ? n + ' apuntados · ' + Math.ceil(n / 6) + (Math.ceil(n / 6) === 1 ? ' mesa' : ' mesas')
-            : n + ' apuntados · ' + ((6 - n) === 1 ? 'falta 1' : 'faltan ' + (6 - n)) + ' para la primera mesa'),
+            ? n + (n === 1 ? ' apuntado · ' : ' apuntados · ') + Math.ceil(n / 6) + (Math.ceil(n / 6) === 1 ? ' mesa' : ' mesas')
+            : n + (n === 1 ? ' apuntado · ' : ' apuntados · ') + ((6 - n) === 1 ? 'falta 1' : 'faltan ' + (6 - n)) + ' para la primera mesa'),
         estadoEstilo: 'font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (mia ? '#1B5138' : (va ? '#1B5138' : '#8F4515')) + ';white-space:nowrap',
         caja: 'display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;border-radius:22px;padding:clamp(15px,2vw,18px);cursor:' + (mia ? 'default' : 'pointer') + ';background:' + (mia ? 'transparent' : (abierta ? '#F2E9D5' : '#FFFBF0')) + ';border:1px solid ' + (mia ? '#1B5138' : 'transparent'),
         icono: 'flex:0 0 auto;width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 15px/1 \'Inter Tight\',sans-serif;background:' + (mia ? '#1B5138' : m[2]) + ';color:' + (mia ? '#FAF3E4' : m[1]),
@@ -512,15 +554,27 @@ class Component extends DCLogic {
         cargo: 'Tu puesto en esta fecha',
         precio: '8 USD en bolívares',
         nota: 'Cubre el emparejamiento, la verificación del grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
-        textoConfirmar: 'Reservar mi puesto · 8 USD',
+        textoConfirmar: this.state.reservandoYa ? 'Apuntándote' : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : '8 USD'),
         botonConfirmar: 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
         abrir: () => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0 })),
-        confirmar: () => this.setState((s) => ({
-          hechas: Object.assign({}, s.hechas, {
-            [clave]: { tipo: c[1], cuando: c[2].split(' · ')[0], zona: c[3], hora: horasDe[s.hora] }
-          }),
-          reservando: null
-        }))
+        // Reservar de verdad. Antes solo se marcaba en la pantalla: al
+        // recargar desaparecia, y en la base no habia nada.
+        confirmar: () => {
+          if (this.state.reservandoYa) return;
+          this.setState({ reservandoYa: true, falloReserva: '' });
+          fetch('/api/reservar', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventoId: c[5] })
+          })
+            .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
+            .then(({ ok, x }) => {
+              if (!ok) { this.setState({ reservandoYa: false, falloReserva: x.error || 'No pudimos apuntarte.' }); return; }
+              this.setState({ reservandoYa: false, reservando: null });
+              // Se relee: el estado de la cuenta cambia con la reserva.
+              fetch('/api/mi-cuenta').then((r) => r.json()).then((d2) => this.setState({ datos: d2 }));
+            })
+            .catch(() => this.setState({ reservandoYa: false, falloReserva: 'No pudimos apuntarte.' }));
+        }
       });
     });
 
@@ -537,6 +591,8 @@ class Component extends DCLogic {
       quitarFiltro: () => this.setState({ filtro: 0, reservando: null }),
       botonFantasmaOscuro: 'display:inline-flex;align-items:center;min-height:50px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
       hayDatos: !!this.state.datos,
+      hayFalloReserva: !!this.state.falloReserva,
+      falloReserva: this.state.falloReserva,
       // La API ya decia quien es ops y la pantalla no lo usaba: un admin
       // entraba y veia la vista de miembro, sin ninguna puerta al panel.
       esOps: !!(this.state.datos && this.state.datos.esOps),

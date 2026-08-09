@@ -36,7 +36,7 @@ export async function GET() {
   const { data: perfil } = await admin
     .from('profiles')
     .select(
-      'id, full_name, display_name, email, contact_email, status, role, waitlist_id, birthdate, gender, phone_e164',
+      'id, full_name, display_name, email, contact_email, status, role, waitlist_id, birthdate, gender, phone_e164, city_slug',
     )
     .eq('id', user.id)
     .maybeSingle()
@@ -147,6 +147,65 @@ export async function GET() {
     }
   }
 
+  // La agenda: las fechas abiertas con cuánta gente va. Enseñar cuánta
+  // gente hay y no cuántos puestos quedan es deliberado —un contador de
+  // escasez es otra cosa— pero seis fechas escritas a mano tampoco son
+  // gente.
+  const { data: fechas } = await admin
+    .from('events')
+    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug')
+    .in('status', ['open', 'draft'])
+    .gte('starts_at', new Date().toISOString())
+    .eq('city_slug', perfil.city_slug ?? 'caracas')
+    .order('starts_at', { ascending: true })
+    .limit(12)
+
+  const idsFechas = (fechas ?? []).map((f) => f.id)
+
+  const { data: apuntadosPorFecha } = await admin
+    .from('bookings')
+    .select('event_id')
+    .in('event_id', idsFechas.length ? idsFechas : ['00000000-0000-0000-0000-000000000000'])
+    .eq('status', 'confirmed')
+
+  const cuentaPorFecha = new Map<string, number>()
+  for (const b of apuntadosPorFecha ?? []) {
+    cuentaPorFecha.set(b.event_id, (cuentaPorFecha.get(b.event_id) ?? 0) + 1)
+  }
+
+  const { data: misReservas } = await admin
+    .from('bookings')
+    .select('event_id')
+    .eq('profile_id', user.id)
+    .in('status', ['confirmed', 'attended'])
+
+  const mias = new Set((misReservas ?? []).map((b) => b.event_id))
+
+  // Las zonas de cada fecha, para decir dónde es sin prometer un sitio.
+  const { data: sedesFechas } = await admin
+    .from('event_venues')
+    .select('event_id, zone_slug, zones(name)')
+    .in('event_id', idsFechas.length ? idsFechas : ['00000000-0000-0000-0000-000000000000'])
+
+  const zonasPorFecha = new Map<string, string[]>()
+  for (const v of sedesFechas ?? []) {
+    const nombre = (v.zones as unknown as { name: string } | null)?.name ?? v.zone_slug
+    const ya = zonasPorFecha.get(v.event_id) ?? []
+    if (!ya.includes(nombre)) zonasPorFecha.set(v.event_id, [...ya, nombre])
+  }
+
+  // Sus planes: todo lo que reservó, con lo que paso. Habia tres lineas
+  // escritas a mano —"Alto, mesa 02", "Malabar, cancelaste"— en la pantalla
+  // que hace de historial. Un historial inventado es peor que no tenerlo.
+  const { data: todasSusReservas } = await admin
+    .from('bookings')
+    .select(
+      'id, status, cancelled_at, event_id, events(starts_at, format, reveal_at), table_members(dinner_tables(table_number, restaurants!dinner_tables_restaurant_id_fkey(name)))',
+    )
+    .eq('profile_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
   const ahora = Date.now()
   const evento = reserva?.events as
     | { starts_at: string; reveal_at: string; status: string; restaurants: { name: string; address: string; zone_slug: string | null } | null }
@@ -175,6 +234,36 @@ export async function GET() {
   return NextResponse.json({
     nombre: perfil.display_name || perfil.full_name || null,
     esOps: perfil.role === 'ops' || perfil.role === 'admin',
+    planes: (todasSusReservas ?? []).map((b) => {
+      const ev = b.events as unknown as { starts_at: string; format: string; reveal_at: string } | null
+      const mesa = (b.table_members as unknown as {
+        dinner_tables: { table_number: number; restaurants: { name: string } | null } | null
+      }[])?.[0]?.dinner_tables
+      const revelada = ev ? Date.now() >= new Date(ev.reveal_at).getTime() : false
+      return {
+        empiezaEn: ev?.starts_at ?? null,
+        formato: ev?.format ?? 'dinner',
+        estado: b.status,
+        cancelada: !!b.cancelled_at,
+        pasada: ev ? Date.now() > new Date(ev.starts_at).getTime() : false,
+        // El sitio y la mesa solo despues de revelar: antes no los sabe, y
+        // el historial no puede ser la puerta de atras a la revelacion.
+        restaurante: revelada ? (mesa?.restaurants?.name ?? null) : null,
+        numeroMesa: revelada ? (mesa?.table_number ?? null) : null,
+      }
+    }),
+    agenda: (fechas ?? []).map((f) => ({
+      id: f.id,
+      formato: f.format,
+      empiezaEn: f.starts_at,
+      cierraEn: f.booking_closes_at,
+      creditos: f.credit_cost ?? 1,
+      zonas: zonasPorFecha.get(f.id) ?? [],
+      apuntados: cuentaPorFecha.get(f.id) ?? 0,
+      // Si ya está apuntada, la tarjeta lo dice en vez de ofrecerle
+      // reservar otra vez.
+      mia: mias.has(f.id),
+    })),
     proximaFecha: proxima
       ? {
           empiezaEn: proxima.starts_at,
