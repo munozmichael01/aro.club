@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { PESOS, repartir, roturas, desglose, type Persona } from '@/lib/reparto/repartir'
+import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
 
 /**
  * El reparto PROPONE. Una persona confirma (HANDOFF-4 §4.2).
@@ -27,17 +27,6 @@ const cuerpo = z.object({
     })
     .optional(),
 })
-
-async function exigirOps() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return null
-  const { data } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-  if (data?.role !== 'ops' && data?.role !== 'admin') return null
-  return user.id
-}
 
 export async function POST(request: Request) {
   const actor = await exigirOps()

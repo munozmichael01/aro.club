@@ -76,6 +76,13 @@ export type Database = {
             foreignKeyName: "answers_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "answers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -168,6 +175,13 @@ export type Database = {
             foreignKeyName: "bookings_attended_marked_by_fkey"
             columns: ["attended_marked_by"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "bookings_attended_marked_by_fkey"
+            columns: ["attended_marked_by"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -198,6 +212,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "bookings_profile_id_fkey"
@@ -298,6 +319,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_ledger_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "credit_ledger_profile_id_fkey"
@@ -406,6 +434,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employer_aliases_confirmed_by_fkey"
+            columns: ["confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "employer_aliases_confirmed_by_fkey"
@@ -548,6 +583,13 @@ export type Database = {
             foreignKeyName: "exclusions_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "exclusions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -569,6 +611,13 @@ export type Database = {
             foreignKeyName: "exclusions_profile_a_fkey"
             columns: ["profile_a"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "exclusions_profile_a_fkey"
+            columns: ["profile_a"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -585,6 +634,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exclusions_profile_b_fkey"
+            columns: ["profile_b"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "exclusions_profile_b_fkey"
@@ -631,6 +687,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fx_rates_set_by_fkey"
+            columns: ["set_by"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "fx_rates_set_by_fkey"
@@ -711,6 +774,13 @@ export type Database = {
             foreignKeyName: "incident_reports_reporter_id_fkey"
             columns: ["reporter_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "incident_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -732,6 +802,13 @@ export type Database = {
             foreignKeyName: "incident_reports_resolved_by_fkey"
             columns: ["resolved_by"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "incident_reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -748,6 +825,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "incident_reports_subject_id_fkey"
@@ -832,6 +916,13 @@ export type Database = {
             foreignKeyName: "matching_runs_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "matching_runs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -862,6 +953,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matching_runs_published_by_fkey"
+            columns: ["published_by"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "matching_runs_published_by_fkey"
@@ -939,6 +1037,13 @@ export type Database = {
             foreignKeyName: "memberships_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "memberships_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -991,6 +1096,13 @@ export type Database = {
             foreignKeyName: "ops_audit_log_actor_id_fkey"
             columns: ["actor_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "ops_audit_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -1034,6 +1146,13 @@ export type Database = {
             foreignKeyName: "pair_encounters_profile_a_fkey"
             columns: ["profile_a"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "pair_encounters_profile_a_fkey"
+            columns: ["profile_a"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -1050,6 +1169,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pair_encounters_profile_b_fkey"
+            columns: ["profile_b"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "pair_encounters_profile_b_fkey"
@@ -1215,6 +1341,13 @@ export type Database = {
             foreignKeyName: "payments_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "payments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -1231,6 +1364,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "payments_reviewed_by_fkey"
@@ -1291,6 +1431,13 @@ export type Database = {
             foreignKeyName: "peer_feedback_rated_id_fkey"
             columns: ["rated_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "peer_feedback_rated_id_fkey"
+            columns: ["rated_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -1307,6 +1454,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "peer_feedback_rater_id_fkey"
+            columns: ["rater_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "peer_feedback_rater_id_fkey"
@@ -1399,6 +1553,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_identities_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "profile_identities_profile_id_fkey"
@@ -1499,6 +1660,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_traits_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "profile_traits_profile_id_fkey"
@@ -1606,6 +1774,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "profiles_invited_by_fkey"
@@ -1856,6 +2031,13 @@ export type Database = {
             foreignKeyName: "scheduled_emails_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "scheduled_emails_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -1920,6 +2102,13 @@ export type Database = {
             foreignKeyName: "table_feedback_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "table_feedback_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -1979,6 +2168,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "table_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "table_members_profile_id_fkey"
@@ -2088,6 +2284,13 @@ export type Database = {
             foreignKeyName: "verifications_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "verifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -2111,6 +2314,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verifications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "verifications_reviewed_by_fkey"
@@ -2224,6 +2434,13 @@ export type Database = {
             foreignKeyName: "waitlist_converted_profile_id_fkey"
             columns: ["converted_profile_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "waitlist_converted_profile_id_fkey"
+            columns: ["converted_profile_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -2274,6 +2491,21 @@ export type Database = {
         }
         Relationships: []
       }
+      v_cola_verificacion: {
+        Row: {
+          birthdate: string | null
+          display_name: string | null
+          doc_pendiente: number | null
+          email: string | null
+          espera_desde: string | null
+          full_name: string | null
+          gender: Database["public"]["Enums"]["gender_t"] | null
+          profile_id: string | null
+          rechazos_previos: number | null
+          selfie_pendiente: number | null
+        }
+        Relationships: []
+      }
       v_credit_balance: {
         Row: {
           balance: number | null
@@ -2286,6 +2518,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_ledger_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "credit_ledger_profile_id_fkey"
@@ -2421,6 +2660,13 @@ export type Database = {
             foreignKeyName: "verifications_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "verifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -2454,6 +2700,13 @@ export type Database = {
             foreignKeyName: "bookings_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "bookings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["profile_id"]
           },
@@ -2480,6 +2733,7 @@ export type Database = {
       }
     }
     Functions: {
+      a_texto: { Args: { v: Json }; Returns: string[] }
       age_years: { Args: { d: string }; Returns: number }
       convertir_lead: {
         Args: {
@@ -2502,6 +2756,13 @@ export type Database = {
       }
       is_ops: { Args: never; Returns: boolean }
       normalize_employer: { Args: { raw: string }; Returns: string }
+      purgar_documentos_verificacion: {
+        Args: never
+        Returns: {
+          borradas: number
+        }[]
+      }
+      refrescar_rasgos: { Args: { p_profile_id: string }; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
@@ -2579,7 +2840,7 @@ export type Database = {
         | "rejected"
         | "refunded"
       rootedness_t: "volvio" | "se-quedo" | "interior" | "extranjero" | "visita"
-      social_energy_t: "listener" | "balanced" | "driver"
+      social_energy_t: "escucha" | "depende" | "lleva"
       verification_kind_t:
         | "id_document"
         | "selfie"
@@ -2797,7 +3058,7 @@ export const Constants = {
         "refunded",
       ],
       rootedness_t: ["volvio", "se-quedo", "interior", "extranjero", "visita"],
-      social_energy_t: ["listener", "balanced", "driver"],
+      social_energy_t: ["escucha", "depende", "lleva"],
       verification_kind_t: [
         "id_document",
         "selfie",

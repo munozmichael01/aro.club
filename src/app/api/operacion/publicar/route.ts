@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
 
 /**
  * Publicar la propuesta: aquí es donde las mesas empiezan a existir.
@@ -23,17 +23,6 @@ type MesaPropuesta = {
   puntuacion: number
   desglose: Record<string, number>
   integrantes: { profileId: string; bookingId: string }[]
-}
-
-async function exigirOps() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return null
-  const { data } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
-  if (data?.role !== 'ops' && data?.role !== 'admin') return null
-  return user.id
 }
 
 export async function POST(request: Request) {

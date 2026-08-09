@@ -101,7 +101,7 @@
         </div>
 
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
-          <button onClick="{{ simularTelefono }}" style="{{ botonSecundario }}">Ya terminé en el teléfono</button>
+          <button onClick="{{ comprobarTelefono }}" style="{{ botonSecundario }}">Ya terminé en el teléfono</button>
           <button onClick="{{ seguirAqui }}" style="{{ botonFantasma }}">Subir archivos desde aquí</button>
         </div>
       </div>
@@ -132,11 +132,18 @@
           </sc-if>
         </div>
 
+        <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="display:flex;gap:12px;align-items:flex-start;border-radius:26px;background:rgba(110,52,15,.09);padding:clamp(15px,2.2vw,19px);margin-top:16px">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+            <span style="flex:1;min-width:0;font:400 15px/1.45 'Inter Tight',sans-serif;color:#14342A">{{ fallo }}</span>
+          </div>
+        </sc-if>
+
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:20px">
           <sc-if value="{{ sinToma }}" hint-placeholder-val="{{ true }}">
             <button onClick="{{ tomar }}" style="{{ botonPrimario }}">{{ textoTomar }}</button>
             <sc-if value="{{ enMovil }}" hint-placeholder-val="{{ true }}">
-              <button onClick="{{ tomar }}" style="{{ botonFantasma }}">Elegir de la galería</button>
+              <button onClick="{{ deGaleria }}" style="{{ botonFantasma }}">Elegir de la galería</button>
             </sc-if>
           </sc-if>
           <sc-if value="{{ hayToma }}" hint-placeholder-val="{{ false }}">
@@ -185,21 +192,22 @@
 
     <sc-if value="{{ esRechazo }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 460ms ease both">
-        <div style="{{ eyebrow }}">HAY QUE REPETIR UNA FOTO</div>
-        <h1 style="{{ h1 }}">La cédula salió movida.</h1>
-        <p style="{{ bajada }}">No es un rechazo: es que no se lee el número. Repite solo esa foto, lo demás sigue guardado.</p>
+        <div style="{{ eyebrow }}">{{ tituloRechazo }}</div>
+        <h1 style="{{ h1 }}">{{ encabezadoRechazo }}</h1>
 
         <div style="border-radius:26px;border:1px solid rgba(143,69,21,.32);padding:clamp(20px,2.6vw,28px);margin-top:clamp(24px,3vw,32px)">
-          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:16px">LO QUE VIO QUIEN REVISÓ</div>
-          <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;max-width:56ch;text-wrap:pretty">«El número de cédula está borroso en la esquina inferior. Todo lo demás se ve bien.» — Revisión del 5 de agosto, 9:12 a.m.</div>
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:16px">QUÉ PASÓ</div>
+          <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;max-width:56ch;text-wrap:pretty">{{ mensajeRechazo }}</div>
         </div>
 
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
-          <button onClick="{{ repetirCedula }}" style="{{ botonPrimario }}">Repetir la foto de la cédula</button>
-          <button onClick="{{ volverRevision }}" style="{{ botonFantasma }}">Volver</button>
+          <sc-if value="{{ puedeReintentar }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ repetirCedula }}" style="{{ botonPrimario }}">Repetir las fotos</button>
+          </sc-if>
+          <a href="Aro Club - Mi cuenta.dc.html" style="{{ botonFantasma }}">Volver</a>
         </div>
 
-        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:20px;max-width:54ch;text-wrap:pretty">Si vuelve a fallar dos veces, te escribimos por WhatsApp y lo resolvemos con una persona. Nunca te dejamos con un error y sin salida.</div>
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:20px;max-width:54ch;text-wrap:pretty">{{ pieRechazo }}</div>
       </div>
     </sc-if>
   </div>
@@ -208,10 +216,72 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { fase: 'intro', movil: true, toma: 0, tomas: {}, repetirSolo: null };
+  state = { fase: 'intro', movil: true, toma: 0, tomas: {}, repetirSolo: null,
+            subiendo: false, fallo: '', motivo: null };
+
+  TIPOS = ['cedula', 'selfie'];
 
   componentDidMount() {
-    if (window.innerWidth > 780) this.setState({ movil: false });
+    // Puntero grueso = se toca con el dedo. El ancho solo no sirve: una
+    // ventana de escritorio estrecha no es un telefono, y a un telefono en
+    // horizontal no se le puede enseñar el QR de traspaso.
+    const dedo = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    if (!dedo && window.innerWidth > 780) this.setState({ movil: false });
+
+    // Quien vuelve no repite lo que ya mando.
+    fetch('/api/verificacion')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
+      .then((d) => {
+        if (d.estado === 'revision') { this.setState({ fase: 'revision' }); return; }
+        if (d.estado === 'rechazada') { this.setState({ fase: 'rechazo', motivo: d.motivo }); return; }
+        if (d.estado === 'aprobada') { window.location.href = 'Aro Club - Mi cuenta.dc.html'; return; }
+        const t = {};
+        if (d.cedulaLista) t[0] = true;
+        if (d.selfieLista) t[1] = true;
+        // Con una foto ya mandada no se vuelve a la intro: se entra directo
+        // en la que falta. Explicarle otra vez que van a ser dos fotos a
+        // quien ya mando una es hacerle repetir el camino.
+        if (Object.keys(t).length) {
+          this.setState({ tomas: t, fase: 'captura', toma: d.cedulaLista && !d.selfieLista ? 1 : 0 });
+        }
+      })
+      .catch(() => { window.location.href = 'Aro Club - Entrar.dc.html'; });
+  }
+
+  // La camara del telefono, sin app. `capture` la abre directamente:
+  // trasera para la cedula, frontal para la selfie. Sin `capture` es el
+  // selector de archivos, que es lo que toca en escritorio y en galeria.
+  pedirFoto(conCamara) {
+    const i = document.createElement('input');
+    i.type = 'file';
+    i.accept = 'image/*';
+    if (conCamara) i.setAttribute('capture', this.state.toma === 1 ? 'user' : 'environment');
+    i.addEventListener('change', () => {
+      const f = i.files && i.files[0];
+      if (f) this.subir(f);
+    });
+    i.click();
+  }
+
+  subir(archivo) {
+    if (this.state.subiendo) return;
+    const idx = this.state.toma;
+    const cuerpo = new FormData();
+    cuerpo.append('tipo', this.TIPOS[idx]);
+    cuerpo.append('archivo', archivo);
+    this.setState({ subiendo: true, fallo: '' });
+    fetch('/api/verificacion', { method: 'POST', body: cuerpo })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) { this.setState({ subiendo: false, fallo: d.error || 'No pudimos subir la foto.' }); return; }
+        // La marca se pone cuando el servidor la tiene, no al elegirla:
+        // un "Cedula lista" con la subida caida seria mentir en verde.
+        this.setState((st) => ({
+          subiendo: false,
+          tomas: Object.assign({}, st.tomas, { [idx]: true })
+        }));
+      })
+      .catch(() => this.setState({ subiendo: false, fallo: 'No pudimos subir la foto. Reintenta.' }));
   }
 
   renderVals() {
@@ -308,15 +378,31 @@ class Component extends DCLogic {
       etiquetaPaso: { intro: 'VERIFICACIÓN', qr: 'TRASPASO', captura: 'VERIFICACIÓN', revision: 'EN REVISIÓN', rechazo: 'ACCIÓN REQUERIDA' }[f],
 
       textoEmpezar: movil ? 'Empezar, son dos fotos' : 'Empezar',
-      empezar: () => this.setState({ fase: movil ? 'captura' : 'qr', toma: 0 }),
+      // Arranca en la que falta, no siempre en la primera: si ya subio la
+      // cedula, "Empezar" la mandaba a repetirla.
+      empezar: () => this.setState((st) => ({
+        fase: movil ? 'captura' : 'qr',
+        toma: st.tomas[0] && !st.tomas[1] ? 1 : 0
+      })),
       seguirAqui: () => this.setState({ fase: 'captura', toma: 0 }),
-      simularTelefono: () => this.setState({ fase: 'revision' }),
+      // Antes saltaba a "en revision" sin mirar nada. Ahora pregunta si las
+      // fotos llegaron de verdad desde el telefono.
+      comprobarTelefono: () => {
+        this.setState({ subiendo: true, fallo: '' });
+        fetch('/api/verificacion')
+          .then((r) => r.json())
+          .then((d) => {
+            if (d.estado === 'revision' || d.estado === 'aprobada') { this.setState({ fase: 'revision', subiendo: false }); return; }
+            this.setState({ subiendo: false, fallo: 'Todavia no nos han llegado las dos fotos. Termina en el telefono y vuelve a darle.' });
+          })
+          .catch(() => this.setState({ subiendo: false, fallo: 'No pudimos comprobarlo. Reintenta.' }));
+      },
 
       capturaEtiqueta: c.etiqueta,
       capturaTitulo: c.titulo,
       capturaAyuda: c.ayuda,
       pistaVisor: c.pista,
-      textoTomar: c.boton,
+      textoTomar: this.state.subiendo ? 'Subiendo' : c.boton,
       textoToma: c.hecho,
       notaCaptura: c.nota,
       hayToma: hecha,
@@ -328,7 +414,11 @@ class Component extends DCLogic {
       guia: 'width:' + (this.state.toma === 1 ? '55%' : '82%') + ';aspect-ratio:' + (this.state.toma === 1 ? '3/4' : '1.586') + ';border:2px dashed rgba(250,243,228,.5);border-radius:' + (this.state.toma === 1 ? '999px' : '14px'),
       tomaHecha: 'display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;background:#1B5138',
 
-      tomar: () => this.setState((s) => ({ tomas: Object.assign({}, s.tomas, { [s.toma]: true }) })),
+      tomar: () => this.pedirFoto(movil),
+      deGaleria: () => this.pedirFoto(false),
+      subiendo: this.state.subiendo,
+      fallo: this.state.fallo,
+      hayFallo: !!this.state.fallo,
       repetir: () => this.setState((s) => {
         const t = Object.assign({}, s.tomas); delete t[s.toma]; return { tomas: t };
       }),
@@ -338,6 +428,21 @@ class Component extends DCLogic {
       },
 
       verRechazo: () => this.setState({ fase: 'rechazo' }),
+      // El texto sale del catalogo de motivos, no de aqui. Y `rejection_note`
+      // —lo que escribio quien reviso— NO se pide ni se enseña: el bloque
+      // decia "LO QUE VIO QUIEN REVISO" y citaba esa nota, que es interna.
+      // Ensenarla le explicaria a quien suplanta que corregir, y los dos
+      // motivos de sospecha comparten mensaje justo para evitar eso.
+      mensajeRechazo: (this.state.motivo && this.state.motivo.mensaje) || '',
+      puedeReintentar: !!(this.state.motivo && this.state.motivo.permiteReintento),
+      tituloRechazo: (this.state.motivo && this.state.motivo.permiteReintento)
+        ? 'HAY QUE REPETIR LAS FOTOS' : 'NO PUDIMOS VERIFICARTE',
+      encabezadoRechazo: (this.state.motivo && this.state.motivo.permiteReintento)
+        ? 'Hay que repetirlo.' : 'Esto lo vemos contigo.',
+      pieRechazo: (this.state.motivo && this.state.motivo.permiteReintento)
+        ? 'Si vuelve a fallar dos veces, te escribimos y lo resolvemos con una persona. Nunca te dejamos con un error y sin salida.'
+        : 'Lo revisa una persona, no un programa. Escríbenos y lo miramos contigo.',
+      repetirCedula: () => this.setState({ fase: 'captura', toma: 0, tomas: {}, fallo: '' }),
       volverRevision: () => this.setState({ fase: 'revision' }),
       repetirCedula: () => this.setState({ fase: 'captura', toma: 0, tomas: {}, repetirSolo: 0 }),
 
