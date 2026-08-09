@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#F2E9D5; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#14342A; color:#FAF3E4; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#F2E9D5;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh">
+
+  <div style="position:sticky;top:0;z-index:40;background:rgba(242,233,213,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.14)">
+    <div style="max-width:1120px;margin:0 auto;padding:11px clamp(14px,3vw,26px);display:flex;align-items:center;gap:13px;flex-wrap:wrap">
+      <a href="{{ volverEnlace }}" style="display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:-8px 0;color:#14342A">
+        <span style="font:500 19px/1 'Inter Tight',sans-serif;color:#33513F">←</span>
+        <span style="font:500 15px/1 'Inter Tight',sans-serif;color:#1B5138">{{ volverTexto }}</span>
+      </a>
+      <span style="flex:1"></span>
+      <span style="display:flex;align-items:center;gap:9px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="1.8"></circle><circle cx="20.6" cy="12" r="1.9" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="3.4" cy="12" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#14342A"></circle></svg>
+        <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">FICHA INTERNA</span>
+      </span>
+    </div>
+  </div>
+
+  <div style="max-width:1120px;margin:0 auto;padding:clamp(20px,3vw,32px) clamp(14px,3vw,26px) clamp(44px,6vw,72px)">
+
+    <sc-if value="{{ hayError }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius:24px;border:1px dashed rgba(20,52,42,.28);padding:clamp(20px,3vw,28px);max-width:56ch">
+        <div style="font:400 clamp(21px,2.4vw,26px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ error }}</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ hayFicha }}" hint-placeholder-val="{{ true }}">
+      <div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;justify-content:space-between">
+      <div style="min-width:0">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="{{ avatarGrande }}">{{ inicial }}</span>
+          <span style="min-width:0">
+            <span style="display:block;font:400 clamp(28px,4vw,42px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A">{{ trato }}</span>
+            <span style="display:block;font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:5px">{{ resumen }}</span>
+          </span>
+        </div>
+      </div>
+      <span style="{{ selloVerif }}">{{ textoVerif }}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px;align-items:start;margin-top:clamp(22px,3vw,30px)">
+
+      <div style="{{ tarjeta }}">
+        <div style="{{ tituloBloque }}">Identidad</div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          <sc-for list="{{ identidad }}" as="d" hint-placeholder-count="7">
+            <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+              <span style="flex:1 1 120px;font:400 14px/1.45 'Inter Tight',sans-serif;color:#33513F">{{ d.campo }}</span>
+              <span style="{{ d.valorEstilo }}">{{ d.valor }}</span>
+              <sc-if value="{{ d.interno }}" hint-placeholder-val="{{ false }}">
+                <span style="{{ chipInterno }}">USO INTERNO</span>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:13px;text-wrap:pretty">De ella, los otros cinco solo ven el nombre de trato y el sector. Lo marcado no sale de aquí.</div>
+      </div>
+
+      <div style="{{ tarjeta }}">
+        <div style="{{ tituloBloque }}">Verificación</div>
+
+        <sc-if value="{{ hayDocumento }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:9px;margin-bottom:14px">
+            <sc-if value="{{ hayCedula }}" hint-placeholder-val="{{ true }}">
+              <a href="{{ cedula }}" target="_blank" rel="noopener" style="flex:1;border-radius:14px;overflow:hidden;background:#E8DFC6;aspect-ratio:3/2;display:block">
+                <img src="{{ cedula }}" alt="Cédula" style="width:100%;height:100%;object-fit:cover;display:block">
+              </a>
+            </sc-if>
+            <sc-if value="{{ haySelfie }}" hint-placeholder-val="{{ true }}">
+              <a href="{{ selfie }}" target="_blank" rel="noopener" style="flex:1;border-radius:14px;overflow:hidden;background:#E8DFC6;aspect-ratio:3/2;display:block">
+                <img src="{{ selfie }}" alt="Selfie" style="width:100%;height:100%;object-fit:cover;display:block">
+              </a>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ nuncaHubo }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:11px;align-items:flex-start;border-radius:18px;border:1px dashed rgba(20,52,42,.28);padding:14px 16px;margin-bottom:14px">
+            <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ textoSinCaptura }}</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ sinDocumento }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:11px;align-items:flex-start;border-radius:18px;background:rgba(27,81,56,.09);padding:14px 16px;margin-bottom:14px">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+            <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ textoBorrado }}</span>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;flex-direction:column;gap:0">
+          <sc-for list="{{ verificacion }}" as="v" hint-placeholder-count="4">
+            <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+              <span style="flex:1 1 120px;font:400 14px/1.45 'Inter Tight',sans-serif;color:#33513F">{{ v.campo }}</span>
+              <span style="{{ v.valorEstilo }}">{{ v.valor }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ hayIntentos }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:11px;align-items:flex-start;border-radius:18px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:14px">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 14px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ tituloIntentos }}</span>
+              <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:4px;text-wrap:pretty">{{ detalleIntentos }}</span>
+            </span>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="{{ tarjetaAncha }}">
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between">
+        <span style="{{ tituloBloque }}">Historial de mesas</span>
+        <span style="font:500 13px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ resumenHistorial }}</span>
+      </div>
+
+      <sc-if value="{{ hayHistorial }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:0">
+          <sc-for list="{{ historial }}" as="h" hint-placeholder-count="3">
+            <div style="padding:15px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+              <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline">
+                <span style="flex:1 1 200px;min-width:0">
+                  <span style="display:block;font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ h.sitio }}</span>
+                  <span style="display:block;font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ h.cuando }}</span>
+                </span>
+                <span style="{{ h.chip }}">{{ h.estado }}</span>
+              </div>
+              <sc-if value="{{ h.hayMesa }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:11px">
+                  <sc-for list="{{ h.gente }}" as="g" hint-placeholder-count="5">
+                    <span style="display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 12px 0 6px;border-radius:999px;background:rgba(20,52,42,.06);font:500 13px/1 'Inter Tight',sans-serif;color:#2C4A38">
+                      <span style="{{ g.avatar }}">{{ g.inicial }}</span>{{ g.nombre }}
+                    </span>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ h.hayNota }}" hint-placeholder-val="{{ false }}">
+                <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:11px;max-width:64ch;text-wrap:pretty">{{ h.nota }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sinHistorial }}" hint-placeholder-val="{{ false }}">
+        <div style="border-radius:20px;border:1px dashed rgba(20,52,42,.28);padding:clamp(18px,2.4vw,24px);max-width:60ch">
+          <div style="font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloVacio }}</div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:8px;text-wrap:pretty">{{ cuerpoVacio }}</div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="margin-top:clamp(26px,3.4vw,38px)">
+      <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">LO QUE RESPONDIÓ</div>
+      <sc-for list="{{ grupos }}" as="g" hint-placeholder-count="5">
+        <div style="margin-top:clamp(20px,2.6vw,28px)">
+          <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:13px">
+            <span style="font:400 clamp(21px,2.4vw,27px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A">{{ g.nombre }}</span>
+            <span style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ g.nota }}</span>
+          </div>
+          <div style="border-radius:24px;background:#FFFBF0;overflow:hidden">
+            <sc-for list="{{ g.respuestas }}" as="r" hint-placeholder-count="4">
+              <div style="{{ r.contenedor }}">
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ r.pregunta }}</span>
+                  <span style="{{ r.valorEstilo }}">{{ r.valor }}</span>
+                </span>
+                <sc-if value="{{ r.reservada }}" hint-placeholder-val="{{ false }}">
+                  <span style="{{ chipInterno }}">NO SE LE ENSEÑA</span>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px;align-items:start;margin-top:12px">
+
+      <div style="{{ tarjeta }}">
+        <div style="{{ tituloBloque }}">Señales</div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <sc-for list="{{ senales }}" as="s" hint-placeholder-count="4">
+            <div style="{{ s.caja }}">
+              <span style="{{ s.icono }}">{{ s.glifo }}</span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:600 14px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ s.titulo }}</span>
+                <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-wrap:pretty">{{ s.cuerpo }}</span>
+                <sc-if value="{{ s.interno }}" hint-placeholder-val="{{ false }}">
+                  <span style="{{ chipInterno }}">NO SE LE ENSEÑA</span>
+                </sc-if>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="{{ tarjeta }}">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between">
+          <span style="{{ tituloBloque }}">Créditos</span>
+          <span style="{{ cifraCreditos }}">{{ creditos }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          <sc-for list="{{ movimientos }}" as="m" hint-placeholder-count="5">
+            <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+              <span style="flex:1 1 150px;min-width:0">
+                <span style="display:block;font:500 14px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ m.concepto }}</span>
+                <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ m.cuando }}</span>
+              </span>
+              <span style="{{ m.deltaEstilo }}">{{ m.delta }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:clamp(22px,3vw,30px);max-width:64ch;text-wrap:pretty">Esta ficha es para mirar. Aprobar y rechazar siguen en la cola de verificaciones; bloquear y excluir viven en su propio sitio.</div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { datos: null, error: '', desde: 'mesa' };
+
+  componentDidMount() {
+    // La ficha se abre por miembro: /Perfil miembro?id=<uuid>&desde=cola.
+    // El hash de la maqueta abria una de tres fichas escritas a mano; aqui
+    // el id es el del perfil de verdad y no hay lista que mantener.
+    const q = new URLSearchParams(window.location.search);
+    const id = q.get('id');
+    const desde = q.get('desde') === 'cola' ? 'cola' : 'mesa';
+    this.setState({ desde: desde });
+
+    if (!id) { this.setState({ error: 'Esta ficha se abre desde una mesa o desde la cola.' }); return; }
+
+    fetch('/api/operacion/miembro?id=' + encodeURIComponent(id))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d) => this.setState({ datos: d }))
+      .catch((e) => this.setState({
+        // 404 desde operacion significa "no eres operacion": la ruta entera
+        // no existe para quien no lo es, y aqui se dice igual.
+        error: e.message === '404' ? 'Esta ficha es de operación.' : 'No pudimos abrir la ficha.'
+      }));
+  }
+
+  renderVals() {
+    const D = this.state.datos;
+    const avatar = (i, tam) => 'flex:0 0 auto;width:' + tam + 'px;height:' + tam + 'px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 ' + Math.round(tam * 0.42) + 'px/1 \'Inter Tight\',sans-serif';
+    const chip = (fondo, color, borde) => 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;background:' + fondo + ';color:' + color + ';border:1px solid ' + (borde || 'transparent') + ';white-space:nowrap';
+    const valor = (interno) => 'flex:2 1 170px;font:500 15px/1.45 \'Inter Tight\',sans-serif;color:' + (interno ? '#2C4A38' : '#14342A');
+
+    const deCola = this.state.desde === 'cola';
+    const marco = {
+      volverEnlace: deCola ? 'Aro Club - Operacion.dc.html#verificaciones' : 'Aro Club - Operacion.dc.html#mesas',
+      volverTexto: deCola ? 'Cola de verificaciones' : 'Reparto de la fecha',
+      tarjeta: 'border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.4vw,24px)',
+      tarjetaAncha: 'border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.4vw,24px);margin-top:12px',
+      tituloBloque: 'font:400 clamp(21px,2.4vw,26px)/1.1 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:#14342A;margin-bottom:14px;display:block',
+      chipInterno: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(20,52,42,.24);font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;color:#33513F;margin-top:6px',
+      hayError: !!this.state.error, error: this.state.error,
+      // Nada se pinta hasta que llega la ficha. Media ficha con los huecos
+      // por rellenar es peor que esperar: se decide sobre personas con ella.
+      hayFicha: !!D
+    };
+
+    if (!D) {
+      return Object.assign(marco, {
+        identidad: [], verificacion: [], historial: [], grupos: [], senales: [], movimientos: [],
+        inicial: '', trato: '', resumen: '', textoVerif: '', resumenHistorial: '',
+        avatarGrande: avatar(0, 60), selloVerif: chip('transparent', '#33513F', 'rgba(20,52,42,.2)'),
+        hayDocumento: false, sinDocumento: false, hayCedula: false, haySelfie: false,
+        cedula: '', selfie: '', textoBorrado: '',
+        hayIntentos: false, tituloIntentos: '', detalleIntentos: '',
+        hayHistorial: false, sinHistorial: false, tituloVacio: '', cuerpoVacio: '',
+        creditos: '0', cifraCreditos: 'font:700 clamp(24px,3vw,30px)/1 \'Inter Tight\',sans-serif;color:#33513F'
+      });
+    }
+
+    const I = D.identidad, V = D.verificacion;
+
+    const sellos = {
+      verificada: [chip('rgba(27,81,56,.12)', '#1B5138'), 'VERIFICADA'],
+      revision: [chip('rgba(143,69,21,.12)', '#8F4515'), 'EN REVISIÓN'],
+      rechazada: [chip('transparent', '#8F4515', 'rgba(143,69,21,.42)'), 'RECHAZADA']
+    }[V.estado];
+
+    const identidad = [
+      ['Nombre de trato', I.trato, false],
+      ['Nombre completo', I.completo, true],
+      ['Edad', I.edad != null ? I.edad + ' años' : 'Sin fecha de nacimiento', false],
+      ['Género', I.genero, false],
+      ['Sector', I.sector, false],
+      ['Teléfono', I.telefono, true],
+      ['Correo', I.correo, true],
+      ['Miembro desde', I.desde, false]
+    ].map((d) => ({ campo: d[0], valor: d[1], interno: d[2], valorEstilo: valor(d[2]) }));
+
+    const verificacion = [
+      ['Estado', sellos[1].charAt(0) + sellos[1].slice(1).toLowerCase()],
+      ['Quién la aprobó', V.quien || 'Sin asignar'],
+      ['Cuándo', V.cuando],
+      ['Contra el documento', V.coincide]
+    ].map((v) => ({ campo: v[0], valor: v[1], valorEstilo: valor(false) }));
+
+    const chipsHist = {
+      'Fue': chip('rgba(27,81,56,.12)', '#1B5138'),
+      'Canceló': chip('transparent', '#33513F', 'rgba(20,52,42,.22)'),
+      'Cancelada por nosotros': chip('transparent', '#33513F', 'rgba(20,52,42,.22)'),
+      'No apareció': chip('rgba(143,69,21,.12)', '#8F4515')
+    };
+    const historial = (D.historial || []).map((h) => ({
+      sitio: h.sitio, cuando: h.cuando, estado: h.estado, chip: chipsHist[h.estado],
+      hayMesa: (h.gente || []).length > 0,
+      gente: (h.gente || []).map((n, i) => ({ nombre: n, inicial: (n || '—').charAt(0), avatar: avatar(i, 22) })),
+      hayNota: !!h.nota, nota: h.nota
+    }));
+
+    const fue = historial.filter((h) => h.estado === 'Fue').length;
+    const resumenHistorial = historial.length === 0
+      ? 'Ninguna todavía'
+      : fue + (fue === 1 ? ' cena · ' : ' cenas · ') + historial.length + ' apuntadas';
+
+    // Los cinco títulos son los del cuestionario; las preguntas y su orden
+    // salen del catálogo, para que añadir una no obligue a tocar esto.
+    const TITULOS = [
+      ['Tu contexto', 'De dónde viene y a qué se dedica.'],
+      ['Cómo es en la mesa', 'Lo que más pesa al armar el grupo.'],
+      ['De qué habla', 'Dos horas se sostienen con temas.'],
+      ['Qué busca y cuánto', 'El rango marcado es el techo del sitio.'],
+      ['Logística', 'Dónde puede llegar y qué días.']
+    ];
+    const grupos = TITULOS.map((t, i) => {
+      const suyas = (D.preguntas || []).filter((p) => p.pantalla === i + 1);
+      return {
+        nombre: t[0], nota: t[1],
+        respuestas: suyas.map((r, j) => ({
+          pregunta: r.enunciado, valor: r.valor, reservada: !!r.reservada,
+          contenedor: 'display:flex;gap:14px;align-items:center;min-height:66px;padding:14px clamp(16px,2.4vw,22px)' + (j < suyas.length - 1 ? ';border-bottom:1px solid rgba(20,52,42,.1)' : ''),
+          valorEstilo: 'display:block;font:400 15px/1.45 \'Inter Tight\',sans-serif;color:' + (r.reservada ? '#33513F' : '#566A5D') + ';margin-top:3px;text-wrap:pretty'
+        }))
+      };
+    }).filter((g) => g.respuestas.length);
+
+    const tonos = {
+      bloqueo: ['rgba(20,52,42,.06)', '#14342A', '·'],
+      limpio: ['transparent', '#1B5138', '✓'],
+      aviso: ['rgba(143,69,21,.1)', '#6E340F', '!']
+    };
+    const senales = (D.senales || []).map((s) => {
+      const t = tonos[s.tono] || tonos.limpio;
+      return {
+        titulo: s.titulo, cuerpo: s.cuerpo, interno: !!s.interno, glifo: t[2],
+        caja: 'display:flex;gap:12px;align-items:flex-start;border-radius:20px;padding:14px 16px;background:' + t[0] + ';border:1px solid ' + (s.tono === 'limpio' ? 'rgba(20,52,42,.14)' : 'transparent'),
+        icono: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:' + t[1] + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px'
+      };
+    });
+
+    const movimientos = ((D.movimientos || []).length
+      ? D.movimientos
+      : [{ concepto: 'Sin movimientos', cuando: 'Aún no ha comprado', delta: '0' }]
+    ).map((m) => ({
+      concepto: m.concepto, cuando: m.cuando, delta: m.delta,
+      deltaEstilo: 'flex:0 0 auto;font:600 15px/1.4 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;color:' + (String(m.delta).charAt(0) === '+' ? '#1B5138' : (String(m.delta) === '0' ? '#33513F' : '#8F4515'))
+    }));
+
+    return Object.assign(marco, {
+      identidad, verificacion, historial, grupos, senales, movimientos, resumenHistorial,
+
+      inicial: (I.trato || '?').charAt(0),
+      trato: I.trato,
+      avatarGrande: avatar(0, 60),
+      resumen: [I.sector !== '—' ? I.sector : null, I.edad != null ? I.edad + ' años' : null,
+                'miembro desde ' + I.desde.toLowerCase()].filter(Boolean).join(' · '),
+      selloVerif: sellos[0].replace('min-height:30px', 'min-height:38px').replace('padding:0 12px', 'padding:0 16px') + ';letter-spacing:.1em',
+      textoVerif: sellos[1],
+
+      // Las capturas eran dos recuadros grises con la palabra dentro. Ahora
+      // son las fotos, con una firma que caduca a los cinco minutos.
+      hayDocumento: !V.borrado && !V.nuncaHubo,
+      nuncaHubo: !!V.nuncaHubo,
+      textoSinCaptura: 'No hay capturas guardadas de esta verificación. No es la purga de los noventa días: nunca se subieron.',
+      hayCedula: !!V.cedula, cedula: V.cedula || '',
+      haySelfie: !!V.selfie, selfie: V.selfie || '',
+      sinDocumento: V.borrado,
+      textoBorrado: 'La cédula y la selfie se borraron noventa días después de aprobarla. Queda la marca de que ocurrió y quién la aprobó. Es lo que prometimos.',
+
+      hayIntentos: V.intentos > 0,
+      tituloIntentos: V.intentos === 1 ? 'Un intento rechazado antes de este' : V.intentos + ' intentos rechazados antes de este',
+      detalleIntentos: 'Míralo con calma antes de aprobar. El motivo de cada rechazo está en la cola.',
+
+      hayHistorial: historial.length > 0,
+      sinHistorial: historial.length === 0,
+      tituloVacio: V.estado === 'verificada' ? 'Verificada, pero todavía no ha cenado' : 'Aún no puede apuntarse',
+      cuerpoVacio: V.estado === 'verificada'
+        ? 'Entra al reparto en cuanto se apunte a una fecha.'
+        : 'Hasta que no se apruebe su verificación no entra a ningún reparto.',
+
+      creditos: String(D.creditos),
+      cifraCreditos: 'font:700 clamp(24px,3vw,30px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:' + (D.creditos > 0 ? '#14342A' : '#33513F')
+    });
+  }
+}
+</script>
+</body>
+</html>

@@ -53,7 +53,7 @@ async function rpc(fn, args) {
  */
 const GENTE = [
   // -- jóvenes, 28 a 34 --
-  ['Daniela Pérez',       'Daniela', '1996-03-14', 'mujer',  '4241234501', 'arquitectura', 'Oficina Nueve',  'volvio',     ['cocinar','viajar','museos']],
+  ['Daniela Pérez',       'Daniela', '1996-03-14', 'mujer',  '4241234501', 'diseno',       'Oficina Nueve',  'volvio',     ['cocinar','viajar','museos']],
   ['Andrés Molina',       'Andrés',  '1994-07-02', 'hombre', '4141234502', 'tecnologia',   'Ridery',         'se-quedo',   ['correr','gimnasio','viajar']],
   ['Gabriela Ríos',       'Gabriela','1992-11-20', 'mujer',  '4121234503', 'salud',        'Banesco',        'se-quedo',   ['cocinar','leer','museos']],
   ['José Manuel Arteaga', 'José',    '1997-05-09', 'hombre', '4161234504', 'finanzas',     'Banesco',        'volvio',     ['correr','playa','viajar']],

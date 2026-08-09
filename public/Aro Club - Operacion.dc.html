@@ -166,6 +166,7 @@
                   <span style="display:block;font:400 clamp(19px,2vw,22px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.nombre }}</span>
                   <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ c.espera }}</span>
                 </span>
+                <a href="{{ c.ficha }}" title="Ver su ficha" style="flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-width:32px;min-height:32px;border-radius:999px;border:1px solid rgba(20,52,42,.18);color:#33513F;font:600 12px/1 'Inter Tight',sans-serif">→</a>
               </div>
               <div style="display:flex;gap:9px;margin-top:14px">
                 <img src="{{ c.cedula }}" alt="Documento" style="flex:1;min-width:0;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;object-fit:cover" />
@@ -921,7 +922,12 @@ class Component extends DCLogic {
               // pixeles no es un arrastre, es un clic.
               this._drag = { pid: pid, desde: propuesta[k].numero, x: e.clientX, y: e.clientY, activo: false };
             },
-            verPerfil: () => this.setState({ fallo: 'El perfil del miembro todavía no existe. Se lo pedimos a Design.' })
+            // La ficha se abre con el id del miembro y recordando de dónde
+            // se vino, que es lo que decide el texto de la vuelta.
+            verPerfil: () => {
+              window.location.href = 'Aro Club - Perfil miembro.dc.html?id=' +
+                encodeURIComponent(pid) + '&desde=mesa';
+            }
           };
         }),
         // REVISAR sin decir que revisar no sirve de nada. Las roturas van
@@ -1085,6 +1091,8 @@ class Component extends DCLogic {
       return {
         nombre: c[0], inicial: c[0].charAt(0), avatar: avatar(i),
         espera: d === 'ok' ? 'Aprobada por ti' : (d === 'no' ? 'Rechazada por ti' : c[1]),
+        // La ficha completa, para quien necesite mirar mas que las dos fotos.
+        ficha: 'Aro Club - Perfil miembro.dc.html?id=' + encodeURIComponent(c[4].profileId) + '&desde=cola',
         datos: c[2].map((texto) => ({ texto })),
         hayAviso: !!c[3] && !d, aviso: c[3] || '',
         caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (d === 'ok' ? '#1B5138' : (d === 'no' ? '#C0662F' : 'transparent')) + ';transition:all 200ms ease',
