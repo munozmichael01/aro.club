@@ -26,9 +26,7 @@ export async function GET() {
 
   const { data: reserva } = await admin
     .from('bookings')
-    .select(
-      'id, event_id, events(starts_at, reveal_at, status, restaurants!events_restaurant_id_fkey(zone_slug))',
-    )
+    .select('id, event_id, events(starts_at, reveal_at, status)')
     .eq('profile_id', user.id)
     .in('status', ['confirmed', 'attended'])
     .order('created_at', { ascending: false })
@@ -36,12 +34,7 @@ export async function GET() {
     .maybeSingle()
 
   const evento = reserva?.events as
-    | {
-        starts_at: string
-        reveal_at: string
-        status: string
-        restaurants: { zone_slug: string | null } | null
-      }
+    | { starts_at: string; reveal_at: string; status: string }
     | null
     | undefined
 
@@ -54,24 +47,27 @@ export async function GET() {
   const empiezaEn = new Date(evento.starts_at).getTime()
 
   if (ahora < revelaEn) {
-    // Cerrada: la hora y la zona, nada más. El restaurante exacto y los
-    // cinco nombres son lo que se revela; la zona la enseña la pantalla de
-    // Design desde el principio porque hace falta para organizarse la noche.
-    let zona: string | null = null
-    if (evento.restaurants?.zone_slug) {
-      const { data } = await admin
-        .from('zones')
-        .select('name')
-        .eq('slug', evento.restaurants.zone_slug)
-        .maybeSingle()
-      zona = data?.name ?? null
-    }
+    // Cerrada: la hora y las zonas que ELLA acepto. Ya no es informacion
+    // que le damos sobre el sitio —es lo que ella eligio— asi que no
+    // adelanta nada de la revelacion. Si acepto una sola, la sabe desde el
+    // primer momento; si acepto dos, sabe que es una de las dos.
+    const { data: suyas } = await admin
+      .from('booking_zones')
+      .select('zone_slug')
+      .eq('booking_id', reserva.id)
+
+    const slugs = (suyas ?? []).map((z) => z.zone_slug)
+    const { data: nombres } = await admin
+      .from('zones')
+      .select('name')
+      .in('slug', slugs.length ? slugs : ['__ninguna__'])
+      .order('sort_order')
 
     return NextResponse.json({
       fase: 'cerrada',
       revelaEn: evento.reveal_at,
       empiezaEn: evento.starts_at,
-      zona,
+      zonas: (nombres ?? []).map((z) => z.name),
       faltanSegundos: Math.round((revelaEn - ahora) / 1000),
     })
   }

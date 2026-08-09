@@ -29,6 +29,8 @@ type MesaPropuesta = {
   puntuacion: number
   desglose: Record<string, number>
   roturas?: Rotura[]
+  zona: string | null
+  restaurantId: string | null
   integrantes: { profileId: string; bookingId: string }[]
 }
 
@@ -56,7 +58,7 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, reveal_at, restaurant_id')
+    .select('id, reveal_at')
     .eq('id', corrida.event_id)
     .maybeSingle()
 
@@ -107,7 +109,9 @@ export async function POST(request: Request) {
         table_number: mesa.numero,
         score: mesa.puntuacion,
         score_breakdown: mesa.desglose as never,
-        restaurant_id: evento.restaurant_id,
+        // El sitio es de la MESA, no de la fecha: dos mesas del mismo
+        // jueves pueden cenar en zonas distintas.
+        restaurant_id: mesa.restaurantId,
       })
       .select('id')
       .single()

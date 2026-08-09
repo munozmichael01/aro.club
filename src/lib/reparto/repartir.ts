@@ -30,6 +30,8 @@ export type Persona = {
   intereses: string[]
   temas: string[]
   idiomas: string[]
+  /** Zonas que acepta PARA ESA FECHA, ya cruzadas con las que abrimos. */
+  zonas: string[]
   /** Perfiles con los que no puede coincidir: exclusiones o ya se vieron. */
   vetados: Set<string>
 }
@@ -109,6 +111,15 @@ export function roturas(mesa: Persona[]): Rotura[] {
     fallos.push({ regla: 'visita', detalle: `${deVisita} de visita` })
   }
 
+  // Zona: la misma operacion que el idioma. Una mesa solo existe si hay un
+  // sitio al que los seis irian. No se reparte por zona en pools separados
+  // —eso fragmenta y con poca gente no se llena ninguna mesa—: la zona es
+  // una restriccion sobre quien puede sentarse junto.
+  const zonaComun = zonasDe(mesa)
+  if (zonaComun.length === 0) {
+    fallos.push({ regla: 'zona', detalle: 'sin zona en comun' })
+  }
+
   const comun = mesa
     .map((p) => new Set(p.idiomas))
     .reduce<Set<string> | null>((acc, s) => {
@@ -120,6 +131,21 @@ export function roturas(mesa: Persona[]): Rotura[] {
   }
 
   return fallos
+}
+
+/**
+ * Las zonas donde esta mesa podria cenar: las que aceptan LOS SEIS.
+ * Ordenadas para que el reparto sea estable ante el mismo pool.
+ */
+export function zonasDe(mesa: Persona[]): string[] {
+  if (!mesa.length) return []
+  const comun = mesa
+    .map((p) => new Set(p.zonas ?? []))
+    .reduce<Set<string> | null>((acc, s) => {
+      if (!acc) return s
+      return new Set([...acc].filter((x) => s.has(x)))
+    }, null)
+  return [...(comun ?? new Set<string>())].sort()
 }
 
 export const esLegal = (mesa: Persona[]) => roturas(mesa).length === 0
@@ -205,8 +231,15 @@ export function repartir(pool: Persona[], porMesa = 6, pesos: Pesos = PESOS): Re
   // pool, mismo reparto. Ordenar por edad importa porque el spread de 10
   // años es la restricción que más difícil es arreglar después: sembrar al
   // azar mezcla generaciones y luego ningún intercambio lo deshace.
+  // Por zonas primero y luego por edad. La edad sigue mandando dentro de
+  // cada grupo —el spread de diez años es lo mas dificil de arreglar
+  // despues— pero quien solo acepta una zona entra antes que quien acepta
+  // tres, porque tiene menos huecos donde caber.
   const orden = [...pool].sort(
-    (a, b) => (a.edad ?? 999) - (b.edad ?? 999) || a.profileId.localeCompare(b.profileId),
+    (a, b) =>
+      a.zonas.length - b.zonas.length ||
+      (a.edad ?? 999) - (b.edad ?? 999) ||
+      a.profileId.localeCompare(b.profileId),
   )
 
   const mesas: Persona[][] = Array.from({ length: cuantas }, () => [])
@@ -219,19 +252,48 @@ export function repartir(pool: Persona[], porMesa = 6, pesos: Pesos = PESOS): Re
     while (mesas[m].length < porMesa && libres.length) {
       let mejor = -1
       let mejorPunto = -Infinity
+      let mejorFlex = Infinity
       for (let i = 0; i < libres.length; i++) {
         const tentativa = [...mesas[m], libres[i]]
         if (!esLegal(tentativa)) continue
+        // Primero quien tiene MENOS zonas donde puede ir.
+        //
+        // Sin esto, la primera mesa se llevaba a los flexibles porque
+        // puntuaban bien, y los que solo aceptan una zona acababan juntos
+        // sin poder compartir ninguna. Con 6 de Las Mercedes, 3 de El
+        // Rosal y 3 que aceptan las dos hay solucion evidente, y el reparto
+        // no la encontraba: dejaba una mesa sin sitio donde cenar.
+        //
+        // Quien puede ir a todas partes cabe en cualquier hueco; quien solo
+        // puede ir a uno hay que sentarlo mientras ese hueco existe.
+        const flex = libres[i].zonas.length
         const p = puntuar(tentativa, pesos)
-        if (p > mejorPunto) {
+        if (flex < mejorFlex || (flex === mejorFlex && p > mejorPunto)) {
+          mejorFlex = flex
           mejorPunto = p
           mejor = i
         }
       }
-      // Si nadie cabe sin romper, se coge al primero y el intercambio
-      // posterior intenta arreglarlo. Mejor una mesa marcada REVISAR que
-      // una fecha sin mesas.
-      mesas[m].push(libres.splice(mejor >= 0 ? mejor : 0, 1)[0])
+      // Si nadie cabe sin romper, se coge a QUIEN MENOS ROMPE, no al
+      // primero de la lista. Coger al primero metia a alguien de otra zona
+      // en una mesa que solo necesitaba estirar la edad, y eso deja la mesa
+      // sin sitio donde cenar: una rotura barata se cambiaba por una que no
+      // tiene arreglo.
+      if (mejor < 0) {
+        let menos = Infinity
+        let punto = -Infinity
+        for (let i = 0; i < libres.length; i++) {
+          const tentativa = [...mesas[m], libres[i]]
+          const n = roturas(tentativa).length
+          const p = puntuar(tentativa, pesos)
+          if (n < menos || (n === menos && p > punto)) {
+            menos = n
+            punto = p
+            mejor = i
+          }
+        }
+      }
+      mesas[m].push(libres.splice(Math.max(0, mejor), 1)[0])
     }
   }
 

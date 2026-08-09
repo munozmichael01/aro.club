@@ -448,9 +448,15 @@ class Component extends DCLogic {
         ? 'Tienes puesto el ' + DIAS[empieza.getDay()] + '.'
         : 'Tienes puesto.',
       textoCena: empieza ? 'Cena · ' + DIAS[empieza.getDay()] + ' ' + empieza.getDate() : 'Cena',
-      textoHoraZona: empieza
-        ? laHora(empieza) + ((dt && dt.zona) ? ' · ' + dt.zona : '')
-        : ((dt && dt.zona) || ''),
+      // Las zonas que ella acepto, no la del restaurante: "Chacao o Las
+      // Mercedes" es una respuesta a medias, pero es la verdad, y es el
+      // precio de poder llenar mesas con poca gente.
+      textoHoraZona: (() => {
+        const z = (dt && dt.zonas) || [];
+        const texto = z.length === 0 ? '' : (z.length === 1 ? z[0] : z.slice(0, -1).join(', ') + ' o ' + z[z.length - 1]);
+        if (!empieza) return texto;
+        return laHora(empieza) + (texto ? ' · ' + texto : '');
+      })(),
       tardeAbierto: this.state.tarde,
       avisado: this.state.avisado,
       textoAvisado: 'Avisamos que llegas ' + ['10 minutos', '20 minutos', 'media hora'][this.state.retraso] + ' tarde',

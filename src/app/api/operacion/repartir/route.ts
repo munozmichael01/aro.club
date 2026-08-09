@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { PESOS, repartir, roturas, desglose, type Persona } from '@/lib/reparto/repartir'
+import { PESOS, repartir, roturas, desglose, zonasDe, type Persona } from '@/lib/reparto/repartir'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -142,6 +142,22 @@ export async function POST(request: Request) {
 
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
 
+  // Las zonas que ABRIMOS esa noche, con su sitio. Sin sedes no hay dónde
+  // cenar, y repartir gente en mesas sin restaurante es una promesa vacía.
+  const { data: sedes } = await admin
+    .from('event_venues')
+    .select('zone_slug, restaurant_id, max_tables, restaurants(name, max_tables)')
+    .eq('event_id', eventoId)
+
+  if (!sedes?.length) {
+    return NextResponse.json(
+      { error: 'Esta fecha no tiene ninguna zona abierta. Abre al menos una antes de repartir.' },
+      { status: 409 },
+    )
+  }
+
+  const zonasAbiertas = new Set(sedes.map((v) => v.zone_slug))
+
   const { data: pool, error: errorPool } = await admin
     .from('v_matching_pool')
     .select('*')
@@ -194,13 +210,48 @@ export async function POST(request: Request) {
     intereses: p.interests ?? [],
     temas: p.conversation_topics ?? [],
     idiomas: p.languages ?? ['es'],
+    // Solo las que aceptó Y abrimos. Quien acepta una zona que no se abre
+    // esta noche es, para este reparto, alguien que no acepta esa zona.
+    zonas: (p.zones ?? []).filter((z: string) => zonasAbiertas.has(z)),
     vetados: vetos.get(p.profile_id as string) ?? new Set<string>(),
   }))
 
   const r = repartir(personas, evento.seats_per_table ?? 6, pesos)
 
-  const propuesta = r.mesas.map((mesa, i) => ({
+  // Cada mesa cae en una de las zonas que aceptan los seis, y ahí se le da
+  // sitio. El aforo se respeta: si Cardenal aguanta dos mesas, la tercera
+  // va al siguiente sitio de esa zona.
+  const ocupacion = new Map<string, number>()
+  const sedeDe = (zona: string) => {
+    const candidatas = sedes.filter((v) => v.zone_slug === zona)
+    for (const v of candidatas) {
+      const tope =
+        v.max_tables ?? (v.restaurants as unknown as { max_tables: number } | null)?.max_tables ?? 4
+      const usadas = ocupacion.get(v.restaurant_id) ?? 0
+      if (usadas < tope) {
+        ocupacion.set(v.restaurant_id, usadas + 1)
+        return {
+          restaurantId: v.restaurant_id,
+          nombre: (v.restaurants as unknown as { name: string } | null)?.name ?? null,
+        }
+      }
+    }
+    return null
+  }
+
+  const propuesta = r.mesas.map((mesa, i) => {
+    const zonasPosibles = zonasDe(mesa)
+    // Reparto estable: entre varias zonas válidas, la primera por orden
+    // alfabético. Elegir "la que tenga más sitio" haría que el mismo pool
+    // diera repartos distintos según en qué orden se procesaran las mesas.
+    const zona = zonasPosibles[0] ?? null
+    const sede = zona ? sedeDe(zona) : null
+    return {
     numero: i + 1,
+    zona,
+    zonasPosibles,
+    restaurantId: sede?.restaurantId ?? null,
+    restaurante: sede?.nombre ?? null,
     puntuacion: Number(r.puntuaciones[i].toFixed(3)),
     desglose: desglose(mesa),
     roturas: roturas(mesa),
@@ -214,7 +265,18 @@ export async function POST(request: Request) {
       empresa: p.empresa,
       sector: p.sector,
     })),
-  }))
+    }
+  })
+
+  // Una mesa sin sitio no se puede publicar: el aforo de la zona se agotó.
+  for (const m of propuesta) {
+    if (!m.restaurantId) {
+      m.roturas = [
+        ...m.roturas,
+        { regla: 'sede', detalle: m.zona ? 'sin sitio libre en ' + m.zona : 'sin zona común' },
+      ]
+    }
+  }
 
   const { data: corrida, error: errorCorrida } = await admin
     .from('matching_runs')

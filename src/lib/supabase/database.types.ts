@@ -123,6 +123,43 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_zones: {
+        Row: {
+          booking_id: string
+          zone_slug: string
+        }
+        Insert: {
+          booking_id: string
+          zone_slug: string
+        }
+        Update: {
+          booking_id?: string
+          zone_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_zones_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_zones_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["booking_id"]
+          },
+          {
+            foreignKeyName: "booking_zones_zone_slug_fkey"
+            columns: ["zone_slug"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           after_rsvp: boolean | null
@@ -455,6 +492,62 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_verified_profiles"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_venues: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          max_tables: number | null
+          restaurant_id: string
+          zone_slug: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          max_tables?: number | null
+          restaurant_id: string
+          zone_slug: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          max_tables?: number | null
+          restaurant_id?: string
+          zone_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_venues_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_venues_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_signal"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_venues_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_venues_zone_slug_fkey"
+            columns: ["zone_slug"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["slug"]
           },
         ]
       }
