@@ -25,8 +25,11 @@
      otra pintaba de verde etiquetas, chips y el resumen entero. Aqui no hay
      nada que copiar; lo que hay es una superficie que se manipula. */
   .aro-mesa, .aro-mesa * { user-select:none; -webkit-user-select:none; }
-  /* La barra de abajo es fija: sin este hueco tapa la ultima tarjeta. */
-  .aro-fondo { padding-bottom: 0; }
+  /* La barra de abajo es fija: sin este hueco tapa lo ultimo de la pagina.
+     Y el documento no se ensancha: el fondo a todo lo ancho se hacia con
+     margin:0 -100vw, que es lo que provocaba el scroll horizontal. */
+  .aro-conbarra { padding-bottom: 148px; }
+  body { overflow-x: hidden; }
   @keyframes aro-latido { 0%,100% { opacity:1 } 50% { opacity:.45 } }
   @keyframes aro-open { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
@@ -51,7 +54,7 @@
     </div>
   </div>
 
-  <div style="max-width:1280px;margin:0 auto;padding:clamp(20px,3vw,32px) clamp(14px,3vw,26px) clamp(40px,6vw,64px)">
+  <div class="aro-conbarra" style="max-width:1280px;margin:0 auto;padding:clamp(20px,3vw,32px) clamp(14px,3vw,26px) clamp(40px,6vw,64px)">
 
     <sc-if value="{{ esMesas }}" hint-placeholder-val="{{ true }}">
       <div style="animation:aro-open 300ms ease both">
@@ -296,14 +299,14 @@
     </sc-if>
 
     <sc-if value="{{ esMesas }}" hint-placeholder-val="{{ true }}">
-      <div style="position:sticky;bottom:0;z-index:30;margin:0 -100vw;padding:0 100vw;background:rgba(242,233,213,.97);backdrop-filter:blur(10px);border-top:1px solid rgba(20,52,42,.16)">
+      <div style="position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(242,233,213,.97);backdrop-filter:blur(10px);border-top:1px solid rgba(20,52,42,.16)">
         <div data-mesa="0" class="aro-mesa" style="{{ cajaEspera }}">
-          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 0">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px clamp(16px,4vw,30px)">
             <span style="flex:1 1 240px;min-width:0">
               <span style="display:block;font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">{{ tituloEspera }}</span>
               <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:5px">{{ notaEspera }}</span>
               <sc-if value="{{ hayEspera }}" hint-placeholder-val="{{ false }}">
-                <span style="display:flex;flex-wrap:wrap;gap:7px;margin-top:9px">
+                <span style="{{ listaEspera }}">
                   <sc-for list="{{ espera }}" as="e" hint-placeholder-count="4">
                     <span onPointerDown="{{ e.tomar }}" style="{{ e.pastilla }}">
                       <span style="{{ e.avatar }}">{{ e.inicial }}</span>{{ e.nombre }}
@@ -483,7 +486,7 @@ class Component extends DCLogic {
         this.setState({
           trabajando: false, recalculando: [], antesDeMover: null,
           aviso: aMesa === 0
-            ? 'Movido a la espera. ' + (rotas ? rotas + ' aviso(s) en el reparto.' : 'Todas las mesas cuadran.')
+            ? 'Movido a la espera. ' + (rotas ? (rotas === 1 ? 'Queda un aviso en el reparto.' : 'Quedan ' + rotas + ' avisos en el reparto.') : 'Todas las mesas cuadran.')
             : 'Movido a la mesa ' + String(aMesa).padStart(2, '0') + '. ' +
               (rotas ? rotas + ' aviso(s) en el reparto.' : 'Todas las mesas cuadran.')
         });
@@ -811,7 +814,8 @@ class Component extends DCLogic {
             idioma: 'Sin idioma comun',
             visita: 'Demasiados de visita',
             zona: 'No hay zona que les sirva a los seis',
-            sede: 'Sin restaurante libre en su zona'
+            sede: 'Sin restaurante libre en su zona',
+            'tamaño': 'La mesa no está completa'
           }[r.regla] || r.regla,
           detalle: r.detalle
         })),
@@ -881,13 +885,17 @@ class Component extends DCLogic {
     });
 
     const porPublicar = propuesta.filter((m) => !m.publicada).length;
+    const notaCorta = (n) => n === 0 ? 'Todos tienen mesa'
+      : (n >= 6 ? 'Hay para otra mesa' : 'Faltan ' + (6 - n) + ' para otra mesa');
+
     const revisar = mesas.filter((m) => m.estado === 'REVISAR').length;
     const metricas = [
       ['APUNTADOS', String(APUNTADOS), 'Cierra hoy a las 7 p.m.', null],
       ['MESAS', String(nMesas), nMesas * 6 + ' sentados, todas de seis', null],
-      ['EN ESPERA', String(enEspera),
-        enEspera === 0 ? 'Todos tienen mesa' : 'Faltan ' + (6 - enEspera) + ' para otra mesa',
-        enEspera === 0 ? null : '#8F4515'],
+      // La misma cuenta que la barra, y por eso sale de la misma funcion:
+      // tenerla dos veces es como acabo diciendo "faltan -2" en un sitio y
+      // lo correcto en el otro.
+      ['EN ESPERA', String(enEspera), notaCorta(enEspera), enEspera === 0 ? null : '#8F4515'],
       ['SIN VERIFICAR', String(SIN_VERIFICAR), 'No entran al reparto', '#8F4515']
     ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) }));
 
@@ -1052,9 +1060,14 @@ class Component extends DCLogic {
       // Con cero en espera no falta nadie para nada: decir "faltan seis para
       // llenar la mesa tres" cuando no hay ni una persona esperando es
       // inventarse una mesa que nadie ha pedido.
+      // Con seis o mas en espera ya no "falta" nadie: sobra para otra mesa,
+      // y lo que hay que hacer es repartir de nuevo. La resta daba "faltan
+      // -2", que es la señal de que la frase asumia menos de seis.
       notaEspera: enEspera === 0
         ? 'Todos los apuntados tienen mesa.'
-        : 'Faltan ' + letra(6 - enEspera) + ' para llenar otra mesa. Se les avisa hoy y su crédito no se toca.',
+        : (enEspera >= 6
+            ? 'Hay para ' + (enEspera >= 12 ? letra(Math.floor(enEspera / 6)) + ' mesas mas' : 'otra mesa') + '. Vuelve a repartir.'
+            : 'Faltan ' + letra(6 - enEspera) + ' para llenar otra mesa. Se les avisa hoy y su crédito no se toca.'),
       textoPublicado: letra(nMesas).charAt(0).toUpperCase() + letra(nMesas).slice(1) + ' mesas publicadas. Los correos salen el jueves a las 12:00 en punto, no antes.',
       // El boton decia "Publicar" sobre una corrida ya publicada porque la
       // pantalla no miraba el campo que el servidor ya devolvia.
@@ -1117,6 +1130,10 @@ class Component extends DCLogic {
       // mesas: hay que ver que soltar ahi es una opcion.
       cajaEspera: 'border-radius:0;background:' + (this.state.sobreMesa === 0 ? 'rgba(27,81,56,.09)' : 'transparent') +
         ';max-width:1180px;margin:0 auto;transition:background 140ms ease',
+      // La lista se queda en dos filas y a partir de ahi hace su propio
+      // scroll. Sin tope, veinte personas en espera se comen media pantalla
+      // y tapan justo las mesas que hay que mirar.
+      listaEspera: 'display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;max-height:96px;overflow-y:auto',
       hayMesas: nMesas > 0,
       sinMesas: nMesas === 0,
       trabajando: this.state.trabajando,
