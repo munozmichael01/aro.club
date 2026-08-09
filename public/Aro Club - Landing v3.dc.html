@@ -43,8 +43,13 @@
         <span style="font:400 23px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
       </a>
       <div style="display:flex;align-items:center;gap:6px">
-        <a href="Aro Club - Entrar.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;color:#1B5138;font:500 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Entrar</a>
-        <a href="#registro" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Empezar</a>
+        <sc-if value="{{ sinSesion }}" hint-placeholder-val="{{ true }}">
+          <a href="Aro Club - Entrar.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;color:#1B5138;font:500 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Entrar</a>
+          <a href="#registro" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Empezar</a>
+        </sc-if>
+        <sc-if value="{{ haySesion }}" hint-placeholder-val="{{ false }}">
+          <a href="Aro Club - Mi cuenta.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">{{ textoCuenta }}</a>
+        </sc-if>
       </div>
     </div>
   </div>
@@ -486,11 +491,24 @@
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
   state = {
+    sesion: null,
     faq: 0, fase: 'correo', correo: '', error: '', ahora: Date.now(), ciudad: -1,
     paso: 0, arraigo: -1, zonas: [], planes: [], temas: []
   };
 
+  leerSesion() {
+    // La landing no sabia que hay sesion: quien ya es miembro y tocaba el
+    // logo aterrizaba aqui con "Entrar" y "Empezar" y sin manera de volver.
+    // Desde dentro eso no se lee como una pagina publica, se lee como que
+    // te han echado.
+    fetch('/api/mi-cuenta')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) this.setState({ sesion: d }); })
+      .catch(() => {});
+  }
+
   componentDidMount() {
+    this.leerSesion();
     this._t = setInterval(() => this.setState({ ahora: Date.now() }), 1000);
     this.armar();
   }
@@ -811,6 +829,11 @@ class Component extends DCLogic {
     const nombreCiudad = this.state.ciudad >= 0 ? ciudades[this.state.ciudad].nombre : 'tu ciudad';
 
     return {
+      // Un miembro a medio camino no quiere "Mi cuenta" a secas: quiere
+      // saber que le falta. El estado ya lo decide el servidor.
+      haySesion: !!this.state.sesion,
+      sinSesion: !this.state.sesion,
+      textoCuenta: this.state.sesion && this.state.sesion.estado === 'abierta' ? 'Mi mesa' : 'Mi cuenta',
       relojCorto: this.reloj(),
       polaroids, marquesina, reconocimientos, planes, comensales, eventos, zonas, precios, faq,
 
