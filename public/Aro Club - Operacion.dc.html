@@ -19,6 +19,7 @@
   a:hover { color:#8F4515; }
   input, button { font: inherit; color: inherit; }
   ::selection { background:#14342A; color:#FAF3E4; }
+  @keyframes aro-latido { 0%,100% { opacity:1 } 50% { opacity:.45 } }
   @keyframes aro-open { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
 </style>
@@ -73,6 +74,7 @@
                 </span>
                 <span style="{{ t.sello }}">{{ t.estado }}</span>
               </div>
+              <div style="{{ t.cuerpo }}">
               <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(20,52,42,.12)">
                 <sc-for list="{{ t.gente }}" as="g" hint-placeholder-count="6">
                   <div draggable="true" onDragStart="{{ g.coger }}" onDragEnd="{{ g.soltar }}" style="{{ g.fila }}">
@@ -88,6 +90,7 @@
                   <span style="{{ s.chip }}">{{ s.texto }}</span>
                 </sc-for>
               </div>
+              <sc-if value="{{ t.hayComun }}" hint-placeholder-val="{{ true }}">
               <div style="border-top:1px solid rgba(20,52,42,.12);margin-top:13px;padding-top:12px">
                 <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:9px">QUÉ COMPARTEN</div>
                 <sc-for list="{{ t.enComun }}" as="e" hint-placeholder-count="5">
@@ -97,6 +100,7 @@
                   </div>
                 </sc-for>
               </div>
+              </sc-if>
 
               <sc-if value="{{ t.haySedes }}" hint-placeholder-val="{{ false }}">
                 <div style="border-top:1px solid rgba(20,52,42,.12);margin-top:12px;padding-top:12px">
@@ -109,6 +113,8 @@
                 </div>
               </sc-if>
 
+              </div>
+              <button onClick="{{ t.publicarMesa }}" style="{{ t.botonMesa }}">{{ t.textoPublicarMesa }}</button>
               <sc-if value="{{ t.hayRoturas }}" hint-placeholder-val="{{ false }}">
                 <div style="border-top:1px solid rgba(143,69,21,.28);margin-top:13px;padding-top:12px">
                   <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:9px">QUÉ HAY QUE REVISAR</div>
@@ -141,7 +147,7 @@
 
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(22px,3vw,30px)">
           <button onClick="{{ publicar }}" aria-disabled="{{ publicarInerte }}" style="{{ botonPrimario }}">{{ textoPublicar }}</button>
-          <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
+          <button onClick="{{ rebarajar }}" style="{{ botonRepartir }}">{{ textoRepartir }}</button>
         </div>
         <sc-if value="{{ hayAviso }}" hint-placeholder-val="{{ false }}">
           <div role="status" style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:rgba(27,81,56,.1);padding:15px 18px;margin-top:14px;animation:aro-open 240ms ease both">
@@ -313,7 +319,9 @@ class Component extends DCLogic {
   state = { vista: 0, publicado: false, decididas: {}, abriendo: null, motivos: {},
             cola: null, catalogo: [], trabajando: false, fallo: '',
             reparto: null, roturasFreno: null, avisosPublicados: null, aviso: '',
-            arrastrando: null, desdeMesa: null, sobreMesa: null };
+            arrastrando: null, desdeMesa: null, sobreMesa: null,
+            recalculando: [], antesDeMover: null, repartiendo: false,
+            publicando: null, frenoMesa: null };
 
   componentDidMount() { this.cargarCola(); this.cargarReparto(); }
 
@@ -349,17 +357,52 @@ class Component extends DCLogic {
   moverPersona(profileId, aMesa) {
     const c = this.state.reparto && this.state.reparto.corrida;
     if (!c || this.state.trabajando) return;
-    this.setState({ trabajando: true, fallo: '' });
+
+    // El movimiento se pinta YA, antes de preguntarle al servidor.
+    //
+    // Antes se soltaba, no pasaba nada, y la persona aparecia en la mesa de
+    // destino medio segundo despues, cuando volvia la evaluacion. Desde
+    // fuera eso no se lee como "esta calculando", se lee como que el
+    // arrastre no funciono. Lo que tarda es la revalidacion, no el
+    // movimiento, asi que se separan: el movimiento es inmediato y las dos
+    // mesas afectadas se marcan como que estan recalculando.
+    const antes = JSON.parse(JSON.stringify(this.state.reparto));
+    const prop = this.state.reparto.corrida.propuesta;
+    let desde = null;
+    let persona = null;
+    prop.forEach((m) => {
+      const i = m.integrantes.findIndex((x) => x.profileId === profileId);
+      if (i >= 0) { desde = m.numero; persona = m.integrantes.splice(i, 1)[0]; }
+    });
+    const destino = prop.find((m) => m.numero === aMesa);
+    if (persona && destino) destino.integrantes.push(persona);
+
+    this.setState({
+      trabajando: true, fallo: '',
+      reparto: this.state.reparto,
+      // Las dos: de la que sale cambia tanto como la que recibe.
+      recalculando: [desde, aMesa].filter((n) => n != null),
+      antesDeMover: antes
+    });
     fetch('/api/operacion/propuesta', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ accion: 'mover', corridaId: c.id, profileId: profileId, aMesa: aMesa })
     })
       .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
       .then(({ ok, d }) => {
-        if (!ok) { this.setState({ trabajando: false, fallo: d.error || 'No se pudo mover.' }); return; }
+        if (!ok) {
+          // Se deshace lo que se pinto: la pantalla no puede quedarse
+          // enseñando un movimiento que el servidor no acepto.
+          this.setState({
+            trabajando: false, recalculando: [],
+            reparto: this.state.antesDeMover, antesDeMover: null,
+            fallo: d.error || 'No se pudo mover.'
+          });
+          return;
+        }
         const rotas = d.mesas.reduce((t, m) => t + m.roturas.length, 0);
         this.setState({
-          trabajando: false,
+          trabajando: false, recalculando: [], antesDeMover: null,
           aviso: aMesa === 0
             ? 'Movido a la espera. ' + (rotas ? rotas + ' aviso(s) en el reparto.' : 'Todas las mesas cuadran.')
             : 'Movido a la mesa ' + String(aMesa).padStart(2, '0') + '. ' +
@@ -367,13 +410,17 @@ class Component extends DCLogic {
         });
         this.cargarReparto();
       })
-      .catch(() => this.setState({ trabajando: false, fallo: 'No se pudo mover.' }));
+      .catch(() => this.setState({
+        trabajando: false, recalculando: [],
+        reparto: this.state.antesDeMover, antesDeMover: null,
+        fallo: 'No se pudo mover.'
+      }));
   }
 
   repartirDeNuevo() {
     const ev = this.state.reparto && this.state.reparto.evento;
     if (!ev || this.state.trabajando) return;
-    this.setState({ trabajando: true, fallo: '', roturasFreno: null, avisosPublicados: null });
+    this.setState({ trabajando: true, repartiendo: true, fallo: '', roturasFreno: null, avisosPublicados: null });
     fetch('/api/operacion/repartir', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ eventoId: ev.id })
@@ -384,17 +431,46 @@ class Component extends DCLogic {
         // es determinista, la propuesta nueva sale casi igual y desde fuera
         // parecia que el boton no hacia nada.
         this.setState({
-          trabajando: false, publicado: false, roturasFreno: null, avisosPublicados: null,
+          trabajando: false, repartiendo: false, publicado: false, roturasFreno: null, avisosPublicados: null,
           aviso: 'Repartido otra vez: ' + d.mesas + (d.mesas === 1 ? ' mesa' : ' mesas') +
                  ' y ' + d.espera + ' en espera. Sin publicar.'
         });
         this.cargarReparto();
       })
-      .catch(() => this.setState({ trabajando: false, fallo: 'No se pudo repartir.' }));
+      .catch(() => this.setState({ trabajando: false, repartiendo: false, fallo: 'No se pudo repartir.' }));
   }
 
   // El freno: si la propuesta rompe reglas duras, el servidor devuelve 409
   // con lo que esta roto. Forzar es otra llamada, a proposito.
+  // Publicar una sola mesa. Cerrar de una en una fija ese grupo y deja el
+  // resto en juego: volver a repartir ya no los toca.
+  publicarUna(numero, forzar) {
+    const c = this.state.reparto && this.state.reparto.corrida;
+    if (!c || this.state.trabajando) return;
+    this.setState({ trabajando: true, fallo: '', publicando: numero });
+    fetch('/api/operacion/publicar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(forzar
+        ? { corridaId: c.id, mesa: numero, forzar: true }
+        : { corridaId: c.id, mesa: numero })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, code: r.status, d })))
+      .then(({ ok, code, d }) => {
+        if (!ok && code === 409 && d.roturas) {
+          this.setState({ trabajando: false, publicando: null, roturasFreno: d.roturas, frenoMesa: numero });
+          return;
+        }
+        if (!ok) { this.setState({ trabajando: false, publicando: null, fallo: d.error || 'No se pudo publicar.' }); return; }
+        this.setState({
+          trabajando: false, publicando: null, roturasFreno: null, frenoMesa: null,
+          aviso: 'Mesa ' + String(numero).padStart(2, '0') + ' publicada. ' +
+                 (d.quedanPorPublicar ? d.quedanPorPublicar + ' por cerrar; volver a repartir ya no la toca.' : 'No queda ninguna.')
+        });
+        this.cargarReparto();
+      })
+      .catch(() => this.setState({ trabajando: false, publicando: null, fallo: 'No se pudo publicar.' }));
+  }
+
   publicarMesas(forzar) {
     const c = this.state.reparto && this.state.reparto.corrida;
     if (!c || this.state.trabajando) return;
@@ -535,7 +611,10 @@ class Component extends DCLogic {
       }));
 
       return {
-        n: String(k + 1).padStart(2, '0'),
+        // El numero REAL de la mesa. Con publicacion por tandas, la primera
+        // que queda por cerrar puede ser la 03, y enseñar "01" era mentir
+        // sobre a que mesa va a llegar esa gente.
+        n: String((propuesta[k] && propuesta[k].numero) || k + 1).padStart(2, '0'),
         // El sitio es de LA MESA. Con dos zonas abiertas, poner el del
         // evento hacia que las dos mesas dijeran Cardenal estando una en
         // Alto: el panel enseñaba a operacion un sitio equivocado.
@@ -544,9 +623,29 @@ class Component extends DCLogic {
           ? (() => { const d = new Date(R.evento.empiezaEn); const h = d.getHours();
               return (h % 12 || 12) + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes() + ' ' + (h < 12 ? 'a.m.' : 'p.m.'); })()
           : '',
-        estado: ojo ? 'REVISAR' : 'CUADRA',
+        // Mientras el servidor revalida, la mesa lo dice en su propio sello
+        // en vez de dejar un CUADRA o un REVISAR que ya no vale.
+        recalculando: this.state.recalculando.indexOf(k + 1) >= 0,
+        publicada: !!(propuesta[k] && propuesta[k].publicada),
+        // Una mesa cerrada no se arrastra ni se cambia de sitio.
+        textoPublicarMesa: this.state.publicando === (propuesta[k] && propuesta[k].numero)
+          ? 'Publicando'
+          : ((propuesta[k] && propuesta[k].publicada) ? 'Publicada' : 'Publicar esta mesa'),
+        publicarMesa: () => {
+          if (propuesta[k] && !propuesta[k].publicada) this.publicarUna(propuesta[k].numero, false);
+        },
+        botonMesa: 'width:100%;display:inline-flex;align-items:center;justify-content:center;min-height:48px;margin-top:13px;padding:0 18px;border-radius:999px;border:none;font:600 14px/1 \'Inter Tight\',sans-serif;background:' +
+          ((propuesta[k] && propuesta[k].publicada) ? 'rgba(27,81,56,.13)' : '#1B5138') + ';color:' +
+          ((propuesta[k] && propuesta[k].publicada) ? '#1B5138' : '#FAF3E4') + ';cursor:' +
+          ((propuesta[k] && propuesta[k].publicada) ? 'default' : 'pointer'),
+        estado: this.state.recalculando.indexOf(k + 1) >= 0
+          ? 'CALCULANDO'
+          : ((propuesta[k] && propuesta[k].publicada) ? 'PUBLICADA' : (ojo ? 'REVISAR' : 'CUADRA')),
         // El borde cambia cuando se pasa por encima arrastrando: hay que
         // ver donde va a caer ANTES de soltar.
+        // Lo que ya no es de fiar se atenua: la puntuacion y las señales de
+        // una mesa que esta recalculando son las de antes del movimiento.
+        cuerpo: 'opacity:' + (this.state.recalculando.indexOf(k + 1) >= 0 ? '.5' : '1') + ';transition:opacity 160ms ease',
         caja: 'border-radius:24px;background:' + (this.state.sobreMesa === (k + 1) ? '#FFFBF0' : '#FAF3E4') +
           ';padding:clamp(16px,2vw,20px);border:1px solid ' +
           (this.state.sobreMesa === (k + 1) ? '#1B5138' : (ojo ? '#C0662F' : 'transparent')) +
@@ -566,7 +665,10 @@ class Component extends DCLogic {
           this.moverPersona(quien, k + 1);
         },
         numero: 'flex:0 0 auto;width:42px;height:42px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:700 15px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums',
-        sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;background:' + (ojo ? 'rgba(143,69,21,.13)' : 'rgba(27,81,56,.11)') + ';color:' + (ojo ? '#8F4515' : '#1B5138'),
+        sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;' +
+          (this.state.recalculando.indexOf(k + 1) >= 0
+            ? 'background:rgba(20,52,42,.09);color:#33513F;animation:aro-latido 1.2s ease-in-out infinite'
+            : 'background:' + (ojo ? 'rgba(143,69,21,.13)' : 'rgba(27,81,56,.11)') + ';color:' + (ojo ? '#8F4515' : '#1B5138')),
         gente: g.map((p, i) => {
           const pid = (propuesta[k] && propuesta[k].integrantes[i] && propuesta[k].integrantes[i].profileId) || null;
           const arrastrando = this.state.arrastrando === pid;
@@ -602,6 +704,7 @@ class Component extends DCLogic {
         zona: (propuesta[k] && propuesta[k].zona) || null,
         // Lo que comparten los seis. Sin esto, decidir si se publica es
         // firmar a ciegas lo que decidió el algoritmo.
+        hayComun: !!(propuesta[k] && propuesta[k].resumen),
         enComun: (() => {
           const r = (propuesta[k] && propuesta[k].resumen) || null;
           if (!r) return [];
@@ -653,11 +756,14 @@ class Component extends DCLogic {
       };
     });
 
+    const porPublicar = propuesta.filter((m) => !m.publicada).length;
     const revisar = mesas.filter((m) => m.estado === 'REVISAR').length;
     const metricas = [
       ['APUNTADOS', String(APUNTADOS), 'Cierra hoy a las 7 p.m.', null],
       ['MESAS', String(nMesas), nMesas * 6 + ' sentados, todas de seis', null],
-      ['EN ESPERA', String(enEspera), 'Faltan ' + (6 - enEspera) + ' para otra mesa', '#8F4515'],
+      ['EN ESPERA', String(enEspera),
+        enEspera === 0 ? 'Todos tienen mesa' : 'Faltan ' + (6 - enEspera) + ' para otra mesa',
+        enEspera === 0 ? null : '#8F4515'],
       ['SIN VERIFICAR', String(SIN_VERIFICAR), 'No entran al reparto', '#8F4515']
     ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) }));
 
@@ -805,16 +911,29 @@ class Component extends DCLogic {
       publicado: this.state.publicado,
       textoBajada: APUNTADOS + ' apuntados. El reparto propone ' + letra(nMesas) + ' mesas y deja ' + (enEspera === 1 ? 'una' : letra(enEspera)) + ' en espera. Nada se publica hasta que lo confirmes.',
       tituloEspera: (enEspera === 1 ? 'Una' : letra(enEspera)) + ' en espera',
-      notaEspera: 'Faltan ' + letra(6 - enEspera) + ' para llenar la mesa ' + letra(nMesas + 1) + '. Se les avisa hoy y su crédito no se toca.',
+      // Con cero en espera no falta nadie para nada: decir "faltan seis para
+      // llenar la mesa tres" cuando no hay ni una persona esperando es
+      // inventarse una mesa que nadie ha pedido.
+      notaEspera: enEspera === 0
+        ? 'Todos los apuntados tienen mesa.'
+        : 'Faltan ' + letra(6 - enEspera) + ' para llenar otra mesa. Se les avisa hoy y su crédito no se toca.',
       textoPublicado: letra(nMesas).charAt(0).toUpperCase() + letra(nMesas).slice(1) + ' mesas publicadas. Los correos salen el jueves a las 12:00 en punto, no antes.',
       // El boton decia "Publicar" sobre una corrida ya publicada porque la
       // pantalla no miraba el campo que el servidor ya devolvia.
-      textoPublicar: this.state.trabajando
+      // Cuenta las que QUEDAN, no todas: con publicacion por tandas,
+      // "Publicar las dos mesas" sobre dos ya cerradas no significaba nada.
+      textoPublicar: this.state.trabajando && !this.state.publicando
         ? 'Publicando'
-        : (this.state.publicado ? 'Ya publicadas' : 'Publicar las ' + letra(nMesas) + ' mesas'),
-      publicarInerte: this.state.publicado ? 'true' : null,
+        : (porPublicar === 0
+            ? 'Todas publicadas'
+            : (porPublicar === 1 ? 'Publicar la que queda' : 'Publicar las ' + letra(porPublicar) + ' que quedan')),
+      publicarInerte: porPublicar === 0 ? 'true' : null,
+      hayPorPublicar: porPublicar > 0,
       hayAviso: !!this.state.aviso,
       aviso: this.state.aviso,
+      textoRepartir: this.state.repartiendo ? 'Repartiendo' : 'Volver a repartir',
+      botonRepartir: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:999px;border:1px solid rgba(20,52,42,.24);background:transparent;color:#1B5138;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' +
+        (this.state.repartiendo ? 'progress' : 'pointer') + ';opacity:' + (this.state.repartiendo ? '.6' : '1'),
       publicar: () => this.publicarMesas(false),
       forzar: () => this.publicarMesas(true),
       rebarajar: () => this.repartirDeNuevo(),

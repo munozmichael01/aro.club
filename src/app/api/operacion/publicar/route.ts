@@ -20,6 +20,9 @@ const cuerpo = z.object({
   corridaId: z.string().uuid(),
   // Publicar con avisos es una decisión, no un descuido: hay que pedirlo.
   forzar: z.boolean().optional(),
+  // Una sola mesa. Sin esto, todas las que falten. Cerrar de una en una es
+  // lo que permite ir fijando grupos y seguir moviendo el resto.
+  mesa: z.number().int().positive().optional(),
 })
 
 type Rotura = { regla: string; detalle: string }
@@ -31,6 +34,7 @@ type MesaPropuesta = {
   roturas?: Rotura[]
   zona: string | null
   restaurantId: string | null
+  publicada?: boolean
   integrantes: { profileId: string; bookingId: string }[]
 }
 
@@ -52,10 +56,6 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   if (!corrida) return NextResponse.json({ error: 'Esa corrida no existe.' }, { status: 404 })
-  if (corrida.is_published) {
-    return NextResponse.json({ error: 'Esa corrida ya está publicada.' }, { status: 409 })
-  }
-
   const { data: evento } = await admin
     .from('events')
     .select('id, reveal_at')
@@ -64,9 +64,24 @@ export async function POST(request: Request) {
 
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
 
-  const mesas = (corrida.proposal ?? []) as unknown as MesaPropuesta[]
-  if (!mesas.length) {
+  const todas = (corrida.proposal ?? []) as unknown as MesaPropuesta[]
+  if (!todas.length) {
     return NextResponse.json({ error: 'La propuesta está vacía.' }, { status: 400 })
+  }
+
+  // Lo que hay que publicar en esta llamada.
+  const mesas = parsed.data.mesa
+    ? todas.filter((m) => m.numero === parsed.data.mesa)
+    : todas.filter((m) => !m.publicada)
+
+  if (parsed.data.mesa && !mesas.length) {
+    return NextResponse.json({ error: 'Esa mesa no existe.' }, { status: 404 })
+  }
+  if (mesas.some((m) => m.publicada)) {
+    return NextResponse.json({ error: 'Esa mesa ya está publicada.' }, { status: 409 })
+  }
+  if (!mesas.length) {
+    return NextResponse.json({ error: 'No queda ninguna mesa por publicar.' }, { status: 409 })
   }
 
   // El freno. El reparto ya apuntó qué reglas duras no pudo cumplir; hasta
@@ -88,16 +103,10 @@ export async function POST(request: Request) {
     )
   }
 
-  // Publicar dos veces duplicaba los encuentros: borrar las mesas arrastra
-  // a sus miembros, pero pair_encounters es un acumulado que el trigger ya
-  // habia incrementado. Esto lo descuenta antes de volver a sentar.
-  const { error: errorLimpieza } = await admin.rpc('despublicar_evento', {
-    p_event_id: corrida.event_id,
-  })
-  if (errorLimpieza) {
-    console.error('[publicar] no se pudo deshacer lo anterior', errorLimpieza)
-    return NextResponse.json({ error: 'No pudimos publicar las mesas.' }, { status: 500 })
-  }
+  // Ya no se deshace el evento entero antes de publicar. Con publicación
+  // por mesa, borrar todo tiraría justo las mesas que ya se cerraron y sus
+  // encuentros: lo contrario de lo que se busca. Una mesa publicada solo se
+  // cambia despublicándola a propósito.
 
   const creadas: string[] = []
   for (const mesa of mesas) {
@@ -166,10 +175,18 @@ export async function POST(request: Request) {
     )
   }
 
+  // La propuesta guarda qué mesas ya salieron.
+  for (const m of todas) {
+    if (mesas.some((x) => x.numero === m.numero)) m.publicada = true
+  }
+  const quedan = todas.filter((m) => !m.publicada).length
+
   await admin
     .from('matching_runs')
     .update({
-      is_published: true,
+      proposal: todas as never,
+      // La corrida solo está publicada del todo cuando no queda ninguna.
+      is_published: quedan === 0,
       published_at: new Date().toISOString(),
       published_by: actor,
       // Si se forzó, queda escrito qué se aceptó y quién lo aceptó. Dentro
@@ -186,6 +203,8 @@ export async function POST(request: Request) {
   return NextResponse.json({
     estado: 'publicado',
     mesas: creadas.length,
+    // Cuántas siguen abiertas, para que el panel lo diga sin recontar.
+    quedanPorPublicar: quedan,
     // El número real de filas encoladas, no el de la lista que se intentó:
     // reportar 12 habiendo guardado 0 es peor que fallar.
     correosProgramados: encolados?.length ?? 0,

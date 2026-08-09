@@ -160,7 +160,67 @@ export async function POST(request: Request) {
   // validaria contra datos distintos de los que se usaron para proponer.
   const pool = await construirPool(admin, eventoId)
   const sedes = pool.sedes
-  const personas = pool.personas
+
+  // Las mesas YA PUBLICADAS no se tocan. Esa gente sabe con quién cena y
+  // dónde, así que sale del pool: volver a repartir mueve al resto, no a
+  // ellos. Es lo que permite ir cerrando grupos en tandas.
+  const { data: yaSentados } = await admin
+    .from('dinner_tables')
+    .select(
+      'id, table_number, restaurant_id, score, restaurants!dinner_tables_restaurant_id_fkey(name, zone_slug), table_members(profile_id, booking_id, profiles(display_name, full_name))',
+    )
+    .eq('event_id', eventoId)
+    .order('table_number')
+
+  // Los rasgos de quien ya está sentado. Sin esto la mesa publicada salía
+  // con "—, null" y un rango de edades "0–0": la que YA está cerrada era la
+  // que peor se veía.
+  const idsCerrados = (yaSentados ?? []).flatMap((t) =>
+    ((t.table_members ?? []) as unknown as { profile_id: string }[]).map((m) => m.profile_id),
+  )
+  const { data: rasgosCerrados } = await admin
+    .from('profile_traits')
+    .select('profile_id, age, gender, industry, employer')
+    .in('profile_id', idsCerrados.length ? idsCerrados : ['00000000-0000-0000-0000-000000000000'])
+
+  const rasgoDe = new Map((rasgosCerrados ?? []).map((r) => [r.profile_id, r]))
+
+  const cerradas = (yaSentados ?? []).map((t) => {
+    const miembros = (t.table_members ?? []) as unknown as {
+      profile_id: string
+      booking_id: string
+      profiles: { display_name: string | null; full_name: string | null } | null
+    }[]
+    const rest = t.restaurants as unknown as { name: string; zone_slug: string | null } | null
+    return {
+      numero: t.table_number,
+      publicada: true,
+      zona: rest?.zone_slug ?? null,
+      zonasPosibles: rest?.zone_slug ? [rest.zone_slug] : [],
+      restaurantId: t.restaurant_id,
+      restaurante: rest?.name ?? null,
+      puntuacion: t.score ?? 0,
+      desglose: {},
+      resumen: null,
+      roturas: [] as { regla: string; detalle: string }[],
+      integrantes: miembros.map((m) => {
+        const r = rasgoDe.get(m.profile_id)
+        return {
+          profileId: m.profile_id,
+          bookingId: m.booking_id,
+          nombre: m.profiles?.display_name || m.profiles?.full_name?.split(' ')[0] || '—',
+          edad: r?.age ?? null,
+          genero: r?.gender ?? null,
+          empresa: r?.employer ?? null,
+          sector: r?.industry ?? null,
+        }
+      }),
+    }
+  })
+
+  const sentados = new Set(cerradas.flatMap((m) => m.integrantes.map((i) => i.profileId)))
+  const personas = pool.personas.filter((p) => !sentados.has(p.profileId))
+  const desdeNumero = cerradas.reduce((n, m) => Math.max(n, m.numero), 0)
 
   if (!sedes.length) {
     return NextResponse.json(
@@ -175,6 +235,11 @@ export async function POST(request: Request) {
   // sitio. El aforo se respeta: si Cardenal aguanta dos mesas, la tercera
   // va al siguiente sitio de esa zona.
   const ocupacion = new Map<string, number>()
+  // Lo ya publicado ocupa aforo: si Cardenal aguanta dos y ya hay una mesa
+  // cerrada allí, solo cabe una más.
+  for (const m of cerradas) {
+    if (m.restaurantId) ocupacion.set(m.restaurantId, (ocupacion.get(m.restaurantId) ?? 0) + 1)
+  }
   const sedeDe = (zona: string) => {
     const candidatas = sedes.filter((v) => v.zona === zona)
     for (const v of candidatas) {
@@ -187,7 +252,7 @@ export async function POST(request: Request) {
     return null
   }
 
-  const propuesta = r.mesas.map((mesa, i) => {
+  const nuevas = r.mesas.map((mesa, i) => {
     const zonasPosibles = zonasDe(mesa)
     // Reparto estable: entre varias zonas válidas, la primera por orden
     // alfabético. Elegir "la que tenga más sitio" haría que el mismo pool
@@ -195,7 +260,8 @@ export async function POST(request: Request) {
     const zona = zonasPosibles[0] ?? null
     const sede = zona ? sedeDe(zona) : null
     return {
-    numero: i + 1,
+    numero: desdeNumero + i + 1,
+    publicada: false,
     zona,
     zonasPosibles,
     restaurantId: sede?.restaurantId ?? null,
@@ -219,8 +285,12 @@ export async function POST(request: Request) {
     }
   })
 
+  // Las cerradas van primero: el panel enseña la foto completa de la fecha,
+  // no solo lo que queda por decidir.
+  const propuesta = [...cerradas, ...nuevas]
+
   // Una mesa sin sitio no se puede publicar: el aforo de la zona se agotó.
-  for (const m of propuesta) {
+  for (const m of nuevas) {
     if (!m.restaurantId) {
       m.roturas = [
         ...m.roturas,

@@ -67,6 +67,7 @@ const comoIntegrante = (p: {
 })
 type Mesa = {
   numero: number
+  publicada?: boolean
   zona: string | null
   zonasPosibles: string[]
   restaurantId: string | null
@@ -97,14 +98,6 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   if (!corrida) return NextResponse.json({ error: 'Esa corrida no existe.' }, { status: 404 })
-  if (corrida.is_published) {
-    // Una vez publicada, la gente ya sabe con quién cena. Cambiarla aquí
-    // dejaría la pantalla del miembro diciendo una cosa y la base otra.
-    return NextResponse.json(
-      { error: 'Esa corrida ya está publicada. Vuelve a repartir para cambiarla.' },
-      { status: 409 },
-    )
-  }
 
   const mesas = (corrida.proposal ?? []) as unknown as Mesa[]
   const espera = ((corrida.unmatched ?? []) as unknown as Integrante[]) ?? []
@@ -115,9 +108,17 @@ export async function POST(request: Request) {
   const pool: Pool = await construirPool(admin, corrida.event_id)
   const porId = new Map(pool.personas.map((p) => [p.profileId, p]))
 
+  // Una mesa publicada no se toca. Esa gente ya sabe con quién cena y
+  // dónde; cambiarlo aquí dejaría su pantalla diciendo una cosa y la base
+  // otra. Para cambiarla hay que despublicarla a propósito.
+  const cerrada = (m?: Mesa | null) => m?.publicada === true
+
   if (d.accion === 'sede') {
     const mesa = mesas.find((m) => m.numero === d.mesa)
     if (!mesa) return NextResponse.json({ error: 'Esa mesa no existe.' }, { status: 404 })
+    if (cerrada(mesa)) {
+      return NextResponse.json({ error: 'Esa mesa ya está publicada.' }, { status: 409 })
+    }
 
     const sede = pool.sedes.find((v) => v.restaurantId === d.restaurantId)
     if (!sede) {
@@ -151,6 +152,12 @@ export async function POST(request: Request) {
     if (d.aMesa !== 0 && !destino) {
       return NextResponse.json({ error: 'Esa mesa no existe.' }, { status: 404 })
     }
+    if (cerrada(origen) || cerrada(destino)) {
+      return NextResponse.json(
+        { error: 'No se puede mover gente de una mesa ya publicada.' },
+        { status: 409 },
+      )
+    }
     if (origen && destino && origen.numero === destino.numero) {
       return NextResponse.json({ estado: 'sin cambios', mesas, espera })
     }
@@ -170,6 +177,9 @@ export async function POST(request: Request) {
   // la que sale tanto como la de la que entra, y una sede puede dejar de
   // valer si la mesa cambió de gente.
   for (const m of mesas) {
+    // Las publicadas se dejan como están: recalcularlas no cambiaría nada y
+    // su gente ya no está en el pool, así que saldrían vacías.
+    if (m.publicada) continue
     const gente = m.integrantes.map((i) => porId.get(i.profileId)).filter((p) => p != null)
     m.puntuacion = Number(puntuar(gente, pesos).toFixed(3))
     m.desglose = desglose(gente)
