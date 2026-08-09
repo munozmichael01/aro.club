@@ -115,6 +115,38 @@ export async function GET() {
 
   if (errorReserva) console.error('[mi-cuenta] reserva', errorReserva)
 
+  // La próxima fecha abierta, para quien todavía no ha reservado. El copy
+  // decía "Ya van 34 apuntados y se cierra el martes" con doce apuntados y
+  // el cierre otro día: dos cifras escritas a mano en la pantalla que mas
+  // veces se abre.
+  const { data: proxima } = await admin
+    .from('events')
+    .select(
+      'id, starts_at, booking_closes_at, restaurants!events_restaurant_id_fkey(name, zone_slug)',
+    )
+    .in('status', ['open', 'draft'])
+    .gte('starts_at', new Date().toISOString())
+    .order('starts_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  let apuntadosProxima = 0
+  let zonaProxima: string | null = null
+  if (proxima) {
+    const { count } = await admin
+      .from('bookings')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', proxima.id)
+      .eq('status', 'confirmed')
+    apuntadosProxima = count ?? 0
+
+    const slug = (proxima.restaurants as unknown as { zone_slug: string | null } | null)?.zone_slug
+    if (slug) {
+      const { data: z } = await admin.from('zones').select('name').eq('slug', slug).maybeSingle()
+      zonaProxima = z?.name ?? null
+    }
+  }
+
   const ahora = Date.now()
   const evento = reserva?.events as
     | { starts_at: string; reveal_at: string; status: string; restaurants: { name: string; address: string; zone_slug: string | null } | null }
@@ -143,6 +175,14 @@ export async function GET() {
   return NextResponse.json({
     nombre: perfil.display_name || perfil.full_name || null,
     esOps: perfil.role === 'ops' || perfil.role === 'admin',
+    proximaFecha: proxima
+      ? {
+          empiezaEn: proxima.starts_at,
+          cierraEn: proxima.booking_closes_at,
+          zona: zonaProxima,
+          apuntados: apuntadosProxima,
+        }
+      : null,
     estado,
     verif,
     motivoRechazo: rechazada?.rejection_reason ?? null,
