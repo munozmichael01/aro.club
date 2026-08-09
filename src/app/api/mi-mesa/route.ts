@@ -26,7 +26,9 @@ export async function GET() {
 
   const { data: reserva } = await admin
     .from('bookings')
-    .select('id, event_id, events(starts_at, reveal_at, status)')
+    .select(
+      'id, event_id, events(starts_at, reveal_at, status, restaurants!events_restaurant_id_fkey(zone_slug))',
+    )
     .eq('profile_id', user.id)
     .in('status', ['confirmed', 'attended'])
     .order('created_at', { ascending: false })
@@ -34,7 +36,12 @@ export async function GET() {
     .maybeSingle()
 
   const evento = reserva?.events as
-    | { starts_at: string; reveal_at: string; status: string }
+    | {
+        starts_at: string
+        reveal_at: string
+        status: string
+        restaurants: { zone_slug: string | null } | null
+      }
     | null
     | undefined
 
@@ -47,11 +54,24 @@ export async function GET() {
   const empiezaEn = new Date(evento.starts_at).getTime()
 
   if (ahora < revelaEn) {
-    // Cerrada: solo la cuenta atrás. Ni el sitio ni con quién.
+    // Cerrada: la hora y la zona, nada más. El restaurante exacto y los
+    // cinco nombres son lo que se revela; la zona la enseña la pantalla de
+    // Design desde el principio porque hace falta para organizarse la noche.
+    let zona: string | null = null
+    if (evento.restaurants?.zone_slug) {
+      const { data } = await admin
+        .from('zones')
+        .select('name')
+        .eq('slug', evento.restaurants.zone_slug)
+        .maybeSingle()
+      zona = data?.name ?? null
+    }
+
     return NextResponse.json({
       fase: 'cerrada',
       revelaEn: evento.reveal_at,
       empiezaEn: evento.starts_at,
+      zona,
       faltanSegundos: Math.round((revelaEn - ahora) / 1000),
     })
   }
@@ -85,7 +105,30 @@ export async function GET() {
     .select('profile_id, industry')
     .in('profile_id', (companeros ?? []).map((c) => c.profile_id))
 
-  const sectorDe = new Map((traits ?? []).map((t) => [t.profile_id, t.industry]))
+  // `industry` se guarda con el código estable ("tecnologia"), que no es lo
+  // que se enseña. La etiqueta vive en las opciones de la pregunta y se lee
+  // de ahí: un mapa aquí sería un segundo catálogo que se desincroniza a la
+  // primera vez que Design cambie un nombre.
+  const { data: preguntaSector } = await admin
+    .from('questions')
+    .select('options, questionnaire_versions!inner(is_active)')
+    .eq('key', 'sector')
+    .eq('questionnaire_versions.is_active', true)
+    .maybeSingle()
+
+  const etiquetaDe = new Map(
+    ((preguntaSector?.options ?? []) as { value: string; label: string }[]).map((o) => [
+      o.value,
+      o.label,
+    ]),
+  )
+
+  const sectorDe = new Map(
+    (traits ?? []).map((t) => [
+      t.profile_id,
+      t.industry ? (etiquetaDe.get(t.industry) ?? t.industry) : null,
+    ]),
+  )
 
   return NextResponse.json({
     // Pasada: la cena ya ocurrió, toca F11.
