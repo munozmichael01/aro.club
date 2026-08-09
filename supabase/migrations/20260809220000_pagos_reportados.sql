@@ -76,11 +76,12 @@ alter table payments
   add column if not exists moneda text;
 
 -- --- la tasa ---------------------------------------------------------
--- Sin tasa del dia no se puede cobrar en bolivares. Se siembra una para
--- que el flujo funcione; la de verdad la pone operacion cada mañana.
-insert into fx_rates (rate_date, usd_to_ves, source)
-values ((now() at time zone 'America/Caracas')::date, 62.40, 'manual')
-on conflict (rate_date) do nothing;
+-- NO se siembra ninguna. La trae el cron del BCV a medianoche de Caracas.
+--
+-- Sembre una a 62,40 —el numero de la maqueta de Design— y fue peor que no
+-- tener ninguna: la real son 756, asi que la pantalla enseñaba 499 Bs
+-- cuando ocho dolares son seis mil. Una tasa inventada no es un valor por
+-- defecto, es un precio equivocado.
 
 alter table payment_methods enable row level security;
 create policy metodos_lectura on payment_methods

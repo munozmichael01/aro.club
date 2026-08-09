@@ -318,6 +318,14 @@ class Component extends DCLogic {
         accion: 'Reservar mi puesto', enlace: '#agenda'
       },
       {
+        id: 'porconfirmar', sello: 'PAGO EN REVISIÓN',
+        verif: 'ok', respuestas: 'Completas', creditos: '3 de 4',
+        creditosCuerpo: 'Uno está apartado para el jueves, a la espera de confirmar el pago.',
+        titulo: 'Tu puesto está apartado.',
+        cuerpo: 'Reportaste el pago y una persona lo está cuadrando con el banco. Suele tardar menos de una hora. Nadie más puede tomar tu puesto mientras tanto.',
+        accion: 'Ver mi reserva', enlace: 'Aro Club - Mi mesa.dc.html', secundaria: 'Algo no cuadra'
+      },
+      {
         id: 'reservada', sello: 'TIENES MESA', reloj: true,
         verif: 'ok', respuestas: 'Completas', creditos: '3 de 4',
         creditosCuerpo: 'Uno está reservado para el jueves. Los otros tres no caducan.',
@@ -441,10 +449,17 @@ class Component extends DCLogic {
       if (p.cancelada || p.estado === 'cancelled') return [titulo, cuando, 'Cancelaste', 'Cancelaste'];
       if (p.estado === 'attended') return [titulo, cuando, 'Fuiste', 'Fuiste'];
       if (p.pasada) return [titulo, cuando, 'Ya pasó', 'Pasada'];
-      return [titulo, cuando, 'Apuntada, se cierra 48 h antes', 'Próxima'];
+      if (p.estado === 'pending_payment') return [titulo, cuando, 'Pago en revisión · puesto apartado', 'Por confirmar'];
+      return [titulo, cuando, 'Confirmada, se cierra 48 h antes', 'Confirmada'];
     });
     const mios = crudosMios.map((h) => {
-      const activo = h[3] === 'Hoy' || h[3] === 'Próxima';
+      // Tres estados vivos, no dos: por confirmar, confirmada y hoy. Un
+      // pago reportado no es una reserva confirmada, y la fila tiene que
+      // decirlo o la persona cree que ya esta.
+      const pendiente = h[3] === 'Por confirmar';
+      const activo = h[3] === 'Hoy' || h[3] === 'Confirmada';
+      const fondo = pendiente ? 'rgba(143,69,21,.13)' : (activo ? '#1B5138' : (h[3] === 'Fuiste' ? 'rgba(27,81,56,.11)' : 'transparent'));
+      const tinta = pendiente ? '#8F4515' : (activo ? '#FAF3E4' : (h[3] === 'Fuiste' ? '#1B5138' : '#566A5D'));
       return {
         sitio: h[0], cuando: h[1], detalle: h[2], estado: h[3],
         chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + (activo ? '#1B5138' : (h[3] === 'Fuiste' ? 'rgba(27,81,56,.11)' : 'transparent')) + ';border:1px solid ' + (h[3] === 'Cancelaste' ? 'rgba(20,52,42,.18)' : 'transparent') + ';color:' + (activo ? '#FAF3E4' : (h[3] === 'Fuiste' ? '#1B5138' : '#566A5D'))

@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/server'
 type Estado =
   | 'perfil'
   | 'datos'
+  | 'porconfirmar'
   | 'verificar'
   | 'revision'
   | 'reservar'
@@ -108,7 +109,10 @@ export async function GET() {
       'id, status, event_id, events(starts_at, reveal_at, status, restaurants!events_restaurant_id_fkey(name, address, zone_slug))',
     )
     .eq('profile_id', user.id)
-    .in('status', ['confirmed', 'attended'])
+    // `pending_payment` cuenta como reserva: el puesto ESTA apartado
+    // aunque el pago no este cuadrado. Dejarla fuera haria que la pantalla
+    // le ofreciera reservar otra vez algo que ya tiene.
+    .in('status', ['pending_payment', 'confirmed', 'attended'])
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -228,6 +232,9 @@ export async function GET() {
   else if (!verificada && !enRevision) estado = 'verificar'
   else if (enRevision) estado = 'revision'
   else if (!reserva) estado = 'reservar'
+  // Pagado no es confirmado: mientras alguien lo cuadra con el banco, su
+  // pantalla lo dice en vez de darlo por hecho.
+  else if (reserva.status === 'pending_payment') estado = 'porconfirmar'
   else if (!revelado) estado = 'reservada'
   else estado = 'abierta'
 
