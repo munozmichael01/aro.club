@@ -32,6 +32,8 @@ export type Persona = {
   idiomas: string[]
   /** Zonas que acepta PARA ESA FECHA, ya cruzadas con las que abrimos. */
   zonas: string[]
+  /** Restricciones alimentarias. El restaurante tiene que poder con todas. */
+  dietas: string[]
   /** Perfiles con los que no puede coincidir: exclusiones o ya se vieron. */
   vetados: Set<string>
 }
@@ -76,39 +78,60 @@ export function roturas(mesa: Persona[]): Rotura[] {
   if (edades.length > 1) {
     const spread = Math.max(...edades) - Math.min(...edades)
     if (spread > 10) {
-      fallos.push({ regla: 'edad', detalle: `spread de ${spread} años` })
+      const joven = mesa.find((p) => p.edad === Math.min(...edades))
+      const mayor = mesa.find((p) => p.edad === Math.max(...edades))
+      fallos.push({
+        regla: 'edad',
+        detalle: `${spread} años entre ${joven?.nombre} (${joven?.edad}) y ${mayor?.nombre} (${mayor?.edad})`,
+      })
     }
   }
 
   const mujeres = mesa.filter((p) => p.genero === 'mujer').length
   const hombres = mesa.filter((p) => p.genero === 'hombre').length
   if (Math.abs(mujeres - hombres) > 2) {
-    fallos.push({ regla: 'genero', detalle: `${mujeres} y ${hombres}` })
+    fallos.push({ regla: 'genero', detalle: `${mujeres} mujeres y ${hombres} hombres` })
   }
 
   const empresas = mesa.map(empresaDe).filter((e): e is string => e != null)
   const repetida = empresas.find((e, i) => empresas.indexOf(e) !== i)
-  if (repetida) fallos.push({ regla: 'empresa', detalle: `dos de ${repetida}` })
+  if (repetida) {
+    // Con nombres. "dos de banesco" obligaba a mirar uno por uno quiénes
+    // eran, justo cuando hay que decidir si se publica o no.
+    const quienes = mesa.filter((p) => empresaDe(p) === repetida).map((p) => p.nombre)
+    fallos.push({ regla: 'empresa', detalle: `${quienes.join(' y ')}, los dos en ${repetida}` })
+  }
 
-  for (const a of mesa) {
-    for (const b of mesa) {
-      if (a.profileId !== b.profileId && a.vetados.has(b.profileId)) {
-        fallos.push({ regla: 'veto', detalle: `${a.nombre} y ${b.nombre}` })
-        break
-      }
+  // TODAS las parejas vetadas, no la primera. Cortar en la primera hacía
+  // que al arreglar una apareciera otra que ya estaba ahí: desde el panel
+  // parecía que cada cambio creaba un problema nuevo.
+  const vistos = new Set<string>()
+  for (let i = 0; i < mesa.length; i++) {
+    for (let j = i + 1; j < mesa.length; j++) {
+      const a = mesa[i]
+      const b = mesa[j]
+      if (!a.vetados.has(b.profileId) && !b.vetados.has(a.profileId)) continue
+      const clave = [a.profileId, b.profileId].sort().join(':')
+      if (vistos.has(clave)) continue
+      vistos.add(clave)
+      fallos.push({ regla: 'veto', detalle: `${a.nombre} y ${b.nombre}` })
     }
-    if (fallos.some((f) => f.regla === 'veto')) break
   }
 
   const tramos = mesa.map((p) => p.tramoGasto).filter((t): t is number => t != null)
   if (tramos.length > 1 && Math.max(...tramos) - Math.min(...tramos) > 1) {
     // Un tier 1 con un tier 3 garantiza mal rato cuando llega la cuenta.
-    fallos.push({ regla: 'gasto', detalle: `tramos ${Math.min(...tramos)} a ${Math.max(...tramos)}` })
+    const barato = mesa.find((p) => p.tramoGasto === Math.min(...tramos))
+    const caro = mesa.find((p) => p.tramoGasto === Math.max(...tramos))
+    fallos.push({
+      regla: 'gasto',
+      detalle: `${barato?.nombre} y ${caro?.nombre} están a dos tramos de distancia`,
+    })
   }
 
-  const deVisita = mesa.filter((p) => p.arraigo === 'visita').length
-  if (deVisita > 2) {
-    fallos.push({ regla: 'visita', detalle: `${deVisita} de visita` })
+  const deVisita = mesa.filter((p) => p.arraigo === 'visita')
+  if (deVisita.length > 2) {
+    fallos.push({ regla: 'visita', detalle: deVisita.map((p) => p.nombre).join(', ') })
   }
 
   // Zona: la misma operacion que el idioma. Una mesa solo existe si hay un
@@ -127,7 +150,10 @@ export function roturas(mesa: Persona[]): Rotura[] {
       return new Set([...acc].filter((x) => s.has(x)))
     }, null)
   if (comun && comun.size === 0) {
-    fallos.push({ regla: 'idioma', detalle: 'sin idioma común' })
+    fallos.push({
+      regla: 'idioma',
+      detalle: mesa.map((p) => `${p.nombre}: ${p.idiomas.join('/')}`).join(' · '),
+    })
   }
 
   return fallos
@@ -192,6 +218,65 @@ export function desglose(mesa: Persona[]): Record<keyof Pesos, number> {
   const novedad = 1 - conocidos / pares
 
   return { cohesion, sector, arraigo, energia, novedad }
+}
+
+/**
+ * Lo que la mesa comparte, en claro.
+ *
+ * La puntuación dice "0.835" y las roturas dicen qué está mal, pero para
+ * decidir si esta mesa se publica hace falta lo tercero: en qué se parecen.
+ * Sin eso, publicar es firmar a ciegas lo que decidió el algoritmo.
+ */
+export type Resumen = {
+  zonas: string[]
+  temas: string[]
+  intereses: string[]
+  idiomas: string[]
+  tramoGasto: { min: number; max: number } | null
+  edades: { min: number; max: number } | null
+  generos: { mujeres: number; hombres: number; otros: number }
+  dietas: string[]
+  sectores: string[]
+  arraigos: string[]
+  energias: { lleva: number; depende: number; escucha: number }
+}
+
+/** Lo que TODOS comparten, no lo que aparece alguna vez. */
+function interseccion(listas: string[][]): string[] {
+  if (!listas.length) return []
+  return [...listas.reduce<Set<string>>(
+    (acc, l, i) => (i === 0 ? new Set(l) : new Set([...acc].filter((x) => l.includes(x)))),
+    new Set<string>(),
+  )].sort()
+}
+
+export function resumen(mesa: Persona[]): Resumen {
+  const edades = mesa.map((p) => p.edad).filter((e): e is number => e != null)
+  const tramos = mesa.map((p) => p.tramoGasto).filter((t): t is number => t != null)
+
+  return {
+    zonas: zonasDe(mesa),
+    temas: interseccion(mesa.map((p) => p.temas)),
+    intereses: interseccion(mesa.map((p) => p.intereses)),
+    idiomas: interseccion(mesa.map((p) => p.idiomas)),
+    tramoGasto: tramos.length ? { min: Math.min(...tramos), max: Math.max(...tramos) } : null,
+    edades: edades.length ? { min: Math.min(...edades), max: Math.max(...edades) } : null,
+    generos: {
+      mujeres: mesa.filter((p) => p.genero === 'mujer').length,
+      hombres: mesa.filter((p) => p.genero === 'hombre').length,
+      otros: mesa.filter((p) => p.genero !== 'mujer' && p.genero !== 'hombre').length,
+    },
+    // Las dietas NO se intersecan: aquí importa la union, porque el
+    // restaurante tiene que poder darle de comer a los seis.
+    dietas: [...new Set(mesa.flatMap((p) => p.dietas ?? []))].filter((d) => d !== 'ninguna').sort(),
+    sectores: [...new Set(mesa.map((p) => p.sector).filter((x): x is string => !!x))].sort(),
+    arraigos: [...new Set(mesa.map((p) => p.arraigo).filter((x): x is string => !!x))].sort(),
+    energias: {
+      lleva: mesa.filter((p) => p.energia === 'lleva').length,
+      depende: mesa.filter((p) => p.energia === 'depende').length,
+      escucha: mesa.filter((p) => p.energia === 'escucha').length,
+    },
+  }
 }
 
 export function puntuar(mesa: Persona[], pesos: Pesos = PESOS): number {

@@ -87,6 +87,27 @@
                   <span style="{{ s.chip }}">{{ s.texto }}</span>
                 </sc-for>
               </div>
+              <div style="border-top:1px solid rgba(20,52,42,.12);margin-top:13px;padding-top:12px">
+                <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:9px">QUÉ COMPARTEN</div>
+                <sc-for list="{{ t.enComun }}" as="e" hint-placeholder-count="5">
+                  <div style="display:flex;gap:10px;align-items:baseline;margin-bottom:5px">
+                    <span style="flex:0 0 auto;width:44%;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ e.clave }}</span>
+                    <span style="flex:1;min-width:0;font:500 13px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ e.valor }}</span>
+                  </div>
+                </sc-for>
+              </div>
+
+              <sc-if value="{{ t.haySedes }}" hint-placeholder-val="{{ false }}">
+                <div style="border-top:1px solid rgba(20,52,42,.12);margin-top:12px;padding-top:12px">
+                  <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:9px">DÓNDE LOS SENTAMOS</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:7px">
+                    <sc-for list="{{ t.sedes }}" as="v" hint-placeholder-count="2">
+                      <button onClick="{{ v.pick }}" style="{{ v.btn }}">{{ v.nombre }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
               <sc-if value="{{ t.hayRoturas }}" hint-placeholder-val="{{ false }}">
                 <div style="border-top:1px solid rgba(143,69,21,.28);margin-top:13px;padding-top:12px">
                   <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:9px">QUÉ HAY QUE REVISAR</div>
@@ -301,6 +322,25 @@ class Component extends DCLogic {
       .catch(() => this.setState({ reparto: { evento: null } }));
   }
 
+  // Cambiar el sitio de una mesa. El servidor revalida: si la mesa no
+  // acepta esa zona, lo dice y no lo guarda.
+  cambiarSede(mesa, restaurantId) {
+    const c = this.state.reparto && this.state.reparto.corrida;
+    if (!c || this.state.trabajando) return;
+    this.setState({ trabajando: true, fallo: '' });
+    fetch('/api/operacion/propuesta', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accion: 'sede', corridaId: c.id, mesa: mesa, restaurantId: restaurantId })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) { this.setState({ trabajando: false, fallo: d.error || 'No se pudo cambiar el sitio.' }); return; }
+        this.setState({ trabajando: false, aviso: 'Mesa ' + String(mesa).padStart(2, '0') + ': sitio cambiado.' });
+        this.cargarReparto();
+      })
+      .catch(() => this.setState({ trabajando: false, fallo: 'No se pudo cambiar el sitio.' }));
+  }
+
   repartirDeNuevo() {
     const ev = this.state.reparto && this.state.reparto.evento;
     if (!ev || this.state.trabajando) return;
@@ -407,6 +447,10 @@ class Component extends DCLogic {
     // El POOL de arriba era el maniqui. Lo real viene del servidor: la
     // propuesta que el reparto guardo, con sus roturas ya calculadas.
     const R = this.state.reparto || {};
+    const zonaNombre = (slug) => {
+      const v = ((R.sedes) || []).find((x) => x.zona === slug);
+      return v ? v.zonaNombre : slug;
+    };
     const corrida = R.corrida || null;
     const propuesta = (corrida && corrida.propuesta) || [];
     const hayReparto = propuesta.length > 0;
@@ -495,6 +539,43 @@ class Component extends DCLogic {
           detalle: r.detalle
         })),
         zona: (propuesta[k] && propuesta[k].zona) || null,
+        // Lo que comparten los seis. Sin esto, decidir si se publica es
+        // firmar a ciegas lo que decidió el algoritmo.
+        enComun: (() => {
+          const r = (propuesta[k] && propuesta[k].resumen) || null;
+          if (!r) return [];
+          const TRAMOS = { 1: 'hasta 20 USD', 2: '20 a 35', 3: '35 a 50', 4: 'más de 50' };
+          const filas = [
+            ['Zonas que les sirven', (r.zonas || []).map((z) => zonaNombre(z)).join(', ') || 'ninguna'],
+            ['Presupuesto', r.tramoGasto
+              ? (r.tramoGasto.min === r.tramoGasto.max
+                  ? TRAMOS[r.tramoGasto.min]
+                  : TRAMOS[r.tramoGasto.min] + ' a ' + TRAMOS[r.tramoGasto.max])
+              : 'sin declarar'],
+            ['Hablan', (r.idiomas || []).join(', ') || 'sin idioma común'],
+            ['Temas que comparten', (r.temas || []).join(', ') || 'ninguno en común'],
+            ['Quién lleva la conversación', r.energias.lleva + ' de ' + (r.energias.lleva + r.energias.depende + r.energias.escucha)]
+          ];
+          // La dieta solo aparece si hay alguna: "ninguna" es ruido, pero
+          // "sin gluten" cambia a que restaurante pueden ir.
+          if ((r.dietas || []).length) filas.push(['Dietas a cubrir', r.dietas.join(', ')]);
+          return filas.map((x) => ({ clave: x[0], valor: x[1] }));
+        })(),
+        // Los sitios a los que SI puede ir esta mesa.
+        sedes: ((R.sedes) || [])
+          .filter((v) => (propuesta[k] && propuesta[k].zonasPosibles || []).indexOf(v.zona) >= 0)
+          .map((v) => ({
+            nombre: v.nombre + ' · ' + v.zonaNombre,
+            elegida: propuesta[k] && propuesta[k].restaurantId === v.restaurantId,
+            pick: () => this.cambiarSede(propuesta[k].numero, v.restaurantId),
+            btn: 'display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border-radius:999px;cursor:pointer;font:' +
+              (propuesta[k] && propuesta[k].restaurantId === v.restaurantId ? '600' : '500') +
+              ' 13px/1 \'Inter Tight\',sans-serif;border:1px solid ' +
+              (propuesta[k] && propuesta[k].restaurantId === v.restaurantId ? '#1B5138' : 'rgba(20,52,42,.2)') +
+              ';background:' + (propuesta[k] && propuesta[k].restaurantId === v.restaurantId ? 'rgba(27,81,56,.11)' : 'transparent') +
+              ';color:#14342A'
+          })),
+        haySedes: ((R.sedes) || []).filter((v) => (propuesta[k] && propuesta[k].zonasPosibles || []).indexOf(v.zona) >= 0).length > 1,
         senales
       };
     });
@@ -692,8 +773,10 @@ class Component extends DCLogic {
         ? (() => {
             const d = new Date(R.evento.empiezaEn);
             const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-            return 'Cena · ' + dias[d.getDay()] + ' ' + d.getDate() +
-              (R.evento.restaurante ? ' · ' + R.evento.restaurante : '');
+            // Sin restaurante: el evento es una FECHA. El sitio lo lleva
+            // cada mesa, y con dos zonas abiertas ponerlo aqui era decir que
+            // todos cenan en el mismo sitio cuando no es verdad.
+            return 'Cena · ' + dias[d.getDay()] + ' ' + d.getDate();
           })()
         : 'Sin fecha abierta',
       hayMesas: nMesas > 0,

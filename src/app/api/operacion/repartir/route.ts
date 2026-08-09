@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { PESOS, repartir, roturas, desglose, zonasDe, type Persona } from '@/lib/reparto/repartir'
+import { PESOS, repartir, roturas, desglose, resumen, zonasDe, type Persona } from '@/lib/reparto/repartir'
 import { exigirOps } from '@/lib/ops'
+import { construirPool } from '@/lib/reparto/pool'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -85,7 +86,20 @@ export async function GET() {
     .limit(1)
     .maybeSingle()
 
+  // Las sedes abiertas, para que el panel pueda ofrecer el cambio de sitio
+  // sin inventarse candidatos.
+  const { data: sedesRaw } = await admin
+    .from('event_venues')
+    .select('zone_slug, restaurant_id, restaurants(name), zones(name)')
+    .eq('event_id', evento.id)
+
   return NextResponse.json({
+    sedes: (sedesRaw ?? []).map((v) => ({
+      zona: v.zone_slug,
+      zonaNombre: (v.zones as unknown as { name: string } | null)?.name ?? v.zone_slug,
+      restaurantId: v.restaurant_id,
+      nombre: (v.restaurants as unknown as { name: string } | null)?.name ?? null,
+    })),
     evento: {
       id: evento.id,
       empiezaEn: evento.starts_at,
@@ -136,104 +150,38 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, seats_per_table')
+    .select('id')
     .eq('id', eventoId)
     .maybeSingle()
 
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
 
-  // Las zonas que ABRIMOS esa noche, con su sitio. Sin sedes no hay dónde
-  // cenar, y repartir gente en mesas sin restaurante es una promesa vacía.
-  const { data: sedes } = await admin
-    .from('event_venues')
-    .select('zone_slug, restaurant_id, max_tables, restaurants(name, max_tables)')
-    .eq('event_id', eventoId)
+  // El mismo pool que usa retocar la propuesta. Con dos construcciones, una
+  // validaria contra datos distintos de los que se usaron para proponer.
+  const pool = await construirPool(admin, eventoId)
+  const sedes = pool.sedes
+  const personas = pool.personas
 
-  if (!sedes?.length) {
+  if (!sedes.length) {
     return NextResponse.json(
       { error: 'Esta fecha no tiene ninguna zona abierta. Abre al menos una antes de repartir.' },
       { status: 409 },
     )
   }
 
-  const zonasAbiertas = new Set(sedes.map((v) => v.zone_slug))
-
-  const { data: pool, error: errorPool } = await admin
-    .from('v_matching_pool')
-    .select('*')
-    .eq('event_id', eventoId)
-
-  if (errorPool) {
-    console.error('[repartir] pool', errorPool)
-    return NextResponse.json({ error: 'No pudimos leer los apuntados.' }, { status: 500 })
-  }
-
-  const ids = (pool ?? []).map((p) => p.profile_id).filter((id): id is string => id != null)
-
-  const { data: perfiles } = await admin
-    .from('profiles')
-    .select('id, display_name, full_name')
-    .in('id', ids)
-
-  const { data: encuentros } = await admin
-    .from('pair_encounters')
-    .select('profile_a, profile_b')
-    .gt('last_met_at', new Date(Date.now() - 182 * 86400_000).toISOString())
-
-  const { data: exclusiones } = await admin.from('exclusions').select('profile_a, profile_b')
-
-  // Un solo mapa: "con quién no puede sentarse". Al matcher le da igual si
-  // el motivo fue una exclusión o que ya cenaron en marzo.
-  const vetos = new Map<string, Set<string>>()
-  for (const { profile_a, profile_b } of [...(encuentros ?? []), ...(exclusiones ?? [])]) {
-    if (!vetos.has(profile_a)) vetos.set(profile_a, new Set())
-    if (!vetos.has(profile_b)) vetos.set(profile_b, new Set())
-    vetos.get(profile_a)!.add(profile_b)
-    vetos.get(profile_b)!.add(profile_a)
-  }
-
-  const nombreDe = new Map(
-    (perfiles ?? []).map((p) => [p.id, p.display_name || p.full_name?.split(' ')[0] || '—']),
-  )
-
-  const personas: Persona[] = (pool ?? []).map((p) => ({
-    profileId: p.profile_id as string,
-    bookingId: p.booking_id as string,
-    nombre: nombreDe.get(p.profile_id as string) ?? '—',
-    edad: p.age,
-    genero: p.gender,
-    arraigo: p.rootedness,
-    sector: p.industry,
-    empresa: p.employer_key,
-    energia: p.social_energy,
-    tramoGasto: p.budget_tier,
-    intereses: p.interests ?? [],
-    temas: p.conversation_topics ?? [],
-    idiomas: p.languages ?? ['es'],
-    // Solo las que aceptó Y abrimos. Quien acepta una zona que no se abre
-    // esta noche es, para este reparto, alguien que no acepta esa zona.
-    zonas: (p.zones ?? []).filter((z: string) => zonasAbiertas.has(z)),
-    vetados: vetos.get(p.profile_id as string) ?? new Set<string>(),
-  }))
-
-  const r = repartir(personas, evento.seats_per_table ?? 6, pesos)
+  const r = repartir(personas, pool.porMesa, pesos)
 
   // Cada mesa cae en una de las zonas que aceptan los seis, y ahí se le da
   // sitio. El aforo se respeta: si Cardenal aguanta dos mesas, la tercera
   // va al siguiente sitio de esa zona.
   const ocupacion = new Map<string, number>()
   const sedeDe = (zona: string) => {
-    const candidatas = sedes.filter((v) => v.zone_slug === zona)
+    const candidatas = sedes.filter((v) => v.zona === zona)
     for (const v of candidatas) {
-      const tope =
-        v.max_tables ?? (v.restaurants as unknown as { max_tables: number } | null)?.max_tables ?? 4
-      const usadas = ocupacion.get(v.restaurant_id) ?? 0
-      if (usadas < tope) {
-        ocupacion.set(v.restaurant_id, usadas + 1)
-        return {
-          restaurantId: v.restaurant_id,
-          nombre: (v.restaurants as unknown as { name: string } | null)?.name ?? null,
-        }
+      const usadas = ocupacion.get(v.restaurantId) ?? 0
+      if (usadas < v.maxMesas) {
+        ocupacion.set(v.restaurantId, usadas + 1)
+        return { restaurantId: v.restaurantId, nombre: v.nombre }
       }
     }
     return null
@@ -254,6 +202,9 @@ export async function POST(request: Request) {
     restaurante: sede?.nombre ?? null,
     puntuacion: Number(r.puntuaciones[i].toFixed(3)),
     desglose: desglose(mesa),
+    // Lo que comparten, para poder decidir con criterio y no solo con un
+    // numero. Va en la propuesta y no se recalcula en la pantalla.
+    resumen: resumen(mesa),
     roturas: roturas(mesa),
     // La aritmética del panel sale de aquí; nada se escribe a mano.
     integrantes: mesa.map((p) => ({
