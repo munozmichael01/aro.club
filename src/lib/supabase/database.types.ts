@@ -170,6 +170,7 @@ export type Database = {
           created_at: string
           event_id: string
           held_until: string | null
+          hold_until: string | null
           id: string
           profile_id: string
           status: Database["public"]["Enums"]["booking_status_t"]
@@ -183,6 +184,7 @@ export type Database = {
           created_at?: string
           event_id: string
           held_until?: string | null
+          hold_until?: string | null
           id?: string
           profile_id: string
           status?: Database["public"]["Enums"]["booking_status_t"]
@@ -196,6 +198,7 @@ export type Database = {
           created_at?: string
           event_id?: string
           held_until?: string | null
+          hold_until?: string | null
           id?: string
           profile_id?: string
           status?: Database["public"]["Enums"]["booking_status_t"]
@@ -1388,17 +1391,61 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_methods: {
+        Row: {
+          activo: boolean
+          actualizado_en: string
+          campos: Json
+          captura_obligatoria: boolean
+          datos_cuenta: Json
+          id: string
+          manual: boolean
+          moneda: string
+          nombre: string
+          orden: number
+        }
+        Insert: {
+          activo?: boolean
+          actualizado_en?: string
+          campos?: Json
+          captura_obligatoria?: boolean
+          datos_cuenta?: Json
+          id: string
+          manual?: boolean
+          moneda: string
+          nombre: string
+          orden?: number
+        }
+        Update: {
+          activo?: boolean
+          actualizado_en?: string
+          campos?: Json
+          captura_obligatoria?: boolean
+          datos_cuenta?: Json
+          id?: string
+          manual?: boolean
+          moneda?: string
+          nombre?: string
+          orden?: number
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount_local: number | null
           amount_usd: number
           booking_id: string | null
+          captura_path: string | null
           cents_token: number | null
           charge_date: string
           created_at: string
+          datos: Json
+          fx_congelado_en: string | null
           fx_rate: number | null
           id: string
           method: Database["public"]["Enums"]["payment_method_t"]
+          metodo: string | null
+          moneda: string | null
           paid_at: string | null
           payer_bank: string | null
           product_id: string | null
@@ -1406,6 +1453,7 @@ export type Database = {
           proof_path: string | null
           reference_code: string | null
           rejection_note: string | null
+          reportado_en: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["payment_status_t"]
@@ -1415,12 +1463,17 @@ export type Database = {
           amount_local?: number | null
           amount_usd: number
           booking_id?: string | null
+          captura_path?: string | null
           cents_token?: number | null
           charge_date?: string
           created_at?: string
+          datos?: Json
+          fx_congelado_en?: string | null
           fx_rate?: number | null
           id?: string
           method: Database["public"]["Enums"]["payment_method_t"]
+          metodo?: string | null
+          moneda?: string | null
           paid_at?: string | null
           payer_bank?: string | null
           product_id?: string | null
@@ -1428,6 +1481,7 @@ export type Database = {
           proof_path?: string | null
           reference_code?: string | null
           rejection_note?: string | null
+          reportado_en?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["payment_status_t"]
@@ -1437,12 +1491,17 @@ export type Database = {
           amount_local?: number | null
           amount_usd?: number
           booking_id?: string | null
+          captura_path?: string | null
           cents_token?: number | null
           charge_date?: string
           created_at?: string
+          datos?: Json
+          fx_congelado_en?: string | null
           fx_rate?: number | null
           id?: string
           method?: Database["public"]["Enums"]["payment_method_t"]
+          metodo?: string | null
+          moneda?: string | null
           paid_at?: string | null
           payer_bank?: string | null
           product_id?: string | null
@@ -1450,6 +1509,7 @@ export type Database = {
           proof_path?: string | null
           reference_code?: string | null
           rejection_note?: string | null
+          reportado_en?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["payment_status_t"]
@@ -1469,6 +1529,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_matching_pool"
             referencedColumns: ["booking_id"]
+          },
+          {
+            foreignKeyName: "payments_metodo_fkey"
+            columns: ["metodo"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "payments_product_id_fkey"
