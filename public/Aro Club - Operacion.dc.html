@@ -87,6 +87,20 @@
                   <span style="{{ s.chip }}">{{ s.texto }}</span>
                 </sc-for>
               </div>
+              <sc-if value="{{ t.hayRoturas }}" hint-placeholder-val="{{ false }}">
+                <div style="border-top:1px solid rgba(143,69,21,.28);margin-top:13px;padding-top:12px">
+                  <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:9px">QUÉ HAY QUE REVISAR</div>
+                  <sc-for list="{{ t.loQueFalla }}" as="r" hint-placeholder-count="2">
+                    <div style="display:flex;gap:9px;align-items:flex-start;margin-bottom:7px">
+                      <span style="flex:0 0 auto;width:18px;height:18px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 10px/1 'Inter Tight',sans-serif;margin-top:2px">!</span>
+                      <span style="flex:1;min-width:0">
+                        <span style="display:block;font:600 13px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ r.texto }}</span>
+                        <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:1px">{{ r.detalle }}</span>
+                      </span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
             </div>
           </sc-for>
         </div>
@@ -104,9 +118,16 @@
         </div>
 
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(22px,3vw,30px)">
-          <button onClick="{{ publicar }}" style="{{ botonPrimario }}">{{ textoPublicar }}</button>
+          <button onClick="{{ publicar }}" aria-disabled="{{ publicarInerte }}" style="{{ botonPrimario }}">{{ textoPublicar }}</button>
           <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
         </div>
+        <sc-if value="{{ hayAviso }}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:rgba(27,81,56,.1);padding:15px 18px;margin-top:14px;animation:aro-open 240ms ease both">
+            <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+            <span style="flex:1;min-width:0;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ aviso }}</span>
+          </div>
+        </sc-if>
+
         <sc-if value="{{ hayFreno }}" hint-placeholder-val="{{ false }}">
           <div role="alert" style="border-radius:22px;border:1px solid rgba(143,69,21,.42);background:rgba(143,69,21,.07);padding:clamp(16px,2.2vw,20px);margin-top:14px;animation:aro-open 260ms ease both">
             <div style="display:flex;gap:11px;align-items:flex-start">
@@ -269,14 +290,14 @@
 class Component extends DCLogic {
   state = { vista: 0, publicado: false, decididas: {}, abriendo: null, motivos: {},
             cola: null, catalogo: [], trabajando: false, fallo: '',
-            reparto: null, roturasFreno: null, avisosPublicados: null };
+            reparto: null, roturasFreno: null, avisosPublicados: null, aviso: '' };
 
   componentDidMount() { this.cargarCola(); this.cargarReparto(); }
 
   cargarReparto() {
     fetch('/api/operacion/repartir')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin permiso'))))
-      .then((d) => this.setState({ reparto: d }))
+      .then((d) => this.setState({ reparto: d, publicado: !!(d.corrida && d.corrida.publicada) }))
       .catch(() => this.setState({ reparto: { evento: null } }));
   }
 
@@ -289,7 +310,17 @@ class Component extends DCLogic {
       body: JSON.stringify({ eventoId: ev.id })
     })
       .then((r) => r.json())
-      .then(() => { this.setState({ trabajando: false, publicado: false }); this.cargarReparto(); })
+      .then((d) => {
+        // Repartir devolvia 200 y la pantalla no decia nada. Como el reparto
+        // es determinista, la propuesta nueva sale casi igual y desde fuera
+        // parecia que el boton no hacia nada.
+        this.setState({
+          trabajando: false, publicado: false, roturasFreno: null, avisosPublicados: null,
+          aviso: 'Repartido otra vez: ' + d.mesas + (d.mesas === 1 ? ' mesa' : ' mesas') +
+                 ' y ' + d.espera + ' en espera. Sin publicar.'
+        });
+        this.cargarReparto();
+      })
       .catch(() => this.setState({ trabajando: false, fallo: 'No se pudo repartir.' }));
   }
 
@@ -307,7 +338,12 @@ class Component extends DCLogic {
       .then(({ ok, code, d }) => {
         if (!ok && code === 409 && d.roturas) { this.setState({ trabajando: false, roturasFreno: d.roturas }); return; }
         if (!ok) { this.setState({ trabajando: false, fallo: d.error || 'No se pudo publicar.' }); return; }
-        this.setState({ trabajando: false, publicado: true, roturasFreno: null, avisosPublicados: d.publicadoConAvisos });
+        this.setState({
+          trabajando: false, publicado: true, roturasFreno: null,
+          avisosPublicados: d.publicadoConAvisos,
+          aviso: 'Publicadas ' + d.mesas + (d.mesas === 1 ? ' mesa' : ' mesas') + '. ' +
+                 d.correosProgramados + ' correos en cola para la revelación; no salen antes.'
+        });
         this.cargarReparto();
       })
       .catch(() => this.setState({ trabajando: false, fallo: 'No se pudo publicar.' }));
@@ -427,9 +463,10 @@ class Component extends DCLogic {
 
       return {
         n: String(k + 1).padStart(2, '0'),
-        // El sitio y la hora salen de la fecha, no de una lista de seis
-        // restaurantes inventados que se repetia mesa a mesa.
-        sitio: (R.evento && R.evento.restaurante) || 'Sin restaurante',
+        // El sitio es de LA MESA. Con dos zonas abiertas, poner el del
+        // evento hacia que las dos mesas dijeran Cardenal estando una en
+        // Alto: el panel enseñaba a operacion un sitio equivocado.
+        sitio: (propuesta[k] && propuesta[k].restaurante) || 'Sin sitio',
         hora: R.evento && R.evento.empiezaEn
           ? (() => { const d = new Date(R.evento.empiezaEn); const h = d.getHours();
               return (h % 12 || 12) + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes() + ' ' + (h < 12 ? 'a.m.' : 'p.m.'); })()
@@ -439,6 +476,25 @@ class Component extends DCLogic {
         numero: 'flex:0 0 auto;width:42px;height:42px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:700 15px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums',
         sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;background:' + (ojo ? 'rgba(143,69,21,.13)' : 'rgba(27,81,56,.11)') + ';color:' + (ojo ? '#8F4515' : '#1B5138'),
         gente: g.map((p, i) => ({ nombre: p[0], dato: p[1] + ', ' + p[2], inicial: p[0].charAt(0), avatar: avatar(i + k) })),
+        // REVISAR sin decir que revisar no sirve de nada. Las roturas van
+        // aparte de las señales normales: mezcladas parecian lo mismo que
+        // "3 y 3" o "29-33 años", que no son problemas.
+        hayRoturas: rotSrv.length > 0,
+        loQueFalla: rotSrv.map((r) => ({
+          texto: {
+            edad: 'Demasiada diferencia de edad',
+            genero: 'Desequilibrio de genero',
+            empresa: 'Dos de la misma empresa',
+            veto: 'Ya cenaron juntos o hay un bloqueo',
+            gasto: 'Presupuestos incompatibles',
+            idioma: 'Sin idioma comun',
+            visita: 'Demasiados de visita',
+            zona: 'No hay zona que les sirva a los seis',
+            sede: 'Sin restaurante libre en su zona'
+          }[r.regla] || r.regla,
+          detalle: r.detalle
+        })),
+        zona: (propuesta[k] && propuesta[k].zona) || null,
         senales
       };
     });
@@ -607,7 +663,14 @@ class Component extends DCLogic {
       tituloEspera: (enEspera === 1 ? 'Una' : letra(enEspera)) + ' en espera',
       notaEspera: 'Faltan ' + letra(6 - enEspera) + ' para llenar la mesa ' + letra(nMesas + 1) + '. Se les avisa hoy y su crédito no se toca.',
       textoPublicado: letra(nMesas).charAt(0).toUpperCase() + letra(nMesas).slice(1) + ' mesas publicadas. Los correos salen el jueves a las 12:00 en punto, no antes.',
-      textoPublicar: this.state.trabajando ? 'Publicando' : (this.state.publicado ? 'Publicadas' : 'Publicar las ' + letra(nMesas) + ' mesas'),
+      // El boton decia "Publicar" sobre una corrida ya publicada porque la
+      // pantalla no miraba el campo que el servidor ya devolvia.
+      textoPublicar: this.state.trabajando
+        ? 'Publicando'
+        : (this.state.publicado ? 'Ya publicadas' : 'Publicar las ' + letra(nMesas) + ' mesas'),
+      publicarInerte: this.state.publicado ? 'true' : null,
+      hayAviso: !!this.state.aviso,
+      aviso: this.state.aviso,
       publicar: () => this.publicarMesas(false),
       forzar: () => this.publicarMesas(true),
       rebarajar: () => this.repartirDeNuevo(),
