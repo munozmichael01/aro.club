@@ -124,57 +124,100 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = {
-    abierta: null,
-    borrador: null,
-    r: {
-      nombre: 'Daniela Pérez', trato: 'Daniela', nacimiento: '1992-03-14', genero: 0, telefono: '4241234567',
-      arraigo: 0, sector: 0, momento: 2, rol: 1, motivo: 0, romance: 1,
-      empleador: 'Banesco', actividades: [1, 2, 7], planes: [0, 3],
-      temas: [0, 1, 5], evitar: [3], peso: 1, gasto: 1, dieta: [0],
-      zonas: [0, 4, 3], dias: [2, 3], idiomas: [0, 1]
-    }
-  };
+  state = { abierta: null, borrador: null, datos: null, guardando: false, fallo: '' };
 
-  campos() {
+  componentDidMount() {
+    // Las opciones salen del catalogo, no de una copia aqui. La copia ya
+    // habia derivado: seguia ofreciendo "Soy extranjero viviendo aqui",
+    // que dejo de existir en la entrega 7, y le faltaban los dos codigos
+    // nuevos. Una pantalla que ofrece algo que la base rechaza es un
+    // callejon sin salida para quien lo elige.
+    fetch('/api/mi-perfil')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
+      .then((d) => this.setState({ datos: d }))
+      .catch(() => { window.location.href = 'Aro Club - Entrar.dc.html'; });
+  }
+
+  guardarCampo(clave, valor) {
+    if (this.state.guardando) return;
+    this.setState({ guardando: true, fallo: '' });
+    fetch('/api/mi-perfil', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clave: clave, valor: valor })
+    })
+      .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
+      .then(({ ok, x }) => {
+        if (!ok) { this.setState({ guardando: false, fallo: x.error || 'No pudimos guardarlo.' }); return; }
+        this.setState({ guardando: false, abierta: null, borrador: null });
+        fetch('/api/mi-perfil').then((r) => r.json()).then((d) => this.setState({ datos: d }));
+      })
+      .catch(() => this.setState({ guardando: false, fallo: 'No pudimos guardarlo.' }));
+  }
+
+  // Los datos base no son respuestas del cuestionario: viven en el perfil
+  // y los usa el reparto directamente, asi que se describen aqui. Sus
+  // opciones si son fijas porque son las del enum de la base.
+  BASE() {
     return {
-      // — datos base —
       trato: { s: 0, etiqueta: 'Cómo te llamamos en la mesa', tipo: 'texto', visible: true, ayuda: 'Es lo único que ven los otros cinco, junto con tu sector.' },
       nombre: { s: 0, etiqueta: 'Tu nombre completo', tipo: 'texto', ayuda: 'Como aparece en tu cédula. Solo lo ve nuestro equipo al verificarte.' },
       nacimiento: { s: 0, etiqueta: 'Fecha de nacimiento', tipo: 'fecha', ayuda: 'Nadie ve tu edad. La usamos para que en tu mesa no haya más de diez años de diferencia.' },
-      genero: { s: 0, etiqueta: 'Género', tipo: 'unica', privada: true, ayuda: 'No se muestra a nadie. Sirve para que la mesa quede balanceada.', opciones: ['Mujer', 'Hombre', 'No binario', 'Prefiero no decirlo'] },
-      telefono: { s: 0, etiqueta: 'Teléfono', tipo: 'texto', ayuda: 'Solo lo usamos el día del encuentro, por WhatsApp. No lo ve nadie de tu mesa.' },
-
-      // — quién eres —
-      arraigo: { s: 1, etiqueta: 'Tu historia', tipo: 'unica', opciones: ['Me fui del país y volví', 'Nunca me fui de Venezuela', 'Me mudé a Caracas desde el interior', 'Soy extranjero viviendo aquí', 'Vivo en el exterior y estoy de visita'] },
-      empleador: { s: 1, etiqueta: 'Dónde trabajas', tipo: 'texto', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.' },
-
-      momento: { s: 2, etiqueta: 'En qué momento estás', tipo: 'unica', opciones: ['Soltera sin hijos', 'Soltera con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
-      sector: { s: 1, etiqueta: 'Sector', tipo: 'unica', compacta: true, opciones: ['Tecnología', 'Finanzas', 'Salud', 'Educación', 'Consultoría', 'Legal', 'Marketing', 'Medios', 'Diseño', 'Comercio', 'Gastronomía', 'ONG', 'Gobierno', 'Emprendo por mi cuenta', 'Estudio', 'Otro'], visible: true },
-
-      rol: { s: 2, etiqueta: 'En una mesa con desconocidos', tipo: 'unica', opciones: ['Escucho más de lo que hablo', 'Depende del momento', 'Suelo llevar la conversación'] },
-      motivo: { s: 2, etiqueta: 'Qué te trae', tipo: 'unica', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con Caracas después de volver', 'Red profesional'] },
-      romance: { s: 2, etiqueta: 'Sobre que surja algo', tipo: 'unica', privada: true, ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: ['Abierta, si surge algo bienvenido', 'Me da igual, vengo por la conversación', 'Prefiero una mesa sin esa energía'] },
-
-      // — de qué hablas —
-      temas: { s: 3, etiqueta: 'De qué hablas dos horas', tipo: 'multi', min: 2, max: 4, opciones: ['Cocina y restaurantes', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios y emprender', 'Tecnología', 'Arte y diseño', 'Arquitectura', 'Ciencia', 'Historia', 'Psicología', 'Política', 'Economía', 'Crianza', 'Salud y bienestar', 'Humor y absurdos'] },
-
-      // — logística —
-      evitar: { s: 3, etiqueta: 'Temas que prefieres esquivar', tipo: 'multi', exclusiva: 6, opciones: ['Política y situación del país', 'Religión y fe', 'Dinero, sueldos y precios', 'Vida amorosa y relaciones', 'Crianza e hijos', 'Trabajo, vengo a desconectarme', 'Ninguno, hablo de todo'] },
-      actividades: { s: 3, etiqueta: 'Lo que de verdad haces', tipo: 'multi', min: 3, max: 6, opciones: ['Cocinar', 'Salir a comer', 'Correr', 'Gimnasio', 'Yoga o pilates', 'Ciclismo', 'Senderismo', 'Playa', 'Pádel o tenis', 'Fútbol', 'Béisbol', 'Nadar', 'Bailar', 'Conciertos', 'Cine', 'Museos', 'Leer', 'Videojuegos'] },
-
-      planes: { s: 4, etiqueta: 'Planes que te interesan', tipo: 'multi', opciones: ['Cena en restaurante', 'Cena con foco gastronómico', 'Café o desayuno de networking', 'Drinks / after office', 'Correr', 'Senderismo', 'Pádel o tenis', 'Yoga o pilates', 'Ciclismo'] },
-      peso: { s: 4, etiqueta: 'Qué pesa más en una cena', tipo: 'unica', opciones: ['La conversación, el restaurante es la excusa', 'Las dos cosas por igual', 'La comida, vengo por la experiencia'] },
-
-      gasto: { s: 4, etiqueta: 'Cuánto piensas gastar', tipo: 'unica', ayuda: 'Elegimos el restaurante con el número más bajo de la mesa. Marcar de más solo hace que la noche te salga cara.', opciones: ['Hasta 20 USD', '20 a 35 USD', '35 a 50 USD', 'Más de 50 USD'] },
-      zonas: { s: 5, etiqueta: 'Zonas donde puedes ir', tipo: 'multi', opciones: ['Las Mercedes', 'El Rosal', 'Bello Monte', 'Chacao', 'Altamira', 'La Castellana', 'Los Palos Grandes', 'Sebucán y Los Dos Caminos', 'Chuao', 'El Cafetal y Santa Paula', 'Los Naranjos y Cerro Verde', 'La Trinidad y La Tahona', 'El Hatillo'] },
-      dias: { s: 5, etiqueta: 'Días que te sirven', tipo: 'multi', opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía'] },
-      dieta: { s: 5, etiqueta: 'Restricciones alimentarias', tipo: 'multi', exclusiva: 0, opciones: ['Ninguna', 'Vegetariana', 'Vegana', 'Pescetariana', 'Sin gluten', 'Sin lactosa', 'No como cerdo', 'No como carnes rojas', 'Diabética', 'Alergias'] },
-      idiomas: { s: 5, etiqueta: 'Idiomas', tipo: 'multi', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] }
+      genero: { s: 0, etiqueta: 'Género', tipo: 'unica', privada: true, ayuda: 'No se muestra a nadie. Sirve para que la mesa quede balanceada.',
+                codigos: ['mujer', 'hombre', 'no-binario', 'sin-decir'],
+                opciones: ['Mujer', 'Hombre', 'No binario', 'Prefiero no decirlo'] },
+      telefono: { s: 0, etiqueta: 'Teléfono', tipo: 'texto', ayuda: 'Solo lo usamos el día del encuentro, por WhatsApp. No lo ve nadie de tu mesa.' }
     };
   }
 
+  // Las diecisiete, del catalogo. La pantalla ya no sabe que opciones hay:
+  // las pregunta.
+  campos() {
+    const d = this.state.datos;
+    const c = this.BASE();
+    if (!d) return c;
+    // Las pantallas del cuestionario 1..5 se mapean a las secciones 1..5;
+    // la 0 son los datos base.
+    (d.preguntas || []).forEach((q) => {
+      c[q.clave] = {
+        s: Math.min(5, q.pantalla || 1),
+        etiqueta: q.enunciado,
+        ayuda: q.ayuda || undefined,
+        tipo: q.tipo === 'multi' ? 'multi' : (q.tipo === 'text' ? 'texto' : 'unica'),
+        min: q.min || undefined,
+        max: q.max || undefined,
+        codigos: (q.opciones || []).map((o) => o.value),
+        opciones: (q.opciones || []).map((o) => o.label),
+        exclusiva: q.exclusiva
+          ? (q.opciones || []).findIndex((o) => o.value === q.exclusiva)
+          : undefined
+      };
+    });
+    return c;
+  }
+
+  // Lo respondido, traducido de codigos a indices para la pantalla. El
+  // codigo es lo que manda; el indice solo existe aqui dentro.
+  valores() {
+    const d = this.state.datos;
+    if (!d) return {};
+    const v = {
+      nombre: d.base.nombre, trato: d.base.trato,
+      nacimiento: d.base.nacimiento, telefono: d.base.telefono,
+      genero: ['mujer', 'hombre', 'no-binario', 'sin-decir'].indexOf(d.base.genero)
+    };
+    (d.preguntas || []).forEach((q) => {
+      const cods = (q.opciones || []).map((o) => o.value);
+      if (q.tipo === 'text') v[q.clave] = q.valor || '';
+      else if (q.tipo === 'multi') v[q.clave] = (q.valor || []).map((x) => cods.indexOf(x)).filter((i) => i >= 0);
+      else v[q.clave] = cods.indexOf(q.valor);
+    });
+    return v;
+  }
+
   renderVals() {
+    // Antes vivian en el estado con indices escritos a mano.
+    const R = this.valores();
+    const D = this.state.datos || {};
     const campos = this.campos();
     const abierta = this.state.abierta;
     const borrador = this.state.borrador;
@@ -189,7 +232,12 @@ class Component extends DCLogic {
         return p.length === 3 ? parseInt(p[2], 10) + ' de ' + ms[parseInt(p[1], 10) - 1] + ' de ' + p[0] : 'Sin responder';
       }
       if (c.tipo === 'texto') {
-        if (id === 'telefono' && v) return '+58 ' + String(v).slice(0, 3) + ' ' + String(v).slice(3);
+        // El numero se guarda en E.164 con su +58 dentro. Anteponerlo otra
+        // vez daba "+58 +58 4241234501".
+        if (id === 'telefono' && v) {
+          const n = String(v).replace(/^\+?58/, '');
+          return '+58 ' + n.slice(0, 3) + ' ' + n.slice(3);
+        }
         return v || 'Sin responder';
       }
       if (c.tipo === 'unica') return c.opciones[v];
@@ -200,12 +248,12 @@ class Component extends DCLogic {
     const construir = (id) => {
       const c = campos[id];
       const on = abierta === id;
-      const val = on ? borrador : this.state.r[id];
+      const val = on ? borrador : R[id];
       const esUnica = c.tipo === 'unica';
       const esTexto = c.tipo === 'texto';
       const esFecha = c.tipo === 'fecha';
       const soloLectura = false;
-      const partes = String((on ? borrador : this.state.r[id]) || '').split('-');
+      const partes = String((on ? borrador : R[id]) || '').split('-');
       const campoBase = 'min-height:54px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 16px/1 \'Inter Tight\',sans-serif;outline:none';
       const ponFecha = (i, v) => this.setState((st) => {
         const p = String(st.borrador || '--').split('-');
@@ -239,7 +287,7 @@ class Component extends DCLogic {
 
       return {
         etiqueta: c.etiqueta,
-        valor: on ? (bajo ? 'Elige al menos ' + c.min : 'Editando') : nombres(id, this.state.r[id]),
+        valor: on ? (bajo ? 'Elige al menos ' + c.min : 'Editando') : nombres(id, R[id]),
         valorEstilo: 'display:block;font:400 14px/1.5 \'Inter Tight\',sans-serif;color:' + (c.privada ? '#8F4515' : '#566A5D') + ';margin-top:4px;text-wrap:pretty',
         icono: on ? '×' : '›',
         flecha: 'flex:0 0 auto;width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 17px/1 \'Inter Tight\',sans-serif;background:' + (on ? '#1B5138' : 'rgba(27,81,56,.09)') + ';color:' + (on ? '#FAF3E4' : '#1B5138'),
@@ -274,7 +322,16 @@ class Component extends DCLogic {
         botonGuardar: 'display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;border:none;background:' + (bajo ? 'rgba(27,81,56,.13)' : '#1B5138') + ';color:' + (bajo ? '#7E9A8B' : '#FAF3E4') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (bajo ? 'not-allowed' : 'pointer'),
         guardar: () => {
           if (bajo) return;
-          this.setState((s) => ({ r: Object.assign({}, s.r, { [id]: s.borrador }), abierta: null, borrador: null }));
+          // Al servidor va el CODIGO estable, nunca el indice: el orden de
+          // las opciones puede cambiar y el codigo no.
+          const b = this.state.borrador;
+          const cods = c.codigos || [];
+          const valor = c.tipo === 'texto'
+            ? (id === 'telefono' ? '+58' + String(b || '').replace(/[^0-9]/g, '').replace(/^58/, '') : b)
+            : (c.tipo === 'multi'
+                ? (b || []).map((i) => cods[i]).filter(Boolean)
+                : (cods[b] || null));
+          this.guardarCampo(id, valor);
         },
         cerrar: () => this.setState({ abierta: null, borrador: null }),
         abrir: () => this.setState((s) => (s.abierta === id
@@ -297,7 +354,11 @@ class Component extends DCLogic {
     }));
 
     const credenciales = [
-      ['Identidad verificada', true], ['Perfil completo', true], ['3 créditos', false]
+      // Del servidor. Un sello que dice "Perfil completo" siempre es peor
+      // que no tenerlo: quien le falten respuestas no se entera.
+      [D.verificada ? 'Identidad verificada' : 'Sin verificar', !!D.verificada],
+      [D.completo ? 'Perfil completo' : (D.faltan === 1 ? 'Falta 1 respuesta' : 'Faltan ' + (D.faltan || 0) + ' respuestas'), !!D.completo],
+      [(D.creditos || 0) === 1 ? '1 crédito' : (D.creditos || 0) + ' créditos', false]
     ].map((c) => ({
       texto: c[0],
       chip: 'display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.04em;background:' + (c[1] ? 'rgba(27,81,56,.11)' : 'transparent') + ';border:1px solid ' + (c[1] ? 'transparent' : 'rgba(20,52,42,.18)') + ';color:' + (c[1] ? '#1B5138' : '#566A5D')
@@ -305,7 +366,7 @@ class Component extends DCLogic {
 
     return {
       secciones, credenciales,
-      saludo: (this.state.r.trato || 'Tu perfil') + '.',
+      saludo: (R.trato || 'Tu perfil') + '.',
       botonFantasma: 'display:inline-flex;align-items:center;min-height:48px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
       enlacePie: 'display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.18);font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138'
     };

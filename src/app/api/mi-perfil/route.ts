@@ -1,0 +1,222 @@
+import { NextResponse } from 'next/server'
+import { z } from 'zod'
+
+import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
+
+/**
+ * Mi perfil: ver y editar lo que respondió.
+ *
+ * Las opciones salen del catálogo de preguntas, no de una copia en la
+ * pantalla. La copia ya había derivado: seguía ofreciendo «Soy extranjero
+ * viviendo aquí», que dejó de existir en la entrega 7, y no tenía los dos
+ * códigos nuevos. Una pantalla que ofrece una opción que la base rechaza es
+ * un callejón sin salida para quien la elige.
+ *
+ * Los datos base van aparte porque no son respuestas: viven en el perfil y
+ * los usa el reparto directamente.
+ */
+
+const guardar = z.object({
+  clave: z.string().min(1),
+  valor: z.union([z.string(), z.array(z.string()), z.null()]),
+})
+
+const BASE = new Set(['nombre', 'trato', 'nacimiento', 'genero', 'telefono'])
+
+export async function GET() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
+
+  const admin = createAdminClient()
+
+  const { data: perfil } = await admin
+    .from('profiles')
+    .select('full_name, display_name, birthdate, gender, phone_e164')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const { data: version } = await admin
+    .from('questionnaire_versions')
+    .select('id')
+    .eq('is_active', true)
+    .maybeSingle()
+
+  const { data: preguntas } = await admin
+    .from('questions')
+    .select('key, prompt, help_text, input_type, options, min_select, max_select, is_required, exclusive_value, screen, sort_order')
+    .eq('version_id', version?.id ?? 0)
+    .order('screen')
+    .order('sort_order')
+
+  const { data: respuestas } = await admin
+    .from('answers')
+    .select('question_key, value')
+    .eq('profile_id', user.id)
+    .eq('version_id', version?.id ?? 0)
+
+  const dadas = new Map((respuestas ?? []).map((a) => [a.question_key, a.value]))
+
+  // Cuántas cenas lleva. Solo el número: ni con quién ni cuándo. Aro no es
+  // una agenda de contactos, y el detalle vive en operación.
+  const { count: cenas } = await admin
+    .from('bookings')
+    .select('*', { count: 'exact', head: true })
+    .eq('profile_id', user.id)
+    .eq('status', 'attended')
+
+  // Los tres sellos de la cabecera estaban escritos a mano: "Identidad
+  // verificada", "Perfil completo" y "3 creditos" fijos, en la pantalla que
+  // resume su estado.
+  const { data: verificaciones } = await admin
+    .from('verifications')
+    .select('kind, status')
+    .eq('profile_id', user.id)
+    .eq('status', 'approved')
+
+  const tipos = new Set((verificaciones ?? []).map((v) => v.kind))
+
+  const { data: saldo } = await admin
+    .from('v_credit_balance')
+    .select('balance')
+    .eq('profile_id', user.id)
+    .maybeSingle()
+
+  const obligatorias = (preguntas ?? []).filter((q) => q.is_required)
+  const faltan = obligatorias.filter((q) => !dadas.has(q.key)).length
+
+  return NextResponse.json({
+    verificada: tipos.has('id_document') && tipos.has('selfie'),
+    completo: faltan === 0,
+    faltan,
+    creditos: saldo?.balance ?? 0,
+    base: {
+      nombre: perfil?.full_name ?? '',
+      trato: perfil?.display_name ?? '',
+      nacimiento: perfil?.birthdate ?? '',
+      genero: perfil?.gender ?? null,
+      telefono: perfil?.phone_e164 ?? '',
+    },
+    preguntas: (preguntas ?? []).map((q) => ({
+      clave: q.key,
+      enunciado: q.prompt,
+      ayuda: q.help_text,
+      tipo: q.input_type,
+      opciones: q.options,
+      min: q.min_select,
+      max: q.max_select,
+      obligatoria: q.is_required,
+      exclusiva: q.exclusive_value,
+      pantalla: q.screen,
+      valor: dadas.get(q.key) ?? null,
+    })),
+    cenas: cenas ?? 0,
+  })
+}
+
+export async function POST(request: Request) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
+
+  const parsed = guardar.safeParse(await request.json().catch(() => null))
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Petición inválida.' }, { status: 400 })
+  }
+
+  const { clave, valor } = parsed.data
+  const admin = createAdminClient()
+
+  // --- datos base -------------------------------------------------------
+  if (BASE.has(clave)) {
+    const columna = {
+      nombre: 'full_name',
+      trato: 'display_name',
+      nacimiento: 'birthdate',
+      genero: 'gender',
+      telefono: 'phone_e164',
+    }[clave]!
+
+    if (typeof valor !== 'string' || !valor.trim()) {
+      return NextResponse.json({ error: 'Ese dato no puede quedar vacío.' }, { status: 400 })
+    }
+
+    if (clave === 'telefono' && !/^\+58(412|414|416|422|424|426)\d{7}$/.test(valor)) {
+      return NextResponse.json({ error: 'Ese número no parece venezolano.' }, { status: 400 })
+    }
+
+    const { error } = await admin
+      .from('profiles')
+      .update({ [columna]: valor } as never)
+      .eq('id', user.id)
+
+    if (error) {
+      console.error('[mi-perfil] no se guardó el dato base', error)
+      return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+    }
+    // El trigger de `profiles` recalcula los rasgos si cambió nacimiento o
+    // género, así que el reparto se entera solo.
+    return NextResponse.json({ estado: 'guardado' })
+  }
+
+  // --- respuestas -------------------------------------------------------
+  const { data: version } = await admin
+    .from('questionnaire_versions')
+    .select('id')
+    .eq('is_active', true)
+    .maybeSingle()
+
+  const { data: pregunta } = await admin
+    .from('questions')
+    .select('key, input_type, options, min_select, is_required')
+    .eq('version_id', version?.id ?? 0)
+    .eq('key', clave)
+    .maybeSingle()
+
+  if (!pregunta) return NextResponse.json({ error: 'Esa pregunta no existe.' }, { status: 404 })
+
+  // Se valida contra el catálogo. Es lo que impide que una pantalla vieja
+  // guarde un código retirado —como `extranjero`— y lo deje ahí para que
+  // el reparto se lo encuentre.
+  const validos = new Set(
+    ((pregunta.options ?? []) as { value: string }[]).map((o) => o.value),
+  )
+
+  if (pregunta.input_type !== 'text' && validos.size) {
+    const lista = Array.isArray(valor) ? valor : valor ? [valor] : []
+    const fuera = lista.filter((v) => !validos.has(v))
+    if (fuera.length) {
+      console.error('[mi-perfil] código fuera de catálogo', clave, fuera)
+      return NextResponse.json({ error: 'Esa opción ya no existe.' }, { status: 400 })
+    }
+    if (pregunta.is_required && lista.length < (pregunta.min_select ?? 1)) {
+      return NextResponse.json({ error: 'Falta elegir.' }, { status: 400 })
+    }
+  }
+
+  const { error } = await admin
+    .from('answers')
+    .upsert(
+      {
+        profile_id: user.id,
+        version_id: version?.id ?? 0,
+        question_key: clave,
+        value: valor as never,
+      },
+      { onConflict: 'profile_id,version_id,question_key' },
+    )
+
+  if (error) {
+    console.error('[mi-perfil] no se guardó la respuesta', error)
+    return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+  }
+
+  // El trigger de `answers` recalcula los rasgos: editar aquí cambia el
+  // reparto de la próxima fecha sin que nadie tenga que acordarse.
+  return NextResponse.json({ estado: 'guardado' })
+}
