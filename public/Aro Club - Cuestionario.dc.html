@@ -554,6 +554,18 @@ class Component extends DCLogic {
       botonContinuar: 'flex:1;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + (completa ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (completa ? '#FAF3E4' : '#456352') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (completa ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
       continuar: () => {
         if (!completa) return;
+        // Al pasar de pantalla se reenvía lo que hay en ella, no solo lo que
+        // se tocó. `idiomas` viene premarcado con Español, y el guardado
+        // dispara al tocar: quien no lo cambiaba nunca lo guardaba, se
+        // quedaba en 16 de 17 y Mi cuenta le pedía terminar el perfil para
+        // siempre. Reenviar es idempotente —el servidor mezcla— y cierra
+        // toda la clase, no solo esta pregunta.
+        visibles.forEach((q) => {
+          if (q.tipo === 'texto') return;
+          const v = r[q.id];
+          if (v == null || (Array.isArray(v) && !v.length)) return;
+          this.enviar(q.id, this.aCodigo(q.id, v));
+        });
         if (ultima) { this.enviar('__fin', null); this.setState({ fin: true }); return; }
         this.setState((s) => ({ pantalla: s.pantalla + 1, retomada: false }));
         window.scrollTo(0, 0);
