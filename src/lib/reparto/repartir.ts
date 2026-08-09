@@ -36,6 +36,13 @@ export type Persona = {
   dietas: string[]
   /** Perfiles con los que no puede coincidir: exclusiones o ya se vieron. */
   vetados: Set<string>
+  /**
+   * Con quién ya cenó ALGUNA vez, sin ventana de tiempo. No es lo mismo que
+   * `vetados`: el veto son tres meses y es regla dura, así que en una mesa
+   * que cuadra nunca hay vetados y el término de novedad valía 1 siempre.
+   * Un diez por ciento de la puntuación que no medía nada.
+   */
+  conocidos: Set<string>
 }
 
 export type Pesos = {
@@ -229,7 +236,7 @@ export function desglose(mesa: Persona[]): Record<keyof Pesos, number> {
   let conocidos = 0
   for (let i = 0; i < mesa.length; i++) {
     for (let j = i + 1; j < mesa.length; j++) {
-      if (mesa[i].vetados.has(mesa[j].profileId)) conocidos++
+      if (mesa[i].conocidos.has(mesa[j].profileId)) conocidos++
     }
   }
   const novedad = 1 - conocidos / pares

@@ -108,6 +108,34 @@
       </div>
     </sc-for>
 
+
+    <div id="exclusiones" style="margin-top:clamp(30px,4vw,44px)">
+      <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:14px">
+        <span style="font:400 clamp(22px,2.6vw,28px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A">Con quién no coincides</span>
+        <span style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#566A5D">Nadie sabe nunca que la bloqueaste.</span>
+      </div>
+
+      <sc-if value="{{ sinExclusiones }}" hint-placeholder-val="{{ true }}">
+        <div style="border-radius:24px;background:#FFFBF0;padding:clamp(18px,2.4vw,22px);font:400 15px/1.55 'Inter Tight',sans-serif;color:#456352;text-wrap:pretty">No has bloqueado a nadie. Puedes hacerlo después de cualquier cena, desde Mi mesa.</div>
+      </sc-if>
+
+      <sc-if value="{{ hayExclusiones }}" hint-placeholder-val="{{ false }}">
+        <div style="border-radius:24px;background:#FFFBF0;overflow:hidden">
+          <sc-for list="{{ exclusiones }}" as="x" hint-placeholder-count="2">
+            <div style="{{ x.contenedor }}">
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ x.nombre }}</span>
+                <span style="display:block;font:400 14px/1.45 'Inter Tight',sans-serif;color:#566A5D;margin-top:3px">{{ x.porQue }}</span>
+              </span>
+              <sc-if value="{{ x.sePuedeQuitar }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ x.quitar }}" style="{{ x.botonQuitar }}">{{ x.textoQuitar }}</button>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
     <div style="margin-top:clamp(30px,4vw,44px);border-radius:24px;border:1px solid rgba(20,52,42,.16);padding:clamp(20px,2.6vw,26px)">
       <div style="font:400 clamp(20px,2.3vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cambiar respuestas no toca la mesa que ya tienes</div>
       <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#456352;margin-top:8px;max-width:56ch;text-wrap:pretty">Lo que edites aquí entra en el emparejamiento de las próximas. La mesa del jueves ya está armada con lo que respondiste antes.</div>
@@ -124,7 +152,8 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { abierta: null, borrador: null, datos: null, guardando: false, fallo: '' };
+  state = { abierta: null, borrador: null, datos: null, guardando: false, fallo: '',
+            exclusiones: null, quitando: null };
 
   componentDidMount() {
     // Las opciones salen del catalogo, no de una copia aqui. La copia ya
@@ -136,6 +165,29 @@ class Component extends DCLogic {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((d) => this.setState({ datos: d }))
       .catch(() => { window.location.href = 'Aro Club - Entrar.dc.html'; });
+
+    this.leerExclusiones();
+  }
+
+  leerExclusiones() {
+    fetch('/api/mis-exclusiones')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
+      .then((d) => this.setState({ exclusiones: d.exclusiones, quitando: null }))
+      .catch(() => this.setState({ exclusiones: [], quitando: null }));
+  }
+
+  quitarExclusion(id) {
+    if (this.state.quitando) return;
+    this.setState({ quitando: id, fallo: '' });
+    fetch('/api/mis-exclusiones', {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ aQuien: id })
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no'))))
+      // Se relee en vez de quitarlo de la lista a mano: lo que se ve es lo
+      // que hay guardado, no lo que creemos que se guardo.
+      .then(() => this.leerExclusiones())
+      .catch(() => this.setState({ quitando: null, fallo: 'No pudimos quitarlo.' }));
   }
 
   guardarCampo(clave, valor) {
@@ -364,8 +416,29 @@ class Component extends DCLogic {
       chip: 'display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.04em;background:' + (c[1] ? 'rgba(27,81,56,.11)' : 'transparent') + ';border:1px solid ' + (c[1] ? 'transparent' : 'rgba(20,52,42,.18)') + ';color:' + (c[1] ? '#1B5138' : '#566A5D')
     }));
 
+    const listaExcl = this.state.exclusiones || [];
+    const exclusiones = listaExcl.map((x, i) => {
+      const quitando = this.state.quitando === x.id;
+      return {
+        nombre: x.nombre,
+        // De ella solo el nombre de pila: cenaron juntas, con eso la
+        // reconoce, y dar mas seria hacerle una ficha a quien no eligio
+        // estar aqui.
+        porQue: x.porQue,
+        sePuedeQuitar: !!x.sePuedeQuitar,
+        contenedor: 'display:flex;gap:14px;align-items:center;min-height:66px;padding:14px clamp(16px,2.4vw,22px)' + (i < listaExcl.length - 1 ? ';border-bottom:1px solid rgba(20,52,42,.1)' : ''),
+        textoQuitar: quitando ? 'Quitando…' : 'Quitar',
+        botonQuitar: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#1B5138;font:500 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+        quitar: () => this.quitarExclusion(x.id)
+      };
+    });
+
     return {
-      secciones, credenciales,
+      secciones, credenciales, exclusiones,
+      hayExclusiones: exclusiones.length > 0,
+      // Solo cuando ya se sabe: null es "todavia no ha llegado", y decir
+      // "no has bloqueado a nadie" sin saberlo es inventarse un dato.
+      sinExclusiones: !!this.state.exclusiones && exclusiones.length === 0,
       saludo: (R.trato || 'Tu perfil') + '.',
       botonFantasma: 'display:inline-flex;align-items:center;min-height:48px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
       enlacePie: 'display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.18);font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138'

@@ -247,7 +247,7 @@
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
   state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {}, datos: null, sinCuenta: false,
-            reservandoYa: false, falloReserva: '' };
+            reservandoYa: false, falloReserva: '', nExclusiones: null };
 
   componentDidMount() {
     this._t = setInterval(() => this.setState({ ahora: Date.now() }), 1000);
@@ -258,9 +258,13 @@ class Component extends DCLogic {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((datos) => this.setState({ datos: datos }))
       .catch(() => { this.setState({ sinCuenta: true }); window.location.href = 'Aro Club - Entrar.dc.html'; });
+
+    fetch('/api/mis-exclusiones')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
+      .then((d) => this.setState({ nExclusiones: d.exclusiones.length }))
+      .catch(() => {});
   }
 
-  componentWillUnmount() { clearInterval(this._t); }
   componentWillUnmount() { clearInterval(this._t); }
 
   reloj() {
@@ -424,11 +428,16 @@ class Component extends DCLogic {
     }));
 
     const pieVerif = { sin: 'Sin verificar', revision: 'En revisión', ok: 'Verificada' }[e.verif];
+    const nExcl = this.state.nExclusiones;
     const atajos = [
       ['Mis respuestas', 'Las diecisiete del cuestionario, para ver y editar cuando quieras.', e.respuestas, 'Aro Club - Mi perfil.dc.html'],
       ['Mis créditos', e.creditosCuerpo, e.creditos, 'Aro Club - Landing v3.dc.html'],
       ['Mi verificación', 'Estado de tu cédula y tu selfie.', pieVerif, 'Aro Club - Verificacion.dc.html'],
-      ['Exclusiones', 'Personas con las que no quieres volver a coincidir. Nadie se entera.', 'Ninguna', 'Aro Club - Legal.dc.html']
+      // El "Ninguna" estaba escrito a mano y el enlace iba al legal: un dato
+      // inventado y un enlace que decia una cosa y llevaba a otra.
+      ['Exclusiones', 'Personas con las que no quieres volver a coincidir. Nadie se entera.',
+       nExcl == null ? 'Cargando' : (nExcl === 0 ? 'Ninguna' : (nExcl === 1 ? '1 persona' : nExcl + ' personas')),
+       'Aro Club - Mi perfil.dc.html#exclusiones']
     ].map((a) => ({
       titulo: a[0], cuerpo: a[1], pie: a[2], enlace: a[3],
       pieEstilo: 'margin-top:auto;padding-top:12px;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:#8F4515'

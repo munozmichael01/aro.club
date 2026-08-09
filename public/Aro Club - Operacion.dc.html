@@ -391,6 +391,75 @@
         </div>
       </div>
     </sc-if>
+
+    <sc-if value="{{ esIncidencias }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 320ms ease both">
+        <h1 style="{{ h1 }}">Lo que nos contaron</h1>
+        <p style="{{ bajada }}">Cada reporte lo puso una persona que estuvo en esa mesa. Le dijimos que lo leería alguien el mismo día, así que esto se mira todos los días.</p>
+
+        <sc-if value="{{ sinIncidencias }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:24px;border:1px dashed rgba(20,52,42,.28);padding:clamp(20px,3vw,28px);max-width:56ch;margin-top:clamp(20px,2.6vw,28px)">
+            <div style="font:400 clamp(21px,2.4vw,26px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Nada que revisar</div>
+            <div style="font:400 15px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:8px;text-wrap:pretty">Ningún reporte pendiente. Los ya resueltos se quedan en la ficha de cada persona.</div>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:clamp(20px,2.6vw,28px)">
+          <sc-for list="{{ incidencias }}" as="n" hint-placeholder-count="2">
+            <div style="{{ n.caja }}">
+              <div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:baseline">
+                <span style="flex:1 1 240px;min-width:0">
+                  <span style="display:block;font:400 clamp(20px,2.2vw,24px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ n.titular }}</span>
+                  <span style="display:block;font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:4px">{{ n.contexto }}</span>
+                </span>
+                <span style="{{ n.sello }}">{{ n.textoSello }}</span>
+              </div>
+
+              <div style="font:500 15px/1.55 'Inter Tight',sans-serif;color:#14342A;margin-top:12px;max-width:64ch;text-wrap:pretty">{{ n.motivo }}</div>
+
+              <sc-if value="{{ n.hayPatron }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:12px">
+                  <span style="flex:0 0 auto;width:20px;height:20px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+                  <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ n.patron }}</span>
+                </div>
+              </sc-if>
+
+              <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:14px">
+                <a href="{{ n.fichaSujeto }}" style="{{ botonFicha }}">Ver su ficha</a>
+                <a href="{{ n.fichaReporta }}" style="{{ botonFicha }}">Ver la de quien reportó</a>
+              </div>
+
+              <sc-if value="{{ n.abierta }}" hint-placeholder-val="{{ true }}">
+                <div style="border-top:1px solid rgba(20,52,42,.12);margin-top:14px;padding-top:14px">
+                  <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:10px">QUÉ SE HIZO</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    <sc-for list="{{ n.acciones }}" as="a" hint-placeholder-count="4">
+                      <button onClick="{{ a.pick }}" style="{{ a.btn }}">
+                        <span style="{{ a.aro }}">{{ a.icono }}</span>
+                        <span style="{{ a.txt }}">{{ a.label }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ n.hayAviso }}" hint-placeholder-val="{{ false }}">
+                    <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin-top:12px;max-width:56ch;text-wrap:pretty">{{ n.avisoExpulsion }}</div>
+                  </sc-if>
+                  <div style="margin-top:14px">
+                    <button onClick="{{ n.cerrar }}" aria-disabled="{{ n.inerte }}" style="{{ n.botonCerrar }}">{{ n.textoCerrar }}</button>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ n.cerrada }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:11px;align-items:flex-start;border-top:1px solid rgba(20,52,42,.12);margin-top:14px;padding-top:14px">
+                  <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+                  <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ n.resumenCerrada }}</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
   </div>
 </div>
 
@@ -399,6 +468,7 @@
 class Component extends DCLogic {
   state = { vista: 0, publicado: false, decididas: {}, abriendo: null, motivos: {},
             cola: null, catalogo: [], trabajando: false, fallo: '',
+            incidencias: null, accionesIncidencia: [], accionElegida: {}, cerrando: null,
             reparto: null, roturasFreno: null, avisosPublicados: null, aviso: '',
             arrastrando: null, desdeMesa: null, sobreMesa: null,
             recalculando: [], antesDeMover: null, repartiendo: false,
@@ -735,6 +805,11 @@ class Component extends DCLogic {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin permiso'))))
       .then((d) => this.setState({ cola: d.cola, catalogo: d.motivos }))
       .catch(() => this.setState({ cola: [], catalogo: [] }));
+
+    fetch('/api/operacion/incidencias')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin permiso'))))
+      .then((d) => this.setState({ incidencias: d.cola, accionesIncidencia: d.acciones }))
+      .catch(() => this.setState({ incidencias: [], accionesIncidencia: [] }));
   }
 
   decidir(cuerpo, i) {
@@ -1004,7 +1079,83 @@ class Component extends DCLogic {
       };
     });
 
-    const pestanas = [['Mesas', String(nMesas)], ['Verificaciones', String(pendientes)], ['Pagos', String((this.state.pagosResumen && this.state.pagosResumen.pendientes) || 0)]].map((p, i) => {
+
+    // --- reportes ---------------------------------------------------------
+    // Se enseñan los sin resolver primero; los cerrados se quedan debajo con
+    // lo que se decidio, porque el historial solo sirve si dice que se hizo.
+    const ACCIONES = this.state.accionesIncidencia || [];
+    const fichaDe = (pid) => 'Aro Club - Perfil miembro.dc.html?id=' + encodeURIComponent(pid || '') + '&desde=cola';
+    const hace = (iso) => {
+      if (!iso) return '';
+      const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+      if (m < 60) { const n = Math.max(1, m); return 'Hace ' + n + ' minuto' + (n === 1 ? '' : 's'); }
+      const h = Math.floor(m / 60);
+      if (h < 24) return 'Hace ' + h + ' hora' + (h === 1 ? '' : 's');
+      const d = Math.floor(h / 24);
+      return d === 1 ? 'Ayer' : 'Hace ' + d + ' dias';
+    };
+
+    const incidencias = (this.state.incidencias || []).map((n) => {
+      const elegida = this.state.accionElegida[n.id];
+      const cerrando = this.state.cerrando === n.id;
+      return {
+        titular: n.sobreQuien,
+        contexto: 'Lo reporto ' + n.quienReporta + ' · ' + hace(n.cuando).toLowerCase(),
+        motivo: n.motivo,
+        sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;background:' + (n.resuelta ? 'rgba(27,81,56,.12)' : 'rgba(143,69,21,.13)') + ';color:' + (n.resuelta ? '#1B5138' : '#8F4515'),
+        textoSello: n.resuelta ? 'RESUELTO' : 'SIN RESOLVER',
+        caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.4vw,24px);border:1px solid ' + (n.resuelta ? 'transparent' : 'rgba(143,69,21,.34)'),
+
+        hayPatron: n.vecesReportada > 1,
+        patron: 'Es el reporte numero ' + n.vecesReportada + ' sobre esta persona. Uno es un incidente; varios son un patron.',
+
+        fichaSujeto: fichaDe(n.sobreQuienId),
+        fichaReporta: fichaDe(n.quienReportaId),
+
+        abierta: !n.resuelta,
+        cerrada: !!n.resuelta,
+        resumenCerrada: n.seHizo ? n.seHizo + ' · ' + hace(n.resueltaEn).toLowerCase() : 'Resuelto',
+
+        acciones: ACCIONES.map((a) => {
+          const on = elegida === a.codigo;
+          return {
+            label: a.label, icono: on ? '✓' : '',
+            pick: () => this.setState((st) => ({ accionElegida: Object.assign({}, st.accionElegida, { [n.id]: a.codigo }) })),
+            aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif',
+            btn: 'display:inline-flex;align-items:center;gap:9px;min-height:48px;padding:0 16px 0 12px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 180ms ease',
+            txt: 'font:' + (on ? '600' : '500') + ' 14px/1.2 \'Inter Tight\',sans-serif;color:#14342A;white-space:nowrap'
+          };
+        }),
+
+        // Expulsar cambia el estado de la persona y no se deshace desde aqui.
+        // Decirlo antes es la diferencia entre una decision y un clic.
+        hayAviso: elegida === 'expulsada',
+        avisoExpulsion: 'Al cerrarlo, esta persona queda fuera del club y deja de entrar a cualquier reparto. Devolverla es a mano.',
+
+        inerte: elegida && !cerrando ? null : 'true',
+        textoCerrar: cerrando ? 'Guardando…' : (elegida ? 'Cerrar el reporte' : 'Elige que se hizo'),
+        botonCerrar: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:999px;background:' + (elegida ? '#14342A' : 'rgba(20,52,42,.1)') + ';color:' + (elegida ? '#FAF3E4' : '#5A7264') + ';border:none;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (elegida ? 'pointer' : 'not-allowed'),
+        cerrar: () => {
+          if (!elegida || cerrando) return;
+          this.setState({ cerrando: n.id });
+          fetch('/api/operacion/incidencias', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ incidenciaId: n.id, accion: elegida })
+          })
+            .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no'))))
+            // Se relee la cola en vez de parchear el estado: asi lo que se
+            // ve es lo que hay guardado, no lo que creemos que guardamos.
+            .then(() => fetch('/api/operacion/incidencias').then((r) => r.json()))
+            .then((d) => this.setState({ incidencias: d.cola, cerrando: null }))
+            .catch(() => this.setState({ cerrando: null, fallo: 'No pudimos cerrar el reporte.' }));
+        }
+      };
+    });
+    const sinIncidencias = !!this.state.incidencias && incidencias.length === 0;
+    const botonFicha = 'display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.2);font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138';
+
+    const sinResolver = (this.state.incidencias || []).filter((n) => !n.resuelta).length;
+    const pestanas = [['Mesas', String(nMesas)], ['Verificaciones', String(pendientes)], ['Pagos', String((this.state.pagosResumen && this.state.pagosResumen.pendientes) || 0)], ['Reportes', String(sinResolver)]].map((p, i) => {
       const on = v === i;
       return {
         nombre: p[0], n: p[1],
@@ -1049,15 +1200,6 @@ class Component extends DCLogic {
 
     // La cola sale de la base. Los cuatro nombres de ejemplo se quedaban
     // igual con la cola vacia, asi que operacion revisaba gente inventada.
-    const hace = (iso) => {
-      if (!iso) return '';
-      const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-      if (m < 60) return 'Hace ' + Math.max(1, m) + ' minuto' + (m === 1 ? '' : 's');
-      const h = Math.floor(m / 60);
-      if (h < 24) return 'Hace ' + h + ' hora' + (h === 1 ? '' : 's');
-      const d = Math.floor(h / 24);
-      return d === 1 ? 'Ayer' : 'Hace ' + d + ' dias';
-    };
     const edadDe = (iso) => {
       if (!iso) return null;
       const n = new Date(iso), hoy = new Date();
@@ -1249,13 +1391,14 @@ class Component extends DCLogic {
 
     return {
       pestanas, metricas, mesas, espera, colas, metricasPago, pagos,
+      incidencias, sinIncidencias, botonFicha,
       conciliar, hayConciliar: conciliar.length > 0,
       // La tasa de VERDAD, con su fecha: enseñar 62,40 cuando son 756 no es
       // un dato desactualizado, es un precio equivocado.
       textoTasa: R$.tasa
         ? 'TASA BCV · ' + R$.tasa.toFixed(2).replace('.', ',') + ' Bs'
         : 'SIN TASA DE HOY',
-      esMesas: v === 0, esVerificaciones: v === 1, esPagos: v === 2,
+      esMesas: v === 0, esVerificaciones: v === 1, esPagos: v === 2, esIncidencias: v === 3,
 
       h1: 'font:400 clamp(26px,3.4vw,38px)/1.05 \'Young Serif\',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:0',
       bajada: 'font:400 16px/1.6 \'Inter Tight\',sans-serif;color:#2C4A38;max-width:62ch;margin:10px 0 0;text-wrap:pretty',

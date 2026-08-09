@@ -72,23 +72,31 @@ export async function construirPool(
   // poca gente, seis meses de veto agota el pool y deja mesas sin armar.
   // Es el número que hay que vigilar cuando crezca la base.
   const MESES_SIN_REPETIR = 3
-  const { data: encuentros } = await admin
+  // Todos los encuentros, con su fecha. Los de los últimos tres meses son
+  // veto; los demás siguen contando para la novedad, que es lo que mide si
+  // la mesa es gente nueva de verdad.
+  const { data: todos } = await admin
     .from('pair_encounters')
-    .select('profile_a, profile_b')
-    .gt(
-      'last_met_at',
-      new Date(Date.now() - MESES_SIN_REPETIR * 30 * 86400_000).toISOString(),
-    )
+    .select('profile_a, profile_b, last_met_at')
+
+  const corte = Date.now() - MESES_SIN_REPETIR * 30 * 86400_000
+  const encuentros = (todos ?? []).filter((e) => new Date(e.last_met_at).getTime() > corte)
 
   const { data: exclusiones } = await admin.from('exclusions').select('profile_a, profile_b')
 
-  const vetos = new Map<string, Set<string>>()
-  for (const { profile_a, profile_b } of [...(encuentros ?? []), ...(exclusiones ?? [])]) {
-    if (!vetos.has(profile_a)) vetos.set(profile_a, new Set())
-    if (!vetos.has(profile_b)) vetos.set(profile_b, new Set())
-    vetos.get(profile_a)!.add(profile_b)
-    vetos.get(profile_b)!.add(profile_a)
+  const emparejar = (filas: { profile_a: string; profile_b: string }[]) => {
+    const m = new Map<string, Set<string>>()
+    for (const { profile_a, profile_b } of filas) {
+      if (!m.has(profile_a)) m.set(profile_a, new Set())
+      if (!m.has(profile_b)) m.set(profile_b, new Set())
+      m.get(profile_a)!.add(profile_b)
+      m.get(profile_b)!.add(profile_a)
+    }
+    return m
   }
+
+  const vetos = emparejar([...encuentros, ...(exclusiones ?? [])])
+  const yaSeConocen = emparejar(todos ?? [])
 
   const nombreDe = new Map(
     (perfiles ?? []).map((p) => [p.id, p.display_name || p.full_name?.split(' ')[0] || '—']),
@@ -113,6 +121,7 @@ export async function construirPool(
     zonas: (p.zones ?? []).filter((z: string) => zonasAbiertas.has(z)),
     dietas: p.dietary ?? [],
     vetados: vetos.get(p.profile_id as string) ?? new Set<string>(),
+    conocidos: yaSeConocen.get(p.profile_id as string) ?? new Set<string>(),
   }))
 
   return { personas, sedes, porMesa: evento?.seats_per_table ?? 6 }
