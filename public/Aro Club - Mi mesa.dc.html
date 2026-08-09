@@ -165,6 +165,12 @@
               <button onClick="{{ enviarValoracion }}" aria-disabled="{{ enviarInerte }}" style="{{ botonEnviar }}">{{ textoEnviar }}</button>
               <a href="Aro Club - Mi cuenta.dc.html" style="{{ botonFantasma }}">Ahora no</a>
             </div>
+            <sc-if value="{{ hayErrorF11 }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:14px">
+                <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+                <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ errorF11 }}</span>
+              </div>
+            </sc-if>
           </div>
 
         </sc-if>
@@ -221,6 +227,12 @@
               <button onClick="{{ enviarReporte }}" aria-disabled="{{ reporteInerte }}" style="{{ botonReportar }}">{{ textoReportar }}</button>
               <button onClick="{{ abrirReporte }}" style="{{ botonFantasma }}">Cancelar</button>
             </div>
+            <sc-if value="{{ hayErrorF11 }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:14px">
+                <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+                <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ errorF11 }}</span>
+              </div>
+            </sc-if>
           </div>
         </sc-if>
 
@@ -249,7 +261,7 @@ class Component extends DCLogic {
     fase: 0, ahora: Date.now(), tarde: false, retraso: 1, avisado: false,
     valor: -1, bloqueados: [], contado: false,
     reporte: false, motivo: -1, quien: -1, reportado: false,
-    datos: null
+    datos: null, errorF11: '', enviando: false
   };
 
   componentDidMount() {
@@ -269,12 +281,75 @@ class Component extends DCLogic {
         // sin-reserva y sin-mesa no tienen pantalla propia aquí: quien no
         // tiene mesa vuelve a Mi cuenta, que sí sabe qué le toca hacer.
         if (i === undefined) { window.location.href = 'Aro Club - Mi cuenta.dc.html'; return; }
-        this.setState({ datos: d, fase: i });
+        // Lo que ya envio se recupera: si no, al recargar le pediriamos otra
+        // vez que valore una mesa que ya valoro, y el boton escribiria encima.
+        const ids = (d.companeros || []).map((c) => c.id);
+        this.setState({
+          datos: d, fase: i,
+          contado: !!d.yaValoro,
+          reportado: !!d.yaReporto,
+          quien: d.yaReporto ? ids.indexOf(d.yaReporto) : -1,
+          bloqueados: (d.yaBloqueados || []).map((id) => ids.indexOf(id)).filter((k) => k >= 0)
+        });
       })
       .catch(() => { window.location.href = 'Aro Club - Entrar.dc.html'; });
   }
   componentWillUnmount() {
     clearInterval(this._t);
+  }
+
+  // --- F11 --------------------------------------------------------------
+  // Los tres caminos van al mismo sitio, `/api/despues`, y cada uno es
+  // independiente: valorar no cierra reportar.
+  //
+  // El acuse ("Anotado, gracias") se pinta DESPUES de que el servidor lo
+  // confirme, nunca al pulsar. Un acuse optimista aqui es peor que ninguno:
+  // le diriamos que su bloqueo esta puesto cuando no lo esta, y no hay
+  // segunda oportunidad de contarselo.
+  enviar(cuerpo) {
+    const mesaId = this.state.datos && this.state.datos.mesaId;
+    if (!mesaId) return Promise.reject(new Error('sin mesa'));
+    return fetch('/api/despues', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ mesaId: mesaId }, cuerpo))
+    }).then((r) => r.json().then((j) => (r.ok ? j : Promise.reject(new Error(j.error || 'error')))));
+  }
+
+  quienesBloquea() {
+    const cs = (this.state.datos && this.state.datos.companeros) || [];
+    return this.state.bloqueados.map((i) => cs[i] && cs[i].id).filter(Boolean);
+  }
+
+  guardarValoracion() {
+    if (this.state.valor < 0 || this.state.enviando) return;
+    this.setState({ enviando: true, errorF11: '' });
+
+    // La pantalla ordena de mejor a peor; la API al reves, para que el
+    // numero crezca con las ganas de repetir.
+    const volveria = 2 - this.state.valor;
+    const aQuien = this.quienesBloquea();
+
+    this.enviar({ accion: 'valorar', volveria: volveria })
+      .then(() => (aQuien.length ? this.enviar({ accion: 'bloquear', aQuien: aQuien }) : null))
+      .then(() => this.setState({ contado: true, enviando: false }))
+      .catch(() => this.setState({ enviando: false, errorF11: 'No pudimos guardarlo. Vuelve a intentarlo.' }));
+  }
+
+  guardarReporte(motivo) {
+    const cs = (this.state.datos && this.state.datos.companeros) || [];
+    const a = cs[this.state.quien];
+    if (!a || this.state.motivo < 0 || this.state.enviando) return;
+    this.setState({ enviando: true, errorF11: '' });
+
+    this.enviar({ accion: 'reportar', aQuien: a.id, motivo: motivo })
+      .then(() => this.setState((st) => ({
+        reporte: false, reportado: true, enviando: false,
+        // Reportar bloquea, y el servidor ya lo hizo. Marcarlo aqui es para
+        // que la lista lo ensene, no para volver a pedirlo.
+        bloqueados: st.bloqueados.indexOf(st.quien) >= 0 ? st.bloqueados : st.bloqueados.concat([st.quien])
+      })))
+      .catch(() => this.setState({ enviando: false, errorF11: 'No pudimos registrarlo. Vuelve a intentarlo.' }));
   }
 
   renderVals() {
@@ -411,16 +486,18 @@ class Component extends DCLogic {
       sinContar: !this.state.contado,
       contado: this.state.contado,
       resumenValoracion: this.state.bloqueados.length
-        ? 'Entra en tu próxima mesa. ' + (this.state.bloqueados.length === 1 ? 'La persona que marcaste no' : 'Las personas que marcaste no') + ' volverá a coincidir contigo.'
+        ? 'Entra en tu próxima mesa. ' + (this.state.bloqueados.length === 1
+            ? 'La persona que marcaste no volverá'
+            : 'Las personas que marcaste no volverán') + ' a coincidir contigo.'
         : 'Entra en el emparejamiento de tu próxima mesa.',
-      textoEnviar: this.state.valor >= 0 ? 'Enviar' : 'Elige una respuesta',
+      textoEnviar: this.state.enviando ? 'Enviando…' : (this.state.valor >= 0 ? 'Enviar' : 'Elige una respuesta'),
       botonEnviar: btn(this.state.valor >= 0 ? '#14342A' : 'rgba(20,52,42,.12)', this.state.valor >= 0 ? '#FAF3E4' : '#2C4A38', 'none', this.state.valor >= 0 ? '' : 'cursor:not-allowed'),
       // no está `disabled`: sigue siendo enfocable y anuncia por qué no responde
       enviarInerte: this.state.valor >= 0 ? null : 'true',
       reporteInerte: listoReporte ? null : 'true',
       botonPrimarioSuelto: btn('#14342A', '#FAF3E4', 'none', 'margin-top:16px'),
       botonReportar: btn(listoReporte ? '#6E340F' : 'rgba(20,52,42,.12)', listoReporte ? '#FFF8EA' : '#2C4A38', 'none', listoReporte ? '' : 'cursor:not-allowed'),
-      enviarValoracion: () => { if (this.state.valor >= 0) this.setState({ contado: true }); },
+      enviarValoracion: () => this.guardarValoracion(),
       reporteAbierto: this.state.reporte,
       reportado: this.state.reportado,
       // valorar y reportar son independientes: enviar una no cierra la otra
@@ -431,11 +508,12 @@ class Component extends DCLogic {
         ? 'Al enviarlo, ' + comensales[this.state.quien].nombre + ' deja de coincidir contigo para siempre. No se le avisa de que fuiste tú.'
         : 'Quien reportes deja de coincidir contigo para siempre. No se le avisa de que fuiste tú.',
       resumenReporte: 'Reportaste a ' + (this.state.quien >= 0 ? comensales[this.state.quien].nombre : 'alguien') + ', así que ya no volverá a coincidir contigo. Lo lee una persona hoy y te escribimos cuando esté revisado.',
-      enviarReporte: () => { if (!listoReporte) return; this.setState((st) => ({
-        reporte: false, reportado: true,
-        bloqueados: st.bloqueados.indexOf(st.quien) >= 0 ? st.bloqueados : st.bloqueados.concat([st.quien])
-      })); },
-      textoReportar: listoReporte ? 'Enviar el reporte' : (this.state.quien < 0 ? 'Elige sobre quién' : 'Elige qué pasó'),
+      // El motivo viaja como texto: es lo que lee la persona de operacion,
+      // y un codigo la obligaria a traducirlo con una tabla al lado.
+      enviarReporte: () => { if (listoReporte) this.guardarReporte(motivos[this.state.motivo].label); },
+      textoReportar: this.state.enviando ? 'Enviando…' : (listoReporte ? 'Enviar el reporte' : (this.state.quien < 0 ? 'Elige sobre quién' : 'Elige qué pasó')),
+      errorF11: this.state.errorF11,
+      hayErrorF11: !!this.state.errorF11,
 
       // "jueves 14" con la cena el 13, y "SE ABRE EL JUEVES" fijo. Las tres
       // salen de la fecha real: si la cena se mueve, el texto se mueve.

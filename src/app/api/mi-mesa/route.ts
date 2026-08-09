@@ -24,14 +24,38 @@ export async function GET() {
 
   const admin = createAdminClient()
 
-  const { data: reserva } = await admin
+  const { data: reservas } = await admin
     .from('bookings')
     .select('id, event_id, events(starts_at, reveal_at, status)')
     .eq('profile_id', user.id)
     .in('status', ['confirmed', 'attended'])
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+
+  const ahora = Date.now()
+  const FIN = 5 * 3600 * 1000 // la cena se da por terminada cinco horas después
+  const VENTANA = 48 * 3600 * 1000 // y se puede valorar hasta dos días después
+
+  type Reserva = NonNullable<typeof reservas>[number]
+  const empiezaDe = (r: Reserva) =>
+    new Date((r.events as unknown as { starts_at: string }).starts_at).getTime()
+
+  // Cuál de sus reservas es "su mesa" ahora mismo. Ordenar por fecha de
+  // creación y quedarse con la última tenía un agujero: quien se apunta a la
+  // siguiente fecha antes de valorar la anterior deja de ver la anterior, y
+  // valorar es la única cosa de F11 que caduca. Así que durante las 48 horas
+  // siguientes a una cena, esa cena manda; después vuelve a mandar la próxima.
+  const porValorar = (reservas ?? [])
+    .filter((r) => {
+      const desde = ahora - empiezaDe(r)
+      return desde > FIN && desde < VENTANA
+    })
+    .sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
+
+  const proxima = (reservas ?? [])
+    .filter((r) => empiezaDe(r) + FIN > ahora)
+    .sort((a, b) => empiezaDe(a) - empiezaDe(b))[0]
+
+  const reserva =
+    porValorar ?? proxima ?? (reservas ?? []).sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
 
   const evento = reserva?.events as
     | { starts_at: string; reveal_at: string; status: string }
@@ -42,7 +66,6 @@ export async function GET() {
     return NextResponse.json({ fase: 'sin-reserva' })
   }
 
-  const ahora = Date.now()
   const revelaEn = new Date(evento.reveal_at).getTime()
   const empiezaEn = new Date(evento.starts_at).getTime()
 
@@ -119,6 +142,19 @@ export async function GET() {
     ]),
   )
 
+  const { data: yaValoro } = await admin
+    .from('table_feedback')
+    .select('id')
+    .eq('table_id', miembro.table_id)
+    .eq('profile_id', user.id)
+    .maybeSingle()
+
+  const { data: bloqueados } = await admin
+    .from('peer_feedback')
+    .select('rated_id, flag_conduct')
+    .eq('table_id', miembro.table_id)
+    .eq('rater_id', user.id)
+
   const sectorDe = new Map(
     (traits ?? []).map((t) => [
       t.profile_id,
@@ -129,6 +165,10 @@ export async function GET() {
   return NextResponse.json({
     // Pasada: la cena ya ocurrió, toca F11.
     fase: ahora > empiezaEn + 5 * 3600 * 1000 ? 'pasada' : 'abierta',
+    // El id de la mesa y los de sus companeros: hacen falta para valorar,
+    // bloquear y reportar. Son uuid opacos; el nombre de pila y el sector
+    // siguen siendo lo unico legible que se le enseña de ellos.
+    mesaId: miembro.table_id,
     numeroMesa: mesa.table_number,
     empiezaEn: evento.starts_at,
     restaurante: mesa.restaurants?.name ?? null,
@@ -138,9 +178,16 @@ export async function GET() {
     companeros: (companeros ?? []).map((c) => {
       const p = c.profiles as unknown as { display_name: string | null; full_name: string | null } | null
       const nombre = p?.display_name || p?.full_name?.split(' ')[0] || null
-      return { nombre, sector: sectorDe.get(c.profile_id) ?? null }
+      return { id: c.profile_id, nombre, sector: sectorDe.get(c.profile_id) ?? null }
     }),
     // Todas verificaron: es el retorno de lo que costó verificarse.
     todosVerificados: true,
+    // Lo que ya hizo. Los tres caminos son independientes, asi que se
+    // devuelven por separado: haber valorado no cierra reportar.
+    yaValoro: !!yaValoro,
+    yaBloqueados: (bloqueados ?? []).map((b) => b.rated_id),
+    // A quién reportó, no un sí/no: al recargar, la pantalla decía
+    // «Reportaste a alguien». Con el id puede volver a decir su nombre.
+    yaReporto: (bloqueados ?? []).find((b) => b.flag_conduct)?.rated_id ?? null,
   })
 }

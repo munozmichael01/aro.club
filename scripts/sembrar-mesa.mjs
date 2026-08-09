@@ -58,7 +58,7 @@ const GENTE = [
   ['Gabriela Ríos',       'Gabriela','1992-11-20', 'mujer',  '4121234503', 'salud',        'Banesco',        'se-quedo',   ['cocinar','leer','museos']],
   ['José Manuel Arteaga', 'José',    '1997-05-09', 'hombre', '4161234504', 'finanzas',     'Banesco',        'volvio',     ['correr','playa','viajar']],
   ['Andreína Salas',      'Andreína','1995-01-27', 'mujer',  '4261234505', 'educacion',    'Universidad Metropolitana','interior', ['leer','cocinar','teatro']],
-  ['Luis Felipe Bracho',  'Luis',    '1993-09-15', 'hombre', '4221234506', 'construccion', 'Grupo Naranjos', 'extranjero', ['gimnasio','playa','correr']],
+  ['Luis Felipe Bracho',  'Luis',    '1993-09-15', 'hombre', '4221234506', 'construccion', 'Grupo Naranjos', 'interior'   , ['gimnasio','playa','correr']],
   // -- mayores, 37 a 44 --
   ['Mariana Guevara',     'Mariana', '1985-02-11', 'mujer',  '4241234507', 'consultoria',  'Deloitte',       'volvio',     ['viajar','museos','leer']],
   ['Ricardo Peña',        'Ricardo', '1983-06-30', 'hombre', '4141234508', 'medios',       'Ridery',         'se-quedo',   ['cine','musica','viajar']],
