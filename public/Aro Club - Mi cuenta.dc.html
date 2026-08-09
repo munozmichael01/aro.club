@@ -560,6 +560,16 @@ class Component extends DCLogic {
         // Reservar de verdad. Antes solo se marcaba en la pantalla: al
         // recargar desaparecia, y en la base no habia nada.
         confirmar: () => {
+          // Con creditos se aparta el puesto aqui mismo. Sin creditos hay
+          // que pagar, y eso es otra pantalla: reportar un pago no es
+          // pulsar un boton, es salir al banco y volver.
+          if (!d || !(d.creditos > 0)) {
+            const q = new URLSearchParams({
+              evento: c[5], tipo: c[1], cuando: c[2], zona: c[3], hora: c[2].split(' · ')[1] || ''
+            });
+            window.location.href = 'Aro Club - Pago.dc.html?' + q.toString();
+            return;
+          }
           if (this.state.reservandoYa) return;
           this.setState({ reservandoYa: true, falloReserva: '' });
           fetch('/api/reservar', {

@@ -27,6 +27,17 @@ const cuerpo = z.object({
   datos: z.record(z.string(), z.string()),
 })
 
+/**
+ * Los céntimos de esta persona en esta fecha. Estables entre cargas y
+ * distintos entre personas, que es lo que se les pide.
+ */
+function centimosDe(profileId: string, eventoId: string) {
+  const semilla = `${profileId}:${eventoId}`
+  let h = 0
+  for (let i = 0; i < semilla.length; i++) h = (h * 31 + semilla.charCodeAt(i)) % 100_000
+  return h % 100
+}
+
 /** La tasa del día. Sin ella no se puede cobrar en bolívares. */
 async function tasaDelDia(admin: ReturnType<typeof createAdminClient>) {
   const { data } = await admin
@@ -69,7 +80,11 @@ export async function GET(request: Request) {
   // Los céntimos son un discriminador, no un capricho: hacen que monto y
   // fecha identifiquen el pago casi unívocamente contra el estado de cuenta
   // del banco, sin integrar nada.
-  const centimos = Math.floor(Math.random() * 100)
+  //
+  // Y son DETERMINISTAS. Con Math.random() cambiaban en cada carga: la
+  // persona veía 499,94, recargaba y veía 499,72, pagaba uno de los dos y
+  // nosotros buscábamos el otro. Justo lo contrario de para lo que están.
+  const centimos = centimosDe(user.id, evento.id)
 
   const { data: reserva } = await admin
     .from('bookings')
@@ -215,8 +230,13 @@ export async function POST(request: Request) {
     method: 'pago_movil',
     moneda: m.moneda,
     amount_usd: usd,
+    // Con los céntimos dentro: es el importe exacto que sale de su cuenta,
+    // y el que operación busca en el banco.
     amount_local:
-      m.moneda === 'VES' && tasa ? Number((usd * Number(tasa.usd_to_ves)).toFixed(2)) : null,
+      m.moneda === 'VES' && tasa
+        ? Number((usd * Number(tasa.usd_to_ves) + centimosDe(user.id, evento.id) / 100).toFixed(2))
+        : null,
+    cents_token: centimosDe(user.id, evento.id),
     fx_rate: m.moneda === 'VES' && tasa ? Number(tasa.usd_to_ves) : null,
     fx_congelado_en: m.moneda === 'VES' ? ahora : null,
     reportado_en: ahora,
