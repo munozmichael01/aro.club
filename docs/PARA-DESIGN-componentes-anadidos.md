@@ -167,6 +167,15 @@ buscar dónde. Sus pastillas se arrastran igual que las filas.
 Es el punto donde más me meto en tu terreno. Si la barra te parece mal,
 dilo: lo que no puede volver es que decidir exija hacer scroll.
 
+### 19 · Cola de conciliación de pagos
+**Qué es:** en la pestaña Pagos, cada reporte pendiente con lo que la
+persona declaró, el monto exacto con sus céntimos, la captura si la hay, y
+dos salidas: «Cuadra, confirmar» y «No cuadra» con motivo cerrado.
+
+**Por qué:** es la otra mitad de tu entrega 9 y sin ella los pagos
+reportados no se pueden aprobar. La monté reusando la forma de tu cola de
+verificaciones para que no desentone. **Cuando la diseñes, la tuya manda.**
+
 ---
 
 ## Lo que quiero de ti
