@@ -189,12 +189,41 @@ export async function POST(request: Request) {
     .eq('profile_id', user.id)
     .maybeSingle()
 
+  // Una reserva CANCELADA no es una reserva. Antes se reutilizaba tal cual:
+  // quien cancelaba y se volvia a apuntar recibia un "apuntada" y seguia
+  // cancelado, sin cobro y sin puesto. La fila se revive y se vuelve a
+  // cobrar el credito, porque el anterior ya se le devolvio.
+  const estabaCancelada =
+    yaTiene?.status === 'cancelled_by_user' || yaTiene?.status === 'cancelled_by_ops'
+
   // El crédito se cobra una vez: quien cambia de zonas no vuelve a pagar.
-  if (!yaTiene && (saldo?.balance ?? 0) < coste) {
+  // Pero quien se reapunta después de cancelar sí, porque el suyo volvió.
+  if ((!yaTiene || estabaCancelada) && (saldo?.balance ?? 0) < coste) {
     return NextResponse.json({ error: 'No te quedan encuentros.' }, { status: 409 })
   }
 
-  let bookingId = yaTiene?.id ?? null
+  let bookingId = yaTiene && !estabaCancelada ? yaTiene.id : null
+
+  if (estabaCancelada && yaTiene) {
+    await admin
+      .from('bookings')
+      .update({
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString(),
+        cancelled_at: null,
+        cancel_reason: null,
+      })
+      .eq('id', yaTiene.id)
+
+    await admin.from('credit_ledger').insert({
+      profile_id: user.id,
+      delta: -coste,
+      reason: 'event_charge',
+      booking_id: yaTiene.id,
+    })
+
+    bookingId = yaTiene.id
+  }
 
   if (!bookingId) {
     const { data: creada, error } = await admin

@@ -103,7 +103,32 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { fase: 0, tarde: false, motivo: -1 };
+  state = { fase: 0, tarde: false, motivo: -1, datos: null, cancelando: false, fallo: '' };
+
+  componentDidMount() {
+    // Si hay margen o no lo decide el servidor contra la hora de la cena.
+    // La pantalla no puede calcularlo: no sabe cuando es.
+    fetch('/api/cancelar')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin reserva'))))
+      .then((d) => this.setState({ datos: d, tarde: !d.conMargen }))
+      .catch(() => { window.location.href = 'Aro Club - Mi cuenta.dc.html'; });
+  }
+
+  cancelar() {
+    const d = this.state.datos;
+    if (!d || this.state.cancelando) return;
+    this.setState({ cancelando: true, fallo: '' });
+    fetch('/api/cancelar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reservaId: d.reservaId, motivo: this._motivoTexto || undefined })
+    })
+      .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
+      .then(({ ok, x }) => {
+        if (!ok) { this.setState({ cancelando: false, fallo: x.error || 'No pudimos cancelar.' }); return; }
+        this.setState({ cancelando: false, fase: 2, tarde: !x.creditoDevuelto });
+      })
+      .catch(() => this.setState({ cancelando: false, fallo: 'No pudimos cancelar.' }));
+  }
 
   renderVals() {
     const f = this.state.fase;
@@ -117,7 +142,7 @@ class Component extends DCLogic {
       const on = this.state.motivo === i;
       return {
         label, icono: on ? '✓' : '', aro: aroDe(on),
-        pick: () => this.setState({ motivo: i }),
+        pick: () => { this._motivoTexto = label; this.setState({ motivo: i }); },
         btn: 'display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;padding:0 20px 0 15px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 180ms ease',
         txt: 'font:' + (on ? '600' : '400') + ' 16px/1.3 \'Inter Tight\',sans-serif;color:#14342A'
       };
@@ -125,9 +150,6 @@ class Component extends DCLogic {
 
     return {
       esPreguntar: f < 2, esHecho: f === 2,
-        const n = (s.fase + 1) % 3;
-        return { fase: n, tarde: n === 1 };
-      }),
 
       motivos,
       h1: 'font:400 clamp(30px,6.4vw,46px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance',
@@ -151,8 +173,11 @@ class Component extends DCLogic {
       botonPrimario: btn('#14342A', '#FAF3E4', 'none'),
       botonFantasma: btn('transparent', '#33513F', 'none', 'font-weight:500;padding:0 8px;text-decoration:underline;text-underline-offset:6px'),
       selloHecho: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;margin-bottom:16px',
-
-      cancelar: () => this.setState({ fase: 2 }),
+      // Cancela de verdad: devuelve el credito si hay margen y saca a la
+      // persona de su mesa si ya la tenia.
+      cancelar: () => this.cancelar(),
+      hayFallo: !!this.state.fallo,
+      fallo: this.state.fallo,
       creditosRestantes: tarde ? '3' : '4',
       resumenHecho: tarde
         ? 'Avisaste con menos de 24 horas, así que ese crédito se pierde. Gracias por decirlo igual: preferimos una mesa de cinco a un puesto vacío.'

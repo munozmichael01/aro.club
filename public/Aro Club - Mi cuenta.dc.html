@@ -208,6 +208,9 @@
               </span>
               <span style="flex:0 0 auto;font:500 13px/1.4 'Inter Tight',sans-serif;color:#566A5D">{{ m.cuando }}</span>
               <span style="{{ m.chip }}">{{ m.estado }}</span>
+              <sc-if value="{{ m.cancelable }}" hint-placeholder-val="{{ false }}">
+                <a href="Aro Club - Cancelar.dc.html" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 12px;font:500 13px/1 'Inter Tight',sans-serif;color:#8F4515;text-decoration:underline;text-underline-offset:5px">Cancelar</a>
+              </sc-if>
             </div>
           </sc-for>
         </div>
@@ -462,7 +465,9 @@ class Component extends DCLogic {
       const tinta = pendiente ? '#8F4515' : (activo ? '#FAF3E4' : (h[3] === 'Fuiste' ? '#1B5138' : '#566A5D'));
       return {
         sitio: h[0], cuando: h[1], detalle: h[2], estado: h[3],
-        chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + (activo ? '#1B5138' : (h[3] === 'Fuiste' ? 'rgba(27,81,56,.11)' : 'transparent')) + ';border:1px solid ' + (h[3] === 'Cancelaste' ? 'rgba(20,52,42,.18)' : 'transparent') + ';color:' + (activo ? '#FAF3E4' : (h[3] === 'Fuiste' ? '#1B5138' : '#566A5D'))
+        // Solo lo vivo se puede cancelar: lo pasado y lo ya cancelado, no.
+        cancelable: activo || pendiente,
+        chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + fondo + ';border:1px solid ' + (h[3] === 'Cancelaste' ? 'rgba(20,52,42,.18)' : 'transparent') + ';color:' + tinta
       };
     });
 
