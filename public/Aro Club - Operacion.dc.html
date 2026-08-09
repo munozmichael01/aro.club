@@ -64,7 +64,7 @@
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));align-items:start;gap:12px">
           <sc-for list="{{ mesas }}" as="t" hint-placeholder-count="6">
-            <div style="{{ t.caja }}">
+            <div onDragOver="{{ t.permitir }}" onDrop="{{ t.recibir }}" onDragLeave="{{ t.salir }}" style="{{ t.caja }}">
               <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
                 <span style="{{ t.numero }}">{{ t.n }}</span>
                 <span style="flex:1;min-width:0">
@@ -75,10 +75,11 @@
               </div>
               <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(20,52,42,.12)">
                 <sc-for list="{{ t.gente }}" as="g" hint-placeholder-count="6">
-                  <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(20,52,42,.09)">
+                  <div draggable="true" onDragStart="{{ g.coger }}" onDragEnd="{{ g.soltar }}" style="{{ g.fila }}">
                     <span style="{{ g.avatar }}">{{ g.inicial }}</span>
                     <span style="flex:1;min-width:0;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ g.nombre }}</span>
                     <span style="font:400 12px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ g.dato }}</span>
+                    <button onClick="{{ g.verPerfil }}" title="Ver su perfil" style="flex:0 0 auto;min-width:32px;min-height:32px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:transparent;color:#33513F;font:600 12px/1 'Inter Tight',sans-serif;cursor:pointer">→</button>
                   </div>
                 </sc-for>
               </div>
@@ -311,7 +312,8 @@
 class Component extends DCLogic {
   state = { vista: 0, publicado: false, decididas: {}, abriendo: null, motivos: {},
             cola: null, catalogo: [], trabajando: false, fallo: '',
-            reparto: null, roturasFreno: null, avisosPublicados: null, aviso: '' };
+            reparto: null, roturasFreno: null, avisosPublicados: null, aviso: '',
+            arrastrando: null, desdeMesa: null, sobreMesa: null };
 
   componentDidMount() { this.cargarCola(); this.cargarReparto(); }
 
@@ -339,6 +341,33 @@ class Component extends DCLogic {
         this.cargarReparto();
       })
       .catch(() => this.setState({ trabajando: false, fallo: 'No se pudo cambiar el sitio.' }));
+  }
+
+  // Mover a alguien de mesa. El servidor recalcula LAS DOS y guarda; si el
+  // cambio rompe algo se ve al momento y el freno lo sigue viendo al
+  // publicar. Mover sin revalidar convertiria el freno en decorado.
+  moverPersona(profileId, aMesa) {
+    const c = this.state.reparto && this.state.reparto.corrida;
+    if (!c || this.state.trabajando) return;
+    this.setState({ trabajando: true, fallo: '' });
+    fetch('/api/operacion/propuesta', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accion: 'mover', corridaId: c.id, profileId: profileId, aMesa: aMesa })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) { this.setState({ trabajando: false, fallo: d.error || 'No se pudo mover.' }); return; }
+        const rotas = d.mesas.reduce((t, m) => t + m.roturas.length, 0);
+        this.setState({
+          trabajando: false,
+          aviso: aMesa === 0
+            ? 'Movido a la espera. ' + (rotas ? rotas + ' aviso(s) en el reparto.' : 'Todas las mesas cuadran.')
+            : 'Movido a la mesa ' + String(aMesa).padStart(2, '0') + '. ' +
+              (rotas ? rotas + ' aviso(s) en el reparto.' : 'Todas las mesas cuadran.')
+        });
+        this.cargarReparto();
+      })
+      .catch(() => this.setState({ trabajando: false, fallo: 'No se pudo mover.' }));
   }
 
   repartirDeNuevo() {
@@ -516,10 +545,42 @@ class Component extends DCLogic {
               return (h % 12 || 12) + ':' + (d.getMinutes() < 10 ? '0' : '') + d.getMinutes() + ' ' + (h < 12 ? 'a.m.' : 'p.m.'); })()
           : '',
         estado: ojo ? 'REVISAR' : 'CUADRA',
-        caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (ojo ? '#C0662F' : 'transparent'),
+        // El borde cambia cuando se pasa por encima arrastrando: hay que
+        // ver donde va a caer ANTES de soltar.
+        caja: 'border-radius:24px;background:' + (this.state.sobreMesa === (k + 1) ? '#FFFBF0' : '#FAF3E4') +
+          ';padding:clamp(16px,2vw,20px);border:1px solid ' +
+          (this.state.sobreMesa === (k + 1) ? '#1B5138' : (ojo ? '#C0662F' : 'transparent')) +
+          ';transition:background 140ms ease,border-color 140ms ease',
+        permitir: (e) => {
+          if (!this.state.arrastrando) return;
+          e.preventDefault();
+          if (this.state.sobreMesa !== (k + 1)) this.setState({ sobreMesa: k + 1 });
+        },
+        salir: () => { if (this.state.sobreMesa === (k + 1)) this.setState({ sobreMesa: null }); },
+        recibir: (e) => {
+          e.preventDefault();
+          const quien = this.state.arrastrando;
+          const desde = this.state.desdeMesa;
+          this.setState({ arrastrando: null, sobreMesa: null });
+          if (!quien || desde === (k + 1)) return;
+          this.moverPersona(quien, k + 1);
+        },
         numero: 'flex:0 0 auto;width:42px;height:42px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:700 15px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums',
         sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;background:' + (ojo ? 'rgba(143,69,21,.13)' : 'rgba(27,81,56,.11)') + ';color:' + (ojo ? '#8F4515' : '#1B5138'),
-        gente: g.map((p, i) => ({ nombre: p[0], dato: p[1] + ', ' + p[2], inicial: p[0].charAt(0), avatar: avatar(i + k) })),
+        gente: g.map((p, i) => {
+          const pid = (propuesta[k] && propuesta[k].integrantes[i] && propuesta[k].integrantes[i].profileId) || null;
+          const arrastrando = this.state.arrastrando === pid;
+          return {
+            nombre: p[0], dato: p[1] + ', ' + p[2], inicial: p[0].charAt(0), avatar: avatar(i + k),
+            // Se ve de donde sale mientras se arrastra: sin eso, al soltar
+            // en la mesa equivocada no hay forma de saber que se movio.
+            fila: 'display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(20,52,42,.09);cursor:grab;opacity:' +
+              (arrastrando ? '.4' : '1') + ';transition:opacity 140ms ease',
+            coger: () => this.setState({ arrastrando: pid, desdeMesa: propuesta[k].numero }),
+            soltar: () => this.setState({ arrastrando: null, sobreMesa: null }),
+            verPerfil: () => this.setState({ fallo: 'El perfil del miembro todavía no existe. Se lo pedimos a Design.' })
+          };
+        }),
         // REVISAR sin decir que revisar no sirve de nada. Las roturas van
         // aparte de las señales normales: mezcladas parecian lo mismo que
         // "3 y 3" o "29-33 años", que no son problemas.
@@ -575,7 +636,9 @@ class Component extends DCLogic {
               ';background:' + (propuesta[k] && propuesta[k].restaurantId === v.restaurantId ? 'rgba(27,81,56,.11)' : 'transparent') +
               ';color:#14342A'
           })),
-        haySedes: ((R.sedes) || []).filter((v) => (propuesta[k] && propuesta[k].zonasPosibles || []).indexOf(v.zona) >= 0).length > 1,
+        // Siempre visible aunque solo haya un sitio posible: saber que no
+        // hay alternativa es tan util como poder elegir.
+        haySedes: ((R.sedes) || []).filter((v) => (propuesta[k] && propuesta[k].zonasPosibles || []).indexOf(v.zona) >= 0).length > 0,
         senales
       };
     });

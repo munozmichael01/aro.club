@@ -35,7 +35,36 @@ const accion = z.discriminatedUnion('accion', [
   }),
 ])
 
-type Integrante = { profileId: string; bookingId: string; nombre: string }
+// La MISMA forma que escribe repartir. Guardar solo el nombre dejaba a
+// quien se movia sin edad ni sector, y la tarjeta enseñaba "—, undefined"
+// y un rango de edades "NaN–NaN".
+type Integrante = {
+  profileId: string
+  bookingId: string
+  nombre: string
+  edad: number | null
+  genero: string | null
+  empresa: string | null
+  sector: string | null
+}
+
+const comoIntegrante = (p: {
+  profileId: string
+  bookingId: string
+  nombre: string
+  edad: number | null
+  genero: string | null
+  empresa: string | null
+  sector: string | null
+}): Integrante => ({
+  profileId: p.profileId,
+  bookingId: p.bookingId,
+  nombre: p.nombre,
+  edad: p.edad,
+  genero: p.genero,
+  empresa: p.empresa,
+  sector: p.sector,
+})
 type Mesa = {
   numero: number
   zona: string | null
@@ -131,17 +160,9 @@ export async function POST(request: Request) {
     if (desdeEspera >= 0) espera.splice(desdeEspera, 1)
 
     if (destino) {
-      destino.integrantes.push({
-        profileId: persona.profileId,
-        bookingId: persona.bookingId,
-        nombre: persona.nombre,
-      })
+      destino.integrantes.push(comoIntegrante(persona))
     } else {
-      espera.push({
-        profileId: persona.profileId,
-        bookingId: persona.bookingId,
-        nombre: persona.nombre,
-      })
+      espera.push(comoIntegrante(persona))
     }
   }
 
