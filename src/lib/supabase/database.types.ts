@@ -2933,6 +2933,12 @@ export type Database = {
         Returns: undefined
       }
       despublicar_evento: { Args: { p_event_id: string }; Returns: undefined }
+      despublicar_mesa: {
+        Args: { p_table_id: string }
+        Returns: {
+          correos_retirados: number
+        }[]
+      }
       guardar_respuesta: {
         Args: {
           p_clave: string

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#F2E9D5; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#14342A; color:#FAF3E4; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#F2E9D5;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh">
+
+  <div style="position:sticky;top:0;z-index:40;background:rgba(242,233,213,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.14)">
+    <div style="max-width:1120px;margin:0 auto;padding:11px clamp(14px,3vw,26px);display:flex;align-items:center;gap:13px;flex-wrap:wrap">
+      <a href="{{ volverEnlace }}" style="display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:-8px 0;color:#14342A">
+        <span style="font:500 19px/1 'Inter Tight',sans-serif;color:#33513F">←</span>
+        <span style="font:500 15px/1 'Inter Tight',sans-serif;color:#1B5138">{{ volverTexto }}</span>
+      </a>
+      <span style="flex:1"></span>
+      <span style="display:flex;align-items:center;gap:9px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="1.8"></circle><circle cx="20.6" cy="12" r="1.9" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="3.4" cy="12" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#14342A"></circle></svg>
+        <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">FICHA INTERNA</span>
+      </span>
+    </div>
+  </div>
+
+  <div style="max-width:1120px;margin:0 auto;padding:clamp(20px,3vw,32px) clamp(14px,3vw,26px) clamp(44px,6vw,72px)">
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;justify-content:space-between">
+      <div style="min-width:0">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="{{ avatarGrande }}">{{ inicial }}</span>
+          <span style="min-width:0">
+            <span style="display:block;font:400 clamp(28px,4vw,42px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A">{{ trato }}</span>
+            <span style="display:block;font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:5px">{{ resumen }}</span>
+          </span>
+        </div>
+      </div>
+      <span style="{{ selloVerif }}">{{ textoVerif }}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px;align-items:start;margin-top:clamp(22px,3vw,30px)">
+
+      <div style="{{ tarjeta }}">
+        <div style="{{ tituloBloque }}">Identidad</div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          <sc-for list="{{ identidad }}" as="d" hint-placeholder-count="7">
+            <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+              <span style="flex:1 1 120px;font:400 14px/1.45 'Inter Tight',sans-serif;color:#33513F">{{ d.campo }}</span>
+              <span style="{{ d.valorEstilo }}">{{ d.valor }}</span>
+              <sc-if value="{{ d.interno }}" hint-placeholder-val="{{ false }}">
+                <span style="{{ chipInterno }}">USO INTERNO</span>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:13px;text-wrap:pretty">De ella, los otros cinco solo ven el nombre de trato y el sector. Lo marcado no sale de aquí.</div>
+      </div>
+
+      <div style="{{ tarjeta }}">
+        <div style="{{ tituloBloque }}">Verificación</div>
+
+        <sc-if value="{{ hayDocumento }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:9px;margin-bottom:14px">
+            <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Cédula</div>
+            <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Selfie</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ sinDocumento }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:11px;align-items:flex-start;border-radius:18px;background:rgba(27,81,56,.09);padding:14px 16px;margin-bottom:14px">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+            <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ textoBorrado }}</span>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;flex-direction:column;gap:0">
+          <sc-for list="{{ verificacion }}" as="v" hint-placeholder-count="4">
+            <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+              <span style="flex:1 1 120px;font:400 14px/1.45 'Inter Tight',sans-serif;color:#33513F">{{ v.campo }}</span>
+              <span style="{{ v.valorEstilo }}">{{ v.valor }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ hayIntentos }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:11px;align-items:flex-start;border-radius:18px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:14px">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 14px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ tituloIntentos }}</span>
+              <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:4px;text-wrap:pretty">{{ detalleIntentos }}</span>
+            </span>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="{{ tarjetaAncha }}">
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between">
+        <span style="{{ tituloBloque }}">Historial de mesas</span>
+        <span style="font:500 13px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ resumenHistorial }}</span>
+      </div>
+
+      <sc-if value="{{ hayHistorial }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:0">
+          <sc-for list="{{ historial }}" as="h" hint-placeholder-count="3">
+            <div style="padding:15px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+              <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline">
+                <span style="flex:1 1 200px;min-width:0">
+                  <span style="display:block;font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ h.sitio }}</span>
+                  <span style="display:block;font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ h.cuando }}</span>
+                </span>
+                <span style="{{ h.chip }}">{{ h.estado }}</span>
+              </div>
+              <sc-if value="{{ h.hayMesa }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:11px">
+                  <sc-for list="{{ h.gente }}" as="g" hint-placeholder-count="5">
+                    <span style="display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 12px 0 6px;border-radius:999px;background:rgba(20,52,42,.06);font:500 13px/1 'Inter Tight',sans-serif;color:#2C4A38">
+                      <span style="{{ g.avatar }}">{{ g.inicial }}</span>{{ g.nombre }}
+                    </span>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ h.hayNota }}" hint-placeholder-val="{{ false }}">
+                <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:11px;max-width:64ch;text-wrap:pretty">{{ h.nota }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sinHistorial }}" hint-placeholder-val="{{ false }}">
+        <div style="border-radius:20px;border:1px dashed rgba(20,52,42,.28);padding:clamp(18px,2.4vw,24px);max-width:60ch">
+          <div style="font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloVacio }}</div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:8px;text-wrap:pretty">{{ cuerpoVacio }}</div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="margin-top:clamp(26px,3.4vw,38px)">
+      <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">LO QUE RESPONDIÓ</div>
+      <sc-for list="{{ grupos }}" as="g" hint-placeholder-count="5">
+        <div style="margin-top:clamp(20px,2.6vw,28px)">
+          <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:13px">
+            <span style="font:400 clamp(21px,2.4vw,27px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A">{{ g.nombre }}</span>
+            <span style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ g.nota }}</span>
+          </div>
+          <div style="border-radius:24px;background:#FFFBF0;overflow:hidden">
+            <sc-for list="{{ g.respuestas }}" as="r" hint-placeholder-count="4">
+              <div style="{{ r.contenedor }}">
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ r.pregunta }}</span>
+                  <span style="{{ r.valorEstilo }}">{{ r.valor }}</span>
+                </span>
+                <sc-if value="{{ r.reservada }}" hint-placeholder-val="{{ false }}">
+                  <span style="{{ chipInterno }}">NO SE LE ENSEÑA</span>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px;align-items:start;margin-top:12px">
+
+      <div style="{{ tarjeta }}">
+        <div style="{{ tituloBloque }}">Señales</div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <sc-for list="{{ senales }}" as="s" hint-placeholder-count="4">
+            <div style="{{ s.caja }}">
+              <span style="{{ s.icono }}">{{ s.glifo }}</span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:600 14px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ s.titulo }}</span>
+                <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-wrap:pretty">{{ s.cuerpo }}</span>
+                <sc-if value="{{ s.interno }}" hint-placeholder-val="{{ false }}">
+                  <span style="{{ chipInterno }}">NO SE LE ENSEÑA</span>
+                </sc-if>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="{{ tarjeta }}">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between">
+          <span style="{{ tituloBloque }}">Créditos</span>
+          <span style="{{ cifraCreditos }}">{{ creditos }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0">
+          <sc-for list="{{ movimientos }}" as="m" hint-placeholder-count="5">
+            <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+              <span style="flex:1 1 150px;min-width:0">
+                <span style="display:block;font:500 14px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ m.concepto }}</span>
+                <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ m.cuando }}</span>
+              </span>
+              <span style="{{ m.deltaEstilo }}">{{ m.delta }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:clamp(22px,3vw,30px);max-width:64ch;text-wrap:pretty">Esta ficha es para mirar. Aprobar y rechazar siguen en la cola de verificaciones; bloquear y excluir viven en su propio sitio.</div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { quien: 0, desde: 'mesa' };
+
+  componentDidMount() {
+    this.leerHash();
+    this._h = () => this.leerHash();
+    window.addEventListener('hashchange', this._h);
+  }
+
+  componentWillUnmount() { window.removeEventListener('hashchange', this._h); }
+
+  leerHash() {
+    // La ficha se abre por miembro: en producción es /operacion/miembro/:id.
+    // Aquí el hash cumple ese papel, y ?desde= recuerda de dónde se vino.
+    const h = (window.location.hash || '').replace('#', '');
+    const idx = { gabriela: 0, ricardo: 1, renata: 2 }[h];
+    if (typeof idx === 'number') this.setState({ quien: idx, desde: idx === 1 ? 'cola' : 'mesa' });
+  }
+
+  renderVals() {
+    const avatar = (i, tam) => 'flex:0 0 auto;width:' + tam + 'px;height:' + tam + 'px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 ' + Math.round(tam * 0.42) + 'px/1 \'Inter Tight\',sans-serif';
+
+    const chip = (fondo, color, borde) => 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;background:' + fondo + ';color:' + color + ';border:1px solid ' + (borde || 'transparent') + ';white-space:nowrap';
+
+    const gente = [
+      ['Daniela', 0], ['Andrés', 1], ['José Manuel', 2], ['Andreína', 3], ['Valentina', 4]
+    ].map((g) => ({ nombre: g[0], inicial: g[0].charAt(0), avatar: avatar(g[1], 22) }));
+
+    // Tres fichas reales, no variantes de maqueta: cubren los estados
+    // que de verdad existen — documento borrado a los 90 días, rechazos
+    // repetidos, y alguien verificado que aún no ha cenado.
+    const fichas = [
+      {
+        trato: 'Gabriela', completo: 'Gabriela Andreína Ortiz Belisario',
+        respuestas: {"arraigo":"Nunca me fui de Venezuela","sector":"Salud","empleador":"Clínica Ávila","momento":"En pareja sin hijos","rol":"Escucho más de lo que hablo","motivo":"Conocer gente fuera del trabajo","temas":["Cocina y restaurantes","Viajes","Arte y diseño","Salud y bienestar"],"evitar":["Política y situación del país"],"actividades":["Cocinar","Salir a comer","Yoga o pilates","Senderismo","Museos","Leer"],"planes":["Cena en restaurante","Café o desayuno de networking"],"peso":"La conversación, el restaurante es la excusa","gasto":"20 a 35 USD","zonas":["Las Mercedes","Chacao","Altamira"],"dias":["Jueves noche","Viernes noche"],"idiomas":["Español","Inglés"],"dieta":["Sin gluten"]},
+        edad: 31, genero: 'Mujer', tel: '+58 414 219 88 40', correo: 'gabriela.ortiz@gmail.com',
+        desde: 'Marzo de 2026', sector: 'Salud',
+        verif: 'verificada', quien: 'Marcela Ruiz', cuando: '4 de abril de 2026',
+        coincide: 'Nombre y edad coincidían', borrado: true, intentos: 0,
+        creditos: 2,
+        historial: [
+          ['Cardenal', 'Jueves 31 de julio · Las Mercedes', 'Fue', true, 'Volvería sin dudarlo. No bloqueó a nadie.'],
+          ['Alto', 'Jueves 17 de julio · Altamira', 'Fue', true, 'Estuvo bien. Bloqueó a una persona de esa mesa.'],
+          ['Malabar', 'Jueves 3 de julio · Las Mercedes', 'Canceló', false, 'Canceló con más de 24 h. Crédito devuelto.']
+        ],
+        senales: [
+          ['bloqueo', 'Bloqueó a una persona', 'Desde la cena del 17 de julio. No vuelve a coincidir con ella y esa persona no lo sabe.', true],
+          ['limpio', 'Nadie la ha bloqueado', 'En tres mesas.', false],
+          ['limpio', 'Sin reportes', 'Ni suyos ni sobre ella.', false]
+        ],
+        movimientos: [
+          ['Pack de 4 encuentros', '12 de junio', '+4'],
+          ['Cena · Malabar', '3 de julio', '−1'],
+          ['Devolución por cancelar', '2 de julio', '+1'],
+          ['Cena · Alto', '17 de julio', '−1'],
+          ['Cena · Cardenal', '31 de julio', '−1']
+        ]
+      },
+      {
+        trato: 'Ricardo', completo: 'Ricardo José Álvarez Mendoza',
+        respuestas: {"arraigo":"Me fui del país y volví","sector":"Consultoría","empleador":"Deloitte","momento":"En pareja con hijos","rol":"Suelo llevar la conversación","motivo":"Reconectar con Caracas después de volver","temas":["Negocios y emprender","Economía","Historia"],"evitar":["Ninguno, hablo de todo"],"actividades":["Correr","Gimnasio","Salir a comer","Leer","Viajar"],"planes":["Cena en restaurante","Drinks / after office","Correr"],"peso":"Las dos cosas por igual","gasto":"35 a 50 USD","zonas":["Altamira","La Castellana","Los Palos Grandes"],"dias":["Jueves noche","Sábado noche"],"idiomas":["Español","Inglés","Portugués"],"dieta":["Ninguna"]},
+        edad: 39, genero: 'Hombre', tel: '+58 412 660 15 07', correo: 'ricardo.alvarez@outlook.com',
+        desde: 'Agosto de 2026', sector: 'Consultoría',
+        verif: 'revision', quien: null, cuando: 'Hace 2 horas',
+        coincide: 'Sin comprobar todavía', borrado: false, intentos: 3,
+        creditos: 0,
+        historial: [],
+        senales: [
+          ['limpio', 'Sin bloqueos', 'Todavía no ha ido a ninguna mesa.', false],
+          ['limpio', 'Sin reportes', 'Ni suyos ni sobre él.', false]
+        ],
+        movimientos: [['Sin movimientos', 'Aún no ha comprado', '0']]
+      },
+      {
+        trato: 'Renata', completo: 'Renata Sofía Guzmán Peña',
+        respuestas: {"arraigo":"Me mudé a Caracas desde el interior","sector":"ONG","empleador":"Cáritas","momento":"Soltero sin hijos","rol":"Depende del momento","motivo":"Ampliar mi círculo","temas":["Libros","Música","Psicología","Cine y series"],"evitar":[],"actividades":["Bailar","Conciertos","Leer","Voluntariado","Cine"],"planes":["Cena en restaurante","Café o desayuno de networking","Yoga o pilates"],"peso":"La conversación, el restaurante es la excusa","gasto":"Hasta 20 USD","zonas":["Chacao","Bello Monte","El Rosal"],"dias":["Jueves noche","Sábado mediodía"],"idiomas":["Español"],"dieta":["Vegetariano"]},
+        edad: 26, genero: 'Mujer', tel: '+58 424 118 72 33', correo: 'renata.guzman@gmail.com',
+        desde: 'Julio de 2026', sector: 'ONG',
+        verif: 'verificada', quien: 'Marcela Ruiz', cuando: '29 de julio de 2026',
+        coincide: 'Nombre y edad coincidían', borrado: false, intentos: 0,
+        creditos: 4,
+        historial: [],
+        senales: [
+          ['limpio', 'Sin bloqueos', 'Todavía no ha ido a ninguna mesa.', false],
+          ['limpio', 'Sin reportes', 'Ni suyos ni sobre ella.', false]
+        ],
+        movimientos: [['Pack de 4 encuentros', '29 de julio', '+4']]
+      }
+    ];
+    const f = fichas[this.state.quien];
+
+    const sellos = {
+      verificada: [chip('rgba(27,81,56,.12)', '#1B5138'), 'VERIFICADA'],
+      revision: [chip('rgba(143,69,21,.12)', '#8F4515'), 'EN REVISIÓN'],
+      rechazada: [chip('transparent', '#8F4515', 'rgba(143,69,21,.42)'), 'RECHAZADA']
+    }[f.verif];
+
+    const valor = (interno) => 'flex:2 1 170px;font:500 15px/1.45 \'Inter Tight\',sans-serif;color:' + (interno ? '#2C4A38' : '#14342A');
+    const identidad = [
+      ['Nombre de trato', f.trato, false],
+      ['Nombre completo', f.completo, true],
+      ['Edad', f.edad + ' años', false],
+      ['Género', f.genero, false],
+      ['Sector', f.sector, false],
+      ['Teléfono', f.tel, true],
+      ['Correo', f.correo, true],
+      ['Miembro desde', f.desde, false]
+    ].map((d) => ({ campo: d[0], valor: d[1], interno: d[2], valorEstilo: valor(d[2]) }));
+
+    const verificacion = [
+      ['Estado', sellos[1].charAt(0) + sellos[1].slice(1).toLowerCase()],
+      ['Quién la aprobó', f.quien || 'Sin asignar'],
+      ['Cuándo', f.cuando],
+      ['Contra el documento', f.coincide]
+    ].map((v) => ({ campo: v[0], valor: v[1], valorEstilo: valor(false) }));
+
+    const chipsHist = {
+      'Fue': chip('rgba(27,81,56,.12)', '#1B5138'),
+      'Canceló': chip('transparent', '#33513F', 'rgba(20,52,42,.22)'),
+      'No apareció': chip('rgba(143,69,21,.12)', '#8F4515')
+    };
+    const historial = f.historial.map((h) => ({
+      sitio: h[0], cuando: h[1], estado: h[2], chip: chipsHist[h[2]],
+      hayMesa: h[3], gente, hayNota: !!h[4], nota: h[4]
+    }));
+
+    const fue = f.historial.filter((h) => h[2] === 'Fue').length;
+    const resumenHistorial = f.historial.length === 0
+      ? 'Ninguna todavía'
+      : fue + (fue === 1 ? ' cena · ' : ' cenas · ') + f.historial.length + ' apuntadas';
+
+    // Las cinco pantallas y las diecisiete preguntas del cuestionario, tal cual.
+    // Los títulos y los textos son los de `Aro Club - Cuestionario.dc.html`;
+    // los valores se resuelven por código estable, nunca por etiqueta.
+    const RESP = f.respuestas;
+    const lista = (a) => (a && a.length ? a.join(', ') : 'Sin responder');
+    const grupos = [
+      ['Tu contexto', 'De dónde viene y a qué se dedica.', [
+        ['¿Cuál de estas se parece más a tu historia?', RESP.arraigo],
+        ['¿En qué sector trabajas?', RESP.sector],
+        ['¿Dónde trabajas actualmente?', RESP.empleador, true]
+      ]],
+      ['Cómo es en la mesa', 'Lo que más pesa al armar el grupo.', [
+        ['¿En qué momento estás?', RESP.momento],
+        ['En una mesa con gente que no conoces, ¿cómo eres?', RESP.rol],
+        ['¿Qué te trae?', RESP.motivo],
+        ['Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?', 'Respondida · no se enseña nunca', true]
+      ]],
+      ['De qué habla', 'Dos horas se sostienen con temas.', [
+        ['¿De qué podrías hablar dos horas seguidas?', lista(RESP.temas)],
+        ['¿Hay algún tema que prefieras que no salga?', lista(RESP.evitar)],
+        ['Escoge lo que de verdad haces, no lo que te gustaría hacer', lista(RESP.actividades)]
+      ]],
+      ['Qué busca y cuánto', 'El rango marcado es el techo del sitio.', [
+        ['¿Qué planes te interesan?', lista(RESP.planes)],
+        ['En una cena, ¿qué pesa más para ti?', RESP.peso],
+        ['¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?', RESP.gasto]
+      ]],
+      ['Logística', 'Dónde puede llegar y qué días.', [
+        ['¿En qué zonas puedes asistir sin problema?', lista(RESP.zonas)],
+        ['¿Qué días te sirven mejor?', lista(RESP.dias)],
+        ['¿En qué idiomas conversas cómodo?', lista(RESP.idiomas)],
+        ['¿Alguna restricción alimentaria?', lista(RESP.dieta)]
+      ]]
+    ].map((g) => ({
+      nombre: g[0],
+      nota: g[1],
+      respuestas: g[2].map((r, i, todas) => ({
+        pregunta: r[0], valor: r[1], reservada: !!r[2],
+        contenedor: 'display:flex;gap:14px;align-items:center;min-height:66px;padding:14px clamp(16px,2.4vw,22px)' + (i < todas.length - 1 ? ';border-bottom:1px solid rgba(20,52,42,.1)' : ''),
+        valorEstilo: 'display:block;font:400 15px/1.45 \'Inter Tight\',sans-serif;color:' + (r[2] ? '#33513F' : '#566A5D') + ';margin-top:3px;text-wrap:pretty'
+      }))
+    }));
+
+    const tonos = {
+      bloqueo: ['rgba(20,52,42,.06)', '#14342A', '·'],
+      limpio: ['transparent', '#1B5138', '✓'],
+      aviso: ['rgba(143,69,21,.1)', '#6E340F', '!']
+    };
+    const senales = f.senales.map((s) => {
+      const t = tonos[s[0]];
+      return {
+        titulo: s[1], cuerpo: s[2], interno: s[3], glifo: t[2],
+        caja: 'display:flex;gap:12px;align-items:flex-start;border-radius:20px;padding:14px 16px;background:' + t[0] + ';border:1px solid ' + (s[0] === 'limpio' ? 'rgba(20,52,42,.14)' : 'transparent'),
+        icono: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:' + t[1] + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px'
+      };
+    });
+
+    const movimientos = f.movimientos.map((m) => ({
+      concepto: m[0], cuando: m[1], delta: m[2],
+      deltaEstilo: 'flex:0 0 auto;font:600 15px/1.4 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;color:' + (m[2].charAt(0) === '+' ? '#1B5138' : (m[2] === '0' ? '#33513F' : '#8F4515'))
+    }));
+
+    const deCola = this.state.desde === 'cola';
+
+    return {
+      identidad, verificacion, historial, grupos, senales, movimientos, resumenHistorial,
+
+      volverEnlace: deCola ? 'Aro Club - Operacion.dc.html#verificaciones' : 'Aro Club - Operacion.dc.html#mesas',
+      volverTexto: deCola ? 'Cola de verificaciones' : 'Reparto del jueves 14',
+
+      inicial: f.trato.charAt(0),
+      trato: f.trato,
+      avatarGrande: avatar(this.state.quien, 60),
+      resumen: f.sector + ' · ' + f.edad + ' años · miembro desde ' + f.desde.toLowerCase(),
+      selloVerif: sellos[0].replace('min-height:30px', 'min-height:38px').replace('padding:0 12px', 'padding:0 16px').replace('font:600 12px', 'font:600 12px') + ';letter-spacing:.1em',
+      textoVerif: sellos[1],
+
+      hayDocumento: !f.borrado,
+      sinDocumento: f.borrado,
+      textoBorrado: 'La cédula y la selfie se borraron el 3 de julio, noventa días después de aprobarla. Queda la marca de que ocurrió y quién la aprobó. Es lo que prometimos.',
+
+      hayIntentos: f.intentos > 0,
+      tituloIntentos: f.intentos + ' intentos antes de este',
+      detalleIntentos: 'Dos con la foto movida y uno con un documento distinto al primero. Míralo con calma antes de aprobar.',
+
+      hayHistorial: historial.length > 0,
+      sinHistorial: historial.length === 0,
+      tituloVacio: f.verif === 'verificada' ? 'Verificada, pero todavía no ha cenado' : 'Aún no puede apuntarse',
+      cuerpoVacio: f.verif === 'verificada'
+        ? 'Tiene créditos y perfil completo. Entra al reparto en cuanto se apunte a una fecha.'
+        : 'Hasta que no se apruebe su verificación no entra a ningún reparto.',
+
+      creditos: String(f.creditos),
+      cifraCreditos: 'font:700 clamp(24px,3vw,30px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:' + (f.creditos > 0 ? '#14342A' : '#33513F'),
+
+      tarjeta: 'border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.4vw,24px)',
+      tarjetaAncha: 'border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.4vw,24px);margin-top:12px',
+      tituloBloque: 'font:400 clamp(21px,2.4vw,26px)/1.1 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:#14342A;margin-bottom:14px;display:block',
+      chipInterno: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(20,52,42,.24);font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;color:#33513F;margin-top:6px'
+    };
+  }
+}
+</script>
+</body>
+</html>

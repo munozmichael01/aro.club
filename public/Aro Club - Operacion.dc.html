@@ -65,7 +65,7 @@
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));align-items:start;gap:12px">
           <sc-for list="{{ mesas }}" as="t" hint-placeholder-count="6">
-            <div onDragOver="{{ t.permitir }}" onDrop="{{ t.recibir }}" onDragLeave="{{ t.salir }}" style="{{ t.caja }}">
+            <div data-mesa="{{ t.nReal }}" style="{{ t.caja }}">
               <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
                 <span style="{{ t.numero }}">{{ t.n }}</span>
                 <span style="flex:1;min-width:0">
@@ -77,7 +77,7 @@
               <div style="{{ t.cuerpo }}">
               <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(20,52,42,.12)">
                 <sc-for list="{{ t.gente }}" as="g" hint-placeholder-count="6">
-                  <div draggable="true" onDragStart="{{ g.coger }}" onDragEnd="{{ g.soltar }}" style="{{ g.fila }}">
+                  <div onPointerDown="{{ g.tomar }}" style="{{ g.fila }}">
                     <span style="{{ g.avatar }}">{{ g.inicial }}</span>
                     <span style="flex:1;min-width:0;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ g.nombre }}</span>
                     <span style="font:400 12px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ g.dato }}</span>
@@ -323,7 +323,50 @@ class Component extends DCLogic {
             recalculando: [], antesDeMover: null, repartiendo: false,
             publicando: null, frenoMesa: null };
 
-  componentDidMount() { this.cargarCola(); this.cargarReparto(); }
+  componentDidMount() {
+    this.cargarCola();
+    this.cargarReparto();
+
+    // Arrastre con eventos de puntero y no con drag-and-drop de HTML5.
+    //
+    // El de HTML5 no llegaba a arrancar —ni con raton de verdad— y en
+    // tactil directamente no existe, asi que en el movil de operacion el
+    // panel no se podia usar. Con punteros el gesto es el mismo en las dos
+    // y controlamos que se ve mientras dura.
+    this._mover = (e) => {
+      const d = this._drag;
+      if (!d) return;
+      if (!d.activo) {
+        if (Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) < 6) return;
+        d.activo = true;
+        this.setState({ arrastrando: d.pid });
+      }
+      e.preventDefault();
+      const bajo = document.elementFromPoint(e.clientX, e.clientY);
+      const caja = bajo && bajo.closest ? bajo.closest('[data-mesa]') : null;
+      const n = caja ? parseInt(caja.getAttribute('data-mesa'), 10) : null;
+      if (this.state.sobreMesa !== n) this.setState({ sobreMesa: n });
+    };
+
+    this._levantar = () => {
+      const d = this._drag;
+      this._drag = null;
+      if (!d || !d.activo) { this.setState({ arrastrando: null, sobreMesa: null }); return; }
+      const destino = this.state.sobreMesa;
+      this.setState({ arrastrando: null, sobreMesa: null });
+      if (destino != null && destino !== d.desde) this.moverPersona(d.pid, destino);
+    };
+
+    window.addEventListener('pointermove', this._mover, { passive: false });
+    window.addEventListener('pointerup', this._levantar);
+    window.addEventListener('pointercancel', this._levantar);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('pointermove', this._mover);
+    window.removeEventListener('pointerup', this._levantar);
+    window.removeEventListener('pointercancel', this._levantar);
+  }
 
   cargarReparto() {
     fetch('/api/operacion/repartir')
@@ -444,6 +487,33 @@ class Component extends DCLogic {
   // con lo que esta roto. Forzar es otra llamada, a proposito.
   // Publicar una sola mesa. Cerrar de una en una fija ese grupo y deja el
   // resto en juego: volver a repartir ya no los toca.
+  // Deshacer una mesa cerrada. Devuelve su gente al pool y descuenta sus
+  // encuentros, para que no queden vetados seis meses por una cena que se
+  // cancelo.
+  despublicarUna(numero) {
+    const c = this.state.reparto && this.state.reparto.corrida;
+    if (!c || this.state.trabajando) return;
+    this.setState({ trabajando: true, fallo: '', publicando: numero });
+    fetch('/api/operacion/despublicar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ corridaId: c.id, mesa: numero })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) { this.setState({ trabajando: false, publicando: null, fallo: d.error || 'No se pudo deshacer.' }); return; }
+        this.setState({
+          trabajando: false, publicando: null,
+          aviso: 'Mesa ' + String(numero).padStart(2, '0') + ' deshecha. ' +
+            (d.correosYaEnviados
+              // Esto no lo arregla el sistema: hay que escribirles.
+              ? 'OJO: a ' + d.correosYaEnviados + ' ya les habia llegado el correo. Escribeles.'
+              : 'Los ' + d.correosRetirados + ' avisos se retiraron a tiempo.')
+        });
+        this.cargarReparto();
+      })
+      .catch(() => this.setState({ trabajando: false, publicando: null, fallo: 'No se pudo deshacer.' }));
+  }
+
   publicarUna(numero, forzar) {
     const c = this.state.reparto && this.state.reparto.corrida;
     if (!c || this.state.trabajando) return;
@@ -615,6 +685,7 @@ class Component extends DCLogic {
         // que queda por cerrar puede ser la 03, y enseñar "01" era mentir
         // sobre a que mesa va a llegar esa gente.
         n: String((propuesta[k] && propuesta[k].numero) || k + 1).padStart(2, '0'),
+        nReal: (propuesta[k] && propuesta[k].numero) || (k + 1),
         // El sitio es de LA MESA. Con dos zonas abiertas, poner el del
         // evento hacia que las dos mesas dijeran Cardenal estando una en
         // Alto: el panel enseñaba a operacion un sitio equivocado.
@@ -625,61 +696,63 @@ class Component extends DCLogic {
           : '',
         // Mientras el servidor revalida, la mesa lo dice en su propio sello
         // en vez de dejar un CUADRA o un REVISAR que ya no vale.
-        recalculando: this.state.recalculando.indexOf(k + 1) >= 0,
+        recalculando: this.state.recalculando.indexOf((propuesta[k] && propuesta[k].numero) || (k + 1)) >= 0,
         publicada: !!(propuesta[k] && propuesta[k].publicada),
         // Una mesa cerrada no se arrastra ni se cambia de sitio.
         textoPublicarMesa: this.state.publicando === (propuesta[k] && propuesta[k].numero)
-          ? 'Publicando'
-          : ((propuesta[k] && propuesta[k].publicada) ? 'Publicada' : 'Publicar esta mesa'),
+          ? 'Un momento'
+          // Una mesa cerrada no dice "Publicada" y punto: dice como volver.
+          : ((propuesta[k] && propuesta[k].publicada) ? 'Deshacer esta mesa' : 'Publicar esta mesa'),
         publicarMesa: () => {
-          if (propuesta[k] && !propuesta[k].publicada) this.publicarUna(propuesta[k].numero, false);
+          if (!propuesta[k]) return;
+          if (propuesta[k].publicada) this.despublicarUna(propuesta[k].numero);
+          else this.publicarUna(propuesta[k].numero, false);
         },
-        botonMesa: 'width:100%;display:inline-flex;align-items:center;justify-content:center;min-height:48px;margin-top:13px;padding:0 18px;border-radius:999px;border:none;font:600 14px/1 \'Inter Tight\',sans-serif;background:' +
-          ((propuesta[k] && propuesta[k].publicada) ? 'rgba(27,81,56,.13)' : '#1B5138') + ';color:' +
-          ((propuesta[k] && propuesta[k].publicada) ? '#1B5138' : '#FAF3E4') + ';cursor:' +
-          ((propuesta[k] && propuesta[k].publicada) ? 'default' : 'pointer'),
-        estado: this.state.recalculando.indexOf(k + 1) >= 0
+        // Deshacer va en borde y no en solido: no es el camino normal.
+        botonMesa: 'width:100%;display:inline-flex;align-items:center;justify-content:center;min-height:48px;margin-top:13px;padding:0 18px;border-radius:999px;font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;' +
+          ((propuesta[k] && propuesta[k].publicada)
+            ? 'background:transparent;border:1px solid rgba(143,69,21,.44);color:#8F4515'
+            : 'background:#1B5138;border:none;color:#FAF3E4'),
+        estado: this.state.recalculando.indexOf((propuesta[k] && propuesta[k].numero) || (k + 1)) >= 0
           ? 'CALCULANDO'
           : ((propuesta[k] && propuesta[k].publicada) ? 'PUBLICADA' : (ojo ? 'REVISAR' : 'CUADRA')),
         // El borde cambia cuando se pasa por encima arrastrando: hay que
         // ver donde va a caer ANTES de soltar.
         // Lo que ya no es de fiar se atenua: la puntuacion y las señales de
         // una mesa que esta recalculando son las de antes del movimiento.
-        cuerpo: 'opacity:' + (this.state.recalculando.indexOf(k + 1) >= 0 ? '.5' : '1') + ';transition:opacity 160ms ease',
-        caja: 'border-radius:24px;background:' + (this.state.sobreMesa === (k + 1) ? '#FFFBF0' : '#FAF3E4') +
+        cuerpo: 'opacity:' + (this.state.recalculando.indexOf((propuesta[k] && propuesta[k].numero) || (k + 1)) >= 0 ? '.5' : '1') + ';transition:opacity 160ms ease',
+        caja: 'border-radius:24px;background:' + (this.state.sobreMesa === ((propuesta[k] && propuesta[k].numero) || (k + 1)) ? '#FFFBF0' : '#FAF3E4') +
           ';padding:clamp(16px,2vw,20px);border:1px solid ' +
-          (this.state.sobreMesa === (k + 1) ? '#1B5138' : (ojo ? '#C0662F' : 'transparent')) +
+          (this.state.sobreMesa === ((propuesta[k] && propuesta[k].numero) || (k + 1)) ? '#1B5138' : (ojo ? '#C0662F' : 'transparent')) +
           ';transition:background 140ms ease,border-color 140ms ease',
-        permitir: (e) => {
-          if (!this.state.arrastrando) return;
-          e.preventDefault();
-          if (this.state.sobreMesa !== (k + 1)) this.setState({ sobreMesa: k + 1 });
-        },
-        salir: () => { if (this.state.sobreMesa === (k + 1)) this.setState({ sobreMesa: null }); },
-        recibir: (e) => {
-          e.preventDefault();
-          const quien = this.state.arrastrando;
-          const desde = this.state.desdeMesa;
-          this.setState({ arrastrando: null, sobreMesa: null });
-          if (!quien || desde === (k + 1)) return;
-          this.moverPersona(quien, k + 1);
-        },
         numero: 'flex:0 0 auto;width:42px;height:42px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:700 15px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums',
         sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;' +
-          (this.state.recalculando.indexOf(k + 1) >= 0
+          (this.state.recalculando.indexOf((propuesta[k] && propuesta[k].numero) || (k + 1)) >= 0
             ? 'background:rgba(20,52,42,.09);color:#33513F;animation:aro-latido 1.2s ease-in-out infinite'
             : 'background:' + (ojo ? 'rgba(143,69,21,.13)' : 'rgba(27,81,56,.11)') + ';color:' + (ojo ? '#8F4515' : '#1B5138')),
         gente: g.map((p, i) => {
           const pid = (propuesta[k] && propuesta[k].integrantes[i] && propuesta[k].integrantes[i].profileId) || null;
           const arrastrando = this.state.arrastrando === pid;
+          // Una mesa cerrada no se toca, asi que tampoco se arrastra. Dejar
+          // el cursor de arrastre sobre algo que el servidor va a rechazar
+          // es prometer una interaccion que no existe.
+          const cerrada = !!(propuesta[k] && propuesta[k].publicada);
           return {
             nombre: p[0], dato: p[1] + ', ' + p[2], inicial: p[0].charAt(0), avatar: avatar(i + k),
             // Se ve de donde sale mientras se arrastra: sin eso, al soltar
             // en la mesa equivocada no hay forma de saber que se movio.
-            fila: 'display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(20,52,42,.09);cursor:grab;opacity:' +
+
+            // Sin seleccion de texto: arrastrar una fila seleccionaba media
+            // tarjeta y el panel se veia roto justo mientras se usa.
+            fila: 'user-select:none;-webkit-user-select:none;touch-action:none;display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(20,52,42,.09);cursor:' +
+              (cerrada ? 'default' : 'grab') + ';opacity:' +
               (arrastrando ? '.4' : '1') + ';transition:opacity 140ms ease',
-            coger: () => this.setState({ arrastrando: pid, desdeMesa: propuesta[k].numero }),
-            soltar: () => this.setState({ arrastrando: null, sobreMesa: null }),
+            tomar: (e) => {
+              if (cerrada) return;
+              // Solo se guarda la intencion: hasta que no se mueven seis
+              // pixeles no es un arrastre, es un clic.
+              this._drag = { pid: pid, desde: propuesta[k].numero, x: e.clientX, y: e.clientY, activo: false };
+            },
             verPerfil: () => this.setState({ fallo: 'El perfil del miembro todavía no existe. Se lo pedimos a Design.' })
           };
         }),
