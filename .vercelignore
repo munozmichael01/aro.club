@@ -1,0 +1,11 @@
+# Las entregas de Design son la especificación, no el producto: 5,3 MB de
+# los que ninguno se sirve. Diez copias del mismo `support.js` y las fotos
+# repetidas en cada carpeta. No tienen por qué subir a cada despliegue.
+#
+# Siguen en el repositorio a propósito: los HANDOFF son el contrato —la
+# respuesta a «por qué esto es así»— y los `.dc.html` son contra lo que se
+# contrasta cada pantalla antes de darla por hecha.
+docs/
+
+# El andamio de pruebas tampoco.
+scripts/

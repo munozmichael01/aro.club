@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // El runtime de Design y las once copias que trae cada entrega. No es
+    // nuestro código y no lo vamos a arreglar: con él dentro, `npm run lint`
+    // devolvía 111 problemas de los que 22 eran errores suyos, y un lint que
+    // nadie lee es un lint que no existe.
+    "docs/entrega/**",
+    "public/support.js",
   ]),
 ]);
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { PESOS, repartir, roturas, desglose, resumen, zonasDe, type Persona } from '@/lib/reparto/repartir'
+import { PESOS, repartir, roturas, desglose, resumen, zonasDe } from '@/lib/reparto/repartir'
 import { exigirOps } from '@/lib/ops'
 import { construirPool } from '@/lib/reparto/pool'
 import { createAdminClient } from '@/lib/supabase/admin'
