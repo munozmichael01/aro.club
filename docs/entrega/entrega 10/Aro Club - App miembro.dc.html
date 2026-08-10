@@ -1,0 +1,2179 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#DED6C0; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  input, button, textarea { font: inherit; color: inherit; }
+  ::selection { background:#14342A; color:#FAF3E4; }
+  ::placeholder { color:#5F7266; }
+  :focus-visible { outline:2px solid #8F4515; outline-offset:2px; }
+  .aro-scroll { overflow-y:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .aro-scroll::-webkit-scrollbar { display:none; }
+  .aro-rail::-webkit-scrollbar { display:none; }
+  @keyframes aro-in { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:none } }
+  @keyframes aro-spin { to { transform:rotate(360deg) } }
+  @keyframes aro-noti { from { opacity:0; transform:translateY(-22px) scale(.97) } to { opacity:1; transform:none } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#DED6C0;display:flex;align-items:flex-start;justify-content:center;padding:clamp(12px,3vw,40px);font-family:'Inter Tight',system-ui,sans-serif">
+
+  <div style="width:390px;max-width:100%;height:844px;max-height:calc(100vh - 24px);border-radius:44px;overflow:hidden;background:#FAF3E4;box-shadow:0 40px 90px -40px rgba(20,52,42,.6);display:flex;flex-direction:column;position:relative">
+
+    <div style="{{ barraSuperior }}">
+      <span style="font:600 14px/1 'Inter Tight',sans-serif;font-variant-numeric:tabular-nums">{{ hora }}</span>
+      <span style="display:flex;gap:5px;align-items:center">
+        <sc-if value="{{ sinRed }}" hint-placeholder-val="{{ false }}">
+          <span style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.06em">SIN RED</span>
+        </sc-if>
+        <span style="width:16px;height:9px;border:1.4px solid currentColor;border-radius:3px;opacity:.85"></span>
+      </span>
+    </div>
+
+    <sc-if value="{{ hayCabecera }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ cabecera }}">
+        <sc-if value="{{ hayAtras }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ atras }}" aria-label="Atrás" style="{{ botonAtras }}">←</button>
+        </sc-if>
+        <span style="{{ tituloCabecera }}">{{ titulo }}</span>
+        <span style="flex:1"></span>
+        <sc-if value="{{ hayPerfil }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ irPerfil }}" aria-label="Mi perfil" style="{{ botonAvatar }}">D</button>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <div class="aro-scroll" style="{{ lienzo }}">
+
+      <sc-if value="{{ esArranque }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;height:100%;animation:aro-in 420ms ease both">
+          <div style="{{ heroFoto }}"><div style="{{ heroVelo }}"></div></div>
+          <div style="flex:0 0 auto;display:flex;flex-direction:column;padding:22px 24px 26px">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" style="margin-bottom:14px"><circle cx="12" cy="12" r="8.6" stroke="#FAF3E4" stroke-width="1.8"></circle><circle cx="20.6" cy="12" r="1.9" fill="#E39C63"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#FAF3E4"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#FAF3E4"></circle><circle cx="3.4" cy="12" r="1.9" fill="#FAF3E4"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#FAF3E4"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#FAF3E4"></circle></svg>
+            <h1 style="font:400 34px/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#FAF3E4;margin:0 0 12px">Ya sabemos con quién cenas el jueves.</h1>
+            <p style="font:400 16px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;margin:0 0 20px;max-width:32ch">Un club para conocer gente en tu ciudad. Empezamos por la cena: seis desconocidos, una mesa, cada semana.</p>
+            <button onClick="{{ empezar }}" style="{{ botonClaro }}">Empezar</button>
+            <button onClick="{{ irEntrar }}" style="{{ botonFantasmaClaro }}">Ya tengo cuenta</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esEntrar }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:22px 24px 30px;animation:aro-in 320ms ease both">
+          <h1 style="{{ h1 }}">Entra a tu mesa.</h1>
+          <p style="{{ bajada }}">Con la cuenta que usaste al registrarte.</p>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:26px">
+            <button onClick="{{ entrarProveedor }}" style="{{ botonApple }}">
+              <svg width="17" height="20" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.8-1.6 0-3.1 1-3.9 2.4C.2 10.4 1.4 14.7 3 17c.8 1.1 1.7 2.4 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.8zM11.7 3.3c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"></path></svg>
+              Continuar con Apple
+            </button>
+            <button onClick="{{ entrarProveedor }}" style="{{ botonGoogle }}">
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
+              Continuar con Google
+            </button>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;margin:22px 0">
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.18)"></span>
+            <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#33513F">O</span>
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.18)"></span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <input type="email" placeholder="tu@correo.com" value="{{ correo }}" onChange="{{ onCorreo }}" autocomplete="email" aria-label="Tu correo" style="{{ campo }}" />
+            <input type="password" placeholder="Tu contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="current-password" aria-label="Tu contraseña" style="{{ campo }}" />
+            <button onClick="{{ entrarCorreo }}" style="{{ botonPrimario }}">Entrar</button>
+          </div>
+          <button onClick="{{ nada }}" style="{{ botonFantasma }}">Olvidé mi contraseña</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esQuiz }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;min-height:100%;padding:14px 24px 24px">
+          <div style="display:flex;gap:4px;margin-bottom:12px">
+            <sc-for list="{{ bloques }}" as="b" hint-placeholder-count="5">
+              <span style="{{ b.barra }}"></span>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:20px">
+            <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">{{ bloqueTitulo }}</span>
+            <span style="font:500 12px/1 'Inter Tight',sans-serif;color:#33513F;font-variant-numeric:tabular-nums">{{ contadorQuiz }}</span>
+          </div>
+
+          <div style="flex:1;animation:aro-in 260ms ease both">
+            <h2 style="{{ h2Quiz }}">{{ quizPregunta }}</h2>
+            <sc-if value="{{ hayAyuda }}" hint-placeholder-val="{{ false }}">
+              <p style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin:10px 0 0;text-wrap:pretty">{{ quizAyuda }}</p>
+            </sc-if>
+            <sc-if value="{{ esOpcional }}" hint-placeholder-val="{{ false }}">
+              <span style="{{ chipOpcional }}">OPCIONAL</span>
+            </sc-if>
+
+            <sc-if value="{{ esTexto }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:20px">
+                <input type="text" value="{{ textoLibre }}" onChange="{{ onTextoLibre }}" placeholder="Empieza a escribir" aria-label="{{ quizPregunta }}" style="{{ campo }}" />
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:11px">
+                  <sc-for list="{{ sugerencias }}" as="s" hint-placeholder-count="3">
+                    <button onClick="{{ s.pick }}" style="{{ chipSugerencia }}">{{ s.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ esLista }}" hint-placeholder-val="{{ true }}">
+              <div style="{{ contenedorOpciones }}">
+                <sc-for list="{{ opciones }}" as="o" hint-placeholder-count="5">
+                  <button onClick="{{ o.pick }}" style="{{ o.btn }}">
+                    <span style="{{ o.aro }}">{{ o.icono }}</span>
+                    <span style="{{ o.txt }}">{{ o.label }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="position:sticky;bottom:0;background:linear-gradient(rgba(250,243,228,0),#FAF3E4 24%);padding-top:16px;margin-top:20px">
+            <sc-if value="{{ hayContador }}" hint-placeholder-val="{{ false }}">
+              <div style="{{ contadorEstilo }}">{{ contadorMulti }}</div>
+            </sc-if>
+            <button onClick="{{ siguiente }}" aria-disabled="{{ inerteQuiz }}" style="{{ botonSiguiente }}">{{ textoSiguiente }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esMisDatos }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+          <h2 style="{{ h2 }}">Tus datos base.</h2>
+          <p style="{{ bajada }}">Lo que diste al entrar. La edad y el género sostienen el reparto, y no se le muestran a nadie.</p>
+          <div style="border-radius:22px;background:#FFFBF0;margin-top:20px;overflow:hidden">
+            <sc-for list="{{ filasDatos }}" as="d" hint-placeholder-count="5">
+              <div>
+                <button onClick="{{ d.editar }}" style="{{ d.fila }}">
+                  <span style="flex:1;min-width:0;text-align:left">
+                    <span style="display:block;font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ d.etiqueta }}</span>
+                    <span style="{{ d.valorEstilo }}">{{ d.valor }}</span>
+                  </span>
+                  <span style="{{ d.flecha }}">{{ d.glifo }}</span>
+                </button>
+                <sc-if value="{{ d.abierta }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:2px 18px 18px;animation:aro-in 220ms ease both">
+                    <sc-if value="{{ d.esTexto }}" hint-placeholder-val="{{ true }}">
+                      <input type="text" value="{{ d.texto }}" onChange="{{ d.onTexto }}" placeholder="{{ d.pista }}" aria-label="{{ d.etiqueta }}" style="{{ d.campo }}" />
+                    </sc-if>
+                    <sc-if value="{{ d.esFecha }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;gap:8px">
+                        <input type="text" inputmode="numeric" value="{{ d.dia }}" onChange="{{ d.onDia }}" placeholder="Día" aria-label="Día" style="{{ d.campoCorto }}" />
+                        <input type="text" inputmode="numeric" value="{{ d.mes }}" onChange="{{ d.onMes }}" placeholder="Mes" aria-label="Mes" style="{{ d.campoCorto }}" />
+                        <input type="text" inputmode="numeric" value="{{ d.ano }}" onChange="{{ d.onAno }}" placeholder="Año" aria-label="Año" style="{{ d.campoLargo }}" />
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ d.esOpciones }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-wrap:wrap;gap:8px">
+                        <sc-for list="{{ d.opciones }}" as="o" hint-placeholder-count="4">
+                          <button onClick="{{ o.pick }}" style="{{ o.btn }}">
+                            <span style="{{ o.aro }}">{{ o.icono }}</span>
+                            <span style="{{ o.txt }}">{{ o.label }}</span>
+                          </button>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <button onClick="{{ d.cerrar }}" style="{{ d.botonListo }}">Listo</button>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:16px;text-wrap:pretty">Tu teléfono solo lo usamos el día del encuentro. Nadie de tu mesa lo ve.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esDatos }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+          <h2 style="{{ h2 }}">Ahora tú, en cinco datos.</h2>
+          <p style="{{ bajada }}">La edad y el género no se le enseñan a nadie. Sirven para que la mesa tenga referencias parecidas: nadie se sienta con gente que le saca veinte años.</p>
+          <div style="display:flex;flex-direction:column;gap:18px;margin-top:24px">
+            <div>
+              <label style="{{ etiquetaCampo }}" for="d-nombre">Tu nombre</label>
+              <input id="d-nombre" type="text" value="{{ dNombre }}" onChange="{{ onDNombre }}" placeholder="Daniela Pérez" autocomplete="name" style="{{ campo }}" />
+            </div>
+            <div>
+              <label style="{{ etiquetaCampo }}" for="d-llamar">Cómo quieres que te llamen en la mesa</label>
+              <input id="d-llamar" type="text" value="{{ dLlamar }}" onChange="{{ onDLlamar }}" placeholder="Daniela" style="{{ campo }}" />
+              <div style="{{ ayudaCampo }}">Es lo único tuyo que ven los otros cinco, junto a tu sector.</div>
+            </div>
+            <div>
+              <div style="{{ etiquetaCampo }}">Fecha de nacimiento</div>
+              <div style="display:flex;gap:8px">
+                <input type="text" inputmode="numeric" value="{{ dDia }}" onChange="{{ onDDia }}" placeholder="Día" aria-label="Día" style="{{ campoCorto }}" />
+                <input type="text" inputmode="numeric" value="{{ dMes }}" onChange="{{ onDMes }}" placeholder="Mes" aria-label="Mes" style="{{ campoCorto }}" />
+                <input type="text" inputmode="numeric" value="{{ dAno }}" onChange="{{ onDAno }}" placeholder="Año" aria-label="Año" style="{{ campoLargo }}" />
+              </div>
+              <div style="{{ ayudaCampo }}">{{ notaEdad }}</div>
+            </div>
+            <div>
+              <div style="{{ etiquetaCampo }}">Género</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <sc-for list="{{ generos }}" as="g" hint-placeholder-count="4">
+                  <button onClick="{{ g.pick }}" style="{{ g.btn }}"><span style="{{ g.aro }}">{{ g.icono }}</span><span style="{{ g.txt }}">{{ g.label }}</span></button>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <label style="{{ etiquetaCampo }}" for="d-tel">Teléfono</label>
+              <input id="d-tel" type="tel" value="{{ dTel }}" onChange="{{ onDTel }}" placeholder="+58 412 1234567" autocomplete="tel" style="{{ campo }}" />
+              <div style="{{ ayudaCampo }}">Solo te escribimos por aquí el día de la cena.</div>
+            </div>
+            <button onClick="{{ guardarDatos }}" aria-disabled="{{ inerteDatos }}" style="{{ botonDatos }}">{{ textoDatos }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esCuenta }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 320ms ease both">
+          <div style="{{ selloVerde }}">TIENES PUESTO</div>
+          <h2 style="{{ h2 }}">Guarda tu puesto con una cuenta.</h2>
+          <p style="{{ bajada }}">Ya respondimos lo difícil. Esto es para que puedas volver.</p>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:24px">
+            <button onClick="{{ crearProveedor }}" style="{{ botonApple }}">
+              <svg width="17" height="20" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.8-1.6 0-3.1 1-3.9 2.4C.2 10.4 1.4 14.7 3 17c.8 1.1 1.7 2.4 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.8zM11.7 3.3c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"></path></svg>
+              Continuar con Apple
+            </button>
+            <button onClick="{{ crearProveedor }}" style="{{ botonGoogle }}">
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
+              Continuar con Google
+            </button>
+            <sc-if value="{{ sinFormCuenta }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ abrirFormCuenta }}" style="{{ botonBorde }}">Usar correo y contraseña</button>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ conFormCuenta }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px;animation:aro-in 240ms ease both">
+              <input type="email" value="{{ correo }}" onChange="{{ onCorreo }}" placeholder="tu@correo.com" autocomplete="email" aria-label="Tu correo" style="{{ campoAncho }}" />
+              <div style="position:relative;display:flex">
+                <input type="{{ tipoClave }}" value="{{ clave }}" onChange="{{ onClave }}" placeholder="Contraseña" autocomplete="new-password" aria-label="Contraseña" style="{{ campoClave }}" />
+                <button onClick="{{ verClave }}" aria-label="Mostrar u ocultar" style="{{ botonVer }}">{{ textoVer }}</button>
+              </div>
+              <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:{{ colorPista }}">{{ pistaClave }}</div>
+              <button onClick="{{ crearCorreo }}" aria-disabled="{{ inerteCuenta }}" style="{{ botonCrear }}">{{ textoCrear }}</button>
+              <button onClick="{{ cerrarFormCuenta }}" style="{{ botonFantasma }}">Mejor con Apple o Google</button>
+            </div>
+          </sc-if>
+          <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:20px;text-wrap:pretty">Al crear la cuenta aceptas las reglas de la mesa. Con Apple puedes ocultar tu correo: si lo haces, te pedimos uno de contacto para poder avisarte de tu mesa.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esHome }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:6px 24px 26px;animation:aro-in 300ms ease both">
+          <h1 style="font:400 34px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0 0 22px">Hola, Daniela.</h1>
+
+          <div style="{{ tarjetaPaso }}">
+            <div style="{{ selloPaso }}">{{ paso.sello }}</div>
+            <div style="font:400 26px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:{{ paso.colorTitulo }};margin-bottom:10px">{{ paso.titulo }}</div>
+            <div style="font:400 15px/1.55 'Inter Tight',sans-serif;color:{{ paso.colorCuerpo }};text-wrap:pretty">{{ paso.cuerpo }}</div>
+            <button onClick="{{ paso.accion }}" style="{{ paso.boton }}">{{ paso.textoAccion }}</button>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:12px">
+            <div style="{{ tarjetaMini }}">
+              <div style="{{ etiquetaMini }}">CRÉDITOS</div>
+              <div style="{{ cifraMini }}">{{ creditos }}</div>
+              <div style="{{ notaMini }}">{{ creditosNota }}</div>
+            </div>
+            <div style="{{ tarjetaMini }}">
+              <div style="{{ etiquetaMini }}">TU PERFIL</div>
+              <div style="{{ cifraMini }}">{{ perfilPct }}</div>
+              <div style="{{ notaMini }}">{{ perfilNota }}</div>
+            </div>
+          </div>
+
+          <sc-if value="{{ hayValorar }}" hint-placeholder-val="{{ false }}">
+            <div style="border-radius:24px;background:#F2E9D5;padding:19px;margin-top:12px">
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:10px">PENDIENTE DE VALORAR</div>
+              <div style="font:400 22px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">¿Qué tal estuvo?</div>
+              <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:8px;text-wrap:pretty">Lo que nos cuentes entra en el emparejamiento de la próxima, y puedes marcar con quién prefieres no repetir.</div>
+              <button onClick="{{ irDespuesDeCena }}" style="{{ botonPrimarioAncho }}">Contar qué tal fue</button>
+            </div>
+          </sc-if>
+
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin:26px 0 12px">LO PRÓXIMO</div>
+          <sc-if value="{{ hayPlanes }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:0">
+              <sc-for list="{{ planes }}" as="p" hint-placeholder-count="2">
+                <button onClick="{{ p.abrir }}" style="{{ p.fila }}">
+                  <span style="flex:1;min-width:0;text-align:left">
+                    <span style="display:block;font:400 20px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ p.titulo }}</span>
+                    <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ p.detalle }}</span>
+                  </span>
+                  <span style="{{ p.chip }}">{{ p.estado }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <button onClick="{{ irPlanesTab }}" style="{{ botonBordeAncho }}">Ver todos los planes</button>
+          </sc-if>
+          <sc-if value="{{ sinPlanes }}" hint-placeholder-val="{{ true }}">
+            <div style="border-radius:24px;border:1px dashed rgba(20,52,42,.28);padding:20px">
+              <div style="font:400 20px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Todavía no tienes ninguna.</div>
+              <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:8px;text-wrap:pretty">Mira qué jueves hay abiertos y apúntate al que te sirva. Te sentamos con cinco personas de tus zonas.</div>
+              <button onClick="{{ irPlanesTab }}" style="{{ botonPrimarioAncho }}">Ver la agenda</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hayAvisoNoti }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;border:1px solid rgba(143,69,21,.34);padding:15px 17px;margin-top:12px">
+              <span style="{{ iconoAviso }}">!</span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">Sin avisos no sabrás dónde es</span>
+                <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-wrap:pretty">El jueves a las doce se abre tu mesa. Sin notificaciones te lo mandamos por correo, pero se te puede pasar.</span>
+                <button onClick="{{ pedirNoti }}" style="{{ botonMini }}">Activar avisos</button>
+              </span>
+            </div>
+          </sc-if>
+
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esVerificar }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;min-height:100%;padding:8px 24px 26px">
+          <button onClick="{{ ciclarVerif }}" style="{{ botonDemoVerif }}">{{ etiquetaDemoVerif }}</button>
+
+          <sc-if value="{{ vRechazo }}" hint-placeholder-val="{{ false }}">
+            <div style="animation:aro-in 300ms ease both">
+              <div style="{{ selloTerra }}">FALTA UNA FOTO</div>
+              <h2 style="{{ h2 }}">No se lee tu cédula.</h2>
+              <p style="{{ bajada }}">No es un rechazo: es que el número está borroso. Repite solo esa foto, la selfie ya está guardada.</p>
+              <div style="border-radius:22px;border:1px solid rgba(143,69,21,.34);padding:17px 19px;margin-top:20px">
+                <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:11px">LO QUE VIO QUIEN REVISÓ</div>
+                <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">«El número está borroso en la esquina inferior. Lo demás se ve bien.»</div>
+              </div>
+              <button onClick="{{ repetirCedula }}" style="{{ botonPrimarioAncho }}">Repetir la foto de la cédula</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ vHecha }}" hint-placeholder-val="{{ false }}">
+            <div style="animation:aro-in 300ms ease both">
+              <div style="{{ selloVerde }}">IDENTIDAD VERIFICADA</div>
+              <h2 style="{{ h2 }}">Eres tú, y ya está comprobado.</h2>
+              <p style="{{ bajada }}">Lo revisó una persona de nuestro equipo el 6 de agosto. Ya puedes reservar puesto en cualquier fecha abierta.</p>
+              <div style="display:flex;flex-direction:column;gap:0;margin-top:22px">
+                <sc-for list="{{ datosVerif }}" as="v" hint-placeholder-count="4">
+                  <div style="display:flex;gap:14px;align-items:baseline;padding:14px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+                    <span style="flex:1 1 130px;font:400 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ v.campo }}</span>
+                    <span style="flex:1 1 130px;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A;text-align:right">{{ v.valor }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="border-radius:22px;background:#F2E9D5;padding:17px 19px;margin-top:20px">
+                <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">Tu cédula y tu selfie se borran el 4 de noviembre</div>
+                <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:5px;text-wrap:pretty">A los noventa días de aprobarla. Después solo queda la marca de que la verificación ocurrió. No las ve ningún otro miembro.</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ vNoPedida }}" hint-placeholder-val="{{ true }}">
+            <div style="animation:aro-in 300ms ease both">
+              <h2 style="{{ h2 }}">Antes de pedirte nada, esto es lo que hacemos con ello.</h2>
+              <div style="display:flex;flex-direction:column;gap:14px;margin-top:22px">
+                <sc-for list="{{ promesasVerif }}" as="p" hint-placeholder-count="3">
+                  <div style="display:flex;gap:12px;align-items:flex-start">
+                    <span style="{{ puntoVerde }}">✓</span>
+                    <span style="flex:1;min-width:0;font:400 15px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ p.texto }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="border-radius:22px;background:#F2E9D5;padding:17px 19px;margin-top:22px">
+                <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">Vamos a usar la cámara</div>
+                <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:5px;text-wrap:pretty">Dos fotos: tu cédula y tu cara. Nada más. No guardamos nada de la cámara aparte de esas dos.</div>
+              </div>
+              <button onClick="{{ empezarFotos }}" style="{{ botonPrimarioAncho }}">Hacer las dos fotos</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ vCamara }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;height:100%;animation:aro-in 240ms ease both">
+              <div style="display:flex;gap:5px;margin-bottom:14px">
+                <span style="{{ barraFoto1 }}"></span>
+                <span style="{{ barraFoto2 }}"></span>
+              </div>
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:10px">{{ etiquetaFoto }}</div>
+              <div style="font:400 24px/1.12 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A;margin-bottom:16px">{{ tituloFoto }}</div>
+              <div style="{{ visor }}">
+                <span style="{{ guiaVisor }}"></span>
+                <span style="position:relative;font:400 14px/1.5 'Inter Tight',sans-serif;color:#9CBBA6;text-align:center;padding:0 24px">{{ pieVisor }}</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:22px;margin-top:auto;padding-top:20px">
+                <button onClick="{{ galeria }}" style="{{ botonFantasma }}">Galería</button>
+                <button onClick="{{ disparar }}" aria-label="Hacer la foto" style="{{ botonDisparo }}"></button>
+                <button onClick="{{ voltear }}" style="{{ botonFantasma }}">Voltear</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ vRevision }}" hint-placeholder-val="{{ false }}">
+            <div style="animation:aro-in 320ms ease both;padding-top:8px">
+              <div style="{{ selloNeutro }}">EN REVISIÓN</div>
+              <h2 style="{{ h2 }}">Lo está mirando una persona.</h2>
+              <p style="{{ bajada }}">No es un robot comparando caras. Alguien de nuestro equipo revisa que tu cédula y tu foto sean la misma persona, y suele tardar menos de un día.</p>
+              <div style="border-radius:22px;background:#F2E9D5;padding:17px 19px;margin-top:22px">
+                <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">Te avisamos en cuanto esté. Mientras tanto puedes seguir mirando las fechas, pero no reservar: los sin verificar no entran al reparto.</div>
+              </div>
+              <button onClick="{{ irHome }}" style="{{ botonPrimarioAncho }}">Volver al inicio</button>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esFechas }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+          <div class="aro-rail" style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:0;margin:0 0 22px;padding:2px 0 6px;scrollbar-width:none">
+            <sc-for list="{{ categorias }}" as="c" hint-placeholder-count="4">
+              <button onClick="{{ c.pick }}" style="{{ c.marco }}">
+                <span style="{{ c.foto }}"><span style="{{ c.tinte }}"></span></span>
+                <span style="{{ c.pie }}">{{ c.nombre }}</span>
+                <span style="{{ c.dias }}">{{ c.detalle }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <h2 style="{{ h2 }}">{{ tituloFechas }}</h2>
+          <p style="{{ bajada }}">Te apuntas a una fecha, no a una mesa. Cenas siempre con cinco personas: repartimos a los apuntados en mesas de seis por tus zonas, y el jueves a las doce sabes en cuál te tocó.</p>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+            <sc-for list="{{ fechas }}" as="f" hint-placeholder-count="4">
+              <button onClick="{{ f.pick }}" style="{{ f.caja }}">
+                <span style="display:flex;align-items:center;gap:13px;width:100%">
+                  <span style="{{ f.dia }}">{{ f.diaN }}</span>
+                  <span style="flex:1;min-width:0;text-align:left">
+                    <span style="display:block;font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ f.titulo }}</span>
+                    <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ f.detalle }}</span>
+                  </span>
+                  <span style="{{ f.aro }}">{{ f.icono }}</span>
+                </span>
+                <span style="{{ f.estado }}">{{ f.gente }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="position:sticky;bottom:0;background:linear-gradient(rgba(250,243,228,0),#FAF3E4 24%);padding-top:16px;margin-top:18px">
+            <button onClick="{{ irPago }}" aria-disabled="{{ inerteFecha }}" style="{{ botonFecha }}">{{ textoFecha }}</button>
+          </div>
+
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin:30px 0 12px">TUS PLANES</div>
+          <sc-if value="{{ hayPlanes }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:0">
+              <sc-for list="{{ planes }}" as="p" hint-placeholder-count="2">
+                <button onClick="{{ p.abrir }}" style="{{ p.fila }}">
+                  <span style="flex:1;min-width:0;text-align:left">
+                    <span style="display:block;font:400 20px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ p.titulo }}</span>
+                    <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ p.detalle }}</span>
+                  </span>
+                  <span style="{{ p.chip }}">{{ p.estado }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ sinPlanes }}" hint-placeholder-val="{{ true }}">
+            <div style="border-radius:24px;border:1px dashed rgba(20,52,42,.28);padding:20px">
+              <div style="font:400 20px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Todavía no te has apuntado a nada.</div>
+              <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:8px;text-wrap:pretty">Cuando te apuntes a una fecha aparece aquí, y después de ir podrás contarnos qué tal fue.</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esPago }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+
+          <sc-if value="{{ pResumen }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <h2 style="{{ h2 }}">Tu puesto del {{ fechaElegidaBaja }}.</h2>
+              <div style="border-radius:24px;background:#F2E9D5;padding:20px;margin-top:20px">
+                <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
+                  <span style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">Un puesto</span>
+                  <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">8,00 USD</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-top:9px">
+                  <span style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">Tasa BCV de hoy</span>
+                  <span style="font:500 15px/1.4 'Inter Tight',sans-serif;color:#33513F;font-variant-numeric:tabular-nums">756,71 Bs</span>
+                </div>
+                <div style="height:1px;background:rgba(20,52,42,.14);margin:16px 0"></div>
+                <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
+                  <span style="font:600 16px/1.4 'Inter Tight',sans-serif;color:#14342A">Total</span>
+                  <span style="font:700 28px/1 'Inter Tight',sans-serif;letter-spacing:-.03em;color:#14342A;font-variant-numeric:tabular-nums">6.053,68 Bs</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(143,69,21,.09);padding:14px 16px;margin-top:12px">
+                <span style="{{ iconoAviso }}">!</span>
+                <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">Esto no incluye tu consumo. La comida y la bebida las pagas en el restaurante.</span>
+              </div>
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin:24px 0 12px">CÓMO PAGAS</div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ metodos }}" as="m" hint-placeholder-count="4">
+                  <button onClick="{{ m.pick }}" aria-disabled="{{ m.inerte }}" style="{{ m.btn }}">
+                    <span style="{{ m.aro }}">{{ m.icono }}</span>
+                    <span style="flex:1;min-width:0;text-align:left">
+                      <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                        <span style="{{ m.txt }}">{{ m.nombre }}</span>
+                        <span style="{{ m.selloEstilo }}">{{ m.sello }}</span>
+                      </span>
+                      <span style="display:block;font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ m.nota }}</span>
+                    </span>
+                  </button>
+                </sc-for>
+              </div>
+              <button onClick="{{ irBanco }}" style="{{ botonPrimarioAncho }}">{{ textoIrBanco }}</button>
+              <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;text-wrap:pretty">Cancelas con más de 24 horas y recuperas el crédito completo.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ pDatos }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="{{ selloReloj }}">{{ textoReloj }}</div>
+              <h2 style="{{ h2 }}">{{ tituloDatos }}</h2>
+              <p style="{{ bajada }}">{{ bajadaDatos }}</p>
+
+              <div style="border-radius:24px;background:#14342A;color:#FAF3E4;padding:20px;margin-top:20px">
+                <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#9CBBA6;margin-bottom:16px">{{ etiquetaDatos }}</div>
+                <div style="display:flex;flex-direction:column;gap:0">
+                  <sc-for list="{{ datosPago }}" as="d" hint-placeholder-count="4">
+                    <div style="padding:12px 0;border-bottom:1px solid rgba(250,243,228,.16)">
+                      <div style="font:400 12px/1.3 'Inter Tight',sans-serif;color:#9CBBA6">{{ d.campo }}</div>
+                      <div style="display:flex;align-items:center;gap:12px;margin-top:5px">
+                        <span style="flex:1;min-width:0;font:600 18px/1.3 'Inter Tight',sans-serif;color:#FAF3E4;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis">{{ d.valor }}</span>
+                        <button onClick="{{ d.copiar }}" style="{{ d.botonCopiar }}">{{ d.textoCopiar }}</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <button onClick="{{ pVolverConRef }}" style="{{ botonPrimarioAncho }}">Ya pagué, lo reporto</button>
+              <button onClick="{{ irHome }}" style="{{ botonFantasma }}">Lo pago luego</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ pReferencia }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="{{ selloReloj }}">{{ textoReloj }}</div>
+              <h2 style="{{ h2 }}">{{ tituloReporte }}</h2>
+              <p style="{{ bajada }}">{{ bajadaReporte }}</p>
+
+              <div style="display:flex;flex-direction:column;gap:16px;margin-top:22px">
+                <sc-for list="{{ camposReporte }}" as="c" hint-placeholder-count="5">
+                  <div>
+                    <label style="display:block;font:500 13px/1 'Inter Tight',sans-serif;color:#33513F;margin-bottom:8px">{{ c.etiqueta }}</label>
+                    <div style="{{ c.envoltorio }}">
+                      <sc-if value="{{ c.esSelector }}" hint-placeholder-val="{{ false }}">
+                        <span style="{{ c.grupoPrefijo }}">
+                          <button onClick="{{ c.ponerV }}" aria-label="Cédula venezolana" style="{{ c.botonV }}">V</button>
+                          <button onClick="{{ c.ponerE }}" aria-label="Cédula de extranjero" style="{{ c.botonE }}">E</button>
+                        </span>
+                      </sc-if>
+                      <sc-if value="{{ c.hayPrefijo }}" hint-placeholder-val="{{ false }}">
+                        <span style="{{ c.prefijoEstilo }}">{{ c.prefijo }}</span>
+                      </sc-if>
+                      <input type="text" inputmode="{{ c.modo }}" value="{{ c.valor }}" onChange="{{ c.onChange }}" onBlur="{{ c.onBlur }}" placeholder="{{ c.pista }}" aria-label="{{ c.etiqueta }}" style="{{ c.campo }}" />
+                    </div>
+                    <sc-if value="{{ c.hayNota }}" hint-placeholder-val="{{ false }}">
+                      <div style="{{ c.notaEstilo }}">{{ c.nota }}</div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+
+                <sc-if value="{{ hayCaptura }}" hint-placeholder-val="{{ true }}">
+                <div>
+                  <label style="display:block;font:500 13px/1 'Inter Tight',sans-serif;color:#33513F;margin-bottom:8px">{{ etiquetaCaptura }}</label>
+                  <button onClick="{{ adjuntar }}" style="{{ botonCaptura }}">
+                    <span style="{{ iconoCaptura }}">{{ glifoCaptura }}</span>
+                    <span style="flex:1;min-width:0;text-align:left">
+                      <span style="display:block;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ tituloCaptura }}</span>
+                      <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ notaCaptura }}</span>
+                    </span>
+                  </button>
+                </div>
+                </sc-if>
+              </div>
+
+              <button onClick="{{ confirmarPago }}" aria-disabled="{{ inerteRef }}" style="{{ botonRef }}">{{ textoRef }}</button>
+              <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;text-wrap:pretty">{{ notaRevision }}</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ pPendiente }}" hint-placeholder-val="{{ false }}">
+            <div style="animation:aro-in 400ms ease both">
+              <div style="{{ selloTerra }}">PENDIENTE DE CONFIRMAR</div>
+              <h2 style="{{ h2 }}">Estamos validando tu pago.</h2>
+              <p style="{{ bajada }}">Suele estar listo en menos de treinta minutos. <em style="font-weight:600;color:#14342A">Tu puesto ya está apartado</em> mientras tanto: nadie más lo puede tomar.</p>
+              <div style="border-radius:24px;border:1px solid rgba(20,52,42,.18);padding:19px;margin-top:20px">
+                <div style="display:flex;flex-direction:column;gap:13px">
+                  <sc-for list="{{ pasosPendiente }}" as="x" hint-placeholder-count="3">
+                    <div style="display:flex;gap:12px;align-items:flex-start">
+                      <span style="{{ x.marca }}">{{ x.glifo }}</span>
+                      <span style="flex:1;min-width:0">
+                        <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ x.titulo }}</span>
+                        <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-wrap:pretty">{{ x.cuerpo }}</span>
+                      </span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <button onClick="{{ irHome }}" style="{{ botonPrimarioAncho }}">Ir al inicio</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ pConfirmado }}" hint-placeholder-val="{{ false }}">
+            <div style="animation:aro-in 400ms ease both">
+              <div style="{{ selloVerde }}">PUESTO RESERVADO</div>
+              <h2 style="{{ h2 }}">Nos vemos el jueves.</h2>
+              <p style="{{ bajada }}">A las doce del mediodía se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
+              <sc-if value="{{ pedirNotiAhora }}" hint-placeholder-val="{{ true }}">
+                <div style="border-radius:24px;background:#F2E9D5;padding:20px;margin-top:20px">
+                  <div style="font:400 22px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">¿Te avisamos cuando se abra?</div>
+                  <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:8px;text-wrap:pretty">Es un solo aviso, el jueves a las doce, con tu mesa dentro. No mandamos nada más.</div>
+                  <button onClick="{{ pedirNoti }}" style="{{ botonPrimarioAncho }}">Sí, avísame</button>
+                  <button onClick="{{ noQuiereNoti }}" style="{{ botonFantasma }}">Ahora no</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ notiResuelta }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ irHome }}" style="{{ botonPrimarioAncho }}">Ir al inicio</button>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esBloqueo }}" hint-placeholder-val="{{ false }}">
+        <div style="{{ pantallaBloqueo }}">
+          <div style="text-align:center;padding-top:46px">
+            <div style="font:500 13px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:rgba(250,243,228,.72)">{{ fechaCena }}</div>
+            <div style="font:300 76px/1 'Inter Tight',sans-serif;letter-spacing:-.04em;color:#FAF3E4;margin-top:6px;font-variant-numeric:tabular-nums">12:00</div>
+          </div>
+          <div style="margin-top:auto;padding:0 8px 22px">
+            <button onClick="{{ abrirNoti }}" style="{{ tarjetaNoti }}">
+              <span style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+                <span style="width:20px;height:20px;border-radius:6px;background:#14342A;display:flex;align-items:center;justify-content:center">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#FAF3E4" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.2" fill="#E39C63"></circle></svg>
+                </span>
+                <span style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.04em;color:#3C5A48">ARO CLUB</span>
+                <span style="flex:1"></span>
+                <span style="font:500 12px/1 'Inter Tight',sans-serif;color:#5F7266">ahora</span>
+              </span>
+              <span style="display:block;font:600 16px/1.3 'Inter Tight',sans-serif;color:#14342A;text-align:left">Mesa 04, Cardenal, Las Mercedes.</span>
+              <span style="display:block;font:400 15px/1.4 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-align:left">Hoy a las 7:00 p.m. Ya puedes ver con quién.</span>
+            </button>
+            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:rgba(250,243,228,.6);text-align:center;margin-top:16px">Toca para abrir tu mesa</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esMesa }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:6px 24px 26px">
+
+          <sc-if value="{{ sinRed }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:10px;align-items:center;border-radius:18px;background:#F2E9D5;padding:11px 14px;margin-bottom:14px">
+              <span style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#8F4515">SIN CONEXIÓN</span>
+              <span style="flex:1;min-width:0;font:400 13px/1.45 'Inter Tight',sans-serif;color:#2C4A38">Esto lo guardamos en el teléfono. Está todo aquí.</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ mCerrada }}" hint-placeholder-val="{{ false }}">
+            <div style="animation:aro-in 300ms ease both">
+              <div style="{{ selloNeutro }}">{{ textoEspera }}</div>
+              <h2 style="{{ h2 }}">Todavía no.</h2>
+              <p style="{{ bajada }}">El sitio, tu mesa y los otros cinco se abren de golpe. Ni un minuto antes, ni un adelanto.</p>
+              <div style="border-radius:26px;background:#14342A;color:#FAF3E4;padding:26px 22px;margin-top:22px;text-align:center">
+                <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#9CBBA6">SE ABRE EN</div>
+                <div style="font:300 46px/1 'Inter Tight',sans-serif;letter-spacing:-.03em;margin-top:12px;font-variant-numeric:tabular-nums">{{ cuenta }}</div>
+              </div>
+              <div style="border-radius:22px;border:1px solid rgba(20,52,42,.18);padding:17px 19px;margin-top:12px">
+                <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">Lo que ya sabes: es el {{ fechaElegidaBaja }} a las 7:00 p.m., en una de tus zonas, y son seis personas contigo incluida.</div>
+              </div>
+              <button onClick="{{ irCancelar }}" style="{{ botonFantasma }}">Cancelar mi puesto</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ mAbierta }}" hint-placeholder-val="{{ false }}">
+            <div style="animation:aro-in 420ms ease both">
+              <div style="border-radius:28px;background:#14342A;color:#FAF3E4;padding:24px 22px">
+                <div style="{{ selloAbierto }}">ABIERTO</div>
+                <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#9CBBA6;margin-bottom:8px">TU MESA</div>
+                <div style="font:700 72px/1 'Inter Tight',sans-serif;letter-spacing:-.05em;font-variant-numeric:tabular-nums">04</div>
+                <div style="height:1px;background:rgba(250,243,228,.2);margin:20px 0"></div>
+                <div style="font:400 30px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.025em">Cardenal</div>
+                <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:8px">Calle Madrid con avenida Principal<br />Las Mercedes</div>
+                <div style="font:500 15px/1.4 'Inter Tight',sans-serif;color:#FAF3E4;margin-top:12px">Hoy · 7:00 p.m. · a tu nombre</div>
+              </div>
+              <button onClick="{{ nada }}" style="{{ botonPrimarioAncho }}">Cómo llegar</button>
+              <button onClick="{{ avisarTarde }}" style="{{ botonBordeAncho }}">{{ textoTarde }}</button>
+
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin:26px 0 10px">CON QUIÉN CENAS</div>
+              <div style="display:flex;flex-direction:column;gap:0">
+                <sc-for list="{{ comensales }}" as="c" hint-placeholder-count="5">
+                  <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+                    <span style="{{ c.avatar }}">{{ c.inicial }}</span>
+                    <span style="flex:1;min-width:0;font:400 20px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.nombre }}</span>
+                    <span style="font:400 13px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ c.sector }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;text-wrap:pretty">Todos con identidad verificada. Al llegar, di que vas a la mesa de Aro, la 04.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ mPasada }}" hint-placeholder-val="{{ false }}">
+            <div style="animation:aro-in 300ms ease both">
+              <div style="{{ selloNeutro }}">ANOCHE</div>
+              <h2 style="{{ h2 }}">¿Qué tal estuvo?</h2>
+              <p style="{{ bajada }}">Cenaste en Cardenal, mesa 04. Lo que nos cuentes entra en el emparejamiento de la próxima.</p>
+              <button onClick="{{ irDespuesDeCena }}" style="{{ botonPrimarioAncho }}">Contar qué tal fue</button>
+              <button onClick="{{ irHome }}" style="{{ botonFantasma }}">Ahora no</button>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esDespues }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+          <sc-if value="{{ dSinContar }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515;margin-bottom:12px">¿VOLVERÍAS A ESA MESA?</div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ valoraciones }}" as="v" hint-placeholder-count="3">
+                  <button onClick="{{ v.pick }}" style="{{ v.btn }}"><span style="{{ v.aro }}">{{ v.icono }}</span><span style="{{ v.txt }}">{{ v.label }}</span></button>
+                </sc-for>
+              </div>
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515;margin:26px 0 6px">¿CON QUIÉN NO QUIERES VOLVER A COINCIDIR?</div>
+              <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-bottom:12px;text-wrap:pretty">Opcional, y no se le avisa nunca. Solo deja de salir en tus mesas.</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ bloqueables }}" as="b" hint-placeholder-count="5">
+                  <button onClick="{{ b.pick }}" style="{{ b.btn }}"><span style="{{ b.aro }}">{{ b.icono }}</span><span style="{{ b.txt }}">{{ b.nombre }}</span><span style="{{ b.pie }}">{{ b.sector }}</span></button>
+                </sc-for>
+              </div>
+              <button onClick="{{ enviarValoracion }}" aria-disabled="{{ inerteValor }}" style="{{ botonValorar }}">{{ textoValorar }}</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ dContado }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:12px;align-items:flex-start;border-radius:24px;background:rgba(27,81,56,.1);padding:18px 20px;animation:aro-in 300ms ease both">
+              <span style="{{ puntoVerde }}">✓</span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">Anotado, gracias.</span>
+                <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-wrap:pretty">{{ resumenValoracion }}</span>
+              </span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ dPuedeReportar }}" hint-placeholder-val="{{ true }}">
+            <div style="border-radius:24px;border:1px solid rgba(143,69,21,.34);padding:18px 20px;margin-top:22px">
+              <div style="font:400 22px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#6E340F">¿Pasó algo grave?</div>
+              <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:8px;text-wrap:pretty">Bloquear no es lo mismo que reportar. Si alguien se pasó de la raya, lo lee una persona de nuestro equipo hoy mismo.</div>
+              <button onClick="{{ abrirReporte }}" style="{{ botonBordeAncho }}">Reportar algo</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ dReporte }}" hint-placeholder-val="{{ false }}">
+            <div style="border-radius:24px;background:#F2E9D5;padding:20px;margin-top:12px;animation:aro-in 260ms ease both">
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin-bottom:10px">SOBRE QUIÉN</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ reportables }}" as="r" hint-placeholder-count="5">
+                  <button onClick="{{ r.pick }}" style="{{ r.btn }}"><span style="{{ r.aro }}">{{ r.icono }}</span><span style="{{ r.txt }}">{{ r.nombre }}</span></button>
+                </sc-for>
+              </div>
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin:20px 0 10px">QUÉ PASÓ</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ motivos }}" as="m" hint-placeholder-count="5">
+                  <button onClick="{{ m.pick }}" style="{{ m.btn }}"><span style="{{ m.aro }}">{{ m.icono }}</span><span style="{{ m.txt }}">{{ m.label }}</span></button>
+                </sc-for>
+              </div>
+              <button onClick="{{ enviarReporte }}" aria-disabled="{{ inerteReporte }}" style="{{ botonReportar }}">{{ textoReportar }}</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ dReportado }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:12px;align-items:flex-start;border-radius:24px;border:1px solid rgba(143,69,21,.34);padding:18px 20px;margin-top:12px;animation:aro-in 300ms ease both">
+              <span style="{{ puntoTerracota }}">✓</span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">Reporte enviado</span>
+                <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px">{{ resumenReporte }}</span>
+              </span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ dCierre }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ irHome }}" style="{{ botonPrimarioAncho }}">Volver al inicio</button>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esCancelar }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+          <h2 style="{{ h2 }}">¿Cancelas tu puesto?</h2>
+          <p style="{{ bajada }}">{{ textoCancelar }}</p>
+          <div style="border-radius:24px;background:#F2E9D5;padding:20px;margin-top:20px">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
+              <span style="font:400 20px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cena · {{ fechaElegidaBaja }}</span>
+              <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F">7:00 p.m.</span>
+            </div>
+            <div style="height:1px;background:rgba(20,52,42,.14);margin:14px 0"></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
+              <span style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">Tu crédito</span>
+              <span style="{{ estiloCredito }}">{{ textoCredito }}</span>
+            </div>
+          </div>
+          <sc-if value="{{ hayMotivosCancel }}" hint-placeholder-val="{{ true }}">
+            <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin:24px 0 10px">¿POR QUÉ CANCELAS?</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ motivosCancel }}" as="m" hint-placeholder-count="4">
+                <button onClick="{{ m.pick }}" style="{{ m.btn }}"><span style="{{ m.aro }}">{{ m.icono }}</span><span style="{{ m.txt }}">{{ m.label }}</span></button>
+              </sc-for>
+            </div>
+            <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:10px;text-wrap:pretty">Opcional, pero si la zona o la hora no te servían dejamos de ofrecértelas.</div>
+          </sc-if>
+          <button onClick="{{ confirmarCancel }}" style="{{ botonCancelar }}">Sí, cancelar mi puesto</button>
+          <button onClick="{{ atras }}" style="{{ botonFantasma }}">No, mantener mi puesto</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esBaja }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+          <h2 style="{{ h2 }}">Darte de baja borra tu cuenta.</h2>
+          <p style="{{ bajada }}">No es cerrar sesión: se borran tus respuestas, tus datos y tus documentos. No se puede deshacer.</p>
+
+          <div style="border-radius:24px;border:1px solid rgba(143,69,21,.34);padding:18px 20px;margin-top:20px">
+            <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#6E340F">Antes de irte, dos cosas</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:7px;text-wrap:pretty">Los créditos sin usar se devuelven a la cuenta desde la que pagaste, en menos de siete días. Los registros de facturación se conservan diez años porque la ley obliga.</div>
+          </div>
+
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin:24px 0 12px">¿POR QUÉ TE VAS? · OPCIONAL</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <sc-for list="{{ motivosBaja }}" as="m" hint-placeholder-count="4">
+              <button onClick="{{ m.pick }}" style="{{ m.btn }}">
+                <span style="{{ m.aro }}">{{ m.icono }}</span>
+                <span style="{{ m.txt }}">{{ m.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+
+          <button onClick="{{ confirmarBaja }}" style="{{ botonConfirmarBaja }}">Borrar mi cuenta</button>
+          <button onClick="{{ atras }}" style="{{ botonFantasma }}">Mejor no</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esRespuestas }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+          <h2 style="{{ h2 }}">Lo que respondiste.</h2>
+          <p style="{{ bajada }}">De ti, los otros cinco solo ven tu nombre y tu sector. Todo lo demás vive aquí y no se le muestra a nadie.</p>
+
+          <sc-for list="{{ bloquesResp }}" as="b" hint-placeholder-count="5">
+            <div style="margin-top:clamp(24px,3vw,30px)">
+              <div style="font:400 clamp(21px,2.4vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ b.titulo }}</div>
+              <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:5px;text-wrap:pretty">{{ b.nota }}</div>
+              <div style="border-radius:22px;background:#FFFBF0;margin-top:13px;overflow:hidden">
+                <sc-for list="{{ b.filas }}" as="f" hint-placeholder-count="3">
+                  <div>
+                    <button onClick="{{ f.editar }}" style="{{ f.fila }}">
+                      <span style="flex:1;min-width:0;text-align:left">
+                        <span style="display:block;font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ f.pregunta }}</span>
+                        <span style="{{ f.valorEstilo }}">{{ f.valor }}</span>
+                      </span>
+                      <span style="{{ f.flecha }}">{{ f.glifo }}</span>
+                    </button>
+                    <sc-if value="{{ f.abierta }}" hint-placeholder-val="{{ false }}">
+                      <div style="padding:2px 18px 18px;animation:aro-in 220ms ease both">
+                        <sc-if value="{{ f.esTextoLibre }}" hint-placeholder-val="{{ false }}">
+                          <input type="text" value="{{ f.texto }}" onChange="{{ f.onTexto }}" placeholder="{{ f.pista }}" aria-label="{{ f.pregunta }}" style="{{ f.campoTexto }}" />
+                        </sc-if>
+                        <sc-if value="{{ f.conOpciones }}" hint-placeholder-val="{{ true }}">
+                          <div style="{{ f.contenedor }}">
+                            <sc-for list="{{ f.opciones }}" as="o" hint-placeholder-count="4">
+                              <button onClick="{{ o.pick }}" style="{{ o.btn }}">
+                                <span style="{{ o.aro }}">{{ o.icono }}</span>
+                                <span style="{{ o.txt }}">{{ o.label }}</span>
+                              </button>
+                            </sc-for>
+                          </div>
+                        </sc-if>
+                        <button onClick="{{ f.cerrar }}" style="{{ f.botonListo }}">Listo</button>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esCenas }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+          <h2 style="{{ h2 }}">Dónde has estado.</h2>
+          <p style="{{ bajada }}">No guardamos con quién cenaste: solo el número de cenas y a quién no quieres volver a ver.</p>
+          <sc-if value="{{ hayCenas }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:0;margin-top:20px">
+              <sc-for list="{{ cenas }}" as="c" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:12px;padding:15px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+                  <span style="flex:1;min-width:0">
+                    <span style="display:block;font:400 20px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.sitio }}</span>
+                    <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ c.cuando }}</span>
+                  </span>
+                  <span style="{{ c.chip }}">{{ c.estado }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ sinCenas }}" hint-placeholder-val="{{ true }}">
+            <div style="border-radius:24px;border:1px dashed rgba(20,52,42,.28);padding:20px;margin-top:20px">
+              <div style="font:400 20px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Todavía no has ido a ninguna.</div>
+              <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:8px;text-wrap:pretty">Cuando cenes, aparece aquí con el sitio y la fecha.</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esExclusiones }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+          <h2 style="{{ h2 }}">Con quién no vuelves a coincidir.</h2>
+          <p style="{{ bajada }}">Nadie sabe que lo marcaste, ni ahora ni nunca. Simplemente deja de salir en tus mesas.</p>
+          <sc-if value="{{ hayExcluidos }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:0;margin-top:20px">
+              <sc-for list="{{ excluidos }}" as="x" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+                  <span style="{{ x.avatar }}">{{ x.inicial }}</span>
+                  <span style="flex:1;min-width:0">
+                    <span style="display:block;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ x.nombre }}</span>
+                    <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ x.cuando }}</span>
+                  </span>
+                  <button onClick="{{ x.quitar }}" style="{{ botonQuitar }}">Quitar</button>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ sinExcluidos }}" hint-placeholder-val="{{ true }}">
+            <div style="border-radius:24px;border:1px dashed rgba(20,52,42,.28);padding:20px;margin-top:20px">
+              <div style="font:400 20px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">No has marcado a nadie.</div>
+              <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:8px;text-wrap:pretty">Después de cada cena puedes marcar con quién prefieres no repetir. Aparecerá aquí.</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esAvisos }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+          <h2 style="{{ h2 }}">Cuándo te escribimos.</h2>
+          <p style="{{ bajada }}">Cinco avisos y ninguno más. Sin novedades, sin promociones, sin recordatorios de que existimos.</p>
+          <div style="display:flex;flex-direction:column;gap:0;margin-top:20px">
+            <sc-for list="{{ avisos }}" as="a" hint-placeholder-count="4">
+              <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ a.titulo }}</span>
+                  <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:3px;text-wrap:pretty">{{ a.cuerpo }}</span>
+                </span>
+                <sc-if value="{{ a.fijo }}" hint-placeholder-val="{{ false }}">
+                  <span style="{{ a.selloFijo }}">SIEMPRE</span>
+                </sc-if>
+                <sc-if value="{{ a.opcional }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ a.alternar }}" aria-label="{{ a.titulo }}" style="{{ a.pastilla }}"><span style="{{ a.bolita }}"></span></button>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:18px;text-wrap:pretty">{{ notaAvisos }}</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esDoc }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:8px 24px 26px;animation:aro-in 300ms ease both">
+          <h2 style="{{ h2 }}">{{ tituloDoc }}</h2>
+          <div style="display:flex;flex-direction:column;gap:0;margin-top:18px">
+            <sc-for list="{{ parrafos }}" as="d" hint-placeholder-count="6">
+              <div style="padding:16px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+                <div style="font:400 20px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ d.titulo }}</div>
+                <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:7px;text-wrap:pretty">{{ d.cuerpo }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esPerfil }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:6px 24px 26px;animation:aro-in 300ms ease both">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+            <span style="{{ avatarGrande }}">D</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:400 28px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A">Daniela</span>
+            </span>
+          </div>
+          <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;margin:-12px 0 4px">{{ resumenPerfil }}</div>
+
+          <sc-for list="{{ gruposPerfil }}" as="g" hint-placeholder-count="3">
+            <div style="margin-top:24px">
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:10px">{{ g.titulo }}</div>
+              <div style="border-radius:22px;background:#FFFBF0;overflow:hidden">
+                <sc-for list="{{ g.filas }}" as="f" hint-placeholder-count="4">
+                  <button onClick="{{ f.abrir }}" style="{{ f.fila }}">
+                    <span style="flex:1;min-width:0;text-align:left">
+                      <span style="display:block;font:500 16px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ f.titulo }}</span>
+                      <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ f.detalle }}</span>
+                    </span>
+                    <span style="{{ flechaFila }}">›</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:22px;text-wrap:pretty">Aro no guarda una agenda de con quién cenaste. Solo el número de cenas y a quién no quieres volver a ver.</div>
+          <button onClick="{{ salir }}" style="{{ botonSalir }}">Cerrar sesión</button>
+          <button onClick="{{ irBaja }}" style="{{ botonBaja }}">Darse de baja</button>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ hayTabs }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ tabs }}">
+        <button onClick="{{ irHomeTab }}" aria-label="Inicio" style="{{ tabHome }}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.6" stroke="currentColor" stroke-width="1.8"></circle><circle cx="20.6" cy="12" r="1.9" fill="{{ puntoHome }}"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="currentColor"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="currentColor"></circle><circle cx="3.4" cy="12" r="1.9" fill="currentColor"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="currentColor"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="currentColor"></circle></svg>
+          <span style="{{ txtHome }}">Inicio</span>
+        </button>
+        <button onClick="{{ irPlanesTab }}" aria-label="Planes" style="{{ tabPlanes }}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.2" y="5.2" width="17.6" height="15.6" rx="3.4" stroke="currentColor" stroke-width="1.8"></rect><path d="M3.2 10h17.6" stroke="currentColor" stroke-width="1.8"></path><path d="M8 3.2v3.4M16 3.2v3.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><circle cx="12" cy="15.4" r="1.9" fill="{{ puntoPlanes }}"></circle></svg>
+          <span style="{{ txtPlanes }}">Planes</span>
+        </button>
+        <button onClick="{{ irPerfilTab }}" aria-label="Perfil" style="{{ tabPerfil }}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8.4" r="3.9" stroke="currentColor" stroke-width="1.8"></circle><path d="M4.6 20.4c0-3.9 3.3-6.4 7.4-6.4s7.4 2.5 7.4 6.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+          <span style="{{ txtPerfil }}">Perfil</span>
+        </button>
+      </div>
+    </sc-if>
+
+    <div style="{{ barraInferior }}"><span style="width:134px;height:5px;border-radius:999px;background:{{ colorIndicador }};opacity:.3"></span></div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    p: 'arranque', ahora: Date.now(), red: true,
+    qi: 0, r: { idiomas: [0] }, texto: '',
+    dNombre: '', dLlamar: '', dDia: '', dMes: '', dAno: '', dGenero: -1, dTel: '',
+    correo: '', clave: '',
+    vFase: 'no', foto: 0, formCuenta: false, verClave: false, cat: 0, doc: 'reglas', avisos: {}, desde: '', motivoBaja: -1, tocados: {}, intento: false, docTipo: 'V', editando: '', editandoDato: '',
+    fecha: -1, pFase: 'resumen', metodo: 0, referencia: '', copiado: -1, rep: {},
+    noti: 'ok', mVista: '', revelada: false, tarde: false, cenaTs: 0,
+    valor: -1, bloqueados: [], contado: false,
+    reporte: false, quien: -1, motivo: -1, reportado: false,
+    motivoCancel: -1
+  };
+
+  componentDidMount() {
+    // un tic por segundo solo donde se ven segundos; si no, cada medio minuto
+    const tic = () => {
+      const fino = this.state.p === 'mesa' || this.state.p === 'bloqueo' || this.state.p === 'home';
+      clearInterval(this._t);
+      this._t = setInterval(() => this.setState({ ahora: Date.now() }), fino ? 1000 : 30000);
+      this._fino = fino;
+    };
+    tic();
+    this._tic = tic;
+    this._on = () => this.setState({ red: navigator.onLine !== false });
+    window.addEventListener('online', this._on);
+    window.addEventListener('offline', this._on);
+    this._on();
+  }
+
+  componentDidUpdate() {
+    // el lienzo es el mismo nodo en todas las pantallas: hay que subirlo a mano
+    if (this._p !== this.state.p) {
+      this._p = this.state.p;
+      const l = document.querySelector('.aro-scroll');
+      if (l) l.scrollTop = 0;
+    }
+    // al cambiar de pantalla, el reloj cambia de ritmo
+    const fino = this.state.p === 'mesa' || this.state.p === 'bloqueo' || this.state.p === 'home';
+    if (this._tic && fino !== this._fino) this._tic();
+  }
+
+  componentWillUnmount() {
+    clearInterval(this._t);
+    window.removeEventListener('online', this._on);
+    window.removeEventListener('offline', this._on);
+  }
+
+  // avanzar por el flujo normal borra el origen; solo la flecha lo consume
+  ir(p) { this.setState({ p: p, desde: '' }); }
+
+  set(id, v) { this.setState((s) => ({ r: Object.assign({}, s.r, { [id]: v }) })); }
+
+  renderVals() {
+    const S = this.state;
+
+    // el historial vive en el perfil, que sí puede crecer sin estorbar
+    const CENAS = [
+      ['Alto', 'Jueves 31 de julio · 7:00 p.m.', 'Fuiste'],
+      ['Cardenal', 'Jueves 17 de julio · 7:00 p.m.', 'Fuiste'],
+      ['Malabar', 'Jueves 3 de julio · 7:00 p.m.', 'Cancelaste']
+    ].map((c) => ({
+      sitio: c[0], cuando: c[1], estado: c[2],
+      chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + (c[2] === 'Fuiste' ? 'rgba(27,81,56,.11)' : 'transparent') + ';border:1px solid ' + (c[2] === 'Fuiste' ? 'transparent' : 'rgba(20,52,42,.18)') + ';color:' + (c[2] === 'Fuiste' ? '#1B5138' : '#33513F')
+    }));
+    const cenasHechas = CENAS.filter((c) => c.estado === 'Fuiste').length;
+
+    const p = S.p;
+
+    const ZONAS = ['Las Mercedes', 'El Rosal', 'Bello Monte', 'Chacao', 'Altamira', 'La Castellana', 'Los Palos Grandes', 'Sebucán y Los Dos Caminos', 'Chuao', 'El Cafetal y Santa Paula', 'Los Naranjos y Cerro Verde', 'La Trinidad y La Tahona', 'El Hatillo'];
+    const TEMAS = ['Cocina y restaurantes', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios y emprender', 'Tecnología', 'Arte y diseño', 'Arquitectura', 'Ciencia', 'Historia', 'Psicología', 'Política', 'Economía', 'Crianza', 'Salud y bienestar', 'Humor y absurdos'];
+    const SECTORES = ['Tecnología', 'Finanzas', 'Salud', 'Educación', 'Consultoría', 'Legal', 'Marketing', 'Medios', 'Diseño', 'Comercio', 'Manufactura', 'Energía', 'Construcción', 'Gastronomía', 'ONG', 'Sector público', 'Otro'];
+    const ACTIVIDADES = ['Cocinar', 'Correr', 'Gimnasio', 'Yoga o pilates', 'Montaña', 'Ciclismo', 'Leer', 'Cine', 'Conciertos', 'Museos', 'Bares', 'Videojuegos', 'Fotografía', 'Bailar', 'Viajar', 'Voluntariado', 'Estudiar algo', 'Nada de esto'];
+    const DIAS = ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía', 'Sábado por la mañana', 'Domingo por la mañana'];
+
+    const BLOQUES = [
+      { titulo: 'Tu contexto', preguntas: [
+        { id: 'arraigo', tipo: 'unica', pregunta: '¿Cuál de estas se parece más a tu historia?', opciones: ['Volví después de años fuera', 'Nunca me fui, y se fue casi toda mi gente', 'Sigo con la gente de siempre', 'Trabajo remoto y casi no veo gente', 'Llegué y no conozco a nadie', 'Estoy de paso'] },
+        { id: 'sector', tipo: 'unica', compacta: true, pregunta: '¿En qué sector trabajas?', opciones: SECTORES },
+        { id: 'empleador', tipo: 'texto', pregunta: '¿Dónde trabajas actualmente?', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.' }
+      ] },
+      { titulo: 'Cómo eres en la mesa', preguntas: [
+        { id: 'momento', tipo: 'unica', pregunta: '¿En qué momento estás?', opciones: ['Soltero sin hijos', 'Soltero con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
+        { id: 'rol', tipo: 'unica', pregunta: 'En una mesa con gente que no conoces, ¿cómo eres?', opciones: ['Escucho más de lo que hablo', 'Depende del momento', 'Suelo llevar la conversación'] },
+        { id: 'motivo', tipo: 'unica', pregunta: '¿Qué te trae?', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con la ciudad', 'Simplemente no cenar solo un jueves'] },
+        { id: 'romance', tipo: 'unica', opcional: true, pregunta: 'Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?', ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla.', opciones: ['Vengo solo a hacer amigos', 'No lo busco, pero no me molesta', 'Si pasa, pasa'] }
+      ] },
+      { titulo: 'De qué hablas', preguntas: [
+        { id: 'temas', tipo: 'multi', min: 2, max: 4, pregunta: '¿De qué podrías hablar dos horas seguidas?', opciones: TEMAS },
+        { id: 'evitar', tipo: 'multi', opcional: true, exclusiva: 6, pregunta: '¿Hay algún tema que prefieras que no salga?', ayuda: 'Se lo decimos al anfitrión de la mesa, sin decir de quién vino.', opciones: ['Política y situación del país', 'Religión y fe', 'Dinero, sueldos y precios', 'Vida amorosa y relaciones', 'Crianza e hijos', 'Trabajo, vengo a desconectarme', 'Ninguno, hablo de todo'] },
+        { id: 'actividades', tipo: 'multi', min: 3, max: 6, pregunta: 'Escoge lo que de verdad haces, no lo que te gustaría hacer', opciones: ACTIVIDADES }
+      ] },
+      { titulo: 'Qué buscas y cuánto', preguntas: [
+        { id: 'planes', tipo: 'multi', pregunta: '¿Qué planes te interesan?', ayuda: 'Hoy solo hay cenas. Lo demás lo abrimos según lo que pida la gente.', opciones: ['Cena en restaurante', 'Drinks', 'Coffee', 'Movimiento'] },
+        { id: 'peso', tipo: 'unica', pregunta: 'En una cena, ¿qué pesa más para ti?', opciones: ['La conversación, el restaurante es la excusa', 'Las dos cosas por igual', 'La comida, vengo por el sitio'] },
+        { id: 'gasto', tipo: 'unica', pregunta: '¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?', ayuda: 'Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa. Marcar de más solo hace que la noche te salga cara.', opciones: ['Menos de 20 USD', '20 a 35 USD', '35 a 50 USD', 'Más de 50 USD'] }
+      ] },
+      { titulo: 'Logística', preguntas: [
+        { id: 'zonas', tipo: 'multi', pregunta: '¿En qué zonas puedes asistir sin problema?', opciones: ZONAS },
+        { id: 'dias', tipo: 'multi', pregunta: '¿Qué días te sirven mejor?', ayuda: 'No todo es cena: también hay café de sábado por la mañana y planes de domingo temprano.', opciones: DIAS },
+        { id: 'idiomas', tipo: 'multi', pregunta: '¿En qué idiomas conversas cómodo?', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] },
+        { id: 'dieta', tipo: 'multi', opcional: true, exclusiva: 0, pregunta: '¿Alguna restricción alimentaria?', opciones: ['Ninguna', 'Vegetariano', 'Vegano', 'Pescetariano', 'Sin gluten', 'Sin lactosa', 'Halal', 'Kosher', 'Alergias'] }
+      ] }
+    ];
+
+    const PLANAS = [];
+    BLOQUES.forEach((b, bi) => b.preguntas.forEach((q) => PLANAS.push(Object.assign({ bloque: bi }, q))));
+    const TOTAL = PLANAS.length;
+    const OBLIG = PLANAS.filter((q) => !q.opcional).length;
+
+    const A = { crema: '#FAF3E4', cremaF: '#F2E9D5', verde: '#14342A', verde2: '#1B5138', terra: '#8F4515', terraO: '#6E340F', texto2: '#2C4A38', texto3: '#33513F', claro: '#9CBBA6' };
+    const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:56px;padding:0 24px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease;' + (extra || '');
+    const aroDe = (on) => 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;border:1px solid ' + (on ? A.terraO : 'rgba(20,52,42,.3)') + ';background:' + (on ? A.terra : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;transition:all 160ms ease';
+    const pastilla = (on) => 'display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;padding:12px 18px 12px 14px;border-radius:26px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? A.terraO : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 160ms ease';
+    const chipB = (on) => 'display:inline-flex;align-items:center;gap:9px;min-height:48px;padding:0 16px 0 12px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? A.terraO : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 160ms ease';
+    const txtDe = (on, chico) => 'font:' + (on ? '600' : '400') + ' ' + (chico ? '15px' : '16px') + '/1.3 \'Inter Tight\',sans-serif;color:' + A.verde;
+    const avatarDe = (i, grande) => 'flex:0 0 auto;width:' + (grande ? '54px' : '32px') + ';height:' + (grande ? '54px' : '32px') + ';border-radius:999px;background:' + (i % 2 ? A.verde2 : A.terra) + ';color:' + A.crema + ';display:flex;align-items:center;justify-content:center;font:600 ' + (grande ? '20px' : '13px') + '/1 \'Inter Tight\',sans-serif';
+
+    const d = new Date(S.ahora);
+    const dosD = (n) => (n < 10 ? '0' + n : '' + n);
+
+    // ── quiz ─────────────────────────────────────────────────────────
+    const q = PLANAS[Math.min(S.qi, TOTAL - 1)];
+    const val = S.r[q.id];
+    const esMulti = q.tipo === 'multi';
+    const esTexto = q.tipo === 'texto';
+    const sel = esMulti ? (val || []) : (val === undefined ? -1 : val);
+
+    const marcar = (i) => {
+      if (!esMulti) { this.set(q.id, i); return; }
+      const a = (S.r[q.id] || []).slice();
+      const ex = q.exclusiva;
+      if (a.indexOf(i) >= 0) { this.set(q.id, a.filter((x) => x !== i)); return; }
+      if (ex !== undefined && i === ex) { this.set(q.id, [ex]); return; }
+      const limpio = ex !== undefined ? a.filter((x) => x !== ex) : a;
+      if (q.max && limpio.length >= q.max) return;
+      this.set(q.id, limpio.concat([i]));
+    };
+
+    const compacto = !!q.compacta || (esMulti && q.opciones && q.opciones.length > 8);
+    const opciones = (q.opciones || []).map((label, i) => {
+      const on = esMulti ? sel.indexOf(i) >= 0 : sel === i;
+      const tope = esMulti && q.max && sel.length >= q.max && !on;
+      return {
+        label, icono: on ? '✓' : '', aro: aroDe(on),
+        pick: () => marcar(i),
+        btn: (compacto ? chipB(on) : pastilla(on)) + ';opacity:' + (tope ? '.45' : '1'),
+        txt: txtDe(on, compacto)
+      };
+    });
+
+    const empresas = ['Banesco', 'Mercantil', 'BBVA Provincial', 'Polar', 'Farmatodo', 'Movistar', 'Ridery', 'Yummy', 'Digitel', 'Locatel'];
+    const t = S.texto;
+    const sug = t.length >= 2 ? empresas.filter((e) => e.toLowerCase().indexOf(t.toLowerCase()) >= 0).slice(0, 3) : [];
+
+    const completa = esTexto ? !!t.trim() : (esMulti ? sel.length >= (q.min || 1) : sel >= 0);
+    const puede = completa || !!q.opcional;
+    const restanN = OBLIG - PLANAS.slice(0, S.qi).filter((x) => !x.opcional).length - (q.opcional ? 0 : 1);
+
+    const contadorMulti = esMulti && (q.min || q.max)
+      ? (sel.length < (q.min || 0)
+        ? 'Elige al menos ' + (q.min - sel.length) + ' más'
+        : (q.max && sel.length >= q.max ? 'Llegaste al máximo de ' + q.max : sel.length + (q.max ? ' de ' + q.max : ' marcados')))
+      : '';
+
+    const avanzar = () => {
+      if (!puede) return;
+      if (esTexto) this.set(q.id, t.trim());
+      if (S.qi + 1 >= TOTAL) { this.setState({ p: 'datos', texto: '' }); return; }
+      this.setState({ qi: S.qi + 1, texto: '' });
+    };
+
+    // ── datos base ───────────────────────────────────────────────────
+    const generos = ['Mujer', 'Hombre', 'No binario', 'Prefiero no decirlo'].map((label, i) => {
+      const on = S.dGenero === i;
+      return { label, icono: on ? '✓' : '', aro: aroDe(on), btn: chipB(on), txt: txtDe(on, true), pick: () => this.setState({ dGenero: i }) };
+    });
+    const ano = parseInt(S.dAno, 10);
+    const edad = ano > 1900 && ano < 2100 ? d.getFullYear() - ano : 0;
+    const datosOk = !!(S.dNombre.trim() && S.dLlamar.trim() && edad >= 18 && S.dGenero >= 0 && S.dTel.trim().length >= 8);
+
+    // ── las fechas, una sola fuente ──────────────────────────────────
+    // El k-ésimo jueves por venir a las 19:00. Todo lo demás —etiqueta, reloj,
+    // apertura y fin de la cena— sale de aquí, no de recalcular «próximo jueves».
+    const juevesN = (k) => {
+      const j = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 19, 0, 0, 0);
+      let s = (4 - d.getDay() + 7) % 7;
+      if (s === 0 && d.getTime() >= j.getTime()) s = 7;
+      j.setDate(j.getDate() + s + (k || 0) * 7);
+      return j.getTime();
+    };
+    const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const etiquetaFecha = (ts) => {
+      const f = new Date(ts);
+      return 'Jueves ' + f.getDate() + ' de ' + MESES[f.getMonth()];
+    };
+
+    // ── reloj ────────────────────────────────────────────────────────
+    // Si ya hay reserva, cuenta a la apertura de ESA cena; si no, a la próxima.
+    const objetivo = S.cenaTs || juevesN(0);
+    const meta = new Date(new Date(objetivo).setHours(12, 0, 0, 0));
+    const dias = Math.max(0, Math.round((new Date(meta).setHours(0, 0, 0, 0) - new Date(d).setHours(0, 0, 0, 0)) / 86400000));
+    const seg = Math.max(0, Math.floor((meta.getTime() - d.getTime()) / 1000));
+    const hh = Math.floor(seg / 3600);
+    const cuenta = hh >= 24
+      ? Math.floor(seg / 86400) + 'd ' + dosD(hh % 24) + 'h ' + dosD(Math.floor(seg / 60) % 60) + 'm'
+      : dosD(hh) + ':' + dosD(Math.floor(seg / 60) % 60) + ':' + dosD(seg % 60);
+
+    // ── home ─────────────────────────────────────────────────────────
+    const verificado = S.vFase === 'ok';
+    const enRevision = S.vFase === 'revision';
+    const porConfirmar = S.pFase === 'pendiente';
+    const reservado = S.pFase === 'confirmado' || porConfirmar;
+
+    // las tres fechas abiertas; se declara aquí porque el bloque `paso` ya las lee
+    const FECHAS = [34, 11, 4].map((n, k) => {
+      const ts = juevesN(k);
+      return [String(new Date(ts).getDate()), etiquetaFecha(ts), n, ts];
+    });
+
+    // volvemos a enseñarle la notificación.
+    // no puede depender de `dias`: la cuenta atrás salta a la semana siguiente
+    // en cuanto pasa el mediodía del jueves, que es justo cuando debe abrirse
+    // Todo se deriva del instante de la cena, no del día de la semana: así la
+    // reserva queda en pasado desde que termina hasta que se reserve otra fecha.
+    const cenaTs = S.cenaTs || 0;
+    const apertura = cenaTs ? new Date(cenaTs).setHours(12, 0, 0, 0) : 0;
+    const abiertaYa = reservado && cenaTs > 0 && S.ahora >= apertura;
+    const yaCeno = reservado && cenaTs > 0 && S.ahora >= cenaTs + 4 * 3600 * 1000;
+    const mFase = !reservado ? 'cerrada' : ((S.mVista === 'pasada' || yaCeno) ? 'pasada' : (abiertaYa ? 'abierta' : 'cerrada'));
+    const cenado = mFase === 'pasada';
+    // la revelación se enseña una vez, al entrar con la mesa recién abierta
+    const revelacionPendiente = abiertaYa && !S.revelada;
+
+    let paso;
+    if (!verificado && !enRevision) {
+      paso = { sello: 'ÚLTIMO PASO', titulo: 'Falta verificar quién eres.', cuerpo: 'Dos fotos con la cámara: tu cédula y tu cara. Es lo que hace que los otros cinco confíen en sentarse contigo.', textoAccion: 'Verificar mi identidad', accion: () => this.setState({ p: 'verificar', vFase: 'no' }), osc: true };
+    } else if (enRevision) {
+      paso = { sello: 'EN REVISIÓN', titulo: 'Lo está mirando una persona.', cuerpo: 'Suele tardar menos de un día. Te avisamos en cuanto esté, y entonces puedes reservar.', textoAccion: 'Ver el estado', accion: () => this.setState({ p: 'verificar', vFase: 'revision' }), osc: false };
+    } else if (!reservado) {
+      paso = { sello: 'LISTA PARA RESERVAR', titulo: 'Hay cena el ' + etiquetaFecha(FECHAS[Math.max(0, S.fecha)][3]).toLowerCase() + '.', cuerpo: 'Ya van 34 apuntados y se cierra el martes. Te apuntas a la fecha; el jueves al mediodía sabes en qué mesa te tocó.', textoAccion: 'Reservar mi puesto', accion: () => this.ir('fechas'), osc: false };
+    } else if (porConfirmar) {
+      paso = { sello: 'PAGO EN REVISIÓN', titulo: 'Tu puesto está apartado.', cuerpo: 'Estamos validando tu pago con el banco. Suele estar listo en menos de treinta minutos, y te avisamos en cuanto lo esté.', textoAccion: 'Ver mi reserva', accion: () => this.setState({ p: 'pago', pFase: 'pendiente' }), osc: false };
+    } else if (mFase === 'cerrada') {
+      paso = { sello: 'TIENES MESA', titulo: 'Se abre el jueves a las doce.', cuerpo: 'El sitio, tu número de mesa y los otros cinco nombres. Todo de golpe, ni un minuto antes.', textoAccion: 'Ver mi reserva', accion: () => this.ir('mesa'), osc: true };
+    } else if (mFase === 'abierta') {
+      paso = { sello: 'ABIERTO', titulo: 'Mesa 04 en Cardenal.', cuerpo: 'Hoy a las 7:00 p.m., en Las Mercedes. Ya puedes ver con quién cenas.', textoAccion: 'Ver mi mesa', accion: () => this.ir('mesa'), osc: true };
+    } else {
+      paso = { sello: 'ANOCHE', titulo: '¿Qué tal estuvo?', cuerpo: 'Cenaste en Cardenal, mesa 04. Lo que nos cuentes entra en el emparejamiento de la próxima.', textoAccion: 'Contar qué tal fue', accion: () => this.ir('despues'), osc: false };
+    }
+    const osc = paso.osc;
+    paso.colorTitulo = osc ? A.crema : A.verde;
+    paso.colorCuerpo = osc ? '#C5D8CA' : A.texto2;
+    paso.boton = btn(osc ? A.crema : A.verde, osc ? A.verde : A.crema, 'none', 'margin-top:18px');
+
+    // ── fechas ───────────────────────────────────────────────────────
+    const fechas = FECHAS.map((f, i) => {
+      const on = S.fecha === i;
+      const n = f[2];
+      const va = n >= 6;
+      return {
+        diaN: f[0], titulo: f[1], detalle: '7:00 p.m. · en tus zonas',
+        icono: on ? '✓' : '', aro: aroDe(on),
+        gente: va
+          ? n + ' apuntados · ' + Math.ceil(n / 6) + (Math.ceil(n / 6) === 1 ? ' mesa' : ' mesas')
+          : n + ' apuntados · faltan ' + (6 - n) + ' para la primera mesa',
+        estado: 'display:block;width:100%;text-align:left;font:600 12px/1.4 \'Inter Tight\',sans-serif;color:' + (va ? A.verde2 : A.terra) + ';margin-top:12px;padding-top:12px;border-top:1px solid rgba(20,52,42,.12)',
+        dia: 'flex:0 0 auto;width:46px;height:46px;border-radius:999px;background:' + (on ? A.verde : A.cremaF) + ';color:' + (on ? A.crema : A.verde) + ';display:flex;align-items:center;justify-content:center;font:700 17px/1 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;transition:all 160ms ease',
+        caja: 'display:flex;flex-direction:column;width:100%;padding:16px;border-radius:26px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? A.terraO : 'rgba(20,52,42,.18)') + ';cursor:pointer;transition:all 160ms ease',
+        pick: () => this.setState({ fecha: i })
+      };
+    });
+
+    // ── pago ─────────────────────────────────────────────────────────
+    // ── pago ─────────────────────────────────────────────────────────
+    // Cuatro métodos. Los tres primeros los concilia una persona; la tarjeta,
+    // cuando exista, confirma sola. `activo` lo enciende operación.
+    const METODOS = [
+      { id: 'pm', nombre: 'Pago Móvil', nota: 'En bolívares, desde tu banco. Lo más usado.', sello: '', activo: true, manual: true },
+      { id: 'zelle', nombre: 'Zelle', nota: 'En dólares, si tienes cuenta en Estados Unidos.', sello: '', activo: true, manual: true },
+      { id: 'bizum', nombre: 'Bizum', nota: 'En euros, si estás en España.', sello: '', activo: true, manual: true },
+      { id: 'debito', nombre: 'Débito inmediato', nota: 'Se cobra de tu cuenta sin salir de la app. Todavía no está disponible.', sello: 'PRONTO', activo: false, manual: false },
+      { id: 'tarjeta', nombre: 'Tarjeta', nota: 'Todavía no está disponible.', sello: 'PRONTO', activo: false, manual: false }
+    ];
+    const mSel = METODOS[S.metodo] || METODOS[0];
+
+    const metodos = METODOS.map((m, i) => {
+      const on = S.metodo === i && m.activo;
+      return {
+        nombre: m.nombre, nota: m.nota, sello: m.sello,
+        icono: on ? '✓' : '', aro: aroDe(on),
+        btn: pastilla(on) + ';opacity:' + (m.activo ? '1' : '.5') + ';cursor:' + (m.activo ? 'pointer' : 'not-allowed'),
+        inerte: m.activo ? null : 'true',
+        txt: 'display:block;font:' + (on ? '600' : '500') + ' 16px/1.3 \'Inter Tight\',sans-serif;color:' + A.verde,
+        selloEstilo: m.sello
+          ? 'display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;background:rgba(20,52,42,.09);font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;color:' + A.texto3
+          : 'display:none',
+        pick: () => { if (m.activo) this.setState({ metodo: i, copiado: -1 }); }
+      };
+    });
+
+    // nuestros datos, distintos por método
+    const DATOS = {
+      pm: [['Banco', '0134 · Banesco'], ['Documento', 'J-40551234-8'], ['Teléfono', '0412 555 0134'], ['Monto exacto', '6.053,68 Bs']],
+      zelle: [['Correo Zelle', 'pagos@aro.club'], ['A nombre de', 'Aro Club LLC'], ['Monto exacto', '8,00 USD']],
+      bizum: [['Teléfono', '+34 611 22 33 44'], ['A nombre de', 'Aro Club'], ['Concepto', 'ARO-4471'], ['Monto exacto', '7,40 EUR']],
+      debito: [], tarjeta: []
+    };
+    const datosPago = (DATOS[mSel.id] || []).map((x, i) => ({
+      campo: x[0], valor: x[1],
+      textoCopiar: S.copiado === i ? 'Copiado' : 'Copiar',
+      botonCopiar: 'flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid rgba(250,243,228,.3);background:transparent;color:' + (S.copiado === i ? '#E39C63' : A.crema) + ';font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      copiar: () => {
+        try { if (navigator.clipboard) navigator.clipboard.writeText(x[1]); } catch (e) { /* sin permiso */ }
+        this.setState({ copiado: i });
+      }
+    }));
+
+    // el formulario de reporte, campo por campo según el método
+    const campo = (k) => (S.rep && S.rep[k]) || '';
+    const setCampo = (k, filtro) => (e) => {
+      const v = filtro ? filtro(e.target.value || '') : (e.target.value || '');
+      this.setState((st) => ({ rep: Object.assign({}, st.rep, { [k]: v }) }));
+    };
+    const soloNum = (max) => (v) => v.replace(/[^0-9]/g, '').slice(0, max);
+    // las barras se ponen solas: nadie las teclea bien a la primera
+    const fechaAuto = (v) => {
+      const n = v.replace(/[^0-9]/g, '').slice(0, 6);
+      if (n.length <= 2) return n;
+      if (n.length <= 4) return n.slice(0, 2) + '/' + n.slice(2);
+      return n.slice(0, 2) + '/' + n.slice(2, 4) + '/' + n.slice(4);
+    };
+
+    // Cada campo trae su comprobación. Antes solo se miraba la longitud,
+    // así que «01012020» o un banco «1» pasaban por buenos.
+    const VALIDA = {
+      tel: (v, pre) => {
+        const n = pre === '+34' ? 9 : 10;
+        return v.length === n ? '' : 'Son ' + (n === 9 ? 'nueve' : 'diez') + ' dígitos, sin el cero';
+      },
+      doc: (v) => (v.length >= 6 && v.length <= 9 ? '' : 'Entre seis y nueve dígitos, sin puntos'),
+      banco: (v) => (v.trim().length >= 3 ? '' : 'Escribe el nombre del banco'),
+      ref: (v) => (v.length >= 4 ? '' : 'Los últimos cuatro dígitos como mínimo'),
+      otp: (v) => (v.length === 6 ? '' : 'Son seis dígitos'),
+      fecha: (v) => {
+        const m = v.match(/^([0-9]{2})\/([0-9]{2})\/([0-9]{2})$/);
+        if (!m) return 'Con barras: DD/MM/AA';
+        const d = +m[1], mm = +m[2];
+        if (d < 1 || d > 31 || mm < 1 || mm > 12) return 'Esa fecha no existe';
+        return '';
+      },
+      titular: (v) => (v.trim().length >= 3 ? '' : 'Escribe el nombre completo'),
+      contacto: (v) => (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) || v.replace(/[^0-9]/g, '').length >= 9 ? '' : 'Un correo o un teléfono')
+    };
+
+    const CAMPOS = {
+      pm: [
+        ['tel', 'Teléfono desde el que pagaste', '4141234567', '+58', 'numeric', soloNum(10), ''],
+        ['doc', 'Cédula del titular', '12345678', 'V/E', 'numeric', soloNum(9), ''],
+        ['banco', 'Banco emisor', 'Banesco, Mercantil, BNC…', '', 'text', null, ''],
+        ['ref', 'Referencia', 'Últimos 6 dígitos', '', 'numeric', soloNum(6), 'La que te dio el banco al confirmar.'],
+        ['fecha', 'Fecha del pago', 'DD/MM/AA', '', 'numeric', fechaAuto, '']
+      ],
+      zelle: [
+        ['titular', 'Nombre del titular que envió', 'Como aparece en tu banco', '', 'text', null, ''],
+        ['contacto', 'Correo o teléfono desde el que enviaste', 'tu@correo.com', '', 'text', null, 'Tiene que ser el que usaste en Zelle.'],
+        ['ref', 'Código de confirmación', 'Ej. ABC123XYZ', '', 'text', (v) => v.toUpperCase().slice(0, 14), 'Zelle te lo da al terminar el envío.'],
+        ['fecha', 'Fecha del pago', 'DD/MM/AA', '', 'numeric', fechaAuto, '']
+      ],
+      bizum: [
+        ['titular', 'Nombre del titular que envió', 'Como aparece en tu banco', '', 'text', null, ''],
+        ['tel', 'Teléfono desde el que enviaste', '611223344', '+34', 'numeric', soloNum(9), ''],
+        ['fecha', 'Fecha del pago', 'DD/MM/AA', '', 'numeric', fechaAuto, 'Bizum no da referencia al momento: por eso la captura es obligatoria.']
+      ],
+      debito: [
+        ['tel', 'Teléfono', '4141234567', '+58', 'numeric', soloNum(10), 'Los mismos datos que usas para el pago móvil.'],
+        ['doc', 'Cédula', '12345678', 'V/E', 'numeric', soloNum(9), ''],
+        ['banco', 'Banco', 'Banesco, Mercantil, BNC…', '', 'text', null, ''],
+        ['otp', 'Código del banco', '000000', '', 'numeric', soloNum(6), 'Tu banco te lo manda por SMS al confirmar. Solo se cobra al final.']
+      ],
+      tarjeta: []
+    };
+    const listaCampos = CAMPOS[mSel.id] || [];
+    // V o E se eligen, no se adivinan: las dos a la vista
+    const tipoDoc = (v) => {
+      const on = (S.docTipo || 'V') === v;
+      return 'flex:0 0 auto;min-width:34px;min-height:44px;border-radius:999px;border:none;background:' + (on ? A.verde : 'transparent') + ';color:' + (on ? A.crema : A.texto3) + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 160ms ease';
+    };
+    const tocado = (k) => campo(k).length > 0 || !!(S.tocados || {})[k] || !!S.intento;
+    const errorDe = (k) => {
+      const f = VALIDA[k];
+      const v = campo(k);
+      const def = listaCampos.filter((x) => x[0] === k)[0];
+      if (!f) return v.trim().length >= 3 ? '' : 'Completa este campo';
+      return v.length === 0 ? 'Falta' : f(v, def ? def[3] : '');
+    };
+    const camposReporte = listaCampos.map((c) => {
+      const err = errorDe(c[0]);
+      const verErr = !!err && tocado(c[0]);
+      return {
+      etiqueta: c[1], modo: c[4], pista: c[2],
+      prefijo: c[0] === 'doc' ? (S.docTipo || 'V') : c[3],
+      esSelector: c[0] === 'doc',
+      hayPrefijo: !!c[3] && c[0] !== 'doc',
+      ponerV: () => this.setState({ docTipo: 'V' }),
+      ponerE: () => this.setState({ docTipo: 'E' }),
+      grupoPrefijo: 'flex:0 0 auto;display:flex;align-items:center;gap:2px;padding:0 10px 0 8px;border-right:1px solid rgba(20,52,42,.16);margin-right:12px',
+      botonV: tipoDoc('V'), botonE: tipoDoc('E'),
+      nota: verErr ? err : c[6], hayNota: verErr || !!c[6],
+      notaEstilo: 'font:' + (verErr ? '500' : '400') + ' 12px/1.5 \'Inter Tight\',sans-serif;color:' + (verErr ? A.terraO : A.texto3) + ';margin-top:6px',
+      valor: campo(c[0]),
+      onChange: setCampo(c[0], c[5]),
+      onBlur: () => this.setState((st) => ({ tocados: Object.assign({}, st.tocados, { [c[0]]: true }) })),
+      envoltorio: 'display:flex;align-items:center;gap:0;border-radius:999px;border:1px solid ' + (verErr ? A.terraO : 'rgba(20,52,42,.22)') + ';background:' + A.cremaF + ';overflow:hidden',
+      prefijoEstilo: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:56px;padding:0 4px 0 18px;font:600 16px/1 \'Inter Tight\',sans-serif;color:' + A.texto2 + ';border-right:1px solid rgba(20,52,42,.16);margin-right:12px;padding-right:14px',
+      campo: 'flex:1;min-width:0;min-height:56px;padding:0 18px' + (c[3] ? ';padding-left:0' : '') + ';border:none;background:transparent;color:' + A.verde + ';font:400 16px/1 \'Inter Tight\',sans-serif;outline:none'
+      };
+    });
+
+    const conCaptura = !!(S.rep && S.rep.captura);
+    // Bizum no entrega referencia: sin captura no hay nada que conciliar.
+    const capturaObligatoria = mSel.id === 'bizum';
+    const fallo = listaCampos.filter((c) => errorDe(c[0]) !== '')[0];
+    const primerFallo = fallo ? fallo[1] : '';
+    const camposOk = listaCampos.length > 0 && !fallo;
+    const refOk = camposOk && (!capturaObligatoria || conCaptura);
+
+    const GENTE = [['Andrés', 'Tecnología'], ['Gabriela', 'Salud'], ['José Manuel', 'Finanzas'], ['Andreína', 'Educación'], ['Valentina', 'Arquitectura']];
+    const comensales = GENTE.map((g, i) => ({ nombre: g[0], sector: g[1], inicial: g[0].charAt(0), avatar: avatarDe(i) }));
+
+    // ── después de la cena ───────────────────────────────────────────
+    const valoraciones = ['Sí, sin dudarlo', 'Estuvo bien', 'No del todo'].map((label, i) => {
+      const on = S.valor === i;
+      return { label, icono: on ? '✓' : '', aro: aroDe(on), btn: pastilla(on), txt: txtDe(on), pick: () => this.setState({ valor: i }) };
+    });
+    const bloqueables = GENTE.map((g, i) => {
+      const on = S.bloqueados.indexOf(i) >= 0;
+      return {
+        nombre: g[0], sector: g[1], icono: on ? '✓' : '', aro: aroDe(on), btn: pastilla(on),
+        txt: 'flex:1;min-width:0;' + txtDe(on, true),
+        pie: 'flex:0 0 auto;font:400 13px/1.2 \'Inter Tight\',sans-serif;color:' + A.texto3,
+        pick: () => this.setState((s) => ({ bloqueados: s.bloqueados.indexOf(i) >= 0 ? s.bloqueados.filter((x) => x !== i) : s.bloqueados.concat([i]) }))
+      };
+    });
+    const reportables = GENTE.map((g, i) => {
+      const on = S.quien === i;
+      return { nombre: g[0], icono: on ? '✓' : '', aro: aroDe(on), btn: pastilla(on), txt: 'flex:1;min-width:0;' + txtDe(on, true), pick: () => this.setState({ quien: i }) };
+    });
+    const motivos = ['Comentarios sobre el cuerpo o insistencia', 'No aceptó un no', 'Vino a vender o a reclutar', 'No era quien decía ser', 'Otra cosa'].map((label, i) => {
+      const on = S.motivo === i;
+      return { label, icono: on ? '✓' : '', aro: aroDe(on), btn: pastilla(on), txt: 'flex:1;min-width:0;' + txtDe(on, true), pick: () => this.setState({ motivo: i }) };
+    });
+    const reporteOk = S.quien >= 0 && S.motivo >= 0;
+
+    const conMargen = seg > 86400;
+    const motivosCancel = ['Me surgió algo', 'La zona no me sirve', 'La hora no me sirve', 'Ya no me apetece'].map((label, i) => {
+      const on = S.motivoCancel === i;
+      return { label, icono: on ? '✓' : '', aro: aroDe(on), btn: pastilla(on), txt: 'flex:1;min-width:0;' + txtDe(on, true), pick: () => this.setState({ motivoCancel: i }) };
+    });
+
+    // ── mis respuestas: se leen, y se edita la que quieras ──────────
+    // Antes reabría el cuestionario en la 1: para ver una respuesta había
+    // que rellenarlo entero. Mismo patrón que el perfil web.
+    const valorDe = (q) => {
+      const v = (S.r || {})[q.id];
+      if (q.tipo === 'texto') return v || 'Sin responder';
+      if (q.tipo === 'multi') {
+        if (!v || !v.length) return 'Sin responder';
+        return v.map((i) => q.opciones[i]).filter(Boolean).join(', ');
+      }
+      return (v === undefined || v < 0) ? 'Sin responder' : (q.opciones[v] || 'Sin responder');
+    };
+    const NOTAS_BLOQUE = {
+          "Tu contexto": "Con esto evitamos sentarte con alguien de tu empresa y armamos mesas donde las historias se entiendan.",
+          "Cómo eres en la mesa": "Sirve para equilibrar quién habla y quién escucha.",
+          "De qué hablas": "Es la materia prima de tu mesa.",
+          "Qué buscas y cuánto": "Elegimos el sitio con el número más bajo de la mesa.",
+          "Logística": "Dónde y cuándo puedes llegar."
+    };
+    const bloquesResp = BLOQUES.map((b) => ({
+      titulo: b.titulo,
+      nota: NOTAS_BLOQUE[b.titulo] || '',
+      filas: b.preguntas.map((q) => {
+        const val = valorDe(q);
+        const vacio = val === 'Sin responder';
+        const abierta = S.editando === q.id;
+        const multi = q.tipo === 'multi';
+        const sel = (S.r || {})[q.id];
+        return {
+          pregunta: q.pregunta, valor: val, abierta,
+          glifo: abierta ? '×' : '›',
+          valorEstilo: 'display:block;font:400 14px/1.45 \'Inter Tight\',sans-serif;color:' + (vacio ? A.terraO : A.texto2) + ';margin-top:4px;text-wrap:pretty',
+          flecha: 'flex:0 0 auto;width:30px;height:30px;border-radius:999px;background:' + (abierta ? A.verde : 'rgba(20,52,42,.07)') + ';color:' + (abierta ? A.crema : A.verde) + ';display:flex;align-items:center;justify-content:center;font:500 16px/1 \'Inter Tight\',sans-serif',
+          fila: 'display:flex;align-items:center;gap:12px;width:100%;padding:14px 18px;border:none;border-bottom:1px solid rgba(20,52,42,.09);background:' + (abierta ? '#F2E9D5' : 'transparent') + ';cursor:pointer;min-height:64px',
+          // se edita aquí mismo, como en el perfil web: no expulsa al cuestionario
+          editar: () => this.setState((st) => ({ editando: st.editando === q.id ? '' : q.id })),
+          cerrar: () => this.setState({ editando: '' }),
+          esTextoLibre: q.tipo === 'texto',
+          conOpciones: q.tipo !== 'texto',
+          texto: (S.r || {})[q.id] || '',
+          pista: q.pista || 'Escribe tu respuesta',
+          onTexto: (e) => { const v = e.target.value; this.setState((st) => ({ r: Object.assign({}, st.r, { [q.id]: v }) })); },
+          campoTexto: 'width:100%;min-height:56px;padding:0 20px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:' + A.cremaF + ';color:' + A.verde + ';font:400 16px/1 \'Inter Tight\',sans-serif;outline:none',
+          contenedor: multi ? 'display:flex;flex-wrap:wrap;gap:8px' : 'display:flex;flex-direction:column;gap:8px',
+          botonListo: 'display:inline-flex;align-items:center;min-height:48px;margin-top:14px;padding:0 20px;border-radius:999px;border:none;background:' + A.verde + ';color:' + A.crema + ';font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+          opciones: (q.opciones || []).map((label, oi) => {
+            const on = multi ? (sel || []).indexOf(oi) >= 0 : sel === oi;
+            return {
+              label, icono: on ? '✓' : '', aro: aroDe(on),
+              btn: multi ? chipB(on) : 'display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:54px;padding:0 18px 0 14px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? A.terraO : 'rgba(20,52,42,.18)') + ';cursor:pointer',
+              txt: txtDe(on, true),
+              pick: () => this.setState((st) => {
+                const r = Object.assign({}, st.r);
+                if (multi) {
+                  const a2 = (r[q.id] || []).slice();
+                  const k = a2.indexOf(oi);
+                  if (k >= 0) a2.splice(k, 1); else a2.push(oi);
+                  r[q.id] = a2;
+                } else { r[q.id] = oi; }
+                return { r };
+              })
+            };
+          })
+        };
+      })
+    }));
+
+    // Tres grupos con rótulo, en vez de ocho filas seguidas: se escanea
+    // por bloques y cada uno dice de qué va.
+    const GRUPOS = [
+      ['TU PERFIL', [
+        ['Mis respuestas', OBLIG + ' preguntas', () => this.setState({ p: 'respuestas', desde: 'perfil' })],
+        ['Mis datos', 'Nombre, nacimiento y teléfono', () => this.setState({ p: 'misdatos', desde: 'perfil' })],
+        ['Mi verificación', verificado ? 'Verificada' : (enRevision ? 'En revisión' : 'Sin verificar'), () => this.setState({ p: 'verificar', desde: 'perfil' })]
+      ]],
+      ['TU ACTIVIDAD', [
+        ['Mis cenas', cenasHechas ? cenasHechas + (cenasHechas === 1 ? ' cena' : ' cenas') : 'Ninguna todavía', () => this.setState({ p: 'cenas', desde: 'perfil' })],
+        ['Exclusiones', S.bloqueados.length ? S.bloqueados.length + (S.bloqueados.length === 1 ? ' persona' : ' personas') : 'Ninguna', () => this.setState({ p: 'exclusiones', desde: 'perfil' })],
+        ['Avisos', S.noti === 'ok' ? 'Activados' : 'Desactivados', () => this.setState({ p: 'avisos', desde: 'perfil' })]
+      ]],
+      ['AYUDA', [
+        ['Reglas de la mesa', 'Términos y privacidad', () => this.setState({ p: 'texto', doc: 'reglas', desde: 'perfil' })],
+        ['Preguntas frecuentes', 'Lo que todo el mundo pregunta', () => this.setState({ p: 'texto', doc: 'faq', desde: 'perfil' })]
+      ]]
+    ];
+    const gruposPerfil = GRUPOS.map((g) => ({
+      titulo: g[0],
+      filas: g[1].map((f, i) => ({
+        titulo: f[0], detalle: f[1], abrir: f[2],
+        fila: 'display:flex;align-items:center;gap:12px;width:100%;padding:14px 18px;border:none;background:transparent;cursor:pointer;min-height:64px' + (i < g[1].length - 1 ? ';border-bottom:1px solid rgba(20,52,42,.09)' : '')
+      }))
+    }));
+
+    const titulos = { entrar: 'Entrar', quiz: '', datos: 'Datos base', cuenta: 'Tu cuenta', verificar: 'Verificación', fechas: 'Planes', pago: 'Pago', mesa: 'Mi mesa', despues: 'Después de la cena', cancelar: 'Cancelar', perfil: 'Mi perfil', home: '', exclusiones: 'Exclusiones', avisos: 'Avisos', texto: '', baja: 'Darse de baja', respuestas: 'Mis respuestas', misdatos: 'Mis datos', cenas: 'Mis cenas', home: '' };
+    // con sesión iniciada y sin flujo modal encima
+    const CON_TABS = ['home', 'fechas', 'perfil'];
+
+
+    // Entrar con cuenta existente devuelve un perfil ya respondido; si no,
+    // las pantallas de edición salen vacías y parece un usuario nuevo.
+    const SESION = {
+      p: 'home', vFase: 'ok', noti: 'ok',
+      dNombre: 'Daniela Pérez', dLlamar: 'Daniela', dDia: '14', dMes: '03', dAno: '1992', dGenero: 0, dTel: '+58 414 1234567',
+      r: {
+        arraigo: 0, momento: 0, rol: 1, motivo: 0, romance: 2,
+        sector: 3, planes: [0, 1], peso: 0, evitar: [6], dieta: [4],
+        temas: [0, 1, 4], actividades: [0, 2, 5],
+        gasto: 1, zonas: [0, 2], dias: [2, 3], idiomas: [0], empleador: 'Estudio propio'
+      }
+    };
+
+    // ── exclusiones, avisos y los dos documentos ─────────────────────
+    const EXCLUIDOS = S.bloqueados.map((i) => {
+      const g = [['Andrés', 'Tecnología'], ['Gabriela', 'Salud'], ['José Manuel', 'Finanzas'], ['Andreína', 'Educación'], ['Valentina', 'Arquitectura']][i] || ['Alguien', ''];
+      return {
+        nombre: g[0], inicial: g[0].charAt(0), cuando: 'Desde la cena del 31 de julio',
+        avatar: avatarDe(i),
+        quitar: () => this.setState((st) => ({ bloqueados: st.bloqueados.filter((x) => x !== i) }))
+      };
+    });
+
+    const pastillaDe = (on) => 'flex:0 0 auto;width:52px;height:32px;border-radius:999px;border:none;padding:3px;display:flex;justify-content:' + (on ? 'flex-end' : 'flex-start') + ';background:' + (on ? A.verde : 'rgba(20,52,42,.18)') + ';cursor:pointer;transition:all 200ms ease';
+    // Todos encendidos al empezar: es lo que se acepta al crear la cuenta.
+    // Los dos primeros no se pueden apagar — sin ellos no sabes dónde es.
+    const AVISOS = [
+      ['Tu mesa, el jueves a las doce', 'El único imprescindible: dentro va el sitio, tu número de mesa y los cinco nombres.', true, true],
+      ['El día de la cena', 'Un recordatorio la tarde del encuentro, con la dirección.', true, true],
+      ['Cuando confirmamos tu pago', 'Un aviso al pasar tu reserva de pendiente a confirmada.', false, true],
+      ['Cuando abre mesa en tus zonas', 'Solo si hay fecha nueva donde te queda cómodo salir.', false, true],
+      ['WhatsApp el día de la cena', 'Solo ese día y solo si algo cambia: un retraso del grupo o un cambio de sitio.', false, false]
+    ].map((x, i) => {
+      const guardado = (S.avisos || {})[i];
+      const on = S.noti === 'ok' && (x[2] || (guardado === undefined ? x[3] : guardado));
+      return {
+        titulo: x[0], cuerpo: x[1],
+        pastilla: pastillaDe(on),
+        bolita: 'width:26px;height:26px;border-radius:999px;background:' + (on ? A.crema : '#FFFBF0'),
+        fijo: x[2], opcional: !x[2],
+        selloFijo: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 11px;border-radius:999px;background:rgba(27,81,56,.12);font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;color:' + A.verde,
+        alternar: () => { if (x[2]) return; this.setState((st) => (st.noti !== 'ok'
+          ? { noti: 'ok' }
+          : { avisos: Object.assign({}, st.avisos, { [i]: !((st.avisos || {})[i] === undefined ? x[3] : (st.avisos || {})[i]) }) })); }
+      };
+    });
+
+    const REGLAS = [
+      ['Vas tú, y vas solo', 'La plaza es personal. Todo el grupo tiene que ser desconocido entre sí.'],
+      ['Eres quien dices ser', 'Suplantar a otra persona es salida inmediata y definitiva.'],
+      ['Avisas si no vas', 'Con más de 24 horas recuperas el crédito. No aparecer dos veces sin avisar te deja fuera un mes.'],
+      ['Nadie vende nada en la mesa', 'Puedes hablar de tu trabajo. No puedes usar la cena para vender ni reclutar.'],
+      ['Lo que se dice en la mesa se queda ahí', 'No publiques nombres ni capturas. Fotos del grupo solo si todos dicen que sí.'],
+      ['Respeto, y el no se acepta a la primera', 'Cero acoso, cero insistencia. Si alguien no quiere dar su contacto, ahí acaba.']
+    ].map((x) => ({ titulo: x[0], cuerpo: x[1] }));
+
+    const FAQ = [
+      ['¿Y si no me cae bien nadie?', 'Son dos horas y a las nueve estás libre. Nos lo cuentas después y entra en el emparejamiento de la próxima.'],
+      ['¿Puedo ir con un amigo?', 'No. Con una pareja conocida en la mesa, el resto se convierte en público.'],
+      ['¿Qué incluye lo que pago?', 'El emparejamiento, la verificación del grupo y la mesa a tu nombre. Tu consumo lo pagas en el sitio.'],
+      ['¿Cómo sé que son reales?', 'Todos pasaron por documento, foto y una revisión humana que compara las dos.'],
+      ['¿Y si alguien se pasa de la raya?', 'Lo reportas desde tu mesa y lo lee una persona el mismo día. Quien acumula reportes sale del club.'],
+      ['¿Cuándo hay mesa en mi zona?', 'Abrimos donde se junta suficiente gente que pueda llegar. Te avisamos el día que se abra la primera.'],
+      ['¿Por qué preguntan mi edad y mi género?', 'Para que el grupo tenga referencias parecidas y esté balanceado. No se muestran a los demás: de ti solo ven tu nombre y tu sector.'],
+      ['¿A qué hora es y cuánto dura?', 'Las cenas empiezan a las siete y duran unas dos horas. A las nueve estás libre.'],
+      ['Soy vegetariano o tengo alergias', 'Nos lo dices en el perfil y lo tenemos en cuenta al elegir el sitio. También se lo avisamos al restaurante.'],
+      ['¿Cómo sé dónde es?', 'El jueves a las doce del mediodía te llega todo: sitio, dirección y número de mesa. Ni un minuto antes.'],
+      ['¿Y si llego tarde?', 'Avisas desde la app y se lo decimos al grupo. Nadie se queda mirando la puerta.']
+    ].map((x) => ({ titulo: x[0], cuerpo: x[1] }));
+    const tabDe = (on) => 'flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:58px;padding:9px 4px 7px;border:none;background:transparent;cursor:pointer;color:' + (on ? A.verde : '#7E9A8B');
+    const txtTab = (on) => 'font:' + (on ? '600' : '500') + ' 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.02em;color:' + (on ? A.verde : '#7E9A8B');
+    // Cenas activo; el resto anunciado y sin fechas, como en la web.
+    const CAT_DEFS = [
+      ['Todo', '', '', '¿Qué jueves te sirve?'],
+      ['Cenas', 'Jueves y viernes', 'fotos/cenas.jpg', '¿Qué jueves te sirve?'],
+      ['Drinks', 'Próximamente', 'fotos/drinks.jpg', 'Los drinks abren pronto.'],
+      ['Movimiento', 'Próximamente', 'fotos/movimiento.jpg', 'Movimiento abre pronto.'],
+      ['Coffee', 'Próximamente', 'fotos/coffee.jpg', 'Los coffee abren pronto.']
+    ];
+    const ROT = ['0deg', '-1.8deg', '1.5deg', '-1.3deg', '1.6deg'];
+    const CATEGORIAS = [1, 2, 3, 4].map((i) => {
+      const d = CAT_DEFS[i];
+      const on = S.cat === i;
+      const activa = i === 1;
+      return {
+        nombre: d[0], detalle: d[1],
+        pick: () => { if (activa) this.setState({ cat: on ? 0 : i }); },
+        marco: 'flex:0 0 auto;width:136px;scroll-snap-align:start;display:flex;flex-direction:column;background:' + A.cremaF + ';padding:7px 7px 0;border:1px solid ' + (on ? A.terraO : 'transparent') + ';border-radius:12px;box-shadow:0 10px 26px -16px rgba(20,52,42,.45);transform:rotate(' + (on ? '0deg' : ROT[i]) + ');cursor:' + (activa ? 'pointer' : 'not-allowed') + ';opacity:' + (activa ? '1' : '.55') + ';transition:all 200ms ease',
+        foto: 'position:relative;display:block;aspect-ratio:1;overflow:hidden;border-radius:7px;background:#DCD3BC;background-image:url(\'' + d[2] + '\');background-size:cover;background-position:center;filter:grayscale(' + (activa ? '.24' : '.8') + ') contrast(1.16) saturate(' + (activa ? '.74' : '.3') + ') brightness(.9)',
+        tinte: 'position:absolute;inset:0;background:linear-gradient(rgba(20,52,42,.2),rgba(27,81,56,.26))',
+        pie: 'display:block;font:400 17px/1.1 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:' + (on ? A.terraO : A.verde) + ';text-align:center;padding:8px 4px 0',
+        dias: 'display:block;font:500 11px/1.3 \'Inter Tight\',sans-serif;color:' + A.texto3 + ';text-align:center;padding:3px 4px 9px'
+      };
+    });
+    // 14 preguntas del cuestionario más los cinco datos base
+    const respondidas = PLANAS.filter((q) => {
+      if (q.opcional) return false;
+      const v = (S.r || {})[q.id];
+      return Array.isArray(v) ? v.length > 0 : (v !== undefined && v !== null && v !== -1 && v !== '');
+    }).length;
+    // el mismo denominador que el quiz: las obligatorias, no las 17
+    // el perfil son las obligatorias MÁS los cinco datos base, en un solo total
+    const DATOS_BASE = [S.dNombre, S.dLlamar, S.dDia && S.dMes && S.dAno, S.dGenero >= 0, S.dTel];
+    const datosHechos = DATOS_BASE.filter(Boolean).length;
+    const totalPerfil = OBLIG + DATOS_BASE.length;
+    const hechas = respondidas + datosHechos;
+    const pctPerfil = Math.min(100, Math.round((hechas / totalPerfil) * 100));
+    const perfilCompleto = respondidas >= OBLIG && datosOk;
+    const faltanPerfil = Math.max(0, totalPerfil - hechas);
+
+    const cuentaOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((S.correo || '').trim()) && S.clave.length >= 8;
+    const conAtras = ['entrar', 'quiz', 'datos', 'verificar', 'pago', 'mesa', 'despues', 'cancelar', 'exclusiones', 'avisos', 'texto', 'baja', 'respuestas', 'misdatos', 'cenas'];
+    const DEL_PERFIL = ['exclusiones', 'avisos', 'texto', 'baja', 'respuestas', 'misdatos', 'cenas'];
+
+    const oscura = p === 'arranque' || p === 'bloqueo' || revelacionPendiente;
+
+    return {
+      hora: dosD(d.getHours()) + ':' + dosD(d.getMinutes()),
+      sinRed: !S.red,
+      barraSuperior: 'flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 26px 6px;color:' + (oscura ? A.crema : A.verde) + ';background:' + (oscura ? '#0F2820' : A.crema),
+      barraInferior: 'flex:0 0 auto;display:flex;justify-content:center;padding:8px 0 10px;background:' + (oscura ? '#0F2820' : A.crema),
+      colorIndicador: oscura ? A.crema : A.verde,
+      lienzo: 'flex:1;min-height:0;background:' + (oscura ? '#0F2820' : A.crema),
+
+      hayCabecera: p !== 'arranque' && p !== 'bloqueo' && !revelacionPendiente,
+      hayAtras: conAtras.indexOf(p) >= 0,
+      hayPerfil: false,
+
+      esRespuestas: p === 'respuestas', bloquesResp,
+      esCenas: p === 'cenas', cenas: CENAS,
+      hayCenas: CENAS.length > 0, sinCenas: CENAS.length === 0,
+      hayValorar: cenado || mFase === 'pasada',
+      esMisDatos: p === 'misdatos',
+      filasDatos: (function () {
+        const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+        const GEN = ['Mujer', 'Hombre', 'No binario', 'Prefiero no decirlo'];
+        const tel = String(S.dTel || '');
+        const defs = [
+          ['dLlamar', 'Cómo te llamamos en la mesa', S.dLlamar, 'texto', 'Daniela'],
+          ['dNombre', 'Tu nombre completo', S.dNombre, 'texto', 'Daniela Pérez'],
+          ['fecha', 'Fecha de nacimiento', (S.dDia && S.dMes && S.dAno) ? (parseInt(S.dDia, 10) + ' de ' + (MESES[parseInt(S.dMes, 10) - 1] || '') + ' de ' + S.dAno) : '', 'fecha', ''],
+          ['dGenero', 'Género', S.dGenero >= 0 ? GEN[S.dGenero] : '', 'opciones', ''],
+          ['dTel', 'Teléfono', tel, 'tel', '+58 414 1234567']
+        ];
+        return defs.map((d) => {
+          const abierta = S.editandoDato === d[0];
+          const vacio = !d[2];
+          return {
+            etiqueta: d[1], valor: d[2] || 'Sin responder', abierta,
+            glifo: abierta ? '×' : '›',
+            // texto es el defecto: un tipo sin rama propia sigue siendo editable
+            esTexto: d[3] !== 'opciones' && d[3] !== 'fecha',
+            esOpciones: d[3] === 'opciones',
+            esFecha: d[3] === 'fecha',
+            dia: S.dDia || '', mes: S.dMes || '', ano: S.dAno || '',
+            onDia: (e) => this.setState({ dDia: e.target.value.replace(/\D/g, '').slice(0, 2) }),
+            onMes: (e) => this.setState({ dMes: e.target.value.replace(/\D/g, '').slice(0, 2) }),
+            onAno: (e) => this.setState({ dAno: e.target.value.replace(/\D/g, '').slice(0, 4) }),
+            campoCorto: 'flex:1;min-width:0;min-height:56px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:' + A.cremaF + ';color:' + A.verde + ';font:400 16px/1 \'Inter Tight\',sans-serif;outline:none;text-align:center',
+            campoLargo: 'flex:1.4;min-width:0;min-height:56px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:' + A.cremaF + ';color:' + A.verde + ';font:400 16px/1 \'Inter Tight\',sans-serif;outline:none;text-align:center',
+            texto: d[3] === 'tel' ? String(S.dTel || '') : (S[d[0]] || ''),
+            pista: d[4],
+            onTexto: (e) => {
+              const v = e.target.value;
+              this.setState({ [d[0]]: d[3] === 'tel' ? v.replace(/[^0-9+]/g, '').replace(/(?!^)\+/g, '').slice(0, 16) : v });
+            },
+            opciones: GEN.map((label, gi) => {
+              const on = S.dGenero === gi;
+              return { label, icono: on ? '✓' : '', aro: aroDe(on), btn: chipB(on), txt: txtDe(on, true), pick: () => this.setState({ dGenero: gi }) };
+            }),
+            valorEstilo: 'display:block;font:400 14px/1.45 \'Inter Tight\',sans-serif;color:' + (vacio ? A.terraO : A.texto2) + ';margin-top:4px',
+            flecha: 'flex:0 0 auto;width:30px;height:30px;border-radius:999px;background:' + (abierta ? A.verde : 'rgba(20,52,42,.07)') + ';color:' + (abierta ? A.crema : A.verde) + ';display:flex;align-items:center;justify-content:center;font:500 16px/1 \'Inter Tight\',sans-serif',
+            fila: 'display:flex;align-items:center;gap:12px;width:100%;padding:14px 18px;border:none;border-bottom:1px solid rgba(20,52,42,.09);background:' + (abierta ? '#F2E9D5' : 'transparent') + ';cursor:pointer;min-height:64px',
+            campo: 'width:100%;min-height:56px;padding:0 20px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:' + A.cremaF + ';color:' + A.verde + ';font:400 16px/1 \'Inter Tight\',sans-serif;outline:none',
+            botonListo: 'display:inline-flex;align-items:center;min-height:48px;margin-top:14px;padding:0 20px;border-radius:999px;border:none;background:' + A.verde + ';color:' + A.crema + ';font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+            editar: () => this.setState((st) => ({ editandoDato: st.editandoDato === d[0] ? '' : d[0] })),
+            cerrar: () => this.setState({ editandoDato: '' })
+          };
+        });
+      }).call(this),
+      sellosPerfil: [
+        [verificado ? 'Identidad verificada' : (enRevision ? 'En revisión' : 'Sin verificar'), verificado],
+        [perfilCompleto ? 'Perfil completo' : pctPerfil + '% del perfil', perfilCompleto],
+        [(reservado && !cenado ? '3' : '4') + ' créditos', false]
+      ].map((x) => ({
+        texto: x[0],
+        chip: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;font:600 13px/1 \'Inter Tight\',sans-serif;background:' + (x[1] ? 'rgba(27,81,56,.12)' : 'transparent') + ';border:1px solid ' + (x[1] ? 'transparent' : 'rgba(20,52,42,.2)') + ';color:' + (x[1] ? A.verde : A.texto2)
+      })),
+      esExclusiones: p === 'exclusiones', esAvisos: p === 'avisos', esDoc: p === 'texto',
+      excluidos: EXCLUIDOS, hayExcluidos: EXCLUIDOS.length > 0, sinExcluidos: EXCLUIDOS.length === 0,
+      botonQuitar: 'flex:0 0 auto;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:' + A.texto3 + ';font:500 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      avisos: AVISOS,
+      notaAvisos: S.noti === 'ok'
+        ? 'El del jueves a las doce es el que importa: dentro va tu mesa.'
+        : 'Con los avisos apagados te lo mandamos por correo, pero se te puede pasar.',
+      tituloDoc: S.doc === 'faq' ? 'Lo que todo el mundo pregunta.' : 'Las reglas de la mesa.',
+      parrafos: S.doc === 'faq' ? FAQ : REGLAS,
+      hayTabs: CON_TABS.indexOf(p) >= 0 && !revelacionPendiente,
+
+      // el inicio muestra lo que se puede perder de vista: créditos y reservas
+      tarjetaMini: 'flex:1;min-width:0;border-radius:22px;background:' + A.cremaF + ';padding:15px 16px',
+      etiquetaMini: 'font:500 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:' + A.texto3,
+      cifraMini: 'font:700 26px/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:' + A.verde + ';margin-top:8px',
+      notaMini: 'font:400 12px/1.4 \'Inter Tight\',sans-serif;color:' + A.texto3 + ';margin-top:4px',
+      creditos: reservado ? '3' : '4',
+      creditosNota: reservado ? 'uno está en tu reserva' : 'no caducan',
+      perfilPct: perfilCompleto ? '100%' : pctPerfil + '%',
+      perfilNota: perfilCompleto
+        ? 'completo'
+        : (faltanPerfil === 1 ? 'te falta 1 pregunta' : 'te faltan ' + faltanPerfil + ' preguntas'),
+      botonBordeAncho: btn('transparent', A.verde, '1px solid rgba(20,52,42,.22)', 'width:100%;margin-top:14px'),
+
+      // las mismas cuatro categorías de la web, con su polaroid
+      categorias: CATEGORIAS,
+      tituloFechas: (CAT_DEFS[S.cat] && CAT_DEFS[S.cat][3]) || '¿Qué jueves te sirve?',
+
+      // alta por correo: existía el botón y no el formulario
+      sinFormCuenta: !S.formCuenta,
+      conFormCuenta: !!S.formCuenta,
+      abrirFormCuenta: () => this.setState({ formCuenta: true }),
+      cerrarFormCuenta: () => this.setState({ formCuenta: false, clave: '' }),
+      campoAncho: 'width:100%;min-height:56px;padding:0 20px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:' + A.cremaF + ';color:' + A.verde + ';font:400 16px/1 \'Inter Tight\',sans-serif;outline:none',
+      campoClave: 'flex:1;min-width:0;min-height:56px;padding:0 76px 0 20px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:' + A.cremaF + ';color:' + A.verde + ';font:400 16px/1 \'Inter Tight\',sans-serif;outline:none',
+      tipoClave: S.verClave ? 'text' : 'password',
+      textoVer: S.verClave ? 'Ocultar' : 'Ver',
+      verClave: () => this.setState((st) => ({ verClave: !st.verClave })),
+      botonVer: 'position:absolute;right:6px;top:6px;bottom:6px;display:inline-flex;align-items:center;padding:0 15px;border-radius:999px;border:none;background:transparent;color:' + A.texto3 + ';font:500 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      pistaClave: S.clave.length === 0 ? 'Ocho caracteres como mínimo.' : (S.clave.length < 8 ? 'Te faltan ' + (8 - S.clave.length) + '.' : 'Bien.'),
+      colorPista: S.clave.length >= 8 ? A.verde : A.texto3,
+      inerteCuenta: cuentaOk ? null : 'true',
+      textoCrear: cuentaOk ? 'Crear mi cuenta' : 'Completa los dos campos',
+      botonCrear: btn(cuentaOk ? A.verde : 'rgba(20,52,42,.12)', cuentaOk ? A.crema : A.texto3, 'none', 'width:100%' + (cuentaOk ? '' : ';cursor:not-allowed')),
+
+      // Pestañas dibujadas con el aro de la marca, un calendario y una silueta.
+      // El punto terracota marca la activa, igual que en el logo.
+      irHomeTab: () => this.setState({ p: 'home', mVista: '' }),
+      irPlanesTab: () => this.setState({ p: 'fechas', mVista: '' }),
+      irPerfilTab: () => this.setState({ p: 'perfil', mVista: '' }),
+      tabHome: tabDe(p === 'home'), tabPlanes: tabDe(p === 'fechas'), tabPerfil: tabDe(p === 'perfil'),
+      txtHome: txtTab(p === 'home'), txtPlanes: txtTab(p === 'fechas'), txtPerfil: txtTab(p === 'perfil'),
+      puntoHome: p === 'home' ? A.terra : 'currentColor',
+      puntoPlanes: p === 'fechas' ? A.terra : 'currentColor',
+      tabs: 'flex:0 0 auto;display:flex;align-items:stretch;gap:2px;padding:4px 10px 0;border-top:1px solid rgba(20,52,42,.12);background:' + A.crema,
+      titulo: titulos[p] || '',
+      cabecera: 'flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:8px 20px 10px;background:' + A.crema,
+      tituloCabecera: 'font:600 15px/1 \'Inter Tight\',sans-serif;color:' + A.verde,
+      botonAtras: 'flex:0 0 auto;width:44px;height:44px;margin-left:-10px;border:none;background:transparent;color:' + A.texto3 + ';font:400 20px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      botonAvatar: 'flex:0 0 auto;width:44px;height:44px;border-radius:999px;border:none;background:' + A.verde2 + ';color:' + A.crema + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+
+      esArranque: p === 'arranque' && !revelacionPendiente,
+      esEntrar: p === 'entrar', esQuiz: p === 'quiz', esDatos: p === 'datos',
+      esCuenta: p === 'cuenta',
+      esHome: p === 'home' && !revelacionPendiente,
+      esVerificar: p === 'verificar', esFechas: p === 'fechas',
+      esPago: p === 'pago' && !revelacionPendiente,
+      esBloqueo: p === 'bloqueo' || revelacionPendiente,
+      esMesa: p === 'mesa' && !revelacionPendiente,
+      esDespues: p === 'despues',
+      esCancelar: p === 'cancelar', esPerfil: p === 'perfil',
+
+      h1: 'font:400 34px/1.05 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:' + A.verde + ';margin:0',
+      h2: 'font:400 29px/1.08 \'Young Serif\',Georgia,serif;letter-spacing:-.03em;color:' + A.verde + ';margin:0',
+      h2Quiz: 'font:400 27px/1.12 \'Young Serif\',Georgia,serif;letter-spacing:-.03em;color:' + A.verde + ';margin:0',
+      bajada: 'font:400 16px/1.55 \'Inter Tight\',sans-serif;color:' + A.texto2 + ';margin:12px 0 0;text-wrap:pretty',
+      campo: 'width:100%;min-height:56px;padding:0 20px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:' + A.cremaF + ';color:' + A.verde + ';font:400 16px/1 \'Inter Tight\',sans-serif;outline:none',
+      campoCorto: 'flex:1;min-width:0;min-height:56px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:' + A.cremaF + ';color:' + A.verde + ';font:400 16px/1 \'Inter Tight\',sans-serif;outline:none;text-align:center',
+      campoLargo: 'flex:1.4;min-width:0;min-height:56px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:' + A.cremaF + ';color:' + A.verde + ';font:400 16px/1 \'Inter Tight\',sans-serif;outline:none;text-align:center',
+      campoRef: 'width:100%;min-height:72px;margin-top:20px;padding:0 24px;border-radius:26px;border:1px solid rgba(20,52,42,.22);background:' + A.cremaF + ';color:' + A.verde + ';font:600 32px/1 \'Inter Tight\',sans-serif;letter-spacing:.24em;text-align:center;outline:none;font-variant-numeric:tabular-nums',
+      etiquetaCampo: 'display:block;font:600 15px/1.3 \'Inter Tight\',sans-serif;color:' + A.verde + ';margin-bottom:9px',
+      ayudaCampo: 'font:400 13px/1.5 \'Inter Tight\',sans-serif;color:' + A.texto3 + ';margin-top:8px;text-wrap:pretty',
+      chipOpcional: 'display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border-radius:999px;background:rgba(20,52,42,.08);font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;color:' + A.texto3 + ';margin-top:12px',
+      chipSugerencia: 'display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:transparent;color:' + A.verde2 + ';font:500 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      selloVerde: 'display:inline-flex;align-items:center;min-height:32px;padding:0 13px;border-radius:999px;background:' + A.verde2 + ';color:' + A.crema + ';font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;margin-bottom:14px',
+      selloNeutro: 'display:inline-flex;align-items:center;min-height:32px;padding:0 13px;border-radius:999px;background:rgba(20,52,42,.08);color:' + A.texto3 + ';font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;margin-bottom:14px',
+      selloAbierto: 'display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;background:#E39C63;color:' + A.verde + ';font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;margin-bottom:18px',
+      iconoAviso: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:' + A.terraO + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px',
+      puntoVerde: 'flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:' + A.verde2 + ';color:' + A.crema + ';display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px',
+      puntoTerracota: 'flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:' + A.terraO + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px',
+      flechaFila: 'flex:0 0 auto;width:30px;height:30px;border-radius:999px;background:' + A.cremaF + ';color:' + A.verde + ';display:flex;align-items:center;justify-content:center;font:500 13px/1 \'Inter Tight\',sans-serif',
+      avatarGrande: avatarDe(0, true),
+
+      botonPrimario: btn(A.verde, A.crema, 'none'),
+      botonPrimarioAncho: btn(A.verde, A.crema, 'none', 'margin-top:20px'),
+      botonBorde: btn('transparent', A.verde2, '1px solid rgba(20,52,42,.24)'),
+      botonBordeAncho: btn('transparent', A.verde2, '1px solid rgba(20,52,42,.24)', 'margin-top:10px'),
+      botonClaro: btn(A.crema, A.verde, 'none'),
+      botonApple: btn('#14342A', A.crema, 'none'),
+      botonGoogle: btn('#FFFBF0', A.verde, '1px solid rgba(20,52,42,.2)'),
+      botonFantasma: btn('transparent', A.texto3, 'none', 'min-height:52px;margin-top:8px;font-weight:500;font-size:15px;text-decoration:underline;text-underline-offset:6px'),
+      botonFantasmaClaro: btn('transparent', A.claro, 'none', 'min-height:52px;margin-top:8px;font-weight:500;font-size:15px;text-decoration:underline;text-underline-offset:6px'),
+      botonMini: 'display:inline-flex;align-items:center;min-height:44px;padding:0 16px;margin-top:12px;border-radius:999px;border:1px solid ' + A.terraO + ';background:transparent;color:' + A.terra + ';font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+
+      heroFoto: 'position:relative;flex:1 1 auto;min-height:110px;background:#0F2820;background-image:url(\'fotos/cenas.jpg\');background-size:cover;background-position:center;filter:grayscale(.24) contrast(1.16) saturate(.74) brightness(.9)',
+      heroVelo: 'position:absolute;inset:0;background:linear-gradient(rgba(15,40,32,.2),#0F2820)',
+      pantallaBloqueo: 'display:flex;flex-direction:column;height:100%;padding:0 14px;background:#0F2820;background-image:linear-gradient(rgba(15,40,32,.74),rgba(15,40,32,.95)),url(\'fotos/cenas.jpg\');background-size:cover;background-position:center',
+      tarjetaNoti: 'display:flex;flex-direction:column;width:100%;text-align:left;padding:16px;border-radius:22px;border:none;background:rgba(250,243,228,.95);cursor:pointer;animation:aro-noti 520ms cubic-bezier(.2,.8,.3,1) both',
+
+      empezar: () => this.setState({ p: 'quiz', qi: 0 }),
+      irEntrar: () => this.ir('entrar'),
+      irHome: () => this.ir('home'),
+      irPerfil: () => this.ir('perfil'),
+      irCancelar: () => this.ir('cancelar'),
+      irDespues: () => this.ir('despues'),
+      nada: () => {},
+      atras: () => {
+        const vuelta = { entrar: 'arranque', quiz: 'arranque', datos: 'quiz', cuenta: 'datos', verificar: 'home', fechas: 'home', pago: 'fechas', mesa: 'home', despues: 'mesa', cancelar: 'mesa', perfil: 'home', exclusiones: 'perfil', avisos: 'perfil', texto: 'perfil', baja: 'perfil', respuestas: 'perfil', misdatos: 'perfil', cenas: 'perfil' };
+        if (p === 'quiz' && S.qi > 0) { this.setState({ qi: S.qi - 1, texto: '' }); return; }
+        if (p === 'pago') {
+          const previa = { referencia: 'datos', datos: 'resumen' }[S.pFase];
+          if (previa) { this.setState({ pFase: previa, intento: false }); return; }
+          this.setState({ p: 'fechas', desde: '', pFase: 'resumen' });
+          return;
+        }
+        if (S.desde) { this.setState({ p: S.desde, desde: '' }); return; }
+        this.ir(vuelta[p] || 'home');
+      },
+
+      correo: S.correo, clave: S.clave,
+      onCorreo: (e) => this.setState({ correo: e.target.value }),
+      onClave: (e) => this.setState({ clave: e.target.value }),
+      // cuenta existente: la sesión vuelve con su verificación hecha
+      entrarProveedor: () => this.setState(SESION),
+      entrarCorreo: () => this.setState(SESION),
+
+      bloques: BLOQUES.map((b, i) => ({
+        barra: 'flex:1;height:4px;border-radius:999px;background:' + (i < q.bloque ? A.verde2 : (i === q.bloque ? A.terra : 'rgba(20,52,42,.14)')) + ';transition:background 240ms ease'
+      })),
+      bloqueTitulo: BLOQUES[q.bloque].titulo.toUpperCase(),
+      // el progreso cuenta solo las obligatorias: una opcional no puede sumar
+      contadorQuiz: q.opcional
+        ? 'Opcional'
+        : (PLANAS.slice(0, S.qi + 1).filter((x) => !x.opcional).length) + ' de ' + OBLIG,
+      quizPregunta: q.pregunta,
+      quizAyuda: q.ayuda || '',
+      hayAyuda: !!q.ayuda,
+      esOpcional: !!q.opcional,
+      esTexto: esTexto, esLista: !esTexto,
+      opciones,
+      contenedorOpciones: compacto
+        ? 'display:flex;flex-wrap:wrap;gap:8px;margin-top:20px'
+        : 'display:flex;flex-direction:column;gap:9px;margin-top:20px',
+      textoLibre: t,
+      onTextoLibre: (e) => this.setState({ texto: e.target.value }),
+      sugerencias: sug.map((label) => ({ label, pick: () => this.setState({ texto: label }) })),
+      hayContador: !!contadorMulti,
+      contadorMulti,
+      contadorEstilo: 'display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;margin-bottom:10px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + (completa ? 'rgba(27,81,56,.12)' : 'rgba(20,52,42,.07)') + ';color:' + (completa ? A.verde2 : A.texto3),
+      textoSiguiente: completa
+        ? (S.qi + 1 >= TOTAL ? 'Terminar' : 'Siguiente')
+        : (q.opcional ? 'Saltar' : (esTexto ? 'Escribe dónde trabajas' : (esMulti ? 'Elige al menos ' + (q.min || 1) : 'Elige una respuesta'))),
+      inerteQuiz: puede ? null : 'true',
+      botonSiguiente: btn(puede ? A.verde : 'rgba(20,52,42,.12)', puede ? A.crema : A.texto3, 'none', puede ? '' : 'cursor:not-allowed'),
+      siguiente: avanzar,
+
+      dNombre: S.dNombre, dLlamar: S.dLlamar, dDia: S.dDia, dMes: S.dMes, dAno: S.dAno, dTel: S.dTel,
+      onDNombre: (e) => this.setState({ dNombre: e.target.value }),
+      onDLlamar: (e) => this.setState({ dLlamar: e.target.value }),
+      onDDia: (e) => this.setState({ dDia: e.target.value.replace(/\D/g, '').slice(0, 2) }),
+      onDMes: (e) => this.setState({ dMes: e.target.value.replace(/\D/g, '').slice(0, 2) }),
+      onDAno: (e) => this.setState({ dAno: e.target.value.replace(/\D/g, '').slice(0, 4) }),
+      onDTel: (e) => this.setState({ dTel: e.target.value.replace(/[^0-9+]/g, '').replace(/(?!^)\\+/g, '').slice(0, 16) }),
+      generos,
+      notaEdad: edad >= 18
+        ? 'Tienes ' + edad + '. Tu mesa será de gente de ' + (edad - 5) + ' a ' + (edad + 5) + '.'
+        : 'Aro es para mayores de 18. La edad exacta no se le enseña a nadie.',
+      inerteDatos: datosOk ? null : 'true',
+      textoDatos: datosOk ? 'Continuar' : 'Faltan datos',
+      botonDatos: btn(datosOk ? A.verde : 'rgba(20,52,42,.12)', datosOk ? A.crema : A.texto3, 'none', datosOk ? '' : 'cursor:not-allowed'),
+      guardarDatos: () => { if (datosOk) this.ir('cuenta'); },
+
+      crearProveedor: () => this.setState({ p: 'home', vFase: 'no' }),
+      crearCorreo: () => { if (cuentaOk) this.setState({ p: 'home', vFase: 'no', formCuenta: false }); },
+
+      paso,
+      tarjetaPaso: 'border-radius:28px;padding:22px;background:' + (osc ? A.verde : A.cremaF),
+      selloPaso: 'display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;margin-bottom:14px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;background:' + (osc ? 'rgba(250,243,228,.16)' : 'rgba(20,52,42,.08)') + ';color:' + (osc ? A.crema : A.texto3),
+      hayAvisoNoti: S.noti === 'no' && reservado,
+      pedirNoti: () => this.setState({ noti: 'ok' }),
+      noQuiereNoti: () => this.setState({ noti: 'no' }),
+
+      hayPlanes: reservado,
+      sinPlanes: !reservado,
+      fechaCena: etiquetaFecha(S.cenaTs || juevesN(0)).toLowerCase(),
+      fechaElegida: etiquetaFecha(S.cenaTs || FECHAS[Math.max(0, S.fecha)][3]),
+      fechaElegidaBaja: etiquetaFecha(S.cenaTs || FECHAS[Math.max(0, S.fecha)][3]).toLowerCase(),
+      planes: reservado ? [{
+        titulo: mFase === 'abierta' ? 'Cardenal · mesa 04' : 'Cena en tus zonas',
+        detalle: etiquetaFecha(S.cenaTs || juevesN(0)) + ' · 7:00 p.m.',
+        estado: porConfirmar ? 'Por confirmar' : (mFase === 'abierta' ? 'Hoy' : (cenado ? 'Fuiste' : 'Confirmada')),
+        chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + (porConfirmar ? 'rgba(143,69,21,.13)' : (cenado ? 'rgba(27,81,56,.11)' : A.verde2)) + ';color:' + (porConfirmar ? A.terraO : (cenado ? A.verde2 : A.crema)),
+        fila: 'display:flex;align-items:center;gap:12px;width:100%;padding:15px 0;border:none;border-bottom:1px solid rgba(20,52,42,.1);background:transparent;cursor:pointer;min-height:64px',
+        abrir: () => this.ir('mesa')
+      }] : [],
+
+      vNoPedida: S.vFase === 'no', vCamara: S.vFase === 'camara', vRevision: S.vFase === 'revision',
+      vHecha: verificado,
+      vRechazo: S.vFase === 'rechazo',
+      etiquetaDemoVerif: 'DEMO · ' + String(S.vFase).toUpperCase(),
+      botonDemoVerif: 'display:inline-flex;align-items:center;min-height:44px;margin-bottom:14px;padding:0 12px;border-radius:999px;border:1px dashed rgba(20,52,42,.3);background:transparent;font:500 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;color:' + A.texto3 + ';cursor:pointer',
+      ciclarVerif: () => {
+        const fs = ['no', 'camara', 'revision', 'ok', 'rechazo'];
+        this.setState((st) => ({ vFase: fs[(fs.indexOf(st.vFase) + 1) % fs.length], foto: 0 }));
+      },
+      repetirCedula: () => this.setState({ vFase: 'camara', foto: 0 }),
+      datosVerif: [
+        ['Documento', 'V-18.442.019'],
+        ['Nombre', 'Daniela Pérez'],
+        ['Nacimiento', '14 de marzo de 1992'],
+        ['Aprobada', '6 de agosto de 2026']
+      ].map((x) => ({ campo: x[0], valor: x[1] })),
+      promesasVerif: [
+        { texto: 'Lo revisa una persona de nuestro equipo, no un robot.' },
+        { texto: 'Tu cédula y tu selfie se borran a los noventa días. Después solo queda que la verificación ocurrió.' },
+        { texto: 'Ningún otro miembro las ve, en ninguna pantalla. De ti solo ven tu nombre y tu sector.' }
+      ],
+      empezarFotos: () => this.setState({ vFase: 'camara', foto: 0 }),
+      etiquetaFoto: S.foto === 0 ? 'FOTO 1 DE 2' : 'FOTO 2 DE 2',
+      tituloFoto: S.foto === 0 ? 'Tu cédula, por delante' : 'Ahora tú',
+      pieVisor: S.foto === 0 ? 'Que se lean el número y la fecha. Sin brillos encima.' : 'Mira a la cámara, sin gafas de sol ni gorra.',
+      barraFoto1: 'flex:1;height:4px;border-radius:999px;background:' + (S.foto >= 1 ? A.verde2 : A.terra),
+      barraFoto2: 'flex:1;height:4px;border-radius:999px;background:' + (S.foto >= 1 ? A.terra : 'rgba(20,52,42,.14)'),
+      visor: 'position:relative;flex:1;min-height:300px;border-radius:26px;background:#0F2820;display:flex;align-items:center;justify-content:center;overflow:hidden',
+      guiaVisor: S.foto === 0
+        ? 'position:absolute;inset:16% 8%;border:2px dashed rgba(250,243,228,.34);border-radius:16px'
+        : 'position:absolute;top:10%;bottom:10%;left:18%;right:18%;border:2px dashed rgba(250,243,228,.34);border-radius:999px',
+      botonDisparo: 'flex:0 0 auto;width:70px;height:70px;border-radius:999px;background:' + A.crema + ';border:4px solid ' + A.verde + ';cursor:pointer',
+      galeria: () => {},
+      voltear: () => {},
+      disparar: () => {
+        if (S.foto === 0) { this.setState({ foto: 1 }); return; }
+        this.setState({ vFase: 'revision' });
+      },
+
+      fechas,
+      inerteFecha: (S.fecha >= 0 && verificado) ? null : 'true',
+      textoFecha: !verificado ? 'Verifica tu identidad para reservar' : (S.fecha >= 0 ? 'Reservar mi puesto · 8 USD' : 'Elige una fecha'),
+      botonFecha: btn((S.fecha >= 0 && verificado) ? A.verde : 'rgba(20,52,42,.12)', (S.fecha >= 0 && verificado) ? A.crema : A.texto3, 'none', (S.fecha >= 0 && verificado) ? '' : 'cursor:not-allowed'),
+      irPago: () => { if (S.fecha >= 0 && verificado) this.setState({ p: 'pago', pFase: 'resumen', desde: '', intento: false }); },
+
+      textoIrBanco: mSel.manual ? (mSel.id === 'pm' ? 'Ver los datos para pagar' : 'Ver los datos de ' + mSel.nombre) : 'Pagar con débito inmediato',
+      selloReloj: 'display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:rgba(143,69,21,.12);font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;color:' + A.terraO,
+      textoReloj: 'TU PUESTO ESTÁ APARTADO 30 MIN',
+      tituloDatos: mSel.manual ? 'Paga y vuelve aquí.' : 'Paga sin salir de aquí.',
+      bajadaDatos: mSel.manual
+        ? (mSel.id === 'pm'
+          ? 'Sales de Aro, haces el pago móvil y vuelves con la referencia. Guardamos el sitio mientras tanto.'
+          : 'Sales de Aro, haces el envío por ' + mSel.nombre + ' y vuelves a reportarlo. Guardamos el sitio mientras tanto.')
+        : 'Con los mismos datos de tu pago móvil. Tu banco te manda un código y el cobro sale de tu cuenta.',
+      etiquetaDatos: 'DATOS PARA ' + mSel.nombre.toUpperCase(),
+      bajadaReporte: mSel.manual
+        ? 'Con esto una persona cuadra tu pago con el del banco. Suele estar listo en menos de una hora.'
+        : 'Tu banco confirma el cobro. No hace falta que reportes nada después.',
+      camposReporte,
+      tituloReporte: mSel.manual ? 'Reporta tu pago.' : 'Confirma el cobro.',
+      hayCaptura: mSel.manual,
+      etiquetaCaptura: capturaObligatoria ? 'Captura del pago' : 'Captura del pago · opcional',
+      glifoCaptura: conCaptura ? '✓' : '+',
+      tituloCaptura: conCaptura ? 'Captura adjunta' : 'Adjuntar captura',
+      notaCaptura: conCaptura ? 'Toca para cambiarla' : (capturaObligatoria ? 'Obligatoria para ' + mSel.nombre : 'Acelera la revisión'),
+      iconoCaptura: 'flex:0 0 auto;width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 17px/1 \'Inter Tight\',sans-serif;background:' + (conCaptura ? A.verde : 'rgba(20,52,42,.09)') + ';color:' + (conCaptura ? A.crema : A.verde),
+      botonCaptura: 'display:flex;align-items:center;gap:13px;width:100%;min-height:72px;padding:14px 18px;border-radius:26px;background:' + (conCaptura ? A.cremaF : 'transparent') + ';border:1px ' + (conCaptura ? 'solid ' + A.verde : 'dashed rgba(20,52,42,.3)') + ';cursor:pointer;transition:all 180ms ease',
+      adjuntar: () => this.setState((st) => ({ rep: Object.assign({}, st.rep, { captura: !st.rep.captura }) })),
+      notaRevision: mSel.manual
+        ? 'Lo revisa una persona. Si algo no cuadra te escribimos, y tu puesto sigue apartado mientras tanto.'
+        : 'Se cobra al confirmar. Si cancelas con margen, vuelve a tu cuenta sola.',
+      selloTerra: 'display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:' + A.terraO + ';color:#FFF8EA;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;margin-bottom:16px',
+      pResumen: S.pFase === 'resumen', pDatos: S.pFase === 'datos',
+      pReferencia: S.pFase === 'referencia', pConfirmado: S.pFase === 'confirmado',
+      metodos, datosPago,
+      irBanco: () => this.setState({ pFase: 'datos', copiado: -1 }),
+      pVolverConRef: () => this.setState({ pFase: 'referencia' }),
+      inerteRef: refOk ? null : 'true',
+      textoRef: refOk ? (mSel.manual ? 'Reportar mi pago' : 'Confirmar y pagar') : (camposOk ? 'Adjunta la captura' : 'Falta ' + primerFallo.toLowerCase()),
+      botonRef: btn(refOk ? A.verde : 'rgba(20,52,42,.12)', refOk ? A.crema : A.texto3, 'none', 'margin-top:18px;' + (refOk ? '' : 'cursor:not-allowed')),
+      // se ancla a la fecha que eligió, no al jueves inmediato
+      confirmarPago: () => {
+        if (!refOk) { this.setState({ intento: true }); return; }
+        // manual queda por conciliar; solo el débito lo confirma el banco
+        this.setState({ pFase: mSel.manual ? 'pendiente' : 'confirmado', cenaTs: FECHAS[Math.max(0, S.fecha)][3], intento: false });
+      },
+      pPendiente: S.pFase === 'pendiente',
+      pasosPendiente: [
+        ['✓', A.verde, 'Tu puesto está apartado', 'Nadie más lo puede tomar mientras revisamos.'],
+        ['·', A.terraO, 'Lo cuadramos con el banco', 'Una persona compara tu reporte con el movimiento real. Menos de una hora.'],
+        ['→', A.verde2, 'Te avisamos al confirmarlo', 'Un aviso y un correo. Ahí tu reserva pasa a confirmada.']
+      ].map((x) => ({
+        glifo: x[0], titulo: x[2], cuerpo: x[3],
+        marca: 'flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:' + x[1] + ';color:' + A.crema + ';display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px'
+      })),
+      pedirNotiAhora: S.noti === 'sin',
+      notiResuelta: S.noti !== 'sin',
+
+      cuenta,
+      textoEspera: dias === 0 ? 'SE ABRE HOY A LAS 12:00' : 'SE ABRE EL ' + etiquetaFecha(objetivo).toUpperCase() + ' A LAS 12:00',
+      mCerrada: mFase === 'cerrada', mAbierta: mFase === 'abierta', mPasada: mFase === 'pasada',
+      comensales,
+      textoTarde: S.tarde ? 'Avisado, van a saberlo' : 'Voy tarde',
+      avisarTarde: () => this.setState({ tarde: true }),
+      abrirNoti: () => this.setState({ p: 'mesa', revelada: true }),
+
+      dSinContar: !S.contado,
+      dContado: S.contado,
+      valoraciones, bloqueables, reportables, motivos,
+      resumenValoracion: S.bloqueados.length
+        ? 'Entra en tu próxima mesa. ' + (S.bloqueados.length === 1 ? 'La persona que marcaste no volverá' : 'Las personas que marcaste no volverán') + ' a coincidir contigo.'
+        : 'Entra en el emparejamiento de tu próxima mesa.',
+      inerteValor: S.valor >= 0 ? null : 'true',
+      textoValorar: S.valor >= 0 ? 'Enviar' : 'Elige una respuesta',
+      botonValorar: btn(S.valor >= 0 ? A.verde : 'rgba(20,52,42,.12)', S.valor >= 0 ? A.crema : A.texto3, 'none', 'margin-top:22px;' + (S.valor >= 0 ? '' : 'cursor:not-allowed')),
+      enviarValoracion: () => { if (S.valor >= 0) this.setState({ contado: true }); },
+      dPuedeReportar: !S.reportado && !S.reporte,
+      dReporte: S.reporte,
+      dReportado: S.reportado,
+      abrirReporte: () => this.setState({ reporte: true }),
+      inerteReporte: reporteOk ? null : 'true',
+      textoReportar: reporteOk ? 'Enviar el reporte' : (S.quien < 0 ? 'Elige sobre quién' : 'Elige qué pasó'),
+      botonReportar: btn(reporteOk ? A.terraO : 'rgba(20,52,42,.12)', reporteOk ? '#FFF8EA' : A.texto3, 'none', 'margin-top:18px;' + (reporteOk ? '' : 'cursor:not-allowed')),
+      enviarReporte: () => { if (reporteOk) this.setState({ reporte: false, reportado: true }); },
+      resumenReporte: 'Reportaste a ' + (S.quien >= 0 ? GENTE[S.quien][0] : 'alguien') + '. Lo lee una persona hoy y te escribimos cuando esté revisado.',
+      dCierre: S.contado || S.reportado,
+
+      textoCancelar: conMargen
+        ? 'Cancelas con más de 24 horas, así que recuperas el crédito entero. Nadie de la mesa se entera.'
+        : 'Faltan menos de 24 horas y la mesa ya está armada, así que el crédito se pierde. Aun así, avisar es mejor que no aparecer.',
+      textoCredito: conMargen ? 'Vuelve entero' : 'Se pierde',
+      estiloCredito: 'font:600 15px/1.4 \'Inter Tight\',sans-serif;color:' + (conMargen ? A.verde2 : A.terra),
+      hayMotivosCancel: conMargen,
+      motivosCancel,
+      botonCancelar: btn(A.terraO, '#FFF8EA', 'none', 'margin-top:22px'),
+      confirmarCancel: () => this.setState({ p: 'home', pFase: 'resumen', fecha: -1, mVista: '', revelada: false, referencia: '', rep: {}, cenaTs: 0 }),
+      irDespuesDeCena: () => this.setState({ p: 'despues', mVista: 'pasada' }),
+
+      estadoPerfil: verificado ? 'Identidad verificada' : (enRevision ? 'Verificación en revisión' : 'Sin verificar'),
+      botonSalir: btn('transparent', A.texto3, '1px solid rgba(20,52,42,.2)', 'width:100%;margin-top:22px'),
+      botonBaja: btn('transparent', A.terraO, 'none', 'width:100%;margin-top:10px;font-weight:500;font-size:15px;text-decoration:underline;text-underline-offset:6px'),
+      irBaja: () => this.setState({ p: 'baja', desde: 'perfil' }),
+      esBaja: p === 'baja',
+      motivosBaja: ['No encontré mesa en mi zona', 'No es lo que esperaba', 'Prefiero parar un tiempo', 'Otra cosa'].map((label, i) => {
+        const on = S.motivoBaja === i;
+        return {
+          label, icono: on ? '✓' : '', aro: aroDe(on), btn: chipB(on), txt: txtDe(on, true),
+          pick: () => this.setState({ motivoBaja: i })
+        };
+      }),
+      botonConfirmarBaja: btn(A.terraO, '#FFF8EA', 'none', 'width:100%;margin-top:22px'),
+      confirmarBaja: () => this.setState({ p: 'arranque', vFase: 'no', pFase: 'resumen', fecha: -1, cenaTs: 0, motivoBaja: -1 }),
+      salir: () => this.setState({ p: 'arranque', vFase: 'no', pFase: 'resumen', fecha: -1, cenaTs: 0, formCuenta: false, correo: '', clave: '' }),
+      metricasPerfil: [
+        { cifra: cenado ? '1' : '0', etiqueta: cenado ? 'cena' : 'cenas' },
+      ],
+      gruposPerfil,
+      resumenPerfil: (perfilCompleto ? 'Perfil completo' : pctPerfil + '% del perfil') + ' · ' + (verificado ? 'identidad verificada' : 'sin verificar') + ' · ' + (reservado && !cenado ? '3' : '4') + ' créditos'
+    };
+  }
+}
+</script>
+</body>
+</html>

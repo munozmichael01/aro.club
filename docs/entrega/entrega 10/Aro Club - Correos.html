@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8" />
+<title>Aro Club — Los cinco correos</title>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  body{margin:0;background:#F2E9D5;font-family:'Inter Tight',system-ui,sans-serif;color:#14342A}
+  .wrap{max-width:1360px;margin:0 auto;padding:clamp(20px,4vw,40px)}
+  h1{font:400 clamp(28px,4vw,42px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;margin:0 0 10px}
+  p.sub{font:400 16px/1.6 'Inter Tight',sans-serif;color:#2C4A38;max-width:62ch;margin:0 0 28px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+  .card{background:#FAF3E4;border-radius:20px;overflow:hidden;border:1px solid rgba(20,52,42,.14)}
+  .head{padding:15px 18px;border-bottom:1px solid rgba(20,52,42,.12)}
+  .n{font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515}
+  .t{font:400 21px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;margin-top:7px}
+  .s{font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:5px}
+  iframe{width:100%;height:620px;border:0;display:block;background:#F2E9D5}
+  a.abrir{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;margin:12px 18px 16px;border-radius:999px;border:1px solid rgba(20,52,42,.22);font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:none}
+</style></head>
+<body><div class="wrap">
+<h1>Los cinco correos.</h1>
+<p class="sub">Archivos HTML autocontenidos, listos para pegar en la herramienta de envío. Sin JavaScript, sin fuentes web, sin imágenes externas: todo son celdas de tabla y tipografía, que es lo único que sobrevive igual en Gmail, Outlook y Apple Mail.</p>
+<div class="grid" id="g"></div>
+</div>
+<script>
+const cs=[
+ ['01','Bienvenida','Al terminar las cuatro preguntas de la landing','correos/01-bienvenida.html'],
+ ['02','Identidad verificada','Cuando una persona aprueba la cédula y la selfie','correos/02-verificacion.html'],
+ ['03','Tu mesa','Jueves a las 12:00 · el correo que sostiene la promesa','correos/03-mesa-asignada.html'],
+ ['04','Es hoy','La tarde del encuentro','correos/04-recordatorio.html'],
+ ['05','Puesto cancelado','Al cancelar, con o sin devolución','correos/05-cancelacion.html'],
+ ['06','Pago en revisión','Al reportar un pago manual · puesto apartado','correos/06-pago-en-revision.html'],
+ ['07','Pago confirmado','Cuando operación cuadra el pago con el banco','correos/07-pago-confirmado.html'],
+ ['08','El pago no cuadra','Cuando el reporte no aparece en el banco · 24 h para corregir','correos/08-pago-no-cuadra.html']
+];
+document.getElementById('g').innerHTML=cs.map(c=>`<div class="card"><div class="head"><div class="n">${c[0]}</div><div class="t">${c[1]}</div><div class="s">${c[2]}</div></div><iframe src="${c[3]}" title="${c[1]}"></iframe><a class="abrir" href="${c[3]}" target="_blank">Abrir a tamaño real</a></div>`).join('');
+</script>
+</body></html>

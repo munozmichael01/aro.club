@@ -2142,14 +2142,22 @@ export type Database = {
           fixed_menu_usd: number | null
           formats: Database["public"]["Enums"]["event_format_t"][]
           has_parking: boolean
+          has_terrace: boolean | null
           id: string
+          is_accessible: boolean | null
           is_active: boolean
           is_after_venue: boolean
+          last_seating: string | null
           maps_url: string | null
           max_tables: number
+          metro_minutes: number | null
+          metro_nearby: string | null
           name: string
           noise_level: number | null
+          open_days: number[]
           safety_notes: string | null
+          splits_bill: boolean | null
+          table_shape: string | null
           zone_slug: string | null
         }
         Insert: {
@@ -2168,14 +2176,22 @@ export type Database = {
           fixed_menu_usd?: number | null
           formats?: Database["public"]["Enums"]["event_format_t"][]
           has_parking?: boolean
+          has_terrace?: boolean | null
           id?: string
+          is_accessible?: boolean | null
           is_active?: boolean
           is_after_venue?: boolean
+          last_seating?: string | null
           maps_url?: string | null
           max_tables?: number
+          metro_minutes?: number | null
+          metro_nearby?: string | null
           name: string
           noise_level?: number | null
+          open_days?: number[]
           safety_notes?: string | null
+          splits_bill?: boolean | null
+          table_shape?: string | null
           zone_slug?: string | null
         }
         Update: {
@@ -2194,14 +2210,22 @@ export type Database = {
           fixed_menu_usd?: number | null
           formats?: Database["public"]["Enums"]["event_format_t"][]
           has_parking?: boolean
+          has_terrace?: boolean | null
           id?: string
+          is_accessible?: boolean | null
           is_active?: boolean
           is_after_venue?: boolean
+          last_seating?: string | null
           maps_url?: string | null
           max_tables?: number
+          metro_minutes?: number | null
+          metro_nearby?: string | null
           name?: string
           noise_level?: number | null
+          open_days?: number[]
           safety_notes?: string | null
+          splits_bill?: boolean | null
+          table_shape?: string | null
           zone_slug?: string | null
         }
         Relationships: [
@@ -2460,6 +2484,79 @@ export type Database = {
           },
           {
             foreignKeyName: "table_members_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "dinner_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_feedback: {
+        Row: {
+          created_at: string
+          noise_level: number | null
+          profile_id: string
+          rating: number
+          restaurant_id: string
+          spent_usd: number | null
+          table_id: string
+        }
+        Insert: {
+          created_at?: string
+          noise_level?: number | null
+          profile_id: string
+          rating: number
+          restaurant_id: string
+          spent_usd?: number | null
+          table_id: string
+        }
+        Update: {
+          created_at?: string
+          noise_level?: number | null
+          profile_id?: string
+          rating?: number
+          restaurant_id?: string
+          spent_usd?: number | null
+          table_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_feedback_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_feedback_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "venue_feedback_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "venue_feedback_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_feedback_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_feedback_table_id_fkey"
             columns: ["table_id"]
             isOneToOne: false
             referencedRelation: "dinner_tables"

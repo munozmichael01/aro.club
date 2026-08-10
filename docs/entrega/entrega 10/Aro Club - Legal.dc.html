@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  html { scroll-behavior: smooth; }
+  body { margin:0; background:#FAF3E4; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  ::selection { background:#1B5138; color:#FAF3E4; }
+  .aro-anc { scroll-margin-top: 104px; }
+  .aro-nav::-webkit-scrollbar { display:none; }
+</style>
+</helmet>
+
+<div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif">
+
+  <div style="position:sticky;top:0;z-index:40;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.1)">
+    <div style="max-width:820px;margin:0 auto;padding:11px clamp(16px,4vw,32px);display:flex;align-items:center;gap:11px">
+      <a href="Aro Club - Landing v3.dc.html" style="display:flex;align-items:center;gap:9px;color:#14342A;min-height:44px;margin:-10px 0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
+        <span style="font:400 21px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
+      </a>
+    </div>
+  </div>
+
+  <div style="max-width:820px;margin:0 auto;padding:clamp(30px,5vw,56px) clamp(16px,4vw,32px) clamp(56px,9vw,100px)">
+
+    <h1 style="font:400 clamp(32px,5.2vw,56px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0;max-width:17ch;text-wrap:balance">Las reglas, los términos y qué hacemos con tus datos.</h1>
+    <p style="font:400 17px/1.6 'Inter Tight',sans-serif;color:#456352;max-width:54ch;margin:16px 0 0;text-wrap:pretty">Escrito para que se entienda. Si algo aquí no te cuadra, escríbenos antes de registrarte y no después.</p>
+    <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:20px">Última actualización: 5 de agosto de 2026 · Caracas, Venezuela</div>
+
+    <div class="aro-anc" id="reglas" style="margin-top:clamp(40px,6vw,72px)">
+      <div style="{{ eyebrow }}">01 · REGLAS DE LA MESA</div>
+      <h2 style="{{ h2 }}">Lo que aceptas al sentarte.</h2>
+      <p style="{{ intro }}">Estas seis reglas son la razón por la que alguien se atreve a cenar con cinco desconocidos. Romperlas es motivo de salida del club, sin devolución de créditos usados.</p>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:26px">
+        <sc-for list="{{ reglas }}" as="r" hint-placeholder-count="6">
+          <div style="display:flex;gap:15px;align-items:flex-start;border-radius:22px;background:#FFFBF0;padding:clamp(17px,2.2vw,22px)">
+            <span style="flex:0 0 auto;width:30px;height:30px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 13px/1 'Inter Tight',sans-serif;margin-top:2px">{{ r.n }}</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:400 clamp(19px,2.2vw,23px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ r.titulo }}</span>
+              <span style="display:block;font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;margin-top:7px;text-wrap:pretty">{{ r.cuerpo }}</span>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="border-radius:22px;border:1px solid rgba(143,69,21,.3);padding:clamp(17px,2.2vw,22px);margin-top:14px">
+        <div style="font:400 clamp(19px,2.2vw,23px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#8F4515">Si algo pasa en una mesa</div>
+        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;margin-top:8px;max-width:60ch;text-wrap:pretty">Lo reportas desde tu mesa y lo lee una persona el mismo día. Puedes bloquear a alguien para que nunca vuelva a coincidir contigo, y no se le avisa. Quien acumula reportes sale del club. Si hay un delito de por medio, colaboramos con las autoridades y te acompañamos en la denuncia; no hacemos de juez ni de policía.</div>
+      </div>
+    </div>
+
+    <div class="aro-anc" id="terminos" style="margin-top:clamp(40px,6vw,72px)">
+      <div style="{{ eyebrow }}">02 · TÉRMINOS DE SERVICIO</div>
+      <h2 style="{{ h2 }}">Qué te damos y qué no.</h2>
+
+      <div style="display:flex;flex-direction:column;gap:0;margin-top:26px">
+        <sc-for list="{{ terminos }}" as="t" hint-placeholder-count="9">
+          <div style="padding:clamp(18px,2.4vw,24px) 0;border-bottom:1px solid rgba(20,52,42,.13)">
+            <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#8F4515;margin-bottom:11px">{{ t.n }}</div>
+            <div style="font:400 clamp(20px,2.3vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ t.titulo }}</div>
+            <div style="font:400 15px/1.65 'Inter Tight',sans-serif;color:#456352;margin-top:9px;max-width:64ch;text-wrap:pretty">{{ t.cuerpo }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div class="aro-anc" id="privacidad" style="margin-top:clamp(40px,6vw,72px)">
+      <div style="{{ eyebrow }}">03 · PRIVACIDAD</div>
+      <h2 style="{{ h2 }}">Qué guardamos, quién lo ve, cuánto dura.</h2>
+      <p style="{{ intro }}">Te pedimos cédula y una selfie. Es lo más delicado que vas a darnos, así que esta sección es la más concreta de las tres.</p>
+
+      <div style="border-radius:22px;background:#14342A;color:#FAF3E4;padding:clamp(20px,2.8vw,28px);margin-top:26px">
+        <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#9CBBA6;margin-bottom:18px">LO QUE NUNCA VE OTRO MIEMBRO</div>
+        <div style="display:flex;flex-wrap:wrap;gap:9px">
+          <sc-for list="{{ nunca }}" as="n" hint-placeholder-count="8">
+            <span style="display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(250,243,228,.28);font:500 14px/1 'Inter Tight',sans-serif;color:#FAF3E4">{{ n.texto }}</span>
+          </sc-for>
+        </div>
+        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:20px;max-width:60ch;text-wrap:pretty">De ti, los otros cinco solo ven el nombre con el que quieres que te llamen y tu sector. Nada más, en ninguna pantalla, en ningún estado del producto.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:0;margin-top:20px">
+        <sc-for list="{{ datos }}" as="d" hint-placeholder-count="7">
+          <div style="display:flex;flex-wrap:wrap;gap:6px 18px;padding:clamp(15px,2vw,19px) 0;border-bottom:1px solid rgba(20,52,42,.13)">
+            <span style="flex:1 1 190px;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ d.dato }}</span>
+            <span style="flex:2 1 260px;font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;text-wrap:pretty">{{ d.para }}</span>
+            <span style="{{ d.plazoEstilo }}">{{ d.plazo }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:0;margin-top:26px">
+        <sc-for list="{{ privacidad }}" as="p" hint-placeholder-count="6">
+          <div style="padding:clamp(18px,2.4vw,24px) 0;border-bottom:1px solid rgba(20,52,42,.13)">
+            <div style="font:400 clamp(20px,2.3vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ p.titulo }}</div>
+            <div style="font:400 15px/1.65 'Inter Tight',sans-serif;color:#456352;margin-top:9px;max-width:64ch;text-wrap:pretty">{{ p.cuerpo }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="border-radius:22px;background:#FFFBF0;padding:clamp(20px,2.8vw,28px);margin-top:26px">
+        <div style="font:400 clamp(21px,2.4vw,26px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cómo ejercer tus derechos</div>
+        <div style="font:400 15px/1.65 'Inter Tight',sans-serif;color:#456352;margin-top:10px;max-width:62ch;text-wrap:pretty">Escribe desde el correo con el que te registraste y pide lo que quieras: ver tus datos, corregirlos, llevártelos o borrarlos. Respondemos en menos de quince días hábiles. Borrar la cuenta borra tus respuestas y tus documentos; lo que no se borra son los registros de facturación, que la ley obliga a conservar.</div>
+          <a href="mailto:hola@aro.club" style="display:inline-flex;align-items:center;min-height:52px;padding:0 22px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;margin-top:18px;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">hola@aro.club</a>
+      </div>
+    </div>
+
+    <div style="margin-top:clamp(40px,6vw,72px);padding-top:24px;border-top:1px solid rgba(20,52,42,.13);font:400 14px/1.65 'Inter Tight',sans-serif;color:#566A5D;max-width:62ch;text-wrap:pretty">
+      Aro Club opera en Caracas, Venezuela. Estos términos se rigen por la legislación venezolana y cualquier disputa se resuelve en los tribunales de la ciudad de Caracas. Si cambiamos algo importante, te lo escribimos por correo con treinta días de antelación.
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  renderVals() {
+    const indice = [['Reglas de la mesa', '#reglas'], ['Términos', '#terminos'], ['Privacidad', '#privacidad']]
+      .map((i) => ({ nombre: i[0], ancla: i[1] }));
+
+    const reglas = [
+      ['Vas tú, y vas solo', 'La plaza es personal e intransferible. No puedes llevar acompañante ni cederla: todo el grupo tiene que ser desconocido entre sí, porque una pareja que ya se conoce convierte al resto en público.'],
+      ['Eres quien dices ser', 'La verificación no es un trámite. Suplantar a otra persona, usar documentos ajenos o dar datos falsos es salida inmediata y definitiva.'],
+      ['Avisas si no vas', 'Cancelar con más de 24 horas devuelve tu crédito. Con menos, se pierde. No aparecer sin avisar dos veces te deja fuera de las reservas durante un mes: en una mesa de seis, un puesto vacío se nota.'],
+      ['Nadie vende nada en la mesa', 'Puedes hablar de tu trabajo. No puedes usar la cena para vender, reclutar, levantar capital ni repartir tarjetas. Si eso es lo que buscas, este no es el sitio.'],
+      ['Lo que se dice en la mesa se queda en la mesa', 'No publiques nombres, capturas ni datos de las otras personas. Fotos del grupo solo si todos dicen que sí, en el momento y en voz alta.'],
+      ['Respeto, y el «no» se acepta a la primera', 'Cero acoso, cero comentarios sobre el cuerpo, cero insistencia después de un no. Si alguien no quiere dar su contacto al final de la noche, ahí se acabó la conversación.']
+    ].map((r, i) => ({ n: i + 1, titulo: r[0], cuerpo: r[1] }));
+
+    const terminos = [
+      ['Qué es Aro Club', 'Un servicio que arma grupos de seis personas verificadas y reserva una mesa en un restaurante de Caracas. No somos el restaurante, no cocinamos y no servimos: intermediamos el encuentro.'],
+      ['Quién puede usarlo', 'Mayores de 18 años con documento de identidad venezolano o pasaporte vigente. Una cuenta por persona. Nos reservamos el derecho de no admitir a alguien sin dar explicaciones, y de devolverle lo que haya pagado sin usar.'],
+      ['Qué incluye lo que pagas', 'El emparejamiento, la verificación del grupo, la reserva a tu nombre y el acompañamiento de operación esa noche. No incluye tu consumo: la comida y la bebida las pagas en el sitio, como en cualquier salida.'],
+      ['Precios y pagos', 'Los precios se muestran en dólares como referencia y se cobran en bolívares a la tasa oficial del día del pago. Un crédito comprado no caduca. No hay cobros automáticos ni suscripción: pagas cuando reservas.'],
+      ['Cancelaciones y devoluciones', 'Cancelas con más de 24 horas y recuperas el crédito íntegro. Con menos de 24 horas, el crédito se pierde, porque la mesa ya está reservada y el grupo ya está armado. Si cancelamos nosotros, te devolvemos el crédito y te damos otro de cortesía.'],
+      ['Si la mesa no se llena', 'A veces no hay suficiente gente compatible una semana concreta. Te avisamos con al menos 48 horas y tu crédito vuelve intacto. Preferimos moverte de semana a sentarte en un grupo que no funciona.'],
+      ['Lo que no controlamos', 'No respondemos por la calidad de la comida, el servicio del restaurante ni por lo que otra persona haga o diga en la mesa. Verificamos identidades y moderamos reportes; eso reduce el riesgo, no lo elimina. Vas bajo tu propia responsabilidad, igual que a cualquier sitio.'],
+      ['Tu contenido', 'Las respuestas del cuestionario y los reportes que escribas son tuyos. Nos das permiso para usarlos con un único fin: armar mesas y moderar el club. No los vendemos, no los cedemos y no entrenamos nada con ellos.'],
+      ['Cómo te escribimos', 'Al crear la cuenta aceptas los avisos del servicio: la mesa del jueves a mediodía, el recordatorio del día de la cena, la confirmación de tu pago y las aperturas en tus zonas. Los dos primeros no se pueden desactivar, porque sin ellos no sabrías dónde es. <em style="font-weight:600">WhatsApp es aparte y va apagado</em>: solo lo activas tú, solo se usa el día de la cena y solo si algo cambia. No mandamos promociones ni novedades por ninguna vía.'],
+      ['Darte de baja', 'Borrar la cuenta elimina tus respuestas, tus datos y tus documentos, y no se puede deshacer. Los créditos sin usar se devuelven a la cuenta desde la que pagaste en menos de siete días. Los registros de facturación se conservan diez años porque la ley lo exige.'],
+      ['Cierre de cuenta', 'Puedes irte cuando quieras desde tu perfil. Podemos cerrarte la cuenta si rompes las reglas de la mesa, si hay fraude en el pago o si suplantas a alguien. En ese caso te devolvemos los créditos sin usar, salvo que el motivo sea un daño a otra persona.']
+    ].map((t, i) => ({ n: String(i + 1).padStart(2, '0'), titulo: t[0], cuerpo: t[1] }));
+
+    const nunca = ['Tu apellido', 'Tu cédula', 'Tu selfie', 'Tu teléfono', 'Tu correo', 'Tu edad exacta', 'Dónde trabajas', 'Tus respuestas del cuestionario']
+      .map((texto) => ({ texto }));
+
+    const plazo = (t) => 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;background:rgba(27,81,56,.1);font:500 12px/1 \'Inter Tight\',sans-serif;color:#1B5138;white-space:nowrap';
+    const datos = [
+      ['Correo', 'Avisarte cuando abra mesa en tu zona y mandarte el enlace de acceso.', 'Mientras tengas cuenta'],
+      ['Nombre y fecha de nacimiento', 'Confirmar que eres mayor de edad y saber cómo llamarte.', 'Mientras tengas cuenta'],
+      ['Teléfono', 'Escribirte por WhatsApp el día de la cena, y solo ese día.', 'Mientras tengas cuenta'],
+      ['Cédula y selfie', 'Verificar que eres quien dices. Lo revisa una persona de nuestro equipo.', '90 días tras verificar'],
+      ['Respuestas del cuestionario', 'Armar tu mesa. Es el único uso.', 'Mientras tengas cuenta'],
+      ['Dónde trabajas', 'Intentar no sentarte con alguien de tu propia empresa.', 'Mientras tengas cuenta'],
+      ['Pagos', 'Facturación y obligaciones fiscales.', '10 años, por ley']
+    ].map((d) => ({ dato: d[0], para: d[1], plazo: d[2], plazoEstilo: plazo(d[2]) }));
+
+    const privacidad = [
+      ['La cédula y la selfie se borran a los 90 días', 'Una vez verificada tu identidad, el documento y la foto dejan de hacer falta. Se borran a los noventa días y solo queda una marca de que la verificación ocurrió y quién la aprobó. No se guardan en el teléfono de nadie ni en ninguna carpeta compartida.'],
+      ['Quién los ve dentro de Aro', 'Solo el equipo de operación que hace la verificación, con acceso registrado y nominal. Nadie más de la empresa, y ningún otro miembro, en ningún caso.'],
+      ['Con quién los compartimos fuera', 'Con el proveedor de pagos, lo mínimo para cobrar. Con el restaurante, solo el nombre de la reserva y el número de personas. Con nadie más. No vendemos datos ni los cedemos a anunciantes.'],
+      ['No hay perfiles públicos ni fotos de perfil', 'La base de miembros no se puede navegar. No existe una pantalla donde alguien vea quién está en el club. Y no hay foto de perfil en ninguna parte del producto: es una decisión de diseño, no una función pendiente.'],
+      ['Tus datos viven fuera de Venezuela', 'Los servidores están en Estados Unidos, con nuestro proveedor de infraestructura. Al registrarte aceptas esa transferencia internacional. Todo viaja cifrado y los documentos de identidad se guardan cifrados en reposo.'],
+      ['Cookies', 'Solo las necesarias para mantener tu sesión abierta y recordar dónde te quedaste en el cuestionario. No hay cookies de publicidad ni de terceros para seguirte por otras páginas.'],
+      ['Menores de edad', 'El servicio es solo para mayores de 18. Si detectamos una cuenta de un menor, la cerramos y borramos todo lo asociado.']
+    ].map((p) => ({ titulo: p[0], cuerpo: p[1] }));
+
+    return {
+      indice, reglas, terminos, nunca, datos, privacidad,
+      eyebrow: 'font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.16em;color:#8F4515;margin-bottom:14px',
+      h2: 'font:400 clamp(26px,3.4vw,40px)/1.05 \'Young Serif\',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:0;max-width:20ch;text-wrap:balance',
+      intro: 'font:400 16px/1.6 \'Inter Tight\',sans-serif;color:#456352;max-width:58ch;margin:13px 0 0;text-wrap:pretty'
+    };
+  }
+}
+</script>
+</body>
+</html>

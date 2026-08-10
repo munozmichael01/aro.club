@@ -183,13 +183,21 @@ export async function GET() {
       historico: {
         mesas: h.mesas,
         personas: h.personas,
-        valoracion: h.votos ? Number((h.suma / h.votos).toFixed(2)) : null,
+        // Esto NO es la nota del local: es la de las MESAS que mandamos
+        // ahí, y la pregunta que la escribe es «¿volverías a esa mesa?»
+        // —sobre la gente, no sobre el sitio—. Usarla para decidir si se
+        // renueva un proveedor penaliza a un restaurante impecable porque
+        // a alguien le tocó una mesa aburrida.
+        //
+        // La valoración del local todavía no existe: hay que preguntarla.
+        notaDeLasMesas: h.votos ? Number((h.suma / h.votos).toFixed(2)) : null,
+        valoracion: null,
       },
     }
   })
 
-  // La media general, de los que tienen nota. Estaba escrita a mano en tres
-  // sitios del diseño y ya se había desviado del dato real.
+  // La media de los locales que tengan nota PROPIA. Hoy ninguno la tiene,
+  // así que sale «—» en vez de un número que no es de lo que dice ser.
   const conNota = lista.filter((l) => l.historico.valoracion != null)
   const media = conNota.length
     ? conNota.reduce((t, l) => t + (l.historico.valoracion ?? 0), 0) / conNota.length

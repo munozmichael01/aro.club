@@ -363,7 +363,7 @@ class Component extends DCLogic {
       ['ACTIVOS', String(R.activos != null ? R.activos : '—'), 'De ' + (R.total != null ? R.total : '—') + ' dados de alta', null],
       ['ZONAS CUBIERTAS', (R.zonasCubiertas != null ? R.zonasCubiertas : '—') + ' de ' + (R.zonasTotales != null ? R.zonasTotales : '—'), 'Sin sitio no hay mesa', null],
       ['ZONAS CON UN SOLO SITIO', String(R.zonasConUnSolo != null ? R.zonasConUnSolo : '—'), 'Ahí no hay elección posible', '#8F4515'],
-      ['VALORACIÓN MEDIA', unaCifra(R.valoracionMedia), 'De quienes cenaron', null]
+      ['VALORACIÓN MEDIA', unaCifra(R.valoracionMedia), 'Nadie ha valorado un sitio aún', null]
     ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) + ';margin-top:9px' }));
 
     const filtroDefs = [['Todos', null]].concat(FAMILIAS.map((f) => [f[1], f[0]])).concat([['Sin activar', 'inactivos']]);
@@ -500,10 +500,16 @@ class Component extends DCLogic {
       historico: [
         [a.historico.mesas ? String(a.historico.mesas) : '—', 'mesas que mandamos'],
         [a.historico.personas ? String(a.historico.personas) : '—', 'personas que cenaron'],
-        [unaCifra(a.historico.valoracion), 'valoración media'],
+        [unaCifra(a.historico.notaDeLasMesas), 'qué tal salieron esas mesas'],
         [sitio(a.historico.valoracion) === null ? '—' : (sitio(a.historico.valoracion) === 'abajo' ? 'Revisar' : 'Sí'), 'renovaríamos']
       ].map((h) => ({ cifra: h[0], etiqueta: h[1], cifraEstilo: cifra('#FAF3E4', true) })),
-      lectura: a.historico.mesas === 0
+      // Mientras la valoracion del local no exista, la ficha lo dice en vez
+      // de decidir «renovariamos» con la nota de otra cosa.
+      lectura: a.historico.valoracion == null
+        ? (a.historico.mesas === 0
+            ? 'Todavía no ha recibido ninguna mesa.' + (a.falta.length ? ' Hasta que no esté completo no se puede ofrecer.' : '')
+            : 'Nadie ha valorado el sitio todavía: la nota de arriba es la de las mesas, no la del local. Para decidir si se renueva hace falta preguntarlo.')
+        : a.historico.mesas === 0
         ? 'Todavía no ha recibido ninguna mesa.' + (a.falta.length ? ' Hasta que no esté completo no se puede ofrecer.' : '')
         : (sitio(a.historico.valoracion) === 'arriba'
           ? 'Por encima de la media de ' + unaCifra(media) + '. Renovaríamos sin dudarlo.'
