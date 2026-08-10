@@ -243,6 +243,13 @@ export type Database = {
             foreignKeyName: "bookings_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "v_fechas_publicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_signal"
             referencedColumns: ["event_id"]
           },
@@ -429,6 +436,13 @@ export type Database = {
             foreignKeyName: "dinner_tables_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "v_fechas_publicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dinner_tables_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_signal"
             referencedColumns: ["event_id"]
           },
@@ -529,6 +543,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_venues_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_fechas_publicas"
             referencedColumns: ["id"]
           },
           {
@@ -873,6 +894,13 @@ export type Database = {
             foreignKeyName: "incident_reports_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "v_fechas_publicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incident_reports_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "v_matching_signal"
             referencedColumns: ["event_id"]
           },
@@ -1060,6 +1088,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matching_runs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_fechas_publicas"
             referencedColumns: ["id"]
           },
           {
@@ -1911,6 +1946,7 @@ export type Database = {
           city_slug: string | null
           contact_email: string | null
           created_at: string
+          deleted_at: string | null
           display_name: string | null
           email: string
           events_attended: number
@@ -1928,6 +1964,8 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role_t"]
           rootedness: Database["public"]["Enums"]["rootedness_t"] | null
           status: Database["public"]["Enums"]["member_status_t"]
+          terms_accepted_at: string | null
+          terms_version: string | null
           updated_at: string
           waitlist_id: string | null
           whatsapp_opt_in: boolean
@@ -1937,6 +1975,7 @@ export type Database = {
           city_slug?: string | null
           contact_email?: string | null
           created_at?: string
+          deleted_at?: string | null
           display_name?: string | null
           email: string
           events_attended?: number
@@ -1954,6 +1993,8 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role_t"]
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
           status?: Database["public"]["Enums"]["member_status_t"]
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string
           waitlist_id?: string | null
           whatsapp_opt_in?: boolean
@@ -1963,6 +2004,7 @@ export type Database = {
           city_slug?: string | null
           contact_email?: string | null
           created_at?: string
+          deleted_at?: string | null
           display_name?: string | null
           email?: string
           events_attended?: number
@@ -1980,6 +2022,8 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role_t"]
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
           status?: Database["public"]["Enums"]["member_status_t"]
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           updated_at?: string
           waitlist_id?: string | null
           whatsapp_opt_in?: boolean
@@ -2303,6 +2347,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_emails_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_fechas_publicas"
             referencedColumns: ["id"]
           },
           {
@@ -3001,6 +3052,70 @@ export type Database = {
           },
         ]
       }
+      v_fechas_publicas: {
+        Row: {
+          booking_closes_at: string | null
+          city_slug: string | null
+          credit_cost: number | null
+          format: Database["public"]["Enums"]["event_format_t"] | null
+          id: string | null
+          price_usd: number | null
+          reveal_at: string | null
+          seats_per_table: number | null
+          starts_at: string | null
+          status: Database["public"]["Enums"]["event_status_t"] | null
+          zone_slug: string | null
+        }
+        Insert: {
+          booking_closes_at?: string | null
+          city_slug?: string | null
+          credit_cost?: number | null
+          format?: Database["public"]["Enums"]["event_format_t"] | null
+          id?: string | null
+          price_usd?: number | null
+          reveal_at?: string | null
+          seats_per_table?: number | null
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["event_status_t"] | null
+          zone_slug?: string | null
+        }
+        Update: {
+          booking_closes_at?: string | null
+          city_slug?: string | null
+          credit_cost?: number | null
+          format?: Database["public"]["Enums"]["event_format_t"] | null
+          id?: string | null
+          price_usd?: number | null
+          reveal_at?: string | null
+          seats_per_table?: number | null
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["event_status_t"] | null
+          zone_slug?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_city_slug_fkey"
+            columns: ["city_slug"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "events_city_slug_fkey"
+            columns: ["city_slug"]
+            isOneToOne: false
+            referencedRelation: "v_city_demand"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "events_zone_slug_fkey"
+            columns: ["zone_slug"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       v_lead_progreso: {
         Row: {
           city: string | null
@@ -3078,6 +3193,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_fechas_publicas"
             referencedColumns: ["id"]
           },
           {
@@ -3207,6 +3329,7 @@ export type Database = {
             }
             Returns: undefined
           }
+      dar_de_baja: { Args: { p_profile_id: string }; Returns: undefined }
       despublicar_evento: { Args: { p_event_id: string }; Returns: undefined }
       despublicar_mesa: {
         Args: { p_table_id: string }

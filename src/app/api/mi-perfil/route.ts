@@ -85,13 +85,38 @@ export async function GET() {
     .eq('profile_id', user.id)
     .maybeSingle()
 
+  // El perfil completo son DIECINUEVE: las catorce preguntas obligatorias
+  // del cuestionario más los cinco datos base.
+  //
+  // Contar solo las catorce decía «completo» a alguien sin fecha de
+  // nacimiento — y sin fecha de nacimiento no hay edad, sin edad no hay
+  // regla de ±10 años y sin género no hay balance en la mesa. O sea: el
+  // sello decía que estaba listo para el reparto cuando el reparto no
+  // podía sentarlo.
   const obligatorias = (preguntas ?? []).filter((q) => q.is_required)
-  const faltan = obligatorias.filter((q) => !dadas.has(q.key)).length
+  const faltanPreguntas = obligatorias.filter((q) => !dadas.has(q.key)).length
+
+  const base = {
+    nombre: perfil?.full_name,
+    trato: perfil?.display_name,
+    nacimiento: perfil?.birthdate,
+    genero: perfil?.gender,
+    telefono: perfil?.phone_e164,
+  }
+  const faltanBase = Object.values(base).filter((v) => !v).length
+
+  const faltan = faltanPreguntas + faltanBase
+  const total = obligatorias.length + 5
 
   return NextResponse.json({
     verificada: tipos.has('id_document') && tipos.has('selfie'),
     completo: faltan === 0,
     faltan,
+    // El total y el desglose, para que la pantalla no tenga que deducirlos
+    // ni —peor— llevar su propia cuenta y discrepar de esta.
+    total,
+    faltanPreguntas,
+    faltanBase,
     creditos: saldo?.balance ?? 0,
     base: {
       nombre: perfil?.full_name ?? '',

@@ -141,6 +141,27 @@
       <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#456352;margin-top:8px;max-width:56ch;text-wrap:pretty">Lo que edites aquí entra en el emparejamiento de las próximas. La mesa del jueves ya está armada con lo que respondiste antes.</div>
     </div>
 
+
+    <div style="margin-top:clamp(30px,4vw,44px);border-radius:24px;border:1px solid rgba(143,69,21,.34);padding:clamp(20px,2.6vw,26px)">
+      <div style="font:400 clamp(20px,2.3vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#6E340F">Darse de baja</div>
+      <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#456352;margin-top:8px;max-width:56ch;text-wrap:pretty">{{ textoBaja }}</div>
+
+      <sc-if value="{{ bajaCerrada }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ abrirBaja }}" style="{{ botonBaja }}">Quiero darme de baja</button>
+      </sc-if>
+
+      <sc-if value="{{ bajaAbierta }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:16px">
+          <label style="display:block;font:600 14px/1.3 'Inter Tight',sans-serif;color:#14342A;margin-bottom:8px">Escribe BAJA para confirmar</label>
+          <input type="text" value="{{ palabraBaja }}" onChange="{{ onPalabraBaja }}" placeholder="BAJA" aria-label="Escribe BAJA para confirmar" style="{{ campoBaja }}" />
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:14px">
+            <button onClick="{{ confirmarBaja }}" aria-disabled="{{ bajaInerte }}" style="{{ botonConfirmarBaja }}">{{ textoConfirmarBaja }}</button>
+            <button onClick="{{ abrirBaja }}" style="{{ botonFantasma }}">Cancelar</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
     <div style="margin-top:clamp(26px,3.4vw,36px);padding-top:24px;border-top:1px solid rgba(20,52,42,.13);display:flex;flex-wrap:wrap;gap:10px">
       <a href="Aro Club - Verificacion.dc.html" style="{{ enlacePie }}">Mi verificación</a>
       <a href="Aro Club - Legal.dc.html#privacidad" style="{{ enlacePie }}">Qué hacemos con esto</a>
@@ -153,7 +174,7 @@
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
   state = { abierta: null, borrador: null, datos: null, guardando: false, fallo: '',
-            exclusiones: null, quitando: null };
+            exclusiones: null, quitando: null, baja: false, palabraBaja: '' };
 
   componentDidMount() {
     // Las opciones salen del catalogo, no de una copia aqui. La copia ya
@@ -409,7 +430,14 @@ class Component extends DCLogic {
       // Del servidor. Un sello que dice "Perfil completo" siempre es peor
       // que no tenerlo: quien le falten respuestas no se entera.
       [D.verificada ? 'Identidad verificada' : 'Sin verificar', !!D.verificada],
-      [D.completo ? 'Perfil completo' : (D.faltan === 1 ? 'Falta 1 respuesta' : 'Faltan ' + (D.faltan || 0) + ' respuestas'), !!D.completo],
+      [D.completo
+        ? 'Perfil completo'
+        : (D.faltanBase && D.faltanPreguntas
+            ? 'Faltan ' + D.faltanPreguntas + ' respuestas y ' + D.faltanBase + ' datos'
+            : D.faltanBase
+              ? (D.faltanBase === 1 ? 'Falta un dato base' : 'Faltan ' + D.faltanBase + ' datos base')
+              : (D.faltanPreguntas === 1 ? 'Falta 1 respuesta' : 'Faltan ' + (D.faltanPreguntas || 0) + ' respuestas')),
+       !!D.completo],
       [(D.creditos || 0) === 1 ? '1 crédito' : (D.creditos || 0) + ' créditos', false]
     ].map((c) => ({
       texto: c[0],
@@ -433,8 +461,36 @@ class Component extends DCLogic {
       };
     });
 
+    // --- baja de cuenta ---------------------------------------------------
+    // Se dice exactamente qué se borra y qué no. Prometer un borrado más
+    // amplio del que cumplimos es peor que no ofrecer la baja.
+    const enBaja = this.state.baja;
+    const puedeBaja = (this.state.palabraBaja || '').trim().toUpperCase() === 'BAJA';
+
     return {
       secciones, credenciales, exclusiones,
+      textoBaja: 'Se borran tus respuestas, tu cédula y tu selfie, y dejas de entrar a cualquier reparto. Se conservan tus pagos, porque la ley nos obliga a guardar la facturación, y quedan sin tu nombre. No se puede deshacer.',
+      bajaCerrada: !enBaja,
+      bajaAbierta: enBaja,
+      palabraBaja: this.state.palabraBaja,
+      onPalabraBaja: (e) => this.setState({ palabraBaja: e.target.value }),
+      abrirBaja: () => this.setState((s) => ({ baja: !s.baja, palabraBaja: '', fallo: '' })),
+      botonBaja: 'display:inline-flex;align-items:center;min-height:48px;padding:0 20px;border-radius:999px;margin-top:14px;background:transparent;border:1px solid rgba(143,69,21,.44);color:#8F4515;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      campoBaja: 'width:100%;max-width:220px;min-height:52px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;outline:none',
+      bajaInerte: puedeBaja && !this.state.guardando ? null : 'true',
+      textoConfirmarBaja: this.state.guardando ? 'Dando de baja…' : (puedeBaja ? 'Darme de baja' : 'Escribe BAJA'),
+      botonConfirmarBaja: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:999px;border:none;background:' + (puedeBaja ? '#6E340F' : 'rgba(20,52,42,.12)') + ';color:' + (puedeBaja ? '#FFF8EA' : '#5A7264') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (puedeBaja ? 'pointer' : 'not-allowed'),
+      confirmarBaja: () => {
+        if (!puedeBaja || this.state.guardando) return;
+        this.setState({ guardando: true, fallo: '' });
+        fetch('/api/baja', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirmacion: 'BAJA' })
+        })
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no'))))
+          .then(() => { window.location.href = 'Aro Club - Landing v3.dc.html'; })
+          .catch(() => this.setState({ guardando: false, fallo: 'No pudimos completar la baja.' }));
+      },
       hayExclusiones: exclusiones.length > 0,
       // Solo cuando ya se sabe: null es "todavia no ha llegado", y decir
       // "no has bloqueado a nadie" sin saberlo es inventarse un dato.

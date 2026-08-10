@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { VERSION_LEGAL } from '@/lib/legal'
 import { verificar } from '@/lib/lead-token'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
@@ -103,6 +104,18 @@ export async function POST(request: Request) {
   await admin
     .from('profile_identities')
     .insert({ profile_id: creado.user.id, provider: 'password', provider_email: correo })
+
+  // La aceptacion de los terminos, con fecha y version. Se guarda AQUI y no
+  // en la pantalla: el boton de la pantalla es lo que ella ve, esta fila es
+  // la constancia. Le pedimos la cedula y una selfie —no se piden esas cosas
+  // sin registrar para que consintio.
+  await admin
+    .from('profiles')
+    .update({
+      terms_accepted_at: new Date().toISOString(),
+      terms_version: VERSION_LEGAL,
+    } as never)
+    .eq('id', creado.user.id)
 
   // Sesión inmediata: quien acaba de registrarse entra sin pasar por
   // ningún correo. Es una cuenta recién creada, así que no hay riesgo de
