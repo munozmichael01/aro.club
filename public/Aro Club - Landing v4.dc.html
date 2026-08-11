@@ -30,6 +30,20 @@
   @keyframes aro-marquee { to { transform: translateX(-50%) } }
   @keyframes aro-spin { to { transform: rotate(360deg) } }
   @keyframes aro-open { from { opacity:0; filter:blur(10px) } to { opacity:1; filter:none } }
+  /* El hero en movil.
+     Design lo dejo en `min(88vh,860px)`, y con la cabecera pegajosa encima
+     —71px— mas la cinta —44— la cinta caia 18px por debajo del corte. En un
+     movil de verdad es peor: `vh` NO descuenta la barra del navegador, asi
+     que la parte visible es mas corta que lo que `vh` promete.
+     `svh` es la altura garantizada, y de ahi se restan la cabecera y la
+     cinta para que la cinta entre siempre. */
+  @media (max-width: 767px) {
+    [data-hero] {
+      min-height: calc(100svh - 122px) !important;
+      padding-top: 36px !important;
+      padding-bottom: 30px !important;
+    }
+  }
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
   }
@@ -55,7 +69,7 @@
     <div data-parallax="1" style="position:absolute;inset:-8% 0 -8% 0;background-image:url('fotos/cenas.jpg');background-size:cover;background-position:center 60%;filter:grayscale(.3) contrast(1.14) saturate(.62) brightness(.66);will-change:transform"></div>
     <div style="position:absolute;inset:0;background:linear-gradient(rgba(15,40,32,.42) 0%,rgba(15,40,32,.72) 55%,rgba(15,40,32,.94) 100%)"></div>
 
-    <div style="position:relative;max-width:1240px;margin:0 auto;padding:clamp(48px,10vw,120px) clamp(16px,4vw,36px) clamp(40px,7vw,84px);min-height:min(88vh,860px);display:flex;flex-direction:column;justify-content:flex-end">
+    <div data-hero style="position:relative;max-width:1240px;margin:0 auto;padding:clamp(48px,10vw,120px) clamp(16px,4vw,36px) clamp(40px,7vw,84px);min-height:min(88vh,860px);display:flex;flex-direction:column;justify-content:flex-end">
       <div data-reveal="0" style="display:inline-flex;align-self:flex-start;align-items:center;gap:9px;min-height:38px;padding:0 15px;border-radius:999px;border:1px solid rgba(250,243,228,.34);font:500 12px/1 'Inter Tight',sans-serif;color:#FAF3E4;margin-bottom:clamp(20px,3vw,30px)">
         <span style="flex:0 0 auto;width:6px;height:6px;border-radius:999px;background:#E39C63"></span><span>{{ textoChip }}</span>
       </div>
