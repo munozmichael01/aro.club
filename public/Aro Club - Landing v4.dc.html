@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="./reglas.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  html { scroll-behavior: smooth; }
+  body { margin:0; background:#FAF3E4; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#1B5138; color:#FAF3E4; }
+  ::placeholder { color:#7E9A8B; }
+  :focus-visible { outline:2px solid #8F4515; outline-offset:3px; }
+  .aro-rail { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; scroll-padding-inline:clamp(16px,4vw,36px); }
+  .aro-rail::-webkit-scrollbar { display:none; }
+  .aro-rail > * { scroll-snap-align:start; flex:0 0 auto; }
+  .aro-rail::after { content:""; flex:0 0 clamp(16px,4vw,36px); }
+  @keyframes aro-marquee { to { transform: translateX(-50%) } }
+  @keyframes aro-spin { to { transform: rotate(360deg) } }
+  @keyframes aro-open { from { opacity:0; filter:blur(10px) } to { opacity:1; filter:none } }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+  }
+</style>
+</helmet>
+
+<div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;overflow-x:hidden">
+
+  <div style="position:sticky;top:0;z-index:40;background:rgba(250,243,228,.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.09)">
+    <div style="max-width:1240px;margin:0 auto;padding:13px clamp(16px,4vw,36px);display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <a href="#top" style="display:flex;align-items:center;gap:9px;color:#14342A;min-height:44px;margin:-10px 0">
+        <svg width="25" height="25" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
+        <span style="font:400 21px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
+      </a>
+      <div style="display:flex;align-items:center;gap:6px">
+        <a href="Aro Club - Entrar.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;color:#1B5138;font:500 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Entrar</a>
+        <a href="#registro" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Empezar</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="top" data-screen-label="Hero" style="position:relative;background:#0F2820;color:#FAF3E4;overflow:hidden">
+    <div data-parallax="1" style="position:absolute;inset:-8% 0 -8% 0;background-image:url('fotos/cenas.jpg');background-size:cover;background-position:center 60%;filter:grayscale(.3) contrast(1.14) saturate(.62) brightness(.66);will-change:transform"></div>
+    <div style="position:absolute;inset:0;background:linear-gradient(rgba(15,40,32,.42) 0%,rgba(15,40,32,.72) 55%,rgba(15,40,32,.94) 100%)"></div>
+
+    <div style="position:relative;max-width:1240px;margin:0 auto;padding:clamp(48px,10vw,120px) clamp(16px,4vw,36px) clamp(40px,7vw,84px);min-height:min(88vh,860px);display:flex;flex-direction:column;justify-content:flex-end">
+      <div data-reveal="0" style="display:inline-flex;align-self:flex-start;align-items:center;gap:9px;min-height:38px;padding:0 15px;border-radius:999px;border:1px solid rgba(250,243,228,.34);font:500 12px/1 'Inter Tight',sans-serif;color:#FAF3E4;margin-bottom:clamp(20px,3vw,30px)">
+        <span style="flex:0 0 auto;width:6px;height:6px;border-radius:999px;background:#E39C63"></span><span>{{ textoChip }}</span>
+      </div>
+
+      <h1 data-reveal="1" style="font:400 clamp(44px,8.4vw,112px)/0.94 'Young Serif',Georgia,serif;letter-spacing:-.04em;color:#FAF3E4;margin:0;max-width:14ch;text-wrap:balance">Ya sabemos con quién cenas el jueves.<br /><em style="color:#E39C63">Tú no. Todavía.</em></h1>
+
+      <p data-reveal="2" style="font:400 clamp(17px,1.7vw,23px)/1.5 'Inter Tight',sans-serif;color:#E4EDE6;max-width:44ch;margin:clamp(22px,3vw,32px) 0 0;text-wrap:pretty">Un club para conocer gente en tu ciudad. Empezamos por la cena: <em style="font-weight:600;color:#FAF3E4">seis desconocidos verificados, una mesa, cada semana.</em></p>
+
+      <div data-reveal="3" style="display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;margin-top:clamp(26px,3.4vw,38px)">
+        <a href="#registro" style="display:inline-flex;align-items:center;min-height:60px;padding:0 32px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;transition:background 220ms ease" style-hover="background:#E39C63;color:#14342A">Encuentra tu mesa</a>
+        <span style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#C5D8CA">8 USD la plaza · dos minutos · sin tarjeta</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#14342A;color:#FAF3E4;border-bottom:1px solid rgba(250,243,228,.14);overflow:hidden;padding:13px 0">
+    <div style="display:flex;width:max-content;animation:aro-marquee 40s linear infinite">
+      <sc-for list="{{ marquesina }}" as="m" hint-placeholder-count="12">
+        <span style="display:inline-flex;align-items:center;gap:22px;font:400 clamp(17px,1.7vw,24px)/1 'Young Serif',Georgia,serif;color:#FAF3E4;padding-right:22px;white-space:nowrap">{{ m.texto }}<span style="width:6px;height:6px;border-radius:999px;background:#E39C63;flex:0 0 auto"></span></span>
+      </sc-for>
+    </div>
+  </div>
+
+  <div data-screen-label="Cómo funciona" style="border-bottom:1px solid rgba(20,52,42,.09)">
+    <div style="max-width:1240px;margin:0 auto;padding:clamp(52px,7vw,100px) 0 clamp(44px,6vw,80px)">
+      <div style="padding:0 clamp(16px,4vw,36px);max-width:840px">
+        <div data-reveal="0" style="{{ eyebrow }}">CÓMO FUNCIONA</div>
+        <h2 data-reveal="1" style="{{ h2 }}">Cuatro pasos, y uno de ellos es <em style="color:#8F4515">cenar</em>.</h2>
+        <p data-reveal="2" style="{{ intro }}">Es todo lo que tienes que hacer. Del resto —el sitio, la mesa, con quién— nos encargamos nosotros.</p>
+      </div>
+
+      <div class="aro-rail" style="gap:14px;padding:clamp(26px,3.4vw,40px) clamp(16px,4vw,36px) 8px;align-items:stretch">
+
+        <div data-reveal="3" style="{{ pasoMarco }}">
+          <div style="{{ pasoCab }}">
+            <span style="{{ pasoNum }}">01</span>
+            <span style="flex:1;min-width:0">
+              <span style="{{ pasoTitulo }}">Respondes</span>
+              <span style="{{ pasoCuando }}">Dos minutos</span>
+            </span>
+          </div>
+          <div style="{{ pasoCuerpo }}">Cuatro preguntas aquí mismo. Es la materia prima con la que armamos tu mesa.</div>
+          <div style="{{ pantalla }}">
+            <div style="{{ pantallaCab }}"><span>9:41</span><span style="display:flex;gap:4px"><span style="{{ punto }}"></span><span style="{{ punto }}"></span></span></div>
+            <div style="padding:15px 14px">
+              <div style="display:flex;gap:4px;margin-bottom:15px"><span style="{{ barraOn }}"></span><span style="{{ barraOn }}"></span><span style="{{ barraOn }}"></span><span style="{{ barraOff }}"></span></div>
+              <div style="font:400 20px/1.15 'Young Serif',Georgia,serif;color:#14342A;margin-bottom:15px">¿De qué podrías hablar dos horas seguidas?</div>
+              <div style="display:flex;flex-wrap:wrap;gap:7px">
+                <span style="{{ fichaOn }}"><span style="{{ aroOn }}">✓</span>Cocina</span>
+                <span style="{{ fichaOff }}"><span style="{{ aroOff }}"></span>Cine</span>
+                <span style="{{ fichaOn }}"><span style="{{ aroOn }}">✓</span>Viajes</span>
+                <span style="{{ fichaOff }}"><span style="{{ aroOff }}"></span>Música</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div data-reveal="4" style="{{ pasoMarco }}">
+          <div style="{{ pasoCab }}">
+            <span style="{{ pasoNum }}">02</span>
+            <span style="flex:1;min-width:0">
+              <span style="{{ pasoTitulo }}">Verificamos</span>
+              <span style="{{ pasoCuando }}">Menos de 24 horas</span>
+            </span>
+          </div>
+          <div style="{{ pasoCuerpo }}">Cédula y una selfie. Lo revisa una persona, no un robot, y nadie más las ve.</div>
+          <div style="{{ pantalla }}">
+            <div style="{{ pantallaCab }}"><span>9:41</span><span style="display:flex;gap:4px"><span style="{{ punto }}"></span><span style="{{ punto }}"></span></span></div>
+            <div style="padding:24px 14px;text-align:center">
+              <div style="width:62px;height:62px;margin:0 auto 16px;border-radius:999px;border:1px solid rgba(27,81,56,.3);display:flex;align-items:center;justify-content:center">
+                <svg width="26" height="26" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="14" stroke="#1B5138" stroke-width="1.8"></circle><path d="M13 20.5l4.6 4.6L27 15.8" stroke="#C0662F" stroke-width="2.4" stroke-linecap="round"></path></svg>
+              </div>
+              <div style="font:400 21px/1.15 'Young Serif',Georgia,serif;color:#14342A;margin-bottom:8px">Identidad confirmada</div>
+              <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#456352">Lo revisó una persona, no un robot.</div>
+            </div>
+          </div>
+        </div>
+
+        <div data-reveal="5" style="{{ pasoMarco }}">
+          <div style="{{ pasoCab }}">
+            <span style="{{ pasoNum }}">03</span>
+            <span style="flex:1;min-width:0">
+              <span style="{{ pasoTitulo }}">Reservas</span>
+              <span style="{{ pasoCuando }}">Dos minutos</span>
+            </span>
+          </div>
+          <div style="{{ pasoCuerpo }}">Eliges el jueves que te sirve y pagas en bolívares. La plaza queda tuya.</div>
+          <div style="{{ pantalla }}">
+            <div style="{{ pantallaCab }}"><span>9:41</span><span style="display:flex;gap:4px"><span style="{{ punto }}"></span><span style="{{ punto }}"></span></span></div>
+            <div style="padding:13px 14px">
+              <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#566A5D;margin-bottom:11px">ESTA SEMANA</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ eventos }}" as="e" hint-placeholder-count="3">
+                  <div style="{{ e.caja }}">
+                    <span style="{{ e.icono }}">◍</span>
+                    <span style="flex:1;min-width:0"><span style="display:block;font:600 13px/1.2 'Inter Tight',sans-serif;color:#14342A">Cena</span><span style="display:block;font:400 12px/1.3 'Inter Tight',sans-serif;color:#566A5D;margin-top:2px">{{ e.cuando }}</span></span>
+                    <span style="{{ e.flecha }}">→</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div data-reveal="6" style="{{ pasoMarcoOsc }}">
+          <div style="{{ pasoCab }}">
+            <span style="{{ pasoNumOsc }}">04</span>
+            <span style="flex:1;min-width:0">
+              <span style="{{ pasoTituloOsc }}">Cenas</span>
+              <span style="{{ pasoCuandoOsc }}">El jueves a las 12:00</span>
+            </span>
+          </div>
+          <div style="{{ pasoCuerpoOsc }}">Se abre todo: el restaurante, la dirección, tu número de mesa y los otros cinco nombres.</div>
+          <div style="{{ pantalla }}">
+            <div style="{{ pantallaCab }}"><span>12:00</span><span style="font:600 9px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#8F4515">ABIERTO</span></div>
+            <div style="padding:13px 14px">
+              <div style="display:flex;gap:13px;align-items:center;margin-bottom:13px">
+                <div style="flex:0 0 auto;width:58px;height:58px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                  <span style="font:500 8px/1 'Inter Tight',sans-serif;letter-spacing:.14em;opacity:.72">MESA</span>
+                  <span style="font:700 24px/1 'Inter Tight',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin-top:2px">04</span>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="font:400 21px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cardenal</div>
+                  <div style="font:500 11px/1.35 'Inter Tight',sans-serif;color:#456352;margin-top:4px">Las Mercedes · 7:00 p.m.</div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px;padding-top:11px;border-top:1px solid rgba(20,52,42,.11)">
+                <sc-for list="{{ comensales }}" as="c" hint-placeholder-count="5">
+                  <div style="display:flex;gap:9px;align-items:center">
+                    <span style="{{ c.avatar }}">{{ c.inicial }}</span>
+                    <span style="font:600 12px/1.2 'Inter Tight',sans-serif;color:#14342A">{{ c.nombre }}</span>
+                    <span style="font:400 11px/1.2 'Inter Tight',sans-serif;color:#566A5D">{{ c.sector }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:10px clamp(16px,4vw,36px) 0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D">Desliza →</div>
+    </div>
+  </div>
+
+  <div data-screen-label="No es una app de citas" style="background:#14342A;color:#FAF3E4">
+    <div style="max-width:1240px;margin:0 auto;padding:clamp(60px,9vw,130px) clamp(16px,4vw,36px)">
+      <h2 data-reveal="0" style="font:400 clamp(38px,7.2vw,96px)/0.98 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0;max-width:16ch;text-wrap:balance">Sin perfiles. Sin swipe. Sin planificar nada.<br /><em style="color:#E39C63">Solo apareces.</em></h2>
+      <p data-reveal="1" style="font:400 clamp(17px,1.6vw,22px)/1.5 'Inter Tight',sans-serif;color:#C5D8CA;max-width:46ch;margin:clamp(26px,3.2vw,38px) 0 0;text-wrap:pretty">Elegimos el restaurante, armamos el grupo y reservamos a tu nombre. Tú llegas a las siete.</p>
+      <a href="#registro" data-reveal="2" style="display:inline-flex;align-items:center;min-height:58px;padding:0 30px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;margin-top:clamp(28px,3.4vw,40px);transition:background 220ms ease" style-hover="background:#E39C63;color:#14342A">Encuentra tu mesa</a>
+    </div>
+  </div>
+
+  <div data-screen-label="Reconocimiento" style="border-bottom:1px solid rgba(20,52,42,.09)">
+    <div style="max-width:1240px;margin:0 auto;padding:clamp(52px,7vw,100px) 0">
+      <div style="padding:0 clamp(16px,4vw,36px);max-width:840px">
+        <h2 data-reveal="0" style="{{ h2 }}">¿Te suena alguna de estas?</h2>
+      </div>
+      <div class="aro-rail" style="gap:clamp(14px,1.8vw,22px);padding:clamp(26px,3.4vw,38px) clamp(16px,4vw,36px) 10px;align-items:flex-start">
+        <sc-for list="{{ reconocimientos }}" as="r" hint-placeholder-count="6">
+          <div style="{{ r.marco }}">
+            <div style="{{ r.foto }}"><div style="{{ r.tinte }}"></div></div>
+            <div style="font:400 clamp(19px,1.9vw,23px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A;padding:15px 8px 17px;text-wrap:balance">{{ r.frase }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:12px clamp(16px,4vw,36px) 0;font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;max-width:52ch;text-wrap:pretty">Cualquiera de las seis te sienta en la misma mesa. Marcas la tuya al registrarte y con eso armamos el grupo.</div>
+    </div>
+  </div>
+
+  <div data-screen-label="Planes" style="background:#F2E9D5;border-bottom:1px solid rgba(20,52,42,.09)">
+    <div style="max-width:1240px;margin:0 auto;padding:clamp(52px,7vw,100px) clamp(16px,4vw,36px)">
+      <div style="max-width:840px">
+        <h2 data-reveal="0" style="{{ h2 }}">Hoy son cenas. Después, lo que pida la gente.</h2>
+        <p data-reveal="1" style="{{ intro }}">Empezamos por la cena porque es lo más fácil de decir que sí. Los demás formatos abren cuando haya suficiente gente que los quiera.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(150px,42vw,232px),1fr));gap:clamp(12px,1.8vw,24px);margin-top:clamp(28px,3.4vw,44px)">
+        <sc-for list="{{ planes }}" as="f" hint-placeholder-count="4">
+          <div style="{{ f.marco }}">
+            <div style="{{ f.foto }}">
+              <div style="{{ f.tinte }}"></div>
+              <sc-if value="{{ f.pronto }}" hint-placeholder-val="{{ false }}">
+                <span style="{{ f.selloPronto }}">PRÓXIMAMENTE</span>
+              </sc-if>
+            </div>
+            <div style="padding:14px 10px 16px;text-align:center">
+              <div style="font:400 clamp(21px,2vw,26px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ f.titulo }}</div>
+              <div style="font:500 12px/1.4 'Inter Tight',sans-serif;color:#566A5D;margin-top:7px">{{ f.dias }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="Precio">
+    <div style="max-width:1240px;margin:0 auto;padding:clamp(52px,7vw,100px) clamp(16px,4vw,36px)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(28px,4vw,64px);align-items:start">
+
+        <div>
+          <div data-reveal="0" style="{{ eyebrow }}">LO QUE CUESTA</div>
+          <div data-reveal="1" style="display:flex;align-items:baseline;gap:12px;margin-bottom:6px">
+            <span style="font:400 clamp(76px,12vw,148px)/0.86 'Young Serif',Georgia,serif;letter-spacing:-.05em;color:#14342A;font-variant-numeric:tabular-nums">8</span>
+            <span style="font:500 clamp(20px,2.2vw,28px)/1 'Inter Tight',sans-serif;color:#8F4515">USD</span>
+          </div>
+          <div data-reveal="2" style="font:400 clamp(19px,2vw,25px)/1.3 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A;max-width:18ch">Tu plaza en la mesa, pagada en bolívares a la tasa del día.</div>
+          <a href="#registro" data-reveal="3" style="display:inline-flex;align-items:center;min-height:58px;padding:0 30px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 17px/1 'Inter Tight',sans-serif;margin-top:clamp(24px,3vw,32px);transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Encuentra tu mesa</a>
+        </div>
+
+        <div data-reveal="2">
+          <div style="border-radius:26px;background:#FFFBF0;padding:clamp(22px,2.6vw,30px)">
+            <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:18px">QUÉ CUBREN ESOS 8 USD</div>
+            <div style="display:flex;flex-direction:column;gap:0">
+              <sc-for list="{{ cubre }}" as="c" hint-placeholder-count="3">
+                <div style="display:flex;gap:13px;align-items:flex-start;padding:13px 0;border-bottom:1px solid rgba(20,52,42,.11)">
+                  <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+                  <span style="flex:1;min-width:0;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ c.texto }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding-top:16px">
+              <span style="flex:1 1 auto;font:500 15px/1.4 'Inter Tight',sans-serif;color:#14342A">¿Vas a repetir? Pack de cuatro plazas</span>
+              <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#8F4515;white-space:nowrap">28 USD</span>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;border:1px solid rgba(20,52,42,.18);padding:16px 18px;margin-top:14px">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+            <span style="flex:1;min-width:0;font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty"><em style="font-weight:600;color:#14342A">Tu consumo va aparte:</em> entre 20 y 35 USD que pagas en el restaurante, como en cualquier salida. Nos dices tu tramo antes y elegimos el sitio con el número más bajo de la mesa.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="Cómo cuidamos la mesa" style="background:#14342A;color:#FAF3E4">
+    <div style="max-width:1240px;margin:0 auto;padding:clamp(52px,7vw,100px) 0">
+      <div style="padding:0 clamp(16px,4vw,36px);max-width:840px">
+        <h2 data-reveal="0" style="font:400 clamp(30px,4.4vw,60px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.03em;margin:0;text-wrap:balance">Sentarte con desconocidos solo funciona si alguien hizo el trabajo antes.</h2>
+      </div>
+      <div class="aro-rail" style="gap:12px;padding:clamp(26px,3.4vw,40px) clamp(16px,4vw,36px) 8px;align-items:stretch">
+        <sc-for list="{{ cuidados }}" as="c" hint-placeholder-count="3">
+          <div style="{{ c.marco }}">
+            <div style="{{ c.aro }}">{{ c.glifo }}</div>
+            <div style="font:400 clamp(23px,2.2vw,29px)/1.08 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#FAF3E4;margin-bottom:11px">{{ c.titulo }}</div>
+            <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#9CBBA6;text-wrap:pretty">{{ c.cuerpo }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:clamp(26px,3.4vw,40px) clamp(16px,4vw,36px) 0">
+        <a href="#faq" data-reveal="1" style="display:inline-flex;align-items:center;min-height:52px;padding:0 24px;border-radius:999px;border:1px solid rgba(250,243,228,.32);color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;transition:all 220ms ease" style-hover="background:#FAF3E4;color:#14342A;border-color:#FAF3E4">Resolver mis dudas</a>
+      </div>
+    </div>
+  </div>
+
+  <div data-screen-label="Zonas" style="border-bottom:1px solid rgba(20,52,42,.09)">
+    <div style="max-width:1240px;margin:0 auto;padding:clamp(52px,7vw,100px) clamp(16px,4vw,36px)">
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:baseline;justify-content:space-between;margin-bottom:12px">
+        <h2 data-reveal="0" style="{{ h2 }}">¿Por dónde te queda cómodo salir?</h2>
+        <div data-reveal="1" style="{{ chipZonas }}">{{ textoChipZonas }}</div>
+      </div>
+      <p data-reveal="2" style="{{ intro }}">Marca hasta tres. Abrimos donde se junta más gente que pueda llegar.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:clamp(8px,1vw,12px);margin-top:clamp(22px,3vw,30px)">
+        <sc-for list="{{ zonas }}" as="z" hint-placeholder-count="10">
+          <button onClick="{{ z.pick }}" style="{{ z.btn }}">
+            <span style="{{ z.aro }}">{{ z.icono }}</span>
+            <span style="{{ z.nombre }}">{{ z.zona }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div data-reveal="3" style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:20px;max-width:56ch;text-wrap:pretty">{{ notaZonas }}</div>
+      <sc-if value="{{ hayZonas }}" hint-placeholder-val="{{ false }}">
+        <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;margin-top:22px;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Avísame cuando abra</a>
+      </sc-if>
+
+      <div style="margin-top:clamp(32px,4vw,48px);padding-top:clamp(26px,3.2vw,36px);border-top:1px solid rgba(20,52,42,.13)">
+        <div style="font:400 clamp(21px,2.2vw,27px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">¿No vives en {{ ciudad }}?</div>
+        <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;max-width:50ch;margin:9px 0 16px;text-wrap:pretty">Dinos dónde estás. Abrimos ciudad cuando hay suficiente gente que pueda llegar a la misma mesa el mismo día.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:clamp(8px,1vw,12px)">
+          <sc-for list="{{ ciudades }}" as="c" hint-placeholder-count="7">
+            <button onClick="{{ c.pick }}" style="{{ c.btn }}">
+              <span style="{{ c.aro }}">{{ c.icono }}</span>
+              <span style="{{ c.txt }}">{{ c.nombre }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ hayCiudad }}" hint-placeholder-val="{{ false }}">
+          <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;border:1px solid rgba(20,52,42,.24);color:#1B5138;font:600 16px/1 'Inter Tight',sans-serif;margin-top:20px;transition:all 220ms ease" style-hover="background:#1B5138;color:#FAF3E4">Avísame cuando abra ahí</a>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <div id="faq" data-screen-label="Preguntas">
+    <div style="max-width:1240px;margin:0 auto;padding:clamp(52px,7vw,100px) clamp(16px,4vw,36px)">
+      <h2 data-reveal="0" style="{{ h2 }}">Lo que todo el mundo pregunta.</h2>
+      <div style="display:flex;flex-direction:column;gap:9px;max-width:900px;margin-top:clamp(28px,3.4vw,44px)">
+        <sc-for list="{{ faq }}" as="q" hint-placeholder-count="11">
+          <div style="{{ q.caja }}">
+            <button onClick="{{ q.toggle }}" style="width:100%;display:flex;gap:16px;align-items:center;justify-content:space-between;padding:clamp(15px,1.7vw,20px) clamp(17px,2.2vw,26px);background:transparent;border:none;cursor:pointer;text-align:left;min-height:62px">
+              <span style="{{ q.tituloStyle }}">{{ q.p }}</span>
+              <span style="{{ q.signo }}">{{ q.icono }}</span>
+            </button>
+            <sc-if value="{{ q.abierto }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 clamp(17px,2.2vw,26px) clamp(18px,2.2vw,24px);max-width:62ch"><div style="font:400 15px/1.65 'Inter Tight',sans-serif;color:#456352;text-wrap:pretty">{{ q.r }}</div></div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div id="registro" data-screen-label="Registro" style="background:#14342A;color:#FAF3E4">
+    <div style="max-width:1240px;margin:0 auto;padding:clamp(56px,8vw,120px) clamp(16px,4vw,36px)">
+
+      <sc-if value="{{ esCorreo }}" hint-placeholder-val="{{ true }}">
+        <div style="max-width:640px">
+          <h2 style="font:400 clamp(36px,6vw,80px)/0.98 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0 0 18px;max-width:14ch;text-wrap:balance">Empecemos por tu correo.</h2>
+          <p style="font:400 clamp(16px,1.4vw,20px)/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin:0 0 clamp(26px,3.2vw,38px);max-width:42ch;text-wrap:pretty">Después vienen cuatro preguntas de dos minutos. Con el correo te guardamos el puesto; con las preguntas podemos armar tu mesa.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:stretch">
+            <div style="flex:1 1 260px;display:flex;border-radius:999px;border:1px solid rgba(250,243,228,.32);background:rgba(250,243,228,.06);overflow:hidden">
+              <input type="email" placeholder="tu@correo.com" value="{{ correo }}" onChange="{{ onCorreo }}" onKeyDown="{{ onKey }}" aria-label="Tu correo" style="flex:1;min-width:0;min-height:60px;padding:0 22px;background:transparent;border:none;color:#FAF3E4;font:400 17px/1 'Inter Tight',sans-serif;outline:none" />
+            </div>
+            <button onClick="{{ enviarCorreo }}" style="flex:0 0 auto;min-height:60px;padding:0 30px;border-radius:999px;border:none;background:#FAF3E4;color:#14342A;font:600 16px/1 'Inter Tight',sans-serif;cursor:pointer;transition:background 220ms ease" style-hover="background:#E39C63;color:#14342A">Continuar</button>
+          </div>
+          <sc-if value="{{ hayError }}" hint-placeholder-val="{{ false }}">
+            <div style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#F0BE9C;margin-top:13px">{{ error }}</div>
+          </sc-if>
+          <div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:22px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#9CBBA6">
+            <span>No compartimos tu correo</span><span>Te sales con un clic</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esEnviando }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:640px">
+          <h2 style="font:400 clamp(36px,6vw,80px)/0.98 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0 0 18px;max-width:14ch">Guardando tu puesto.</h2>
+          <div style="display:inline-flex;align-items:center;gap:15px;border-radius:999px;border:1px solid rgba(250,243,228,.3);min-height:58px;padding:0 25px;max-width:100%;margin-top:14px">
+            <span style="flex:0 0 auto;width:17px;height:17px;border:2px solid rgba(250,243,228,.24);border-top-color:#FAF3E4;border-radius:999px;animation:aro-spin 800ms linear infinite"></span>
+            <span style="font:500 16px/1 'Inter Tight',sans-serif;color:#C5D8CA;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ correo }}</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esQuiz }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:780px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(24px,3vw,36px)">
+            <div style="display:flex;gap:6px">
+              <sc-for list="{{ progreso }}" as="p" hint-placeholder-count="4">
+                <span style="{{ p.punto }}"></span>
+              </sc-for>
+            </div>
+            <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#9CBBA6">{{ textoProgreso }}</span>
+          </div>
+
+          <div style="animation:aro-open 420ms ease both">
+            <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#E39C63;margin-bottom:16px">{{ quizEtiqueta }}</div>
+            <h2 style="font:400 clamp(30px,4.6vw,60px)/1 'Young Serif',Georgia,serif;letter-spacing:-.03em;margin:0 0 12px;max-width:22ch;text-wrap:balance">{{ quizPregunta }}</h2>
+            <p style="font:400 15px/1.55 'Inter Tight',sans-serif;color:#9CBBA6;margin:0 0 clamp(24px,3vw,34px);max-width:44ch;text-wrap:pretty">{{ quizAyuda }}</p>
+
+            <div style="{{ quizContenedor }}">
+              <sc-for list="{{ quizOpciones }}" as="o" hint-placeholder-count="6">
+                <button onClick="{{ o.pick }}" style="{{ o.btn }}">
+                  <span style="{{ o.marca }}">{{ o.icono }}</span>
+                  <span style="{{ o.txt }}">{{ o.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:clamp(28px,3.4vw,40px)">
+              <button onClick="{{ siguiente }}" style="{{ botonSiguiente }}">{{ textoSiguiente }}</button>
+              <sc-if value="{{ puedeAtras }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ atras }}" style="min-height:56px;padding:0 8px;background:transparent;border:none;color:#9CBBA6;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Atrás</button>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esFinal }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:680px;animation:aro-open 520ms ease both">
+          <div style="display:inline-flex;align-items:center;gap:9px;font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#14342A;background:#FAF3E4;border-radius:999px;padding:12px 18px;margin-bottom:24px">TIENES PUESTO</div>
+          <h2 style="font:400 clamp(36px,6vw,80px)/0.98 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0 0 18px;max-width:15ch;text-wrap:balance">{{ tituloFinal }}</h2>
+          <p style="font:400 clamp(16px,1.4vw,20px)/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin:0 0 28px;max-width:46ch;text-wrap:pretty">{{ resumenFinal }}</p>
+          <sc-if value="{{ hayPendientes }}" hint-placeholder-val="{{ true }}">
+            <div style="border-radius:26px;border:1px solid rgba(250,243,228,.2);padding:clamp(20px,2.4vw,28px);margin-bottom:28px">
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#9CBBA6;margin-bottom:16px">LO QUE FALTA PARA PODER RESERVAR</div>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <sc-for list="{{ pendientes }}" as="p" hint-placeholder-count="2">
+                  <div style="display:flex;gap:12px;align-items:flex-start">
+                    <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;border:1px solid rgba(250,243,228,.32);display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;color:#E39C63;margin-top:1px">{{ p.n }}</span>
+                    <span style="flex:1"><span style="display:block;font:600 15px/1.3 'Inter Tight',sans-serif;color:#FAF3E4">{{ p.titulo }}</span><span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#9CBBA6;margin-top:3px;text-wrap:pretty">{{ p.cuerpo }}</span></span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+          <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center">
+            <a href="Aro Club - Cuestionario.dc.html" style="{{ botonFinal }}">{{ textoFinal }}</a>
+            <button onClick="{{ reiniciar }}" style="min-height:58px;padding:0 8px;background:transparent;border:none;color:#9CBBA6;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Lo hago después</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esRepetido }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:640px;animation:aro-open 520ms ease both">
+          <div style="display:inline-flex;align-items:center;gap:9px;font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#FAF3E4;border:1px solid rgba(250,243,228,.34);border-radius:999px;padding:12px 18px;margin-bottom:24px">YA TIENES PUESTO</div>
+          <h2 style="font:400 clamp(36px,6vw,80px)/0.98 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0 0 18px;max-width:15ch;text-wrap:balance">Este correo ya está registrado.</h2>
+          <p style="font:400 clamp(16px,1.4vw,20px)/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin:0 0 28px;max-width:44ch;text-wrap:pretty">Te apuntaste con <em style="font-weight:600;color:#FAF3E4">{{ correo }}</em> el 14 de julio y no perdiste el turno. Sigue donde lo dejaste.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center">
+            <a href="Aro Club - Entrar.dc.html" style="display:inline-flex;align-items:center;min-height:58px;padding:0 28px;border-radius:999px;border:1px solid rgba(250,243,228,.34);color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;transition:all 220ms ease" style-hover="background:#FAF3E4;color:#14342A">Entrar a mi cuenta</a>
+            <button onClick="{{ reiniciar }}" style="min-height:58px;padding:0 8px;background:transparent;border:none;color:#9CBBA6;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Usar otro correo</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div data-screen-label="Pie" style="background:#14342A;color:#9CBBA6;border-top:1px solid rgba(250,243,228,.14)">
+    <div style="max-width:1240px;margin:0 auto;padding:clamp(28px,3.6vw,46px) clamp(16px,4vw,36px);display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;justify-content:space-between">
+      <div>
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#9CBBA6" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#E39C63"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#9CBBA6"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#9CBBA6"></circle><circle cx="3.4" cy="12" r="1.9" fill="#9CBBA6"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#9CBBA6"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#9CBBA6"></circle></svg>
+          <span style="font:400 17px/1 'Young Serif',Georgia,serif;color:#FAF3E4">Aro Club</span>
+        </div>
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;max-width:40ch;text-wrap:pretty">Grupos pequeños, identidad verificada. Restaurantes, montos y fotos de esta página son de ejemplo.</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:clamp(22px,4vw,48px);font:400 13px/1 'Inter Tight',sans-serif">
+        <div style="display:flex;flex-direction:column">
+          <a href="#faq" style="color:#9CBBA6;display:flex;align-items:center;min-height:44px">Preguntas</a>
+          <a href="#registro" style="color:#9CBBA6;display:flex;align-items:center;min-height:44px">Empezar</a>
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <a href="Aro Club - Legal.dc.html#terminos" style="color:#9CBBA6;display:flex;align-items:center;min-height:44px">Términos</a>
+          <a href="Aro Club - Legal.dc.html#privacidad" style="color:#9CBBA6;display:flex;align-items:center;min-height:44px">Privacidad</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = {
+    faq: -1, fase: 'correo', correo: '', error: '', ahora: Date.now(),
+    paso: 0, arraigo: -1, zonas: [], planes: [], temas: [], ciudad: -1
+  };
+
+  componentDidMount() {
+    this._t = setInterval(() => this.setState({ ahora: Date.now() }), 30000);
+    this.armar();
+    this.parallax();
+  }
+
+  componentDidUpdate() { this.armar(); }
+
+  componentWillUnmount() {
+    clearInterval(this._t);
+    clearTimeout(this._env);
+    if (this._io) this._io.disconnect();
+    if (this._onScroll) window.removeEventListener('scroll', this._onScroll);
+  }
+
+  // La foto del hero se mueve más despacio que la página: da profundidad
+  // sin que nada flote, porque solo ocurre con el scroll.
+  parallax() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let pedido = false;
+    this._onScroll = () => {
+      if (pedido) return;
+      pedido = true;
+      window.requestAnimationFrame(() => {
+        pedido = false;
+        const el = document.querySelector('[data-parallax]');
+        if (!el) return;
+        const y = Math.min(window.scrollY, 900);
+        el.style.transform = 'translate3d(0,' + (y * 0.16).toFixed(1) + 'px,0)';
+      });
+    };
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    this._onScroll();
+  }
+
+  armar() {
+    if (!window.IntersectionObserver) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const ver = (el) => { el.style.opacity = '1'; el.style.transform = 'none'; };
+    if (!this._io) {
+      this._io = new IntersectionObserver((es) => {
+        es.forEach((e) => { if (e.isIntersecting) { ver(e.target); this._io.unobserve(e.target); } });
+      }, { rootMargin: '0px 0px -6% 0px', threshold: 0.04 });
+    }
+    const nuevos = [];
+    document.querySelectorAll('[data-reveal]').forEach((el) => {
+      if (el.dataset.revealArmed) return;
+      el.dataset.revealArmed = '1';
+      const d = (parseInt(el.getAttribute('data-reveal'), 10) || 0) * 90;
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(24px)';
+      el.style.transition = 'opacity 760ms cubic-bezier(.2,.7,.3,1) ' + d + 'ms, transform 760ms cubic-bezier(.2,.7,.3,1) ' + d + 'ms';
+      this._io.observe(el);
+      nuevos.push(el);
+    });
+    if (nuevos.length) setTimeout(() => nuevos.forEach(ver), 2400);
+  }
+
+  // el martes a las 19:00, que es cuando se cierra la fecha del jueves
+  reloj() {
+    const d = new Date(this.state.ahora);
+    let dias = (2 - d.getDay() + 7) % 7;
+    const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 19, 0, 0, 0);
+    if (dias === 0 && d.getTime() >= t.getTime()) dias = 7;
+    t.setDate(t.getDate() + dias);
+    const s = Math.max(0, Math.floor((t.getTime() - d.getTime()) / 1000));
+    const dd = Math.floor(s / 86400);
+    const hh = Math.floor(s / 3600) % 24;
+    if (dd > 0) return dd + (dd === 1 ? ' día' : ' días') + ' y ' + hh + ' h';
+    const mm = Math.floor(s / 60) % 60;
+    return hh + ' h ' + mm + ' min';
+  }
+
+  esFuera() { return this.state.ciudad >= 0 && this.state.zonas.length === 0; }
+
+  CIUDADES = ['valencia', 'maracaibo', 'margarita', 'barquisimeto', 'merida', 'puerto-la-cruz', 'otra'];
+
+  // MISMO endpoint y MISMO payload que la v3. Lo unico que cambia es la
+  // variante, que cada pagina declara por su cuenta: sin eso, el
+  // experimento costaria un esquema y un endpoint aparte.
+  guardarLead(extra) {
+    const cuerpo = Object.assign({
+      correo: (this.state.correo || '').trim(),
+      ciudad: this.state.ciudad >= 0 ? this.CIUDADES[this.state.ciudad] : 'caracas',
+      variante: 'v4'
+    }, extra || {});
+    return fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cuerpo)
+      // Si el servidor devuelve algo que no es JSON, no se cuela por el
+      // catch de red: culpar a la conexion de la persona cuando el que
+      // falla somos nosotros manda a revisar el wifi en vano.
+    }).then((r) => r.text().then((t) => {
+      let j = {};
+      try { j = JSON.parse(t); } catch (e) { j = { error: null }; }
+      return { ok: r.ok, servidor: !r.ok, j: j };
+    }));
+  }
+
+  recordarSesion(j) {
+    try {
+      window.localStorage.setItem('aro-sesion', JSON.stringify({
+        correo: (this.state.correo || '').trim(), token: j.token
+      }));
+    } catch (e) { /* modo privado */ }
+  }
+
+  enviarCorreo = () => {
+    const c = (this.state.correo || '').trim();
+    // La misma regla que el resto del sitio y que el servidor.
+    const valido = (typeof AroReglas !== 'undefined')
+      ? AroReglas.valido('correo', c)
+      : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c);
+    if (!valido) {
+      this.setState({ error: 'Ese correo no se ve completo. Revisa que tenga arroba y punto.' });
+      return;
+    }
+    this.setState({ fase: 'enviando', error: '' });
+    const fuera = this.esFuera();
+
+    // Se guarda ANTES de la primera pregunta: quien abandona en la dos ya
+    // quedo capturado, y con su variante.
+    this.guardarLead().then(({ ok, servidor, j }) => {
+      if (!ok) {
+        this.setState({
+          fase: 'correo',
+          error: j.error || (servidor
+            ? 'No pudimos guardar tu correo. Es cosa nuestra, no tuya: vuelve a intentarlo en un momento.'
+            : 'No pudimos guardar tu correo.')
+        });
+        return;
+      }
+      this.recordarSesion(j);
+      // Repetido solo si ademas ya paso por el quiz: quien dejo el correo y
+      // se fue vuelve a entrar donde lo dejo.
+      const repetir = j.estado === 'repetido' && j.quizCompletado;
+      this.setState({ fase: repetir ? 'repetido' : (fuera ? 'final' : 'quiz'), paso: 0 });
+    }).catch(() => this.setState({
+      fase: 'correo',
+      error: 'No pudimos conectar. Revisa tu conexion e intentalo otra vez.'
+    }));
+  };
+
+  alterna(clave, i, max) {
+    this.setState((s) => {
+      const a = s[clave];
+      if (a.indexOf(i) >= 0) { const o = {}; o[clave] = a.filter((x) => x !== i); return o; }
+      if (max && a.length >= max) return {};
+      const o = {}; o[clave] = a.concat([i]); return o;
+    });
+  }
+
+  renderVals() {
+    // una sola fuente: hoy Caracas, mañana la ciudad de quien lee
+    const CIUDAD = 'Caracas';
+    const wiki = (f) => 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(f) + '?width=800';
+
+    // un solo tratamiento para toda la fotografía del sitio
+    const FILTRO = 'filter:grayscale(.24) contrast(1.16) saturate(.74) brightness(.9)';
+    const TINTE = 'position:absolute;inset:0;background:linear-gradient(rgba(20,52,42,.2),rgba(27,81,56,.26))';
+    const foto = (u, ar) => 'position:relative;aspect-ratio:' + (ar || '1') + ';overflow:hidden;border-radius:6px;background:#DCD3BC;background-image:url(\'' + u + '\');background-size:cover;background-position:center;' + FILTRO;
+    const marco = (rot, extra) => 'background:#FFFBF0;padding:9px 9px 0;border-radius:12px;box-shadow:0 16px 38px -20px rgba(20,52,42,.48);transform:rotate(' + rot + ');' + (extra || '');
+
+    const marquesina = [];
+    const frases = ['8 USD la plaza', 'tu consumo va aparte', 'identidad verificada', 'sin perfiles', 'sin swipe', 'todo se abre a las 12:00'];
+    for (let k = 0; k < 2; k++) frases.forEach((f) => marquesina.push({ texto: f }));
+
+    // ── los cuatro pasos: el único bloque numerado de la página ──────
+    const gente = [
+      ['Daniela', 'D', 'Arquitectura'], ['Andrés', 'A', 'Tecnología'], ['Gabriela', 'G', 'Salud'],
+      ['José Manuel', 'J', 'Finanzas'], ['Andreína', 'A', 'Educación']
+    ];
+    const comensales = gente.map((g, i) => ({
+      nombre: g[0], inicial: g[1], sector: g[2],
+      avatar: 'flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#A0511F') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 10px/1 \'Inter Tight\',sans-serif'
+    }));
+    const eventos = [
+      ['Jueves 14 · 7:00 p.m.', '#A0511F'], ['Jueves 21 · 7:00 p.m.', '#1B5138'], ['Viernes 22 · 8:00 p.m.', '#2D6A4F']
+    ].map((e, i) => ({
+      cuando: e[0],
+      caja: 'display:flex;gap:10px;align-items:center;padding:9px;border-radius:14px;background:' + (i === 0 ? '#F2E9D5' : 'transparent') + ';border:1px solid ' + (i === 0 ? 'transparent' : 'rgba(20,52,42,.12)'),
+      icono: 'flex:0 0 auto;width:28px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 12px/1 \'Inter Tight\',sans-serif;background:rgba(27,81,56,.1);color:' + e[1],
+      flecha: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:500 11px/1 \'Inter Tight\',sans-serif'
+    }));
+
+    // ── reconocimiento: foto y titular, sin párrafo ─────────────────
+    const recoDefs = [
+      ['La mesa que dejaste ya no existe', 'fotos/reco-volvio.jpg', '1.6deg'],
+      ['Te quedaste, y la mesa se vació sola', 'fotos/reco-se-quedo.jpg', '-2.1deg'],
+      ['Nadie se fue, pero tampoco entró nadie', 'fotos/reco-mismos.jpg', '1.1deg'],
+      ['Tu oficina está en otro país', 'fotos/reco-remoto.jpg', '-1.7deg'],
+      ['Conoces la ciudad, no conoces a nadie', wiki('Autopista Francisco Fajardo y el cerro el Ávila en la noche noche, Caracas.jpg'), '2.3deg'],
+      ['Estás unos días y no quieres pasarlos en casa', wiki('Caracas desde el teleférico.JPG'), '-1.3deg']
+    ];
+    const reconocimientos = recoDefs.map((r) => ({
+      frase: r[0], tinte: TINTE,
+      marco: marco(r[2], 'width:clamp(232px,62vw,272px);margin:14px 0 26px'),
+      foto: foto(r[1], '4/3')
+    }));
+
+    const planDefs = [
+      ['Cenas', 'Jueves y viernes', 'fotos/cenas.jpg', '-1.8deg', true],
+      ['Drinks', 'Una copa y conversación', 'fotos/drinks.jpg', '1.5deg', false],
+      ['En movimiento', 'Correr, caminar el cerro, entrenar', 'fotos/movimiento.jpg', '-1.3deg', false],
+      ['Coffee', 'Café de sábado por la mañana', 'fotos/coffee.jpg', '1.6deg', false]
+    ];
+    const planes = planDefs.map((f) => ({
+      titulo: f[0], dias: f[1], tinte: TINTE, pronto: !f[4],
+      marco: marco(f[3]), foto: foto(f[2], '4/5'),
+      selloPronto: 'position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;background:rgba(20,52,42,.86);color:#FAF3E4;font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em'
+    }));
+
+    const cubre = [
+      'El emparejamiento: quién se sienta contigo y por qué.',
+      'La verificación de identidad de todo el grupo, no solo la tuya.',
+      'El restaurante elegido y la mesa reservada a tu nombre.'
+    ].map((texto) => ({ texto }));
+
+    const cuidados = [
+      ['✓', 'Identidad verificada', 'Todo el mundo confirma quién es antes de sentarse, y lo revisa una persona.'],
+      ['◍', 'La mesa está balanceada', 'Armamos grupos donde nadie queda descolgado. Entre el más joven y el mayor no hay más de diez años.'],
+      ['◔', 'Zonas céntricas y horas accesibles', 'Sitios a los que llegas fácil y a una hora en la que la noche todavía es tuya.']
+    ].map((c) => ({
+      glifo: c[0], titulo: c[1], cuerpo: c[2],
+      marco: 'width:clamp(252px,74vw,320px);display:flex;flex-direction:column;border-radius:26px;border:1px solid rgba(250,243,228,.18);padding:clamp(22px,2.4vw,28px)',
+      aro: 'width:60px;height:60px;border-radius:999px;border:1px solid rgba(250,243,228,.26);display:flex;align-items:center;justify-content:center;margin-bottom:20px;font:400 24px/1 \'Inter Tight\',sans-serif;color:#E39C63'
+    }));
+
+    const aroDS = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
+    const pastilla = (on, tope) => 'display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 18px 0 13px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : (tope ? 'rgba(20,52,42,.1)' : 'rgba(20,52,42,.16)')) + ';cursor:pointer;transition:all 220ms ease;opacity:' + (tope ? '.5' : '1');
+
+    const zonaDefs = ['Las Mercedes', 'Los Palos Grandes', 'Altamira', 'Chacao', 'El Rosal', 'La Castellana', 'El Hatillo', 'La Trinidad y La Tahona', 'Chuao', 'Bello Monte'];
+    const zonas = zonaDefs.map((z, i) => {
+      const on = this.state.zonas.indexOf(i) >= 0;
+      const tope = this.state.zonas.length >= 3 && !on;
+      return {
+        zona: z, icono: on ? '✓' : '', aro: aroDS(on),
+        pick: () => this.alterna('zonas', i, 3),
+        btn: pastilla(on, tope),
+        nombre: 'font:' + (on ? '600' : '500') + ' 15px/1.2 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A;white-space:nowrap'
+      };
+    });
+    const ciudades = ['Valencia', 'Maracaibo', 'Margarita', 'Barquisimeto', 'Mérida', 'Puerto La Cruz', 'Otra ciudad'].map((nombre, i) => {
+      const on = this.state.ciudad === i;
+      return {
+        nombre, icono: on ? '✓' : '', aro: aroDS(on),
+        pick: () => this.setState({ ciudad: on ? -1 : i }),
+        btn: pastilla(on, false),
+        txt: 'font:' + (on ? '600' : '500') + ' 15px/1.2 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A;white-space:nowrap'
+      };
+    });
+    const nz = this.state.zonas.length;
+    const nombresZonas = this.state.zonas.map((i) => zonaDefs[i]);
+    const listaZonas = nombresZonas.length
+      ? (nombresZonas.length === 1 ? nombresZonas[0] : nombresZonas.slice(0, -1).join(', ') + ' y ' + nombresZonas[nombresZonas.length - 1])
+      : 'tu zona';
+
+    const faqDefs = [
+      ['¿Qué incluye lo que pago?', 'Los 8 USD cubren el emparejamiento, la verificación de todo el grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio, como en cualquier salida: entre 20 y 35 USD según dónde sea. Nos dices tu tramo antes y elegimos el restaurante con el número más bajo de la mesa.'],
+      ['¿Y si no me cae bien nadie?', 'Pasa, y no es un fracaso. Son dos horas, a las nueve estás libre y no le debes nada a nadie. Nos lo cuentas después y eso entra en el emparejamiento de la próxima: qué no funcionó y con quién no volver a sentarte.'],
+      ['¿Puedo ir con un amigo?', 'No. Todo el grupo son desconocidos entre sí, incluidos ustedes dos. Con una pareja conocida en la mesa el resto se convierte en público, y eso rompe la noche para los demás.'],
+      ['¿Cómo sé que las otras personas son reales?', 'Porque pasaron por lo mismo que tú: documento de identidad, una foto y una revisión humana que compara las dos. En la pantalla de tu mesa aparece explícito que todo el grupo tiene identidad verificada y edad confirmada.'],
+      ['¿A qué hora es y cuánto dura?', 'A las siete de la tarde, y sobre las nueve estás libre. Es a propósito: una cena que no se come la noche entera es una cena a la que se dice que sí.'],
+      ['¿Y si soy el más joven de la mesa?', 'No lo vas a ser por mucho. Entre la persona más joven y la mayor de una mesa no hay más de diez años, así que si tienes 24 te sientas con gente de 20 a 34. Es una regla del emparejamiento, no una casualidad.'],
+      ['Soy vegetariano, ¿o tengo una alergia?', 'Nos lo dices en el perfil y elegimos un sitio donde puedas comer sin negociar con la carta. No se lo contamos a la mesa: si quieres explicarlo tú, es cosa tuya.'],
+      ['¿Cómo sé dónde es, y qué pasa si llego tarde?', 'El jueves a las doce del mediodía se abre todo: restaurante, dirección y tu número de mesa. Si se te hace tarde, avisas desde la app con un toque y se lo decimos a la mesa. Nadie se queda mirando la puerta.'],
+      ['¿Qué pasa si alguien se comporta mal?', 'Lo reportas desde tu mesa después y lo lee una persona el mismo día. Puedes bloquear a alguien para que nunca vuelva a coincidir contigo sin que se entere, y quien acumula reportes sale del club. Sin escándalo y sin apelación pública.'],
+      ['¿Por qué preguntan mi edad y mi género?', 'Para que el grupo tenga referencias parecidas y esté balanceado. No se muestran a los demás: de ti solo ven el nombre con el que quieres que te llamen y tu sector.'],
+      ['¿Cuándo hay mesa en mi zona?', 'Abrimos donde se junta suficiente gente que pueda llegar. Marca las tuyas arriba y te escribimos el día que se abre la primera. No antes: no queremos escribirte para nada.']
+    ];
+    const faq = faqDefs.map((q, i) => {
+      const on = this.state.faq === i;
+      return {
+        p: q[0], r: q[1], abierto: on, icono: on ? '−' : '+',
+        toggle: () => this.setState({ faq: on ? -1 : i }),
+        caja: 'border-radius:26px;overflow:hidden;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? 'transparent' : 'rgba(20,52,42,.14)') + ';transition:background 220ms ease',
+        tituloStyle: 'font:' + (on ? '600' : '500') + ' clamp(16px,1.4vw,19px)/1.3 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A;max-width:42ch',
+        signo: 'flex:0 0 auto;width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 19px/1 \'Inter Tight\',sans-serif;background:' + (on ? '#A0511F' : 'rgba(27,81,56,.1)') + ';color:' + (on ? '#FFF8EA' : '#1B5138')
+      };
+    });
+
+    // ── quiz ────────────────────────────────────────────────────────
+    const preguntas = [
+      {
+        etiqueta: 'ARRAIGO', pregunta: '¿Cuál de estas eres tú?',
+        ayuda: 'Una sola. Nos dice quién está llegando a Aro, y por dónde abrir.',
+        tipo: 'unica', clave: 'arraigo',
+        opciones: ['Volví después de años fuera', 'Nunca me fui, y se fue casi toda mi gente', 'Sigo con la gente de siempre', 'Trabajo remoto y casi no veo gente', 'Llegué y no conozco a nadie', 'Estoy de paso']
+      },
+      {
+        etiqueta: 'ZONAS', pregunta: '¿Dónde te queda cómodo salir?',
+        ayuda: 'Hasta tres. Son las mismas que puedes marcar arriba.',
+        tipo: 'multi', clave: 'zonas', max: 3, opciones: zonaDefs
+      },
+      {
+        etiqueta: 'DÍAS', pregunta: '¿Qué días te sirven mejor?',
+        ayuda: 'Marca todos los que puedas. Sin esto no podemos sentarte en ninguna mesa.',
+        tipo: 'multi', clave: 'planes',
+        opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado mañana', 'Sábado mediodía', 'Sábado noche', 'Domingo mañana', 'Domingo mediodía']
+      },
+      {
+        etiqueta: 'CONVERSACIÓN', pregunta: '¿De qué podrías hablar dos horas seguidas?',
+        ayuda: 'Entre dos y cuatro. Es con lo que armamos tu mesa.',
+        tipo: 'multi', clave: 'temas', max: 4, min: 2,
+        opciones: ['Cocina', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios', 'Arte y diseño', 'Tecnología', 'Crianza']
+      }
+    ];
+    const q = preguntas[Math.min(this.state.paso, 3)];
+    const esUnica = q.tipo === 'unica';
+    const sel = esUnica ? this.state.arraigo : this.state[q.clave];
+
+    const quizOpciones = q.opciones.map((label, i) => {
+      const on = esUnica ? sel === i : sel.indexOf(i) >= 0;
+      const tope = !esUnica && q.max && sel.length >= q.max && !on;
+      return {
+        label, icono: on ? '✓' : '',
+        pick: esUnica ? () => this.setState({ arraigo: i }) : () => this.alterna(q.clave, i, q.max),
+        btn: esUnica
+          ? 'display:flex;align-items:center;gap:14px;width:100%;padding:16px 20px;border-radius:999px;background:' + (on ? '#FAF3E4' : 'rgba(250,243,228,.06)') + ';border:1px solid ' + (on ? '#FAF3E4' : 'rgba(250,243,228,.22)') + ';cursor:pointer;text-align:left;min-height:58px;transition:all 200ms ease'
+          : 'display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 20px 0 16px;border-radius:999px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#FAF3E4' : 'rgba(250,243,228,.24)') + ';cursor:pointer;transition:all 200ms ease;opacity:' + (tope ? '.45' : '1'),
+        marca: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(250,243,228,.42)') + ';background:' + (on ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease',
+        txt: 'font:' + (on ? '600' : '400') + ' ' + (esUnica ? '16px' : '15px') + '/1.3 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:' + (on ? '#14342A' : '#E8F0E9')
+      };
+    });
+
+    const completa = esUnica ? sel >= 0 : (sel.length >= (q.min || 1));
+    const ultimo = this.state.paso >= 3;
+    const progreso = [0, 1, 2, 3].map((i) => ({
+      punto: 'width:' + (i === this.state.paso ? '26px' : '8px') + ';height:8px;border-radius:999px;background:' + (i <= this.state.paso ? '#E39C63' : 'rgba(250,243,228,.24)') + ';transition:all 260ms ease'
+    }));
+
+    const f = this.state.fase;
+    const fuera = this.esFuera();
+    const nombreCiudad = this.state.ciudad >= 0 ? ciudades[this.state.ciudad].nombre : 'tu ciudad';
+
+    return {
+      ciudad: CIUDAD,
+      textoChip: CIUDAD + ' · la próxima se cierra en ' + this.reloj(),
+      marquesina, reconocimientos, planes, cubre, cuidados, zonas, ciudades, faq,
+      comensales, eventos,
+
+      pasoMarco: 'width:clamp(262px,76vw,318px);display:flex;flex-direction:column;border-radius:26px;background:#FFFBF0;padding:clamp(18px,2vw,22px);border:1px solid rgba(20,52,42,.1)',
+      pasoMarcoOsc: 'width:clamp(262px,76vw,318px);display:flex;flex-direction:column;border-radius:26px;background:#14342A;padding:clamp(18px,2vw,22px);border:1px solid #14342A',
+      pasoCab: 'display:flex;align-items:flex-start;gap:13px;margin-bottom:12px',
+      pasoNum: 'flex:0 0 auto;font:400 clamp(38px,3.6vw,46px)/0.86 \'Young Serif\',Georgia,serif;letter-spacing:-.04em;color:#C0662F;font-variant-numeric:tabular-nums',
+      pasoNumOsc: 'flex:0 0 auto;font:400 clamp(38px,3.6vw,46px)/0.86 \'Young Serif\',Georgia,serif;letter-spacing:-.04em;color:#E39C63;font-variant-numeric:tabular-nums',
+      pasoTitulo: 'display:block;font:400 clamp(24px,2.4vw,29px)/1.05 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:#14342A',
+      pasoTituloOsc: 'display:block;font:400 clamp(24px,2.4vw,29px)/1.05 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:#FAF3E4',
+      pasoCuando: 'display:block;font:500 12px/1.3 \'Inter Tight\',sans-serif;color:#8F4515;margin-top:5px;letter-spacing:.04em',
+      pasoCuandoOsc: 'display:block;font:500 12px/1.3 \'Inter Tight\',sans-serif;color:#E39C63;margin-top:5px;letter-spacing:.04em',
+      pasoCuerpo: 'font:400 14px/1.55 \'Inter Tight\',sans-serif;color:#456352;padding:0 2px 16px;min-height:66px;text-wrap:pretty',
+      pasoCuerpoOsc: 'font:400 14px/1.55 \'Inter Tight\',sans-serif;color:#9CBBA6;padding:0 2px 16px;min-height:66px;text-wrap:pretty',
+      pantalla: 'margin-top:auto;border-radius:16px;border:1px solid rgba(20,52,42,.13);overflow:hidden;background:#FAF3E4;min-height:286px',
+      pantallaCab: 'display:flex;align-items:center;justify-content:space-between;padding:8px 13px;border-bottom:1px solid rgba(20,52,42,.1);font:600 10px/1 \'Inter Tight\',sans-serif;color:#456352;font-variant-numeric:tabular-nums',
+      punto: 'width:4px;height:4px;border-radius:999px;background:#566A5D',
+      barraOn: 'flex:1;height:3px;border-radius:999px;background:#A0511F',
+      barraOff: 'flex:1;height:3px;border-radius:999px;background:rgba(20,52,42,.14)',
+      fichaOn: 'display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 11px 0 8px;border-radius:999px;background:#FFFBF0;border:1px solid #8F4515;color:#14342A;font:600 12px/1 \'Inter Tight\',sans-serif',
+      fichaOff: 'display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 11px 0 8px;border-radius:999px;background:transparent;border:1px solid rgba(20,52,42,.18);color:#456352;font:400 12px/1 \'Inter Tight\',sans-serif',
+      aroOn: 'flex:0 0 auto;width:15px;height:15px;border-radius:999px;border:1px solid #8F4515;background:#A0511F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 9px/1 \'Inter Tight\',sans-serif',
+      aroOff: 'flex:0 0 auto;width:15px;height:15px;border-radius:999px;border:1px solid rgba(20,52,42,.3)',
+
+      eyebrow: 'font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.18em;color:#8F4515;margin-bottom:16px',
+      h2: 'font:400 clamp(31px,4.6vw,62px)/1 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:17ch;text-wrap:balance',
+      intro: 'font:400 clamp(16px,1.4vw,19px)/1.6 \'Inter Tight\',sans-serif;color:#456352;max-width:48ch;margin:16px 0 0;text-wrap:pretty',
+
+      chipZonas: 'display:inline-flex;align-items:center;gap:9px;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid ' + (nz ? '#8F4515' : 'rgba(27,81,56,.22)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:' + (nz ? '#8F4515' : '#1B5138') + ';white-space:nowrap',
+      textoChipZonas: nz ? nz + ' DE 3 MARCADAS' : 'MARCA HASTA 3',
+      hayZonas: nz > 0,
+      hayCiudad: this.state.ciudad >= 0,
+      notaZonas: nz
+        ? 'Anotado: ' + listaZonas + '. Te escribimos en cuanto abramos mesa ahí.'
+        : 'Una zona abre su primera mesa cuando hay doce personas que puedan llegar a ella.',
+
+      esCorreo: f === 'correo',
+      esEnviando: f === 'enviando',
+      esQuiz: f === 'quiz',
+      esFinal: f === 'final',
+      esRepetido: f === 'repetido',
+      correo: this.state.correo,
+      error: this.state.error,
+      hayError: !!this.state.error,
+      onCorreo: (e) => this.setState({ correo: e.target.value, error: '' }),
+      onKey: (e) => { if (e.key === 'Enter') this.enviarCorreo(); },
+      enviarCorreo: this.enviarCorreo,
+
+      progreso,
+      textoProgreso: 'PREGUNTA ' + (this.state.paso + 1) + ' DE 4',
+      quizEtiqueta: q.etiqueta,
+      quizPregunta: q.pregunta,
+      quizAyuda: q.ayuda,
+      quizOpciones,
+      quizContenedor: esUnica ? 'display:flex;flex-direction:column;gap:9px;max-width:540px' : 'display:flex;flex-wrap:wrap;gap:9px',
+      botonSiguiente: 'display:inline-flex;align-items:center;min-height:58px;padding:0 30px;border-radius:999px;border:none;background:' + (completa ? '#FAF3E4' : 'rgba(250,243,228,.14)') + ';color:' + (completa ? '#14342A' : '#7E9A8B') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (completa ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
+      textoSiguiente: completa ? (ultimo ? 'Terminar' : 'Siguiente') : 'Elige para seguir',
+      puedeAtras: this.state.paso > 0,
+      siguiente: () => {
+        if (!completa) return;
+        if (ultimo) {
+          const COD = {
+            arraigo: ['volvio', 'se-quedo', 'mismos', 'remoto', 'interior', 'visita'],
+            zonas: ['mercedes', 'palos-grandes', 'altamira', 'chacao', 'rosal', 'castellana', 'hatillo', 'trinidad', 'chuao', 'bello-monte'],
+            dias: ['mar', 'mie', 'jue', 'vie', 'sab-am', 'sab-md', 'sab', 'dom-am', 'dom-md'],
+            temas: ['cocina', 'viajes', 'cine', 'musica', 'libros', 'deporte', 'negocios', 'arte', 'tecnologia', 'crianza']
+          };
+          this.guardarLead({
+            arraigo: this.state.arraigo >= 0 ? COD.arraigo[this.state.arraigo] : null,
+            zonas: this.state.zonas.map((i) => COD.zonas[i]),
+            dias: this.state.planes.map((i) => COD.dias[i]),
+            temas: this.state.temas.map((i) => COD.temas[i])
+          }).catch(() => { /* el lead ya esta capturado desde el paso 1 */ });
+          this.setState({ fase: 'final' });
+          return;
+        }
+        this.setState((s) => ({ paso: s.paso + 1 }));
+      },
+      atras: () => this.setState((s) => ({ paso: Math.max(0, s.paso - 1) })),
+
+      tituloFinal: fuera ? 'Anotado. Eres de los primeros de ' + nombreCiudad + '.' : 'Ya podemos empezar a armar tu mesa.',
+      hayPendientes: !fuera,
+      resumenFinal: fuera
+        ? 'Guardamos ' + this.state.correo + '. Abrimos ciudad cuando hay suficiente gente que pueda llegar a la misma mesa el mismo día, así que no te damos fecha: te escribimos en cuanto ' + nombreCiudad + ' llegue a ese número.'
+        : 'Guardamos ' + this.state.correo + ' y lo que nos dijiste. Te escribimos en cuanto abramos mesa en ' + listaZonas + '.',
+      pendientes: [
+        { n: '1', titulo: 'El resto del perfil', cuerpo: 'Diez preguntas más sobre días, comida y qué prefieres esquivar. Cinco minutos, cuando quieras.' },
+        { n: '2', titulo: 'Verificar tu identidad', cuerpo: 'Solo cuando haya mesa cerca. Sin esto no se puede reservar, y es lo que hace que el grupo confíe.' }
+      ],
+      botonFinal: 'display:inline-flex;align-items:center;min-height:58px;padding:0 28px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;transition:background 220ms ease',
+      textoFinal: fuera ? 'Completar mi perfil igual' : 'Completar mi perfil',
+      reiniciar: () => this.setState({ fase: 'correo', correo: '', error: '', paso: 0, arraigo: -1, planes: [], temas: [] })
+    };
+  }
+}
+</script>
+</body>
+</html>

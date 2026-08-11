@@ -27,6 +27,16 @@ const PANTALLAS: Array<[string, string]> = [
   ['/pago', '/Aro Club - Pago.dc.html'],
   ['/cancelar', '/Aro Club - Cancelar.dc.html'],
   ['/operacion', '/Aro Club - Operacion.dc.html'],
+  // Entrega 7 y 8 · la ficha de miembro y los locales, ambas de operación
+  ['/miembro', '/Aro Club - Perfil miembro.dc.html'],
+  ['/locales', '/Aro Club - Locales.dc.html'],
+  // Entrega 11 · la segunda landing.
+  //
+  // Vive aquí y NO se enlaza desde ningún sitio: la v3 sigue siendo la
+  // pública. No hay reparto de tráfico ni cookie de variante —eso se define
+  // cuando se decida arrancar el test—; lo único montado es que cada página
+  // dice de cuál viene el lead.
+  ['/v4', '/Aro Club - Landing v4.dc.html'],
 ]
 
 const nextConfig: NextConfig = {

@@ -27,6 +27,9 @@ const CORREO = z
 const paso1 = z.object({
   correo: CORREO,
   ciudad: z.string().regex(/^[a-z-]+$/).optional(),
+  // De qué landing viene. Cada página sabe cuál es y lo dice; aquí no hay
+  // reparto de tráfico ni nada que decidir.
+  variante: z.enum(['v3', 'v4']).optional(),
   // Campo oculto: una persona nunca lo rellena.
   website: z.string().max(0).optional(),
 })
@@ -132,6 +135,10 @@ export async function POST(request: Request) {
   if (existente) {
     // Correo ya registrado no es un error (§3.8). Se actualiza la ciudad por
     // si volvió desde otra, y se le dice por dónde va.
+    // La ciudad se actualiza por si volvió desde otra. La VARIANTE no: la
+    // atribución es del primer contacto. Si alguien deja el correo en la v3
+    // y vuelve por la v4, el lead lo trajo la v3 y machacarlo aquí le
+    // regalaría la conversión a la otra.
     await supabase
       .from('waitlist')
       .update({ city_slug: ciudadFinal })
@@ -148,7 +155,14 @@ export async function POST(request: Request) {
     .from('waitlist')
     // Solo el slug: `city` era texto libre en paralelo y ya divergia en
     // mayusculas. Una ciudad escrita a mano no se puede cruzar con sus zonas.
-    .insert({ email: correo, city_slug: ciudadFinal, source: 'landing' })
+    .insert({
+      email: correo,
+      city_slug: ciudadFinal,
+      source: 'landing',
+      // Con el correo, en el primer guardado: quien abandona en la pregunta
+      // 2 tambien queda atribuido. Al final del quiz seria tarde.
+      variante: parsed.data.variante ?? 'v3',
+    })
 
   if (error) {
     console.error('[lead] inserción falló', error)

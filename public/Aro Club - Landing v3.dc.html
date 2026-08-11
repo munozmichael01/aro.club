@@ -566,7 +566,10 @@ class Component extends DCLogic {
   guardarLead(extra) {
     const cuerpo = Object.assign({
       correo: (this.state.correo || '').trim(),
-      ciudad: this.state.ciudad >= 0 ? this.CIUDADES[this.state.ciudad] : 'caracas'
+      ciudad: this.state.ciudad >= 0 ? this.CIUDADES[this.state.ciudad] : 'caracas',
+      // Esta pagina es la v3 y lo dice. Sin reparto de trafico: el servidor
+      // no decide nada, solo apunta de donde vino.
+      variante: 'v3'
     }, extra || {});
     return fetch('/api/lead', {
       method: 'POST',
@@ -897,7 +900,7 @@ class Component extends DCLogic {
           try {
             // identificadores estables: el texto visible puede reescribirse sin romper nada
             const COD_ = {
-              arraigo: ['volvio', 'se-quedo', 'interior', 'extranjero', 'visita'],
+              arraigo: ['volvio', 'se-quedo', 'interior', 'interior', 'visita'],
               zonas: ['mercedes', 'palos-grandes', 'altamira', 'chacao', 'rosal', 'castellana', 'sebucan', 'chuao', 'bello-monte', 'cafetal'],
               dias: ['mar', 'mie', 'jue', 'vie', 'sab', 'sab-md', 'dom-md'],
               temas: ['cocina', 'viajes', 'cine', 'musica', 'libros', 'deporte', 'negocios', 'arte', 'tecnologia', 'crianza']

@@ -2699,6 +2699,7 @@ export type Database = {
           referral_code: string | null
           rootedness: Database["public"]["Enums"]["rootedness_t"] | null
           source: string | null
+          variante: string | null
           zones: string[]
         }
         Insert: {
@@ -2722,6 +2723,7 @@ export type Database = {
           referral_code?: string | null
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
           source?: string | null
+          variante?: string | null
           zones?: string[]
         }
         Update: {
@@ -2745,6 +2747,7 @@ export type Database = {
           referral_code?: string | null
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
           source?: string | null
+          variante?: string | null
           zones?: string[]
         }
         Relationships: [
