@@ -224,6 +224,22 @@ export async function POST(request: Request) {
     }
   }
 
+  // La letra del documento: V o E, y aquí también. Hay extranjeros
+  // residentes pagando con cédula E, y sin la letra operación busca en el
+  // banco un V-18442019 que no existe. Si la pantalla no la manda, no se
+  // asume V: se pide.
+  const pideDoc = campos.find((c) => (c as { conTipo?: boolean }).conTipo)
+  if (pideDoc) {
+    const letra = (datos.doc_tipo ?? '').toUpperCase()
+    if (letra !== 'V' && letra !== 'E') {
+      return NextResponse.json(
+        { error: 'Elige si tu documento es V o E.', campo: 'doc_tipo' },
+        { status: 400 },
+      )
+    }
+    datos.doc_tipo = letra
+  }
+
   const { data: evento } = await admin
     .from('events')
     .select('id, price_usd, booking_closes_at')

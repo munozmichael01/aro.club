@@ -140,6 +140,13 @@
                 <sc-if value="{{ c.hayPrefijo }}" hint-placeholder-val="{{ false }}">
                   <span style="{{ c.prefijoEstilo }}">{{ c.prefijo }}</span>
                 </sc-if>
+                <sc-if value="{{ c.hayTipoDoc }}" hint-placeholder-val="{{ false }}">
+                  <span style="flex:0 0 auto;display:flex;border-right:1px solid rgba(20,52,42,.16);margin-right:12px;overflow:hidden">
+                    <sc-for list="{{ c.tiposDoc }}" as="t" hint-placeholder-count="2">
+                      <button onClick="{{ t.pick }}" style="{{ t.btn }}">{{ t.letra }}</button>
+                    </sc-for>
+                  </span>
+                </sc-if>
                 <input type="text" inputmode="{{ c.modo }}" value="{{ c.valor }}" onChange="{{ c.onChange }}" placeholder="{{ c.pista }}" aria-label="{{ c.etiqueta }}" style="{{ c.campo }}" />
               </div>
               <sc-if value="{{ c.hayNota }}" hint-placeholder-val="{{ false }}">
@@ -459,8 +466,18 @@ class Component extends DCLogic {
       const pista = c.campo === 'tel' ? (PISTAS.tel[c.prefijo] || '') : (PISTAS[c.campo] || '');
       return {
       etiqueta: c.etiqueta, pista: pista,
-      prefijo: c.tipo === 'tel' ? (c.prefijo || '') : (c.tipo === 'documento' ? 'V' : ''),
-      hayPrefijo: c.tipo === 'tel' || c.tipo === 'documento',
+      prefijo: c.tipo === 'tel' ? (c.prefijo || '') : '',
+      hayPrefijo: c.tipo === 'tel',
+      // V o E, elegido. El esquema anterior asumia V.
+      hayTipoDoc: !!c.conTipo,
+      tiposDoc: ['V', 'E'].map(function (t) {
+        var on = (campo('doc_tipo') || 'V') === t;
+        return {
+          letra: t,
+          pick: (function (letra) { return function () { setCampo('doc_tipo', null)({ target: { value: letra } }); }; })(t),
+          btn: 'flex:0 0 auto;min-width:44px;min-height:56px;border:none;background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#566A5D') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer'
+        };
+      }),
       modo: (c.tipo === 'texto' || !c.tipo) ? 'text' : 'numeric',
       nota: NOTAS[c.campo] || '', hayNota: !!NOTAS[c.campo],
       valor: campo(c.campo),
@@ -481,12 +498,14 @@ class Component extends DCLogic {
     const capturaObligatoria = !!mSel.capturaObligatoria;
     // Antes: «al menos tres caracteres», que dejaba pasar un telefono de
     // tres digitos y luego nadie encontraba el pago en el banco.
-    const camposOk = listaCampos.length > 0 && listaCampos.every((c) => {
+    const cumple = (c) => {
       const v = campo(c.campo).trim();
       if (!v) return false;
       const regla = R ? R.campoDe(c) : null;
       return regla && R ? R.valido(regla, v) : v.length >= 3;
-    });
+    };
+    const elQueFalta = listaCampos.find((c) => !cumple(c));
+    const camposOk = listaCampos.length > 0 && !elQueFalta;
     const repOk = camposOk && (!capturaObligatoria || conCaptura);
 
     const comprobante = [
@@ -564,7 +583,11 @@ class Component extends DCLogic {
       adjuntar: () => this.setState((st) => ({ rep: Object.assign({}, st.rep, { captura: !st.rep.captura }) })),
 
       inerteRep: repOk ? null : 'true',
-      textoReportar: repOk ? (mSel.manual ? 'Reportar mi pago' : 'Confirmar y pagar') : (camposOk ? 'Adjunta la captura' : 'Completa los datos'),
+      // El boton NOMBRA lo que falta. «Completa los datos» obliga a repasar
+      // cinco campos para encontrar cual es.
+      textoReportar: repOk
+        ? (mSel.manual ? 'Reportar mi pago' : 'Confirmar y pagar')
+        : (camposOk ? 'Adjunta la captura' : 'Falta ' + (elQueFalta ? elQueFalta.etiqueta.toLowerCase() : 'algo')),
       botonReportar: btn(repOk ? '#1B5138' : 'rgba(20,52,42,.12)', repOk ? '#FAF3E4' : '#5A7264', repOk ? '' : 'cursor:not-allowed'),
       notaRevision: mSel.manual
         ? 'Lo revisa una persona. Si algo no cuadra te escribimos, y tu puesto sigue apartado mientras tanto.'

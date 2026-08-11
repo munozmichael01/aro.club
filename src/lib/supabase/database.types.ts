@@ -1827,6 +1827,7 @@ export type Database = {
           locale: string
           neighborhood: string | null
           notes_ops: string | null
+          notificaciones: Json
           phone_e164: string | null
           role: Database["public"]["Enums"]["app_role_t"]
           rootedness: Database["public"]["Enums"]["rootedness_t"] | null
@@ -1835,7 +1836,7 @@ export type Database = {
           terms_version: string | null
           updated_at: string
           waitlist_id: string | null
-          whatsapp_opt_in: boolean
+          whatsapp_opt_in_at: string | null
         }
         Insert: {
           birthdate?: string | null
@@ -1856,6 +1857,7 @@ export type Database = {
           locale?: string
           neighborhood?: string | null
           notes_ops?: string | null
+          notificaciones?: Json
           phone_e164?: string | null
           role?: Database["public"]["Enums"]["app_role_t"]
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
@@ -1864,7 +1866,7 @@ export type Database = {
           terms_version?: string | null
           updated_at?: string
           waitlist_id?: string | null
-          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
         }
         Update: {
           birthdate?: string | null
@@ -1885,6 +1887,7 @@ export type Database = {
           locale?: string
           neighborhood?: string | null
           notes_ops?: string | null
+          notificaciones?: Json
           phone_e164?: string | null
           role?: Database["public"]["Enums"]["app_role_t"]
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
@@ -1893,7 +1896,7 @@ export type Database = {
           terms_version?: string | null
           updated_at?: string
           waitlist_id?: string | null
-          whatsapp_opt_in?: boolean
+          whatsapp_opt_in_at?: string | null
         }
         Relationships: [
           {
