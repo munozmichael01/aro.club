@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="./reglas.js"></script>
 </head>
 <body>
 <x-dc>
@@ -369,7 +370,14 @@ class Component extends DCLogic {
         abierta: on,
         esTexto, esFecha,
         borradorTexto: on && esTexto ? (borrador || '') : '',
-        onTexto: (e) => { const v = e.target.value; this.setState({ borrador: id === 'telefono' ? v.replace(/\D/g, '').slice(0, 10) : v }); },
+        onTexto: (e) => {
+          const v = e.target.value;
+          const R = (typeof AroReglas !== 'undefined') ? AroReglas : null;
+          // El telefono del perfil NO es el del pago movil: admite cualquier
+          // prefijo internacional. Forzar diez digitos dejaba fuera a quien
+          // escribe desde fuera de Venezuela.
+          this.setState({ borrador: (id === 'telefono' && R) ? R.filtrar('telefonoPerfil', v) : v });
+        },
         anio: partes[0] || '', dia: partes[2] || '',
         // mismo control que en Datos base: un mes no se teclea, se elige
         meses: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'].map((nombre, k) => {
@@ -381,8 +389,8 @@ class Component extends DCLogic {
             txt: 'flex:1;min-width:0;text-align:left;font:' + (marcada ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A'
           };
         }),
-        onAnio: (e) => ponFecha(0, e.target.value.replace(/\D/g, '').slice(0, 4)),
-        onDia: (e) => ponFecha(2, e.target.value.replace(/\D/g, '').slice(0, 2)),
+        onAnio: (e) => ponFecha(0, (typeof AroReglas !== 'undefined' ? AroReglas.filtrar('anio', e.target.value) : e.target.value)),
+        onDia: (e) => ponFecha(2, (typeof AroReglas !== 'undefined' ? AroReglas.filtrar('dia', e.target.value) : e.target.value)),
         campo: campoBase + ';width:100%',
         campoCifra: campoBase + ';width:88px;text-align:center;font-variant-numeric:tabular-nums',
         campoAnio: campoBase + ';width:106px;text-align:center;font-variant-numeric:tabular-nums',

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { valido } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -171,8 +172,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Ese dato no puede quedar vacío.' }, { status: 400 })
     }
 
-    if (clave === 'telefono' && !/^\+58(412|414|416|422|424|426)\d{7}$/.test(valor)) {
-      return NextResponse.json({ error: 'Ese número no parece venezolano.' }, { status: 400 })
+    // El teléfono del perfil admite cualquier prefijo internacional: hay
+    // miembros escribiendo desde fuera y exigir un móvil venezolano los
+    // dejaba sin poder guardar el suyo. El del pago móvil sí es venezolano,
+    // porque ahí es un dato del banco, y esa regla vive en `reglas.js`.
+    if (clave === 'telefono' && !valido('telefonoPerfil', valor)) {
+      return NextResponse.json(
+        { error: 'Ese teléfono no parece válido. Ponlo con el prefijo de tu país.' },
+        { status: 400 },
+      )
     }
 
     const { error } = await admin

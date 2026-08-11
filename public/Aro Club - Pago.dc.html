@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="./reglas.js"></script>
 </head>
 <body>
 <x-dc>
@@ -369,6 +370,9 @@ class Component extends DCLogic {
     const METODOS = (D.metodos || []).map((m) => ({
       id: m.id, nombre: m.nombre, activo: m.activo, manual: m.manual,
       cuenta: m.cuenta, capturaObligatoria: m.capturaObligatoria,
+      // Los campos que pide ESTE metodo, tal como los define la base. Antes
+      // el mapeo se los comia y la pantalla usaba su propia tabla.
+      campos: m.campos || [],
       nota: {
         pm: 'En bolívares, desde tu banco. Lo más usado.',
         zelle: 'En dólares, si tienes cuenta en Estados Unidos.',
@@ -428,51 +432,61 @@ class Component extends DCLogic {
     const soloNum = (max) => (v) => v.replace(/[^0-9]/g, '').slice(0, max);
     const fechaF = (v) => v.replace(/[^0-9/]/g, '').slice(0, 8);
 
-    const CAMPOS = {
-      pm: [
-        ['tel', 'Teléfono desde el que pagaste', '4141234567', '+58', 'numeric', soloNum(10), '', false],
-        ['doc', 'Cédula del titular', '12345678', 'V', 'numeric', soloNum(9), '', false],
-        ['banco', 'Banco emisor', 'Banesco, Mercantil, BNC…', '', 'text', null, '', false],
-        ['ref', 'Referencia', 'Últimos 6 dígitos', '', 'numeric', soloNum(6), 'La que te dio el banco al confirmar.', false],
-        ['fecha', 'Fecha del pago', 'DD/MM/AA', '', 'numeric', fechaF, '', false]
-      ],
-      zelle: [
-        ['titular', 'Nombre del titular que envió', 'Como aparece en tu banco', '', 'text', null, '', true],
-        ['contacto', 'Correo o teléfono desde el que enviaste', 'tu@correo.com', '', 'text', null, 'Tiene que ser el que usaste en Zelle.', true],
-        ['ref', 'Código de confirmación', 'Ej. ABC123XYZ', '', 'text', (v) => v.toUpperCase().slice(0, 14), 'Zelle te lo da al terminar el envío.', false],
-        ['fecha', 'Fecha del pago', 'DD/MM/AA', '', 'numeric', fechaF, '', false]
-      ],
-      bizum: [
-        ['titular', 'Nombre del titular que envió', 'Como aparece en tu banco', '', 'text', null, '', true],
-        ['tel', 'Teléfono desde el que enviaste', '611223344', '+34', 'numeric', soloNum(9), '', false],
-        ['fecha', 'Fecha del pago', 'DD/MM/AA', '', 'numeric', fechaF, 'Bizum no da referencia al momento: por eso la captura es obligatoria.', false]
-      ],
-      debito: [
-        ['tel', 'Teléfono', '4141234567', '+58', 'numeric', soloNum(10), 'Los mismos datos que usas para el pago móvil.', false],
-        ['doc', 'Cédula', '12345678', 'V', 'numeric', soloNum(9), '', false],
-        ['banco', 'Banco', 'Banesco, Mercantil, BNC…', '', 'text', null, '', false],
-        ['otp', 'Código del banco', '000000', '', 'numeric', soloNum(6), 'Tu banco te lo manda por SMS. Solo se cobra al confirmar.', false]
-      ],
-      tarjeta: []
+    // Los campos salen del METODO, que los trae de la base, y las reglas de
+    // `reglas.js`, que es el mismo fichero que usa el servidor para validar.
+    //
+    // Antes esta pantalla llevaba su propia tabla de campos por metodo —una
+    // tercera copia, ignorando la de la base— con sus propios filtros. Ahi
+    // nacio el fallo de Bizum: aqui el telefono cortaba a nueve digitos y el
+    // validador exigia diez, asi que el boton no se activaba nunca.
+    const R = (typeof AroReglas !== 'undefined') ? AroReglas : null;
+
+    const PISTAS = {
+      tel: { '+58': '4141234567', '+34': '611223344' },
+      doc: '12345678', banco: 'Banesco, Mercantil, BNC…',
+      ref: 'Últimos 6 dígitos', fecha: 'DD/MM/AA',
+      titular: 'Como aparece en tu banco', contacto: 'tu@correo.com', otp: '000000'
     };
-    const listaCampos = CAMPOS[mSel.id] || [];
-    const camposReporte = listaCampos.map((c) => ({
-      etiqueta: c[1], pista: c[2], prefijo: c[3], hayPrefijo: !!c[3], modo: c[4],
-      nota: c[6], hayNota: !!c[6],
-      valor: campo(c[0]),
-      onChange: setCampo(c[0], c[5]),
-      celda: c[7] ? 'grid-column:1/-1' : '',
+    const NOTAS = {
+      ref: 'La que te dio el banco al confirmar.',
+      contacto: 'Tiene que ser el que usaste en Zelle.',
+      otp: 'Tu banco te lo manda por SMS. Solo se cobra al confirmar.'
+    };
+
+    const listaCampos = (mSel.campos || []);
+    const camposReporte = listaCampos.map((c) => {
+      const regla = R ? R.campoDe(c) : null;
+      const pista = c.campo === 'tel' ? (PISTAS.tel[c.prefijo] || '') : (PISTAS[c.campo] || '');
+      return {
+      etiqueta: c.etiqueta, pista: pista,
+      prefijo: c.tipo === 'tel' ? (c.prefijo || '') : (c.tipo === 'documento' ? 'V' : ''),
+      hayPrefijo: c.tipo === 'tel' || c.tipo === 'documento',
+      modo: (c.tipo === 'texto' || !c.tipo) ? 'text' : 'numeric',
+      nota: NOTAS[c.campo] || '', hayNota: !!NOTAS[c.campo],
+      valor: campo(c.campo),
+      // El filtro y el validador salen del MISMO sitio: si divergen, el
+      // campo se cierra a si mismo y no hay forma de enviarlo.
+      onChange: setCampo(c.campo, regla && R ? ((v) => R.filtrar(regla, v)) : null),
+      celda: (c.campo === 'titular' || c.campo === 'contacto') ? 'grid-column:1/-1' : '',
       envoltorio: 'display:flex;align-items:center;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;overflow:hidden',
       prefijoEstilo: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:56px;padding:0 14px 0 18px;font:600 16px/1 \'Inter Tight\',sans-serif;color:#2C4A38;border-right:1px solid rgba(20,52,42,.16);margin-right:12px',
-      campo: 'flex:1;min-width:0;min-height:56px;padding:0 18px' + (c[3] ? ';padding-left:0' : '') + ';border:none;background:transparent;color:#1B5138;font:400 16px/1 \'Inter Tight\',sans-serif;outline:none'
-    }));
+      campo: 'flex:1;min-width:0;min-height:56px;padding:0 18px' + ((c.tipo === 'tel' || c.tipo === 'documento') ? ';padding-left:0' : '') + ';border:none;background:transparent;color:#1B5138;font:400 16px/1 \'Inter Tight\',sans-serif;outline:none'
+    };
+    });
 
     const conCaptura = !!(S.rep && S.rep.captura);
     // Bizum no entrega referencia: sin captura no hay nada que conciliar.
     // Lo dice la tabla, no un id escrito aqui: el dia que entre otro metodo
     // sin referencia, se enciende sin tocar la pantalla.
     const capturaObligatoria = !!mSel.capturaObligatoria;
-    const camposOk = listaCampos.length > 0 && listaCampos.every((c) => campo(c[0]).trim().length >= (c[0] === 'fecha' ? 6 : 3));
+    // Antes: «al menos tres caracteres», que dejaba pasar un telefono de
+    // tres digitos y luego nadie encontraba el pago en el banco.
+    const camposOk = listaCampos.length > 0 && listaCampos.every((c) => {
+      const v = campo(c.campo).trim();
+      if (!v) return false;
+      const regla = R ? R.campoDe(c) : null;
+      return regla && R ? R.valido(regla, v) : v.length >= 3;
+    });
     const repOk = camposOk && (!capturaObligatoria || conCaptura);
 
     const comprobante = [

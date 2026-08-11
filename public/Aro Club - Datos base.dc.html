@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="./reglas.js"></script>
 </head>
 <body>
 <x-dc>
@@ -326,8 +327,9 @@ class Component extends DCLogic {
           txt: 'flex:1;min-width:0;text-align:left;font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;text-transform:none;color:' + (on ? '#14342A' : '#33513F')
         };
       }),
-      onDia: (e) => this.setState({ dia: e.target.value.replace(/\D/g, '').slice(0, 2) }),
-      onAnio: (e) => this.setState({ anio: e.target.value.replace(/\D/g, '').slice(0, 4) }),
+      // Las mismas reglas que el servidor, no una copia.
+      onDia: (e) => this.setState({ dia: AroReglas.filtrar('dia', e.target.value) }),
+      onAnio: (e) => this.setState({ anio: AroReglas.filtrar('anio', e.target.value) }),
       campoCifra: campoBase + ';width:136px;text-align:center;font:600 20px/1 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.02em',
       hayEdad: edad !== null && edad >= 18 && edad <= 99,
       textoEdad: edad + ' años',

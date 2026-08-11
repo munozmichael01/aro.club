@@ -134,7 +134,7 @@ export async function POST(request: Request) {
     // si volvió desde otra, y se le dice por dónde va.
     await supabase
       .from('waitlist')
-      .update({ city: ciudadFinal, city_slug: ciudadFinal })
+      .update({ city_slug: ciudadFinal })
       .eq('email', correo)
     return NextResponse.json({
       estado: 'repetido',
@@ -146,10 +146,9 @@ export async function POST(request: Request) {
 
   const { error } = await supabase
     .from('waitlist')
-    // `city` es texto libre heredado y `city_slug` apunta al catalogo. Se
-    // escriben los dos hasta que el viejo se pueda retirar: una ciudad
-    // escrita a mano no se puede cruzar con sus zonas.
-    .insert({ email: correo, city: ciudadFinal, city_slug: ciudadFinal, source: 'landing' })
+    // Solo el slug: `city` era texto libre en paralelo y ya divergia en
+    // mayusculas. Una ciudad escrita a mano no se puede cruzar con sus zonas.
+    .insert({ email: correo, city_slug: ciudadFinal, source: 'landing' })
 
   if (error) {
     console.error('[lead] inserción falló', error)

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { campoDe, valido } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -191,13 +192,36 @@ export async function POST(request: Request) {
 
   // Cada método pide lo que de verdad genera. Se valida contra SU esquema,
   // no contra una lista fija de columnas.
-  const campos = (m.campos ?? []) as { campo: string; etiqueta: string; requerido?: boolean }[]
+  const campos = (m.campos ?? []) as {
+    campo: string
+    etiqueta: string
+    requerido?: boolean
+    tipo?: string
+    prefijo?: string
+    largo?: number
+  }[]
+
   const faltan = campos.filter((c) => c.requerido !== false && !datos[c.campo]?.trim())
   if (faltan.length) {
     return NextResponse.json(
       { error: `Falta ${faltan[0].etiqueta.toLowerCase()}.`, campo: faltan[0].campo },
       { status: 400 },
     )
+  }
+
+  // Y la FORMA, con las mismas reglas que usa la pantalla para filtrar al
+  // teclear. Antes solo se comprobaba que no vinieran vacíos: un teléfono
+  // de tres dígitos entraba, y luego nadie encontraba el pago en el banco.
+  for (const c of campos) {
+    const regla = campoDe(c)
+    const valor = datos[c.campo]
+    if (!regla || !valor) continue
+    if (!valido(regla, valor)) {
+      return NextResponse.json(
+        { error: `${c.etiqueta} no tiene el formato correcto.`, campo: c.campo },
+        { status: 400 },
+      )
+    }
   }
 
   const { data: evento } = await admin
@@ -298,8 +322,11 @@ export async function POST(request: Request) {
   const { error: errorPago } = await admin.from('payments').insert({
     profile_id: user.id,
     booking_id: bookingId,
+    // El metodo real, por su id. Antes aqui iba ademas `method: 'pago_movil'`
+    // FIJO —un Bizum quedaba registrado como pago movil— y esa columna se
+    // quito: el enum en paralelo a la tabla de metodos era la misma
+    // duplicacion, y habia divergido en el 100% de las filas.
     metodo: m.id,
-    method: 'pago_movil',
     moneda: m.moneda,
     amount_usd: usd,
     // Con los céntimos dentro: es el importe exacto que sale de su cuenta,

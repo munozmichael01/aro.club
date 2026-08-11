@@ -583,7 +583,6 @@ export type Database = {
           age_band_max: number | null
           age_band_min: number | null
           booking_closes_at: string
-          city: string
           city_slug: string
           created_at: string
           credit_cost: number
@@ -606,7 +605,6 @@ export type Database = {
           age_band_max?: number | null
           age_band_min?: number | null
           booking_closes_at: string
-          city?: string
           city_slug: string
           created_at?: string
           credit_cost?: number
@@ -629,7 +627,6 @@ export type Database = {
           age_band_max?: number | null
           age_band_min?: number | null
           booking_closes_at?: string
-          city?: string
           city_slug?: string
           created_at?: string
           credit_cost?: number
@@ -1162,85 +1159,6 @@ export type Database = {
           },
         ]
       }
-      memberships: {
-        Row: {
-          created_at: string
-          expires_at: string
-          grace_until: string | null
-          id: string
-          payment_id: string | null
-          product_id: string
-          profile_id: string
-          started_at: string
-          status: Database["public"]["Enums"]["membership_status_t"]
-        }
-        Insert: {
-          created_at?: string
-          expires_at: string
-          grace_until?: string | null
-          id?: string
-          payment_id?: string | null
-          product_id: string
-          profile_id: string
-          started_at?: string
-          status?: Database["public"]["Enums"]["membership_status_t"]
-        }
-        Update: {
-          created_at?: string
-          expires_at?: string
-          grace_until?: string | null
-          id?: string
-          payment_id?: string | null
-          product_id?: string
-          profile_id?: string
-          started_at?: string
-          status?: Database["public"]["Enums"]["membership_status_t"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "memberships_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "memberships_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "memberships_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "memberships_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "v_cola_verificacion"
-            referencedColumns: ["profile_id"]
-          },
-          {
-            foreignKeyName: "memberships_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "v_matching_pool"
-            referencedColumns: ["profile_id"]
-          },
-          {
-            foreignKeyName: "memberships_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "v_verified_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ops_audit_log: {
         Row: {
           action: string
@@ -1378,54 +1296,6 @@ export type Database = {
           },
         ]
       }
-      payment_accounts: {
-        Row: {
-          account_holder: string | null
-          account_number: string | null
-          bank_code: string | null
-          bank_name: string | null
-          document_id: string | null
-          id: string
-          instructions: string | null
-          is_active: boolean
-          label: string
-          method: Database["public"]["Enums"]["payment_method_t"]
-          phone_e164: string | null
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          account_holder?: string | null
-          account_number?: string | null
-          bank_code?: string | null
-          bank_name?: string | null
-          document_id?: string | null
-          id?: string
-          instructions?: string | null
-          is_active?: boolean
-          label: string
-          method: Database["public"]["Enums"]["payment_method_t"]
-          phone_e164?: string | null
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          account_holder?: string | null
-          account_number?: string | null
-          bank_code?: string | null
-          bank_name?: string | null
-          document_id?: string | null
-          id?: string
-          instructions?: string | null
-          is_active?: boolean
-          label?: string
-          method?: Database["public"]["Enums"]["payment_method_t"]
-          phone_e164?: string | null
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       payment_methods: {
         Row: {
           activo: boolean
@@ -1478,7 +1348,6 @@ export type Database = {
           fx_congelado_en: string | null
           fx_rate: number | null
           id: string
-          method: Database["public"]["Enums"]["payment_method_t"]
           metodo: string | null
           moneda: string | null
           paid_at: string | null
@@ -1506,7 +1375,6 @@ export type Database = {
           fx_congelado_en?: string | null
           fx_rate?: number | null
           id?: string
-          method: Database["public"]["Enums"]["payment_method_t"]
           metodo?: string | null
           moneda?: string | null
           paid_at?: string | null
@@ -1534,7 +1402,6 @@ export type Database = {
           fx_congelado_en?: string | null
           fx_rate?: number | null
           id?: string
-          method?: Database["public"]["Enums"]["payment_method_t"]
           metodo?: string | null
           moneda?: string | null
           paid_at?: string | null
@@ -2173,10 +2040,8 @@ export type Database = {
         Row: {
           address: string
           avg_check_usd: number | null
-          avg_rating: number | null
           budget_tier: number | null
           commission_pct: number | null
-          commission_per_head: number | null
           contact_name: string | null
           contact_phone: string | null
           created_at: string
@@ -2207,10 +2072,8 @@ export type Database = {
         Insert: {
           address: string
           avg_check_usd?: number | null
-          avg_rating?: number | null
           budget_tier?: number | null
           commission_pct?: number | null
-          commission_per_head?: number | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -2241,10 +2104,8 @@ export type Database = {
         Update: {
           address?: string
           avg_check_usd?: number | null
-          avg_rating?: number | null
           budget_tier?: number | null
           commission_pct?: number | null
-          commission_per_head?: number | null
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
@@ -2817,7 +2678,6 @@ export type Database = {
         Row: {
           base_completed_at: string | null
           birthdate: string | null
-          city: string
           city_slug: string | null
           conversation_topics: string[]
           converted_profile_id: string | null
@@ -2841,7 +2701,6 @@ export type Database = {
         Insert: {
           base_completed_at?: string | null
           birthdate?: string | null
-          city?: string
           city_slug?: string | null
           conversation_topics?: string[]
           converted_profile_id?: string | null
@@ -2865,7 +2724,6 @@ export type Database = {
         Update: {
           base_completed_at?: string | null
           birthdate?: string | null
-          city?: string
           city_slug?: string | null
           conversation_topics?: string[]
           converted_profile_id?: string | null
@@ -2887,20 +2745,6 @@ export type Database = {
           zones?: string[]
         }
         Relationships: [
-          {
-            foreignKeyName: "waitlist_city_fkey"
-            columns: ["city"]
-            isOneToOne: false
-            referencedRelation: "cities"
-            referencedColumns: ["slug"]
-          },
-          {
-            foreignKeyName: "waitlist_city_fkey"
-            columns: ["city"]
-            isOneToOne: false
-            referencedRelation: "v_city_demand"
-            referencedColumns: ["slug"]
-          },
           {
             foreignKeyName: "waitlist_city_slug_fkey"
             columns: ["city_slug"]
@@ -3149,14 +2993,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "waitlist_city_fkey"
+            foreignKeyName: "waitlist_city_slug_fkey"
             columns: ["city"]
             isOneToOne: false
             referencedRelation: "cities"
             referencedColumns: ["slug"]
           },
           {
-            foreignKeyName: "waitlist_city_fkey"
+            foreignKeyName: "waitlist_city_slug_fkey"
             columns: ["city"]
             isOneToOne: false
             referencedRelation: "v_city_demand"
