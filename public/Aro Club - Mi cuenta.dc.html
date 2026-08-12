@@ -325,7 +325,13 @@ class Component extends DCLogic {
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
         titulo: 'Estamos revisando tu identidad.',
         cuerpo: 'Menos de 24 horas, casi siempre el mismo día. Te escribimos al correo en cuanto esté. No hace falta que hagas nada.',
-        accion: 'Ver mis respuestas', enlace: 'Aro Club - Cuestionario.dc.html', secundaria: 'Simular aprobación'
+        // Decia "Ver mis respuestas" y abria el formulario entero: para leer
+        // una respuesta habia que rellenarlo otra vez. Van al perfil, que es
+        // donde se leen —pregunta, valor y editar en linea—.
+        //
+        // Y la secundaria era "Simular aprobacion", un boton de demo en la
+        // pantalla que mas se abre. Fuera.
+        accion: 'Ver mis respuestas', enlace: 'Aro Club - Mi perfil.dc.html'
       },
       {
         id: 'reservar', sello: 'LISTA PARA RESERVAR',

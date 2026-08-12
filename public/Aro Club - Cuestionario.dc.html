@@ -201,7 +201,12 @@
         </sc-if>
         <button onClick="{{ continuar }}" aria-disabled="{{ inerteContinuar }}" style="{{ botonContinuar }}">{{ textoContinuar }}</button>
       </div>
-      <div style="max-width:720px;margin:0 auto;padding:0 clamp(16px,4vw,28px) 12px;font:400 12px/1.4 'Inter Tight',sans-serif;color:#566A5D">{{ pieGuardado }}</div>
+      <div style="max-width:720px;margin:0 auto;padding:0 clamp(16px,4vw,28px) 12px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;justify-content:space-between">
+        <span style="font:400 12px/1.4 'Inter Tight',sans-serif;color:#566A5D">{{ pieGuardado }}</span>
+        <sc-if value="{{ haySalida }}" hint-placeholder-val="{{ false }}">
+          <a href="Aro Club - Mi cuenta.dc.html" style="font:500 13px/1.4 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:4px;white-space:nowrap">Seguir después</a>
+        </sc-if>
+      </div>
     </div>
   </sc-if>
 </div>
@@ -246,6 +251,16 @@ class Component extends DCLogic {
     const s = this.sesion();
     if (!s || !s.correo || !s.token) { this.setState({ sinSesion: true }); return; }
     this._sesion = s;
+
+    // ¿Ya tiene cuenta? Esta pantalla trabaja con la sesion del lead y no lo
+    // sabe, asi que se lo pregunta a quien lo sabe. Importa para la salida:
+    // a mitad del cuestionario el logo llevaba a Agradecimiento —la pagina
+    // del que acaba de dejar su correo—, que para un miembro que esta
+    // terminando su perfil es un callejon. Y el pie promete "puedes salir y
+    // volver cuando quieras" sin ofrecer por donde.
+    fetch('/api/mi-cuenta')
+      .then((r) => { if (r.ok) this.setState({ tieneCuenta: true }); })
+      .catch(() => {});
 
     const q = '?correo=' + encodeURIComponent(s.correo) + '&token=' + encodeURIComponent(s.token);
     fetch('/api/cuestionario' + q)
@@ -509,7 +524,10 @@ class Component extends DCLogic {
         ? 'Entrarás con tu correo y esta contraseña.'
         : 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Apple o Google.',
       // pointer-events no bloquea el teclado: la inercia va en el handler
-      enlaceLogo: fin ? 'Aro Club - Mi cuenta.dc.html' : 'Aro Club - Agradecimiento.dc.html',
+      enlaceLogo: (fin || this.state.tieneCuenta) ? 'Aro Club - Mi cuenta.dc.html' : 'Aro Club - Agradecimiento.dc.html',
+      // La salida se ENSEÑA, no se deja implicita en el logo: el pie dice
+      // que puedes salir y hasta ahora no habia como.
+      haySalida: !!this.state.tieneCuenta && !fin,
       inerteClave: (this.state.clave || '').length >= 8 ? null : 'true',
       // La cuenta se crea aqui, al cerrar el cuestionario: es cuando ya hay
       // algo que guardar. El servidor abre la sesion en la misma respuesta.
