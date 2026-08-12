@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
 
 /**
  * F10 · Mi mesa.
@@ -31,8 +32,9 @@ export async function GET() {
     .in('status', ['confirmed', 'attended'])
 
   const ahora = Date.now()
-  const FIN = 5 * 3600 * 1000 // la cena se da por terminada cinco horas después
-  const VENTANA = 48 * 3600 * 1000 // y se puede valorar hasta dos días después
+  // Las dos cifras viven en lib/ventana-mesa: Mi cuenta decide con ellas si
+  // enseña la tarjeta de valorar, y si alli fueran 72 horas el boton
+  // llevaria a esta pantalla cuando ya no deja valorar.
 
   type Reserva = NonNullable<typeof reservas>[number]
   const empiezaDe = (r: Reserva) =>
@@ -45,13 +47,12 @@ export async function GET() {
   // siguientes a una cena, esa cena manda; después vuelve a mandar la próxima.
   const porValorar = (reservas ?? [])
     .filter((r) => {
-      const desde = ahora - empiezaDe(r)
-      return desde > FIN && desde < VENTANA
+      return sePuedeValorar(empiezaDe(r), ahora)
     })
     .sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
 
   const proxima = (reservas ?? [])
-    .filter((r) => empiezaDe(r) + FIN > ahora)
+    .filter((r) => empiezaDe(r) + FIN_CENA > ahora)
     .sort((a, b) => empiezaDe(a) - empiezaDe(b))[0]
 
   const reserva =

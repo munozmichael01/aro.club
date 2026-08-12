@@ -38,6 +38,7 @@ type Api = {
   campoTelefonoDe: (prefijo: string) => Campo
   primerFallo: (valores: Partial<Record<Campo, unknown>>) => Campo | null
   campoDe: (definicion: { tipo?: string; prefijo?: string; largo?: number }) => Campo | null
+  aE164: (valor: unknown) => string
   REGLAS: Record<Campo, { etiqueta: string; ayuda?: string }>
 }
 
@@ -48,5 +49,6 @@ export const valido = api.valido
 export const campoTelefonoDe = api.campoTelefonoDe
 export const primerFallo = api.primerFallo
 export const campoDe = api.campoDe
+export const aE164 = api.aE164
 export const REGLAS = api.REGLAS
 export type { Campo }

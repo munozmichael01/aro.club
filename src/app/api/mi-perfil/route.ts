@@ -61,13 +61,54 @@ export async function GET() {
 
   const dadas = new Map((respuestas ?? []).map((a) => [a.question_key, a.value]))
 
-  // Cuántas cenas lleva. Solo el número: ni con quién ni cuándo. Aro no es
-  // una agenda de contactos, y el detalle vive en operación.
-  const { count: cenas } = await admin
+  // Sus cenas (§10): el historial vive aqui porque es identidad acumulada,
+  // no algo que tengas que hacer, y en la portada era una lista sin techo.
+  //
+  // DONDE y CUANDO, nunca con quien. Aro no es una agenda de contactos: los
+  // nombres de quienes se sentaron contigo no vuelven a aparecer despues de
+  // la cena, y esa lista seria justo eso.
+  const { data: susCenas } = await admin
     .from('bookings')
-    .select('*', { count: 'exact', head: true })
+    .select(
+      'id, status, cancelled_at, events(starts_at, format, reveal_at), table_members(dinner_tables(table_number, restaurants!dinner_tables_restaurant_id_fkey(name)))',
+    )
     .eq('profile_id', user.id)
-    .eq('status', 'attended')
+    .order('created_at', { ascending: false })
+    .limit(60)
+
+  const ahoraMs = Date.now()
+  const historial = (susCenas ?? [])
+    .map((b) => {
+      const ev = b.events as unknown as { starts_at: string; format: string; reveal_at: string } | null
+      if (!ev) return null
+      const empiezaMs = new Date(ev.starts_at).getTime()
+      // Solo lo que ya paso: lo que tiene fecha por delante vive en "Lo
+      // proximo", en la portada. Que una fecha aparezca en las dos listas
+      // es como se acaba cancelando dos veces la misma reserva.
+      if (empiezaMs > ahoraMs) return null
+      const mesa = (b.table_members as unknown as {
+        dinner_tables: { table_number: number; restaurants: { name: string } | null } | null
+      }[])?.[0]?.dinner_tables
+      return {
+        cuando: ev.starts_at,
+        formato: ev.format,
+        sitio: mesa?.restaurants?.name ?? null,
+        numeroMesa: mesa?.table_number ?? null,
+        // Lo que de verdad paso, en sus palabras y no en las nuestras.
+        estado: b.cancelled_at || b.status === 'cancelled_by_user'
+          ? 'cancelaste'
+          : b.status === 'attended'
+            ? 'fuiste'
+            : 'no-llegaste',
+      }
+    })
+    .filter((c): c is NonNullable<typeof c> => c !== null)
+    // Por la fecha de la cena, no por cuando se hizo la reserva: dos
+    // reservas hechas el mismo dia para cenas de meses distintos salian en
+    // el orden en que se apunto, que en un historial no significa nada.
+    .sort((a, b) => new Date(b.cuando).getTime() - new Date(a.cuando).getTime())
+
+  const cenas = historial.filter((c) => c.estado === 'fuiste').length
 
   // Los tres sellos de la cabecera estaban escritos a mano: "Identidad
   // verificada", "Perfil completo" y "3 creditos" fijos, en la pantalla que
@@ -139,7 +180,8 @@ export async function GET() {
       pantalla: q.screen,
       valor: dadas.get(q.key) ?? null,
     })),
-    cenas: cenas ?? 0,
+    cenas,
+    historial,
   })
 }
 

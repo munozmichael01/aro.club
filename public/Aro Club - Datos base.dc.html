@@ -113,8 +113,7 @@
       <div style="margin-top:clamp(26px,3.4vw,34px);animation:aro-open 300ms ease both">
         <label for="tel" style="{{ etiqueta }}">Teléfono</label>
         <div style="display:flex;gap:9px;align-items:stretch">
-          <div style="flex:0 0 auto;display:flex;align-items:center;min-height:58px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;font:600 16px/1 'Inter Tight',sans-serif;color:#14342A">+58</div>
-          <input id="tel" type="tel" value="{{ telefono }}" onChange="{{ onTelefono }}" placeholder="412 1234567" inputmode="tel" autocomplete="tel-national" style="{{ campoAncho }}" />
+          <input id="tel" type="tel" value="{{ telefono }}" onChange="{{ onTelefono }}" placeholder="+58 412 1234567" inputmode="tel" autocomplete="tel" style="{{ campoAncho }}" />
         </div>
         <sc-if value="{{ hayErrorTel }}" hint-placeholder-val="{{ false }}">
           <div style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin-top:11px">{{ errorTel }}</div>
@@ -198,7 +197,7 @@ class Component extends DCLogic {
         trato: this.state.trato.trim(),
         nacimiento: this.state.anio + '-' + p2(this.state.mes) + '-' + p2(this.state.dia),
         genero: this.GENEROS[this.state.genero],
-        telefono: '+58' + this.telLimpio()
+        telefono: AroReglas.aE164(this.state.telefono)
       })
     })
       .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
@@ -230,33 +229,44 @@ class Component extends DCLogic {
     const p = this.state.paso;
     const edad = this.edad();
     const tel = this.telLimpio();
-    // móviles venezolanos: 412, 414, 424, 416, 426 + siete cifras
-    const telOk = /^(412|414|424|416|422|426)\d{7}$/.test(tel);
+    // El §11: este campo admite cualquier prefijo internacional. Antes exigia
+    // movil venezolano, asi que quien escribe desde fuera no podia darse de
+    // alta —y en cambio si podia editarlo luego en su perfil, que aceptaba
+    // otra regla distinta para el mismo dato.
+    const telOk = AroReglas.valido('telefonoPerfil', this.state.telefono);
 
     const pasos = [
       {
         eyebrow: 'DATOS BASE · 1 DE 4',
         titulo: '¿Cómo te llamas?',
         bajada: 'Cuatro preguntas rápidas que no estaban en el cuestionario y sin las cuales no podemos armar tu mesa.',
-        listo: this.state.nombre.trim().length >= 2
+        listo: this.state.nombre.trim().length >= 2,
+        falla: this.state.nombre.trim().length === 0 ? 'Escribe tu nombre' : 'Escribe tu nombre completo'
       },
       {
         eyebrow: 'DATOS BASE · 2 DE 4',
         titulo: '¿Cuándo naciste?',
         bajada: 'Es una de las dos cosas que más pesan al armar el grupo.',
-        listo: edad !== null && edad >= 18 && edad <= 99
+        listo: edad !== null && edad >= 18 && edad <= 99,
+        falla: (!this.state.dia || this.state.mes < 0 || !this.state.anio)
+          ? 'Completa día, mes y año'
+          : (edad !== null && edad < 18 ? 'Aro es para mayores de 18' : 'Revisa la fecha')
       },
       {
         eyebrow: 'DATOS BASE · 3 DE 4',
         titulo: '¿Con qué género te identificas?',
         bajada: 'La otra. Va aparte del resto del perfil porque no se comparte con nadie.',
-        listo: this.state.genero >= 0
+        listo: this.state.genero >= 0,
+        falla: 'Elige una opción'
       },
       {
         eyebrow: 'DATOS BASE · 4 DE 4',
         titulo: '¿A qué número te escribimos?',
         bajada: 'Solo el día del encuentro, y solo si hace falta.',
-        listo: telOk
+        listo: telOk,
+        falla: tel.length === 0
+          ? 'Escribe tu teléfono con el prefijo del país'
+          : 'Ese número se ve corto. Escríbelo con el prefijo del país.'
       },
       {
         eyebrow: 'LISTO',
@@ -342,9 +352,9 @@ class Component extends DCLogic {
       avisoIcono: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px',
 
       telefono: this.state.telefono,
-      onTelefono: (e) => this.setState({ telefono: e.target.value }),
-      hayErrorTel: tel.length >= 10 && !telOk,
-      errorTel: 'Ese número no se ve completo. Empieza por 412, 414, 416, 422, 424 o 426 y lleva siete cifras más.',
+      onTelefono: (e) => this.setState({ telefono: AroReglas.filtrar('telefonoPerfil', e.target.value) }),
+      hayErrorTel: tel.length >= 8 && !telOk,
+      errorTel: 'Ese número no se ve completo. Escríbelo con el prefijo del país.',
 
       etiqueta: 'display:block;font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:11px',
       etiquetaSuelta: 'display:block;font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#33513F;margin:26px 0 11px',
@@ -355,7 +365,7 @@ class Component extends DCLogic {
       eyebrow: 'font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.16em;color:#8F4515;margin-bottom:13px',
       h1: 'font:400 clamp(30px,6.4vw,44px)/1.04 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:16ch;text-wrap:balance',
 
-      textoSiguiente: this.state.guardando ? 'Guardando' : (q.listo ? (p === 3 ? 'Terminar' : 'Continuar') : 'Falta este dato'),
+      textoSiguiente: this.state.guardando ? 'Guardando' : (q.listo ? (p === 3 ? 'Terminar' : 'Continuar') : (q.falla || 'Falta este dato')),
       inerte: q.listo ? null : 'true',
       botonSiguiente: btn(q.listo ? '#14342A' : 'rgba(20,52,42,.12)', q.listo ? '#FAF3E4' : '#2C4A38', q.listo ? '' : 'cursor:not-allowed'),
       // Del paso 4 al resumen se pasa GUARDANDO. Antes avanzaba solo, asi

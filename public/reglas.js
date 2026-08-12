@@ -211,6 +211,36 @@
     },
 
     /**
+     * El teléfono de contacto, en E.164, desde lo que sea que haya tecleado.
+     *
+     * Estaba resuelto en tres sitios y de tres maneras: Datos base pegaba
+     * '+58' a ciegas —y encima solo aceptaba móviles venezolanos, que deja
+     * fuera a quien escribe desde España—, Mi perfil hacía su propio apaño
+     * contra el '+58 +58' que ya apareció una vez, y cada servidor validaba
+     * distinto. Es el mismo dato: se normaliza una vez y aquí.
+     *
+     * Quien escribe su prefijo manda. Quien no lo escribe es de Caracas,
+     * que es la única ciudad abierta, y se le pone el +58; en cuanto haya
+     * otra ciudad esta suposición hay que revisarla.
+     */
+    aE164: function (valor) {
+      var v = String(valor == null ? '' : valor).trim()
+      var digitos = v.replace(/\D/g, '')
+      if (!digitos) return ''
+
+      // El '+58 +58' que ya aparecio una vez en un perfil. Un numero
+      // venezolano es 58 y diez cifras que empiezan por 4, asi que un
+      // '5858' al principio solo puede ser el prefijo puesto dos veces:
+      // ni el filtro ni el validador lo cazaban y se guardaba tal cual.
+      while (digitos.indexOf('5858') === 0) digitos = digitos.slice(2)
+
+      // Con prefijo escrito, manda quien escribe.
+      if (v.charAt(0) === '+') return '+' + digitos
+      // Sin prefijo: venezolano, que es la unica ciudad abierta.
+      return '+58' + digitos.replace(/^58/, '')
+    },
+
+    /**
      * El teléfono de un método de pago, según su país. Un solo sitio donde
      * decidirlo: la divergencia entre el filtro y el validador es lo que
      * dejó Bizum imposible de enviar.

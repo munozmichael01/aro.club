@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { diaCompleto, diaYMes, mesYAno } from '@/lib/fechas'
 import { leerCatalogo } from '@/lib/questionnaire/catalogo'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -36,20 +37,6 @@ const edadDe = (nacimiento: string | null) => {
   return e
 }
 
-const MESES = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-]
-const mesYAno = (iso: string | null) => {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  return MESES[d.getMonth()].charAt(0).toUpperCase() + MESES[d.getMonth()].slice(1) + ' de ' + d.getFullYear()
-}
-const diaCompleto = (iso: string | null) => {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  return `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`
-}
 
 export async function GET(request: Request) {
   const actor = await exigirOps()
@@ -250,7 +237,7 @@ export async function GET(request: Request) {
         // restaurante" se lee como un fallo nuestro cuando es lo normal.
         sitio: mesa?.dinner_tables?.restaurants?.name
           ?? (cual === 'Apuntada' ? 'Todavía sin mesa' : 'Sin mesa'),
-        cuando: `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]}` +
+        cuando: `${DIAS[d.getDay()]} ${diaYMes(ev.starts_at)}` +
           (ev.zone_slug ? ` · ${nombreZona.get(ev.zone_slug) ?? ev.zone_slug}` : ''),
         estado: cual,
         gente: mesa

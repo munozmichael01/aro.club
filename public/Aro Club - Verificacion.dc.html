@@ -189,6 +189,23 @@
       </div>
     </sc-if>
 
+    <sc-if value="{{ esHecha }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 400ms ease both">
+        <div style="{{ selloVerde }}">IDENTIDAD VERIFICADA</div>
+        <h1 style="{{ h1 }}">Eres tú, y ya está comprobado.</h1>
+        <p style="{{ bajada }}">{{ bajadaHecha }}</p>
+
+        <div style="border-radius:22px;background:#F2E9D5;padding:clamp(18px,2.4vw,22px);margin-top:clamp(24px,3vw,32px);max-width:520px">
+          <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloBorrado }}</div>
+          <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:5px;text-wrap:pretty">{{ cuerpoBorrado }}</div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
+          <a href="Aro Club - Mi cuenta.dc.html" style="{{ botonPrimario }}">Ir a mi cuenta</a>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ esRechazo }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 460ms ease both">
         <div style="{{ eyebrow }}">{{ tituloRechazo }}</div>
@@ -244,7 +261,14 @@ class Component extends DCLogic {
       .then((d) => {
         if (d.estado === 'revision') { this.setState({ fase: 'revision' }); return; }
         if (d.estado === 'rechazada') { this.setState({ fase: 'rechazo', motivo: d.motivo }); return; }
-        if (d.estado === 'aprobada') { window.location.href = 'Aro Club - Mi cuenta.dc.html'; return; }
+        // Antes se le expulsaba a Mi cuenta. Pero esta pantalla le prometio
+        // que sus fotos se borran a los noventa dias, y echarle de aqui
+        // dejaba esa promesa sin ningun sitio donde comprobarse. Ahora ve su
+        // estado, con la fecha exacta.
+        if (d.estado === 'aprobada') {
+          this.setState({ fase: 'hecha', revisadaEl: d.revisadaEl, seBorraEl: d.seBorraEl, yaBorradas: d.yaBorradas });
+          return;
+        }
         const t = {};
         if (d.cedulaLista) t[0] = true;
         if (d.selfieLista) t[1] = true;
@@ -281,7 +305,9 @@ class Component extends DCLogic {
         .then((d) => {
           if (d.estado === 'revision' || d.estado === 'aprobada') {
             clearInterval(this._vig);
-            this.setState({ fase: 'revision' });
+            this.setState(d.estado === 'aprobada'
+              ? { fase: 'hecha', revisadaEl: d.revisadaEl, seBorraEl: d.seBorraEl, yaBorradas: d.yaBorradas }
+              : { fase: 'revision' });
           } else if (d.cedulaLista || d.selfieLista) {
             // Se ve llegar la primera foto antes que la segunda: quien mira
             // la pantalla sabe que el telefono esta haciendo algo.
@@ -401,6 +427,22 @@ class Component extends DCLogic {
       esCaptura: f === 'captura',
       esRevision: f === 'revision',
       esRechazo: f === 'rechazo',
+      esHecha: f === 'hecha',
+      selloVerde: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;margin-bottom:16px',
+      bajadaHecha: 'Lo revisó una persona de nuestro equipo' +
+        (this.state.revisadaEl ? ' el ' + this.state.revisadaEl : '') +
+        '. Ya puedes reservar puesto en cualquier fecha abierta.',
+      // Se dice la fecha exacta porque es una promesa concreta, y cuando la
+      // purga ya paso se dice en pasado: anunciar un borrado futuro de algo
+      // que ya no existe suena a que seguimos guardandolo.
+      tituloBorrado: this.state.yaBorradas
+        ? 'Tu cédula y tu selfie ya están borradas'
+        : (this.state.seBorraEl
+            ? 'Tu cédula y tu selfie se borran el ' + this.state.seBorraEl
+            : 'Tu cédula y tu selfie se borran a los noventa días'),
+      cuerpoBorrado: this.state.yaBorradas
+        ? 'Solo queda la marca de que la verificación ocurrió. No las vio ningún otro miembro.'
+        : 'A los noventa días de aprobarla. Después solo queda la marca de que la verificación ocurrió. No las ve ningún otro miembro.',
       enMovil: movil,
 
       explicacion, qr, pasosQr, barras, mientras,
@@ -413,7 +455,7 @@ class Component extends DCLogic {
       botonFantasma: btn('transparent', '#566A5D', 'none', 'font-weight:500;font-size:15px;text-decoration:underline;text-underline-offset:6px;padding:0 10px'),
       botonDispositivo: 'display:inline-flex;align-items:center;min-height:44px;margin:-8px 0;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:transparent;color:#1B5138;font:500 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
 
-      etiquetaPaso: { intro: 'VERIFICACIÓN', qr: 'TRASPASO', captura: 'VERIFICACIÓN', revision: 'EN REVISIÓN', rechazo: 'ACCIÓN REQUERIDA' }[f],
+      etiquetaPaso: { intro: 'VERIFICACIÓN', qr: 'TRASPASO', captura: 'VERIFICACIÓN', revision: 'EN REVISIÓN', rechazo: 'ACCIÓN REQUERIDA', hecha: 'VERIFICADA' }[f],
 
       textoEmpezar: movil ? 'Empezar, son dos fotos' : 'Empezar',
       // Arranca en la que falta, no siempre en la primera: si ya subio la
@@ -433,7 +475,12 @@ class Component extends DCLogic {
         fetch('/api/verificacion')
           .then((r) => r.json())
           .then((d) => {
-            if (d.estado === 'revision' || d.estado === 'aprobada') { this.setState({ fase: 'revision', subiendo: false }); return; }
+            if (d.estado === 'revision' || d.estado === 'aprobada') {
+              this.setState(d.estado === 'aprobada'
+                ? { fase: 'hecha', subiendo: false, revisadaEl: d.revisadaEl, seBorraEl: d.seBorraEl, yaBorradas: d.yaBorradas }
+                : { fase: 'revision', subiendo: false });
+              return;
+            }
             this.setState({ subiendo: false, fallo: 'Todavia no nos han llegado las dos fotos. Termina en el telefono y vuelve a darle.' });
           })
           .catch(() => this.setState({ subiendo: false, fallo: 'No pudimos comprobarlo. Reintenta.' }));
@@ -481,9 +528,11 @@ class Component extends DCLogic {
       pieRechazo: (this.state.motivo && this.state.motivo.permiteReintento)
         ? 'Si vuelve a fallar dos veces, te escribimos y lo resolvemos con una persona. Nunca te dejamos con un error y sin salida.'
         : 'Lo revisa una persona, no un programa. Escríbenos y lo miramos contigo.',
-      repetirCedula: () => this.setState({ fase: 'captura', toma: 0, tomas: {}, fallo: '' }),
       volverRevision: () => this.setState({ fase: 'revision' }),
-      repetirCedula: () => this.setState({ fase: 'captura', toma: 0, tomas: {}, repetirSolo: 0 }),
+      // Estaba dos veces en este mismo objeto y ganaba la segunda, asi que
+      // al repetir la cedula se quedaba en pantalla el error de la vez
+      // anterior. Una sola, y limpia el fallo.
+      repetirCedula: () => this.setState({ fase: 'captura', toma: 0, tomas: {}, repetirSolo: 0, fallo: '' }),
 
       // El lado lo dice el codigo, no el maquetado: si la URL crece, el QR
       // pasa de 29 a 33 modulos y una rejilla de 21 lo dibujaria torcido.

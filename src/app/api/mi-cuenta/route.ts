@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { sePuedeValorar } from '@/lib/ventana-mesa'
 
 /**
  * El estado de Mi cuenta, derivado del servidor.
@@ -204,13 +205,61 @@ export async function GET() {
   const { data: todasSusReservas } = await admin
     .from('bookings')
     .select(
-      'id, status, cancelled_at, event_id, events(starts_at, format, reveal_at), table_members(dinner_tables(table_number, restaurants!dinner_tables_restaurant_id_fkey(name)))',
+      'id, status, cancelled_at, event_id, events(starts_at, format, reveal_at), table_members(table_id, dinner_tables(table_number, restaurants!dinner_tables_restaurant_id_fkey(name)))',
     )
     .eq('profile_id', user.id)
     .order('created_at', { ascending: false })
     .limit(20)
 
   const ahora = Date.now()
+
+  // ¿Hay una cena recién pasada que todavía no ha valorado? (§10)
+  //
+  // Valorar era la única cosa de F11 a la que solo se llegaba escribiendo la
+  // URL a mano: la fila del historial no hacía nada, y lo único que importa
+  // de una cena pasada es justo eso. Aquí sale como tarjeta de acción, y se
+  // va sola a las 48 horas porque despues ya no se puede valorar.
+  //
+  // La ventana la decide lib/ventana-mesa, la misma que usa Mi mesa: si
+  // aquí durara más, el botón llevaría a una pantalla que ya cerró.
+  const recienPasada = (todasSusReservas ?? [])
+    .filter((b) => {
+      const ev = b.events as unknown as { starts_at: string } | null
+      return (
+        !b.cancelled_at &&
+        (b.status === 'confirmed' || b.status === 'attended') &&
+        !!ev &&
+        sePuedeValorar(ev.starts_at, ahora)
+      )
+    })
+    .sort((a, b) => {
+      const ea = new Date((a.events as unknown as { starts_at: string }).starts_at).getTime()
+      const eb = new Date((b.events as unknown as { starts_at: string }).starts_at).getTime()
+      return eb - ea
+    })[0]
+
+  const mesaRecien = recienPasada
+    ? (recienPasada.table_members as unknown as { table_id: string }[])?.[0]?.table_id
+    : null
+
+  // Sin mesa no hubo cena que valorar: no llegó a sentarse.
+  let porValorar: { cuando: string; sitio: string | null } | null = null
+  if (mesaRecien) {
+    const { data: yaValoro } = await admin
+      .from('table_feedback')
+      .select('id')
+      .eq('table_id', mesaRecien)
+      .eq('profile_id', user.id)
+      .maybeSingle()
+
+    if (!yaValoro) {
+      const ev = recienPasada.events as unknown as { starts_at: string }
+      const mesa = (recienPasada.table_members as unknown as {
+        dinner_tables: { restaurants: { name: string } | null } | null
+      }[])?.[0]?.dinner_tables
+      porValorar = { cuando: ev.starts_at, sitio: mesa?.restaurants?.name ?? null }
+    }
+  }
   const evento = reserva?.events as
     | { starts_at: string; reveal_at: string; status: string; restaurants: { name: string; address: string; zone_slug: string | null } | null }
     | null
@@ -241,6 +290,7 @@ export async function GET() {
   return NextResponse.json({
     nombre: perfil.display_name || perfil.full_name || null,
     esOps: perfil.role === 'ops' || perfil.role === 'admin',
+    porValorar,
     planes: (todasSusReservas ?? []).map((b) => {
       const ev = b.events as unknown as { starts_at: string; format: string; reveal_at: string } | null
       const mesa = (b.table_members as unknown as {
