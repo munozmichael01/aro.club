@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="./nav.js"></script>
 <script src="./reglas.js"></script>
 </head>
 <body>
@@ -30,9 +31,19 @@
 <div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh">
 
   <div style="position:sticky;top:0;z-index:30;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.1)">
-    <div style="max-width:680px;margin:0 auto;padding:12px clamp(16px,4vw,28px);display:flex;align-items:center;justify-content:space-between;gap:14px">
-      <a href="Aro Club - Mi cuenta.dc.html" style="display:inline-flex;align-items:center;gap:9px;min-height:44px;margin:-11px 0;color:#1B5138;font:500 15px/1 'Inter Tight',sans-serif">← Mi cuenta</a>
+    <div style="max-width:720px;margin:0 auto;padding:12px clamp(16px,4vw,28px);display:flex;align-items:center;justify-content:space-between;gap:14px">
+      <a href="/" style="display:flex;align-items:center;gap:8px;color:#14342A;min-height:44px;margin:-11px 0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
+        <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
+      </a>
       <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">PERFIL</span>
+    </div>
+    <div style="border-top:1px solid rgba(20,52,42,.08)">
+      <div style="max-width:720px;margin:0 auto;padding:0 clamp(16px,4vw,28px);display:flex;gap:clamp(18px,4vw,28px)">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
+          <a href="{{ n.enlace }}" aria-current="{{ n.actual }}" style="{{ n.estilo }}">{{ n.texto }}</a>
+        </sc-for>
+      </div>
     </div>
   </div>
 
@@ -247,6 +258,13 @@ class Component extends DCLogic {
 
     this.leerExclusiones();
     this.leerAvisos();
+
+    // Si hay mesa se lo pregunta a quien lo sabe: la barra no puede ofrecer
+    // "Mi mesa" a quien no tiene ninguna.
+    fetch('/api/mi-cuenta')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => this.setState({ hayMesa: !!d && (d.estado === 'reservada' || d.estado === 'abierta') }))
+      .catch(() => {});
   }
 
   leerAvisos() {
@@ -627,6 +645,7 @@ class Component extends DCLogic {
       }),
       hayCenas: !!(D && D.historial && D.historial.length),
       sinCenas: !!D.historial && D.historial.length === 0,
+      nav: AroNav.items('perfil', !!this.state.hayMesa),
       hayFalloAvisos: !!this.state.falloAvisos,
       falloAvisos: this.state.falloAvisos || '',
       hayExclusiones: exclusiones.length > 0,

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="./nav.js"></script>
 <script src="./reglas.js"></script>
 </head>
 <body>
@@ -39,6 +40,13 @@
       <sc-if value="{{ esOps }}" hint-placeholder-val="{{ false }}">
         <a href="Aro Club - Operacion.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.22);color:#1B5138;font:600 13px/1 'Inter Tight',sans-serif;letter-spacing:.04em;white-space:nowrap">Operación</a>
       </sc-if>
+    </div>
+    <div style="border-top:1px solid rgba(20,52,42,.08)">
+      <div style="max-width:720px;margin:0 auto;padding:0 clamp(16px,4vw,28px);display:flex;gap:clamp(18px,4vw,28px)">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
+          <a href="{{ n.enlace }}" aria-current="{{ n.actual }}" style="{{ n.estilo }}">{{ n.texto }}</a>
+        </sc-for>
+      </div>
     </div>
   </div>
 
@@ -724,6 +732,10 @@ class Component extends DCLogic {
         ? (d.porValorar.sitio ? 'Tu mesa en ' + d.porValorar.sitio + '.' : 'Tu última mesa.')
         : '',
       cuerpoValorar: 'Dos preguntas. Lo que digas entra en el emparejamiento de la próxima, y nadie más lo ve.',
+      // "Mi mesa" solo si de verdad la hay: sin reserva esa pantalla te
+      // devuelve aqui, y una pestaña que rebota a donde ya estabas no es
+      // navegacion.
+      nav: AroNav.items('inicio', conMesa),
       hayMios: mios.length > 0,
       sinMios: mios.length === 0,
 
