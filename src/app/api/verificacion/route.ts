@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { diaCompleto } from '@/lib/fechas'
 import { cerrarTraspasos, perfilDeTraspaso } from '@/lib/traspaso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
 
   const { data: filas } = await createAdminClient()
     .from('verifications')
-    .select('kind, status, rejection_reason, created_at')
+    .select('kind, status, rejection_reason, created_at, reviewed_at, storage_path')
     .eq('profile_id', user)
     .order('created_at', { ascending: false })
 
@@ -83,11 +84,34 @@ export async function GET(request: Request) {
           ? 'revision'
           : 'sin-empezar'
 
+  // Cuándo la revisó una persona, y cuándo se borran las fotos. La pantalla
+  // de «ya verificada» promete una fecha concreta de borrado, así que sale
+  // de la MISMA regla que purga de verdad —reviewed_at + 90 días, la de
+  // purgar_documentos_verificacion()— y no de una cuenta escrita aparte.
+  // Dos cuentas del mismo plazo acaban diciendo días distintos.
+  const revisadaEl =
+    estado === 'aprobada'
+      ? [doc?.reviewed_at, selfie?.reviewed_at].filter(Boolean).sort().pop() ?? null
+      : null
+
+  // Si ya no hay fichero, es que la purga pasó: entonces no se anuncia una
+  // fecha futura, se dice que ya están borradas.
+  const yaBorradas = estado === 'aprobada' && !doc?.storage_path && !selfie?.storage_path
+
+  const seBorraEl =
+    revisadaEl && !yaBorradas
+      ? new Date(new Date(revisadaEl).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
+      : null
+
   return NextResponse.json({
     estado,
     cedulaLista: Boolean(doc && doc.status !== 'rejected'),
     selfieLista: Boolean(selfie && selfie.status !== 'rejected'),
     motivo,
+    // Escritas aquí, como en el resto: la pantalla no arma fechas a mano.
+    revisadaEl: revisadaEl ? diaCompleto(revisadaEl) : null,
+    seBorraEl: seBorraEl ? diaCompleto(seBorraEl) : null,
+    yaBorradas,
   })
 }
 
