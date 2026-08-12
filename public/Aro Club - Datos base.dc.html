@@ -137,8 +137,9 @@
             <sc-for list="{{ resumen }}" as="r" hint-placeholder-count="5">
               <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.12)">
                 <span style="flex:1 1 130px;font:400 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ r.campo }}</span>
-                <span style="flex:1 1 150px;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ r.valor }}</span>
+                <span style="flex:1 1 130px;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ r.valor }}</span>
                 <span style="{{ r.chip }}">{{ r.visible }}</span>
+                <button onClick="{{ r.corregir }}" aria-label="{{ r.etiquetaCorregir }}" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;margin:-8px 0;padding:0 10px;background:transparent;border:none;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:5px;cursor:pointer">Corregir</button>
               </div>
             </sc-for>
           </div>
@@ -250,14 +251,14 @@ class Component extends DCLogic {
 
     const pasos = [
       {
-        eyebrow: 'DATOS BASE · 1 DE 4',
+        eyebrow: 'DATOS PERSONALES · 1 DE 4',
         titulo: '¿Cómo te llamas?',
         bajada: 'Cuatro preguntas rápidas que no estaban en el cuestionario y sin las cuales no podemos armar tu mesa.',
         listo: this.state.nombre.trim().length >= 2,
         falla: this.state.nombre.trim().length === 0 ? 'Escribe tu nombre' : 'Escribe tu nombre completo'
       },
       {
-        eyebrow: 'DATOS BASE · 2 DE 4',
+        eyebrow: 'DATOS PERSONALES · 2 DE 4',
         titulo: '¿Cuándo naciste?',
         bajada: 'Es una de las dos cosas que más pesan al armar el grupo.',
         listo: edad !== null && edad >= 18 && edad <= 99,
@@ -266,14 +267,14 @@ class Component extends DCLogic {
           : (edad !== null && edad < 18 ? 'Aro es para mayores de 18' : 'Revisa la fecha')
       },
       {
-        eyebrow: 'DATOS BASE · 3 DE 4',
+        eyebrow: 'DATOS PERSONALES · 3 DE 4',
         titulo: '¿Con qué género te identificas?',
         bajada: 'La otra. Va aparte del resto del perfil porque no se comparte con nadie.',
         listo: this.state.genero >= 0,
         falla: 'Elige una opción'
       },
       {
-        eyebrow: 'DATOS BASE · 4 DE 4',
+        eyebrow: 'DATOS PERSONALES · 4 DE 4',
         titulo: '¿A qué número te escribimos?',
         bajada: 'Solo el día del encuentro, y solo si hace falta.',
         listo: telOk,
@@ -308,13 +309,26 @@ class Component extends DCLogic {
 
     const chip = (v) => 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + (v ? 'rgba(27,81,56,.12)' : 'transparent') + ';border:1px solid ' + (v ? 'transparent' : 'rgba(20,52,42,.2)') + ';color:' + (v ? '#1B5138' : '#33513F');
     const trato = this.state.trato.trim() || this.state.nombre.trim().split(' ')[0] || '—';
+    // El prefijo sale del selector, no escrito a mano: con '+58' fijo, el
+    // numero de quien vive en España se resumia como "+58 600 123456".
+    const telBonito = telOk
+      ? (this.state.prefijo ? this.state.prefijo + ' ' : '') + tel.replace(/(\d{3})(?=\d)/, '$1 ')
+      : '—';
+
+    // Cada fila vuelve a su paso. El resumen se leia y no se podia tocar:
+    // quien se equivocaba en el nombre o en el año se enteraba aqui, al
+    // final, y no tenia mas salida que volver a empezar.
     const resumen = [
-      ['Tu nombre', this.state.nombre.trim() || '—', 'Solo el equipo', false],
-      ['En la mesa te llaman', trato, 'Lo ven los cinco', true],
-      ['Edad', edad !== null ? edad + ' años' : '—', 'No se muestra', false],
-      ['Género', this.state.genero >= 0 ? generos[this.state.genero].label : '—', 'No se muestra', false],
-      ['Teléfono', telOk ? '+58 ' + tel.slice(0, 3) + ' ' + tel.slice(3) : '—', 'Solo ese día', false]
-    ].map((r) => ({ campo: r[0], valor: r[1], visible: r[2], chip: chip(r[3]) }));
+      ['Tu nombre', this.state.nombre.trim() || '—', 'Solo el equipo', false, 0],
+      ['En la mesa te llaman', trato, 'Lo ven los cinco', true, 0],
+      ['Edad', edad !== null ? edad + ' años' : '—', 'No se muestra', false, 1],
+      ['Género', this.state.genero >= 0 ? generos[this.state.genero].label : '—', 'No se muestra', false, 2],
+      ['Teléfono', telBonito, 'Solo ese día', false, 3]
+    ].map((r) => ({
+      campo: r[0], valor: r[1], visible: r[2], chip: chip(r[3]),
+      corregir: () => this.setState({ paso: r[4] }),
+      etiquetaCorregir: 'Corregir ' + r[0].toLowerCase()
+    }));
 
     const btn = (fondo, color, extra) => 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + fondo + ';color:' + color + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
 

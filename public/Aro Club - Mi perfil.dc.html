@@ -510,7 +510,7 @@ class Component extends DCLogic {
     };
 
     const titulos = [
-      ['Datos base', 'Lo que diste al entrar. Edad y género sostienen el reparto.'],
+      ['Datos personales', 'Lo que diste al entrar. Edad y género sostienen el reparto.'],
       ['Tu contexto', 'Con esto evitamos sentarte con alguien de tu empresa.'],
       ['Cómo eres en la mesa', 'Lo que más pesa al armar el grupo. Nada de esto se le muestra a nadie.'],
       ['De qué hablas', 'Dos horas se sostienen con temas.'],
@@ -531,7 +531,7 @@ class Component extends DCLogic {
         : (D.faltanBase && D.faltanPreguntas
             ? 'Faltan ' + D.faltanPreguntas + ' respuestas y ' + D.faltanBase + ' datos'
             : D.faltanBase
-              ? (D.faltanBase === 1 ? 'Falta un dato base' : 'Faltan ' + D.faltanBase + ' datos base')
+              ? (D.faltanBase === 1 ? 'Falta un dato personal' : 'Faltan ' + D.faltanBase + ' datos base')
               : (D.faltanPreguntas === 1 ? 'Falta 1 respuesta' : 'Faltan ' + (D.faltanPreguntas || 0) + ' respuestas')),
        !!D.completo],
       [(D.creditos || 0) === 1 ? '1 crédito' : (D.creditos || 0) + ' créditos', false]
