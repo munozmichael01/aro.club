@@ -118,7 +118,6 @@
           </div>
         </sc-for>
       </div>
-      <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;margin-top:clamp(26px,3.2vw,38px);transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Encuentra tu mesa</a>
     </div>
   </div>
 
@@ -230,7 +229,6 @@
           </div>
         </div>
       </div>
-      <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;margin-top:clamp(26px,3.2vw,38px);transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Encuentra tu mesa</a>
     </div>
   </div>
 
@@ -286,7 +284,6 @@
       <div style="padding:clamp(28px,3.4vw,44px) clamp(16px,4vw,36px) 0">
         <a href="#faq" data-reveal="5" style="display:inline-flex;align-items:center;min-height:50px;padding:0 24px;border-radius:999px;border:1px solid rgba(250,243,228,.32);color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;transition:all 220ms ease" style-hover="background:#FAF3E4;color:#14342A;border-color:#FAF3E4">Y si alguien se pasa de la raya</a>
       </div>
-      <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 16px/1 'Inter Tight',sans-serif;margin-top:clamp(26px,3.2vw,38px);transition:background 220ms ease" style-hover="background:#E39C63;color:#14342A">Encuentra tu mesa</a>
     </div>
   </div>
 
@@ -326,7 +323,6 @@
         </sc-if>
       </div>
 
-      <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;margin-top:clamp(26px,3.2vw,38px);transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Marcar mis zonas</a>
     </div>
   </div>
 
@@ -344,7 +340,6 @@
           </div>
         </sc-for>
       </div>
-      <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;margin-top:clamp(26px,3.2vw,38px);transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Encuentra tu mesa</a>
     </div>
   </div>
 
@@ -364,7 +359,6 @@
           </div>
         </sc-for>
       </div>
-      <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;margin-top:clamp(26px,3.2vw,38px);transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Encuentra tu mesa</a>
     </div>
   </div>
 
@@ -498,7 +492,7 @@
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
   state = {
-    sesion: null,
+    sesion: null, sesionSabida: false,
     faq: 0, fase: 'correo', correo: '', error: '', ahora: Date.now(), ciudad: -1,
     paso: 0, arraigo: -1, zonas: [], planes: [], temas: []
   };
@@ -510,8 +504,8 @@ class Component extends DCLogic {
     // te han echado.
     fetch('/api/mi-cuenta')
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) this.setState({ sesion: d }); })
-      .catch(() => {});
+      .then((d) => this.setState({ sesion: d || null, sesionSabida: true }))
+      .catch(() => this.setState({ sesionSabida: true }));
   }
 
   componentDidMount() {
@@ -841,8 +835,12 @@ class Component extends DCLogic {
     return {
       // Un miembro a medio camino no quiere "Mi cuenta" a secas: quiere
       // saber que le falta. El estado ya lo decide el servidor.
-      haySesion: !!this.state.sesion,
-      sinSesion: !this.state.sesion,
+      // Hasta que el servidor no contesta no se pinta ninguno de los dos:
+      // `null` querian decir «no hay sesion» y «todavia no se sabe» a la vez,
+      // y por eso salia «Entrar» y saltaba a «Mi cuenta» medio segundo
+      // despues. Un boton que cambia solo se lee como un fallo.
+      haySesion: this.state.sesionSabida && !!this.state.sesion,
+      sinSesion: this.state.sesionSabida && !this.state.sesion,
       textoCuenta: this.state.sesion && this.state.sesion.estado === 'abierta' ? 'Mi mesa' : 'Mi cuenta',
       relojCorto: this.reloj(),
       polaroids, marquesina, reconocimientos, planes, comensales, eventos, zonas, precios, faq,

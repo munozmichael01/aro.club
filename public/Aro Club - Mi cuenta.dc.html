@@ -32,7 +32,7 @@
 
   <div style="position:sticky;top:0;z-index:30;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.1)">
     <div style="max-width:720px;margin:0 auto;padding:12px clamp(16px,4vw,28px);display:flex;align-items:center;justify-content:space-between;gap:14px">
-      <a href="Aro Club - Landing v3.dc.html" style="display:flex;align-items:center;gap:8px;color:#14342A;min-height:44px;margin:-11px 0">
+      <a href="/" style="display:flex;align-items:center;gap:8px;color:#14342A;min-height:44px;margin:-11px 0">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
         <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
       </a>
@@ -237,9 +237,10 @@
     </div>
 
     <div style="margin-top:clamp(30px,4vw,44px);padding-top:24px;border-top:1px solid rgba(20,52,42,.13);display:flex;flex-wrap:wrap;gap:10px">
-      <sc-for list="{{ pie }}" as="p" hint-placeholder-count="4">
+      <sc-for list="{{ pie }}" as="p" hint-placeholder-count="3">
         <a href="{{ p.enlace }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.18);font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138">{{ p.nombre }}</a>
       </sc-for>
+      <button onClick="{{ salir }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:transparent;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;cursor:pointer">{{ textoSalir }}</button>
     </div>
   </div>
 </div>
@@ -248,7 +249,7 @@
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
   state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {}, datos: null, sinCuenta: false,
-            reservandoYa: false, falloReserva: '', nExclusiones: null };
+            reservandoYa: false, falloReserva: '', nExclusiones: null, saliendo: false };
 
   componentDidMount() {
     this._t = setInterval(() => this.setState({ ahora: Date.now() }), 1000);
@@ -339,7 +340,7 @@ class Component extends DCLogic {
         creditosCuerpo: 'Uno está reservado para el jueves. Los otros tres no caducan.',
         titulo: 'Jueves 14, siete de la noche.',
         cuerpo: 'Ya está reservada a tu nombre. El jueves al mediodía se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.',
-        accion: 'Ver mi reserva', enlace: 'Aro Club - Landing v3.dc.html', secundaria: 'Adelantar a las 12:00'
+        accion: 'Ver mi reserva', enlace: '/', secundaria: 'Adelantar a las 12:00'
       },
       {
         id: 'abierta', sello: 'ABIERTO', mesa: true, historial: true,
@@ -347,7 +348,7 @@ class Component extends DCLogic {
         creditosCuerpo: 'Uno es el de esta noche. Te queda uno más.',
         titulo: 'Tu mesa de esta noche.',
         cuerpo: 'Llega diez minutos antes y pregunta por la reserva de Aro. Si se te hace tarde, avísanos y se lo decimos al grupo.',
-        accion: 'Cómo llegar', enlace: 'Aro Club - Landing v3.dc.html', secundaria: 'Volver al principio'
+        accion: 'Cómo llegar', enlace: '/', secundaria: 'Volver al principio'
       }
     ];
     const FORMATOS = { dinner: 'Cenas', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' };
@@ -432,7 +433,7 @@ class Component extends DCLogic {
     const nExcl = this.state.nExclusiones;
     const atajos = [
       ['Mis respuestas', 'Las diecisiete del cuestionario, para ver y editar cuando quieras.', e.respuestas, 'Aro Club - Mi perfil.dc.html'],
-      ['Mis créditos', e.creditosCuerpo, e.creditos, 'Aro Club - Landing v3.dc.html'],
+      ['Mis créditos', e.creditosCuerpo, e.creditos, '/'],
       ['Mi verificación', 'Estado de tu cédula y tu selfie.', pieVerif, 'Aro Club - Verificacion.dc.html'],
       // El "Ninguna" estaba escrito a mano y el enlace iba al legal: un dato
       // inventado y un enlace que decia una cosa y llevaba a otra.
@@ -565,7 +566,7 @@ class Component extends DCLogic {
       if (!g) { g = { semana: c[0], eventos: [] }; semanas.push(g); }
       g.eventos.push({
         tipo: c[1], cuando: c[2], zona: c[3], glifo: mia ? '✓' : m[0],
-        enlace: 'Aro Club - Landing v3.dc.html',
+        enlace: '/',
         estado: mia
           ? 'Ya estás apuntada'
           : (n >= 6
@@ -619,14 +620,27 @@ class Component extends DCLogic {
     });
 
     const pie = [
-      ['Preguntas', 'Aro Club - Landing v3.dc.html#faq'],
+      ['Preguntas', '/#faq'],
       ['Reglas de la mesa', 'Aro Club - Legal.dc.html#reglas'],
-      ['Privacidad', 'Aro Club - Legal.dc.html#privacidad'],
-      ['Cerrar sesión', 'Aro Club - Landing v3.dc.html']
+      ['Privacidad', 'Aro Club - Legal.dc.html#privacidad']
     ].map((p) => ({ nombre: p[0], enlace: p[1] }));
 
     return {
       comensales, atajos, pie, filtros,
+
+      // Cerrar sesion NO es un enlace: llama al servidor, que borra la
+      // cookie, y solo entonces navega. Antes era un <a> a la landing y la
+      // sesion seguia viva: se veia "Entrar" el instante que tarda el fetch
+      // y volvia a "Mi cuenta".
+      textoSalir: this.state.saliendo ? 'Cerrando…' : 'Cerrar sesión',
+      salir: () => {
+        if (this.state.saliendo) return;
+        this.setState({ saliendo: true });
+        fetch('/api/salir', { method: 'POST' })
+          .then(() => { try { window.localStorage.removeItem('aro-sesion'); } catch (e) {} })
+          .catch(() => {})
+          .then(() => { window.location.href = '/'; });
+      },
       hayFiltro: this.state.filtro !== 0,
       quitarFiltro: () => this.setState({ filtro: 0, reservando: null }),
       botonFantasmaOscuro: 'display:inline-flex;align-items:center;min-height:50px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',

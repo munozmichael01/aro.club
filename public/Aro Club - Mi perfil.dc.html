@@ -496,7 +496,7 @@ class Component extends DCLogic {
           body: JSON.stringify({ confirmacion: 'BAJA' })
         })
           .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no'))))
-          .then(() => { window.location.href = 'Aro Club - Landing v3.dc.html'; })
+          .then(() => { window.location.href = '/'; })
           .catch(() => this.setState({ guardando: false, fallo: 'No pudimos completar la baja.' }));
       },
       hayExclusiones: exclusiones.length > 0,

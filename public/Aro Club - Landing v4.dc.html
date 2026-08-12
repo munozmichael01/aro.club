@@ -80,8 +80,13 @@
         <span style="font:400 21px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
       </a>
       <div style="display:flex;align-items:center;gap:6px">
-        <a href="Aro Club - Entrar.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;color:#1B5138;font:500 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Entrar</a>
-        <a href="#registro" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Empezar</a>
+        <sc-if value="{{ sinSesion }}" hint-placeholder-val="{{ true }}">
+          <a href="Aro Club - Entrar.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;color:#1B5138;font:500 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Entrar</a>
+          <a href="#registro" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Empezar</a>
+        </sc-if>
+        <sc-if value="{{ haySesion }}" hint-placeholder-val="{{ false }}">
+          <a href="Aro Club - Mi cuenta.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">{{ textoCuenta }}</a>
+        </sc-if>
       </div>
     </div>
   </div>
@@ -231,7 +236,6 @@
         </div>
       </div>
       <div style="padding:10px clamp(16px,4vw,36px) 0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D">Desliza →</div>
-      <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;margin-top:clamp(26px,3.2vw,38px);transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Encuentra tu mesa</a>
     </div>
   </div>
 
@@ -257,7 +261,6 @@
         </sc-for>
       </div>
       <div style="padding:12px clamp(16px,4vw,36px) 0;font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;max-width:52ch;text-wrap:pretty">Cualquiera de las seis te sienta en la misma mesa. Marcas la tuya al registrarte y con eso armamos el grupo.</div>
-      <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;margin-top:clamp(26px,3.2vw,38px);transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Encuentra tu mesa</a>
     </div>
   </div>
 
@@ -343,7 +346,6 @@
       <div style="padding:clamp(26px,3.4vw,40px) clamp(16px,4vw,36px) 0">
         <a href="#faq" data-reveal="1" style="display:inline-flex;align-items:center;min-height:52px;padding:0 24px;border-radius:999px;border:1px solid rgba(250,243,228,.32);color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;transition:all 220ms ease" style-hover="background:#FAF3E4;color:#14342A;border-color:#FAF3E4">Resolver mis dudas</a>
       </div>
-      <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 16px/1 'Inter Tight',sans-serif;margin-top:clamp(26px,3.2vw,38px);transition:background 220ms ease" style-hover="background:#E39C63;color:#14342A">Encuentra tu mesa</a>
     </div>
   </div>
 
@@ -382,7 +384,6 @@
           <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;border:1px solid rgba(20,52,42,.24);color:#1B5138;font:600 16px/1 'Inter Tight',sans-serif;margin-top:20px;transition:all 220ms ease" style-hover="background:#1B5138;color:#FAF3E4">Avísame cuando abra ahí</a>
         </sc-if>
       </div>
-      <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;margin-top:clamp(26px,3.2vw,38px);transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Marcar mis zonas</a>
     </div>
   </div>
 
@@ -402,7 +403,6 @@
           </div>
         </sc-for>
       </div>
-      <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;margin-top:clamp(26px,3.2vw,38px);transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Encuentra tu mesa</a>
     </div>
   </div>
 
@@ -540,13 +540,15 @@
 class Component extends DCLogic {
   state = {
     faq: -1, fase: 'correo', correo: '', error: '', ahora: Date.now(),
-    paso: 0, arraigo: -1, zonas: [], planes: [], temas: [], ciudad: -1
+    paso: 0, arraigo: -1, zonas: [], planes: [], temas: [], ciudad: -1,
+    sesion: null, sesionSabida: false
   };
 
   componentDidMount() {
     this._t = setInterval(() => this.setState({ ahora: Date.now() }), 30000);
     this.armar();
     this.parallax();
+    this.leerSesion();
   }
 
   componentDidUpdate() { this.armar(); }
@@ -617,6 +619,17 @@ class Component extends DCLogic {
   }
 
   esFuera() { return this.state.ciudad >= 0 && this.state.zonas.length === 0; }
+
+  // La v4 no miraba si hay sesion: un miembro que aterrizara aqui veia
+  // "Entrar" y "Empezar" y no tenia vuelta a su cuenta. Desde dentro eso no
+  // se lee como una pagina publica, se lee como que te han echado. Es lo
+  // mismo que la v3 ya tenia resuelto.
+  leerSesion() {
+    fetch('/api/mi-cuenta')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => this.setState({ sesion: d || null, sesionSabida: true }))
+      .catch(() => this.setState({ sesionSabida: true }));
+  }
 
   CIUDADES = ['valencia', 'maracaibo', 'margarita', 'barquisimeto', 'merida', 'puerto-la-cruz', 'otra'];
 
@@ -880,6 +893,12 @@ class Component extends DCLogic {
     const nombreCiudad = this.state.ciudad >= 0 ? ciudades[this.state.ciudad].nombre : 'tu ciudad';
 
     return {
+      // Hasta que el servidor no contesta no se pinta ninguno de los dos:
+      // pintar "Entrar" mientras se sabe seria enseñar la puerta a quien ya
+      // esta dentro, y corregirlo medio segundo despues se lee como un fallo.
+      haySesion: this.state.sesionSabida && !!this.state.sesion,
+      sinSesion: this.state.sesionSabida && !this.state.sesion,
+      textoCuenta: this.state.sesion && this.state.sesion.estado === 'abierta' ? 'Mi mesa' : 'Mi cuenta',
       ciudad: CIUDAD,
       textoChip: CIUDAD + ' · la próxima se cierra en ' + this.reloj(),
       marquesina, reconocimientos, planes, cubre, cuidados, zonas, ciudades, faq,

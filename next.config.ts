@@ -10,7 +10,7 @@ import type { NextConfig } from 'next'
  */
 const PANTALLAS: Array<[string, string]> = [
   // Entrega 1 · captación
-  ['/', '/Aro Club - Landing v3.dc.html'],
+  ['/', '/Aro Club - Landing v4.dc.html'],
   ['/cuestionario', '/Aro Club - Cuestionario.dc.html'],
   ['/gracias', '/Aro Club - Agradecimiento.dc.html'],
   ['/legal', '/Aro Club - Legal.dc.html'],
@@ -36,7 +36,10 @@ const PANTALLAS: Array<[string, string]> = [
   // pública. No hay reparto de tráfico ni cookie de variante —eso se define
   // cuando se decida arrancar el test—; lo único montado es que cada página
   // dice de cuál viene el lead.
-  ['/v4', '/Aro Club - Landing v4.dc.html'],
+  // La v3 sigue servida y entera, pero ya no la enlaza nadie: se entra a
+  // mano por /v3. No se borra porque es la que ha visto todo el trafico
+  // hasta hoy y los leads existentes estan atribuidos a ella.
+  ['/v3', '/Aro Club - Landing v3.dc.html'],
 ]
 
 const nextConfig: NextConfig = {
