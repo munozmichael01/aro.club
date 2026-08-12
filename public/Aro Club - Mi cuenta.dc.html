@@ -196,8 +196,17 @@
       </sc-if>
     </div>
 
+    <sc-if value="{{ hayPorValorar }}" hint-placeholder-val="{{ false }}">
+      <a href="Aro Club - Mi mesa.dc.html" style="display:block;margin-top:clamp(28px,3.6vw,40px);border-radius:26px;background:#14342A;color:#FAF3E4;padding:clamp(20px,2.8vw,28px);transition:background 220ms ease" style-hover="background:#1B5138">
+        <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#C0662F;margin-bottom:10px">PENDIENTE DE VALORAR</div>
+        <div style="font:400 clamp(21px,2.4vw,27px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.025em">{{ tituloValorar }}</div>
+        <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:8px;max-width:52ch;text-wrap:pretty">{{ cuerpoValorar }}</div>
+        <div style="display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;margin-top:16px">Valorar esa mesa</div>
+      </a>
+    </sc-if>
+
     <div style="margin-top:clamp(32px,4.4vw,48px)">
-      <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:16px">Mis planes</div>
+      <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:16px">Lo próximo</div>
 
       <sc-if value="{{ hayMios }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:0">
@@ -431,6 +440,12 @@ class Component extends DCLogic {
 
     const pieVerif = { sin: 'Sin verificar', revision: 'En revisión', ok: 'Verificada' }[e.verif];
     const nExcl = this.state.nExclusiones;
+    // Las que ocurrieron de verdad: ni las canceladas ni las que aun no han
+    // pasado. Decir "3 cenas" contando una que cancelo seria mentirle sobre
+    // su propio historial.
+    const nCenas = d && d.planes
+      ? d.planes.filter((p) => p.pasada && !p.cancelada && p.estado !== 'cancelled').length
+      : null;
     const atajos = [
       ['Mis respuestas', 'Las diecisiete del cuestionario, para ver y editar cuando quieras.', e.respuestas, 'Aro Club - Mi perfil.dc.html'],
       ['Mis créditos', e.creditosCuerpo, e.creditos, '/'],
@@ -439,7 +454,12 @@ class Component extends DCLogic {
       // inventado y un enlace que decia una cosa y llevaba a otra.
       ['Exclusiones', 'Personas con las que no quieres volver a coincidir. Nadie se entera.',
        nExcl == null ? 'Cargando' : (nExcl === 0 ? 'Ninguna' : (nExcl === 1 ? '1 persona' : nExcl + ' personas')),
-       'Aro Club - Mi perfil.dc.html#exclusiones']
+       'Aro Club - Mi perfil.dc.html#exclusiones'],
+      // El historial completo no vive aqui: es identidad acumulada, no algo
+      // que tengas que hacer. Esta tarjeta lleva a donde vive.
+      ['Mis cenas', 'Dónde has estado y cuándo. La lista entera.',
+       nCenas == null ? 'Cargando' : (nCenas === 0 ? 'Ninguna todavía' : (nCenas === 1 ? '1 cena' : nCenas + ' cenas')),
+       'Aro Club - Mi perfil.dc.html#cenas']
     ].map((a) => ({
       titulo: a[0], cuerpo: a[1], pie: a[2], enlace: a[3],
       pieEstilo: 'margin-top:auto;padding-top:12px;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:#8F4515'
@@ -466,7 +486,12 @@ class Component extends DCLogic {
       if (p.estado === 'pending_payment') return [titulo, cuando, 'Pago en revisión · puesto apartado', 'Por confirmar'];
       return [titulo, cuando, 'Confirmada, se cierra 48 h antes', 'Confirmada'];
     });
-    const mios = crudosMios.map((h) => {
+    // §10: "Mis planes" era una lista sin techo en la portada —una entrada
+    // por cena, para siempre, hundiendo cada semana lo que hay debajo—. Aqui
+    // queda solo lo que tiene fecha por delante, que son dos o tres como
+    // mucho. El historial completo vive en el perfil, que es identidad
+    // acumulada y no algo que tengas que hacer.
+    const mios = crudosMios.filter((h) => h[3] !== 'Pasada' && h[3] !== 'Fuiste' && h[3] !== 'Cancelaste').map((h) => {
       // Tres estados vivos, no dos: por confirmar, confirmada y hoy. Un
       // pago reportado no es una reserva confirmada, y la fila tiene que
       // decirlo o la persona cree que ya esta.
@@ -686,6 +711,13 @@ class Component extends DCLogic {
       botonFantasmaClaro: 'display:inline-flex;align-items:center;min-height:56px;padding:0 10px;background:transparent;border:none;color:' + (oscuro ? '#9CBBA6' : '#566A5D') + ';font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
 
       mios,
+      // La tarjeta de valorar. Se va sola a las 48 h porque despues ya no se
+      // puede valorar: no es una fila de historial, es algo que hacer.
+      hayPorValorar: !!(d && d.porValorar),
+      tituloValorar: (d && d.porValorar)
+        ? (d.porValorar.sitio ? 'Tu mesa en ' + d.porValorar.sitio + '.' : 'Tu última mesa.')
+        : '',
+      cuerpoValorar: 'Dos preguntas. Lo que digas entra en el emparejamiento de la próxima, y nadie más lo ve.',
       hayMios: mios.length > 0,
       sinMios: mios.length === 0,
 

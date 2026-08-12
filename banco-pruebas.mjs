@@ -20,6 +20,7 @@ const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_RO
 
 const CORREO = 'banco-pruebas@aro.club'
 const CLAVE = 'Prueba-8x1'
+const RASTRO = '.banco-pruebas-fechas.json'
 
 async function cuentaExistente() {
   const { data } = await admin.auth.admin.listUsers({ perPage: 200 })
@@ -29,6 +30,15 @@ async function cuentaExistente() {
 async function limpiar() {
   const u = await cuentaExistente()
   if (!u) return null
+  await admin.from('bookings').delete().eq('profile_id', u.id)
+  // Y las fechas que monto este banco. Los ids quedan anotados en disco:
+  // se borra exactamente lo que creo el banco y nada mas. Filtrar "por
+  // fecha pasada" habria barrido eventos reales.
+  if (fs.existsSync(RASTRO)) {
+    const ids = JSON.parse(fs.readFileSync(RASTRO, 'utf8'))
+    for (const ev of ids) await admin.from('events').delete().eq('id', ev)
+    fs.unlinkSync(RASTRO)
+  }
   await admin.from('verifications').delete().eq('profile_id', u.id)
   await admin.from('profiles').delete().eq('id', u.id)
   await admin.auth.admin.deleteUser(u.id)
@@ -74,6 +84,53 @@ if (resto.includes('purgada')) {
     { profile_id: id, kind: 'id_document', status: 'approved', reviewed_at: hace100, storage_path: null },
     { profile_id: id, kind: 'selfie', status: 'approved', reviewed_at: hace100, storage_path: null },
   ])
+}
+
+
+// Historial de cenas: una recien pasada sin valorar (para la tarjeta de
+// valorar) y una vieja a la que fue. Se usan eventos y mesas ya existentes
+// si los hay; si no, se avisa en vez de inventarlos.
+if (resto.includes('cenas')) {
+  // Dos fechas pasadas propias del banco, marcadas para poder borrarlas.
+  // Antes usaba las que hubiera en la base y no habia ninguna pasada; el
+  // resto de datos —restaurante, mesa— sale de lo que ya existe.
+  const { data: rest } = await admin.from('restaurants').select('id, name').limit(1)
+  const restId = rest?.[0]?.id ?? null
+
+  const hace = (h) => new Date(Date.now() - h * 3600_000).toISOString()
+  const nueva = async (horas) => {
+    const { data, error } = await admin.from('events').insert({
+      format: 'dinner', starts_at: hace(horas),
+      booking_closes_at: hace(horas + 48), reveal_at: hace(horas + 12),
+      restaurant_id: restId, status: 'completed', price_usd: 8, city_slug: 'caracas',
+    }).select('id').single()
+    if (error) { console.log('  ! fecha:', error.message); return null }
+    const ya = fs.existsSync(RASTRO) ? JSON.parse(fs.readFileSync(RASTRO, 'utf8')) : []
+    fs.writeFileSync(RASTRO, JSON.stringify([...ya, data.id]))
+    return data.id
+  }
+
+  // Una hace 8 horas: ya termino (>5h) y aun dentro de las 48 → por valorar.
+  const recien = await nueva(8)
+  // Otra hace treinta dias, fuera de la ventana → solo historial.
+  const vieja = await nueva(24 * 30)
+
+  if (recien) {
+    const { data: b } = await admin.from('bookings')
+      .insert({ profile_id: id, event_id: recien, status: 'attended' }).select('id').single()
+    const { data: t } = await admin.from('dinner_tables')
+      .insert({ event_id: recien, table_number: 1, restaurant_id: restId }).select('id').single()
+    if (b && t) await admin.from('table_members').insert({ table_id: t.id, profile_id: id, booking_id: b.id, seat_order: 1 })
+    console.log('  cena de hace 8 h, sin valorar')
+  }
+  if (vieja) {
+    const { data: b } = await admin.from('bookings')
+      .insert({ profile_id: id, event_id: vieja, status: 'attended' }).select('id').single()
+    const { data: t } = await admin.from('dinner_tables')
+      .insert({ event_id: vieja, table_number: 2, restaurant_id: restId }).select('id').single()
+    if (b && t) await admin.from('table_members').insert({ table_id: t.id, profile_id: id, booking_id: b.id, seat_order: 1 })
+    console.log('  cena de hace 30 dias')
+  }
 }
 
 console.log('lista ' + id + (resto.length ? ' · ' + resto.join(', ') : ''))
