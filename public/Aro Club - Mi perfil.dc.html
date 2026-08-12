@@ -408,7 +408,7 @@ class Component extends DCLogic {
           const b = this.state.borrador;
           const cods = c.codigos || [];
           const valor = c.tipo === 'texto'
-            ? (id === 'telefono' ? '+58' + String(b || '').replace(/[^0-9]/g, '').replace(/^58/, '') : b)
+            ? (id === 'telefono' ? AroReglas.aE164(b) : b)
             : (c.tipo === 'multi'
                 ? (b || []).map((i) => cods[i]).filter(Boolean)
                 : (cods[b] || null));

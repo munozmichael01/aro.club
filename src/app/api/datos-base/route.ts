@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { valido } from '@/lib/reglas'
+
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -28,9 +30,18 @@ const cuerpo = z.object({
   trato: z.string().trim().max(60).optional(),
   nacimiento: NACIMIENTO,
   genero: z.enum(['mujer', 'hombre', 'no-binario', 'sin-decir']),
+  // La misma regla que /api/mi-perfil, que es el mismo dato. Aqui exigia
+  // movil venezolano y alli aceptaba cualquier prefijo: quien escribe desde
+  // fuera podia editar su telefono en el perfil pero no darse de alta.
+  // El §11 lo dice explicito: este campo admite prefijo internacional.
+  // Exige el prefijo escrito. Sin el '+' la comprobacion de AroReglas pasaba
+  // —solo cuenta digitos— y el fallo saltaba abajo, en el check de la tabla,
+  // devolviendo un 500 en vez de decirle a la persona que le falta el
+  // prefijo. Normalizar aqui seria adivinar el pais en el servidor.
   telefono: z
     .string()
-    .regex(/^\+58(412|414|416|422|424|426)\d{7}$/, 'Ese número no parece venezolano.'),
+    .regex(/^\+[1-9]\d{7,14}$/, 'Escribe el teléfono con el prefijo del país.')
+    .refine((v) => valido('telefonoPerfil', v), 'Ese teléfono no se ve bien.'),
 })
 
 export async function GET() {
