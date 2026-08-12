@@ -316,7 +316,7 @@ class Component extends DCLogic {
         verif: 'sin', respuestas: 'Completas', creditos: '4 de 4',
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
         titulo: 'Faltan cuatro datos para poder sentarte.',
-        cuerpo: 'Tu nombre, cuándo naciste, tu género y un teléfono. No estaban en el cuestionario y sin ellos no podemos armar tu mesa: la edad y el género son lo que más pesa al formar el grupo.',
+        cuerpo: 'Tu nombre, cuándo naciste, tu género y un teléfono. Cuatro campos, medio minuto, y sin ellos no podemos armar tu mesa: la edad y el género son lo que más pesa al formar el grupo.',
         accion: 'Completar mis datos', enlace: 'Aro Club - Datos base.dc.html'
       },
       {
@@ -735,7 +735,11 @@ class Component extends DCLogic {
       // "Mi mesa" solo si de verdad la hay: sin reserva esa pantalla te
       // devuelve aqui, y una pestaña que rebota a donde ya estabas no es
       // navegacion.
-      nav: AroNav.items('inicio', conMesa),
+      // De la RESERVA, no del estado. `conMesa` mira en que punto de la
+      // cadena esta, y quien tiene reserva pero el perfil a medias —o
+      // cualquier estado que no sea reservada/abierta— tiene mesa y no veia
+      // la pestaña. La pregunta es "¿hay mesa?", no "¿en que paso vas?".
+      nav: AroNav.items('inicio', !!(d && d.reserva)),
       hayMios: mios.length > 0,
       sinMios: mios.length === 0,
 

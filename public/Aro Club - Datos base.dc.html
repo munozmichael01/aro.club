@@ -144,7 +144,7 @@
             </sc-for>
           </div>
         </div>
-        <a href="Aro Club - Mi cuenta.dc.html" style="{{ botonPrimarioSuelto }}">Continuar</a>
+        <a href="{{ enlaceSiguiente }}" style="{{ botonPrimarioSuelto }}">{{ textoSiguiente5 }}</a>
       </div>
     </sc-if>
 
@@ -174,10 +174,27 @@ class Component extends DCLogic {
 
   GENEROS = ['mujer', 'hombre', 'no-binario', 'sin-decir'];
 
+  SESION = 'aro-sesion';
+
+  /** La llave del correo, si todavia no hay cuenta. */
+  sesionLead() {
+    try { return JSON.parse(window.localStorage.getItem(this.SESION) || 'null'); }
+    catch (e) { return null; }
+  }
+
   componentDidMount() {
+    // Estos datos se piden ANTES del cuestionario, cuando todavia es un lead
+    // y no hay contraseña. Si hay llave del correo se usa; si no, es un
+    // miembro editandolos desde su cuenta y manda la sesion.
+    const s = this.sesionLead();
+    this._lead = (s && s.correo && s.token) ? s : null;
+    const q = this._lead
+      ? '?correo=' + encodeURIComponent(this._lead.correo) + '&token=' + encodeURIComponent(this._lead.token)
+      : '';
+
     // Se rellena con lo que ya haya: quien vuelve a esta pantalla no
     // reescribe su nombre para cambiar el telefono.
-    fetch('/api/datos-base')
+    fetch('/api/datos-base' + q)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((d) => {
         // Lo guardado viene en E.164; se parte para poder pintar el
@@ -194,6 +211,11 @@ class Component extends DCLogic {
       .catch(() => { window.location.href = 'Aro Club - Entrar.dc.html'; });
   }
 
+  /** A donde se va al terminar: al cuestionario si aun falta, o a la cuenta. */
+  siguiente() {
+    return this._lead ? 'Aro Club - Cuestionario.dc.html' : 'Aro Club - Mi cuenta.dc.html';
+  }
+
   // Se guarda entero al terminar, no pregunta a pregunta: aqui las cuatro
   // se validan entre si —la edad depende de dia, mes y anio a la vez— y
   // media fecha guardada no es media respuesta, es una fecha que miente.
@@ -204,7 +226,7 @@ class Component extends DCLogic {
     fetch('/api/datos-base', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      body: JSON.stringify(Object.assign({}, this._lead ? { correo: this._lead.correo, token: this._lead.token } : {}, {
         nombre: this.state.nombre.trim(),
         trato: this.state.trato.trim(),
         nacimiento: this.state.anio + '-' + p2(this.state.mes) + '-' + p2(this.state.dia),
@@ -212,7 +234,7 @@ class Component extends DCLogic {
         // El prefijo del selector y el numero, juntos. Si el selector esta
         // en "Otro" el numero ya lo lleva dentro.
         telefono: AroReglas.aE164(this.state.prefijo + this.state.telefono)
-      })
+      }))
     })
       .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
       .then(({ ok, d }) => {
@@ -253,7 +275,7 @@ class Component extends DCLogic {
       {
         eyebrow: 'DATOS PERSONALES · 1 DE 4',
         titulo: '¿Cómo te llamas?',
-        bajada: 'Cuatro preguntas rápidas que no estaban en el cuestionario y sin las cuales no podemos armar tu mesa.',
+        bajada: 'Cuatro datos y ya está. Después vienen las preguntas, que son las que arman tu mesa.',
         listo: this.state.nombre.trim().length >= 2,
         falla: this.state.nombre.trim().length === 0 ? 'Escribe tu nombre' : 'Escribe tu nombre completo'
       },
@@ -284,8 +306,13 @@ class Component extends DCLogic {
       },
       {
         eyebrow: 'LISTO',
-        titulo: 'Ya podemos sentarte.',
-        bajada: 'Esto es todo lo que guardamos de esta parte, y quién lo ve.',
+        // "Ya podemos sentarte" no es verdad para quien todavia tiene las
+        // diecisiete preguntas por delante. Prometer el final a mitad de
+        // camino es como se llega al final creyendo que ya estaba.
+        titulo: this._lead ? 'Listo. Ahora las preguntas.' : 'Guardado.',
+        bajada: this._lead
+          ? 'Esto es lo que guardamos de esta parte, y quién lo ve. Lo demás son preguntas sobre cómo eres en una mesa.'
+          : 'Esto es todo lo que guardamos de esta parte, y quién lo ve.',
         listo: true
       }
     ];
@@ -336,6 +363,10 @@ class Component extends DCLogic {
 
     return {
       barras, generos, resumen,
+      // Quien todavia no tiene cuenta sigue al cuestionario; quien la tiene
+      // esta editando y vuelve a su cuenta.
+      enlaceSiguiente: this.siguiente(),
+      textoSiguiente5: this._lead ? 'Seguir con las preguntas' : 'Volver a mi cuenta',
       etiquetaPaso: p < 4 ? 'PASO ' + (p + 1) + ' DE 4' : 'COMPLETO',
 
       esNombre: p === 0, esNacimiento: p === 1, esGenero: p === 2, esTelefono: p === 3, esFin: p === 4,

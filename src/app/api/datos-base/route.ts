@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { verificar } from '@/lib/lead-token'
 import { valido } from '@/lib/reglas'
 
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -17,7 +18,43 @@ import { createClient } from '@/lib/supabase/server'
  * reparto —diez años de horquilla y equilibrio de género— y sin este paso
  * llegan nulas. Las dos reglas que más importan estaban desactivadas para
  * todo usuario real.
+ *
+ * ANTES O DESPUÉS DE TENER CUENTA. Se pedían al final, después de las
+ * diecisiete preguntas, y quien terminaba el cuestionario descubría ahí que
+ * todavía no podía reservar por no habernos dicho cómo se llama. Lo
+ * elaborado iba antes que lo obvio.
+ *
+ * Ahora se piden justo después del correo, cuando todavía es un lead y no
+ * hay contraseña de por medio. Por eso esta ruta atiende a los dos: a quien
+ * tiene sesión escribe en `profiles`, y a quien llega con el token del
+ * correo escribe en `waitlist` —que ya tenía estas columnas—. Al crear la
+ * cuenta, `convertir_lead` las copia solas.
  */
+
+/** Quién pregunta: un miembro con sesión, o un lead con su token. */
+type Quien = { tabla: 'profiles'; id: string } | { tabla: 'waitlist'; correo: string }
+
+async function deQuien(url: URL, cuerpoJson?: { correo?: string; token?: string }): Promise<Quien | null> {
+  const correo = cuerpoJson?.correo ?? url.searchParams.get('correo')
+  const token = cuerpoJson?.token ?? url.searchParams.get('token')
+
+  // LA SESION MANDA sobre el token del correo, y el orden aqui importa: la
+  // llave del lead se guarda en el navegador y no se borra al crear la
+  // cuenta, asi que un miembro editando sus datos la lleva encima. Con el
+  // token primero, sus cambios acabarian en la fila de waitlist y su perfil
+  // no cambiaria nunca, sin un solo error. Una sesion es una credencial
+  // autenticada; el token solo es un correo firmado.
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (user) return { tabla: 'profiles', id: user.id }
+
+  if (correo && token && verificar(correo, token)) {
+    return { tabla: 'waitlist', correo: correo.trim().toLowerCase() }
+  }
+  return null
+}
 
 const NACIMIENTO = z
   .string()
@@ -44,18 +81,18 @@ const cuerpo = z.object({
     .refine((v) => valido('telefonoPerfil', v), 'Ese teléfono no se ve bien.'),
 })
 
-export async function GET() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
+export async function GET(request: Request) {
+  const quien = await deQuien(new URL(request.url))
+  if (!quien) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
 
-  const { data } = await createAdminClient()
-    .from('profiles')
+  const consulta = createAdminClient()
+    .from(quien.tabla)
     .select('full_name, display_name, birthdate, gender, phone_e164')
-    .eq('id', user.id)
-    .maybeSingle()
+
+  const { data } =
+    quien.tabla === 'profiles'
+      ? await consulta.eq('id', quien.id).maybeSingle()
+      : await consulta.eq('email', quien.correo).maybeSingle()
 
   return NextResponse.json({
     nombre: data?.full_name ?? '',
@@ -70,13 +107,14 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
+  const bruto = (await request.json().catch(() => null)) as
+    | { correo?: string; token?: string }
+    | null
 
-  const parsed = cuerpo.safeParse(await request.json().catch(() => null))
+  const quien = await deQuien(new URL(request.url), bruto ?? undefined)
+  if (!quien) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
+
+  const parsed = cuerpo.safeParse(bruto)
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? 'Revisa los datos.' },
@@ -96,16 +134,26 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient()
-  const { error } = await admin
-    .from('profiles')
-    .update({
-      full_name: nombre,
-      display_name: trato?.trim() || nombre.split(' ')[0],
-      birthdate: nacimiento,
-      gender: genero,
-      phone_e164: telefono,
-    })
-    .eq('id', user.id)
+  const campos = {
+    full_name: nombre,
+    display_name: trato?.trim() || nombre.split(' ')[0],
+    birthdate: nacimiento,
+    gender: genero,
+    phone_e164: telefono,
+  }
+
+  const escritura = admin.from(quien.tabla).update(
+    quien.tabla === 'waitlist'
+      ? // La marca de que este paso esta hecho, para que Mi cuenta no lo
+        // vuelva a pedir despues de convertir el lead.
+        { ...campos, base_completed_at: new Date().toISOString() }
+      : campos,
+  )
+
+  const { error } =
+    quien.tabla === 'profiles'
+      ? await escritura.eq('id', quien.id)
+      : await escritura.eq('email', quien.correo)
 
   if (error) {
     console.error('[datos-base] no se guardó', error)

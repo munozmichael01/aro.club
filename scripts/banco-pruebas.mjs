@@ -133,5 +133,28 @@ if (resto.includes('cenas')) {
   }
 }
 
+// Una fecha por delante con su mesa: es lo que hace aparecer la pestaña
+// "Mi mesa", que sin reserva no se enseña.
+if (resto.includes('mesa')) {
+  const { data: rest } = await admin.from('restaurants').select('id').limit(1)
+  const restId = rest?.[0]?.id ?? null
+  const en = (h) => new Date(Date.now() + h * 3600_000).toISOString()
+  const { data: ev, error: ee } = await admin.from('events').insert({
+    format: 'dinner', starts_at: en(48), booking_closes_at: en(2), reveal_at: en(24),
+    restaurant_id: restId, status: 'open', price_usd: 8, city_slug: 'caracas',
+  }).select('id').single()
+  if (ee) console.log('  ! fecha:', ee.message)
+  else {
+    const ya = fs.existsSync(RASTRO) ? JSON.parse(fs.readFileSync(RASTRO, 'utf8')) : []
+    fs.writeFileSync(RASTRO, JSON.stringify([...ya, ev.id]))
+    const { data: b } = await admin.from('bookings')
+      .insert({ profile_id: id, event_id: ev.id, status: 'confirmed' }).select('id').single()
+    const { data: t } = await admin.from('dinner_tables')
+      .insert({ event_id: ev.id, table_number: 3, restaurant_id: restId }).select('id').single()
+    if (b && t) await admin.from('table_members').insert({ table_id: t.id, profile_id: id, booking_id: b.id, seat_order: 1 })
+    console.log('  reserva en dos dias')
+  }
+}
+
 console.log('lista ' + id + (resto.length ? ' · ' + resto.join(', ') : ''))
 console.log('   ' + CORREO + ' / ' + CLAVE)

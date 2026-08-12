@@ -276,8 +276,13 @@ export async function GET() {
   const datosBase = Boolean(perfil.full_name && perfil.birthdate && perfil.phone_e164)
 
   let estado: Estado
-  if (faltan > 0) estado = 'perfil'
-  else if (!datosBase) estado = 'datos'
+  // Los datos personales van PRIMERO. Se pedian al final y quien terminaba
+  // las diecisiete preguntas descubria ahi que no podia reservar por no
+  // habernos dicho como se llama: lo elaborado antes que lo obvio. Ahora
+  // van justo despues del correo, y esta cadena tiene que decir lo mismo
+  // que el alta o Mi cuenta mandaria al sitio contrario.
+  if (!datosBase) estado = 'datos'
+  else if (faltan > 0) estado = 'perfil'
   else if (!verificada && !enRevision) estado = 'verificar'
   else if (enRevision) estado = 'revision'
   else if (!reserva) estado = 'reservar'

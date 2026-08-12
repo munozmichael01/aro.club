@@ -492,7 +492,7 @@
             </div>
           </sc-if>
           <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center">
-            <a href="Aro Club - Cuestionario.dc.html" style="{{ botonFinal }}">{{ textoFinal }}</a>
+            <a href="Aro Club - Datos base.dc.html" style="{{ botonFinal }}">{{ textoFinal }}</a>
             <button onClick="{{ reiniciar }}" style="min-height:58px;padding:0 8px;background:transparent;border:none;color:#9CBBA6;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Lo hago después</button>
           </div>
         </div>
@@ -986,9 +986,13 @@ class Component extends DCLogic {
       resumenFinal: fuera
         ? 'Guardamos ' + this.state.correo + '. Abrimos ciudad cuando hay suficiente gente que pueda llegar a la misma mesa el mismo día, así que no te damos fecha: te escribimos en cuanto ' + nombreCiudad + ' llegue a ese número.'
         : 'Guardamos ' + this.state.correo + ' y lo que nos dijiste. Te escribimos en cuanto abramos mesa en ' + listaZonas + '.',
+      // Lo obvio primero. Se pedia al final —despues de las diecisiete
+      // preguntas— y quien terminaba descubria ahi que aun no podia
+      // reservar por no habernos dicho como se llama.
       pendientes: [
-        { n: '1', titulo: 'El resto del perfil', cuerpo: 'Diez preguntas más sobre días, comida y qué prefieres esquivar. Cinco minutos, cuando quieras.' },
-        { n: '2', titulo: 'Verificar tu identidad', cuerpo: 'Solo cuando haya mesa cerca. Sin esto no se puede reservar, y es lo que hace que el grupo confíe.' }
+        { n: '1', titulo: 'Tus datos personales', cuerpo: 'Nombre, cuándo naciste, género y un teléfono. Cuatro campos, medio minuto.' },
+        { n: '2', titulo: 'El resto del perfil', cuerpo: 'Diez preguntas más sobre días, comida y qué prefieres esquivar. Cinco minutos, cuando quieras.' },
+        { n: '3', titulo: 'Verificar tu identidad', cuerpo: 'Solo cuando haya mesa cerca. Sin esto no se puede reservar, y es lo que hace que el grupo confíe.' }
       ],
       botonFinal: 'display:inline-flex;align-items:center;min-height:58px;padding:0 28px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;transition:background 220ms ease',
       textoFinal: fuera ? 'Completar mi perfil igual' : 'Completar mi perfil',

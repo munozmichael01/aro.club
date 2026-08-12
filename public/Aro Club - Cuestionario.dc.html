@@ -542,6 +542,11 @@ class Component extends DCLogic {
         }).then((r) => r.text().then((t) => {
           let j = {}; try { j = JSON.parse(t); } catch (e) { j = {}; }
           if (j.estado === 'creada' || j.estado === 'ya_existe') {
+            // El lead ya es perfil: su llave sobra, y guardada es una
+            // trampa. Las pantallas que aceptan las dos credenciales la
+            // seguirian mandando, y algun dia una escribiria en la fila
+            // vieja en vez de en el perfil.
+            try { window.localStorage.removeItem('aro-sesion'); } catch (e) {}
             window.location.href = 'Aro Club - Verificacion.dc.html';
             return;
           }
