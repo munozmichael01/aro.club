@@ -99,8 +99,10 @@ const P = {
   ],
   peso: [
     ['conversacion', 'La conversación, el restaurante es la excusa'],
-    ['ambas', 'Las dos cosas por igual'],
     ['comida', 'La comida, vengo por la experiencia gastronómica'],
+    // La intermedia va al final: puesta en medio se elige por estar en
+    // medio, y "las dos por igual" no distingue a nadie al armar la mesa.
+    ['ambas', 'Las dos cosas por igual'],
   ],
   gasto: [
     ['hasta-20', 'Hasta 20 USD'], ['20-35', '20 a 35 USD'],

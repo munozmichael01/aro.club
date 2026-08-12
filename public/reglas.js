@@ -211,6 +211,53 @@
     },
 
     /**
+     * Los prefijos que ofrecemos, con el pais delante.
+     *
+     * Venezuela primero porque es la unica ciudad abierta; despues, donde
+     * de verdad hay gente de Caracas. No es una lista mundial a proposito:
+     * un desplegable de doscientos paises para elegir uno es peor que
+     * escribirlo, y quien no este aqui puede teclear su prefijo a mano.
+     */
+    PREFIJOS: [
+      { codigo: '+58', pais: 'Venezuela' },
+      { codigo: '+34', pais: 'España' },
+      { codigo: '+1', pais: 'EE. UU.' },
+      { codigo: '+57', pais: 'Colombia' },
+      { codigo: '+51', pais: 'Perú' },
+      { codigo: '+56', pais: 'Chile' },
+      { codigo: '+52', pais: 'México' },
+      { codigo: '+54', pais: 'Argentina' },
+      { codigo: '+55', pais: 'Brasil' },
+      { codigo: '+507', pais: 'Panamá' },
+      { codigo: '+39', pais: 'Italia' },
+      { codigo: '+351', pais: 'Portugal' },
+      { codigo: '+33', pais: 'Francia' },
+      { codigo: '+44', pais: 'R. Unido' },
+      { codigo: '+49', pais: 'Alemania' },
+    ],
+
+    /**
+     * Partir un E.164 en prefijo y resto, para poder pintarlos por separado.
+     * El prefijo mas largo gana: +1 no puede comerse a +507.
+     */
+    partirTelefono: function (valor) {
+      var v = String(valor == null ? '' : valor).trim()
+      if (v.charAt(0) !== '+') return { prefijo: '+58', resto: v.replace(/\D/g, '') }
+      var lista = api.PREFIJOS.map(function (p) { return p.codigo })
+        .sort(function (a, b) { return b.length - a.length })
+      for (var i = 0; i < lista.length; i++) {
+        if (v.indexOf(lista[i]) === 0) {
+          return { prefijo: lista[i], resto: v.slice(lista[i].length).replace(/\D/g, '') }
+        }
+      }
+      // Un prefijo que no ofrecemos. No se adivina donde corta —+971 se
+      // partiria como +9715— asi que se devuelve entero y la pantalla lo
+      // enseña en el campo, con el selector en "Otro". Inventar el corte
+      // seria romperle el numero a quien escribe desde fuera de la lista.
+      return { prefijo: '', resto: v }
+    },
+
+    /**
      * El teléfono de contacto, en E.164, desde lo que sea que haya tecleado.
      *
      * Estaba resuelto en tres sitios y de tres maneras: Datos base pegaba

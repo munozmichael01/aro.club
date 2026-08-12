@@ -20,7 +20,9 @@
   a:hover { color:#8F4515; }
   input, button, select { font: inherit; color: inherit; }
   ::selection { background:#14342A; color:#FAF3E4; }
-  ::placeholder { color:#7E9A8B; }
+  /* El ejemplo hereda la negrita de 20px del campo y se lee igual que un
+     valor tecleado: hay gente que cree que la fecha ya esta puesta. */
+  ::placeholder { color:#7E9A8B; font-weight:400; letter-spacing:0; }
   @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
 </style>
@@ -68,7 +70,7 @@
     <sc-if value="{{ esNacimiento }}" hint-placeholder-val="{{ false }}">
       <div style="margin-top:clamp(26px,3.4vw,34px);animation:aro-open 300ms ease both">
         <label for="dia" style="{{ etiqueta }}">DÍA</label>
-        <input id="dia" type="text" value="{{ dia }}" onChange="{{ onDia }}" placeholder="14" inputmode="numeric" maxlength="2" style="{{ campoCifra }}" />
+        <input id="dia" type="text" value="{{ dia }}" onChange="{{ onDia }}" placeholder="DD" inputmode="numeric" maxlength="2" style="{{ campoCifra }}" />
 
         <div style="{{ etiquetaSuelta }}">MES</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(30%,96px),1fr));gap:8px">
@@ -81,7 +83,7 @@
         </div>
 
         <label for="anio" style="{{ etiquetaSuelta }}">AÑO</label>
-        <input id="anio" type="text" value="{{ anio }}" onChange="{{ onAnio }}" placeholder="1992" inputmode="numeric" maxlength="4" style="{{ campoCifra }}" />
+        <input id="anio" type="text" value="{{ anio }}" onChange="{{ onAnio }}" placeholder="AAAA" inputmode="numeric" maxlength="4" style="{{ campoCifra }}" />
         <sc-if value="{{ hayEdad }}" hint-placeholder-val="{{ false }}">
           <div style="{{ chipEdad }}">{{ textoEdad }}</div>
         </sc-if>
@@ -113,7 +115,12 @@
       <div style="margin-top:clamp(26px,3.4vw,34px);animation:aro-open 300ms ease both">
         <label for="tel" style="{{ etiqueta }}">Teléfono</label>
         <div style="display:flex;gap:9px;align-items:stretch">
-          <input id="tel" type="tel" value="{{ telefono }}" onChange="{{ onTelefono }}" placeholder="+58 412 1234567" inputmode="tel" autocomplete="tel" style="{{ campoAncho }}" />
+          <select aria-label="Prefijo del país" onChange="{{ onPrefijo }}" style="{{ campoPrefijo }}">
+            <sc-for list="{{ prefijos }}" as="p" hint-placeholder-count="16">
+              <option value="{{ p.codigo }}" selected="{{ p.elegido }}">{{ p.texto }}</option>
+            </sc-for>
+          </select>
+          <input id="tel" type="tel" value="{{ telefono }}" onChange="{{ onTelefono }}" placeholder="{{ ejemploTel }}" inputmode="tel" autocomplete="tel-national" style="{{ campoAncho }}" />
         </div>
         <sc-if value="{{ hayErrorTel }}" hint-placeholder-val="{{ false }}">
           <div style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin-top:11px">{{ errorTel }}</div>
@@ -161,7 +168,8 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { paso: 0, nombre: '', trato: '', dia: '', mes: '', anio: '', genero: -1, telefono: '', guardando: false, fallo: '' };
+  state = { paso: 0, nombre: '', trato: '', dia: '', mes: '', anio: '', genero: -1,
+    prefijo: '+58', telefono: '', guardando: false, fallo: '' };
 
   GENEROS = ['mujer', 'hombre', 'no-binario', 'sin-decir'];
 
@@ -171,7 +179,10 @@ class Component extends DCLogic {
     fetch('/api/datos-base')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((d) => {
-        const est = { nombre: d.nombre || '', trato: d.trato || '', telefono: d.telefono || '' };
+        // Lo guardado viene en E.164; se parte para poder pintar el
+        // selector y el numero por separado.
+        const p = AroReglas.partirTelefono(d.telefono || '');
+        const est = { nombre: d.nombre || '', trato: d.trato || '', prefijo: p.prefijo, telefono: p.resto };
         if (d.nacimiento) {
           const p = String(d.nacimiento).split('-');
           est.anio = p[0]; est.mes = String(parseInt(p[1], 10)); est.dia = String(parseInt(p[2], 10));
@@ -197,7 +208,9 @@ class Component extends DCLogic {
         trato: this.state.trato.trim(),
         nacimiento: this.state.anio + '-' + p2(this.state.mes) + '-' + p2(this.state.dia),
         genero: this.GENEROS[this.state.genero],
-        telefono: AroReglas.aE164(this.state.telefono)
+        // El prefijo del selector y el numero, juntos. Si el selector esta
+        // en "Otro" el numero ya lo lleva dentro.
+        telefono: AroReglas.aE164(this.state.prefijo + this.state.telefono)
       })
     })
       .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
@@ -233,7 +246,7 @@ class Component extends DCLogic {
     // movil venezolano, asi que quien escribe desde fuera no podia darse de
     // alta —y en cambio si podia editarlo luego en su perfil, que aceptaba
     // otra regla distinta para el mismo dato.
-    const telOk = AroReglas.valido('telefonoPerfil', this.state.telefono);
+    const telOk = AroReglas.valido('telefonoPerfil', this.state.prefijo + this.state.telefono);
 
     const pasos = [
       {
@@ -265,8 +278,8 @@ class Component extends DCLogic {
         bajada: 'Solo el día del encuentro, y solo si hace falta.',
         listo: telOk,
         falla: tel.length === 0
-          ? 'Escribe tu teléfono con el prefijo del país'
-          : 'Ese número se ve corto. Escríbelo con el prefijo del país.'
+          ? 'Escribe tu teléfono'
+          : 'Ese número se ve corto'
       },
       {
         eyebrow: 'LISTO',
@@ -353,8 +366,19 @@ class Component extends DCLogic {
 
       telefono: this.state.telefono,
       onTelefono: (e) => this.setState({ telefono: AroReglas.filtrar('telefonoPerfil', e.target.value) }),
+      // El selector, con "Otro" para quien no esta en la lista: ahi el
+      // numero se escribe entero con su prefijo y no se adivina el corte.
+      prefijos: AroReglas.PREFIJOS.concat([{ codigo: '', pais: 'Otro país' }]).map((p) => ({
+        codigo: p.codigo,
+        texto: p.codigo ? p.codigo + '  ' + p.pais : 'Otro país',
+        elegido: p.codigo === this.state.prefijo
+      })),
+      onPrefijo: (e) => this.setState({ prefijo: e.target.value }),
+      campoPrefijo: campoBase + ';flex:0 0 auto;width:132px;padding:0 8px 0 14px;background:#FFFBF0;cursor:pointer' +
+        ';font:500 13px/1 \'Inter Tight\',sans-serif',
+      ejemploTel: this.state.prefijo === '+58' ? '412 1234567' : (this.state.prefijo ? 'Tu número' : '+971 50 1234567'),
       hayErrorTel: tel.length >= 8 && !telOk,
-      errorTel: 'Ese número no se ve completo. Escríbelo con el prefijo del país.',
+      errorTel: 'Ese número no se ve completo. Revisa el prefijo y las cifras.',
 
       etiqueta: 'display:block;font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:11px',
       etiquetaSuelta: 'display:block;font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#33513F;margin:26px 0 11px',

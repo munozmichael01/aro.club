@@ -19,6 +19,8 @@
   a { color:#1B5138; text-decoration:none; }
   a:hover { color:#8F4515; }
   input, button { font: inherit; color: inherit; }
+  /* El ejemplo no puede parecer un valor tecleado. */
+  ::placeholder { color:#7E9A8B; font-weight:400; letter-spacing:0; }
   ::selection { background:#1B5138; color:#FAF3E4; }
   @keyframes aro-open { from { opacity:0; transform:translateY(-6px) } to { opacity:1; transform:none } }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
@@ -73,7 +75,7 @@
 
                   <sc-if value="{{ f.esFecha }}" hint-placeholder-val="{{ false }}">
                     <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:9px">DÍA</div>
-                    <input type="text" value="{{ f.dia }}" onChange="{{ f.onDia }}" placeholder="14" inputmode="numeric" maxlength="2" aria-label="Día" style="{{ f.campoCifra }}" />
+                    <input type="text" value="{{ f.dia }}" onChange="{{ f.onDia }}" placeholder="DD" inputmode="numeric" maxlength="2" aria-label="Día" style="{{ f.campoCifra }}" />
 
                     <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin:18px 0 9px">MES</div>
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(30%,96px),1fr));gap:8px">
@@ -86,7 +88,7 @@
                     </div>
 
                     <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin:18px 0 9px">AÑO</div>
-                    <input type="text" value="{{ f.anio }}" onChange="{{ f.onAnio }}" placeholder="1992" inputmode="numeric" maxlength="4" aria-label="Año" style="{{ f.campoAnio }}" />
+                    <input type="text" value="{{ f.anio }}" onChange="{{ f.onAnio }}" placeholder="AAAA" inputmode="numeric" maxlength="4" aria-label="Año" style="{{ f.campoAnio }}" />
                   </sc-if>
 
                   <div style="{{ f.contenedorOpciones }}">
