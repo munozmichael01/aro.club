@@ -137,6 +137,35 @@
       </sc-if>
     </div>
 
+    <div id="avisos" style="margin-top:clamp(30px,4vw,44px)">
+      <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:14px">
+        <span style="font:400 clamp(22px,2.6vw,28px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A">Cómo te escribimos</span>
+        <span style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#566A5D">Nunca promociones. Solo esto.</span>
+      </div>
+
+      <div style="border-radius:24px;background:#FFFBF0;overflow:hidden">
+        <sc-for list="{{ avisos }}" as="a" hint-placeholder-count="5">
+          <div style="{{ a.fila }}">
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ a.titulo }}</span>
+              <span style="display:block;font:400 14px/1.45 'Inter Tight',sans-serif;color:#566A5D;margin-top:3px;text-wrap:pretty">{{ a.cuerpo }}</span>
+              <sc-if value="{{ a.hayDesde }}" hint-placeholder-val="{{ false }}">
+                <span style="display:block;font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:5px">{{ a.desde }}</span>
+              </sc-if>
+            </span>
+            <button onClick="{{ a.alternar }}" aria-pressed="{{ a.encendido }}" aria-label="{{ a.titulo }}" style="{{ a.interruptor }}">
+              <span style="{{ a.bolita }}"></span>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:10px;max-width:60ch;text-wrap:pretty">Los dos primeros no se pueden apagar: sin ellos no sabrías dónde es tu cena.</div>
+      <sc-if value="{{ hayFalloAvisos }}" hint-placeholder-val="{{ false }}">
+        <div style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin-top:9px">{{ falloAvisos }}</div>
+      </sc-if>
+    </div>
+
     <div style="margin-top:clamp(30px,4vw,44px);border-radius:24px;border:1px solid rgba(20,52,42,.16);padding:clamp(20px,2.6vw,26px)">
       <div style="font:400 clamp(20px,2.3vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cambiar respuestas no toca la mesa que ya tienes</div>
       <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#456352;margin-top:8px;max-width:56ch;text-wrap:pretty">Lo que edites aquí entra en el emparejamiento de las próximas. La mesa del jueves ya está armada con lo que respondiste antes.</div>
@@ -189,6 +218,37 @@ class Component extends DCLogic {
       .catch(() => { window.location.href = 'Aro Club - Entrar.dc.html'; });
 
     this.leerExclusiones();
+    this.leerAvisos();
+  }
+
+  leerAvisos() {
+    fetch('/api/mis-avisos')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
+      .then((d) => this.setState({ avisos: d.avisos, whatsappDesde: d.whatsappDesde, falloAvisos: '' }))
+      .catch(() => this.setState({ avisos: [] }));
+  }
+
+  /**
+   * Se pinta el cambio antes de que conteste el servidor y se deshace si
+   * falla. Un interruptor que tarda medio segundo en moverse se toca dos
+   * veces, y con WhatsApp eso significa dar y quitar un permiso.
+   */
+  alternarAviso(clave, valor) {
+    const antes = this.state.avisos || [];
+    this.setState({
+      avisos: antes.map((a) => (a.clave === clave ? Object.assign({}, a, { encendido: valor }) : a)),
+      falloAvisos: ''
+    });
+    const cuerpo = {}; cuerpo[clave] = valor;
+    fetch('/api/mis-avisos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cuerpo)
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no'))))
+      // Se relee: la fecha del permiso de WhatsApp la pone el servidor, y
+      // los dos fijos vuelven a true aunque se pidan apagados.
+      .then(() => this.leerAvisos())
+      .catch(() => this.setState({ avisos: antes, falloAvisos: 'No pudimos guardarlo. Inténtalo otra vez.' }));
   }
 
   leerExclusiones() {
@@ -499,6 +559,29 @@ class Component extends DCLogic {
           .then(() => { window.location.href = '/'; })
           .catch(() => this.setState({ guardando: false, fallo: 'No pudimos completar la baja.' }));
       },
+      // Los avisos. Los dos fijos se pintan encendidos y sin poder tocarse,
+      // pero se ENSEÑAN: un interruptor que desaparece no explica por que.
+      avisos: (this.state.avisos || []).map((a) => {
+        const on = !!a.encendido;
+        const fijo = !!a.fijo;
+        return {
+          clave: a.clave, titulo: a.titulo, cuerpo: a.cuerpo, encendido: on,
+          fila: 'display:flex;gap:14px;align-items:flex-start;padding:15px clamp(16px,2vw,20px);border-bottom:1px solid rgba(20,52,42,.1)',
+          interruptor: 'flex:0 0 auto;position:relative;width:52px;height:31px;margin-top:2px;border-radius:999px;border:none;padding:0;' +
+            'background:' + (on ? '#1B5138' : 'rgba(20,52,42,.22)') + ';' +
+            (fijo ? 'opacity:.45;cursor:not-allowed' : 'cursor:pointer') + ';transition:background 200ms ease',
+          bolita: 'position:absolute;top:3px;left:' + (on ? '24px' : '3px') +
+            ';width:25px;height:25px;border-radius:999px;background:#FFFBF0;transition:left 200ms ease',
+          // La fecha del permiso solo tiene sentido en WhatsApp, que es el
+          // unico de los cinco con implicacion legal.
+          hayDesde: a.clave === 'whatsapp' && on && !!this.state.whatsappDesde,
+          desde: 'Lo activaste el ' + String(this.state.whatsappDesde || '').slice(8, 10) + '/' +
+            String(this.state.whatsappDesde || '').slice(5, 7) + '/' + String(this.state.whatsappDesde || '').slice(0, 4),
+          alternar: fijo ? (() => {}) : (() => this.alternarAviso(a.clave, !on))
+        };
+      }),
+      hayFalloAvisos: !!this.state.falloAvisos,
+      falloAvisos: this.state.falloAvisos || '',
       hayExclusiones: exclusiones.length > 0,
       // Solo cuando ya se sabe: null es "todavia no ha llegado", y decir
       // "no has bloqueado a nadie" sin saberlo es inventarse un dato.
