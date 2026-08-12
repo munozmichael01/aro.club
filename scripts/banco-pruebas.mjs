@@ -12,7 +12,7 @@ import { createClient } from '@supabase/supabase-js'
 import fs from 'node:fs'
 
 const env = Object.fromEntries(
-  fs.readFileSync('.env.local', 'utf8').split('\n').filter((l) => l.includes('='))
+  fs.readFileSync(new URL('../.env.local', import.meta.url).pathname, 'utf8').split('\n').filter((l) => l.includes('='))
     .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()])
 )
 const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY,
@@ -20,7 +20,7 @@ const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_RO
 
 const CORREO = 'banco-pruebas@aro.club'
 const CLAVE = 'Prueba-8x1'
-const RASTRO = '.banco-pruebas-fechas.json'
+const RASTRO = new URL('../.banco-pruebas-fechas.json', import.meta.url).pathname
 
 async function cuentaExistente() {
   const { data } = await admin.auth.admin.listUsers({ perPage: 200 })
