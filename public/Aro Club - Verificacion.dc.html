@@ -120,10 +120,19 @@
         <p style="{{ bajada }}">{{ capturaAyuda }}</p>
 
         <div style="{{ visor }}">
-          <sc-if value="{{ hayToma }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ hayPrevia }}" hint-placeholder-val="{{ false }}">
+            <img src="{{ previa }}" alt="La foto que acabas de hacer" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0F2A21" />
+          </sc-if>
+          <sc-if value="{{ hayTomaSinPrevia }}" hint-placeholder-val="{{ false }}">
             <div style="{{ tomaHecha }}">
               <svg width="34" height="34" viewBox="0 0 40 40" fill="none"><path d="M12 20.5l5 5L28 14.8" stroke="#FAF3E4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="96" style="animation:aro-trace 560ms cubic-bezier(.2,.7,.3,1) both"></path></svg>
               <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#FAF3E4;margin-top:12px">{{ textoToma }}</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ subiendo }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(15,42,33,.82)">
+              <span style="width:10px;height:10px;border-radius:999px;background:#FAF3E4;animation:aro-pulso 1.2s ease-in-out infinite"></span>
+              <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#FAF3E4;margin-top:14px">Subiendo tu foto</span>
             </div>
           </sc-if>
           <sc-if value="{{ sinToma }}" hint-placeholder-val="{{ true }}">
@@ -136,6 +145,14 @@
           <div role="alert" style="display:flex;gap:12px;align-items:flex-start;border-radius:26px;background:rgba(110,52,15,.09);padding:clamp(15px,2.2vw,19px);margin-top:16px">
             <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
             <span style="flex:1;min-width:0;font:400 15px/1.45 'Inter Tight',sans-serif;color:#14342A">{{ fallo }}</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ atascado }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:26px;border:1px solid rgba(20,52,42,.18);padding:clamp(17px,2.4vw,22px);margin-top:14px">
+            <div style="font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">¿Sigue sin subir?</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-top:6px;max-width:56ch;text-wrap:pretty">No te quedes aquí. Escríbenos y lo resolvemos contigo por otro camino: tu puesto no se pierde por esto.</div>
+            <a href="{{ enlaceAyuda }}" style="display:inline-flex;align-items:center;min-height:48px;padding:0 20px;border-radius:999px;border:1px solid rgba(20,52,42,.22);font:600 15px/1 'Inter Tight',sans-serif;color:#1B5138;margin-top:12px">Escribirnos</a>
           </div>
         </sc-if>
 
@@ -232,7 +249,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { fase: 'intro', movil: true, toma: 0, tomas: {}, repetirSolo: null,
+  state = { fase: 'intro', movil: true, toma: 0, tomas: {}, previas: {}, intentos: 0, repetirSolo: null,
             subiendo: false, fallo: '', motivo: null,
             celdas: [], ladoQr: 0, traspaso: null };
 
@@ -330,14 +347,63 @@ class Component extends DCLogic {
     if (conCamara) i.setAttribute('capture', this.state.toma === 1 ? 'user' : 'environment');
     i.addEventListener('change', () => {
       const f = i.files && i.files[0];
-      if (f) this.subir(f);
+      if (!f) return;
+      this.setState({ subiendo: true, fallo: '' });
+      this.encoger(f).then((chico) => this.subir(chico));
     });
     i.click();
   }
 
+  /**
+   * Encoger la foto antes de mandarla.
+   *
+   * Iba cruda. Una foto de iPhone son entre tres y ocho megas, y por LTE eso
+   * es un minuto largo de "Subiendo" y, con suerte, un fallo al final: el
+   * cuerpo de una peticion no puede pasar de 4,5 MB en produccion, asi que
+   * la nuestra ni llegaba a este codigo. Es lo que le paso a Michael dos
+   * veces seguidas.
+   *
+   * Mil seiscientos pixeles de lado largo es de sobra para que una persona
+   * lea una cedula, y deja la foto en unos trescientos kilos. De paso
+   * convierte el HEIC del iPhone en JPEG, que es otra familia entera de
+   * fallos que desaparece.
+   *
+   * Si el navegador no puede con ella —un formato que no sabe decodificar—
+   * se manda la original: mejor intentarlo que negarse.
+   */
+  encoger(archivo) {
+    const LADO = 1600;
+    return new Promise((listo) => {
+      if (!archivo.type || archivo.type.indexOf('image/') !== 0) return listo(archivo);
+      const url = URL.createObjectURL(archivo);
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const escala = Math.min(1, LADO / Math.max(img.width, img.height));
+          // Ya es pequena: no se recomprime, que solo quitaria calidad.
+          if (escala === 1 && archivo.size < 1200000) { URL.revokeObjectURL(url); return listo(archivo); }
+          const c = document.createElement('canvas');
+          c.width = Math.round(img.width * escala);
+          c.height = Math.round(img.height * escala);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          c.toBlob((b) => {
+            URL.revokeObjectURL(url);
+            if (!b) return listo(archivo);
+            listo(new File([b], 'foto.jpg', { type: 'image/jpeg' }));
+          }, 'image/jpeg', 0.82);
+        } catch (e) { URL.revokeObjectURL(url); listo(archivo); }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); listo(archivo); };
+      img.src = url;
+    });
+  }
+
   subir(archivo) {
-    if (this.state.subiendo) return;
     const idx = this.state.toma;
+    // La foto en pantalla, para que compruebe que se lee ANTES de que la
+    // mire una persona. Sin esto se enviaba a ciegas: un dedo encima o un
+    // reflejo solo se descubrian al recibir el rechazo dias despues.
+    const previa = URL.createObjectURL(archivo);
     const cuerpo = new FormData();
     cuerpo.append('tipo', this.TIPOS[idx]);
     cuerpo.append('archivo', archivo);
@@ -346,15 +412,28 @@ class Component extends DCLogic {
     fetch('/api/verificacion', { method: 'POST', body: cuerpo })
       .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
       .then(({ ok, d }) => {
-        if (!ok) { this.setState({ subiendo: false, fallo: d.error || 'No pudimos subir la foto.' }); return; }
+        if (!ok) {
+          this.setState((st) => ({ subiendo: false, intentos: (st.intentos || 0) + 1,
+            fallo: d.error || 'No pudimos subir la foto.' }));
+          return;
+        }
         // La marca se pone cuando el servidor la tiene, no al elegirla:
         // un "Cedula lista" con la subida caida seria mentir en verde.
         this.setState((st) => ({
           subiendo: false,
+          intentos: 0,
+          previas: Object.assign({}, st.previas, { [idx]: previa }),
           tomas: Object.assign({}, st.tomas, { [idx]: true })
         }));
       })
-      .catch(() => this.setState({ subiendo: false, fallo: 'No pudimos subir la foto. Reintenta.' }));
+      // Se cuentan los intentos: al segundo fallo se deja de repetir el
+      // mismo consejo y se le ofrece otra salida. Un error identico tres
+      // veces seguidas no es informacion, es un muro.
+      .catch(() => this.setState((st) => ({
+        subiendo: false,
+        intentos: (st.intentos || 0) + 1,
+        fallo: 'No pudimos subir la foto. Puede ser la conexión: prueba otra vez.'
+      })));
   }
 
   renderVals() {
@@ -494,6 +573,16 @@ class Component extends DCLogic {
       textoToma: c.hecho,
       notaCaptura: c.nota,
       hayToma: hecha,
+      // La foto en pantalla manda sobre la marca verde: ver lo que subiste
+      // dice mas que un "listo".
+      hayPrevia: !!(this.state.previas || {})[this.state.toma],
+      previa: (this.state.previas || {})[this.state.toma] || '',
+      hayTomaSinPrevia: hecha && !(this.state.previas || {})[this.state.toma],
+      subiendo: !!this.state.subiendo,
+      // Dos fallos seguidos y se le ofrece otra via. Repetirle el mismo
+      // consejo una tercera vez no es informacion, es un muro.
+      atascado: (this.state.intentos || 0) >= 2,
+      enlaceAyuda: 'mailto:hola@aro.club?subject=' + encodeURIComponent('No puedo subir mi verificación'),
       sinToma: !hecha,
       textoContinuar: this.state.toma === 1 || this.state.repetirSolo != null ? 'Enviar a revisión' : 'Continuar',
 

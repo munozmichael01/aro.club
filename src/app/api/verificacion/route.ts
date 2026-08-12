@@ -22,7 +22,18 @@ import { createClient } from '@/lib/supabase/server'
 
 const TIPOS = { cedula: 'id_document', selfie: 'selfie' } as const
 const MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic']
-const MAXIMO = 8 * 1024 * 1024
+/**
+ * Cuatro megas, por debajo del limite de la plataforma.
+ *
+ * Estaba en ocho, y el cuerpo de una peticion no puede pasar de 4,5 MB en
+ * produccion: una foto de iPhone pasaba nuestra comprobacion y moria fuera,
+ * asi que la pantalla ensenaba un fallo generico despues de un minuto de
+ * "Subiendo". Ahora el limite es nuestro y el mensaje tambien.
+ *
+ * La pantalla ademas encoge la foto antes de mandarla, asi que llegar aqui
+ * con mas de cuatro megas ya solo pasa si el navegador no supo decodificarla.
+ */
+const MAXIMO = 4 * 1024 * 1024
 
 /**
  * De quién es esta verificación: de quien tiene sesión, o de quien llega
@@ -127,7 +138,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Falta la foto.' }, { status: 400 })
   }
   if (archivo.size > MAXIMO) {
-    return NextResponse.json({ error: 'La foto pesa demasiado. Prueba otra vez.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Esa foto pesa demasiado. Haz otra con menos zoom, o elígela de la galería.' },
+      { status: 400 },
+    )
   }
   if (!MIMES.includes(archivo.type)) {
     return NextResponse.json({ error: 'Ese archivo no es una foto.' }, { status: 400 })
