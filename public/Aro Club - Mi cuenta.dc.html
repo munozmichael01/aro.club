@@ -90,12 +90,12 @@
             <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
               <div style="flex:0 0 auto;width:78px;height:78px;border-radius:999px;background:#FAF3E4;color:#14342A;display:flex;flex-direction:column;align-items:center;justify-content:center">
                 <span style="font:500 9px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">MESA</span>
-                <span style="font:700 32px/1 'Inter Tight',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin-top:2px">04</span>
+                <span style="font:700 32px/1 'Inter Tight',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin-top:2px">{{ numeroMesa }}</span>
               </div>
               <div style="flex:1 1 200px;min-width:0">
-                <div style="font:400 clamp(25px,3vw,32px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#FAF3E4">Cardenal</div>
-                <div style="font:500 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:5px">Calle Madrid, Las Mercedes</div>
-                <div style="font:500 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA">Jueves 14 · 7:00 p.m.</div>
+                <div style="font:400 clamp(25px,3vw,32px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#FAF3E4">{{ nombreSitio }}</div>
+                <div style="font:500 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:5px">{{ direccionSitio }}</div>
+                <div style="font:500 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA">{{ cuandoMesa }}</div>
               </div>
             </div>
 
@@ -282,6 +282,19 @@ class Component extends DCLogic {
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((d) => this.setState({ nExclusiones: d.exclusiones.length }))
       .catch(() => {});
+
+    // La mesa, de la MISMA fuente que Mi mesa. Este bloque tenia el
+    // restaurante, la direccion, la fecha, el numero de mesa y los cinco
+    // comensales escritos a mano —Cardenal, Calle Madrid, jueves 14, mesa
+    // 04, "Andres, Gabriela, Jose Manuel, Andreina, Luis"—: la pantalla que
+    // te dice donde presentarte a cenar se lo inventaba entero.
+    //
+    // Se pide a /api/mi-mesa en vez de copiar aqui su logica: dos sitios
+    // calculando "cual es mi mesa" es como acaban discrepando.
+    fetch('/api/mi-mesa')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && d.mesaId) this.setState({ mesa: d }); })
+      .catch(() => {});
   }
 
   componentWillUnmount() { clearInterval(this._t); }
@@ -457,10 +470,12 @@ class Component extends DCLogic {
     // esta, no se pinta ninguno. Se veia medio segundo de "TE FALTAN 13
     // PREGUNTAS" a gente que las tenia todas contestadas.
 
-    const gente = [
-      ['Andrés', 'A', 'Tecnología'], ['Gabriela', 'G', 'Salud'], ['José Manuel', 'J', 'Finanzas'],
-      ['Andreína', 'A', 'Educación'], ['Luis', 'L', 'Arquitectura']
-    ];
+    // Los cinco de verdad. Eran cinco personas inventadas con sus sectores,
+    // en la pantalla que te dice con quien cenas.
+    const M = this.state.mesa;
+    const gente = ((M && M.companeros) || []).map((c) => [
+      c.nombre || '—', (c.nombre || '?').charAt(0).toUpperCase(), c.sector || ''
+    ]);
     const comensales = gente.map((g, i) => ({
       nombre: g[0], inicial: g[1], sector: g[2],
       avatar: 'flex:0 0 auto;width:28px;height:28px;border-radius:999px;background:' + (i % 2 ? 'rgba(250,243,228,.16)' : '#A0511F') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif'
@@ -731,7 +746,20 @@ class Component extends DCLogic {
       titulo: e.titulo,
       cuerpo: e.cuerpo,
 
-      hayMesa: !!e.mesa,
+      // El bloque solo si HAY mesa de verdad: antes bastaba con que el
+      // estado dijera que la habia, y se pintaba la de mentira.
+      hayMesa: !!e.mesa && !!M,
+      numeroMesa: M ? String(M.numeroMesa == null ? '' : M.numeroMesa).padStart(2, '0') : '',
+      nombreSitio: (M && M.restaurante) || '',
+      direccionSitio: (M && M.direccion) || '',
+      cuandoMesa: (function () {
+        if (!M || !M.empiezaEn) return '';
+        const f = new Date(M.empiezaEn);
+        const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+        let h = f.getHours(); const mi = f.getMinutes();
+        const t = h < 12 ? 'a.m.' : 'p.m.'; h = h % 12 || 12;
+        return DIAS[f.getDay()] + ' ' + f.getDate() + ' · ' + h + ':' + (mi < 10 ? '0' + mi : mi) + ' ' + t;
+      })(),
       hayReloj: !!e.reloj,
       reloj: this.reloj(),
 

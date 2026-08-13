@@ -139,12 +139,16 @@ if (resto.includes('cenas')) {
 
 // Una fecha por delante con su mesa: es lo que hace aparecer la pestaña
 // "Mi mesa", que sin reserva no se enseña.
-if (resto.includes('mesa')) {
+if (resto.includes('mesa') || resto.includes('revelada')) {
+  const yaRevelada = resto.includes('revelada')
   const { data: rest } = await admin.from('restaurants').select('id').limit(1)
   const restId = rest?.[0]?.id ?? null
   const en = (h) => new Date(Date.now() + h * 3600_000).toISOString()
   const { data: ev, error: ee } = await admin.from('events').insert({
-    format: 'dinner', starts_at: en(48), booking_closes_at: en(2), reveal_at: en(24),
+    format: 'dinner',
+    starts_at: yaRevelada ? en(6) : en(48),
+    booking_closes_at: yaRevelada ? en(-48) : en(2),
+    reveal_at: yaRevelada ? en(-1) : en(24),
     restaurant_id: restId, status: 'open', price_usd: 8, city_slug: 'caracas',
   }).select('id').single()
   if (ee) console.log('  ! fecha:', ee.message)
