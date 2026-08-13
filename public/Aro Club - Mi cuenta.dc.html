@@ -416,7 +416,21 @@ class Component extends DCLogic {
       respuestas: d.respuestas.faltan === 0
         ? 'Completas'
         : d.respuestas.faltan + (d.respuestas.faltan === 1 ? ' pendiente' : ' pendientes'),
-      creditos: d.creditos + ' de ' + (d.creditos + (d.reserva ? 1 : 0)),
+      // Antes: "0 de 0", y debajo un "Cuatro encuentros comprados. No
+      // caducan." que NO se sobrescribia nunca. Todo el mundo leia que habia
+      // comprado un pack de cuatro que no existe: no se venden packs, y el
+      // legal ya dice "pagas cuando reservas". Un credito solo aparece al
+      // cancelar con mas de 24 horas.
+      creditos: d.creditos === 0
+        ? 'Ninguno'
+        : (d.creditos === 1 ? '1 crédito' : d.creditos + ' créditos'),
+      creditosCuerpo: d.creditos === 0
+        ? (d.reserva
+            ? 'Tu puesto del jueves ya está pagado. Si cancelas con más de 24 horas, el crédito vuelve aquí.'
+            : 'Se paga cada cena al reservarla. Si cancelas con más de 24 horas, el crédito queda aquí para la siguiente.')
+        : (d.creditos === 1
+            ? 'Un crédito sin usar, de una cena que cancelaste a tiempo. No caduca.'
+            : d.creditos + ' créditos sin usar, de cenas que cancelaste a tiempo. No caducan.'),
       sello: d.estado === 'perfil'
         ? 'TE FALTAN ' + d.respuestas.faltan + (d.respuestas.faltan === 1 ? ' PREGUNTA' : ' PREGUNTAS')
         : base.sello,
@@ -462,7 +476,10 @@ class Component extends DCLogic {
       : null;
     const atajos = [
       ['Mis respuestas', 'Las diecisiete del cuestionario, para ver y editar cuando quieras.', e.respuestas, 'Aro Club - Mi perfil.dc.html'],
-      ['Mis créditos', e.creditosCuerpo, e.creditos, '/'],
+      // Llevaba a '/', que es la landing: un atajo que dice "Mis creditos" y
+      // te saca del producto. Va al legal, que es donde se explica cuando
+      // vuelve un credito y cuando se pierde.
+      ['Mis créditos', e.creditosCuerpo, e.creditos, 'Aro Club - Legal.dc.html#terminos'],
       ['Mi verificación', 'Estado de tu cédula y tu selfie.', pieVerif, 'Aro Club - Verificacion.dc.html'],
       // El "Ninguna" estaba escrito a mano y el enlace iba al legal: un dato
       // inventado y un enlace que decia una cosa y llevaba a otra.
