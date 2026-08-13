@@ -44,8 +44,8 @@
 
         <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,26px);margin-top:clamp(24px,3.4vw,32px)">
           <div style="display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline">
-            <span style="flex:1 1 auto;font:400 clamp(21px,2.4vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cena · jueves 14</span>
-            <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F">7:00 p.m. · Las Mercedes</span>
+            <span style="flex:1 1 auto;font:400 clamp(21px,2.4vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ queCena }}</span>
+            <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ cuandoYDonde }}</span>
           </div>
           <div style="height:1px;background:rgba(20,52,42,.12);margin:16px 0"></div>
           <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline">
@@ -80,7 +80,7 @@
     <sc-if value="{{ esHecho }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 420ms ease both">
         <div style="{{ selloHecho }}">PUESTO CANCELADO</div>
-        <h1 style="{{ h1 }}">Listo, no cuentan contigo el jueves.</h1>
+        <h1 style="{{ h1 }}">{{ tituloHecho }}</h1>
         <p style="{{ bajada }}">{{ resumenHecho }}</p>
 
         <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,26px);margin-top:clamp(24px,3.4vw,32px)">
@@ -149,8 +149,33 @@ class Component extends DCLogic {
       };
     });
 
+    // La cena de verdad. Estaba escrita en el marcado —«Cena · jueves 14»,
+    // «7:00 p.m. · Las Mercedes»— asi que quien iba a soltar su puesto leia
+    // la fecha de otra persona.
+    const D = this.state.datos;
+    const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    const MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const NOMBRE = { dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' };
+    const cuando = D && D.empiezaEn ? new Date(D.empiezaEn) : null;
+    const hhmm = (f) => {
+      let h = f.getHours(); const m = f.getMinutes();
+      const t = h < 12 ? 'a.m.' : 'p.m.'; h = h % 12 || 12;
+      return h + ':' + (m < 10 ? '0' + m : m) + ' ' + t;
+    };
+    // El sitio solo si ya se revelo; si no, la zona. Cancelar no puede ser
+    // la puerta de atras para saber donde es.
+    const donde = D ? (D.restaurante || D.zona || null) : null;
+
     return {
       esPreguntar: f < 2, esHecho: f === 2,
+
+      queCena: cuando
+        ? (NOMBRE[D.formato] || 'Cena') + ' · ' + DIAS[cuando.getDay()] + ' ' + cuando.getDate() + ' de ' + MES[cuando.getMonth()]
+        : '',
+      cuandoYDonde: cuando ? hhmm(cuando) + (donde ? ' · ' + donde : '') : '',
+      tituloHecho: cuando
+        ? 'Listo, no cuentan contigo el ' + DIAS[cuando.getDay()] + '.'
+        : 'Listo, ya no cuentan contigo.',
 
       motivos,
       h1: 'font:400 clamp(30px,6.4vw,46px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance',

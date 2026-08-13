@@ -34,7 +34,9 @@ export async function GET(request: Request) {
 
   let q = admin
     .from('bookings')
-    .select('id, status, event_id, events(starts_at), table_members(table_id)')
+    .select(
+      'id, status, event_id, events(starts_at, reveal_at, format, restaurants!events_restaurant_id_fkey(name, zone_slug)), table_members(table_id)',
+    )
     .eq('profile_id', user.id)
     .in('status', ['pending_payment', 'confirmed'])
 
@@ -54,14 +56,39 @@ export async function GET(request: Request) {
   }
   if (!reserva) return NextResponse.json({ error: 'No tienes ninguna reserva viva.' }, { status: 404 })
 
-  const evento = reserva.events as unknown as { starts_at: string } | null
+  const evento = reserva.events as unknown as {
+    starts_at: string
+    reveal_at: string | null
+    format: string | null
+    restaurants: { name: string; zone_slug: string | null } | null
+  } | null
+
   const faltan = evento
     ? (new Date(evento.starts_at).getTime() - Date.now()) / 3600_000
     : 0
 
+  // Qué cena es, para que la pantalla no la escriba a mano. Estaban fijos en
+  // el marcado —«Cena · jueves 14», «7:00 p.m. · Las Mercedes»— así que
+  // quien iba a soltar su puesto leía la fecha de otra persona. En la
+  // pantalla donde renuncias a algo, eso es lo último que puede fallar.
+  //
+  // El RESTAURANTE solo después de revelar, como en el resto: cancelar no
+  // puede ser la puerta de atrás para saber dónde es.
+  const revelado = evento?.reveal_at ? Date.now() >= new Date(evento.reveal_at).getTime() : false
+
+  let zona: string | null = null
+  const slug = evento?.restaurants?.zone_slug ?? null
+  if (slug) {
+    const { data: z } = await admin.from('zones').select('name').eq('slug', slug).maybeSingle()
+    zona = z?.name ?? null
+  }
+
   return NextResponse.json({
     reservaId: reserva.id,
     empiezaEn: evento?.starts_at ?? null,
+    formato: evento?.format ?? 'dinner',
+    zona,
+    restaurante: revelado ? (evento?.restaurants?.name ?? null) : null,
     horasQueFaltan: Math.max(0, Math.round(faltan)),
     // Lo único que cambia el resultado, y por eso se decide aquí.
     conMargen: faltan >= HORAS_DE_MARGEN,
