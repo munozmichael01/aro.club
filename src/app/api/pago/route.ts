@@ -78,17 +78,19 @@ export async function GET(request: Request) {
     .select('id, nombre, moneda, manual, activo, datos_cuenta, campos, captura_obligatoria')
     .order('orden')
 
-  // `pendiente_de_datos_reales` era una nota para mí y no impedía nada: la
-  // pantalla enseñaba un teléfono de Pago Móvil que me inventé como si
-  // fuera una cuenta a la que transferir. Un método con la cuenta de
-  // mentira NO cobra —sale como «Pronto», igual que los apagados— hasta
-  // que los datos sean los de verdad.
+  // `pendiente_de_datos_reales` empezó siendo una nota mía que no impedía
+  // nada, y la pantalla enseñaba un teléfono de Pago Móvil inventado como si
+  // fuera una cuenta a la que transferir. Durante un tiempo el método se
+  // apagaba entero.
+  //
+  // Ahora no se esconde: se AVISA. Apagarlo hacía imposible probar el pago,
+  // y esconder unos datos falsos no es lo que protege a nadie —lo que
+  // protege es que se lea "esto es de prueba, no envíes dinero" justo encima
+  // del número—. El día que los datos sean los de verdad, se quita la marca
+  // y el aviso desaparece solo.
   const metodos = (metodosRaw ?? []).map((m) => {
     const datos = (m.datos_cuenta ?? {}) as Record<string, unknown>
-    const deMentira = datos.pendiente_de_datos_reales === true
-    return deMentira
-      ? { ...m, activo: false, datos_cuenta: {} }
-      : m
+    return { ...m, datosDePrueba: datos.pendiente_de_datos_reales === true }
   })
 
   const { data: zona } = evento.zone_slug
@@ -151,6 +153,8 @@ export async function GET(request: Request) {
       // Los datos de nuestra cuenta solo de los encendidos: publicar los de
       // un método apagado invita a pagar por un canal que no miramos.
       cuenta: m.activo ? m.datos_cuenta : null,
+      // Para que la pantalla pueda avisar encima del numero.
+      datosDePrueba: m.datosDePrueba,
       campos: m.campos,
       capturaObligatoria: m.captura_obligatoria,
     })),
@@ -183,8 +187,7 @@ export async function POST(request: Request) {
 
   if (!m) return NextResponse.json({ error: 'Ese método no existe.' }, { status: 400 })
 
-  const cuenta = (m.datos_cuenta ?? {}) as Record<string, unknown>
-  if (!m.activo || cuenta.pendiente_de_datos_reales === true) {
+  if (!m.activo) {
     // Ni por API. Si solo lo impidiera la pantalla, el interruptor sería
     // decorativo.
     return NextResponse.json({ error: 'Ese método no está disponible.' }, { status: 409 })

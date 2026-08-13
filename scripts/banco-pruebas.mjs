@@ -30,7 +30,11 @@ async function cuentaExistente() {
 async function limpiar() {
   const u = await cuentaExistente()
   if (!u) return null
+  // Los pagos antes que las reservas: apuntan a ellas y bloquean el borrado.
+  await admin.from('payments').delete().eq('profile_id', u.id)
+  await admin.from('credit_ledger').delete().eq('profile_id', u.id)
   await admin.from('bookings').delete().eq('profile_id', u.id)
+  await admin.from('answers').delete().eq('profile_id', u.id)
   // Y las fechas que monto este banco. Los ids quedan anotados en disco:
   // se borra exactamente lo que creo el banco y nada mas. Filtrar "por
   // fecha pasada" habria barrido eventos reales.
@@ -154,6 +158,30 @@ if (resto.includes('mesa')) {
     if (b && t) await admin.from('table_members').insert({ table_id: t.id, profile_id: id, booking_id: b.id, seat_order: 1 })
     console.log('  reserva en dos dias')
   }
+}
+
+// Perfil completo y verificado, con creditos: lo minimo para llegar al pago.
+if (resto.includes('lista')) {
+  await admin.from('profiles').update({
+    full_name: 'Banco Pruebas', display_name: 'Banco',
+    birthdate: '1990-05-12', gender: 'mujer', phone_e164: '+584121234567',
+  }).eq('id', id)
+  const hace2 = new Date(Date.now() - 2 * 86400_000).toISOString()
+  await admin.from('verifications').insert([
+    { profile_id: id, kind: 'id_document', status: 'approved', reviewed_at: hace2, storage_path: id + '/id.jpg' },
+    { profile_id: id, kind: 'selfie', status: 'approved', reviewed_at: hace2, storage_path: id + '/selfie.jpg' },
+  ])
+  // Las respuestas obligatorias, con el primer codigo de cada una.
+  const { data: v } = await admin.from('questionnaire_versions').select('id').eq('is_active', true).maybeSingle()
+  const { data: qs } = await admin.from('questions')
+    .select('key, options, input_type').eq('version_id', v.id).eq('is_required', true)
+  const filas = (qs || []).map((q) => {
+    const cods = (q.options || []).map((o) => o.value)
+    const valor = q.input_type === 'multi' ? cods.slice(0, 2) : (cods[0] ?? 'x')
+    return { profile_id: id, version_id: v.id, question_key: q.key, value: valor }
+  })
+  if (filas.length) await admin.from('answers').insert(filas)
+  console.log('  perfil completo, verificado, ' + filas.length + ' respuestas')
 }
 
 console.log('lista ' + id + (resto.length ? ' · ' + resto.join(', ') : ''))

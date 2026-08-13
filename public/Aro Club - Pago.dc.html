@@ -97,6 +97,16 @@
         <h1 style="{{ h1 }}">{{ tituloDatos }}</h1>
         <p style="{{ bajada }}">{{ bajadaDatos }}</p>
 
+        <sc-if value="{{ datosDePrueba }}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:#8F4515;color:#FFF8EA;padding:clamp(15px,2.2vw,19px);margin-top:clamp(20px,2.6vw,26px)">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#FFF8EA;color:#8F4515;display:flex;align-items:center;justify-content:center;font:700 13px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif">Esta cuenta es de prueba. No envíes dinero.</span>
+              <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;margin-top:4px;text-wrap:pretty">Estamos probando el sistema y estos datos son inventados. Puedes seguir el recorrido y reportar el pago igual: sirve para probar, y nadie va a cobrarte nada.</span>
+            </span>
+          </div>
+        </sc-if>
+
         <div style="border-radius:26px;background:#14342A;color:#FAF3E4;padding:clamp(20px,3vw,26px);margin-top:clamp(22px,3vw,28px)">
           <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#9CBBA6;margin-bottom:16px">{{ etiquetaDatos }}</div>
           <div style="display:flex;flex-direction:column;gap:0">
@@ -376,7 +386,7 @@ class Component extends DCLogic {
     // encender Zelle un sábado exigiría un despliegue.
     const METODOS = (D.metodos || []).map((m) => ({
       id: m.id, nombre: m.nombre, activo: m.activo, manual: m.manual,
-      cuenta: m.cuenta, capturaObligatoria: m.capturaObligatoria,
+      cuenta: m.cuenta, datosDePrueba: m.datosDePrueba, capturaObligatoria: m.capturaObligatoria,
       // Los campos que pide ESTE metodo, tal como los define la base. Antes
       // el mapeo se los comia y la pantalla usaba su propia tabla.
       campos: m.campos || [],
@@ -505,7 +515,13 @@ class Component extends DCLogic {
       return regla && R ? R.valido(regla, v) : v.length >= 3;
     };
     const elQueFalta = listaCampos.find((c) => !cumple(c));
-    const camposOk = listaCampos.length > 0 && !elQueFalta;
+    // La letra del documento es obligatoria en el servidor y aqui no
+    // contaba: el boton se encendia sin ella, el servidor devolvia 400 y
+    // la persona no veia nada. Un campo que el servidor exige y la
+    // pantalla no comprueba es un callejon garantizado.
+    const pideLetra = listaCampos.some((c) => c.conTipo);
+    const faltaLetra = pideLetra && !campo('doc_tipo');
+    const camposOk = listaCampos.length > 0 && !elQueFalta && !faltaLetra;
     const repOk = camposOk && (!capturaObligatoria || conCaptura);
 
     const comprobante = [
@@ -539,6 +555,9 @@ class Component extends DCLogic {
       esPendiente: f === 4, esListo: f === 5, esFallo: f === 6,
 
       metodos, datosPago, camposReporte, comprobante, pasosPendiente, salidas,
+      // El aviso va ARRIBA del numero, no como un dato mas de la lista: ahi
+      // saldria con su boton de "Copiar", que es justo lo contrario.
+      datosDePrueba: !!(mSel && mSel.datosDePrueba),
       nombreEv, detalleEv,
       metodoElegido: mSel.nombre,
       totalTexto: mSel.moneda,
@@ -582,12 +601,22 @@ class Component extends DCLogic {
       botonCaptura: 'display:flex;align-items:center;gap:13px;width:100%;min-height:72px;padding:14px 18px;border-radius:26px;background:' + (conCaptura ? '#FFFBF0' : 'transparent') + ';border:1px ' + (conCaptura ? 'solid #1B5138' : 'dashed rgba(20,52,42,.3)') + ';cursor:pointer;transition:all 180ms ease',
       adjuntar: () => this.setState((st) => ({ rep: Object.assign({}, st.rep, { captura: !st.rep.captura }) })),
 
+      // Se usaban en el marcado y no los devolvia nadie, asi que la franja
+      // de error no aparecia jamas: el servidor rechazaba el reporte y la
+      // pantalla se quedaba igual, sin decir por que.
+      hayFallo: !!this.state.fallo,
+      fallo: this.state.fallo || '',
+
       inerteRep: repOk ? null : 'true',
       // El boton NOMBRA lo que falta. «Completa los datos» obliga a repasar
       // cinco campos para encontrar cual es.
       textoReportar: repOk
         ? (mSel.manual ? 'Reportar mi pago' : 'Confirmar y pagar')
-        : (camposOk ? 'Adjunta la captura' : 'Falta ' + (elQueFalta ? elQueFalta.etiqueta.toLowerCase() : 'algo')),
+        : (camposOk
+            ? 'Adjunta la captura'
+            : (elQueFalta
+                ? 'Falta ' + elQueFalta.etiqueta.toLowerCase()
+                : (faltaLetra ? 'Elige si tu documento es V o E' : 'Falta algo'))),
       botonReportar: btn(repOk ? '#1B5138' : 'rgba(20,52,42,.12)', repOk ? '#FAF3E4' : '#5A7264', repOk ? '' : 'cursor:not-allowed'),
       notaRevision: mSel.manual
         ? 'Lo revisa una persona. Si algo no cuadra te escribimos, y tu puesto sigue apartado mientras tanto.'
