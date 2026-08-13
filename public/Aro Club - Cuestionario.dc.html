@@ -70,7 +70,7 @@
 
         <div style="display:flex;flex-direction:column;gap:clamp(34px,5vw,52px);margin-top:clamp(30px,4.4vw,46px)">
           <sc-for list="{{ preguntas }}" as="q" hint-placeholder-count="4">
-            <div>
+            <div id="{{ q.ancla }}">
               <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:baseline;margin-bottom:5px">
                 <span style="font:400 clamp(20px,2.6vw,26px)/1.2 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A;flex:1 1 auto;min-width:0;text-wrap:pretty">{{ q.pregunta }}</span>
                 <sc-if value="{{ q.esOpcional }}" hint-placeholder-val="{{ false }}">
@@ -424,6 +424,8 @@ class Component extends DCLogic {
     const preguntas = visibles.map((q) => {
       const val = r[q.id];
       const base = {
+        // Para poder llevar la pantalla hasta ella cuando falte.
+        ancla: 'preg-' + q.id,
         pregunta: q.pregunta,
         ayuda: q.ayuda || '',
         hayAyuda: !!q.ayuda,
@@ -488,13 +490,21 @@ class Component extends DCLogic {
       return base;
     });
 
-    const completa = visibles.every((q) => {
+    const contestada = (q) => {
       if (q.opcional) return true;
       const v = r[q.id];
       if (q.tipo === 'texto') return this.state.empleador.trim().length > 0;
       if (q.tipo === 'unica') return v != null;
       return (v || []).length >= (q.min || 1);
-    });
+    };
+    // CUAL falta, no solo que falta alguna. La tercera pregunta de la
+    // primera pantalla —"¿Donde trabajas?"— queda debajo del pie fijo: se
+    // respondia el sector, el boton seguia apagado sin decir por que, y la
+    // pregunta que faltaba no se veia. Un boton muerto en una pantalla que
+    // parece terminada se lee como que la web esta rota.
+    const cual = visibles.find((q) => !contestada(q)) || null;
+    const faltante = cual ? { id: cual.id, tipo: cual.tipo, ancla: 'preg-' + cual.id } : null;
+    const completa = !faltante;
 
     const barras = [0, 1, 2, 3, 4].map((i) => ({
       estilo: 'flex:1;height:4px;border-radius:999px;background:' + (i < this.state.pantalla ? '#1B5138' : (i === this.state.pantalla ? '#A0511F' : 'rgba(20,52,42,.13)')) + ';transition:background 260ms ease'
@@ -574,11 +584,30 @@ class Component extends DCLogic {
 
       puedeAtras: this.state.pantalla > 0,
       atras: () => this.setState((s) => ({ pantalla: Math.max(0, s.pantalla - 1), retomada: false })),
-      inerteContinuar: completa ? null : 'true',
-      textoContinuar: ultima ? 'Terminar' : 'Continuar',
+      // Deja de estar inerte: si falta algo, el boton LLEVA a lo que falta en
+      // vez de no hacer nada.
+      inerteContinuar: null,
+      textoContinuar: completa
+        ? (ultima ? 'Terminar' : 'Continuar')
+        : (faltante && faltante.tipo === 'texto' ? 'Falta dónde trabajas' : 'Falta una respuesta'),
       botonContinuar: 'flex:1;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + (completa ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (completa ? '#FAF3E4' : '#456352') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (completa ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
       continuar: () => {
-        if (!completa) return;
+        // Si falta algo, se va HASTA ello y se enfoca. Antes no pasaba nada
+        // y la pregunta que faltaba estaba fuera de la vista.
+        if (!completa) {
+          if (faltante) {
+            const el = document.getElementById(faltante.ancla);
+            if (el) {
+              // Instantaneo y no 'smooth': el suave depende del navegador y
+              // con reduced-motion no se mueve nada. Y para "llevame a lo
+              // que falta" llegar es mejor que el viaje.
+              el.scrollIntoView({ block: 'center' });
+              const campo = el.querySelector('input');
+              if (campo) { try { campo.focus({ preventScroll: true }); } catch (e) {} }
+            }
+          }
+          return;
+        }
         // Al pasar de pantalla se reenvía lo que hay en ella, no solo lo que
         // se tocó. `idiomas` viene premarcado con Español, y el guardado
         // dispara al tocar: quien no lo cambiaba nunca lo guardaba, se
