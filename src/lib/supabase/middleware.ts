@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { createAdminClient } from '@/lib/supabase/admin'
+
 import { env } from '@/lib/env'
 
 import type { Database } from './database.types'
@@ -41,14 +43,32 @@ export async function updateSession(request: NextRequest) {
 
   // El panel no puede quedar detrás de una URL difícil de adivinar: eso no
   // es una puerta, es un cartel tapado. Se comprueba el rol de verdad.
-  if (request.nextUrl.pathname.startsWith('/operacion')) {
+  // Las tres del panel, no solo /operacion: la ficha de un miembro y el
+  // alta de locales se abren DESDE el panel y cargaban sin sesion. Sus APIs
+  // devuelven 404 sin rol, asi que no se escapaba ningun dato —se veia el
+  // cascaron vacio—, pero una pantalla interna que responde a cualquiera es
+  // media puerta.
+  const DEL_PANEL = ['/operacion', '/locales', '/miembro']
+  if (DEL_PANEL.some((p) => request.nextUrl.pathname.startsWith(p))) {
     if (!user) {
       const destino = request.nextUrl.clone()
       destino.pathname = '/entrar'
       return NextResponse.redirect(destino)
     }
 
-    const { data: perfil } = await supabase
+    // Con el cliente de SERVICIO, no con el del usuario.
+    //
+    // Esta comprobación llevaba caída desde que `profiles` dejó de ser
+    // legible para `authenticated`: la consulta devolvía null por permisos,
+    // el rol nunca era 'ops' y el panel respondía 404 a todo el mundo,
+    // incluido admin. No saltó porque las rutas de /api/operacion validan
+    // por su cuenta y esas sí funcionaban; lo que estaba roto era la puerta.
+    //
+    // Es una comprobación de autorización del servidor sobre su propia
+    // tabla de roles, que es justo para lo que existe la clave de servicio.
+    // La alternativa —volver a abrir `profiles` a `authenticated`— desharía
+    // el cierre por defecto para arreglar una sola consulta.
+    const { data: perfil } = await createAdminClient()
       .from('profiles')
       .select('role')
       .eq('id', user.id)
