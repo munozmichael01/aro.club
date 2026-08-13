@@ -846,29 +846,15 @@ class Component extends DCLogic {
     // El contador de la pestaña sale de la cola real, no de un 4 fijo.
     const pendientes = (this.state.cola || []).length - Object.keys(this.state.decididas).length;
 
-    // Un solo pool real. Todo lo demás —mesas, señales y métricas— se deriva de aquí,
-    // así que no puede volver a desincronizarse.
-    const POOL = [
-      ['Daniela', 'Arquitectura', 34, 'Estudio propio', 'M'], ['Andrés', 'Tecnología', 38, 'Ridery', 'H'],
-      ['Gabriela', 'Salud', 31, 'Clínica Ávila', 'M'], ['José Manuel', 'Finanzas', 36, 'Banesco', 'H'],
-      ['Andreína', 'Educación', 29, 'UCAB', 'M'], ['Valentina', 'Medios', 33, 'El Estímulo', 'M'],
-      ['Ricardo', 'Consultoría', 39, 'Deloitte', 'H'], ['Mariana', 'Diseño', 30, 'Estudio propio', 'M'],
-      ['Eduardo', 'Legal', 37, 'Travieso Evans', 'H'], ['Carla', 'Marketing', 32, 'Polar', 'M'],
-      ['Simón', 'Gastronomía', 35, 'Alto', 'H'], ['Patricia', 'Tecnología', 33, 'Yummy', 'M'],
-      ['Alejandro', 'Comercio', 41, 'Farmatodo', 'H'], ['Isabel', 'ONG', 28, 'Fe y Alegría', 'M'],
-      ['Rodrigo', 'Finanzas', 34, 'Mercantil', 'H'], ['Verónica', 'Salud', 36, 'Locatel', 'M'],
-      ['Miguel', 'Energía', 40, 'Chevron', 'H'], ['Lucía', 'Educación', 27, 'Unimet', 'M'],
-      ['Gustavo', 'Medios', 38, 'Unión Radio', 'H'], ['Camila', 'Arquitectura', 31, 'Oficina propia', 'M'],
-      ['Federico', 'Tecnología', 29, 'Banesco', 'H'], ['Sofía', 'Legal', 35, 'Baker McKenzie', 'M'],
-      ['Ignacio', 'Consultoría', 42, 'EY', 'H'], ['Adriana', 'Diseño', 33, 'Freelance', 'M'],
-      ['Julián', 'Comercio', 30, 'Movistar', 'H'], ['Fabiana', 'Marketing', 34, 'Digitel', 'M'],
-      ['Emilio', 'Gastronomía', 37, 'Malabar', 'H'], ['Natalia', 'Salud', 32, 'Clínica Santiago', 'M'],
-      ['Óscar', 'Finanzas', 39, 'BBVA Provincial', 'H'], ['Renata', 'ONG', 26, 'Cáritas', 'M'],
-      ['Carolina', 'Educación', 30, 'Unimet', 'M'], ['Luis', 'Tecnología', 36, 'Yummy', 'H']
-    ];
+    // Aqui vivia un POOL de treinta y dos personas inventadas —nombre,
+    // sector, edad y donde trabajan— que fue el maniqui de esta pantalla.
+    // Ya no lo usa nadie: el reparto real viene del servidor con sus
+    // roturas calculadas. Se borra porque una lista de gente que parece de
+    // verdad, en el panel que decide quien se sienta con quien, es una
+    // trampa esperando a que alguien la vuelva a enchufar.
 
-    // El POOL de arriba era el maniqui. Lo real viene del servidor: la
-    // propuesta que el reparto guardo, con sus roturas ya calculadas.
+    // Lo real viene del servidor: la propuesta que el reparto guardo, con
+    // sus roturas ya calculadas.
     const R = this.state.reparto || {};
     const zonaNombre = (slug) => {
       const v = ((R.sedes) || []).find((x) => x.zona === slug);
