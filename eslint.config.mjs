@@ -18,6 +18,9 @@ const eslintConfig = defineConfig([
     // nadie lee es un lint que no existe.
     "docs/entrega/**",
     "public/support.js",
+    // React, ReactDOM y Babel, tal cual vienen de su publicacion. Son suyos,
+    // no se tocan, y revisarlos aqui son 129 errores que no significan nada.
+    "public/vendor/**",
   ]),
 ]);
 
