@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { anotar } from '@/lib/auditoria'
 
 /**
  * Deshacer una mesa ya publicada.
@@ -93,6 +94,12 @@ export async function POST(request: Request) {
 
   const retirados = (resultado as unknown as { correos_retirados: number }[] | null)?.[0]
     ?.correos_retirados
+
+  // Se anota SIEMPRE, y con cuantos avisos no se pudieron retirar: esa
+  // cifra es la que obliga a escribir a mano a esa gente.
+  await anotar(actor, 'mesas_despublicadas', 'evento', corrida.event_id, {
+    correosRetirados: retirados ?? 0, correosYaEnviados: yaSalieron ?? 0,
+  })
 
   return NextResponse.json({
     estado: 'deshecha',

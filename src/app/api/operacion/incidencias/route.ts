@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { anotar } from '@/lib/auditoria'
 
 /**
  * La cola de incidencias.
@@ -145,5 +146,6 @@ export async function POST(request: Request) {
     await admin.from('profiles').update({ status: 'banned' }).eq('id', incidencia.subject_id)
   }
 
+  await anotar(actor, 'incidencia_resuelta', 'incidencia', d.incidenciaId, { accion: d.accion })
   return NextResponse.json({ estado: 'resuelta' })
 }

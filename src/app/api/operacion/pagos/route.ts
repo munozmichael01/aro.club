@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { anotar } from '@/lib/auditoria'
 
 /**
  * La cola de conciliación.
@@ -211,6 +212,7 @@ export async function POST(request: Request) {
 
     await encolar(admin, pago.profile_id, pago.booking_id, 'pago_confirmado', {})
 
+    await anotar(actor, 'pago_confirmado', 'pago', pago.id, { reserva: pago.booking_id })
     return NextResponse.json({ estado: 'confirmado' })
   }
 
@@ -239,5 +241,6 @@ export async function POST(request: Request) {
     guardadoHasta: limite,
   })
 
+  await anotar(actor, 'pago_no_cuadra', 'pago', pago.id, { motivo: d.motivo, guardadoHasta: limite })
   return NextResponse.json({ estado: 'no-cuadra', guardadoHasta: limite })
 }

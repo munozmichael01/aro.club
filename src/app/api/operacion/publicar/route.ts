@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { anotar } from '@/lib/auditoria'
 
 /**
  * Publicar la propuesta: aquí es donde las mesas empiezan a existir.
@@ -199,6 +200,8 @@ export async function POST(request: Request) {
     .eq('id', corrida.id)
 
   await admin.from('events').update({ status: 'matched' }).eq('id', corrida.event_id)
+
+  await anotar(actor, 'mesas_publicadas', 'evento', corrida.event_id, { mesas: creadas.length })
 
   return NextResponse.json({
     estado: 'publicado',

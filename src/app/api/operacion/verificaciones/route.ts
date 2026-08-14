@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { anotar } from '@/lib/auditoria'
 
 /**
  * La cola de verificación (HANDOFF-4 §4.4).
@@ -135,6 +136,9 @@ export async function POST(request: Request) {
       await admin.from('profiles').update({ status: 'active' }).eq('id', d.profileId)
     }
 
+    await anotar(actor, 'verificacion_aprobada', 'verificacion', d.profileId, {
+      nombreCoincide: d.nombreCoincide, edadCoincide: d.edadCoincide,
+    })
     return NextResponse.json({ estado: 'aprobada' })
   }
 
@@ -166,5 +170,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No pudimos rechazarla.' }, { status: 500 })
   }
 
+  await anotar(actor, 'verificacion_rechazada', 'verificacion', d.profileId, { motivo: d.motivo })
   return NextResponse.json({ estado: 'rechazada' })
 }
