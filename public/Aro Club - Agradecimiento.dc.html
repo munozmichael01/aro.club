@@ -212,7 +212,7 @@ class Component extends DCLogic {
         ? d.bajada
         : 'Guardamos tu correo. Te escribimos el día que abramos mesa en tu zona, y no antes.',
 
-      botonGuardar: 'display:inline-flex;align-items:center;min-height:56px;padding:0 26px;border-radius:999px;border:none;background:' + (listo ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (listo ? '#FAF3E4' : '#7E9A8B') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (listo ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
+      botonGuardar: 'display:inline-flex;align-items:center;min-height:56px;padding:0 26px;border-radius:999px;border:none;background:' + (listo ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (listo ? '#FAF3E4' : '#456352') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (listo ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
 
       guardar: () => { if (listo) this.setState({ fase: 'resuelto', guardado: sel }); },
       saltar: () => this.setState({ fase: 'resuelto', guardado: -1 }),

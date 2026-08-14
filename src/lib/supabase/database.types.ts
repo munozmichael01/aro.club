@@ -3244,6 +3244,10 @@ export type Database = {
         | "pago_confirmado"
         | "pago_no_cuadra"
         | "cancelacion"
+        | "verificacion_rechazada"
+        | "fecha_cancelada"
+        | "restablecer_clave"
+        | "abrimos_zona"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -3466,6 +3470,10 @@ export const Constants = {
         "pago_confirmado",
         "pago_no_cuadra",
         "cancelacion",
+        "verificacion_rechazada",
+        "fecha_cancelada",
+        "restablecer_clave",
+        "abrimos_zona",
       ],
       event_format_t: [
         "dinner",

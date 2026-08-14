@@ -506,7 +506,7 @@ class Component extends DCLogic {
         contenedorOpciones: (esUnica && !c.compacta)
           ? 'display:flex;flex-direction:column;gap:8px'
           : 'display:flex;flex-wrap:wrap;gap:8px',
-        botonGuardar: 'display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;border:none;background:' + (bajo ? 'rgba(27,81,56,.13)' : '#1B5138') + ';color:' + (bajo ? '#7E9A8B' : '#FAF3E4') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (bajo ? 'not-allowed' : 'pointer'),
+        botonGuardar: 'display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;border:none;background:' + (bajo ? 'rgba(27,81,56,.13)' : '#1B5138') + ';color:' + (bajo ? '#456352' : '#FAF3E4') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (bajo ? 'not-allowed' : 'pointer'),
         guardar: () => {
           if (bajo) return;
           // Al servidor va el CODIGO estable, nunca el indice: el orden de

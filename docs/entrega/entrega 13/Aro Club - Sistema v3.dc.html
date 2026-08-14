@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
-<script src="./reglas.js"></script>
 </head>
 <body>
 <x-dc>
@@ -33,18 +32,23 @@
     <div style="max-width:1080px;margin:0 auto;padding:11px clamp(16px,4vw,32px);display:flex;align-items:center;gap:11px">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
       <span style="font:400 21px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
-      <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#566A5D;border-left:1px solid rgba(20,52,42,.2);padding-left:11px">SISTEMA · CAPA MIEMBRO</span>
+      <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#566A5D;border-left:1px solid rgba(20,52,42,.2);padding-left:11px">SISTEMA · TRES CAPAS</span>
+    </div>
+    <div class="aro-nav" style="max-width:1080px;margin:0 auto;padding:0 clamp(16px,4vw,32px) 10px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none">
+      <sc-for list="{{ indice }}" as="i" hint-placeholder-count="9">
+        <a href="{{ i.ancla }}" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;margin-block:-3px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.16);font:500 13px/1 'Inter Tight',sans-serif;color:#1B5138;white-space:nowrap">{{ i.nombre }}</a>
+      </sc-for>
     </div>
   </div>
 
   <div style="max-width:1080px;margin:0 auto;padding:clamp(32px,6vw,64px) clamp(16px,4vw,32px) clamp(60px,10vw,110px)">
 
     <h1 style="font:400 clamp(33px,5.4vw,60px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0;max-width:19ch;text-wrap:balance">Un sistema para una mesa de seis.</h1>
-    <p style="font:400 17px/1.6 'Inter Tight',sans-serif;color:#456352;max-width:58ch;margin:18px 0 0;text-wrap:pretty">Todo lo que se repite en la landing, el agradecimiento y el cuestionario, con sus estados. Es la capa de miembro; la de operación comparte tokens y cambia la densidad.</p>
+    <p style="font:400 17px/1.6 'Inter Tight',sans-serif;color:#456352;max-width:58ch;margin:18px 0 0;text-wrap:pretty">Todo lo que se repite en las {{ cuentaPantallas }} pantallas, con sus estados. Captación, miembro y operación comparten estos tokens; lo que cambia entre capas es la densidad, nunca el color ni la tipografía.</p>
 
     <div class="aro-sec" id="color" style="margin-top:clamp(44px,7vw,84px)">
       <div style="{{ eyebrow }}">01 · COLOR</div>
-      <h2 style="{{ h2 }}">Tres familias, siete tonos, ninguno decorativo.</h2>
+      <h2 style="{{ h2 }}">{{ tituloColor }}</h2>
       <p style="{{ intro }}">Crema es el papel. Verde profundo es la tinta y el fondo de lo que pesa. Terracota es el único acento y siempre significa lo mismo: <em style="font-weight:600">esto está marcado</em> o <em style="font-weight:600">esto es tuyo</em>.</p>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,164px),1fr));gap:12px;margin-top:26px">
@@ -87,6 +91,12 @@
             <span style="flex:0 0 auto;font:500 12px/1.4 'Inter Tight',sans-serif;color:#566A5D;font-variant-numeric:tabular-nums">{{ t.spec }}</span>
           </div>
         </sc-for>
+      </div>
+
+      <div style="border-radius:20px;background:#FFFBF0;padding:clamp(16px,2.2vw,22px);margin-top:14px">
+        <div style="{{ etiquetaBloque }}">DOS ESCALAS, Y NO SE MEZCLAN</div>
+        <div style="font:400 15px/1.65 'Inter Tight',sans-serif;color:#456352;max-width:62ch;text-wrap:pretty">La captación puede gritar; el producto no. <em style="font-weight:600;color:#14342A">Display XL y Cifra display existen solo en la landing y el anuncio</em>, donde hay una sola cosa que decir y toda la pantalla para decirla. Dentro del producto el techo es Display, porque una pantalla con datos, botones y estados no aguanta un titular de 112px sin que todo lo demás parezca una nota al pie.</div>
+        <div style="font:400 15px/1.65 'Inter Tight',sans-serif;color:#456352;max-width:62ch;margin-top:12px;text-wrap:pretty">Lo mismo con las cifras: <em style="font-weight:600;color:#14342A">un precio de escaparate va en serif</em> y una cifra que se compara —mesa 04, 34 apuntados, 6.053,68 Bs— va en Inter Tight tabular, para que los dígitos se alineen entre filas.</div>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,258px),1fr));gap:12px;margin-top:14px">
@@ -147,11 +157,15 @@
       <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;font:400 12px/1.5 'Inter Tight',sans-serif;color:#566A5D">
         <span>1 · reposo</span><span>2 · presionado</span><span>3 · deshabilitado</span>
       </div>
+      <div style="border-radius:20px;background:#FFFBF0;padding:clamp(16px,2.2vw,22px);margin-top:14px">
+        <div style="{{ etiquetaBloque }}">DESHABILITADO SE LEE</div>
+        <div style="font:400 15px/1.65 'Inter Tight',sans-serif;color:#456352;max-width:62ch;text-wrap:pretty">Un botón apagado sigue siendo texto que alguien necesita leer: dice qué falta para poder pulsarlo. <em style="font-weight:600;color:#14342A">Su tinta es #456352 sobre crema y #C5D8CA sobre verde</em>, las dos por encima de 4,5. Lo que baja no es el contraste, es el fondo: relleno al 13% en vez de sólido. Gris claro sobre gris claro es la forma más común de romper esta regla.</div>
+      </div>
     </div>
 
     <div class="aro-sec" id="preguntas" style="margin-top:clamp(44px,7vw,84px)">
       <div style="{{ eyebrow }}">05 · KIT DE PREGUNTA</div>
-      <h2 style="{{ h2 }}">El componente que aparece 17 veces.</h2>
+      <h2 style="{{ h2 }}">{{ tituloKit }}</h2>
       <p style="{{ intro }}">Un solo indicador en los tres tipos: aro de 20px que se rellena de terracota. La ficha no cambia de ancho al marcarla. Pruébalos.</p>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,296px),1fr));gap:14px;margin-top:26px">
@@ -228,25 +242,160 @@
       </div>
     </div>
 
-    <div class="aro-sec" id="pendiente" style="margin-top:clamp(44px,7vw,84px)">
-      <div style="{{ eyebrow }}">07 · LO QUE FALTA</div>
-      <h2 style="{{ h2 }}">Primitivos que el producto pide y aún no existen.</h2>
-      <p style="{{ intro }}">No los invento sin verlos en un flujo real. Cada uno indica la pantalla del brief que lo va a necesitar.</p>
+    <div class="aro-sec" id="cifras" style="margin-top:clamp(44px,7vw,84px)">
+      <div style="{{ eyebrow }}">07 · CIFRAS Y DINERO</div>
+      <h2 style="{{ h2 }}">Ninguna cifra derivable se escribe a mano.</h2>
+      <p style="{{ intro }}">Es la regla que más veces se rompió sola. «Cinco mesas» y «faltan cuatro» salen del cálculo, en la interfaz <em style="font-weight:600">y en el copy</em>. Un literal en una frase es cómo se desincronizan los paneles.</p>
 
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,232px),1fr));gap:10px;margin-top:26px">
-        <sc-for list="{{ pendientes }}" as="p" hint-placeholder-count="8">
-          <div style="border-radius:18px;border:1px dashed rgba(20,52,42,.28);padding:15px 17px">
-            <div style="font:600 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ p.nombre }}</div>
-            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:5px">{{ p.donde }}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:12px;margin-top:26px">
+        <div style="{{ demo }}">
+          <div style="{{ etiquetaBloque }}">CIFRA GRANDE · TABULAR</div>
+          <div style="display:flex;gap:22px;align-items:baseline;flex-wrap:wrap">
+            <span style="font:700 clamp(30px,4vw,42px)/1 'Inter Tight',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#14342A">34</span>
+            <span style="font:700 clamp(30px,4vw,42px)/1 'Inter Tight',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#8F4515">04</span>
+          </div>
+          <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#456352;margin-top:12px;text-wrap:pretty">Siempre <em style="font-weight:600">tabular-nums</em>: un contador que baila al cambiar de segundo parece roto. Terracota cuando la cifra pide acción.</div>
+        </div>
+
+        <div style="{{ demo }}">
+          <div style="{{ etiquetaBloque }}">DINERO</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;gap:14px;align-items:baseline"><span style="flex:1;font:400 15px/1.4 'Inter Tight',sans-serif;color:#456352">Un puesto</span><span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">8,00 USD</span></div>
+            <div style="display:flex;gap:14px;align-items:baseline"><span style="flex:1;font:400 15px/1.4 'Inter Tight',sans-serif;color:#566A5D">Tasa BCV de hoy</span><span style="font:500 15px/1.4 'Inter Tight',sans-serif;color:#566A5D;font-variant-numeric:tabular-nums">62,40 Bs</span></div>
+            <div style="height:1px;background:rgba(20,52,42,.12);margin:5px 0"></div>
+            <div style="display:flex;gap:14px;align-items:baseline"><span style="flex:1;font:600 16px/1.4 'Inter Tight',sans-serif;color:#14342A">Total</span><span style="font:700 26px/1 'Inter Tight',sans-serif;letter-spacing:-.03em;color:#14342A;font-variant-numeric:tabular-nums">499,20 Bs</span></div>
+          </div>
+          <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#456352;margin-top:14px;text-wrap:pretty">El dólar es la referencia, el bolívar es el cobro. Las tres cifras siempre visibles: nadie tiene que fiarse de nuestra aritmética. Coma decimal, punto de millar.</div>
+        </div>
+      </div>
+
+      <div style="border-radius:20px;background:#FFFBF0;padding:clamp(16px,2.2vw,22px);margin-top:12px">
+        <div style="{{ etiquetaBloque }}">NÚMEROS EN LETRA, Y CUÁNDO NO</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <sc-for list="{{ reglasCifra }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex;flex-wrap:wrap;gap:5px 14px;align-items:baseline;padding-bottom:9px;border-bottom:1px solid rgba(20,52,42,.09)">
+              <span style="flex:1 1 220px;font:400 14px/1.45 'Inter Tight',sans-serif;color:#14342A">{{ r.caso }}</span>
+              <span style="flex:1 1 200px;font:400 14px/1.45 'Inter Tight',sans-serif;color:#456352">{{ r.regla }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div class="aro-sec" id="piezas" style="margin-top:clamp(44px,7vw,84px)">
+      <div style="{{ eyebrow }}">08 · PIEZAS</div>
+      <h2 style="{{ h2 }}">Lo que se repite en más de una pantalla.</h2>
+      <p style="{{ intro }}">Todas existen ya en el producto. Aquí están juntas para que no se reinventen con otro color, que es exactamente lo que pasó tres veces.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px;margin-top:26px">
+
+        <div style="{{ demo }}">
+          <div style="{{ etiquetaBloque }}">PERSONA EN UNA LISTA</div>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <sc-for list="{{ personas }}" as="p" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+                <span style="{{ p.avatar }}">{{ p.inicial }}</span>
+                <span style="flex:1;min-width:0;font:500 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ p.nombre }}</span>
+                <span style="font:400 13px/1.3 'Inter Tight',sans-serif;color:#456352">{{ p.dato }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#456352;margin-top:12px;text-wrap:pretty">Inicial sobre disco, verde y terracota alternos. <em style="font-weight:600">Nunca una foto.</em> A la derecha, sector y edad; nunca apellido.</div>
+        </div>
+
+        <div style="{{ demo }}">
+          <div style="{{ etiquetaBloque }}">TARJETA DE EVENTO</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ eventos }}" as="e" hint-placeholder-count="2">
+              <div style="{{ e.caja }}">
+                <span style="{{ e.icono }}">{{ e.glifo }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font:600 14px/1.2 'Inter Tight',sans-serif;color:#14342A">{{ e.tipo }}</span>
+                  <span style="display:block;font:400 12px/1.35 'Inter Tight',sans-serif;color:#566A5D;margin-top:2px">{{ e.cuando }}</span>
+                </span>
+                <span style="{{ e.estadoEstilo }}">{{ e.estado }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#456352;margin-top:12px;text-wrap:pretty">Cada plan con su glifo y su tono, para escanear la lista sin leerla. Lo que ya es tuyo va con borde en vez de relleno.</div>
+        </div>
+
+        <div style="{{ demo }}">
+          <div style="{{ etiquetaBloque }}">PESTAÑAS CON CONTADOR</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <sc-for list="{{ pestanas }}" as="t" hint-placeholder-count="3">
+              <button onClick="{{ t.pick }}" style="{{ t.btn }}">{{ t.nombre }}<span style="{{ t.contador }}">{{ t.n }}</span></button>
+            </sc-for>
+          </div>
+          <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#456352;margin-top:14px;text-wrap:pretty">El contador es parte de la pestaña, no un aviso rojo aparte. Un cero se muestra igual: significa que no hay trabajo pendiente, no que algo falle.</div>
+        </div>
+
+        <div style="{{ demo }}">
+          <div style="{{ etiquetaBloque }}">RECUADRO DE FOTO</div>
+          <div style="display:flex;gap:9px">
+            <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Cédula</div>
+            <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Selfie</div>
+          </div>
+          <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#456352;margin-top:12px;text-wrap:pretty">Fondo <em style="font-weight:600">#E8DFC6</em> y etiqueta en #456352. El mismo par en la cola de verificaciones y en los correos.</div>
+        </div>
+
+        <div style="{{ demo }}">
+          <div style="{{ etiquetaBloque }}">CONFIRMACIÓN DESTRUCTIVA</div>
+          <div style="border-radius:22px;border:1px solid rgba(143,69,21,.34);padding:17px">
+            <div style="font:400 21px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#6E340F">¿Cancelas tu puesto?</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-top:8px">Quedan más de 24 horas, así que recuperas el crédito entero.</div>
+            <div style="display:flex;gap:9px;margin-top:14px">
+              <button style="flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;border:1px solid rgba(143,69,21,.44);background:transparent;color:#8F4515;font:600 14px/1 'Inter Tight',sans-serif;cursor:pointer">Sí, cancelar</button>
+              <button style="flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;cursor:pointer">Mantenerlo</button>
+            </div>
+          </div>
+          <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#456352;margin-top:12px;text-wrap:pretty">Lo destructivo va en borde terracota y lo seguro en verde sólido. Nunca al revés, y nunca rojo: no es una alarma, es una decisión.</div>
+        </div>
+
+        <div style="{{ demo }}">
+          <div style="{{ etiquetaBloque }}">SELLO DE ESTADO</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <sc-for list="{{ sellos }}" as="x" hint-placeholder-count="4">
+              <span style="{{ x.estilo }}">{{ x.texto }}</span>
+            </sc-for>
+          </div>
+          <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#456352;margin-top:14px;text-wrap:pretty">Sobre fondo terracota el texto va en <em style="font-weight:600">#FFF8EA sobre #6E340F</em>. La terracota clara con texto de 11px no llega a AA: fue un fallo real.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aro-sec" id="pantallas" style="margin-top:clamp(44px,7vw,84px)">
+      <div style="{{ eyebrow }}">09 · PANTALLAS</div>
+      <h2 style="{{ h2 }}">{{ tituloPantallas }}</h2>
+      <p style="{{ intro }}">Captación es público, miembro es lo que ve quien va a cenar, operación es interno. Comparten tokens; cambia la densidad.</p>
+
+      <div style="display:flex;flex-direction:column;gap:22px;margin-top:26px">
+        <sc-for list="{{ capas }}" as="c" hint-placeholder-count="3">
+          <div>
+            <div style="{{ etiquetaBloque }}">{{ c.nombre }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:9px">
+              <sc-for list="{{ c.pantallas }}" as="p" hint-placeholder-count="5">
+                <a href="{{ p.enlace }}" style="{{ p.btn }}">{{ p.nombre }}</a>
+              </sc-for>
+            </div>
           </div>
         </sc-for>
+      </div>
+
+      <div style="border-radius:20px;border:1px dashed rgba(20,52,42,.28);padding:clamp(16px,2.2vw,22px);margin-top:22px">
+        <div style="font:400 clamp(20px,2.3vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Lo que aún no existe</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+          <sc-for list="{{ faltan }}" as="f" hint-placeholder-count="3">
+            <span style="display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border-radius:999px;border:1px dashed rgba(20,52,42,.3);font:500 14px/1 'Inter Tight',sans-serif;color:#456352">{{ f.texto }}</span>
+          </sc-for>
+        </div>
       </div>
     </div>
 
     <div style="margin-top:clamp(44px,7vw,84px);padding-top:26px;border-top:1px solid rgba(20,52,42,.13);display:flex;flex-wrap:wrap;gap:12px">
-      <a href="/" style="{{ enlacePie }}">Landing</a>
-      <a href="Aro Club - Agradecimiento.dc.html" style="{{ enlacePie }}">Agradecimiento</a>
-      <a href="Aro Club - Cuestionario.dc.html" style="{{ enlacePie }}">Cuestionario</a>
+      <a href="Aro Club - Landing v3.dc.html" style="{{ enlacePie }}">Landing</a>
+      <a href="Aro Club - Mi cuenta.dc.html" style="{{ enlacePie }}">Mi cuenta</a>
+      <a href="Aro Club - Operacion.dc.html" style="{{ enlacePie }}">Operación</a>
     </div>
   </div>
 </div>
@@ -254,9 +403,17 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { unica: 1, multi: [0, 2], texto: '', pantalla: 1 };
+  state = { unica: 1, multi: [0, 2], texto: '', pantalla: 1, pestana: 0 };
 
   renderVals() {
+    // §07 en su propio documento: en frase de copy, en letra hasta veinte.
+    // Una sola tabla, porque tener dos desincronizadas fue el fallo original.
+    const LETRAS = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez',
+      'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte'];
+    const enLetra = (n, capitular) => {
+      const t = LETRAS[n] || String(n);
+      return capitular ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+    };
     const uns = (id) => 'https://images.unsplash.com/' + id + '?auto=format&fit=crop&w=600&q=76';
     const px = (id) => 'https://images.pexels.com/photos/' + id + '/pexels-photo-' + id + '.jpeg?auto=compress&cs=tinysrgb&w=600';
     const FILTRO = 'filter:grayscale(.24) contrast(1.16) saturate(.74) brightness(.9)';
@@ -264,7 +421,8 @@ class Component extends DCLogic {
 
     const indice = [
       ['Color', '#color'], ['Tipografía', '#tipografia'], ['Fotografía', '#fotografia'],
-      ['Botones', '#botones'], ['Kit de pregunta', '#preguntas'], ['Avisos', '#avisos'], ['Lo que falta', '#pendiente']
+      ['Botones', '#botones'], ['Kit de pregunta', '#preguntas'], ['Avisos', '#avisos'],
+      ['Cifras y dinero', '#cifras'], ['Piezas', '#piezas'], ['Pantallas', '#pantallas']
     ].map((i) => ({ nombre: i[0], ancla: i[1] }));
 
     const colores = [
@@ -274,7 +432,10 @@ class Component extends DCLogic {
       ['Verde profundo', '#14342A', 'Texto principal y fondo de las secciones que pesan.'],
       ['Verde', '#1B5138', 'Botón primario, enlaces, avatares.'],
       ['Terracota clara', '#C0662F', 'Solo trazos, anillos y titulares grandes.'],
-      ['Terracota oscura', '#8F4515', 'La que sí puede llevar texto pequeño.']
+      ['Terracota oscura', '#8F4515', 'La que sí puede llevar texto pequeño.'],
+      ['Línea sobre verde', '#3C5A48', 'Separador en correo, donde el alfa no es fiable.'],
+      ['Terracota profunda', '#6E340F', 'Para texto crema ENCIMA de terracota. Nació de un sello ilegible.'],
+      ['Verde sobre oscuro', '#9CBBA6', 'El secundario cuando el fondo es verde profundo. Nunca #566A5D.']
     ].map((c) => ({
       nombre: c[0], hex: c[1], uso: c[2],
       muestra: 'height:76px;background:' + c[1] + ';border-bottom:1px solid rgba(20,52,42,.1)'
@@ -286,17 +447,20 @@ class Component extends DCLogic {
       ['Cuerpo #456352 sobre crema', '6.43', 'AA', true],
       ['Secundario #566A5D sobre crema', '5.62', 'AA', true],
       ['Terracota oscura sobre crema', '6.70', 'AA', true],
-      ['Terracota clara sobre crema · texto pequeño', '3.42', 'SOLO 24px+', false]
+      ['Terracota clara sobre crema · texto pequeño', '3.42', 'SOLO 24px+', false],
+      ['Deshabilitado #456352 sobre su fondo', '4.88', 'AA', true]
     ].map((k) => ({ par: k[0], ratio: k[1] + ':1', nivel: k[2], sello: sello(k[3]) }));
 
     const escala = [
-      ['Display', 'Ya sabemos con quién cenas', 'Young Serif 88/0.98', 'font:400 clamp(30px,4.6vw,54px)/1 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A'],
-      ['Título', 'Cinco maneras de llegar', 'Young Serif 56/1.02', 'font:400 clamp(25px,3.2vw,38px)/1.05 \'Young Serif\',Georgia,serif;letter-spacing:-.03em;color:#14342A'],
+      ['Display XL · solo captación', 'Ya sabemos con quién cenas', '44→112 / 0.94 / -.04em', 'font:400 clamp(28px,5.2vw,62px)/0.94 \'Young Serif\',Georgia,serif;letter-spacing:-.04em;color:#14342A'],
+      ['Display', 'Sin perfiles. Sin swipe.', '38→96 / 0.98 / -.035em', 'font:400 clamp(26px,4.4vw,52px)/0.98 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A'],
+      ['Título', 'Cinco maneras de llegar', '31→62 / 1 / -.035em', 'font:400 clamp(25px,3.2vw,38px)/1 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A'],
       ['Subtítulo', 'El resto del perfil', 'Young Serif 24/1.15', 'font:400 23px/1.15 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:#14342A'],
       ['Cuerpo grande', 'Seis desconocidos, una mesa, el jueves.', 'Inter Tight 17/1.55', 'font:400 17px/1.55 \'Inter Tight\',sans-serif;color:#456352'],
       ['Cuerpo', 'Nosotros elegimos el sitio y reservamos.', 'Inter Tight 15/1.6', 'font:400 15px/1.6 \'Inter Tight\',sans-serif;color:#456352'],
       ['Etiqueta', 'PANTALLA 3 DE 5', 'Inter Tight 12/1 · .14em', 'font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#566A5D'],
-      ['Cifra', '04', 'Inter Tight 700 · tabular', 'font:700 28px/1 \'Inter Tight\',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:#14342A']
+      ['Cifra', '04', 'Inter Tight 700 · tabular', 'font:700 28px/1 \'Inter Tight\',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:#14342A'],
+      ['Cifra display · solo captación', '8', 'Young Serif 76→148 / 0.86', 'font:400 clamp(46px,6vw,72px)/0.86 \'Young Serif\',Georgia,serif;letter-spacing:-.05em;font-variant-numeric:tabular-nums;color:#14342A']
     ].map((t) => ({ texto: t[1], spec: t[2], muestra: t[3] + ';flex:1 1 auto;min-width:0' }));
 
     const polaroids = [
@@ -320,8 +484,8 @@ class Component extends DCLogic {
     const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;min-height:52px;padding:0 24px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;' + (extra || '');
     const botones = [
       ['PRIMARIO', 'Encuentra tu mesa', btn('#1B5138', '#FAF3E4', 'none'), btn('#8F4515', '#FFF8EA', 'none'), btn('rgba(27,81,56,.13)', '#456352', 'none', 'cursor:not-allowed'), '#1B5138'],
-      ['SECUNDARIO', 'Cambiar mi respuesta', btn('transparent', '#1B5138', '1px solid rgba(20,52,42,.22)'), btn('#FFFBF0', '#8F4515', '1px solid #8F4515'), btn('transparent', '#9DAEA2', '1px solid rgba(20,52,42,.1)', 'cursor:not-allowed'), '#566A5D'],
-      ['FANTASMA', 'Ahora no', btn('transparent', '#566A5D', 'none', 'text-decoration:underline;text-underline-offset:6px;font-weight:500'), btn('transparent', '#8F4515', 'none', 'text-decoration:underline;text-underline-offset:6px;font-weight:500'), btn('transparent', '#9DAEA2', 'none', 'text-decoration:underline;text-underline-offset:6px;font-weight:500;cursor:not-allowed'), '#566A5D'],
+      ['SECUNDARIO', 'Cambiar mi respuesta', btn('transparent', '#1B5138', '1px solid rgba(20,52,42,.22)'), btn('#FFFBF0', '#8F4515', '1px solid #8F4515'), btn('transparent', '#456352', '1px solid rgba(20,52,42,.14)', 'cursor:not-allowed'), '#566A5D'],
+      ['FANTASMA', 'Ahora no', btn('transparent', '#566A5D', 'none', 'text-decoration:underline;text-underline-offset:6px;font-weight:500'), btn('transparent', '#8F4515', 'none', 'text-decoration:underline;text-underline-offset:6px;font-weight:500'), btn('transparent', '#456352', 'none', 'text-decoration:underline;text-underline-offset:6px;font-weight:500;cursor:not-allowed'), '#566A5D'],
       ['SOBRE VERDE', 'Completar mi perfil', btn('#FAF3E4', '#14342A', 'none'), btn('#E39C63', '#14342A', 'none'), btn('rgba(250,243,228,.16)', '#C5D8CA', 'none', 'cursor:not-allowed'), '#566A5D']
     ].map((b, i) => ({
       etiqueta: b[0], texto: b[1], reposo: b[2], presionado: b[3], inerte: b[4],
@@ -392,20 +556,85 @@ class Component extends DCLogic {
       };
     });
 
-    const pendientes = [
-      ['Área de texto', 'F5 · motivo de rechazo'],
-      ['Subida de archivo y cámara', 'F5 · cédula y selfie'],
-      ['Pestañas', 'F13 · perfil y cuenta'],
-      ['Modal', 'F8 · confirmar pago'],
-      ['Confirmación destructiva', 'F12 · cancelar reserva'],
-      ['Tarjeta de evento', 'F6 · home con próxima cena'],
-      ['Tablero de mesas', 'O1 · panel de operación'],
-      ['Traspaso a móvil por QR', 'F5 · verificar desde escritorio']
-    ].map((p) => ({ nombre: p[0], donde: p[1] }));
+    const reglasCifra = [
+      ['En una frase de copy', 'En letra hasta veinte: «cinco mesas», «faltan cuatro», «dieciocho pantallas».'],
+      ['En una cifra destacada, precio o contador', 'En dígitos y tabulares, siempre.'],
+      ['Mesa, pantalla o paso', 'Dos dígitos con cero: 04, 02. Es un identificador, no una cantidad.']
+    ].map((r) => ({ caso: r[0], regla: r[1] }));
+
+    const avatar = (i) => 'flex:0 0 auto;width:30px;height:30px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 13px/1 \'Inter Tight\',sans-serif';
+    const personas = [
+      ['Daniela', 'Arquitectura, 34'], ['Andrés', 'Tecnología, 38'], ['Gabriela', 'Salud, 31']
+    ].map((p, i) => ({ nombre: p[0], dato: p[1], inicial: p[0].charAt(0), avatar: avatar(i) }));
+
+    const eventos = [
+      ['Cenas', 'Jueves 14 · 7:00 p.m.', '◗', '#8F4515', '34 apuntados', false],
+      ['Drinks', 'Viernes 15 · 8:00 p.m.', '◇', '#1B5138', 'Ya estás apuntada', true]
+    ].map((e) => ({
+      tipo: e[0], cuando: e[1], glifo: e[5] ? '✓' : e[2], estado: e[4],
+      caja: 'display:flex;gap:11px;align-items:flex-start;border-radius:22px;padding:13px;background:' + (e[5] ? 'transparent' : '#FAF3E4') + ';border:1px solid ' + (e[5] ? '#1B5138' : 'transparent'),
+      icono: 'flex:0 0 auto;width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 14px/1 \'Inter Tight\',sans-serif;background:' + (e[5] ? '#1B5138' : 'rgba(192,102,47,.14)') + ';color:' + (e[5] ? '#FAF3E4' : e[3]),
+      estadoEstilo: 'flex:0 0 auto;font:600 12px/1.3 \'Inter Tight\',sans-serif;color:' + (e[5] ? '#1B5138' : '#8F4515') + ';white-space:nowrap'
+    }));
+
+    const pestanas = [['Mesas', '5'], ['Verificaciones', '4'], ['Pagos', '34']].map((p, i) => {
+      const on = this.state.pestana === i;
+      return {
+        nombre: p[0], n: p[1],
+        pick: () => this.setState({ pestana: i }),
+        btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#1B5138') + ';font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease',
+        contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.22)' : 'rgba(20,52,42,.09)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#566A5D') + ';font-variant-numeric:tabular-nums'
+      };
+    });
+
+    const sellos = [
+      ['CUADRA', 'rgba(27,81,56,.12)', '#1B5138', 'transparent'],
+      ['REVISAR', 'rgba(143,69,21,.13)', '#8F4515', 'transparent'],
+      ['ABIERTO', '#6E340F', '#FFF8EA', 'transparent'],
+      ['PENDIENTE', 'transparent', '#566A5D', 'rgba(20,52,42,.22)']
+    ].map((x) => ({
+      texto: x[0],
+      estilo: 'display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;background:' + x[1] + ';color:' + x[2] + ';border:1px solid ' + x[3]
+    }));
+
+    const btnPantalla = 'display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;background:#FFFBF0;font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138';
+    const capas = [
+      ['CAPTACIÓN · PÚBLICO', [
+        ['Landing v4', 'Aro Club - Landing v4.dc.html'], ['Landing v3', 'Aro Club - Landing v3.dc.html'],
+        ['Agradecimiento', 'Aro Club - Agradecimiento.dc.html'],
+        ['Entrar', 'Aro Club - Entrar.dc.html'], ['Legal', 'Aro Club - Legal.dc.html']
+      ]],
+      ['MIEMBRO', [
+        ['Datos base', 'Aro Club - Datos base.dc.html'], ['Cuestionario', 'Aro Club - Cuestionario.dc.html'],
+        ['Verificación', 'Aro Club - Verificacion.dc.html'], ['Mi cuenta', 'Aro Club - Mi cuenta.dc.html'],
+        ['Mi perfil', 'Aro Club - Mi perfil.dc.html'], ['Pago', 'Aro Club - Pago.dc.html'],
+        ['Cancelar', 'Aro Club - Cancelar.dc.html'], ['Mi mesa', 'Aro Club - Mi mesa.dc.html'],
+        ['App del miembro', 'Aro Club - App miembro.dc.html']
+      ]],
+      ['OPERACIÓN · INTERNO', [
+        ['Panel de operación', 'Aro Club - Operacion.dc.html'], ['Locales', 'Aro Club - Locales.dc.html'],
+        ['Perfil del miembro', 'Aro Club - Perfil miembro.dc.html'], ['Los doce correos', 'Aro Club - Correos.html']
+      ]]
+    ].map((c) => ({
+      nombre: c[0],
+      pantallas: c[1].map((p) => ({ nombre: p[0], enlace: p[1], btn: btnPantalla }))
+    }));
+
+    const nPantallas = capas.reduce((n, c) => n + c.pantallas.length, 0);
+
+    const faltan = [
+      'Área de texto larga', 'Pestañas en web', 'Modal', 'Tablero de mesas en tiempo real'
+    ].map((texto) => ({ texto }));
 
     return {
-      indice, colores, contrastes, escala, polaroids, reglasFoto, botones,
-      demoUnica, demoMulti, contador, avisos, pendientes, barras,
+      indice, colores, contrastes, escala,
+      tituloPantallas: enLetra(nPantallas, true) + ', en tres capas.',
+      // las catorce obligatorias del cuestionario, que es lo que el kit resuelve
+      tituloKit: 'El componente que aparece ' + enLetra(14) + ' veces.',
+      cuentaPantallas: enLetra(nPantallas),
+      tituloColor: 'Tres familias, ' + enLetra(colores.length) + ' tonos, ninguno decorativo.', polaroids, reglasFoto, botones,
+      demoUnica, demoMulti, contador, avisos, barras,
+      reglasCifra, personas, eventos, pestanas, sellos, capas, faltan,
 
       eyebrow: 'font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.16em;color:#8F4515;margin-bottom:14px',
       h2: 'font:400 clamp(27px,3.6vw,42px)/1.05 \'Young Serif\',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:0;max-width:20ch;text-wrap:balance',

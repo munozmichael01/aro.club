@@ -491,7 +491,9 @@ class Component extends DCLogic {
     }));
 
     const mientras = [
-      ['✓', 'Tu perfil está completo', 'Las diecisiete respuestas ya están guardadas. No hay que tocar nada más.'],
+      // Sin cifra: esta pantalla no pide el catalogo, y un numero escrito
+      // aqui es un numero que se queda viejo sin que nadie se entere.
+      ['✓', 'Tu perfil está completo', 'Tus respuestas ya están guardadas. No hay que tocar nada más.'],
       ['·', 'Te avisamos cuando haya mesa', 'En cuanto se apruebe y se abra mesa en tu zona, llega un solo correo con el día y la hora.']
     ].map((m) => ({
       icono: m[0], titulo: m[1], cuerpo: m[2],

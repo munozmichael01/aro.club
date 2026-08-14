@@ -145,7 +145,7 @@ export async function POST(request: Request) {
     // reservar" con la selfie aun pendiente seria mentira, y esa pantalla
     // seguiria diciendole que espere.
     if (tipos.has('id_document') && tipos.has('selfie')) {
-      await encolar({ perfil: d.profileId }, 'verificacion', { resultado: 'aprobada' })
+      await encolar({ perfil: d.profileId }, 'verificacion', {})
     }
     return NextResponse.json({ estado: 'aprobada' })
   }
@@ -182,6 +182,6 @@ export async function POST(request: Request) {
 
   // El rechazo tambien se avisa. Sin esto, quien no pasa se queda en "en
   // revision" para siempre, esperando un correo que nadie iba a mandar.
-  await encolar({ perfil: d.profileId }, 'verificacion', { resultado: 'rechazada', motivo: d.motivo })
+  await encolar({ perfil: d.profileId }, 'verificacion_rechazada', { motivo: d.motivo })
   return NextResponse.json({ estado: 'rechazada' })
 }

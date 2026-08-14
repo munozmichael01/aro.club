@@ -4,8 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
-<script src="./nav.js"></script>
-<script src="./reglas.js"></script>
 </head>
 <body>
 <x-dc>
@@ -21,7 +19,6 @@
   a:hover { color:#8F4515; }
   input, button { font: inherit; color: inherit; }
   ::selection { background:#1B5138; color:#FAF3E4; }
-  @keyframes aro-latido { 0%,100% { opacity:.55 } 50% { opacity:.28 } }
   @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
   @keyframes aro-trace { from { stroke-dashoffset:96 } to { stroke-dashoffset:0 } }
   @keyframes aro-pulso { 0%,100% { opacity:.4 } 50% { opacity:1 } }
@@ -33,43 +30,17 @@
 
   <div style="position:sticky;top:0;z-index:30;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.1)">
     <div style="max-width:720px;margin:0 auto;padding:12px clamp(16px,4vw,28px);display:flex;align-items:center;justify-content:space-between;gap:14px">
-      <a href="/" style="display:flex;align-items:center;gap:8px;color:#14342A;min-height:44px;margin:-11px 0">
+      <a href="Aro Club - Landing v3.dc.html" style="display:flex;align-items:center;gap:8px;color:#14342A;min-height:44px;margin:-11px 0">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
         <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
       </a>
-      <sc-if value="{{ esOps }}" hint-placeholder-val="{{ false }}">
-        <a href="Aro Club - Operacion.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.22);color:#1B5138;font:600 13px/1 'Inter Tight',sans-serif;letter-spacing:.04em;white-space:nowrap">Operación</a>
-      </sc-if>
-    </div>
-    <div style="border-top:1px solid rgba(20,52,42,.08)">
-      <div style="max-width:720px;margin:0 auto;padding:0 clamp(16px,4vw,28px);display:flex;gap:clamp(18px,4vw,28px)">
-        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
-          <a href="{{ n.enlace }}" aria-current="{{ n.actual }}" style="{{ n.estilo }}">{{ n.texto }}</a>
-        </sc-for>
-      </div>
+      <button onClick="{{ ciclarEstado }}" style="{{ botonEstado }}">{{ textoEstado }}</button>
     </div>
   </div>
 
   <div style="flex:1;max-width:720px;width:100%;margin:0 auto;padding:clamp(24px,4.5vw,44px) clamp(16px,4vw,28px) clamp(48px,8vw,90px)">
 
-    <sc-if value="{{ cargando }}" hint-placeholder-val="{{ false }}">
-      <div aria-busy="true" aria-live="polite" style="animation:aro-open 200ms ease both">
-        <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">Cargando tu cuenta</span>
-        <div style="{{ huesoSaludo }}"></div>
-        <div style="{{ huesoBloque }}">
-          <div style="{{ huesoSello }}"></div>
-          <div style="{{ huesoTitulo }}"></div>
-          <div style="{{ huesoTituloCorto }}"></div>
-          <div style="{{ huesoLinea }}"></div>
-          <div style="{{ huesoLinea }}"></div>
-          <div style="{{ huesoLineaCorta }}"></div>
-          <div style="{{ huesoBoton }}"></div>
-        </div>
-      </div>
-    </sc-if>
-
-    <sc-if value="{{ hayDatos }}" hint-placeholder-val="{{ true }}">
-    <div style="font:400 clamp(26px,4.6vw,38px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:clamp(20px,3vw,28px)">{{ saludo }}</div>
+    <div style="font:400 clamp(26px,4.6vw,38px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:clamp(20px,3vw,28px)">Hola, Daniela.</div>
 
     <div style="{{ bloque }}">
       <div style="animation:aro-open 420ms ease both">
@@ -90,12 +61,12 @@
             <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
               <div style="flex:0 0 auto;width:78px;height:78px;border-radius:999px;background:#FAF3E4;color:#14342A;display:flex;flex-direction:column;align-items:center;justify-content:center">
                 <span style="font:500 9px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">MESA</span>
-                <span style="font:700 32px/1 'Inter Tight',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin-top:2px">{{ numeroMesa }}</span>
+                <span style="font:700 32px/1 'Inter Tight',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin-top:2px">04</span>
               </div>
               <div style="flex:1 1 200px;min-width:0">
-                <div style="font:400 clamp(25px,3vw,32px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#FAF3E4">{{ nombreSitio }}</div>
-                <div style="font:500 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:5px">{{ direccionSitio }}</div>
-                <div style="font:500 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA">{{ cuandoMesa }}</div>
+                <div style="font:400 clamp(25px,3vw,32px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#FAF3E4">Cardenal</div>
+                <div style="font:500 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:5px">Calle Madrid, Las Mercedes</div>
+                <div style="font:500 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA">Jueves 14 · 7:00 p.m.</div>
               </div>
             </div>
 
@@ -115,11 +86,11 @@
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
           <a href="{{ accionEnlace }}" style="{{ botonAccion }}">{{ textoAccion }}</a>
           <sc-if value="{{ haySecundaria }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ ciclarEstado }}" style="{{ botonFantasmaClaro }}">{{ textoSecundaria }}</button>
           </sc-if>
         </div>
       </div>
     </div>
-    </sc-if>
 
     <div id="agenda" style="margin-top:clamp(32px,4.4vw,48px);scroll-margin-top:80px">
       <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:12px">Lo que viene en Caracas</div>
@@ -192,33 +163,26 @@
         </div>
       </sc-for>
 
-      <sc-if value="{{ hayFalloReserva }}" hint-placeholder-val="{{ false }}">
-        <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:15px 18px;margin-top:12px">
-          <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
-          <span style="flex:1;min-width:0;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ falloReserva }}</span>
-        </div>
-      </sc-if>
-
       <sc-if value="{{ agendaVacia }}" hint-placeholder-val="{{ false }}">
         <div style="border-radius:22px;border:1px dashed rgba(20,52,42,.26);padding:clamp(20px,2.6vw,26px);font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:52ch;text-wrap:pretty">Nada de ese tipo abierto ahora mismo. Abrimos según lo que pida la gente: marca ese plan en tu perfil y cuentas para que salga.</div>
       </sc-if>
     </div>
 
-    <sc-if value="{{ hayPorValorar }}" hint-placeholder-val="{{ false }}">
-      <a href="Aro Club - Mi mesa.dc.html" style="display:block;margin-top:clamp(28px,3.6vw,40px);border-radius:26px;background:#14342A;color:#FAF3E4;padding:clamp(20px,2.8vw,28px);transition:background 220ms ease" style-hover="background:#1B5138">
-        <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#C0662F;margin-bottom:10px">PENDIENTE DE VALORAR</div>
-        <div style="font:400 clamp(21px,2.4vw,27px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.025em">{{ tituloValorar }}</div>
-        <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:8px;max-width:52ch;text-wrap:pretty">{{ cuerpoValorar }}</div>
-        <div style="display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;margin-top:16px">Valorar esa mesa</div>
-      </a>
+    <sc-if value="{{ hayValorar }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius:26px;background:#F2E9D5;padding:clamp(20px,2.8vw,26px);margin-top:clamp(28px,3.6vw,40px);max-width:60ch">
+        <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:12px">PENDIENTE DE VALORAR</div>
+        <div style="font:400 clamp(22px,2.6vw,28px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">¿Qué tal estuvo?</div>
+        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:9px;text-wrap:pretty">{{ textoValorar }}</div>
+        <a href="Aro Club - Mi mesa.dc.html#pasada" style="{{ botonValorar }}">Contar qué tal fue</a>
+      </div>
     </sc-if>
 
-    <div style="margin-top:clamp(32px,4.4vw,48px)">
+    <div style="margin-top:clamp(28px,3.6vw,40px)">
       <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:16px">Lo próximo</div>
 
       <sc-if value="{{ hayMios }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:0">
-          <sc-for list="{{ mios }}" as="m" hint-placeholder-count="3">
+          <sc-for list="{{ mios }}" as="m" hint-placeholder-count="2">
             <div style="display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;padding:clamp(15px,2vw,19px) 0;border-bottom:1px solid rgba(20,52,42,.13)">
               <span style="flex:1 1 200px;min-width:0">
                 <span style="display:block;font:400 clamp(19px,2.1vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ m.sitio }}</span>
@@ -227,7 +191,7 @@
               <span style="flex:0 0 auto;font:500 13px/1.4 'Inter Tight',sans-serif;color:#566A5D">{{ m.cuando }}</span>
               <span style="{{ m.chip }}">{{ m.estado }}</span>
               <sc-if value="{{ m.cancelable }}" hint-placeholder-val="{{ false }}">
-                <a href="Aro Club - Cancelar.dc.html" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 12px;font:500 13px/1 'Inter Tight',sans-serif;color:#8F4515;text-decoration:underline;text-underline-offset:5px">Cancelar</a>
+                <a href="Aro Club - Cancelar.dc.html" style="{{ enlaceCancelar }}">Cancelar</a>
               </sc-if>
             </div>
           </sc-for>
@@ -237,13 +201,13 @@
       <sc-if value="{{ sinMios }}" hint-placeholder-val="{{ true }}">
         <div style="border-radius:24px;border:1px dashed rgba(20,52,42,.26);padding:clamp(22px,3vw,30px);max-width:56ch">
           <div style="font:400 clamp(20px,2.3vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Todavía no te has apuntado a nada.</div>
-          <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;text-wrap:pretty">Cuando te apuntes a una fecha aparece aquí, y después de ir podrás contarnos qué tal fue. Eso entra en el emparejamiento de la siguiente.</div>
-          <a href="#agenda" style="display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;margin-top:18px">Ver lo que viene</a>
+          <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;text-wrap:pretty">Cuando te apuntes a una fecha aparece aquí. Tus cenas anteriores viven en tu perfil.</div>
+          <a href="#agenda" style="{{ botonValorar }}">Ver lo que viene</a>
         </div>
       </sc-if>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,214px),1fr));gap:12px;margin-top:clamp(32px,4.4vw,48px)">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,214px),1fr));gap:12px">
       <sc-for list="{{ atajos }}" as="a" hint-placeholder-count="4">
         <a href="{{ a.enlace }}" style="display:flex;flex-direction:column;border-radius:22px;background:#FFFBF0;padding:clamp(17px,2.2vw,21px);min-height:112px">
           <span style="font:400 clamp(19px,2.1vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ a.titulo }}</span>
@@ -254,10 +218,9 @@
     </div>
 
     <div style="margin-top:clamp(30px,4vw,44px);padding-top:24px;border-top:1px solid rgba(20,52,42,.13);display:flex;flex-wrap:wrap;gap:10px">
-      <sc-for list="{{ pie }}" as="p" hint-placeholder-count="3">
+      <sc-for list="{{ pie }}" as="p" hint-placeholder-count="4">
         <a href="{{ p.enlace }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.18);font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138">{{ p.nombre }}</a>
       </sc-for>
-      <button onClick="{{ salir }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:transparent;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;cursor:pointer">{{ textoSalir }}</button>
     </div>
   </div>
 </div>
@@ -265,38 +228,9 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {}, datos: null, sinCuenta: false,
-            reservandoYa: false, falloReserva: '', nExclusiones: null, saliendo: false };
+  state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {} };
 
-  componentDidMount() {
-    this._t = setInterval(() => this.setState({ ahora: Date.now() }), 1000);
-    // Los seis estados los decide el servidor. La pantalla solo elige qué
-    // copy enseñar: si decidiera ella, dos pantallas podrían discrepar
-    // sobre en qué punto está la misma persona.
-    fetch('/api/mi-cuenta')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
-      .then((datos) => this.setState({ datos: datos }))
-      .catch(() => { this.setState({ sinCuenta: true }); window.location.href = 'Aro Club - Entrar.dc.html'; });
-
-    fetch('/api/mis-exclusiones')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
-      .then((d) => this.setState({ nExclusiones: d.exclusiones.length }))
-      .catch(() => {});
-
-    // La mesa, de la MISMA fuente que Mi mesa. Este bloque tenia el
-    // restaurante, la direccion, la fecha, el numero de mesa y los cinco
-    // comensales escritos a mano —Cardenal, Calle Madrid, jueves 14, mesa
-    // 04, "Andres, Gabriela, Jose Manuel, Andreina, Luis"—: la pantalla que
-    // te dice donde presentarte a cenar se lo inventaba entero.
-    //
-    // Se pide a /api/mi-mesa en vez de copiar aqui su logica: dos sitios
-    // calculando "cual es mi mesa" es como acaban discrepando.
-    fetch('/api/mi-mesa')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d && d.mesaId) this.setState({ mesa: d }); })
-      .catch(() => {});
-  }
-
+  componentDidMount() { this._t = setInterval(() => this.setState({ ahora: Date.now() }), 1000); }
   componentWillUnmount() { clearInterval(this._t); }
 
   reloj() {
@@ -322,17 +256,6 @@ class Component extends DCLogic {
         accion: 'Continuar el perfil', enlace: 'Aro Club - Cuestionario.dc.html'
       },
       {
-        // Estado nuevo. El copy sale de la propia pantalla de Datos base de
-        // Design ("Cuatro preguntas rápidas que no estaban en el cuestionario
-        // y sin las cuales no podemos armar tu mesa"), no inventado aquí.
-        id: 'datos', sello: 'FALTAN TUS DATOS PERSONALES',
-        verif: 'sin', respuestas: 'Completas', creditos: '4 de 4',
-        creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
-        titulo: 'Faltan cuatro datos para poder sentarte.',
-        cuerpo: 'Tu nombre, cuándo naciste, tu género y un teléfono. Cuatro campos, medio minuto, y sin ellos no podemos armar tu mesa: la edad y el género son lo que más pesa al formar el grupo.',
-        accion: 'Completar mis datos', enlace: 'Aro Club - Datos base.dc.html'
-      },
-      {
         id: 'verificar', sello: 'FALTA VERIFICAR',
         verif: 'sin', respuestas: 'Completas', creditos: '4 de 4',
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
@@ -346,20 +269,14 @@ class Component extends DCLogic {
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
         titulo: 'Estamos revisando tu identidad.',
         cuerpo: 'Menos de 24 horas, casi siempre el mismo día. Te escribimos al correo en cuanto esté. No hace falta que hagas nada.',
-        // Decia "Ver mis respuestas" y abria el formulario entero: para leer
-        // una respuesta habia que rellenarlo otra vez. Van al perfil, que es
-        // donde se leen —pregunta, valor y editar en linea—.
-        //
-        // Y la secundaria era "Simular aprobacion", un boton de demo en la
-        // pantalla que mas se abre. Fuera.
-        accion: 'Ver mis respuestas', enlace: 'Aro Club - Mi perfil.dc.html'
+        accion: 'Ver mis respuestas', enlace: 'Aro Club - Cuestionario.dc.html', secundaria: 'Simular aprobación'
       },
       {
         id: 'reservar', sello: 'LISTA PARA RESERVAR',
         verif: 'ok', respuestas: 'Completas', creditos: '4 de 4',
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
         titulo: 'Hay cena el jueves en Las Mercedes.',
-        cuerpo: 'Te apuntas a la fecha, pagas en bolívares, y el jueves al mediodía sabes en qué mesa te tocó y con quién.',
+        cuerpo: 'Ya van 34 apuntados y se cierra el martes. Te apuntas a la fecha, pagas en bolívares, y el jueves al mediodía sabes en qué mesa te tocó y con quién.',
         accion: 'Reservar mi puesto', enlace: '#agenda'
       },
       {
@@ -368,7 +285,7 @@ class Component extends DCLogic {
         creditosCuerpo: 'Uno está apartado para el jueves, a la espera de confirmar el pago.',
         titulo: 'Tu puesto está apartado.',
         cuerpo: 'Reportaste el pago y una persona lo está cuadrando con el banco. Suele tardar menos de una hora. Nadie más puede tomar tu puesto mientras tanto.',
-        accion: 'Ver mi reserva', enlace: 'Aro Club - Mi mesa.dc.html', secundaria: 'Algo no cuadra'
+        accion: 'Ver mi reserva', enlace: 'Aro Club - Mi mesa.dc.html#cerrada', secundaria: 'Algo no cuadra'
       },
       {
         id: 'reservada', sello: 'TIENES MESA', reloj: true,
@@ -376,7 +293,7 @@ class Component extends DCLogic {
         creditosCuerpo: 'Uno está reservado para el jueves. Los otros tres no caducan.',
         titulo: 'Jueves 14, siete de la noche.',
         cuerpo: 'Ya está reservada a tu nombre. El jueves al mediodía se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.',
-        accion: 'Ver mi reserva', enlace: '/', secundaria: 'Adelantar a las 12:00'
+        accion: 'Ver mi reserva', enlace: 'Aro Club - Mi mesa.dc.html', secundaria: 'Adelantar a las 12:00'
       },
       {
         id: 'abierta', sello: 'ABIERTO', mesa: true, historial: true,
@@ -384,174 +301,72 @@ class Component extends DCLogic {
         creditosCuerpo: 'Uno es el de esta noche. Te queda uno más.',
         titulo: 'Tu mesa de esta noche.',
         cuerpo: 'Llega diez minutos antes y pregunta por la reserva de Aro. Si se te hace tarde, avísanos y se lo decimos al grupo.',
-        accion: 'Cómo llegar', enlace: '/', secundaria: 'Volver al principio'
+        accion: 'Ver mi mesa', enlace: 'Aro Club - Mi mesa.dc.html', secundaria: 'Volver al principio'
       }
     ];
-    const FORMATOS = { dinner: 'Cenas', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' };
-    const DIASEM = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    const hhmm = (f) => {
-      const h = f.getHours();
-      return (h % 12 || 12) + ':' + (f.getMinutes() < 10 ? '0' : '') + f.getMinutes() + ' ' + (h < 12 ? 'a.m.' : 'p.m.');
-    };
-    const semanaDe = (f) => {
-      const dias = Math.floor((f - new Date()) / 86400000);
-      return dias < 7 ? 'Esta semana' : (dias < 14 ? 'La semana que viene' : 'Más adelante');
-    };
-    const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-    // "Hay cena el jueves en Las Mercedes" y "Ya van 34 apuntados y se
-    // cierra el martes" estaban escritos a mano. Con doce apuntados y otra
-    // fecha, la pantalla que mas se abre mentia en dos cifras.
-    const tituloReservar = (d) => {
-      if (!d.proximaFecha) return 'Todavía no hay fecha abierta.';
-      const f = new Date(d.proximaFecha.empiezaEn);
-      return 'Hay cena el ' + DIAS[f.getDay()] +
-        (d.proximaFecha.zona ? ' en ' + d.proximaFecha.zona : '') + '.';
-    };
-    const cuerpoReservar = (d, base) => {
-      if (!d.proximaFecha) return 'Te avisamos por correo en cuanto abramos la próxima. No hay que hacer nada.';
-      const n = d.proximaFecha.apuntados;
-      const c = new Date(d.proximaFecha.cierraEn);
-      const gente = n === 0 ? 'Eres de los primeros' : (n === 1 ? 'Va una persona apuntada' : 'Ya van ' + n + ' apuntados');
-      return gente + ' y se cierra el ' + DIAS[c.getDay()] + '. ' + base;
-    };
-
-    // Los huesos van en el verde de la marca al 9%, no en gris: un gris
-    // neutro sobre este fondo crema se ve sucio.
-    const hueso = (alto, ancho, extra) =>
-      'height:' + alto + ';width:' + ancho + ';max-width:100%;background:rgba(20,52,42,.09);animation:aro-latido 1.5s ease-in-out infinite;' + (extra || '');
-
-    const d = this.state.datos;
-    const base = (d && estados.find((x) => x.id === d.estado)) || estados[0];
-    // El copy es de Design; las cifras son del servidor. Ninguna se escribe
-    // a mano: el sello y los atajos salen de lo que respondió esta persona.
-    const e = !d ? base : Object.assign({}, base, {
-      verif: d.verif,
-      respuestas: d.respuestas.faltan === 0
-        ? 'Completas'
-        : d.respuestas.faltan + (d.respuestas.faltan === 1 ? ' pendiente' : ' pendientes'),
-      // Antes: "0 de 0", y debajo un "Cuatro encuentros comprados. No
-      // caducan." que NO se sobrescribia nunca. Todo el mundo leia que habia
-      // comprado un pack de cuatro que no existe: no se venden packs, y el
-      // legal ya dice "pagas cuando reservas". Un credito solo aparece al
-      // cancelar con mas de 24 horas.
-      creditos: d.creditos === 0
-        ? 'Ninguno'
-        : (d.creditos === 1 ? '1 crédito' : d.creditos + ' créditos'),
-      creditosCuerpo: d.creditos === 0
-        ? (d.reserva
-            ? 'Tu puesto del jueves ya está pagado. Si cancelas con más de 24 horas, el crédito vuelve aquí.'
-            : 'Se paga cada cena al reservarla. Si cancelas con más de 24 horas, el crédito queda aquí para la siguiente.')
-        : (d.creditos === 1
-            ? 'Un crédito sin usar, de una cena que cancelaste a tiempo. No caduca.'
-            : d.creditos + ' créditos sin usar, de cenas que cancelaste a tiempo. No caducan.'),
-      sello: d.estado === 'perfil'
-        ? 'TE FALTAN ' + d.respuestas.faltan + (d.respuestas.faltan === 1 ? ' PREGUNTA' : ' PREGUNTAS')
-        : base.sello,
-      // La fecha venía escrita a mano en el copy y decía "Jueves 14" con la
-      // cena el 13. Ninguna cifra derivable se escribe a mano (regla 4).
-      titulo: d.reserva && (d.estado === 'reservada' || d.estado === 'abierta')
-        ? (() => {
-            const f = new Date(d.reserva.empiezaEn);
-            const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-            const h = f.getHours();
-            const letras = ['doce','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once'];
-            const enLetra = letras[h % 12];
-            return dias[f.getDay()] + ' ' + f.getDate() + ', ' + enLetra +
-              // Las siete son de la noche, no de la tarde: es como lo dice
-              // el copy original y como se dice en Caracas.
-              (h >= 19 || h < 6 ? ' de la noche.' : h >= 12 ? ' de la tarde.' : ' de la mañana.');
-          })()
-        : (d.estado === 'reservar' ? tituloReservar(d) : base.titulo),
-      cuerpo: d.estado === 'reservar' ? cuerpoReservar(d, base.cuerpo) : base.cuerpo,
-      accion: d.estado === 'reservar' && !d.proximaFecha ? 'Ver la agenda' : base.accion
+    estados.push({
+      id: 'anoche', sello: 'ANOCHE', historial: true, cenado: true,
+      verif: 'ok', respuestas: 'Completas', creditos: '1 de 4',
+      creditosCuerpo: 'Te queda uno. No caduca.',
+      titulo: 'Cenaste anoche.',
+      cuerpo: 'Cardenal, mesa 04. Te queda un crédito para la próxima.',
+      accion: 'Ver mi mesa', enlace: 'Aro Club - Mi mesa.dc.html#pasada', secundaria: 'Volver al principio'
     });
+    const e = estados[this.state.i % estados.length];
     const oscuro = e.id === 'abierta' || e.id === 'reservada';
-    // Igual que en Mi mesa: hasta que el servidor no dice en que estado
-    // esta, no se pinta ninguno. Se veia medio segundo de "TE FALTAN 13
-    // PREGUNTAS" a gente que las tenia todas contestadas.
+    const enRevisionPago = e.id === 'porconfirmar';
 
-    // Los cinco de verdad. Eran cinco personas inventadas con sus sectores,
-    // en la pantalla que te dice con quien cenas.
-    const M = this.state.mesa;
-    const gente = ((M && M.companeros) || []).map((c) => [
-      c.nombre || '—', (c.nombre || '?').charAt(0).toUpperCase(), c.sector || ''
-    ]);
+    const gente = [
+      ['Andrés', 'A', 'Tecnología'], ['Gabriela', 'G', 'Salud'], ['José Manuel', 'J', 'Finanzas'],
+      ['Andreína', 'A', 'Educación'], ['Luis', 'L', 'Arquitectura']
+    ];
     const comensales = gente.map((g, i) => ({
       nombre: g[0], inicial: g[1], sector: g[2],
       avatar: 'flex:0 0 auto;width:28px;height:28px;border-radius:999px;background:' + (i % 2 ? 'rgba(250,243,228,.16)' : '#A0511F') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif'
     }));
 
+    // el historial tiene su propia fuente: no depende del orden de este render
+    const CENAS_HECHAS = e.cenado ? 3 : (e.historial ? 2 : 0);
+    const porValorar = !!e.cenado;
+
     const pieVerif = { sin: 'Sin verificar', revision: 'En revisión', ok: 'Verificada' }[e.verif];
-    const nExcl = this.state.nExclusiones;
-    // Las que ocurrieron de verdad: ni las canceladas ni las que aun no han
-    // pasado. Decir "3 cenas" contando una que cancelo seria mentirle sobre
-    // su propio historial.
-    const nCenas = d && d.planes
-      ? d.planes.filter((p) => p.pasada && !p.cancelada && p.estado !== 'cancelled').length
-      : null;
     const atajos = [
-      // El numero sale del catalogo, no escrito aqui: decia diecisiete y las
-      // obligatorias son catorce. El dia que cambie el catalogo, cambia solo.
-      ['Mis respuestas',
-       'Las ' + (d && d.respuestas ? d.respuestas.total : '') + ' del cuestionario, para ver y editar cuando quieras.',
-       e.respuestas, 'Aro Club - Mi perfil.dc.html'],
-      // Llevaba a '/', que es la landing: un atajo que dice "Mis creditos" y
-      // te saca del producto. Va al legal, que es donde se explica cuando
-      // vuelve un credito y cuando se pierde.
-      ['Mis créditos', e.creditosCuerpo, e.creditos, 'Aro Club - Legal.dc.html#terminos'],
+      ['Mis respuestas', 'Las catorce del cuestionario, para ver y editar cuando quieras.', e.respuestas, 'Aro Club - Mi perfil.dc.html'],
+      ['Mis créditos', e.creditosCuerpo, e.creditos, 'Aro Club - Landing v3.dc.html'],
       ['Mi verificación', 'Estado de tu cédula y tu selfie.', pieVerif, 'Aro Club - Verificacion.dc.html'],
-      // El "Ninguna" estaba escrito a mano y el enlace iba al legal: un dato
-      // inventado y un enlace que decia una cosa y llevaba a otra.
-      ['Exclusiones', 'Personas con las que no quieres volver a coincidir. Nadie se entera.',
-       nExcl == null ? 'Cargando' : (nExcl === 0 ? 'Ninguna' : (nExcl === 1 ? '1 persona' : nExcl + ' personas')),
-       'Aro Club - Mi perfil.dc.html#exclusiones'],
-      // El historial completo no vive aqui: es identidad acumulada, no algo
-      // que tengas que hacer. Esta tarjeta lleva a donde vive.
-      ['Mis cenas', 'Dónde has estado y cuándo. La lista entera.',
-       nCenas == null ? 'Cargando' : (nCenas === 0 ? 'Ninguna todavía' : (nCenas === 1 ? '1 cena' : nCenas + ' cenas')),
-       'Aro Club - Mi perfil.dc.html#cenas']
+      ['Mis cenas', 'Dónde has estado y con cuánta gente. Vive en tu perfil.', CENAS_HECHAS ? String(CENAS_HECHAS) : 'Ninguna todavía', 'Aro Club - Mi perfil.dc.html#cenas'],
+      ['Exclusiones', 'Personas con las que no quieres volver a coincidir. Nadie se entera.', 'Ninguna', 'Aro Club - Legal.dc.html']
     ].map((a) => ({
       titulo: a[0], cuerpo: a[1], pie: a[2], enlace: a[3],
       pieEstilo: 'margin-top:auto;padding-top:12px;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:#8F4515'
     }));
 
     // planes propios: futuros y pasados en la misma lista, con su estado
-    const conMesa = e.id === 'reservada' || e.id === 'abierta';
+    const conMesa = e.id === 'reservada' || e.id === 'abierta' || enRevisionPago;
     // lo que se acaba de apuntar entra aquí, no solo lo que trae el estado
-    // Sus planes de verdad. Antes eran tres lineas fijas —una cena en
-    // Malabar que nadie tuvo— en la pantalla que hace de historial.
-    const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-    const crudosMios = ((d && d.planes) || []).map((p) => {
-      const f = p.empiezaEn ? new Date(p.empiezaEn) : null;
-      const cuando = f
-        ? DIASEM[f.getDay()] + ' ' + f.getDate() + ' de ' + MESES[f.getMonth()] + ' · ' + hhmm(f)
-        : '';
-      const titulo = p.restaurante
-        ? p.restaurante + (p.numeroMesa != null ? ' · mesa ' + String(p.numeroMesa).padStart(2, '0') : '')
-        // En singular: es UNA cena suya, no la categoria del calendario.
-        : ({ dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' }[p.formato] || 'Cena');
-      if (p.cancelada || p.estado === 'cancelled') return [titulo, cuando, 'Cancelaste', 'Cancelaste'];
-      if (p.estado === 'attended') return [titulo, cuando, 'Fuiste', 'Fuiste'];
-      if (p.pasada) return [titulo, cuando, 'Ya pasó', 'Pasada'];
-      if (p.estado === 'pending_payment') return [titulo, cuando, 'Pago en revisión · puesto apartado', 'Por confirmar'];
-      return [titulo, cuando, 'Confirmada, se cierra 48 h antes', 'Confirmada'];
+    const recien = Object.keys(this.state.hechas).map((k) => {
+      const d = this.state.hechas[k];
+      return [d.tipo + ' en ' + d.zona, d.cuando + ' · ' + d.hora, 'Pago en revisión · puesto apartado', 'Por confirmar'];
     });
-    // §10: "Mis planes" era una lista sin techo en la portada —una entrada
-    // por cena, para siempre, hundiendo cada semana lo que hay debajo—. Aqui
-    // queda solo lo que tiene fecha por delante, que son dos o tres como
-    // mucho. El historial completo vive en el perfil, que es identidad
-    // acumulada y no algo que tengas que hacer.
-    const mios = crudosMios.filter((h) => h[3] !== 'Pasada' && h[3] !== 'Fuiste' && h[3] !== 'Cancelaste').map((h) => {
-      // Tres estados vivos, no dos: por confirmar, confirmada y hoy. Un
-      // pago reportado no es una reserva confirmada, y la fila tiene que
-      // decirlo o la persona cree que ya esta.
+    const crudosMios = recien.concat(conMesa
+      ? [
+        [e.id === 'abierta' ? 'Cardenal · mesa 04' : 'Cena en Las Mercedes', 'Jueves 14 de agosto · 7:00 p.m.',
+          enRevisionPago ? 'Pago en revisión · puesto apartado' : (e.id === 'abierta' ? 'Se abre a las 12:00' : 'Confirmada, se cierra el martes'),
+          enRevisionPago ? 'Por confirmar' : (e.id === 'abierta' ? 'Hoy' : 'Confirmada')],
+        ['Alto', 'Jueves 31 de julio · 7:00 p.m.', 'Mesa 02 · cinco personas', 'Fuiste'],
+        ['Malabar', 'Jueves 17 de julio · 7:00 p.m.', 'Cancelaste con menos de 24 h', 'Cancelaste']
+      ]
+      : []);
+    // Lo pasado se va al perfil: esta lista solo lleva lo que tiene fecha por delante.
+    const proximos = crudosMios.filter((h) => h[3] !== 'Fuiste' && h[3] !== 'Cancelaste');
+    const mios = proximos.map((h) => {
+      // tres estados vivos: por confirmar, confirmada y hoy
       const pendiente = h[3] === 'Por confirmar';
       const activo = h[3] === 'Hoy' || h[3] === 'Confirmada';
       const fondo = pendiente ? 'rgba(143,69,21,.13)' : (activo ? '#1B5138' : (h[3] === 'Fuiste' ? 'rgba(27,81,56,.11)' : 'transparent'));
       const tinta = pendiente ? '#8F4515' : (activo ? '#FAF3E4' : (h[3] === 'Fuiste' ? '#1B5138' : '#566A5D'));
       return {
         sitio: h[0], cuando: h[1], detalle: h[2], estado: h[3],
-        // Solo lo vivo se puede cancelar: lo pasado y lo ya cancelado, no.
         cancelable: activo || pendiente,
         chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + fondo + ';border:1px solid ' + (h[3] === 'Cancelaste' ? 'rgba(20,52,42,.18)' : 'transparent') + ';color:' + tinta
       };
@@ -584,49 +399,31 @@ class Component extends DCLogic {
       Movimiento: ['◢', '#2D6A4F', 'rgba(45,106,79,.14)'],
       Coffee: ['◉', '#566A5D', 'rgba(86,106,93,.14)']
     };
+    // el evento que ya tienes reservado no se ofrece otra vez
+    const yaApuntada = conMesa ? 'Jueves 14 · 7:00 p.m.' : null;
     // El apuntado es a una FECHA, no a una mesa. Las mesas se arman al cerrar,
     // repartiendo a todo el que se apuntó. Por eso el contador es de gente en la fecha
     // y el umbral es el mínimo para que esa fecha salga adelante.
     const MINIMO = 12;
-
-    // Seis fechas escritas a mano —con "Jueves 14" y 34 apuntados— en la
-    // pantalla donde se decide si vas a cenar. Ahora salen de la base.
-    const agendaSrv = (d && d.agenda) || [];
-    const yaApuntada = (() => {
-      const m = agendaSrv.find((a) => a.mia);
-      if (!m) return null;
-      const f = new Date(m.empiezaEn);
-      return DIASEM[f.getDay()] + ' ' + f.getDate() + ' · ' + hhmm(f);
-    })();
-    const crudos = agendaSrv.map((a) => {
-      const f = new Date(a.empiezaEn);
-      return [
-        semanaDe(f),
-        FORMATOS[a.formato] || 'Cenas',
-        DIASEM[f.getDay()] + ' ' + f.getDate() + ' · ' + hhmm(f),
-        // Las zonas ABIERTAS de esa fecha, no un sitio: el sitio se decide
-        // al armar la mesa y ella no lo sabe hasta la revelación.
-        a.zonas.join(' o ') || 'Zona por confirmar',
-        a.apuntados,
-        a.id,
-        a.mia
-      ];
-    });
+    const crudos = [
+      ['Esta semana', 'Cenas', 'Jueves 14 · 7:00 p.m.', 'Las Mercedes', 34],
+      ['Esta semana', 'Drinks', 'Viernes 15 · 8:00 p.m.', 'El Rosal', 19],
+      ['Esta semana', 'Movimiento', 'Domingo 17 · 7:00 a.m.', 'El Ávila, Sabas Nieves', 8],
+      ['La semana que viene', 'Cenas', 'Jueves 21 · 7:00 p.m.', 'Los Palos Grandes', 11],
+      ['La semana que viene', 'Cenas', 'Viernes 22 · 8:00 p.m.', 'Chacao', 6],
+      ['La semana que viene', 'Coffee', 'Sábado 23 · 10:00 a.m.', 'Altamira', 4]
+    ];
     const filtrados = crudos.filter((c) => this.state.filtro === 0 || c[1] === tipos[this.state.filtro]);
     const semanas = [];
     filtrados.forEach((c) => {
       const n = c[4];
       const va = n >= 6;
       const clave = c[1] + c[2];
-      // Lo dice el servidor, no una marca local que se pierde al recargar.
-      const mia = !!c[6];
+      const yaHecha = !!this.state.hechas[clave];
+      const mia = yaApuntada === c[2] || yaHecha;
       const abierta = this.state.reservando === clave;
       const m = marcas[c[1]];
-      // La hora REAL de la fecha, una sola. Habia dos opciones por formato
-      // —"7:00 p.m." y "8:30 p.m."— pero un evento tiene una hora y nadie
-      // elige turno: era un selector que no cambiaba nada. Si algun dia hay
-      // dos turnos, seran dos fechas distintas.
-      const horasDe = [c[2].split(' · ')[1] || ''];
+      const horasDe = { Cenas: ['7:00 p.m.', '8:30 p.m.'], Drinks: ['8:00 p.m.', '9:30 p.m.'], Movimiento: ['7:00 a.m.', '9:00 a.m.'], Coffee: ['10:00 a.m.', '4:00 p.m.'] }[c[1]];
       const horas = horasDe.map((label, hi) => {
         const on = this.state.hora === hi;
         return {
@@ -641,12 +438,12 @@ class Component extends DCLogic {
       if (!g) { g = { semana: c[0], eventos: [] }; semanas.push(g); }
       g.eventos.push({
         tipo: c[1], cuando: c[2], zona: c[3], glifo: mia ? '✓' : m[0],
-        enlace: '/',
+        enlace: 'Aro Club - Landing v3.dc.html',
         estado: mia
-          ? 'Ya estás apuntada'
+          ? (enRevisionPago ? 'Pago en revisión' : 'Ya estás apuntada')
           : (n >= 6
-            ? n + (n === 1 ? ' apuntado · ' : ' apuntados · ') + Math.ceil(n / 6) + (Math.ceil(n / 6) === 1 ? ' mesa' : ' mesas')
-            : n + (n === 1 ? ' apuntado · ' : ' apuntados · ') + ((6 - n) === 1 ? 'falta 1' : 'faltan ' + (6 - n)) + ' para la primera mesa'),
+            ? n + ' apuntados · ' + Math.ceil(n / 6) + (Math.ceil(n / 6) === 1 ? ' mesa' : ' mesas')
+            : n + ' apuntados · ' + ((6 - n) === 1 ? 'falta 1' : 'faltan ' + (6 - n)) + ' para la primera mesa'),
         estadoEstilo: 'font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (mia ? '#1B5138' : (va ? '#1B5138' : '#8F4515')) + ';white-space:nowrap',
         caja: 'display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;border-radius:22px;padding:clamp(15px,2vw,18px);cursor:' + (mia ? 'default' : 'pointer') + ';background:' + (mia ? 'transparent' : (abierta ? '#F2E9D5' : '#FFFBF0')) + ';border:1px solid ' + (mia ? '#1B5138' : 'transparent'),
         icono: 'flex:0 0 auto;width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 15px/1 \'Inter Tight\',sans-serif;background:' + (mia ? '#1B5138' : m[2]) + ';color:' + (mia ? '#FAF3E4' : m[1]),
@@ -660,85 +457,31 @@ class Component extends DCLogic {
         cargo: 'Tu puesto en esta fecha',
         precio: '8 USD en bolívares',
         nota: 'Cubre el emparejamiento, la verificación del grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
-        textoConfirmar: this.state.reservandoYa ? 'Apuntándote' : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : '8 USD'),
+        textoConfirmar: 'Reservar mi puesto · 8 USD',
         botonConfirmar: 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
         abrir: () => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0 })),
-        // Reservar de verdad. Antes solo se marcaba en la pantalla: al
-        // recargar desaparecia, y en la base no habia nada.
+        // la reserva no se marca aquí: se confirma al pagar
         confirmar: () => {
-          // Con creditos se aparta el puesto aqui mismo. Sin creditos hay
-          // que pagar, y eso es otra pantalla: reportar un pago no es
-          // pulsar un boton, es salir al banco y volver.
-          if (!d || !(d.creditos > 0)) {
-            const q = new URLSearchParams({
-              evento: c[5], tipo: c[1], cuando: c[2], zona: c[3], hora: c[2].split(' · ')[1] || ''
-            });
-            window.location.href = 'Aro Club - Pago.dc.html?' + q.toString();
-            return;
-          }
-          if (this.state.reservandoYa) return;
-          this.setState({ reservandoYa: true, falloReserva: '' });
-          fetch('/api/reservar', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ eventoId: c[5] })
-          })
-            .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
-            .then(({ ok, x }) => {
-              if (!ok) { this.setState({ reservandoYa: false, falloReserva: x.error || 'No pudimos apuntarte.' }); return; }
-              this.setState({ reservandoYa: false, reservando: null });
-              // Se relee: el estado de la cuenta cambia con la reserva.
-              fetch('/api/mi-cuenta').then((r) => r.json()).then((d2) => this.setState({ datos: d2 }));
-            })
-            .catch(() => this.setState({ reservandoYa: false, falloReserva: 'No pudimos apuntarte.' }));
+          const q = new URLSearchParams({
+            tipo: c[1], cuando: c[2], zona: c[3], hora: horasDe[this.state.hora]
+          });
+          window.location.href = 'Aro Club - Pago.dc.html?' + q.toString();
         }
       });
     });
 
     const pie = [
-      ['Preguntas', '/#faq'],
+      ['Preguntas', 'Aro Club - Landing v3.dc.html#faq'],
       ['Reglas de la mesa', 'Aro Club - Legal.dc.html#reglas'],
-      ['Privacidad', 'Aro Club - Legal.dc.html#privacidad']
+      ['Privacidad', 'Aro Club - Legal.dc.html#privacidad'],
+      ['Cerrar sesión', 'Aro Club - Landing v3.dc.html']
     ].map((p) => ({ nombre: p[0], enlace: p[1] }));
 
     return {
       comensales, atajos, pie, filtros,
-
-      // Cerrar sesion NO es un enlace: llama al servidor, que borra la
-      // cookie, y solo entonces navega. Antes era un <a> a la landing y la
-      // sesion seguia viva: se veia "Entrar" el instante que tarda el fetch
-      // y volvia a "Mi cuenta".
-      textoSalir: this.state.saliendo ? 'Cerrando…' : 'Cerrar sesión',
-      salir: () => {
-        if (this.state.saliendo) return;
-        this.setState({ saliendo: true });
-        fetch('/api/salir', { method: 'POST' })
-          .then(() => { try { window.localStorage.removeItem('aro-sesion'); } catch (e) {} })
-          .catch(() => {})
-          .then(() => { window.location.href = '/'; });
-      },
       hayFiltro: this.state.filtro !== 0,
       quitarFiltro: () => this.setState({ filtro: 0, reservando: null }),
       botonFantasmaOscuro: 'display:inline-flex;align-items:center;min-height:50px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
-      hayDatos: !!this.state.datos,
-      hayFalloReserva: !!this.state.falloReserva,
-      falloReserva: this.state.falloReserva,
-      // La API ya decia quien es ops y la pantalla no lo usaba: un admin
-      // entraba y veia la vista de miembro, sin ninguna puerta al panel.
-      esOps: !!(this.state.datos && this.state.datos.esOps),
-      // Un esqueleto con la forma del bloque que viene, no un spinner: el
-      // salto de una cosa a otra es lo que se nota, no la espera.
-      cargando: !this.state.datos && !this.state.sinCuenta,
-      huesoSaludo: hueso('clamp(26px,4.6vw,38px)', '7ch', 'margin-bottom:clamp(20px,3vw,28px);border-radius:10px'),
-      huesoBloque: 'border-radius:30px;background:#FFFBF0;padding:clamp(24px,4vw,38px)',
-      huesoSello: hueso('30px', '13ch', 'border-radius:999px;margin-bottom:16px'),
-      huesoTitulo: hueso('clamp(28px,4.4vw,40px)', '100%', 'margin-bottom:8px;border-radius:10px'),
-      huesoTituloCorto: hueso('clamp(28px,4.4vw,40px)', '62%', 'margin-bottom:20px;border-radius:10px'),
-      huesoLinea: hueso('15px', '100%', 'margin-bottom:9px;border-radius:6px'),
-      huesoLineaCorta: hueso('15px', '48%', 'margin-bottom:26px;border-radius:6px'),
-      huesoBoton: hueso('56px', '15ch', 'border-radius:999px'),
-      saludo: this.state.datos && this.state.datos.nombre
-        ? 'Hola, ' + this.state.datos.nombre + '.'
-        : 'Hola.',
       agenda: semanas,
       agendaVacia: semanas.length === 0,
 
@@ -750,20 +493,7 @@ class Component extends DCLogic {
       titulo: e.titulo,
       cuerpo: e.cuerpo,
 
-      // El bloque solo si HAY mesa de verdad: antes bastaba con que el
-      // estado dijera que la habia, y se pintaba la de mentira.
-      hayMesa: !!e.mesa && !!M,
-      numeroMesa: M ? String(M.numeroMesa == null ? '' : M.numeroMesa).padStart(2, '0') : '',
-      nombreSitio: (M && M.restaurante) || '',
-      direccionSitio: (M && M.direccion) || '',
-      cuandoMesa: (function () {
-        if (!M || !M.empiezaEn) return '';
-        const f = new Date(M.empiezaEn);
-        const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-        let h = f.getHours(); const mi = f.getMinutes();
-        const t = h < 12 ? 'a.m.' : 'p.m.'; h = h % 12 || 12;
-        return DIAS[f.getDay()] + ' ' + f.getDate() + ' · ' + h + ':' + (mi < 10 ? '0' + mi : mi) + ' ' + t;
-      })(),
+      hayMesa: !!e.mesa,
       hayReloj: !!e.reloj,
       reloj: this.reloj(),
 
@@ -771,27 +501,20 @@ class Component extends DCLogic {
       accionEnlace: e.enlace,
       botonAccion: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 26px;border-radius:999px;background:' + (oscuro ? '#FAF3E4' : '#1B5138') + ';color:' + (oscuro ? '#14342A' : '#FAF3E4') + ';font:600 16px/1 \'Inter Tight\',sans-serif;transition:background 200ms ease',
       haySecundaria: !!e.secundaria,
+      textoSecundaria: e.secundaria || '',
       botonFantasmaClaro: 'display:inline-flex;align-items:center;min-height:56px;padding:0 10px;background:transparent;border:none;color:' + (oscuro ? '#9CBBA6' : '#566A5D') + ';font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
 
       mios,
-      // La tarjeta de valorar. Se va sola a las 48 h porque despues ya no se
-      // puede valorar: no es una fila de historial, es algo que hacer.
-      hayPorValorar: !!(d && d.porValorar),
-      tituloValorar: (d && d.porValorar)
-        ? (d.porValorar.sitio ? 'Tu mesa en ' + d.porValorar.sitio + '.' : 'Tu última mesa.')
-        : '',
-      cuerpoValorar: 'Dos preguntas. Lo que digas entra en el emparejamiento de la próxima, y nadie más lo ve.',
-      // "Mi mesa" solo si de verdad la hay: sin reserva esa pantalla te
-      // devuelve aqui, y una pestaña que rebota a donde ya estabas no es
-      // navegacion.
-      // De la RESERVA, no del estado. `conMesa` mira en que punto de la
-      // cadena esta, y quien tiene reserva pero el perfil a medias —o
-      // cualquier estado que no sea reservada/abierta— tiene mesa y no veia
-      // la pestaña. La pregunta es "¿hay mesa?", no "¿en que paso vas?".
-      nav: AroNav.items('inicio', !!(d && d.reserva)),
       hayMios: mios.length > 0,
       sinMios: mios.length === 0,
+      hayValorar: porValorar,
+      textoValorar: 'Cenaste anoche en Cardenal, mesa 04. Lo que nos cuentes entra en el emparejamiento de la próxima, y puedes marcar con quién prefieres no repetir.',
+      botonValorar: 'display:inline-flex;align-items:center;min-height:56px;padding:0 24px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;margin-top:18px',
+      enlaceCancelar: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 12px;margin:-8px -12px -8px 0;border-radius:999px;font:500 13px/1 \'Inter Tight\',sans-serif;color:#8F4515;text-decoration:underline;text-underline-offset:4px',
 
+      textoEstado: 'Estado ' + ((this.state.i % estados.length) + 1) + ' de ' + estados.length,
+      botonEstado: 'display:inline-flex;align-items:center;min-height:44px;margin:-8px 0;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:transparent;color:#1B5138;font:500 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      ciclarEstado: () => this.setState((s) => ({ i: (s.i + 1) % estados.length }))
     };
   }
 }

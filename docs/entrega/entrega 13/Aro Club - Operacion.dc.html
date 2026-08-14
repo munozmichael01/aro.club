@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#F2E9D5; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#14342A; color:#FAF3E4; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#F2E9D5;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh">
+
+  <div style="position:sticky;top:0;z-index:40;background:rgba(242,233,213,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.14)">
+    <div style="max-width:1280px;margin:0 auto;padding:12px clamp(14px,3vw,26px);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:10px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="1.8"></circle><circle cx="20.6" cy="12" r="1.9" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="3.4" cy="12" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#14342A"></circle></svg>
+        <span style="font:400 18px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro</span>
+        <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;border-left:1px solid rgba(20,52,42,.22);padding-left:12px">OPERACIÓN</span>
+      </span>
+      <span style="flex:1"></span>
+      <div style="display:flex;gap:5px">
+        <sc-for list="{{ pestanas }}" as="p" hint-placeholder-count="3">
+          <button onClick="{{ p.pick }}" style="{{ p.btn }}">{{ p.nombre }}<span style="{{ p.contador }}">{{ p.n }}</span></button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1280px;margin:0 auto;padding:clamp(20px,3vw,32px) clamp(14px,3vw,26px) clamp(40px,6vw,64px)">
+
+    <sc-if value="{{ esMesas }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:aro-open 300ms ease both">
+        <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+          <h1 style="{{ h1 }}">Cena · jueves 14 · Las Mercedes</h1>
+          <span style="{{ selloCierre }}">CIERRA EN 6 H 12 M</span>
+        </div>
+        <p style="{{ bajada }}">{{ textoBajada }}</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:clamp(20px,2.6vw,26px) 0">
+          <sc-for list="{{ metricas }}" as="m" hint-placeholder-count="4">
+            <div style="border-radius:20px;background:#FAF3E4;padding:16px 18px">
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">{{ m.etiqueta }}</div>
+              <div style="{{ m.cifraEstilo }}">{{ m.cifra }}</div>
+              <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:4px">{{ m.nota }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));align-items:start;gap:12px">
+          <sc-for list="{{ mesas }}" as="t" hint-placeholder-count="6">
+            <div style="{{ t.caja }}">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+                <span style="{{ t.numero }}">{{ t.n }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font:400 clamp(19px,2vw,22px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ t.sitio }}</span>
+                  <span style="display:block;font:500 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ t.hora }}</span>
+                </span>
+                <span style="{{ t.sello }}">{{ t.estado }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(20,52,42,.12)">
+                <sc-for list="{{ t.gente }}" as="g" hint-placeholder-count="6">
+                  <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(20,52,42,.09)">
+                    <span style="{{ g.avatar }}">{{ g.inicial }}</span>
+                    <span style="flex:1;min-width:0;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ g.nombre }}</span>
+                    <span style="font:400 12px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ g.dato }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:14px">
+                <sc-for list="{{ t.senales }}" as="s" hint-placeholder-count="3">
+                  <span style="{{ s.chip }}">{{ s.texto }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="border-radius:22px;border:1px dashed rgba(20,52,42,.3);padding:clamp(18px,2.4vw,24px);margin-top:12px">
+          <div style="font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloEspera }}</div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:7px;max-width:56ch;text-wrap:pretty">{{ notaEspera }}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+            <sc-for list="{{ espera }}" as="e" hint-placeholder-count="4">
+              <span style="display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 14px 0 8px;border-radius:999px;background:#FAF3E4;font:500 14px/1 'Inter Tight',sans-serif;color:#14342A">
+                <span style="{{ e.avatar }}">{{ e.inicial }}</span>{{ e.nombre }}
+              </span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(22px,3vw,30px)">
+          <button onClick="{{ publicar }}" style="{{ botonPrimario }}">{{ textoPublicar }}</button>
+          <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
+        </div>
+        <sc-if value="{{ publicado }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:rgba(27,81,56,.11);padding:16px 18px;margin-top:14px;animation:aro-open 260ms ease both">
+            <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+            <span style="flex:1;min-width:0;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ textoPublicado }}</span>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esVerificaciones }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <h1 style="{{ h1 }}">Cola de verificaciones</h1>
+        <p style="{{ bajada }}">Compara el documento con la selfie y decide. Lo que apruebes queda con tu nombre, y el documento se borra a los noventa días.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start;gap:12px;margin-top:clamp(20px,2.6vw,28px)">
+          <sc-for list="{{ colas }}" as="c" hint-placeholder-count="4">
+            <div style="{{ c.caja }}">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="{{ c.avatar }}">{{ c.inicial }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font:400 clamp(19px,2vw,22px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.nombre }}</span>
+                  <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ c.espera }}</span>
+                </span>
+              </div>
+              <div style="display:flex;gap:9px;margin-top:14px">
+                <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Cédula</div>
+                <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Selfie</div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+                <sc-for list="{{ c.datos }}" as="d" hint-placeholder-count="3">
+                  <span style="display:inline-flex;align-items:center;min-height:30px;padding:0 11px;border-radius:999px;background:rgba(20,52,42,.07);font:500 12px/1 'Inter Tight',sans-serif;color:#2C4A38">{{ d.texto }}</span>
+                </sc-for>
+              </div>
+              <sc-if value="{{ c.hayAviso }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:12px">
+                  <span style="flex:0 0 auto;width:20px;height:20px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+                  <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ c.aviso }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ c.eligiendo }}" hint-placeholder-val="{{ false }}">
+                <div style="border-top:1px solid rgba(20,52,42,.12);margin-top:14px;padding-top:14px;animation:aro-open 220ms ease both">
+                  <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:10px">POR QUÉ SE RECHAZA</div>
+                  <div style="display:flex;flex-direction:column;gap:7px">
+                    <sc-for list="{{ c.motivos }}" as="m" hint-placeholder-count="5">
+                      <button onClick="{{ m.pick }}" style="{{ m.btn }}">
+                        <span style="{{ m.aro }}">{{ m.icono }}</span>
+                        <span style="flex:1;min-width:0;text-align:left">
+                          <span style="{{ m.txt }}">{{ m.label }}</span>
+                          <span style="{{ m.pieEstilo }}">{{ m.pie }}</span>
+                        </span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ c.hayVista }}" hint-placeholder-val="{{ false }}">
+                    <div style="border-radius:16px;background:#F2E9D5;padding:13px 15px;margin-top:12px">
+                      <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:7px">LO QUE LE LLEGA A ELLA</div>
+                      <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ c.vistaUsuario }}</div>
+                    </div>
+                  </sc-if>
+                  <div style="display:flex;gap:9px;margin-top:14px">
+                    <button onClick="{{ c.confirmarRechazo }}" style="{{ c.botonConfirmar }}">{{ c.textoConfirmar }}</button>
+                    <button onClick="{{ c.rechazar }}" style="{{ c.botonVolver }}">Volver</button>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ c.decidiendo }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;gap:9px;margin-top:14px">
+                  <button onClick="{{ c.aprobar }}" style="{{ c.botonAprobar }}">{{ c.textoAprobar }}</button>
+                  <button onClick="{{ c.rechazar }}" style="{{ c.botonRechazar }}">Rechazar</button>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ c.hayResuelto }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:11px;align-items:flex-start;border-radius:16px;background:{{ c.fondoResuelto }};padding:12px 14px;margin-top:14px">
+                  <span style="{{ c.iconoResuelto }}">{{ c.glifoResuelto }}</span>
+                  <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ c.resuelto }}</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esPagos }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+          <h1 style="{{ h1 }}">Pagos de hoy</h1>
+          <span style="{{ selloTasa }}">TASA BCV · 756,71 Bs</span>
+        </div>
+        <p style="{{ bajada }}">Todo se cobra en bolívares. La tasa se congela al confirmar el pago, no al reservar.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:clamp(20px,2.6vw,26px) 0">
+          <sc-for list="{{ metricasPago }}" as="m" hint-placeholder-count="4">
+            <div style="border-radius:20px;background:#FAF3E4;padding:16px 18px">
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">{{ m.etiqueta }}</div>
+              <div style="{{ m.cifraEstilo }}">{{ m.cifra }}</div>
+              <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:4px">{{ m.nota }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font:400 clamp(22px,2.6vw,28px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:clamp(24px,3vw,32px) 0 6px">Por conciliar</div>
+        <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;max-width:60ch;margin:0 0 18px;text-wrap:pretty">Cada reporte junto al movimiento del banco. El puesto ya está apartado: lo que decides aquí es si el dinero entró.</p>
+
+        <sc-if value="{{ hayCola }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px">
+            <sc-for list="{{ cola }}" as="c" hint-placeholder-count="3">
+              <div style="{{ c.caja }}">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="{{ c.avatar }}">{{ c.inicial }}</span>
+                  <span style="flex:1;min-width:0">
+                    <span style="display:block;font:400 clamp(19px,2vw,22px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.nombre }}</span>
+                    <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ c.espera }}</span>
+                  </span>
+                  <span style="{{ c.selloMetodo }}">{{ c.metodo }}</span>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+                  <div style="border-radius:16px;background:#F2E9D5;padding:13px 14px">
+                    <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:9px">LO QUE REPORTÓ</div>
+                    <sc-for list="{{ c.reporte }}" as="r" hint-placeholder-count="4">
+                      <div style="display:flex;gap:8px;justify-content:space-between;padding:4px 0">
+                        <span style="font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ r.campo }}</span>
+                        <span style="{{ r.valorEstilo }}">{{ r.valor }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="border-radius:16px;background:#F2E9D5;padding:13px 14px">
+                    <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:9px">EL BANCO</div>
+                    <sc-for list="{{ c.banco }}" as="r" hint-placeholder-count="4">
+                      <div style="display:flex;gap:8px;justify-content:space-between;padding:4px 0">
+                        <span style="font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ r.campo }}</span>
+                        <span style="{{ r.valorEstilo }}">{{ r.valor }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <sc-if value="{{ c.hayCaptura }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:11px;border-radius:16px;border:1px solid rgba(20,52,42,.16);padding:11px 14px;margin-top:10px">
+                    <span style="flex:0 0 auto;width:34px;height:34px;border-radius:10px;background:#E8DFC6"></span>
+                    <span style="flex:1;min-width:0;font:500 13px/1.4 'Inter Tight',sans-serif;color:#2C4A38">Captura adjunta</span>
+                    <span style="font:500 13px/1.4 'Inter Tight',sans-serif;color:#1B5138">Ver</span>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ c.hayAviso }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:10px">
+                    <span style="flex:0 0 auto;width:20px;height:20px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+                    <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ c.aviso }}</span>
+                  </div>
+                </sc-if>
+
+                <div style="display:flex;gap:9px;margin-top:14px">
+                  <button onClick="{{ c.aprobar }}" style="{{ c.botonAprobar }}">{{ c.textoAprobar }}</button>
+                  <button onClick="{{ c.rechazar }}" style="{{ c.botonRechazar }}">{{ c.textoRechazar }}</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ sinCola }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:22px;border:1px dashed rgba(20,52,42,.28);padding:clamp(20px,2.6vw,26px)">
+            <div style="font:400 clamp(20px,2.2vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Nada por conciliar.</div>
+            <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:8px">Todos los pagos reportados están cuadrados.</div>
+          </div>
+        </sc-if>
+
+        <div style="font:400 clamp(22px,2.6vw,28px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:clamp(28px,3.4vw,40px) 0 16px">Movimientos</div>
+        <div style="border-radius:22px;background:#FAF3E4;overflow:hidden">
+          <div style="display:flex;gap:14px;padding:13px clamp(16px,2vw,20px);border-bottom:1px solid rgba(20,52,42,.14);font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F">
+            <span style="flex:2 1 150px">MIEMBRO</span>
+            <span style="flex:1 1 90px;text-align:right">MONTO</span>
+            <span style="flex:0 0 120px;text-align:right">ESTADO</span>
+          </div>
+          <sc-for list="{{ pagos }}" as="p" hint-placeholder-count="6">
+            <div style="display:flex;gap:14px;align-items:center;padding:14px clamp(16px,2vw,20px);border-bottom:1px solid rgba(20,52,42,.09)">
+              <span style="flex:2 1 150px;min-width:0">
+                <span style="display:block;font:500 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ p.nombre }}</span>
+                <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ p.metodo }}</span>
+              </span>
+              <span style="flex:1 1 90px;text-align:right;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ p.monto }}</span>
+              <span style="flex:0 0 120px;display:flex;justify-content:flex-end"><span style="{{ p.chip }}">{{ p.estado }}</span></span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { vista: 0, publicado: false, decididas: {}, abriendo: null, motivos: {} };
+
+  renderVals() {
+    const v = this.state.vista;
+    // en letra, como el resto del producto
+    const LETRAS = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
+    const letra = (n) => LETRAS[n] || String(n);
+    const pendientes = 4 - Object.keys(this.state.decididas).length;
+
+    // Un solo pool real. Todo lo demás —mesas, señales y métricas— se deriva de aquí,
+    // así que no puede volver a desincronizarse.
+    const POOL = [
+      ['Daniela', 'Arquitectura', 34, 'Estudio propio', 'M'], ['Andrés', 'Tecnología', 38, 'Ridery', 'H'],
+      ['Gabriela', 'Salud', 31, 'Clínica Ávila', 'M'], ['José Manuel', 'Finanzas', 36, 'Banesco', 'H'],
+      ['Andreína', 'Educación', 29, 'UCAB', 'M'], ['Valentina', 'Medios', 33, 'El Estímulo', 'M'],
+      ['Ricardo', 'Consultoría', 39, 'Deloitte', 'H'], ['Mariana', 'Diseño', 30, 'Estudio propio', 'M'],
+      ['Eduardo', 'Legal', 37, 'Travieso Evans', 'H'], ['Carla', 'Marketing', 32, 'Polar', 'M'],
+      ['Simón', 'Gastronomía', 35, 'Alto', 'H'], ['Patricia', 'Tecnología', 33, 'Yummy', 'M'],
+      ['Alejandro', 'Comercio', 41, 'Farmatodo', 'H'], ['Isabel', 'ONG', 28, 'Fe y Alegría', 'M'],
+      ['Rodrigo', 'Finanzas', 34, 'Mercantil', 'H'], ['Verónica', 'Salud', 36, 'Locatel', 'M'],
+      ['Miguel', 'Energía', 40, 'Chevron', 'H'], ['Lucía', 'Educación', 27, 'Unimet', 'M'],
+      ['Gustavo', 'Medios', 38, 'Unión Radio', 'H'], ['Camila', 'Arquitectura', 31, 'Oficina propia', 'M'],
+      ['Federico', 'Tecnología', 29, 'Banesco', 'H'], ['Sofía', 'Legal', 35, 'Baker McKenzie', 'M'],
+      ['Ignacio', 'Consultoría', 42, 'EY', 'H'], ['Adriana', 'Diseño', 33, 'Freelance', 'M'],
+      ['Julián', 'Comercio', 30, 'Movistar', 'H'], ['Fabiana', 'Marketing', 34, 'Digitel', 'M'],
+      ['Emilio', 'Gastronomía', 37, 'Malabar', 'H'], ['Natalia', 'Salud', 32, 'Clínica Santiago', 'M'],
+      ['Óscar', 'Finanzas', 39, 'BBVA Provincial', 'H'], ['Renata', 'ONG', 26, 'Cáritas', 'M'],
+      ['Carolina', 'Educación', 30, 'Unimet', 'M'], ['Luis', 'Tecnología', 36, 'Yummy', 'H']
+    ];
+
+    const APUNTADOS = 34;
+    const SIN_VERIFICAR = 2;            // no entran al reparto
+    const elegibles = POOL.length;      // 32
+    const nMesas = Math.floor(elegibles / 6);
+    const enEspera = elegibles - nMesas * 6;
+
+    const restaurantes = [
+      ['Cardenal', '7:00 p.m.'], ['Alto', '7:00 p.m.'], ['Malabar', '7:30 p.m.'],
+      ['Casa Bistró', '7:00 p.m.'], ['La Cita', '8:00 p.m.'], ['Miga', '7:30 p.m.']
+    ];
+
+    const grupos = [];
+    for (let k = 0; k < nMesas; k++) grupos.push(POOL.slice(k * 6, k * 6 + 6));
+    const sobrantes = POOL.slice(nMesas * 6);
+
+    const avatar = (i, chico) => 'flex:0 0 auto;width:' + (chico ? '24px' : '30px') + ';height:' + (chico ? '24px' : '30px') + ';border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 ' + (chico ? '11px' : '13px') + '/1 \'Inter Tight\',sans-serif';
+    const cifra = (col) => 'font:700 clamp(26px,3vw,34px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:' + (col || '#14342A') + ';margin-top:9px';
+
+    const mesas = grupos.map((g, k) => {
+      // las señales salen del grupo, no de un literal
+      const edades = g.map((p) => p[2]);
+      const min = Math.min.apply(null, edades), max = Math.max.apply(null, edades);
+      const rango = max - min;
+      const mujeres = g.filter((p) => p[4] === 'M').length;
+      const hombres = 6 - mujeres;
+      const empresas = g.map((p) => p[3]);
+      const repes = empresas.filter((e, x) => e !== 'Estudio propio' && e !== 'Freelance' && e !== 'Oficina propia' && empresas.indexOf(e) !== x);
+      const balanceMal = Math.abs(mujeres - hombres) > 2;
+      const rangoMal = rango > 10;
+      const empresaMal = repes.length > 0;
+      const ojo = balanceMal || rangoMal || empresaMal;
+
+      const senales = [
+        [mujeres + ' y ' + hombres, balanceMal],
+        [min + '–' + max + ' años', rangoMal],
+        [empresaMal ? 'Dos de ' + repes[0] : 'Sin empresa repetida', empresaMal]
+      ].map((x) => ({
+        texto: x[0],
+        chip: 'display:inline-flex;align-items:center;min-height:30px;padding:0 11px;border-radius:999px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + (x[1] ? 'rgba(143,69,21,.12)' : 'rgba(20,52,42,.07)') + ';color:' + (x[1] ? '#8F4515' : '#2C4A38')
+      }));
+
+      return {
+        n: String(k + 1).padStart(2, '0'), sitio: restaurantes[k][0], hora: restaurantes[k][1],
+        estado: ojo ? 'REVISAR' : 'CUADRA',
+        caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (ojo ? '#C0662F' : 'transparent'),
+        numero: 'flex:0 0 auto;width:42px;height:42px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:700 15px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums',
+        sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;background:' + (ojo ? 'rgba(143,69,21,.13)' : 'rgba(27,81,56,.11)') + ';color:' + (ojo ? '#8F4515' : '#1B5138'),
+        gente: g.map((p, i) => ({ nombre: p[0], dato: p[1] + ', ' + p[2], inicial: p[0].charAt(0), avatar: avatar(i + k) })),
+        senales
+      };
+    });
+
+    // se declara antes que las pestañas, que ya lo leen
+    const porConciliar = 3 - Object.keys(this.state.conciliadas || {}).length;
+
+    const pestanas = [['Mesas', String(nMesas)], ['Verificaciones', String(pendientes)], ['Pagos', String(porConciliar)]].map((p, i) => {
+      const on = v === i;
+      return {
+        nombre: p[0], n: p[1],
+        pick: () => this.setState({ vista: i }),
+        btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#1B5138') + ';font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease',
+        contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.22)' : 'rgba(20,52,42,.09)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#33513F') + ';font-variant-numeric:tabular-nums'
+      };
+    });
+
+    const revisar = mesas.filter((m) => m.estado === 'REVISAR').length;
+    const metricas = [
+      ['APUNTADOS', String(APUNTADOS), 'Cierra hoy a las 7 p.m.', null],
+      ['MESAS', String(nMesas), nMesas * 6 + ' sentados, todas de seis', null],
+      ['EN ESPERA', String(enEspera), 'Faltan ' + (6 - enEspera) + ' para otra mesa', '#8F4515'],
+      ['SIN VERIFICAR', String(SIN_VERIFICAR), 'No entran al reparto', '#8F4515']
+    ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) }));
+
+    const espera = sobrantes.map((p, i) => ({
+      nombre: p[0], inicial: p[0].charAt(0), avatar: avatar(i, true)
+    }));
+
+    const colasDefs = [
+      ['María Fernanda', 'Hace 40 minutos', ['V-18.442.019', '31 años', 'Chacao'], null],
+      ['Ricardo', 'Hace 2 horas', ['V-14.007.556', '39 años', 'Altamira'], 'La foto del documento está movida. Se lee el número, no la fecha.'],
+      ['Sofía', 'Hace 3 horas', ['E-84.221.310', '27 años', 'Las Mercedes'], null],
+      ['Gustavo', 'Ayer', ['V-21.556.884', '24 años', 'Bello Monte'], 'La selfie y el documento no parecen la misma persona.']
+    ];
+    const btnCola = (fondo, color, borde) => 'flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease';
+    // Cada motivo dice qué ve ella y si puede reintentar. Los de sospecha
+    // no se explican: enseñarían a quien suplanta qué corregir.
+    const MOTIVOS = [
+      ['La foto salió movida o cortada', 'No se lee bien tu documento. Vuelve a hacer la foto con más luz y sin recortar los bordes.', true],
+      ['Documento vencido', 'Tu documento está vencido. Sube uno vigente y lo revisamos el mismo día.', true],
+      ['La selfie no se ve clara', 'La selfie salió muy oscura o borrosa. Repítela de frente y con luz natural.', true],
+      ['El documento no es válido aquí', 'Aceptamos cédula venezolana o pasaporte vigente. Sube uno de los dos.', true],
+      ['La selfie y el documento no coinciden', 'No pudimos verificar tu identidad. Escríbenos a hola@aro.club y lo revisamos contigo.', false],
+      ['Sospecha de suplantación', 'No pudimos verificar tu identidad. Escríbenos a hola@aro.club y lo revisamos contigo.', false]
+    ];
+
+    const colas = colasDefs.map((c, i) => {
+      const d = this.state.decididas[i];
+      const abierta = this.state.abriendo === i;
+      const mSel = this.state.motivos[i] === undefined ? -1 : this.state.motivos[i];
+      const dm = d === 'no' ? mSel : -1;
+      return {
+        nombre: c[0], inicial: c[0].charAt(0), avatar: avatar(i),
+        espera: d === 'ok' ? 'Aprobada por ti' : (d === 'no' ? 'Rechazada por ti' : c[1]),
+        datos: c[2].map((texto) => ({ texto })),
+        hayAviso: !!c[3] && !d, aviso: c[3] || '',
+        caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (d === 'ok' ? '#1B5138' : (d === 'no' ? '#C0662F' : 'transparent')) + ';transition:all 200ms ease',
+        textoAprobar: d === 'ok' ? 'Aprobada' : 'Aprobar',
+        botonAprobar: btnCola(d === 'ok' ? 'rgba(27,81,56,.13)' : '#1B5138', d === 'ok' ? '#1B5138' : '#FAF3E4', 'none'),
+        botonRechazar: btnCola('transparent', '#8F4515', '1px solid rgba(143,69,21,.44)'),
+        botonVolver: btnCola('transparent', '#33513F', '1px solid rgba(20,52,42,.22)'),
+        botonConfirmar: btnCola(mSel >= 0 ? '#6E340F' : 'rgba(20,52,42,.1)', mSel >= 0 ? '#FFF8EA' : '#456352', 'none'),
+        textoConfirmar: mSel >= 0 ? 'Rechazar' : 'Elige el motivo',
+
+        decidiendo: !d && !abierta,
+        eligiendo: abierta,
+        motivos: MOTIVOS.map((m, k) => {
+          const on = mSel === k;
+          return {
+            label: m[0], pie: m[2] ? 'Puede reintentar' : 'No reintenta · escala a una persona',
+            icono: on ? '✓' : '',
+            pick: () => this.setState((st) => ({ motivos: Object.assign({}, st.motivos, { [i]: k }) })),
+            aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease',
+            btn: 'display:flex;align-items:center;gap:11px;width:100%;min-height:52px;padding:9px 15px 9px 12px;border-radius:20px;background:' + (on ? '#F2E9D5' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
+            txt: 'display:block;font:' + (on ? '600' : '500') + ' 14px/1.3 \'Inter Tight\',sans-serif;color:#14342A',
+            pieEstilo: 'display:block;font:400 12px/1.4 \'Inter Tight\',sans-serif;color:' + (m[2] ? '#33513F' : '#8F4515') + ';margin-top:2px'
+          };
+        }),
+        hayVista: mSel >= 0,
+        vistaUsuario: mSel >= 0 ? MOTIVOS[mSel][1] : '',
+
+        hayResuelto: !!d,
+        resuelto: d === 'ok'
+          ? 'Aprobada. Le llega el correo de identidad verificada y ya puede reservar.'
+          : (dm >= 0 ? MOTIVOS[dm][1] : ''),
+        glifoResuelto: d === 'ok' ? '✓' : '·',
+        fondoResuelto: d === 'ok' ? 'rgba(27,81,56,.11)' : 'rgba(143,69,21,.09)',
+        iconoResuelto: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:' + (d === 'ok' ? '#1B5138' : '#6E340F') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;margin-top:1px',
+
+        aprobar: () => this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [i]: 'ok' }), abriendo: null })),
+        rechazar: () => this.setState((st) => ({ abriendo: st.abriendo === i ? null : i })),
+        confirmarRechazo: () => { if (mSel >= 0) this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [i]: 'no' }), abriendo: null })); }
+      };
+    });
+
+    const metricasPago = [
+      ['COBRADO HOY', '181.610 Bs', nMesas * 6 + ' puestos a 8 USD', null],
+      ['EN DÓLARES', '240,00', 'A la tasa de hoy, sin la devolución', null],
+      ['PENDIENTES', '2', 'Transferencias sin conciliar', '#8F4515'],
+      ['DEVUELTO', '6.053,68 Bs', 'Una cancelación con margen', null]
+    ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) }));
+
+    const chipPago = (e) => {
+      const c = {
+        'Confirmado': ['rgba(27,81,56,.12)', '#1B5138', 'transparent'],
+        'Pendiente': ['rgba(143,69,21,.12)', '#8F4515', 'transparent'],
+        'Devuelto': ['transparent', '#33513F', 'rgba(20,52,42,.22)']
+      }[e];
+      return 'display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;background:' + c[0] + ';color:' + c[1] + ';border:1px solid ' + c[2] + ';white-space:nowrap';
+    };
+    // ── cola de conciliación ─────────────────────────────────────────
+    // Cada reporte junto al movimiento del banco. El desajuste se ve solo.
+    const par = (campo, valor, mal) => ({
+      campo, valor,
+      valorEstilo: 'font:' + (mal ? '600' : '500') + ' 12px/1.4 \'Inter Tight\',sans-serif;color:' + (mal ? '#8F4515' : '#14342A') + ';font-variant-numeric:tabular-nums;text-align:right'
+    });
+    const COLA = [
+      {
+        nombre: 'Gabriela Ortiz', metodo: 'Pago Móvil', espera: 'Hace 12 minutos', captura: true, aviso: '',
+        reporte: [par('Referencia', '004471'), par('Monto', '6.053,68 Bs'), par('Banco', 'Banesco'), par('Fecha', '09/08/26')],
+        banco: [par('Referencia', '004471'), par('Monto', '6.053,68 Bs'), par('Banco', 'Banesco'), par('Fecha', '09/08/26')]
+      },
+      {
+        nombre: 'Carolina Núñez', metodo: 'Zelle', espera: 'Hace 40 minutos', captura: true,
+        aviso: 'El monto no cuadra: faltan 0,50 USD. Puede ser comisión de su banco.',
+        reporte: [par('Código', 'ABC123XYZ'), par('Monto', '8,00 USD'), par('Titular', 'C. Núñez'), par('Fecha', '09/08/26')],
+        banco: [par('Código', 'ABC123XYZ'), par('Monto', '7,50 USD', true), par('Titular', 'C. Núñez'), par('Fecha', '09/08/26')]
+      },
+      {
+        nombre: 'Rodrigo Silva', metodo: 'Bizum', espera: 'Hace 2 horas', captura: true,
+        aviso: 'No aparece ningún movimiento con ese teléfono. Bizum no da referencia: hay que mirar la captura.',
+        reporte: [par('Teléfono', '611223344'), par('Monto', '7,40 EUR'), par('Titular', 'R. Silva'), par('Fecha', '08/08/26')],
+        banco: [par('Teléfono', '—', true), par('Monto', '—', true), par('Titular', '—', true), par('Fecha', '—', true)]
+      }
+    ];
+    const btnCola = (fondo, color, borde) => 'flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease';
+    const cola = COLA.map((c, i) => {
+      const d = (this.state.conciliadas || {})[i];
+      return {
+        nombre: c.nombre, metodo: c.metodo, inicial: c.nombre.charAt(0),
+        espera: d === 'ok' ? 'Confirmado por ti' : (d === 'no' ? 'Marcado: no cuadra' : c.espera),
+        avatar: avatar(i),
+        reporte: c.reporte, banco: c.banco,
+        hayCaptura: c.captura && !d, hayAviso: !!c.aviso && !d, aviso: c.aviso,
+        selloMetodo: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;background:rgba(20,52,42,.07);font:600 11px/1 \'Inter Tight\',sans-serif;color:#2C4A38;white-space:nowrap',
+        caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (d === 'ok' ? '#1B5138' : (d === 'no' ? '#C0662F' : 'transparent')),
+        textoAprobar: d === 'ok' ? 'Confirmado' : 'Confirmar pago',
+        textoRechazar: d === 'no' ? 'No cuadra' : 'No cuadra',
+        botonAprobar: btnCola(d === 'ok' ? 'rgba(27,81,56,.13)' : '#1B5138', d === 'ok' ? '#1B5138' : '#FAF3E4', 'none'),
+        botonRechazar: btnCola('transparent', '#8F4515', '1px solid rgba(143,69,21,.4)'),
+        aprobar: () => this.setState((st) => ({ conciliadas: Object.assign({}, st.conciliadas, { [i]: 'ok' }) })),
+        rechazar: () => this.setState((st) => ({ conciliadas: Object.assign({}, st.conciliadas, { [i]: 'no' }) }))
+      };
+    });
+
+    const pagos = [
+      ['Daniela Pérez', 'Pago móvil · ARO-4471-K2', '6.053,68 Bs', 'Confirmado'],
+      ['Andrés Ramírez', 'Tarjeta · ARO-4470-M8', '6.053,68 Bs', 'Confirmado'],
+      ['Gabriela Ortiz', 'Transferencia · ARO-4469-P1', '6.053,68 Bs', 'Pendiente'],
+      ['José Manuel Silva', 'Pago móvil · ARO-4468-T3', '6.053,68 Bs', 'Confirmado'],
+      ['Carolina Núñez', 'Transferencia · ARO-4467-B9', '6.053,68 Bs', 'Pendiente'],
+      ['Luis Ferrer', 'Pago móvil · ARO-4462-R6', '6.053,68 Bs', 'Devuelto']
+    ].map((p) => ({ nombre: p[0], metodo: p[1], monto: p[2], estado: p[3], chip: chipPago(p[3]) }));
+
+    return {
+      pestanas, metricas, mesas, espera, colas, metricasPago, pagos,
+      cola, hayCola: porConciliar > 0, sinCola: porConciliar === 0,
+      esMesas: v === 0, esVerificaciones: v === 1, esPagos: v === 2,
+
+      h1: 'font:400 clamp(26px,3.4vw,38px)/1.05 \'Young Serif\',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:0',
+      bajada: 'font:400 16px/1.6 \'Inter Tight\',sans-serif;color:#2C4A38;max-width:62ch;margin:10px 0 0;text-wrap:pretty',
+      selloCierre: 'display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:rgba(143,69,21,.13);font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;color:#8F4515;white-space:nowrap',
+      selloTasa: 'display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.22);font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:#2C4A38;white-space:nowrap',
+      botonPrimario: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 26px;border-radius:999px;border:none;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      botonBorde: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:999px;border:1px solid rgba(20,52,42,.24);background:transparent;color:#1B5138;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+
+      publicado: this.state.publicado,
+      textoBajada: APUNTADOS + ' apuntados. El reparto propone ' + letra(nMesas) + ' mesas y deja ' + (enEspera === 1 ? 'una' : letra(enEspera)) + ' en espera. Nada se publica hasta que lo confirmes.',
+      tituloEspera: (enEspera === 1 ? 'Una' : letra(enEspera)) + ' en espera',
+      notaEspera: 'Faltan ' + letra(6 - enEspera) + ' para llenar la mesa ' + letra(nMesas + 1) + '. Se les avisa hoy y su crédito no se toca.',
+      textoPublicado: letra(nMesas).charAt(0).toUpperCase() + letra(nMesas).slice(1) + ' mesas publicadas. Los correos salen el jueves a las 12:00 en punto, no antes.',
+      textoPublicar: this.state.publicado ? 'Publicadas' : 'Publicar las ' + letra(nMesas) + ' mesas',
+      publicar: () => this.setState({ publicado: true }),
+      rebarajar: () => this.setState({ publicado: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

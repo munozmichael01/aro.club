@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
-<script src="./reglas.js"></script>
 </head>
 <body>
 <x-dc>
@@ -70,7 +69,7 @@
 
         <div style="display:flex;flex-direction:column;gap:clamp(34px,5vw,52px);margin-top:clamp(30px,4.4vw,46px)">
           <sc-for list="{{ preguntas }}" as="q" hint-placeholder-count="4">
-            <div id="{{ q.ancla }}">
+            <div>
               <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:baseline;margin-bottom:5px">
                 <span style="font:400 clamp(20px,2.6vw,26px)/1.2 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A;flex:1 1 auto;min-width:0;text-wrap:pretty">{{ q.pregunta }}</span>
                 <sc-if value="{{ q.esOpcional }}" hint-placeholder-val="{{ false }}">
@@ -149,15 +148,16 @@
           <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:6px">CÓMO QUIERES ENTRAR A PARTIR DE AHORA</div>
           <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar el jueves para ver tu mesa.</div>
 
-          <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
-            <div style="position:relative;display:flex;align-items:center">
-              <input type="{{ tipoClave }}" placeholder="Crea una contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
-              <button onClick="{{ alternarVerClave }}" aria-label="{{ etiquetaVerClave }}" style="{{ botonVer }}">{{ textoVerClave }}</button>
-            </div>
-            <input type="{{ tipoClave }}" placeholder="Repítela" value="{{ clave2 }}" onChange="{{ onClave2 }}" autocomplete="new-password" aria-label="Repite la contraseña" style="{{ campoClave2 }}" />
-            <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
+          <div style="display:flex;flex-direction:column;gap:10px;max-width:400px">
+            <a href="Aro Club - Entrar.dc.html#relay" style="{{ botonProveedor }}">
+              <svg width="19" height="22" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.8-1.6 0-3.1 1-3.9 2.4C.2 10.4 1.4 14.7 3 17c.8 1.1 1.7 2.4 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.8zM11.7 3.3c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"></path></svg>
+              <span>Continuar con Apple</span>
+            </a>
+            <a href="Aro Club - Entrar.dc.html#otroCorreo" style="{{ botonProveedor }}">
+              <svg width="19" height="19" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
+              <span>Continuar con Google</span>
+            </a>
           </div>
-          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
 
           <div style="display:flex;align-items:center;gap:14px;margin:20px 0;max-width:400px">
             <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
@@ -165,17 +165,11 @@
             <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
           </div>
 
-          <div style="display:flex;flex-direction:column;gap:10px;max-width:400px">
-            <a href="Aro Club - Entrar.dc.html" style="{{ botonProveedor }}">
-              <svg width="19" height="22" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.8-1.6 0-3.1 1-3.9 2.4C.2 10.4 1.4 14.7 3 17c.8 1.1 1.7 2.4 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.8zM11.7 3.3c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"></path></svg>
-              <span>Continuar con Apple</span>
-            </a>
-            <a href="Aro Club - Entrar.dc.html" style="{{ botonProveedor }}">
-              <svg width="19" height="19" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
-              <span>Continuar con Google</span>
-            </a>
+          <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
+            <input type="password" placeholder="Crea una contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
+            <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
           </div>
-          <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;max-width:46ch;text-wrap:pretty">Al crear tu cuenta aceptas los <a href="Aro Club - Legal.dc.html#terminos" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Términos</a> y la <a href="Aro Club - Legal.dc.html#privacidad" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Privacidad</a>. Te pediremos la cédula y una selfie para verificar que eres quien dices; ahí se explica qué hacemos con ellas y cuándo se borran.</div>
+          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
         </div>
 
         <div style="border-radius:26px;border:1px solid rgba(20,52,42,.16);padding:clamp(20px,3vw,28px);margin-top:14px;max-width:460px">
@@ -205,12 +199,7 @@
         </sc-if>
         <button onClick="{{ continuar }}" aria-disabled="{{ inerteContinuar }}" style="{{ botonContinuar }}">{{ textoContinuar }}</button>
       </div>
-      <div style="max-width:720px;margin:0 auto;padding:0 clamp(16px,4vw,28px) 12px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;justify-content:space-between">
-        <span style="font:400 12px/1.4 'Inter Tight',sans-serif;color:#566A5D">{{ pieGuardado }}</span>
-        <sc-if value="{{ haySalida }}" hint-placeholder-val="{{ false }}">
-          <a href="Aro Club - Mi cuenta.dc.html" style="font:500 13px/1.4 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:4px;white-space:nowrap">Seguir después</a>
-        </sc-if>
-      </div>
+      <div style="max-width:720px;margin:0 auto;padding:0 clamp(16px,4vw,28px) 12px;font:400 12px/1.4 'Inter Tight',sans-serif;color:#566A5D">{{ pieGuardado }}</div>
     </div>
   </sc-if>
 </div>
@@ -218,131 +207,116 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { pantalla: 0, r: { idiomas: [0] }, empleador: '', retomada: false, cerrada: false, fin: false, heredadas: [], sinSesion: false };
+  state = { pantalla: 0, r: { idiomas: [0] }, empleador: '', retomada: false, cerrada: false, fin: false, heredadas: [] };
 
-  SESION = 'aro-sesion';
+  LLAVE = 'aro-cuestionario';
 
-  // Identificadores estables, en el mismo orden que las opciones de cada
-  // pregunta de renderVals(). El texto visible puede reescribirse sin romper
-  // nada; reordenar una lista obliga a reordenar la suya aquí al lado.
+  // identificadores estables, en el mismo orden que las opciones de cada pregunta.
+  // El texto visible puede reescribirse sin romper la herencia.
   COD = {
-    arraigo: ['volvio', 'se-quedo', 'interior', 'extranjero', 'visita'],
-    sector: ['tecnologia', 'finanzas', 'salud', 'educacion', 'consultoria', 'legal', 'marketing', 'medios', 'diseno', 'comercio', 'manufactura', 'energia', 'construccion', 'gastronomia', 'ong', 'gobierno', 'emprendo', 'estudio', 'entre-trabajos', 'otro'],
-    momento: ['soltero-sin-hijos', 'soltero-con-hijos', 'pareja-sin-hijos', 'pareja-con-hijos', 'no-decir'],
-    rol: ['escucha', 'depende', 'lleva'],
-    motivo: ['ampliar', 'volver-a-salir', 'fuera-del-trabajo', 'reconectar', 'red-profesional'],
-    romance: ['abierto', 'indiferente', 'cerrado'],
-    actividades: ['cocinar', 'salir-a-comer', 'correr', 'gimnasio', 'yoga', 'ciclismo', 'senderismo', 'playa', 'padel', 'futbol', 'beisbol', 'nadar', 'bailar', 'conciertos', 'cine', 'teatro', 'museos', 'leer', 'escribir', 'fotografia', 'instrumento', 'videojuegos', 'juegos-de-mesa', 'viajar', 'voluntariado', 'estudiar', 'plantas'],
-    temas: ['cocina', 'viajes', 'cine', 'musica', 'libros', 'deporte', 'negocios', 'tecnologia', 'arte', 'arquitectura', 'ciencia', 'historia', 'psicologia', 'politica', 'economia', 'crianza', 'salud', 'humor'],
-    evitar: ['politica', 'religion', 'dinero', 'vida-amorosa', 'crianza', 'trabajo', 'ninguno'],
-    planes: ['cena', 'cena-gastronomica', 'cafe', 'drinks', 'correr', 'senderismo', 'padel', 'pilates', 'ciclismo'],
-    peso: ['conversacion', 'comida', 'ambas'],
-    gasto: ['hasta-20', '20-35', '35-50', 'mas-50'],
-    dieta: ['ninguna', 'vegetariano', 'vegano', 'pescetariano', 'sin-gluten', 'sin-lactosa', 'kosher', 'halal', 'sin-cerdo', 'sin-carnes-rojas', 'diabetico', 'alergias'],
+    arraigo: ['volvio', 'se-quedo', 'mismos', 'remoto', 'interior', 'visita'],
     zonas: ['mercedes', 'rosal', 'bello-monte', 'chacao', 'altamira', 'castellana', 'palos-grandes', 'sebucan', 'chuao', 'cafetal', 'naranjos', 'trinidad', 'hatillo'],
-    dias: ['mar', 'mie', 'jue', 'vie', 'sab', 'sab-md', 'dom-md'],
-    idiomas: ['es', 'en', 'pt', 'it', 'fr', 'de', 'ar', 'zh']
+    dias: ['mar', 'mie', 'jue', 'vie', 'sab-am', 'sab-md', 'sab', 'dom-am', 'dom-md'],
+    temas: ['cocina', 'viajes', 'cine', 'musica', 'libros', 'deporte', 'negocios', 'tecnologia', 'arte', 'arquitectura', 'ciencia', 'historia', 'psicologia', 'politica', 'economia', 'crianza', 'salud', 'humor']
   };
 
   MINIMOS = { temas: 2 };
 
-  sesion() {
-    try { return JSON.parse(window.localStorage.getItem(this.SESION) || 'null'); }
-    catch (e) { return null; }
-  }
-
   componentDidMount() {
-    const s = this.sesion();
-    if (!s || !s.correo || !s.token) { this.setState({ sinSesion: true }); return; }
-    this._sesion = s;
+    let g = null, prev = null;
+    try { g = JSON.parse(window.localStorage.getItem(this.LLAVE) || 'null'); } catch (e) { g = null; }
+    try { prev = JSON.parse(window.localStorage.getItem('aro-landing') || 'null'); } catch (e) { prev = null; }
 
-    // ¿Ya tiene cuenta? Esta pantalla trabaja con la sesion del lead y no lo
-    // sabe, asi que se lo pregunta a quien lo sabe. Importa para la salida:
-    // a mitad del cuestionario el logo llevaba a Agradecimiento —la pagina
-    // del que acaba de dejar su correo—, que para un miembro que esta
-    // terminando su perfil es un callejon. Y el pie promete "puedes salir y
-    // volver cuando quieras" sin ofrecer por donde.
-    fetch('/api/mi-cuenta')
-      .then((r) => { if (r.ok) this.setState({ tieneCuenta: true }); })
-      .catch(() => {});
+    const retomable = g && typeof g.pantalla === 'number' && g.pantalla > 0 && !g.fin;
+    // partimos de lo guardado aquí, y encima aplicamos lo que ya se respondió en la landing
+    const base = retomable ? (g.r || { idiomas: [0] }) : this.state.r;
+    const r = Object.assign({}, base);
+    const ya = [];
 
-    const q = '?correo=' + encodeURIComponent(s.correo) + '&token=' + encodeURIComponent(s.token);
-    fetch('/api/cuestionario' + q)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sesion'))))
-      .then((d) => {
-        const C = this.COD;
-        const r = Object.assign({}, this.state.r);
-        const ya = [];
+    // Los leads ya capturados se guardaron sin `v`: por índice primero, por etiqueta después.
+    // Se normalizan a códigos aquí y se reescriben, para no perder ni un registro.
+    if (prev && prev.v !== 2) {
+      const LEG = {
+        arraigo: ['Volví a Caracas después de años fuera', 'Nunca me fui, y se fue casi toda mi gente', 'Llegué hace poco, desde otra ciudad del país', 'Soy de otro país y vivo aquí', 'Vivo afuera y estoy de visita'],
+        zonas: ['Las Mercedes', 'Los Palos Grandes', 'Altamira', 'Chacao', 'El Rosal', 'La Castellana', 'Sebucán y Los Dos Caminos', 'Chuao', 'Bello Monte', 'El Cafetal y Santa Paula'],
+        dias: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía'],
+        temas: ['Cocina', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios', 'Arte y diseño', 'Tecnología', 'Crianza']
+      };
+      const COD_LAND = {
+        arraigo: ['volvio', 'se-quedo', 'interior', 'extranjero', 'visita'],
+        zonas: ['mercedes', 'palos-grandes', 'altamira', 'chacao', 'rosal', 'castellana', 'sebucan', 'chuao', 'bello-monte', 'cafetal'],
+        dias: ['mar', 'mie', 'jue', 'vie', 'sab', 'sab-md', 'dom-md'],
+        temas: ['cocina', 'viajes', 'cine', 'musica', 'libros', 'deporte', 'negocios', 'arte', 'tecnologia', 'crianza']
+      };
+      // `extranjero` se fusionó en `interior`: los perfiles ya capturados se reasignan
+      const FUSION = { extranjero: 'interior' };
+      const aCod = (campo, v) => {
+        if (typeof v === 'number') return COD_LAND[campo][v] || null;
+        if (typeof v !== 'string') return null;
+        if (FUSION[v]) return FUSION[v];
+        if (COD_LAND[campo].indexOf(v) >= 0) return v;
+        const i = LEG[campo].indexOf(v);
+        return i >= 0 ? COD_LAND[campo][i] : null;
+      };
+      const lista = (campo) => (prev[campo] || []).map((v) => aCod(campo, v)).filter(Boolean);
 
-        // El servidor habla en códigos; la pantalla trabaja con posiciones.
-        // La traducción ocurre solo aquí y al enviar.
-        Object.keys(d.respuestas || {}).forEach((id) => {
-          const v = d.respuestas[id];
-          if (id === 'empleador') return;
-          if (!C[id]) return;
-          if (Array.isArray(v)) {
-            const idx = v.map((x) => C[id].indexOf(x)).filter((i) => i >= 0);
-            if (idx.length) r[id] = idx;
-          } else {
-            const i = C[id].indexOf(v);
-            if (i >= 0) r[id] = i;
-          }
-        });
+      prev = {
+        v: 2,
+        arraigo: aCod('arraigo', prev.arraigo),
+        zonas: lista('zonas'),
+        dias: lista('dias'),
+        temas: lista('temas')
+      };
+      try { window.localStorage.setItem('aro-landing', JSON.stringify(prev)); } catch (e) { /* modo privado */ }
+    }
 
-        (d.heredadas || []).forEach((id) => {
-          const v = d.respuestas[id];
-          const completa = Array.isArray(v)
-            ? v.length >= (this.MINIMOS[id] || 1)
-            : v != null;
-          if (completa) ya.push(id);
-        });
+    // `extranjero` viajó con v:2 durante varias rondas: la fusión va ANTES de
+    // bifurcar por versión, o esos perfiles pierden el arraigo en silencio.
+    if (prev && prev.arraigo === 'extranjero') prev.arraigo = 'interior';
 
-        const est = { r, heredadas: ya, empleador: (d.respuestas || {}).empleador || '' };
-        if (d.pantalla > 0 && !d.completado) { est.pantalla = d.pantalla; est.retomada = true; }
-        this.setState(est);
-      })
-      .catch(() => this.setState({ sinSesion: true }));
+    if (prev && prev.v === 2) {
+      const C = this.COD;
+      // una multi solo se da por respondida si TODO lo guardado se resolvió
+      // y alcanza el mínimo; si no, se muestra con lo recuperado ya marcado.
+      const heredarMulti = (id) => {
+        const vs = prev[id] || [];
+        if (!vs.length) return;
+        const idxs = vs.map((v) => C[id].indexOf(v));
+        const ok = idxs.filter((i) => i >= 0);
+        if (!ok.length) return;
+        r[id] = ok;
+        const completa = ok.length === idxs.length && ok.length >= (this.MINIMOS[id] || 1);
+        if (completa) ya.push(id);
+      };
+
+      const iA = typeof prev.arraigo === 'string' ? C.arraigo.indexOf(prev.arraigo) : -1;
+      if (iA >= 0) { r.arraigo = iA; ya.push('arraigo'); }
+
+      heredarMulti('zonas');
+      heredarMulti('dias');
+      heredarMulti('temas');
+    }
+
+    const est = { r, heredadas: ya };
+    if (retomable) {
+      est.pantalla = g.pantalla;
+      est.empleador = g.empleador || '';
+      est.retomada = true;
+    }
+    this.setState(est);
   }
 
-  componentWillUnmount() { clearTimeout(this._tEmpleador); }
-
-  // El guardado es por pregunta, no por pantalla: quien responde tres de
-  // cuatro y cierra la pestaña no pierde las tres.
-  enviar(id, valor) {
-    const s = this._sesion;
-    if (!s) return;
-    fetch('/api/cuestionario', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(id === '__fin'
-        ? { correo: s.correo, token: s.token, clave: 'empleador',
-            valor: this.state.empleador, pantalla: this.state.pantalla, fin: true }
-        : { correo: s.correo, token: s.token, clave: id, valor: valor,
-            pantalla: this.state.pantalla })
-    }).catch(() => { /* se reintenta con el siguiente cambio */ });
+  componentDidUpdate() {
+    try {
+      window.localStorage.setItem(this.LLAVE, JSON.stringify({
+        pantalla: this.state.pantalla, r: this.state.r, empleador: this.state.empleador, fin: this.state.fin
+      }));
+    } catch (e) { /* modo privado */ }
   }
 
-  aCodigo(id, v) {
-    const C = this.COD[id];
-    if (!C) return v;
-    if (Array.isArray(v)) return v.map((i) => C[i]).filter(Boolean);
-    return typeof v === 'number' && v >= 0 ? C[v] : null;
-  }
-
-  set(id, v) {
-    this.setState((s) => ({ r: Object.assign({}, s.r, { [id]: v }) }),
-      () => this.enviar(id, this.aCodigo(id, v)));
-  }
-
-  setEmpleador(v) {
-    this.setState({ empleador: v });
-    // Texto libre: se espera a que deje de teclear.
-    clearTimeout(this._tEmpleador);
-    this._tEmpleador = setTimeout(() => this.enviar('empleador', v), 600);
-  }
+  set(id, v) { this.setState((s) => ({ r: Object.assign({}, s.r, { [id]: v }) })); }
 
   multi(id, i, max, exclusiva) {
-    let salida = null;
     this.setState((s) => {
       const a = (s.r[id] || []).slice();
       const tieneEx = exclusiva != null;
@@ -354,9 +328,8 @@ class Component extends DCLogic {
         if (max && limpio.length >= max) return {};
         out = limpio.concat([i]);
       }
-      salida = out;
       return { r: Object.assign({}, s.r, { [id]: out }) };
-    }, () => { if (salida) this.enviar(id, this.aCodigo(id, salida)); });
+    });
   }
 
   renderVals() {
@@ -371,49 +344,49 @@ class Component extends DCLogic {
     const pantallas = [
       {
         titulo: 'Tu contexto',
-        proposito: 'Con esto evitamos sentarte con alguien de tu misma empresa y armamos mesas donde las historias se entiendan entre sí.',
+        proposito: 'Con esto evitamos sentarte con alguien de tu misma empresa, y sabemos quién está llegando a Aro y por dónde abrir.',
         preguntas: [
-          { id: 'arraigo', corto: 'tu historia', tipo: 'unica', pregunta: '¿Cuál de estas se parece más a tu historia?', opciones: ['Me fui del país y volví', 'Nunca me fui de Venezuela', 'Me mudé a Caracas desde el interior', 'Soy extranjero viviendo aquí', 'Vivo en el exterior y estoy de visita'] },
-          { id: 'sector', corto: 'tu sector', tipo: 'unica', pregunta: '¿En qué sector trabajas?', opciones: sectores, compacta: true },
-          { id: 'empleador', corto: 'dónde trabajas', tipo: 'texto', pregunta: '¿Dónde trabajas actualmente?', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.', fuente: empresas }
+          { id: 'arraigo', tipo: 'unica', pregunta: '¿Cuál de estas se parece más a tu historia?', opciones: ['Volví después de años fuera', 'Nunca me fui, y se fue casi toda mi gente', 'Sigo con la gente de siempre', 'Trabajo remoto y casi no veo gente', 'Llegué y no conozco a nadie', 'Estoy de paso'] },
+          { id: 'sector', tipo: 'unica', pregunta: '¿En qué sector trabajas?', opciones: sectores, compacta: true },
+          { id: 'empleador', tipo: 'texto', pregunta: '¿Dónde trabajas actualmente?', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.', fuente: empresas }
         ]
       },
       {
         titulo: 'Cómo eres en la mesa',
         proposito: 'Una mesa donde todos llevan la conversación no funciona, y una donde nadie la lleva tampoco. Nada de esto se le muestra a nadie.',
         preguntas: [
-          { id: 'momento', corto: 'en qué momento estás', tipo: 'unica', pregunta: '¿En qué momento estás?', opciones: ['Soltero sin hijos', 'Soltero con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
-          { id: 'rol', corto: 'cómo eres en la mesa', tipo: 'unica', pregunta: 'En una mesa con gente que no conoces, ¿cómo eres?', opciones: ['Escucho más de lo que hablo', 'Depende del momento', 'Suelo llevar la conversación'] },
-          { id: 'motivo', corto: 'qué te trae', tipo: 'unica', pregunta: '¿Qué te trae?', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con Caracas después de volver', 'Red profesional'] },
-          { id: 'romance', corto: 'si buscas algo romántico', tipo: 'unica', opcional: true, pregunta: 'Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?', ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla del producto. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: ['Abierto, si surge algo bienvenido', 'Me da igual, vengo por la conversación', 'Prefiero una mesa sin esa energía'] }
+          { id: 'momento', tipo: 'unica', pregunta: '¿En qué momento estás?', opciones: ['Soltero sin hijos', 'Soltero con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
+          { id: 'rol', tipo: 'unica', pregunta: 'En una mesa con gente que no conoces, ¿cómo eres?', opciones: ['Escucho más de lo que hablo', 'Depende del momento', 'Suelo llevar la conversación'] },
+          { id: 'motivo', tipo: 'unica', pregunta: '¿Qué te trae?', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con Caracas después de volver', 'Red profesional'] },
+          { id: 'romance', tipo: 'unica', opcional: true, pregunta: 'Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?', ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla del producto. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: ['Abierto, si surge algo bienvenido', 'Me da igual, vengo por la conversación', 'Prefiero una mesa sin esa energía'] }
         ]
       },
       {
         titulo: 'De qué hablas',
         proposito: 'Es lo que más pesa a la hora de armar el grupo: dos horas se sostienen con temas, no con datos.',
         preguntas: [
-          { id: 'temas', corto: 'de qué hablas', tipo: 'multi', min: 2, max: 4, pregunta: '¿De qué podrías hablar dos horas seguidas?', opciones: temas },
-          { id: 'evitar', corto: 'qué prefieres esquivar', tipo: 'multi', opcional: true, exclusiva: 6, pregunta: '¿Hay algún tema que prefieras que no salga?', ayuda: 'Se lo decimos al anfitrión de la mesa, sin decir de quién viene.', opciones: ['Política y situación del país', 'Religión y fe', 'Dinero, sueldos y precios', 'Vida amorosa y relaciones', 'Crianza e hijos', 'Trabajo, vengo a desconectarme', 'Ninguno, hablo de todo'] },
-          { id: 'actividades', corto: 'qué haces', tipo: 'multi', min: 3, max: 6, pregunta: 'Escoge lo que de verdad haces, no lo que te gustaría hacer', opciones: actividades }
+          { id: 'temas', tipo: 'multi', min: 2, max: 4, pregunta: '¿De qué podrías hablar dos horas seguidas?', opciones: temas },
+          { id: 'evitar', tipo: 'multi', opcional: true, exclusiva: 6, pregunta: '¿Hay algún tema que prefieras que no salga?', ayuda: 'Se lo decimos al anfitrión de la mesa, sin decir de quién viene.', opciones: ['Política y situación del país', 'Religión y fe', 'Dinero, sueldos y precios', 'Vida amorosa y relaciones', 'Crianza e hijos', 'Trabajo, vengo a desconectarme', 'Ninguno, hablo de todo'] },
+          { id: 'actividades', tipo: 'multi', min: 3, max: 6, pregunta: 'Escoge lo que de verdad haces, no lo que te gustaría hacer', opciones: actividades }
         ]
       },
       {
         titulo: 'Qué buscas y cuánto',
         proposito: 'El rango que marques es el techo del sitio que elegimos. Nadie ve tu respuesta y no hay mesa mejor por gastar más.',
         preguntas: [
-          { id: 'planes', corto: 'qué planes te interesan', tipo: 'multi', pregunta: '¿Qué planes te interesan?', ayuda: 'Hoy solo hay cenas. Lo demás lo abrimos según lo que pida la gente.', opciones: ['Cena en restaurante', 'Cena con foco gastronómico', 'Café o desayuno de networking', 'Drinks / after office', 'Correr', 'Senderismo', 'Pádel o tenis', 'Yoga o pilates', 'Ciclismo'] },
-          { id: 'peso', corto: 'qué pesa más', tipo: 'unica', pregunta: 'En una cena, ¿qué pesa más para ti?', opciones: ['La conversación, el restaurante es la excusa', 'La comida, vengo por la experiencia gastronómica', 'Las dos cosas por igual'] },
-          { id: 'gasto', corto: 'tu presupuesto', tipo: 'unica', pregunta: '¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?', ayuda: 'Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa, así que marcar de más solo hace que la noche te salga cara.', opciones: ['Hasta 20 USD', '20 a 35 USD', '35 a 50 USD', 'Más de 50 USD'] },
+          { id: 'planes', tipo: 'multi', pregunta: '¿Qué planes te interesan?', ayuda: 'Hoy solo hay cenas. Lo demás lo abrimos según lo que pida la gente.', opciones: ['Cena en restaurante', 'Cena con foco gastronómico', 'Café o desayuno de networking', 'Drinks / after office', 'Correr', 'Senderismo', 'Pádel o tenis', 'Yoga o pilates', 'Ciclismo'] },
+          { id: 'peso', tipo: 'unica', pregunta: 'En una cena, ¿qué pesa más para ti?', opciones: ['La conversación, el restaurante es la excusa', 'Las dos cosas por igual', 'La comida, vengo por la experiencia gastronómica'] },
+          { id: 'gasto', tipo: 'unica', pregunta: '¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?', ayuda: 'Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa, así que marcar de más solo hace que la noche te salga cara.', opciones: ['Hasta 20 USD', '20 a 35 USD', '35 a 50 USD', 'Más de 50 USD'] },
         ]
       },
       {
         titulo: 'Logística',
         proposito: 'Lo último. Con esto sabemos a qué mesa puedes llegar de verdad y qué sitio elegir.',
         preguntas: [
-          { id: 'zonas', corto: 'tus zonas', tipo: 'multi', pregunta: '¿En qué zonas puedes asistir sin problema?', opciones: zonas },
-          { id: 'dias', corto: 'tus días', tipo: 'multi', pregunta: '¿Qué días te sirven mejor?', opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía'] },
-          { id: 'idiomas', corto: 'tus idiomas', tipo: 'multi', pregunta: '¿En qué idiomas conversas cómodo?', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] },
-          { id: 'dieta', corto: 'tu dieta', tipo: 'multi', opcional: true, exclusiva: 0, pregunta: '¿Alguna restricción alimentaria?', opciones: ['Ninguna', 'Vegetariano', 'Vegano', 'Pescetariano', 'Sin gluten', 'Sin lactosa', 'Kosher', 'Halal', 'No como cerdo', 'No como carnes rojas', 'Diabético', 'Alergias'] }
+          { id: 'zonas', tipo: 'multi', pregunta: '¿En qué zonas puedes asistir sin problema?', opciones: zonas },
+          { id: 'dias', tipo: 'multi', ayuda: 'No todo es cena: también hay café de sábado por la mañana y planes de domingo temprano.', pregunta: '¿Qué días te sirven mejor?', opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado mañana', 'Sábado mediodía', 'Sábado noche', 'Domingo mañana', 'Domingo mediodía'] },
+          { id: 'idiomas', tipo: 'multi', pregunta: '¿En qué idiomas conversas cómodo?', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] },
+          { id: 'dieta', tipo: 'multi', opcional: true, exclusiva: 0, pregunta: '¿Alguna restricción alimentaria?', opciones: ['Ninguna', 'Vegetariano', 'Vegano', 'Pescetariano', 'Sin gluten', 'Sin lactosa', 'Kosher', 'Halal', 'No como cerdo', 'No como carnes rojas', 'Diabético', 'Alergias'] }
         ]
       }
     ];
@@ -428,8 +401,6 @@ class Component extends DCLogic {
     const preguntas = visibles.map((q) => {
       const val = r[q.id];
       const base = {
-        // Para poder llevar la pantalla hasta ella cuando falte.
-        ancla: 'preg-' + q.id,
         pregunta: q.pregunta,
         ayuda: q.ayuda || '',
         hayAyuda: !!q.ayuda,
@@ -454,8 +425,8 @@ class Component extends DCLogic {
           ? q.fuente.filter((e) => e.toLowerCase().indexOf(t.toLowerCase()) >= 0).slice(0, 4)
           : [];
         base.valorTexto = t;
-        base.onTexto = (e) => this.setEmpleador(e.target.value);
-        base.sugerencias = sug.map((label) => ({ label, pick: () => this.setEmpleador(label) }));
+        base.onTexto = (e) => this.setState({ empleador: e.target.value });
+        base.sugerencias = sug.map((label) => ({ label, pick: () => this.setState({ empleador: label }) }));
         base.haySugerencias = sug.length > 0 && sug.indexOf(t) < 0;
         return base;
       }
@@ -494,25 +465,13 @@ class Component extends DCLogic {
       return base;
     });
 
-    const contestada = (q) => {
+    const completa = visibles.every((q) => {
       if (q.opcional) return true;
       const v = r[q.id];
       if (q.tipo === 'texto') return this.state.empleador.trim().length > 0;
       if (q.tipo === 'unica') return v != null;
       return (v || []).length >= (q.min || 1);
-    };
-    // CUAL falta, no solo que falta alguna. La tercera pregunta de la
-    // primera pantalla —"¿Donde trabajas?"— queda debajo del pie fijo: se
-    // respondia el sector, el boton seguia apagado sin decir por que, y la
-    // pregunta que faltaba no se veia. Un boton muerto en una pantalla que
-    // parece terminada se lee como que la web esta rota.
-    const cual = visibles.find((q) => !contestada(q)) || null;
-    // Se guarda tambien COMO se llama, para poder nombrarla en el boton.
-    // "Falta una respuesta" delante de tres preguntas obliga a repasarlas.
-    const faltante = cual
-      ? { id: cual.id, tipo: cual.tipo, ancla: 'preg-' + cual.id, corto: cual.corto || '' }
-      : null;
-    const completa = !faltante;
+    });
 
     const barras = [0, 1, 2, 3, 4].map((i) => ({
       estilo: 'flex:1;height:4px;border-radius:999px;background:' + (i < this.state.pantalla ? '#1B5138' : (i === this.state.pantalla ? '#A0511F' : 'rgba(20,52,42,.13)')) + ';transition:background 260ms ease'
@@ -528,10 +487,7 @@ class Component extends DCLogic {
       etiquetaProgreso: fin ? 'COMPLETO' : 'PANTALLA ' + (this.state.pantalla + 1) + ' DE 5',
       // derivada del propio array: no vuelve a desincronizarse en el siguiente recorte
       textoCierre: (() => {
-        // Solo las OBLIGATORIAS (§5 de la entrega 13). Contar las opcionales
-        // deja a quien las salta en un porcentaje que nunca llega al final,
-        // y la etiqueta "Opcional" invita justo a saltarlas.
-        const n = pantallas.reduce((t, x) => t + x.preguntas.filter((q) => !q.opcional).length, 0);
+        const n = pantallas.reduce((t, x) => t + x.preguntas.length, 0);
         const letras = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho'];
         const t = letras[n] || String(n);
         return t.charAt(0).toUpperCase() + t.slice(1) + (n === 1 ? ' respuesta.' : ' respuestas.');
@@ -539,60 +495,15 @@ class Component extends DCLogic {
       // el acceso se elige aquí, cuando ya hay algo que guardar
       clave: this.state.clave || '',
       onClave: (e) => this.setState({ clave: e.target.value }),
-      onClave2: (e) => this.setState({ clave2: e.target.value }),
-      clave2: this.state.clave2 || '',
-
-      // Un solo campo tapado y sin repetir: un dedo torcido te deja fuera de
-      // tu cuenta, y la recuperacion va por correo. Poder VERLA es mejor que
-      // repetirla a ciegas, asi que estan las dos cosas.
-      tipoClave: this.state.verClave ? 'text' : 'password',
-      textoVerClave: this.state.verClave ? 'Ocultar' : 'Ver',
-      etiquetaVerClave: this.state.verClave ? 'Ocultar la contraseña' : 'Mostrar la contraseña',
-      alternarVerClave: () => this.setState((st) => ({ verClave: !st.verClave })),
-      botonVer: 'position:absolute;right:8px;min-height:44px;padding:0 12px;background:transparent;border:none;font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138;cursor:pointer',
-      campoClave: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none' + ';padding-right:78px',
-      campoClave2: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none' + (((this.state.clave2 || '') && this.state.clave !== this.state.clave2) ? ';border-color:#8F4515' : ''),
-      textoClave: (this.state.clave || '').length < 8
-        ? 'Al menos ocho caracteres'
-        : (!(this.state.clave2 || '') ? 'Repite la contraseña'
-            : (this.state.clave !== this.state.clave2 ? 'No coinciden' : 'Crear mi cuenta')),
+      campoClave: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none',
+      textoClave: (this.state.clave || '').length >= 8 ? 'Crear mi cuenta' : 'Al menos ocho caracteres',
       pistaClave: (this.state.clave || '').length >= 8
         ? 'Entrarás con tu correo y esta contraseña.'
         : 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Apple o Google.',
       // pointer-events no bloquea el teclado: la inercia va en el handler
-      enlaceLogo: (fin || this.state.tieneCuenta) ? 'Aro Club - Mi cuenta.dc.html' : 'Aro Club - Agradecimiento.dc.html',
-      // La salida se ENSEÑA, no se deja implicita en el logo: el pie dice
-      // que puedes salir y hasta ahora no habia como.
-      haySalida: !!this.state.tieneCuenta && !fin,
-      inerteClave: ((this.state.clave || '').length >= 8 && this.state.clave === this.state.clave2) ? null : 'true',
-      // La cuenta se crea aqui, al cerrar el cuestionario: es cuando ya hay
-      // algo que guardar. El servidor abre la sesion en la misma respuesta.
-      crearCuenta: () => {
-        const clave = this.state.clave || '';
-        const s = this._sesion;
-        if (clave.length < 8 || !s) return;
-        fetch('/api/cuenta', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ correo: s.correo, token: s.token, clave: clave })
-        }).then((r) => r.text().then((t) => {
-          let j = {}; try { j = JSON.parse(t); } catch (e) { j = {}; }
-          if (j.estado === 'creada' || j.estado === 'ya_existe') {
-            // El lead ya es perfil: su llave sobra, y guardada es una
-            // trampa. Las pantallas que aceptan las dos credenciales la
-            // seguirian mandando, y algun dia una escribiria en la fila
-            // vieja en vez de en el perfil.
-            try { window.localStorage.removeItem('aro-sesion'); } catch (e) {}
-            window.location.href = 'Aro Club - Verificacion.dc.html';
-            return;
-          }
-          this.setState({ errorCuenta: j.error || 'No pudimos crear tu cuenta. Es cosa nuestra: inténtalo otra vez.' });
-        })).catch(() => this.setState({
-          errorCuenta: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
-        }));
-      },
-      errorCuenta: this.state.errorCuenta || '',
-      hayErrorCuenta: !!this.state.errorCuenta,
+      enlaceLogo: fin ? 'Aro Club - Mi cuenta.dc.html' : 'Aro Club - Agradecimiento.dc.html',
+      inerteClave: (this.state.clave || '').length >= 8 ? null : 'true',
+      crearCuenta: () => { if ((this.state.clave || '').length >= 8) window.location.href = 'Aro Club - Verificacion.dc.html'; },
       botonClave: 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease;background:' + ((this.state.clave || '').length >= 8 ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + ((this.state.clave || '').length >= 8 ? '#FAF3E4' : '#456352') + ';cursor:' + ((this.state.clave || '').length >= 8 ? 'pointer' : 'not-allowed'),
       botonProveedor: 'display:inline-flex;align-items:center;justify-content:center;gap:11px;width:100%;min-height:58px;padding:0 26px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease',
 
@@ -610,43 +521,12 @@ class Component extends DCLogic {
 
       puedeAtras: this.state.pantalla > 0,
       atras: () => this.setState((s) => ({ pantalla: Math.max(0, s.pantalla - 1), retomada: false })),
-      // Deja de estar inerte: si falta algo, el boton LLEVA a lo que falta en
-      // vez de no hacer nada.
-      inerteContinuar: null,
-      textoContinuar: completa
-        ? (ultima ? 'Terminar' : 'Continuar')
-        : (faltante && faltante.corto ? 'Falta ' + faltante.corto : 'Falta una respuesta'),
+      inerteContinuar: completa ? null : 'true',
+      textoContinuar: ultima ? 'Terminar' : 'Continuar',
       botonContinuar: 'flex:1;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + (completa ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (completa ? '#FAF3E4' : '#456352') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (completa ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
       continuar: () => {
-        // Si falta algo, se va HASTA ello y se enfoca. Antes no pasaba nada
-        // y la pregunta que faltaba estaba fuera de la vista.
-        if (!completa) {
-          if (faltante) {
-            const el = document.getElementById(faltante.ancla);
-            if (el) {
-              // Instantaneo y no 'smooth': el suave depende del navegador y
-              // con reduced-motion no se mueve nada. Y para "llevame a lo
-              // que falta" llegar es mejor que el viaje.
-              el.scrollIntoView({ block: 'center' });
-              const campo = el.querySelector('input');
-              if (campo) { try { campo.focus({ preventScroll: true }); } catch (e) {} }
-            }
-          }
-          return;
-        }
-        // Al pasar de pantalla se reenvía lo que hay en ella, no solo lo que
-        // se tocó. `idiomas` viene premarcado con Español, y el guardado
-        // dispara al tocar: quien no lo cambiaba nunca lo guardaba, se
-        // quedaba en 16 de 17 y Mi cuenta le pedía terminar el perfil para
-        // siempre. Reenviar es idempotente —el servidor mezcla— y cierra
-        // toda la clase, no solo esta pregunta.
-        visibles.forEach((q) => {
-          if (q.tipo === 'texto') return;
-          const v = r[q.id];
-          if (v == null || (Array.isArray(v) && !v.length)) return;
-          this.enviar(q.id, this.aCodigo(q.id, v));
-        });
-        if (ultima) { this.enviar('__fin', null); this.setState({ fin: true }); return; }
+        if (!completa) return;
+        if (ultima) { this.setState({ fin: true }); return; }
         this.setState((s) => ({ pantalla: s.pantalla + 1, retomada: false }));
         window.scrollTo(0, 0);
       },

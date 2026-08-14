@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { encolar } from '@/lib/correos'
 
 /**
  * Entrar con correo y contraseña, y recuperación.
@@ -84,10 +85,17 @@ export async function POST(request: Request) {
     })
     if (error) {
       console.error('[entrar] no se pudo generar el enlace', error)
-    } else if (process.env.NODE_ENV !== 'production') {
-      // El envío real llega con los correos transaccionales. Hasta entonces
-      // el enlace queda en el registro para poder probar el recorrido.
-      console.info('[entrar] enlace de recuperación:', data.properties?.action_link)
+    } else {
+      // El enlace se generaba y se tiraba: la unica via de vuelta a una
+      // cuenta —Apple y Google no estan conectados— acababa en un
+      // console.info. Ahora queda encolado con la plantilla 09.
+      //
+      // El enlace VIVE en el payload y caduca. Es lo unico de esta cola que
+      // da acceso a una cuenta, asi que cuando exista el remitente conviene
+      // que estas filas se borren al enviarse y no se queden de historico.
+      await encolar({ perfil: perfil.id }, 'restablecer_clave', {
+        enlace: data.properties?.action_link ?? null,
+      })
     }
   }
 

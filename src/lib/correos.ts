@@ -28,6 +28,14 @@ export type Correo =
   | 'pago_en_revision'
   | 'pago_confirmado'
   | 'pago_no_cuadra'
+  // Entrega 13: el rechazo deja de ir dentro de `verificacion` con un
+  // resultado en el payload. Son dos mensajes distintos —«ya puedes
+  // reservar» y «repite esta foto»— y con un solo tipo el remitente tendria
+  // que mirar dentro del payload para elegir plantilla.
+  | 'verificacion_rechazada'
+  | 'fecha_cancelada'
+  | 'restablecer_clave'
+  | 'abrimos_zona'
 
 type AQuien = { perfil: string } | { correo: string }
 
