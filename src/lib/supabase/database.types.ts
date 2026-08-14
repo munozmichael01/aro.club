@@ -2177,31 +2177,34 @@ export type Database = {
       scheduled_emails: {
         Row: {
           created_at: string
+          email: string | null
           event_id: string | null
           id: string
           kind: Database["public"]["Enums"]["email_kind_t"]
           payload: Json
-          profile_id: string
+          profile_id: string | null
           send_at: string
           sent_at: string | null
         }
         Insert: {
           created_at?: string
+          email?: string | null
           event_id?: string | null
           id?: string
           kind: Database["public"]["Enums"]["email_kind_t"]
           payload?: Json
-          profile_id: string
+          profile_id?: string | null
           send_at: string
           sent_at?: string | null
         }
         Update: {
           created_at?: string
+          email?: string | null
           event_id?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["email_kind_t"]
           payload?: Json
-          profile_id?: string
+          profile_id?: string | null
           send_at?: string
           sent_at?: string | null
         }
