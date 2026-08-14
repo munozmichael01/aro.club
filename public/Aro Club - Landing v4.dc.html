@@ -775,7 +775,11 @@ class Component extends DCLogic {
       ['Te quedaste, y la mesa se vació sola', 'fotos/reco-se-quedo.jpg', '-2.1deg'],
       ['Nadie se fue, pero tampoco entró nadie', 'fotos/reco-mismos.jpg', '1.1deg'],
       ['Tu oficina está en otro país', 'fotos/reco-remoto.jpg', '-1.7deg'],
-      ['Conoces la ciudad, no conoces a nadie', wiki('Autopista Francisco Fajardo y el cerro el Ávila en la noche noche, Caracas.jpg'), '2.3deg'],
+      ['Conoces la ciudad, no conoces a nadie', 'fotos/reco-extranjero.jpg', '2.3deg'],
+      // ÚLTIMA FOTO DE UN TERCERO. Se sirve desde Wikimedia, asi que cada
+      // visita a la portada le dice a otro servidor quien esta mirando, y el
+      // dia que ese servidor falle esta tarjeta se queda en gris. Falta la
+      // foto propia; en cuanto llegue, esta linea deja de ser la excepcion.
       ['Estás unos días y no quieres pasarlos en casa', wiki('Caracas desde el teleférico.JPG'), '-1.3deg']
     ];
     const reconocimientos = recoDefs.map((r) => ({
