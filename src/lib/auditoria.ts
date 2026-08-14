@@ -26,6 +26,7 @@ export type Accion =
   | 'verificacion_rechazada'
   | 'pago_confirmado'
   | 'pago_no_cuadra'
+  | 'fecha_abierta'
   | 'mesas_publicadas'
   | 'mesas_despublicadas'
   | 'mesas_repartidas'
