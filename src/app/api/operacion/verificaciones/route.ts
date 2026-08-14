@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
+import { encolar } from '@/lib/correos'
 
 /**
  * La cola de verificación (HANDOFF-4 §4.4).
@@ -139,6 +140,13 @@ export async function POST(request: Request) {
     await anotar(actor, 'verificacion_aprobada', 'verificacion', d.profileId, {
       nombreCoincide: d.nombreCoincide, edadCoincide: d.edadCoincide,
     })
+
+    // Solo cuando estan las DOS aprobadas: avisar de que "ya puedes
+    // reservar" con la selfie aun pendiente seria mentira, y esa pantalla
+    // seguiria diciendole que espere.
+    if (tipos.has('id_document') && tipos.has('selfie')) {
+      await encolar({ perfil: d.profileId }, 'verificacion', { resultado: 'aprobada' })
+    }
     return NextResponse.json({ estado: 'aprobada' })
   }
 
@@ -171,5 +179,9 @@ export async function POST(request: Request) {
   }
 
   await anotar(actor, 'verificacion_rechazada', 'verificacion', d.profileId, { motivo: d.motivo })
+
+  // El rechazo tambien se avisa. Sin esto, quien no pasa se queda en "en
+  // revision" para siempre, esperando un correo que nadie iba a mandar.
+  await encolar({ perfil: d.profileId }, 'verificacion', { resultado: 'rechazada', motivo: d.motivo })
   return NextResponse.json({ estado: 'rechazada' })
 }

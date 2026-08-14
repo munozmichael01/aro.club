@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
+import { encolar } from '@/lib/correos'
 
 /**
  * La cola de conciliación.
@@ -17,30 +18,6 @@ import { anotar } from '@/lib/auditoria'
  *    suyo: mal tecleada una referencia, o el banco tardó.
  */
 
-/**
- * Encola el aviso. Hoy no hay remitente, asi que esto no manda nada: es el
- * registro de lo que habria que mandar. Cuando el remitente exista, este
- * flujo ya funciona.
- */
-async function encolar(
-  admin: ReturnType<typeof createAdminClient>,
-  profileId: string,
-  bookingId: string | null,
-  kind: 'pago_confirmado' | 'pago_no_cuadra',
-  payload: Record<string, unknown>,
-) {
-  const { data: reserva } = bookingId
-    ? await admin.from('bookings').select('event_id').eq('id', bookingId).maybeSingle()
-    : { data: null }
-
-  await admin.from('scheduled_emails').insert({
-    profile_id: profileId,
-    kind,
-    event_id: reserva?.event_id ?? null,
-    send_at: new Date().toISOString(),
-    payload: payload as never,
-  } as never)
-}
 
 const decision = z.discriminatedUnion('accion', [
   z.object({ accion: z.literal('confirmar'), pagoId: z.string().uuid() }),
@@ -210,7 +187,7 @@ export async function POST(request: Request) {
         .eq('id', pago.booking_id)
     }
 
-    await encolar(admin, pago.profile_id, pago.booking_id, 'pago_confirmado', {})
+    await encolar({ perfil: pago.profile_id }, 'pago_confirmado', {})
 
     await anotar(actor, 'pago_confirmado', 'pago', pago.id, { reserva: pago.booking_id })
     return NextResponse.json({ estado: 'confirmado' })
@@ -236,7 +213,7 @@ export async function POST(request: Request) {
 
   // El aviso, con el motivo dentro. Es el unico de los tres del que Design
   // no tiene plantilla, y el correo 06 le promete que se lo diriamos.
-  await encolar(admin, pago.profile_id, pago.booking_id, 'pago_no_cuadra', {
+  await encolar({ perfil: pago.profile_id }, 'pago_no_cuadra', {
     motivo: d.motivo,
     guardadoHasta: limite,
   })

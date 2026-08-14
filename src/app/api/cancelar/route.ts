@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { encolar } from '@/lib/correos'
 
 /**
  * Cancelar un puesto.
@@ -172,13 +173,12 @@ export async function POST(request: Request) {
       .in('status', ['under_review', 'confirmed'])
   }
 
-  await admin.from('scheduled_emails').insert({
-    profile_id: user.id,
-    kind: 'cancelacion',
-    event_id: reserva.event_id,
-    send_at: ahora,
-    payload: { conMargen, creditoDevuelto: conMargen } as never,
-  } as never)
+  await encolar(
+    { perfil: user.id },
+    'cancelacion',
+    { conMargen, creditoDevuelto: conMargen },
+    { eventoId: reserva.event_id },
+  )
 
   return NextResponse.json({
     estado: 'cancelada',

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { campoDe, valido } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { encolar } from '@/lib/correos'
 
 /**
  * F7 · Reportar un pago.
@@ -378,13 +379,12 @@ export async function POST(request: Request) {
 
   // El aviso queda EN COLA. Hoy no hay remitente y no sale nada, pero el
   // dia que exista, esto ya funciona sin volver a tocar el flujo.
-  await admin.from('scheduled_emails').insert({
-    profile_id: user.id,
-    kind: m.manual ? 'pago_en_revision' : 'pago_confirmado',
-    event_id: evento.id,
-    send_at: ahora,
-    payload: { metodo: m.id, monto: usd } as never,
-  } as never)
+  await encolar(
+    { perfil: user.id },
+    m.manual ? 'pago_en_revision' : 'pago_confirmado',
+    { metodo: m.id, monto: usd },
+    { eventoId: evento.id },
+  )
 
   return NextResponse.json({
     estado: m.manual ? 'reportado' : 'confirmado',

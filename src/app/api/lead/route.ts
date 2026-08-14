@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { firmar } from '@/lib/lead-token'
 import { leerCatalogo, validarConjunto } from '@/lib/questionnaire/catalogo'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { encolar } from '@/lib/correos'
 
 /**
  * Captación de la landing, en dos tiempos (HANDOFF §2.2).
@@ -171,6 +172,11 @@ export async function POST(request: Request) {
       { status: 500 },
     )
   }
+
+  // El primer correo del recorrido: «Guardamos tu puesto». Va aqui y no al
+  // crear la cuenta porque es AHORA cuando se le promete, y la mayoria de
+  // quienes dejan su correo no llegan a tener cuenta.
+  await encolar({ correo }, 'bienvenida', { ciudad: ciudadFinal })
 
   return NextResponse.json({ estado: 'nuevo', token: firmar(correo) })
 }
