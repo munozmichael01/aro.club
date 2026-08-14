@@ -593,7 +593,7 @@ class Component extends DCLogic {
       campoBaja: 'width:100%;max-width:220px;min-height:52px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;outline:none',
       bajaInerte: puedeBaja && !this.state.guardando ? null : 'true',
       textoConfirmarBaja: this.state.guardando ? 'Dando de baja…' : (puedeBaja ? 'Darme de baja' : 'Escribe BAJA'),
-      botonConfirmarBaja: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:999px;border:none;background:' + (puedeBaja ? '#6E340F' : 'rgba(20,52,42,.12)') + ';color:' + (puedeBaja ? '#FFF8EA' : '#5A7264') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (puedeBaja ? 'pointer' : 'not-allowed'),
+      botonConfirmarBaja: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:999px;border:none;background:' + (puedeBaja ? '#6E340F' : 'rgba(20,52,42,.12)') + ';color:' + (puedeBaja ? '#FFF8EA' : '#456352') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (puedeBaja ? 'pointer' : 'not-allowed'),
       confirmarBaja: () => {
         if (!puedeBaja || this.state.guardando) return;
         this.setState({ guardando: true, fallo: '' });

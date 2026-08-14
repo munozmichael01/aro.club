@@ -150,7 +150,11 @@
           <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar el jueves para ver tu mesa.</div>
 
           <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
-            <input type="password" placeholder="Crea una contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
+            <div style="position:relative;display:flex;align-items:center">
+              <input type="{{ tipoClave }}" placeholder="Crea una contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
+              <button onClick="{{ alternarVerClave }}" aria-label="{{ etiquetaVerClave }}" style="{{ botonVer }}">{{ textoVerClave }}</button>
+            </div>
+            <input type="{{ tipoClave }}" placeholder="Repítela" value="{{ clave2 }}" onChange="{{ onClave2 }}" autocomplete="new-password" aria-label="Repite la contraseña" style="{{ campoClave2 }}" />
             <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
           </div>
           <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
@@ -369,47 +373,47 @@ class Component extends DCLogic {
         titulo: 'Tu contexto',
         proposito: 'Con esto evitamos sentarte con alguien de tu misma empresa y armamos mesas donde las historias se entiendan entre sí.',
         preguntas: [
-          { id: 'arraigo', tipo: 'unica', pregunta: '¿Cuál de estas se parece más a tu historia?', opciones: ['Me fui del país y volví', 'Nunca me fui de Venezuela', 'Me mudé a Caracas desde el interior', 'Soy extranjero viviendo aquí', 'Vivo en el exterior y estoy de visita'] },
-          { id: 'sector', tipo: 'unica', pregunta: '¿En qué sector trabajas?', opciones: sectores, compacta: true },
-          { id: 'empleador', tipo: 'texto', pregunta: '¿Dónde trabajas actualmente?', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.', fuente: empresas }
+          { id: 'arraigo', corto: 'tu historia', tipo: 'unica', pregunta: '¿Cuál de estas se parece más a tu historia?', opciones: ['Me fui del país y volví', 'Nunca me fui de Venezuela', 'Me mudé a Caracas desde el interior', 'Soy extranjero viviendo aquí', 'Vivo en el exterior y estoy de visita'] },
+          { id: 'sector', corto: 'tu sector', tipo: 'unica', pregunta: '¿En qué sector trabajas?', opciones: sectores, compacta: true },
+          { id: 'empleador', corto: 'dónde trabajas', tipo: 'texto', pregunta: '¿Dónde trabajas actualmente?', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.', fuente: empresas }
         ]
       },
       {
         titulo: 'Cómo eres en la mesa',
         proposito: 'Una mesa donde todos llevan la conversación no funciona, y una donde nadie la lleva tampoco. Nada de esto se le muestra a nadie.',
         preguntas: [
-          { id: 'momento', tipo: 'unica', pregunta: '¿En qué momento estás?', opciones: ['Soltero sin hijos', 'Soltero con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
-          { id: 'rol', tipo: 'unica', pregunta: 'En una mesa con gente que no conoces, ¿cómo eres?', opciones: ['Escucho más de lo que hablo', 'Depende del momento', 'Suelo llevar la conversación'] },
-          { id: 'motivo', tipo: 'unica', pregunta: '¿Qué te trae?', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con Caracas después de volver', 'Red profesional'] },
-          { id: 'romance', tipo: 'unica', opcional: true, pregunta: 'Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?', ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla del producto. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: ['Abierto, si surge algo bienvenido', 'Me da igual, vengo por la conversación', 'Prefiero una mesa sin esa energía'] }
+          { id: 'momento', corto: 'en qué momento estás', tipo: 'unica', pregunta: '¿En qué momento estás?', opciones: ['Soltero sin hijos', 'Soltero con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
+          { id: 'rol', corto: 'cómo eres en la mesa', tipo: 'unica', pregunta: 'En una mesa con gente que no conoces, ¿cómo eres?', opciones: ['Escucho más de lo que hablo', 'Depende del momento', 'Suelo llevar la conversación'] },
+          { id: 'motivo', corto: 'qué te trae', tipo: 'unica', pregunta: '¿Qué te trae?', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con Caracas después de volver', 'Red profesional'] },
+          { id: 'romance', corto: 'si buscas algo romántico', tipo: 'unica', opcional: true, pregunta: 'Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?', ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla del producto. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: ['Abierto, si surge algo bienvenido', 'Me da igual, vengo por la conversación', 'Prefiero una mesa sin esa energía'] }
         ]
       },
       {
         titulo: 'De qué hablas',
         proposito: 'Es lo que más pesa a la hora de armar el grupo: dos horas se sostienen con temas, no con datos.',
         preguntas: [
-          { id: 'temas', tipo: 'multi', min: 2, max: 4, pregunta: '¿De qué podrías hablar dos horas seguidas?', opciones: temas },
-          { id: 'evitar', tipo: 'multi', opcional: true, exclusiva: 6, pregunta: '¿Hay algún tema que prefieras que no salga?', ayuda: 'Se lo decimos al anfitrión de la mesa, sin decir de quién viene.', opciones: ['Política y situación del país', 'Religión y fe', 'Dinero, sueldos y precios', 'Vida amorosa y relaciones', 'Crianza e hijos', 'Trabajo, vengo a desconectarme', 'Ninguno, hablo de todo'] },
-          { id: 'actividades', tipo: 'multi', min: 3, max: 6, pregunta: 'Escoge lo que de verdad haces, no lo que te gustaría hacer', opciones: actividades }
+          { id: 'temas', corto: 'de qué hablas', tipo: 'multi', min: 2, max: 4, pregunta: '¿De qué podrías hablar dos horas seguidas?', opciones: temas },
+          { id: 'evitar', corto: 'qué prefieres esquivar', tipo: 'multi', opcional: true, exclusiva: 6, pregunta: '¿Hay algún tema que prefieras que no salga?', ayuda: 'Se lo decimos al anfitrión de la mesa, sin decir de quién viene.', opciones: ['Política y situación del país', 'Religión y fe', 'Dinero, sueldos y precios', 'Vida amorosa y relaciones', 'Crianza e hijos', 'Trabajo, vengo a desconectarme', 'Ninguno, hablo de todo'] },
+          { id: 'actividades', corto: 'qué haces', tipo: 'multi', min: 3, max: 6, pregunta: 'Escoge lo que de verdad haces, no lo que te gustaría hacer', opciones: actividades }
         ]
       },
       {
         titulo: 'Qué buscas y cuánto',
         proposito: 'El rango que marques es el techo del sitio que elegimos. Nadie ve tu respuesta y no hay mesa mejor por gastar más.',
         preguntas: [
-          { id: 'planes', tipo: 'multi', pregunta: '¿Qué planes te interesan?', ayuda: 'Hoy solo hay cenas. Lo demás lo abrimos según lo que pida la gente.', opciones: ['Cena en restaurante', 'Cena con foco gastronómico', 'Café o desayuno de networking', 'Drinks / after office', 'Correr', 'Senderismo', 'Pádel o tenis', 'Yoga o pilates', 'Ciclismo'] },
-          { id: 'peso', tipo: 'unica', pregunta: 'En una cena, ¿qué pesa más para ti?', opciones: ['La conversación, el restaurante es la excusa', 'La comida, vengo por la experiencia gastronómica', 'Las dos cosas por igual'] },
-          { id: 'gasto', tipo: 'unica', pregunta: '¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?', ayuda: 'Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa, así que marcar de más solo hace que la noche te salga cara.', opciones: ['Hasta 20 USD', '20 a 35 USD', '35 a 50 USD', 'Más de 50 USD'] },
+          { id: 'planes', corto: 'qué planes te interesan', tipo: 'multi', pregunta: '¿Qué planes te interesan?', ayuda: 'Hoy solo hay cenas. Lo demás lo abrimos según lo que pida la gente.', opciones: ['Cena en restaurante', 'Cena con foco gastronómico', 'Café o desayuno de networking', 'Drinks / after office', 'Correr', 'Senderismo', 'Pádel o tenis', 'Yoga o pilates', 'Ciclismo'] },
+          { id: 'peso', corto: 'qué pesa más', tipo: 'unica', pregunta: 'En una cena, ¿qué pesa más para ti?', opciones: ['La conversación, el restaurante es la excusa', 'La comida, vengo por la experiencia gastronómica', 'Las dos cosas por igual'] },
+          { id: 'gasto', corto: 'tu presupuesto', tipo: 'unica', pregunta: '¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?', ayuda: 'Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa, así que marcar de más solo hace que la noche te salga cara.', opciones: ['Hasta 20 USD', '20 a 35 USD', '35 a 50 USD', 'Más de 50 USD'] },
         ]
       },
       {
         titulo: 'Logística',
         proposito: 'Lo último. Con esto sabemos a qué mesa puedes llegar de verdad y qué sitio elegir.',
         preguntas: [
-          { id: 'zonas', tipo: 'multi', pregunta: '¿En qué zonas puedes asistir sin problema?', opciones: zonas },
-          { id: 'dias', tipo: 'multi', pregunta: '¿Qué días te sirven mejor?', opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía'] },
-          { id: 'idiomas', tipo: 'multi', pregunta: '¿En qué idiomas conversas cómodo?', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] },
-          { id: 'dieta', tipo: 'multi', opcional: true, exclusiva: 0, pregunta: '¿Alguna restricción alimentaria?', opciones: ['Ninguna', 'Vegetariano', 'Vegano', 'Pescetariano', 'Sin gluten', 'Sin lactosa', 'Kosher', 'Halal', 'No como cerdo', 'No como carnes rojas', 'Diabético', 'Alergias'] }
+          { id: 'zonas', corto: 'tus zonas', tipo: 'multi', pregunta: '¿En qué zonas puedes asistir sin problema?', opciones: zonas },
+          { id: 'dias', corto: 'tus días', tipo: 'multi', pregunta: '¿Qué días te sirven mejor?', opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía'] },
+          { id: 'idiomas', corto: 'tus idiomas', tipo: 'multi', pregunta: '¿En qué idiomas conversas cómodo?', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] },
+          { id: 'dieta', corto: 'tu dieta', tipo: 'multi', opcional: true, exclusiva: 0, pregunta: '¿Alguna restricción alimentaria?', opciones: ['Ninguna', 'Vegetariano', 'Vegano', 'Pescetariano', 'Sin gluten', 'Sin lactosa', 'Kosher', 'Halal', 'No como cerdo', 'No como carnes rojas', 'Diabético', 'Alergias'] }
         ]
       }
     ];
@@ -503,7 +507,11 @@ class Component extends DCLogic {
     // pregunta que faltaba no se veia. Un boton muerto en una pantalla que
     // parece terminada se lee como que la web esta rota.
     const cual = visibles.find((q) => !contestada(q)) || null;
-    const faltante = cual ? { id: cual.id, tipo: cual.tipo, ancla: 'preg-' + cual.id } : null;
+    // Se guarda tambien COMO se llama, para poder nombrarla en el boton.
+    // "Falta una respuesta" delante de tres preguntas obliga a repasarlas.
+    const faltante = cual
+      ? { id: cual.id, tipo: cual.tipo, ancla: 'preg-' + cual.id, corto: cual.corto || '' }
+      : null;
     const completa = !faltante;
 
     const barras = [0, 1, 2, 3, 4].map((i) => ({
@@ -528,8 +536,23 @@ class Component extends DCLogic {
       // el acceso se elige aquí, cuando ya hay algo que guardar
       clave: this.state.clave || '',
       onClave: (e) => this.setState({ clave: e.target.value }),
-      campoClave: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none',
-      textoClave: (this.state.clave || '').length >= 8 ? 'Crear mi cuenta' : 'Al menos ocho caracteres',
+      onClave2: (e) => this.setState({ clave2: e.target.value }),
+      clave2: this.state.clave2 || '',
+
+      // Un solo campo tapado y sin repetir: un dedo torcido te deja fuera de
+      // tu cuenta, y la recuperacion va por correo. Poder VERLA es mejor que
+      // repetirla a ciegas, asi que estan las dos cosas.
+      tipoClave: this.state.verClave ? 'text' : 'password',
+      textoVerClave: this.state.verClave ? 'Ocultar' : 'Ver',
+      etiquetaVerClave: this.state.verClave ? 'Ocultar la contraseña' : 'Mostrar la contraseña',
+      alternarVerClave: () => this.setState((st) => ({ verClave: !st.verClave })),
+      botonVer: 'position:absolute;right:8px;min-height:44px;padding:0 12px;background:transparent;border:none;font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138;cursor:pointer',
+      campoClave: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none' + ';padding-right:78px',
+      campoClave2: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none' + (((this.state.clave2 || '') && this.state.clave !== this.state.clave2) ? ';border-color:#8F4515' : ''),
+      textoClave: (this.state.clave || '').length < 8
+        ? 'Al menos ocho caracteres'
+        : (!(this.state.clave2 || '') ? 'Repite la contraseña'
+            : (this.state.clave !== this.state.clave2 ? 'No coinciden' : 'Crear mi cuenta')),
       pistaClave: (this.state.clave || '').length >= 8
         ? 'Entrarás con tu correo y esta contraseña.'
         : 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Apple o Google.',
@@ -538,7 +561,7 @@ class Component extends DCLogic {
       // La salida se ENSEÑA, no se deja implicita en el logo: el pie dice
       // que puedes salir y hasta ahora no habia como.
       haySalida: !!this.state.tieneCuenta && !fin,
-      inerteClave: (this.state.clave || '').length >= 8 ? null : 'true',
+      inerteClave: ((this.state.clave || '').length >= 8 && this.state.clave === this.state.clave2) ? null : 'true',
       // La cuenta se crea aqui, al cerrar el cuestionario: es cuando ya hay
       // algo que guardar. El servidor abre la sesion en la misma respuesta.
       crearCuenta: () => {
@@ -589,7 +612,7 @@ class Component extends DCLogic {
       inerteContinuar: null,
       textoContinuar: completa
         ? (ultima ? 'Terminar' : 'Continuar')
-        : (faltante && faltante.tipo === 'texto' ? 'Falta dónde trabajas' : 'Falta una respuesta'),
+        : (faltante && faltante.corto ? 'Falta ' + faltante.corto : 'Falta una respuesta'),
       botonContinuar: 'flex:1;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + (completa ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (completa ? '#FAF3E4' : '#456352') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (completa ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
       continuar: () => {
         // Si falta algo, se va HASTA ello y se enfoca. Antes no pasaba nada

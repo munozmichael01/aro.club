@@ -106,7 +106,6 @@
 
       <div data-reveal="3" style="display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;margin-top:clamp(26px,3.4vw,38px)">
         <a href="#registro" style="display:inline-flex;align-items:center;min-height:60px;padding:0 32px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;transition:background 220ms ease" style-hover="background:#E39C63;color:#14342A">Encuentra tu mesa</a>
-        <span style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#C5D8CA">8 USD la plaza · sin tarjeta ahora</span>
       </div>
     </div>
   </div>
@@ -314,10 +313,6 @@
                 </div>
               </sc-for>
             </div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding-top:16px">
-              <span style="flex:1 1 auto;font:500 15px/1.4 'Inter Tight',sans-serif;color:#14342A">¿Vas a repetir? Pack de cuatro plazas</span>
-              <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#8F4515;white-space:nowrap">28 USD</span>
-            </div>
           </div>
 
           <div style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;border:1px solid rgba(20,52,42,.18);padding:16px 18px;margin-top:14px">
@@ -355,7 +350,7 @@
         <h2 data-reveal="0" style="{{ h2 }}">¿Por dónde te queda cómodo salir?</h2>
         <div data-reveal="1" style="{{ chipZonas }}">{{ textoChipZonas }}</div>
       </div>
-      <p data-reveal="2" style="{{ intro }}">Marca hasta tres. Abrimos donde se junta más gente que pueda llegar.</p>
+      <p data-reveal="2" style="{{ intro }}">Marca hasta cinco. Abrimos donde se junta más gente que pueda llegar.</p>
       <div style="display:flex;flex-wrap:wrap;gap:clamp(8px,1vw,12px);margin-top:clamp(22px,3vw,30px)">
         <sc-for list="{{ zonas }}" as="z" hint-placeholder-count="10">
           <button onClick="{{ z.pick }}" style="{{ z.btn }}">
@@ -550,6 +545,16 @@ class Component extends DCLogic {
     this.parallax();
     this.leerSesion();
     this.recuperarPuesto();
+
+    // La fecha de verdad. El contador la calculaba —"el proximo martes a las
+    // siete"— sin mirar si existe, asi que prometia una fecha aunque no
+    // hubiera ninguna, y al terminar el alta la misma pantalla decia "te
+    // escribimos en cuanto abramos mesa". Dos frases que se contradicen en
+    // el mismo recorrido.
+    fetch('/api/proxima')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) this.setState({ proxima: d }); })
+      .catch(() => {});
   }
 
   /**
@@ -627,10 +632,11 @@ class Component extends DCLogic {
   // el martes a las 19:00, que es cuando se cierra la fecha del jueves
   reloj() {
     const d = new Date(this.state.ahora);
-    let dias = (2 - d.getDay() + 7) % 7;
-    const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 19, 0, 0, 0);
-    if (dias === 0 && d.getTime() >= t.getTime()) dias = 7;
-    t.setDate(t.getDate() + dias);
+    const p = this.state.proxima;
+    // Hacia el cierre de la fecha que existe. Sin fecha no hay cuenta atras
+    // que dar, y quien llama a esto ya lo comprueba antes.
+    if (!p || !p.hay || !p.cierraEn) return '';
+    const t = new Date(p.cierraEn);
     const s = Math.max(0, Math.floor((t.getTime() - d.getTime()) / 1000));
     const dd = Math.floor(s / 86400);
     const hh = Math.floor(s / 3600) % 24;
@@ -809,13 +815,17 @@ class Component extends DCLogic {
     const aroDS = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
     const pastilla = (on, tope) => 'display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 18px 0 13px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : (tope ? 'rgba(20,52,42,.1)' : 'rgba(20,52,42,.16)')) + ';cursor:pointer;transition:all 220ms ease;opacity:' + (tope ? '.5' : '1');
 
+    // Cinco, no tres. Con tres, quien se mueve por media ciudad tenia que
+    // dejarse fuera zonas a las que si puede llegar, y eso reduce las mesas
+    // en las que encaja. Un solo numero para las dos listas.
+    const MAX_ZONAS = 5;
     const zonaDefs = ['Las Mercedes', 'Los Palos Grandes', 'Altamira', 'Chacao', 'El Rosal', 'La Castellana', 'El Hatillo', 'La Trinidad y La Tahona', 'Chuao', 'Bello Monte'];
     const zonas = zonaDefs.map((z, i) => {
       const on = this.state.zonas.indexOf(i) >= 0;
-      const tope = this.state.zonas.length >= 3 && !on;
+      const tope = this.state.zonas.length >= MAX_ZONAS && !on;
       return {
         zona: z, icono: on ? '✓' : '', aro: aroDS(on),
-        pick: () => this.alterna('zonas', i, 3),
+        pick: () => this.alterna('zonas', i, MAX_ZONAS),
         btn: pastilla(on, tope),
         nombre: 'font:' + (on ? '600' : '500') + ' 15px/1.2 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A;white-space:nowrap'
       };
@@ -869,8 +879,8 @@ class Component extends DCLogic {
       },
       {
         etiqueta: 'ZONAS', pregunta: '¿Dónde te queda cómodo salir?',
-        ayuda: 'Hasta tres. Son las mismas que puedes marcar arriba.',
-        tipo: 'multi', clave: 'zonas', max: 3, opciones: zonaDefs
+        ayuda: 'Hasta cinco. Son las mismas que puedes marcar arriba.',
+        tipo: 'multi', clave: 'zonas', max: MAX_ZONAS, opciones: zonaDefs
       },
       {
         etiqueta: 'DÍAS', pregunta: '¿Qué días te sirven mejor?',
@@ -921,7 +931,10 @@ class Component extends DCLogic {
       sinSesion: this.state.sesionSabida && !this.state.sesion,
       textoCuenta: this.state.sesion && this.state.sesion.estado === 'abierta' ? 'Mi mesa' : 'Mi cuenta',
       ciudad: CIUDAD,
-      textoChip: CIUDAD + ' · la próxima se cierra en ' + this.reloj(),
+      hayProxima: !!(this.state.proxima && this.state.proxima.hay),
+      textoChip: (this.state.proxima && this.state.proxima.hay)
+        ? CIUDAD + ' · la próxima se cierra en ' + this.reloj()
+        : CIUDAD + ' · abrimos la próxima fecha en cuanto haya gente suficiente',
       marquesina, reconocimientos, planes, cubre, cuidados, zonas, ciudades, faq,
       comensales, eventos,
 
@@ -951,12 +964,17 @@ class Component extends DCLogic {
       intro: 'font:400 clamp(16px,1.4vw,19px)/1.6 \'Inter Tight\',sans-serif;color:#456352;max-width:48ch;margin:16px 0 0;text-wrap:pretty',
 
       chipZonas: 'display:inline-flex;align-items:center;gap:9px;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid ' + (nz ? '#8F4515' : 'rgba(27,81,56,.22)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:' + (nz ? '#8F4515' : '#1B5138') + ';white-space:nowrap',
-      textoChipZonas: nz ? nz + ' DE 3 MARCADAS' : 'MARCA HASTA 3',
+      textoChipZonas: nz ? nz + ' DE ' + MAX_ZONAS + ' MARCADAS' : 'MARCA HASTA ' + MAX_ZONAS,
       hayZonas: nz > 0,
       hayCiudad: this.state.ciudad >= 0,
-      notaZonas: nz
-        ? 'Anotado: ' + listaZonas + '. Te escribimos en cuanto abramos mesa ahí.'
-        : 'Una zona abre su primera mesa cuando hay doce personas que puedan llegar a ella.',
+      // Al llegar al tope no pasaba nada y no se decia por que: tocabas la
+      // sexta y la pantalla se quedaba muda, que se lee como que no
+      // funciona.
+      notaZonas: nz >= MAX_ZONAS
+        ? 'Anotado: ' + listaZonas + '. Son cinco, el máximo: quita una si quieres cambiarla.'
+        : (nz
+            ? 'Anotado: ' + listaZonas + '. Te escribimos en cuanto abramos mesa ahí.'
+            : 'Una zona abre su primera mesa cuando hay doce personas que puedan llegar a ella.'),
 
       esCorreo: f === 'correo',
       bajadaCorreo: this.state.yaTienePuesto
@@ -1009,7 +1027,10 @@ class Component extends DCLogic {
       hayPendientes: !fuera,
       resumenFinal: fuera
         ? 'Guardamos ' + this.state.correo + '. Abrimos ciudad cuando hay suficiente gente que pueda llegar a la misma mesa el mismo día, así que no te damos fecha: te escribimos en cuanto ' + nombreCiudad + ' llegue a ese número.'
-        : 'Guardamos ' + this.state.correo + ' y lo que nos dijiste. Te escribimos en cuanto abramos mesa en ' + listaZonas + '.',
+        : 'Guardamos ' + this.state.correo + ' y lo que nos dijiste. ' +
+          ((this.state.proxima && this.state.proxima.hay)
+            ? 'Hay fecha abierta: termina tu perfil y puedes reservar.'
+            : 'Te escribimos en cuanto abramos mesa en ' + listaZonas + '.'),
       // Lo obvio primero. Se pedia al final —despues de las diecisiete
       // preguntas— y quien terminaba descubria ahi que aun no podia
       // reservar por no habernos dicho como se llama.

@@ -1127,7 +1127,7 @@ class Component extends DCLogic {
 
         inerte: elegida && !cerrando ? null : 'true',
         textoCerrar: cerrando ? 'Guardando…' : (elegida ? 'Cerrar el reporte' : 'Elige que se hizo'),
-        botonCerrar: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:999px;background:' + (elegida ? '#14342A' : 'rgba(20,52,42,.1)') + ';color:' + (elegida ? '#FAF3E4' : '#5A7264') + ';border:none;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (elegida ? 'pointer' : 'not-allowed'),
+        botonCerrar: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:999px;background:' + (elegida ? '#14342A' : 'rgba(20,52,42,.1)') + ';color:' + (elegida ? '#FAF3E4' : '#456352') + ';border:none;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (elegida ? 'pointer' : 'not-allowed'),
         cerrar: () => {
           if (!elegida || cerrando) return;
           this.setState({ cerrando: n.id });
@@ -1236,7 +1236,7 @@ class Component extends DCLogic {
         botonAprobar: btnCola(d === 'ok' ? 'rgba(27,81,56,.13)' : '#1B5138', d === 'ok' ? '#1B5138' : '#FAF3E4', 'none'),
         botonRechazar: btnCola('transparent', '#8F4515', '1px solid rgba(143,69,21,.44)'),
         botonVolver: btnCola('transparent', '#33513F', '1px solid rgba(20,52,42,.22)'),
-        botonConfirmar: btnCola(mSel >= 0 ? '#6E340F' : 'rgba(20,52,42,.1)', mSel >= 0 ? '#FFF8EA' : '#5A7264', 'none'),
+        botonConfirmar: btnCola(mSel >= 0 ? '#6E340F' : 'rgba(20,52,42,.1)', mSel >= 0 ? '#FFF8EA' : '#456352', 'none'),
         textoConfirmar: mSel >= 0 ? 'Rechazar' : 'Elige el motivo',
 
         decidiendo: !d && !abierta,
@@ -1340,7 +1340,7 @@ class Component extends DCLogic {
         botonConfirmar: btnCola('#1B5138', '#FAF3E4', 'none'),
         botonRechazar: btnCola('transparent', '#8F4515', '1px solid rgba(143,69,21,.44)'),
         botonVolver: btnCola('transparent', '#33513F', '1px solid rgba(20,52,42,.22)'),
-        botonNoCuadra: btnCola(mSel >= 0 ? '#6E340F' : 'rgba(20,52,42,.1)', mSel >= 0 ? '#FFF8EA' : '#5A7264', 'none'),
+        botonNoCuadra: btnCola(mSel >= 0 ? '#6E340F' : 'rgba(20,52,42,.1)', mSel >= 0 ? '#FFF8EA' : '#456352', 'none'),
         textoNoCuadra: mSel >= 0 ? 'Avisarle' : 'Elige el motivo',
         confirmar: () => this.decidirPago({ accion: 'confirmar', pagoId: p.id }),
         abrirNoCuadra: () => this.setState((st) => ({ abriendoPago: st.abriendoPago === i ? null : i })),
