@@ -29,10 +29,36 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-/** Margen antes de dar por hecho que se fue. Media jornada. */
-const HORAS_DE_SILENCIO = 6
+/** Margen antes de dar por hecho que se fue. */
+const HORAS_DE_SILENCIO = 1
+
+/**
+ * Y no a cualquier hora.
+ *
+ * El cron corre cada hora para que «una hora» signifique una hora; con una
+ * pasada diaria, quien se paraba a las tres de la tarde recibia el empujon
+ * al dia siguiente. Pero correr cada hora significa tambien que alguien que
+ * abandona a las dos de la madrugada recibe un correo a las tres, y eso no
+ * es diligencia: es despertar a alguien para pedirle que rellene un
+ * formulario.
+ *
+ * De ocho de la mañana a nueve de la noche, hora de Caracas. Quien se para
+ * de noche lo recibe al despertar, que es cuando podia hacer algo con el.
+ */
+const DESDE_CARACAS = 8
+const HASTA_CARACAS = 21
+
+/** Caracas va cuatro horas por detras de UTC, y no cambia con la estacion. */
+function horaEnCaracas(d: Date): number {
+  return (d.getUTCHours() + 24 - 4) % 24
+}
 
 async function empujar() {
+  const hora = horaEnCaracas(new Date())
+  if (hora < DESDE_CARACAS || hora >= HASTA_CARACAS) {
+    return NextResponse.json({ fuera_de_hora: hora, perfil: 0, verificacion: 0 })
+  }
+
   const admin = createAdminClient()
   const corte = new Date(Date.now() - HORAS_DE_SILENCIO * 3600_000).toISOString()
 

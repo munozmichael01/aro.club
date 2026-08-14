@@ -10,7 +10,7 @@
     },
     {
       "path": "/api/cron/empujon",
-      "schedule": "0 14 * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }
