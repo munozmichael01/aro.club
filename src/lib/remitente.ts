@@ -22,7 +22,21 @@ import type { Correo } from '@/lib/correos'
 
 const DE = process.env.CORREO_DE ?? 'Aro Club <hola@aro.club>'
 const CLAVE = process.env.RESEND_API_KEY
-export const SITIO = process.env.NEXT_PUBLIC_SITIO ?? 'https://aro.club'
+
+/**
+ * La dirección del sitio, de la MISMA variable que usa el resto.
+ *
+ * Yo había inventado `NEXT_PUBLIC_SITIO` para los correos y el proyecto ya
+ * tenía `NEXT_PUBLIC_SITE_URL`. Dos nombres para lo mismo es una trampa que
+ * salta el día del despliegue: se pone una en Vercel, la otra se queda con
+ * su valor por defecto, y los enlaces de los correos apuntan a localhost sin
+ * que falle nada visible.
+ *
+ * En local `NEXT_PUBLIC_SITE_URL` es `http://localhost:3000`, que es lo que
+ * queremos al probar. Si algún día no estuviera puesta, el dominio de verdad
+ * es mejor caída que un localhost dentro de un correo.
+ */
+export const SITIO = process.env.NEXT_PUBLIC_SITE_URL || 'https://aro.club'
 
 /** Qué plantilla usa cada tipo. El nombre del fichero es de Design. */
 const PLANTILLA: Record<Correo, string> = {
