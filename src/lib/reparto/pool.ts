@@ -89,12 +89,15 @@ export async function construirPool(
     return true
   }
 
+  // `restaurant_id` es nulo mientras el sitio no se ha elegido —eso es lo
+  // normal ahora—, y una sede sin sitio no es asignable: no se puede sentar a
+  // nadie ahí. Se filtra aquí y no en el tipo para que la zona siga abierta.
   const sedes: Sede[] = (sedesRaw ?? [])
-    .filter((v) => puedeRecibir(v.restaurants as unknown as Local | null))
+    .filter((v) => v.restaurant_id != null && puedeRecibir(v.restaurants as unknown as Local | null))
     .map((v) => ({
       zona: v.zone_slug,
       zonaNombre: (v.zones as unknown as { name: string } | null)?.name ?? v.zone_slug,
-      restaurantId: v.restaurant_id,
+      restaurantId: v.restaurant_id as string,
       nombre: (v.restaurants as unknown as Local | null)?.name ?? null,
       maxMesas:
         v.max_tables ?? (v.restaurants as unknown as Local | null)?.max_tables ?? 4,

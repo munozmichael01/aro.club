@@ -518,7 +518,7 @@ export type Database = {
           event_id: string
           id: string
           max_tables: number | null
-          restaurant_id: string
+          restaurant_id: string | null
           zone_slug: string
         }
         Insert: {
@@ -526,7 +526,7 @@ export type Database = {
           event_id: string
           id?: string
           max_tables?: number | null
-          restaurant_id: string
+          restaurant_id?: string | null
           zone_slug: string
         }
         Update: {
@@ -534,7 +534,7 @@ export type Database = {
           event_id?: string
           id?: string
           max_tables?: number | null
-          restaurant_id?: string
+          restaurant_id?: string | null
           zone_slug?: string
         }
         Relationships: [
@@ -3193,6 +3193,13 @@ export type Database = {
           correos_retirados: number
         }[]
       }
+      documentos_a_purgar: {
+        Args: never
+        Returns: {
+          id: string
+          storage_path: string
+        }[]
+      }
       guardar_respuesta: {
         Args: {
           p_clave: string
@@ -3206,12 +3213,6 @@ export type Database = {
       is_ops: { Args: never; Returns: boolean }
       limpiar_traspasos: { Args: never; Returns: undefined }
       normalize_employer: { Args: { raw: string }; Returns: string }
-      purgar_documentos_verificacion: {
-        Args: never
-        Returns: {
-          borradas: number
-        }[]
-      }
       refrescar_rasgos: { Args: { p_profile_id: string }; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
