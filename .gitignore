@@ -46,3 +46,7 @@ node_modules/
 .env*.local
 supabase/.temp/
 .banco-pruebas-fechas.json
+# El CLI de Vercel añadió `.env*`, que se lleva por delante .env.example.
+# Esa sí se commitea: es la plantilla que dice qué variables hacen falta.
+.env
+.vercel
