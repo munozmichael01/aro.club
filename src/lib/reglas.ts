@@ -40,6 +40,12 @@ type Api = {
   campoDe: (definicion: { tipo?: string; prefijo?: string; largo?: number }) => Campo | null
   aE164: (valor: unknown) => string
   REGLAS: Record<Campo, { etiqueta: string; ayuda?: string }>
+  vozDe: (formato: string | null | undefined) => {
+    unidad: string; unidades: string; Unidad: string; Unidades: string
+    art: string; Art: string; esta: string; tu: string; La: string; el: string
+    sitio: string; Sitio: string; sitioCorto: string
+    sentados: string; juntarse: string; mia: string; TU: string
+  }
 }
 
 const api = reglas as Api
@@ -51,4 +57,6 @@ export const primerFallo = api.primerFallo
 export const campoDe = api.campoDe
 export const aE164 = api.aE164
 export const REGLAS = api.REGLAS
+/** Mesa o grupo, según el formato. La tabla vive en public/reglas.js. */
+export const vozDe = api.vozDe
 export type { Campo }
