@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8" />
+<title>Aro Club — Los correos</title>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  body{margin:0;background:#F2E9D5;font-family:'Inter Tight',system-ui,sans-serif;color:#14342A}
+  .wrap{max-width:1400px;margin:0 auto;padding:clamp(24px,4vw,48px)}
+  h1{font:400 clamp(30px,4.4vw,50px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0 0 12px}
+  p.sub{font:400 16px/1.6 'Inter Tight',sans-serif;color:#2C4A38;max-width:64ch;margin:0 0 10px;text-wrap:pretty}
+  .eyebrow{font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.18em;color:#8F4515;margin:clamp(30px,4vw,44px) 0 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .card{background:#FAF3E4;border-radius:22px;overflow:hidden;border:1px solid rgba(20,52,42,.14);display:flex;flex-direction:column}
+  .head{padding:15px 18px 14px;border-bottom:1px solid rgba(20,52,42,.12)}
+  .n{font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515}
+  .t{font:400 21px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;margin-top:7px}
+  .s{font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:6px}
+  .visor{position:relative;height:520px;overflow:hidden;background:#F2E9D5}
+  iframe{width:600px;height:1400px;border:0;transform:scale(.54);transform-origin:0 0;position:absolute;top:0;left:50%;margin-left:-162px}
+  .pie{display:flex;gap:8px;padding:12px 14px;border-top:1px solid rgba(20,52,42,.12);background:#FFFBF0}
+  a.b{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.22);font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:none}
+  a.b:hover{background:#1B5138;color:#FAF3E4;border-color:#1B5138}
+</style></head>
+<body><div class="wrap">
+<h1>Los correos.</h1>
+<p class="sub">Archivos HTML autocontenidos, listos para pegar en la herramienta de envío. Sin JavaScript, sin fuentes web y <strong>sin fotografías</strong>: todo son celdas de tabla y tipografía, que es lo único que sobrevive igual en Gmail, Outlook y Apple Mail. La única imagen es el logo, y es una excepción deliberada: los seis puntos sobre el anillo —las seis sillas— no se pueden colocar en círculo con tablas. Si el cliente la bloquea no se pierde nada, porque el wordmark va al lado en texto.</p>
+<p class="sub">Cada uno lleva su línea de previsualización —lo que se lee junto al asunto— y dice por qué lo recibes.</p>
+<div id="g"></div>
+</div>
+<script>
+const G=[
+ ['LA CENA', [
+  ['03','Tu mesa','Jueves a las 12:00 · el que sostiene la promesa','correos/03-mesa-asignada.html'],
+  ['04','Es hoy','La tarde del encuentro','correos/04-recordatorio.html'],
+  ['12','La fecha no sale','No juntamos gente · crédito devuelto y uno de cortesía','correos/12-fecha-cancelada.html'],
+  ['05','Puesto cancelado','Cuando cancela el miembro','correos/05-cancelacion.html']
+ ]],
+ ['ENTRAR Y VERIFICAR', [
+  ['01','Bienvenida','Al terminar las cuatro preguntas de la landing','correos/01-bienvenida.html'],
+  ['09','Restablecer contraseña','Al pedirlo desde entrar · caduca en 15 minutos','correos/09-restablecer-clave.html'],
+  ['02','Identidad verificada','Cuando una persona aprueba la cédula y la selfie','correos/02-verificacion.html'],
+  ['10','Falta una foto','Cuando el documento no se lee','correos/10-verificacion-rechazada.html'],
+  ['13','Tu cuenta está lista','Al terminar perfil y verificación del tirón · es un recibo, no una bienvenida','correos/13-cuenta-lista.html']
+ ]],
+ ['PAGO', [
+  ['06','Pago en revisión','Al reportar un pago manual · puesto apartado','correos/06-pago-en-revision.html'],
+  ['07','Pago confirmado','Cuando operación lo cuadra con el banco','correos/07-pago-confirmado.html'],
+  ['08','El pago no cuadra','No aparece en el banco · 24 h para corregir','correos/08-pago-no-cuadra.html']
+ ]],
+ ['ESPERA', [
+  ['11','Ya hay mesa en tu zona','La promesa de la landing, cumplida','correos/11-abrimos-zona.html']
+ ]]
+];
+document.getElementById('g').innerHTML=G.map(([t,cs])=>`<div class="eyebrow">${t}</div><div class="grid">`+cs.map(c=>`<div class="card"><div class="head"><div class="n">${c[0]}</div><div class="t">${c[1]}</div><div class="s">${c[2]}</div></div><div class="visor"><iframe src="${c[3]}" title="${c[1]}" loading="lazy"></iframe></div><div class="pie"><a class="b" href="${c[3]}" target="_blank">Abrir a tamaño real</a></div></div>`).join('')+`</div>`).join('');
+</script>
+</body></html>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { anotar } from '@/lib/auditoria'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -50,6 +51,20 @@ const alta = z.object({
   familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee'])).min(1),
   aforo: z.number().int().min(1).max(20),
   ruido: z.number().int().min(1).max(3),
+  // Tres columnas que el esquema define desde el 10 de agosto y que el alta
+  // no pedía: se guardaban vacías y nadie las volvía a tocar.
+  //
+  // El metro y los minutos andando, porque en Caracas deciden si alguien
+  // acepta una zona o no.
+  metro: z.string().trim().max(80).nullable().optional(),
+  metroMinutos: z.number().int().min(0).max(60).nullable().optional(),
+  // La forma de la mesa, que en una de seis desconocidos pesa más que el
+  // ruido: en una mesa larga los dos extremos no se oyen. Tres valores y no
+  // una casilla, porque con un booleano no se distingue «larga» de «ambas».
+  forma: z.enum(['redonda', 'larga', 'ambas']).nullable().optional(),
+  // Y los días que abre. Es el que impide que un sitio cerrado los jueves
+  // reciba la cena del jueves. 0 = domingo, como getDay().
+  dias: z.array(z.number().int().min(0).max(6)).min(1).optional(),
 })
 
 const cambio = z.discriminatedUnion('accion', [
@@ -61,8 +76,13 @@ const cambio = z.discriminatedUnion('accion', [
   z.object({
     accion: z.literal('editar'),
     id: z.string().uuid(),
-    campo: z.enum(['direccion', 'menu', 'comision', 'contacto', 'telefono', 'aforo', 'ruido', 'mapa']),
-    valor: z.union([z.string(), z.number(), z.null()]),
+    campo: z.enum([
+      'direccion', 'menu', 'comision', 'contacto', 'telefono', 'aforo', 'ruido', 'mapa',
+      // Los tres del alta, también editables desde la ficha: un sitio cambia
+      // los días que abre y la mesa larga que compró el mes pasado.
+      'metro', 'metroMinutos', 'forma', 'dias',
+    ]),
+    valor: z.union([z.string(), z.number(), z.array(z.number().int().min(0).max(6)), z.null()]),
   }),
 ])
 
@@ -90,7 +110,7 @@ export async function GET() {
 
   const { data: locales, error } = await admin
     .from('restaurants')
-    .select('id, name, zone_slug, address, maps_url, facade_photo_path, contact_name, contact_phone, fixed_menu_usd, avg_check_usd, commission_pct, noise_level, max_tables, is_active, formats, created_at')
+    .select('id, name, zone_slug, address, maps_url, facade_photo_path, contact_name, contact_phone, fixed_menu_usd, avg_check_usd, commission_pct, noise_level, max_tables, is_active, formats, created_at, metro_nearby, metro_minutes, table_shape, open_days')
     .order('name')
 
   if (error) {
@@ -174,6 +194,14 @@ export async function GET() {
       ruidoTexto: l.noise_level ? RUIDO[l.noise_level][0] : 'Ruido sin medir',
       ruidoNota: l.noise_level ? RUIDO[l.noise_level][1] : 'Nadie ha anotado si ahí se puede conversar.',
       aforo: l.max_tables,
+      // En Caracas el metro decide si alguien acepta una zona.
+      metro: l.metro_nearby,
+      metroMinutos: l.metro_minutes,
+      // En una mesa larga de seis, los dos extremos no se oyen.
+      forma: l.table_shape,
+      // Los días que abre, para que el selector de una fecha no ofrezca un
+      // sitio cerrado ese día. 0 = domingo.
+      dias: l.open_days ?? [],
       familias,
       activo: l.is_active,
       desde: l.created_at,
@@ -264,6 +292,12 @@ export async function POST(request: Request) {
       max_tables: d.aforo,
       noise_level: d.ruido,
       formats: formatos as never,
+      metro_nearby: d.metro?.trim() || null,
+      metro_minutes: d.metroMinutos ?? null,
+      table_shape: d.forma ?? null,
+      // Si no se dicen, abre todos los días: es el default de la columna y es
+      // lo que hacía hasta ahora. Decir «ninguno» sería peor que no saberlo.
+      ...(d.dias?.length ? { open_days: [...new Set(d.dias)].sort() } : {}),
       // Entra SIN activar, siempre. El alta pide cinco cosas y el resto se
       // rellena luego; hasta que esté completo no se ofrece a ninguna fecha.
       is_active: false,
@@ -275,6 +309,11 @@ export async function POST(request: Request) {
     console.error('[locales] alta', error)
     return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
   }
+
+  await anotar(actor, 'local_creado', 'local', data?.id ?? null, {
+    nombre: d.nombre.trim(),
+    zona: d.zona,
+  })
 
   return NextResponse.json({ estado: 'creado', id: data?.id })
 }
@@ -335,9 +374,42 @@ export async function PATCH(request: Request) {
     aforo: 'max_tables',
     ruido: 'noise_level',
     mapa: 'maps_url',
+    metro: 'metro_nearby',
+    metroMinutos: 'metro_minutes',
+    forma: 'table_shape',
+    dias: 'open_days',
   }
 
-  const NUMERICOS = new Set(['menu', 'comision', 'aforo', 'ruido'])
+  // Los días son una lista, no un valor suelto: se validan aparte y salen por
+  // su propio camino antes de que el resto los trate como texto.
+  if (d.campo === 'dias') {
+    if (!Array.isArray(d.valor) || !d.valor.length) {
+      return NextResponse.json(
+        { error: 'Un sitio que no abre ningún día no puede recibir mesas. Elige al menos uno.' },
+        { status: 400 },
+      )
+    }
+    const dias = [...new Set(d.valor)].sort()
+    const { error } = await admin
+      .from('restaurants')
+      .update({ open_days: dias } as never)
+      .eq('id', d.id)
+
+    if (error) {
+      console.error('[locales] editar días', error)
+      return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+    }
+    await anotar(actor, 'local_editado', 'local', d.id, { campo: 'dias', valor: dias })
+    return NextResponse.json({ estado: 'guardado', dias })
+  }
+
+  if (d.campo === 'forma' && d.valor !== null) {
+    if (!['redonda', 'larga', 'ambas'].includes(String(d.valor))) {
+      return NextResponse.json({ error: 'Esa forma de mesa no existe.' }, { status: 400 })
+    }
+  }
+
+  const NUMERICOS = new Set(['menu', 'comision', 'aforo', 'ruido', 'metroMinutos'])
   let valor: string | number | null = d.valor as string | number | null
 
   if (NUMERICOS.has(d.campo)) {
@@ -352,6 +424,9 @@ export async function PATCH(request: Request) {
       }
       if (d.campo === 'aforo' && (n < 1 || n > 20)) {
         return NextResponse.json({ error: 'El aforo va de 1 a 20 mesas.' }, { status: 400 })
+      }
+      if (d.campo === 'metroMinutos' && (n < 0 || n > 60)) {
+        return NextResponse.json({ error: 'Los minutos andando van de 0 a 60.' }, { status: 400 })
       }
       valor = n
     }
@@ -368,6 +443,8 @@ export async function PATCH(request: Request) {
     console.error('[locales] editar', error)
     return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
   }
+
+  await anotar(actor, 'local_editado', 'local', d.id, { campo: d.campo, valor })
 
   return NextResponse.json({ estado: 'guardado' })
 }

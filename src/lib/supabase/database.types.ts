@@ -577,6 +577,7 @@ export type Database = {
       }
       events: {
         Row: {
+          activity: Json | null
           after_reveal_at: string | null
           after_starts_at: string | null
           after_venue_id: string | null
@@ -599,6 +600,7 @@ export type Database = {
           zone_slug: string | null
         }
         Insert: {
+          activity?: Json | null
           after_reveal_at?: string | null
           after_starts_at?: string | null
           after_venue_id?: string | null
@@ -621,6 +623,7 @@ export type Database = {
           zone_slug?: string | null
         }
         Update: {
+          activity?: Json | null
           after_reveal_at?: string | null
           after_starts_at?: string | null
           after_venue_id?: string | null
@@ -3248,6 +3251,7 @@ export type Database = {
         | "fecha_cancelada"
         | "restablecer_clave"
         | "abrimos_zona"
+        | "cuenta_lista"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -3474,6 +3478,7 @@ export const Constants = {
         "fecha_cancelada",
         "restablecer_clave",
         "abrimos_zona",
+        "cuenta_lista",
       ],
       event_format_t: [
         "dinner",

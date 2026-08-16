@@ -121,7 +121,7 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, booking_closes_at, credit_cost, status')
+    .select('id, booking_closes_at, credit_cost, status, max_seats')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -195,6 +195,33 @@ export async function POST(request: Request) {
   // cobrar el credito, porque el anterior ya se le devolvio.
   const estabaCancelada =
     yaTiene?.status === 'cancelled_by_user' || yaTiene?.status === 'cancelled_by_ops'
+
+  // El cupo, si la fecha lo tiene.
+  //
+  // `max_seats` estaba en el esquema desde el primer dia y no lo leia nadie:
+  // se podian apuntar doscientas personas a una fecha con un solo sitio
+  // reservado. Solo muerde a quien entra ahora —quien ya esta dentro cambia
+  // de zonas sin que le echen— y se cuenta lo que ocupa puesto:
+  // `pending_payment` tambien, porque su sitio esta apartado.
+  if (!yaTiene || estabaCancelada) {
+    if (evento.max_seats != null) {
+      const { count } = await admin
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', evento.id)
+        .in('status', ['pending_payment', 'confirmed'])
+
+      if ((count ?? 0) >= evento.max_seats) {
+        return NextResponse.json(
+          {
+            error: 'Esta fecha se llenó. Te avisamos en cuanto abramos la siguiente en tu zona.',
+            motivo: 'llena',
+          },
+          { status: 409 },
+        )
+      }
+    }
+  }
 
   // El crédito se cobra una vez: quien cambia de zonas no vuelve a pagar.
   // Pero quien se reapunta después de cancelar sí, porque el suyo volvió.

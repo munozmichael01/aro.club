@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { encolar } from '@/lib/correos'
 import { diaCompleto } from '@/lib/fechas'
 import { cerrarTraspasos, perfilDeTraspaso } from '@/lib/traspaso'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -221,7 +222,55 @@ export async function POST(request: Request) {
     .in('status', ['pending', 'approved'])
 
   const tipos = new Set((entregadas ?? []).map((v) => v.kind))
-  if (tipos.has('id_document') && tipos.has('selfie')) await cerrarTraspasos(user)
+  if (tipos.has('id_document') && tipos.has('selfie')) {
+    await cerrarTraspasos(user)
+    await avisarCuentaLista(user)
+  }
 
   return NextResponse.json({ estado: 'recibida' })
+}
+
+/**
+ * «Tu cuenta está lista» — la plantilla 13.
+ *
+ * Este es el momento en que alguien ha hecho TODO lo que le pedimos: los
+ * cuatro datos, las catorce preguntas, la cédula y la selfie. Y hasta ahora
+ * lo que recibía era silencio, hasta que una persona aprobara la identidad
+ * —que puede ser el mismo día o el lunes siguiente—. Justo después del único
+ * paso incómodo del embudo, nada.
+ *
+ * No es la bienvenida —esa es de quien deja el correo y se queda a medias— ni
+ * la de verificación —esa llega cuando la aprueban—: es el acuse de que la
+ * pelota ya no está en su tejado. Y es el único correo que le dice con qué
+ * dirección entra, que es la razón de «guarda este correo».
+ *
+ * Una sola vez por persona: quien repite una foto rechazada vuelve a pasar
+ * por aquí, y recibir dos veces «ya está todo» después de que le dijeran que
+ * no, es peor que no recibir nada.
+ */
+async function avisarCuentaLista(perfilId: string): Promise<void> {
+  const admin = createAdminClient()
+
+  const { data: perfil } = await admin
+    .from('profiles')
+    .select('email, display_name, status')
+    .eq('id', perfilId)
+    .maybeSingle()
+
+  // Solo con el perfil terminado. Quien subió las fotos antes de contestar el
+  // cuestionario no tiene la cuenta lista, y decírselo sería mentirle.
+  if (!perfil || perfil.status !== 'pending_verification') return
+
+  const { count } = await admin
+    .from('scheduled_emails')
+    .select('*', { count: 'exact', head: true })
+    .eq('profile_id', perfilId)
+    .eq('kind', 'cuenta_lista')
+
+  if ((count ?? 0) > 0) return
+
+  await encolar({ perfil: perfilId }, 'cuenta_lista', {
+    correo: perfil.email,
+    nombre: perfil.display_name,
+  })
 }

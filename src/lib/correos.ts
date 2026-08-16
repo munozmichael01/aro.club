@@ -36,6 +36,12 @@ export type Correo =
   | 'fecha_cancelada'
   | 'restablecer_clave'
   | 'abrimos_zona'
+  // Entrega 14: el hueco de en medio. Alguien termina el perfil, sube la
+  // cédula y la selfie —todo lo que le pedimos— y no recibía nada hasta que
+  // una persona aprobara la identidad. La bienvenida es de quien se queda a
+  // medias y la de verificación llega al aprobar: entre las dos había
+  // silencio justo después del único paso incómodo del embudo.
+  | 'cuenta_lista'
 
 type AQuien = { perfil: string } | { correo: string }
 

@@ -21,7 +21,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
  *
  *   empieza  el día elegido, a la hora del formato
  *   cierra   48 h antes  — el tiempo que necesita el reparto
- *   revela   ese mismo día a las 12:00 — «todo se abre a mediodía»
+ *   revela   a las 12:00 — del día ANTERIOR si el plan es de mañana
  *
  * Al abrirla se avisa a quien tenga alguna de esas zonas entre las suyas y
  * el aviso encendido. Es la plantilla 11 de Design, que hasta ahora no podía
@@ -55,6 +55,34 @@ function enUTC(dia: string, horaCaracas: number): Date {
   return new Date(Date.UTC(a, m - 1, d, horaCaracas + CARACAS, 0, 0, 0))
 }
 
+/**
+ * Cuándo se revela: mediodía, sí, pero no siempre del mismo día.
+ *
+ * «Todo se abre a las 12:00» se escribió mirando una cena, que empieza a las
+ * siete. Siete de los once formatos empiezan por la mañana —un hiking a las
+ * 7:00, un run a las 6:00— y para esos el mediodía del propio día llega con
+ * la actividad ya terminada: la mesa se revelaría después de la caminata.
+ *
+ * Así que la regla se deriva de la hora de inicio en vez de estar escrita a
+ * mano: si el plan es de mañana, se revela el mediodía ANTERIOR. Sigue siendo
+ * «a mediodía» —lo que promete la portada y lo que dice el pie de todos los
+ * correos— y sigue dejando la tarde entera para leerlo.
+ */
+function revelacionDe(dia: string, horaDeInicio: number): Date {
+  const mediodia = enUTC(dia, HORA_REVELACION)
+  if (horaDeInicio >= HORA_REVELACION) return mediodia
+  return new Date(mediodia.getTime() - 24 * 3600_000)
+}
+
+/** El día de la semana de una fecha del calendario. 0 = domingo, como getDay(). */
+function diaDeLaSemana(dia: string): number {
+  const [a, m, d] = dia.split('-').map(Number)
+  return new Date(Date.UTC(a, m - 1, d)).getUTCDay()
+}
+
+/** Los que salen a la calle: no basta con decir dónde, hay que decir qué. */
+const MOVIMIENTO = ['walk', 'hike', 'run', 'padel', 'pilates', 'cycling']
+
 const cuerpo = z.object({
   // Solo el día. La hora la pone el formato.
   dia: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha no se entiende.'),
@@ -65,7 +93,29 @@ const cuerpo = z.object({
     ])
     .default('dinner'),
   ciudad: z.string().min(2).max(40).default('caracas'),
+  // Ocho dólares es el arranque, no una constante: un pádel no cuesta lo que
+  // una cena, y el día que cambie el precio no puede hacer falta un deploy.
   precioUsd: z.number().positive().max(500).default(8),
+  // El cupo total. Nulo es abierto —entra quien quepa en mesas completas—;
+  // un número es el tope, y el tope manda sobre el reparto: por encima de él
+  // no se reserva aunque la mesa siguiente cupiera.
+  cupo: z.number().int().positive().max(500).nullable().optional(),
+  // Y cuántos por mesa. Seis en una cena, pero una caminata de seis no es lo
+  // mismo que una de doce, y el reparto ya lee esta columna.
+  porMesa: z.number().int().min(2).max(20).default(6),
+  // Qué se hace. Para una cena el sitio ES el plan y esto sobra; para los
+  // siete formatos de movimiento el punto de encuentro no dice nada de la
+  // ruta, los kilómetros ni el nivel, y salir sin decirlo es mandar a
+  // alguien a un sitio a las siete de la mañana sin saber a qué.
+  actividad: z
+    .object({
+      ruta: z.string().trim().min(1, 'Di qué se hace.').max(160),
+      km: z.number().positive().max(300).nullable().optional(),
+      minutos: z.number().int().positive().max(600).nullable().optional(),
+      nivel: z.enum(['suave', 'medio', 'exigente']).nullable().optional(),
+    })
+    .nullable()
+    .optional(),
   // Dónde puede caer, y en qué local. El restaurante NO es opcional: es lo
   // que se revela el jueves a mediodía, y una zona sin sitio es una mesa que
   // no se puede reservar a nombre de nadie.
@@ -83,6 +133,19 @@ const cuerpo = z.object({
     )
     .min(1, 'Elige al menos una zona.'),
 })
+  // La actividad es obligatoria en movimiento y solo ahí. Va aquí y no en el
+  // campo porque depende del formato, y la base tiene el mismo check: que el
+  // mensaje sea bueno es cosa de esta capa, que no entre sin ella es de la
+  // otra.
+  .refine((d) => !MOVIMIENTO.includes(d.formato) || d.actividad != null, {
+    path: ['actividad'],
+    error: 'Di qué se hace: la ruta, y si puedes los kilómetros y el nivel.',
+  })
+  // Un cupo que no da ni para una mesa deja una fecha que no puede salir.
+  .refine((d) => d.cupo == null || d.cupo >= d.porMesa, {
+    path: ['cupo'],
+    error: 'El cupo no llega ni para una mesa.',
+  })
 
 export async function POST(request: Request) {
   const actor = await exigirOps()
@@ -97,9 +160,10 @@ export async function POST(request: Request) {
   }
 
   const d = parsed.data
-  const empieza = enUTC(d.dia, HORA_DE[d.formato] ?? 19)
+  const horaDeInicio = HORA_DE[d.formato] ?? 19
+  const empieza = enUTC(d.dia, horaDeInicio)
   const cierra = new Date(empieza.getTime() - HORAS_DE_CIERRE * 3600_000)
-  const revela = enUTC(d.dia, HORA_REVELACION)
+  const revela = revelacionDe(d.dia, horaDeInicio)
 
   // Una fecha que ya cerró nace muerta: nadie puede apuntarse.
   if (cierra.getTime() <= Date.now()) {
@@ -126,6 +190,45 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Ya hay una fecha de ese tipo ese día.' }, { status: 409 })
   }
 
+  // --- que los sitios elegidos puedan de verdad ------------------------
+  //
+  // Un sitio cerrado los jueves no puede recibir la cena del jueves. La
+  // columna existe desde hace días y no la miraba nadie: el alta la guardaba
+  // y aquí se abría la fecha igual, así que el error solo aparecía cuando
+  // seis personas llegaban a una puerta cerrada.
+  //
+  // Y de paso la zona: si el local está en Altamira, no puede ser el sitio de
+  // la zona de Las Mercedes, por mucho que quien abre la fecha lo escriba.
+  const diaSemana = diaDeLaSemana(d.dia)
+
+  const { data: locales } = await admin
+    .from('restaurants')
+    .select('id, name, zone_slug, open_days, is_active')
+    .in('id', d.zonas.map((z) => z.restauranteId))
+
+  for (const z of d.zonas) {
+    const local = (locales ?? []).find((l) => l.id === z.restauranteId)
+    if (!local) {
+      return NextResponse.json({ error: 'Ese sitio no existe.' }, { status: 400 })
+    }
+    if (local.is_active === false) {
+      return NextResponse.json({ error: `${local.name} está dado de baja.` }, { status: 400 })
+    }
+    if (local.zone_slug && local.zone_slug !== z.zona) {
+      return NextResponse.json(
+        { error: `${local.name} no está en esa zona.` },
+        { status: 400 },
+      )
+    }
+    const abre = local.open_days ?? []
+    if (abre.length && !abre.includes(diaSemana)) {
+      return NextResponse.json(
+        { error: `${local.name} no abre ese día de la semana.` },
+        { status: 400 },
+      )
+    }
+  }
+
   const { data: evento, error } = await admin
     .from('events')
     .insert({
@@ -135,6 +238,9 @@ export async function POST(request: Request) {
       reveal_at: revela.toISOString(),
       city_slug: d.ciudad,
       price_usd: d.precioUsd,
+      seats_per_table: d.porMesa,
+      max_seats: d.cupo ?? null,
+      activity: d.actividad ?? null,
       status: 'open',
     } as never)
     .select('id')
@@ -170,6 +276,9 @@ export async function POST(request: Request) {
     dia: d.dia,
     formato: d.formato,
     zonas: d.zonas.map((z) => z.zona),
+    cupo: d.cupo ?? null,
+    porMesa: d.porMesa,
+    precioUsd: d.precioUsd,
   })
 
   // --- el aviso, a quien le sirva ---------------------------------------
@@ -212,6 +321,11 @@ export async function POST(request: Request) {
     empiezaEn: empieza.toISOString(),
     cierraEn: cierra.toISOString(),
     revelaEn: revela.toISOString(),
+    // La pantalla enseña las tres antes de abrir, para que quien abre vea qué
+    // está prometiendo. Se devuelven también después, que es lo que queda
+    // escrito en el registro.
+    cupo: d.cupo ?? null,
+    porMesa: d.porMesa,
     avisados,
   })
 }
