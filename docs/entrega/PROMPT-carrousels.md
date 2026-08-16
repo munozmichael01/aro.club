@@ -176,8 +176,8 @@ cada una, y no las tenemos.
 Todo esto ya está en el sistema, pero lo dejo por escrito para no ir a
 buscarlo:
 
-- **Verde `#14342A`** de fondo o de tinta, **crema `#FAF3E4`** de papel,
-  **quemado `#8F4515`** para lo que acentúa. El naranja de ellos es de ellos.
+- **La paleta entera, no tres colores.** Ver la corrección de abajo: dar solo
+  verde, crema y quemado fue un error mío y salió un feed de beige.
 - **Young Serif** para los titulares, **Inter Tight** para lo demás. La letra
   a mano de las referencias es su marca; la nuestra tiene que ser la nuestra
   —si hace falta un trazo escrito, defínelo como parte del sistema, no como
@@ -205,3 +205,90 @@ dependa de la palabra «Aro» para entenderse.
 
 Si algún tema no te da para las láminas que digo, dilo y lo recorto. Prefiero
 cinco láminas que se sostienen a nueve rellenas.
+
+---
+
+# CORRECCIÓN · el color, y las puertas
+
+Esto va después de ver la primera entrega. **El fallo es del brief, no de la
+ejecución**: hiciste exactamente lo que pedía, y lo que pedía estaba mal.
+
+## Lo que leí mal
+
+Escribí «los dos que ganan son los dos más simples» y de ahí saqué crema,
+línea fina y tipografía plana. Es una lectura equivocada de las referencias.
+
+Vuelve a mirarlas:
+
+- **Las puertas** —la mejor de las seis, 3.418 guardados— **no tiene nada de
+  sobria.** Es una puerta a sangre, naranja plano saturado, verde plano,
+  morado plano, ocupando la lámina entera. El color es el 80% de la pieza.
+- **Mitos** es un campo crema con una silueta **azul saturado enorme**.
+- Y hasta la de solo texto —**los detalles**— tiene dos o tres palabras en
+  naranja por lámina. El color es lo que hace que se lea de un vistazo.
+
+Lo simple en esas piezas es **la idea y la composición**: un objeto, cuatro
+palabras, nada más en la lámina. No la paleta. Yo confundí «pocos elementos»
+con «poco color», y son cosas distintas.
+
+Tú lo dijiste antes que yo, con la razón buena: **Timeleft mete color a
+propósito**, y lo mete porque un perfil es una rejilla. Siete carruseles crema
+seguidos son una pared beige. El color no es adorno en este formato: es lo que
+le da ritmo a la cuadrícula y lo que hace que una lámina se distinga de la
+siguiente al pasar el dedo.
+
+## La paleta, entera
+
+Te di tres colores. El sistema tiene esto, y todo está ya en producción en la
+landing:
+
+| | | Dónde vive hoy |
+|---|---|---|
+| `#14342A` | verde profundo | fondos oscuros, titulares |
+| `#1B5138` | verde | botones, sellos |
+| `#8F4515` | quemado | acento principal |
+| `#C0662F` | naranja | avisos, lo que rompe |
+| `#E39C63` | melocotón | fondos cálidos |
+| `#9CBBA6` | salvia | verde claro sobre oscuro |
+| `#C5D8CA` | verde pálido | texto sobre verde |
+| `#FAF3E4` · `#FFF8EA` · `#F2E9D5` | cremas | papel |
+
+**Cada carrusel tiene un color dominante y las piezas alternan**, para que en
+la rejilla del perfil no haya dos seguidos del mismo tono. Una pieza puede ser
+verde profundo a sangre con la ilustración en crema; la siguiente, crema con
+la ilustración en melocotón; la siguiente, quemado. Eso es lo que quiero ver.
+
+Y dentro de un carrusel el color también puede moverse de lámina a lámina,
+como en las puertas: cada puerta es de un color distinto.
+
+## La tipografía
+
+Mismo problema. Las láminas que entregaste usan un tamaño para casi todo.
+Young Serif aguanta mucho más: en la referencia el titular ocupa media lámina
+y el apoyo es diminuto. Ese salto —muy grande contra muy pequeño— es la mitad
+del efecto. Úsalo.
+
+## Las puertas: adaptar, no transformar
+
+Esta es la corrección más concreta. **La referencia original está perfecta**;
+lo que hay que hacer es pasarla a nuestro idioma y a nuestro visual, no
+convertirla en otra cosa.
+
+- **La puerta va a sangre**, ocupando la lámina, dibujada a mano con su línea
+  gruesa y su color plano. No un icono pequeño y centrado sobre una tarjeta.
+- **Un color por puerta**, saturado, del sistema.
+- **Cuatro o cinco palabras dentro del marco**, escritas a mano, como ellos.
+- Y el contenido vuelve al de la referencia: **qué te encuentras detrás**, no
+  qué formato es. El formato puede ir de pie pequeño abajo, pero el titular es
+  lo que hay detrás de la puerta. Mi versión anterior —«detrás, una cena» /
+  «detrás, un café»— convertía una idea sobre lo que te puede pasar en un
+  catálogo de productos. Eso es lo que no quiero.
+
+## Dos cosas de la entrega
+
+- En los textos de presentación de «Mitos» y de «Lo que no vas a encontrar» se
+  ve **HTML crudo**: sale literalmente `<em style="font-weight:600;color:
+  #14342A">Son siete y no seis:</em>` como texto. Es solo el documento de
+  presentación, no las láminas, pero hay que limpiarlo.
+- Que «Mitos» sean siete y no seis, y «Lo que no vas a encontrar» ocho y no
+  seis, **está bien**. Si el contenido pide una lámina más, se pone.
