@@ -229,7 +229,14 @@ export async function POST(request: Request) {
     )
   }
 
-  const r = repartir(personas, pool.porMesa, pesos)
+  // El tope de la fecha, descontando lo que ya está sentado y publicado: si
+  // la fecha da para veinticuatro y hay dos mesas cerradas, quedan doce.
+  // Nunca negativo —una mesa forzada por encima del tope no puede hacer que
+  // el reparto siguiente devuelva mesas de menos uno—.
+  const topeRestante =
+    pool.tope != null ? Math.max(0, pool.tope - sentados.size) : null
+
+  const r = repartir(personas, pool.porMesa, pesos, topeRestante)
 
   // Cada mesa cae en una de las zonas que aceptan los seis, y ahí se le da
   // sitio. El aforo se respeta: si Cardenal aguanta dos mesas, la tercera

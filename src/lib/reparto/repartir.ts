@@ -332,7 +332,20 @@ export type Resultado = {
  * sino una solución legal y buena en tiempo predecible. Lo que sí garantiza
  * es que ninguna mesa devuelta rompe una restricción dura.
  */
-export function repartir(pool: Persona[], porMesa = 6, pesos: Pesos = PESOS): Resultado {
+export function repartir(
+  pool: Persona[],
+  porMesa = 6,
+  pesos: Pesos = PESOS,
+  /**
+   * El tope de puestos de la fecha, si lo tiene.
+   *
+   * NO limita quién se apunta: apuntarse está siempre abierto. Limita a
+   * cuántos sentamos, que es otra cosa —y es para lo que existe la lista de
+   * espera—. Una fecha con un solo sitio reservado y treinta apuntados no
+   * rechaza a nadie: sienta a doce y deja dieciocho esperando.
+   */
+  tope: number | null = null,
+): Resultado {
   // Quien no acepta NINGUNA de las zonas abiertas no se puede sentar en
   // ningun sitio, y ordenar por "menos zonas primero" lo hacia justo lo
   // contrario: entraba el primero a sembrar mesas —cero es el minimo— y
@@ -341,7 +354,11 @@ export function repartir(pool: Persona[], porMesa = 6, pesos: Pesos = PESOS): Re
   const sentables = pool.filter((p) => p.zonas.length > 0)
   const sinZona = pool.filter((p) => p.zonas.length === 0)
 
-  const cuantas = Math.floor(sentables.length / porMesa)
+  // Cuántas mesas caben con la gente que hay, y cuántas deja el tope. Manda
+  // la menor: el tope recorta mesas, no reservas.
+  const porGente = Math.floor(sentables.length / porMesa)
+  const porTope = tope != null ? Math.floor(tope / porMesa) : porGente
+  const cuantas = Math.min(porGente, porTope)
   if (cuantas === 0) return { mesas: [], espera: [...pool], puntuaciones: [], media: 0 }
 
   // Semilla por edad, y el id como desempate para que sea estable: mismo

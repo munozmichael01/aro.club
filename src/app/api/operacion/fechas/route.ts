@@ -96,9 +96,13 @@ const cuerpo = z.object({
   // Ocho dólares es el arranque, no una constante: un pádel no cuesta lo que
   // una cena, y el día que cambie el precio no puede hacer falta un deploy.
   precioUsd: z.number().positive().max(500).default(8),
-  // El cupo total. Nulo es abierto —entra quien quepa en mesas completas—;
-  // un número es el tope, y el tope manda sobre el reparto: por encima de él
-  // no se reserva aunque la mesa siguiente cupiera.
+  // El cupo total: cuántos puestos sentamos. Nulo es abierto.
+  //
+  // NO limita quién se apunta. Apuntarse está siempre abierto y a quien no
+  // entre lo sostiene la lista de espera: rechazar una reserva por aforo
+  // cierra la puerta a alguien que podría acabar sentado —basta con que otra
+  // persona cancele— y nos hace perder justo a quien hay que colocar la
+  // semana siguiente. El tope manda sobre el REPARTO: recorta mesas.
   cupo: z.number().int().positive().max(500).nullable().optional(),
   // Y cuántos por mesa. Seis en una cena, pero una caminata de seis no es lo
   // mismo que una de doce, y el reparto ya lee esta columna.

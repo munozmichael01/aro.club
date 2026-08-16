@@ -28,6 +28,13 @@ export type Pool = {
   personas: Persona[]
   sedes: Sede[]
   porMesa: number
+  /**
+   * El tope de puestos de la fecha, o null si es abierta.
+   *
+   * Recorta cuántas mesas se sientan; no recorta quién se apunta. Quien no
+   * entra se queda en la lista de espera, que para eso está.
+   */
+  tope: number | null
 }
 
 export async function construirPool(
@@ -36,7 +43,7 @@ export async function construirPool(
 ): Promise<Pool> {
   const { data: evento } = await admin
     .from('events')
-    .select('seats_per_table, format')
+    .select('seats_per_table, format, max_seats')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -160,5 +167,5 @@ export async function construirPool(
     conocidos: yaSeConocen.get(p.profile_id as string) ?? new Set<string>(),
   }))
 
-  return { personas, sedes, porMesa: evento?.seats_per_table ?? 6 }
+  return { personas, sedes, porMesa: evento?.seats_per_table ?? 6, tope: evento?.max_seats ?? null }
 }
