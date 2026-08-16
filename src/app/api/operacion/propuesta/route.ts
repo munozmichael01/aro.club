@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { desglose, puntuar, resumen, roturas, zonasDe, PESOS } from '@/lib/reparto/repartir'
+import { desglose, evaluacion, puntuar, resumen, roturas, zonasDe, PESOS } from '@/lib/reparto/repartir'
 import { exigirOps } from '@/lib/ops'
 import { construirPool, type Pool } from '@/lib/reparto/pool'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -56,13 +56,15 @@ const comoIntegrante = (p: {
   genero: string | null
   empresa: string | null
   sector: string | null
+  empresaTexto?: string | null
 }): Integrante => ({
   profileId: p.profileId,
   bookingId: p.bookingId,
   nombre: p.nombre,
   edad: p.edad,
   genero: p.genero,
-  empresa: p.empresa,
+  // Como se escribe, no como se compara.
+  empresa: p.empresaTexto || p.empresa,
   sector: p.sector,
 })
 type Mesa = {
@@ -76,6 +78,7 @@ type Mesa = {
   desglose: Record<string, number>
   resumen: unknown
   roturas: { regla: string; detalle: string }[]
+  reglas?: { regla: string; ok: boolean; texto: string }[]
   integrantes: Integrante[]
 }
 
@@ -176,6 +179,8 @@ export async function POST(request: Request) {
   // Se recalcula TODO, no solo lo tocado: mover a alguien cambia la mesa de
   // la que sale tanto como la de la que entra, y una sede puede dejar de
   // valer si la mesa cambió de gente.
+  const nombresDeZona = new Map(pool.zonas.map((z) => [z.slug, z.nombre]))
+
   for (const m of mesas) {
     // Las publicadas se dejan como están: recalcularlas no cambiaría nada y
     // su gente ya no está en el pool, así que saldrían vacías.
@@ -186,6 +191,9 @@ export async function POST(request: Request) {
     m.resumen = resumen(gente)
     m.zonasPosibles = zonasDe(gente)
     m.roturas = roturas(gente)
+    // Las siete, otra vez: mover a alguien cambia el balance de las dos
+    // mesas, y la pantalla las pinta desde aqui.
+    m.reglas = evaluacion(gente, m.zona, nombresDeZona.get(m.zona ?? '') ?? m.zona)
 
     // Si la sede elegida ya no está entre las zonas posibles, se cae.
     if (m.restaurantId) {

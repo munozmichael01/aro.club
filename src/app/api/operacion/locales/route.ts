@@ -244,9 +244,38 @@ export async function GET() {
   const porZona = new Map<string, number>()
   for (const l of activos) porZona.set(l.zona ?? '', (porZona.get(l.zona ?? '') ?? 0) + 1)
 
+  // Cuánta gente acepta cada zona.
+  //
+  // Es el número que decide si vale la pena abrirla: una zona con cuatro
+  // personas no da para una mesa por muchos locales que tenga. Sale de las
+  // respuestas, no de los locales, y se cuenta solo a quien podría sentarse
+  // —verificada y de alta—: contar leads infla la zona y hace abrir fechas
+  // que luego no se llenan.
+  const { data: verificados } = await admin.from('v_verified_profiles').select('id')
+  const puedenSentarse = new Set((verificados ?? []).map((v) => v.id))
+
+  const { data: respuestasZona } = await admin
+    .from('answers')
+    .select('profile_id, value')
+    .eq('question_key', 'zonas')
+
+  const genteEn = new Map<string, number>()
+  for (const r of respuestasZona ?? []) {
+    if (!puedenSentarse.has(r.profile_id)) continue
+    for (const z of (Array.isArray(r.value) ? r.value : []) as string[]) {
+      genteEn.set(z, (genteEn.get(z) ?? 0) + 1)
+    }
+  }
+
   return NextResponse.json({
     locales: lista,
-    zonas: (zonas ?? []).map((z) => ({ slug: z.slug, nombre: z.name, ciudad: z.city_slug })),
+    zonas: (zonas ?? []).map((z) => ({
+      slug: z.slug,
+      nombre: z.name,
+      ciudad: z.city_slug,
+      activa: z.is_active !== false,
+      personas: genteEn.get(z.slug) ?? 0,
+    })),
     resumen: {
       activos: activos.length,
       total: lista.length,

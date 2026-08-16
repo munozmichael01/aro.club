@@ -25,6 +25,12 @@ export type Persona = {
   sector: string | null
   /** Empresa ya normalizada y resuelta contra los alias confirmados. */
   empresa: string | null
+  /**
+   * Y como la escribió ella. La normalizada es para comparar —`banesco`— y
+   * enseñarla en el panel deja una ficha en minúsculas que no es el nombre
+   * de nadie. Comparar y mostrar no son el mismo dato.
+   */
+  empresaTexto?: string | null
   energia: string | null
   tramoGasto: number | null
   intereses: string[]
@@ -197,6 +203,69 @@ export function zonasDe(mesa: Persona[]): string[] {
 }
 
 export const esLegal = (mesa: Persona[]) => roturas(mesa).length === 0
+
+/**
+ * Las reglas evaluadas TODAS, cumplidas y rotas, con su texto.
+ *
+ * `roturas` solo devuelve lo que falla, que es lo que necesita el reparto.
+ * Pero el panel enseña las siete a la vez —en verde las que cuadran— y con
+ * solo las rotas tendría que deducir las buenas: volver a contar géneros,
+ * edades y empresas en el navegador. Eso es una segunda implementación de
+ * las reglas, y el día que discrepe de esta, la pantalla diría que una mesa
+ * está bien mientras el servidor se niega a publicarla.
+ *
+ * Así que se evalúan aquí una sola vez y se mandan hechas.
+ */
+export type Regla = { regla: string; ok: boolean; texto: string }
+
+export function evaluacion(
+  mesa: Persona[],
+  /** El slug de la zona donde está puesta la mesa: con eso se comprueba. */
+  zonaDeLaMesa?: string | null,
+  /** Y su nombre, que es lo que se lee. Sin él se enseña el slug. */
+  nombreDeLaZona?: string | null,
+): Regla[] {
+  const rotas = new Map(roturas(mesa).map((r) => [r.regla, r.detalle]))
+  const di = (clave: string, bien: string): Regla => ({
+    regla: clave,
+    ok: !rotas.has(clave),
+    texto: rotas.get(clave) ?? bien,
+  })
+
+  const mujeres = mesa.filter((p) => p.genero === 'mujer').length
+  const hombres = mesa.filter((p) => p.genero === 'hombre').length
+
+  const edades = mesa.map((p) => p.edad).filter((e): e is number => e != null)
+  const rango = edades.length
+    ? `${Math.min(...edades)}–${Math.max(...edades)} años`
+    : 'Sin edades'
+
+  // La zona se mira contra DÓNDE está puesta la mesa, no solo entre ellos.
+  // Que los seis compartan Las Mercedes no dice nada si la mesa está en Los
+  // Palos Grandes: seis personas que no pueden llegar.
+  const comunes = zonasDe(mesa)
+  const zonaOk = zonaDeLaMesa ? comunes.includes(zonaDeLaMesa) : comunes.length > 0
+  const comoSeLee = nombreDeLaZona ?? zonaDeLaMesa
+  const textoZona = zonaDeLaMesa
+    ? zonaOk
+      ? `Todos aceptan ${comoSeLee}`
+      : comunes.length
+        ? `Nadie acepta ${comoSeLee}`
+        : 'Sin zona para los seis'
+    : comunes.length
+      ? 'Zona en común'
+      : 'Sin zona para los seis'
+
+  return [
+    di('genero', `Balance ${mujeres} y ${hombres}`),
+    di('edad', rango),
+    di('empresa', 'Sin empresa repetida'),
+    di('veto', 'Nadie repetido'),
+    di('gasto', 'Gasto compatible'),
+    di('idioma', 'Idioma común'),
+    { regla: 'zona', ok: zonaOk, texto: textoZona },
+  ]
+}
 
 // ---------------------------------------------------------------------
 // Puntuación

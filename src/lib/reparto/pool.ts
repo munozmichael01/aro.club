@@ -125,6 +125,14 @@ export async function construirPool(
 
   const ids = (pool ?? []).map((p) => p.profile_id).filter((id): id is string => id != null)
 
+  // El nombre de la empresa sin normalizar, solo para enseñarlo.
+  const { data: rasgosTexto } = await admin
+    .from('profile_traits')
+    .select('profile_id, employer')
+    .in('profile_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
+
+  const empresaTextoDe = new Map((rasgosTexto ?? []).map((r) => [r.profile_id, r.employer]))
+
   const { data: perfiles } = await admin
     .from('profiles')
     .select('id, display_name, full_name')
@@ -176,6 +184,7 @@ export async function construirPool(
     arraigo: p.rootedness,
     sector: p.industry,
     empresa: p.employer_key,
+    empresaTexto: empresaTextoDe.get(p.profile_id as string) ?? p.employer_key,
     energia: p.social_energy,
     tramoGasto: p.budget_tier,
     intereses: p.interests ?? [],

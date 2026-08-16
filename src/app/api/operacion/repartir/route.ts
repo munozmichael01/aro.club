@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { PESOS, repartir, roturas, desglose, resumen, zonasDe } from '@/lib/reparto/repartir'
+import { PESOS, repartir, roturas, evaluacion, desglose, resumen, zonasDe } from '@/lib/reparto/repartir'
 import { exigirOps } from '@/lib/ops'
 import { construirPool } from '@/lib/reparto/pool'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -270,6 +270,9 @@ export async function POST(request: Request) {
     return null
   }
 
+  const nombreDeZona = new Map(pool.zonas.map((z) => [z.slug, z.nombre]))
+  const nombreZonaDe = (slug: string | null) => (slug ? (nombreDeZona.get(slug) ?? slug) : null)
+
   const nuevas = r.mesas.map((mesa, i) => {
     const zonasPosibles = zonasDe(mesa)
     // Reparto estable: entre varias zonas válidas, la primera por orden
@@ -290,6 +293,9 @@ export async function POST(request: Request) {
     // numero. Va en la propuesta y no se recalcula en la pantalla.
     resumen: resumen(mesa),
     roturas: roturas(mesa),
+    // Las siete, cumplidas y rotas. El panel las enseña todas y con solo las
+    // rotas tendria que volver a contarlas por su cuenta.
+    reglas: evaluacion(mesa, zona, nombreZonaDe(zona)),
     // La aritmética del panel sale de aquí; nada se escribe a mano.
     integrantes: mesa.map((p) => ({
       profileId: p.profileId,
@@ -297,7 +303,7 @@ export async function POST(request: Request) {
       nombre: p.nombre,
       edad: p.edad,
       genero: p.genero,
-      empresa: p.empresa,
+      empresa: p.empresaTexto || p.empresa,
       sector: p.sector,
     })),
     }
@@ -311,7 +317,6 @@ export async function POST(request: Request) {
   // distintas y la salida es distinta en cada una: si no hay ninguno elegido,
   // hay que elegirlo; si los que hay están llenos, hay que añadir otro. Un
   // solo mensaje para las dos mandaba a mirar donde no era.
-  const nombreDeZona = new Map(pool.zonas.map((z) => [z.slug, z.nombre]))
   for (const m of nuevas) {
     if (m.restaurantId) continue
 

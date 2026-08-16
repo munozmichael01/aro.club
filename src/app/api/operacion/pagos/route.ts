@@ -92,8 +92,43 @@ export async function GET() {
     .eq('status', 'refunded')
     .gte('created_at', hoy + 'T00:00:00Z')
 
+  // Lo ya decidido: quién pagó, con qué y cómo quedó.
+  //
+  // La cola de arriba es lo que falta por conciliar; esto es lo que ya pasó,
+  // que es lo que se mira cuando alguien pregunta por su pago o cuando hay
+  // que cuadrar el día. La pantalla lo tenía escrito a mano con seis nombres
+  // inventados y seis veces el mismo importe.
+  const { data: yaDecididos } = await admin
+    .from('payments')
+    .select('id, metodo, moneda, amount_usd, amount_local, status, datos, created_at, profiles!payments_profile_id_fkey(display_name, full_name)')
+    .in('status', ['confirmed', 'refunded', 'rejected'])
+    .order('created_at', { ascending: false })
+    .limit(30)
+
+  const ESTADO: Record<string, string> = {
+    confirmed: 'confirmado',
+    refunded: 'devuelto',
+    rejected: 'pendiente',
+  }
+
+  const historico = (yaDecididos ?? []).map((p) => {
+    const quien = p.profiles as unknown as { display_name: string | null; full_name: string | null } | null
+    const datos = (p.datos ?? {}) as Record<string, unknown>
+    const ref = datos.referencia ?? datos.codigo ?? datos.telefono ?? null
+    return {
+      nombre: quien?.display_name || quien?.full_name || '—',
+      metodo: p.metodo,
+      referencia: ref != null ? String(ref) : null,
+      moneda: p.moneda,
+      montoUsd: p.amount_usd != null ? Number(p.amount_usd) : null,
+      montoLocal: p.amount_local != null ? Number(p.amount_local) : null,
+      estado: ESTADO[p.status] ?? 'pendiente',
+    }
+  })
+
   return NextResponse.json({
     resumen: {
+      historico,
       tasa: tasaHoy ? Number(tasaHoy.usd_to_ves) : null,
       tasaFecha: tasaHoy?.rate_date ?? null,
       cobradoLocal: confirmados.reduce((t, p) => t + Number(p.amount_local ?? 0), 0),
