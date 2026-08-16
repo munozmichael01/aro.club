@@ -35,7 +35,16 @@ comparten porque quien los lee se reconoce y se los manda a alguien.
 
 ---
 
-## 01 · Tipos de amigo
+## Cuáles se trabajan ahora
+
+Cinco de las seis entran en el encargo —ver `docs/entrega/PROMPT-carrousels.md`—.
+**Tipos de amigo** y **La amistad por país** quedan en reserva: no se
+descartan, están documentadas con su versión pensada y con la razón de por
+qué esperan. Se retoman cuando se pidan.
+
+---
+
+## 01 · Tipos de amigo · *en reserva*
 
 *«The 2am crisis manager friend»*, *«The confidently wrong friend»*. Nueve
 láminas, una por tipo de amigo.
@@ -54,7 +63,7 @@ Papel crema con un solo color plano por lámina. Titular en serif clásica, una
 frase de apoyo, y una ilustración geométrica muy simple: dos siluetas de
 perfil enfrentadas con una flecha circular en medio.
 
-## 03 · La amistad por país
+## 03 · La amistad por país · *en reserva*
 
 *«In France, a friend is someone who disagrees with everything you say»*.
 Siete láminas, una por país.
