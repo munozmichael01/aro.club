@@ -34,8 +34,10 @@ export type Accion =
   | 'local_creado'
   | 'local_editado'
   | 'incidencia_resuelta'
+  | 'acceso_concedido'
+  | 'acceso_retirado'
 
-type Entidad = 'verificacion' | 'pago' | 'evento' | 'local' | 'incidencia'
+type Entidad = 'verificacion' | 'pago' | 'evento' | 'local' | 'incidencia' | 'equipo'
 
 export async function anotar(
   actorId: string,
