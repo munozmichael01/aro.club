@@ -34,19 +34,29 @@ const cuerpo = z.object({
  * propuesta sin publicar. El panel lo lee de aquí en vez de traerse su
  * propia idea de cuánta gente hay.
  */
-export async function GET() {
+export async function GET(request: Request) {
   const actor = await exigirOps()
   if (!actor) return new NextResponse(null, { status: 404 })
 
   const admin = createAdminClient()
 
-  const { data: evento } = await admin
+  // Cuál se reparte. Sin decir nada, la siguiente por fecha —que es lo que
+  // hacía y sigue valiendo para el caso normal—; con `eventoId`, esa. Con
+  // tres fechas abiertas a la vez, quedarse siempre con la primera dejaba las
+  // otras dos sin forma de tocarlas desde el panel.
+  const pedido = new URL(request.url).searchParams.get('eventoId')
+
+  const consulta = admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, seats_per_table, status, restaurants!events_restaurant_id_fkey(name)')
-    .in('status', ['draft', 'open', 'locked', 'matched'])
-    .order('starts_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
+    .select('id, starts_at, booking_closes_at, seats_per_table, status, format, restaurants!events_restaurant_id_fkey(name)')
+
+  const { data: evento } = pedido
+    ? await consulta.eq('id', pedido).maybeSingle()
+    : await consulta
+        .in('status', ['draft', 'open', 'locked', 'matched'])
+        .order('starts_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
 
   if (!evento) return NextResponse.json({ evento: null })
 
@@ -105,6 +115,9 @@ export async function GET() {
       empiezaEn: evento.starts_at,
       cierraEn: evento.booking_closes_at,
       estado: evento.status,
+      // El formato manda el vocabulario: una caminata tiene grupos y punto de
+      // encuentro, no mesas y restaurante. La pantalla no puede deducirlo.
+      formato: evento.format,
       // Hoy hay un restaurante por fecha. Con el modelo de zonas sera uno
       // por zona, y esto pasara a salir de la mesa.
       restaurante:
@@ -222,21 +235,19 @@ export async function POST(request: Request) {
   const personas = pool.personas.filter((p) => !sentados.has(p.profileId))
   const desdeNumero = cerradas.reduce((n, m) => Math.max(n, m.numero), 0)
 
-  if (!sedes.length) {
+  // ZONAS, no sitios. Se comprobaban los sitios elegidos, así que una fecha
+  // con zonas abiertas y el sitio todavía por decidir —que es lo normal, el
+  // sitio se elige cuando se sabe cuánta gente hay— no se podía repartir. Y
+  // repartir es justo lo que dice cuántas mesas hacen falta en cada zona, que
+  // es lo que hace falta saber para elegir bien el sitio.
+  if (!pool.zonas.length) {
     return NextResponse.json(
-      { error: 'Esta fecha no tiene ninguna zona abierta. Abre al menos una antes de repartir.' },
+      { error: 'Esta fecha no abre ninguna zona. Abre al menos una antes de repartir.' },
       { status: 409 },
     )
   }
 
-  // El tope de la fecha, descontando lo que ya está sentado y publicado: si
-  // la fecha da para veinticuatro y hay dos mesas cerradas, quedan doce.
-  // Nunca negativo —una mesa forzada por encima del tope no puede hacer que
-  // el reparto siguiente devuelva mesas de menos uno—.
-  const topeRestante =
-    pool.tope != null ? Math.max(0, pool.tope - sentados.size) : null
-
-  const r = repartir(personas, pool.porMesa, pesos, topeRestante)
+  const r = repartir(personas, pool.porMesa, pesos)
 
   // Cada mesa cae en una de las zonas que aceptan los seis, y ahí se le da
   // sitio. El aforo se respeta: si Cardenal aguanta dos mesas, la tercera
@@ -296,14 +307,30 @@ export async function POST(request: Request) {
   // no solo lo que queda por decidir.
   const propuesta = [...cerradas, ...nuevas]
 
-  // Una mesa sin sitio no se puede publicar: el aforo de la zona se agotó.
+  // Una mesa sin sitio no se puede publicar. Pero «sin sitio» son dos cosas
+  // distintas y la salida es distinta en cada una: si no hay ninguno elegido,
+  // hay que elegirlo; si los que hay están llenos, hay que añadir otro. Un
+  // solo mensaje para las dos mandaba a mirar donde no era.
+  const nombreDeZona = new Map(pool.zonas.map((z) => [z.slug, z.nombre]))
   for (const m of nuevas) {
-    if (!m.restaurantId) {
-      m.roturas = [
-        ...m.roturas,
-        { regla: 'sede', detalle: m.zona ? 'sin sitio libre en ' + m.zona : 'sin zona común' },
-      ]
+    if (m.restaurantId) continue
+
+    if (!m.zona) {
+      m.roturas = [...m.roturas, { regla: 'sede', detalle: 'sin zona común' }]
+      continue
     }
+
+    const cuantos = sedes.filter((v) => v.zona === m.zona).length
+    const donde = nombreDeZona.get(m.zona) ?? m.zona
+    m.roturas = [
+      ...m.roturas,
+      {
+        regla: 'sede',
+        detalle: cuantos === 0
+          ? 'falta elegir sitio en ' + donde
+          : 'los sitios de ' + donde + ' ya están llenos: añade otro',
+      },
+    ]
   }
 
   const { data: corrida, error: errorCorrida } = await admin

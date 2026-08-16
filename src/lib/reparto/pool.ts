@@ -26,15 +26,18 @@ export type Sede = {
 
 export type Pool = {
   personas: Persona[]
+  /** Los sitios ASIGNABLES: los que ya están elegidos y pueden recibir. */
   sedes: Sede[]
-  porMesa: number
   /**
-   * El tope de puestos de la fecha, o null si es abierta.
+   * Las zonas que abre la fecha, tengan sitio o no.
    *
-   * Recorta cuántas mesas se sientan; no recorta quién se apunta. Quien no
-   * entra se queda en la lista de espera, que para eso está.
+   * No es lo mismo que las sedes: una zona abierta sin sitio decidido sigue
+   * siendo una zona donde puede caer una mesa. Confundirlas hacía que el
+   * reparto se negara a correr —«esta fecha no tiene ninguna zona abierta»—
+   * justo cuando lo que hace falta es que corra y diga dónde falta sitio.
    */
-  tope: number | null
+  zonas: { slug: string; nombre: string }[]
+  porMesa: number
 }
 
 export async function construirPool(
@@ -43,7 +46,7 @@ export async function construirPool(
 ): Promise<Pool> {
   const { data: evento } = await admin
     .from('events')
-    .select('seats_per_table, format, max_seats')
+    .select('seats_per_table, format')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -97,7 +100,26 @@ export async function construirPool(
         v.max_tables ?? (v.restaurants as unknown as Local | null)?.max_tables ?? 4,
     }))
 
-  const zonasAbiertas = new Set(sedes.map((v) => v.zona))
+  // Las zonas abiertas son las de la FECHA, tengan sitio o no.
+  //
+  // Salían de `sedes`, que es la lista de sitios asignables, así que una zona
+  // sin sitio decidido todavía —lo normal ahora, porque el sitio se elige
+  // cuando se sabe cuánta gente hay— dejaba de existir para el reparto: sus
+  // apuntados caían a la espera como si no aceptaran ninguna zona. Y eso lee
+  // como «no hay gente para una mesa» cuando lo que pasa es «falta elegir
+  // dónde». La mesa se arma igual y sale marcada: falta el sitio.
+  const zonasAbiertas = new Set(
+    (sedesRaw ?? []).map((v) => v.zone_slug).filter((z): z is string => z != null),
+  )
+
+  // Con su nombre, que no sale de las sedes: una zona sin sitio elegido no
+  // tiene sede, y el aviso «falta elegir sitio en mercedes» enseñaba el slug.
+  const zonas = [...zonasAbiertas].map((slug) => ({
+    slug,
+    nombre:
+      ((sedesRaw ?? []).find((v) => v.zone_slug === slug)?.zones as unknown as
+        { name: string } | null)?.name ?? slug,
+  }))
 
   const { data: pool } = await admin.from('v_matching_pool').select('*').eq('event_id', eventoId)
 
@@ -167,5 +189,5 @@ export async function construirPool(
     conocidos: yaSeConocen.get(p.profile_id as string) ?? new Set<string>(),
   }))
 
-  return { personas, sedes, porMesa: evento?.seats_per_table ?? 6, tope: evento?.max_seats ?? null }
+  return { personas, sedes, zonas, porMesa: evento?.seats_per_table ?? 6 }
 }

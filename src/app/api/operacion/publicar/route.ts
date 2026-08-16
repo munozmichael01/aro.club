@@ -91,6 +91,27 @@ export async function POST(request: Request) {
     .filter((m) => (m.roturas ?? []).length > 0)
     .map((m) => ({ mesa: m.numero, roturas: m.roturas ?? [] }))
 
+  // Sin sitio no se publica, ni forzando.
+  //
+  // Forzar existe para saltarse una regla de afinidad: quien lleva la
+  // operación puede saber algo que el algoritmo no. Pero publicar es lo que
+  // le dice a seis personas dónde tienen que estar el jueves, y una mesa sin
+  // sitio manda seis correos sin dirección. Eso no es una decisión que se
+  // pueda tomar: es un correo roto.
+  const sinSitio = mesas.filter((m) => !m.restaurantId).map((m) => m.numero)
+  if (sinSitio.length) {
+    return NextResponse.json(
+      {
+        error:
+          sinSitio.length === 1
+            ? `La mesa ${String(sinSitio[0]).padStart(2, '0')} no tiene sitio. Elígelo antes de publicar.`
+            : `Hay ${sinSitio.length} mesas sin sitio. Elígelo antes de publicar.`,
+        mesasSinSitio: sinSitio,
+      },
+      { status: 409 },
+    )
+  }
+
   if (conRoturas.length && !parsed.data.forzar) {
     return NextResponse.json(
       {
