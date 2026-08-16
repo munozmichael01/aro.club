@@ -35,6 +35,7 @@ type MesaPropuesta = {
   roturas?: Rotura[]
   zona: string | null
   restaurantId: string | null
+  restaurante?: string | null
   publicada?: boolean
   integrantes: { profileId: string; bookingId: string }[]
 }
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
   if (!corrida) return NextResponse.json({ error: 'Esa corrida no existe.' }, { status: 404 })
   const { data: evento } = await admin
     .from('events')
-    .select('id, reveal_at')
+    .select('id, reveal_at, format')
     .eq('id', corrida.event_id)
     .maybeSingle()
 
@@ -178,7 +179,15 @@ export async function POST(request: Request) {
       kind: 'mesa_asignada' as const,
       event_id: corrida.event_id,
       send_at: evento.reveal_at,
-      payload: { mesa: mesa.numero },
+      // El formato va DENTRO del correo, no solo el número. La plantilla
+      // 03 dice «TU MESA · 04» y para una caminata del domingo no hay
+      // ninguna mesa: quien lo mande tiene que poder decir «TU GRUPO · 04»
+      // sin volver a preguntarle a la base de qué era esa fecha.
+      payload: {
+        mesa: mesa.numero,
+        formato: evento.format,
+        sitio: mesa.restaurante ?? null,
+      },
     })),
   )
 

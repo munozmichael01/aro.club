@@ -107,7 +107,7 @@ export async function GET() {
   const { data: reserva, error: errorReserva } = await admin
     .from('bookings')
     .select(
-      'id, status, event_id, events(starts_at, reveal_at, status, restaurants!events_restaurant_id_fkey(name, address, zone_slug))',
+      'id, status, event_id, events(starts_at, reveal_at, status, format, restaurants!events_restaurant_id_fkey(name, address, zone_slug))',
     )
     .eq('profile_id', user.id)
     // `pending_payment` cuenta como reserva: el puesto ESTA apartado
@@ -261,7 +261,7 @@ export async function GET() {
     }
   }
   const evento = reserva?.events as
-    | { starts_at: string; reveal_at: string; status: string; restaurants: { name: string; address: string; zone_slug: string | null } | null }
+    | { starts_at: string; reveal_at: string; status: string; format: string; restaurants: { name: string; address: string; zone_slug: string | null } | null }
     | null
     | undefined
 
@@ -342,6 +342,9 @@ export async function GET() {
     reserva: reserva
       ? {
           id: reserva.id,
+          // De qué es: decide si su cuenta dice mesa o grupo, y si la
+          // pestaña se llama «Mi mesa» o «Mi grupo».
+          formato: evento?.format ?? null,
           empiezaEn: evento?.starts_at ?? null,
           revelaEn: evento?.reveal_at ?? null,
           revelado,

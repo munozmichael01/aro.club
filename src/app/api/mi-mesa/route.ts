@@ -27,7 +27,7 @@ export async function GET() {
 
   const { data: reservas } = await admin
     .from('bookings')
-    .select('id, event_id, events(starts_at, reveal_at, status)')
+    .select('id, event_id, events(starts_at, reveal_at, status, format, activity)')
     .eq('profile_id', user.id)
     .in('status', ['confirmed', 'attended'])
 
@@ -59,7 +59,7 @@ export async function GET() {
     porValorar ?? proxima ?? (reservas ?? []).sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
 
   const evento = reserva?.events as
-    | { starts_at: string; reveal_at: string; status: string }
+    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown }
     | null
     | undefined
 
@@ -89,6 +89,7 @@ export async function GET() {
 
     return NextResponse.json({
       fase: 'cerrada',
+      formato: evento.format,
       revelaEn: evento.reveal_at,
       empiezaEn: evento.starts_at,
       zonas: (nombres ?? []).map((z) => z.name),
@@ -105,7 +106,7 @@ export async function GET() {
 
   if (!miembro) {
     // Apuntada y revelada pero sin mesa: no se inventa nada.
-    return NextResponse.json({ fase: 'sin-mesa', empiezaEn: evento.starts_at })
+    return NextResponse.json({ fase: 'sin-mesa', formato: evento.format, empiezaEn: evento.starts_at })
   }
 
   const mesa = miembro.dinner_tables as unknown as {
@@ -181,6 +182,12 @@ export async function GET() {
     // siguen siendo lo unico legible que se le enseña de ellos.
     mesaId: miembro.table_id,
     numeroMesa: mesa.table_number,
+    // De qué es esto: decide si la pantalla dice mesa y restaurante o grupo
+    // y punto de encuentro. Once formatos y una sola palabra no se sostiene.
+    formato: evento.format,
+    // Y qué se hace, cuando el sitio no lo dice: la ruta, los kilómetros y
+    // el nivel de una caminata no caben en una dirección.
+    actividad: evento.activity ?? null,
     empiezaEn: evento.starts_at,
     restaurante: mesa.restaurants?.name ?? null,
     direccion: mesa.restaurants?.address ?? null,

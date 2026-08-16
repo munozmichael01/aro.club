@@ -263,7 +263,7 @@ class Component extends DCLogic {
     // "Mi mesa" a quien no tiene ninguna.
     fetch('/api/mi-cuenta')
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => this.setState({ hayMesa: !!(d && d.reserva) }))
+      .then((d) => this.setState({ hayMesa: !!(d && d.reserva), formatoMesa: d && d.reserva ? d.reserva.formato : null }))
       .catch(() => {});
   }
 
@@ -645,7 +645,7 @@ class Component extends DCLogic {
       }),
       hayCenas: !!(D && D.historial && D.historial.length),
       sinCenas: !!D.historial && D.historial.length === 0,
-      nav: AroNav.items('perfil', !!this.state.hayMesa),
+      nav: AroNav.items('perfil', !!this.state.hayMesa, this.state.formatoMesa),
       hayFalloAvisos: !!this.state.falloAvisos,
       falloAvisos: this.state.falloAvisos || '',
       hayExclusiones: exclusiones.length > 0,

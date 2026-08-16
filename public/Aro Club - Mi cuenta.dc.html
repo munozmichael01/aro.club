@@ -384,6 +384,10 @@ class Component extends DCLogic {
         creditosCuerpo: 'Uno es el de esta noche. Te queda uno más.',
         titulo: 'Tu mesa de esta noche.',
         cuerpo: 'Llega diez minutos antes y pregunta por la reserva de Aro. Si se te hace tarde, avísanos y se lo decimos al grupo.',
+        // Y la versión de movimiento: para una caminata no hay mesa que
+        // reservar ni «esta noche» que valga a las siete de la mañana.
+        tituloMov: 'Tu grupo de hoy.',
+        cuerpoMov: 'Llega diez minutos antes al punto de encuentro y pregunta por Aro. Si se te hace tarde, avísanos y se lo decimos al grupo.',
         accion: 'Cómo llegar', enlace: '/', secundaria: 'Volver al principio'
       }
     ];
@@ -422,6 +426,11 @@ class Component extends DCLogic {
 
     const d = this.state.datos;
     const base = (d && estados.find((x) => x.id === d.estado)) || estados[0];
+    // Lo que tiene reservado decide el vocabulario de toda la tarjeta.
+    const vozCuenta = (window.AroReglas && window.AroReglas.vozDe)
+      ? window.AroReglas.vozDe(d && d.reserva ? d.reserva.formato : null)
+      : { unidad: 'mesa' };
+    const esMovimiento = vozCuenta.unidad === 'grupo';
     // El copy es de Design; las cifras son del servidor. Ninguna se escribe
     // a mano: el sello y los atajos salen de lo que respondió esta persona.
     const e = !d ? base : Object.assign({}, base, {
@@ -461,8 +470,13 @@ class Component extends DCLogic {
               // el copy original y como se dice en Caracas.
               (h >= 19 || h < 6 ? ' de la noche.' : h >= 12 ? ' de la tarde.' : ' de la mañana.');
           })()
-        : (d.estado === 'reservar' ? tituloReservar(d) : base.titulo),
-      cuerpo: d.estado === 'reservar' ? cuerpoReservar(d, base.cuerpo) : base.cuerpo,
+        : (d.estado === 'reservar'
+            ? tituloReservar(d)
+            // Mesa o grupo, según lo que tenga reservado.
+            : ((esMovimiento && base.tituloMov) ? base.tituloMov : base.titulo)),
+      cuerpo: d.estado === 'reservar'
+        ? cuerpoReservar(d, base.cuerpo)
+        : ((esMovimiento && base.cuerpoMov) ? base.cuerpoMov : base.cuerpo),
       accion: d.estado === 'reservar' && !d.proximaFecha ? 'Ver la agenda' : base.accion
     });
     const oscuro = e.id === 'abierta' || e.id === 'reservada';
@@ -788,7 +802,7 @@ class Component extends DCLogic {
       // cadena esta, y quien tiene reserva pero el perfil a medias —o
       // cualquier estado que no sea reservada/abierta— tiene mesa y no veia
       // la pestaña. La pregunta es "¿hay mesa?", no "¿en que paso vas?".
-      nav: AroNav.items('inicio', !!(d && d.reserva)),
+      nav: AroNav.items('inicio', !!(d && d.reserva), d && d.reserva && d.reserva.formato),
       hayMios: mios.length > 0,
       sinMios: mios.length === 0,
 

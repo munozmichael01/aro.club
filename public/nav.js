@@ -25,11 +25,16 @@
    * `hayMesa` decide si «Mi mesa» aparece: sin reserva esa pantalla te
    * devuelve a Inicio, y una pestaña que rebota a donde ya estabas no es
    * navegación, es una puerta pintada en la pared.
+   *
+   * Y `formato` decide cómo se llama. Para la caminata del domingo no hay
+   * ninguna mesa: la pestaña dice «Mi grupo». La tabla está en reglas.js,
+   * que es de donde la leen también la pantalla, el panel y los correos.
    */
-  function items(activa, hayMesa) {
+  function items(activa, hayMesa, formato) {
+    var voz = (raiz.AroReglas && raiz.AroReglas.vozDe) ? raiz.AroReglas.vozDe(formato) : { mia: 'Mi mesa' }
     var todos = [
       { id: 'inicio', texto: 'Inicio', enlace: 'Aro Club - Mi cuenta.dc.html' },
-      { id: 'mesa', texto: 'Mi mesa', enlace: 'Aro Club - Mi mesa.dc.html', requiereMesa: true },
+      { id: 'mesa', texto: voz.mia, enlace: 'Aro Club - Mi mesa.dc.html', requiereMesa: true },
       { id: 'perfil', texto: 'Perfil', enlace: 'Aro Club - Mi perfil.dc.html' },
     ]
     return todos

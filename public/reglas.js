@@ -319,6 +319,44 @@
       return null
     },
 
+    /**
+     * Cómo se llama esto según el formato: mesa o grupo.
+     *
+     * Once formatos y un solo vocabulario: la pantalla se llamaba «Mi mesa»
+     * y el correo decía «TU MESA · 04» también para una caminata del
+     * domingo, donde no hay mesa ni restaurante — hay un grupo y un punto de
+     * encuentro. Y hay que llevar el género, porque «una grupo» es
+     * castellano roto.
+     *
+     * Vive aquí y no en cada pantalla porque lo usan las cuatro del miembro,
+     * el panel y los correos. Con una copia por sitio, cambiar una palabra
+     * es cambiarla en seis y acordarse de los seis.
+     */
+    VOZ_MESA: {
+      unidad: 'mesa', unidades: 'mesas', Unidad: 'Mesa', Unidades: 'Mesas',
+      art: 'una', Art: 'Una', esta: 'esta', tu: 'tu', La: 'La', el: 'la',
+      sitio: 'restaurante', Sitio: 'Restaurante', sitioCorto: 'el sitio',
+      sentados: 'sentados', juntarse: 'sentarse', mia: 'Mi mesa', TU: 'TU MESA',
+    },
+
+    VOZ_GRUPO: {
+      unidad: 'grupo', unidades: 'grupos', Unidad: 'Grupo', Unidades: 'Grupos',
+      art: 'un', Art: 'Un', esta: 'este', tu: 'tu', La: 'El', el: 'el',
+      sitio: 'punto de encuentro', Sitio: 'Punto de encuentro', sitioCorto: 'el punto',
+      sentados: 'repartidos', juntarse: 'juntarse', mia: 'Mi grupo', TU: 'TU GRUPO',
+    },
+
+    /** Los formatos que salen a la calle: ahí no hay mesa. */
+    DE_MOVIMIENTO: ['walk', 'hike', 'run', 'padel', 'pilates', 'cycling'],
+
+    /**
+     * La voz de un formato. Sin formato —o con uno que no conocemos— se
+     * habla de mesa, que es lo que era el producto entero hasta ahora.
+     */
+    vozDe: function (formato) {
+      return api.DE_MOVIMIENTO.indexOf(String(formato || '')) >= 0 ? api.VOZ_GRUPO : api.VOZ_MESA
+    },
+
     /** Valida un conjunto. Devuelve el primer campo que falla, o null. */
     primerFallo: function (valores) {
       for (var campo in valores) {
