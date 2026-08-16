@@ -52,7 +52,26 @@ export async function POST(request: Request) {
         { status: 401 },
       )
     }
-    return NextResponse.json({ estado: 'dentro' })
+    // A donde va, lo dice su ROL, no la pantalla.
+    //
+    // Entrar mandaba a todo el mundo a Mi cuenta, asi que una cuenta de
+    // operacion aterrizaba en un panel de miembro pidiendole que completara
+    // un perfil que no va a usar nunca —«te faltan 14 preguntas»— con un
+    // enlace pequeño al sitio donde de verdad trabaja.
+    const { data: perfil } = await createAdminClient()
+      .from('profiles')
+      .select('role')
+      .eq('email', correo)
+      .maybeSingle()
+
+    const deOperacion = perfil?.role === 'ops' || perfil?.role === 'admin'
+
+    return NextResponse.json({
+      estado: 'dentro',
+      // Quien es las dos cosas —Michael lo es— llega a su trabajo y tiene
+      // el enlace a su cuenta de miembro en el panel.
+      destino: deOperacion ? 'Aro Club - Operacion.dc.html' : 'Aro Club - Mi cuenta.dc.html',
+    })
   }
 
   // --- Recuperar -----------------------------------------------------

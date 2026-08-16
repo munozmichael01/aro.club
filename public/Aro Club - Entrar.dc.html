@@ -194,7 +194,9 @@ class Component extends DCLogic {
       body: JSON.stringify({ accion: 'entrar', correo: correo, clave: clave })
     }).then((r) => r.text().then((t) => {
       let j = {}; try { j = JSON.parse(t); } catch (e) { j = {}; }
-      if (j.estado === 'dentro') { window.location.href = 'Aro Club - Mi cuenta.dc.html'; return; }
+      // El destino lo decide el servidor, que es quien sabe el rol. Antes
+      // estaba fijo aqui y operacion aterrizaba en el panel de miembro.
+      if (j.estado === 'dentro') { window.location.href = j.destino || 'Aro Club - Mi cuenta.dc.html'; return; }
       this.setState({ fase: 'correo', error: j.error || 'Ese correo y esa contraseña no coinciden.' });
     })).catch(() => this.setState({
       fase: 'correo', error: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
