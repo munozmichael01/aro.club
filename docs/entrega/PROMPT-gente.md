@@ -104,6 +104,54 @@ selecciona gente para mandarle nada. Es para **saber**, no para disparar.
 
 ---
 
+---
+
+# Y dos pantallas más, pequeñas, que van en el mismo encargo
+
+Las dos existen por lo mismo: el correo ya sale de verdad desde el 17 de
+agosto, y eso destapa huecos que antes no se veían porque no llegaba nada.
+
+## A · Darse de baja de los correos
+
+Cada correo lleva **«Ajustes de correo»** en el pie, y hoy apunta a `/cuenta`,
+que exige sesión. El problema es que **quien recibe la bienvenida no tiene
+cuenta**: dejó su correo y se quedó a medias. Ese enlace no lleva a ningún
+sitio para él.
+
+Y un enlace de baja que no funciona no es solo feo: en varias jurisdicciones
+no es legal.
+
+Son **dos destinos según quién abre**, y esa distinción es lo que hay que
+diseñar:
+
+- **Tiene cuenta** → sus ajustes de correo, dentro de Mi cuenta. Ahí ya hay
+  un interruptor por tipo de aviso; solo falta que el pie del correo lleve
+  hasta él.
+- **No tiene cuenta** → una pantalla suelta, sin sesión, a la que se llega
+  con un enlace firmado. Dice de qué dirección se trata, la da de baja, y
+  ofrece deshacerlo por si se pulsó sin querer.
+
+La segunda es una pantalla nueva y es la que necesito de ti. Que sea corta:
+una frase, un botón, y la vuelta atrás. No es un sitio donde retener a nadie.
+
+## B · Poner una contraseña nueva
+
+**Esta ya existe y la hice yo**, en `/clave`, y quiero que la revises.
+
+La monté deprisa porque el agujero era grave: el correo de recuperación se
+mandaba desde el principio, pero no había NINGUNA pantalla que recogiera el
+enlace. Con Google y Apple sin conectar, la contraseña es la única puerta —
+quien la olvidaba perdía la cuenta con su verificación, sus créditos y su
+historial dentro.
+
+Seguí el sistema —fondo verde, Young Serif, el campo y el botón de Entrar— y
+tiene tres estados: el enlace vale, el enlace caducó, y hecho. Un solo campo,
+sin «mostrar» ni confirmación, como quedamos.
+
+No hay diseño detrás, así que dime qué le falta.
+
+---
+
 ## Qué hay ya de mi lado
 
 Los datos están todos. Monto la ruta que devuelve conteos y listas con los
