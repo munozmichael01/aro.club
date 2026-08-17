@@ -951,9 +951,40 @@ class Component extends DCLogic {
     this.cargarPagos();
     this.cargarIncidencias();
     this.cargarLocales();
-    this.cargarEquipo();
+    // Equipo decide cuántas pestañas hay, así que la del hash se resuelve
+    // cuando se sabe si esta cuenta es admin.
+    this.cargarEquipo().then((s) => this.abrirDelHash(s.esAdmin));
     this.cargarGente();
     this.montarArrastre();
+  }
+
+  /**
+   * El orden de las pestañas, por clave.
+   *
+   * Vive aquí y no suelto en `renderVals` porque hay dos sitios que necesitan
+   * saberlo —qué pestaña se pinta y a cuál lleva un enlace de vuelta— y
+   * porque Equipo solo existe para admin: con índices a pelo, Gente es la 7
+   * para un admin y la 6 para un ops, y una de las dos siempre se equivoca.
+   */
+  clavesPestanas(esAdmin) {
+    const admin = esAdmin === undefined ? this.state.esAdmin : esAdmin;
+    return ['mesas', 'verificaciones', 'pagos', 'reportes', 'fechas', 'locales']
+      .concat(admin ? ['equipo'] : [])
+      .concat(['gente']);
+  }
+
+  /**
+   * `/operacion#verificaciones` abre esa pestaña.
+   *
+   * La ficha de miembro lleva enlazando así desde la entrega 7 —«Cola de
+   * verificaciones», «Reparto de la fecha»— y el panel nunca leyó el hash:
+   * volver desde una ficha te dejaba siempre en Reparto, dijera lo que dijera
+   * el enlace.
+   */
+  abrirDelHash(esAdmin) {
+    const clave = String(window.location.hash || '').replace('#', '');
+    const i = this.clavesPestanas(esAdmin).indexOf(clave);
+    if (i >= 0) this.setState({ vista: i });
   }
 
   // --- carga -----------------------------------------------------------
@@ -1034,8 +1065,11 @@ class Component extends DCLogic {
   cargarEquipo() {
     return fetch('/api/operacion/equipo')
       .then((r) => (r.ok ? r.json().then((d) => ({ equipo: d.equipo, esAdmin: true })) : { equipo: [], esAdmin: false }))
-      .then((s) => this.setState(s))
-      .catch(() => this.setState({ equipo: [], esAdmin: false }));
+      .catch(() => ({ equipo: [], esAdmin: false }))
+      // Devuelve lo que cargó además de guardarlo: quien encadena detrás
+      // necesita `esAdmin` YA, y `setState` no promete haberlo aplicado
+      // todavía cuando corre el `then` siguiente.
+      .then((s) => { this.setState(s); return s; });
   }
 
   /** La fecha que se está trabajando ahora mismo. */
@@ -1834,7 +1868,10 @@ class Component extends DCLogic {
 
     // Equipo solo existe para admin: la ruta devuelve 404 a un ops, y una
     // pestaña que siempre dice cero es peor que no estar. Gente va detrás, así
-    // que su índice depende de si Equipo está o no.
+    // que su índice depende de si Equipo está o no; por eso las pestañas se
+    // preguntan por clave y no por número.
+    const CLAVES = this.clavesPestanas();
+    const esta = (clave) => v === CLAVES.indexOf(clave);
     const pestanas = [
       ['Reparto', String(FECHAS_REP.length)],
       ['Verificaciones', String(pendientes)],
@@ -2299,8 +2336,8 @@ class Component extends DCLogic {
       tituloEspera: espera.length + ' en espera',
       notaEspera: 'No dan para ' + vozRep.art + ' ' + vozRep.unidad + ' de seis. Se les avisa hoy y su crédito no se toca.',
       cola, hayCola: porConciliar > 0, sinCola: porConciliar === 0,
-      esMesas: v === 0, esVerificaciones: v === 1, esPagos: v === 2,
-      esReportes: v === 3, esFechas: v === 4, esLocales: v === 5,
+      esMesas: esta('mesas'), esVerificaciones: esta('verificaciones'), esPagos: esta('pagos'),
+      esReportes: esta('reportes'), esFechas: esta('fechas'), esLocales: esta('locales'),
       sinReportes: reportes.length === 0,
       tituloSinReportes: St.incidencias === null ? 'Cargando…' : 'Ningún reporte abierto.',
       notaSinReportes: St.incidencias === null
@@ -2309,7 +2346,7 @@ class Component extends DCLogic {
       reportes, locales, filtrosLocales,
 
       // ── gente ─────────────────────────────────────────────────────
-      esGente: v === (St.esAdmin ? 7 : 6),
+      esGente: esta('gente'),
       nGente: String(FILTRADA.length),
       palabraGente: FILTRADA.length === 1 ? 'persona' : 'personas',
       cifraGrande: 'font:700 clamp(52px,7vw,84px)/0.9 \'Inter Tight\',sans-serif;letter-spacing:-.045em;font-variant-numeric:tabular-nums;color:#14342A',
@@ -2484,7 +2521,7 @@ class Component extends DCLogic {
             : [p.edad ? p.edad + ' años' : null, p.industria || null, zonas || 'sin zonas', recorrido]
               .filter(Boolean).join(' · '),
           estado: e[0],
-          enlace: esLead ? undefined : 'Aro Club - Perfil miembro.dc.html?id=' + p.id,
+          enlace: esLead ? undefined : 'Aro Club - Perfil miembro.dc.html?id=' + p.id + '&desde=gente',
           avatar: 'flex:0 0 auto;width:34px;height:34px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 14px/1 \'Inter Tight\',sans-serif',
           chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;background:' + e[2] + ';border:1px solid ' + (e[2] === 'transparent' ? 'rgba(20,52,42,.2)' : 'transparent') + ';color:' + e[1],
           fila: 'display:flex;align-items:center;gap:12px;padding:13px 18px;min-height:64px;text-decoration:none;border-bottom:1px solid rgba(20,52,42,.09)' + (esLead ? ';cursor:default' : ''),
@@ -2512,7 +2549,7 @@ class Component extends DCLogic {
       }),
 
       // ── el equipo: quién puede operar ─────────────────────────────
-      esEquipo: v === 6 && St.esAdmin,
+      esEquipo: esta('equipo'),
       equipo: EQUIPO.map((p, i) => {
         // `fuera` es lo que acaba de hacerse en esta pantalla: la fila se
         // queda visible con su chip en «Miembro» para ver el resultado sin

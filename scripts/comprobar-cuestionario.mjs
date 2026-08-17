@@ -114,5 +114,47 @@ for (const [id, pares] of Object.entries(OPC)) {
   }
 }
 
+// --- la cuarta copia: el reparto de planes en familias ----------------
+//
+// `profile_traits.formats` guarda el código de `planes` tal cual, y la
+// pestaña Gente pregunta por FAMILIA —cenas, drinks, movimiento, coffee—.
+// Ese reparto es una decisión de producto y vive en `src/lib/formatos.ts`,
+// que es una lista más que puede quedarse vieja.
+//
+// Un plan sin familia no rompe nada visible: no entra en ningún filtro y la
+// pantalla dice cero sin quejarse, que es exactamente el fallo de siempre
+// con otra ropa. Por eso cuenta como error y no como aviso.
+const ts = fs.readFileSync(
+  fileURLToPath(new URL('../src/lib/formatos.ts', import.meta.url)), 'utf8')
+const iniF = ts.indexOf('export const PLANES_DE_FAMILIA')
+const abre = ts.indexOf('{', iniF)
+const cierra = ts.indexOf('\n}', abre)
+if (iniF < 0 || cierra < 0) {
+  console.error('No encuentro PLANES_DE_FAMILIA en src/lib/formatos.ts.')
+  process.exit(1)
+}
+// eslint-disable-next-line no-eval
+const PLANES_DE_FAMILIA = eval('(' + ts.slice(abre, cierra + 2) + ')')
+const conFamilia = Object.values(PLANES_DE_FAMILIA).flat()
+
+const planes = (enBase.get('planes') ?? []).map((o) => o.value)
+const sinFamilia = planes.filter((c) => !conFamilia.includes(c))
+const familiaFantasma = conFamilia.filter((c) => !planes.includes(c))
+
+if (sinFamilia.length || familiaFantasma.length) {
+  errores++
+  console.error('\n✗ planes → familias (src/lib/formatos.ts)')
+  if (sinFamilia.length) {
+    console.error(`  la base ofrece y ninguna familia recoge: ${sinFamilia.join(', ')}`)
+    console.error('  → quien lo marque no sale en ningún filtro de formato de Gente')
+  }
+  if (familiaFantasma.length) {
+    console.error(`  la familia incluye y la base no conoce: ${familiaFantasma.join(', ')}`)
+    console.error('  → filtro que no puede encontrar a nadie')
+  }
+} else if (planes.length) {
+  console.log('✓ planes → familias')
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)

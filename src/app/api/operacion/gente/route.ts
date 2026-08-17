@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 
-import { FORMATOS_DE_FAMILIA, esFamilia, familiasDe } from '@/lib/formatos'
+import { familiasDe, planesDe } from '@/lib/formatos'
 import { exigirOps } from '@/lib/ops'
+import { leerCatalogo } from '@/lib/questionnaire/catalogo'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -96,7 +97,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'No se pudo leer.' }, { status: 500 })
   }
 
-  const ids = (perfiles ?? []).map((p) => p.id)
+  // La industria se guarda por código —`tecnologia`, `otro`— y en pantalla
+  // tiene que leerse como lo leyó quien contestó. El texto sale del catálogo
+  // de la pregunta `sector`, que es donde vive: escribir aquí una segunda
+  // lista de sectores es exactamente la copia que se queda vieja.
+  const catalogo = await leerCatalogo()
+  const sectores = new Map(
+    (catalogo?.porClave.get('sector')?.opciones ?? []).map((o) => [o.valor, o.label]),
+  )
 
   // Zonas, formatos e industria viven en los rasgos, que es lo que deja el
   // cuestionario. Quien no lo terminó no tiene fila aquí, y eso está bien:
@@ -144,7 +152,7 @@ export async function GET(request: Request) {
       cenas: p.events_attended ?? 0,
       creditos: saldoDe.get(p.id)?.balance ?? 0,
       dias: diasDesde(p.created_at),
-      industria: r?.industry ?? '',
+      industria: r?.industry ? (sectores.get(r.industry) ?? r.industry) : '',
       espera: esperaDe.get(p.id)?.veces ?? 0,
     }
   })
@@ -188,14 +196,15 @@ export async function GET(request: Request) {
   // con una sola, la misma pantalla daría dos respuestas a la misma pregunta.
   //
   // El filtro entra como FAMILIA —«cenas»— porque es lo que enseña la
-  // pantalla, y también se acepta un formato suelto —«dinner»— porque es lo
-  // que guarda la base. Una familia son hasta seis formatos: pedirle a
-  // operación que marque los seis de «movimiento» para preguntar «¿dónde hay
-  // gente para salir a la calle?» sería trasladarle una decisión de esquema.
+  // pantalla, y también se acepta un plan suelto —«cena-gastronomica»—. Una
+  // familia son hasta cinco planes: pedirle a operación que marque los cinco
+  // de «movimiento» para preguntar «¿dónde hay gente para salir a la calle?»
+  // sería trasladarle una decisión de esquema.
+  //
+  // Y son PLANES del cuestionario, no formatos de evento: aquí se pregunta
+  // por lo que quiere la gente, y eso es lo que hay en `profile_traits`.
   const formato = url.searchParams.get('formato')
-  const formatosPedidos = formato
-    ? (esFamilia(formato) ? FORMATOS_DE_FAMILIA[formato] : [formato])
-    : null
+  const formatosPedidos = formato ? planesDe(formato) : null
   const sirve = (p: Fila) =>
     !formatosPedidos || p.formatos.some((f) => formatosPedidos.includes(f))
 
@@ -232,12 +241,12 @@ export async function GET(request: Request) {
   // ahí, que es lo que se está preguntando.
   const escalones: { paso: string; etiqueta: string; pasa: (p: Fila) => boolean }[] = [
     { paso: 'correo', etiqueta: 'Dejó el correo', pasa: () => true },
-    { paso: 'datos', etiqueta: 'Completó datos', pasa: (p) => p.estado !== 'lead' },
+    { paso: 'datos', etiqueta: 'Completó sus datos', pasa: (p) => p.estado !== 'lead' },
     { paso: 'cuestionario', etiqueta: 'Contestó el cuestionario', pasa: (p) => p.zonas.length > 0 },
-    { paso: 'documentos', etiqueta: 'Subió cédula', pasa: (p) => p.estado !== 'sin' },
+    { paso: 'documentos', etiqueta: 'Subió su cédula', pasa: (p) => p.estado !== 'sin' },
     { paso: 'verificada', etiqueta: 'Verificada', pasa: (p) => p.estado === 'ok' },
     { paso: 'reservo', etiqueta: 'Reservó', pasa: (p) => p.cenas > 0 || p.creditos > 0 },
-    { paso: 'fue', etiqueta: 'Fue', pasa: (p) => p.cenas > 0 },
+    { paso: 'fue', etiqueta: 'Fue a una mesa', pasa: (p) => p.cenas > 0 },
   ]
 
   let quedan = todos

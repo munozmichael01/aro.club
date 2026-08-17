@@ -257,7 +257,8 @@ class Component extends DCLogic {
     // el id es el del perfil de verdad y no hay lista que mantener.
     const q = new URLSearchParams(window.location.search);
     const id = q.get('id');
-    const desde = q.get('desde') === 'cola' ? 'cola' : 'mesa';
+    const pedido = q.get('desde');
+    const desde = ['cola', 'gente'].indexOf(pedido) >= 0 ? pedido : 'mesa';
     this.setState({ desde: desde });
 
     if (!id) { this.setState({ error: 'Esta ficha se abre desde una mesa o desde la cola.' }); return; }
@@ -278,10 +279,17 @@ class Component extends DCLogic {
     const chip = (fondo, color, borde) => 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;background:' + fondo + ';color:' + color + ';border:1px solid ' + (borde || 'transparent') + ';white-space:nowrap';
     const valor = (interno) => 'flex:2 1 170px;font:500 15px/1.45 \'Inter Tight\',sans-serif;color:' + (interno ? '#2C4A38' : '#14342A');
 
-    const deCola = this.state.desde === 'cola';
+    // De dónde se entró decide a dónde vuelve. El panel lee ese hash, así que
+    // el enlace lleva de verdad a la pestaña que dice.
+    const VUELTA = {
+      cola: ['#verificaciones', 'Cola de verificaciones'],
+      gente: ['#gente', 'Gente'],
+      mesa: ['#mesas', 'Reparto de la fecha']
+    };
+    const vuelta = VUELTA[this.state.desde] || VUELTA.mesa;
     const marco = {
-      volverEnlace: deCola ? 'Aro Club - Operacion.dc.html#verificaciones' : 'Aro Club - Operacion.dc.html#mesas',
-      volverTexto: deCola ? 'Cola de verificaciones' : 'Reparto de la fecha',
+      volverEnlace: 'Aro Club - Operacion.dc.html' + vuelta[0],
+      volverTexto: vuelta[1],
       tarjeta: 'border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.4vw,24px)',
       tarjetaAncha: 'border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.4vw,24px);margin-top:12px',
       tituloBloque: 'font:400 clamp(21px,2.4vw,26px)/1.1 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:#14342A;margin-bottom:14px;display:block',
