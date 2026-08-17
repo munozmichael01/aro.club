@@ -1,7 +1,15 @@
-# Los trabajos programados, y por qué no están en `vercel.json`
+# Los trabajos programados
 
-`vercel.json` desapareció a propósito. Lo que había dentro eran cinco crons
-y **la cuenta es Hobby, donde Vercel solo admite crons diarios**.
+**Resuelto: la cuenta pasó a Pro y los cinco crons volvieron a `vercel.json`.**
+Lo de abajo se queda escrito porque explica una avería que costó tres días de
+producción congelada y que no deja rastro en ninguna pantalla.
+
+---
+
+## Lo que pasó (agosto 2026)
+
+`vercel.json` estuvo un rato sin crons a propósito. Lo que había dentro eran
+cinco y **la cuenta era Hobby, donde Vercel solo admite crons diarios**.
 
 Dos de los cinco no pueden ser diarios:
 
