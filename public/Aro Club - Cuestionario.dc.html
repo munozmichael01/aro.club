@@ -352,8 +352,47 @@ class Component extends DCLogic {
   aCodigo(id, v) {
     const C = this.COD[id];
     if (!C) return v;
-    if (Array.isArray(v)) return v.map((i) => C[i]).filter(Boolean);
+    // Un indice sin codigo se caia por el `.filter(Boolean)` sin decir nada:
+    // la persona marcaba una opcion y no se guardaba ninguna respuesta. Se
+    // grita en consola, que es lo unico que se puede hacer aqui sin dejarla
+    // tirada a mitad del cuestionario.
+    if (Array.isArray(v)) {
+      return v.map((i) => {
+        if (C[i] === undefined) console.error('[cuestionario] sin codigo para ' + id + '[' + i + ']');
+        return C[i];
+      }).filter(Boolean);
+    }
     return typeof v === 'number' && v >= 0 ? C[v] : null;
+  }
+
+  /**
+   * El candado de los indices.
+   *
+   * `aCodigo` traduce POR POSICION: la opcion 3 de la pantalla se guarda como
+   * el codigo 3 de COD. Eso significa que anadir, quitar o reordenar opciones
+   * sin tocar COD al lado guarda la respuesta equivocada —Chacao donde la
+   * persona marco Altamira— sin lanzar un error, sin fallar una validacion y
+   * sin que se vea en ninguna pantalla. Solo se descubre meses despues,
+   * mirando por que una mesa no cuadra.
+   *
+   * Esto no puede detectar un reordenamiento —dos listas del mismo largo en
+   * distinto orden son indistinguibles desde aqui— pero si el caso comun, que
+   * es que las longitudes dejen de cuadrar. Se comprueba una vez al arrancar.
+   */
+  revisarCodigos(pantallas) {
+    if (this._revisado) return;
+    this._revisado = true;
+    pantallas.forEach((p) => (p.preguntas || []).forEach((q) => {
+      const C = this.COD[q.id];
+      if (!C || !q.opciones) return;
+      // Las zonas llevan una opcion de mas —«cualquier zona»— que a proposito
+      // no tiene codigo: es un atajo que marca las otras, no una respuesta.
+      const reales = q.todas != null ? q.opciones.length - 1 : q.opciones.length;
+      if (reales !== C.length) {
+        console.error('[cuestionario] ' + q.id + ': ' + reales + ' opciones y '
+          + C.length + ' codigos. Las respuestas se guardarian corridas.');
+      }
+    }));
   }
 
   set(id, v) {
@@ -487,6 +526,9 @@ class Component extends DCLogic {
         ]
       }
     ];
+
+    // Antes de nada: que cada pregunta tenga tantos codigos como opciones.
+    this.revisarCodigos(pantallas);
 
     const her = this.state.heredadas;
     const heredada = (id) => her.indexOf(id) >= 0;

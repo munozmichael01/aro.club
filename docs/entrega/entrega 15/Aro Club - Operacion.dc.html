@@ -1,0 +1,2164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#F2E9D5; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#14342A; color:#FAF3E4; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#F2E9D5;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh">
+
+  <div style="position:sticky;top:0;z-index:40;background:rgba(242,233,213,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.14)">
+    <div style="max-width:1280px;margin:0 auto;padding:12px clamp(14px,3vw,26px);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:10px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="1.8"></circle><circle cx="20.6" cy="12" r="1.9" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="3.4" cy="12" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#14342A"></circle></svg>
+        <span style="font:400 18px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro</span>
+        <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;border-left:1px solid rgba(20,52,42,.22);padding-left:12px">OPERACIÓN</span>
+      </span>
+      <span style="flex:1"></span>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;min-width:0">
+        <sc-for list="{{ pestanas }}" as="p" hint-placeholder-count="3">
+          <button onClick="{{ p.pick }}" style="{{ p.btn }}">{{ p.nombre }}<span style="{{ p.contador }}">{{ p.n }}</span></button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1280px;margin:0 auto;padding:clamp(20px,3vw,32px) clamp(14px,3vw,26px) clamp(40px,6vw,64px)">
+
+    <sc-if value="{{ esMesas }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:aro-open 300ms ease both">
+
+        <div style="{{ etiqueta }}">QUÉ FECHA ESTÁS REPARTIENDO</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <sc-for list="{{ tiposRep }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.pick }}" style="{{ t.btn }}">
+              <span style="{{ t.txt }}">{{ t.nombre }}</span>
+              <span style="{{ t.contador }}">{{ t.n }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div class="aro-rail" style="display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:6px;margin-bottom:clamp(24px,3vw,32px)">
+          <sc-for list="{{ fechasRep }}" as="f" hint-placeholder-count="3">
+            <button onClick="{{ f.pick }}" style="{{ f.btn }}">
+              <span style="{{ f.aro }}">{{ f.icono }}</span>
+              <span style="flex:1;min-width:0;text-align:left">
+                <span style="{{ f.txt }}">{{ f.titulo }}</span>
+                <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ f.detalle }}</span>
+              </span>
+              <span style="{{ f.sello }}">{{ f.estado }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ sinFechasTipo }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:22px;border:1px dashed rgba(20,52,42,.28);padding:clamp(18px,2.4vw,24px);margin-bottom:clamp(24px,3vw,32px);max-width:56ch">
+            <div style="font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloSinFechas }}</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:7px;text-wrap:pretty">Abre una desde la pestaña Fechas y aparecerá aquí para repartir.</div>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+          <h1 style="{{ h1 }}">{{ tituloRep }}</h1>
+          <span style="{{ selloCierre }}">{{ textoCierre }}</span>
+        </div>
+        <p style="{{ bajada }}">{{ bajadaRep }}</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:clamp(20px,2.6vw,26px) 0">
+          <sc-for list="{{ metricas }}" as="m" hint-placeholder-count="4">
+            <div style="border-radius:20px;background:#FAF3E4;padding:16px 18px">
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">{{ m.etiqueta }}</div>
+              <div style="{{ m.cifraEstilo }}">{{ m.cifra }}</div>
+              <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:4px">{{ m.nota }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-for list="{{ zonasRep }}" as="z" hint-placeholder-count="2">
+          <div style="margin-top:clamp(26px,3.4vw,38px)">
+            <div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:baseline;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid rgba(20,52,42,.16)">
+              <span style="flex:1 1 auto;min-width:0">
+                <span style="display:block;font:400 clamp(23px,2.6vw,30px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A">{{ z.zona }}</span>
+                <span style="display:block;font:500 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:4px">{{ z.sitio }}</span>
+              </span>
+              <span style="font:500 13px/1.4 'Inter Tight',sans-serif;color:#33513F;white-space:nowrap">{{ z.contador }}</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px;margin-top:14px">
+              <sc-for list="{{ z.mesas }}" as="t" hint-placeholder-count="3">
+                <div onDragOver="{{ permitirSoltar }}" onDrop="{{ t.entrar }}" style="{{ t.caja }}">
+                  <div style="display:flex;align-items:center;gap:12px;margin-bottom:13px">
+                    <span style="{{ t.numero }}">{{ t.n }}</span>
+                    <span style="flex:1;min-width:0">
+                      <span style="display:block;font:400 clamp(19px,2vw,22px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ t.titulo }}</span>
+                      <span style="display:block;font:500 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ t.hora }}</span>
+                    </span>
+                    <span style="{{ t.sello }}">{{ t.estado }}</span>
+                  </div>
+
+                  <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(20,52,42,.12)">
+                    <sc-for list="{{ t.gente }}" as="g" hint-placeholder-count="6">
+                      <div draggable="{{ g.arrastrable }}" onDragStart="{{ g.tomar }}" onDragEnd="{{ g.soltar }}" style="{{ g.fila }}">
+                        <span style="{{ g.avatar }}">{{ g.inicial }}</span>
+                        <span style="flex:1;min-width:0;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ g.nombre }}</span>
+                        <span style="font:400 12px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ g.dato }}</span>
+                        <a href="Aro Club - Perfil miembro.dc.html" aria-label="Ver el perfil de {{ g.nombre }}" style="{{ g.enlace }}"><span style="{{ g.circulo }}">→</span></a>
+                      </div>
+                    </sc-for>
+                  </div>
+
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:13px">
+                    <sc-for list="{{ t.reglas }}" as="r" hint-placeholder-count="7">
+                      <span style="{{ r.chip }}">{{ r.texto }}</span>
+                    </sc-for>
+                  </div>
+
+                  <sc-if value="{{ t.hayRota }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:12px">
+                      <span style="{{ iconoAviso }}">!</span>
+                      <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ t.textoRota }}</span>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ t.hayForzada }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;border:1px solid rgba(143,69,21,.34);padding:11px 13px;margin-top:12px">
+                      <span style="{{ iconoAviso }}">·</span>
+                      <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ t.textoForzada }}</span>
+                    </div>
+                  </sc-if>
+
+                  <div style="display:flex;gap:9px;margin-top:13px">
+                    <button onClick="{{ t.publicar }}" style="{{ t.botonPublicar }}">{{ t.textoPublicar }}</button>
+                    <sc-if value="{{ t.puedeForzar }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ t.forzar }}" style="{{ t.botonForzar }}">Publicar igualmente</button>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+
+        <sc-if value="{{ hayEspera }}" hint-placeholder-val="{{ false }}">
+          <div onDragOver="{{ permitirSoltar }}" onDrop="{{ aEspera }}" style="{{ cajaEspera }}">
+            <div style="font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloEspera }}</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:7px;max-width:56ch;text-wrap:pretty">{{ notaEspera }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+              <sc-for list="{{ espera }}" as="e" hint-placeholder-count="4">
+                <span draggable="true" onDragStart="{{ e.tomar }}" onDragEnd="{{ e.soltar }}" style="{{ e.pastilla }}">
+                  <span style="{{ e.avatar }}">{{ e.inicial }}</span>{{ e.nombre }}
+                  <a href="Aro Club - Perfil miembro.dc.html" aria-label="Ver el perfil de {{ e.nombre }}" style="{{ e.enlace }}"><span style="{{ e.circulo }}">→</span></a>
+                </span>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;max-width:56ch;margin-top:clamp(20px,2.6vw,28px);text-wrap:pretty">Arrastra a alguien a otra {{ unidadVoz }} o a la espera y se recalculan todas las abiertas. Lo publicado queda fijo: ni suelta ni recibe.</div>
+        <div style="height:96px"></div>
+      </div>
+
+      <sc-if value="{{ hayModal }}" hint-placeholder-val="{{ false }}">
+        <div style="position:fixed;inset:0;z-index:60;background:rgba(20,52,42,.44);display:flex;align-items:center;justify-content:center;padding:clamp(16px,4vw,40px)">
+          <div style="max-width:560px;width:100%;border-radius:30px;background:#FFFBF0;padding:clamp(24px,3.4vw,36px);box-shadow:0 40px 90px -40px rgba(20,52,42,.6)">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px">
+              <span style="flex:0 0 auto;width:30px;height:30px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Inter Tight',sans-serif;margin-top:4px">!</span>
+              <span style="flex:1;min-width:0;font:400 clamp(26px,3vw,34px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A">{{ tituloModal }}</span>
+            </div>
+            <p style="font:400 16px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin:0 0 20px;max-width:44ch;text-wrap:pretty">Puedes publicar igualmente, pero queda escrito qué aceptaste y quién lo aceptó.</p>
+            <div style="border-radius:22px;background:#F2E9D5;padding:17px 19px;margin-bottom:22px">
+              <div style="font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A;margin-bottom:8px">{{ nombreModal }}</div>
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <sc-for list="{{ rotasModal }}" as="r" hint-placeholder-count="2">
+                  <span style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#8F4515">{{ r.texto }}</span>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+              <button onClick="{{ confirmarForzar }}" style="{{ botonForzarModal }}">{{ textoForzarModal }}</button>
+              <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
+              <button onClick="{{ cerrarModal }}" style="min-height:52px;padding:0 8px;background:transparent;border:none;color:#33513F;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <div onDragOver="{{ permitirSoltar }}" onDrop="{{ aEspera }}" style="{{ barra }}">
+        <div style="max-width:1280px;margin:0 auto;padding:12px clamp(14px,3vw,26px);display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+          <span style="flex:1 1 200px;min-width:0">
+            <span style="{{ etiquetaBarra }}">{{ tituloBarra }}</span>
+            <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-wrap:pretty">{{ notaBarra }}</span>
+          </span>
+          <button onClick="{{ publicarListas }}" aria-disabled="{{ inerteListas }}" style="{{ botonListas }}">{{ textoListas }}</button>
+          <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esVerificaciones }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <h1 style="{{ h1 }}">Cola de verificaciones</h1>
+        <p style="{{ bajada }}">Compara el documento con la selfie y decide. Lo que apruebes queda con tu nombre, y el documento se borra a los noventa días.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start;gap:12px;margin-top:clamp(20px,2.6vw,28px)">
+          <sc-for list="{{ colas }}" as="c" hint-placeholder-count="4">
+            <div style="{{ c.caja }}">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="{{ c.avatar }}">{{ c.inicial }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font:400 clamp(19px,2vw,22px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.nombre }}</span>
+                  <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ c.espera }}</span>
+                </span>
+              </div>
+              <div style="display:flex;gap:9px;margin-top:14px">
+                <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Cédula</div>
+                <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Selfie</div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+                <sc-for list="{{ c.datos }}" as="d" hint-placeholder-count="3">
+                  <span style="display:inline-flex;align-items:center;min-height:30px;padding:0 11px;border-radius:999px;background:rgba(20,52,42,.07);font:500 12px/1 'Inter Tight',sans-serif;color:#2C4A38">{{ d.texto }}</span>
+                </sc-for>
+              </div>
+              <sc-if value="{{ c.hayAviso }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:12px">
+                  <span style="flex:0 0 auto;width:20px;height:20px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+                  <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ c.aviso }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ c.eligiendo }}" hint-placeholder-val="{{ false }}">
+                <div style="border-top:1px solid rgba(20,52,42,.12);margin-top:14px;padding-top:14px;animation:aro-open 220ms ease both">
+                  <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:10px">POR QUÉ SE RECHAZA</div>
+                  <div style="display:flex;flex-direction:column;gap:7px">
+                    <sc-for list="{{ c.motivos }}" as="m" hint-placeholder-count="5">
+                      <button onClick="{{ m.pick }}" style="{{ m.btn }}">
+                        <span style="{{ m.aro }}">{{ m.icono }}</span>
+                        <span style="flex:1;min-width:0;text-align:left">
+                          <span style="{{ m.txt }}">{{ m.label }}</span>
+                          <span style="{{ m.pieEstilo }}">{{ m.pie }}</span>
+                        </span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ c.hayVista }}" hint-placeholder-val="{{ false }}">
+                    <div style="border-radius:16px;background:#F2E9D5;padding:13px 15px;margin-top:12px">
+                      <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:7px">LO QUE LE LLEGA A ELLA</div>
+                      <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ c.vistaUsuario }}</div>
+                    </div>
+                  </sc-if>
+                  <div style="display:flex;gap:9px;margin-top:14px">
+                    <button onClick="{{ c.confirmarRechazo }}" style="{{ c.botonConfirmar }}">{{ c.textoConfirmar }}</button>
+                    <button onClick="{{ c.rechazar }}" style="{{ c.botonVolver }}">Volver</button>
+                  </div>
+                </div>
+              </sc-if>
+
+              <a href="Aro Club - Perfil miembro.dc.html" aria-label="Ver el perfil de {{ c.nombre }}" style="display:flex;align-items:center;gap:10px;min-height:48px;margin-top:12px;padding:0 15px;border-radius:999px;background:rgba(20,52,42,.06);font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138">
+                <span style="flex:1;min-width:0">Ver su perfil completo</span>
+                <span style="flex:0 0 auto;width:26px;height:26px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:500 12px/1 'Inter Tight',sans-serif">→</span>
+              </a>
+
+              <sc-if value="{{ c.decidiendo }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;gap:9px;margin-top:12px">
+                  <button onClick="{{ c.aprobar }}" style="{{ c.botonAprobar }}">{{ c.textoAprobar }}</button>
+                  <button onClick="{{ c.rechazar }}" style="{{ c.botonRechazar }}">Rechazar</button>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ c.hayResuelto }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:11px;align-items:flex-start;border-radius:16px;background:{{ c.fondoResuelto }};padding:12px 14px;margin-top:14px">
+                  <span style="{{ c.iconoResuelto }}">{{ c.glifoResuelto }}</span>
+                  <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ c.resuelto }}</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esReportes }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <h1 style="{{ h1 }}">Reportes</h1>
+        <p style="{{ bajada }}">Lo que alguien contó después de una mesa. Se lee el mismo día: quien reporta ya hizo la parte difícil.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-top:clamp(22px,3vw,30px)">
+          <sc-for list="{{ reportes }}" as="r" hint-placeholder-count="3">
+            <div style="{{ r.caja }}">
+              <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:13px">
+                <span style="{{ r.sello }}">{{ r.gravedad }}</span>
+                <span style="flex:1;min-width:0;text-align:right;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ r.cuando }}</span>
+              </div>
+              <div style="font:400 clamp(20px,2.1vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ r.motivo }}</div>
+              <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:9px;text-wrap:pretty">{{ r.relato }}</div>
+
+              <div style="display:flex;flex-direction:column;gap:0;margin-top:14px;padding-top:13px;border-top:1px solid rgba(20,52,42,.12)">
+                <sc-for list="{{ r.partes }}" as="p" hint-placeholder-count="3">
+                  <div style="display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:8px 0">
+                    <span style="flex:1 1 110px;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ p.campo }}</span>
+                    <span style="flex:2 1 130px;font:600 14px/1.4 'Inter Tight',sans-serif;color:#14342A;text-align:right">{{ p.valor }}</span>
+                  </div>
+                </sc-for>
+              </div>
+
+              <sc-if value="{{ r.hayHistorial }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:12px">
+                  <span style="{{ iconoAviso }}">!</span>
+                  <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ r.historial }}</span>
+                </div>
+              </sc-if>
+
+              <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:14px">
+                <sc-for list="{{ r.acciones }}" as="a" hint-placeholder-count="3">
+                  <button onClick="{{ a.pulsar }}" style="{{ a.btn }}">{{ a.texto }}</button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ r.resuelto }}" hint-placeholder-val="{{ false }}">
+                <div style="font:500 13px/1.5 'Inter Tight',sans-serif;color:#1B5138;margin-top:11px">{{ r.textoResuelto }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esLocales }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+          <h1 style="{{ h1 }}">Con quién trabajamos</h1>
+          <a href="Aro Club - Locales.dc.html#alta" style="{{ botonPrimarioOp }}">Añadir local</a>
+        </div>
+        <p style="{{ bajada }}">La zona decide a qué mesas puede ir cada sitio. Sin sitios abiertos en una zona, el selector de dónde los sentamos no tiene nada que ofrecer.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:clamp(20px,2.6vw,26px) 0">
+          <sc-for list="{{ metricasLocales }}" as="m" hint-placeholder-count="4">
+            <div style="border-radius:20px;background:#FAF3E4;padding:16px 18px">
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">{{ m.etiqueta }}</div>
+              <div style="{{ m.cifraEstilo }}">{{ m.cifra }}</div>
+              <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:4px">{{ m.nota }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+          <sc-for list="{{ filtrosLocales }}" as="f" hint-placeholder-count="5">
+            <button onClick="{{ f.pick }}" style="{{ f.btn }}">
+              <span style="{{ f.txt }}">{{ f.nombre }}</span>
+              <span style="{{ f.contador }}">{{ f.n }}</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ haySinCubrir }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.1);padding:16px 18px;margin-bottom:16px">
+            <span style="{{ iconoGente }}">!</span>
+            <span style="flex:1;min-width:0;font:400 15px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ notaSinCubrir }}</span>
+          </div>
+        </sc-if>
+
+        <div style="border-radius:22px;background:#FAF3E4;overflow:hidden">
+          <div style="display:flex;gap:14px;padding:13px clamp(16px,2vw,20px);border-bottom:1px solid rgba(20,52,42,.14);font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F">
+            <span style="flex:2 1 170px">LOCAL</span>
+            <span style="flex:1 1 130px">FORMATOS</span>
+            <span style="flex:0 0 80px;text-align:right">AFORO</span>
+            <span style="flex:0 0 96px;text-align:right">POR CABEZA</span>
+            <span style="flex:0 0 44px"></span>
+          </div>
+          <sc-for list="{{ locales }}" as="l" hint-placeholder-count="8">
+            <a href="Aro Club - Locales.dc.html#ficha" style="{{ l.fila }}">
+              <span style="flex:2 1 170px;min-width:0">
+                <span style="display:block;font:500 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ l.nombre }}</span>
+                <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ l.nota }}</span>
+              </span>
+              <span style="flex:1 1 130px;display:flex;gap:5px;flex-wrap:wrap">
+                <sc-for list="{{ l.familias }}" as="f" hint-placeholder-count="2">
+                  <span style="{{ f.chip }}">{{ f.texto }}</span>
+                </sc-for>
+              </span>
+              <span style="flex:0 0 80px;text-align:right;font:500 14px/1.4 'Inter Tight',sans-serif;color:#2C4A38">{{ l.aforo }}</span>
+              <span style="flex:0 0 96px;text-align:right;font:600 14px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ l.porCabeza }}</span>
+              <span style="flex:0 0 44px;display:flex;justify-content:flex-end">
+                <span style="width:32px;height:32px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:500 14px/1 'Inter Tight',sans-serif">→</span>
+              </span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esEquipo }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <h1 style="{{ h1 }}">Quién puede operar</h1>
+        <p style="{{ bajada }}">Una cuenta de trabajo no se sienta a ninguna mesa: nace con su rol puesto, sin cuestionario ni verificación.</p>
+
+        <div style="border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.4vw,24px);margin-top:clamp(22px,3vw,30px);max-width:620px">
+          <div style="{{ etiqueta }}">DAR ACCESO A ALGUIEN</div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <input type="text" value="{{ nombreEq }}" onChange="{{ onNombreEq }}" placeholder="Nombre y apellido" aria-label="Nombre" style="{{ campoEq }}" />
+            <input type="email" value="{{ correoEq }}" onChange="{{ onCorreoEq }}" placeholder="persona@aro.club" aria-label="Correo" style="{{ campoEq }}" />
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ rolesEq }}" as="r" hint-placeholder-count="2">
+                <button onClick="{{ r.pick }}" style="{{ r.btn }}">
+                  <span style="{{ r.aro }}">{{ r.icono }}</span>
+                  <span style="flex:1;min-width:0;text-align:left">
+                    <span style="{{ r.txt }}">{{ r.nombre }}</span>
+                    <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ r.nota }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+            <button onClick="{{ invitar }}" aria-disabled="{{ inerteEq }}" style="{{ botonEq }}">{{ textoEq }}</button>
+          </div>
+          <sc-if value="{{ hayAcuseEq }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(27,81,56,.11);padding:14px 16px;margin-top:14px;animation:aro-open 260ms ease both">
+              <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+              <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ acuseEq }}</span>
+            </div>
+          </sc-if>
+          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;text-wrap:pretty">Solo un admin puede dar acceso. Un ops que pudiera nombrar a otro ops se daría admin por el camino largo.</div>
+        </div>
+
+        <div style="border-radius:22px;background:#FAF3E4;overflow:hidden;margin-top:18px">
+          <div style="display:flex;gap:14px;padding:13px clamp(16px,2vw,20px);border-bottom:1px solid rgba(20,52,42,.14);font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F">
+            <span style="flex:2 1 180px">PERSONA</span>
+            <span style="flex:0 0 110px">ROL</span>
+            <span style="flex:0 0 130px;text-align:right">ACCESO</span>
+          </div>
+          <sc-for list="{{ equipo }}" as="p" hint-placeholder-count="4">
+            <div style="display:flex;gap:14px;align-items:center;padding:14px clamp(16px,2vw,20px);border-bottom:1px solid rgba(20,52,42,.09)">
+              <span style="flex:2 1 180px;min-width:0;display:flex;align-items:center;gap:11px">
+                <span style="{{ p.avatar }}">{{ p.inicial }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font:500 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ p.nombre }}</span>
+                  <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ p.correo }}</span>
+                </span>
+              </span>
+              <span style="flex:0 0 110px"><span style="{{ p.chip }}">{{ p.rol }}</span></span>
+              <span style="flex:0 0 130px;display:flex;justify-content:flex-end">
+                <button onClick="{{ p.quitar }}" aria-disabled="{{ p.inerte }}" style="{{ p.botonQuitar }}">{{ p.textoQuitar }}</button>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;max-width:60ch;text-wrap:pretty">Quitar el acceso no borra la cuenta: baja a miembro. Lo que esa persona aprobó sigue en el registro con su nombre — una auditoría con actores borrados no es auditoría.</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esFechas }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:clamp(20px,2.6vw,28px)">
+          <sc-for list="{{ subFechas }}" as="t" hint-placeholder-count="2">
+            <button onClick="{{ t.pick }}" style="{{ t.btn }}">{{ t.nombre }}</button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ esAbrir }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <h1 style="{{ h1 }}">Abrir una fecha</h1>
+            <p style="{{ bajada }}">{{ bajadaAbrir }}</p>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(16px,2.4vw,26px);margin-top:clamp(22px,3vw,30px);align-items:start">
+
+              <div style="display:flex;flex-direction:column;gap:20px">
+                <div>
+                  <div style="{{ etiqueta }}">EL DÍA</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    <sc-for list="{{ dias }}" as="d" hint-placeholder-count="4">
+                      <button onClick="{{ d.pick }}" style="{{ d.btn }}">
+                        <span style="{{ d.aro }}">{{ d.icono }}</span>
+                        <span style="{{ d.txt }}">{{ d.label }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                  <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:10px;max-width:52ch;text-wrap:pretty">Solo el día. La hora la pone el formato, y el cierre y la revelación salen de ahí: no se pueden escribir a mano. Los formatos de mañana se revelan el mediodía anterior, porque a las doce del mismo día ya habrían pasado.</div>
+                </div>
+
+                <div>
+                  <div style="{{ etiqueta }}">EL FORMATO</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    <sc-for list="{{ formatos }}" as="f" hint-placeholder-count="11">
+                      <button onClick="{{ f.pick }}" style="{{ f.btn }}">
+                        <span style="{{ f.aro }}">{{ f.icono }}</span>
+                        <span style="{{ f.txt }}">{{ f.label }}</span>
+                        <span style="{{ f.hora }}">{{ f.horaTxt }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <sc-if value="{{ hayActividad }}" hint-placeholder-val="{{ false }}">
+                  <div>
+                    <div style="{{ etiqueta }}">LA ACTIVIDAD</div>
+                    <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin:-4px 0 12px;max-width:52ch;text-wrap:pretty">Qué se hace, no dónde se ven. «{{ ejemploActividad }}» dice algo; «{{ formatoNombre }} en Altamira» no dice nada.</div>
+                    <div style="display:flex;flex-direction:column;gap:9px;max-width:520px">
+                      <input type="text" value="{{ actividad }}" onChange="{{ onActividad }}" placeholder="{{ ejemploActividad }}" aria-label="La actividad" style="{{ campoAct }}" />
+                      <div style="display:flex;flex-wrap:wrap;gap:9px">
+                        <input type="text" inputmode="numeric" value="{{ distancia }}" onChange="{{ onDistancia }}" placeholder="Km" aria-label="Distancia en kilómetros" style="{{ campoCorto }}" />
+                        <input type="text" inputmode="numeric" value="{{ duracion }}" onChange="{{ onDuracion }}" placeholder="Minutos" aria-label="Duración en minutos" style="{{ campoCorto }}" />
+                        <sc-for list="{{ niveles }}" as="n" hint-placeholder-count="3">
+                          <button onClick="{{ n.pick }}" style="{{ n.btn }}">
+                            <span style="{{ n.aro }}">{{ n.icono }}</span>
+                            <span style="{{ n.txt }}">{{ n.label }}</span>
+                          </button>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <div>
+                  <div style="{{ etiqueta }}">CUPO Y PRECIO</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center">
+                    <sc-for list="{{ cupos }}" as="c" hint-placeholder-count="2">
+                      <button onClick="{{ c.pick }}" style="{{ c.btn }}">
+                        <span style="{{ c.aro }}">{{ c.icono }}</span>
+                        <span style="{{ c.txt }}">{{ c.label }}</span>
+                      </button>
+                    </sc-for>
+                    <sc-if value="{{ cupoLimitado }}" hint-placeholder-val="{{ false }}">
+                      <span style="{{ envCampo }}">
+                        <input type="text" inputmode="numeric" value="{{ tope }}" onChange="{{ onTope }}" placeholder="30" aria-label="Tope de personas" style="{{ campoNum }}" />
+                        <span style="{{ sufijo }}">personas</span>
+                      </span>
+                    </sc-if>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:11px">
+                    <span style="{{ envCampo }}">
+                      <input type="text" inputmode="decimal" value="{{ precio }}" onChange="{{ onPrecio }}" placeholder="8" aria-label="Precio por plaza en dólares" style="{{ campoNum }}" />
+                      <span style="{{ sufijo }}">USD por plaza</span>
+                    </span>
+                    <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F;white-space:nowrap">{{ precioBs }}</span>
+                  </div>
+                  <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:10px;max-width:52ch;text-wrap:pretty">{{ notaPrecio }}</div>
+                </div>
+
+                <div>
+                  <div style="{{ etiqueta }}">{{ etiquetaZonas }}</div>
+                  <div style="display:flex;flex-direction:column;gap:9px">
+                    <sc-for list="{{ zonasAbrir }}" as="z" hint-placeholder-count="5">
+                      <div style="{{ z.caja }}">
+                        <button onClick="{{ z.pick }}" style="{{ z.btnZona }}">
+                          <span style="{{ z.aro }}">{{ z.icono }}</span>
+                          <span style="flex:1;min-width:0;text-align:left">
+                            <span style="{{ z.txt }}">{{ z.zona }}</span>
+                            <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ z.gente }}</span>
+                          </span>
+                        </button>
+                        <sc-if value="{{ z.abierta }}" hint-placeholder-val="{{ false }}">
+                          <div style="padding:0 15px 15px">
+                            <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:9px">{{ z.etiquetaLocal }}</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:7px">
+                              <sc-for list="{{ z.locales }}" as="l" hint-placeholder-count="3">
+                                <button onClick="{{ l.pick }}" style="{{ l.btn }}">
+                                  <span style="{{ l.aro }}">{{ l.icono }}</span>
+                                  <span style="{{ l.txt }}">{{ l.nombre }}</span>
+                                </button>
+                              </sc-for>
+                            </div>
+                            <sc-if value="{{ z.sinLocal }}" hint-placeholder-val="{{ false }}">
+                              <div style="display:flex;gap:10px;align-items:flex-start;border-radius:14px;background:rgba(143,69,21,.1);padding:10px 12px;margin-top:10px">
+                                <span style="{{ iconoAviso }}">!</span>
+                                <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">Sin {{ z.sitioNombre }} no hay dónde presentarse. Es lo que se revela a las doce.</span>
+                              </div>
+                            </sc-if>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+
+              <div style="border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.4vw,24px)">
+                <div style="{{ etiqueta }}">QUÉ ESTÁS PROMETIENDO</div>
+                <div style="display:flex;flex-direction:column;gap:0">
+                  <sc-for list="{{ resumen }}" as="r" hint-placeholder-count="5">
+                    <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.12)">
+                      <span style="flex:1 1 120px;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ r.campo }}</span>
+                      <span style="{{ r.valorEstilo }}">{{ r.valor }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="{{ cajaAvisoGente }}">
+                  <span style="{{ iconoGente }}">{{ glifoGente }}</span>
+                  <span style="flex:1;min-width:0">
+                    <span style="display:block;font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloGente }}</span>
+                    <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-wrap:pretty">{{ cuerpoGente }}</span>
+                  </span>
+                </div>
+
+                <button onClick="{{ abrir }}" aria-disabled="{{ inerteAbrir }}" style="{{ botonAbrir }}">{{ textoAbrir }}</button>
+                <sc-if value="{{ abierta }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(27,81,56,.11);padding:14px 16px;margin-top:12px;animation:aro-open 260ms ease both">
+                    <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+                    <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ textoAbierta }}</span>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ esCancelar }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <h1 style="{{ h1 }}">Cancelar una fecha</h1>
+            <p style="{{ bajada }}">Lo que se rompe al cancelar no lo arregla el sistema: los bolívares se devuelven a mano.</p>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(16px,2.4vw,26px);margin-top:clamp(22px,3vw,30px);align-items:start">
+
+              <div>
+                <div style="{{ etiqueta }}">QUÉ FECHA</div>
+                <div style="display:flex;flex-direction:column;gap:9px">
+                  <sc-for list="{{ abiertas }}" as="a" hint-placeholder-count="3">
+                    <button onClick="{{ a.pick }}" style="{{ a.btn }}">
+                      <span style="{{ a.aro }}">{{ a.icono }}</span>
+                      <span style="flex:1;min-width:0;text-align:left">
+                        <span style="{{ a.txt }}">{{ a.titulo }}</span>
+                        <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ a.detalle }}</span>
+                      </span>
+                    </button>
+                  </sc-for>
+                </div>
+
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <sc-for list="{{ vias }}" as="v" hint-placeholder-count="2">
+                  <div style="{{ v.caja }}">
+                    <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+                      <span style="{{ v.titulo }}">{{ v.nombre }}</span>
+                      <span style="{{ v.selloCredito }}">{{ v.credito }}</span>
+                    </div>
+                    <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-bottom:16px;max-width:46ch;text-wrap:pretty">{{ v.cuando }}</div>
+
+                    <div style="display:flex;flex-direction:column;gap:11px;padding-top:14px;border-top:1px solid rgba(20,52,42,.13)">
+                      <sc-for list="{{ v.consecuencias }}" as="c" hint-placeholder-count="4">
+                        <div style="display:flex;gap:11px;align-items:flex-start">
+                          <span style="{{ c.marca }}">{{ c.glifo }}</span>
+                          <span style="flex:1;min-width:0">
+                            <span style="display:block;font:600 13px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ c.titulo }}</span>
+                            <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:2px;text-wrap:pretty">{{ c.cuerpo }}</span>
+                          </span>
+                        </div>
+                      </sc-for>
+                    </div>
+
+                    <button onClick="{{ v.pulsar }}" aria-disabled="{{ v.inerte }}" style="{{ v.boton }}">{{ v.textoBoton }}</button>
+                  </div>
+                </sc-for>
+
+                <sc-if value="{{ cancelada }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(143,69,21,.1);padding:14px 16px;animation:aro-open 260ms ease both">
+                    <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+                    <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ textoCancelada }}</span>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esPagos }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+          <h1 style="{{ h1 }}">Pagos de hoy</h1>
+          <span style="{{ selloTasa }}">{{ textoTasa }}</span>
+        </div>
+        <p style="{{ bajada }}">Todo se cobra en bolívares. La tasa se congela al confirmar el pago, no al reservar.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:clamp(20px,2.6vw,26px) 0">
+          <sc-for list="{{ metricasPago }}" as="m" hint-placeholder-count="4">
+            <div style="border-radius:20px;background:#FAF3E4;padding:16px 18px">
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">{{ m.etiqueta }}</div>
+              <div style="{{ m.cifraEstilo }}">{{ m.cifra }}</div>
+              <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:4px">{{ m.nota }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="font:400 clamp(22px,2.6vw,28px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:clamp(24px,3vw,32px) 0 6px">Por conciliar</div>
+        <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;max-width:60ch;margin:0 0 18px;text-wrap:pretty">Cada reporte junto al movimiento del banco. El puesto ya está apartado: lo que decides aquí es si el dinero entró.</p>
+
+        <sc-if value="{{ hayCola }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px">
+            <sc-for list="{{ cola }}" as="c" hint-placeholder-count="3">
+              <div style="{{ c.caja }}">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="{{ c.avatar }}">{{ c.inicial }}</span>
+                  <span style="flex:1;min-width:0">
+                    <span style="display:block;font:400 clamp(19px,2vw,22px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.nombre }}</span>
+                    <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ c.espera }}</span>
+                  </span>
+                  <span style="{{ c.selloMetodo }}">{{ c.metodo }}</span>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+                  <div style="border-radius:16px;background:#F2E9D5;padding:13px 14px">
+                    <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:9px">LO QUE REPORTÓ</div>
+                    <sc-for list="{{ c.reporte }}" as="r" hint-placeholder-count="4">
+                      <div style="display:flex;gap:8px;justify-content:space-between;padding:4px 0">
+                        <span style="font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ r.campo }}</span>
+                        <span style="{{ r.valorEstilo }}">{{ r.valor }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="border-radius:16px;background:#F2E9D5;padding:13px 14px">
+                    <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:9px">EL BANCO</div>
+                    <sc-for list="{{ c.banco }}" as="r" hint-placeholder-count="4">
+                      <div style="display:flex;gap:8px;justify-content:space-between;padding:4px 0">
+                        <span style="font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ r.campo }}</span>
+                        <span style="{{ r.valorEstilo }}">{{ r.valor }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <sc-if value="{{ c.hayCaptura }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:11px;border-radius:16px;border:1px solid rgba(20,52,42,.16);padding:11px 14px;margin-top:10px">
+                    <span style="flex:0 0 auto;width:34px;height:34px;border-radius:10px;background:#E8DFC6"></span>
+                    <span style="flex:1;min-width:0;font:500 13px/1.4 'Inter Tight',sans-serif;color:#2C4A38">Captura adjunta</span>
+                    <span style="font:500 13px/1.4 'Inter Tight',sans-serif;color:#1B5138">Ver</span>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ c.hayAviso }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:10px">
+                    <span style="flex:0 0 auto;width:20px;height:20px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+                    <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ c.aviso }}</span>
+                  </div>
+                </sc-if>
+
+                <div style="display:flex;gap:9px;margin-top:14px">
+                  <button onClick="{{ c.aprobar }}" style="{{ c.botonAprobar }}">{{ c.textoAprobar }}</button>
+                  <button onClick="{{ c.rechazar }}" style="{{ c.botonRechazar }}">{{ c.textoRechazar }}</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ sinCola }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:22px;border:1px dashed rgba(20,52,42,.28);padding:clamp(20px,2.6vw,26px)">
+            <div style="font:400 clamp(20px,2.2vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Nada por conciliar.</div>
+            <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:8px">Todos los pagos reportados están cuadrados.</div>
+          </div>
+        </sc-if>
+
+        <div style="font:400 clamp(22px,2.6vw,28px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:clamp(28px,3.4vw,40px) 0 16px">Movimientos</div>
+        <div style="border-radius:22px;background:#FAF3E4;overflow:hidden">
+          <div style="display:flex;gap:14px;padding:13px clamp(16px,2vw,20px);border-bottom:1px solid rgba(20,52,42,.14);font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F">
+            <span style="flex:2 1 150px">MIEMBRO</span>
+            <span style="flex:1 1 90px;text-align:right">MONTO</span>
+            <span style="flex:0 0 120px;text-align:right">ESTADO</span>
+          </div>
+          <sc-for list="{{ pagos }}" as="p" hint-placeholder-count="6">
+            <div style="display:flex;gap:14px;align-items:center;padding:14px clamp(16px,2vw,20px);border-bottom:1px solid rgba(20,52,42,.09)">
+              <span style="flex:2 1 150px;min-width:0">
+                <span style="display:block;font:500 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ p.nombre }}</span>
+                <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ p.metodo }}</span>
+              </span>
+              <span style="flex:1 1 90px;text-align:right;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ p.monto }}</span>
+              <span style="flex:0 0 120px;display:flex;justify-content:flex-end"><span style="{{ p.chip }}">{{ p.estado }}</span></span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esGente }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <h1 style="{{ h1 }}">Gente</h1>
+        <p style="{{ bajada }}">{{ bajadaGente }}</p>
+
+        <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin:clamp(26px,3.2vw,34px) 0 12px">DÓNDE HAY GENTE SUFICIENTE</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <sc-for list="{{ formatosZona }}" as="f" hint-placeholder-count="4">
+            <button onClick="{{ f.pick }}" style="{{ f.btn }}">{{ f.nombre }}</button>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,168px),1fr));gap:10px">
+          <sc-for list="{{ zonasMapa }}" as="z" hint-placeholder-count="10">
+            <button onClick="{{ z.pick }}" style="{{ z.caja }}">
+              <span style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                <span style="{{ z.cifra }}">{{ z.n }}</span>
+                <span style="{{ z.selloEstilo }}">{{ z.sello }}</span>
+              </span>
+              <span style="display:block;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A;margin-top:8px;text-align:left">{{ z.zona }}</span>
+              <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px;text-align:left">{{ z.nota }}</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="height:1px;background:rgba(20,52,42,.14);margin:clamp(30px,3.6vw,42px) 0"></div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+          <div style="flex:1 1 320px;display:flex;align-items:center;gap:12px;min-height:60px;padding:0 20px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4">
+            <span style="flex:0 0 auto;font:400 18px/1 'Inter Tight',sans-serif;color:#566A5D">⌕</span>
+            <input type="text" value="{{ busca }}" onChange="{{ onBusca }}" placeholder="Buscar por nombre o correo" aria-label="Buscar persona" style="flex:1;min-width:0;min-height:58px;border:none;background:transparent;color:#14342A;font:400 16px/1 'Inter Tight',sans-serif;outline:none" />
+            <sc-if value="{{ hayBusca }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ limpiaBusca }}" aria-label="Limpiar" style="flex:0 0 auto;min-width:44px;min-height:44px;border:none;background:transparent;color:#566A5D;font:400 18px/1 'Inter Tight',sans-serif;cursor:pointer">×</button>
+            </sc-if>
+          </div>
+          <sc-for list="{{ atajos }}" as="a" hint-placeholder-count="3">
+            <button onClick="{{ a.pick }}" style="{{ a.btn }}">
+              <span style="{{ a.cifraEstilo }}">{{ a.n }}</span>
+              <span style="{{ a.txt }}">{{ a.nombre }}</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:clamp(18px,2.4vw,30px);align-items:flex-start;margin-top:clamp(26px,3.2vw,34px)">
+
+          <div style="flex:1 1 300px;min-width:0;border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.2vw,24px)">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px">
+              <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">FILTROS</span>
+              <sc-if value="{{ hayFiltros }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ limpiaFiltros }}" style="min-height:36px;padding:0 12px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#8F4515;font:500 12px/1 'Inter Tight',sans-serif;cursor:pointer">Quitar todos</button>
+              </sc-if>
+            </div>
+            <sc-for list="{{ grupos }}" as="g" hint-placeholder-count="5">
+              <div style="margin-bottom:20px">
+                <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D;margin-bottom:10px">{{ g.titulo }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:7px">
+                  <sc-for list="{{ g.opciones }}" as="o" hint-placeholder-count="4">
+                    <button onClick="{{ o.pick }}" style="{{ o.btn }}">
+                      <span style="{{ o.txt }}">{{ o.label }}</span>
+                      <span style="{{ o.cuenta }}">{{ o.n }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="flex:2 1 420px;min-width:0">
+            <div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:baseline;margin-bottom:6px">
+              <span style="{{ cifraGrande }}">{{ nGente }}</span>
+              <span style="font:400 clamp(19px,2vw,24px)/1.2 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ palabraGente }}</span>
+            </div>
+            <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;max-width:56ch;margin-bottom:18px;text-wrap:pretty">{{ leyendaGente }}</div>
+
+            <sc-if value="{{ hayGente }}" hint-placeholder-val="{{ true }}">
+              <div style="border-radius:24px;background:#FAF3E4;overflow:hidden">
+                <sc-for list="{{ lista }}" as="p" hint-placeholder-count="8">
+                  <a href="{{ p.enlace }}" style="{{ p.fila }}">
+                    <span style="{{ p.avatar }}">{{ p.inicial }}</span>
+                    <span style="flex:1;min-width:0">
+                      <span style="display:block;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ p.nombre }}</span>
+                      <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ p.linea }}</span>
+                    </span>
+                    <span style="{{ p.chip }}">{{ p.estado }}</span>
+                    <span style="{{ p.flecha }}">›</span>
+                  </a>
+                </sc-for>
+              </div>
+              <sc-if value="{{ hayMas }}" hint-placeholder-val="{{ false }}">
+                <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:12px">{{ textoMas }}</div>
+              </sc-if>
+            </sc-if>
+            <sc-if value="{{ sinGente }}" hint-placeholder-val="{{ false }}">
+              <div style="border-radius:24px;border:1px dashed rgba(20,52,42,.28);padding:clamp(20px,2.6vw,26px);max-width:52ch">
+                <div style="font:400 clamp(20px,2.2vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Nadie cumple los cuatro filtros.</div>
+                <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:8px;text-wrap:pretty">Cero también es una respuesta: significa que esa fecha no se puede abrir con la gente que hay hoy. Quita el filtro que menos te importe y vuelve a mirar.</div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="height:1px;background:rgba(20,52,42,.14);margin:clamp(30px,3.6vw,42px) 0"></div>
+
+        <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:6px">DÓNDE SE NOS CAE LA GENTE</div>
+        <p style="{{ bajada }}">{{ bajadaEmbudo }}</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;max-width:820px">
+          <sc-for list="{{ embudo }}" as="e" hint-placeholder-count="7">
+            <button onClick="{{ e.pick }}" style="{{ e.fila }}">
+              <span style="{{ e.barra }}"><span style="{{ e.relleno }}"></span></span>
+              <span style="flex:1 1 190px;min-width:0;text-align:left;font:500 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ e.paso }}</span>
+              <span style="{{ e.cifra }}">{{ e.n }}</span>
+              <span style="{{ e.caida }}">{{ e.perdidos }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;max-width:60ch;text-wrap:pretty">Sin exportar y sin envíos: esta pestaña sirve para saber, no para disparar. El documento, el teléfono y el correo completo se abren en la ficha de una en una, y la cédula solo desde la cola de verificaciones.</div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    vista: 0, decididas: {}, conciliadas: {}, abriendo: null, motivos: {},
+    fechaRep: 0, publicadas: {}, forzadas: {},
+    sub: 'abrir', diaSel: -1, formatoSel: 0, zonasSel: {}, abierta: false,
+    actividad: '', distancia: '', duracion: '', nivel: -1,
+    limitado: false, tope: '', precio: undefined,
+    fechaCanc: -1, cancelada: '', resueltos: {},
+    asig: {}, arrastrando: null, calculando: [], tipoRep: 'todo', confirmar: '', filtroLoc: 'todos',
+    nombreEq: '', correoEq: '', rolEq: 0, retirados: {}, concedidos: [], acuseEq: ''
+  };
+
+  renderVals() {
+    const v = this.state.vista;
+    // en letra, como el resto del producto
+    const LETRAS = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
+    const letra = (n) => LETRAS[n] || String(n);
+    const pendientes = 4 - Object.keys(this.state.decididas).length;
+
+    const St = this.state;
+    // En producción sale de la tabla de tasas que llena el cron del BCV.
+    const TASA_BCV = 756.71;
+    const bs = (usd) => (usd * TASA_BCV).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // los dos que usan las colas de verificaciones y de conciliación
+    const avatar = (i, chico) => 'flex:0 0 auto;width:' + (chico ? '24px' : '30px') + ';height:' + (chico ? '24px' : '30px') + ';border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 ' + (chico ? '11px' : '13px') + '/1 \'Inter Tight\',sans-serif';
+    const cifra = (col) => 'font:700 clamp(26px,3vw,34px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:' + (col || '#14342A') + ';margin-top:9px';
+
+    const aroDS = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
+    const past = (on) => 'display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 18px 0 13px;border-radius:999px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.18)') + ';cursor:pointer;transition:all 180ms ease';
+    const txtDS = (on) => 'font:' + (on ? '600' : '500') + ' 15px/1.2 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A;white-space:nowrap';
+
+    // los once formatos de la base, con su hora
+    const FORMATOS = [
+      ['Cena', '7:00 p.m.'], ['Cena foodie', '7:30 p.m.'], ['Cena de mujeres', '7:00 p.m.'],
+      ['Drinks', '8:00 p.m.'], ['Coffee', '10:00 a.m.'], ['Caminata', '7:00 a.m.'],
+      ['Senderismo', '6:30 a.m.'], ['Correr', '7:00 a.m.'], ['Pádel', '8:00 a.m.'],
+      ['Pilates', '9:00 a.m.'], ['Ciclismo', '6:30 a.m.']
+    ];
+    const fSel = FORMATOS[St.formatoSel] || FORMATOS[0];
+    // Cada formato pertenece a una familia, y cada sitio dice a qué familias
+    // sirve: es el campo local.formatos[] del catálogo.
+    const FAMILIA = {
+      'Cena': 'cenas', 'Cena foodie': 'cenas', 'Cena de mujeres': 'cenas',
+      'Drinks': 'drinks', 'Coffee': 'coffee',
+      'Caminata': 'movimiento', 'Senderismo': 'movimiento', 'Correr': 'movimiento',
+      'Pádel': 'movimiento', 'Pilates': 'movimiento', 'Ciclismo': 'movimiento'
+    };
+    const fam = FAMILIA[fSel[0]] || 'cenas';
+    const deMesa = fam !== 'movimiento';
+    // El producto entero tiene que decir «grupo» cuando no hay mesa. Con su
+    // género, porque «una grupo» es castellano roto.
+    const VOZ = deMesa
+      ? { unidad: 'mesa', unidades: 'mesas', Unidad: 'Mesa', art: 'una', abierta: 'abierta', sitio: 'restaurante', donde: 'DÓNDE LOS SENTAMOS' }
+      : { unidad: 'grupo', unidades: 'grupos', Unidad: 'Grupo', art: 'un', abierta: 'abierto', sitio: 'punto de encuentro', donde: 'DÓNDE SE VEN' };
+
+    const ZONAS_OP = [
+      ['Las Mercedes', 34, [['Cardenal', ['cenas'], [2, 3, 4, 5, 6]], ['Alto', ['cenas', 'drinks'], [3, 4, 5, 6]], ['Malabar', ['cenas', 'drinks'], [2, 3, 4, 5, 6]], ['Franca', ['coffee'], [1, 2, 3, 4, 5, 6, 0]]]],
+      ['Los Palos Grandes', 19, [['Miga', ['coffee', 'cenas'], [2, 3, 4, 5, 6, 0]], ['La Cita', ['cenas', 'drinks'], [4, 5, 6]], ['Parque Los Palos Grandes', ['movimiento'], [1, 2, 3, 4, 5, 6, 0]]]],
+      ['Altamira', 14, [['Casa Bistró', ['cenas'], [2, 3, 4, 5, 6]], ['Tarzán', ['drinks'], [4, 5, 6]], ['Amapola', ['coffee'], [1, 2, 3, 4, 5, 6, 0]], ['Plaza Altamira', ['movimiento'], [6, 0]]]],
+      ['Chacao', 11, [['Mérida', ['cenas'], [2, 3, 4, 5, 6]], ['Sartenejas', ['coffee'], [1, 2, 3, 4, 5, 6]], ['Studio Chacao', ['movimiento'], [1, 2, 3, 4, 5, 6]]]],
+      ['El Rosal', 8, []]
+    ];
+
+    // ── el tablero: fecha → zona → mesas ────────────────────────────
+    // Siete reglas duras, no tres señales: si una se rompe, esa mesa no
+    // debería existir. Y se publica una por una, con deshacer.
+    const POOL_REP = [
+      ['Daniela', 'M', 34, 'Estudio propio', ['es', 'en'], 2, ['mercedes', 'rosal', 'altamira']],
+      ['Andrés', 'H', 38, 'Ridery', ['es', 'en'], 2, ['mercedes', 'altamira']],
+      ['Gabriela', 'M', 31, 'Clínica Ávila', ['es'], 1, ['mercedes', 'altamira']],
+      ['José Manuel', 'H', 36, 'Banesco', ['es', 'en'], 2, ['mercedes', 'altamira']],
+      ['Andreína', 'M', 29, 'UCAB', ['es'], 1, ['mercedes', 'altamira']],
+      ['Valentina', 'M', 33, 'El Estímulo', ['es', 'pt'], 2, ['mercedes', 'altamira']],
+      ['Ricardo', 'H', 39, 'Deloitte', ['es', 'en'], 3, ['mercedes', 'rosal', 'altamira']],
+      ['Mariana', 'M', 30, 'Estudio propio', ['es'], 2, ['mercedes', 'altamira']],
+      ['Eduardo', 'H', 51, 'Travieso Evans', ['es', 'en'], 3, ['mercedes', 'altamira']],
+      ['Carla', 'M', 32, 'Polar', ['es'], 2, ['mercedes', 'altamira']],
+      ['Simón', 'H', 35, 'Alto', ['es', 'it'], 2, ['mercedes', 'altamira']],
+      ['Patricia', 'M', 33, 'Yummy', ['es', 'en'], 2, ['mercedes', 'altamira']],
+      ['Alejandro', 'H', 41, 'Banesco', ['es'], 2, ['palos-grandes', 'altamira']],
+      ['Isabel', 'M', 28, 'Fe y Alegría', ['es'], 1, ['palos-grandes', 'altamira']],
+      ['Rodrigo', 'H', 34, 'Mercantil', ['es', 'en'], 2, ['palos-grandes', 'altamira']],
+      ['Verónica', 'M', 36, 'Locatel', ['es'], 2, ['palos-grandes', 'altamira']],
+      ['Miguel', 'H', 40, 'Chevron', ['en'], 3, ['rosal']],
+      ['Lucía', 'M', 27, 'Unimet', ['es'], 1, ['palos-grandes', 'altamira']],
+      ['Gustavo', 'H', 38, 'Unión Radio', ['es'], 2, ['palos-grandes', 'altamira']],
+      ['Camila', 'M', 31, 'Oficina propia', ['es', 'en'], 2, ['palos-grandes', 'altamira']]
+    ];
+    // quiénes ya cenaron juntos en los últimos tres meses
+    const YA_CENARON = [['Daniela', 'Simón'], ['Miguel', 'Lucía']];
+
+    // El sitio sale del catálogo filtrado por la familia del formato, igual que
+    // en la pestaña Fechas. Si una zona no tiene sitio para ese formato, esa
+    // fecha no puede tenerla: se cae aquí y no llega al reparto.
+    const sitioDe = (zona, familia) => {
+      const z = ZONAS_OP.filter((x) => x[0] === zona)[0];
+      if (!z) return null;
+      const sirven = z[2].filter((l) => l[1].indexOf(familia) >= 0);
+      return sirven.length ? sirven[0][0] : null;
+    };
+    const FECHAS_REP = [
+      { titulo: 'Cena · jueves 20', formato: 'Cena', hora: '7:00 p.m.', cierra: 'CIERRA EN 6 H 12 M', fam: 'cenas',
+        zonas: [['Las Mercedes', 0, 12], ['Los Palos Grandes', 12, 8]] },
+      { titulo: 'Coffee · sábado 22', formato: 'Coffee', hora: '10:00 a.m.', cierra: 'CIERRA EN 2 DÍAS', fam: 'coffee',
+        zonas: [['Altamira', 2, 7]] },
+      { titulo: 'Caminata · domingo 23', formato: 'Caminata', hora: '7:00 a.m.', cierra: 'CIERRA EN 3 DÍAS', fam: 'movimiento',
+        zonas: [['Altamira', 6, 13]] }
+    ].map((f) => Object.assign({}, f, {
+      zonas: f.zonas.map((z) => [z[0], sitioDe(z[0], f.fam), z[1], z[2]]).filter((z) => !!z[1])
+    }));
+    const fr = FECHAS_REP[St.fechaRep || 0];
+    const vozRep = fr.fam !== 'movimiento'
+      ? { unidad: 'mesa', unidades: 'mesas', Unidad: 'Mesa', Unidades: 'Mesas', art: 'una', sent: 'sentados', sitio: 'restaurante' }
+      : { unidad: 'grupo', unidades: 'grupos', Unidad: 'Grupo', Unidades: 'Grupos', art: 'un', sent: 'repartidos', sitio: 'punto de encuentro' };
+
+    const avatarRep = (i, chico) => 'flex:0 0 auto;width:' + (chico ? '24px' : '28px') + ';height:' + (chico ? '24px' : '28px') + ';border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 ' + (chico ? '11px' : '12px') + '/1 \'Inter Tight\',sans-serif';
+    const cifraRep = (col) => 'font:700 clamp(26px,3vw,34px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:' + (col || '#14342A') + ';margin-top:9px';
+
+    // las siete, evaluadas sobre el grupo
+    const SLUG = { 'Las Mercedes': 'mercedes', 'Los Palos Grandes': 'palos-grandes', 'Altamira': 'altamira', 'Chacao': 'chacao', 'El Rosal': 'rosal' };
+    const evaluar = (g, zonaMesa) => {
+      const ms = g.filter((p) => p[1] === 'M').length;
+      const hs = g.length - ms;
+      const eds = g.map((p) => p[2]);
+      const min = Math.min.apply(null, eds), max = Math.max.apply(null, eds);
+      const emp = g.map((p) => p[3]).filter((e) => ['Estudio propio', 'Oficina propia', 'Freelance'].indexOf(e) < 0);
+      const rep = emp.filter((e, i) => emp.indexOf(e) !== i);
+      const idiomas = g.reduce((a, p) => a.filter((l) => p[4].indexOf(l) >= 0), g[0][4].slice());
+      const gastos = g.map((p) => p[5]);
+      const juntos = YA_CENARON.filter((par) => g.filter((p) => par.indexOf(p[0]) >= 0).length === 2);
+      const zonas = g.reduce((a, p) => a.filter((z) => p[6].indexOf(z) >= 0), g[0][6].slice());
+      const slug = SLUG[zonaMesa];
+      return [
+        ['Balance ' + ms + ' y ' + hs, Math.abs(ms - hs) <= 2],
+        [min + '–' + max + ' años', (max - min) <= 10],
+        [rep.length ? 'Dos de ' + rep[0] : 'Sin empresa repetida', rep.length === 0],
+        [juntos.length ? juntos[0][0] + ' y ' + juntos[0][1] + ' ya cenaron' : 'Nadie repetido', juntos.length === 0],
+        [gastos.length && (Math.max.apply(null, gastos) - Math.min.apply(null, gastos)) <= 1 ? 'Gasto compatible' : 'Tramos de gasto lejanos', (Math.max.apply(null, gastos) - Math.min.apply(null, gastos)) <= 1],
+        [idiomas.length ? 'Idioma común' : 'Sin idioma común', idiomas.length > 0],
+        // no basta que se solapen: la zona donde está puesta la mesa tiene
+        // que estar dentro, o hay gente que no puede llegar
+        [zonas.indexOf(slug) >= 0 ? 'Todos aceptan ' + zonaMesa : (zonas.length ? 'Nadie acepta ' + zonaMesa : 'Sin zona para los seis'), zonas.indexOf(slug) >= 0]
+      ];
+    };
+
+    // ── mover gente entre mesas ─────────────────────────────────────
+    // Mover recalcula TODAS las mesas abiertas, no solo las dos tocadas:
+    // quien sale cambia su mesa tanto como la que lo recibe. Y una sede
+    // puede dejar de valer si la mesa cambió de gente.
+    const asig = St.asig || {};
+    const claveDe = (zona, k) => (St.fechaRep || 0) + '-' + zona + '-' + k;
+    const pubs = St.publicadas || {};
+    const forz = St.forzadas || {};
+    let sentados = 0, sobran = 0, rotas = 0, publicadas = 0, totalMesas = 0, desiguales = 0;
+    const sobrantes = [];
+
+    // El pool de la FECHA, no de cada zona: mover a alguien de una zona a
+    // otra tiene que encontrarlo alguien al otro lado.
+    const poolFecha = [];
+    const porDefecto = {};
+    const clavesVivas = {};
+    fr.zonas.forEach((z) => {
+      const [zona, , desde, cuantos] = z;
+      const suyos = POOL_REP.slice(desde, desde + cuantos);
+      const nM = Math.floor(suyos.length / 6);
+      for (let k = 0; k < nM; k++) clavesVivas[claveDe(zona, k)] = true;
+      suyos.forEach((p, i) => {
+        porDefecto[p[0]] = i < nM * 6 ? claveDe(zona, Math.floor(i / 6)) : 'espera';
+        poolFecha.push(p);
+      });
+    });
+    // quien acabe en una clave que ya no existe cae a la espera, nunca al vacío
+    const donde = (p) => {
+      const d = asig[p[0]] || porDefecto[p[0]];
+      return clavesVivas[d] ? d : 'espera';
+    };
+    poolFecha.filter((p) => donde(p) === 'espera').forEach((p) => { sobrantes.push(p); sobran++; });
+
+    const mover = (nombre, destino) => {
+      // se recalculan las dos: quien sale cambia su mesa tanto como la que entra
+      const origen = asig[nombre] || porDefecto[nombre];
+      this.setState({ calculando: [destino, origen].filter(Boolean), arrastrando: null });
+      clearTimeout(this._rec);
+      this._rec = setTimeout(() => this.setState((st) => ({
+        asig: Object.assign({}, st.asig, { [nombre]: destino }),
+        calculando: null
+      })), 420);
+    };
+
+    const zonasRep = fr.zonas.map((z) => {
+      const [zona, sitio, desde, cuantos] = z;
+      const todos = POOL_REP.slice(desde, desde + cuantos);
+      const nMesas = Math.floor(todos.length / 6);
+      const mesas = [];
+      for (let k = 0; k < nMesas; k++) {
+        const g = poolFecha.filter((p) => donde(p) === claveDe(zona, k));
+        if (!g.length) continue;
+        const reglas = evaluar(g, zona);
+        const malas = reglas.filter((r) => !r[1]);
+        const clave = claveDe(zona, k);
+        const pub = !!pubs[clave];
+        // seis exactos: una mesa corta o pasada tampoco puede publicarse
+        const tamOk = g.length === 6;
+        const calc = (St.calculando || []).indexOf(clave) >= 0;
+        const forzada = !!forz[clave];
+        totalMesas++;
+        sentados += g.length;
+        if ((malas.length || g.length !== 6) && !pub) rotas++;
+        if (g.length !== 6) desiguales++;
+        if (pub) publicadas++;
+        mesas.push({
+          clave, lista: !pub && !calc && tamOk && malas.length === 0,
+          n: String(k + 1).padStart(2, '0'),
+          titulo: vozRep.Unidad + ' ' + String(k + 1).padStart(2, '0'),
+          hora: fr.hora + ' · ' + sitio,
+          estado: pub ? 'PUBLICADA' : (calc ? 'CALCULANDO' : (malas.length ? 'NO PUEDE SALIR' : 'LISTA')),
+          recibe: !pub && !!St.arrastrando && g.filter((x) => x[0] === St.arrastrando).length === 0,
+          entrar: () => { if (!pub && St.arrastrando) mover(St.arrastrando, clave); },
+          caja: 'border-radius:24px;padding:clamp(16px,2vw,20px);transition:all 180ms ease;background:' + (!pub && St.arrastrando && g.filter((x) => x[0] === St.arrastrando).length === 0 ? '#F2E9D5' : '#FAF3E4') + ';border:1px ' + (!pub && St.arrastrando && g.filter((x) => x[0] === St.arrastrando).length === 0 ? 'dashed #8F4515' : 'solid ' + (pub ? '#1B5138' : (calc ? '#8F4515' : (malas.length ? '#C0662F' : 'rgba(20,52,42,.14)')))),
+          numero: 'flex:0 0 auto;width:42px;height:42px;border-radius:999px;background:' + (pub ? '#1B5138' : '#14342A') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:700 15px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums',
+          sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;white-space:nowrap;background:' + (pub ? 'rgba(27,81,56,.13)' : (malas.length ? 'rgba(143,69,21,.13)' : 'rgba(20,52,42,.07)')) + ';color:' + (pub ? '#1B5138' : (malas.length ? '#8F4515' : '#2C4A38')),
+          gente: g.map((p, i) => ({
+            nombre: p[0], dato: p[1] + ' · ' + p[2] + ' · ' + p[3], inicial: p[0].charAt(0),
+            avatar: avatarRep(i + k),
+            arrastrable: pub ? null : 'true',
+            enlace: 'flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:-9px -9px -9px 0;border-radius:999px',
+            circulo: 'width:26px;height:26px;border-radius:999px;background:rgba(20,52,42,.07);color:#1B5138;display:flex;align-items:center;justify-content:center;font:500 12px/1 \'Inter Tight\',sans-serif',
+            fila: 'display:flex;align-items:center;gap:10px;padding:8px 6px;margin:0 -6px;border-radius:12px;border-bottom:1px solid rgba(20,52,42,.09);cursor:' + (pub ? 'default' : 'grab') + ';background:' + (St.arrastrando === p[0] ? 'rgba(143,69,21,.1)' : 'transparent'),
+            tomar: () => { if (!pub) this.setState({ arrastrando: p[0] }); },
+            soltar: () => this.setState({ arrastrando: null })
+          })),
+          reglas: reglas.map((r) => ({
+            texto: r[0],
+            chip: 'display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;font:500 11px/1 \'Inter Tight\',sans-serif;background:' + (r[1] ? 'rgba(20,52,42,.07)' : 'rgba(143,69,21,.13)') + ';color:' + (r[1] ? '#2C4A38' : '#8F4515')
+          })),
+          hayRota: (malas.length > 0 || !tamOk) && !pub && !calc,
+          textoRota: !tamOk
+            ? (g.length < 6 ? 'Se quedó en ' + g.length + ': faltan ' + (6 - g.length) + ' para poder publicarla.' : 'Son ' + g.length + ' y caben seis. Mueve ' + (g.length - 6) + ' a otra ' + vozRep.unidad + ' o a la espera.')
+            : malas.length === 1
+            ? 'Rompe una regla: ' + malas[0][0] + '. Publicar se para aquí.'
+            : 'Rompe ' + malas.length + ' reglas: ' + malas.map((m) => m[0]).join(' · ') + '. Publicar se para aquí.',
+          hayForzada: forzada && pub,
+          textoForzada: 'Publicada rompiendo ' + (malas.length === 1 ? 'una regla' : malas.length + ' reglas') + '. Lo aceptó María Fernanda, hoy a las 4:12 p.m.',
+          puedeForzar: malas.length > 0 && tamOk && !pub && !calc,
+          textoPublicar: pub ? 'Deshacer' : (calc ? 'Calculando…' : (!tamOk ? 'Faltan ' + Math.abs(6 - g.length) + ' para seis' : (malas.length ? 'No se puede publicar' : 'Publicar esta ' + vozRep.unidad))),
+          botonPublicar: 'flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;font:600 14px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease;' + (pub
+            ? 'background:transparent;color:#8F4515;border:1px solid rgba(143,69,21,.4);cursor:pointer'
+            : ((malas.length || !tamOk || calc)
+              ? 'background:rgba(27,81,56,.13);color:#456352;border:none;cursor:not-allowed'
+              : 'background:#1B5138;color:#FAF3E4;border:none;cursor:pointer')),
+          botonForzar: 'flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;background:transparent;color:#8F4515;border:1px dashed rgba(143,69,21,.5);font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+          publicar: () => {
+            if ((malas.length || !tamOk || calc) && !pub) return;
+            this.setState((st) => {
+              const p = Object.assign({}, st.publicadas);
+              const fz = Object.assign({}, st.forzadas);
+              if (p[clave]) { delete p[clave]; delete fz[clave]; } else { p[clave] = true; }
+              return { publicadas: p, forzadas: fz };
+            });
+          },
+          forzar: () => this.setState({ confirmar: clave })
+        });
+      }
+      return {
+        zona, sitio: vozRep.sitio.charAt(0).toUpperCase() + vozRep.sitio.slice(1) + ': ' + sitio,
+        contador: todos.length + ' apuntados · ' + mesas.length + ' ' + (mesas.length === 1 ? vozRep.unidad : vozRep.unidades),
+        mesas
+      };
+    });
+
+    // publicar en tanda solo alcanza a las que no rompen nada
+    const clavesListas = [];
+    zonasRep.forEach((z) => z.mesas.forEach((m) => { if (m.lista) clavesListas.push(m.clave); }));
+    const listasParaPublicar = clavesListas.length;
+
+    const mesaModal = St.confirmar
+      ? zonasRep.reduce((a, z) => a.concat(z.mesas), []).filter((m) => m.clave === St.confirmar)[0]
+      : null;
+
+    const apuntadosRep = fr.zonas.reduce((a, z) => a + z[3], 0);
+    const metricas = [
+      ['APUNTADOS', String(apuntadosRep), 'En ' + fr.zonas.length + (fr.zonas.length === 1 ? ' zona' : ' zonas'), null],
+      [vozRep.Unidades.toUpperCase(), String(totalMesas), sentados + ' ' + vozRep.sent + (desiguales ? ', ' + desiguales + ' sin seis' : ', ' + (totalMesas === 1 ? 'de seis' : 'todas de seis')), desiguales ? '#8F4515' : null],
+      ['PUBLICADAS', publicadas + ' de ' + totalMesas, publicadas === totalMesas ? 'Todas fijas' : 'El resto sigue moviéndose', publicadas === totalMesas ? '#1B5138' : null],
+      ['NO PUEDEN SALIR', String(rotas), rotas ? 'Rompen alguna de las siete reglas' : 'Ninguna rompe reglas', rotas ? '#8F4515' : null]
+    ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifraRep(m[3]) }));
+
+    // quien está en espera se arrastra igual que quien está en una mesa:
+    // meterlo en un hueco es la mitad del trabajo de repartir.
+    const espera = sobrantes.map((p, i) => ({
+      nombre: p[0], inicial: p[0].charAt(0), avatar: avatarRep(i, true),
+      pastilla: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 8px 0 8px;border-radius:999px;background:' + (St.arrastrando === p[0] ? '#F2E9D5' : '#FAF3E4') + ';border:1px solid ' + (St.arrastrando === p[0] ? '#8F4515' : 'transparent') + ';font:500 14px/1 \'Inter Tight\',sans-serif;color:#14342A;cursor:grab',
+      enlace: 'flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:0 -9px 0 0;border-radius:999px',
+      circulo: 'width:26px;height:26px;border-radius:999px;background:rgba(20,52,42,.09);color:#1B5138;display:flex;align-items:center;justify-content:center;font:500 12px/1 \'Inter Tight\',sans-serif',
+      tomar: () => this.setState({ arrastrando: p[0] }),
+      soltar: () => this.setState({ arrastrando: null })
+    }));
+
+    const NOMBRE_FILTRO = { cenas: 'Cenas', drinks: 'Drinks', coffee: 'Coffee', movimiento: 'Movimiento' };
+    const tipoRep = St.tipoRep || 'todo';
+    const tiposRep = ['todo', 'cenas', 'drinks', 'coffee', 'movimiento'].map((t) => {
+      const on = tipoRep === t;
+      const n = t === 'todo' ? FECHAS_REP.length : FECHAS_REP.filter((f) => f.fam === t).length;
+      return {
+        nombre: t === 'todo' ? 'Todo' : NOMBRE_FILTRO[t], n: String(n),
+        pick: () => this.setState({ tipoRep: t }),
+        btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';cursor:pointer;opacity:' + (n === 0 && t !== 'todo' ? '.45' : '1') + ';transition:all 180ms ease',
+        txt: 'font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#1B5138'),
+        contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.22)' : 'rgba(20,52,42,.09)') + ';font:600 11px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#33513F') + ';font-variant-numeric:tabular-nums'
+      };
+    });
+    const visibles = FECHAS_REP.map((f, i) => [f, i]).filter((x) => tipoRep === 'todo' || x[0].fam === tipoRep);
+
+    const fechasRep = visibles.map((x) => {
+      const f = x[0], i = x[1];
+      const on = (St.fechaRep || 0) === i;
+      const nz = f.zonas.length;
+      return {
+        titulo: f.titulo, icono: on ? '✓' : '',
+        detalle: f.zonas.reduce((a, z) => a + z[3], 0) + ' apuntados · ' + nz + (nz === 1 ? ' zona' : ' zonas') + ' · ' + f.zonas.map((z) => z[0]).join(', '),
+        aro: aroDS(on),
+        btn: 'flex:0 0 auto;scroll-snap-align:start;display:flex;align-items:center;gap:12px;width:clamp(268px,72vw,330px);min-height:64px;padding:12px 16px;border-radius:22px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'display:block;font:' + (on ? '600' : '500') + ' 15px/1.25 \'Inter Tight\',sans-serif;color:#14342A',
+        estado: f.cierra.replace('CIERRA EN ', ''),
+        sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;background:rgba(20,52,42,.07);font:600 11px/1 \'Inter Tight\',sans-serif;color:#2C4A38;white-space:nowrap',
+        pick: () => this.setState({ fechaRep: i })
+      };
+    });
+
+    // ── reportes: la cola de incident_reports ───────────────────────
+    // Severidad de la base: low | medium | high | critical.
+    const REPORTES = [
+      ['critical', 'CRÍTICO', 'No aceptó un no', 'Insistió en llevarme a casa después de que dije tres veces que no. Me fui antes del postre.',
+        [['Sobre', 'Gustavo Peña'], ['Lo cuenta', 'Andreína (protegida)'], ['Mesa', 'Cardenal, jueves 14']],
+        'Es su segundo reporte en dos meses. El primero fue por comentarios sobre el cuerpo.'],
+      ['medium', 'MEDIO', 'Vino a vender o a reclutar', 'Repartió tarjetas y pidió el contacto de todos para su fondo. La conversación giró en torno a eso.',
+        [['Sobre', 'Ricardo Bravo'], ['Lo cuenta', 'Carla (protegida)'], ['Mesa', 'Alto, jueves 7']], ''],
+      ['low', 'BAJO', 'Otra cosa', 'Llegó cuarenta minutos tarde sin avisar y la mesa lo esperó para pedir.',
+        [['Sobre', 'Simón Arteaga'], ['Lo cuenta', 'Mariana (protegida)'], ['Mesa', 'Malabar, jueves 7']], '']
+    ];
+    const TONO = {
+      critical: ['#6E340F', '#FFF8EA', '#6E340F'], high: ['rgba(143,69,21,.14)', '#8F4515', '#C0662F'],
+      medium: ['rgba(143,69,21,.1)', '#8F4515', 'rgba(20,52,42,.16)'], low: ['rgba(20,52,42,.07)', '#2C4A38', 'rgba(20,52,42,.16)']
+    };
+    const reportes = REPORTES.map((r, i) => {
+      const t = TONO[r[0]];
+      const hecho = (St.resueltos || {})[i];
+      const btnR = (fondo, color, borde) => 'display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 17px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease';
+      return {
+        gravedad: r[1], motivo: r[2], relato: r[3], cuando: ['Hace 2 horas', 'Hace 6 días', 'Hace 6 días'][i],
+        partes: r[4].map((p) => ({ campo: p[0], valor: p[1] })),
+        hayHistorial: !!r[5] && !hecho, historial: r[5],
+        caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(17px,2.2vw,22px);border:1px solid ' + (hecho ? '#1B5138' : t[2]),
+        sello: 'display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;background:' + t[0] + ';color:' + t[1] + ';font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;white-space:nowrap',
+        resuelto: !!hecho,
+        textoResuelto: hecho === 'fuera' ? 'Fuera del club. Se le escribió y su cuenta está cerrada.'
+          : (hecho === 'aviso' ? 'Aviso enviado. Queda registrado en su ficha.' : 'Cerrado sin acción, y queda escrito quién lo cerró.'),
+        acciones: hecho ? [] : [
+          ['Sacar del club', () => this.setState((st) => ({ resueltos: Object.assign({}, st.resueltos, { [i]: 'fuera' }) })), btnR('#6E340F', '#FFF8EA', 'none')],
+          ['Avisar y anotar', () => this.setState((st) => ({ resueltos: Object.assign({}, st.resueltos, { [i]: 'aviso' }) })), btnR('transparent', '#8F4515', '1px solid rgba(143,69,21,.4)')],
+          ['Cerrar sin acción', () => this.setState((st) => ({ resueltos: Object.assign({}, st.resueltos, { [i]: 'nada' }) })), btnR('transparent', '#2C4A38', '1px solid rgba(20,52,42,.2)')]
+        ].map((x) => ({ texto: x[0], pulsar: x[1], btn: x[2] }))
+      };
+    });
+    const sinResolver = REPORTES.length - Object.keys(St.resueltos || {}).length;
+
+    // ── locales: de aquí sale el sitio de cada zona ─────────────────
+    const NOMBRE_FAM = { cenas: 'Cenas', drinks: 'Drinks', coffee: 'Coffee', movimiento: 'Movimiento' };
+    const NOTA_LOCAL = {
+      'Cardenal': 'Mesa redonda · se puede conversar · divide la cuenta',
+      'Alto': 'Mesa larga · suena · divide la cuenta',
+      'Malabar': 'Mesa redonda · suena · divide la cuenta',
+      'Franca': 'Mesa redonda · se puede conversar',
+      'Miga': 'Mesa larga · se puede conversar · divide la cuenta',
+      'La Cita': 'Mesa redonda · suena alto · no divide la cuenta',
+      'Casa Bistró': 'Mesa redonda · se puede conversar · divide la cuenta',
+      'Tarzán': 'De pie · suena alto',
+      'Amapola': 'Mesa redonda · se puede conversar',
+      'Plaza Altamira': 'Punto de encuentro · al aire libre',
+      'Mérida': 'Mesa larga · suena · divide la cuenta',
+      'Sartenejas': 'Mesa redonda · se puede conversar',
+      'Studio Chacao': 'Punto de encuentro · sala cerrada',
+      'Parque Los Palos Grandes': 'Punto de encuentro · al aire libre'
+    };
+    // aforo en mesas y gasto por cabeza declarado: los dos son de la ficha
+    const FICHA = {
+      'Cardenal': [2, 26], 'Alto': [1, 31], 'Malabar': [2, 24], 'Franca': [1, 14],
+      'Miga': [2, 19], 'La Cita': [1, 28], 'Casa Bistró': [1, 22], 'Tarzán': [2, 21],
+      'Amapola': [1, 12], 'Plaza Altamira': [4, 0], 'Mérida': [2, 23], 'Sartenejas': [1, 13],
+      'Studio Chacao': [2, 0], 'Parque Los Palos Grandes': [4, 0]
+    };
+    const filtroLoc = St.filtroLoc || 'todos';
+    const todosLocales = [];
+    ZONAS_OP.forEach((z) => {
+      z[2].forEach((l) => {
+        const f = FICHA[l[0]] || [1, 0];
+        todosLocales.push({
+          nombre: l[0], zona: z[0], fams: l[1],
+          nota: z[0] + ' · ' + ((NOTA_LOCAL[l[0]] || '').split(' · ')[1] || 'sin ficha'),
+          aforo: f[0] + (f[0] === 1 ? ' mesa' : ' mesas'),
+          porCabeza: f[1] ? f[1] + ' USD' : '—',
+          familias: l[1].map((x) => ({
+            texto: NOMBRE_FAM[x] || x,
+            chip: 'display:inline-flex;align-items:center;min-height:26px;padding:0 9px;border-radius:999px;background:rgba(20,52,42,.07);font:500 11px/1 \'Inter Tight\',sans-serif;color:#2C4A38;white-space:nowrap'
+          })),
+          fila: 'display:flex;gap:14px;align-items:center;padding:14px clamp(16px,2vw,20px);border-bottom:1px solid rgba(20,52,42,.09)'
+        });
+      });
+    });
+    const locales = todosLocales.filter((l) => filtroLoc === 'todos' || l.fams.indexOf(filtroLoc) >= 0);
+    const filtrosLocales = ['todos', 'cenas', 'drinks', 'movimiento', 'coffee'].map((t) => {
+      const on = filtroLoc === t;
+      const n = t === 'todos' ? todosLocales.length : todosLocales.filter((l) => l.fams.indexOf(t) >= 0).length;
+      return {
+        nombre: t === 'todos' ? 'Todos' : (NOMBRE_FAM[t] || t), n: String(n),
+        pick: () => this.setState({ filtroLoc: t }),
+        btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#1B5138'),
+        contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.22)' : 'rgba(20,52,42,.09)') + ';font:600 11px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#33513F') + ';font-variant-numeric:tabular-nums'
+      };
+    });
+    const zonasCubiertas = ZONAS_OP.filter((z) => z[2].length > 0).length;
+    const zonasUnSitio = ZONAS_OP.filter((z) => z[2].length === 1).length;
+    // el aviso que hace útil esta pantalla: dónde no podemos sentar a nadie
+    const sinCubrir = ZONAS_OP.filter((z) => z[2].filter((l) => l[1].indexOf('cenas') >= 0).length === 0).map((z) => z[0]);
+
+    // quién tiene acceso hoy: es la única ruta de operación que no tenía pantalla
+    // ── gente: un solo pool y todo derivado ─────────────────────────
+    // Los conteos, el mapa de zonas y el embudo salen de aquí. Ninguna cifra
+    // de esta pestaña está escrita a mano.
+    const PERFILES = [
+      ['Daniela Pérez', 'Daniela', 34, 'M', 'volvio', ['mercedes', 'altamira'], ['cenas', 'coffee'], 'ok', 2, 3, 12, 'Arquitectura', 0],
+      ['Andrés Betancourt', 'Andrés', 38, 'H', 'se-quedo', ['mercedes', 'rosal'], ['cenas', 'drinks'], 'ok', 3, 1, 8, 'Tecnología'],
+      ['Gabriela Ortiz', 'Gabriela', 31, 'M', 'mismos', ['altamira', 'palos-grandes'], ['cenas'], 'ok', 1, 0, 21, 'Salud'],
+      ['José Manuel Silva', 'José Manuel', 36, 'H', 'volvio', ['mercedes'], ['cenas', 'movimiento'], 'ok', 4, 0, 5, 'Finanzas'],
+      ['Andreína Rojas', 'Andreína', 29, 'M', 'remoto', ['palos-grandes', 'chacao'], ['coffee', 'movimiento'], 'ok', 0, 4, 0, 'Educación', 3],
+      ['Valentina Mora', 'Valentina', 33, 'M', 'interior', ['mercedes', 'chacao'], ['cenas', 'drinks'], 'ok', 2, 2, 30, 'Medios'],
+      ['Ricardo Peña', 'Ricardo', 39, 'H', 'se-quedo', ['altamira'], ['cenas'], 'revision', 0, 0, 0, 'Consultoría'],
+      ['Mariana Díaz', 'Mariana', 30, 'M', 'mismos', ['rosal', 'mercedes'], ['drinks', 'coffee'], 'ok', 1, 1, 44, 'Diseño'],
+      ['Eduardo Lara', 'Eduardo', 37, 'H', 'volvio', ['palos-grandes'], ['cenas'], 'ok', 0, 4, 0, 'Legal', 4],
+      ['Carla Núñez', 'Carla', 32, 'M', 'remoto', ['chacao', 'altamira'], ['coffee'], 'ok', 2, 0, 62, 'Marketing'],
+      ['Simón Álvarez', 'Simón', 35, 'H', 'mismos', ['mercedes'], ['cenas', 'drinks'], 'ok', 5, 2, 9, 'Gastronomía'],
+      ['Patricia Guerra', 'Patricia', 33, 'M', 'se-quedo', ['castellana', 'altamira'], ['cenas', 'movimiento'], 'ok', 0, 0, 0, 'Tecnología'],
+      ['Alejandro Vega', 'Alejandro', 41, 'H', 'interior', ['chuao'], ['cenas'], 'sin', 0, 0, 0, 'Comercio'],
+      ['Isabel Contreras', 'Isabel', 28, 'M', 'mismos', ['bello-monte', 'rosal'], ['coffee', 'movimiento'], 'ok', 1, 0, 18, 'ONG'],
+      ['Rodrigo Silva', 'Rodrigo', 34, 'H', 'remoto', ['mercedes', 'rosal'], ['cenas', 'coffee'], 'ok', 0, 3, 0, 'Finanzas', 2],
+      ['Verónica Salas', 'Verónica', 36, 'M', 'volvio', ['altamira'], ['cenas'], 'ok', 3, 0, 14, 'Salud'],
+      ['Miguel Ancinas', 'Miguel', 40, 'H', 'se-quedo', ['rosal'], ['drinks'], 'ok', 1, 1, 71, 'Energía'],
+      ['Lucía Ferrer', 'Lucía', 27, 'M', 'interior', ['palos-grandes', 'chacao'], ['cenas', 'coffee'], 'revision', 0, 0, 0, 'Educación'],
+      ['Gustavo Rivas', 'Gustavo', 38, 'H', 'mismos', ['mercedes', 'castellana'], ['cenas'], 'ok', 2, 1, 26, 'Medios'],
+      ['Camila Otero', 'Camila', 31, 'M', 'remoto', ['chacao'], ['movimiento', 'coffee'], 'ok', 0, 2, 0, 'Arquitectura', 0],
+      ['Federico Ruiz', 'Federico', 29, 'H', 'volvio', ['mercedes', 'palos-grandes'], ['cenas', 'drinks'], 'sin', 0, 0, 0, 'Tecnología'],
+      ['Sofía Marcano', 'Sofía', 35, 'M', 'visita', ['mercedes'], ['cenas'], 'ok', 1, 0, 55, 'Legal']
+    ].map((p) => ({
+      nombre: p[0], trato: p[1], edad: p[2], genero: p[3], arraigo: p[4],
+      zonas: p[5], formatos: p[6], estado: p[7], cenas: p[8], creditos: p[9],
+      dias: p[10], industria: p[11], espera: p[12] || 0
+    }));
+
+    // Los leads son filas de verdad, no una cifra: si el primer escalón dice 47
+    // tiene que poder enseñar a esos 47. Del lead solo hay correo, así que se
+    // muestra enmascarado —el completo se abre en la ficha, de una en una.
+    const LEADS = [
+      ['ana', 'gmail.com', 3], ['jose', 'gmail.com', 4], ['maria', 'hotmail.com', 5],
+      ['luis', 'gmail.com', 6], ['carmen', 'yahoo.com', 8], ['pedro', 'gmail.com', 9],
+      ['sofia', 'outlook.com', 11], ['diego', 'gmail.com', 12], ['laura', 'gmail.com', 14],
+      ['juan', 'hotmail.com', 15], ['elena', 'gmail.com', 17], ['pablo', 'gmail.com', 18],
+      ['clara', 'yahoo.com', 20], ['hugo', 'gmail.com', 22], ['nadia', 'gmail.com', 24],
+      ['tomas', 'outlook.com', 26], ['irene', 'gmail.com', 28], ['bruno', 'gmail.com', 31],
+      ['paula', 'hotmail.com', 34], ['raul', 'gmail.com', 37], ['nora', 'gmail.com', 41],
+      ['ivan', 'gmail.com', 45], ['leti', 'yahoo.com', 50], ['mateo', 'gmail.com', 56],
+      ['vera', 'gmail.com', 63]
+    ].map((l) => ({
+      nombre: l[0].slice(0, 2) + '•••@' + l[1], trato: l[0], edad: 0, genero: '', arraigo: '',
+      zonas: [], formatos: [], estado: 'lead', cenas: 0, creditos: 0, dias: l[2], industria: '', espera: 0
+    }));
+    const TODOS = PERFILES.concat(LEADS);
+
+    // el filtrado vive una vez: la lista, el número y su leyenda lo comparten
+    const selG = St.filtros || {};
+    const qG = (St.busca || '').trim().toLowerCase();
+    // el escalón del embudo es un filtro más: sin esto, pincharlo no hacía nada
+    const ESCALON = [
+      null,
+      (p) => p.estado !== 'lead',
+      (p) => p.estado !== 'lead',
+      (p) => p.estado !== 'sin',
+      (p) => p.estado === 'ok',
+      (p) => p.cenas > 0 || p.creditos > 0,
+      (p) => p.cenas > 0
+    ];
+    const escSel = typeof St.escalon === 'number' && St.escalon >= 0 ? St.escalon : -1;
+    const FILTRADA = TODOS.filter((p) => {
+      if (escSel >= 0 && ESCALON[escSel] && !ESCALON[escSel](p)) return false;
+      if (qG && p.nombre.toLowerCase().indexOf(qG) < 0) return false;
+      if (St.fZona && p.zonas.indexOf(St.fZona) < 0) return false;
+      if (St.atajo === 'cred' && !(p.creditos > 0 && p.cenas === 0)) return false;
+      if (St.atajo === 'espera' && !(p.espera > 0 && p.cenas === 0)) return false;
+      if (St.atajo === 'dormidos' && !(p.cenas > 0 && p.dias > 60)) return false;
+      if (selG.estado && p.estado !== selG.estado) return false;
+      if (selG.genero && p.genero !== selG.genero) return false;
+      if (selG.arraigo && p.arraigo !== selG.arraigo) return false;
+      if (selG.formato && p.formatos.indexOf(selG.formato) < 0) return false;
+      if (selG.edad) {
+        const t = p.edad < 32 ? 'j' : p.edad <= 37 ? 'm' : 'v';
+        if (t !== selG.edad) return false;
+      }
+      return true;
+    });
+
+    // semilla más lo concedido en esta sesión: sin esto, dar acceso no tenía
+    // dónde escribirse y el contador no podía moverse.
+    const EQUIPO = [
+      ['María Fernanda Ruiz', 'mafe@aro.club', 'admin'],
+      ['Andrés Betancourt', 'andres@aro.club', 'ops'],
+      ['Carolina Díaz', 'carolina@aro.club', 'ops'],
+      ['Simón Herrera', 'simon@aro.club', 'ops']
+    ].concat(St.concedidos || []);
+    // el contador cuenta quién tiene acceso hoy, como el GET de la ruta
+    const conAcceso = EQUIPO.filter((p, i) => !(St.retirados || {})[i]).length;
+    const eqCorreoOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(St.correoEq || '').trim());
+    const eqOk = String(St.nombreEq || '').trim().length >= 3 && eqCorreoOk;
+
+    const porConciliar = 3 - Object.keys(St.conciliadas || {}).length;
+
+    const pestanas = [['Reparto', String(FECHAS_REP.length)], ['Verificaciones', String(pendientes)], ['Pagos', String(porConciliar)], ['Reportes', String(sinResolver)], ['Fechas', '3'], ['Locales', String(locales.length)], ['Equipo', String(conAcceso)], ['Gente', String(TODOS.length)]].map((p, i) => {
+      const on = v === i;
+      return {
+        nombre: p[0], n: p[1],
+        pick: () => this.setState({ vista: i }),
+        btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#1B5138') + ';font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease',
+        contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.22)' : 'rgba(20,52,42,.09)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#33513F') + ';font-variant-numeric:tabular-nums'
+      };
+    });
+
+    // ── abrir una fecha ─────────────────────────────────────────────
+    const DIAS_SEM = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const hoy = new Date();
+    const candidatos = [];
+    for (let k = 3; k < 17; k++) {
+      const d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + k);
+      if (d.getDay() === 0 || d.getDay() === 1) continue;
+      candidatos.push(d);
+      if (candidatos.length >= 6) break;
+    }
+    const fmt = (d) => DIAS_SEM[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()];
+    const dias = candidatos.map((d, i) => {
+      const on = St.diaSel === i;
+      return {
+        label: DIAS_SEM[d.getDay()] + ' ' + d.getDate(), icono: on ? '✓' : '', aro: aroDS(on),
+        btn: past(on), txt: txtDS(on),
+        pick: () => this.setState({ diaSel: i, abierta: false })
+      };
+    });
+    const formatos = FORMATOS.map((f, i) => {
+      const on = St.formatoSel === i;
+      return {
+        label: f[0], horaTxt: f[1], icono: on ? '✓' : '', aro: aroDS(on),
+        btn: past(on), txt: txtDS(on),
+        hora: 'font:500 12px/1.2 \'Inter Tight\',sans-serif;color:' + (on ? '#8F4515' : '#33513F') + ';white-space:nowrap',
+        pick: () => this.setState((st) => {
+          // un sitio que no sirve al formato nuevo no puede seguir marcado
+          const nf = FAMILIA[FORMATOS[i][0]] || 'cenas';
+          const n = {};
+          Object.keys(st.zonasSel || {}).forEach((k) => {
+            const sitio = st.zonasSel[k];
+            const defs = ZONAS_OP[Number(k)][2];
+            const vale = sitio && defs.filter((l) => l[0] === sitio && l[1].indexOf(nf) >= 0).length > 0;
+            n[k] = vale ? sitio : null;
+          });
+          return { formatoSel: i, zonasSel: n, abierta: false };
+        })
+      };
+    });
+
+    const dSel = candidatos[St.diaSel] || null;
+    const zSel = St.zonasSel || {};
+    const zonasAbrir = ZONAS_OP.map((z, i) => {
+      const marcada = Object.prototype.hasOwnProperty.call(zSel, i);
+      const local = zSel[i];
+      // un sitio cerrado ese día no puede recibir esa fecha
+      const diaSem = dSel ? dSel.getDay() : null;
+      const sirven = z[2]
+        .filter((l) => l[1].indexOf(fam) >= 0 && (diaSem === null || (l[2] || [1, 2, 3, 4, 5, 6, 0]).indexOf(diaSem) >= 0))
+        .map((l) => l[0]);
+      const unidades = Math.floor(z[1] / 6);
+      return {
+        zona: z[0], icono: marcada ? '✓' : '', aro: aroDS(marcada),
+        gente: z[1] + ' personas la aceptan · ' + unidades + ' ' + (unidades === 1 ? VOZ.unidad : VOZ.unidades),
+        abierta: marcada, sinLocal: marcada && !local, sitioNombre: VOZ.sitio,
+        etiquetaLocal: VOZ.donde,
+        caja: 'border-radius:22px;background:' + (marcada ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (marcada ? (local ? '#1B5138' : '#C0662F') : 'rgba(20,52,42,.16)') + ';overflow:hidden;transition:all 180ms ease',
+        btnZona: 'display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:12px 15px;border:none;background:transparent;cursor:pointer',
+        txt: 'display:block;font:' + (marcada ? '600' : '500') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A',
+        pick: () => this.setState((st) => {
+          const n = Object.assign({}, st.zonasSel || {});
+          if (Object.prototype.hasOwnProperty.call(n, i)) delete n[i]; else n[i] = null;
+          return { zonasSel: n, abierta: false };
+        }),
+        locales: (sirven.length ? sirven : [
+          z[2].filter((l) => l[1].indexOf(fam) >= 0).length && dSel
+            ? 'Ninguno abre ' + ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'][dSel.getDay()]
+            : 'Sin sitio de ' + fSel[0].toLowerCase() + ' en esta zona'
+        ]).map((nombre) => {
+          const on = local === nombre;
+          const real = sirven.length > 0;
+          return {
+            nombre, icono: on ? '✓' : '', aro: aroDS(on),
+            btn: 'display:inline-flex;align-items:center;gap:9px;min-height:46px;padding:0 15px 0 11px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.18)') + ';cursor:' + (real ? 'pointer' : 'not-allowed') + ';opacity:' + (real ? '1' : '.55'),
+            txt: 'font:' + (on ? '600' : '400') + ' 14px/1.2 \'Inter Tight\',sans-serif;color:#14342A;white-space:nowrap',
+            pick: () => { if (real) this.setState((st) => ({ zonasSel: Object.assign({}, st.zonasSel, { [i]: nombre }), abierta: false })); }
+          };
+        })
+      };
+    });
+
+    const idxZonas = Object.keys(zSel).map(Number);
+    const genteTotal = idxZonas.reduce((a, i) => a + ZONAS_OP[i][1], 0);
+    const todasConLocal = idxZonas.length > 0 && idxZonas.every((i) => !!zSel[i]);
+    const cierre = dSel ? new Date(dSel.getTime() - 48 * 3600000) : null;
+    // «todo se abre a las 12:00» se diseñó para cenas: un formato de mañana
+    // se revelaría después de haber pasado, así que se adelanta la víspera.
+    const mananero = /a\.m\./.test(fSel[1]) && parseInt(fSel[1], 10) < 12;
+    const revela = dSel ? new Date(dSel.getFullYear(), dSel.getMonth(), dSel.getDate() - (mananero ? 1 : 0)) : null;
+
+    const EJEMPLO_ACT = {
+      'Caminata': 'Sabas Nieves hasta el Cenizo', 'Senderismo': 'Pico Naiguatá por Los Venados',
+      'Correr': '8 km por el Parque del Este', 'Pádel': 'Dos pistas, partidos rotando',
+      'Pilates': 'Clase de reformer, nivel principiante', 'Ciclismo': '20 km por la Cota Mil'
+    };
+    const actOk = deMesa || (String(St.actividad || '').trim().length >= 4);
+    const precioNum = parseFloat(String(St.precio === undefined ? '8' : St.precio).replace(',', '.')) || 0;
+    const topeNum = parseInt(St.tope, 10) || 0;
+    const cupoOk = !St.limitado || topeNum >= 6;
+    const precioOk = precioNum > 0;
+
+    const mesasBrutas = idxZonas.reduce((a, i) => a + (zSel[i] ? Math.floor(ZONAS_OP[i][1] / 6) : 0), 0);
+    // el tope manda: no se prometen más plazas de las que se abrieron
+    const unidadesTotal = (St.limitado && topeNum >= 6) ? Math.min(mesasBrutas, Math.floor(topeNum / 6)) : mesasBrutas;
+    const listoAbrir = !!dSel && idxZonas.length > 0 && todasConLocal && actOk && cupoOk && precioOk;
+
+    const resumen = [
+      ['Día', dSel ? fmt(dSel) : 'Sin elegir', !!dSel],
+      ['Hora', dSel ? fSel[1] + ' · la pone el formato' : fSel[1], false],
+      ['Se cierra', cierre ? fmt(cierre) + ' a las ' + fSel[1] : '48 h antes', !!cierre],
+      ['Se revela', revela ? fmt(revela) + ' a las 12:00' + (mananero ? ' · el día antes' : '') : 'a las 12:00', !!revela],
+      ['Cupo', St.limitado ? (topeNum >= 6 ? topeNum + ' personas · ' + Math.floor(topeNum / 6) + ' ' + (Math.floor(topeNum / 6) === 1 ? VOZ.unidad : VOZ.unidades) : 'Falta el tope') : 'Abierto', cupoOk],
+      ['Precio', precioOk ? precioNum.toFixed(2).replace('.', ',') + ' USD por plaza' : 'Falta el precio', precioOk],
+      ['Zonas', idxZonas.length ? idxZonas.map((i) => ZONAS_OP[i][0]).join(', ') : 'Ninguna', idxZonas.length > 0],
+      ['Qué se hace', deMesa ? fSel[0] : (String(St.actividad || '').trim() || 'Sin describir') + (St.distancia ? ' · ' + St.distancia + ' km' : '') + (St.duracion ? ' · ' + St.duracion + ' min' : '') + (St.nivel >= 0 ? ' · ' + ['Suave', 'Media', 'Exigente'][St.nivel] : ''), deMesa || actOk],
+      [VOZ.Unidad + 's que salen', idxZonas.length ? String(unidadesTotal) : '—', idxZonas.length > 0]
+    ].map((r) => ({
+      campo: r[0], valor: r[1],
+      valorEstilo: 'flex:2 1 150px;font:' + (r[2] ? '600' : '400') + ' 14px/1.4 \'Inter Tight\',sans-serif;color:' + (r[2] ? '#14342A' : '#33513F') + ';text-align:right'
+    }));
+
+    // ── cancelar: dos vías con consecuencias distintas ──────────────
+    const ABIERTAS = [
+      ['Cena · jueves 20 · Las Mercedes y El Rosal', '20 apuntados · 3 mesas · 18 pagados'],
+      ['Coffee · sábado 22 · Altamira', '7 apuntados · 1 mesa · 7 pagados'],
+      ['Caminata · domingo 23 · Altamira', '13 apuntados · 2 grupos · 11 pagados']
+    ];
+    const abiertas = ABIERTAS.map((a, i) => {
+      const on = St.fechaCanc === i;
+      return {
+        titulo: a[0], detalle: a[1], icono: on ? '✓' : '', aro: aroDS(on),
+        btn: 'display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:12px 16px;border-radius:22px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'display:block;font:' + (on ? '600' : '500') + ' 15px/1.25 \'Inter Tight\',sans-serif;color:#14342A',
+        pick: () => this.setState({ fechaCanc: on ? -1 : i, cancelada: '' })
+      };
+    });
+    const hayFecha = St.fechaCanc >= 0;
+    const nApuntados = hayFecha ? [20, 7, 13][St.fechaCanc] : 0;
+    const nPagados = hayFecha ? [18, 7, 11][St.fechaCanc] : 0;
+    const marcaC = (col) => 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:' + col + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;margin-top:1px';
+    const VIAS = [
+      { id: 'no-lleno', nombre: 'No se llenó', credito: 'DEVUELVE 1 CRÉDITO', creditos: 1,
+        cuando: 'No llegó al mínimo de seis en ninguna zona. Nadie tiene culpa y el correo lo dice así.',
+        cons: [['✓', '#1B5138', 'Cada apuntado recupera su crédito', 'Entero y sin caducidad. Puede usarlo en cualquier otra fecha.'],
+          ['→', '#14342A', 'Sale el correo de fecha cancelada', 'Con el motivo dentro: no llegamos al mínimo.']] },
+      { id: 'nosotros', nombre: 'La cancelamos nosotros', credito: 'DEVUELVE 2 CRÉDITOS', creditos: 2,
+        cuando: 'El sitio se cayó, o no podemos sostenerla. La culpa es nuestra, y eso cambia lo que se devuelve.',
+        cons: [['✓', '#1B5138', 'Su crédito más uno de cortesía', 'Dos por persona. Lo promete el legal cuando cancelamos nosotros, no cuando no se llena.'],
+          ['→', '#14342A', 'Sale el correo de fecha cancelada', 'Con el motivo real. Si el sitio se cayó, se dice que el sitio se cayó.']] }
+    ];
+    const vias = VIAS.map((vi) => {
+      const hecha = St.cancelada === vi.id;
+      const activa = hayFecha && !St.cancelada;
+      const cons = vi.cons.concat([
+        ['!', '#6E340F', nPagados + (nPagados === 1 ? ' pago que devolver a mano' : ' pagos que devolver a mano'),
+          'Los bolívares no los mueve el sistema. Quedan en la cola de devoluciones con su referencia.'],
+        ['·', '#8F4515', 'Se le escribe a ' + nApuntados + (nApuntados === 1 ? ' persona' : ' personas'),
+          'Todos los apuntados a esta fecha. No se puede deshacer una vez sale.']
+      ]).map((c) => ({ glifo: c[0], marca: marcaC(c[1]), titulo: c[2], cuerpo: c[3] }));
+      return {
+        nombre: vi.nombre, credito: vi.credito, cuando: vi.cuando, consecuencias: cons,
+        caja: 'border-radius:24px;background:' + (hecha ? 'rgba(143,69,21,.08)' : '#FAF3E4') + ';border:1px solid ' + (hecha ? '#6E340F' : 'rgba(20,52,42,.16)') + ';padding:clamp(18px,2.2vw,24px);transition:all 200ms ease',
+        titulo: 'font:400 clamp(21px,2.2vw,26px)/1.1 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:#14342A',
+        selloCredito: 'display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;background:' + (vi.creditos === 2 ? 'rgba(143,69,21,.13)' : 'rgba(27,81,56,.11)') + ';font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:' + (vi.creditos === 2 ? '#8F4515' : '#1B5138') + ';white-space:nowrap',
+        inerte: activa ? null : 'true',
+        textoBoton: hecha ? 'Cancelada' : (hayFecha ? vi.nombre : 'Elige una fecha'),
+        boton: 'display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:54px;margin-top:18px;padding:0 22px;border-radius:999px;border:none;background:' + (activa ? '#6E340F' : 'rgba(27,81,56,.13)') + ';color:' + (activa ? '#FFF8EA' : '#456352') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (activa ? 'pointer' : 'not-allowed'),
+        pulsar: () => { if (activa) this.setState({ cancelada: vi.id }); }
+      };
+    });
+    const viaHecha = VIAS.filter((vi) => vi.id === St.cancelada)[0];
+
+    const colasDefs = [
+      ['María Fernanda', 'Hace 40 minutos', ['V-18.442.019', '31 años', 'Chacao'], null],
+      ['Ricardo', 'Hace 2 horas', ['V-14.007.556', '39 años', 'Altamira'], 'La foto del documento está movida. Se lee el número, no la fecha.'],
+      ['Sofía', 'Hace 3 horas', ['E-84.221.310', '27 años', 'Las Mercedes'], null],
+      ['Gustavo', 'Ayer', ['V-21.556.884', '24 años', 'Bello Monte'], 'La selfie y el documento no parecen la misma persona.']
+    ];
+    const btnCola = (fondo, color, borde) => 'flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease';
+    // Cada motivo dice qué ve ella y si puede reintentar. Los de sospecha
+    // no se explican: enseñarían a quien suplanta qué corregir.
+    const MOTIVOS = [
+      ['La foto salió movida o cortada', 'No se lee bien tu documento. Vuelve a hacer la foto con más luz y sin recortar los bordes.', true],
+      ['Documento vencido', 'Tu documento está vencido. Sube uno vigente y lo revisamos el mismo día.', true],
+      ['La selfie no se ve clara', 'La selfie salió muy oscura o borrosa. Repítela de frente y con luz natural.', true],
+      ['El documento no es válido aquí', 'Aceptamos cédula venezolana o pasaporte vigente. Sube uno de los dos.', true],
+      ['La selfie y el documento no coinciden', 'No pudimos verificar tu identidad. Escríbenos a hola@aro.club y lo revisamos contigo.', false],
+      ['Sospecha de suplantación', 'No pudimos verificar tu identidad. Escríbenos a hola@aro.club y lo revisamos contigo.', false]
+    ];
+
+    const colas = colasDefs.map((c, i) => {
+      const d = this.state.decididas[i];
+      const abierta = this.state.abriendo === i;
+      const mSel = this.state.motivos[i] === undefined ? -1 : this.state.motivos[i];
+      const dm = d === 'no' ? mSel : -1;
+      return {
+        nombre: c[0], inicial: c[0].charAt(0), avatar: avatar(i),
+        espera: d === 'ok' ? 'Aprobada por ti' : (d === 'no' ? 'Rechazada por ti' : c[1]),
+        datos: c[2].map((texto) => ({ texto })),
+        hayAviso: !!c[3] && !d, aviso: c[3] || '',
+        caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (d === 'ok' ? '#1B5138' : (d === 'no' ? '#C0662F' : 'transparent')) + ';transition:all 200ms ease',
+        textoAprobar: d === 'ok' ? 'Aprobada' : 'Aprobar',
+        botonAprobar: btnCola(d === 'ok' ? 'rgba(27,81,56,.13)' : '#1B5138', d === 'ok' ? '#1B5138' : '#FAF3E4', 'none'),
+        botonRechazar: btnCola('transparent', '#8F4515', '1px solid rgba(143,69,21,.44)'),
+        botonVolver: btnCola('transparent', '#33513F', '1px solid rgba(20,52,42,.22)'),
+        botonConfirmar: btnCola(mSel >= 0 ? '#6E340F' : 'rgba(20,52,42,.1)', mSel >= 0 ? '#FFF8EA' : '#456352', 'none'),
+        textoConfirmar: mSel >= 0 ? 'Rechazar' : 'Elige el motivo',
+
+        decidiendo: !d && !abierta,
+        eligiendo: abierta,
+        motivos: MOTIVOS.map((m, k) => {
+          const on = mSel === k;
+          return {
+            label: m[0], pie: m[2] ? 'Puede reintentar' : 'No reintenta · escala a una persona',
+            icono: on ? '✓' : '',
+            pick: () => this.setState((st) => ({ motivos: Object.assign({}, st.motivos, { [i]: k }) })),
+            aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease',
+            btn: 'display:flex;align-items:center;gap:11px;width:100%;min-height:52px;padding:9px 15px 9px 12px;border-radius:20px;background:' + (on ? '#F2E9D5' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
+            txt: 'display:block;font:' + (on ? '600' : '500') + ' 14px/1.3 \'Inter Tight\',sans-serif;color:#14342A',
+            pieEstilo: 'display:block;font:400 12px/1.4 \'Inter Tight\',sans-serif;color:' + (m[2] ? '#33513F' : '#8F4515') + ';margin-top:2px'
+          };
+        }),
+        hayVista: mSel >= 0,
+        vistaUsuario: mSel >= 0 ? MOTIVOS[mSel][1] : '',
+
+        hayResuelto: !!d,
+        resuelto: d === 'ok'
+          ? 'Aprobada. Le llega el correo de identidad verificada y ya puede reservar.'
+          : (dm >= 0 ? MOTIVOS[dm][1] : ''),
+        glifoResuelto: d === 'ok' ? '✓' : '·',
+        fondoResuelto: d === 'ok' ? 'rgba(27,81,56,.11)' : 'rgba(143,69,21,.09)',
+        iconoResuelto: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:' + (d === 'ok' ? '#1B5138' : '#6E340F') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;margin-top:1px',
+
+        aprobar: () => this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [i]: 'ok' }), abriendo: null })),
+        rechazar: () => this.setState((st) => ({ abriendo: st.abriendo === i ? null : i })),
+        confirmarRechazo: () => { if (mSel >= 0) this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [i]: 'no' }), abriendo: null })); }
+      };
+    });
+
+    const metricasPago = [
+      ['COBRADO HOY', '181.610 Bs', '30 puestos a 8 USD', null],
+      ['EN DÓLARES', '240,00', 'A la tasa de hoy, sin la devolución', null],
+      ['PENDIENTES', '2', 'Transferencias sin conciliar', '#8F4515'],
+      ['DEVUELTO', '6.053,68 Bs', 'Una cancelación con margen', null]
+    ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) }));
+
+    const chipPago = (e) => {
+      const c = {
+        'Confirmado': ['rgba(27,81,56,.12)', '#1B5138', 'transparent'],
+        'Pendiente': ['rgba(143,69,21,.12)', '#8F4515', 'transparent'],
+        'Devuelto': ['transparent', '#33513F', 'rgba(20,52,42,.22)']
+      }[e];
+      return 'display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;background:' + c[0] + ';color:' + c[1] + ';border:1px solid ' + c[2] + ';white-space:nowrap';
+    };
+    // ── cola de conciliación ─────────────────────────────────────────
+    // Cada reporte junto al movimiento del banco. El desajuste se ve solo.
+    const par = (campo, valor, mal) => ({
+      campo, valor,
+      valorEstilo: 'font:' + (mal ? '600' : '500') + ' 12px/1.4 \'Inter Tight\',sans-serif;color:' + (mal ? '#8F4515' : '#14342A') + ';font-variant-numeric:tabular-nums;text-align:right'
+    });
+    const COLA = [
+      {
+        nombre: 'Gabriela Ortiz', metodo: 'Pago Móvil', espera: 'Hace 12 minutos', captura: true, aviso: '',
+        reporte: [par('Referencia', '004471'), par('Monto', '6.053,68 Bs'), par('Banco', 'Banesco'), par('Fecha', '09/08/26')],
+        banco: [par('Referencia', '004471'), par('Monto', '6.053,68 Bs'), par('Banco', 'Banesco'), par('Fecha', '09/08/26')]
+      },
+      {
+        nombre: 'Carolina Núñez', metodo: 'Zelle', espera: 'Hace 40 minutos', captura: true,
+        aviso: 'El monto no cuadra: faltan 0,50 USD. Puede ser comisión de su banco.',
+        reporte: [par('Código', 'ABC123XYZ'), par('Monto', '8,00 USD'), par('Titular', 'C. Núñez'), par('Fecha', '09/08/26')],
+        banco: [par('Código', 'ABC123XYZ'), par('Monto', '7,50 USD', true), par('Titular', 'C. Núñez'), par('Fecha', '09/08/26')]
+      },
+      {
+        nombre: 'Rodrigo Silva', metodo: 'Bizum', espera: 'Hace 2 horas', captura: true,
+        aviso: 'No aparece ningún movimiento con ese teléfono. Bizum no da referencia: hay que mirar la captura.',
+        reporte: [par('Teléfono', '611223344'), par('Monto', '7,40 EUR'), par('Titular', 'R. Silva'), par('Fecha', '08/08/26')],
+        banco: [par('Teléfono', '—', true), par('Monto', '—', true), par('Titular', '—', true), par('Fecha', '—', true)]
+      }
+    ];
+    const cola = COLA.map((c, i) => {
+      const d = (this.state.conciliadas || {})[i];
+      return {
+        nombre: c.nombre, metodo: c.metodo, inicial: c.nombre.charAt(0),
+        espera: d === 'ok' ? 'Confirmado por ti' : (d === 'no' ? 'Marcado: no cuadra' : c.espera),
+        avatar: avatar(i),
+        reporte: c.reporte, banco: c.banco,
+        hayCaptura: c.captura && !d, hayAviso: !!c.aviso && !d, aviso: c.aviso,
+        selloMetodo: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;background:rgba(20,52,42,.07);font:600 11px/1 \'Inter Tight\',sans-serif;color:#2C4A38;white-space:nowrap',
+        caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (d === 'ok' ? '#1B5138' : (d === 'no' ? '#C0662F' : 'transparent')),
+        textoAprobar: d === 'ok' ? 'Confirmado' : 'Confirmar pago',
+        textoRechazar: d === 'no' ? 'No cuadra' : 'No cuadra',
+        botonAprobar: btnCola(d === 'ok' ? 'rgba(27,81,56,.13)' : '#1B5138', d === 'ok' ? '#1B5138' : '#FAF3E4', 'none'),
+        botonRechazar: btnCola('transparent', '#8F4515', '1px solid rgba(143,69,21,.4)'),
+        aprobar: () => this.setState((st) => ({ conciliadas: Object.assign({}, st.conciliadas, { [i]: 'ok' }) })),
+        rechazar: () => this.setState((st) => ({ conciliadas: Object.assign({}, st.conciliadas, { [i]: 'no' }) }))
+      };
+    });
+
+    const pagos = [
+      ['Daniela Pérez', 'Pago móvil · ARO-4471-K2', '6.053,68 Bs', 'Confirmado'],
+      ['Andrés Ramírez', 'Tarjeta · ARO-4470-M8', '6.053,68 Bs', 'Confirmado'],
+      ['Gabriela Ortiz', 'Transferencia · ARO-4469-P1', '6.053,68 Bs', 'Pendiente'],
+      ['José Manuel Silva', 'Pago móvil · ARO-4468-T3', '6.053,68 Bs', 'Confirmado'],
+      ['Carolina Núñez', 'Transferencia · ARO-4467-B9', '6.053,68 Bs', 'Pendiente'],
+      ['Luis Ferrer', 'Pago móvil · ARO-4462-R6', '6.053,68 Bs', 'Devuelto']
+    ].map((p) => ({ nombre: p[0], metodo: p[1], monto: p[2], estado: p[3], chip: chipPago(p[3]) }));
+
+    return {
+      pestanas, metricas, espera, colas, metricasPago, pagos,
+      fechasRep, zonasRep, tiposRep,
+      sinFechasTipo: fechasRep.length === 0,
+      tituloSinFechas: 'No hay fechas de ' + (NOMBRE_FILTRO[tipoRep] || 'ese tipo').toLowerCase() + ' abiertas.',
+      tituloRep: fr.titulo + ' · ' + fr.hora,
+      textoCierre: fr.cierra,
+      bajadaRep: apuntadosRep + ' apuntados en ' + (fr.zonas.length === 1 ? 'una zona' : fr.zonas.length + ' zonas') + '. Cada ' + vozRep.unidad + ' se publica por separado: al publicarla queda fija y esa gente sale del reparto.',
+      // Barra fija: los botones dejan de estar al final del scroll, y la espera
+      // sigue siendo destino sin traerse los avatares aquí.
+      barra: 'position:sticky;bottom:0;z-index:30;border-top:1px solid ' + (St.arrastrando ? '#8F4515' : 'rgba(20,52,42,.16)') + ';background:' + (St.arrastrando ? '#F2E9D5' : 'rgba(242,233,213,.96)') + ';backdrop-filter:blur(12px);transition:all 180ms ease',
+      etiquetaBarra: 'display:block;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:' + (St.arrastrando ? '#8F4515' : (espera.length ? '#8F4515' : '#1B5138')),
+      tituloBarra: St.arrastrando ? 'SUÉLTALO AQUÍ PARA DEJARLO EN ESPERA'
+        : (espera.length ? (espera.length === 1 ? 'UNA PERSONA EN ESPERA' : espera.length + ' EN ESPERA') : 'CERO EN ESPERA'),
+      notaBarra: St.arrastrando ? 'Sale del reparto de esta fecha y su crédito no se toca.'
+        : (espera.length
+          ? 'Publicar deja fuera a ' + (espera.length === 1 ? 'esa persona' : 'esas ' + espera.length) + '. Se les avisa hoy.'
+          : 'Todos los apuntados tienen ' + vozRep.unidad + '.'),
+      textoListas: listasParaPublicar === 0
+        ? (publicadas === totalMesas ? 'Todo publicado' : 'Ninguna lista para publicar')
+        : (listasParaPublicar === (totalMesas - publicadas)
+          ? 'Publicar ' + (listasParaPublicar === 1 ? 'la que queda' : 'las ' + listasParaPublicar + ' que quedan')
+          : 'Publicar ' + (listasParaPublicar === 1 ? 'la que está lista' : 'las ' + listasParaPublicar + ' que están listas')),
+      inerteListas: listasParaPublicar > 0 ? null : 'true',
+      botonListas: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border-radius:999px;border:none;font:600 15px/1 \'Inter Tight\',sans-serif;background:' + (listasParaPublicar ? '#14342A' : 'rgba(27,81,56,.13)') + ';color:' + (listasParaPublicar ? '#FAF3E4' : '#456352') + ';cursor:' + (listasParaPublicar ? 'pointer' : 'not-allowed'),
+      publicarListas: () => {
+        if (!listasParaPublicar) return;
+        this.setState((st) => {
+          const p = Object.assign({}, st.publicadas);
+          clavesListas.forEach((k) => { p[k] = true; });
+          return { publicadas: p };
+        });
+      },
+      // forzar es la única acción que salta un freno: pasa por modal y deja constancia
+      hayModal: !!St.confirmar,
+      tituloModal: mesaModal ? 'La ' + mesaModal.titulo.toLowerCase() + ' rompe reglas duras.' : '',
+      nombreModal: mesaModal ? mesaModal.titulo : '',
+      rotasModal: mesaModal ? mesaModal.reglas.filter((r) => r.chip.indexOf('143,69,21') >= 0) : [],
+      textoForzarModal: mesaModal ? 'Publicar la ' + mesaModal.n + ' igualmente' : '',
+      botonForzarModal: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border-radius:999px;border:none;background:#6E340F;color:#FFF8EA;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      cerrarModal: () => this.setState({ confirmar: '' }),
+      confirmarForzar: () => this.setState((st) => ({
+        publicadas: Object.assign({}, st.publicadas, { [st.confirmar]: true }),
+        forzadas: Object.assign({}, st.forzadas, { [st.confirmar]: true }),
+        confirmar: ''
+      })),
+      permitirSoltar: (e) => { if (St.arrastrando) e.preventDefault(); },
+      aEspera: () => { if (St.arrastrando) mover(St.arrastrando, 'espera'); },
+      unidadVoz: vozRep.unidad,
+      cajaEspera: 'border-radius:22px;padding:clamp(18px,2.4vw,24px);margin-top:clamp(24px,3vw,32px);transition:all 180ms ease;border:1px dashed ' + (St.arrastrando ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (St.arrastrando ? '#F2E9D5' : 'transparent'),
+      hayEspera: espera.length > 0 || !!St.arrastrando,
+      tituloEspera: espera.length + ' en espera',
+      notaEspera: 'No dan para ' + vozRep.art + ' ' + vozRep.unidad + ' de seis. Se les avisa hoy y su crédito no se toca.',
+      cola, hayCola: porConciliar > 0, sinCola: porConciliar === 0,
+      esMesas: v === 0, esVerificaciones: v === 1, esPagos: v === 2,
+      esReportes: v === 3, esFechas: v === 4, esLocales: v === 5,
+      reportes, locales, filtrosLocales,
+
+      // la lista y el número salen del mismo filtrado que los conteos
+      lista: (function () {
+        const filtrada = FILTRADA;
+        const ZN = { mercedes: 'Las Mercedes', altamira: 'Altamira', 'palos-grandes': 'Los Palos Grandes', chacao: 'Chacao', rosal: 'El Rosal', castellana: 'La Castellana', chuao: 'Chuao', 'bello-monte': 'Bello Monte' };
+        const EST = { ok: ['Verificada', '#1B5138', 'rgba(27,81,56,.12)'], revision: ['En revisión', '#8F4515', 'rgba(143,69,21,.12)'], sin: ['Sin verificar', '#33513F', 'transparent'], lead: ['Sin completar', '#33513F', 'transparent'] };
+        return filtrada.slice(0, 10).map((p, i) => {
+          const e = EST[p.estado];
+          return {
+            nombre: p.nombre, inicial: p.trato.charAt(0),
+            linea: p.estado === 'lead'
+              ? 'Dejó el correo hace ' + p.dias + (p.dias === 1 ? ' día' : ' días') + ' · sin datos base'
+              : p.edad + ' años · ' + p.industria + ' · ' + p.zonas.map((z) => ZN[z]).join(', ') + ' · ' + (p.espera ? p.espera + (p.espera === 1 ? ' vez en espera' : ' veces en espera') : (p.cenas ? p.cenas + (p.cenas === 1 ? ' cena' : ' cenas') : 'ninguna cena')),
+            estado: e[0],
+            enlace: 'Aro Club - Perfil miembro.dc.html',
+            avatar: 'flex:0 0 auto;width:34px;height:34px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 14px/1 \'Inter Tight\',sans-serif',
+            chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;background:' + e[2] + ';border:1px solid ' + (e[2] === 'transparent' ? 'rgba(20,52,42,.2)' : 'transparent') + ';color:' + e[1],
+            fila: 'display:flex;align-items:center;gap:12px;padding:13px 18px;min-height:64px;text-decoration:none;border-bottom:1px solid rgba(20,52,42,.09)',
+            flecha: 'flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-8px -12px -8px 0;font:500 18px/1 \'Inter Tight\',sans-serif;color:#1B5138'
+          };
+        });
+      }).call(this),
+
+      // ── gente ─────────────────────────────────────────────────────
+      esGente: v === 7,
+      nGente: String(FILTRADA.length),
+      palabraGente: FILTRADA.length === 1 ? 'persona' : 'personas',
+      leyendaGente: (function () {
+        const t = [];
+        if (qG) t.push('que coinciden con «' + (St.busca || '').trim() + '»');
+        if (St.fZona) t.push('que aceptan ' + ({ mercedes: 'Las Mercedes', altamira: 'Altamira', 'palos-grandes': 'Los Palos Grandes', chacao: 'Chacao', rosal: 'El Rosal', castellana: 'La Castellana', chuao: 'Chuao', 'bello-monte': 'Bello Monte' })[St.fZona]);
+        if (selG.estado) t.push({ ok: 'con identidad verificada', revision: 'con la verificación en revisión', sin: 'sin verificar', lead: 'que solo dejaron el correo' }[selG.estado]);
+        if (selG.edad) t.push({ j: 'de menos de 32', m: 'de 32 a 37', v: 'de más de 37' }[selG.edad]);
+        if (selG.genero) t.push(selG.genero === 'M' ? 'mujeres' : 'hombres');
+        if (selG.formato) t.push('interesadas en ' + selG.formato);
+        if (St.atajo === 'cred') t.push('con créditos sin usar y ninguna cena');
+        if (St.atajo === 'espera') t.push('que se apuntaron y nunca entraron en una mesa');
+        if (St.atajo === 'dormidos') t.push('que no vuelven desde hace más de dos meses');
+        if (escSel >= 0) t.push('que llegaron a «' + ['dejó el correo', 'completó sus datos', 'contestó el cuestionario', 'subió su cédula', 'verificada', 'reservó', 'fue a una mesa'][escSel] + '»');
+        const elegibles = FILTRADA.filter((p) => p.estado === 'ok').length;
+        const mesas = Math.floor(elegibles / 6);
+        // la cláusula de mesas solo cuenta verificados, igual que el mapa de zonas
+        const cl = mesas >= 1
+          ? (elegibles === FILTRADA.length ? 'Dan' : elegibles + ' están verificadas y dan')
+            + ' para ' + mesas + (mesas === 1 ? ' mesa de seis.' : ' mesas de seis.')
+          : (elegibles === FILTRADA.length
+            ? 'No llegan a un grupo de seis.'
+            : elegibles + (elegibles === 1 ? ' está verificada' : ' están verificadas') + ', así que todavía no llegan a un grupo de seis.');
+        if (!t.length) return 'Toda la base. Cruza filtros y el número de arriba es la respuesta: es lo que decide si una fecha se puede abrir. ' + cl;
+        return 'Personas ' + t.join(', ') + '. ' + cl;
+      }).call(this),
+      hayGente: FILTRADA.length > 0,
+      sinGente: FILTRADA.length === 0,
+      hayMas: FILTRADA.length > 10,
+      textoMas: 'Se muestran diez de ' + FILTRADA.length + '. Afina los filtros para reducir la lista.',
+      cifraGrande: 'font:700 clamp(52px,7vw,84px)/0.9 \'Inter Tight\',sans-serif;letter-spacing:-.045em;font-variant-numeric:tabular-nums;color:#14342A',
+      bajadaGente: PERFILES.length + ' perfiles y ' + LEADS.length + ' correos sin completar. Todo lo de abajo se calcula sobre eso: los conteos, el mapa de zonas y el embudo.',
+      bajadaEmbudo: 'Cada escalón dice cuánta gente llegó hasta ahí. Toca uno para ver quiénes se quedaron en él.',
+
+      formatosZona: ['Todo', 'Cenas', 'Drinks', 'Movimiento', 'Coffee'].map((nombre, i) => {
+        const on = (St.fmtZona || 0) === i;
+        return {
+          nombre,
+          pick: () => this.setState({ fmtZona: i }),
+          btn: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#1B5138') + ';font:' + (on ? '600' : '500') + ' 13px/1 \'Inter Tight\',sans-serif;cursor:pointer'
+        };
+      }),
+
+      zonasMapa: (function () {
+        const F = ['', 'cenas', 'drinks', 'movimiento', 'coffee'][St.fmtZona || 0];
+        const Z = [['mercedes', 'Las Mercedes'], ['altamira', 'Altamira'], ['palos-grandes', 'Los Palos Grandes'], ['chacao', 'Chacao'], ['rosal', 'El Rosal'], ['castellana', 'La Castellana'], ['chuao', 'Chuao'], ['bello-monte', 'Bello Monte']];
+        return Z.map((z) => {
+          const g = PERFILES.filter((p) => p.estado === 'ok' && p.zonas.indexOf(z[0]) >= 0 && (!F || p.formatos.indexOf(F) >= 0));
+          const n = g.length;
+          const sale = n >= 6;
+          const falta = 6 - n;
+          return {
+            zona: z[1], n: String(n),
+            sello: sale ? 'SALE' : (n === 0 ? 'VACÍA' : (falta === 1 ? 'FALTA 1' : 'FALTAN ' + falta)),
+            nota: sale ? Math.floor(n / 6) + (Math.floor(n / 6) === 1 ? ' mesa de seis' : ' mesas de seis') : 'No llega a un grupo',
+            pick: () => this.setState({ fZona: (St.fZona === z[0] ? '' : z[0]) }),
+            caja: 'display:block;text-align:left;border-radius:22px;padding:16px 18px;cursor:pointer;background:' + (St.fZona === z[0] ? '#F2E9D5' : '#FAF3E4') + ';border:1px solid ' + (St.fZona === z[0] ? '#8F4515' : (sale ? 'rgba(27,81,56,.34)' : 'transparent')),
+            cifra: 'font:700 clamp(26px,3vw,34px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:' + (sale ? '#1B5138' : '#8F4515'),
+            selloEstilo: 'display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;white-space:nowrap;background:' + (sale ? 'rgba(27,81,56,.12)' : 'rgba(143,69,21,.12)') + ';color:' + (sale ? '#1B5138' : '#8F4515')
+          };
+        });
+      }).call(this),
+
+      busca: St.busca || '',
+      hayBusca: !!(St.busca || '').trim(),
+      onBusca: (e) => this.setState({ busca: e.target.value }),
+      limpiaBusca: () => this.setState({ busca: '' }),
+
+      atajos: [
+        ['Con créditos sin usar', 'cred'],
+        ['Se apunta y no entra', 'espera'],
+        ['Sin volver, +2 meses', 'dormidos']
+      ].map((a) => {
+        const on = St.atajo === a[1];
+        const n = PERFILES.filter((p) => a[1] === 'cred' ? (p.creditos > 0 && p.cenas === 0)
+          : a[1] === 'espera' ? (p.espera > 0 && p.cenas === 0)
+          : (p.cenas > 0 && p.dias > 60)).length;
+        return {
+          nombre: a[0], n: String(n),
+          pick: () => this.setState({ atajo: on ? '' : a[1] }),
+          btn: 'display:inline-flex;align-items:center;gap:10px;min-height:60px;padding:0 20px;border-radius:999px;cursor:pointer;background:' + (on ? '#14342A' : 'transparent') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.2)'),
+          cifraEstilo: 'font:700 20px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:' + (on ? '#E39C63' : '#8F4515'),
+          txt: 'font:500 14px/1.2 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#14342A') + ';white-space:nowrap'
+        };
+      }),
+
+      grupos: (function () {
+        const sel = St.filtros || {};
+        const pasa = (p, salvo) => {
+          const q = (St.busca || '').trim().toLowerCase();
+          if (q && p.nombre.toLowerCase().indexOf(q) < 0) return false;
+          if (St.fZona && p.zonas.indexOf(St.fZona) < 0) return false;
+          if (St.atajo === 'cred' && !(p.creditos > 0 && p.cenas === 0)) return false;
+          if (St.atajo === 'espera' && !(p.espera > 0 && p.cenas === 0)) return false;
+          if (St.atajo === 'dormidos' && !(p.cenas > 0 && p.dias > 60)) return false;
+          const G = {
+            estado: (v2) => p.estado === v2,
+            genero: (v2) => p.genero === v2,
+            arraigo: (v2) => p.arraigo === v2,
+            edad: (v2) => (v2 === 'j' ? p.edad < 32 : v2 === 'm' ? (p.edad >= 32 && p.edad <= 37) : p.edad > 37),
+            formato: (v2) => p.formatos.indexOf(v2) >= 0
+          };
+          return Object.keys(G).every((k) => (k === salvo || !sel[k]) ? true : G[k](sel[k]));
+        };
+        const DEFS = [
+          ['ESTADO', 'estado', [['Verificada', 'ok'], ['En revisión', 'revision'], ['Sin verificar', 'sin'], ['Sin completar', 'lead']]],
+          ['EDAD', 'edad', [['Menos de 32', 'j'], ['32 a 37', 'm'], ['Más de 37', 'v']]],
+          ['GÉNERO', 'genero', [['Mujer', 'M'], ['Hombre', 'H']]],
+          ['ARRAIGO', 'arraigo', [['Volvió', 'volvio'], ['Se quedó', 'se-quedo'], ['Los mismos', 'mismos'], ['Remoto', 'remoto'], ['Llegó', 'interior'], ['De paso', 'visita']]],
+          ['FORMATO', 'formato', [['Cenas', 'cenas'], ['Drinks', 'drinks'], ['Movimiento', 'movimiento'], ['Coffee', 'coffee']]]
+        ];
+        return DEFS.map((d) => ({
+          titulo: d[0],
+          opciones: d[2].map((o) => {
+            const on = sel[d[1]] === o[1];
+            // cuánta gente deja dentro este filtro sobre lo ya filtrado
+            const n = TODOS.filter((p) => {
+              if (!pasa(p, d[1])) return false;
+              const G = { estado: p.estado, genero: p.genero, arraigo: p.arraigo,
+                edad: (p.edad < 32 ? 'j' : p.edad <= 37 ? 'm' : 'v') };
+              return d[1] === 'formato' ? p.formatos.indexOf(o[1]) >= 0 : G[d[1]] === o[1];
+            }).length;
+            return {
+              label: o[0], n: String(n),
+              pick: () => this.setState((st) => {
+                const f = Object.assign({}, st.filtros);
+                if (f[d[1]] === o[1]) delete f[d[1]]; else f[d[1]] = o[1];
+                return { filtros: f };
+              }),
+              btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 8px 0 14px;border-radius:999px;cursor:pointer;background:' + (on ? '#14342A' : 'transparent') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';opacity:' + (n === 0 && !on ? '.5' : '1'),
+              txt: 'font:' + (on ? '600' : '500') + ' 13px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#14342A') + ';white-space:nowrap',
+              cuenta: 'display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 7px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;background:' + (on ? 'rgba(250,243,228,.2)' : 'rgba(20,52,42,.08)') + ';color:' + (on ? '#FAF3E4' : '#33513F')
+            };
+          })
+        }));
+      }).call(this),
+
+      hayFiltros: Object.keys(St.filtros || {}).length > 0 || !!St.fZona || !!St.atajo || !!(St.busca || '').trim(),
+      limpiaFiltros: () => this.setState({ filtros: {}, fZona: '', atajo: '', busca: '' }),
+
+      embudo: (function () {
+        const ok = PERFILES.filter((p) => p.estado === 'ok');
+        const pasos = [
+          ['Dejó el correo', TODOS.length],
+          ['Completó sus datos', PERFILES.length],
+          ['Contestó el cuestionario', PERFILES.length],
+          ['Subió su cédula', PERFILES.filter((p) => p.estado !== 'sin').length],
+          ['Verificada', ok.length],
+          ['Reservó', PERFILES.filter((p) => p.cenas > 0 || p.creditos > 0).length],
+          ['Fue a una mesa', PERFILES.filter((p) => p.cenas > 0).length]
+        ];
+        const tope = pasos[0][1];
+        return pasos.map((x, i) => {
+          const perdidos = i === 0 ? 0 : pasos[i - 1][1] - x[1];
+          const on = St.escalon === i;
+          return {
+            paso: x[0], n: String(x[1]),
+            perdidos: perdidos ? '−' + perdidos : '',
+            pick: () => this.setState({ escalon: on ? -1 : i }),
+            fila: 'display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;width:100%;text-align:left;padding:14px 18px;border-radius:20px;cursor:pointer;background:' + (on ? '#F2E9D5' : '#FAF3E4') + ';border:1px solid ' + (on ? '#8F4515' : 'transparent'),
+            barra: 'position:relative;display:block;flex:0 0 auto;width:96px;height:8px;border-radius:999px;background:rgba(20,52,42,.12);overflow:hidden',
+            relleno: 'position:absolute;left:0;top:0;bottom:0;width:' + Math.round((x[1] / tope) * 100) + '%;border-radius:999px;background:' + (i >= 4 ? '#1B5138' : '#8F4515'),
+            cifra: 'flex:0 0 auto;font:700 19px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#14342A',
+            caida: 'flex:0 0 auto;min-width:52px;text-align:right;font:600 13px/1 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;color:' + (perdidos > 5 ? '#8F4515' : '#566A5D')
+          };
+        });
+      }).call(this),
+
+      // ── el equipo: quién puede operar ─────────────────────────────
+      esEquipo: v === 6,
+      equipo: EQUIPO.map((p, i) => {
+        const fuera = (St.retirados || {})[i];
+        const soloAdmin = p[2] === 'admin' && EQUIPO.filter((x, k) => x[2] === 'admin' && !(St.retirados || {})[k]).length === 1;
+        return {
+          nombre: p[0], correo: p[1], inicial: p[0].charAt(0), avatar: avatar(i),
+          rol: fuera ? 'Miembro' : (p[2] === 'admin' ? 'Admin' : 'Ops'),
+          chip: 'display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;white-space:nowrap;background:' + (fuera ? 'transparent' : (p[2] === 'admin' ? 'rgba(143,69,21,.13)' : 'rgba(27,81,56,.11)')) + ';border:1px solid ' + (fuera ? 'rgba(20,52,42,.2)' : 'transparent') + ';color:' + (fuera ? '#33513F' : (p[2] === 'admin' ? '#8F4515' : '#1B5138')),
+          inerte: (fuera || soloAdmin) ? 'true' : null,
+          textoQuitar: fuera ? 'Retirado' : (soloAdmin ? 'Único admin' : 'Quitar acceso'),
+          botonQuitar: 'display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 15px;border-radius:999px;font:600 13px/1 \'Inter Tight\',sans-serif;white-space:nowrap;' + ((fuera || soloAdmin)
+            ? 'background:rgba(27,81,56,.13);color:#456352;border:none;cursor:not-allowed'
+            : 'background:transparent;color:#8F4515;border:1px solid rgba(143,69,21,.4);cursor:pointer'),
+          quitar: () => { if (!fuera && !soloAdmin) this.setState((st) => ({ retirados: Object.assign({}, st.retirados, { [i]: true }) })); }
+        };
+      }),
+      nombreEq: St.nombreEq || '',
+      correoEq: St.correoEq || '',
+      onNombreEq: (e) => this.setState({ nombreEq: e.target.value }),
+      onCorreoEq: (e) => this.setState({ correoEq: e.target.value }),
+      campoEq: 'width:100%;min-height:56px;padding:0 20px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#1B5138;font:400 16px/1 \'Inter Tight\',sans-serif;outline:none',
+      rolesEq: [['Ops', 'Reparte, verifica y concilia', 'ops'], ['Admin', 'Todo eso, y da acceso a otros', 'admin']].map((r, i) => {
+        const on = (St.rolEq || 0) === i;
+        return {
+          nombre: r[0], nota: r[1], icono: on ? '✓' : '', aro: aroDS(on),
+          btn: 'flex:1 1 220px;display:flex;align-items:center;gap:11px;min-height:64px;padding:12px 16px;border-radius:22px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.18)') + ';cursor:pointer;transition:all 180ms ease',
+          txt: 'display:block;font:' + (on ? '600' : '500') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A',
+          pick: () => this.setState({ rolEq: i })
+        };
+      }),
+      inerteEq: eqOk ? null : 'true',
+      textoEq: !String(St.nombreEq || '').trim() ? 'Escribe el nombre' : (!eqCorreoOk ? 'Escribe un correo válido' : 'Dar acceso como ' + ((St.rolEq || 0) === 1 ? 'admin' : 'ops')),
+      botonEq: 'display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:56px;padding:0 24px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;background:' + (eqOk ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (eqOk ? '#FAF3E4' : '#456352') + ';cursor:' + (eqOk ? 'pointer' : 'not-allowed'),
+      invitar: () => {
+        if (!eqOk) return;
+        const nombre = String(St.nombreEq).trim();
+        const rol = (St.rolEq || 0) === 1 ? 'admin' : 'ops';
+        this.setState((st) => ({
+          concedidos: (st.concedidos || []).concat([[nombre, String(st.correoEq).trim().toLowerCase(), rol]]),
+          nombreEq: '', correoEq: '', rolEq: 0,
+          acuseEq: nombre + ' ya puede operar como ' + rol + '. Le llega un correo para poner su contraseña, y su cuenta no pasa por cuestionario ni verificación.'
+        }));
+      },
+      hayAcuseEq: !!St.acuseEq,
+      acuseEq: St.acuseEq || '',
+      botonPrimarioOp: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif',
+      metricasLocales: [
+        ['ACTIVOS', String(todosLocales.length), 'En ' + zonasCubiertas + ' zonas', null],
+        ['ZONAS CUBIERTAS', zonasCubiertas + ' de ' + ZONAS_OP.length, 'Sin sitio no hay mesa', null],
+        ['ZONAS CON UN SOLO SITIO', String(zonasUnSitio), zonasUnSitio ? 'Ahí no hay elección posible' : 'Todas con alternativa', zonasUnSitio ? '#8F4515' : null],
+        ['VALORACIÓN MEDIA', '4,4', 'De quienes cenaron', null]
+      ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) })),
+      haySinCubrir: sinCubrir.length > 0,
+      notaSinCubrir: 'No hay sitio de cenas en ' + sinCubrir.join(' ni ') + '. Una mesa que solo acepte esas zonas no se puede sentar.',
+
+      subFechas: [['Abrir una fecha', 'abrir'], ['Cancelar una fecha', 'cancelar']].map((t) => {
+        const on = (St.sub || 'abrir') === t[1];
+        return {
+          nombre: t[0],
+          pick: () => this.setState({ sub: t[1] }),
+          btn: 'display:inline-flex;align-items:center;min-height:44px;padding:0 17px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#1B5138') + ';font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease'
+        };
+      }),
+      esAbrir: (St.sub || 'abrir') === 'abrir',
+      esCancelar: St.sub === 'cancelar',
+
+      etiqueta: 'font:500 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:11px',
+      etiqueta2: 'font:500 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#33513F;margin:26px 0 11px',
+      iconoAviso: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;margin-top:1px',
+
+      dias, formatos, zonasAbrir, resumen, abiertas, vias,
+      etiquetaZonas: deMesa ? 'ZONAS Y RESTAURANTE' : 'ZONAS Y PUNTO DE ENCUENTRO',
+
+      // la actividad solo existe en movimiento, y allí es obligatoria
+      // Cupo y precio son del evento, no del sitio: 8 USD y cupo abierto
+      // son solo el arranque, y en cada fecha se cambian.
+      cupos: [['Cupo abierto', false], ['Limitado', true]].map((x) => {
+        const on = !!St.limitado === x[1];
+        return {
+          label: x[0], icono: on ? '✓' : '', aro: aroDS(on), btn: past(on), txt: txtDS(on),
+          pick: () => this.setState({ limitado: x[1], abierta: false })
+        };
+      }),
+      cupoLimitado: !!St.limitado,
+      tope: St.tope || '',
+      onTope: (e) => this.setState({ tope: e.target.value.replace(/[^0-9]/g, '').slice(0, 4), abierta: false }),
+      precio: St.precio === undefined ? '8' : St.precio,
+      onPrecio: (e) => this.setState({ precio: e.target.value.replace(/[^0-9,.]/g, '').slice(0, 6), abierta: false }),
+      precioBs: precioNum > 0 ? '= ' + bs(precioNum) + ' Bs a la tasa de hoy' : 'Escribe el precio',
+      notaPrecio: 'Se cobra en bolívares a la tasa del día, y la tasa se congela al reportar el pago. El consumo va aparte y no pasa por aquí.',
+      envCampo: 'display:inline-flex;align-items:center;gap:0;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;overflow:hidden',
+      campoNum: 'flex:0 0 auto;width:76px;min-height:52px;padding:0 8px 0 16px;border:none;background:transparent;color:#1B5138;font:600 16px/1 \'Inter Tight\',sans-serif;outline:none;text-align:right',
+      sufijo: 'display:inline-flex;align-items:center;min-height:52px;padding:0 16px 0 6px;font:400 14px/1 \'Inter Tight\',sans-serif;color:#33513F;white-space:nowrap',
+
+      hayActividad: !deMesa,
+      formatoNombre: fSel[0],
+      ejemploActividad: EJEMPLO_ACT[fSel[0]] || 'Ruta y distancia',
+      actividad: St.actividad || '',
+      distancia: St.distancia || '',
+      duracion: St.duracion || '',
+      onActividad: (e) => this.setState({ actividad: e.target.value, abierta: false }),
+      onDistancia: (e) => this.setState({ distancia: e.target.value.replace(/[^0-9,.]/g, '').slice(0, 5), abierta: false }),
+      onDuracion: (e) => this.setState({ duracion: e.target.value.replace(/[^0-9]/g, '').slice(0, 3), abierta: false }),
+      campoAct: 'width:100%;min-height:56px;padding:0 20px;border-radius:999px;border:1px solid ' + (actOk || deMesa ? 'rgba(20,52,42,.22)' : '#C0662F') + ';background:#FAF3E4;color:#1B5138;font:400 16px/1 \'Inter Tight\',sans-serif;outline:none',
+      campoCorto: 'flex:0 0 auto;width:96px;min-height:52px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#1B5138;font:400 15px/1 \'Inter Tight\',sans-serif;outline:none;text-align:center',
+      niveles: ['Suave', 'Media', 'Exigente'].map((label, i) => {
+        const on = St.nivel === i;
+        return {
+          label, icono: on ? '✓' : '', aro: aroDS(on), btn: past(on), txt: txtDS(on),
+          pick: () => this.setState({ nivel: i, abierta: false })
+        };
+      }),
+
+      cajaAvisoGente: 'display:flex;gap:12px;align-items:flex-start;border-radius:20px;background:' + (genteTotal ? 'rgba(143,69,21,.1)' : 'rgba(20,52,42,.05)') + ';padding:15px 17px;margin-top:16px',
+      iconoGente: 'flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:' + (genteTotal ? '#6E340F' : '#456352') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px',
+      glifoGente: genteTotal ? '!' : '·',
+      tituloGente: genteTotal
+        ? 'Se le escribe a ' + genteTotal + (genteTotal === 1 ? ' persona' : ' personas')
+        : 'Todavía no se le escribe a nadie',
+      cuerpoGente: genteTotal
+        ? 'Todo el que acepte estas zonas recibe el aviso de ' + VOZ.unidad + ' ' + VOZ.abierta + ' al pulsar, y no se puede deshacer una vez sale.'
+          + (St.limitado && topeNum >= 6 && genteTotal > topeNum
+            ? ' Ojo: avisas a ' + genteTotal + ' y solo hay ' + topeNum + ' plazas, así que ' + (genteTotal - topeNum) + ' se van a quedar fuera por orden de llegada.'
+            : '')
+        : 'Marca zonas para ver a cuánta gente alcanza esta fecha.',
+      bajadaAbrir: 'Todo el producto cuelga de esto: sin fecha abierta nadie reserva, nadie paga y no hay ' + VOZ.unidades + ' que repartir.',
+
+      inerteAbrir: listoAbrir ? null : 'true',
+      textoAbrir: !dSel ? 'Elige el día'
+        : (idxZonas.length === 0 ? 'Marca al menos una zona'
+          : (!precioOk ? 'Escribe el precio'
+            : (!cupoOk ? 'El tope no llega a ' + VOZ.art + ' ' + VOZ.unidad
+              : (!actOk ? 'Describe la actividad'
+            : (!todasConLocal ? 'Falta el ' + VOZ.sitio + ' de una zona'
+                  : 'Abrir y avisar a ' + genteTotal))))),
+      botonAbrir: 'display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:56px;margin-top:16px;padding:0 24px;border-radius:999px;border:none;background:' + (listoAbrir ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (listoAbrir ? '#FAF3E4' : '#456352') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (listoAbrir ? 'pointer' : 'not-allowed'),
+      abrir: () => { if (listoAbrir) this.setState({ abierta: true }); },
+      abierta: !!St.abierta,
+      textoAbierta: dSel ? ('Fecha abierta: ' + fSel[0] + ' del ' + fmt(dSel) + '. Salieron ' + genteTotal + ' avisos y ' + unidadesTotal + ' ' + (unidadesTotal === 1 ? VOZ.unidad + ' entra' : VOZ.unidades + ' entran') + ' al reparto.') : '',
+
+      cancelada: !!St.cancelada,
+      textoCancelada: viaHecha
+        ? 'Fecha cancelada. Se devolvieron ' + (viaHecha.creditos * nApuntados) + ' créditos a ' + nApuntados + ' personas, y ' + nPagados + (nPagados === 1 ? ' pago queda' : ' pagos quedan') + ' en la cola de devoluciones.'
+        : '',
+
+
+      h1: 'font:400 clamp(26px,3.4vw,38px)/1.05 \'Young Serif\',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:0',
+      bajada: 'font:400 16px/1.6 \'Inter Tight\',sans-serif;color:#2C4A38;max-width:62ch;margin:10px 0 0;text-wrap:pretty',
+      selloCierre: 'display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:rgba(143,69,21,.13);font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;color:#8F4515;white-space:nowrap',
+      textoTasa: 'TASA BCV · ' + TASA_BCV.toFixed(2).replace('.', ',') + ' Bs',
+      selloTasa: 'display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.22);font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:#2C4A38;white-space:nowrap',
+      botonPrimario: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 26px;border-radius:999px;border:none;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      botonBorde: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:999px;border:1px solid rgba(20,52,42,.24);background:transparent;color:#1B5138;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+
+      rebarajar: () => this.setState({ publicadas: {}, forzadas: {}, asig: {} })
+    };
+  }
+}
+</script>
+</body>
+</html>
