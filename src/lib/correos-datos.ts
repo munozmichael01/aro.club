@@ -1,6 +1,8 @@
 import 'server-only'
 
 import type { Correo } from '@/lib/correos'
+import { firmar } from '@/lib/lead-token'
+import { SITIO } from '@/lib/remitente'
 import { vozDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
@@ -145,6 +147,18 @@ export async function prepararCorreo(fila: FilaDeCola): Promise<Preparado> {
           // El pie de la tarjeta. En minúscula, como lo diseñó Design, pero
           // con la zona de verdad y no con «las mercedes» escrito a mano.
           pieDeZona: zonas.length ? `jueves · ${zonas[0].toLowerCase()}` : 'jueves',
+          // El botón. NO puede ser `/cuestionario` a secas.
+          //
+          // Este correo lo recibe quien dejó su correo y se quedó a medias: no
+          // tiene cuenta, así que al pulsar no continuaría nada, empezaría de
+          // cero. El token firmado es justo el mecanismo que ya existe para
+          // seguir el alta desde otro dispositivo, y este es su caso exacto.
+          //
+          // Y para quien SÍ tiene cuenta —el empujón de «te falta verificar»—
+          // el botón lleva a verificación, que es su siguiente paso de verdad.
+          enlaceSeguir: fila.profile_id
+            ? `${SITIO}/verificacion`
+            : `${SITIO}/cuestionario?t=${encodeURIComponent(firmar(a))}`,
         },
       }
     }

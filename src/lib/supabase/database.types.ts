@@ -304,6 +304,114 @@ export type Database = {
         }
         Relationships: []
       }
+      correos_entrantes: {
+        Row: {
+          asunto: string | null
+          created_at: string
+          crudo: Json
+          de: string
+          error_reenvio: string | null
+          html: string | null
+          id: string
+          para: string | null
+          profile_id: string | null
+          proveedor_id: string | null
+          reenviado_at: string | null
+          texto: string | null
+          visto_at: string | null
+          visto_por: string | null
+        }
+        Insert: {
+          asunto?: string | null
+          created_at?: string
+          crudo: Json
+          de: string
+          error_reenvio?: string | null
+          html?: string | null
+          id?: string
+          para?: string | null
+          profile_id?: string | null
+          proveedor_id?: string | null
+          reenviado_at?: string | null
+          texto?: string | null
+          visto_at?: string | null
+          visto_por?: string | null
+        }
+        Update: {
+          asunto?: string | null
+          created_at?: string
+          crudo?: Json
+          de?: string
+          error_reenvio?: string | null
+          html?: string | null
+          id?: string
+          para?: string | null
+          profile_id?: string | null
+          proveedor_id?: string | null
+          reenviado_at?: string | null
+          texto?: string | null
+          visto_at?: string | null
+          visto_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "correos_entrantes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "correos_entrantes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "correos_entrantes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "correos_entrantes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "correos_entrantes_visto_por_fkey"
+            columns: ["visto_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "correos_entrantes_visto_por_fkey"
+            columns: ["visto_por"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "correos_entrantes_visto_por_fkey"
+            columns: ["visto_por"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "correos_entrantes_visto_por_fkey"
+            columns: ["visto_por"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_ledger: {
         Row: {
           booking_id: string | null
