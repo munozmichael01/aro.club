@@ -426,6 +426,12 @@ class Component extends DCLogic {
       // no una zona que se guarde. `aCodigo` lo deja caer por ser null.
       ["Cualquier zona de la ciudad", null],
     ],
+    // Las nueve del catalogo. Las dos de la manana faltaban en la pantalla
+    // desde siempre —y hay gente con `sab-am` ya guardado, que entro por otra
+    // puerta—. Importan para los formatos de movimiento: correr un sabado a
+    // mediodia en Caracas no tiene sentido y un sabado por la manana si, asi
+    // que sin estas dos opciones el horario en que de verdad se corre no se
+    // podia decir. Van al final, en el orden del catalogo.
     dias: [
       ["Martes noche", "mar"],
       ["Miércoles noche", "mie"],
@@ -434,6 +440,8 @@ class Component extends DCLogic {
       ["Sábado noche", "sab"],
       ["Sábado mediodía", "sab-md"],
       ["Domingo mediodía", "dom-md"],
+      ["Sábado mañana", "sab-am"],
+      ["Domingo mañana", "dom-am"],
     ],
     idiomas: [
       ["Español", "es"],
