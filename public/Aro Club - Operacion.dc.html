@@ -1898,15 +1898,27 @@ class Component extends DCLogic {
         fondoResuelto: d === 'ok' ? 'rgba(27,81,56,.11)' : 'rgba(143,69,21,.09)',
         iconoResuelto: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:' + (d === 'ok' ? '#1B5138' : '#6E340F') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;margin-top:1px',
 
+        // Se marca como aprobada DESPUES de que el servidor lo confirme, no
+        // antes. Pintarlo optimista escondio un fallo entero: la peticion se
+        // caia con un 400 y la pantalla decia igual "Aprobada. Le llega el
+        // correo de identidad verificada", asi que la unica senal de que
+        // nada habia pasado era que el correo no llegaba nunca.
         aprobar: () => {
-          this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [c.profileId]: 'ok' }), abriendo: null }));
-          this.decidirIdentidad({ accion: 'aprobar', profileId: c.profileId });
+          this.setState({ abriendo: null });
+          this.decidirIdentidad({ accion: 'aprobar', profileId: c.profileId }).then((r) => {
+            if (!r.ok) return;
+            this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [c.profileId]: 'ok' }) }));
+          });
         },
         rechazar: () => this.setState((st) => ({ abriendo: st.abriendo === c.profileId ? null : c.profileId })),
         confirmarRechazo: () => {
           if (mSel < 0 || !MOTIVOS[mSel]) return;
-          this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [c.profileId]: 'no' }), abriendo: null }));
-          this.decidirIdentidad({ accion: 'rechazar', profileId: c.profileId, motivo: MOTIVOS[mSel][3] });
+          this.setState({ abriendo: null });
+          // Igual que aprobar: primero que lo acepte el servidor.
+          this.decidirIdentidad({ accion: 'rechazar', profileId: c.profileId, motivo: MOTIVOS[mSel][3] }).then((r) => {
+            if (!r.ok) return;
+            this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [c.profileId]: 'no' }) }));
+          });
         }
       };
     });
@@ -1968,13 +1980,20 @@ class Component extends DCLogic {
         textoRechazar: 'No cuadra',
         botonAprobar: btnCola(d === 'ok' ? 'rgba(27,81,56,.13)' : '#1B5138', d === 'ok' ? '#1B5138' : '#FAF3E4', 'none'),
         botonRechazar: btnCola('transparent', '#8F4515', '1px solid rgba(143,69,21,.4)'),
+        // Igual que en verificaciones: se pinta al confirmarlo el servidor.
+        // Un panel que dice "confirmado" cuando la peticion se cayo hace que
+        // el fallo solo se vea por lo que NO pasa despues.
         aprobar: () => {
-          this.setState((st) => ({ conciliadas: Object.assign({}, st.conciliadas, { [c.id]: 'ok' }) }));
-          this.decidirPago({ accion: 'confirmar', pagoId: c.id });
+          this.decidirPago({ accion: 'confirmar', pagoId: c.id }).then((r) => {
+            if (!r.ok) return;
+            this.setState((st) => ({ conciliadas: Object.assign({}, st.conciliadas, { [c.id]: 'ok' }) }));
+          });
         },
         rechazar: () => {
-          this.setState((st) => ({ conciliadas: Object.assign({}, st.conciliadas, { [c.id]: 'no' }) }));
-          this.decidirPago({ accion: 'no-cuadra', pagoId: c.id, motivo: 'El monto o la referencia no cuadran con el movimiento.' });
+          this.decidirPago({ accion: 'no-cuadra', pagoId: c.id, motivo: 'El monto o la referencia no cuadran con el movimiento.' }).then((r) => {
+            if (!r.ok) return;
+            this.setState((st) => ({ conciliadas: Object.assign({}, st.conciliadas, { [c.id]: 'no' }) }));
+          });
         }
       };
     });

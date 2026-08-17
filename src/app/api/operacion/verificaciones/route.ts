@@ -18,8 +18,18 @@ const decision = z.discriminatedUnion('accion', [
   z.object({
     accion: z.literal('aprobar'),
     profileId: z.string().uuid(),
-    nombreCoincide: z.boolean(),
-    edadCoincide: z.boolean(),
+    // Opcionales, y con eso se arregla un fallo que dejó la cola muerta: el
+    // panel manda solo `accion` y `profileId` —no tiene las dos casillas—
+    // así que exigirlas aquí hacía que TODA aprobación se cayera con un 400.
+    // Michael aprobó una y las dos filas siguieron en `pending`.
+    //
+    // Ausente se guarda como null, que no es lo mismo que `false`: la ficha
+    // del miembro ya distingue «Nombre y edad coincidían» de «Sin comprobar
+    // todavía». Escribir `true` por defecto sería dejar dicho que alguien
+    // comprobó algo que nadie comprobó, y ese registro es justo el que se
+    // mira cuando algo sale mal.
+    nombreCoincide: z.boolean().optional(),
+    edadCoincide: z.boolean().optional(),
   }),
   z.object({
     accion: z.literal('rechazar'),
@@ -114,8 +124,8 @@ export async function POST(request: Request) {
         status: 'approved',
         reviewed_by: actor,
         reviewed_at: ahora,
-        name_matches: d.nombreCoincide,
-        age_confirmed: d.edadCoincide,
+        name_matches: d.nombreCoincide ?? null,
+        age_confirmed: d.edadCoincide ?? null,
       })
       .eq('profile_id', d.profileId)
       .eq('status', 'pending')
