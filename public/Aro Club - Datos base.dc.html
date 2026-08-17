@@ -31,7 +31,7 @@
 <div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh">
 
   <div style="max-width:620px;margin:0 auto;padding:clamp(16px,4vw,26px) clamp(16px,4vw,24px) 0;display:flex;align-items:center;justify-content:space-between;gap:12px">
-    <a href="Aro Club - Mi cuenta.dc.html" style="display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:-10px 0">
+    <a href="{{ enlaceCabecera }}" style="display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:-10px 0">
       <span style="font:500 19px/1 'Inter Tight',sans-serif;color:#33513F">←</span>
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="1.8"></circle><circle cx="20.6" cy="12" r="1.9" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#14342A"></circle><circle cx="3.4" cy="12" r="1.9" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#14342A"></circle></svg>
       <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
@@ -54,6 +54,14 @@
       <h1 style="{{ h1 }}">{{ titulo }}</h1>
       <p style="{{ estiloBajada }}">{{ textoBajada }}</p>
     </div>
+
+    <sc-if value="{{ esCorreo }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:clamp(26px,3.4vw,34px);animation:aro-open 300ms ease both">
+        <label for="correo" style="{{ etiqueta }}">Tu correo</label>
+        <input id="correo" type="email" value="{{ correo }}" onChange="{{ onCorreo }}" placeholder="daniela@correo.com" autocomplete="email" inputmode="email" style="{{ campo }}" />
+        <div style="{{ pista }}">Es por donde te avisamos de tu mesa: el jueves a mediodía, cuando se revela. No hay lista de difusión ni nada que no hayas pedido.</div>
+      </div>
+    </sc-if>
 
     <sc-if value="{{ esNombre }}" hint-placeholder-val="{{ true }}">
       <div style="margin-top:clamp(26px,3.4vw,34px);animation:aro-open 300ms ease both">
@@ -169,12 +177,18 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { paso: 0, nombre: '', trato: '', dia: '', mes: '', anio: '', genero: -1,
+  state = { paso: 0, correo: '', nombre: '', trato: '', dia: '', mes: '', anio: '', genero: -1,
     prefijo: '+58', telefono: '', guardando: false, fallo: '' };
 
   GENEROS = ['mujer', 'hombre', 'no-binario', 'sin-decir'];
 
   SESION = 'aro-sesion';
+
+  // El paso del correo va ANTES del primero, y por eso es -1 y no 0: los
+  // cuatro pasos numerados son los datos, y este no es un dato mas sino la
+  // puerta. Asi la barra de progreso sigue contando cuatro y el resumen
+  // final sigue devolviendo a 0, 1, 2 y 3 sin tocar ningun indice.
+  PASO_CORREO = -1;
 
   /** La llave del correo, si todavia no hay cuenta. */
   sesionLead() {
@@ -188,6 +202,20 @@ class Component extends DCLogic {
     // miembro editandolos desde su cuenta y manda la sesion.
     const s = this.sesionLead();
     this._lead = (s && s.correo && s.token) ? s : null;
+    this.cargar(true);
+  }
+
+  /**
+   * Rellena con lo que ya haya guardado.
+   *
+   * `pedirCorreo` decide que pasa si el servidor dice que no sabe quien eres.
+   * Al abrir la pantalla, si: es alguien que llego aqui sin sesion y sin
+   * llave, y se le pide el correo en vez de rebotarlo. Justo despues de
+   * dejarlo, no: acaba de darnoslo, y mandarlo otra vez a la misma casilla
+   * seria un bucle. Ahi se queda en el paso 1 con los campos vacios, que es
+   * exactamente lo que hay que hacer con alguien nuevo.
+   */
+  cargar(pedirCorreo) {
     const q = this._lead
       ? '?correo=' + encodeURIComponent(this._lead.correo) + '&token=' + encodeURIComponent(this._lead.token)
       : '';
@@ -208,7 +236,46 @@ class Component extends DCLogic {
         if (d.genero) est.genero = this.GENEROS.indexOf(d.genero);
         this.setState(est);
       })
-      .catch(() => { window.location.href = 'Aro Club - Entrar.dc.html'; });
+      // Aqui estaba el rebote a Entrar, y era el agujero del embudo: el
+      // correo solo se pedia en la landing, asi que CUALQUIER otra puerta
+      // —«Empieza aqui», un enlace de un correo, escribir /datos— acababa
+      // en una pantalla de entrar sin cuenta con la que entrar. Ahora se
+      // pide aqui y el embudo arranca donde aterrices.
+      .catch(() => { if (pedirCorreo) this.setState({ paso: this.PASO_CORREO }); });
+  }
+
+  /**
+   * El correo, para quien llega sin nada.
+   *
+   * Va a `/api/lead`, que es exactamente donde va el de la landing: no hay
+   * una puerta nueva, hay la misma puerta en otro sitio. De ahi sale la
+   * llave firmada que deja guardar los cuatro datos que vienen despues.
+   */
+  entrar() {
+    const c = (this.state.correo || '').trim();
+    if (this.state.guardando || !AroReglas.valido('correo', c)) return;
+    this.setState({ guardando: true, fallo: '' });
+    fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // Sin `variante`: ese campo solo admite las de la landing, y esto no
+      // lo es. Mandarla como 'datos' seria un 400 en la primera pantalla.
+      body: JSON.stringify({ correo: c, ciudad: 'caracas' })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok || !d.token) {
+          this.setState({ guardando: false, fallo: (d && d.error) || 'No pudimos continuar. Vuelve a intentarlo.' });
+          return;
+        }
+        this._lead = { correo: c, token: d.token };
+        try { window.localStorage.setItem(this.SESION, JSON.stringify(this._lead)); }
+        catch (e) { /* modo privado: se sigue igual, solo que no se recuerda */ }
+        this.setState({ guardando: false, paso: 0 });
+        // Si ya habia dejado sus datos otra vez, aparecen rellenos.
+        this.cargar(false);
+      })
+      .catch(() => this.setState({ guardando: false, fallo: 'No pudimos continuar. Revisa tu conexión.' }));
   }
 
   /** A donde se va al terminar: al cuestionario si aun falta, o a la cuenta. */
@@ -316,7 +383,20 @@ class Component extends DCLogic {
         listo: true
       }
     ];
-    const q = pasos[p];
+
+    // El paso -1 va aparte del array para no correr los indices de los
+    // otros cuatro: el resumen del final devuelve a 0, 1, 2 y 3, y esos
+    // numeros estan escritos en varios sitios.
+    const correoOk = AroReglas.valido('correo', (this.state.correo || '').trim());
+    const q = p === this.PASO_CORREO
+      ? {
+        eyebrow: 'EMPEZAMOS',
+        titulo: '¿A qué correo te escribimos?',
+        bajada: 'Es lo único que hace falta para empezar. Después vienen cuatro datos y las preguntas.',
+        listo: correoOk,
+        falla: (this.state.correo || '').trim().length === 0 ? 'Escribe tu correo' : 'Revisa el correo'
+      }
+      : pasos[p];
 
     const aroDe = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
 
@@ -366,8 +446,16 @@ class Component extends DCLogic {
       // Quien todavia no tiene cuenta sigue al cuestionario; quien la tiene
       // esta editando y vuelve a su cuenta.
       enlaceSiguiente: this.siguiente(),
+      // La flecha de arriba llevaba SIEMPRE a Mi cuenta, que exige sesion.
+      // Para quien todavia no tiene cuenta —y ahora tambien para quien
+      // acaba de aterrizar sin nada— eso es otra puerta cerrada.
+      enlaceCabecera: (p === this.PASO_CORREO || this._lead) ? '/' : 'Aro Club - Mi cuenta.dc.html',
       textoSiguiente5: this._lead ? 'Seguir con las preguntas' : 'Volver a mi cuenta',
-      etiquetaPaso: p < 4 ? 'PASO ' + (p + 1) + ' DE 4' : 'COMPLETO',
+      etiquetaPaso: p === this.PASO_CORREO ? 'TU CORREO' : (p < 4 ? 'PASO ' + (p + 1) + ' DE 4' : 'COMPLETO'),
+
+      esCorreo: p === this.PASO_CORREO,
+      correo: this.state.correo,
+      onCorreo: (e) => this.setState({ correo: e.target.value }),
 
       esNombre: p === 0, esNacimiento: p === 1, esGenero: p === 2, esTelefono: p === 3, esFin: p === 4,
       hayNav: p < 4,
@@ -434,13 +522,16 @@ class Component extends DCLogic {
       eyebrow: 'font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.16em;color:#8F4515;margin-bottom:13px',
       h1: 'font:400 clamp(30px,6.4vw,44px)/1.04 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:16ch;text-wrap:balance',
 
-      textoSiguiente: this.state.guardando ? 'Guardando' : (q.listo ? (p === 3 ? 'Terminar' : 'Continuar') : (q.falla || 'Falta este dato')),
+      textoSiguiente: this.state.guardando
+        ? (p === this.PASO_CORREO ? 'Un momento' : 'Guardando')
+        : (q.listo ? (p === 3 ? 'Terminar' : 'Continuar') : (q.falla || 'Falta este dato')),
       inerte: q.listo ? null : 'true',
       botonSiguiente: btn(q.listo ? '#14342A' : 'rgba(20,52,42,.12)', q.listo ? '#FAF3E4' : '#2C4A38', q.listo ? '' : 'cursor:not-allowed'),
       // Del paso 4 al resumen se pasa GUARDANDO. Antes avanzaba solo, asi
       // que la pantalla decia "Ya podemos sentarte" sin haber guardado nada.
       siguiente: () => {
         if (!q.listo || this.state.guardando) return;
+        if (p === this.PASO_CORREO) { this.entrar(); return; }
         if (p === 3) { this.guardar(); return; }
         this.setState((s) => ({ paso: Math.min(4, s.paso + 1) }));
       },

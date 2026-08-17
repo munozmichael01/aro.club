@@ -103,6 +103,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, nota: 'cuerpo ilegible' })
   }
 
+  // Solo el correo que ENTRA.
+  //
+  // En Resend se puede suscribir un webhook a todos los eventos, y ahí van
+  // también `email.sent`, `email.delivered` y `email.bounced` — los de
+  // NUESTROS envíos—. Sin este filtro, cada correo que mandamos volvería por
+  // aquí, se guardaría como si alguien nos hubiera escrito, y se reenviaría
+  // al buzón. Un bucle silencioso: el reenvío genera otro `email.sent`.
+  //
+  // Se comprueba aquí y no solo en la pantalla de Resend porque marcar la
+  // casilla equivocada es un clic y esto es un bucle.
+  const tipo = String(evento.type ?? '')
+  if (tipo && !tipo.includes('received') && !tipo.includes('inbound')) {
+    return NextResponse.json({ ok: true, nota: 'no es correo entrante: ' + tipo })
+  }
+
   // El payload real de Resend puede traer los campos en la raíz o dentro de
   // `data`. Se miran los dos y se guarda el crudo entero: si mañana hace
   // falta un campo que hoy no extraemos, está ahí y no hay que pedirle a

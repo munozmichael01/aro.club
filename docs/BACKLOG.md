@@ -5,32 +5,38 @@ retomarlo no sea volver a discutirlo.
 
 ---
 
-## 1 · El embudo tiene una sola puerta
+## 1 · El embudo tiene una sola puerta — **hecho el 17 de agosto**
 
-**El problema.** El correo solo se pide en la landing, en el bloque
-`#registro`. Cualquier otra entrada rebota:
+`/datos` pide el correo cuando llega alguien sin sesión y sin llave, en vez
+de rebotar a Entrar, y «Empieza aquí» ya apunta ahí. El paso va antes del
+primero —es el `-1`— para no correr los índices de los cuatro datos, que
+están escritos en el resumen del final.
 
-- «Empieza aquí» desde Entrar te manda a la landing… y **el ancla no baja**.
-  Comprobado: el bloque está a 14.848 píxeles y la página se queda arriba.
-  La landing no scrollea en la ventana sino dentro de un contenedor, así que
-  ni `scrollIntoView` la mueve.
-- Entrar directo a `/datos` o `/cuestionario` sin sesión ni token rebota a
-  Entrar. Ese es el «redirect raro».
+Una corrección sobre lo que decía esta ficha: `deQuien()` **no** acepta un
+correo suelto, exige `correo` + token firmado. Así que el paso nuevo no
+llama a `/api/datos-base` sino a `/api/lead`, que es exactamente donde manda
+el correo la landing. No hay puerta nueva: es la misma puerta en otro sitio.
 
-Y esto empeora ahora que los correos llevan enlaces: cada correo es una
-puerta nueva, y todas dan al mismo sitio.
+Queda pendiente el ancla `/#registro` de la landing —sigue sin bajar— pero
+ya no bloquea a nadie, porque el enlace que la usaba ahora va a `/datos`.
 
-**La solución, que es de Michael.** Que `/datos` pida el correo cuando llega
-alguien sin sesión y sin token, en vez de rebotar. La ruta ya lo admite
-—`deQuien()` acepta `correo` además de `token`— así que no hay fontanería
-nueva: es un estado más de la pantalla.
+---
 
-Con eso «Empieza aquí» puede ir a `/datos` y el embudo arranca donde
-aterrices.
+## 1b · Cualquiera puede pedir la llave de un correo ajeno
 
-**Por qué espera.** Es una pantalla de Design, y va en el mismo encargo que
-la baja de correos y la de Gente. Mientras tanto el enlace sigue apuntando a
-`/#registro`, que no baja pero al menos lleva a la página correcta.
+`/api/lead` acuña token para **cualquier** dirección, exista ya o no. Con esa
+llave, `/datos` abre relleno con el nombre, la edad y el teléfono de quien
+sea. Quien conozca el correo de otra persona ve sus datos base.
+
+Esto **ya pasaba** antes del cambio de arriba —se conseguía igual desde la
+landing, solo que en dos pasos en vez de uno—, así que no es algo que hayamos
+abierto hoy. Pero ahora es la puerta principal del embudo y conviene mirarlo.
+
+**Arreglarlo bien es un enlace mágico**: el token se manda al correo en vez
+de devolverlo en la respuesta, y solo entra quien abre ese correo. Eso toca
+el embudo entero y añade un paso a todo el mundo para tapar un caso que hoy
+exige saberse la dirección de alguien. Es una decisión de producto, no un
+parche, y por eso está aquí y no hecho a medias.
 
 ---
 
