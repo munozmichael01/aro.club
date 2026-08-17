@@ -1140,27 +1140,11 @@
   }
 
   // src/cdn.ts
-  // ----------------------------------------------------------------------
-  // Los tres desde NUESTRO dominio, no desde unpkg.com.
-  //
-  // Cada primera visita se traia 3,2 MB de un tercero —3 de ellos Babel, un
-  // compilador que corre en el navegador— antes de pintar nada. Con una
-  // conexion mala eso es medio minuto en blanco, y si unpkg tiene un mal dia
-  // la pagina se queda enseñando los {{ }} sin resolver. Me paso probando.
-  // El publico de esto es Caracas por LTE.
-  //
-  // Los ficheros son los mismos byte a byte: los SRI de abajo son los que ya
-  // estaban y siguen cuadrando. Solo cambia de donde vienen.
-  //
-  // Actualizar una version = volver a bajar el fichero a public/vendor y
-  // recalcular su hash con:
-  //   openssl dgst -sha384 -binary FICHERO | openssl base64 -A
-  // ----------------------------------------------------------------------
-  var REACT_URL = "/vendor/react.production.min.js";
+  var REACT_URL = "https://unpkg.com/react@18.3.1/umd/react.production.min.js";
   var REACT_SRI = "sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z";
-  var REACT_DOM_URL = "/vendor/react-dom.production.min.js";
+  var REACT_DOM_URL = "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js";
   var REACT_DOM_SRI = "sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1";
-  var BABEL_URL = "/vendor/babel.min.js";
+  var BABEL_URL = "https://unpkg.com/@babel/standalone@7.29.0/babel.min.js";
   var BABEL_SRI = "sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y";
   function cdnScriptFor(url, sri) {
     const res = window.__resources;

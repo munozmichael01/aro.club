@@ -1,6 +1,7 @@
 import 'server-only'
 
 import type { Correo } from '@/lib/correos'
+import { firmarBaja } from '@/lib/baja-token'
 import { firmar } from '@/lib/lead-token'
 import { SITIO } from '@/lib/remitente'
 import { vozDe } from '@/lib/reglas'
@@ -117,9 +118,25 @@ export async function prepararCorreo(fila: FilaDeCola): Promise<Preparado> {
 
   const voz = vozDe(evento?.format ?? (p.formato as string) ?? null)
 
+  // «Ajustes de correo» del pie, con dos destinos según quién abra.
+  //
+  // Los trece correos apuntaban a `/cuenta`, que exige sesión. Y quien recibe
+  // la bienvenida NO tiene cuenta: dejó su dirección y se quedó a medias, así
+  // que para esa persona el enlace no llevaba a ningún sitio. Un enlace de
+  // baja que no funciona no es solo feo; en varias jurisdicciones no es legal.
+  //
+  // Con cuenta va a sus ajustes, donde hay un interruptor por tipo de aviso.
+  // Sin cuenta va a la pantalla de baja, con el token firmado en la URL: sin
+  // sesión, la firma es lo único que impide dar de baja a cualquiera poniendo
+  // su dirección a mano.
+  const enlaceAjustes = fila.profile_id
+    ? `${SITIO}/cuenta`
+    : `${SITIO}/baja?correo=${encodeURIComponent(a)}&token=${encodeURIComponent(firmarBaja(a))}`
+
   const base: Valores = {
     trato,
     correo: a,
+    enlaceAjustes,
     ciudad: 'Caracas',
     cuando: diaTexto(evento?.starts_at),
     hora: horaTexto(evento?.starts_at),

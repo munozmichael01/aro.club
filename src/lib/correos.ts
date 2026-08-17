@@ -19,6 +19,33 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * no se le apruebe la identidad por no poder anotar el correo, peor.
  */
 
+/**
+ * Los correos que la baja NO apaga.
+ *
+ * Son los que contestan a algo que la persona pidió, y que sin ellos lo que
+ * pidió no funciona. El de la mesa **es** cómo sabe dónde es la cena; el del
+ * pago es el comprobante de que apartamos su puesto; el de la clave lo pidió
+ * ella hace un minuto. Apagarlos no sería respetar su decisión, sería
+ * romperle la reserva.
+ *
+ * Lo que sí se apaga: la bienvenida, los empujones, «abrimos tu zona» y todo
+ * lo que sale sin que nadie lo haya pedido. Eso es lo que la gente quiere
+ * decir cuando se da de baja.
+ *
+ * La pantalla de baja dice esta misma línea, para que nadie se lleve la
+ * sorpresa de recibir un correo después de darse de baja.
+ */
+const IMPRESCINDIBLES: ReadonlySet<string> = new Set([
+  'mesa_asignada',
+  'recordatorio',
+  'cancelacion',
+  'fecha_cancelada',
+  'pago_en_revision',
+  'pago_confirmado',
+  'pago_no_cuadra',
+  'restablecer_clave',
+])
+
 export type Correo =
   | 'bienvenida'
   | 'verificacion'
@@ -100,7 +127,9 @@ export async function encolar(
  * algo se tuerce, la fila se queda sin `sent_at` y el cron la recoge en la
  * siguiente vuelta, que es exactamente para lo que está.
  */
-export async function despacharPendientes(): Promise<number> {
+export async function despacharPendientes(
+  seco = false,
+): Promise<{ mandados: number; quedan: number; seco?: { kind: string; asunto: string; huecos: number }[] }> {
   try {
     // Se importan aquí dentro y no arriba porque `correos-datos` necesita el
     // tipo `Correo` de este mismo fichero: en la cabecera sería un ciclo.
@@ -119,6 +148,24 @@ export async function despacharPendientes(): Promise<number> {
       .limit(25)
 
     let mandados = 0
+    // Lo que se ve en el ensayo: qué asunto sale y si quedó algún hueco sin
+    // rellenar. Es la comprobación que importa —una plantilla con un {{ }} a
+    // medias se manda igual y se lee fatal— y no enseña el contenido de nadie.
+    const enSeco: { kind: string; asunto: string; huecos: number }[] = []
+
+    // Quién se dio de baja. Se lee una vez para toda la vuelta, no una por
+    // correo: son pocas filas y la cola trae hasta veinticinco.
+    //
+    // Esto es lo que hace que la baja sea real. Hasta ahora
+    // `profiles.notificaciones` se guardaba y NADIE lo leía al enviar: los
+    // interruptores de Mi cuenta no apagaban nada. Un enlace de baja que no
+    // da de baja no es un detalle feo, es el problema legal.
+    const { data: bajas } = await admin
+      .from('bajas_correo')
+      .select('correo')
+      .is('deshecha_at', null)
+
+    const dadosDeBaja = new Set((bajas ?? []).map((b) => b.correo))
 
     for (const fila of pendientes ?? []) {
       const listo = await prepararCorreo(fila as Parameters<typeof prepararCorreo>[0])
@@ -132,11 +179,36 @@ export async function despacharPendientes(): Promise<number> {
         continue
       }
 
+      // ¿Se dio de baja? Se comprueba con la dirección de verdad —la que
+      // devuelve `prepararCorreo`— y no con la de la fila: la fila puede
+      // llevar `profile_id` sin correo, y ahí la baja se habría colado.
+      if (dadosDeBaja.has(String(listo.a).trim().toLowerCase()) && !IMPRESCINDIBLES.has(fila.kind)) {
+        // Se cierra en vez de dejarla pendiente: si no, cada vuelta del cron
+        // volvería a mirarla para siempre.
+        await admin.from('scheduled_emails')
+          .update({ sent_at: new Date().toISOString() } as never).eq('id', fila.id)
+        continue
+      }
+
       // La columna admite algún `kind` sin plantilla propia —'comprobante'—,
       // así que el tipo de la base es más ancho que el de los correos. Si no
       // hay plantilla, `componer` devuelve null y se anota abajo.
       const pintado = await componer(fila.kind as Correo, listo.datos)
       if (!pintado) { console.error('[correos] sin plantilla', fila.kind); continue }
+
+      // El ensayo se para AQUI y no antes: asi pasa por el filtro de la baja
+      // igual que un envio de verdad. Si se saliera antes, el ensayo diria que
+      // manda un correo que en realidad no se manda, y el ensayo es justo lo
+      // que se usa para comprobar que esto esta bien.
+      if (seco) {
+        enSeco.push({
+          kind: fila.kind,
+          asunto: pintado.asunto,
+          huecos: (pintado.html.match(/\{\{/g) ?? []).length,
+        })
+        mandados++
+        continue
+      }
 
       const r = await enviar(listo.a, pintado.asunto, pintado.html)
 
@@ -155,9 +227,15 @@ export async function despacharPendientes(): Promise<number> {
       if (r.estado === 'enviado') mandados++
     }
 
-    return mandados
+    const { count } = await admin
+      .from('scheduled_emails')
+      .select('*', { count: 'exact', head: true })
+      .is('sent_at', null)
+      .lte('send_at', new Date().toISOString())
+
+    return { mandados, quedan: count ?? 0, seco: seco ? enSeco : undefined }
   } catch (e) {
     console.error('[correos] fallo despachando', e)
-    return 0
+    return { mandados: 0, quedan: 0 }
   }
 }

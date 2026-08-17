@@ -123,6 +123,30 @@ export type Database = {
         }
         Relationships: []
       }
+      bajas_correo: {
+        Row: {
+          baja_at: string
+          correo: string
+          created_at: string
+          deshecha_at: string | null
+          origen: string
+        }
+        Insert: {
+          baja_at?: string
+          correo: string
+          created_at?: string
+          deshecha_at?: string | null
+          origen?: string
+        }
+        Update: {
+          baja_at?: string
+          correo?: string
+          created_at?: string
+          deshecha_at?: string | null
+          origen?: string
+        }
+        Relationships: []
+      }
       booking_zones: {
         Row: {
           booking_id: string

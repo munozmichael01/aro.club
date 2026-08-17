@@ -5,6 +5,59 @@ retomarlo no sea volver a discutirlo.
 
 ---
 
+## 0 · Las opciones del cuestionario, texto y código juntos
+
+**Prioridad alta.** No por lo que rompe hoy, sino por lo que puede romper sin
+que nadie se entere.
+
+**El problema.** En `public/Aro Club - Cuestionario.dc.html` cada pregunta
+tiene sus textos en `renderVals` y sus códigos en `COD`, en dos listas
+separadas. `aCodigo()` traduce **por posición**: la opción 3 de la pantalla se
+guarda como el código 3 de `COD`.
+
+Hay un candado —`revisarCodigos()`— que compara longitudes y grita en consola
+si no cuadran. Cubre el caso común: añadir o quitar una opción y olvidar la
+otra lista.
+
+**Lo que el candado NO puede ver es un reordenamiento:**
+
+```
+opciones: ['Escucho', 'Depende', 'Suelo llevar']   ← 3
+COD.rol:  ['escucha', 'lleva',   'depende']        ← 3   pasa el candado
+```
+
+Tres y tres. Y quien marca «Depende del momento» queda guardado como `lleva`.
+El reparto lo sienta como el que lleva la conversación. Sin error, sin
+validación fallida, sin nada visible en ninguna pantalla. Se descubre meses
+después mirando por qué una mesa no cuadró.
+
+Pasó de verdad al mover «Depende del momento» al final el 17 de agosto: hubo
+que acordarse de mover las dos listas a mano. Si se hubiera movido solo una,
+no se habría notado.
+
+**La solución.** Que no haya dos listas. Cada opción como
+`{ texto: 'Depende del momento', codigo: 'depende' }` en un solo sitio, y
+`aCodigo` leyendo el código de la propia opción en vez de contando posiciones.
+Reordenar deja de poder desincronizar nada, porque no hay nada separado que
+desincronizar. Y `revisarCodigos()` sobra.
+
+Son las 16 preguntas con código: `arraigo`, `sector`, `momento`, `rol`,
+`motivo`, `romance`, `actividades`, `temas`, `evitar`, `planes`, `peso`,
+`gasto`, `dieta`, `zonas`, `dias`, `idiomas`.
+
+**Ojo al hacerlo:** las respuestas ya guardadas son slugs (`"depende"`), no
+índices, así que **no hay que migrar datos**. Es un cambio de cómo la pantalla
+traduce, no de lo que hay en la base. Y `zonas` es un caso aparte: su orden lo
+manda `/api/zonas` en tiempo de ejecución y lleva una opción de más
+—«Cualquier zona de la ciudad»— que a propósito no tiene código.
+
+**Por qué espera.** Es tocar las 16 preguntas de la pantalla que más datos
+produce, y hacerlo a medias —la mitad emparejada y la mitad por posición— es
+peor que el estado de hoy. Necesita una sesión entera y comprobar el guardado
+de cada pregunta después, no un rato entre otras cosas.
+
+---
+
 ## 1 · El embudo tiene una sola puerta — **hecho el 17 de agosto**
 
 `/datos` pide el correo cuando llega alguien sin sesión y sin llave, en vez

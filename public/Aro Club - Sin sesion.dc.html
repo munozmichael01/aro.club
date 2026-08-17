@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#14342A; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#FAF3E4; text-decoration:none; }
+  a:hover { color:#E39C63; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#FAF3E4; color:#14342A; }
+  ::placeholder { color:#7E9A8B; }
+  :focus-visible { outline:2px solid #E39C63; outline-offset:3px; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:none } }
+  @keyframes aro-spin { to { transform:rotate(360deg) } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#14342A;color:#FAF3E4;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column">
+
+  <div style="max-width:620px;width:100%;margin:0 auto;padding:clamp(20px,4vw,32px) clamp(16px,4vw,28px) 0;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <span style="display:inline-flex;align-items:center;gap:9px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#FAF3E4" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#E39C63"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#FAF3E4"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#FAF3E4"></circle><circle cx="3.4" cy="12" r="1.9" fill="#FAF3E4"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#FAF3E4"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#FAF3E4"></circle></svg>
+      <span style="font:400 21px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
+    </span>
+    <sc-if value="{{ hayDemo }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ ciclar }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:999px;border:1px dashed rgba(250,243,228,.32);background:transparent;font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;color:#9CBBA6;cursor:pointer">{{ etiquetaDemo }}</button>
+    </sc-if>
+  </div>
+
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,56px) clamp(16px,4vw,28px)">
+    <div style="max-width:540px;width:100%">
+
+      <sc-if value="{{ esBaja }}" hint-placeholder-val="{{ true }}">
+        <div style="animation:aro-open 380ms ease both">
+          <h1 style="{{ h1 }}">¿Dejamos de escribirte?</h1>
+          <p style="{{ bajada }}">Escribimos a <em style="font-weight:600;color:#FAF3E4">{{ correo }}</em>. Si te das de baja no volvemos a mandar nada a esa dirección.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
+            <button onClick="{{ darBaja }}" style="{{ botonClaro }}">Darme de baja</button>
+            <a href="/" style="{{ botonFantasma }}">Seguir recibiéndolos</a>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esBajaHecha }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:aro-open 420ms ease both">
+          <div style="{{ selloClaro }}">DADO DE BAJA</div>
+          <h1 style="{{ h1 }}">Listo, no te escribimos más.</h1>
+          <p style="{{ bajada }}">Quitamos <em style="font-weight:600;color:#FAF3E4">{{ correo }}</em> de todos nuestros correos.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
+            <button onClick="{{ deshacer }}" style="{{ botonBorde }}">Deshacer</button>
+            <a href="/" style="{{ botonFantasma }}">Ir a Aro Club</a>
+          </div>
+          <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#9CBBA6;margin-top:clamp(26px,3.4vw,34px);padding-top:22px;border-top:1px solid rgba(250,243,228,.18);max-width:44ch;text-wrap:pretty">Si algún día te apuntas a una mesa, sí te escribiremos ese día: el correo del jueves a las doce es cómo sabes dónde es. Eso no se puede apagar sin apagar la reserva.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esBajaCaducada }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:aro-open 380ms ease both">
+          <div style="{{ selloAviso }}">ENLACE CADUCADO</div>
+          <h1 style="{{ h1 }}">Este enlace ya no vale.</h1>
+          <p style="{{ bajada }}">Los enlaces de baja caducan por seguridad, para que nadie pueda darte de baja desde un correo reenviado. Abre el enlace del último correo que te llegó, o escríbenos y lo hacemos nosotros.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
+            <a href="mailto:hola@aro.club?subject=Darme%20de%20baja" style="{{ botonClaro }}">Escribirnos</a>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esClave }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:aro-open 380ms ease both">
+          <h1 style="{{ h1 }}">Pon una contraseña nueva.</h1>
+          <p style="{{ bajada }}">Para la cuenta de <em style="font-weight:600;color:#FAF3E4">{{ correo }}</em>. Con esto vuelves a entrar y tu verificación, tus créditos y tus cenas siguen donde estaban.</p>
+
+          <div style="display:flex;flex-direction:column;gap:11px;margin-top:clamp(26px,3.4vw,34px)">
+            <div style="position:relative;display:flex">
+              <input type="{{ tipoClave }}" value="{{ clave }}" onChange="{{ onClave }}" onKeyDown="{{ onKey }}" autocomplete="new-password" placeholder="Al menos ocho caracteres" aria-label="Contraseña nueva" style="{{ campo }}" />
+              <button onClick="{{ verClave }}" aria-label="Mostrar u ocultar la contraseña" style="{{ botonVer }}">{{ textoVer }}</button>
+            </div>
+            <div style="display:flex;gap:5px">
+              <sc-for list="{{ fuerza }}" as="f" hint-placeholder-count="3">
+                <span style="{{ f.tramo }}"></span>
+              </sc-for>
+            </div>
+            <div style="{{ notaFuerzaEstilo }}">{{ notaFuerza }}</div>
+            <button onClick="{{ guardar }}" aria-disabled="{{ inerte }}" style="{{ botonGuardar }}">{{ textoGuardar }}</button>
+          </div>
+
+          <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#9CBBA6;margin-top:22px;max-width:44ch;text-wrap:pretty">Cuando la guardes, cerramos la sesión en los demás dispositivos. Si no fuiste tú quien pidió el cambio, escríbenos y lo miramos hoy.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esClaveHecha }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:aro-open 420ms ease both">
+          <div style="{{ selloClaro }}">CONTRASEÑA CAMBIADA</div>
+          <h1 style="{{ h1 }}">Ya puedes entrar.</h1>
+          <p style="{{ bajada }}">Cerramos la sesión en los demás dispositivos. Nada de tu cuenta cambió: sigues verificada y con tus créditos.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
+            <a href="Aro Club - Entrar.dc.html" style="{{ botonClaro }}">Entrar</a>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esClaveCaducada }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:aro-open 380ms ease both">
+          <div style="{{ selloAviso }}">ENLACE CADUCADO</div>
+          <h1 style="{{ h1 }}">Este enlace ya se usó o venció.</h1>
+          <p style="{{ bajada }}">Los enlaces valen una vez y quince minutos, para que nadie entre a tu cuenta desde un correo viejo. Pide otro y te llega enseguida.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
+            <a href="Aro Club - Entrar.dc.html" style="{{ botonClaro }}">Pedir otro enlace</a>
+            <a href="mailto:hola@aro.club" style="{{ botonFantasma }}">No me llega</a>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="max-width:620px;width:100%;margin:0 auto;padding:0 clamp(16px,4vw,28px) clamp(24px,4vw,36px);display:flex;flex-wrap:wrap;gap:10px">
+    <a href="Aro Club - Legal.dc.html#privacidad" style="{{ enlacePie }}">Privacidad</a>
+    <a href="Aro Club - Legal.dc.html#terminos" style="{{ enlacePie }}">Términos</a>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  // Las dos pantallas sin sesion viven aqui. Cual se abre lo decide la URL,
+  // no un boton: /baja con su token firmado en la query, /clave con el token
+  // de Supabase en el fragmento —el `#`, que no viaja al servidor—.
+  //
+  // `fase` empieza en -1: «todavia no se sabe». Sin eso la pantalla pinta la
+  // baja durante el instante que tarda en comprobarse el enlace, y quien trae
+  // uno caducado ve «¿dejamos de escribirte?» y luego un salto.
+  state = { fase: -1, clave: '', ver: false, correo: '', trabajando: false, fallo: '' };
+
+  componentWillUnmount() { clearTimeout(this._t); }
+
+  componentDidMount() {
+    const esClave = window.location.pathname.indexOf('/clave') >= 0;
+    // La maqueta trae un boton para recorrer los seis estados. Es util para
+    // revisar el diseno y no para quien recibe el correo, asi que solo sale
+    // con ?demo=1 en la URL.
+    this._demo = new URLSearchParams(window.location.search).get('demo') === '1';
+    if (this._demo) { this.setState({ fase: 0, correo: 'daniela@correo.com' }); return; }
+
+    if (esClave) { this.abrirClave(); return; }
+    this.abrirBaja();
+  }
+
+  /** El token de recuperacion viene en el fragmento y se borra de la barra. */
+  abrirClave() {
+    const h = new URLSearchParams(String(window.location.hash || '').replace(/^#/, ''));
+    const t = h.get('access_token');
+    this._token = t;
+    // Se quita de la URL: un token de acceso en la barra acaba en el
+    // historial, en una captura o en un enlace pegado en un chat.
+    if (t) { try { history.replaceState(null, '', window.location.pathname); } catch (e) {} }
+    if (!t) { this.setState({ fase: 5 }); return; }
+
+    fetch('/api/clave?token=' + encodeURIComponent(t))
+      .then((r) => r.json())
+      .then((d) => this.setState(d.estado === 'vale'
+        ? { fase: 3, correo: d.correo || '' }
+        : { fase: 5 }))
+      .catch(() => this.setState({ fase: 5 }));
+  }
+
+  abrirBaja() {
+    const q = new URLSearchParams(window.location.search);
+    this._correo = q.get('correo') || '';
+    this._token = q.get('token') || '';
+    if (!this._correo || !this._token) { this.setState({ fase: 2 }); return; }
+
+    fetch('/api/baja-correos?correo=' + encodeURIComponent(this._correo)
+      + '&token=' + encodeURIComponent(this._token))
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.estado !== 'vale') { this.setState({ fase: 2 }); return; }
+        // Quien vuelve a pulsar un enlace viejo estando ya de baja abre en
+        // «hecho» con su deshacer, no en la pregunta: preguntarselo otra vez
+        // parece que la primera no funciono.
+        this.setState({ fase: d.yaDeBaja ? 1 : 0, correo: d.correo || this._correo });
+      })
+      .catch(() => this.setState({ fase: 2 }));
+  }
+
+  /** Dar de baja, o deshacerlo. Es la misma decision en dos sentidos. */
+  decidirBaja(baja) {
+    if (this.state.trabajando) return;
+    if (this._demo) { this.setState({ fase: baja ? 1 : 0 }); return; }
+    this.setState({ trabajando: true, fallo: '' });
+    fetch('/api/baja-correos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ correo: this._correo, token: this._token, baja: baja })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) { this.setState({ trabajando: false, fallo: d.error || 'No pudimos guardarlo.' }); return; }
+        this.setState({ trabajando: false, fase: baja ? 1 : 0 });
+      })
+      .catch(() => this.setState({ trabajando: false, fallo: 'No pudimos guardarlo. Revisa tu conexión.' }));
+  }
+
+  guardarClave() {
+    if (this.state.trabajando || this.state.clave.length < 8) return;
+    if (this._demo) { this.setState({ fase: 4 }); return; }
+    this.setState({ trabajando: true, fallo: '' });
+    fetch('/api/clave', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: this._token, clave: this.state.clave })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, estado: r.status, d })))
+      .then(({ ok, estado, d }) => {
+        // 401 es el enlace caducado, y eso tiene pantalla propia: dejarlo como
+        // un error rojo debajo del campo no dice que hay que pedir otro.
+        if (estado === 401) { this.setState({ trabajando: false, fase: 5 }); return; }
+        if (!ok) { this.setState({ trabajando: false, fallo: d.error || 'No pudimos guardarla.' }); return; }
+        this.setState({ trabajando: false, fase: 4 });
+      })
+      .catch(() => this.setState({ trabajando: false, fallo: 'No pudimos guardarla. Revisa tu conexión.' }));
+  }
+
+  renderVals() {
+    const S = this.state;
+    const FASES = ['BAJA', 'BAJA HECHA', 'BAJA CADUCADA', 'CLAVE', 'CLAVE HECHA', 'CLAVE CADUCADA'];
+    const f = S.fase;
+
+    const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 28px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
+
+    // ocho caracteres es el mínimo del sistema; los tramos son orientación,
+    // no una regla más: bloquear por «fuerza» deja a gente fuera de su cuenta
+    const n = S.clave.length;
+    const variedad = (/[a-z]/.test(S.clave) ? 1 : 0) + (/[A-Z]/.test(S.clave) ? 1 : 0)
+      + (/[0-9]/.test(S.clave) ? 1 : 0) + (/[^a-zA-Z0-9]/.test(S.clave) ? 1 : 0);
+    const nivel = n === 0 ? 0 : n < 8 ? 1 : (variedad >= 3 && n >= 12) ? 3 : 2;
+    const COL = ['rgba(250,243,228,.18)', '#F0BE9C', '#E39C63', '#9CD3A8'];
+    const listo = n >= 8;
+
+    return {
+      esBaja: f === 0, esBajaHecha: f === 1, esBajaCaducada: f === 2,
+      esClave: f === 3, esClaveHecha: f === 4, esClaveCaducada: f === 5,
+      // El sello de demo solo con ?demo=1: recorrer estados es para revisar
+      // el diseno, no para quien abre el enlace de su correo.
+      hayDemo: !!this._demo,
+      etiquetaDemo: 'DEMO · ' + FASES[f],
+      ciclar: () => this.setState({ fase: ((f + 1) % 6 + 6) % 6, clave: '', ver: false }),
+
+      // De quien es este enlace. Sin esto no se sabe si es tuyo, que era una
+      // de las tres cosas que Design echaba en falta.
+      correo: S.correo || 'tu correo',
+      h1: 'font:400 clamp(32px,6vw,52px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#FAF3E4;margin:0;max-width:15ch;text-wrap:balance',
+      bajada: 'font:400 17px/1.55 \'Inter Tight\',sans-serif;color:#C5D8CA;max-width:44ch;margin:14px 0 0;text-wrap:pretty',
+      selloClaro: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;margin-bottom:18px',
+      selloAviso: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;background:#E39C63;color:#14342A;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;margin-bottom:18px',
+      botonClaro: btn('#FAF3E4', '#14342A', 'none'),
+      botonBorde: btn('transparent', '#FAF3E4', '1px solid rgba(250,243,228,.34)'),
+      botonFantasma: btn('transparent', '#9CBBA6', 'none', 'min-height:48px;padding:0 6px;font-weight:500;font-size:15px;text-decoration:underline;text-underline-offset:6px'),
+      enlacePie: 'display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid rgba(250,243,228,.2);font:500 14px/1 \'Inter Tight\',sans-serif;color:#9CBBA6',
+
+      darBaja: () => this.decidirBaja(true),
+      deshacer: () => this.decidirBaja(false),
+      fallo: S.fallo,
+      hayFallo: !!S.fallo,
+
+      clave: S.clave,
+      tipoClave: S.ver ? 'text' : 'password',
+      textoVer: S.ver ? 'Ocultar' : 'Ver',
+      verClave: () => this.setState({ ver: !S.ver }),
+      onClave: (e) => this.setState({ clave: e.target.value }),
+      onKey: (e) => { if (e.key === 'Enter' && listo) this.guardarClave(); },
+      campo: 'width:100%;min-height:58px;padding:0 84px 0 22px;border-radius:999px;border:1px solid rgba(250,243,228,.32);background:rgba(250,243,228,.06);color:#FAF3E4;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none',
+      botonVer: 'position:absolute;right:6px;top:6px;bottom:6px;display:inline-flex;align-items:center;padding:0 16px;border-radius:999px;border:none;background:transparent;color:#9CBBA6;font:500 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+
+      fuerza: [1, 2, 3].map((k) => ({
+        tramo: 'flex:1;height:5px;border-radius:999px;background:' + (nivel >= k ? COL[nivel] : COL[0]) + ';transition:background 200ms ease'
+      })),
+      notaFuerza: n === 0 ? 'Ocho caracteres como mínimo.'
+        : nivel === 1 ? 'Le faltan ' + (8 - n) + ' caracteres.'
+        : nivel === 2 ? 'Ya sirve. Si mezclas mayúsculas, números o signos, mejor.'
+        : 'Buena.',
+      notaFuerzaEstilo: 'font:400 13px/1.5 \'Inter Tight\',sans-serif;color:' + (nivel === 1 ? '#F0BE9C' : '#9CBBA6'),
+
+      inerte: listo && !S.trabajando ? null : 'true',
+      textoGuardar: S.trabajando ? 'Guardando' : (listo ? 'Guardar y entrar' : 'Ocho caracteres como mínimo'),
+      botonGuardar: btn(listo ? '#FAF3E4' : 'rgba(250,243,228,.14)', listo ? '#14342A' : '#C5D8CA', 'none', listo ? '' : 'cursor:not-allowed'),
+      guardar: () => this.guardarClave()
+    };
+  }
+}
+</script>
+</body>
+</html>

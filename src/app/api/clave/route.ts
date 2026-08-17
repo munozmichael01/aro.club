@@ -33,6 +33,27 @@ const cuerpo = z.object({
   clave: z.string().min(8, 'La contraseña necesita al menos ocho caracteres.').max(72),
 })
 
+/**
+ * De qué cuenta es este enlace.
+ *
+ * Design lo pidió y tiene razón: sin el correo en pantalla no se sabe si el
+ * enlace es tuyo. Alguien con dos direcciones —o quien recibe el correo
+ * reenviado— está a punto de cambiar una contraseña sin saber de cuál.
+ *
+ * Sirve además para saber si el enlace vale ANTES de pedirle a nadie que
+ * escriba una contraseña: es la diferencia entre abrir en «caducado» y
+ * dejar que teclee para luego decírselo.
+ */
+export async function GET(request: Request) {
+  const token = new URL(request.url).searchParams.get('token')
+  if (!token || token.length < 20) return NextResponse.json({ estado: 'invalido' })
+
+  const { data, error } = await createAdminClient().auth.getUser(token)
+  if (error || !data?.user?.email) return NextResponse.json({ estado: 'caducado' })
+
+  return NextResponse.json({ estado: 'vale', correo: data.user.email })
+}
+
 export async function POST(request: Request) {
   const parsed = cuerpo.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {

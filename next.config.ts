@@ -17,7 +17,11 @@ const PANTALLAS: Array<[string, string]> = [
   ['/sistema', '/Aro Club - Sistema v3.dc.html'],
   // Entrega 2 · área de miembro
   ['/entrar', '/Aro Club - Entrar.dc.html'],
-  ['/clave', '/Aro Club - Clave.dc.html'],
+  // Las dos pantallas sin sesión viven en el mismo fichero: comparten fondo
+  // verde, campo y estados —vale / caducado / hecho— y separarlas sería
+  // mantener dos veces lo mismo. La URL decide cuál se abre.
+  ['/clave', '/Aro Club - Sin sesion.dc.html'],
+  ['/baja', '/Aro Club - Sin sesion.dc.html'],
   ['/verificacion', '/Aro Club - Verificacion.dc.html'],
   ['/cuenta', '/Aro Club - Mi cuenta.dc.html'],
   ['/perfil', '/Aro Club - Mi perfil.dc.html'],
