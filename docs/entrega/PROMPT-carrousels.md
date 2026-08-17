@@ -203,6 +203,17 @@ dependa de la palabra «Aro» para entenderse.
 - Y con cada carrusel, **el pie**: dos o tres líneas y la llamada. Sale de la
   misma voz, no lo escribo yo aparte.
 
+**Las cadenas de la marca, ya decididas.** No hacen falta variantes:
+
+| | |
+|---|---|
+| Web | `aro.club` |
+| Instagram y TikTok | `@somos.aroclub` |
+| Correo | `hola@aro.club` |
+
+La misma en las dos plataformas, y el perfil se llama **Aro Club** —eso es lo
+que hace que quien busque «aro club» nos encuentre—.
+
 Si algún tema no te da para las láminas que digo, dilo y lo recorto. Prefiero
 cinco láminas que se sostienen a nueve rellenas.
 
