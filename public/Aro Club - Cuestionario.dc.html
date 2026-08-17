@@ -249,12 +249,24 @@ class Component extends DCLogic {
    * solo «Cualquier zona de la ciudad», que es un atajo que marca las otras.
    */
   OPC = {
+    // Las seis del catalogo de la base, no cinco.
+    //
+    // Esta lista se habia quedado en la version anterior a la entrega 7. Esa
+    // entrega fusiono `extranjero` dentro de `interior` —y reconstruyo el enum
+    // para que no se pudiera elegir— y anadio `mismos` y `remoto`, que no
+    // exigen haber emigrado: alguien de veinticinco que sigue con la gente del
+    // colegio tiene el mismo problema y no se veia en ninguna opcion.
+    //
+    // La pantalla no se actualizo, asi que durante seis entregas ofrecio una
+    // respuesta que la columna rechaza —se perdia en silencio— y escondio dos
+    // que si existen.
     arraigo: [
       ["Me fui del país y volví", "volvio"],
       ["Nunca me fui de Venezuela", "se-quedo"],
       ["Me mudé a Caracas desde el interior", "interior"],
-      ["Soy extranjero viviendo aquí", "extranjero"],
       ["Vivo en el exterior y estoy de visita", "visita"],
+      ["Sigo con la gente de siempre", "mismos"],
+      ["Trabajo remoto y casi no veo gente", "remoto"],
     ],
     sector: [
       ["Tecnología", "tecnologia"],

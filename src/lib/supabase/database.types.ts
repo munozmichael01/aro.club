@@ -3474,7 +3474,6 @@ export type Database = {
         | "visita"
         | "mismos"
         | "remoto"
-        | "extranjero"
       social_energy_t: "escucha" | "depende" | "lleva"
       verification_kind_t:
         | "id_document"
@@ -3708,7 +3707,6 @@ export const Constants = {
         "visita",
         "mismos",
         "remoto",
-        "extranjero",
       ],
       social_energy_t: ["escucha", "depende", "lleva"],
       verification_kind_t: [
