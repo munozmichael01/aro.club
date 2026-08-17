@@ -1,0 +1,18 @@
+-- Falta un valor de arraigo, y sin él una respuesta del cuestionario se
+-- pierde en silencio.
+--
+-- El cuestionario ofrece cinco opciones y la cuarta —«Soy extranjero viviendo
+-- aquí»— manda el código `extranjero`. El enum no lo tiene, así que la
+-- columna lo rechaza: `invalid input value for enum rootedness_t`.
+--
+-- Y no se ve. La ruta devuelve 500, pero la pantalla guarda cada respuesta
+-- con un `.catch()` vacío a propósito —se reintenta con el cambio siguiente—,
+-- así que quien elige esa opción sigue adelante creyendo que quedó guardada y
+-- no queda nada. Ni un error en pantalla ni una casilla que se desmarque.
+--
+-- Se añade el valor en vez de cambiar el cuestionario porque el texto de la
+-- opción es la decisión de producto y el enum es lo que se quedó corto: el
+-- enum ya tiene `mismos` y `remoto`, que el cuestionario nunca ofrece, así que
+-- el desajuste venía de tocar una lista sin la otra. Añadir es además lo único
+-- que no toca los datos que ya hay.
+alter type rootedness_t add value if not exists 'extranjero';

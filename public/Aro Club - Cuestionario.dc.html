@@ -226,42 +226,227 @@ class Component extends DCLogic {
   // al pintar la lista y al saber cual es su indice.
   TODAS_LAS_ZONAS = 'Cualquier zona de la ciudad';
 
-  // Los nombres por defecto, en el mismo orden que COD.zonas. Se sustituyen
-  // por los del servidor en cuanto llegan.
-  _nombresZona = ['Las Mercedes', 'El Rosal', 'Bello Monte', 'Chacao', 'Altamira',
-    'La Castellana', 'Los Palos Grandes', 'Sebucán y Los Dos Caminos', 'Chuao',
-    'El Cafetal y Santa Paula', 'Los Naranjos y Cerro Verde', 'La Trinidad y La Tahona',
-    'El Hatillo'];
-
-  // Identificadores estables, en el mismo orden que las opciones de cada
-  // pregunta de renderVals(). El texto visible puede reescribirse sin romper
-  // nada; reordenar una lista obliga a reordenar la suya aquí al lado.
-  COD = {
-    arraigo: ['volvio', 'se-quedo', 'interior', 'extranjero', 'visita'],
-    sector: ['tecnologia', 'finanzas', 'salud', 'educacion', 'consultoria', 'legal', 'marketing', 'medios', 'diseno', 'comercio', 'manufactura', 'energia', 'construccion', 'gastronomia', 'ong', 'gobierno', 'emprendo', 'estudio', 'entre-trabajos', 'otro'],
-    momento: ['soltero-sin-hijos', 'soltero-con-hijos', 'pareja-sin-hijos', 'pareja-con-hijos', 'no-decir'],
-    // 'depende' va al final, no en medio: en medio se lee como el punto
-    // neutro de una escala y se lleva a todo el que no quiere elegir. Y esta
-    // respuesta alimenta el balance de la mesa —cuantos llevan y cuantos
-    // escuchan—, asi que un monton amontonado en el medio no es un dato
-    // tibio, es un dato que no sirve.
-    rol: ['escucha', 'lleva', 'depende'],
-    motivo: ['ampliar', 'volver-a-salir', 'fuera-del-trabajo', 'reconectar', 'red-profesional'],
-    romance: ['abierto', 'indiferente', 'cerrado'],
-    actividades: ['cocinar', 'salir-a-comer', 'correr', 'gimnasio', 'yoga', 'ciclismo', 'senderismo', 'playa', 'padel', 'futbol', 'beisbol', 'nadar', 'bailar', 'conciertos', 'cine', 'teatro', 'museos', 'leer', 'escribir', 'fotografia', 'instrumento', 'videojuegos', 'juegos-de-mesa', 'viajar', 'voluntariado', 'estudiar', 'plantas'],
-    temas: ['cocina', 'viajes', 'cine', 'musica', 'libros', 'deporte', 'negocios', 'tecnologia', 'arte', 'arquitectura', 'ciencia', 'historia', 'psicologia', 'politica', 'economia', 'crianza', 'salud', 'humor'],
-    evitar: ['politica', 'religion', 'dinero', 'vida-amorosa', 'crianza', 'trabajo', 'ninguno'],
-    planes: ['cena', 'cena-gastronomica', 'cafe', 'drinks', 'correr', 'senderismo', 'padel', 'pilates', 'ciclismo'],
-    peso: ['conversacion', 'comida', 'ambas'],
-    gasto: ['hasta-20', '20-35', '35-50', 'mas-50'],
-    dieta: ['ninguna', 'vegetariano', 'vegano', 'pescetariano', 'sin-gluten', 'sin-lactosa', 'kosher', 'halal', 'sin-cerdo', 'sin-carnes-rojas', 'diabetico', 'alergias'],
-    // Las zonas no van aqui fijas: las pone `ponerZonas()` con el orden que
-    // manda /api/zonas, que es por demanda. La lista por defecto es la de
-    // abajo, para que la pantalla funcione si esa peticion falla.
-    zonas: ['mercedes', 'rosal', 'bello-monte', 'chacao', 'altamira', 'castellana', 'palos-grandes', 'sebucan', 'chuao', 'cafetal', 'naranjos', 'trinidad', 'hatillo'],
-    dias: ['mar', 'mie', 'jue', 'vie', 'sab', 'sab-md', 'dom-md'],
-    idiomas: ['es', 'en', 'pt', 'it', 'fr', 'de', 'ar', 'zh']
+  /**
+   * Las opciones, con su texto y su codigo JUNTOS.
+   *
+   * Antes esto eran DOS listas: los textos en `renderVals` y los codigos aqui
+   * en un objeto `COD`, emparejados solo por la posicion. `aCodigo` traducia
+   * contando: la opcion 3 de la pantalla se guardaba como el codigo 3 de COD.
+   *
+   * Eso significaba que reordenar una lista y no la otra guardaba la respuesta
+   * equivocada —«Depende del momento» archivado como «lleva la conversacion»,
+   * y el reparto sentando a esa persona como la que lleva la mesa— sin lanzar
+   * error, sin fallar ninguna validacion y sin verse en ninguna pantalla. Se
+   * descubriria meses despues, mirando por que una mesa no cuadro.
+   *
+   * Habia un candado que comparaba longitudes, y no bastaba: tres textos y
+   * tres codigos en distinto orden son indistinguibles desde ahi.
+   *
+   * Ahora hay una sola lista. Reordenar mueve el texto y el codigo porque son
+   * la misma cosa, y el fallo deja de poder existir en vez de quedar vigilado.
+   *
+   * Un codigo `null` es una opcion que a proposito NO es una respuesta: hoy
+   * solo «Cualquier zona de la ciudad», que es un atajo que marca las otras.
+   */
+  OPC = {
+    arraigo: [
+      ["Me fui del país y volví", "volvio"],
+      ["Nunca me fui de Venezuela", "se-quedo"],
+      ["Me mudé a Caracas desde el interior", "interior"],
+      ["Soy extranjero viviendo aquí", "extranjero"],
+      ["Vivo en el exterior y estoy de visita", "visita"],
+    ],
+    sector: [
+      ["Tecnología", "tecnologia"],
+      ["Finanzas", "finanzas"],
+      ["Salud", "salud"],
+      ["Educación", "educacion"],
+      ["Consultoría", "consultoria"],
+      ["Legal", "legal"],
+      ["Marketing", "marketing"],
+      ["Medios", "medios"],
+      ["Diseño", "diseno"],
+      ["Comercio", "comercio"],
+      ["Manufactura", "manufactura"],
+      ["Energía", "energia"],
+      ["Construcción", "construccion"],
+      ["Gastronomía", "gastronomia"],
+      ["ONG", "ong"],
+      ["Gobierno", "gobierno"],
+      ["Emprendo por mi cuenta", "emprendo"],
+      ["Estudio", "estudio"],
+      ["Entre trabajos", "entre-trabajos"],
+      ["Otro", "otro"],
+    ],
+    momento: [
+      ["Soltero sin hijos", "soltero-sin-hijos"],
+      ["Soltero con hijos", "soltero-con-hijos"],
+      ["En pareja sin hijos", "pareja-sin-hijos"],
+      ["En pareja con hijos", "pareja-con-hijos"],
+      ["Prefiero no decirlo", "no-decir"],
+    ],
+    rol: [
+      ["Escucho más de lo que hablo", "escucha"],
+      ["Suelo llevar la conversación", "lleva"],
+      ["Depende del momento", "depende"],
+    ],
+    motivo: [
+      ["Ampliar mi círculo", "ampliar"],
+      ["Volver a salir después de un tiempo", "volver-a-salir"],
+      ["Conocer gente fuera del trabajo", "fuera-del-trabajo"],
+      ["Reconectar con Caracas después de volver", "reconectar"],
+      ["Red profesional", "red-profesional"],
+    ],
+    romance: [
+      ["Abierto, si surge algo bienvenido", "abierto"],
+      ["Me da igual, vengo por la conversación", "indiferente"],
+      ["Prefiero una mesa sin esa energía", "cerrado"],
+    ],
+    actividades: [
+      ["Cocinar", "cocinar"],
+      ["Salir a comer", "salir-a-comer"],
+      ["Correr", "correr"],
+      ["Gimnasio", "gimnasio"],
+      ["Yoga o pilates", "yoga"],
+      ["Ciclismo", "ciclismo"],
+      ["Senderismo", "senderismo"],
+      ["Playa", "playa"],
+      ["Pádel o tenis", "padel"],
+      ["Fútbol", "futbol"],
+      ["Béisbol", "beisbol"],
+      ["Nadar", "nadar"],
+      ["Bailar", "bailar"],
+      ["Conciertos", "conciertos"],
+      ["Cine", "cine"],
+      ["Teatro", "teatro"],
+      ["Museos", "museos"],
+      ["Leer", "leer"],
+      ["Escribir", "escribir"],
+      ["Fotografía", "fotografia"],
+      ["Tocar un instrumento", "instrumento"],
+      ["Videojuegos", "videojuegos"],
+      ["Juegos de mesa", "juegos-de-mesa"],
+      ["Viajar", "viajar"],
+      ["Voluntariado", "voluntariado"],
+      ["Estudiar algo por mi cuenta", "estudiar"],
+      ["Cuidar plantas", "plantas"],
+    ],
+    temas: [
+      ["Cocina y restaurantes", "cocina"],
+      ["Viajes", "viajes"],
+      ["Cine y series", "cine"],
+      ["Música", "musica"],
+      ["Libros", "libros"],
+      ["Deporte", "deporte"],
+      ["Negocios y emprender", "negocios"],
+      ["Tecnología", "tecnologia"],
+      ["Arte y diseño", "arte"],
+      ["Arquitectura", "arquitectura"],
+      ["Ciencia", "ciencia"],
+      ["Historia", "historia"],
+      ["Psicología", "psicologia"],
+      ["Política", "politica"],
+      ["Economía", "economia"],
+      ["Crianza", "crianza"],
+      ["Salud y bienestar", "salud"],
+      ["Humor y absurdos", "humor"],
+    ],
+    evitar: [
+      ["Política y situación del país", "politica"],
+      ["Religión y fe", "religion"],
+      ["Dinero, sueldos y precios", "dinero"],
+      ["Vida amorosa y relaciones", "vida-amorosa"],
+      ["Crianza e hijos", "crianza"],
+      ["Trabajo, vengo a desconectarme", "trabajo"],
+      ["Ninguno, hablo de todo", "ninguno"],
+    ],
+    planes: [
+      ["Cena en restaurante", "cena"],
+      ["Cena con foco gastronómico", "cena-gastronomica"],
+      ["Café o desayuno de networking", "cafe"],
+      ["Drinks / after office", "drinks"],
+      ["Correr", "correr"],
+      ["Senderismo", "senderismo"],
+      ["Pádel o tenis", "padel"],
+      ["Yoga o pilates", "pilates"],
+      ["Ciclismo", "ciclismo"],
+    ],
+    peso: [
+      ["La conversación, el restaurante es la excusa", "conversacion"],
+      ["La comida, vengo por la experiencia gastronómica", "comida"],
+      ["Las dos cosas por igual", "ambas"],
+    ],
+    gasto: [
+      ["Hasta 20 USD", "hasta-20"],
+      ["20 a 35 USD", "20-35"],
+      ["35 a 50 USD", "35-50"],
+      ["Más de 50 USD", "mas-50"],
+    ],
+    dieta: [
+      ["Ninguna", "ninguna"],
+      ["Vegetariano", "vegetariano"],
+      ["Vegano", "vegano"],
+      ["Pescetariano", "pescetariano"],
+      ["Sin gluten", "sin-gluten"],
+      ["Sin lactosa", "sin-lactosa"],
+      ["Kosher", "kosher"],
+      ["Halal", "halal"],
+      ["No como cerdo", "sin-cerdo"],
+      ["No como carnes rojas", "sin-carnes-rojas"],
+      ["Diabético", "diabetico"],
+      ["Alergias", "alergias"],
+    ],
+    zonas: [
+      ["Las Mercedes", "mercedes"],
+      ["El Rosal", "rosal"],
+      ["Bello Monte", "bello-monte"],
+      ["Chacao", "chacao"],
+      ["Altamira", "altamira"],
+      ["La Castellana", "castellana"],
+      ["Los Palos Grandes", "palos-grandes"],
+      ["Sebucán y Los Dos Caminos", "sebucan"],
+      ["Chuao", "chuao"],
+      ["El Cafetal y Santa Paula", "cafetal"],
+      ["Los Naranjos y Cerro Verde", "naranjos"],
+      ["La Trinidad y La Tahona", "trinidad"],
+      ["El Hatillo", "hatillo"],
+      // Sin codigo a proposito: es un atajo que marca las trece de arriba,
+      // no una zona que se guarde. `aCodigo` lo deja caer por ser null.
+      ["Cualquier zona de la ciudad", null],
+    ],
+    dias: [
+      ["Martes noche", "mar"],
+      ["Miércoles noche", "mie"],
+      ["Jueves noche", "jue"],
+      ["Viernes noche", "vie"],
+      ["Sábado noche", "sab"],
+      ["Sábado mediodía", "sab-md"],
+      ["Domingo mediodía", "dom-md"],
+    ],
+    idiomas: [
+      ["Español", "es"],
+      ["Inglés", "en"],
+      ["Portugués", "pt"],
+      ["Italiano", "it"],
+      ["Francés", "fr"],
+      ["Alemán", "de"],
+      ["Árabe", "ar"],
+      ["Chino", "zh"],
+    ],
   };
+
+  /** Solo los textos, para pintar. */
+  textos(id) { return (this.OPC[id] || []).map((o) => o[0]); }
+
+  /**
+   * Solo los codigos, en el mismo orden. Derivado, nunca escrito a mano: es
+   * lo que hace imposible que se descuadre.
+   */
+  get COD() {
+    const m = {};
+    for (const id in this.OPC) m[id] = this.OPC[id].map((o) => o[1]);
+    return m;
+  }
 
   MINIMOS = { temas: 2 };
 
@@ -366,31 +551,19 @@ class Component extends DCLogic {
   }
 
   /**
-   * El candado de los indices.
+   * Aviso si una pregunta tiene codigos sin declarar.
    *
-   * `aCodigo` traduce POR POSICION: la opcion 3 de la pantalla se guarda como
-   * el codigo 3 de COD. Eso significa que anadir, quitar o reordenar opciones
-   * sin tocar COD al lado guarda la respuesta equivocada —Chacao donde la
-   * persona marco Altamira— sin lanzar un error, sin fallar una validacion y
-   * sin que se vea en ninguna pantalla. Solo se descubre meses despues,
-   * mirando por que una mesa no cuadra.
-   *
-   * Esto no puede detectar un reordenamiento —dos listas del mismo largo en
-   * distinto orden son indistinguibles desde aqui— pero si el caso comun, que
-   * es que las longitudes dejen de cuadrar. Se comprueba una vez al arrancar.
+   * Ya no puede haber descuadre entre dos listas —hay una— pero si puede
+   * faltar una entrada entera en OPC si alguien anade una pregunta nueva y se
+   * olvida. Eso se ve: la pregunta saldria sin opciones.
    */
   revisarCodigos(pantallas) {
     if (this._revisado) return;
     this._revisado = true;
     pantallas.forEach((p) => (p.preguntas || []).forEach((q) => {
-      const C = this.COD[q.id];
-      if (!C || !q.opciones) return;
-      // Las zonas llevan una opcion de mas —«cualquier zona»— que a proposito
-      // no tiene codigo: es un atajo que marca las otras, no una respuesta.
-      const reales = q.todas != null ? q.opciones.length - 1 : q.opciones.length;
-      if (reales !== C.length) {
-        console.error('[cuestionario] ' + q.id + ': ' + reales + ' opciones y '
-          + C.length + ' codigos. Las respuestas se guardarian corridas.');
+      if (q.tipo === 'texto') return;
+      if (!q.opciones || !q.opciones.length) {
+        console.error('[cuestionario] ' + q.id + ' no tiene opciones: falta en OPC.');
       }
     }));
   }
@@ -460,20 +633,27 @@ class Component extends DCLogic {
    */
   ponerZonas(lista) {
     if (!lista || !lista.length) return;
-    this.COD.zonas = lista.map((z) => z.slug);
-    this._nombresZona = lista.map((z) => z.nombre);
+    // Se reescribe la lista EMPAREJADA, asi que el orden que manda el servidor
+    // mueve nombre y codigo a la vez. Antes esto tocaba dos arrays y era el
+    // sitio mas facil de todos para descuadrarlos, porque el orden cambia en
+    // tiempo de ejecucion y no se ve en el codigo.
+    this.OPC.zonas = lista.map((z) => [z.nombre, z.slug])
+      .concat([[this.TODAS_LAS_ZONAS, null]]);
     this.forceUpdate();
   }
 
   renderVals() {
     const S = (a) => a;
-    const sectores = S(['Tecnología', 'Finanzas', 'Salud', 'Educación', 'Consultoría', 'Legal', 'Marketing', 'Medios', 'Diseño', 'Comercio', 'Manufactura', 'Energía', 'Construcción', 'Gastronomía', 'ONG', 'Gobierno', 'Emprendo por mi cuenta', 'Estudio', 'Entre trabajos', 'Otro']);
-    const actividades = S(['Cocinar', 'Salir a comer', 'Correr', 'Gimnasio', 'Yoga o pilates', 'Ciclismo', 'Senderismo', 'Playa', 'Pádel o tenis', 'Fútbol', 'Béisbol', 'Nadar', 'Bailar', 'Conciertos', 'Cine', 'Teatro', 'Museos', 'Leer', 'Escribir', 'Fotografía', 'Tocar un instrumento', 'Videojuegos', 'Juegos de mesa', 'Viajar', 'Voluntariado', 'Estudiar algo por mi cuenta', 'Cuidar plantas']);
-    const temas = S(['Cocina y restaurantes', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios y emprender', 'Tecnología', 'Arte y diseño', 'Arquitectura', 'Ciencia', 'Historia', 'Psicología', 'Política', 'Economía', 'Crianza', 'Salud y bienestar', 'Humor y absurdos']);
+    // Los textos salen de OPC, que es donde viven con su codigo al lado.
+    const sectores = this.textos('sector');
+    const actividades = this.textos('actividades');
+    const temas = this.textos('temas');
     // Los nombres, en el orden que tenga COD.zonas en este momento, mas la
     // ultima: «cualquier zona». Esa no es una zona, es un atajo que marca
     // todas —por eso va al final y no tiene codigo propio—.
-    const zonas = S(this._nombresZona.concat([this.TODAS_LAS_ZONAS]));
+    // El atajo «cualquier zona» ya vive dentro de OPC.zonas con codigo null,
+    // asi que no hay que anadirlo aqui ni contar una posicion de mas.
+    const zonas = this.textos('zonas');
 
     const empresas = S(['Banesco', 'Mercantil', 'BBVA Provincial', 'Polar', 'Farmatodo', 'Locatel', 'Movistar', 'Digitel', 'Ridery', 'Yummy', 'PDVSA', 'Deloitte', 'EY', 'KPMG', 'Universidad Metropolitana', 'Universidad Católica Andrés Bello']);
 
@@ -482,7 +662,7 @@ class Component extends DCLogic {
         titulo: 'Tu contexto',
         proposito: 'Con esto evitamos sentarte con alguien de tu misma empresa y armamos mesas donde las historias se entiendan entre sí.',
         preguntas: [
-          { id: 'arraigo', corto: 'tu historia', tipo: 'unica', pregunta: '¿Cuál de estas se parece más a tu historia?', opciones: ['Me fui del país y volví', 'Nunca me fui de Venezuela', 'Me mudé a Caracas desde el interior', 'Soy extranjero viviendo aquí', 'Vivo en el exterior y estoy de visita'] },
+          { id: 'arraigo', corto: 'tu historia', tipo: 'unica', pregunta: '¿Cuál de estas se parece más a tu historia?', opciones: this.textos('arraigo') },
           { id: 'sector', corto: 'tu sector', tipo: 'unica', pregunta: '¿En qué sector trabajas?', opciones: sectores, compacta: true },
           { id: 'empleador', corto: 'dónde trabajas', tipo: 'texto', pregunta: '¿Dónde trabajas actualmente?', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.', fuente: empresas }
         ]
@@ -491,10 +671,10 @@ class Component extends DCLogic {
         titulo: 'Cómo eres en la mesa',
         proposito: 'Una mesa donde todos llevan la conversación no funciona, y una donde nadie la lleva tampoco. Nada de esto se le muestra a nadie.',
         preguntas: [
-          { id: 'momento', corto: 'en qué momento estás', tipo: 'unica', pregunta: '¿En qué momento estás?', opciones: ['Soltero sin hijos', 'Soltero con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
-          { id: 'rol', corto: 'cómo eres en la mesa', tipo: 'unica', pregunta: 'En una mesa con gente que no conoces, ¿cómo eres?', opciones: ['Escucho más de lo que hablo', 'Suelo llevar la conversación', 'Depende del momento'] },
-          { id: 'motivo', corto: 'qué te trae', tipo: 'unica', pregunta: '¿Qué te trae?', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con Caracas después de volver', 'Red profesional'] },
-          { id: 'romance', corto: 'si buscas algo romántico', tipo: 'unica', opcional: true, pregunta: 'Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?', ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla del producto. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: ['Abierto, si surge algo bienvenido', 'Me da igual, vengo por la conversación', 'Prefiero una mesa sin esa energía'] }
+          { id: 'momento', corto: 'en qué momento estás', tipo: 'unica', pregunta: '¿En qué momento estás?', opciones: this.textos('momento') },
+          { id: 'rol', corto: 'cómo eres en la mesa', tipo: 'unica', pregunta: 'En una mesa con gente que no conoces, ¿cómo eres?', opciones: this.textos('rol') },
+          { id: 'motivo', corto: 'qué te trae', tipo: 'unica', pregunta: '¿Qué te trae?', opciones: this.textos('motivo') },
+          { id: 'romance', corto: 'si buscas algo romántico', tipo: 'unica', opcional: true, pregunta: 'Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?', ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla del producto. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: this.textos('romance') }
         ]
       },
       {
@@ -502,7 +682,7 @@ class Component extends DCLogic {
         proposito: 'Es lo que más pesa a la hora de armar el grupo: dos horas se sostienen con temas, no con datos.',
         preguntas: [
           { id: 'temas', corto: 'de qué hablas', tipo: 'multi', min: 2, max: 4, pregunta: '¿De qué podrías hablar dos horas seguidas?', opciones: temas },
-          { id: 'evitar', corto: 'qué prefieres esquivar', tipo: 'multi', opcional: true, exclusiva: 6, pregunta: '¿Hay algún tema que prefieras que no salga?', ayuda: 'Se lo decimos al anfitrión de la mesa, sin decir de quién viene.', opciones: ['Política y situación del país', 'Religión y fe', 'Dinero, sueldos y precios', 'Vida amorosa y relaciones', 'Crianza e hijos', 'Trabajo, vengo a desconectarme', 'Ninguno, hablo de todo'] },
+          { id: 'evitar', corto: 'qué prefieres esquivar', tipo: 'multi', opcional: true, exclusiva: 6, pregunta: '¿Hay algún tema que prefieras que no salga?', ayuda: 'Se lo decimos al anfitrión de la mesa, sin decir de quién viene.', opciones: this.textos('evitar') },
           { id: 'actividades', corto: 'qué haces', tipo: 'multi', min: 3, max: 6, pregunta: 'Escoge lo que de verdad haces, no lo que te gustaría hacer', opciones: actividades }
         ]
       },
@@ -510,19 +690,19 @@ class Component extends DCLogic {
         titulo: 'Qué buscas y cuánto',
         proposito: 'El rango que marques es el techo del sitio que elegimos. Nadie ve tu respuesta y no hay mesa mejor por gastar más.',
         preguntas: [
-          { id: 'planes', corto: 'qué planes te interesan', tipo: 'multi', pregunta: '¿Qué planes te interesan?', ayuda: 'Hoy solo hay cenas. Lo demás lo abrimos según lo que pida la gente.', opciones: ['Cena en restaurante', 'Cena con foco gastronómico', 'Café o desayuno de networking', 'Drinks / after office', 'Correr', 'Senderismo', 'Pádel o tenis', 'Yoga o pilates', 'Ciclismo'] },
-          { id: 'peso', corto: 'qué pesa más', tipo: 'unica', pregunta: 'En una cena, ¿qué pesa más para ti?', opciones: ['La conversación, el restaurante es la excusa', 'La comida, vengo por la experiencia gastronómica', 'Las dos cosas por igual'] },
-          { id: 'gasto', corto: 'tu presupuesto', tipo: 'unica', pregunta: '¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?', ayuda: 'Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa, así que marcar de más solo hace que la noche te salga cara.', opciones: ['Hasta 20 USD', '20 a 35 USD', '35 a 50 USD', 'Más de 50 USD'] },
+          { id: 'planes', corto: 'qué planes te interesan', tipo: 'multi', pregunta: '¿Qué planes te interesan?', ayuda: 'Hoy solo hay cenas. Lo demás lo abrimos según lo que pida la gente.', opciones: this.textos('planes') },
+          { id: 'peso', corto: 'qué pesa más', tipo: 'unica', pregunta: 'En una cena, ¿qué pesa más para ti?', opciones: this.textos('peso') },
+          { id: 'gasto', corto: 'tu presupuesto', tipo: 'unica', pregunta: '¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?', ayuda: 'Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa, así que marcar de más solo hace que la noche te salga cara.', opciones: this.textos('gasto') },
         ]
       },
       {
         titulo: 'Logística',
         proposito: 'Lo último. Con esto sabemos a qué mesa puedes llegar de verdad y qué sitio elegir.',
         preguntas: [
-          { id: 'zonas', corto: 'tus zonas', tipo: 'multi', pregunta: '¿En qué zonas puedes asistir sin problema?', opciones: zonas, todas: zonas.length - 1 },
-          { id: 'dias', corto: 'tus días', tipo: 'multi', pregunta: '¿Qué días te sirven mejor?', opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía'] },
-          { id: 'idiomas', corto: 'tus idiomas', tipo: 'multi', pregunta: '¿En qué idiomas conversas cómodo?', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] },
-          { id: 'dieta', corto: 'tu dieta', tipo: 'multi', opcional: true, exclusiva: 0, pregunta: '¿Alguna restricción alimentaria?', opciones: ['Ninguna', 'Vegetariano', 'Vegano', 'Pescetariano', 'Sin gluten', 'Sin lactosa', 'Kosher', 'Halal', 'No como cerdo', 'No como carnes rojas', 'Diabético', 'Alergias'] }
+          { id: 'zonas', corto: 'tus zonas', tipo: 'multi', pregunta: '¿En qué zonas puedes asistir sin problema?', opciones: zonas, todas: this.OPC.zonas.findIndex((o) => o[1] === null) },
+          { id: 'dias', corto: 'tus días', tipo: 'multi', pregunta: '¿Qué días te sirven mejor?', opciones: this.textos('dias') },
+          { id: 'idiomas', corto: 'tus idiomas', tipo: 'multi', pregunta: '¿En qué idiomas conversas cómodo?', opciones: this.textos('idiomas') },
+          { id: 'dieta', corto: 'tu dieta', tipo: 'multi', opcional: true, exclusiva: 0, pregunta: '¿Alguna restricción alimentaria?', opciones: this.textos('dieta') }
         ]
       }
     ];
