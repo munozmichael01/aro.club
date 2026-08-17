@@ -92,7 +92,28 @@ export async function componer(tipo: Correo, datos: Valores): Promise<Pintado | 
 export type Resultado =
   | { estado: 'enviado'; id: string | null }
   | { estado: 'sin-remitente' }
+  | { estado: 'de-prueba' }
   | { estado: 'error'; motivo: string }
+
+/**
+ * Direcciones a las que NO se escribe nunca.
+ *
+ * `example.com` es un dominio reservado que no acepta correo, y
+ * `prueba.aro.club` es nuestro sin buzón: escribirles es un rebote duro
+ * garantizado. Y los rebotes duros son lo que hunde la reputación de un
+ * dominio nuevo — no hace falta mandar spam, basta con escribirle cuatro
+ * veces a un sitio que no existe.
+ *
+ * Vive aquí y no en una limpieza de la base a propósito: la base se ensucia
+ * sola cada vez que alguien prueba algo, y dentro de tres meses nadie se va a
+ * acordar de este problema. El candado tiene que estar donde sale el correo.
+ */
+const DOMINIOS_DE_PRUEBA = ['example.com', 'example.org', 'example.net', 'prueba.aro.club', 'test.com']
+
+export function esDePrueba(direccion: string): boolean {
+  const d = direccion.trim().toLowerCase()
+  return DOMINIOS_DE_PRUEBA.some((x) => d.endsWith('@' + x) || d.endsWith('.' + x))
+}
 
 /**
  * Manda. Sin clave no manda y lo dice: no se finge un envío.
@@ -103,6 +124,10 @@ export type Resultado =
  * hasta que `aro.club` exista.
  */
 export async function enviar(a: string, asunto: string, html: string): Promise<Resultado> {
+  // Antes que nada: a una dirección de prueba no se le escribe, y no es un
+  // error. Se resuelve y se sigue.
+  if (esDePrueba(a)) return { estado: 'de-prueba' }
+
   if (!CLAVE) return { estado: 'sin-remitente' }
 
   try {

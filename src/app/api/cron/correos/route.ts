@@ -101,6 +101,17 @@ async function despachar(seco: boolean) {
       })
     }
 
+    if (r.estado === 'de-prueba') {
+      // Se marca como resuelta: no se va a poder mandar nunca y reintentarla
+      // cada quince minutos para siempre no ayuda a nadie.
+      await admin
+        .from('scheduled_emails')
+        .update({ sent_at: new Date().toISOString() } as never)
+        .eq('id', fila.id)
+      problemas.push({ id: fila.id, kind: fila.kind, motivo: 'dirección de prueba: no se manda' })
+      continue
+    }
+
     if (r.estado === 'error') {
       // Este SÍ se reintenta: un fallo de red o un límite de la cuenta se
       // arregla solo. No se marca enviado.
