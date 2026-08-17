@@ -255,6 +255,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Esa fecha ya cerró.' }, { status: 409 })
   }
 
+  // Verificada, o no hay puesto.
+  //
+  // Esta comprobación estaba en `/api/reservar` y NO estaba aquí, y eso
+  // dejaba la regla abierta por el lado que importa: reportar un pago es lo
+  // que aparta el puesto y lo que dispara el correo de «tu puesto está
+  // apartado». Una cuenta sin verificar podía llegar hasta ahí —se comprobó
+  // con una de verdad, que recibió el correo sin haber pasado por revisión—.
+  //
+  // Es la regla que sostiene todo lo demás: cinco desconocidos se sientan
+  // con alguien porque una persona miró su cédula. Con una sola puerta sin
+  // candado, la promesa no vale.
+  const { data: verificada } = await admin
+    .from('v_verified_profiles')
+    .select('id')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (!verificada) {
+    return NextResponse.json(
+      { error: 'Verifica tu identidad antes de apartar tu puesto.' },
+      { status: 409 },
+    )
+  }
+
   const tasa = await tasaDelDia(admin)
   if (!tasa && m.moneda === 'VES') {
     // Sin tasa no se puede decir cuánto son ocho dólares hoy, y cobrar con

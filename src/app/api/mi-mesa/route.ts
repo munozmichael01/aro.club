@@ -64,7 +64,18 @@ export async function GET() {
     | undefined
 
   if (!reserva || !evento) {
-    return NextResponse.json({ fase: 'sin-reserva' })
+    // Sin mesa no son todos el mismo caso, y la pantalla necesita saber
+    // cuál es para decir algo útil. Quien está esperando a que revisemos su
+    // cédula no tiene nada que hacer —y decirle «aparta tu puesto» sería
+    // mandarlo a una puerta que aún no se le abre—; quien ya está verificado
+    // sí, y lo que le falta es reservar.
+    const { data: perfil } = await admin
+      .from('profiles')
+      .select('status')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    return NextResponse.json({ fase: 'sin-reserva', estado: perfil?.status ?? null })
   }
 
   const revelaEn = new Date(evento.reveal_at).getTime()

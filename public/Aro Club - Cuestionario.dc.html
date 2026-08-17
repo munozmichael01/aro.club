@@ -229,7 +229,12 @@ class Component extends DCLogic {
     arraigo: ['volvio', 'se-quedo', 'interior', 'extranjero', 'visita'],
     sector: ['tecnologia', 'finanzas', 'salud', 'educacion', 'consultoria', 'legal', 'marketing', 'medios', 'diseno', 'comercio', 'manufactura', 'energia', 'construccion', 'gastronomia', 'ong', 'gobierno', 'emprendo', 'estudio', 'entre-trabajos', 'otro'],
     momento: ['soltero-sin-hijos', 'soltero-con-hijos', 'pareja-sin-hijos', 'pareja-con-hijos', 'no-decir'],
-    rol: ['escucha', 'depende', 'lleva'],
+    // 'depende' va al final, no en medio: en medio se lee como el punto
+    // neutro de una escala y se lleva a todo el que no quiere elegir. Y esta
+    // respuesta alimenta el balance de la mesa —cuantos llevan y cuantos
+    // escuchan—, asi que un monton amontonado en el medio no es un dato
+    // tibio, es un dato que no sirve.
+    rol: ['escucha', 'lleva', 'depende'],
     motivo: ['ampliar', 'volver-a-salir', 'fuera-del-trabajo', 'reconectar', 'red-profesional'],
     romance: ['abierto', 'indiferente', 'cerrado'],
     actividades: ['cocinar', 'salir-a-comer', 'correr', 'gimnasio', 'yoga', 'ciclismo', 'senderismo', 'playa', 'padel', 'futbol', 'beisbol', 'nadar', 'bailar', 'conciertos', 'cine', 'teatro', 'museos', 'leer', 'escribir', 'fotografia', 'instrumento', 'videojuegos', 'juegos-de-mesa', 'viajar', 'voluntariado', 'estudiar', 'plantas'],
@@ -383,7 +388,7 @@ class Component extends DCLogic {
         proposito: 'Una mesa donde todos llevan la conversación no funciona, y una donde nadie la lleva tampoco. Nada de esto se le muestra a nadie.',
         preguntas: [
           { id: 'momento', corto: 'en qué momento estás', tipo: 'unica', pregunta: '¿En qué momento estás?', opciones: ['Soltero sin hijos', 'Soltero con hijos', 'En pareja sin hijos', 'En pareja con hijos', 'Prefiero no decirlo'] },
-          { id: 'rol', corto: 'cómo eres en la mesa', tipo: 'unica', pregunta: 'En una mesa con gente que no conoces, ¿cómo eres?', opciones: ['Escucho más de lo que hablo', 'Depende del momento', 'Suelo llevar la conversación'] },
+          { id: 'rol', corto: 'cómo eres en la mesa', tipo: 'unica', pregunta: 'En una mesa con gente que no conoces, ¿cómo eres?', opciones: ['Escucho más de lo que hablo', 'Suelo llevar la conversación', 'Depende del momento'] },
           { id: 'motivo', corto: 'qué te trae', tipo: 'unica', pregunta: '¿Qué te trae?', opciones: ['Ampliar mi círculo', 'Volver a salir después de un tiempo', 'Conocer gente fuera del trabajo', 'Reconectar con Caracas después de volver', 'Red profesional'] },
           { id: 'romance', corto: 'si buscas algo romántico', tipo: 'unica', opcional: true, pregunta: 'Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?', ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla del producto. Solo la usa el algoritmo para no juntar expectativas opuestas.', opciones: ['Abierto, si surge algo bienvenido', 'Me da igual, vengo por la conversación', 'Prefiero una mesa sin esa energía'] }
         ]
