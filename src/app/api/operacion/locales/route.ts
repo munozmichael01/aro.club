@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { anotar } from '@/lib/auditoria'
+import { FORMATOS_DE_FAMILIA, familiaDe } from '@/lib/formatos'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -16,22 +17,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * cuándo. Borrarlo rompería el histórico de las mesas que pasaron por él, y
  * ese histórico es justo lo que decide si se renueva.
  */
-
-/**
- * Los cuatro formatos de la pantalla son FAMILIAS; la base guarda el
- * formato del evento. «Movimiento» son seis cosas distintas —caminata,
- * carrera, pádel…— y pedirle a operación que marque las seis para decir
- * «aquí se puede hacer deporte» sería trasladarle una decisión de esquema.
- */
-const FAMILIAS: Record<string, string[]> = {
-  cenas: ['dinner', 'foodie_dinner', 'women_dinner'],
-  drinks: ['drinks'],
-  movimiento: ['walk', 'hike', 'run', 'padel', 'pilates', 'cycling'],
-  coffee: ['coffee'],
-}
-
-const familiaDe = (formato: string) =>
-  Object.keys(FAMILIAS).find((f) => FAMILIAS[f].includes(formato)) ?? null
 
 /**
  * El ruido: 1-3 en la base, etiqueta en pantalla. El número no sale nunca,
@@ -310,7 +295,7 @@ export async function POST(request: Request) {
     .maybeSingle()
   if (!zona) return NextResponse.json({ error: 'Esa zona no existe.' }, { status: 400 })
 
-  const formatos = [...new Set(d.familias.flatMap((f) => FAMILIAS[f]))]
+  const formatos = [...new Set(d.familias.flatMap((f) => FORMATOS_DE_FAMILIA[f]))]
 
   const { data, error } = await admin
     .from('restaurants')

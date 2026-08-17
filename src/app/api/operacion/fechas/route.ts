@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { anotar } from '@/lib/auditoria'
 import { encolar } from '@/lib/correos'
+import { FAMILIA_DE_FORMATO, MOVIMIENTO } from '@/lib/formatos'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -80,17 +81,6 @@ function diaDeLaSemana(dia: string): number {
   return new Date(Date.UTC(a, m - 1, d)).getUTCDay()
 }
 
-/** Los que salen a la calle: no basta con decir dónde, hay que decir qué. */
-const MOVIMIENTO = ['walk', 'hike', 'run', 'padel', 'pilates', 'cycling']
-
-/** A qué familia pertenece cada formato: es lo que dice qué sitios sirven. */
-const FAMILIA_DE: Record<string, string> = {
-  dinner: 'cenas', foodie_dinner: 'cenas', women_dinner: 'cenas',
-  drinks: 'drinks', coffee: 'coffee',
-  walk: 'movimiento', hike: 'movimiento', run: 'movimiento',
-  padel: 'movimiento', pilates: 'movimiento', cycling: 'movimiento',
-}
-
 /**
  * Si ese sitio puede recibir esa fecha. Devuelve el problema, o null.
  *
@@ -123,7 +113,7 @@ async function revisarSitio(
   // Y que sirva para lo que se hace: un sitio de coffee no recibe una cena.
   const sirve = (local.formats ?? []) as string[]
   if (sirve.length && !sirve.includes(formato)) {
-    const familia = FAMILIA_DE[formato] ?? formato
+    const familia = FAMILIA_DE_FORMATO[formato] ?? formato
     return `${local.name} no sirve para ${familia}.`
   }
 

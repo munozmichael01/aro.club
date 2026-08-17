@@ -776,6 +776,125 @@
         </div>
       </div>
     </sc-if>
+
+    <sc-if value="{{ esGente }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <h1 style="{{ h1 }}">Gente</h1>
+        <p style="{{ bajada }}">{{ bajadaGente }}</p>
+
+        <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin:clamp(26px,3.2vw,34px) 0 12px">DÓNDE HAY GENTE SUFICIENTE</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+          <sc-for list="{{ formatosZona }}" as="f" hint-placeholder-count="4">
+            <button onClick="{{ f.pick }}" style="{{ f.btn }}">{{ f.nombre }}</button>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,168px),1fr));gap:10px">
+          <sc-for list="{{ zonasMapa }}" as="z" hint-placeholder-count="10">
+            <button onClick="{{ z.pick }}" style="{{ z.caja }}">
+              <span style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+                <span style="{{ z.cifra }}">{{ z.n }}</span>
+                <span style="{{ z.selloEstilo }}">{{ z.sello }}</span>
+              </span>
+              <span style="display:block;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A;margin-top:8px;text-align:left">{{ z.zona }}</span>
+              <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px;text-align:left">{{ z.nota }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;max-width:64ch;text-wrap:pretty">{{ notaMapa }}</div>
+
+        <div style="height:1px;background:rgba(20,52,42,.14);margin:clamp(30px,3.6vw,42px) 0"></div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+          <div style="flex:1 1 320px;display:flex;align-items:center;gap:12px;min-height:60px;padding:0 20px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4">
+            <span style="flex:0 0 auto;font:400 18px/1 'Inter Tight',sans-serif;color:#566A5D">⌕</span>
+            <input type="text" value="{{ busca }}" onChange="{{ onBusca }}" placeholder="Buscar por nombre o correo" aria-label="Buscar persona" style="flex:1;min-width:0;min-height:58px;border:none;background:transparent;color:#14342A;font:400 16px/1 'Inter Tight',sans-serif;outline:none" />
+            <sc-if value="{{ hayBusca }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ limpiaBusca }}" aria-label="Limpiar" style="flex:0 0 auto;min-width:44px;min-height:44px;border:none;background:transparent;color:#566A5D;font:400 18px/1 'Inter Tight',sans-serif;cursor:pointer">×</button>
+            </sc-if>
+          </div>
+          <sc-for list="{{ atajos }}" as="a" hint-placeholder-count="3">
+            <button onClick="{{ a.pick }}" style="{{ a.btn }}">
+              <span style="{{ a.cifraEstilo }}">{{ a.n }}</span>
+              <span style="{{ a.txt }}">{{ a.nombre }}</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:clamp(18px,2.4vw,30px);align-items:flex-start;margin-top:clamp(26px,3.2vw,34px)">
+
+          <div style="flex:1 1 300px;min-width:0;border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.2vw,24px)">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:16px">
+              <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">FILTROS</span>
+              <sc-if value="{{ hayFiltros }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ limpiaFiltros }}" style="min-height:36px;padding:0 12px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#8F4515;font:500 12px/1 'Inter Tight',sans-serif;cursor:pointer">Quitar todos</button>
+              </sc-if>
+            </div>
+            <sc-for list="{{ grupos }}" as="g" hint-placeholder-count="5">
+              <div style="margin-bottom:20px">
+                <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D;margin-bottom:10px">{{ g.titulo }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:7px">
+                  <sc-for list="{{ g.opciones }}" as="o" hint-placeholder-count="4">
+                    <button onClick="{{ o.pick }}" style="{{ o.btn }}">
+                      <span style="{{ o.txt }}">{{ o.label }}</span>
+                      <span style="{{ o.cuenta }}">{{ o.n }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="flex:2 1 420px;min-width:0">
+            <div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:baseline;margin-bottom:6px">
+              <span style="{{ cifraGrande }}">{{ nGente }}</span>
+              <span style="font:400 clamp(19px,2vw,24px)/1.2 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ palabraGente }}</span>
+            </div>
+            <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;max-width:56ch;margin-bottom:18px;text-wrap:pretty">{{ leyendaGente }}</div>
+
+            <sc-if value="{{ hayGente }}" hint-placeholder-val="{{ true }}">
+              <div style="border-radius:24px;background:#FAF3E4;overflow:hidden">
+                <sc-for list="{{ lista }}" as="p" hint-placeholder-count="8">
+                  <a href="{{ p.enlace }}" style="{{ p.fila }}">
+                    <span style="{{ p.avatar }}">{{ p.inicial }}</span>
+                    <span style="flex:1;min-width:0">
+                      <span style="display:block;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ p.nombre }}</span>
+                      <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ p.linea }}</span>
+                    </span>
+                    <span style="{{ p.chip }}">{{ p.estado }}</span>
+                    <span style="{{ p.flecha }}">›</span>
+                  </a>
+                </sc-for>
+              </div>
+              <sc-if value="{{ hayMas }}" hint-placeholder-val="{{ false }}">
+                <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:12px">{{ textoMas }}</div>
+              </sc-if>
+            </sc-if>
+            <sc-if value="{{ sinGente }}" hint-placeholder-val="{{ false }}">
+              <div style="border-radius:24px;border:1px dashed rgba(20,52,42,.28);padding:clamp(20px,2.6vw,26px);max-width:52ch">
+                <div style="font:400 clamp(20px,2.2vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloSinGente }}</div>
+                <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:8px;text-wrap:pretty">{{ notaSinGente }}</div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="height:1px;background:rgba(20,52,42,.14);margin:clamp(30px,3.6vw,42px) 0"></div>
+
+        <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:6px">DÓNDE SE NOS CAE LA GENTE</div>
+        <p style="{{ bajada }}">{{ bajadaEmbudo }}</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:18px;max-width:820px">
+          <sc-for list="{{ embudo }}" as="e" hint-placeholder-count="7">
+            <button onClick="{{ e.pick }}" style="{{ e.fila }}">
+              <span style="{{ e.barra }}"><span style="{{ e.relleno }}"></span></span>
+              <span style="flex:1 1 190px;min-width:0;text-align:left;font:500 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ e.paso }}</span>
+              <span style="{{ e.cifra }}">{{ e.n }}</span>
+              <span style="{{ e.caida }}">{{ e.perdidos }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;max-width:60ch;text-wrap:pretty">Sin exportar y sin envíos: esta pestaña sirve para saber, no para disparar. El documento, el teléfono y el correo completo se abren en la ficha de una en una, y la cédula solo desde la cola de verificaciones.</div>
+      </div>
+    </sc-if>
   </div>
 </div>
 
@@ -805,6 +924,7 @@ class Component extends DCLogic {
     fechaCanc: -1, cancelada: '', resueltos: {},
     arrastrando: null, tipoRep: 'todo', confirmar: '', filtroLoc: 'todos',
     nombreEq: '', correoEq: '', rolEq: 0, retirados: {}, concedidos: [], acuseEq: '',
+    busca: '', filtros: {}, fZona: '', atajo: '', escalon: -1, fmtZona: 0,
 
     // --- lo que viene de las rutas -------------------------------------
     fechas: null,        // GET /api/operacion/fechas
@@ -815,6 +935,10 @@ class Component extends DCLogic {
     incidencias: null, accionesIncidencia: [],
     locales: null, zonasCatalogo: [], resumenLocales: null,
     equipo: null, esAdmin: false,
+    // Gente: la lista, el mapa de zonas y el embudo salen del MISMO GET. El
+    // mapa y el embudo no se recalculan aquí —se pintan— porque son los que
+    // deciden si una fecha se puede abrir.
+    gente: null, zonasGente: [], embudoGente: [], totalGente: 0, verificadosGente: 0,
     // --- y el estado de trabajar con ellas ------------------------------
     trabajando: false, fallo: '', aviso: '',
     desdeMesa: null, sobreMesa: null, recalculando: [], repartiendo: false,
@@ -828,6 +952,7 @@ class Component extends DCLogic {
     this.cargarIncidencias();
     this.cargarLocales();
     this.cargarEquipo();
+    this.cargarGente();
     this.montarArrastre();
   }
 
@@ -880,6 +1005,28 @@ class Component extends DCLogic {
     return this.pedir('/api/operacion/locales',
       (d) => ({ locales: d.locales, zonasCatalogo: d.zonas, resumenLocales: d.resumen }),
       { locales: [], zonasCatalogo: [], resumenLocales: null });
+  }
+
+  /**
+   * Gente, con el filtro de formato puesto.
+   *
+   * El chip de formato del mapa de zonas vuelve a preguntar en vez de
+   * recortar la lista aquí: quien decide cuántas mesas da una zona es la
+   * ruta, y filtrar delante sería una segunda cuenta de la misma cifra. Es
+   * el mismo error que el reparto en el navegador.
+   *
+   * Se manda la FAMILIA —cenas, drinks, movimiento, coffee—, que es lo que
+   * enseña la pantalla; la ruta la traduce a los formatos de la base.
+   */
+  cargarGente(fmt) {
+    const i = typeof fmt === 'number' ? fmt : (this.state.fmtZona || 0);
+    const familia = ['', 'cenas', 'drinks', 'movimiento', 'coffee'][i] || '';
+    return this.pedir('/api/operacion/gente' + (familia ? '?formato=' + familia : ''),
+      (d) => ({
+        gente: d.gente, zonasGente: d.zonas, embudoGente: d.embudo,
+        totalGente: d.total, verificadosGente: d.verificados
+      }),
+      { gente: [], zonasGente: [], embudoGente: [], totalGente: 0, verificadosGente: 0 });
   }
 
   // Equipo es solo de admin: un 404 aquí no es un fallo, es la respuesta. La
@@ -1611,8 +1758,83 @@ class Component extends DCLogic {
 
     const porConciliar = (St.pagosCola || []).length;
 
+    // ── gente: un solo pool, y lo que decide lo dice la ruta ────────
+    //
+    // La entrega traía dos listas escritas a mano, PERFILES y LEADS, y todo
+    // colgaba de ellas. Aquí es UNA lista —la que devuelve la ruta— donde el
+    // lead es una fila más con `estado: 'lead'`: si el primer escalón del
+    // embudo dice 47, se pueden enseñar esos 47.
+    //
+    // Lo que esta pantalla calcula es presentación: qué fila se ve y cómo se
+    // lee. El mapa de zonas y el embudo llegan hechos.
+    const TODOS = St.gente || [];
+    const PERFILES = TODOS.filter((p) => p.estado !== 'lead');
+    const LEADS = TODOS.filter((p) => p.estado === 'lead');
+    const cargandoGente = St.gente === null;
+
+    // El nombre de la zona sale del catálogo que devuelve la misma ruta. Una
+    // tabla escrita aquí se queda vieja en cuanto se activa una zona nueva, y
+    // los slugs de verdad son `las_mercedes` y `los_palos_grandes`.
+    const ZN = {};
+    (St.zonasGente || []).forEach((z) => { ZN[z.slug] = z.nombre; });
+    const nombreZona = (slug) => ZN[slug] || String(slug || '').replace(/_/g, ' ');
+
+    // Los siete escalones, por su clave, y ANIDADOS: el escalón que se pincha
+    // filtra por él y por todos los de arriba. Sueltos, «subió cédula» dejaba
+    // dentro a los leads —que no tienen estado 'sin'— y la lista enseñaba más
+    // gente de la que decía el número que acababas de pulsar.
+    const ESCALON = {
+      correo: () => true,
+      datos: (p) => p.estado !== 'lead',
+      cuestionario: (p) => p.zonas.length > 0,
+      documentos: (p) => p.estado !== 'sin',
+      verificada: (p) => p.estado === 'ok',
+      reservo: (p) => p.cenas > 0 || p.creditos > 0,
+      fue: (p) => p.cenas > 0
+    };
+    const EMBUDO = St.embudoGente || [];
+    const escSel = typeof St.escalon === 'number' && St.escalon >= 0 ? St.escalon : -1;
+    const pasaEscalon = (p) => escSel < 0 ||
+      EMBUDO.slice(0, escSel + 1).every((e) => (ESCALON[e.paso] || (() => true))(p));
+
+    // El filtrado vive una vez: la lista, el número, la leyenda y las cuentas
+    // de cada opción lo comparten. Dos filtrados es cómo el titular dice 10 y
+    // la lista enseña 9.
+    const selG = St.filtros || {};
+    const qG = (St.busca || '').trim().toLowerCase();
+    const TRAMO = (p) => (p.edad < 32 ? 'j' : p.edad <= 37 ? 'm' : 'v');
+    // Del lead, `nombre` ya viene enmascarado y `trato` es lo de antes de la
+    // arroba: se busca por los dos para que buscar «ana» encuentre a quien
+    // dejó su correo, sin que la pantalla llegue a enseñarlo entero.
+    const casa = (p) => !qG ||
+      String(p.nombre || '').toLowerCase().indexOf(qG) >= 0 ||
+      String(p.trato || '').toLowerCase().indexOf(qG) >= 0;
+    const ATAJO = {
+      cred: (p) => p.creditos > 0 && p.cenas === 0,
+      espera: (p) => p.espera > 0 && p.cenas === 0,
+      dormidos: (p) => p.cenas > 0 && p.dias > 60
+    };
+    // `salvo` es el grupo que se está contando: su propia opción no se aplica,
+    // porque si no cada opción diría siempre cuántos hay de sí misma.
+    const pasaGente = (p, salvo) => {
+      if (!pasaEscalon(p)) return false;
+      if (!casa(p)) return false;
+      if (St.fZona && p.zonas.indexOf(St.fZona) < 0) return false;
+      if (St.atajo && ATAJO[St.atajo] && !ATAJO[St.atajo](p)) return false;
+      const G = {
+        estado: (x) => p.estado === x,
+        genero: (x) => p.genero === x,
+        arraigo: (x) => p.arraigo === x,
+        edad: (x) => TRAMO(p) === x,
+        formato: (x) => (p.familias || []).indexOf(x) >= 0
+      };
+      return Object.keys(G).every((k) => (k === salvo || !selG[k]) ? true : G[k](selG[k]));
+    };
+    const FILTRADA = TODOS.filter((p) => pasaGente(p));
+
     // Equipo solo existe para admin: la ruta devuelve 404 a un ops, y una
-    // pestaña que siempre dice cero es peor que no estar.
+    // pestaña que siempre dice cero es peor que no estar. Gente va detrás, así
+    // que su índice depende de si Equipo está o no.
     const pestanas = [
       ['Reparto', String(FECHAS_REP.length)],
       ['Verificaciones', String(pendientes)],
@@ -1620,7 +1842,8 @@ class Component extends DCLogic {
       ['Reportes', String(sinResolver)],
       ['Fechas', String(FECHAS_REP.length)],
       ['Locales', String(locales.length)]
-    ].concat(St.esAdmin ? [['Equipo', String(conAcceso)]] : []).map((p, i) => {
+    ].concat(St.esAdmin ? [['Equipo', String(conAcceso)]] : [])
+      .concat([['Gente', String(TODOS.length)]]).map((p, i) => {
       const on = v === i;
       return {
         nombre: p[0], n: p[1],
@@ -2085,8 +2308,211 @@ class Component extends DCLogic {
         : 'Cuando alguien cuente algo después de una mesa, aparece aquí el mismo día.',
       reportes, locales, filtrosLocales,
 
+      // ── gente ─────────────────────────────────────────────────────
+      esGente: v === (St.esAdmin ? 7 : 6),
+      nGente: String(FILTRADA.length),
+      palabraGente: FILTRADA.length === 1 ? 'persona' : 'personas',
+      cifraGrande: 'font:700 clamp(52px,7vw,84px)/0.9 \'Inter Tight\',sans-serif;letter-spacing:-.045em;font-variant-numeric:tabular-nums;color:#14342A',
+      bajadaGente: cargandoGente
+        ? 'Leyendo la base.'
+        : PERFILES.length + (PERFILES.length === 1 ? ' perfil y ' : ' perfiles y ') + LEADS.length + (LEADS.length === 1 ? ' correo sin completar.' : ' correos sin completar.') + ' Todo lo de abajo se calcula sobre eso: los conteos, el mapa de zonas y el embudo.',
+      bajadaEmbudo: 'Cada escalón dice cuánta gente llegó hasta ahí. Toca uno para ver quiénes se quedaron en él.',
+
+      // La leyenda se compone sola: cada filtro puesto añade su trozo. Sin
+      // esto, el número grande no dice de qué es.
+      leyendaGente: (function () {
+        if (cargandoGente) return 'Leyendo la base.';
+        const t = [];
+        if (qG) t.push('que coinciden con «' + (St.busca || '').trim() + '»');
+        if (St.fZona) t.push('que aceptan ' + nombreZona(St.fZona));
+        if (selG.estado) t.push({ ok: 'con identidad verificada', revision: 'con la verificación en revisión', sin: 'sin verificar', lead: 'que solo dejaron el correo' }[selG.estado]);
+        if (selG.edad) t.push({ j: 'de menos de 32', m: 'de 32 a 37', v: 'de más de 37' }[selG.edad]);
+        if (selG.genero) t.push({ mujer: 'mujeres', hombre: 'hombres', 'no-binario': 'no binarias', 'sin-decir': 'que no dijeron su género' }[selG.genero]);
+        if (selG.arraigo) t.push({ volvio: 'que volvieron a Caracas', 'se-quedo': 'que se quedaron', mismos: 'de siempre aquí', remoto: 'que trabajan en remoto', interior: 'que llegaron de otra parte', visita: 'de paso' }[selG.arraigo]);
+        if (selG.formato) t.push('interesadas en ' + ({ cenas: 'cenas', drinks: 'drinks', movimiento: 'movimiento', coffee: 'coffee' })[selG.formato]);
+        if (St.atajo === 'cred') t.push('con créditos sin usar y ninguna cena');
+        if (St.atajo === 'espera') t.push('que se apuntaron y nunca entraron en una mesa');
+        if (St.atajo === 'dormidos') t.push('que no vuelven desde hace más de dos meses');
+        if (escSel >= 0 && EMBUDO[escSel]) t.push('que llegaron a «' + EMBUDO[escSel].etiqueta.toLowerCase() + '»');
+        // LA REGLA: las mesas se cuentan sobre VERIFICADOS, nunca sobre el
+        // total filtrado, y cuando difieren se dice. Sin la segunda mitad, el
+        // titular prometía mesas con gente que no entra al reparto.
+        const elegibles = FILTRADA.filter((p) => p.estado === 'ok').length;
+        const mesas = Math.floor(elegibles / 6);
+        const cl = mesas >= 1
+          ? (elegibles === FILTRADA.length ? 'Dan' : elegibles + ' están verificadas y dan')
+            + ' para ' + mesas + (mesas === 1 ? ' mesa de seis.' : ' mesas de seis.')
+          : (elegibles === FILTRADA.length
+            ? 'No llegan a un grupo de seis.'
+            : elegibles + (elegibles === 1 ? ' está verificada' : ' están verificadas') + ', así que todavía no llegan a un grupo de seis.');
+        if (!t.length) return 'Toda la base. Cruza filtros y el número de arriba es la respuesta: es lo que decide si una fecha se puede abrir. ' + cl;
+        return 'Personas ' + t.join(', ') + '. ' + cl;
+      }).call(this),
+
+      hayGente: FILTRADA.length > 0,
+      sinGente: FILTRADA.length === 0,
+      hayMas: FILTRADA.length > 10,
+      textoMas: 'Se muestran diez de ' + FILTRADA.length + '. Afina los filtros para reducir la lista.',
+      tituloSinGente: cargandoGente ? 'Cargando…'
+        : (TODOS.length === 0 ? 'Todavía no hay nadie.' : 'Nadie cumple los filtros puestos.'),
+      notaSinGente: cargandoGente ? 'Leyendo la base.'
+        : (TODOS.length === 0
+          ? 'Ni un perfil ni un correo apuntado. En cuanto alguien deje el suyo en la landing, aparece aquí.'
+          : 'Cero también es una respuesta: significa que esa fecha no se puede abrir con la gente que hay hoy. Quita el filtro que menos te importe y vuelve a mirar.'),
+
+      // El chip de formato vuelve a preguntar a la ruta: el mapa lo calcula
+      // ella, que es quien decide cuántas mesas da una zona.
+      formatosZona: ['Todo', 'Cenas', 'Drinks', 'Movimiento', 'Coffee'].map((nombre, i) => {
+        const on = (St.fmtZona || 0) === i;
+        return {
+          nombre,
+          pick: () => { this.setState({ fmtZona: i }); this.cargarGente(i); },
+          btn: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#1B5138') + ';font:' + (on ? '600' : '500') + ' 13px/1 \'Inter Tight\',sans-serif;cursor:pointer'
+        };
+      }),
+
+      // El mapa llega hecho de la ruta, ordenado por demanda. La cifra grande
+      // es la de VERIFICADOS —los que entran al reparto— y cuando hay más
+      // apuntados que verificados la tarjeta lo dice: sin eso, la misma
+      // pantalla daba dos respuestas a la misma pregunta.
+      zonasMapa: (St.zonasGente || []).map((z) => {
+        const sale = z.mesas >= 1;
+        const dif = z.total !== z.verificados;
+        const mesasTxt = sale
+          ? z.mesas + (z.mesas === 1 ? ' mesa de seis' : ' mesas de seis')
+          : 'No llega a un grupo';
+        return {
+          zona: z.nombre, n: String(z.verificados),
+          sello: sale ? 'SALE' : (z.verificados === 0 ? 'VACÍA' : (z.faltan === 1 ? 'FALTA 1' : 'FALTAN ' + z.faltan)),
+          nota: (dif ? z.total + ' en total, ' + z.verificados + (z.verificados === 1 ? ' verificada · ' : ' verificadas · ') : '') + mesasTxt,
+          pick: () => this.setState({ fZona: (St.fZona === z.slug ? '' : z.slug) }),
+          caja: 'display:block;text-align:left;border-radius:22px;padding:16px 18px;cursor:pointer;background:' + (St.fZona === z.slug ? '#F2E9D5' : '#FAF3E4') + ';border:1px solid ' + (St.fZona === z.slug ? '#8F4515' : (sale ? 'rgba(27,81,56,.34)' : 'transparent')),
+          cifra: 'font:700 clamp(26px,3vw,34px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:' + (sale ? '#1B5138' : '#8F4515'),
+          selloEstilo: 'display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;white-space:nowrap;background:' + (sale ? 'rgba(27,81,56,.12)' : 'rgba(143,69,21,.12)') + ';color:' + (sale ? '#1B5138' : '#8F4515')
+        };
+      }),
+      notaMapa: 'La cifra es gente verificada: quien no lo está no entra al reparto, así que no puede contar para prometer una mesa. Cuando hay más apuntados que verificados, la tarjeta lo dice.'
+        + ((St.fmtZona || 0) ? ' Ahora mismo solo cuenta a quien marcó ' + ['', 'cenas', 'drinks', 'movimiento', 'coffee'][St.fmtZona] + ' en el cuestionario, y del correo apuntado no sabemos qué formato quiere.' : ''),
+
+      busca: St.busca || '',
+      hayBusca: !!(St.busca || '').trim(),
+      onBusca: (e) => this.setState({ busca: e.target.value }),
+      limpiaBusca: () => this.setState({ busca: '' }),
+
+      // Los tres atajos semanales. Se cuentan sobre perfiles: un correo suelto
+      // no tiene créditos ni cenas.
+      atajos: [
+        ['Con créditos sin usar', 'cred'],
+        ['Se apunta y no entra', 'espera'],
+        ['Sin volver, +2 meses', 'dormidos']
+      ].map((a) => {
+        const on = St.atajo === a[1];
+        const n = PERFILES.filter(ATAJO[a[1]]).length;
+        return {
+          nombre: a[0], n: String(n),
+          pick: () => this.setState({ atajo: on ? '' : a[1] }),
+          btn: 'display:inline-flex;align-items:center;gap:10px;min-height:60px;padding:0 20px;border-radius:999px;cursor:pointer;background:' + (on ? '#14342A' : 'transparent') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.2)'),
+          cifraEstilo: 'font:700 20px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:' + (on ? '#E39C63' : '#8F4515'),
+          txt: 'font:500 14px/1.2 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#14342A') + ';white-space:nowrap'
+        };
+      }),
+
+      // Cada opción dice cuánta gente deja dentro SOBRE LO YA FILTRADO, no en
+      // total. Cero no se esconde: se atenúa y se puede pulsar igual, porque
+      // saber que no hay nadie es la respuesta a la pregunta.
+      grupos: (function () {
+        const DEFS = [
+          ['ESTADO', 'estado', [['Verificada', 'ok'], ['En revisión', 'revision'], ['Sin verificar', 'sin'], ['Sin completar', 'lead']]],
+          ['EDAD', 'edad', [['Menos de 32', 'j'], ['32 a 37', 'm'], ['Más de 37', 'v']]],
+          // Los cuatro del enum `gender_t`, no dos: filtrar por «mujer» y
+          // «hombre» dejaba fuera de toda pregunta a quien contestó otra cosa.
+          ['GÉNERO', 'genero', [['Mujer', 'mujer'], ['Hombre', 'hombre'], ['No binario', 'no-binario'], ['Sin decir', 'sin-decir']]],
+          // Los seis de `rootedness_t`. `extranjero` no está: la entrega 7 lo
+          // fusionó dentro de `interior` a propósito.
+          ['ARRAIGO', 'arraigo', [['Volvió', 'volvio'], ['Se quedó', 'se-quedo'], ['Los mismos', 'mismos'], ['Remoto', 'remoto'], ['Llegó', 'interior'], ['De paso', 'visita']]],
+          ['FORMATO', 'formato', [['Cenas', 'cenas'], ['Drinks', 'drinks'], ['Movimiento', 'movimiento'], ['Coffee', 'coffee']]]
+        ];
+        return DEFS.map((d) => ({
+          titulo: d[0],
+          opciones: d[2].map((o) => {
+            const on = selG[d[1]] === o[1];
+            const n = TODOS.filter((p) => {
+              if (!pasaGente(p, d[1])) return false;
+              if (d[1] === 'formato') return (p.familias || []).indexOf(o[1]) >= 0;
+              if (d[1] === 'edad') return TRAMO(p) === o[1];
+              return p[d[1]] === o[1];
+            }).length;
+            return {
+              label: o[0], n: String(n),
+              pick: () => this.setState((st) => {
+                const f = Object.assign({}, st.filtros);
+                if (f[d[1]] === o[1]) delete f[d[1]]; else f[d[1]] = o[1];
+                return { filtros: f };
+              }),
+              btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 8px 0 14px;border-radius:999px;cursor:pointer;background:' + (on ? '#14342A' : 'transparent') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';opacity:' + (n === 0 && !on ? '.5' : '1'),
+              txt: 'font:' + (on ? '600' : '500') + ' 13px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#14342A') + ';white-space:nowrap',
+              cuenta: 'display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 7px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;background:' + (on ? 'rgba(250,243,228,.2)' : 'rgba(20,52,42,.08)') + ';color:' + (on ? '#FAF3E4' : '#33513F')
+            };
+          })
+        }));
+      }).call(this),
+
+      hayFiltros: Object.keys(St.filtros || {}).length > 0 || !!St.fZona || !!St.atajo || !!(St.busca || '').trim() || escSel >= 0,
+      limpiaFiltros: () => this.setState({ filtros: {}, fZona: '', atajo: '', busca: '', escalon: -1 }),
+
+      // Diez filas: la lista es para reconocer a alguien, no para leerse
+      // entera. Del lead solo el correo enmascarado, y sin ficha: no hay
+      // ninguna ruta que abra un correo apuntado, así que la fila no lleva a
+      // ningún sitio en vez de llevar a un 404.
+      lista: FILTRADA.slice(0, 10).map((p, i) => {
+        const EST = {
+          ok: ['Verificada', '#1B5138', 'rgba(27,81,56,.12)'],
+          revision: ['En revisión', '#8F4515', 'rgba(143,69,21,.12)'],
+          sin: ['Sin verificar', '#33513F', 'transparent'],
+          lead: ['Sin completar', '#33513F', 'transparent']
+        };
+        const e = EST[p.estado] || EST.sin;
+        const esLead = p.estado === 'lead';
+        const zonas = (p.zonas || []).map(nombreZona).join(', ');
+        const recorrido = p.espera
+          ? p.espera + (p.espera === 1 ? ' vez en espera' : ' veces en espera')
+          : (p.cenas ? p.cenas + (p.cenas === 1 ? ' cena' : ' cenas') : 'ninguna cena');
+        return {
+          nombre: p.nombre, inicial: String(p.trato || p.nombre || '·').charAt(0).toUpperCase(),
+          linea: esLead
+            ? 'Dejó el correo hace ' + p.dias + (p.dias === 1 ? ' día' : ' días') + ' · sin datos base'
+            : [p.edad ? p.edad + ' años' : null, p.industria || null, zonas || 'sin zonas', recorrido]
+              .filter(Boolean).join(' · '),
+          estado: e[0],
+          enlace: esLead ? undefined : 'Aro Club - Perfil miembro.dc.html?id=' + p.id,
+          avatar: 'flex:0 0 auto;width:34px;height:34px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 14px/1 \'Inter Tight\',sans-serif',
+          chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;background:' + e[2] + ';border:1px solid ' + (e[2] === 'transparent' ? 'rgba(20,52,42,.2)' : 'transparent') + ';color:' + e[1],
+          fila: 'display:flex;align-items:center;gap:12px;padding:13px 18px;min-height:64px;text-decoration:none;border-bottom:1px solid rgba(20,52,42,.09)' + (esLead ? ';cursor:default' : ''),
+          flecha: esLead ? 'display:none' : 'flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-8px -12px -8px 0;font:500 18px/1 \'Inter Tight\',sans-serif;color:#1B5138'
+        };
+      }),
+
+      // El embudo llega anidado de la ruta: cada escalón cuenta a quien llegó
+      // HASTA ahí. Pinchable, porque un número que no se puede abrir es un
+      // número que hay que creerse.
+      embudo: EMBUDO.map((e, i) => {
+        const tope = EMBUDO.length ? EMBUDO[0].cuenta : 0;
+        const perdidos = i === 0 ? 0 : EMBUDO[i - 1].cuenta - e.cuenta;
+        const on = escSel === i;
+        return {
+          paso: e.etiqueta, n: String(e.cuenta),
+          perdidos: perdidos ? '−' + perdidos : '',
+          pick: () => this.setState({ escalon: on ? -1 : i }),
+          fila: 'display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;width:100%;text-align:left;padding:14px 18px;border-radius:20px;cursor:pointer;background:' + (on ? '#F2E9D5' : '#FAF3E4') + ';border:1px solid ' + (on ? '#8F4515' : 'transparent'),
+          barra: 'position:relative;display:block;flex:0 0 auto;width:96px;height:8px;border-radius:999px;background:rgba(20,52,42,.12);overflow:hidden',
+          relleno: 'position:absolute;left:0;top:0;bottom:0;width:' + (tope ? Math.round((e.cuenta / tope) * 100) : 0) + '%;border-radius:999px;background:' + (i >= 4 ? '#1B5138' : '#8F4515'),
+          cifra: 'flex:0 0 auto;font:700 19px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#14342A',
+          caida: 'flex:0 0 auto;min-width:52px;text-align:right;font:600 13px/1 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;color:' + (perdidos > 5 ? '#8F4515' : '#566A5D')
+        };
+      }),
+
       // ── el equipo: quién puede operar ─────────────────────────────
-      esEquipo: v === 6,
+      esEquipo: v === 6 && St.esAdmin,
       equipo: EQUIPO.map((p, i) => {
         // `fuera` es lo que acaba de hacerse en esta pantalla: la fila se
         // queda visible con su chip en «Miembro» para ver el resultado sin

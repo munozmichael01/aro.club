@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { FORMATOS_DE_FAMILIA, esFamilia, familiasDe } from '@/lib/formatos'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -33,6 +34,11 @@ type Fila = {
   arraigo: string
   zonas: string[]
   formatos: string[]
+  // Las cuatro que enseña la pantalla, derivadas aquí. La pantalla filtra por
+  // familia y la base guarda el formato: si la traducción se hiciera delante,
+  // el chip «Cenas» del mapa de zonas —que se calcula aquí— y el de los
+  // filtros —que se calcularía allí— podrían dejar de significar lo mismo.
+  familias: string[]
   estado: 'ok' | 'revision' | 'sin' | 'lead'
   cenas: number
   creditos: number
@@ -133,6 +139,7 @@ export async function GET(request: Request) {
       arraigo: (r?.rootedness ?? p.rootedness ?? '') as string,
       zonas: r?.zones ?? [],
       formatos: r?.formats ?? [],
+      familias: familiasDe(r?.formats),
       estado,
       cenas: p.events_attended ?? 0,
       creditos: saldoDe.get(p.id)?.balance ?? 0,
@@ -158,7 +165,10 @@ export async function GET(request: Request) {
     genero: (l.gender ?? '') as string,
     arraigo: (l.rootedness ?? '') as string,
     zonas: l.zones ?? [],
+    // La entrega 7 quitó `waitlist.formats`: del lead se sabe dónde, no qué.
+    // Vacío es la verdad, y por eso un filtro de formato lo deja fuera.
     formatos: [],
+    familias: [],
     estado: 'lead',
     cenas: 0,
     creditos: 0,
@@ -176,7 +186,18 @@ export async function GET(request: Request) {
   // que no puede contar para prometer una mesa. Se devuelven las dos cifras
   // —total y verificados— para que la pantalla pueda decirlo cuando difieren;
   // con una sola, la misma pantalla daría dos respuestas a la misma pregunta.
+  //
+  // El filtro entra como FAMILIA —«cenas»— porque es lo que enseña la
+  // pantalla, y también se acepta un formato suelto —«dinner»— porque es lo
+  // que guarda la base. Una familia son hasta seis formatos: pedirle a
+  // operación que marque los seis de «movimiento» para preguntar «¿dónde hay
+  // gente para salir a la calle?» sería trasladarle una decisión de esquema.
   const formato = url.searchParams.get('formato')
+  const formatosPedidos = formato
+    ? (esFamilia(formato) ? FORMATOS_DE_FAMILIA[formato] : [formato])
+    : null
+  const sirve = (p: Fila) =>
+    !formatosPedidos || p.formatos.some((f) => formatosPedidos.includes(f))
 
   const { data: zonas } = await admin
     .from('zones')
@@ -185,9 +206,7 @@ export async function GET(request: Request) {
     .eq('is_active', true)
 
   const mapa = (zonas ?? []).map((z) => {
-    const enZona = todos.filter(
-      (p) => p.zonas.includes(z.slug) && (!formato || p.formatos.includes(formato)),
-    )
+    const enZona = todos.filter((p) => p.zonas.includes(z.slug) && sirve(p))
     const listos = enZona.filter((p) => p.estado === 'ok')
     return {
       slug: z.slug,
