@@ -119,20 +119,26 @@
 
     fechaPago: {
       etiqueta: 'Fecha del pago',
+      // El año, entero. Con dos cifras «16/08/26» se lee distinto segun quien
+      // mire —y quien lo cuadra contra el movimiento del banco lee fechas
+      // todo el dia—, asi que la ambiguedad la paga el que concilia.
       filtrar: function (v) {
-        var d = String(v == null ? '' : v).replace(/\D/g, '').slice(0, 6)
+        var d = String(v == null ? '' : v).replace(/\D/g, '').slice(0, 8)
         if (d.length <= 2) return d
         if (d.length <= 4) return d.slice(0, 2) + '/' + d.slice(2)
         return d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4)
       },
       valido: function (v) {
-        var m = /^(\d{2})\/(\d{2})\/(\d{2})$/.exec(String(v || ''))
+        var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(v || ''))
         if (!m) return false
         var dia = parseInt(m[1], 10)
         var mes = parseInt(m[2], 10)
-        return dia >= 1 && dia <= 31 && mes >= 1 && mes <= 12
+        var anio = parseInt(m[3], 10)
+        if (dia < 1 || dia > 31 || mes < 1 || mes > 12) return false
+        // Un pago no se reporta antes de existir ni en el siglo que viene.
+        return anio >= 2025 && anio <= 2099
       },
-      ayuda: 'DD/MM/AA',
+      ayuda: 'DD/MM/AAAA',
     },
 
     referencia: {
@@ -157,8 +163,18 @@
       filtrar: function (v) {
         return String(v == null ? '' : v).slice(0, 60)
       },
+      // De la lista, y no lo que sea. Escrito a mano llegaban «Banesco»,
+      // «banesco», «BANESCO C.A.» y «0134» como cuatro bancos distintos, y
+      // quien concilia tiene que adivinar cual es cual contra el movimiento.
+      // Se acepta el codigo o el nombre exacto: el desplegable manda el
+      // codigo, y asi lo ya guardado a mano no se vuelve invalido de golpe.
       valido: function (v) {
-        return String(v || '').trim().length >= 3
+        var s = String(v || '').trim()
+        if (!s) return false
+        for (var i = 0; i < api.BANCOS.length; i++) {
+          if (api.BANCOS[i].codigo === s || api.BANCOS[i].nombre === s) return true
+        }
+        return false
       },
     },
 
@@ -218,6 +234,42 @@
      * un desplegable de doscientos paises para elegir uno es peor que
      * escribirlo, y quien no este aqui puede teclear su prefijo a mano.
      */
+    // Los bancos del sistema venezolano, con su codigo de cuatro cifras.
+    //
+    // El codigo es lo que manda: es lo que aparece en el movimiento del
+    // banco y lo que se teclea al hacer un pago movil, asi que es por donde
+    // se cuadra. El nombre esta para que la persona reconozca el suyo.
+    //
+    // Ordenados por codigo, que es el orden en que los lista el propio
+    // sistema bancario. Si alguno falta o cambia de nombre, se toca aqui y
+    // vale para la pantalla y para el servidor a la vez.
+    BANCOS: [
+      { codigo: '0102', nombre: 'Banco de Venezuela' },
+      { codigo: '0104', nombre: 'Venezolano de Crédito' },
+      { codigo: '0105', nombre: 'Mercantil' },
+      { codigo: '0108', nombre: 'Provincial' },
+      { codigo: '0114', nombre: 'Bancaribe' },
+      { codigo: '0115', nombre: 'Exterior' },
+      { codigo: '0128', nombre: 'Banco Caroní' },
+      { codigo: '0134', nombre: 'Banesco' },
+      { codigo: '0137', nombre: 'Sofitasa' },
+      { codigo: '0138', nombre: 'Banco Plaza' },
+      { codigo: '0146', nombre: 'Bangente' },
+      { codigo: '0151', nombre: 'BFC Banco Fondo Común' },
+      { codigo: '0156', nombre: '100% Banco' },
+      { codigo: '0157', nombre: 'DelSur' },
+      { codigo: '0163', nombre: 'Banco del Tesoro' },
+      { codigo: '0166', nombre: 'Banco Agrícola de Venezuela' },
+      { codigo: '0168', nombre: 'Bancrecer' },
+      { codigo: '0169', nombre: 'Mi Banco' },
+      { codigo: '0171', nombre: 'Banco Activo' },
+      { codigo: '0172', nombre: 'Bancamiga' },
+      { codigo: '0174', nombre: 'Banplus' },
+      { codigo: '0175', nombre: 'Banco Bicentenario' },
+      { codigo: '0177', nombre: 'Banfanb' },
+      { codigo: '0191', nombre: 'BNC Banco Nacional de Crédito' },
+    ],
+
     PREFIJOS: [
       { codigo: '+58', pais: 'Venezuela' },
       { codigo: '+34', pais: 'España' },

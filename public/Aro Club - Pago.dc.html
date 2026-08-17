@@ -157,7 +157,16 @@
                     </sc-for>
                   </span>
                 </sc-if>
+                <sc-if value="{{ c.esBanco }}" hint-placeholder-val="{{ false }}">
+                  <select onChange="{{ c.onChange }}" aria-label="{{ c.etiqueta }}" style="{{ c.estiloLista }}">
+                    <sc-for list="{{ c.bancos }}" as="b" hint-placeholder-count="24">
+                      <option value="{{ b.valor }}" selected="{{ b.elegido }}">{{ b.texto }}</option>
+                    </sc-for>
+                  </select>
+                </sc-if>
+                <sc-if value="{{ c.esTexto }}" hint-placeholder-val="{{ true }}">
                 <input type="text" inputmode="{{ c.modo }}" value="{{ c.valor }}" onChange="{{ c.onChange }}" placeholder="{{ c.pista }}" aria-label="{{ c.etiqueta }}" style="{{ c.campo }}" />
+                </sc-if>
               </div>
               <sc-if value="{{ c.hayNota }}" hint-placeholder-val="{{ false }}">
                 <div style="font:400 12px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:6px">{{ c.nota }}</div>
@@ -294,7 +303,13 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { fase: 0, metodo: 0, ev: null, rep: {}, copiado: -1,
+  // `rep` arranca con la V puesta, no vacio. La inmensa mayoria de las
+  // cedulas venezolanas son V, y dejarla elegida de verdad —y no solo
+  // pintada— es lo que hace que se vea lo mismo que hay guardado. En los
+  // metodos que no piden letra el servidor ni la mira.
+  LETRA = { doc_tipo: 'V' };
+
+  state = { fase: 0, metodo: 0, ev: null, rep: { doc_tipo: 'V' }, copiado: -1,
             datos: null, enviando: false, fallo: '' };
 
   componentDidMount() {
@@ -415,7 +430,7 @@ class Component extends DCLogic {
         selloEstilo: m.sello
           ? 'display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;background:rgba(20,52,42,.09);font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;color:#33513F'
           : 'display:none',
-        pick: () => { if (m.activo) this.setState({ metodo: i, copiado: -1, rep: {} }); }
+        pick: () => { if (m.activo) this.setState({ metodo: i, copiado: -1, rep: Object.assign({}, this.LETRA) }); }
       };
     });
 
@@ -447,7 +462,9 @@ class Component extends DCLogic {
       this.setState((st) => ({ rep: Object.assign({}, st.rep, { [k]: v }) }));
     };
     const soloNum = (max) => (v) => v.replace(/[^0-9]/g, '').slice(0, max);
-    const fechaF = (v) => v.replace(/[^0-9/]/g, '').slice(0, 8);
+    // Diez, no ocho: el año va entero. El filtro de verdad es el de
+    // reglas.js —el mismo que valida el servidor—; esto solo es el tope.
+    const fechaF = (v) => v.replace(/[^0-9/]/g, '').slice(0, 10);
 
     // Los campos salen del METODO, que los trae de la base, y las reglas de
     // `reglas.js`, que es el mismo fichero que usa el servidor para validar.
@@ -461,7 +478,7 @@ class Component extends DCLogic {
     const PISTAS = {
       tel: { '+58': '4141234567', '+34': '611223344' },
       doc: '12345678', banco: 'Banesco, Mercantil, BNC…',
-      ref: 'Últimos 6 dígitos', fecha: 'DD/MM/AA',
+      ref: 'Últimos 6 dígitos', fecha: 'DD/MM/AAAA',
       titular: 'Como aparece en tu banco', contacto: 'tu@correo.com', otp: '000000'
     };
     const NOTAS = {
@@ -478,10 +495,41 @@ class Component extends DCLogic {
       etiqueta: c.etiqueta, pista: pista,
       prefijo: c.tipo === 'tel' ? (c.prefijo || '') : '',
       hayPrefijo: c.tipo === 'tel',
+
+      // El banco, de una lista y no a mano. Escrito a mano llegaban
+      // «Banesco», «banesco» y «0134» como tres bancos distintos, y quien
+      // concilia tiene que adivinar cual es cual contra el movimiento.
+      //
+      // El tipo `banco` ya venia declarado en la base; lo unico que faltaba
+      // era que la pantalla lo pintara como lo que es.
+      esBanco: c.tipo === 'banco',
+      esTexto: c.tipo !== 'banco',
+      // La primera es vacia a proposito. Sin ella el desplegable ensena el
+      // primer banco de la lista como si estuviera elegido mientras el campo
+      // esta vacio, que es exactamente el fallo que tenia la V del documento:
+      // parece contestado y el boton sigue bloqueado sin decir por que.
+      bancos: [{ valor: '', texto: 'Elige tu banco', elegido: !campo(c.campo) }]
+        .concat((R ? R.BANCOS : []).map(function (b) {
+          return {
+            // Se guarda el codigo: es lo que sale en el movimiento del banco.
+            valor: b.codigo,
+            texto: b.codigo + '  ' + b.nombre,
+            elegido: campo(c.campo) === b.codigo
+          };
+        })),
+      estiloLista: 'flex:1;min-width:0;min-height:56px;padding:0 12px 0 4px;border:none;background:transparent'
+        + ';color:#14342A;font:400 15px/1 \'Inter Tight\',sans-serif;outline:none;cursor:pointer',
+
       // V o E, elegido. El esquema anterior asumia V.
+      //
+      // El `|| 'V'` que habia aqui pintaba la V como elegida sin que hubiera
+      // nada guardado: la pantalla decia que si y el boton seguia bloqueado
+      // pidiendo la letra, sin nada que tocar para desbloquearlo. Ahora la V
+      // se guarda de verdad al abrir (ver `sembrarLetra`), asi que lo que se
+      // ve y lo que hay son lo mismo.
       hayTipoDoc: !!c.conTipo,
       tiposDoc: ['V', 'E'].map(function (t) {
-        var on = (campo('doc_tipo') || 'V') === t;
+        var on = campo('doc_tipo') === t;
         return {
           letra: t,
           pick: (function (letra) { return function () { setCampo('doc_tipo', null)({ target: { value: letra } }); }; })(t),

@@ -222,6 +222,17 @@ class Component extends DCLogic {
 
   SESION = 'aro-sesion';
 
+  // El texto del atajo vive en una constante porque se usa en dos sitios:
+  // al pintar la lista y al saber cual es su indice.
+  TODAS_LAS_ZONAS = 'Cualquier zona de la ciudad';
+
+  // Los nombres por defecto, en el mismo orden que COD.zonas. Se sustituyen
+  // por los del servidor en cuanto llegan.
+  _nombresZona = ['Las Mercedes', 'El Rosal', 'Bello Monte', 'Chacao', 'Altamira',
+    'La Castellana', 'Los Palos Grandes', 'Sebucán y Los Dos Caminos', 'Chuao',
+    'El Cafetal y Santa Paula', 'Los Naranjos y Cerro Verde', 'La Trinidad y La Tahona',
+    'El Hatillo'];
+
   // Identificadores estables, en el mismo orden que las opciones de cada
   // pregunta de renderVals(). El texto visible puede reescribirse sin romper
   // nada; reordenar una lista obliga a reordenar la suya aquí al lado.
@@ -244,6 +255,9 @@ class Component extends DCLogic {
     peso: ['conversacion', 'comida', 'ambas'],
     gasto: ['hasta-20', '20-35', '35-50', 'mas-50'],
     dieta: ['ninguna', 'vegetariano', 'vegano', 'pescetariano', 'sin-gluten', 'sin-lactosa', 'kosher', 'halal', 'sin-cerdo', 'sin-carnes-rojas', 'diabetico', 'alergias'],
+    // Las zonas no van aqui fijas: las pone `ponerZonas()` con el orden que
+    // manda /api/zonas, que es por demanda. La lista por defecto es la de
+    // abajo, para que la pantalla funcione si esa peticion falla.
     zonas: ['mercedes', 'rosal', 'bello-monte', 'chacao', 'altamira', 'castellana', 'palos-grandes', 'sebucan', 'chuao', 'cafetal', 'naranjos', 'trinidad', 'hatillo'],
     dias: ['mar', 'mie', 'jue', 'vie', 'sab', 'sab-md', 'dom-md'],
     idiomas: ['es', 'en', 'pt', 'it', 'fr', 'de', 'ar', 'zh']
@@ -257,6 +271,14 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
+    // Las zonas, por demanda. Si esto falla se queda la lista por defecto,
+    // que es la misma de siempre: nadie se queda sin poder contestar porque
+    // no hayamos podido contar.
+    fetch('/api/zonas')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin zonas'))))
+      .then((d) => this.ponerZonas(d.zonas))
+      .catch(() => { /* se queda el orden por defecto */ });
+
     const s = this.sesion();
     if (!s || !s.correo || !s.token) { this.setState({ sinSesion: true }); return; }
     this._sesion = s;
@@ -346,22 +368,62 @@ class Component extends DCLogic {
     this._tEmpleador = setTimeout(() => this.enviar('empleador', v), 600);
   }
 
-  multi(id, i, max, exclusiva) {
+  multi(id, i, max, exclusiva, todas) {
     let salida = null;
     this.setState((s) => {
       const a = (s.r[id] || []).slice();
       const tieneEx = exclusiva != null;
+      const tieneTodas = todas != null;
       let out;
-      if (a.indexOf(i) >= 0) out = a.filter((x) => x !== i);
+
+      // El atajo de «cualquier zona»: marca las trece o las quita todas.
+      //
+      // No se guarda como un valor propio —no existe la zona «cualquiera»—,
+      // sino que se expande a la lista entera. Con un valor propio habria que
+      // ensenarle al reparto que significa «vale cualquiera», y una persona
+      // con ese valor no cuadraria con ninguna zona: se quedaria fuera de
+      // todas las mesas sin un solo error por ningun lado.
+      if (tieneTodas && i === todas) {
+        const reales = [];
+        for (let k = 0; k < todas; k++) reales.push(k);
+        const yaEstaban = reales.every((k) => a.indexOf(k) >= 0);
+        out = yaEstaban ? [] : reales.concat([todas]);
+      } else if (a.indexOf(i) >= 0) out = a.filter((x) => x !== i);
       else if (tieneEx && i === exclusiva) out = [i];
       else {
         const limpio = tieneEx ? a.filter((x) => x !== exclusiva) : a;
         if (max && limpio.length >= max) return {};
         out = limpio.concat([i]);
       }
+
+      // Y se mantiene coherente solo: si quita una zona suelta, «cualquiera»
+      // deja de estar marcada; si acaba marcandolas todas a mano, se marca.
+      // Sin esto la casilla dice una cosa y la seleccion dice otra.
+      if (tieneTodas && i !== todas) {
+        const reales = [];
+        for (let k = 0; k < todas; k++) reales.push(k);
+        const completas = reales.every((k) => out.indexOf(k) >= 0);
+        out = out.filter((x) => x !== todas);
+        if (completas) out = out.concat([todas]);
+      }
+
       salida = out;
       return { r: Object.assign({}, s.r, { [id]: out }) };
     }, () => { if (salida) this.enviar(id, this.aCodigo(id, salida)); });
+  }
+
+  /**
+   * Reordena las zonas con lo que diga el servidor.
+   *
+   * Los nombres y los codigos se mueven JUNTOS, que es lo unico delicado:
+   * `aCodigo` traduce por posicion, asi que una lista reordenada y la otra no
+   * guardaria Chacao donde la persona marco Altamira, sin fallar en nada.
+   */
+  ponerZonas(lista) {
+    if (!lista || !lista.length) return;
+    this.COD.zonas = lista.map((z) => z.slug);
+    this._nombresZona = lista.map((z) => z.nombre);
+    this.forceUpdate();
   }
 
   renderVals() {
@@ -369,7 +431,10 @@ class Component extends DCLogic {
     const sectores = S(['Tecnología', 'Finanzas', 'Salud', 'Educación', 'Consultoría', 'Legal', 'Marketing', 'Medios', 'Diseño', 'Comercio', 'Manufactura', 'Energía', 'Construcción', 'Gastronomía', 'ONG', 'Gobierno', 'Emprendo por mi cuenta', 'Estudio', 'Entre trabajos', 'Otro']);
     const actividades = S(['Cocinar', 'Salir a comer', 'Correr', 'Gimnasio', 'Yoga o pilates', 'Ciclismo', 'Senderismo', 'Playa', 'Pádel o tenis', 'Fútbol', 'Béisbol', 'Nadar', 'Bailar', 'Conciertos', 'Cine', 'Teatro', 'Museos', 'Leer', 'Escribir', 'Fotografía', 'Tocar un instrumento', 'Videojuegos', 'Juegos de mesa', 'Viajar', 'Voluntariado', 'Estudiar algo por mi cuenta', 'Cuidar plantas']);
     const temas = S(['Cocina y restaurantes', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios y emprender', 'Tecnología', 'Arte y diseño', 'Arquitectura', 'Ciencia', 'Historia', 'Psicología', 'Política', 'Economía', 'Crianza', 'Salud y bienestar', 'Humor y absurdos']);
-    const zonas = S(['Las Mercedes', 'El Rosal', 'Bello Monte', 'Chacao', 'Altamira', 'La Castellana', 'Los Palos Grandes', 'Sebucán y Los Dos Caminos', 'Chuao', 'El Cafetal y Santa Paula', 'Los Naranjos y Cerro Verde', 'La Trinidad y La Tahona', 'El Hatillo']);
+    // Los nombres, en el orden que tenga COD.zonas en este momento, mas la
+    // ultima: «cualquier zona». Esa no es una zona, es un atajo que marca
+    // todas —por eso va al final y no tiene codigo propio—.
+    const zonas = S(this._nombresZona.concat([this.TODAS_LAS_ZONAS]));
 
     const empresas = S(['Banesco', 'Mercantil', 'BBVA Provincial', 'Polar', 'Farmatodo', 'Locatel', 'Movistar', 'Digitel', 'Ridery', 'Yummy', 'PDVSA', 'Deloitte', 'EY', 'KPMG', 'Universidad Metropolitana', 'Universidad Católica Andrés Bello']);
 
@@ -415,7 +480,7 @@ class Component extends DCLogic {
         titulo: 'Logística',
         proposito: 'Lo último. Con esto sabemos a qué mesa puedes llegar de verdad y qué sitio elegir.',
         preguntas: [
-          { id: 'zonas', corto: 'tus zonas', tipo: 'multi', pregunta: '¿En qué zonas puedes asistir sin problema?', opciones: zonas },
+          { id: 'zonas', corto: 'tus zonas', tipo: 'multi', pregunta: '¿En qué zonas puedes asistir sin problema?', opciones: zonas, todas: zonas.length - 1 },
           { id: 'dias', corto: 'tus días', tipo: 'multi', pregunta: '¿Qué días te sirven mejor?', opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado noche', 'Sábado mediodía', 'Domingo mediodía'] },
           { id: 'idiomas', corto: 'tus idiomas', tipo: 'multi', pregunta: '¿En qué idiomas conversas cómodo?', opciones: ['Español', 'Inglés', 'Portugués', 'Italiano', 'Francés', 'Alemán', 'Árabe', 'Chino'] },
           { id: 'dieta', corto: 'tu dieta', tipo: 'multi', opcional: true, exclusiva: 0, pregunta: '¿Alguna restricción alimentaria?', opciones: ['Ninguna', 'Vegetariano', 'Vegano', 'Pescetariano', 'Sin gluten', 'Sin lactosa', 'Kosher', 'Halal', 'No como cerdo', 'No como carnes rojas', 'Diabético', 'Alergias'] }
@@ -486,7 +551,7 @@ class Component extends DCLogic {
           icono: on ? '✓' : '',
           pick: q.tipo === 'unica'
             ? () => this.set(q.id, i)
-            : () => this.multi(q.id, i, q.max, q.exclusiva),
+            : () => this.multi(q.id, i, q.max, q.exclusiva, q.todas),
           btnUnica: 'display:flex;align-items:center;gap:13px;width:100%;padding:14px 18px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.18)') + ';cursor:pointer;text-align:left;min-height:56px;transition:all 180ms ease',
           radio: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif',
           txtUnica: 'font:' + (on ? '600' : '400') + ' clamp(15px,1.5vw,17px)/1.3 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A',
@@ -614,7 +679,12 @@ class Component extends DCLogic {
       cerrarRetomada: () => this.setState({ cerrada: true }),
 
       puedeAtras: this.state.pantalla > 0,
-      atras: () => this.setState((s) => ({ pantalla: Math.max(0, s.pantalla - 1), retomada: false })),
+      // Atras tambien sube: volver a una pantalla por su mitad desorienta
+      // igual que llegar a ella por la mitad.
+      atras: () => {
+        window.scrollTo(0, 0);
+        this.setState((s) => ({ pantalla: Math.max(0, s.pantalla - 1), retomada: false }));
+      },
       // Deja de estar inerte: si falta algo, el boton LLEVA a lo que falta en
       // vez de no hacer nada.
       inerteContinuar: null,
@@ -651,9 +721,13 @@ class Component extends DCLogic {
           if (v == null || (Array.isArray(v) && !v.length)) return;
           this.enviar(q.id, this.aCodigo(q.id, v));
         });
+        // El scroll va ANTES del return de la ultima. Estaba despues, asi
+        // que todas las pantallas subian arriba menos justo la del final:
+        // se llegaba a «Completo» a media altura, empezando por la mitad de
+        // un campo. La pantalla que mas se mira era la unica sin arreglar.
+        window.scrollTo(0, 0);
         if (ultima) { this.enviar('__fin', null); this.setState({ fin: true }); return; }
         this.setState((s) => ({ pantalla: s.pantalla + 1, retomada: false }));
-        window.scrollTo(0, 0);
       },
       pieGuardado: completa ? 'Guardado. Puedes salir y volver cuando quieras.' : 'Guardamos cada respuesta al momento.',
       reiniciar: () => this.setState({ fin: false, pantalla: 0, retomada: false })
