@@ -1,8 +1,9 @@
 import 'server-only'
 
-import { createHmac, timingSafeEqual } from 'node:crypto'
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
 
 import { serverEnv } from '@/lib/env'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
  * La firma del enlace de baja que va en el pie de cada correo.
@@ -24,61 +25,157 @@ import { serverEnv } from '@/lib/env'
  * El prefijo `baja:` es lo que los separa. Es una línea y evita que dos usos
  * con permisos muy distintos compartan llave.
  *
- * ## Caduca
+ * ## Se gasta al usarse, y por qué no bastaba con que caducara
  *
- * Treinta días. Un enlace de baja no debería vivir para siempre en un correo
- * archivado, pero tampoco puede caducar en horas: la gente se da de baja
- * cuando le molesta el correo, que puede ser semanas después. Cuando caduca
- * hay pantalla que lo dice —el tercer estado— y no un fallo mudo: un enlace de
- * baja que falla en silencio es el problema legal, no el feo.
+ * Antes esto solo caducaba a los treinta días, y eso estaba mal planteado:
+ * mientras el enlace siguiera vivo servía tantas veces como se pulsara, y el
+ * enlace viaja DENTRO del correo. Reenviar la bienvenida a alguien era darle
+ * un botón para darte de baja a ti, durante un mes. La caducidad no lo
+ * arreglaba: le ponía fecha.
+ *
+ * Ahora el primer uso lo mata (`gastarBaja`). Quien quiera darse de baja
+ * después lo hace desde el pie de cualquier correo nuestro, que trae uno
+ * nuevo, o desde sus ajustes si tiene cuenta.
+ *
+ * La caducidad se queda igualmente, y más corta no: alguien se da de baja
+ * cuando le molesta el correo, y eso puede ser semanas después. Es el tope de
+ * un enlace que NO se ha usado.
+ *
+ * ## El token de visita
+ *
+ * La pantalla ofrece «deshacer» justo después de la baja, y ese deshacer no
+ * puede ir con el token del correo: si el del correo siguiera valiendo, un
+ * reenvío podría volver a suscribir a alguien que se dio de baja, que es el
+ * mismo agujero por el otro lado.
+ *
+ * Así que la baja devuelve un token de VISITA: media hora, no ha viajado por
+ * ningún correo y solo lo tiene el navegador que acaba de hacer la baja. Con
+ * él se puede deshacer —y volver a dar de baja— mientras esa persona sigue
+ * mirando la pantalla. Se acaba la visita, se acaba el token.
  */
 
 const DIAS = 30
 const VENTANA = DIAS * 24 * 3600 * 1000
 
+/** La visita: lo que dura tener la pantalla delante y cambiar de idea. */
+const MINUTOS_VISITA = 30
+const VENTANA_VISITA = MINUTOS_VISITA * 60 * 1000
+
 function secreto(): string {
   return process.env.LEAD_TOKEN_SECRET || serverEnv().SUPABASE_SERVICE_ROLE_KEY
 }
 
-function firma(correo: string, caduca: number): string {
+function firma(prefijo: string, correo: string, caduca: number): string {
   return createHmac('sha256', secreto())
-    .update(`baja:${correo.trim().toLowerCase()}:${caduca}`)
+    .update(`${prefijo}:${correo.trim().toLowerCase()}:${caduca}`)
     .digest('base64url')
 }
 
 /** El token que va en la URL: cuándo caduca y su firma. */
 export function firmarBaja(correo: string): string {
   const caduca = Date.now() + VENTANA
-  return `${caduca}.${firma(correo, caduca)}`
+  return `${caduca}.${firma('baja', correo, caduca)}`
 }
 
-export type Baja = { vale: true } | { vale: false; motivo: 'caducado' | 'invalido' }
+/** El de la visita. Nunca sale en un correo: solo en la respuesta del POST. */
+export function firmarVisita(correo: string): string {
+  const caduca = Date.now() + VENTANA_VISITA
+  return `${caduca}.${firma('baja-visita', correo, caduca)}`
+}
 
-/**
- * Comprueba el token. Distingue caducado de inválido porque la pantalla dice
- * cosas distintas: uno se arregla pidiendo otro correo y el otro no se
- * arregla.
- */
-export function verificarBaja(correo: string, token: string | undefined | null): Baja {
-  if (!token) return { vale: false, motivo: 'invalido' }
+export type Baja =
+  | { vale: true; visita: boolean }
+  | { vale: false; motivo: 'caducado' | 'invalido' | 'gastado' }
 
+function comprobarFirma(prefijo: string, correo: string, token: string): Baja | null {
   const corte = token.indexOf('.')
-  if (corte < 1) return { vale: false, motivo: 'invalido' }
+  if (corte < 1) return null
 
   const caduca = Number(token.slice(0, corte))
   const recibida = token.slice(corte + 1)
-  if (!Number.isFinite(caduca)) return { vale: false, motivo: 'invalido' }
+  if (!Number.isFinite(caduca)) return null
+
+  const esperada = Buffer.from(firma(prefijo, correo, caduca))
+  const dada = Buffer.from(recibida)
+  if (esperada.length !== dada.length || !timingSafeEqual(esperada, dada)) return null
+
+  if (Date.now() > caduca) return { vale: false, motivo: 'caducado' }
+  return { vale: true, visita: prefijo === 'baja-visita' }
+}
+
+/**
+ * Comprueba el token, sea el del correo o el de la visita.
+ *
+ * Distingue caducado de inválido porque la pantalla dice cosas distintas: uno
+ * se arregla pidiendo otro correo y el otro no se arregla. No mira si está
+ * gastado —eso necesita base y esto no la toca—: para saberlo está
+ * `estaGastado`, y para gastarlo `gastarBaja`.
+ */
+export function verificarBaja(correo: string, token: string | undefined | null): Baja {
+  if (!token) return { vale: false, motivo: 'invalido' }
 
   // La firma se comprueba ANTES de mirar la fecha. Al revés, cualquiera podría
   // saber si una fecha inventada está dentro de la ventana, y sobre todo:
   // decirle «caducado» a quien trae un token falso sugiere que el token era
   // bueno y solo le pilló tarde.
-  const esperada = Buffer.from(firma(correo, caduca))
-  const dada = Buffer.from(recibida)
-  if (esperada.length !== dada.length || !timingSafeEqual(esperada, dada)) {
-    return { vale: false, motivo: 'invalido' }
-  }
+  //
+  // Se prueban los dos prefijos porque la pantalla manda uno u otro sin
+  // saberlo: el del correo la primera vez, el de la visita al cambiar de idea.
+  const comoCorreo = comprobarFirma('baja', correo, token)
+  if (comoCorreo) return comoCorreo
 
-  if (Date.now() > caduca) return { vale: false, motivo: 'caducado' }
-  return { vale: true }
+  const comoVisita = comprobarFirma('baja-visita', correo, token)
+  if (comoVisita) return comoVisita
+
+  return { vale: false, motivo: 'invalido' }
+}
+
+const hash = (token: string) => createHash('sha256').update(token).digest('hex')
+
+/** Si este enlace de correo ya se usó. El de visita no se gasta: caduca. */
+export async function estaGastado(token: string): Promise<boolean> {
+  const { data } = await createAdminClient()
+    .from('bajas_correo_tokens')
+    .select('token_hash')
+    .eq('token_hash', hash(token))
+    .maybeSingle()
+
+  return Boolean(data)
+}
+
+/**
+ * Lo gasta. Devuelve `false` si ya estaba gastado.
+ *
+ * Quien decide es la clave primaria, no una lectura previa: dos pulsaciones a
+ * la vez leerían las dos «libre» y las dos seguirían. Insertar solo puede
+ * ganarlo uno.
+ */
+export async function gastarBaja(correo: string, token: string): Promise<boolean> {
+  const { error } = await createAdminClient()
+    .from('bajas_correo_tokens')
+    .insert({ token_hash: hash(token), correo: correo.trim().toLowerCase() } as never)
+
+  if (!error) return true
+
+  // 23505 es la clave duplicada: ya estaba gastado, que es una respuesta y no
+  // un fallo. Cualquier otro error sí lo es, y no puede pasar por gastado.
+  if (error.code === '23505') return false
+
+  console.error('[baja-token] no se pudo gastar el enlace', error)
+  throw new Error('no se pudo gastar el enlace')
+}
+
+/**
+ * Lo devuelve sin usar.
+ *
+ * Solo para cuando se gastó y lo de después falló: un enlace muerto que no
+ * dio de baja a nadie deja a esa persona sin salida y con el correo puesto.
+ */
+export async function soltarBaja(token: string): Promise<void> {
+  const { error } = await createAdminClient()
+    .from('bajas_correo_tokens')
+    .delete()
+    .eq('token_hash', hash(token))
+
+  if (error) console.error('[baja-token] enlace gastado que no se pudo devolver', error)
 }

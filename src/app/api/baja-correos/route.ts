@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { verificarBaja } from '@/lib/baja-token'
+import { estaGastado, firmarVisita, gastarBaja, soltarBaja, verificarBaja } from '@/lib/baja-token'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -20,6 +20,15 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * `GET` dice si el enlace vale y de qué dirección se trata —sin eso la
  * pantalla no puede decirle a nadie qué está a punto de apagar—.
  * `POST` la da de baja o lo deshace.
+ *
+ * **El enlace del correo se gasta al usarse.** Se gasta al dar de baja, que
+ * es la acción; abrir la pantalla no gasta nada, porque un antivirus o el
+ * previsualizador del correo abren enlaces solos y eso mataría el enlace
+ * antes de que nadie lo haya visto.
+ *
+ * El «deshacer» de después no va con el token del correo —si ese siguiera
+ * valiendo, un reenvío podría volver a suscribir a quien se dio de baja— sino
+ * con el token de visita que devuelve el POST.
  */
 
 /** Lo mínimo para no confirmar direcciones ajenas en la respuesta. */
@@ -38,6 +47,15 @@ export async function GET(request: Request) {
     // inventado, responder «¿te damos de baja a ana@gmail.com?» confirmaría
     // que esa dirección es nuestra.
     return NextResponse.json({ estado: firma.motivo })
+  }
+
+  // Un enlace ya usado se cuenta como caducado y no como un estado nuevo: la
+  // pantalla de CADUCADA dice exactamente lo que ha pasado —«los enlaces de
+  // baja caducan por seguridad, para que nadie pueda darte de baja desde un
+  // correo reenviado; abre el enlace del último correo que te llegó»— y para
+  // quien lo lee es la misma situación y la misma salida.
+  if (!firma.visita && token && (await estaGastado(token))) {
+    return NextResponse.json({ estado: 'caducado' })
   }
 
   const admin = createAdminClient()
@@ -86,6 +104,25 @@ export async function POST(request: Request) {
     )
   }
 
+  // El enlace del correo se gasta AQUÍ, al hacer algo con él, y no al abrir la
+  // pantalla: los antivirus y los previsualizadores de correo abren enlaces
+  // solos, y gastarlo en el GET lo mataría antes de que nadie lo viera.
+  //
+  // Se gasta ANTES de escribir y se devuelve si la escritura falla. Al revés
+  // —escribir y luego gastar— dos pulsaciones simultáneas pasarían las dos; y
+  // gastándolo sin devolverlo, un fallo de base dejaría el enlace muerto sin
+  // haber dado de baja a nadie, que es la peor de las tres.
+  const delCorreo = !firma.visita
+  if (delCorreo && !(await gastarBaja(correo, parsed.data.token))) {
+    return NextResponse.json(
+      {
+        error: 'Ese enlace ya se usó. Puedes darte de baja desde el pie de cualquier correo nuestro.',
+        estado: 'caducado',
+      },
+      { status: 401 },
+    )
+  }
+
   const admin = createAdminClient()
   const ahora = new Date().toISOString()
 
@@ -107,8 +144,14 @@ export async function POST(request: Request) {
 
   if (error) {
     console.error('[baja-correos] no se pudo guardar', error)
+    if (delCorreo) await soltarBaja(parsed.data.token)
     return NextResponse.json({ error: 'No pudimos guardarlo. Vuelve a intentarlo.' }, { status: 500 })
   }
 
-  return NextResponse.json({ estado: parsed.data.baja ? 'de-baja' : 'activos' })
+  return NextResponse.json({
+    estado: parsed.data.baja ? 'de-baja' : 'activos',
+    // Con esto se puede cambiar de idea mientras la pantalla sigue delante.
+    // No ha viajado por ningún correo, así que un reenvío no lo tiene.
+    visita: firmarVisita(correo),
+  })
 }

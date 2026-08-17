@@ -205,7 +205,15 @@ class Component extends DCLogic {
     })
       .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
       .then(({ ok, d }) => {
+        // El enlace del correo se gasta al usarse, asi que si llego usado o
+        // caducado esto tiene pantalla propia y no un aviso rojo debajo del
+        // boton: la salida no es reintentar, es abrir el ultimo correo.
+        if (!ok && d.estado === 'caducado') { this.setState({ trabajando: false, fase: 2 }); return; }
         if (!ok) { this.setState({ trabajando: false, fallo: d.error || 'No pudimos guardarlo.' }); return; }
+        // A partir de aqui se sigue con el token de visita: el del correo ya
+        // esta gastado y deshacer con el volveria a abrir el mismo agujero
+        // por el otro lado —un reenvio resuscribiendo a quien se dio de baja.
+        if (d.visita) this._token = d.visita;
         this.setState({ trabajando: false, fase: baja ? 1 : 0 });
       })
       .catch(() => this.setState({ trabajando: false, fallo: 'No pudimos guardarlo. Revisa tu conexión.' }));

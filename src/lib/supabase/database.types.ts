@@ -147,6 +147,24 @@ export type Database = {
         }
         Relationships: []
       }
+      bajas_correo_tokens: {
+        Row: {
+          correo: string
+          gastado_at: string
+          token_hash: string
+        }
+        Insert: {
+          correo: string
+          gastado_at?: string
+          token_hash: string
+        }
+        Update: {
+          correo?: string
+          gastado_at?: string
+          token_hash?: string
+        }
+        Relationships: []
+      }
       booking_zones: {
         Row: {
           booking_id: string
