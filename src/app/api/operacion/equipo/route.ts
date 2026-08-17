@@ -156,6 +156,9 @@ export async function POST(request: Request) {
   const { data: enlace } = await admin.auth.admin.generateLink({
     type: 'recovery',
     email: correo,
+    // Igual que en la recuperación: sin esto, el enlace que se le entrega a
+    // un compañero nuevo lo manda a localhost.
+    options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://aro.club'}/clave` },
   })
 
   await anotar(actor, 'acceso_concedido', 'equipo', invitado.user.id, { correo, rol, nuevo: true })

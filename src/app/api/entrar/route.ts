@@ -101,6 +101,11 @@ export async function POST(request: Request) {
     const { data, error } = await admin.auth.admin.generateLink({
       type: 'recovery',
       email: correo,
+      // A DÓNDE vuelve, dicho aquí y no heredado de la Site URL del proyecto.
+      // Esa apuntaba a localhost, así que todos los enlaces de recuperación
+      // de producción llevaban a ninguna parte —y eso no falla, no avisa: el
+      // correo sale igual de bien—.
+      options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://aro.club'}/clave` },
     })
     if (error) {
       console.error('[entrar] no se pudo generar el enlace', error)

@@ -17,6 +17,7 @@ const PANTALLAS: Array<[string, string]> = [
   ['/sistema', '/Aro Club - Sistema v3.dc.html'],
   // Entrega 2 · área de miembro
   ['/entrar', '/Aro Club - Entrar.dc.html'],
+  ['/clave', '/Aro Club - Clave.dc.html'],
   ['/verificacion', '/Aro Club - Verificacion.dc.html'],
   ['/cuenta', '/Aro Club - Mi cuenta.dc.html'],
   ['/perfil', '/Aro Club - Mi perfil.dc.html'],
