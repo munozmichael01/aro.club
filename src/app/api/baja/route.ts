@@ -42,6 +42,10 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
 
+  // El JWT de esta sesión, ANTES de tocar nada: es lo que hace falta para
+  // cerrar las demás, y más abajo la cuenta ya no se parece a esta.
+  const { data: { session } } = await supabase.auth.getSession()
+
   const parsed = baja.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
     return NextResponse.json(
@@ -112,7 +116,15 @@ export async function POST(request: Request) {
   })
 
   // Y se cierran todas las sesiones abiertas, no solo esta.
-  await admin.auth.admin.signOut(user.id, 'global')
+  //
+  // Con el id de la persona esto no cerraba ninguna: `signOut` quiere el JWT
+  // de una sesión viva y los dos son `string`, así que no fallaba al compilar
+  // —fallaba en cada llamada, sin que nadie mirase el error—. Una cuenta dada
+  // de baja seguía abierta en el móvil donde ya lo estaba.
+  if (session?.access_token) {
+    const { error } = await admin.auth.admin.signOut(session.access_token, 'global')
+    if (error) console.error('[baja] LA CUENTA SE CERRO PERO LAS SESIONES SIGUEN ABIERTAS', user.id, error)
+  }
   await supabase.auth.signOut()
 
   return NextResponse.json({ estado: 'baja' })

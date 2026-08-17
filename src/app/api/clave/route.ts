@@ -21,6 +21,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * cliente de Supabase en el navegador, porque las pantallas son estáticas y
  * meterles un cliente de autenticación solo para esto sería cargar una
  * librería entera en todas para una que la usa.
+ *
+ * Cambiar la contraseña CIERRA todas las sesiones abiertas, que es lo que la
+ * pantalla promete y lo que necesita quien pide el cambio porque le entraron.
+ * De paso mata el propio enlace: el token del correo es una sesión más, así
+ * que al cerrarlas deja de valer y el enlace se vuelve de un solo uso, que es
+ * lo que dice la pantalla de caducado.
  */
 
 const cuerpo = z.object({
@@ -76,6 +82,45 @@ export async function POST(request: Request) {
     )
   }
 
+  // --- 1 · fuera todo el mundo ------------------------------------------
+  //
+  // La pantalla promete dos veces —antes y después— que al guardar se cierra
+  // la sesión en los demás dispositivos, y hasta aquí no se cerraba ninguna:
+  // solo se cambiaba la contraseña. Quien pide el cambio PORQUE le entraron
+  // cuenta exactamente con esto, y cambiar la clave sin echar las sesiones
+  // abiertas no le quita el acceso a nadie: el que estaba dentro sigue dentro
+  // con su token, sin volver a escribir la contraseña vieja nunca más.
+  // Prometerlo sin hacerlo es peor que no decirlo.
+  //
+  // Va ANTES de guardar la contraseña, y el orden es la decisión. Si algo
+  // falla entre los dos pasos, hay que elegir con qué mitad quedarse:
+  //
+  //   · contraseña nueva y sesiones vivas → el intruso sigue dentro y ella
+  //     cree que lo ha echado. Es el fallo que estamos arreglando.
+  //   · sesiones cerradas y contraseña vieja → el intruso está fuera y ella
+  //     pide otro enlace. Molesta y no hace daño.
+  //
+  // Quien está en esta pantalla ya no puede entrar, así que cerrarle sesiones
+  // no le quita nada.
+  // `signOut` quiere el JWT de una sesión viva, no el id de la persona. Con
+  // el id no falla al compilar —los dos son `string`— y falla en cada
+  // llamada, en silencio si nadie mira el error. Aquí el JWT es el token del
+  // propio enlace: el correo de recuperación abre una sesión, y esa sesión
+  // sirve para cerrar todas las demás. `global` incluye a esta.
+  const { error: errorSesiones } = await admin.auth.admin.signOut(token, 'global')
+
+  if (errorSesiones) {
+    console.error('[clave] no se pudieron cerrar las sesiones', errorSesiones)
+    return NextResponse.json(
+      {
+        error: 'No pudimos cerrar las sesiones abiertas, así que no cambiamos la contraseña.'
+          + ' Vuelve a intentarlo o escríbenos a hola@aro.club.',
+      },
+      { status: 500 },
+    )
+  }
+
+  // --- 2 · la contraseña nueva ------------------------------------------
   const { error } = await admin.auth.admin.updateUserById(quien.user.id, { password: clave })
 
   if (error) {
