@@ -203,7 +203,9 @@ export async function POST(request: Request) {
 
   const { data: pago } = await admin
     .from('payments')
-    .select('id, booking_id, status, profile_id')
+    // El evento viaja con el pago porque los dos correos que salen de aquí
+    // —confirmado y no cuadra— nombran la fecha en su primera frase.
+    .select('id, booking_id, status, profile_id, bookings(event_id)')
     .eq('id', d.pagoId)
     .maybeSingle()
 
@@ -211,6 +213,10 @@ export async function POST(request: Request) {
   if (pago.status === 'confirmed') {
     return NextResponse.json({ error: 'Ese pago ya está confirmado.' }, { status: 409 })
   }
+
+  // De qué fecha es este pago, para los correos que la nombran.
+  const eventoId =
+    (pago.bookings as unknown as { event_id: string } | null)?.event_id ?? null
 
   if (d.accion === 'confirmar') {
     await admin
@@ -231,7 +237,12 @@ export async function POST(request: Request) {
         .eq('id', pago.booking_id)
     }
 
-    await encolar({ perfil: pago.profile_id }, 'pago_confirmado', {})
+    // CON su evento. Iba con `{}`, y sin evento no hay fecha: la plantilla
+    // dice «Tu reserva del {{ cuando }} pasa de pendiente a confirmada» y al
+    // miembro le llegaba «Tu reserva del pasa de pendiente a confirmada».
+    // Se ve por contraste con «Recibimos tu pago», que sí se encola con el
+    // evento y sí dice «tu puesto del jueves 20».
+    await encolar({ perfil: pago.profile_id }, 'pago_confirmado', {}, { eventoId })
 
     await anotar(actor, 'pago_confirmado', 'pago', pago.id, { reserva: pago.booking_id })
     return NextResponse.json({ estado: 'confirmado' })
@@ -257,10 +268,11 @@ export async function POST(request: Request) {
 
   // El aviso, con el motivo dentro. Es el unico de los tres del que Design
   // no tiene plantilla, y el correo 06 le promete que se lo diriamos.
+  // Con su evento, por lo mismo: esta plantilla tambien nombra la fecha.
   await encolar({ perfil: pago.profile_id }, 'pago_no_cuadra', {
     motivo: d.motivo,
     guardadoHasta: limite,
-  })
+  }, { eventoId })
 
   await anotar(actor, 'pago_no_cuadra', 'pago', pago.id, { motivo: d.motivo, guardadoHasta: limite })
   return NextResponse.json({ estado: 'no-cuadra', guardadoHasta: limite })

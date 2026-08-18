@@ -109,6 +109,17 @@ export async function prepararCorreo(fila: FilaDeCola): Promise<Preparado> {
   // fecha sale como «El no sale». Antes de pintar una frase rota, no se
   // manda: un correo raro se lee peor que uno que no llega, y este se puede
   // reencolar cuando el dato esté.
+  //
+  // Los dos del pago —`pago_confirmado` y `pago_no_cuadra`— NO están aquí, y
+  // es a propósito. Sus plantillas también nombran la fecha, y el panel los
+  // encolaba sin evento: de ahí la frase coja «Tu reserva del pasa de
+  // pendiente a confirmada». Eso se arregla pasando el evento al encolar, que
+  // es donde estaba el fallo.
+  //
+  // Meterlos en esta lista habría sido peor: un correo que no se puede armar
+  // se CIERRA ahí abajo y no se reintenta nunca. Para un acuse de dinero, no
+  // llegar es peor que llegar con una frase fea — la persona se queda sin el
+  // comprobante que le pedimos que guarde y nadie se entera.
   const NECESITAN_FECHA: Correo[] = [
     'mesa_asignada', 'recordatorio', 'cancelacion', 'fecha_cancelada', 'abrimos_zona',
   ]
@@ -399,7 +410,7 @@ async function elPagoDe(admin: Admin, perfilId: string | null, eventoId: string 
 
   let consulta = admin
     .from('payments')
-    .select('amount_usd, amount_local, fx_rate, datos, booking_id, bookings(event_id)')
+    .select('amount_usd, amount_local, fx_rate, datos, reference_code, booking_id, bookings(event_id)')
     .eq('profile_id', perfilId)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -416,7 +427,14 @@ async function elPagoDe(admin: Admin, perfilId: string | null, eventoId: string 
   }
 
   const datos = (pago.datos ?? {}) as Record<string, unknown>
-  const ref = datos.referencia ?? datos.codigo ?? datos.telefono
+  // De su columna, con respaldo en `datos.ref` para los pagos de antes de que
+  // se empezara a escribir. Buscaba `datos.referencia`, `datos.codigo` y
+  // `datos.telefono`, tres claves que NINGÚN método usa —los campos se llaman
+  // `ref`, `tel` y `banco`—, así que el comprobante decía «Referencia: —»
+  // siempre. Y dos líneas más abajo el mismo correo le pide que lo guarde
+  // «por si algo no cuadra»: le pedíamos guardar el comprobante sin el único
+  // dato con el que se cuadra algo.
+  const ref = pago.reference_code ?? datos.ref
 
   return {
     referencia: ref != null ? String(ref) : '—',
