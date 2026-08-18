@@ -93,7 +93,7 @@
 
     <sc-if value="{{ esDatos }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 320ms ease both">
-        <div style="{{ selloReloj }}">TU PUESTO ESTÁ APARTADO 30 MIN</div>
+        <div style="{{ selloReloj }}">{{ textoSelloReloj }}</div>
         <h1 style="{{ h1 }}">{{ tituloDatos }}</h1>
         <p style="{{ bajada }}">{{ bajadaDatos }}</p>
 
@@ -129,6 +129,18 @@
       </div>
     </sc-if>
 
+    <sc-if value="{{ faltaVerificar }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 320ms ease both">
+        <div style="{{ selloReloj }}">FALTA VERIFICAR</div>
+        <h1 style="{{ h1 }}">Verifica tu identidad y apartas el puesto.</h1>
+        <p style="{{ bajada }}">Sin verificar no podemos sentarte, así que tampoco te cobramos: es lo que hace que los otros cinco se sienten con alguien. Son la cédula y una selfie, lo mira una persona y suele estar el mismo día.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(22px,3vw,28px)">
+          <a href="/verificacion" style="{{ botonPrimario }}">Verificar mi identidad</a>
+          <a href="/cuenta" style="{{ botonFantasma }}">Volver a mi cuenta</a>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
       <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.1);padding:15px 18px;margin-top:14px">
         <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
@@ -138,7 +150,7 @@
 
     <sc-if value="{{ esReportar }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 320ms ease both">
-        <div style="{{ selloReloj }}">TU PUESTO ESTÁ APARTADO 30 MIN</div>
+        <div style="{{ selloReloj }}">{{ textoSelloReloj }}</div>
         <h1 style="{{ h1 }}">{{ tituloReporte }}</h1>
         <p style="{{ bajada }}">{{ bajadaReporte }}</p>
 
@@ -178,7 +190,8 @@
         <sc-if value="{{ hayCaptura }}" hint-placeholder-val="{{ true }}">
           <div style="margin-top:16px">
             <label style="display:block;font:500 13px/1 'Inter Tight',sans-serif;color:#33513F;margin-bottom:8px">{{ etiquetaCaptura }}</label>
-            <button onClick="{{ adjuntar }}" style="{{ botonCaptura }}">
+            <input type="file" id="aro-captura" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" onChange="{{ elegirCaptura }}" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" />
+            <button onClick="{{ adjuntar }}" aria-disabled="{{ subiendoCaptura }}" style="{{ botonCaptura }}">
               <span style="{{ iconoCaptura }}">{{ glifoCaptura }}</span>
               <span style="flex:1;min-width:0;text-align:left">
                 <span style="display:block;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ tituloCaptura }}</span>
@@ -309,7 +322,9 @@ class Component extends DCLogic {
   // metodos que no piden letra el servidor ni la mira.
   LETRA = { doc_tipo: 'V' };
 
-  state = { fase: 0, metodo: 0, ev: null, rep: { doc_tipo: 'V' }, copiado: -1,
+  state = {
+    // La captura: la RUTA que devuelve el servidor tras subirla, no un si/no.
+    capturaRuta: '', capturaNombre: '', subiendoCaptura: false, fase: 0, metodo: 0, ev: null, rep: { doc_tipo: 'V' }, copiado: -1,
             datos: null, enviando: false, fallo: '' };
 
   componentDidMount() {
@@ -341,6 +356,27 @@ class Component extends DCLogic {
   }
 
   // El reporte. El puesto se aparta AQUI, antes de que nadie concilie.
+  /**
+   * Sube la captura y se queda con la RUTA, no con un si/no.
+   *
+   * Va aparte de `rep`: `rep` son los campos que escribe la persona y viaja
+   * entero como `datos`, que el servidor valida como textos. La ruta de la
+   * captura es del pago, no del metodo, y por eso se manda en su propio campo.
+   */
+  subirCaptura(archivo) {
+    if (this.state.subiendoCaptura) return;
+    this.setState({ subiendoCaptura: true, fallo: '' });
+    const cuerpo = new FormData();
+    cuerpo.append('archivo', archivo);
+    fetch('/api/pago/captura', { method: 'POST', body: cuerpo })
+      .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
+      .then(({ ok, x }) => {
+        if (!ok) { this.setState({ subiendoCaptura: false, fallo: x.error || 'No pudimos subir la captura.' }); return; }
+        this.setState({ subiendoCaptura: false, capturaRuta: x.ruta, capturaNombre: archivo.name || '' });
+      })
+      .catch(() => this.setState({ subiendoCaptura: false, fallo: 'No pudimos subir la captura. Revisa tu conexión.' }));
+  }
+
   reportar() {
     if (this.state.enviando) return;
     this.setState({ enviando: true, fallo: '', fase: 3 });
@@ -350,6 +386,7 @@ class Component extends DCLogic {
         eventoId: this._evento,
         metodo: (this.state.datos.metodos[this.state.metodo] || {}).id,
         datos: this.state.rep || {},
+        captura: this.state.capturaRuta || undefined,
         // La tasa que esta pantalla le enseño, que es con la que hizo la
         // transferencia. Si el cron la cambio mientras estaba en el banco,
         // vale la suya y no la de ahora.
@@ -549,11 +586,16 @@ class Component extends DCLogic {
     };
     });
 
-    const conCaptura = !!(S.rep && S.rep.captura);
+    // La captura esta adjunta cuando hay RUTA, no cuando hay un si/no.
+    const conCaptura = !!S.capturaRuta;
+    const subiendo = !!S.subiendoCaptura;
     // Bizum no entrega referencia: sin captura no hay nada que conciliar.
     // Lo dice la tabla, no un id escrito aqui: el dia que entre otro metodo
     // sin referencia, se enciende sin tocar la pantalla.
     const capturaObligatoria = !!mSel.capturaObligatoria;
+    // `undefined` mientras no ha contestado el servidor: no se corta antes de
+    // saberlo, o la pantalla parpadearia «falta verificar» a quien si lo esta.
+    const puedePagar = S.datos ? S.datos.verificada !== false : undefined;
     // Antes: «al menos tres caracteres», que dejaba pasar un telefono de
     // tres digitos y luego nadie encontraba el pago en el banco.
     const cumple = (c) => {
@@ -599,7 +641,14 @@ class Component extends DCLogic {
     ].map((texto, i) => ({ n: i + 1, texto }));
 
     return {
-      esElegir: f === 0, esDatos: f === 1, esReportar: f === 2, esEnviando: f === 3,
+      // Sin verificar no se enseña ni el primer paso: la ruta ya no manda los
+      // datos de la cuenta, y dejar la pantalla andando seria pedirle que
+      // elija metodo para un pago que el servidor va a rechazar al final.
+      faltaVerificar: puedePagar === false,
+      esElegir: f === 0 && puedePagar !== false,
+      esDatos: f === 1 && puedePagar !== false,
+      esReportar: f === 2 && puedePagar !== false,
+      esEnviando: f === 3,
       esPendiente: f === 4, esListo: f === 5, esFallo: f === 6,
 
       metodos, datosPago, camposReporte, comprobante, pasosPendiente, salidas,
@@ -618,6 +667,13 @@ class Component extends DCLogic {
       h1: 'font:400 clamp(30px,6.4vw,46px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance',
       bajada: 'font:400 17px/1.55 \'Inter Tight\',sans-serif;color:#2C4A38;max-width:46ch;margin:14px 0 0;text-wrap:pretty',
       iconoAviso: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px',
+      // Decia «TU PUESTO ESTÁ APARTADO 30 MIN» en las dos pantallas de antes
+      // de pagar, y era mentira dos veces: no hay ninguna reserva todavia
+      // —se crea al reportar— y `bookings.hold_until` se queda en null, o
+      // sea que esos treinta minutos no existen en ninguna parte. Tampoco
+      // hacen falta: aqui no se limitan las plazas, nadie te quita el puesto
+      // por tardar. Lo que si es verdad es cuando se aparta.
+      textoSelloReloj: 'TU PUESTO SE APARTA AL REPORTAR EL PAGO',
       selloReloj: 'display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;background:rgba(143,69,21,.12);font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;color:#8F4515;margin-bottom:16px',
       selloPendiente: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;background:#6E340F;color:#FFF8EA;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;margin-bottom:16px',
       selloListo: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;margin-bottom:16px',
@@ -642,12 +698,29 @@ class Component extends DCLogic {
         : 'Tu banco confirma el cobro. No hace falta que reportes nada después.',
       hayCaptura: mSel.manual,
       etiquetaCaptura: capturaObligatoria ? 'Captura del pago' : 'Captura del pago · opcional',
-      glifoCaptura: conCaptura ? '✓' : '+',
-      tituloCaptura: conCaptura ? 'Captura adjunta' : 'Adjuntar captura',
-      notaCaptura: conCaptura ? 'Toca para cambiarla' : (capturaObligatoria ? 'Obligatoria para ' + mSel.nombre : 'Acelera la revisión'),
+      glifoCaptura: subiendo ? '·' : (conCaptura ? '✓' : '+'),
+      tituloCaptura: subiendo ? 'Subiendo la captura…' : (conCaptura ? 'Captura adjunta' : 'Adjuntar captura'),
+      notaCaptura: subiendo
+        ? 'Un momento'
+        : (conCaptura
+            ? ((S.capturaNombre ? S.capturaNombre + ' · ' : '') + 'toca para cambiarla')
+            : (capturaObligatoria ? 'Obligatoria para ' + mSel.nombre : 'Acelera la revisión')),
       iconoCaptura: 'flex:0 0 auto;width:38px;height:38px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 17px/1 \'Inter Tight\',sans-serif;background:' + (conCaptura ? '#1B5138' : 'rgba(20,52,42,.09)') + ';color:' + (conCaptura ? '#FAF3E4' : '#1B5138'),
       botonCaptura: 'display:flex;align-items:center;gap:13px;width:100%;min-height:72px;padding:14px 18px;border-radius:26px;background:' + (conCaptura ? '#FFFBF0' : 'transparent') + ';border:1px ' + (conCaptura ? 'solid #1B5138' : 'dashed rgba(20,52,42,.3)') + ';cursor:pointer;transition:all 180ms ease',
-      adjuntar: () => this.setState((st) => ({ rep: Object.assign({}, st.rep, { captura: !st.rep.captura }) })),
+      // Abre el selector de verdad. Antes esto invertia un booleano: la
+      // pantalla decia «Captura adjunta» sin haber subido nada, y como ese
+      // booleano viajaba dentro de `datos` —que el servidor valida como
+      // textos— reportar el pago devolvia 400 y solo se salia recargando.
+      adjuntar: () => {
+        if (this.state.subiendoCaptura) return;
+        const campo = document.getElementById('aro-captura');
+        if (campo) { campo.value = ''; campo.click(); }
+      },
+      elegirCaptura: (e) => {
+        const archivo = e.target.files && e.target.files[0];
+        if (archivo) this.subirCaptura(archivo);
+      },
+      subiendoCaptura: this.state.subiendoCaptura ? 'true' : null,
 
       // Se usaban en el marcado y no los devolvia nadie, asi que la franja
       // de error no aparecia jamas: el servidor rechazaba el reporte y la

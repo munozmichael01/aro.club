@@ -360,7 +360,12 @@ class Component extends DCLogic {
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
         titulo: 'Hay cena el jueves en Las Mercedes.',
         cuerpo: 'Te apuntas a la fecha, pagas en bolívares, y el jueves al mediodía sabes en qué mesa te tocó y con quién.',
-        accion: 'Reservar mi puesto', enlace: '#agenda'
+        // El boton dice lo que hace. Decia «Reservar mi puesto» y no reserva:
+        // baja a la agenda, que es donde se elige zona y hora y donde esta el
+        // boton que si aparta el puesto. El texto honesto ya existia catorce
+        // lineas mas abajo —«Ver la agenda»— pero solo se usaba cuando NO
+        // habia fecha abierta, o sea justo cuando no habia nada que elegir.
+        accion: 'Elegir mi fecha', enlace: '#agenda'
       },
       {
         id: 'porconfirmar', sello: 'PAGO EN REVISIÓN',
@@ -674,12 +679,21 @@ class Component extends DCLogic {
         cargo: 'Tu puesto en esta fecha',
         precio: '8 USD en bolívares',
         nota: 'Cubre el emparejamiento, la verificación del grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
-        textoConfirmar: this.state.reservandoYa ? 'Apuntándote' : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : '8 USD'),
+        textoConfirmar: this.state.reservandoYa
+          ? 'Apuntándote'
+          : (d && d.verif !== 'ok'
+              ? 'Verifica tu identidad primero'
+              : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : '8 USD')),
         botonConfirmar: 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
         abrir: () => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0 })),
         // Reservar de verdad. Antes solo se marcaba en la pantalla: al
         // recargar desaparecia, y en la base no habia nada.
         confirmar: () => {
+          // Sin verificar no hay puesto, y decirselo aqui es decirselo donde
+          // decide. Antes se le mandaba a pagar y el candado saltaba al final,
+          // despues de ver los datos del banco: el "no" llegaba cuando ya
+          // habia transferido.
+          if (d && d.verif !== 'ok') { window.location.href = '/verificacion'; return; }
           // Con creditos se aparta el puesto aqui mismo. Sin creditos hay
           // que pagar, y eso es otra pantalla: reportar un pago no es
           // pulsar un boton, es salir al banco y volver.

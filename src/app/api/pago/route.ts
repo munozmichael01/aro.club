@@ -27,6 +27,11 @@ const cuerpo = z.object({
   eventoId: z.string().uuid(),
   metodo: z.string().min(1),
   datos: z.record(z.string(), z.string()),
+  // La ruta que devolvió `/api/pago/captura`. Va aparte y no dentro de
+  // `datos`: `datos` son los textos que escribió la persona para su método, y
+  // meter aquí un valor que no es uno de esos campos es exactamente lo que
+  // rompía el reporte cuando la pantalla colaba un booleano.
+  captura: z.string().min(3).max(200).optional(),
   // La tasa que la pantalla le ENSEÑÓ. No es un dato de adorno: es con la
   // que hizo la transferencia.
   tasaVista: z.number().positive().optional(),
@@ -63,6 +68,16 @@ export async function GET(request: Request) {
 
   const eventoId = new URL(request.url).searchParams.get('evento')
   const admin = createAdminClient()
+
+  // El candado de verificar estaba SOLO al final, al reportar el pago: sin
+  // verificar se recorrían cuatro pantallas, se leían los datos del banco y
+  // se hacía la transferencia, y el 409 llegaba después de haber mandado el
+  // dinero. El corte va donde se decide, no donde se termina.
+  const { data: verificada } = await admin
+    .from('v_verified_profiles')
+    .select('id')
+    .eq('id', user.id)
+    .maybeSingle()
 
   const { data: evento } = await admin
     .from('events')
@@ -151,18 +166,38 @@ export async function GET(request: Request) {
       moneda: m.moneda,
       activo: m.activo,
       manual: m.manual,
-      // Los datos de nuestra cuenta solo de los encendidos: publicar los de
-      // un método apagado invita a pagar por un canal que no miramos.
-      cuenta: m.activo ? m.datos_cuenta : null,
+      // Los datos de nuestra cuenta solo de los encendidos, y solo a quien
+      // puede pagar: publicar los de un método apagado invita a pagar por un
+      // canal que no miramos, y publicárselos a quien no está verificada
+      // invita a transferir por un puesto que no se le va a apartar.
+      cuenta: m.activo && verificada ? m.datos_cuenta : null,
       // Para que la pantalla pueda avisar encima del numero.
       datosDePrueba: m.datosDePrueba,
       campos: m.campos,
       capturaObligatoria: m.captura_obligatoria,
     })),
+    // Para que la pantalla corte al principio y diga qué falta, en vez de
+    // dejar llegar hasta el final.
+    verificada: !!verificada,
     pago: pagoVivo
       ? { estado: pagoVivo.status, metodo: pagoVivo.metodo, reportadoEn: pagoVivo.reportado_en }
       : null,
   })
+}
+
+/** Definición de un campo del método, tal como viene del catálogo. */
+type Campo = { campo: string; tipo?: string }
+
+/** La referencia: el campo que el propio método llama `ref`. */
+const refDe = (campos: Campo[], datos: Record<string, string>) => {
+  const c = campos.find((x) => x.campo === 'ref')
+  return c ? (datos[c.campo]?.trim() || null) : null
+}
+
+/** El banco emisor: el campo declarado de tipo `banco`. */
+const bancoDe = (campos: Campo[], datos: Record<string, string>) => {
+  const c = campos.find((x) => x.tipo === 'banco')
+  return c ? (datos[c.campo]?.trim() || null) : null
 }
 
 export async function POST(request: Request) {
@@ -177,7 +212,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Petición inválida.' }, { status: 400 })
   }
 
-  const { eventoId, metodo, datos } = parsed.data
+  const { eventoId, metodo, datos, captura } = parsed.data
+
+  // La captura tiene que ser de quien reporta. La ruta la escribe el servidor
+  // con el id delante, así que comprobarlo es comparar el prefijo: sin esto,
+  // mandar la ruta de otro adjuntaría su comprobante a este pago.
+  if (captura && !captura.startsWith(`${user.id}/`)) {
+    return NextResponse.json({ error: 'Esa captura no es tuya.' }, { status: 403 })
+  }
   const admin = createAdminClient()
 
   const { data: m } = await admin
@@ -384,6 +426,18 @@ export async function POST(request: Request) {
     fx_congelado_en: m.moneda === 'VES' ? ahora : null,
     reportado_en: ahora,
     datos: datos as never,
+    captura_path: captura ?? null,
+    // La referencia y el banco viven en su columna ADEMÁS de en `datos`.
+    // Estaban siempre en null porque nadie las escribía, y cuadrar un pago
+    // contra el banco se hace justo por la referencia: el histórico del panel
+    // la enseñaba vacía en todas las filas.
+    //
+    // Cuál es cada una lo dice el catálogo del método, no una lista escrita
+    // aquí: el campo que se llama `ref` y el que es de tipo `banco`. Bizum no
+    // tiene referencia —por eso su captura es obligatoria— y ahí queda null,
+    // que es la verdad.
+    reference_code: refDe(campos, datos),
+    payer_bank: bancoDe(campos, datos),
     // Manual entra a la cola. El débito lo confirma el banco y se salta
     // este estado entero.
     status: m.manual ? 'under_review' : 'confirmed',

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { encolar } from '@/lib/correos'
 import { firmar } from '@/lib/lead-token'
 import { leerCatalogo, validarConjunto } from '@/lib/questionnaire/catalogo'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -172,10 +173,23 @@ export async function POST(request: Request) {
     )
   }
 
-  // Aqui NO se manda nada. Ese correo es una lista de lo que falta con un
-  // boton, y mandarlo ahora es empujar a volver a quien no se ha ido: esta
-  // en la pantalla siguiente haciendo justo eso. Lo manda /api/cron/empujon
-  // unas horas despues, y solo si se paro.
+  // La bienvenida sale AQUI, al dejar el correo.
+  //
+  // Antes no salia de aqui a proposito —quien acaba de dejar su correo esta
+  // en la pantalla siguiente y no hace falta empujarlo— y la encolaba solo
+  // `/api/cron/empujon`, que es para quien se paro: mira leads de hace mas de
+  // unas horas y en ventana de 8:00 a 21:00. El efecto es que quien completa
+  // el alta de una sentada no recibe NADA, nunca: no cumple la condicion de
+  // «se paro» en ningun momento. El unico correo del alta no le llega a quien
+  // hace el alta entera.
+  //
+  // No duplica con el empujon: `scheduled_emails` tiene indice unico para la
+  // bienvenida por correo, asi que la segunda encolada choca y `encolar` la
+  // da por buena. Quien la recibe hoy ya no la recibe otra vez manana.
+  await encolar({ correo }, 'bienvenida', {
+    falta: 'perfil',
+    ciudad: ciudadFinal,
+  })
 
   return NextResponse.json({ estado: 'nuevo', token: firmar(correo) })
 }

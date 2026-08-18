@@ -228,8 +228,22 @@
                 </span>
               </div>
               <div style="display:flex;gap:9px;margin-top:14px">
-                <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Cédula</div>
-                <div style="flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 'Inter Tight',sans-serif;color:#456352">Selfie</div>
+                <sc-if value="{{ c.hayCedula }}" hint-placeholder-val="{{ true }}">
+                  <a href="{{ c.cedula }}" target="_blank" rel="noopener" style="flex:1;border-radius:14px;overflow:hidden;background:#E8DFC6;aspect-ratio:3/2;display:block">
+                    <img src="{{ c.cedula }}" alt="Cédula" style="width:100%;height:100%;object-fit:cover;display:block">
+                  </a>
+                </sc-if>
+                <sc-if value="{{ c.sinCedula }}" hint-placeholder-val="{{ false }}">
+                  <div style="{{ c.hueco }}">Sin cédula</div>
+                </sc-if>
+                <sc-if value="{{ c.haySelfie }}" hint-placeholder-val="{{ true }}">
+                  <a href="{{ c.selfie }}" target="_blank" rel="noopener" style="flex:1;border-radius:14px;overflow:hidden;background:#E8DFC6;aspect-ratio:3/2;display:block">
+                    <img src="{{ c.selfie }}" alt="Selfie" style="width:100%;height:100%;object-fit:cover;display:block">
+                  </a>
+                </sc-if>
+                <sc-if value="{{ c.sinSelfie }}" hint-placeholder-val="{{ false }}">
+                  <div style="{{ c.hueco }}">Sin selfie</div>
+                </sc-if>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
                 <sc-for list="{{ c.datos }}" as="d" hint-placeholder-count="3">
@@ -978,6 +992,7 @@ class Component extends DCLogic {
     this.cargarEquipo().then((s) => this.abrirDelHash(s.esAdmin));
     this.cargarGente();
     this.montarArrastre();
+    this.renovarFirmas();
   }
 
   /**
@@ -1058,6 +1073,32 @@ class Component extends DCLogic {
     return this.pedir('/api/operacion/locales',
       (d) => ({ locales: d.locales, zonasCatalogo: d.zonas, resumenLocales: d.resumen }),
       { locales: [], zonasCatalogo: [], resumenLocales: null });
+  }
+
+  /**
+   * Las URLs de las fotos de la cola están firmadas cinco minutos, y con la
+   * pestaña abierta eso se pasa: quien deja el panel puesto mientras habla
+   * por teléfono vuelve a dos recuadros rotos y no sabe si es que no hay
+   * documento o que caducó la vista.
+   *
+   * Así que se renuevan antes de que venzan, en vez de esperar a que se
+   * rompan. Solo mientras se está mirando esa pestaña —no tiene sentido
+   * refrescar lo que no se ve— y nunca en mitad de una decisión: recargar la
+   * cola mientras alguien elige el motivo de un rechazo le movería la fila
+   * debajo del dedo.
+   */
+  renovarFirmas() {
+    const CADA = 4 * 60 * 1000;
+    this._firmas = setInterval(() => {
+      const St = this.state;
+      const mirando = this.clavesPestanas()[St.vista] === 'verificaciones';
+      const ocupada = St.trabajando || St.abriendo != null || Object.keys(St.decididas || {}).length > 0;
+      if (mirando && !ocupada) this.cargarCola();
+    }, CADA);
+  }
+
+  componentWillUnmount() {
+    if (this._firmas) clearInterval(this._firmas);
   }
 
   /**
@@ -2144,7 +2185,14 @@ class Component extends DCLogic {
         aviso: c.rechazosPrevios === 1
           ? 'Ya se le rechazó una vez. Si vuelve a fallar, escríbele en vez de rechazar otra vez.'
           : 'Van ' + c.rechazosPrevios + ' rechazos. Escríbele en vez de rechazar otra vez.',
+        // Las dos fotos, que es lo único con lo que se puede decidir. La
+        // maqueta traía dos recuadros vacíos y la ruta llevaba desde la
+        // entrega 5 firmando las URLs que nadie pintaba: se aprobaba una
+        // identidad sin ver el documento.
         cedula: c.cedula, selfie: c.selfie,
+        hayCedula: !!c.cedula, sinCedula: !c.cedula,
+        haySelfie: !!c.selfie, sinSelfie: !c.selfie,
+        hueco: 'flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 \'Inter Tight\',sans-serif;color:#456352',
         caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (d === 'ok' ? '#1B5138' : (d === 'no' ? '#C0662F' : 'transparent')) + ';transition:all 200ms ease',
         textoAprobar: d === 'ok' ? 'Aprobada' : 'Aprobar',
         botonAprobar: btnCola(d === 'ok' ? 'rgba(27,81,56,.13)' : '#1B5138', d === 'ok' ? '#1B5138' : '#FAF3E4', 'none'),
@@ -2207,6 +2255,9 @@ class Component extends DCLogic {
       const c = {
         'Confirmado': ['rgba(27,81,56,.12)', '#1B5138', 'transparent'],
         'Pendiente': ['rgba(143,69,21,.12)', '#8F4515', 'transparent'],
+        // Rechazado no puede leerse igual que pendiente: uno ya se miró y no
+        // cuadraba, el otro no lo ha tocado nadie.
+        'Rechazado': ['transparent', '#8F4515', 'rgba(143,69,21,.44)'],
         'Devuelto': ['transparent', '#33513F', 'rgba(20,52,42,.22)']
       }[e];
       return 'display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;background:' + c[0] + ';color:' + c[1] + ';border:1px solid ' + c[2] + ';white-space:nowrap';
@@ -2287,7 +2338,7 @@ class Component extends DCLogic {
     ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) }));
 
     // El histórico de la fecha que se está mirando: quién pagó y cómo.
-    const ESTADO_PAGO = { confirmado: 'Confirmado', pendiente: 'Pendiente', devuelto: 'Devuelto' };
+    const ESTADO_PAGO = { confirmado: 'Confirmado', pendiente: 'Pendiente', rechazado: 'Rechazado', devuelto: 'Devuelto' };
     const pagos = ((St.pagosResumen && St.pagosResumen.historico) || []).map((p) => ({
       nombre: p.nombre,
       metodo: (NOMBRE_METODO[p.metodo] || p.metodo) + (p.referencia ? ' · ' + p.referencia : ''),

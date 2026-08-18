@@ -100,7 +100,7 @@ export async function GET() {
   // inventados y seis veces el mismo importe.
   const { data: yaDecididos } = await admin
     .from('payments')
-    .select('id, metodo, moneda, amount_usd, amount_local, status, datos, created_at, profiles!payments_profile_id_fkey(display_name, full_name)')
+    .select('id, metodo, moneda, amount_usd, amount_local, status, datos, reference_code, created_at, profiles!payments_profile_id_fkey(display_name, full_name)')
     .in('status', ['confirmed', 'refunded', 'rejected'])
     .order('created_at', { ascending: false })
     .limit(30)
@@ -108,13 +108,22 @@ export async function GET() {
   const ESTADO: Record<string, string> = {
     confirmed: 'confirmado',
     refunded: 'devuelto',
-    rejected: 'pendiente',
+    // Decía «pendiente», así que un pago RECHAZADO y uno sin decidir se leían
+    // igual en el histórico: quien repasa la lista no distinguía el que ya se
+    // miró y no cuadraba del que nadie ha tocado.
+    rejected: 'rechazado',
   }
 
   const historico = (yaDecididos ?? []).map((p) => {
     const quien = p.profiles as unknown as { display_name: string | null; full_name: string | null } | null
     const datos = (p.datos ?? {}) as Record<string, unknown>
-    const ref = datos.referencia ?? datos.codigo ?? datos.telefono ?? null
+    // La referencia sale de su columna. Antes se buscaba en `datos` por tres
+    // claves —`referencia`, `codigo`, `telefono`— que NINGÚN método usa: los
+    // campos se llaman `ref`, `tel` y `banco`, así que el histórico enseñaba
+    // la referencia vacía en todas las filas y cuadrar contra el banco se
+    // hace justo por ahí. Se deja `datos.ref` como respaldo para los pagos
+    // reportados antes de que la columna se empezara a escribir.
+    const ref = p.reference_code ?? datos.ref ?? null
     return {
       nombre: quien?.display_name || quien?.full_name || '—',
       metodo: p.metodo,
