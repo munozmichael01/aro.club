@@ -46,6 +46,15 @@ type Fila = {
   dias: number
   industria: string
   espera: number
+  /**
+   * Solo de los leads: si pidió no recibir correos.
+   *
+   * Está aquí para que el botón de exportar pueda decir cuántos van a salir
+   * de verdad. Sin esto la pantalla ofrecía «bajar los 3 correos» y el
+   * fichero traía 2, que es la clase de descuadre que hace desconfiar de
+   * todos los demás números de la pantalla.
+   */
+  deBaja: boolean
 }
 
 /** Días desde una fecha. La antigüedad se lee mejor así que con un timestamp. */
@@ -154,16 +163,26 @@ export async function GET(request: Request) {
       dias: diasDesde(p.created_at),
       industria: r?.industry ? (sectores.get(r.industry) ?? r.industry) : '',
       espera: esperaDe.get(p.id)?.veces ?? 0,
+      // La baja de correos va por dirección y la exportación es solo de
+      // leads, así que de un perfil no se pregunta.
+      deBaja: false,
     }
   })
 
   // --- leads -------------------------------------------------------------
   // Solo los que no se convirtieron en cuenta: si no, la misma persona sale
   // dos veces —como lead y como perfil— y el embudo cuenta de más.
-  const { data: leads } = await admin
-    .from('waitlist')
-    .select('id, email, zones, rootedness, gender, birthdate, created_at, converted_profile_id')
-    .is('converted_profile_id', null)
+  const [{ data: leads }, { data: bajas }] = await Promise.all([
+    admin
+      .from('waitlist')
+      .select('id, email, zones, rootedness, gender, birthdate, created_at, converted_profile_id')
+      .is('converted_profile_id', null),
+    admin.from('bajas_correo').select('correo, deshecha_at'),
+  ])
+
+  const deBaja = new Set(
+    (bajas ?? []).filter((b) => !b.deshecha_at).map((b) => String(b.correo).trim().toLowerCase()),
+  )
 
   const filasLeads: Fila[] = (leads ?? []).map((l) => ({
     id: l.id,
@@ -183,6 +202,7 @@ export async function GET(request: Request) {
     dias: diasDesde(l.created_at),
     industria: '',
     espera: 0,
+    deBaja: deBaja.has(String(l.email).trim().toLowerCase()),
   }))
 
   const todos = filasPerfiles.concat(filasLeads)

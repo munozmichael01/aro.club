@@ -36,8 +36,13 @@ export type Accion =
   | 'incidencia_resuelta'
   | 'acceso_concedido'
   | 'acceso_retirado'
+  // Sacar los correos de los leads a un fichero es la única acción del panel
+  // cuyo resultado se va del producto: a partir de ahí no controlamos ni
+  // quién lo abre ni qué se manda desde él. Por eso deja rastro aunque no
+  // cambie nada en la base.
+  | 'leads_exportados'
 
-type Entidad = 'verificacion' | 'pago' | 'evento' | 'local' | 'incidencia' | 'equipo'
+type Entidad = 'verificacion' | 'pago' | 'evento' | 'local' | 'incidencia' | 'equipo' | 'leads'
 
 export async function anotar(
   actorId: string,

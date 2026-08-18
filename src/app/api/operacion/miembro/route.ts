@@ -38,6 +38,83 @@ const edadDe = (nacimiento: string | null) => {
 }
 
 
+/**
+ * La ficha de un lead.
+ *
+ * Tiene poco dentro a propósito: de un lead se sabe el correo, dónde puede
+ * ir y por dónde se quedó. No hay verificación, ni mesas, ni créditos, y
+ * enseñar esas tarjetas vacías haría parecer que faltan datos en vez de que
+ * esa persona no ha llegado hasta ahí.
+ *
+ * El correo va ENTERO. La lista lo enmascara porque son cientos a la vez en
+ * una pantalla; aquí es uno, buscado a propósito, y sin él la ficha no sirve
+ * para lo único que hace falta: escribirle.
+ */
+async function fichaDeLead(id: string) {
+  const admin = createAdminClient()
+
+  const { data: lead } = await admin
+    .from('waitlist')
+    .select('id, email, full_name, display_name, phone_e164, birthdate, gender, rootedness, zones, city_slug, source, variante, created_at, quiz_completed_at, base_completed_at, profile_completed_at, questionnaire_screen, profile_answers, converted_profile_id')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (!lead) return NextResponse.json({ error: 'Ese miembro no existe.' }, { status: 404 })
+
+  // Los nombres de zona y la etiqueta del arraigo salen de donde viven —el
+  // catálogo de zonas y el del cuestionario—, no de una lista escrita aquí.
+  const [{ data: zonas }, catalogo] = await Promise.all([
+    admin.from('zones').select('slug, name'),
+    leerCatalogo(),
+  ])
+  const nombreZona = new Map((zonas ?? []).map((z) => [z.slug, z.name]))
+  const arraigos = new Map(
+    (catalogo?.porClave.get('arraigo')?.opciones ?? []).map((o) => [o.valor, o.label]),
+  )
+
+  // Si pidió no recibir correos, eso se dice en su ficha. Es lo primero que
+  // hay que saber antes de escribirle, y la baja vive en otra tabla porque
+  // va por dirección y no por cuenta.
+  const { data: baja } = await admin
+    .from('bajas_correo')
+    .select('baja_at, deshecha_at')
+    .eq('correo', String(lead.email).trim().toLowerCase())
+    .maybeSingle()
+
+  const respuestas = Object.keys((lead.profile_answers ?? {}) as Record<string, unknown>).length
+
+  return NextResponse.json({
+    tipo: 'lead',
+    identidad: {
+      trato: lead.display_name || lead.full_name?.split(' ')[0] || String(lead.email).split('@')[0],
+      completo: lead.full_name || '—',
+      edad: edadDe(lead.birthdate),
+      genero: lead.gender === 'mujer' ? 'Mujer' : lead.gender === 'hombre' ? 'Hombre' : lead.gender ?? '—',
+      arraigo: lead.rootedness ? (arraigos.get(lead.rootedness) ?? lead.rootedness) : '—',
+      telefono: lead.phone_e164 ?? '—',
+      correo: lead.email,
+      zonas: (lead.zones ?? []).map((z: string) => nombreZona.get(z) ?? z),
+      ciudad: lead.city_slug ?? '—',
+      desde: mesYAno(lead.created_at),
+      cuando: diaCompleto(lead.created_at),
+      origen: lead.source ?? (lead.variante ? 'Landing ' + lead.variante : '—'),
+    },
+    // Por dónde se quedó. Es la pregunta que trae a alguien a esta ficha:
+    // no «quién es» sino «por qué sigue siendo un lead».
+    progreso: [
+      ['Dejó el correo', true, diaCompleto(lead.created_at)],
+      ['Contestó el quiz de la landing', !!lead.quiz_completed_at, lead.quiz_completed_at ? diaCompleto(lead.quiz_completed_at) : ''],
+      ['Contestó el cuestionario', !!lead.profile_completed_at, respuestas ? respuestas + ' respuestas' : ''],
+      ['Completó sus datos base', !!lead.base_completed_at, ''],
+      ['Se hizo la cuenta', !!lead.converted_profile_id, ''],
+    ].map(([paso, hecho, nota]) => ({ paso, hecho, nota })),
+    correos: {
+      deBaja: Boolean(baja && !baja.deshecha_at),
+      cuando: baja?.baja_at ? diaCompleto(baja.baja_at) : null,
+    },
+  })
+}
+
 export async function GET(request: Request) {
   const actor = await exigirOps()
   if (!actor) return new NextResponse(null, { status: 404 })
@@ -57,7 +134,12 @@ export async function GET(request: Request) {
     console.error('[miembro] perfil', errorPerfil)
     return NextResponse.json({ error: 'No pudimos leer la ficha.' }, { status: 500 })
   }
-  if (!perfil) return NextResponse.json({ error: 'Ese miembro no existe.' }, { status: 404 })
+
+  // Si no hay perfil, puede ser un lead: alguien que dejó el correo y no
+  // llegó a tener cuenta. La lista de Gente los mezcla con los perfiles, así
+  // que su fila tiene que abrir en algún sitio — y ese sitio es el único
+  // donde se lee su correo entero, de uno en uno.
+  if (!perfil) return fichaDeLead(id)
 
   // El correo vive en auth, no en `profiles`.
   const { data: cuenta } = await admin.auth.admin.getUserById(id)
@@ -370,6 +452,7 @@ export async function GET(request: Request) {
   const sector = preguntas.find((p) => p.clave === 'sector')?.valor
 
   return NextResponse.json({
+    tipo: 'miembro',
     identidad: {
       trato: perfil.display_name || perfil.full_name?.split(' ')[0] || '—',
       completo: perfil.full_name || '—',

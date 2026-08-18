@@ -80,9 +80,29 @@
             </div>
           </sc-for>
         </div>
-        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:13px;text-wrap:pretty">De ella, los otros cinco solo ven el nombre de trato y el sector. Lo marcado no sale de aquí.</div>
+        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:13px;text-wrap:pretty">{{ notaIdentidad }}</div>
       </div>
 
+      <sc-if value="{{ esLead }}" hint-placeholder-val="{{ false }}">
+        <div style="{{ tarjeta }}">
+          <div style="{{ tituloBloque }}">Por dónde va</div>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <sc-for list="{{ progreso }}" as="p" hint-placeholder-count="5">
+              <div style="display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+                <span style="{{ p.marca }}">{{ p.glifo }}</span>
+                <span style="flex:1 1 140px;{{ p.texto }}">{{ p.paso }}</span>
+                <span style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ p.nota }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="{{ cajaCorreos }}">
+            <span style="{{ iconoCorreos }}">{{ glifoCorreos }}</span>
+            <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ textoCorreos }}</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ esMiembro }}" hint-placeholder-val="{{ true }}">
       <div style="{{ tarjeta }}">
         <div style="{{ tituloBloque }}">Verificación</div>
 
@@ -133,8 +153,10 @@
           </div>
         </sc-if>
       </div>
+      </sc-if>
     </div>
 
+    <sc-if value="{{ esMiembro }}" hint-placeholder-val="{{ true }}">
     <div style="{{ tarjetaAncha }}">
       <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between">
         <span style="{{ tituloBloque }}">Historial de mesas</span>
@@ -241,7 +263,9 @@
       </div>
     </div>
 
-        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:clamp(22px,3vw,30px);max-width:64ch;text-wrap:pretty">Esta ficha es para mirar. Aprobar y rechazar siguen en la cola de verificaciones; bloquear y excluir viven en su propio sitio.</div>
+        </sc-if>
+
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:clamp(22px,3vw,30px);max-width:64ch;text-wrap:pretty">{{ notaPie }}</div>
       </div>
     </sc-if>
   </div>
@@ -295,6 +319,12 @@ class Component extends DCLogic {
       tituloBloque: 'font:400 clamp(21px,2.4vw,26px)/1.1 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:#14342A;margin-bottom:14px;display:block',
       chipInterno: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(20,52,42,.24);font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;color:#33513F;margin-top:6px',
       hayError: !!this.state.error, error: this.state.error,
+      // Una ficha de lead y una de miembro no son la misma con huecos: de un
+      // lead no hay verificación, ni mesas, ni créditos, y enseñar esas
+      // tarjetas vacías haría parecer que faltan datos en vez de que esa
+      // persona no ha llegado hasta ahí.
+      esMiembro: !!D && D.tipo !== 'lead',
+      esLead: !!D && D.tipo === 'lead',
       // Nada se pinta hasta que llega la ficha. Media ficha con los huecos
       // por rellenar es peor que esperar: se decide sobre personas con ella.
       hayFicha: !!D
@@ -302,7 +332,8 @@ class Component extends DCLogic {
 
     if (!D) {
       return Object.assign(marco, {
-        identidad: [], verificacion: [], historial: [], grupos: [], senales: [], movimientos: [],
+        identidad: [], verificacion: [], historial: [], grupos: [], senales: [], movimientos: [], progreso: [],
+        notaIdentidad: '', notaPie: '', cajaCorreos: '', iconoCorreos: '', glifoCorreos: '', textoCorreos: '',
         inicial: '', trato: '', resumen: '', textoVerif: '', resumenHistorial: '',
         avatarGrande: avatar(0, 60), selloVerif: chip('transparent', '#33513F', 'rgba(20,52,42,.2)'),
         hayDocumento: false, sinDocumento: false, hayCedula: false, haySelfie: false,
@@ -313,13 +344,69 @@ class Component extends DCLogic {
       });
     }
 
-    const I = D.identidad, V = D.verificacion;
+    const I = D.identidad;
+
+    // --- la ficha de un lead ------------------------------------------
+    // Corta porque lo que hay es corto. El correo va ENTERO: la lista lo
+    // enmascara porque son muchos a la vez, y aqui es uno buscado a
+    // proposito. Sin el, esta ficha no sirve para lo unico que hace falta.
+    if (D.tipo === 'lead') {
+      const C = D.correos || {};
+      return Object.assign(marco, {
+        identidad: [
+          ['Correo', I.correo, true],
+          ['Nombre', I.completo, true],
+          ['Edad', I.edad != null ? I.edad + ' años' : 'Sin fecha de nacimiento', false],
+          ['Género', I.genero, false],
+          ['Arraigo', I.arraigo, false],
+          ['Zonas', (I.zonas || []).length ? I.zonas.join(', ') : 'Sin zonas', false],
+          ['Teléfono', I.telefono, true],
+          ['De dónde vino', I.origen, false],
+          ['Dejó el correo', I.cuando, false]
+        ].map((d) => ({ campo: d[0], valor: d[1], interno: d[2], valorEstilo: valor(d[2]) })),
+        progreso: (D.progreso || []).map((p) => ({
+          paso: p.paso, nota: p.nota || '',
+          glifo: p.hecho ? '✓' : '·',
+          marca: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;background:' + (p.hecho ? '#1B5138' : 'transparent') + ';border:1px solid ' + (p.hecho ? '#1B5138' : 'rgba(20,52,42,.28)') + ';color:' + (p.hecho ? '#FAF3E4' : '#566A5D'),
+          texto: 'font:' + (p.hecho ? '500' : '400') + ' 15px/1.45 \'Inter Tight\',sans-serif;color:' + (p.hecho ? '#14342A' : '#566A5D')
+        })),
+        // Lo primero que hay que saber antes de escribirle. La baja va por
+        // direccion y no por cuenta, asi que vive en otra tabla y aqui se
+        // dice en su ficha.
+        cajaCorreos: 'display:flex;gap:11px;align-items:flex-start;border-radius:18px;padding:13px 15px;margin-top:14px;background:' + (C.deBaja ? 'rgba(143,69,21,.1)' : 'rgba(20,52,42,.05)'),
+        iconoCorreos: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;margin-top:1px;background:' + (C.deBaja ? '#6E340F' : '#456352') + ';color:#FFF8EA',
+        glifoCorreos: C.deBaja ? '!' : '·',
+        textoCorreos: C.deBaja
+          ? 'Pidió no recibir correos el ' + (C.cuando || 'algún día') + '. No entra en ninguna campaña, tampoco en las que salgan de la exportación.'
+          : 'Recibe nuestros correos. Si se da de baja, deja de aparecer en la exportación de leads.',
+        notaIdentidad: 'El correo entero solo se ve aquí, de uno en uno. En la lista va enmascarado.',
+        notaPie: 'Esta ficha es para mirar. Un lead no tiene verificación, ni mesas, ni créditos: dejó su correo y no ha llegado más lejos.',
+        inicial: String(I.trato || '·').charAt(0).toUpperCase(),
+        trato: I.trato,
+        resumen: [(I.zonas || []).length ? I.zonas.length + (I.zonas.length === 1 ? ' zona' : ' zonas') : 'sin zonas', 'desde ' + I.desde].join(' · '),
+        avatarGrande: avatar(1, 60),
+        selloVerif: chip('transparent', '#33513F', 'rgba(20,52,42,.2)'),
+        textoVerif: 'SIN COMPLETAR',
+        verificacion: [], historial: [], grupos: [], senales: [], movimientos: [],
+        hayDocumento: false, sinDocumento: false, hayCedula: false, haySelfie: false,
+        cedula: '', selfie: '', textoBorrado: '', hayIntentos: false, tituloIntentos: '', detalleIntentos: '',
+        hayHistorial: false, sinHistorial: false, tituloVacio: '', cuerpoVacio: '', resumenHistorial: '',
+        creditos: '0', cifraCreditos: 'font:700 clamp(24px,3vw,30px)/1 \'Inter Tight\',sans-serif;color:#33513F'
+      });
+    }
+
+    const V = D.verificacion;
 
     const sellos = {
       verificada: [chip('rgba(27,81,56,.12)', '#1B5138'), 'VERIFICADA'],
       revision: [chip('rgba(143,69,21,.12)', '#8F4515'), 'EN REVISIÓN'],
       rechazada: [chip('transparent', '#8F4515', 'rgba(143,69,21,.42)'), 'RECHAZADA']
     }[V.estado];
+
+    marco.notaIdentidad = 'De ella, los otros cinco solo ven el nombre de trato y el sector. Lo marcado no sale de aquí.';
+    marco.notaPie = 'Esta ficha es para mirar. Aprobar y rechazar siguen en la cola de verificaciones; bloquear y excluir viven en su propio sitio.';
+    marco.progreso = [];
+    marco.cajaCorreos = 'display:none'; marco.iconoCorreos = ''; marco.glifoCorreos = ''; marco.textoCorreos = '';
 
     const identidad = [
       ['Nombre de trato', I.trato, false],

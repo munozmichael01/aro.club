@@ -892,7 +892,19 @@
             </button>
           </sc-for>
         </div>
-        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;max-width:60ch;text-wrap:pretty">Sin exportar y sin envíos: esta pestaña sirve para saber, no para disparar. El documento, el teléfono y el correo completo se abren en la ficha de una en una, y la cédula solo desde la cola de verificaciones.</div>
+        <sc-if value="{{ puedeExportar }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);margin-top:clamp(26px,3.2vw,34px)">
+            <span style="flex:1 1 300px;min-width:0">
+              <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloExportar }}</span>
+              <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-wrap:pretty">{{ notaExportar }}</span>
+            </span>
+            <a href="/api/operacion/leads" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:52px;padding:0 22px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;text-decoration:none;white-space:nowrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12" stroke="#FAF3E4" stroke-width="1.9" stroke-linecap="round"></path><path d="M7.5 10.5 12 15l4.5-4.5" stroke="#FAF3E4" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.5 19.5h15" stroke="#FAF3E4" stroke-width="1.9" stroke-linecap="round"></path></svg>
+              Bajar los correos
+            </a>
+          </div>
+        </sc-if>
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;max-width:60ch;text-wrap:pretty">{{ notaPieGente }}</div>
       </div>
     </sc-if>
   </div>
@@ -2355,6 +2367,28 @@ class Component extends DCLogic {
         : PERFILES.length + (PERFILES.length === 1 ? ' perfil y ' : ' perfiles y ') + LEADS.length + (LEADS.length === 1 ? ' correo sin completar.' : ' correos sin completar.') + ' Todo lo de abajo se calcula sobre eso: los conteos, el mapa de zonas y el embudo.',
       bajadaEmbudo: 'Cada escalón dice cuánta gente llegó hasta ahí. Toca uno para ver quiénes se quedaron en él.',
 
+      // Sacar los correos a un fichero es la única cosa de esta pestaña cuyo
+      // resultado se va del producto, así que es solo de admin y queda
+      // anotada. El pie ya no puede decir «sin exportar»: lo diría mientras
+      // hay un botón debajo.
+      puedeExportar: !!St.esAdmin,
+      tituloExportar: 'Bajar los leads con su correo entero',
+      notaExportar: (function () {
+        const bajas = LEADS.filter((p) => p.deBaja).length;
+        const salen = LEADS.length - bajas;
+        if (!LEADS.length) return 'Todavía no hay ningún correo apuntado sin cuenta.';
+        // El número dice cuántos salen DE VERDAD. Decir «los 3 correos» y que
+        // el fichero traiga 2 es la clase de descuadre que hace desconfiar de
+        // los demás números de la pantalla.
+        return 'Salen ' + salen + (salen === 1 ? ' correo' : ' correos') + ' en un CSV'
+          + (bajas
+            ? ', de ' + LEADS.length + ' apuntados: ' + bajas + (bajas === 1 ? ' se dio de baja y no va dentro' : ' se dieron de baja y no van dentro') + '. Esa baja no viaja con el fichero, así que se quita aquí.'
+            : '. Quien se dé de baja deja de aparecer aquí automáticamente: esa baja no viaja con el fichero.');
+      }).call(this),
+      notaPieGente: 'Desde aquí no sale ningún correo: esta pestaña sirve para saber, no para disparar.'
+        + (St.esAdmin ? ' La exportación de leads queda anotada con quién la sacó.' : '')
+        + ' El documento, el teléfono y el correo completo se abren en la ficha de una en una, y la cédula solo desde la cola de verificaciones.',
+
       // La leyenda se compone sola: cada filtro puesto añade su trozo. Sin
       // esto, el número grande no dice de qué es.
       leyendaGente: (function () {
@@ -2498,9 +2532,8 @@ class Component extends DCLogic {
       limpiaFiltros: () => this.setState({ filtros: {}, fZona: '', atajo: '', busca: '', escalon: -1 }),
 
       // Diez filas: la lista es para reconocer a alguien, no para leerse
-      // entera. Del lead solo el correo enmascarado, y sin ficha: no hay
-      // ninguna ruta que abra un correo apuntado, así que la fila no lleva a
-      // ningún sitio en vez de llevar a un 404.
+      // entera. Del lead solo el correo enmascarado; el entero se abre en su
+      // ficha, de uno en uno, que es la única pantalla donde se lee.
       lista: FILTRADA.slice(0, 10).map((p, i) => {
         const EST = {
           ok: ['Verificada', '#1B5138', 'rgba(27,81,56,.12)'],
@@ -2521,11 +2554,11 @@ class Component extends DCLogic {
             : [p.edad ? p.edad + ' años' : null, p.industria || null, zonas || 'sin zonas', recorrido]
               .filter(Boolean).join(' · '),
           estado: e[0],
-          enlace: esLead ? undefined : 'Aro Club - Perfil miembro.dc.html?id=' + p.id + '&desde=gente',
+          enlace: 'Aro Club - Perfil miembro.dc.html?id=' + p.id + '&desde=gente',
           avatar: 'flex:0 0 auto;width:34px;height:34px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 14px/1 \'Inter Tight\',sans-serif',
           chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;background:' + e[2] + ';border:1px solid ' + (e[2] === 'transparent' ? 'rgba(20,52,42,.2)' : 'transparent') + ';color:' + e[1],
-          fila: 'display:flex;align-items:center;gap:12px;padding:13px 18px;min-height:64px;text-decoration:none;border-bottom:1px solid rgba(20,52,42,.09)' + (esLead ? ';cursor:default' : ''),
-          flecha: esLead ? 'display:none' : 'flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-8px -12px -8px 0;font:500 18px/1 \'Inter Tight\',sans-serif;color:#1B5138'
+          fila: 'display:flex;align-items:center;gap:12px;padding:13px 18px;min-height:64px;text-decoration:none;border-bottom:1px solid rgba(20,52,42,.09)',
+          flecha: 'flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;margin:-8px -12px -8px 0;font:500 18px/1 \'Inter Tight\',sans-serif;color:#1B5138'
         };
       }),
 
