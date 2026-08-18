@@ -3358,19 +3358,14 @@ export type Database = {
     Functions: {
       a_texto: { Args: { v: Json }; Returns: string[] }
       age_years: { Args: { d: string }; Returns: number }
-      convertir_lead:
-        | {
-            Args: { p_email: string; p_profile_id: string }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_auth_email: string
-              p_lead_email: string
-              p_profile_id: string
-            }
-            Returns: undefined
-          }
+      convertir_lead: {
+        Args: {
+          p_auth_email: string
+          p_lead_email: string
+          p_profile_id: string
+        }
+        Returns: undefined
+      }
       dar_de_baja: { Args: { p_profile_id: string }; Returns: undefined }
       despublicar_evento: { Args: { p_event_id: string }; Returns: undefined }
       despublicar_mesa: {
