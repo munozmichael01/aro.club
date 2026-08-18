@@ -852,7 +852,7 @@
             <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;max-width:56ch;margin-bottom:18px;text-wrap:pretty">{{ leyendaGente }}</div>
 
             <sc-if value="{{ hayGente }}" hint-placeholder-val="{{ true }}">
-              <div style="border-radius:24px;background:#FAF3E4;overflow:hidden">
+              <div style="{{ cajaLista }}">
                 <sc-for list="{{ lista }}" as="p" hint-placeholder-count="8">
                   <a href="{{ p.enlace }}" style="{{ p.fila }}">
                     <span style="{{ p.avatar }}">{{ p.inicial }}</span>
@@ -866,7 +866,15 @@
                 </sc-for>
               </div>
               <sc-if value="{{ hayMas }}" hint-placeholder-val="{{ false }}">
-                <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:12px">{{ textoMas }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px">
+                  <span style="flex:1 1 200px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ textoMas }}</span>
+                  <sc-if value="{{ hayAnterior }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ irAnterior }}" style="{{ botonPagina }}">Anteriores</button>
+                  </sc-if>
+                  <sc-if value="{{ haySiguiente }}" hint-placeholder-val="{{ true }}">
+                    <button onClick="{{ irSiguiente }}" style="{{ botonPagina }}">Siguientes</button>
+                  </sc-if>
+                </div>
               </sc-if>
             </sc-if>
             <sc-if value="{{ sinGente }}" hint-placeholder-val="{{ false }}">
@@ -936,7 +944,7 @@ class Component extends DCLogic {
     fechaCanc: -1, cancelada: '', resueltos: {},
     arrastrando: null, tipoRep: 'todo', confirmar: '', filtroLoc: 'todos',
     nombreEq: '', correoEq: '', rolEq: 0, retirados: {}, concedidos: [], acuseEq: '',
-    busca: '', filtros: {}, fZona: '', atajo: '', escalon: -1, fmtZona: 0,
+    busca: '', filtros: {}, fZona: '', atajo: '', escalon: -1, fmtZona: 0, desde: 0,
 
     // --- lo que viene de las rutas -------------------------------------
     fechas: null,        // GET /api/operacion/fechas
@@ -951,6 +959,8 @@ class Component extends DCLogic {
     // mapa y el embudo no se recalculan aquí —se pintan— porque son los que
     // deciden si una fecha se puede abrir.
     gente: null, zonasGente: [], embudoGente: [], totalGente: 0, verificadosGente: 0,
+    paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {},
+    perfilesGente: 0, leadsGente: null, pidiendoGente: false,
     // --- y el estado de trabajar con ellas ------------------------------
     trabajando: false, fallo: '', aviso: '',
     desdeMesa: null, sobreMesa: null, recalculando: [], repartiendo: false,
@@ -1061,15 +1071,61 @@ class Component extends DCLogic {
    * Se manda la FAMILIA —cenas, drinks, movimiento, coffee—, que es lo que
    * enseña la pantalla; la ruta la traduce a los formatos de la base.
    */
-  cargarGente(fmt) {
-    const i = typeof fmt === 'number' ? fmt : (this.state.fmtZona || 0);
-    const familia = ['', 'cenas', 'drinks', 'movimiento', 'coffee'][i] || '';
-    return this.pedir('/api/operacion/gente' + (familia ? '?formato=' + familia : ''),
+  cargarGente(cambios) {
+    // Cada filtro vuelve a preguntar, y preguntar tarda. Sin decirlo, pulsar
+    // un chip y ver la lista de antes durante un segundo se lee como que el
+    // filtro no hizo nada.
+    this.setState({ pidiendoGente: true });
+    // El estado que se va a consultar es el de ahora más lo que acaba de
+    // cambiar: `setState` no promete haberlo aplicado todavía cuando esto
+    // corre, y pedir con el filtro anterior enseña la respuesta de la
+    // pregunta de antes.
+    const St = Object.assign({}, this.state, cambios || {});
+    const f = St.filtros || {};
+    const q = {
+      formato: ['', 'cenas', 'drinks', 'movimiento', 'coffee'][St.fmtZona || 0] || '',
+      q: (St.busca || '').trim(),
+      estado: f.estado || '', genero: f.genero || '', arraigo: f.arraigo || '',
+      edad: f.edad || '', familia: f.formato || '',
+      zona: St.fZona || '', atajo: St.atajo || '',
+      escalon: St.escalon >= 0 ? String(St.escalon) : '',
+      desde: String(St.desde || 0)
+    };
+    const partes = Object.keys(q).filter((k) => q[k] !== '')
+      .map((k) => k + '=' + encodeURIComponent(q[k]));
+
+    return this.pedir('/api/operacion/gente' + (partes.length ? '?' + partes.join('&') : ''),
       (d) => ({
         gente: d.gente, zonasGente: d.zonas, embudoGente: d.embudo,
-        totalGente: d.total, verificadosGente: d.verificados
+        totalGente: d.total, verificadosGente: d.verificados,
+        paginaGente: d.pagina, resultadoGente: d.resultado,
+        cuentasGente: d.cuentas, atajosGente: d.atajos,
+        perfilesGente: d.perfiles, leadsGente: d.leads, pidiendoGente: false
       }),
-      { gente: [], zonasGente: [], embudoGente: [], totalGente: 0, verificadosGente: 0 });
+      { gente: [], zonasGente: [], embudoGente: [], totalGente: 0, verificadosGente: 0,
+        paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {},
+        perfilesGente: 0, leadsGente: null, pidiendoGente: false });
+  }
+
+  /**
+   * Cambiar un filtro: se guarda, se vuelve a la primera página y se
+   * pregunta.
+   *
+   * Volver a la página cero no es un detalle: sin eso, filtrar estando en la
+   * cuarta página deja la lista vacía con un número grande al lado, y parece
+   * que el filtro no encontró a nadie.
+   */
+  filtrarGente(cambios) {
+    const con = Object.assign({ desde: 0 }, cambios);
+    this.setState(con);
+    return this.cargarGente(con);
+  }
+
+  /** La búsqueda espera a que dejes de escribir: una consulta por letra no. */
+  buscarGente(texto) {
+    this.setState({ busca: texto });
+    clearTimeout(this._teclas);
+    this._teclas = setTimeout(() => this.filtrarGente({ busca: texto }), 300);
   }
 
   // Equipo es solo de admin: un 404 aquí no es un fallo, es la respuesta. La
@@ -1804,79 +1860,31 @@ class Component extends DCLogic {
 
     const porConciliar = (St.pagosCola || []).length;
 
-    // ── gente: un solo pool, y lo que decide lo dice la ruta ────────
+    // ── gente: la ruta filtra, cuenta y pagina; aquí solo se pinta ──
     //
     // La entrega traía dos listas escritas a mano, PERFILES y LEADS, y todo
-    // colgaba de ellas. Aquí es UNA lista —la que devuelve la ruta— donde el
-    // lead es una fila más con `estado: 'lead'`: si el primer escalón del
-    // embudo dice 47, se pueden enseñar esos 47.
+    // colgaba de ellas. Después fue una lista entera filtrada aquí. Ahora es
+    // UNA PÁGINA: con miles de filas, mandarlas todas para enseñar diez es
+    // una pantalla que no abre, y filtrar delante filtraría solo lo que se ve.
     //
-    // Lo que esta pantalla calcula es presentación: qué fila se ve y cómo se
-    // lee. El mapa de zonas y el embudo llegan hechos.
-    const TODOS = St.gente || [];
-    const PERFILES = TODOS.filter((p) => p.estado !== 'lead');
-    const LEADS = TODOS.filter((p) => p.estado === 'lead');
+    // Lo que llega ya viene decidido: la página, cuántos cumplen el filtro,
+    // cuánta gente deja dentro cada opción, el mapa de zonas y el embudo.
+    const GENTE = St.gente || [];
+    const PAG = St.paginaGente || { desde: 0, tam: 10, hayMas: false };
+    const RES = St.resultadoGente || { total: 0, verificados: 0 };
+    const CUENTAS = St.cuentasGente || {};
+    const ATAJOS = St.atajosGente || {};
+    const LEADS = St.leadsGente || { total: 0, deBaja: 0 };
     const cargandoGente = St.gente === null;
+    const selG = St.filtros || {};
+    const escSel = typeof St.escalon === 'number' && St.escalon >= 0 ? St.escalon : -1;
+    const EMBUDO = St.embudoGente || [];
 
     // El nombre de la zona sale del catálogo que devuelve la misma ruta. Una
-    // tabla escrita aquí se queda vieja en cuanto se activa una zona nueva, y
-    // los slugs de verdad son `las_mercedes` y `los_palos_grandes`.
+    // tabla escrita aquí se queda vieja en cuanto se activa una zona nueva.
     const ZN = {};
     (St.zonasGente || []).forEach((z) => { ZN[z.slug] = z.nombre; });
     const nombreZona = (slug) => ZN[slug] || String(slug || '').replace(/_/g, ' ');
-
-    // Los siete escalones, por su clave, y ANIDADOS: el escalón que se pincha
-    // filtra por él y por todos los de arriba. Sueltos, «subió cédula» dejaba
-    // dentro a los leads —que no tienen estado 'sin'— y la lista enseñaba más
-    // gente de la que decía el número que acababas de pulsar.
-    const ESCALON = {
-      correo: () => true,
-      datos: (p) => p.estado !== 'lead',
-      cuestionario: (p) => p.zonas.length > 0,
-      documentos: (p) => p.estado !== 'sin',
-      verificada: (p) => p.estado === 'ok',
-      reservo: (p) => p.cenas > 0 || p.creditos > 0,
-      fue: (p) => p.cenas > 0
-    };
-    const EMBUDO = St.embudoGente || [];
-    const escSel = typeof St.escalon === 'number' && St.escalon >= 0 ? St.escalon : -1;
-    const pasaEscalon = (p) => escSel < 0 ||
-      EMBUDO.slice(0, escSel + 1).every((e) => (ESCALON[e.paso] || (() => true))(p));
-
-    // El filtrado vive una vez: la lista, el número, la leyenda y las cuentas
-    // de cada opción lo comparten. Dos filtrados es cómo el titular dice 10 y
-    // la lista enseña 9.
-    const selG = St.filtros || {};
-    const qG = (St.busca || '').trim().toLowerCase();
-    const TRAMO = (p) => (p.edad < 32 ? 'j' : p.edad <= 37 ? 'm' : 'v');
-    // Del lead, `nombre` ya viene enmascarado y `trato` es lo de antes de la
-    // arroba: se busca por los dos para que buscar «ana» encuentre a quien
-    // dejó su correo, sin que la pantalla llegue a enseñarlo entero.
-    const casa = (p) => !qG ||
-      String(p.nombre || '').toLowerCase().indexOf(qG) >= 0 ||
-      String(p.trato || '').toLowerCase().indexOf(qG) >= 0;
-    const ATAJO = {
-      cred: (p) => p.creditos > 0 && p.cenas === 0,
-      espera: (p) => p.espera > 0 && p.cenas === 0,
-      dormidos: (p) => p.cenas > 0 && p.dias > 60
-    };
-    // `salvo` es el grupo que se está contando: su propia opción no se aplica,
-    // porque si no cada opción diría siempre cuántos hay de sí misma.
-    const pasaGente = (p, salvo) => {
-      if (!pasaEscalon(p)) return false;
-      if (!casa(p)) return false;
-      if (St.fZona && p.zonas.indexOf(St.fZona) < 0) return false;
-      if (St.atajo && ATAJO[St.atajo] && !ATAJO[St.atajo](p)) return false;
-      const G = {
-        estado: (x) => p.estado === x,
-        genero: (x) => p.genero === x,
-        arraigo: (x) => p.arraigo === x,
-        edad: (x) => TRAMO(p) === x,
-        formato: (x) => (p.familias || []).indexOf(x) >= 0
-      };
-      return Object.keys(G).every((k) => (k === salvo || !selG[k]) ? true : G[k](selG[k]));
-    };
-    const FILTRADA = TODOS.filter((p) => pasaGente(p));
 
     // Equipo solo existe para admin: la ruta devuelve 404 a un ops, y una
     // pestaña que siempre dice cero es peor que no estar. Gente va detrás, así
@@ -1892,7 +1900,7 @@ class Component extends DCLogic {
       ['Fechas', String(FECHAS_REP.length)],
       ['Locales', String(locales.length)]
     ].concat(St.esAdmin ? [['Equipo', String(conAcceso)]] : [])
-      .concat([['Gente', String(TODOS.length)]]).map((p, i) => {
+      .concat([['Gente', String(St.totalGente || 0)]]).map((p, i) => {
       const on = v === i;
       return {
         nombre: p[0], n: p[1],
@@ -2359,12 +2367,12 @@ class Component extends DCLogic {
 
       // ── gente ─────────────────────────────────────────────────────
       esGente: esta('gente'),
-      nGente: String(FILTRADA.length),
-      palabraGente: FILTRADA.length === 1 ? 'persona' : 'personas',
+      nGente: String(RES.total),
+      palabraGente: RES.total === 1 ? 'persona' : 'personas',
       cifraGrande: 'font:700 clamp(52px,7vw,84px)/0.9 \'Inter Tight\',sans-serif;letter-spacing:-.045em;font-variant-numeric:tabular-nums;color:#14342A',
       bajadaGente: cargandoGente
         ? 'Leyendo la base.'
-        : PERFILES.length + (PERFILES.length === 1 ? ' perfil y ' : ' perfiles y ') + LEADS.length + (LEADS.length === 1 ? ' correo sin completar.' : ' correos sin completar.') + ' Todo lo de abajo se calcula sobre eso: los conteos, el mapa de zonas y el embudo.',
+        : St.perfilesGente + (St.perfilesGente === 1 ? ' perfil y ' : ' perfiles y ') + LEADS.total + (LEADS.total === 1 ? ' correo sin completar.' : ' correos sin completar.') + ' Todo lo de abajo se calcula sobre eso: los conteos, el mapa de zonas y el embudo.',
       bajadaEmbudo: 'Cada escalón dice cuánta gente llegó hasta ahí. Toca uno para ver quiénes se quedaron en él.',
 
       // Sacar los correos a un fichero es la única cosa de esta pestaña cuyo
@@ -2374,15 +2382,15 @@ class Component extends DCLogic {
       puedeExportar: !!St.esAdmin,
       tituloExportar: 'Bajar los leads con su correo entero',
       notaExportar: (function () {
-        const bajas = LEADS.filter((p) => p.deBaja).length;
-        const salen = LEADS.length - bajas;
-        if (!LEADS.length) return 'Todavía no hay ningún correo apuntado sin cuenta.';
+        const bajas = LEADS.deBaja || 0;
+        const salen = LEADS.total - bajas;
+        if (!LEADS.total) return 'Todavía no hay ningún correo apuntado sin cuenta.';
         // El número dice cuántos salen DE VERDAD. Decir «los 3 correos» y que
         // el fichero traiga 2 es la clase de descuadre que hace desconfiar de
         // los demás números de la pantalla.
         return 'Salen ' + salen + (salen === 1 ? ' correo' : ' correos') + ' en un CSV'
           + (bajas
-            ? ', de ' + LEADS.length + ' apuntados: ' + bajas + (bajas === 1 ? ' se dio de baja y no va dentro' : ' se dieron de baja y no van dentro') + '. Esa baja no viaja con el fichero, así que se quita aquí.'
+            ? ', de ' + LEADS.total + ' apuntados: ' + bajas + (bajas === 1 ? ' se dio de baja y no va dentro' : ' se dieron de baja y no van dentro') + '. Esa baja no viaja con el fichero, así que se quita aquí.'
             : '. Quien se dé de baja deja de aparecer aquí automáticamente: esa baja no viaja con el fichero.');
       }).call(this),
       notaPieGente: 'Desde aquí no sale ningún correo: esta pestaña sirve para saber, no para disparar.'
@@ -2394,7 +2402,7 @@ class Component extends DCLogic {
       leyendaGente: (function () {
         if (cargandoGente) return 'Leyendo la base.';
         const t = [];
-        if (qG) t.push('que coinciden con «' + (St.busca || '').trim() + '»');
+        if ((St.busca || '').trim()) t.push('que coinciden con «' + (St.busca || '').trim() + '»');
         if (St.fZona) t.push('que aceptan ' + nombreZona(St.fZona));
         if (selG.estado) t.push({ ok: 'con identidad verificada', revision: 'con la verificación en revisión', sin: 'sin verificar', lead: 'que solo dejaron el correo' }[selG.estado]);
         if (selG.edad) t.push({ j: 'de menos de 32', m: 'de 32 a 37', v: 'de más de 37' }[selG.edad]);
@@ -2408,26 +2416,38 @@ class Component extends DCLogic {
         // LA REGLA: las mesas se cuentan sobre VERIFICADOS, nunca sobre el
         // total filtrado, y cuando difieren se dice. Sin la segunda mitad, el
         // titular prometía mesas con gente que no entra al reparto.
-        const elegibles = FILTRADA.filter((p) => p.estado === 'ok').length;
+        // Sobre los que cumplen el filtro ENTERO, no sobre la página: diez
+        // filas no saben cuántas personas verificadas hay detrás.
+        const elegibles = RES.verificados;
         const mesas = Math.floor(elegibles / 6);
         const cl = mesas >= 1
-          ? (elegibles === FILTRADA.length ? 'Dan' : elegibles + ' están verificadas y dan')
+          ? (elegibles === RES.total ? 'Dan' : elegibles + ' están verificadas y dan')
             + ' para ' + mesas + (mesas === 1 ? ' mesa de seis.' : ' mesas de seis.')
-          : (elegibles === FILTRADA.length
+          : (elegibles === RES.total
             ? 'No llegan a un grupo de seis.'
             : elegibles + (elegibles === 1 ? ' está verificada' : ' están verificadas') + ', así que todavía no llegan a un grupo de seis.');
         if (!t.length) return 'Toda la base. Cruza filtros y el número de arriba es la respuesta: es lo que decide si una fecha se puede abrir. ' + cl;
         return 'Personas ' + t.join(', ') + '. ' + cl;
       }).call(this),
 
-      hayGente: FILTRADA.length > 0,
-      sinGente: FILTRADA.length === 0,
-      hayMas: FILTRADA.length > 10,
-      textoMas: 'Se muestran diez de ' + FILTRADA.length + '. Afina los filtros para reducir la lista.',
+      cajaLista: 'border-radius:24px;background:#FAF3E4;overflow:hidden;transition:opacity 160ms ease;opacity:' + (St.pidiendoGente ? '.45' : '1'),
+      hayGente: GENTE.length > 0,
+      sinGente: GENTE.length === 0,
+      // La lista es una página. El texto dice cuál se está viendo de cuántos
+      // hay, y los dos botones mueven la ventana sin traerse el resto.
+      hayMas: RES.total > GENTE.length,
+      textoMas: GENTE.length
+        ? 'Del ' + (PAG.desde + 1) + ' al ' + (PAG.desde + GENTE.length) + ' de ' + RES.total + '. Afina los filtros para reducir la lista.'
+        : '',
+      hayAnterior: PAG.desde > 0,
+      haySiguiente: !!PAG.hayMas,
+      irAnterior: () => { const d = Math.max(0, PAG.desde - PAG.tam); this.setState({ desde: d }); this.cargarGente({ desde: d }); },
+      irSiguiente: () => { const d = PAG.desde + PAG.tam; this.setState({ desde: d }); this.cargarGente({ desde: d }); },
+      botonPagina: 'display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:transparent;color:#1B5138;font:500 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
       tituloSinGente: cargandoGente ? 'Cargando…'
-        : (TODOS.length === 0 ? 'Todavía no hay nadie.' : 'Nadie cumple los filtros puestos.'),
+        : (St.totalGente === 0 ? 'Todavía no hay nadie.' : 'Nadie cumple los filtros puestos.'),
       notaSinGente: cargandoGente ? 'Leyendo la base.'
-        : (TODOS.length === 0
+        : (St.totalGente === 0
           ? 'Ni un perfil ni un correo apuntado. En cuanto alguien deje el suyo en la landing, aparece aquí.'
           : 'Cero también es una respuesta: significa que esa fecha no se puede abrir con la gente que hay hoy. Quita el filtro que menos te importe y vuelve a mirar.'),
 
@@ -2437,7 +2457,7 @@ class Component extends DCLogic {
         const on = (St.fmtZona || 0) === i;
         return {
           nombre,
-          pick: () => { this.setState({ fmtZona: i }); this.cargarGente(i); },
+          pick: () => this.filtrarGente({ fmtZona: i }),
           btn: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#1B5138') + ';font:' + (on ? '600' : '500') + ' 13px/1 \'Inter Tight\',sans-serif;cursor:pointer'
         };
       }),
@@ -2456,7 +2476,7 @@ class Component extends DCLogic {
           zona: z.nombre, n: String(z.verificados),
           sello: sale ? 'SALE' : (z.verificados === 0 ? 'VACÍA' : (z.faltan === 1 ? 'FALTA 1' : 'FALTAN ' + z.faltan)),
           nota: (dif ? z.total + ' en total, ' + z.verificados + (z.verificados === 1 ? ' verificada · ' : ' verificadas · ') : '') + mesasTxt,
-          pick: () => this.setState({ fZona: (St.fZona === z.slug ? '' : z.slug) }),
+          pick: () => this.filtrarGente({ fZona: (St.fZona === z.slug ? '' : z.slug) }),
           caja: 'display:block;text-align:left;border-radius:22px;padding:16px 18px;cursor:pointer;background:' + (St.fZona === z.slug ? '#F2E9D5' : '#FAF3E4') + ';border:1px solid ' + (St.fZona === z.slug ? '#8F4515' : (sale ? 'rgba(27,81,56,.34)' : 'transparent')),
           cifra: 'font:700 clamp(26px,3vw,34px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:' + (sale ? '#1B5138' : '#8F4515'),
           selloEstilo: 'display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;white-space:nowrap;background:' + (sale ? 'rgba(27,81,56,.12)' : 'rgba(143,69,21,.12)') + ';color:' + (sale ? '#1B5138' : '#8F4515')
@@ -2467,8 +2487,8 @@ class Component extends DCLogic {
 
       busca: St.busca || '',
       hayBusca: !!(St.busca || '').trim(),
-      onBusca: (e) => this.setState({ busca: e.target.value }),
-      limpiaBusca: () => this.setState({ busca: '' }),
+      onBusca: (e) => this.buscarGente(e.target.value),
+      limpiaBusca: () => this.buscarGente(''),
 
       // Los tres atajos semanales. Se cuentan sobre perfiles: un correo suelto
       // no tiene créditos ni cenas.
@@ -2478,10 +2498,10 @@ class Component extends DCLogic {
         ['Sin volver, +2 meses', 'dormidos']
       ].map((a) => {
         const on = St.atajo === a[1];
-        const n = PERFILES.filter(ATAJO[a[1]]).length;
+        const n = ATAJOS[a[1]] || 0;
         return {
           nombre: a[0], n: String(n),
-          pick: () => this.setState({ atajo: on ? '' : a[1] }),
+          pick: () => this.filtrarGente({ atajo: on ? '' : a[1] }),
           btn: 'display:inline-flex;align-items:center;gap:10px;min-height:60px;padding:0 20px;border-radius:999px;cursor:pointer;background:' + (on ? '#14342A' : 'transparent') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.2)'),
           cifraEstilo: 'font:700 20px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:' + (on ? '#E39C63' : '#8F4515'),
           txt: 'font:500 14px/1.2 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#14342A') + ';white-space:nowrap'
@@ -2507,19 +2527,16 @@ class Component extends DCLogic {
           titulo: d[0],
           opciones: d[2].map((o) => {
             const on = selG[d[1]] === o[1];
-            const n = TODOS.filter((p) => {
-              if (!pasaGente(p, d[1])) return false;
-              if (d[1] === 'formato') return (p.familias || []).indexOf(o[1]) >= 0;
-              if (d[1] === 'edad') return TRAMO(p) === o[1];
-              return p[d[1]] === o[1];
-            }).length;
+            // La cuenta la hace la ruta: aquí solo hay una página, y contar
+            // sobre diez filas diría «Mujer 3» habiendo cuatrocientas.
+            const n = (CUENTAS[d[1]] || {})[o[1]] || 0;
             return {
               label: o[0], n: String(n),
-              pick: () => this.setState((st) => {
-                const f = Object.assign({}, st.filtros);
+              pick: () => {
+                const f = Object.assign({}, St.filtros);
                 if (f[d[1]] === o[1]) delete f[d[1]]; else f[d[1]] = o[1];
-                return { filtros: f };
-              }),
+                this.filtrarGente({ filtros: f });
+              },
               btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 8px 0 14px;border-radius:999px;cursor:pointer;background:' + (on ? '#14342A' : 'transparent') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';opacity:' + (n === 0 && !on ? '.5' : '1'),
               txt: 'font:' + (on ? '600' : '500') + ' 13px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#14342A') + ';white-space:nowrap',
               cuenta: 'display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 7px;border-radius:999px;font:600 12px/1 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;background:' + (on ? 'rgba(250,243,228,.2)' : 'rgba(20,52,42,.08)') + ';color:' + (on ? '#FAF3E4' : '#33513F')
@@ -2529,12 +2546,12 @@ class Component extends DCLogic {
       }).call(this),
 
       hayFiltros: Object.keys(St.filtros || {}).length > 0 || !!St.fZona || !!St.atajo || !!(St.busca || '').trim() || escSel >= 0,
-      limpiaFiltros: () => this.setState({ filtros: {}, fZona: '', atajo: '', busca: '', escalon: -1 }),
+      limpiaFiltros: () => this.filtrarGente({ filtros: {}, fZona: '', atajo: '', busca: '', escalon: -1 }),
 
-      // Diez filas: la lista es para reconocer a alguien, no para leerse
-      // entera. Del lead solo el correo enmascarado; el entero se abre en su
-      // ficha, de uno en uno, que es la única pantalla donde se lee.
-      lista: FILTRADA.slice(0, 10).map((p, i) => {
+      // La página que mandó la ruta, tal cual. Del lead solo el correo
+      // enmascarado; el entero se abre en su ficha, de uno en uno, que es la
+      // única pantalla donde se lee.
+      lista: GENTE.map((p, i) => {
         const EST = {
           ok: ['Verificada', '#1B5138', 'rgba(27,81,56,.12)'],
           revision: ['En revisión', '#8F4515', 'rgba(143,69,21,.12)'],
@@ -2572,7 +2589,7 @@ class Component extends DCLogic {
         return {
           paso: e.etiqueta, n: String(e.cuenta),
           perdidos: perdidos ? '−' + perdidos : '',
-          pick: () => this.setState({ escalon: on ? -1 : i }),
+          pick: () => this.filtrarGente({ escalon: on ? -1 : i }),
           fila: 'display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;width:100%;text-align:left;padding:14px 18px;border-radius:20px;cursor:pointer;background:' + (on ? '#F2E9D5' : '#FAF3E4') + ';border:1px solid ' + (on ? '#8F4515' : 'transparent'),
           barra: 'position:relative;display:block;flex:0 0 auto;width:96px;height:8px;border-radius:999px;background:rgba(20,52,42,.12);overflow:hidden',
           relleno: 'position:absolute;left:0;top:0;bottom:0;width:' + (tope ? Math.round((e.cuenta / tope) * 100) : 0) + '%;border-radius:999px;background:' + (i >= 4 ? '#1B5138' : '#8F4515'),
