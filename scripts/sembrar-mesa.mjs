@@ -1,16 +1,34 @@
 /**
- * Siembra una mesa de prueba completa: restaurante, fecha, seis personas
- * con cuenta real y la asignación ya publicada.
+ * Siembra gente de prueba para poder repartir una mesa.
  *
- * Los seis están elegidos para que las tres señales del panel CUADREN:
- * 3 mujeres y 3 hombres, edades dentro de 10 años, y seis empresas
- * distintas. Si el cálculo del panel marca REVISAR sobre estos datos, el
- * fallo es del cálculo.
+ * Lo que hace y lo que NO hace, porque esta cabecera estuvo mintiendo:
+ * crea las cuentas, las deja verificadas y apuntadas a una fecha, y ahí
+ * para. **No asigna mesa ni publica nada**: eso lo decide el reparto desde
+ * el panel, que es justo lo que se quiere probar.
  *
- *   node scripts/sembrar-mesa.mjs            siembra
- *   node scripts/sembrar-mesa.mjs --borrar   deja la base como estaba
+ *   node scripts/sembrar-mesa.mjs
+ *       Monta su propio restaurante («Cardenal») y su propia fecha —el
+ *       jueves que viene— y siembra DOCE personas. Para probar el reparto
+ *       en frío, sin tocar ninguna fecha real.
+ *
+ *   node scripts/sembrar-mesa.mjs --fecha <uuid>
+ *       Siembra CINCO acompañantes sobre una fecha que YA EXISTE. Es el
+ *       modo para acompañar a un tester que reservó en la fecha abierta de
+ *       verdad: con él son seis y la mesa se puede repartir. No crea
+ *       restaurante ni fecha, y esa fecha NUNCA se borra: no es suya.
+ *
+ *   node scripts/sembrar-mesa.mjs --borrar
+ *       Deja la base como estaba: quita SOLO lo que sembró este guion.
+ *
+ * SOBRE EL BORRADO. La versión anterior borraba con
+ * `events?city=eq.Caracas&price_usd=eq.8`, un filtro que no distingue lo
+ * suyo de lo de nadie: hoy alcanzaría a las tres fechas de la base, las dos
+ * abiertas incluidas. No borraba porque la columna se llama `city_slug` y
+ * el DELETE fallaba —el filtro estaba roto, no a salvo—. Ahora se borra por
+ * **id**, y los ids se anotan en disco al sembrar: se quita exactamente lo
+ * que se creó, o no se quita nada.
  */
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync, writeFileSync, unlinkSync } from 'node:fs'
 
 const env = Object.fromEntries(
   readFileSync('.env.local', 'utf8')
@@ -25,6 +43,9 @@ const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'applic
 
 const CLAVE = 'AroPrueba2026'
 const DOMINIO = 'prueba.aro.club'
+
+/** Lo que creó este guion. Sin este fichero no se borra nada de la base. */
+const RASTRO = new URL('../.sembrar-mesa.json', import.meta.url).pathname
 
 async function rest(path, opciones = {}) {
   const r = await fetch(`${BASE}/rest/v1/${path}`, { headers: H, ...opciones })
@@ -68,6 +89,35 @@ const GENTE = [
   ['Rodrigo Villalba',    'Rodrigo', '1984-08-19', 'hombre', '4221234512', 'energia',      'PDVSA',          'se-quedo',   ['correr','senderismo','gimnasio']],
 ]
 
+/**
+ * Los cinco que acompañan a un tester, y por qué esos cinco.
+ *
+ * Se eligen para que la mesa de seis sea *sentable* y el panel no marque
+ * REVISAR por culpa de la siembra: tres hombres y dos mujeres —el tester
+ * que motiva este modo es mujer, así que quedan 3/3—, cinco empresas
+ * distintas —fuera Gabriela, que comparte Banesco con José Manuel— y todas
+ * las edades dentro del bloque joven, con seis años entre la mayor y el
+ * menor.
+ *
+ * Si el tester fuese hombre, el equilibrio de género sale 4/2 y hay que
+ * cambiar la selección. Se dice aquí para que no sorprenda en el panel.
+ */
+const CINCO = [1, 3, 5, 0, 4]
+
+/**
+ * La energía social de cada uno de los cinco, por su índice en GENTE.
+ *
+ * No van los cinco en `depende`. El matcher puntúa esta señal contando
+ * cuántos `lleva` hay sentados (`repartir.ts`): con dos o tres saca 1, con
+ * cero saca 0,17. Con los cinco en `depende` —y el tester que motiva este
+ * modo también salió `depende`— la mesa se sienta igual pero esa señal entra
+ * por los suelos y no se habría probado el caso bueno.
+ *
+ * Dos `lleva`, dos `depende` y uno `escucha`. Con el tester son dos `lleva`
+ * de seis, que es justo la ventana que el código premia.
+ */
+const ENERGIA = { 1: 'lleva', 3: 'depende', 5: 'lleva', 0: 'escucha', 4: 'depende' }
+
 const RESPUESTAS_BASE = {
   rol: 'depende', motivo: 'ampliar', romance: 'indiferente',
   evitar: ['ninguno'], actividades: ['cocinar', 'viajar', 'correr'],
@@ -77,6 +127,20 @@ const RESPUESTAS_BASE = {
 
 const correoDe = (i) => `mesa${i + 1}@${DOMINIO}`
 
+function leerRastro() {
+  if (!existsSync(RASTRO)) return null
+  try { return JSON.parse(readFileSync(RASTRO, 'utf8')) } catch { return null }
+}
+
+/**
+ * Quita lo que sembró este guion. Nada más.
+ *
+ * Las cuentas se reconocen por el dominio `@prueba.aro.club`, que es
+ * nuestro y no tiene buzón. La fecha y el restaurante, por el id anotado al
+ * sembrar: si no hay rastro en disco, no se borra ninguna de las dos y se
+ * dice. Una fecha pasada por `--fecha` no se anota nunca, así que este
+ * borrado no puede alcanzarla.
+ */
 async function borrar() {
   // Se listan desde auth y no desde profiles: si una siembra fallo a medias,
   // puede haber usuario sin perfil y ese es justo el que bloquea el correo.
@@ -88,57 +152,99 @@ async function borrar() {
     if (!d.ok) throw new Error(`no se pudo borrar ${u.email}: ${d.status} ${await d.text()}`)
   }
   await rest(`waitlist?email=like.*@${DOMINIO}`, { method: 'DELETE' })
-  await rest('events?city=eq.Caracas&price_usd=eq.8', { method: 'DELETE' })
-  await rest('restaurants?name=eq.Cardenal', { method: 'DELETE' })
-  console.log(`Limpieza: ${mios.length} cuentas de prueba, su fecha y el restaurante.`)
+  console.log(`Cuentas de prueba borradas: ${mios.length}.`)
+
+  const rastro = leerRastro()
+  if (!rastro) {
+    console.log('Sin rastro en disco: no se toca ninguna fecha ni ningún restaurante.')
+    return
+  }
+
+  if (rastro.evento) {
+    await rest(`events?id=eq.${rastro.evento}`, { method: 'DELETE' })
+    console.log(`Fecha borrada: ${rastro.evento}`)
+  }
+  if (rastro.restaurante) {
+    await rest(`restaurants?id=eq.${rastro.restaurante}`, { method: 'DELETE' })
+    console.log(`Restaurante borrado: ${rastro.restaurante}`)
+  }
+  unlinkSync(RASTRO)
 }
 
-async function sembrar() {
-  // --- restaurante y fecha ---
-  const [rest1] = await rest('restaurants', {
-    method: 'POST',
-    headers: { ...H, Prefer: 'return=representation' },
-    body: JSON.stringify({
-      name: 'Cardenal', zone_slug: 'mercedes',
-      address: 'Calle Madrid con avenida Principal, Las Mercedes',
-      avg_check_usd: 28, budget_tier: 2, noise_level: 2,
-      max_tables: 4, is_active: true,
-      // Sin contacto ni formatos el pool lo descarta —un sitio al que no se
-      // puede llamar esa noche no se le da a nadie— y la fecha se queda sin
-      // ninguna zona abierta.
-      contact_name: 'Marielena Ruiz', contact_phone: '+58 212 993 4410',
-      formats: ['dinner'],
-    }),
-  })
+/** Comprueba que la fecha de `--fecha` existe antes de sembrar contra ella. */
+async function fechaExistente(id) {
+  const filas = await rest(`events?id=eq.${id}&select=id,starts_at,status,city_slug,seats_per_table`)
+  if (!filas?.length) throw new Error(`no existe ninguna fecha con id ${id}`)
+  return filas[0]
+}
 
-  const jueves = new Date()
-  jueves.setDate(jueves.getDate() + ((4 - jueves.getDay() + 7) % 7 || 7))
-  jueves.setHours(19, 0, 0, 0)
-  const revela = new Date(jueves); revela.setHours(12, 0, 0, 0)
-  const cierra = new Date(jueves.getTime() - 48 * 3600 * 1000)
+async function sembrar(fechaAjena) {
+  let eventoId
+  let rastro = { evento: null, restaurante: null }
 
-  const [evento] = await rest('events', {
-    method: 'POST',
-    headers: { ...H, Prefer: 'return=representation' },
-    body: JSON.stringify({
-      format: 'dinner', starts_at: jueves.toISOString(),
-      booking_closes_at: cierra.toISOString(), reveal_at: revela.toISOString(),
-      restaurant_id: rest1.id, status: 'locked', seats_per_table: 6,
-      min_tables: 1, max_seats: 36, price_usd: 8, credit_cost: 1,
-      zone_slug: 'mercedes', city: 'Caracas',
-    }),
-  })
+  if (fechaAjena) {
+    const ev = await fechaExistente(fechaAjena)
+    eventoId = ev.id
+    // A propósito NO se anota en el rastro: no la creó este guion y el
+    // borrado no debe poder alcanzarla nunca.
+    console.log(`Sembrando sobre una fecha que ya existía: ${ev.starts_at} · ${ev.status}`)
+    console.log('Esa fecha no se anota y `--borrar` no la tocará.\n')
+  } else {
+    // --- restaurante y fecha propios ---
+    const [rest1] = await rest('restaurants', {
+      method: 'POST',
+      headers: { ...H, Prefer: 'return=representation' },
+      body: JSON.stringify({
+        name: 'Cardenal', zone_slug: 'mercedes',
+        address: 'Calle Madrid con avenida Principal, Las Mercedes',
+        avg_check_usd: 28, budget_tier: 2, noise_level: 2,
+        max_tables: 4, is_active: true,
+        // Sin contacto ni formatos el pool lo descarta —un sitio al que no se
+        // puede llamar esa noche no se le da a nadie— y la fecha se queda sin
+        // ninguna zona abierta.
+        contact_name: 'Marielena Ruiz', contact_phone: '+58 212 993 4410',
+        formats: ['dinner'],
+      }),
+    })
+    rastro.restaurante = rest1.id
 
-  // --- las seis personas ---
+    const jueves = new Date()
+    jueves.setDate(jueves.getDate() + ((4 - jueves.getDay() + 7) % 7 || 7))
+    jueves.setHours(19, 0, 0, 0)
+    const revela = new Date(jueves); revela.setHours(12, 0, 0, 0)
+    const cierra = new Date(jueves.getTime() - 48 * 3600 * 1000)
+
+    const [evento] = await rest('events', {
+      method: 'POST',
+      headers: { ...H, Prefer: 'return=representation' },
+      body: JSON.stringify({
+        format: 'dinner', starts_at: jueves.toISOString(),
+        booking_closes_at: cierra.toISOString(), reveal_at: revela.toISOString(),
+        restaurant_id: rest1.id, status: 'locked', seats_per_table: 6,
+        min_tables: 1, max_seats: 36, price_usd: 8, credit_cost: 1,
+        // La columna es `city_slug`. `city` no existe: el insert entero
+        // fallaba con 400 y el guion no sembraba nada.
+        zone_slug: 'mercedes', city_slug: 'caracas',
+      }),
+    })
+    eventoId = evento.id
+    rastro.evento = evento.id
+    writeFileSync(RASTRO, JSON.stringify(rastro, null, 2))
+    console.log(`Fecha propia: jueves ${jueves.toLocaleDateString('es-VE')} · 7:00 p.m. · Cardenal, Las Mercedes\n`)
+  }
+
+  // --- la gente ---
+  const indices = fechaAjena ? CINCO : GENTE.map((_, i) => i)
   const perfiles = []
-  for (let i = 0; i < GENTE.length; i++) {
+
+  for (const i of indices) {
     const [nombre, trato, nacimiento, genero, tel, sector, empresa, arraigo, intereses] = GENTE[i]
     const correo = correoDe(i)
 
     await rest('waitlist', {
       method: 'POST',
       body: JSON.stringify({
-        email: correo, city: 'caracas', source: 'siembra',
+        email: correo, city_slug: 'caracas', source: 'siembra',
         full_name: nombre, display_name: trato, birthdate: nacimiento,
         gender: genero, phone_e164: `+58${tel}`,
         rootedness: arraigo, zones: ['mercedes', 'chacao'], days: ['jue'],
@@ -185,9 +291,17 @@ async function sembrar() {
         profile_id: usuario.id, version_id: 3,
         age: new Date().getFullYear() - Number(nacimiento.slice(0, 4)),
         gender: genero, rootedness: arraigo, industry: sector, employer: empresa,
-        life_stage: 'soltero-sin-hijos', social_energy: 'balanced',
+        // `social_energy` es un enum: escucha | depende | lleva. Decía
+        // `balanced`, que no existe, y ese 400 reventaba DENTRO del bucle
+        // —ya creada la cuenta, convertido el lead y metidas las
+        // verificaciones de la primera persona—, no al empezar.
+        life_stage: 'soltero-sin-hijos', social_energy: ENERGIA[i] ?? 'depende',
         intention: 'ampliar', romantic_openness: 'indiferente',
-        dining_focus: 'both', budget_tier: 2,
+        // `ambas`, no `both`. La columna es texto libre y aceptaba el inglés
+        // sin rechistar, pero el producto escribe en español —`conversacion`,
+        // `ambas`— y el `both` venía del comentario del esquema original, que
+        // se quedó viejo. Cuadra además con el `peso: 'ambas'` de arriba.
+        dining_focus: 'ambas', budget_tier: 2,
         interests: intereses,
         conversation_topics: ['cocina', 'viajes'],
         dietary: ['ninguna'], languages: ['es'],
@@ -205,7 +319,7 @@ async function sembrar() {
       method: 'POST',
       headers: { ...H, Prefer: 'return=representation' },
       body: JSON.stringify({
-        event_id: evento.id, profile_id: usuario.id,
+        event_id: eventoId, profile_id: usuario.id,
         status: 'confirmed', confirmed_at: new Date().toISOString(),
       }),
     })
@@ -219,13 +333,22 @@ async function sembrar() {
     perfiles.push({ id: usuario.id, correo, nombre, trato, reserva: reserva.id })
   }
 
-  console.log(`\nFecha: jueves ${jueves.toLocaleDateString('es-VE')} · 7:00 p.m. · Cardenal, Las Mercedes`)
   console.log(`${perfiles.length} personas apuntadas y verificadas. Sin repartir: eso lo decide el algoritmo.\n`)
   console.log('Cuentas (misma contraseña para todas):\n')
   for (const p of perfiles) console.log(`   ${p.correo.padEnd(28)} ${p.nombre}`)
   console.log(`\n   contraseña: ${CLAVE}\n`)
 }
 
-const borrarPrimero = process.argv.includes('--borrar')
+// --- argumentos -------------------------------------------------------
+const args = process.argv.slice(2)
+const soloBorrar = args.includes('--borrar')
+const iFecha = args.indexOf('--fecha')
+const fechaAjena = iFecha >= 0 ? args[iFecha + 1] : null
+
+if (iFecha >= 0 && !fechaAjena) {
+  console.error('--fecha necesita el uuid de una fecha que ya exista')
+  process.exit(1)
+}
+
 await borrar()
-if (!borrarPrimero) await sembrar()
+if (!soloBorrar) await sembrar(fechaAjena)
