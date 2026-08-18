@@ -75,5 +75,64 @@ begin
   update waitlist set converted_profile_id = p_profile_id where id = v_lead.id;
 end $$;
 
--- La huérfana. Nadie la llama: `/api/cuenta` es el único sitio que convierte.
-drop function if exists convertir_lead(text, uuid);
+-- --------------------------------------------------------------------
+-- La huérfana se va, pero no porque yo crea que no la llama nadie.
+--
+-- En el repo lo comprobé: los dos únicos sitios que convierten —`/api/cuenta`
+-- y `scripts/sembrar-mesa.mjs`— llaman a la de TRES argumentos. Lo que un
+-- grep no puede ver es lo que hay dentro de la base: otra función que la
+-- nombre en su cuerpo, un disparador colgado de ella, una vista.
+--
+-- Así que la comprobación la hace Postgres aquí mismo, y si encuentra algo
+-- esta migración revienta entera y no borra nada. Borrar una función de
+-- producción porque parece que no la usa nadie es como un DELETE acotado por
+-- dos columnas: parece acotado hasta que no lo es.
+-- --------------------------------------------------------------------
+
+do $$
+declare
+  v_funciones text;
+  v_vistas    text;
+  v_triggers  int;
+begin
+  -- Otra función que la nombre en su cuerpo. Postgres NO registra esta
+  -- dependencia —el cuerpo es texto para él—, así que hay que mirarla a mano.
+  select string_agg(p.oid::regprocedure::text, ', ')
+    into v_funciones
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname not in ('pg_catalog', 'information_schema')
+    and p.prosrc ilike '%convertir_lead%'
+    and p.oid <> 'public.convertir_lead(text, uuid)'::regprocedure
+    and p.oid <> 'public.convertir_lead(uuid, text, text)'::regprocedure;
+
+  if v_funciones is not null then
+    raise exception 'no se borra: convertir_lead(text, uuid) la nombran %', v_funciones;
+  end if;
+
+  -- Una vista que la llame.
+  select string_agg(schemaname || '.' || viewname, ', ')
+    into v_vistas
+  from pg_views
+  where schemaname not in ('pg_catalog', 'information_schema')
+    and definition ilike '%convertir_lead%';
+
+  if v_vistas is not null then
+    raise exception 'no se borra: la usan las vistas %', v_vistas;
+  end if;
+
+  -- Y un disparador colgado de ella. Estructuralmente no puede —una función
+  -- de disparador no lleva argumentos— pero se pregunta igual: la suposición
+  -- razonable es justo la que no se comprueba.
+  select count(*) into v_triggers
+  from pg_trigger
+  where tgfoid = 'public.convertir_lead(text, uuid)'::regprocedure;
+
+  if v_triggers > 0 then
+    raise exception 'no se borra: cuelgan % disparadores de ella', v_triggers;
+  end if;
+end $$;
+
+-- Sin CASCADE a propósito: si quedara alguna dependencia registrada que las
+-- tres preguntas de arriba no hayan visto, que falle en vez de arrastrarla.
+drop function if exists public.convertir_lead(text, uuid);

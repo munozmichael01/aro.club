@@ -149,7 +149,13 @@ if (resto.includes('mesa') || resto.includes('revelada')) {
     starts_at: yaRevelada ? en(6) : en(48),
     booking_closes_at: yaRevelada ? en(-48) : en(2),
     reveal_at: yaRevelada ? en(-1) : en(24),
-    restaurant_id: restId, status: 'open', price_usd: 8, city_slug: 'caracas',
+    // `locked` y NUNCA `open`: /api/proxima —la cuenta atras de la portada—
+    // filtra por status = 'open', asi que una fecha de pruebas abierta sale
+    // como cena fantasma contando atras en aro.club, a la vista de cualquiera.
+    // En locked no la ve ningun visitante y el banco sigue sirviendo igual:
+    // la reserva la inserta el propio guion, y /api/pago no mira el estado
+    // del evento sino su cierre.
+    restaurant_id: restId, status: 'locked', price_usd: 8, city_slug: 'caracas',
   }).select('id').single()
   if (ee) console.log('  ! fecha:', ee.message)
   else {
