@@ -349,7 +349,7 @@
       <div style="animation:aro-open 300ms ease both">
         <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;margin-bottom:6px">
           <h1 style="{{ h1 }}">Con quién trabajamos</h1>
-          <a href="Aro Club - Locales.dc.html#alta" style="{{ botonPrimarioOp }}">Añadir local</a>
+          <a href="/locales#alta" style="{{ botonPrimarioOp }}">Añadir local</a>
         </div>
         <p style="{{ bajada }}">La zona decide a qué mesas puede ir cada sitio. Sin sitios abiertos en una zona, el selector de dónde los sentamos no tiene nada que ofrecer.</p>
 
@@ -388,7 +388,7 @@
             <span style="flex:0 0 44px"></span>
           </div>
           <sc-for list="{{ locales }}" as="l" hint-placeholder-count="8">
-            <a href="Aro Club - Locales.dc.html#ficha" style="{{ l.fila }}">
+            <a href="/locales#ficha" style="{{ l.fila }}">
               <span style="flex:2 1 170px;min-width:0">
                 <span style="display:block;font:500 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ l.nombre }}</span>
                 <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ l.nota }}</span>
@@ -1608,7 +1608,7 @@ class Component extends DCLogic {
           avatar: avatarRep(i + m.numero),
           enlace: 'flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:-9px -9px -9px 0;border-radius:999px',
           circulo: 'width:26px;height:26px;border-radius:999px;background:rgba(20,52,42,.07);color:#1B5138;display:flex;align-items:center;justify-content:center;font:500 12px/1 \'Inter Tight\',sans-serif',
-          perfil: 'Aro Club - Perfil miembro.dc.html?id=' + p.profileId,
+          perfil: '/miembro?id=' + p.profileId,
           fila: 'display:flex;align-items:center;gap:10px;padding:8px 6px;margin:0 -6px;border-radius:12px;border-bottom:1px solid rgba(20,52,42,.09);cursor:' + (pub ? 'default' : 'grab') + ';touch-action:' + (pub ? 'auto' : 'none') + ';background:' + (St.arrastrando === p.profileId ? 'rgba(143,69,21,.1)' : 'transparent'),
           tomar: (e) => { if (!pub) this.tomar(e, p.profileId, m.numero); }
         })),
@@ -1709,7 +1709,7 @@ class Component extends DCLogic {
       pastilla: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 8px 0 8px;border-radius:999px;background:' + (St.arrastrando === p.profileId ? '#F2E9D5' : '#FAF3E4') + ';border:1px solid ' + (St.arrastrando === p.profileId ? '#8F4515' : 'transparent') + ';font:500 14px/1 \'Inter Tight\',sans-serif;color:#14342A;cursor:grab;touch-action:none',
       enlace: 'flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:0 -9px 0 0;border-radius:999px',
       circulo: 'width:26px;height:26px;border-radius:999px;background:rgba(20,52,42,.09);color:#1B5138;display:flex;align-items:center;justify-content:center;font:500 12px/1 \'Inter Tight\',sans-serif',
-      perfil: 'Aro Club - Perfil miembro.dc.html?id=' + p.profileId,
+      perfil: '/miembro?id=' + p.profileId,
       tomar: (e) => this.tomar(e, p.profileId, null)
     }));
 
@@ -2135,7 +2135,7 @@ class Component extends DCLogic {
         nombre: c.trato || c.nombre || '—',
         inicial: (c.trato || c.nombre || '—').charAt(0),
         avatar: avatar(i),
-        perfil: 'Aro Club - Perfil miembro.dc.html?id=' + c.profileId,
+        perfil: '/miembro?id=' + c.profileId,
         espera: d === 'ok' ? 'Aprobada por ti' : (d === 'no' ? 'Rechazada por ti' : haceCuanto(c.esperaDesde)),
         datos: [c.nombre, edad != null ? edad + ' años' : null].filter(Boolean).map((texto) => ({ texto })),
         // El aviso que cambia la decisión: si ya la rechazamos antes, esta
@@ -2571,7 +2571,7 @@ class Component extends DCLogic {
             : [p.edad ? p.edad + ' años' : null, p.industria || null, zonas || 'sin zonas', recorrido]
               .filter(Boolean).join(' · '),
           estado: e[0],
-          enlace: 'Aro Club - Perfil miembro.dc.html?id=' + p.id + '&desde=gente',
+          enlace: '/miembro?id=' + p.id + '&desde=gente',
           avatar: 'flex:0 0 auto;width:34px;height:34px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 14px/1 \'Inter Tight\',sans-serif',
           chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;background:' + e[2] + ';border:1px solid ' + (e[2] === 'transparent' ? 'rgba(20,52,42,.2)' : 'transparent') + ';color:' + e[1],
           fila: 'display:flex;align-items:center;gap:12px;padding:13px 18px;min-height:64px;text-decoration:none;border-bottom:1px solid rgba(20,52,42,.09)',

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="32" height="32" role="img" aria-label="Aro Club">
+  <title>Aro Club</title>
+  
+  <circle class="tinta" cx="120" cy="120" r="86" fill="none" stroke-width="17"></circle>
+  <circle class="acento" cx="206" cy="120" r="19"></circle>
+  <circle class="punto" cx="163" cy="194.5" r="19"></circle>
+  <circle class="punto" cx="77" cy="194.5" r="19"></circle>
+  <circle class="punto" cx="34" cy="120" r="19"></circle>
+  <circle class="punto" cx="77" cy="45.5" r="19"></circle>
+  <circle class="punto" cx="163" cy="45.5" r="19"></circle>
+</svg>

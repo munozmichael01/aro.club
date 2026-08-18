@@ -33,9 +33,9 @@
   function items(activa, hayMesa, formato) {
     var voz = (raiz.AroReglas && raiz.AroReglas.vozDe) ? raiz.AroReglas.vozDe(formato) : { mia: 'Mi mesa' }
     var todos = [
-      { id: 'inicio', texto: 'Inicio', enlace: 'Aro Club - Mi cuenta.dc.html' },
-      { id: 'mesa', texto: voz.mia, enlace: 'Aro Club - Mi mesa.dc.html', requiereMesa: true },
-      { id: 'perfil', texto: 'Perfil', enlace: 'Aro Club - Mi perfil.dc.html' },
+      { id: 'inicio', texto: 'Inicio', enlace: '/cuenta' },
+      { id: 'mesa', texto: voz.mia, enlace: '/mesa', requiereMesa: true },
+      { id: 'perfil', texto: 'Perfil', enlace: '/perfil' },
     ]
     return todos
       .filter(function (t) { return !t.requiereMesa || hayMesa })

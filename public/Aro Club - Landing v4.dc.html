@@ -81,11 +81,11 @@
       </a>
       <div style="display:flex;align-items:center;gap:6px">
         <sc-if value="{{ sinSesion }}" hint-placeholder-val="{{ true }}">
-          <a href="Aro Club - Entrar.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;color:#1B5138;font:500 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Entrar</a>
+          <a href="/entrar" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;color:#1B5138;font:500 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Entrar</a>
           <a href="#registro" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Empezar</a>
         </sc-if>
         <sc-if value="{{ haySesion }}" hint-placeholder-val="{{ false }}">
-          <a href="Aro Club - Mi cuenta.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">{{ textoCuenta }}</a>
+          <a href="/cuenta" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">{{ textoCuenta }}</a>
         </sc-if>
       </div>
     </div>
@@ -487,7 +487,7 @@
             </div>
           </sc-if>
           <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center">
-            <a href="Aro Club - Datos base.dc.html" style="{{ botonFinal }}">{{ textoFinal }}</a>
+            <a href="/datos" style="{{ botonFinal }}">{{ textoFinal }}</a>
             <button onClick="{{ reiniciar }}" style="min-height:58px;padding:0 8px;background:transparent;border:none;color:#9CBBA6;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Lo hago después</button>
           </div>
         </div>
@@ -499,7 +499,7 @@
           <h2 style="font:400 clamp(36px,6vw,80px)/0.98 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0 0 18px;max-width:15ch;text-wrap:balance">Este correo ya está registrado.</h2>
           <p style="font:400 clamp(16px,1.4vw,20px)/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin:0 0 28px;max-width:44ch;text-wrap:pretty">Te apuntaste con <em style="font-weight:600;color:#FAF3E4">{{ correo }}</em> el 14 de julio y no perdiste el turno. Sigue donde lo dejaste.</p>
           <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center">
-            <a href="Aro Club - Entrar.dc.html" style="display:inline-flex;align-items:center;min-height:58px;padding:0 28px;border-radius:999px;border:1px solid rgba(250,243,228,.34);color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;transition:all 220ms ease" style-hover="background:#FAF3E4;color:#14342A">Entrar a mi cuenta</a>
+            <a href="/entrar" style="display:inline-flex;align-items:center;min-height:58px;padding:0 28px;border-radius:999px;border:1px solid rgba(250,243,228,.34);color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;transition:all 220ms ease" style-hover="background:#FAF3E4;color:#14342A">Entrar a mi cuenta</a>
             <button onClick="{{ reiniciar }}" style="min-height:58px;padding:0 8px;background:transparent;border:none;color:#9CBBA6;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Usar otro correo</button>
           </div>
         </div>
@@ -522,8 +522,8 @@
           <a href="#registro" style="color:#9CBBA6;display:flex;align-items:center;min-height:44px">Empezar</a>
         </div>
         <div style="display:flex;flex-direction:column">
-          <a href="Aro Club - Legal.dc.html#terminos" style="color:#9CBBA6;display:flex;align-items:center;min-height:44px">Términos</a>
-          <a href="Aro Club - Legal.dc.html#privacidad" style="color:#9CBBA6;display:flex;align-items:center;min-height:44px">Privacidad</a>
+          <a href="/terminos" style="color:#9CBBA6;display:flex;align-items:center;min-height:44px">Términos</a>
+          <a href="/privacidad" style="color:#9CBBA6;display:flex;align-items:center;min-height:44px">Privacidad</a>
         </div>
       </div>
     </div>

@@ -130,6 +130,57 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
+  /**
+   * Las tres secciones tienen URL propia —/reglas, /terminos, /privacidad— y
+   * las tres las sirve esta pantalla. El servidor no puede mandar un ancla en
+   * una reescritura, asi que la pantalla se coloca leyendo su propia
+   * direccion.
+   *
+   * /privacidad es la que se enlaza desde el alta y hasta hoy daba 404:
+   * existia solo como ancla de /legal, o sea que el enlace del formulario no
+   * llevaba a ningun sitio.
+   */
+  componentDidMount() {
+    const seccion = String(window.location.pathname || '').replace(/^\/|\/$/g, '');
+    if (['reglas', 'terminos', 'privacidad'].indexOf(seccion) < 0) return;
+
+    // Colocarse en la seccion cuesta mas de lo que parece, y las tres razones
+    // se descubrieron probandolo:
+    //
+    //  · con requestAnimationFrame no dispara si la pestana esta en segundo
+    //    plano, y abrir /privacidad en una pestana nueva es justo lo que hace
+    //    quien esta rellenando el alta;
+    //  · esta pantalla trae `html { scroll-behavior: smooth }`, asi que un
+    //    scroll normal ARRANCA UNA ANIMACION y cada reintento la reiniciaba
+    //    desde donde iba: la pagina se quedaba arriba sin que fallara nada;
+    //  · el alto cambia mientras carga —las fuentes, el pintado por partes—,
+    //    asi que un destino calculado una vez se queda viejo y acaba pasandose
+    //    hasta el final del documento.
+    //
+    // Por eso mide la distancia que le falta en cada intento y la corrige, en
+    // vez de calcular un destino y creerselo. Se para cuando la seccion esta
+    // arriba o cuando ya no puede acercarse mas —la ultima seccion no siempre
+    // puede quedar pegada al borde— y en todo caso a los dos segundos.
+    const ALTO_CABECERA = 104;
+    const empezo = Date.now();
+    let anterior = -1;
+
+    const colocar = () => {
+      const el = document.getElementById(seccion);
+      if (el) {
+        const falta = el.getBoundingClientRect().top - ALTO_CABECERA;
+        if (Math.abs(falta) < 8) return;
+        // 'instant' explicito para saltarse el scroll-behavior de la hoja.
+        window.scrollTo({ top: Math.max(0, window.scrollY + falta), behavior: 'instant' });
+        // Si no se ha movido, es que ya esta todo lo abajo que se puede.
+        if (window.scrollY === anterior) return;
+        anterior = window.scrollY;
+      }
+      if (Date.now() - empezo < 2000) setTimeout(colocar, 80);
+    };
+    colocar();
+  }
+
   renderVals() {
     const indice = [['Reglas de la mesa', '#reglas'], ['Términos', '#terminos'], ['Privacidad', '#privacidad']]
       .map((i) => ({ nombre: i[0], ancla: i[1] }));

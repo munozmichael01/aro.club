@@ -161,8 +161,8 @@
   </div>
 
   <div style="max-width:1000px;width:100%;margin:0 auto;padding:0 clamp(16px,4vw,28px) clamp(24px,4vw,36px);display:flex;flex-wrap:wrap;gap:10px">
-    <a href="Aro Club - Legal.dc.html#privacidad" style="{{ enlacePie }}">Privacidad</a>
-    <a href="Aro Club - Legal.dc.html#terminos" style="{{ enlacePie }}">Términos</a>
+    <a href="/privacidad" style="{{ enlacePie }}">Privacidad</a>
+    <a href="/terminos" style="{{ enlacePie }}">Términos</a>
   </div>
 </div>
 
@@ -196,7 +196,7 @@ class Component extends DCLogic {
       let j = {}; try { j = JSON.parse(t); } catch (e) { j = {}; }
       // El destino lo decide el servidor, que es quien sabe el rol. Antes
       // estaba fijo aqui y operacion aterrizaba en el panel de miembro.
-      if (j.estado === 'dentro') { window.location.href = j.destino || 'Aro Club - Mi cuenta.dc.html'; return; }
+      if (j.estado === 'dentro') { window.location.href = j.destino || '/cuenta'; return; }
       this.setState({ fase: 'correo', error: j.error || 'Ese correo y esa contraseña no coinciden.' });
     })).catch(() => this.setState({
       fase: 'correo', error: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
@@ -280,7 +280,7 @@ class Component extends DCLogic {
       },
       conApple: () => this.setState({ fase: 'relay' }),
       conGoogle: () => this.setState({ fase: 'otroCorreo' }),
-      aceptar: () => { window.location.href = 'Aro Club - Mi cuenta.dc.html'; },
+      aceptar: () => { window.location.href = '/cuenta'; },
 
       correosPosibles,
       contacto: this.state.contacto,
@@ -288,7 +288,7 @@ class Component extends DCLogic {
       inerteContacto: contactoOk ? null : 'true',
       textoContacto: contactoOk ? 'Guardar y continuar' : 'Escribe un correo',
       botonContacto: btn(contactoOk ? '#FAF3E4' : 'rgba(250,243,228,.14)', contactoOk ? '#14342A' : '#C5D8CA', 'none', contactoOk ? '' : 'cursor:not-allowed'),
-      guardarContacto: () => { if (contactoOk) window.location.href = 'Aro Club - Mi cuenta.dc.html'; }
+      guardarContacto: () => { if (contactoOk) window.location.href = '/cuenta'; }
     };
   }
 }

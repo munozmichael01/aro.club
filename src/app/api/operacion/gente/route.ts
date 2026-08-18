@@ -36,10 +36,25 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * menos gente sin que falle nada. Por eso `todasLasFilas` insiste hasta el
  * final. Es lo mismo que pasaba con el cuestionario: no falla, miente.
  *
- * El día que esto tampoco baste —cuando recorrer la tabla entera por cada
- * petición se note—, el mapa y el embudo se mueven a SQL. Hoy no: dos
- * implementaciones del mismo número, una en JS y otra en la base, es cómo la
- * pantalla acaba dando dos respuestas a la misma pregunta.
+ * ## El techo que queda, dicho claro
+ *
+ * Leer por tramos arregla la CORRECCIÓN —el embudo ya no puede contar menos
+ * gente de la que hay— pero no la escala. El mapa y el embudo cuentan sobre
+ * el total, que es lo que tienen que hacer, y eso hoy es recorrer las tablas
+ * enteras en memoria: con miles de personas son miles de filas leídas en cada
+ * clic de filtro, porque desde el paginado cada filtro vuelve a preguntar. El
+ * techo no desapareció, se movió del navegador aquí.
+ *
+ * Lo caro no es contar, es traérselas: contar diez mil filas dentro de la
+ * base no se nota. Por eso los dos agregados acaban en SQL —una vista con la
+ * derivación y dos funciones que devuelvan ya contado—, y el día que se haga,
+ * esta ruta deja de derivar: si la vista calcula el estado y esto también,
+ * son dos implementaciones del mismo número y la pantalla vuelve a dar dos
+ * respuestas a la misma pregunta.
+ *
+ * No está hecho porque hay nueve personas en la base y la mayor parte de la
+ * petición se va en validar la sesión, no en leer filas. Está escrito con su
+ * condición y su señal en `docs/BACKLOG.md` §6.
  *
  * **No exporta y no manda nada.** Para llevarse los correos de los leads está
  * `/api/operacion/leads`, que es de admin y deja rastro.

@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       estado: 'dentro',
       // Quien es las dos cosas —Michael lo es— llega a su trabajo y tiene
       // el enlace a su cuenta de miembro en el panel.
-      destino: deOperacion ? 'Aro Club - Operacion.dc.html' : 'Aro Club - Mi cuenta.dc.html',
+      destino: deOperacion ? '/operacion' : '/cuenta',
     })
   }
 

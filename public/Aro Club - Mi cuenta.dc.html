@@ -38,7 +38,7 @@
         <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
       </a>
       <sc-if value="{{ esOps }}" hint-placeholder-val="{{ false }}">
-        <a href="Aro Club - Operacion.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.22);color:#1B5138;font:600 13px/1 'Inter Tight',sans-serif;letter-spacing:.04em;white-space:nowrap">Operación</a>
+        <a href="/operacion" style="display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.22);color:#1B5138;font:600 13px/1 'Inter Tight',sans-serif;letter-spacing:.04em;white-space:nowrap">Operación</a>
       </sc-if>
     </div>
     <div style="border-top:1px solid rgba(20,52,42,.08)">
@@ -205,7 +205,7 @@
     </div>
 
     <sc-if value="{{ hayPorValorar }}" hint-placeholder-val="{{ false }}">
-      <a href="Aro Club - Mi mesa.dc.html" style="display:block;margin-top:clamp(28px,3.6vw,40px);border-radius:26px;background:#14342A;color:#FAF3E4;padding:clamp(20px,2.8vw,28px);transition:background 220ms ease" style-hover="background:#1B5138">
+      <a href="/mesa" style="display:block;margin-top:clamp(28px,3.6vw,40px);border-radius:26px;background:#14342A;color:#FAF3E4;padding:clamp(20px,2.8vw,28px);transition:background 220ms ease" style-hover="background:#1B5138">
         <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#C0662F;margin-bottom:10px">PENDIENTE DE VALORAR</div>
         <div style="font:400 clamp(21px,2.4vw,27px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.025em">{{ tituloValorar }}</div>
         <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:8px;max-width:52ch;text-wrap:pretty">{{ cuerpoValorar }}</div>
@@ -227,7 +227,7 @@
               <span style="flex:0 0 auto;font:500 13px/1.4 'Inter Tight',sans-serif;color:#566A5D">{{ m.cuando }}</span>
               <span style="{{ m.chip }}">{{ m.estado }}</span>
               <sc-if value="{{ m.cancelable }}" hint-placeholder-val="{{ false }}">
-                <a href="Aro Club - Cancelar.dc.html" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 12px;font:500 13px/1 'Inter Tight',sans-serif;color:#8F4515;text-decoration:underline;text-underline-offset:5px">Cancelar</a>
+                <a href="/cancelar" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 12px;font:500 13px/1 'Inter Tight',sans-serif;color:#8F4515;text-decoration:underline;text-underline-offset:5px">Cancelar</a>
               </sc-if>
             </div>
           </sc-for>
@@ -276,7 +276,7 @@ class Component extends DCLogic {
     fetch('/api/mi-cuenta')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((datos) => this.setState({ datos: datos }))
-      .catch(() => { this.setState({ sinCuenta: true }); window.location.href = 'Aro Club - Entrar.dc.html'; });
+      .catch(() => { this.setState({ sinCuenta: true }); window.location.href = '/entrar'; });
 
     fetch('/api/mis-exclusiones')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
@@ -319,7 +319,7 @@ class Component extends DCLogic {
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
         titulo: 'Termina tu perfil y ya podemos sentarte.',
         cuerpo: 'Cinco pantallas: cómo eres en la mesa, de qué hablas, cuánto quieres gastar y qué días puedes. Lo que respondiste al registrarte no se vuelve a preguntar.',
-        accion: 'Continuar el perfil', enlace: 'Aro Club - Cuestionario.dc.html'
+        accion: 'Continuar el perfil', enlace: '/cuestionario'
       },
       {
         // Estado nuevo. El copy sale de la propia pantalla de Datos base de
@@ -330,7 +330,7 @@ class Component extends DCLogic {
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
         titulo: 'Faltan cuatro datos para poder sentarte.',
         cuerpo: 'Tu nombre, cuándo naciste, tu género y un teléfono. Cuatro campos, medio minuto, y sin ellos no podemos armar tu mesa: la edad y el género son lo que más pesa al formar el grupo.',
-        accion: 'Completar mis datos', enlace: 'Aro Club - Datos base.dc.html'
+        accion: 'Completar mis datos', enlace: '/datos'
       },
       {
         id: 'verificar', sello: 'FALTA VERIFICAR',
@@ -338,7 +338,7 @@ class Component extends DCLogic {
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
         titulo: 'Verifica tu identidad para poder reservar.',
         cuerpo: 'Cédula y una selfie. Lo revisa una persona, no se le muestra a nadie más, y se borra a los 90 días. Es lo que hace que los otros cinco confíen.',
-        accion: 'Verificar mi identidad', enlace: 'Aro Club - Verificacion.dc.html'
+        accion: 'Verificar mi identidad', enlace: '/verificacion'
       },
       {
         id: 'revision', sello: 'EN REVISIÓN', calmado: true,
@@ -352,7 +352,7 @@ class Component extends DCLogic {
         //
         // Y la secundaria era "Simular aprobacion", un boton de demo en la
         // pantalla que mas se abre. Fuera.
-        accion: 'Ver mis respuestas', enlace: 'Aro Club - Mi perfil.dc.html'
+        accion: 'Ver mis respuestas', enlace: '/perfil'
       },
       {
         id: 'reservar', sello: 'LISTA PARA RESERVAR',
@@ -368,7 +368,7 @@ class Component extends DCLogic {
         creditosCuerpo: 'Uno está apartado para el jueves, a la espera de confirmar el pago.',
         titulo: 'Tu puesto está apartado.',
         cuerpo: 'Reportaste el pago y una persona lo está cuadrando con el banco. Suele tardar menos de una hora. Nadie más puede tomar tu puesto mientras tanto.',
-        accion: 'Ver mi reserva', enlace: 'Aro Club - Mi mesa.dc.html', secundaria: 'Algo no cuadra'
+        accion: 'Ver mi reserva', enlace: '/mesa', secundaria: 'Algo no cuadra'
       },
       {
         id: 'reservada', sello: 'TIENES MESA', reloj: true,
@@ -508,22 +508,22 @@ class Component extends DCLogic {
       // obligatorias son catorce. El dia que cambie el catalogo, cambia solo.
       ['Mis respuestas',
        'Las ' + (d && d.respuestas ? d.respuestas.total : '') + ' del cuestionario, para ver y editar cuando quieras.',
-       e.respuestas, 'Aro Club - Mi perfil.dc.html'],
+       e.respuestas, '/perfil'],
       // Llevaba a '/', que es la landing: un atajo que dice "Mis creditos" y
       // te saca del producto. Va al legal, que es donde se explica cuando
       // vuelve un credito y cuando se pierde.
-      ['Mis créditos', e.creditosCuerpo, e.creditos, 'Aro Club - Legal.dc.html#terminos'],
-      ['Mi verificación', 'Estado de tu cédula y tu selfie.', pieVerif, 'Aro Club - Verificacion.dc.html'],
+      ['Mis créditos', e.creditosCuerpo, e.creditos, '/terminos'],
+      ['Mi verificación', 'Estado de tu cédula y tu selfie.', pieVerif, '/verificacion'],
       // El "Ninguna" estaba escrito a mano y el enlace iba al legal: un dato
       // inventado y un enlace que decia una cosa y llevaba a otra.
       ['Exclusiones', 'Personas con las que no quieres volver a coincidir. Nadie se entera.',
        nExcl == null ? 'Cargando' : (nExcl === 0 ? 'Ninguna' : (nExcl === 1 ? '1 persona' : nExcl + ' personas')),
-       'Aro Club - Mi perfil.dc.html#exclusiones'],
+       '/perfil#exclusiones'],
       // El historial completo no vive aqui: es identidad acumulada, no algo
       // que tengas que hacer. Esta tarjeta lleva a donde vive.
       ['Mis cenas', 'Dónde has estado y cuándo. La lista entera.',
        nCenas == null ? 'Cargando' : (nCenas === 0 ? 'Ninguna todavía' : (nCenas === 1 ? '1 cena' : nCenas + ' cenas')),
-       'Aro Club - Mi perfil.dc.html#cenas']
+       '/perfil#cenas']
     ].map((a) => ({
       titulo: a[0], cuerpo: a[1], pie: a[2], enlace: a[3],
       pieEstilo: 'margin-top:auto;padding-top:12px;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:#8F4515'
@@ -687,7 +687,7 @@ class Component extends DCLogic {
             const q = new URLSearchParams({
               evento: c[5], tipo: c[1], cuando: c[2], zona: c[3], hora: c[2].split(' · ')[1] || ''
             });
-            window.location.href = 'Aro Club - Pago.dc.html?' + q.toString();
+            window.location.href = '/pago?' + q.toString();
             return;
           }
           if (this.state.reservandoYa) return;
@@ -710,8 +710,8 @@ class Component extends DCLogic {
 
     const pie = [
       ['Preguntas', '/#faq'],
-      ['Reglas de la mesa', 'Aro Club - Legal.dc.html#reglas'],
-      ['Privacidad', 'Aro Club - Legal.dc.html#privacidad']
+      ['Reglas de la mesa', '/reglas'],
+      ['Privacidad', '/privacidad']
     ].map((p) => ({ nombre: p[0], enlace: p[1] }));
 
     return {

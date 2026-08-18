@@ -139,3 +139,48 @@ lo reenvía. Falta el MX de la raíz, el secreto del webhook en producción y
 
 **Por qué espera.** Nada, en realidad: está a tres pasos de configuración.
 Va cuando Michael diga.
+
+---
+
+## 6 · El mapa y el embudo de Gente, contados en Postgres
+
+**El paginado del 18 de agosto arregló la corrección, no la escala.** Conviene
+decirlo así de claro porque el commit puede leerse como que dejó la pestaña
+lista para miles, y no es eso lo que hizo.
+
+Lo que sí arregló: PostgREST corta en mil filas sin avisar, así que a partir
+de mil el embudo habría contado menos gente sin que fallara nada. Leer por
+tramos lo cierra: ya no puede mentir. Y la lista viaja paginada, así que el
+navegador deja de recibir la base entera para enseñar diez filas.
+
+**Lo que queda.** El mapa de zonas y el embudo cuentan sobre el total —tienen
+que hacerlo: son «cuántos hay», no «cuántos te enseño»—, y hoy eso se calcula
+en memoria recorriendo las tablas enteras. Con miles de personas son miles de
+filas leídas **en cada clic de filtro**, porque desde el paginado cada filtro
+vuelve a preguntar. El techo no desapareció: se movió del navegador al
+servidor, que es un sitio mejor pero sigue siendo un techo.
+
+Y el coste no es contar: es traérselas. Contar diez mil filas dentro de la
+base no se nota; sacarlas por la red para contarlas aquí, sí.
+
+**La solución.** Los dos agregados a SQL:
+
+- una vista `v_gente` con la derivación que hoy hace la ruta —el estado, la
+  edad, las zonas, los créditos, la espera—, perfiles y leads en una;
+- `gente_zonas(familia)` y `gente_embudo(...)`, que devuelven ya contado lo
+  que la pantalla pinta.
+
+**La condición, y no es negociable:** la ruta deja de derivar. Si la vista
+calcula el estado y la ruta también, son dos implementaciones del mismo número
+y la pantalla acaba dando dos respuestas a la misma pregunta — que es
+exactamente lo que el mapa y el titular hacían antes de la entrega 15.
+
+**Por qué espera.** Hay nueve personas en la base. Medido el 18 de agosto, una
+petición completa tarda ~1,3 s en local y la mayor parte es validar la sesión,
+no leer filas. Mover esto ahora es reescribir la parte que más números decide
+sin una sola fila con la que notar si se rompió.
+
+**Cuándo toca.** Cuando la base pase de unos pocos miles, o antes si un clic
+de filtro se nota en producción. La señal es medible: el tiempo de
+`/api/operacion/gente` menos el de cualquier otra ruta de operación —ese resto
+es lo que cuesta contar—.

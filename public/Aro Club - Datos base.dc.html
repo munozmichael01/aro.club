@@ -280,7 +280,7 @@ class Component extends DCLogic {
 
   /** A donde se va al terminar: al cuestionario si aun falta, o a la cuenta. */
   siguiente() {
-    return this._lead ? 'Aro Club - Cuestionario.dc.html' : 'Aro Club - Mi cuenta.dc.html';
+    return this._lead ? '/cuestionario' : '/cuenta';
   }
 
   // Se guarda entero al terminar, no pregunta a pregunta: aqui las cuatro
@@ -449,7 +449,7 @@ class Component extends DCLogic {
       // La flecha de arriba llevaba SIEMPRE a Mi cuenta, que exige sesion.
       // Para quien todavia no tiene cuenta —y ahora tambien para quien
       // acaba de aterrizar sin nada— eso es otra puerta cerrada.
-      enlaceCabecera: (p === this.PASO_CORREO || this._lead) ? '/' : 'Aro Club - Mi cuenta.dc.html',
+      enlaceCabecera: (p === this.PASO_CORREO || this._lead) ? '/' : '/cuenta',
       textoSiguiente5: this._lead ? 'Seguir con las preguntas' : 'Volver a mi cuenta',
       etiquetaPaso: p === this.PASO_CORREO ? 'TU CORREO' : (p < 4 ? 'PASO ' + (p + 1) + ' DE 4' : 'COMPLETO'),
 

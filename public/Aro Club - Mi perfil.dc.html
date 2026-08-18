@@ -232,9 +232,9 @@
     </div>
 
     <div style="margin-top:clamp(26px,3.4vw,36px);padding-top:24px;border-top:1px solid rgba(20,52,42,.13);display:flex;flex-wrap:wrap;gap:10px">
-      <a href="Aro Club - Verificacion.dc.html" style="{{ enlacePie }}">Mi verificación</a>
-      <a href="Aro Club - Legal.dc.html#privacidad" style="{{ enlacePie }}">Qué hacemos con esto</a>
-      <a href="Aro Club - Mi cuenta.dc.html" style="{{ enlacePie }}">Volver</a>
+      <a href="/verificacion" style="{{ enlacePie }}">Mi verificación</a>
+      <a href="/privacidad" style="{{ enlacePie }}">Qué hacemos con esto</a>
+      <a href="/cuenta" style="{{ enlacePie }}">Volver</a>
     </div>
   </div>
 </div>
@@ -254,7 +254,7 @@ class Component extends DCLogic {
     fetch('/api/mi-perfil')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((d) => this.setState({ datos: d }))
-      .catch(() => { window.location.href = 'Aro Club - Entrar.dc.html'; });
+      .catch(() => { window.location.href = '/entrar'; });
 
     this.leerExclusiones();
     this.leerAvisos();

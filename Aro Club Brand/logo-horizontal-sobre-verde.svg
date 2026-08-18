@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 200" width="700" height="200" role="img" aria-label="Logo Aro Club horizontal sobre verde">
+  <title>Logo Aro Club horizontal sobre verde</title>
+  <g transform="translate(0,10) scale(0.75)">
+    <circle cx="120" cy="120" r="86" fill="none" stroke="#FAF3E4" stroke-width="17"></circle>
+    <circle cx="206" cy="120" r="19" fill="#E39C63"></circle>
+    <circle cx="163" cy="194.5" r="19" fill="#FAF3E4"></circle>
+    <circle cx="77" cy="194.5" r="19" fill="#FAF3E4"></circle>
+    <circle cx="34" cy="120" r="19" fill="#FAF3E4"></circle>
+    <circle cx="77" cy="45.5" r="19" fill="#FAF3E4"></circle>
+    <circle cx="163" cy="45.5" r="19" fill="#FAF3E4"></circle>
+  </g>
+  <text x="212" y="132" font-family="Young Serif, Georgia, serif" font-size="96" letter-spacing="-1.9" fill="#FAF3E4">Aro Club</text>
+</svg>
