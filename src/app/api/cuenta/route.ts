@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { situacionDeLead } from '@/lib/embudo'
 import { VERSION_LEGAL } from '@/lib/legal'
 import { verificar } from '@/lib/lead-token'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -61,6 +62,30 @@ export async function POST(request: Request) {
   if (lead.converted_profile_id) {
     // Ya tenía cuenta. No es un error (§3.8): se le manda a entrar.
     return NextResponse.json({ estado: 'ya_existe' })
+  }
+
+  // No se crea una cuenta a medias. La pantalla guía y el servidor impide,
+  // como en el pago: aquí no se comprobaba nada, y por eso hay un perfil en
+  // `pending_verification` sin fecha de nacimiento ni teléfono — que además
+  // bloquea su propia verificación, porque verificar es comparar el
+  // documento contra el nombre y la fecha del perfil.
+  //
+  // Lo que falta lo dice la MISMA pieza que se lo dice al cuestionario y a
+  // Mi cuenta: si cada uno lo decidiera por su cuenta volveríamos a tener
+  // huecos entre pantallas, que es de donde salió todo esto.
+  const situacion = await situacionDeLead(correo)
+  if (situacion.paso !== 'cuenta') {
+    return NextResponse.json(
+      {
+        error: situacion.paso === 'preguntas'
+          ? 'Te faltan preguntas del cuestionario.'
+          : 'Faltan tus datos: nombre, fecha de nacimiento y teléfono.',
+        paso: situacion.paso,
+        donde: situacion.donde,
+        falta: situacion.falta,
+      },
+      { status: 409 },
+    )
   }
 
   const { data: creado, error: errorAuth } = await admin.auth.admin.createUser({

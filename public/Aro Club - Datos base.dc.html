@@ -171,7 +171,66 @@
         </sc-if>
       </div>
     </sc-if>
-  </div>
+  
+    <sc-if value="{{ faltaCuenta }}" hint-placeholder-val="{{ false }}">
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(28px,4vw,38px);max-width:460px">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:6px">CÓMO QUIERES ENTRAR A PARTIR DE AHORA</div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar el jueves para ver tu mesa.</div>
+
+          <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
+            <div style="position:relative;display:flex;align-items:center">
+              <input type="{{ tipoClave }}" placeholder="Crea una contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
+              <button onClick="{{ alternarVerClave }}" aria-label="{{ etiquetaVerClave }}" style="{{ botonVer }}">{{ textoVerClave }}</button>
+            </div>
+            <input type="{{ tipoClave }}" placeholder="Repítela" value="{{ clave2 }}" onChange="{{ onClave2 }}" autocomplete="new-password" aria-label="Repite la contraseña" style="{{ campoClave2 }}" />
+            <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
+          </div>
+          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
+
+          <sc-if value="{{ hayErrorCuenta }}" hint-placeholder-val="{{ false }}">
+            <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:13px;max-width:400px">
+              <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+              <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ errorCuenta }}</span>
+            </div>
+          </sc-if>
+
+          <div style="display:flex;align-items:center;gap:14px;margin:20px 0;max-width:400px">
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
+            <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">O</span>
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;max-width:400px">
+            <a href="/entrar" style="{{ botonProveedor }}">
+              <svg width="19" height="22" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.8-1.6 0-3.1 1-3.9 2.4C.2 10.4 1.4 14.7 3 17c.8 1.1 1.7 2.4 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.8zM11.7 3.3c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"></path></svg>
+              <span>Continuar con Apple</span>
+            </a>
+            <a href="/entrar" style="{{ botonProveedor }}">
+              <svg width="19" height="19" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
+              <span>Continuar con Google</span>
+            </a>
+          </div>
+          <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;max-width:46ch;text-wrap:pretty">Al crear tu cuenta aceptas los <a href="/terminos" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Términos</a> y la <a href="/privacidad" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Privacidad</a>. Te pediremos la cédula y una selfie para verificar que eres quien dices; ahí se explica qué hacemos con ellas y cuándo se borran.</div>
+        </div>
+
+        <div style="border-radius:26px;border:1px solid rgba(20,52,42,.16);padding:clamp(20px,3vw,28px);margin-top:14px;max-width:460px">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:16px">DESPUÉS DE ESTO</div>
+          <div style="display:flex;gap:14px;align-items:flex-start">
+            <span style="flex:0 0 auto;width:34px;height:34px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Inter Tight',sans-serif;margin-top:2px">1</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:400 clamp(20px,2.3vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Verificar tu identidad</span>
+              <span style="display:block;font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-top:6px;text-wrap:pretty">Cédula y una selfie. Lo revisa una persona y no se le muestra a nadie más. Es lo que hace que los otros cinco confíen.</span>
+              <span style="display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;background:rgba(27,81,56,.09);font:500 12px/1 'Inter Tight',sans-serif;color:#1B5138;margin-top:12px">Menos de 24 horas</span>
+            </span>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(22px,3vw,30px)">
+          <button onClick="{{ reiniciar }}" style="min-height:58px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Repasar mis respuestas</button>
+        </div>
+      </div>
+        </sc-if>
+</div>
 </div>
 
 </x-dc>
@@ -484,6 +543,77 @@ class Component extends DCLogic {
         };
       }),
       // Las mismas reglas que el servidor, no una copia.
+      // --- la cuenta: contraseña y proveedores ------------------------
+      //
+      // Vivian al final del cuestionario. Se mudan aqui porque el nombre, el
+      // trato y el telefono son identidad y contacto, y la contraseña es
+      // donde la gente espera darlos: los cuatro juntos, y la cuenta al
+      // final. El cuestionario se queda con lo que empareja.
+      //
+      // Solo se enseña a quien todavia NO tiene cuenta: con sesion, esta
+      // pantalla es la de editar el telefono desde el perfil y ahi una
+      // contraseña no pinta nada.
+      // Al final de los cuatro pasos, y solo para quien no tiene cuenta.
+      faltaCuenta: !!this._lead && p === 4,
+      onClave: (e) => this.setState({ clave: e.target.value }),
+      onClave2: (e) => this.setState({ clave2: e.target.value }),
+      clave2: this.state.clave2 || '',
+
+      // Un solo campo tapado y sin repetir: un dedo torcido te deja fuera de
+      // tu cuenta, y la recuperacion va por correo. Poder VERLA es mejor que
+      // repetirla a ciegas, asi que estan las dos cosas.
+      tipoClave: this.state.verClave ? 'text' : 'password',
+      textoVerClave: this.state.verClave ? 'Ocultar' : 'Ver',
+      etiquetaVerClave: this.state.verClave ? 'Ocultar la contraseña' : 'Mostrar la contraseña',
+      alternarVerClave: () => this.setState((st) => ({ verClave: !st.verClave })),
+      botonVer: 'position:absolute;right:8px;min-height:44px;padding:0 12px;background:transparent;border:none;font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138;cursor:pointer',
+      campoClave: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none' + ';padding-right:78px',
+      campoClave2: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none' + (((this.state.clave2 || '') && this.state.clave !== this.state.clave2) ? ';border-color:#8F4515' : ''),
+      textoClave: (this.state.clave || '').length < 8
+        ? 'Al menos ocho caracteres'
+        : (!(this.state.clave2 || '') ? 'Repite la contraseña'
+            : (this.state.clave !== this.state.clave2 ? 'No coinciden' : 'Crear mi cuenta')),
+      pistaClave: (this.state.clave || '').length >= 8
+        ? 'Entrarás con tu correo y esta contraseña.'
+        : 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Apple o Google.',
+      // pointer-events no bloquea el teclado: la inercia va en el handler
+      enlaceLogo: (fin || this.state.tieneCuenta) ? '/cuenta' : '/gracias',
+      // La salida se ENSEÑA, no se deja implicita en el logo: el pie dice
+      // que puedes salir y hasta ahora no habia como.
+      haySalida: !!this.state.tieneCuenta && !fin,
+      inerteClave: ((this.state.clave || '').length >= 8 && this.state.clave === this.state.clave2) ? null : 'true',
+      // La cuenta se crea aqui, al cerrar el cuestionario: es cuando ya hay
+      // algo que guardar. El servidor abre la sesion en la misma respuesta.
+      crearCuenta: () => {
+        const clave = this.state.clave || '';
+        const s = this._lead;
+        if (clave.length < 8 || !s) return;
+        fetch('/api/cuenta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ correo: s.correo, token: s.token, clave: clave })
+        }).then((r) => r.text().then((t) => {
+          let j = {}; try { j = JSON.parse(t); } catch (e) { j = {}; }
+          if (j.estado === 'creada' || j.estado === 'ya_existe') {
+            // El lead ya es perfil: su llave sobra, y guardada es una
+            // trampa. Las pantallas que aceptan las dos credenciales la
+            // seguirian mandando, y algun dia una escribiria en la fila
+            // vieja en vez de en el perfil.
+            try { window.localStorage.removeItem('aro-sesion'); } catch (e) {}
+            // A verificar, que es el paso siguiente de verdad. Lo dice la
+            // misma cadena del embudo que usa el servidor.
+            window.location.href = '/verificacion';
+            return;
+          }
+          this.setState({ errorCuenta: j.error || 'No pudimos crear tu cuenta. Es cosa nuestra: inténtalo otra vez.' });
+        })).catch(() => this.setState({
+          errorCuenta: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
+        }));
+      },
+      errorCuenta: this.state.errorCuenta || '',
+      hayErrorCuenta: !!this.state.errorCuenta,
+      botonClave: 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease;background:' + ((this.state.clave || '').length >= 8 ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + ((this.state.clave || '').length >= 8 ? '#FAF3E4' : '#456352') + ';cursor:' + ((this.state.clave || '').length >= 8 ? 'pointer' : 'not-allowed'),
+      botonProveedor: 'display:inline-flex;align-items:center;justify-content:center;gap:11px;width:100%;min-height:58px;padding:0 26px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease',
       onDia: (e) => this.setState({ dia: AroReglas.filtrar('dia', e.target.value) }),
       onAnio: (e) => this.setState({ anio: AroReglas.filtrar('anio', e.target.value) }),
       campoCifra: campoBase + ';width:136px;text-align:center;font:600 20px/1 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.02em',

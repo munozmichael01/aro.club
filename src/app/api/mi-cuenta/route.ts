@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { situacionDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { sePuedeValorar } from '@/lib/ventana-mesa'
@@ -269,20 +270,22 @@ export async function GET() {
 
   // El orden de esta cadena ES el recorrido: cada estado tiene un solo
   // paso siguiente y no puede haber dos a la vez.
-  // Nombre, nacimiento, genero y telefono. La pantalla existia desde la
-  // entrega 3 pero no la enlazaba nadie, asi que nadie los daba: `age` y
-  // `gender` llegaban nulos al reparto y las dos restricciones mas duras
-  // —diez anos de horquilla y equilibrio de genero— no filtraban nada.
-  const datosBase = Boolean(perfil.full_name && perfil.birthdate && perfil.phone_e164)
-
   let estado: Estado
-  // Los datos personales van PRIMERO. Se pedian al final y quien terminaba
-  // las diecisiete preguntas descubria ahi que no podia reservar por no
-  // habernos dicho como se llama: lo elaborado antes que lo obvio. Ahora
-  // van justo despues del correo, y esta cadena tiene que decir lo mismo
-  // que el alta o Mi cuenta mandaria al sitio contrario.
-  if (!datosBase) estado = 'datos'
-  else if (faltan > 0) estado = 'perfil'
+  // Los primeros tres escalones NO se deciden aquí: los dice `lib/embudo`,
+  // que es la misma pieza que usan el cuestionario y `/api/cuenta`. Esta
+  // cadena vivía solo aquí y cada pantalla se hacía su propia idea de dónde
+  // estaba alguien; de esos huecos salieron las dos cosas que se vinieron a
+  // arreglar —terminar el alta sin datos, y una pantalla diciendo COMPLETO
+  // sobre una base vacía—.
+  //
+  // El orden lo fija allí, y es el que importa: los datos personales van
+  // ANTES que la verificación, porque verificar es comparar el documento
+  // contra el nombre y la fecha de nacimiento del perfil. A quien no nos ha
+  // dicho cuándo nació no se le puede pedir que verifique.
+  const situacion = await situacionDePerfil(user.id)
+
+  if (situacion.paso === 'contacto') estado = 'datos'
+  else if (situacion.paso === 'preguntas') estado = 'perfil'
   else if (!verificada && !enRevision) estado = 'verificar'
   else if (enRevision) estado = 'revision'
   else if (!reserva) estado = 'reservar'

@@ -86,6 +86,29 @@
                 <div style="{{ q.contadorEstilo }}">{{ q.contador }}</div>
               </sc-if>
 
+              <sc-if value="{{ q.esFecha }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:16px;max-width:460px">
+                  <label for="q-dia" style="{{ q.etiquetaFecha }}">DÍA</label>
+                  <input id="q-dia" type="text" value="{{ q.dia }}" onChange="{{ q.onDia }}" placeholder="DD" inputmode="numeric" maxlength="2" style="{{ q.campoCifra }}" />
+
+                  <div style="{{ q.etiquetaFechaSuelta }}">MES</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(30%,96px),1fr));gap:8px">
+                    <sc-for list="{{ q.meses }}" as="m" hint-placeholder-count="12">
+                      <button onClick="{{ m.pick }}" style="{{ m.btn }}">
+                        <span style="{{ m.aro }}">{{ m.icono }}</span>
+                        <span style="{{ m.txt }}">{{ m.nombre }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+
+                  <label for="q-anio" style="{{ q.etiquetaFechaSuelta }}">AÑO</label>
+                  <input id="q-anio" type="text" value="{{ q.anio }}" onChange="{{ q.onAnio }}" placeholder="AAAA" inputmode="numeric" maxlength="4" style="{{ q.campoCifra }}" />
+                  <sc-if value="{{ q.hayEdad }}" hint-placeholder-val="{{ false }}">
+                    <div style="{{ q.chipEdad }}">{{ q.textoEdad }}</div>
+                  </sc-if>
+                </div>
+              </sc-if>
+
               <sc-if value="{{ q.esTexto }}" hint-placeholder-val="{{ false }}">
                 <div style="margin-top:16px;max-width:460px">
                   <input type="text" value="{{ q.valorTexto }}" onChange="{{ q.onTexto }}" placeholder="Empieza a escribir" aria-label="{{ q.pregunta }}" style="width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:400 16px/1 'Inter Tight',sans-serif;outline:none" />
@@ -146,55 +169,11 @@
         <p style="font:400 clamp(16px,1.6vw,19px)/1.55 'Inter Tight',sans-serif;color:#456352;max-width:44ch;margin:16px 0 0;text-wrap:pretty">{{ textoCierre }} Con esto el algoritmo ya puede armar una mesa donde encajes, no una mesa cualquiera con un puesto libre.</p>
 
         <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(28px,4vw,38px);max-width:460px">
-          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:6px">CÓMO QUIERES ENTRAR A PARTIR DE AHORA</div>
-          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar el jueves para ver tu mesa.</div>
-
-          <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
-            <div style="position:relative;display:flex;align-items:center">
-              <input type="{{ tipoClave }}" placeholder="Crea una contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
-              <button onClick="{{ alternarVerClave }}" aria-label="{{ etiquetaVerClave }}" style="{{ botonVer }}">{{ textoVerClave }}</button>
-            </div>
-            <input type="{{ tipoClave }}" placeholder="Repítela" value="{{ clave2 }}" onChange="{{ onClave2 }}" autocomplete="new-password" aria-label="Repite la contraseña" style="{{ campoClave2 }}" />
-            <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
-          </div>
-          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
-
-          <div style="display:flex;align-items:center;gap:14px;margin:20px 0;max-width:400px">
-            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
-            <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">O</span>
-            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
-          </div>
-
-          <div style="display:flex;flex-direction:column;gap:10px;max-width:400px">
-            <a href="/entrar" style="{{ botonProveedor }}">
-              <svg width="19" height="22" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.8-1.6 0-3.1 1-3.9 2.4C.2 10.4 1.4 14.7 3 17c.8 1.1 1.7 2.4 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.8zM11.7 3.3c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"></path></svg>
-              <span>Continuar con Apple</span>
-            </a>
-            <a href="/entrar" style="{{ botonProveedor }}">
-              <svg width="19" height="19" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
-              <span>Continuar con Google</span>
-            </a>
-          </div>
-          <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;max-width:46ch;text-wrap:pretty">Al crear tu cuenta aceptas los <a href="/terminos" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Términos</a> y la <a href="/privacidad" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Privacidad</a>. Te pediremos la cédula y una selfie para verificar que eres quien dices; ahí se explica qué hacemos con ellas y cuándo se borran.</div>
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:6px">LO QUE FALTA</div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Cómo te llamas, cómo quieres que te llamen en la mesa y a qué número te escribimos el día del encuentro. Ahí mismo creas tu cuenta.</div>
+          <a href="{{ enlaceDatos }}" style="{{ botonClave }}">Continuar</a>
         </div>
-
-        <div style="border-radius:26px;border:1px solid rgba(20,52,42,.16);padding:clamp(20px,3vw,28px);margin-top:14px;max-width:460px">
-          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:16px">DESPUÉS DE ESTO</div>
-          <div style="display:flex;gap:14px;align-items:flex-start">
-            <span style="flex:0 0 auto;width:34px;height:34px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 14px/1 'Inter Tight',sans-serif;margin-top:2px">1</span>
-            <span style="flex:1;min-width:0">
-              <span style="display:block;font:400 clamp(20px,2.3vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Verificar tu identidad</span>
-              <span style="display:block;font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-top:6px;text-wrap:pretty">Cédula y una selfie. Lo revisa una persona y no se le muestra a nadie más. Es lo que hace que los otros cinco confíen.</span>
-              <span style="display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;background:rgba(27,81,56,.09);font:500 12px/1 'Inter Tight',sans-serif;color:#1B5138;margin-top:12px">Menos de 24 horas</span>
-            </span>
-          </div>
-        </div>
-
-        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(22px,3vw,30px)">
-          <button onClick="{{ reiniciar }}" style="min-height:58px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Repasar mis respuestas</button>
-        </div>
-      </div>
-    </sc-if>
+</sc-if>
   </div>
 
   <sc-if value="{{ enPreguntas }}" hint-placeholder-val="{{ true }}">
@@ -218,7 +197,12 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { pantalla: 0, r: { idiomas: [0] }, empleador: '', retomada: false, cerrada: false, fin: false, heredadas: [], sinSesion: false };
+  state = { pantalla: 0, r: { idiomas: [0] }, empleador: '', retomada: false, cerrada: false, fin: false, heredadas: [], sinSesion: false,
+    // El nacimiento: dia, mes y ano por separado mientras se escribe, y una
+    // sola fecha al guardarse. Igual que en la pantalla de datos.
+    dia: '', mes: '', anio: '',
+    // Lo que el SERVIDOR dice que falta. La pantalla ya no lo deduce.
+    faltan: null, guardando: false, falloGuardar: '' };
 
   SESION = 'aro-sesion';
 
@@ -267,6 +251,14 @@ class Component extends DCLogic {
       ["Vivo en el exterior y estoy de visita", "visita"],
       ["Sigo con la gente de siempre", "mismos"],
       ["Trabajo remoto y casi no veo gente", "remoto"],
+    ],
+    // Los cuatro de `gender_t`, con las etiquetas de la pantalla de datos:
+    // el mismo par [texto, codigo] en una sola lista, como todo lo demas.
+    genero: [
+      ["Mujer", "mujer"],
+      ["Hombre", "hombre"],
+      ["No binario", "no-binario"],
+      ["Prefiero no decirlo", "sin-decir"],
     ],
     sector: [
       ["Tecnología", "tecnologia"],
@@ -538,20 +530,80 @@ class Component extends DCLogic {
 
   componentWillUnmount() { clearTimeout(this._tEmpleador); }
 
+  /** La edad que sale de dia/mes/ano, o null si la fecha aun no esta. */
+  edadDe() {
+    const d = parseInt(this.state.dia, 10);
+    const m = parseInt(this.state.mes, 10);
+    const a = parseInt(this.state.anio, 10);
+    if (!d || !m || !a || String(this.state.anio).length !== 4) return null;
+    if (d < 1 || d > 31 || m < 1 || m > 12) return null;
+    const n = new Date(a, m - 1, d);
+    // `new Date(2026,1,31)` no falla: se va al 3 de marzo. Se compara de
+    // vuelta para cazar los dias que no existen.
+    if (isNaN(n.getTime()) || n.getDate() !== d || n.getMonth() !== m - 1) return null;
+    const h = new Date();
+    let e = h.getFullYear() - n.getFullYear();
+    const dm = h.getMonth() - n.getMonth();
+    if (dm < 0 || (dm === 0 && h.getDate() < n.getDate())) e--;
+    return e;
+  }
+
+  /**
+   * Cambia una parte de la fecha y guarda SOLO cuando ya es una fecha entera
+   * y mayor de edad. Guardar «19» mientras teclea el ano escribiria a alguien
+   * nacido en el ano 19, y el servidor lo rechazaria en cada tecla.
+   */
+  setFecha(parte) {
+    this.setState(parte, () => {
+      const e = this.edadDe();
+      if (e == null || e < 18) return;
+      const p2 = (v) => String(v).padStart(2, '0');
+      const iso = this.state.anio + '-' + p2(this.state.mes) + '-' + p2(this.state.dia);
+      this.setState((st) => ({ r: Object.assign({}, st.r, { nacimiento: iso }) }));
+      this.enviar('nacimiento', iso);
+    });
+  }
+
   // El guardado es por pregunta, no por pantalla: quien responde tres de
   // cuatro y cierra la pestaña no pierde las tres.
+  /**
+   * Guarda una respuesta, y AHORA SI mira si se guardo.
+   *
+   * Antes esto era un `fetch(...).catch(() => {})` con el comentario «se
+   * reintenta con el siguiente cambio». Dos cosas mal: `fetch` no lanza con
+   * un 403 —una respuesta de error es una promesa cumplida—, asi que ese
+   * catch no se ejecutaba nunca; y aunque se hubiera ejecutado, callarse es
+   * lo que hizo que Michael contestara las catorce preguntas contra una base
+   * que no guardo ni una y la pantalla le dijera «COMPLETO».
+   *
+   * Ahora: 403 es la sesion muerta y tiene pantalla propia con salida; otro
+   * error se dice y se puede reintentar; y lo que el servidor responde sobre
+   * que falta manda sobre lo que la pantalla creia.
+   */
   enviar(id, valor) {
     const s = this._sesion;
-    if (!s) return;
-    fetch('/api/cuestionario', {
+    if (!s) return Promise.resolve(false);
+    this.setState({ guardando: true, falloGuardar: '' });
+    return fetch('/api/cuestionario', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(id === '__fin'
-        ? { correo: s.correo, token: s.token, clave: 'empleador',
-            valor: this.state.empleador, pantalla: this.state.pantalla, fin: true }
-        : { correo: s.correo, token: s.token, clave: id, valor: valor,
-            pantalla: this.state.pantalla })
-    }).catch(() => { /* se reintenta con el siguiente cambio */ });
+      body: JSON.stringify({ correo: s.correo, token: s.token, clave: id, valor: valor,
+        pantalla: this.state.pantalla })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, estado: r.status, d })).catch(() => ({ ok: r.ok, estado: r.status, d: {} })))
+      .then(({ ok, estado, d }) => {
+        if (estado === 403) { this.setState({ guardando: false, sinSesion: true }); return false; }
+        if (!ok) {
+          this.setState({ guardando: false, falloGuardar: d.error || 'No pudimos guardar esa respuesta.' });
+          return false;
+        }
+        this.setState({ guardando: false, falloGuardar: '', faltan: d.faltan || [] });
+        return true;
+      })
+      .catch(() => {
+        this.setState({ guardando: false, falloGuardar: 'No pudimos guardar esa respuesta. Revisa tu conexión.' });
+        return false;
+      });
   }
 
   aCodigo(id, v) {
@@ -682,6 +734,13 @@ class Component extends DCLogic {
         titulo: 'Tu contexto',
         proposito: 'Con esto evitamos sentarte con alguien de tu misma empresa y armamos mesas donde las historias se entiendan entre sí.',
         preguntas: [
+          // El nacimiento va PRIMERO de todo: es la puerta de los 18 anos y
+          // no se rechaza a nadie despues de diecisiete preguntas. Y el
+          // genero justo detras: los dos son datos de emparejamiento —la
+          // horquilla de diez anos y el equilibrio de la mesa—, no de
+          // identidad, y por eso viven aqui y no en el formulario de datos.
+          { id: 'nacimiento', corto: 'cuándo naciste', tipo: 'fecha', pregunta: '¿Cuándo naciste?', ayuda: 'Nadie ve tu edad exacta. La usamos para que en tu mesa no haya más de diez años de diferencia entre la persona más joven y la mayor: es lo que hace que la conversación fluya.' },
+          { id: 'genero', corto: 'tu género', tipo: 'unica', pregunta: '¿Con qué género te identificas?', ayuda: 'No se muestra a nadie. Sirve para que la mesa quede balanceada y no acabes siendo la única persona de tu género en el grupo.', opciones: this.textos('genero') },
           { id: 'arraigo', corto: 'tu historia', tipo: 'unica', pregunta: '¿Cuál de estas se parece más a tu historia?', opciones: this.textos('arraigo') },
           { id: 'sector', corto: 'tu sector', tipo: 'unica', pregunta: '¿En qué sector trabajas?', opciones: sectores, compacta: true },
           { id: 'empleador', corto: 'dónde trabajas', tipo: 'texto', pregunta: '¿Dónde trabajas actualmente?', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.', fuente: empresas }
@@ -750,6 +809,7 @@ class Component extends DCLogic {
         esFicha: q.tipo === 'unica' && !!q.compacta,
         esMulti: q.tipo === 'multi',
         esTexto: q.tipo === 'texto',
+        esFecha: q.tipo === 'fecha',
         hayContador: false,
         contador: '',
         contadorEstilo: '',
@@ -759,6 +819,37 @@ class Component extends DCLogic {
         valorTexto: '',
         onTexto: () => {}
       };
+
+      // El nacimiento, con el MISMO selector de la pantalla de datos: dia,
+      // los doce meses y ano. No se reinventa —era el unico control de fecha
+      // del producto y ya estaba resuelto— y no se guarda hasta que la fecha
+      // esta completa y es de alguien mayor de 18.
+      if (q.tipo === 'fecha') {
+        const aroF = (on) => 'flex:0 0 auto;width:18px;height:18px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 10px/1 \'Inter Tight\',sans-serif';
+        const edad = this.edadDe();
+        base.dia = this.state.dia || '';
+        base.anio = this.state.anio || '';
+        base.etiquetaFecha = 'display:block;font:500 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:8px';
+        base.etiquetaFechaSuelta = 'display:block;font:500 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#33513F;margin:16px 0 8px';
+        base.campoCifra = 'width:100%;max-width:160px;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none;font-variant-numeric:tabular-nums';
+        base.onDia = (e) => this.setFecha({ dia: String(e.target.value).replace(/\D/g, '').slice(0, 2) });
+        base.onAnio = (e) => this.setFecha({ anio: String(e.target.value).replace(/\D/g, '').slice(0, 4) });
+        base.meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'].map((nombre, i) => {
+          const on = String(i + 1) === String(this.state.mes);
+          return {
+            nombre, icono: on ? '✓' : '', aro: aroF(on),
+            pick: () => this.setFecha({ mes: String(i + 1) }),
+            btn: 'display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 14px;border-radius:999px;border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#FAF3E4' : 'transparent') + ';cursor:pointer',
+            txt: 'font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;color:#14342A'
+          };
+        });
+        base.hayEdad = edad != null;
+        base.textoEdad = edad != null
+          ? (edad < 18 ? 'Aro es para mayores de 18' : edad + ' años')
+          : '';
+        base.chipEdad = 'display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border-radius:999px;margin-top:12px;font:600 13px/1 \'Inter Tight\',sans-serif;background:' + (edad != null && edad < 18 ? 'rgba(143,69,21,.12)' : 'rgba(27,81,56,.12)') + ';color:' + (edad != null && edad < 18 ? '#8F4515' : '#1B5138');
+        return base;
+      }
 
       if (q.tipo === 'texto') {
         const t = this.state.empleador;
@@ -850,63 +941,10 @@ class Component extends DCLogic {
       })(),
       // el acceso se elige aquí, cuando ya hay algo que guardar
       clave: this.state.clave || '',
-      onClave: (e) => this.setState({ clave: e.target.value }),
-      onClave2: (e) => this.setState({ clave2: e.target.value }),
-      clave2: this.state.clave2 || '',
-
-      // Un solo campo tapado y sin repetir: un dedo torcido te deja fuera de
-      // tu cuenta, y la recuperacion va por correo. Poder VERLA es mejor que
-      // repetirla a ciegas, asi que estan las dos cosas.
-      tipoClave: this.state.verClave ? 'text' : 'password',
-      textoVerClave: this.state.verClave ? 'Ocultar' : 'Ver',
-      etiquetaVerClave: this.state.verClave ? 'Ocultar la contraseña' : 'Mostrar la contraseña',
-      alternarVerClave: () => this.setState((st) => ({ verClave: !st.verClave })),
-      botonVer: 'position:absolute;right:8px;min-height:44px;padding:0 12px;background:transparent;border:none;font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138;cursor:pointer',
-      campoClave: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none' + ';padding-right:78px',
-      campoClave2: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none' + (((this.state.clave2 || '') && this.state.clave !== this.state.clave2) ? ';border-color:#8F4515' : ''),
-      textoClave: (this.state.clave || '').length < 8
-        ? 'Al menos ocho caracteres'
-        : (!(this.state.clave2 || '') ? 'Repite la contraseña'
-            : (this.state.clave !== this.state.clave2 ? 'No coinciden' : 'Crear mi cuenta')),
-      pistaClave: (this.state.clave || '').length >= 8
-        ? 'Entrarás con tu correo y esta contraseña.'
-        : 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Apple o Google.',
-      // pointer-events no bloquea el teclado: la inercia va en el handler
-      enlaceLogo: (fin || this.state.tieneCuenta) ? '/cuenta' : '/gracias',
-      // La salida se ENSEÑA, no se deja implicita en el logo: el pie dice
-      // que puedes salir y hasta ahora no habia como.
-      haySalida: !!this.state.tieneCuenta && !fin,
-      inerteClave: ((this.state.clave || '').length >= 8 && this.state.clave === this.state.clave2) ? null : 'true',
-      // La cuenta se crea aqui, al cerrar el cuestionario: es cuando ya hay
-      // algo que guardar. El servidor abre la sesion en la misma respuesta.
-      crearCuenta: () => {
-        const clave = this.state.clave || '';
-        const s = this._sesion;
-        if (clave.length < 8 || !s) return;
-        fetch('/api/cuenta', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ correo: s.correo, token: s.token, clave: clave })
-        }).then((r) => r.text().then((t) => {
-          let j = {}; try { j = JSON.parse(t); } catch (e) { j = {}; }
-          if (j.estado === 'creada' || j.estado === 'ya_existe') {
-            // El lead ya es perfil: su llave sobra, y guardada es una
-            // trampa. Las pantallas que aceptan las dos credenciales la
-            // seguirian mandando, y algun dia una escribiria en la fila
-            // vieja en vez de en el perfil.
-            try { window.localStorage.removeItem('aro-sesion'); } catch (e) {}
-            window.location.href = '/verificacion';
-            return;
-          }
-          this.setState({ errorCuenta: j.error || 'No pudimos crear tu cuenta. Es cosa nuestra: inténtalo otra vez.' });
-        })).catch(() => this.setState({
-          errorCuenta: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
-        }));
-      },
-      errorCuenta: this.state.errorCuenta || '',
-      hayErrorCuenta: !!this.state.errorCuenta,
-      botonClave: 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease;background:' + ((this.state.clave || '').length >= 8 ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + ((this.state.clave || '').length >= 8 ? '#FAF3E4' : '#456352') + ';cursor:' + ((this.state.clave || '').length >= 8 ? 'pointer' : 'not-allowed'),
-      botonProveedor: 'display:inline-flex;align-items:center;justify-content:center;gap:11px;width:100%;min-height:58px;padding:0 26px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease',
+      // La contraseña y los proveedores se mudaron a /datos: alli estan el
+      // nombre, el trato y el telefono, y la cuenta se crea con los cuatro
+      // juntos. Aqui solo queda el boton que lleva hasta ahi.
+      botonClave: 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;background:#1B5138;color:#FAF3E4;text-decoration:none;cursor:pointer',
 
       tituloPantalla: p.titulo,
       propositoPantalla: p.proposito,
@@ -968,9 +1006,30 @@ class Component extends DCLogic {
         // se llegaba a «Completo» a media altura, empezando por la mitad de
         // un campo. La pantalla que mas se mira era la unica sin arreglar.
         window.scrollTo(0, 0);
-        if (ultima) { this.enviar('__fin', null); this.setState({ fin: true }); return; }
+        // En la ultima NO se declara «fin» por pulsar: se guarda el empleador
+        // y se cree lo que conteste el SERVIDOR sobre lo que falta. Esa es la
+        // diferencia entre «contesté catorce» y «hay catorce guardadas», que
+        // es justo la que se perdio cuando los guardados devolvian 403.
+        if (ultima) {
+          this.enviar('empleador', this.state.empleador).then((ok) => {
+            if (!ok) return;
+            const faltan = this.state.faltan || [];
+            if (faltan.length) {
+              // Falta algo de verdad: se dice y se vuelve a la primera
+              // pantalla que lo tiene, en vez de cantar victoria.
+              this.setState({ falloGuardar: 'Todavía faltan respuestas: ' + faltan.join(', ') + '.' });
+              return;
+            }
+            this.setState({ fin: true });
+          });
+          return;
+        }
         this.setState((s) => ({ pantalla: s.pantalla + 1, retomada: false }));
       },
+      // Sin token en la URL: /datos lee la misma llave del correo de
+      // `localStorage` que usa esta pantalla. Un token en la barra acaba en
+      // el historial, en una captura o en un enlace pegado en un chat.
+      enlaceDatos: '/datos',
       pieGuardado: completa ? 'Guardado. Puedes salir y volver cuando quieras.' : 'Guardamos cada respuesta al momento.',
       reiniciar: () => this.setState({ fin: false, pantalla: 0, retomada: false })
     };

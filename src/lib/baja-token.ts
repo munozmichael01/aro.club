@@ -65,10 +65,29 @@ function secreto(): string {
   return process.env.LEAD_TOKEN_SECRET || serverEnv().SUPABASE_SERVICE_ROLE_KEY
 }
 
-function firma(prefijo: string, correo: string, caduca: number): string {
-  return createHmac('sha256', secreto())
+/**
+ * Todos los secretos que han valido, el de ahora primero.
+ *
+ * Mismo motivo que en `lead-token`: al añadir `LEAD_TOKEN_SECRET` en
+ * producción cambió el secreto y murieron de golpe los enlaces ya enviados.
+ * Aquí eso significa que el pie de esos correos llevaba a «ENLACE CADUCADO»
+ * —un enlace de baja que no da de baja es el problema legal, no el feo—.
+ * Se firma con el de ahora y se comprueba contra los que ha habido.
+ */
+function secretos(): string[] {
+  const ahora = secreto()
+  const antes = serverEnv().SUPABASE_SERVICE_ROLE_KEY
+  return ahora === antes ? [ahora] : [ahora, antes]
+}
+
+function firmaCon(llave: string, prefijo: string, correo: string, caduca: number): string {
+  return createHmac('sha256', llave)
     .update(`${prefijo}:${correo.trim().toLowerCase()}:${caduca}`)
     .digest('base64url')
+}
+
+function firma(prefijo: string, correo: string, caduca: number): string {
+  return firmaCon(secreto(), prefijo, correo, caduca)
 }
 
 /** El token que va en la URL: cuándo caduca y su firma. */
@@ -95,9 +114,13 @@ function comprobarFirma(prefijo: string, correo: string, token: string): Baja | 
   const recibida = token.slice(corte + 1)
   if (!Number.isFinite(caduca)) return null
 
-  const esperada = Buffer.from(firma(prefijo, correo, caduca))
   const dada = Buffer.from(recibida)
-  if (esperada.length !== dada.length || !timingSafeEqual(esperada, dada)) return null
+  let cuadra = false
+  for (const llave of secretos()) {
+    const esperada = Buffer.from(firmaCon(llave, prefijo, correo, caduca))
+    if (esperada.length === dada.length && timingSafeEqual(esperada, dada)) cuadra = true
+  }
+  if (!cuadra) return null
 
   if (Date.now() > caduca) return { vale: false, motivo: 'caducado' }
   return { vale: true, visita: prefijo === 'baja-visita' }

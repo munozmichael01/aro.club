@@ -17,7 +17,7 @@ export type PreguntaCat = {
   clave: string
   enunciado: string
   ayuda: string | null
-  tipo: 'single' | 'multi' | 'text'
+  tipo: 'single' | 'multi' | 'text' | 'date'
   opciones: OpcionCat[]
   min: number | null
   max: number | null
@@ -92,7 +92,40 @@ export async function leerCatalogo(): Promise<Catalogo | null> {
 }
 
 /** Devuelve el problema encontrado, o null si la respuesta es válida. */
+/**
+ * Los 18 años, contados de verdad.
+ *
+ * Es la puerta del producto y por eso se comprueba en el servidor y no solo
+ * en el selector: el legal dice mayores de 18 y la verificación compara el
+ * documento contra esta fecha.
+ */
+function problemaDeFecha(valor: unknown): string | null {
+  if (typeof valor !== 'string') return 'se esperaba una fecha'
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return 'la fecha va como AAAA-MM-DD'
+
+  // `new Date('2026-02-31')` no falla: se va al 3 de marzo. Se compara la
+  // fecha de vuelta con la de ida para cazar los días que no existen.
+  const d = new Date(valor + 'T00:00:00Z')
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== valor) {
+    return 'esa fecha no existe'
+  }
+
+  const hoy = new Date()
+  let anos = hoy.getUTCFullYear() - d.getUTCFullYear()
+  const m = hoy.getUTCMonth() - d.getUTCMonth()
+  if (m < 0 || (m === 0 && hoy.getUTCDate() < d.getUTCDate())) anos--
+
+  if (anos < 18) return 'Aro es para mayores de 18'
+  if (anos > 120) return 'revisa el año'
+  return null
+}
+
 export function validar(pregunta: PreguntaCat, valor: unknown): string | null {
+  if (pregunta.tipo === 'date') {
+    const problema = problemaDeFecha(valor)
+    return problema ? `${pregunta.clave}: ${problema}` : null
+  }
+
   if (pregunta.tipo === 'text') {
     if (typeof valor !== 'string') return `${pregunta.clave}: se esperaba texto`
     if (valor.length > 120) return `${pregunta.clave}: texto demasiado largo`
