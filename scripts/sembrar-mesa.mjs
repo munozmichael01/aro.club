@@ -107,16 +107,21 @@ const CINCO = [1, 3, 5, 0, 4]
 /**
  * La energía social de cada uno de los cinco, por su índice en GENTE.
  *
+ * Va en `rol`, dentro de `profile_answers`, y NO en `profile_traits`: los
+ * rasgos se derivan solos de las respuestas —lo hace el trigger `trg_rasgos`
+ * sobre `answers`—, así que la única manera de mover esta señal es mover la
+ * respuesta. Es además lo que produce una persona de verdad, que contesta el
+ * cuestionario y no escribe en la tabla de rasgos.
+ *
+ * Los códigos son los mismos que el enum —`escucha | depende | lleva`—,
+ * comprobado contra el catálogo de `questions`.
+ *
  * No van los cinco en `depende`. El matcher puntúa esta señal contando
  * cuántos `lleva` hay sentados (`repartir.ts`): con dos o tres saca 1, con
- * cero saca 0,17. Con los cinco en `depende` —y el tester que motiva este
- * modo también salió `depende`— la mesa se sienta igual pero esa señal entra
- * por los suelos y no se habría probado el caso bueno.
- *
- * Dos `lleva`, dos `depende` y uno `escucha`. Con el tester son dos `lleva`
- * de seis, que es justo la ventana que el código premia.
+ * cero saca 0,17. Dos `lleva`, dos `depende` y uno `escucha`; con el tester
+ * son dos `lleva` de seis, justo la ventana que el código premia.
  */
-const ENERGIA = { 1: 'lleva', 3: 'depende', 5: 'lleva', 0: 'escucha', 4: 'depende' }
+const ROL = { 1: 'lleva', 3: 'depende', 5: 'lleva', 0: 'escucha', 4: 'depende' }
 
 const RESPUESTAS_BASE = {
   rol: 'depende', motivo: 'ampliar', romance: 'indiferente',
@@ -147,7 +152,26 @@ async function borrar() {
   const r = await fetch(`${BASE}/auth/v1/admin/users?per_page=200`, { headers: H })
   const { users = [] } = await r.json()
   const mios = users.filter((u) => (u.email || '').endsWith(`@${DOMINIO}`))
+  // EL ORDEN DE ABAJO NO ES ARBITRARIO. Borrar el usuario de auth a secas
+  // —lo que hacía antes— no funciona en cuanto la siembra pasó de la mitad:
+  //
+  //  1. `waitlist.converted_profile_id` apunta al perfil y su FK bloquea el
+  //     borrado (es NO ACTION, no cascada). Se suelta a null primero.
+  //  2. `answers` va antes que `profile_traits`, y no al revés: borrar
+  //     respuestas dispara `trg_rasgos`, que REINSERTA la fila de rasgos y
+  //     vuelve a bloquear. Al revés no converge nunca.
+  //  3. Y por eso tampoco vale dejar que el borrado del perfil arrastre las
+  //     respuestas en cascada: la cascada dispara el mismo trigger.
+  //
+  // El resto —bookings, payments, credit_ledger, verifications— sí cae con
+  // el perfil, que es de donde cuelgan.
   for (const u of mios) {
+    await rest(`waitlist?converted_profile_id=eq.${u.id}`, {
+      method: 'PATCH', body: JSON.stringify({ converted_profile_id: null }),
+    })
+    await rest(`answers?profile_id=eq.${u.id}`, { method: 'DELETE' })
+    await rest(`profile_traits?profile_id=eq.${u.id}`, { method: 'DELETE' })
+    await rest(`profiles?id=eq.${u.id}`, { method: 'DELETE' })
     const d = await fetch(`${BASE}/auth/v1/admin/users/${u.id}`, { method: 'DELETE', headers: H })
     if (!d.ok) throw new Error(`no se pudo borrar ${u.email}: ${d.status} ${await d.text()}`)
   }
@@ -249,7 +273,12 @@ async function sembrar(fechaAjena) {
         gender: genero, phone_e164: `+58${tel}`,
         rootedness: arraigo, zones: ['mercedes', 'chacao'], days: ['jue'],
         conversation_topics: ['cocina', 'viajes'],
-        profile_answers: { ...RESPUESTAS_BASE, sector, empleador: empresa, actividades: intereses },
+        profile_answers: {
+          ...RESPUESTAS_BASE,
+          sector, empleador: empresa, actividades: intereses,
+          // De aquí sale `profile_traits.social_energy`. Ver ROL.
+          rol: ROL[i] ?? RESPUESTAS_BASE.rol,
+        },
         quiz_completed_at: new Date().toISOString(),
         profile_completed_at: new Date().toISOString(),
         base_completed_at: new Date().toISOString(),
@@ -284,30 +313,18 @@ async function sembrar(fechaAjena) {
       })
     }
 
-    // Traits: es lo que lee el matcher, no las respuestas crudas.
-    await rest('profile_traits', {
-      method: 'POST',
-      body: JSON.stringify({
-        profile_id: usuario.id, version_id: 3,
-        age: new Date().getFullYear() - Number(nacimiento.slice(0, 4)),
-        gender: genero, rootedness: arraigo, industry: sector, employer: empresa,
-        // `social_energy` es un enum: escucha | depende | lleva. Decía
-        // `balanced`, que no existe, y ese 400 reventaba DENTRO del bucle
-        // —ya creada la cuenta, convertido el lead y metidas las
-        // verificaciones de la primera persona—, no al empezar.
-        life_stage: 'soltero-sin-hijos', social_energy: ENERGIA[i] ?? 'depende',
-        intention: 'ampliar', romantic_openness: 'indiferente',
-        // `ambas`, no `both`. La columna es texto libre y aceptaba el inglés
-        // sin rechistar, pero el producto escribe en español —`conversacion`,
-        // `ambas`— y el `both` venía del comentario del esquema original, que
-        // se quedó viejo. Cuadra además con el `peso: 'ambas'` de arriba.
-        dining_focus: 'ambas', budget_tier: 2,
-        interests: intereses,
-        conversation_topics: ['cocina', 'viajes'],
-        dietary: ['ninguna'], languages: ['es'],
-        zones: ['mercedes', 'chacao'], availability: ['jue'],
-      }),
-    })
+    // Los rasgos NO se escriben aquí.
+    //
+    // Este guion los insertaba a mano y chocaba: los deriva el trigger
+    // `trg_rasgos` sobre `answers`, así que la fila ya existe cuando se llega
+    // aquí y el POST devolvía 409 en la PRIMERA persona —con la cuenta ya
+    // creada y el lead ya convertido: una siembra a medias que encima el
+    // borrado no sabía limpiar.
+    //
+    // Y estaban escritos dos veces con valores distintos: el guion ponía
+    // `balanced`, que ni existe en el enum, mientras la derivación sacaba el
+    // valor bueno de la respuesta. Un rasgo con dos dueños siempre acaba
+    // divergiendo; el dueño es la respuesta.
 
     // Cuatro créditos comprados, uno gastado en esta fecha.
     await rest('credit_ledger', {
