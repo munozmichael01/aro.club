@@ -65,16 +65,7 @@ export async function GET() {
     .eq('version_id', version?.id ?? 0)
     .eq('is_required', true)
 
-  const { data: dadas } = await admin
-    .from('answers')
-    .select('question_key')
-    .eq('profile_id', user.id)
-    .eq('version_id', version?.id ?? 0)
-
-  const respondidasSet = new Set((dadas ?? []).map((a) => a.question_key))
-  const pendientes = (obligatorias ?? []).filter((q) => !respondidasSet.has(q.key))
   const totalPreguntas = obligatorias?.length ?? 0
-  const faltan = pendientes.length
 
   // --- verificación ----------------------------------------------------
   const { data: verificaciones } = await admin
@@ -283,6 +274,11 @@ export async function GET() {
   // contra el nombre y la fecha de nacimiento del perfil. A quien no nos ha
   // dicho cuándo nació no se le puede pedir que verifique.
   const situacion = await situacionDePerfil(user.id)
+  // Cuántas faltan lo cuenta la misma pieza: contarlo aquí otra vez era la
+  // segunda opinión de siempre, y esta se equivocaba —el nacimiento y el
+  // género están contestados pero no viven en `answers`, así que salían como
+  // pendientes para todo el mundo—.
+  const faltan = situacion.falta.preguntas.length
 
   if (situacion.paso === 'contacto') estado = 'datos'
   else if (situacion.paso === 'preguntas') estado = 'perfil'

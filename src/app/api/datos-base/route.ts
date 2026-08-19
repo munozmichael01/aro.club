@@ -150,14 +150,28 @@ export async function POST(request: Request) {
       : campos,
   )
 
-  const { error } =
+  // Con `select()` para saber CUÁNTAS filas se tocaron. Un update que no
+  // encuentra a nadie no es un error para Postgres: devuelve cero filas y
+  // esta ruta respondía «guardado» igual. Me pasó probando —una sesión vieja
+  // apuntando a un perfil ya borrado— y la pantalla siguió tan contenta al
+  // resumen con los datos en la mano y la base vacía. Es exactamente el
+  // fallo que se vino a arreglar, en otra ruta.
+  const { data: tocadas, error } =
     quien.tabla === 'profiles'
-      ? await escritura.eq('id', quien.id)
-      : await escritura.eq('email', quien.correo)
+      ? await escritura.eq('id', quien.id).select('id')
+      : await escritura.eq('email', quien.correo).select('email')
 
   if (error) {
     console.error('[datos-base] no se guardó', error)
     return NextResponse.json({ error: 'No pudimos guardar tus datos.' }, { status: 500 })
+  }
+
+  if (!tocadas?.length) {
+    console.error('[datos-base] no había a quién guardar', quien)
+    return NextResponse.json(
+      { error: 'No encontramos tu ficha. Vuelve a entrar y prueba otra vez.' },
+      { status: 404 },
+    )
   }
 
   // El trigger de `profiles` recalcula los rasgos al cambiar nacimiento o

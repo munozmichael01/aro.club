@@ -51,7 +51,7 @@ if (ini < 0 || fin < 0) {
 const OPC = eval('({' + html.slice(html.indexOf('{', ini) + 1, fin) + '})')
 
 // --- lo que dice el catálogo ------------------------------------------
-const { data: catalogo, error } = await admin.from('questions').select('key, options')
+const { data: catalogo, error } = await admin.from('questions').select('key, options, input_type')
 if (error) {
   console.error('No pude leer el catálogo:', error.message)
   process.exit(1)
@@ -112,6 +112,37 @@ for (const [id, pares] of Object.entries(OPC)) {
   } else {
     console.log(`✓ ${id}`)
   }
+}
+
+// --- las preguntas de tipo fecha --------------------------------------
+//
+// `nacimiento` no tiene opciones, así que el cotejo de códigos de arriba no
+// la mira: no hay nada que comparar. Pero sí hay algo que puede desalinearse
+// —que el catálogo pida una fecha y la pantalla no la ofrezca, o al revés— y
+// eso no falla en ningún sitio: la pregunta simplemente no sale, y quien
+// llegue al final se encontrará con que le falta una respuesta que nunca vio.
+const fechasEnBase = (catalogo ?? [])
+  .filter((q) => q.input_type === 'date')
+  .map((q) => q.key)
+
+const fechasEnPantalla = [...html.matchAll(/id:\s*'([a-z_]+)'[^}]*tipo:\s*'fecha'/g)].map((m) => m[1])
+
+const fechaSinPantalla = fechasEnBase.filter((k) => !fechasEnPantalla.includes(k))
+const pantallaSinFecha = fechasEnPantalla.filter((k) => !fechasEnBase.includes(k))
+
+if (fechaSinPantalla.length || pantallaSinFecha.length) {
+  errores++
+  console.error('\n✗ preguntas de tipo fecha')
+  if (fechaSinPantalla.length) {
+    console.error(`  la base pide fecha y la pantalla no la ofrece: ${fechaSinPantalla.join(', ')}`)
+    console.error('  → obligatoria que nadie puede contestar')
+  }
+  if (pantallaSinFecha.length) {
+    console.error(`  la pantalla ofrece fecha y la base no la conoce: ${pantallaSinFecha.join(', ')}`)
+    console.error('  → esa respuesta se PIERDE al guardar')
+  }
+} else if (fechasEnBase.length) {
+  console.log(`✓ fecha (${fechasEnBase.join(', ')})`)
 }
 
 // --- la cuarta copia: el reparto de planes en familias ----------------

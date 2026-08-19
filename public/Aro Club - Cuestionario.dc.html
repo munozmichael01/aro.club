@@ -522,7 +522,25 @@ class Component extends DCLogic {
         });
 
         const est = { r, heredadas: ya, empleador: (d.respuestas || {}).empleador || '' };
-        if (d.pantalla > 0 && !d.completado) { est.pantalla = d.pantalla; est.retomada = true; }
+
+        // El nacimiento vuelve como fecha, no como indice: se parte para
+        // que el selector aparezca relleno al retomar.
+        const nac = (d.respuestas || {}).nacimiento;
+        if (typeof nac === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(nac)) {
+          est.anio = nac.slice(0, 4);
+          est.mes = String(parseInt(nac.slice(5, 7), 10));
+          est.dia = String(parseInt(nac.slice(8, 10), 10));
+        }
+
+        // Si el SERVIDOR dice que lo que falta ya no son preguntas, esto se
+        // acabo: se ensena el cierre con la salida al paso siguiente en vez
+        // de devolver a la pantalla 1 a quien ya contesto todo. El recorrido
+        // es continuo y quien decide donde esta es la misma pieza para todos.
+        if (d.paso && d.paso !== 'preguntas') {
+          est.fin = true;
+        } else if (d.pantalla > 0 && !d.completado) {
+          est.pantalla = d.pantalla; est.retomada = true;
+        }
         this.setState(est);
       })
       .catch(() => this.setState({ sinSesion: true }));
@@ -941,6 +959,11 @@ class Component extends DCLogic {
       })(),
       // el acceso se elige aquí, cuando ya hay algo que guardar
       clave: this.state.clave || '',
+      // pointer-events no bloquea el teclado: la inercia va en el handler
+      enlaceLogo: (fin || this.state.tieneCuenta) ? '/cuenta' : '/gracias',
+      // La salida se ENSEÑA, no se deja implicita en el logo: el pie dice
+      // que puedes salir y hasta ahora no habia como.
+      haySalida: !!this.state.tieneCuenta && !fin,
       // La contraseña y los proveedores se mudaron a /datos: alli estan el
       // nombre, el trato y el telefono, y la cuenta se crea con los cuatro
       // juntos. Aqui solo queda el boton que lleva hasta ahi.

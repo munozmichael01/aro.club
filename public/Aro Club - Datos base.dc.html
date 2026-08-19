@@ -401,14 +401,19 @@ class Component extends DCLogic {
       {
         eyebrow: 'DATOS PERSONALES · 1 DE 4',
         titulo: '¿Cómo te llamas?',
-        bajada: 'Cuatro datos y ya está. Después vienen las preguntas, que son las que arman tu mesa.',
+        // El orden cambió: las preguntas van antes y esto es lo último del
+        // alta. Decir «después vienen las preguntas» mandaba a la persona a
+        // buscar un paso que ya había hecho.
+        bajada: this._lead
+          ? 'Lo último. Con esto ya podemos escribirte y sentarte en una mesa.'
+          : 'Los datos con los que te escribimos. Puedes cambiarlos cuando quieras.',
         listo: this.state.nombre.trim().length >= 2,
         falla: this.state.nombre.trim().length === 0 ? 'Escribe tu nombre' : 'Escribe tu nombre completo'
       },
       {
         eyebrow: 'DATOS PERSONALES · 2 DE 4',
         titulo: '¿Cuándo naciste?',
-        bajada: 'Es una de las dos cosas que más pesan al armar el grupo.',
+        bajada: 'Es una de las dos cosas que más pesan al armar el grupo. Si ya la contestaste en las preguntas, aquí solo la confirmas.',
         listo: edad !== null && edad >= 18 && edad <= 99,
         falla: (!this.state.dia || this.state.mes < 0 || !this.state.anio)
           ? 'Completa día, mes y año'
@@ -432,12 +437,13 @@ class Component extends DCLogic {
       },
       {
         eyebrow: 'LISTO',
-        // "Ya podemos sentarte" no es verdad para quien todavia tiene las
-        // diecisiete preguntas por delante. Prometer el final a mitad de
-        // camino es como se llega al final creyendo que ya estaba.
-        titulo: this._lead ? 'Listo. Ahora las preguntas.' : 'Guardado.',
+        // El orden cambio: las preguntas van ANTES y esto es el ultimo paso
+        // del alta, asi que aqui lo que queda es la cuenta —el bloque de
+        // contraseña esta justo debajo—. Decia «Ahora las preguntas» y
+        // mandaba a buscar un paso ya hecho.
+        titulo: this._lead ? 'Listo. Solo falta tu cuenta.' : 'Guardado.',
         bajada: this._lead
-          ? 'Esto es lo que guardamos de esta parte, y quién lo ve. Lo demás son preguntas sobre cómo eres en una mesa.'
+          ? 'Esto es lo que guardamos de ti, y quién lo ve. Debajo creas la contraseña con la que vuelves a entrar.'
           : 'Esto es todo lo que guardamos de esta parte, y quién lo ve.',
         listo: true
       }
@@ -576,11 +582,6 @@ class Component extends DCLogic {
       pistaClave: (this.state.clave || '').length >= 8
         ? 'Entrarás con tu correo y esta contraseña.'
         : 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Apple o Google.',
-      // pointer-events no bloquea el teclado: la inercia va en el handler
-      enlaceLogo: (fin || this.state.tieneCuenta) ? '/cuenta' : '/gracias',
-      // La salida se ENSEÑA, no se deja implicita en el logo: el pie dice
-      // que puedes salir y hasta ahora no habia como.
-      haySalida: !!this.state.tieneCuenta && !fin,
       inerteClave: ((this.state.clave || '').length >= 8 && this.state.clave === this.state.clave2) ? null : 'true',
       // La cuenta se crea aqui, al cerrar el cuestionario: es cuando ya hay
       // algo que guardar. El servidor abre la sesion en la misma respuesta.

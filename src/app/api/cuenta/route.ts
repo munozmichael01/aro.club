@@ -77,9 +77,17 @@ export async function POST(request: Request) {
   if (situacion.paso !== 'cuenta') {
     return NextResponse.json(
       {
+        // Se NOMBRA lo que falta. «Faltan datos» obliga a repasar cuatro
+        // campos para descubrir cuál, que es justo lo que esta pantalla ya
+        // evita en el pago.
         error: situacion.paso === 'preguntas'
-          ? 'Te faltan preguntas del cuestionario.'
-          : 'Faltan tus datos: nombre, fecha de nacimiento y teléfono.',
+          ? (situacion.falta.preguntas.length === 1
+              ? 'Te falta una pregunta del cuestionario.'
+              : `Te faltan ${situacion.falta.preguntas.length} preguntas del cuestionario.`)
+          : 'Falta ' + ({ nombre: 'tu nombre', nacimiento: 'tu fecha de nacimiento', telefono: 'tu teléfono' } as Record<string, string>)[situacion.falta.contacto[0]]
+            + (situacion.falta.contacto.length > 1
+                ? ' y ' + (situacion.falta.contacto.length - 1) + ' dato más.'
+                : '.'),
         paso: situacion.paso,
         donde: situacion.donde,
         falta: situacion.falta,
@@ -120,9 +128,21 @@ export async function POST(request: Request) {
     // pueda volver a intentarlo en vez de quedar en tierra de nadie.
     console.error('[cuenta] conversión falló, deshaciendo', errorConversion)
     await admin.auth.admin.deleteUser(creado.user.id)
+
+    // Un teléfono repetido NO es cosa nuestra: es un dato que esa persona
+    // puede cambiar, y decirle «inténtalo otra vez» la manda a repetir lo
+    // mismo para obtener lo mismo. `profiles.phone_e164` es único porque es
+    // por donde se avisa el día de la cena.
+    const repetido = errorConversion.code === '23505'
+      && String(errorConversion.details ?? '').includes('phone_e164')
+
     return NextResponse.json(
-      { error: 'No pudimos crear tu cuenta. Es cosa nuestra: inténtalo otra vez.' },
-      { status: 500 },
+      {
+        error: repetido
+          ? 'Ese teléfono ya está en otra cuenta. Usa otro número o entra con la cuenta que ya tienes.'
+          : 'No pudimos crear tu cuenta. Es cosa nuestra: inténtalo otra vez.',
+      },
+      { status: repetido ? 409 : 500 },
     )
   }
 

@@ -159,14 +159,23 @@ export async function situacionDePerfil(perfilId: string): Promise<Situacion> {
   const [{ data: perfil }, { data: respuestas }, { data: verificada }] = await Promise.all([
     admin
       .from('profiles')
-      .select('full_name, birthdate, phone_e164')
+      .select('full_name, birthdate, phone_e164, gender')
       .eq('id', perfilId)
       .maybeSingle(),
     admin.from('answers').select('question_key, value').eq('profile_id', perfilId),
     admin.from('v_verified_profiles').select('id').eq('id', perfilId).maybeSingle(),
   ])
 
-  const dadas = Object.fromEntries((respuestas ?? []).map((r) => [r.question_key, r.value]))
+  // El nacimiento y el género están contestados, pero NO en `answers`: viven
+  // en su columna de `profiles`, que es la fuente de la que derivan los
+  // rasgos. Sin añadirlos aquí, Mi cuenta le diría «te faltan 2 preguntas» a
+  // quien las contestó —y de paso mandaría al cuestionario a alguien que ya
+  // lo terminó—.
+  const dadas: Record<string, unknown> = {
+    ...Object.fromEntries((respuestas ?? []).map((r) => [r.question_key, r.value])),
+    nacimiento: perfil?.birthdate ?? null,
+    genero: perfil?.gender ?? null,
+  }
   const preguntas = await preguntasQueFaltan(dadas)
 
   // El contacto va ANTES que las preguntas para quien ya tiene cuenta: sin
