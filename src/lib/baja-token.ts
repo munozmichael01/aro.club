@@ -74,8 +74,28 @@ function secreto(): string {
  * —un enlace de baja que no da de baja es el problema legal, no el feo—.
  * Se firma con el de ahora y se comprueba contra los que ha habido.
  */
+/**
+ * Hasta cuándo se acepta el secreto anterior.
+ *
+ * Aceptar dos secretos es una medida de TRANSICIÓN, no un diseño: sirve para
+ * no dejar tirado a quien tenía un enlace emitido antes del 15 de agosto de
+ * 2026, cuando se añadió `LEAD_TOKEN_SECRET` y murieron todos de golpe. Sin
+ * fecha se queda para siempre, y dentro de seis meses nadie sabrá por qué
+ * hay dos.
+ *
+ * Noventa días desde aquel cambio. Pasada esa fecha vuelve a haber un solo
+ * secreto y quien traiga un enlace viejo ve que su sesión no vale, con la
+ * salida para recuperarla — que es lo que faltaba y ahora existe.
+ *
+ * Cuando pase: borrar `secretos()` y volver a firmar y comprobar con
+ * `secreto()` a secas.
+ */
+const HASTA_EL_ANTERIOR = Date.parse('2026-11-15T00:00:00Z')
+
 function secretos(): string[] {
   const ahora = secreto()
+  if (Date.now() > HASTA_EL_ANTERIOR) return [ahora]
+
   const antes = serverEnv().SUPABASE_SERVICE_ROLE_KEY
   return ahora === antes ? [ahora] : [ahora, antes]
 }
