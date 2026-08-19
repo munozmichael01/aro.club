@@ -317,9 +317,10 @@ class Component extends DCLogic {
     fetch('/api/lead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // Sin `variante`: ese campo solo admite las de la landing, y esto no
-      // lo es. Mandarla como 'datos' seria un 400 en la primera pantalla.
-      body: JSON.stringify({ correo: c, ciudad: 'caracas' })
+      // Con `origen: 'datos'` y sin variante: quien entra por aqui NO vio
+      // ninguna landing, y grabarlo como 'landing' + 'v3' lo atribuia a una
+      // pagina que no visito y a una variante que ya no enlaza nadie.
+      body: JSON.stringify({ correo: c, ciudad: 'caracas', origen: 'datos' })
     })
       .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
       .then(({ ok, d }) => {

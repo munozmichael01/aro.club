@@ -55,7 +55,7 @@
             <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ precioTexto }}</span>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-top:9px">
-            <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">Tasa BCV de hoy</span>
+            <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ etiquetaTasa }}</span>
             <span style="font:500 15px/1.4 'Inter Tight',sans-serif;color:#33513F;font-variant-numeric:tabular-nums">{{ tasaTexto }}</span>
           </div>
           <div style="height:1px;background:rgba(20,52,42,.12);margin:16px 0"></div>
@@ -661,6 +661,20 @@ class Component extends DCLogic {
       // Las dos salian escritas en el marcado: «8,00 USD» y «1 USD = 62,40
       // Bs». La segunda mentia por un factor de doce.
       precioTexto: D.montoUsd != null ? dinero(D.montoUsd, 'USD') : '—',
+      // «de hoy» solo si la fila es de hoy. El cron del BCV puede no haber
+      // pasado —fin de semana, festivo, un fallo— y entonces la tasa buena es
+      // la del ultimo dia publicado: se dice cual, en vez de llamarla de hoy.
+      etiquetaTasa: (function () {
+        const de = S.datos && S.datos.tasaDe;
+        if (!de) return 'Tasa BCV';
+        const hoy = new Date();
+        const p2 = (n) => String(n).padStart(2, '0');
+        const hoyISO = hoy.getFullYear() + '-' + p2(hoy.getMonth() + 1) + '-' + p2(hoy.getDate());
+        if (de === hoyISO) return 'Tasa BCV de hoy';
+        const [a, m, d] = de.split('-');
+        const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+        return 'Tasa BCV del ' + parseInt(d, 10) + ' de ' + MESES[parseInt(m, 10) - 1];
+      }).call(this),
       tasaTexto: D.tasa ? '1 USD = ' + dinero(D.tasa, 'Bs') : 'Sin tasa de hoy',
       totalEstilo: 'font:700 clamp(24px,3vw,30px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;color:#14342A;font-variant-numeric:tabular-nums',
 

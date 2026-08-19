@@ -31,6 +31,16 @@ const paso1 = z.object({
   // De qué landing viene. Cada página sabe cuál es y lo dice; aquí no hay
   // reparto de tráfico ni nada que decidir.
   variante: z.enum(['v3', 'v4']).optional(),
+  /**
+   * De dónde llega. Por defecto la landing, que es de donde llega casi todo.
+   *
+   * Existe porque quien entra por `/datos` acababa grabado como `landing` y
+   * variante `v3`: atribuido a una página que no vio y a una variante que ya
+   * no enlaza nadie. Y esa atribución es justo lo que decide qué landing
+   * convierte mejor, así que ensuciarla ensucia la única cifra para la que
+   * existe el campo.
+   */
+  origen: z.enum(['landing', 'datos']).optional(),
   // Campo oculto: una persona nunca lo rellena.
   website: z.string().max(0).optional(),
 })
@@ -159,10 +169,14 @@ export async function POST(request: Request) {
     .insert({
       email: correo,
       city_slug: ciudadFinal,
-      source: 'landing',
+      source: parsed.data.origen ?? 'landing',
       // Con el correo, en el primer guardado: quien abandona en la pregunta
       // 2 tambien queda atribuido. Al final del quiz seria tarde.
-      variante: parsed.data.variante ?? 'v3',
+      // La variante es de la landing y solo de ella: quien no viene de ahí
+      // se queda sin variante, que es la verdad, en vez de sumar a la v3.
+      variante: (parsed.data.origen ?? 'landing') === 'landing'
+        ? (parsed.data.variante ?? 'v3')
+        : null,
     })
 
   if (error) {

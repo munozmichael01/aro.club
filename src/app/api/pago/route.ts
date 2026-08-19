@@ -138,7 +138,7 @@ export async function GET(request: Request) {
         .from('payments')
         .select('id, status, metodo, amount_local, reportado_en')
         .eq('booking_id', reserva.id)
-        .in('status', ['awaiting_proof', 'under_review', 'confirmed'])
+        .in('status', VIVOS)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -156,6 +156,12 @@ export async function GET(request: Request) {
     },
     montoUsd: usd,
     tasa: tasa ? Number(tasa.usd_to_ves) : null,
+    // De qué DÍA es la tasa. La pantalla decía «Tasa BCV de hoy» sobre la
+    // fila que hubiera, que un lunes por la mañana —o cualquier día en que el
+    // cron del BCV no haya pasado— es la del día anterior. El importe estaba
+    // bien; lo que estaba mal era la etiqueta, y en una pantalla donde se va
+    // a transferir dinero la etiqueta es parte del importe.
+    tasaDe: tasa?.rate_date ?? null,
     // El monto exacto con los céntimos ya dentro: es el que tiene que
     // transferir, y el que operación busca en el banco.
     montoLocal: tasa ? Number((usd * Number(tasa.usd_to_ves) + centimos / 100).toFixed(2)) : null,
@@ -184,6 +190,16 @@ export async function GET(request: Request) {
       : null,
   })
 }
+
+/**
+ * Un pago VIVO: reportado y todavía en pie.
+ *
+ * Se define una vez porque la usan los dos lados —el GET, para enseñar en qué
+ * va, y el POST, para no aceptar un segundo pago del mismo puesto—. Un
+ * rechazado no está aquí a propósito: si no cuadró, se vuelve a reportar.
+ */
+const VIVOS: ('awaiting_proof' | 'under_review' | 'confirmed')[] =
+  ['awaiting_proof', 'under_review', 'confirmed']
 
 /** Definición de un campo del método, tal como viene del catálogo. */
 type Campo = { campo: string; tipo?: string }
@@ -405,6 +421,37 @@ export async function POST(request: Request) {
     bookingId = creada.id
   }
 
+  // Un puesto no se paga dos veces.
+  //
+  // No había ninguna guarda: se reutilizaba la reserva y se insertaba el pago
+  // sin mirar. Lo único que lo impedía era el índice único
+  // `payments_cents_token_uq (charge_date, cents_token)`, y `charge_date` es
+  // la fecha de Caracas: cada medianoche deja de proteger. Una pestaña vieja
+  // o un botón atrás al día siguiente metían un segundo pago del mismo
+  // puesto, y el mismo día el choque salía como un 500 «no pudimos
+  // registrar tu pago» — que dice lo contrario de lo que pasó.
+  const { data: yaPago } = await admin
+    .from('payments')
+    .select('id, status, reportado_en')
+    .eq('booking_id', bookingId)
+    .in('status', VIVOS)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (yaPago) {
+    return NextResponse.json(
+      {
+        error: yaPago.status === 'confirmed'
+          ? 'Este puesto ya está pagado y confirmado.'
+          : 'Ya reportaste el pago de este puesto. Lo estamos cuadrando con el banco.',
+        estado: yaPago.status,
+        reportadoEn: yaPago.reportado_en,
+      },
+      { status: 409 },
+    )
+  }
+
   const { error: errorPago } = await admin.from('payments').insert({
     profile_id: user.id,
     booking_id: bookingId,
@@ -444,6 +491,15 @@ export async function POST(request: Request) {
   })
 
   if (errorPago) {
+    // 23505 es el índice único: dos reportes a la vez, uno gana. Que el
+    // segundo lea «no pudimos registrar tu pago» sería mentirle — sí se
+    // registró, un instante antes.
+    if (errorPago.code === '23505') {
+      return NextResponse.json(
+        { error: 'Ya reportaste el pago de este puesto. Lo estamos cuadrando con el banco.' },
+        { status: 409 },
+      )
+    }
     console.error('[pago] no se registró el reporte', errorPago)
     return NextResponse.json({ error: 'No pudimos registrar tu pago.' }, { status: 500 })
   }
