@@ -237,7 +237,10 @@ create table exclusions (
   check (profile_a < profile_b)
 );
 
--- Historial de coincidencias. Sostiene la regla de no repetir en 6 meses.
+-- Historial de coincidencias. Sostiene la regla de no repetir.
+-- El plazo son TRES meses, no seis: bajo en la entrega 12 porque con poca
+-- gente seis agota el pool y deja mesas sin armar. Vive en una constante,
+-- `MESES_SIN_REPETIR` en src/lib/reparto/pool.ts.
 -- Se puede derivar de table_members, pero materializarlo hace el matcher
 -- ordenes de magnitud mas rapido.
 create table pair_encounters (

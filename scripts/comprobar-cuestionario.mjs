@@ -187,5 +187,57 @@ if (sinFamilia.length || familiaFantasma.length) {
   console.log('✓ planes → familias')
 }
 
+// --- la quinta copia: las preguntas frecuentes, dos veces -------------
+//
+// Las FAQ estan en la landing DOS veces y no se puede evitar: una en
+// `faqDefs`, que es lo que pinta la pantalla, y otra dentro del JSON-LD del
+// <head>, que es lo que leen los buscadores y los asistentes de IA.
+//
+// No vale generarlas en el navegador: un rastreador no ejecuta JavaScript,
+// asi que si el JSON-LD se armara al vuelo, para el no existiria. Y no vale
+// dejar solo el JSON-LD: la persona tiene que verlas.
+//
+// Asi que hay dos copias a la fuerza, y por eso hacen falta vigiladas. Ya se
+// separaron una vez: la pregunta de la edad decia «si tienes 24 te sientas
+// con gente de 20 a 34» —catorce anos, con la regla en diez— y al corregirla
+// habia que acordarse de tocar las dos.
+const landing = fs.readFileSync(
+  fileURLToPath(new URL('../public/Aro Club - Landing v4.dc.html', import.meta.url)), 'utf8')
+
+const iniFaq = landing.search(/faqDefs\s*=\s*\[/)
+const finFaq = landing.indexOf('];', iniFaq)
+const enPantalla = [...landing.slice(iniFaq, finFaq).matchAll(/\['((?:[^'\\]|\\.)*)',\s*'((?:[^'\\]|\\.)*)'\]/g)]
+  .map((m) => [m[1].replace(/\\'/g, "'"), m[2].replace(/\\'/g, "'")])
+
+const ld = landing.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)
+if (!ld) {
+  console.error('\n✗ la landing no tiene JSON-LD: los buscadores no ven nada')
+  errores++
+} else {
+  const grafo = JSON.parse(ld[1])['@graph'] ?? []
+  const enEsquema = (grafo.find((n) => n['@type'] === 'FAQPage')?.mainEntity ?? [])
+    .map((q) => [q.name, q.acceptedAnswer?.text])
+
+  const distintas = []
+  if (enPantalla.length !== enEsquema.length) {
+    distintas.push(`la pantalla tiene ${enPantalla.length} y el esquema ${enEsquema.length}`)
+  }
+  enPantalla.forEach(([p, r], i) => {
+    const e = enEsquema[i]
+    if (!e) return
+    if (e[0] !== p) distintas.push(`${i + 1}: pregunta distinta`)
+    else if (e[1] !== r) distintas.push(`${i + 1}: «${p}» tiene otra respuesta en el esquema`)
+  })
+
+  if (distintas.length) {
+    errores++
+    console.error('\n✗ preguntas frecuentes: pantalla y JSON-LD no coinciden')
+    distintas.forEach((d) => console.error('    ' + d))
+    console.error('  → la gente lee una cosa y los buscadores otra')
+  } else if (enPantalla.length) {
+    console.log(`✓ preguntas frecuentes (${enPantalla.length}, pantalla y esquema iguales)`)
+  }
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)

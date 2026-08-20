@@ -712,7 +712,7 @@ La pantalla más compleja del producto.
 **Restricciones duras que la interfaz debe visualizar cuando se rompen:**
 - Diferencia de edad mayor a 10 años en la mesa
 - Balance de género fuera de 4-2 (nunca 5-1)
-- Dos personas que ya coincidieron en los últimos 6 meses
+- Dos personas que ya coincidieron en los últimos 3 meses
 - Un par que está en la lista de exclusiones
 - Dos personas de la misma empresa
 - Rango de gasto que abarca más de dos tramos contiguos
