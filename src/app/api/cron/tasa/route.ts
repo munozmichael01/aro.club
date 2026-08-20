@@ -3,26 +3,31 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
- * La tasa del BCV. Cuatro veces al día, y no una a medianoche.
+ * La tasa del BCV. Cuatro veces al día, y a la hora en que hay algo que pedir.
  *
- * Corría una sola vez, a las 04:00 UTC —medianoche en Caracas— y ahí está el
- * fallo: a esa hora el BCV todavía no ha publicado la tasa del día que
- * empieza, así que la fuente devolvía la de AYER y eso es lo que se guardaba.
- * Todos los días. El producto cobraba siempre con la del día anterior, que es
- * exactamente lo que esta ruta existe para evitar.
+ * Corría una sola vez, a las 04:00 UTC —medianoche en Caracas—, y a esa hora
+ * el BCV todavía no ha publicado: la fuente devolvía la de AYER y eso es lo
+ * que se guardaba. Todos los días. El producto cobraba siempre con la del día
+ * anterior, que es exactamente lo que esta ruta existe para evitar.
  *
  * No se ve como un fallo porque no falla: el cron corre, la fuente contesta,
  * la fila se escribe. Solo que con la fecha de ayer. Se descubrió mirando
  * `fx_rates` y viendo que la fila del 18 se había creado a las 04:00 del 19.
  *
- * Ahora se pregunta a medianoche y otras tres veces por la mañana de Caracas
- * —8:00, 11:00 y 14:00—. El `upsert` por `rate_date` hace que repetir sea
- * gratis: en cuanto el BCV publica, la fila del día aparece sola, y si ya
- * estaba no pasa nada.
+ * El primer arreglo movió el horario a 04:00, 12:00, 15:00 y 18:00 UTC y
+ * seguía llegando pronto: son las 00:00, 08:00, 11:00 y 14:00 de Caracas, y
+ * el BCV publica entre las 14:00 y las 18:00 de allá, días hábiles. Las
+ * cuatro preguntas caían antes de la ventana o justo en su borde. Preguntar
+ * cuatro veces no sirve de nada si las cuatro son temprano.
  *
- * En `vercel.json` el cron dice `0 4 * * *` porque Vercel programa en UTC
- * y Caracas es UTC-4. No es un horario raro: son las doce de la noche
- * alla.
+ * Ahora son las 12:00, 19:00, 21:00 y 23:00 UTC: las 08:00 de Caracas como
+ * red —por si un día publicaron tarde y la de ayer llegó después de la última
+ * pregunta— y luego 15:00, 17:00 y 19:00, que cubren la ventana entera. El
+ * `upsert` por `rate_date` hace que repetir sea gratis: en cuanto el BCV
+ * publica, la fila del día aparece sola, y si ya estaba no pasa nada.
+ *
+ * Las horas de `vercel.json` van en UTC porque Vercel programa en UTC.
+ * Caracas es UTC−4: para leerlas, restar cuatro.
  *
  * Sin tasa no se puede cobrar en bolívares, y con la de anteayer se cobra
  * mal: en Venezuela eso no es un redondeo, es dinero.
