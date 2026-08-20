@@ -27,9 +27,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * todavía no se han celebrado salen marcadas `porCelebrar`, y ordenadas
  * primero por ser las que están vivas.
  *
- * También salen las mesas de un reparto que aún no se ha publicado. Esas son
- * una PROPUESTA, no una mesa: la gente todavía no sabe nada. Van marcadas
- * `publicada: false` para que no se lean como hecho consumado.
+ * Lo que NO sale es un reparto sin publicar. `repartir` deja la propuesta en
+ * `matching_runs` y no toca `dinner_tables` a propósito —el disparador de
+ * `table_members` apunta los pares en `pair_encounters`, y una propuesta que
+ * se rehace no puede dejar a dos personas marcadas como que ya cenaron—, así
+ * que aquí una fila es siempre una mesa publicada. Para ver una propuesta
+ * está la pestaña de Reparto, que es donde se puede cambiar.
  *
  * ## La búsqueda
  *
@@ -113,7 +116,6 @@ type Mesa = {
   nps: number | null
   valoraron: number
   porCelebrar: boolean
-  publicada: boolean
 }
 
 const FORMATO_TXT: Record<string, string> = {
@@ -144,8 +146,8 @@ export async function GET(request: Request) {
           .range(d, h)),
       todasLasFilas<{ table_id: string; profile_id: string; booking_id: string; seat_order: number | null }>(
         (d, h) => admin.from('table_members').select('table_id, profile_id, booking_id, seat_order').range(d, h)),
-      todasLasFilas<{ id: string; starts_at: string; format: string; zone_slug: string | null; status: string; restaurant_id: string | null }>(
-        (d, h) => admin.from('events').select('id, starts_at, format, zone_slug, status, restaurant_id').range(d, h)),
+      todasLasFilas<{ id: string; starts_at: string; format: string; zone_slug: string | null; restaurant_id: string | null }>(
+        (d, h) => admin.from('events').select('id, starts_at, format, zone_slug, restaurant_id').range(d, h)),
       todasLasFilas<{ id: string; name: string; zone_slug: string | null }>(
         (d, h) => admin.from('restaurants').select('id, name, zone_slug').range(d, h)),
       todasLasFilas<{ slug: string; name: string }>(
@@ -223,9 +225,6 @@ export async function GET(request: Request) {
       nps: notas.length ? Number((notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(1)) : null,
       valoraron: notas.length,
       porCelebrar: new Date(ev?.starts_at ?? t.created_at).getTime() > ahora,
-      // `matched` es reparto hecho y sin publicar: la gente no sabe nada
-      // todavía. Solo desde `published` la mesa es un hecho.
-      publicada: ev ? ev.status !== 'matched' && ev.status !== 'draft' : false,
     }
   })
 
@@ -247,7 +246,11 @@ export async function GET(request: Request) {
     // por fecha, la mesa del jueves que viene queda enterrada bajo un año de
     // cenas pasadas, y es la única sobre la que todavía se puede hacer algo.
     if (a.porCelebrar !== b.porCelebrar) return a.porCelebrar ? -1 : 1
-    return new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+    const dif = new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+    // Dentro de una misma noche mandan la 1, la 2, la 3: dejarlo al orden en
+    // que la base las devuelva pone la mesa 2 encima de la 1 sin motivo, y en
+    // una pantalla que se lee de arriba abajo eso parece que significa algo.
+    return dif !== 0 ? dif : a.numero - b.numero
   })
 
   // --- el resumen, sobre TODO lo que cumple, no sobre la página ----------
@@ -274,6 +277,12 @@ export async function GET(request: Request) {
   return NextResponse.json({
     mesas: filtradas.slice(desde, desde + tam),
     total: filtradas.length,
+    // Cuántas hay en total, al margen de lo que se esté buscando. El contador
+    // de la pestaña se pinta con esto y no con `total`: un número que baja a
+    // cero mientras escribes no dice cuántas mesas hay, dice cuántas cuadran
+    // con lo que llevas tecleado, y en el sitio donde vive —al lado de
+    // «Gente 22»— eso se lee como que no hay ninguna.
+    todas: todas.length,
     pagina: Math.min(pagina, paginas),
     paginas,
     resumen: {

@@ -965,7 +965,7 @@
                   </sc-for>
                 </div>
                 <sc-if value="{{ m.sinComensales }}" hint-placeholder-val="{{ false }}">
-                  <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-top:12px">Esta mesa no tiene a nadie sentado. Es un resto de un reparto que se rehízo.</div>
+                  <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-top:12px">Esta mesa no tiene a nadie sentado: o se borraron los perfiles que iban en ella, o quedó suelta de un reparto anterior.</div>
                 </sc-if>
                 <sc-if value="{{ m.hayNotas }}" hint-placeholder-val="{{ false }}">
                   <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;padding-top:12px;border-top:1px solid rgba(20,52,42,.12);text-wrap:pretty">{{ m.notas }}</div>
@@ -1043,7 +1043,7 @@ class Component extends DCLogic {
     // Histórico: las mesas que ya se repartieron alguna vez. Se pide aparte
     // de Gente porque responde otra pregunta —dónde se sentó quién— y porque
     // la mayoría de las sesiones no lo abren.
-    historico: null, resumenHistorico: null, totalHistorico: 0,
+    historico: null, resumenHistorico: null, totalHistorico: 0, todasHistorico: 0,
     qHistorico: '', paginaHistorico: 1, paginasHistorico: 1, pidiendoHistorico: false,
     // --- y el estado de trabajar con ellas ------------------------------
     trabajando: false, fallo: '', aviso: '',
@@ -1257,9 +1257,10 @@ class Component extends DCLogic {
     return this.pedir('/api/operacion/historico' + (partes.length ? '?' + partes.join('&') : ''),
       (d) => ({
         historico: d.mesas, resumenHistorico: d.resumen, totalHistorico: d.total,
-        paginaHistorico: d.pagina, paginasHistorico: d.paginas, pidiendoHistorico: false
+        todasHistorico: d.todas, paginaHistorico: d.pagina,
+        paginasHistorico: d.paginas, pidiendoHistorico: false
       }),
-      { historico: [], resumenHistorico: null, totalHistorico: 0,
+      { historico: [], resumenHistorico: null, totalHistorico: 0, todasHistorico: 0,
         paginaHistorico: 1, paginasHistorico: 1, pidiendoHistorico: false });
   }
 
@@ -2062,7 +2063,7 @@ class Component extends DCLogic {
       ['Locales', String(locales.length)]
     ].concat(St.esAdmin ? [['Equipo', String(conAcceso)]] : [])
       .concat([['Gente', String(St.totalGente || 0)],
-               ['Historial', String(St.totalHistorico || 0)]]).map((p, i) => {
+               ['Historial', String(St.todasHistorico || 0)]]).map((p, i) => {
       const on = v === i;
       return {
         nombre: p[0], n: p[1],
@@ -2607,11 +2608,11 @@ class Component extends DCLogic {
         const f = new Date(m.fecha);
         const cuando = f.toLocaleDateString('es-VE',
           { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        // Tres estados y no dos: «propuesta» es un reparto que todavía no se
-        // ha publicado, y leerlo como mesa hecha es lo que hace que alguien
-        // dé por avisada a gente que no sabe nada.
-        const sello = !m.publicada ? ['PROPUESTA', '#8F4515']
-          : m.porCelebrar ? ['POR CELEBRAR', '#1B5138'] : ['CELEBRADA', '#566A5D'];
+        // Dos estados y no tres: aquí solo hay mesas publicadas. Un reparto
+        // sin publicar no llega a esta tabla, así que un sello «propuesta»
+        // sería un estado que nunca se puede dar — y marcaría de propuesta a
+        // una mesa que la gente ya tiene en su correo.
+        const sello = m.porCelebrar ? ['POR CELEBRAR', '#1B5138'] : ['CELEBRADA', '#566A5D'];
         return {
           numero: 'Mesa ' + m.numero,
           cuando: cuando.charAt(0).toUpperCase() + cuando.slice(1),
@@ -2639,7 +2640,7 @@ class Component extends DCLogic {
       }),
       hayMasHistorico: (St.paginasHistorico || 1) > 1,
       textoMasHistorico: 'Página ' + (St.paginaHistorico || 1) + ' de ' + (St.paginasHistorico || 1)
-        + ' · ' + St.totalHistorico + (St.totalHistorico === 1 ? ' mesa' : ' mesas') + ' en total.',
+        + ' · ' + St.totalHistorico + (St.totalHistorico === 1 ? ' mesa' : ' mesas') + ' en lo que estás mirando.',
       hayAntesHistorico: (St.paginaHistorico || 1) > 1,
       hayDespuesHistorico: (St.paginaHistorico || 1) < (St.paginasHistorico || 1),
       irAntesHistorico: () => this.paginarHistorico(Math.max(1, (this.state.paginaHistorico || 1) - 1)),

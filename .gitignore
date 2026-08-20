@@ -54,3 +54,10 @@ supabase/.temp/
 # Material de marca y carrouseles: se trabajan aparte, no van al repo.
 Aro Club Brand/
 carrousel/
+
+# Rastros de los guiones de prueba: qué creó esta máquina en la base, para
+# poder deshacerlo. Es estado local de una ejecución, no del proyecto, y
+# commitearlo hace que `--borrar` de otra máquina apunte a ids que no son
+# suyos. Se coló dos veces en commits ajenos antes de llegar aquí.
+.sembrar-mesa.json
+.escena.json
