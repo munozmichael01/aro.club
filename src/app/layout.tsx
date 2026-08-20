@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     template: `%s · ${env.NEXT_PUBLIC_APP_NAME}`,
   },
   description:
-    'Seis personas, una mesa, cada semana. Cenas curadas en el este de Caracas.',
+    'Seis personas, una mesa, cada semana. Cenas curadas, con todo el mundo verificado.',
 }
 
 /**
