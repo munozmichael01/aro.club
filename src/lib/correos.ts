@@ -61,6 +61,11 @@ export type Correo =
   // que mirar dentro del payload para elegir plantilla.
   | 'verificacion_rechazada'
   | 'fecha_cancelada'
+  // Entrega 16: quien pagó y no se sentó. `publicar` encolaba solo los
+  // `mesa_asignada` de los sentados y no había ninguna rama para el resto:
+  // el panel prometía dos veces «se les avisa hoy» y no salía nada. Alguien
+  // pagó ocho dólares y se quedó fuera sin enterarse.
+  | 'sin_mesa'
   | 'restablecer_clave'
   | 'abrimos_zona'
   // Entrega 14: el hueco de en medio. Alguien termina el perfil, sube la

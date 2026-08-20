@@ -381,7 +381,11 @@ class Component extends DCLogic {
         creditosCuerpo: 'Uno está reservado para el jueves. Los otros tres no caducan.',
         titulo: 'Jueves 14, siete de la noche.',
         cuerpo: 'Ya está reservada a tu nombre. El jueves al mediodía se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.',
-        accion: 'Ver mi reserva', enlace: '/', secundaria: 'Adelantar a las 12:00'
+        // A /mesa, no a la landing. «Ver mi reserva» llevaba a la portada
+        // pública —la rama de al lado, `porconfirmar`, ya apuntaba bien—, así
+        // que quien tenía mesa pulsaba «ver mi reserva» y acababa en la
+        // página de captación, como si no fuera cliente.
+        accion: 'Ver mi reserva', enlace: '/mesa', secundaria: 'Adelantar a las 12:00'
       },
       {
         id: 'abierta', sello: 'ABIERTO', mesa: true, historial: true,

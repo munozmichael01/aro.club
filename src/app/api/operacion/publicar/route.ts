@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { abonarSinMesa } from '@/lib/creditos'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
 
   const { data: corrida } = await admin
     .from('matching_runs')
-    .select('id, event_id, proposal, is_published')
+    .select('id, event_id, proposal, unmatched, is_published')
     .eq('id', parsed.data.corridaId)
     .maybeSingle()
 
@@ -211,6 +212,49 @@ export async function POST(request: Request) {
     if (mesas.some((x) => x.numero === m.numero)) m.publicada = true
   }
   const quedan = todas.filter((m) => !m.publicada).length
+
+  // --- y quien NO se sentó ------------------------------------------
+  //
+  // Esta rama no existía: se encolaban los `mesa_asignada` de los sentados y
+  // del resto no se decía nada, mientras el panel prometía dos veces «se les
+  // avisa hoy». Alguien pagó ocho dólares, se quedó fuera y se enteró de que
+  // no tenía mesa el jueves a mediodía, viendo que no le llegaba nada.
+  //
+  // Va aquí y no en el reparto porque hasta que no se PUBLICA no es verdad:
+  // repartir se puede repetir, y quien está fuera de una propuesta puede
+  // entrar en la siguiente.
+  const fuera = ((corrida.unmatched ?? []) as unknown as { profileId: string }[])
+    .map((p) => p.profileId)
+    .filter(Boolean)
+
+  // Solo los de las mesas que se publican AHORA quedan sentados; si quedan
+  // mesas por publicar, quien está en ellas no es «espera».
+  const sentadosAhora = new Set(mesas.flatMap((m) => m.integrantes.map((p) => p.profileId)))
+  const enEspera = fuera.filter((id) => !sentadosAhora.has(id))
+
+  if (enEspera.length && quedan === 0) {
+    // El aviso, a la hora de la revelación: se entera a la vez que quien sí
+    // tiene mesa. Antes, no.
+    const avisoEspera = enEspera.map((id) => ({
+      profile_id: id,
+      kind: 'sin_mesa' as const,
+      event_id: corrida.event_id,
+      send_at: evento.reveal_at,
+      payload: { formato: evento.format },
+    }))
+
+    const { error: errorEspera } = await admin
+      .from('scheduled_emails')
+      .upsert(avisoEspera as never, { onConflict: 'profile_id,kind,event_id' })
+
+    if (errorEspera) console.error('[publicar] no se encoló el aviso de espera', errorEspera)
+
+    // Y el abono. Pagó y no se sienta: el crédito vuelve, que es lo que el
+    // propio panel promete —«su crédito no se toca»— y lo que Michael llama
+    // abono por mesa no conseguida. Sin esto le cobramos por nada.
+    for (const id of enEspera) await abonarSinMesa(id, corrida.event_id)
+  }
+
 
   await admin
     .from('matching_runs')

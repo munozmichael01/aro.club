@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { anotar } from '@/lib/auditoria'
 import { PESOS, repartir, roturas, evaluacion, desglose, resumen, zonasDe } from '@/lib/reparto/repartir'
 import { exigirOps } from '@/lib/ops'
 import { construirPool } from '@/lib/reparto/pool'
@@ -361,6 +362,19 @@ export async function POST(request: Request) {
     console.error('[repartir] no se guardó la corrida', errorCorrida)
     return NextResponse.json({ error: 'No pudimos guardar la propuesta.' }, { status: 500 })
   }
+
+  // Repartir es la decisión más grande del panel —mueve a todo el mundo de
+  // sitio— y era la única que no dejaba rastro: `mesas_repartidas` existía en
+  // el catálogo de acciones desde el primer día y no lo escribía nadie. Ante
+  // una mesa que salió mal, la pregunta «¿quién la armó y cuándo?» no tenía
+  // respuesta.
+  await anotar(actor, 'mesas_repartidas', 'evento', eventoId, {
+    corrida: corrida.id,
+    apuntados: personas.length,
+    mesas: r.mesas.length,
+    espera: r.espera.length,
+    media: Number(r.media.toFixed(3)),
+  })
 
   return NextResponse.json({
     corridaId: corrida.id,

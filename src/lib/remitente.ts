@@ -53,9 +53,10 @@ const PLANTILLA: Record<Correo, string> = {
   abrimos_zona: '11-abrimos-zona.html',
   fecha_cancelada: '12-fecha-cancelada.html',
   cuenta_lista: '13-cuenta-lista.html',
+  sin_mesa: '14-sin-mesa.html',
 }
 
-// Las plantillas se leen del disco una vez y se quedan: son trece ficheros
+// Las plantillas se leen del disco una vez y se quedan: son catorce ficheros
 // que no cambian mientras el proceso vive.
 const enMemoria = new Map<string, string>()
 

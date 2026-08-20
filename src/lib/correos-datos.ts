@@ -122,6 +122,10 @@ export async function prepararCorreo(fila: FilaDeCola): Promise<Preparado> {
   // comprobante que le pedimos que guarde y nadie se entera.
   const NECESITAN_FECHA: Correo[] = [
     'mesa_asignada', 'recordatorio', 'cancelacion', 'fecha_cancelada', 'abrimos_zona',
+    // `sin_mesa` nombra la fecha de la que se quedó fuera en su primera
+    // frase, y `publicar` SIEMPRE lo encola con su evento: si algún día
+    // llegara sin él, es mejor no mandarlo que mandar «del  salieron».
+    'sin_mesa',
   ]
   if (NECESITAN_FECHA.includes(fila.kind) && !evento) {
     return { error: 'ese correo necesita su fecha y no la tiene' }
@@ -187,6 +191,20 @@ export async function prepararCorreo(fila: FilaDeCola): Promise<Preparado> {
           enlaceSeguir: fila.profile_id
             ? `${SITIO}/verificacion`
             : `${SITIO}/cuestionario?t=${encodeURIComponent(firmar(a))}`,
+        },
+      }
+    }
+
+    // Quien pagó y no se sentó. Necesita la fecha de la que se quedó fuera
+    // —que viene con el evento— y la siguiente, que es lo único accionable
+    // que se le puede ofrecer.
+    case 'sin_mesa': {
+      const proximas = await proximasFechas(admin)
+      return {
+        a,
+        datos: {
+          ...base,
+          proxima1: proximas[0] ?? 'Te avisamos en cuanto abramos otra',
         },
       }
     }

@@ -1730,7 +1730,15 @@ class Component extends DCLogic {
       ? zonasRep.reduce((a, z) => a.concat(z.mesas), []).filter((m) => m.clave === St.confirmar)[0]
       : null;
 
-    const apuntadosRep = fr.zonas.reduce((a, z) => a + z[3], 0);
+    // El número que manda la ruta: `count` sobre las reservas de la fecha.
+    //
+    // Antes se sumaban los apuntados de cada zona, y una persona que acepta
+    // tres zonas contaba tres veces: el panel decía 8 donde había 7. La suma
+    // por zonas sirve para saber dónde hay gente —eso es el desglose de
+    // abajo—, no para cuántos son.
+    const apuntadosRep = fr.apuntados != null
+      ? fr.apuntados
+      : fr.zonas.reduce((a, z) => a + z[3], 0);
     // Mientras el reparto de ESTA fecha no ha llegado, las cifras no son
     // cero: es que no se saben. Un cero aquí dice «no hay mesas» justo
     // cuando lo que pasa es que todavía no hemos preguntado.
@@ -2367,12 +2375,19 @@ class Component extends DCLogic {
       // sigue siendo destino sin traerse los avatares aquí.
       barra: 'position:sticky;bottom:0;z-index:30;border-top:1px solid ' + (St.arrastrando ? '#8F4515' : 'rgba(20,52,42,.16)') + ';background:' + (St.arrastrando ? '#F2E9D5' : 'rgba(242,233,213,.96)') + ';backdrop-filter:blur(12px);transition:all 180ms ease',
       etiquetaBarra: 'display:block;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:' + (St.arrastrando ? '#8F4515' : (espera.length ? '#8F4515' : '#1B5138')),
+      // «CERO EN ESPERA» solo si se ha repartido. Sin reparto no hay nadie
+      // sentado, o sea que en espera están TODOS, y el panel decía cero con
+      // siete esperando: la misma trampa que las métricas de arriba, que ya
+      // distinguen «no hay» de «no se sabe».
       tituloBarra: St.arrastrando ? 'SUÉLTALO AQUÍ PARA DEJARLO EN ESPERA'
-        : (espera.length ? (espera.length === 1 ? 'UNA PERSONA EN ESPERA' : espera.length + ' EN ESPERA') : 'CERO EN ESPERA'),
+        : (!repartoListo ? 'TODAVÍA SIN REPARTIR'
+          : (espera.length ? (espera.length === 1 ? 'UNA PERSONA EN ESPERA' : espera.length + ' EN ESPERA') : 'CERO EN ESPERA')),
       notaBarra: St.arrastrando ? 'Sale del reparto de esta fecha y su crédito no se toca.'
-        : (espera.length
-          ? 'Publicar deja fuera a ' + (espera.length === 1 ? 'esa persona' : 'esas ' + espera.length) + '. Se les avisa hoy.'
-          : 'Todos los apuntados tienen ' + vozRep.unidad + '.'),
+        : (!repartoListo
+          ? (apuntadosRep === 1 ? 'Hay una persona apuntada y ninguna mesa armada todavía.' : 'Hay ' + apuntadosRep + ' personas apuntadas y ninguna ' + vozRep.unidad + ' armada todavía.')
+          : (espera.length
+            ? 'Publicar deja fuera a ' + (espera.length === 1 ? 'esa persona' : 'esas ' + espera.length) + '. Se les avisa hoy, con su crédito de vuelta.'
+            : 'Todos los apuntados tienen ' + vozRep.unidad + '.')),
       textoListas: listasParaPublicar === 0
         ? (publicadas === totalMesas ? 'Todo publicado' : 'Ninguna lista para publicar')
         : (listasParaPublicar === (totalMesas - publicadas)

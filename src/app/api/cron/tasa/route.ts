@@ -3,7 +3,22 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
- * La tasa del BCV, todas las noches a medianoche de Caracas.
+ * La tasa del BCV. Cuatro veces al día, y no una a medianoche.
+ *
+ * Corría una sola vez, a las 04:00 UTC —medianoche en Caracas— y ahí está el
+ * fallo: a esa hora el BCV todavía no ha publicado la tasa del día que
+ * empieza, así que la fuente devolvía la de AYER y eso es lo que se guardaba.
+ * Todos los días. El producto cobraba siempre con la del día anterior, que es
+ * exactamente lo que esta ruta existe para evitar.
+ *
+ * No se ve como un fallo porque no falla: el cron corre, la fuente contesta,
+ * la fila se escribe. Solo que con la fecha de ayer. Se descubrió mirando
+ * `fx_rates` y viendo que la fila del 18 se había creado a las 04:00 del 19.
+ *
+ * Ahora se pregunta a medianoche y otras tres veces por la mañana de Caracas
+ * —8:00, 11:00 y 14:00—. El `upsert` por `rate_date` hace que repetir sea
+ * gratis: en cuanto el BCV publica, la fila del día aparece sola, y si ya
+ * estaba no pasa nada.
  *
  * En `vercel.json` el cron dice `0 4 * * *` porque Vercel programa en UTC
  * y Caracas es UTC-4. No es un horario raro: son las doce de la noche

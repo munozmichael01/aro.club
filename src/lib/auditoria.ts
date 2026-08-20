@@ -28,6 +28,9 @@ export type Accion =
   | 'pago_no_cuadra'
   | 'fecha_abierta'
   | 'fecha_cancelada'
+  // La escribe un DISPARADOR de `events`, no una ruta: borrar una fecha se
+  // hace con la clave de servicio y no pasa por el panel.
+  | 'fecha_borrada'
   | 'mesas_publicadas'
   | 'mesas_despublicadas'
   | 'mesas_repartidas'

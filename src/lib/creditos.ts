@@ -64,3 +64,64 @@ export async function anotarPagoDeEvento(
   // peor. Se grita en el log para poder cuadrarlo después.
   if (error) console.error('[creditos] no se anotó el pago por evento', bookingId, error)
 }
+
+/**
+ * El abono de quien pagó y no se sentó.
+ *
+ * Al repartir siempre puede sobrar gente: las mesas son de seis y las reglas
+ * son duras, así que con siete apuntados hay uno que no entra. Ese uno pagó
+ * igual, y hasta ahora se le cobraba por una mesa que no tuvo — el panel
+ * prometía «su crédito no se toca» y el libro decía lo contrario.
+ *
+ * Se anota una devolución, no se borra el cargo: el libro cuenta lo que pasó
+ * —compró, se le cobró, no entró, se le devolvió— y el saldo queda en uno,
+ * listo para la próxima fecha sin volver a pagar.
+ */
+export async function abonarSinMesa(perfilId: string, eventoId: string): Promise<void> {
+  const admin = createAdminClient()
+
+  // La reserva de esta persona en ESTA fecha: el abono se ata a ella para
+  // poder no repetirlo y para que se vea de qué fecha viene.
+  const { data: reserva } = await admin
+    .from('bookings')
+    .select('id')
+    .eq('profile_id', perfilId)
+    .eq('event_id', eventoId)
+    .maybeSingle()
+
+  if (!reserva) return
+
+  // Idempotente: publicar dos veces no abona dos veces.
+  const { data: yaEsta } = await admin
+    .from('credit_ledger')
+    .select('id')
+    .eq('booking_id', reserva.id)
+    .eq('reason', 'refund')
+    .limit(1)
+    .maybeSingle()
+
+  if (yaEsta) return
+
+  // Y solo si de verdad se le cobró algo: quien no tiene cargo en esta
+  // reserva no tiene nada que abonar, y regalarle un crédito sería inventar
+  // dinero.
+  const { data: cargo } = await admin
+    .from('credit_ledger')
+    .select('id')
+    .eq('booking_id', reserva.id)
+    .eq('reason', 'event_charge')
+    .limit(1)
+    .maybeSingle()
+
+  if (!cargo) return
+
+  const { error } = await admin.from('credit_ledger').insert({
+    profile_id: perfilId,
+    delta: 1,
+    reason: 'refund',
+    booking_id: reserva.id,
+    note: 'No entró en mesa esta fecha',
+  } as never)
+
+  if (error) console.error('[creditos] no se abonó la mesa no conseguida', reserva.id, error)
+}
