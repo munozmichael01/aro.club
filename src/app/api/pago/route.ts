@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { anotarPagoDeEvento } from '@/lib/creditos'
 import { campoDe, valido } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
@@ -505,6 +506,9 @@ export async function POST(request: Request) {
   }
 
   if (!m.manual) {
+    // Confirmado en el acto: el libro se anota aquí.
+    await anotarPagoDeEvento(user.id, bookingId)
+
     await admin
       .from('bookings')
       .update({ status: 'confirmed', confirmed_at: ahora })

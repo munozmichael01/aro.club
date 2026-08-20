@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { anotarPagoDeEvento } from '@/lib/creditos'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
@@ -236,6 +237,11 @@ export async function POST(request: Request) {
         .update({ status: 'confirmed', confirmed_at: ahora, hold_until: null })
         .eq('id', pago.booking_id)
     }
+
+    // Y el libro de créditos, que hasta ahora no se escribía al pagar por
+    // evento: la compra y el cargo, neto cero. Sin esto, una devolución
+    // posterior era un crédito que aparecía de la nada.
+    if (pago.profile_id) await anotarPagoDeEvento(pago.profile_id, pago.booking_id)
 
     // CON su evento. Iba con `{}`, y sin evento no hay fecha: la plantilla
     // dice «Tu reserva del {{ cuando }} pasa de pendiente a confirmada» y al
