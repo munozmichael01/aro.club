@@ -184,3 +184,34 @@ sin una sola fila con la que notar si se rompió.
 de filtro se nota en producción. La señal es medible: el tiempo de
 `/api/operacion/gente` menos el de cualquier otra ruta de operación —ese resto
 es lo que cuesta contar—.
+
+---
+
+## 7 · La ciudad, escrita en los datos estructurados
+
+**Tiene fecha de caducidad y no avisa cuando llega.**
+
+En el JSON-LD de la portada hay dos sitios que dicen **Caracas**: el
+`areaServed` de la organización y el del servicio. Hoy es verdad y ayuda —es
+lo que hace que un buscador o un asistente entienda dónde opera esto—.
+
+**El día que abra otra ciudad, si nadie lo toca**, los buscadores seguirán
+creyendo que Aro solo existe en Caracas. Y no falla nada: la web funciona, la
+gente de Valencia se apunta igual, simplemente no la encuentra quien busca
+desde allí.
+
+Es el mismo animal que el resto de esta semana: un dato escrito a mano que
+envejece solo mientras lo de al lado se actualiza.
+
+**Dónde está:** `public/Aro Club - Landing v4.dc.html`, dentro del bloque
+`application/ld+json`, en los dos nodos con `areaServed`.
+
+**Lo que hay que hacer el día que se abra otra ciudad:** cambiar `City` por la
+lista de ciudades donde hay fechas, o derivarlo de la tabla `cities` en vez de
+escribirlo. Lo segundo es más trabajo y quita el problema para siempre.
+
+**Por qué espera.** Hoy solo hay Caracas y el dato es correcto. Adelantarlo
+sería escribir ciudades donde todavía no hay nada, que es peor.
+
+El texto que lee una persona ya NO menciona la ciudad —dice «en tu ciudad»—,
+así que esto es solo el dato para máquinas.

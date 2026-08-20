@@ -30,8 +30,8 @@
   web. Las preguntas frecuentes van ahí COMPLETAS, con su respuesta, y
   salen de las mismas de la pantalla.
 -->
-<title>Aro Club · Seis desconocidos, una mesa, cada semana</title>
-<meta name="description" content="Seis personas que no se conocen, verificadas una a una, cenando juntas una vez por semana. Ocho dólares el puesto. Empezamos en Caracas." />
+<title>Aro Club · Un club para conocer gente en tu ciudad</title>
+<meta name="description" content="Sin perfiles, sin swipe y sin planificar nada. Elegimos el restaurante, armamos el grupo de seis y reservamos a tu nombre. Tú llegas a las siete." />
 <link rel="canonical" href="https://aro.club/" />
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
 <meta name="theme-color" content="#14342A" />
@@ -50,14 +50,14 @@
 <meta property="og:site_name" content="Aro Club" />
 <meta property="og:locale" content="es_VE" />
 <meta property="og:url" content="https://aro.club/" />
-<meta property="og:title" content="Seis desconocidos, una mesa, cada semana." />
-<meta property="og:description" content="Verificamos a cada persona, una a una, y armamos la mesa según cómo eres. Empezamos en Caracas." />
+<meta property="og:title" content="Ya sabemos con quién cenas el jueves." />
+<meta property="og:description" content="Un club para conocer gente en tu ciudad. Elegimos el sitio, armamos el grupo y reservamos a tu nombre — tú llegas a las siete." />
 <meta property="og:image" content="https://aro.club/correo/mesa-de-seis.jpg" />
 <meta property="og:image:alt" content="Seis personas cenando en una mesa" />
 
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Seis desconocidos, una mesa, cada semana." />
-<meta name="twitter:description" content="Seis personas verificadas, una mesa, cada semana. Ocho dólares el puesto." />
+<meta name="twitter:description" content="Sin perfiles. Sin swipe. Sin planificar nada. Una mesa de seis, cada semana." />
 <meta name="twitter:image" content="https://aro.club/correo/mesa-de-seis.jpg" />
 
 <script type="application/ld+json">
@@ -71,7 +71,7 @@
     "url": "https://aro.club/",
     "logo": "https://aro.club/favicon.svg",
     "email": "hola@aro.club",
-    "description": "Cenas de seis desconocidos verificados, una vez por semana. Empezamos en Caracas.",
+    "description": "Un club para conocer gente en tu ciudad. Elegimos el restaurante, armamos el grupo de seis y reservamos a tu nombre.",
     "areaServed": {
       "@type": "City",
       "name": "Caracas",
@@ -206,6 +206,40 @@
   }
 ]
 }
+</script>
+<script>
+/*
+  La URL se limpia sola al llegar.
+
+  Instagram, Facebook y los anuncios cuelgan su rastreo del enlace —`utm_*`,
+  `fbclid`, `gclid`— y esos parametros viajan a donde vaya la persona
+  despues: abre en Chrome, copia de la barra, pega en WhatsApp, y lo que
+  comparte es un churro de doscientos caracteres con un identificador suyo
+  dentro. Feo, y ademas es su rastro personal viajando a un grupo.
+
+  Aqui no se pierde la atribucion: la peticion ya llego con sus parametros y
+  la analitica los vio. Lo unico que cambia es lo que queda escrito en la
+  barra a partir de ese momento.
+
+  `replaceState` y no `pushState`: no se anade una entrada al historial, asi
+  que el boton de atras sigue llevando a donde llevaba.
+*/
+(function () {
+  try {
+    var u = new URL(window.location.href);
+    var fuera = ['fbclid', 'gclid', 'igshid', 'mc_cid', 'mc_eid', '_ga'];
+    var habia = false;
+    u.searchParams.forEach(function (_, k) {
+      if (k.indexOf('utm_') === 0 || fuera.indexOf(k) >= 0) habia = true;
+    });
+    if (!habia) return;
+    fuera.forEach(function (k) { u.searchParams.delete(k); });
+    Array.from(u.searchParams.keys()).forEach(function (k) {
+      if (k.indexOf('utm_') === 0) u.searchParams.delete(k);
+    });
+    window.history.replaceState({}, '', u.pathname + (u.search || '') + u.hash);
+  } catch (e) { /* si el navegador no deja, se queda la URL como venia */ }
+})();
 </script>
 </head>
 <body>

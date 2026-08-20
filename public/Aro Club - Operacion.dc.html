@@ -929,6 +929,71 @@
         <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;max-width:60ch;text-wrap:pretty">{{ notaPieGente }}</div>
       </div>
     </sc-if>
+
+    <sc-if value="{{ esHistorico }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <h1 style="{{ h1 }}">Historial de mesas</h1>
+        <p style="{{ bajada }}">{{ bajadaHistorico }}</p>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(26px,3.2vw,34px)">
+          <div style="flex:1 1 320px;display:flex;align-items:center;gap:12px;min-height:60px;padding:0 20px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4">
+            <span style="flex:0 0 auto;font:400 18px/1 'Inter Tight',sans-serif;color:#566A5D">⌕</span>
+            <input type="text" value="{{ qHistorico }}" onChange="{{ onQHistorico }}" placeholder="Buscar por zona, restaurante o persona" aria-label="Buscar en el historial de mesas" style="flex:1;min-width:0;min-height:58px;border:none;background:transparent;color:#14342A;font:400 16px/1 'Inter Tight',sans-serif;outline:none" />
+            <sc-if value="{{ hayQHistorico }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ limpiaQHistorico }}" aria-label="Limpiar" style="flex:0 0 auto;min-width:44px;min-height:44px;border:none;background:transparent;color:#566A5D;font:400 18px/1 'Inter Tight',sans-serif;cursor:pointer">×</button>
+            </sc-if>
+          </div>
+        </div>
+
+        <sc-if value="{{ hayHistorico }}" hint-placeholder-val="{{ true }}">
+          <div style="{{ cajaHistorico }}" class="aro-hist">
+            <sc-for list="{{ mesasHistorico }}" as="m" hint-placeholder-count="4">
+              <div style="{{ m.caja }}">
+                <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline">
+                  <span style="font:400 clamp(19px,2vw,23px)/1.2 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ m.numero }}</span>
+                  <span style="{{ m.selloEstilo }}">{{ m.sello }}</span>
+                  <span style="flex:1 1 auto"></span>
+                  <sc-if value="{{ m.hayNps }}" hint-placeholder-val="{{ false }}">
+                    <span style="font:600 13px/1 'Inter Tight',sans-serif;color:#1B5138;font-variant-numeric:tabular-nums">{{ m.nps }}</span>
+                  </sc-if>
+                </div>
+                <div style="font:500 14px/1.45 'Inter Tight',sans-serif;color:#2C4A38;margin-top:6px">{{ m.cuando }}</div>
+                <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ m.donde }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+                  <sc-for list="{{ m.comensales }}" as="c" hint-placeholder-count="6">
+                    <a href="{{ c.enlace }}" style="{{ c.chip }}">{{ c.nombre }}{{ c.marca }}</a>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ m.sinComensales }}" hint-placeholder-val="{{ false }}">
+                  <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-top:12px">Esta mesa no tiene a nadie sentado. Es un resto de un reparto que se rehízo.</div>
+                </sc-if>
+                <sc-if value="{{ m.hayNotas }}" hint-placeholder-val="{{ false }}">
+                  <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;padding-top:12px;border-top:1px solid rgba(20,52,42,.12);text-wrap:pretty">{{ m.notas }}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ hayMasHistorico }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px">
+              <span style="flex:1 1 200px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ textoMasHistorico }}</span>
+              <sc-if value="{{ hayAntesHistorico }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ irAntesHistorico }}" style="{{ botonPagina }}">Anteriores</button>
+              </sc-if>
+              <sc-if value="{{ hayDespuesHistorico }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ irDespuesHistorico }}" style="{{ botonPagina }}">Siguientes</button>
+              </sc-if>
+            </div>
+          </sc-if>
+        </sc-if>
+        <sc-if value="{{ sinHistorico }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:24px;border:1px dashed rgba(20,52,42,.28);padding:clamp(20px,2.6vw,26px);max-width:52ch;margin-top:clamp(22px,2.6vw,28px)">
+            <div style="font:400 clamp(20px,2.2vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloSinHistorico }}</div>
+            <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:8px;text-wrap:pretty">{{ notaSinHistorico }}</div>
+          </div>
+        </sc-if>
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:16px;max-width:60ch;text-wrap:pretty">{{ notaPieHistorico }}</div>
+      </div>
+    </sc-if>
   </div>
 </div>
 
@@ -975,6 +1040,11 @@ class Component extends DCLogic {
     gente: null, zonasGente: [], embudoGente: [], totalGente: 0, verificadosGente: 0,
     paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {},
     perfilesGente: 0, leadsGente: null, pidiendoGente: false,
+    // Histórico: las mesas que ya se repartieron alguna vez. Se pide aparte
+    // de Gente porque responde otra pregunta —dónde se sentó quién— y porque
+    // la mayoría de las sesiones no lo abren.
+    historico: null, resumenHistorico: null, totalHistorico: 0,
+    qHistorico: '', paginaHistorico: 1, paginasHistorico: 1, pidiendoHistorico: false,
     // --- y el estado de trabajar con ellas ------------------------------
     trabajando: false, fallo: '', aviso: '',
     desdeMesa: null, sobreMesa: null, recalculando: [], repartiendo: false,
@@ -991,6 +1061,7 @@ class Component extends DCLogic {
     // cuando se sabe si esta cuenta es admin.
     this.cargarEquipo().then((s) => this.abrirDelHash(s.esAdmin));
     this.cargarGente();
+    this.cargarHistorico();
     this.montarArrastre();
     this.renovarFirmas();
   }
@@ -1007,7 +1078,7 @@ class Component extends DCLogic {
     const admin = esAdmin === undefined ? this.state.esAdmin : esAdmin;
     return ['mesas', 'verificaciones', 'pagos', 'reportes', 'fechas', 'locales']
       .concat(admin ? ['equipo'] : [])
-      .concat(['gente']);
+      .concat(['gente', 'historico']);
   }
 
   /**
@@ -1167,6 +1238,47 @@ class Component extends DCLogic {
     this.setState({ busca: texto });
     clearTimeout(this._teclas);
     this._teclas = setTimeout(() => this.filtrarGente({ busca: texto }), 300);
+  }
+
+  /**
+   * El histórico de mesas.
+   *
+   * Mismo patrón que Gente y por el mismo motivo: la búsqueda y el paginado
+   * se resuelven en el servidor, así que cada cambio vuelve a preguntar. El
+   * estado que se consulta es el de ahora más lo que acaba de cambiar,
+   * porque `setState` no promete haberlo aplicado cuando esto corre.
+   */
+  cargarHistorico(cambios) {
+    const St = Object.assign({}, this.state, cambios || {});
+    const q = { q: (St.qHistorico || '').trim(), pagina: String(St.paginaHistorico || 1) };
+    const partes = Object.keys(q).filter((k) => q[k] !== '' && q[k] !== '1')
+      .map((k) => k + '=' + encodeURIComponent(q[k]));
+
+    return this.pedir('/api/operacion/historico' + (partes.length ? '?' + partes.join('&') : ''),
+      (d) => ({
+        historico: d.mesas, resumenHistorico: d.resumen, totalHistorico: d.total,
+        paginaHistorico: d.pagina, paginasHistorico: d.paginas, pidiendoHistorico: false
+      }),
+      { historico: [], resumenHistorico: null, totalHistorico: 0,
+        paginaHistorico: 1, paginasHistorico: 1, pidiendoHistorico: false });
+  }
+
+  /**
+   * Buscar en el histórico. Espera a que dejes de escribir, como en Gente.
+   *
+   * Vuelve a la primera página: sin eso, buscar estando en la tercera deja la
+   * lista vacía con un total grande al lado y parece que no hay resultados.
+   */
+  buscarHistorico(texto) {
+    this.setState({ qHistorico: texto });
+    clearTimeout(this._teclasHist);
+    this._teclasHist = setTimeout(
+      () => this.cargarHistorico({ qHistorico: texto, paginaHistorico: 1 }), 300);
+  }
+
+  paginarHistorico(pagina) {
+    this.setState({ paginaHistorico: pagina });
+    return this.cargarHistorico({ paginaHistorico: pagina });
   }
 
   // Equipo es solo de admin: un 404 aquí no es un fallo, es la respuesta. La
@@ -1949,7 +2061,8 @@ class Component extends DCLogic {
       ['Fechas', String(FECHAS_REP.length)],
       ['Locales', String(locales.length)]
     ].concat(St.esAdmin ? [['Equipo', String(conAcceso)]] : [])
-      .concat([['Gente', String(St.totalGente || 0)]]).map((p, i) => {
+      .concat([['Gente', String(St.totalGente || 0)],
+               ['Historial', String(St.totalHistorico || 0)]]).map((p, i) => {
       const on = v === i;
       return {
         nombre: p[0], n: p[1],
@@ -2459,6 +2572,86 @@ class Component extends DCLogic {
             ? ', de ' + LEADS.total + ' apuntados: ' + bajas + (bajas === 1 ? ' se dio de baja y no va dentro' : ' se dieron de baja y no van dentro') + '. Esa baja no viaja con el fichero, así que se quita aquí.'
             : '. Quien se dé de baja deja de aparecer aquí automáticamente: esa baja no viaja con el fichero.');
       }).call(this),
+      // ── el histórico: dónde se ha sentado quién ───────────────────
+      //
+      // Las tres cosas que se buscan aquí —zona, restaurante y persona— van
+      // en UNA caja porque es como se pregunta: quien escribe «altamira» no
+      // está eligiendo entre buscar por zona o por local. El filtrado lo hace
+      // la ruta; esto solo pinta.
+      esHistorico: esta('historico'),
+      qHistorico: St.qHistorico || '',
+      hayQHistorico: !!String(St.qHistorico || '').trim(),
+      onQHistorico: (e) => this.buscarHistorico(e.target.value),
+      limpiaQHistorico: () => this.buscarHistorico(''),
+      bajadaHistorico: (() => {
+        if (!St.historico) return 'Leyendo las mesas.';
+        const r = St.resumenHistorico || {};
+        if (!St.totalHistorico) {
+          return String(St.qHistorico || '').trim()
+            ? 'Ninguna mesa cuadra con «' + String(St.qHistorico).trim() + '».'
+            : 'Todavía no se ha repartido ninguna mesa. En cuanto una fecha se reparta, aparece aquí.';
+        }
+        // Comensales y personas son cifras distintas a propósito: quien ha
+        // cenado tres veces cuenta tres veces en la primera y una en la
+        // segunda. La diferencia es exactamente cuánta gente repite.
+        return r.mesas + (r.mesas === 1 ? ' mesa' : ' mesas') + ', '
+          + r.comensales + (r.comensales === 1 ? ' asiento' : ' asientos') + ' y '
+          + r.personas + (r.personas === 1 ? ' persona distinta' : ' personas distintas')
+          + (r.restaurantes ? ' en ' + r.restaurantes + (r.restaurantes === 1 ? ' restaurante.' : ' restaurantes.') : '.')
+          + (r.valoradas ? ' NPS medio ' + String(r.nps).replace('.', ',') + ' sobre ' + r.valoradas + (r.valoradas === 1 ? ' mesa valorada.' : ' mesas valoradas.') : ' Ninguna valorada todavía.');
+      })(),
+      cajaHistorico: 'display:flex;flex-direction:column;gap:12px;transition:opacity 160ms ease;opacity:' + (St.pidiendoHistorico ? '.45' : '1'),
+      hayHistorico: (St.historico || []).length > 0,
+      sinHistorico: !!St.historico && St.historico.length === 0,
+      mesasHistorico: (St.historico || []).map((m) => {
+        const f = new Date(m.fecha);
+        const cuando = f.toLocaleDateString('es-VE',
+          { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        // Tres estados y no dos: «propuesta» es un reparto que todavía no se
+        // ha publicado, y leerlo como mesa hecha es lo que hace que alguien
+        // dé por avisada a gente que no sabe nada.
+        const sello = !m.publicada ? ['PROPUESTA', '#8F4515']
+          : m.porCelebrar ? ['POR CELEBRAR', '#1B5138'] : ['CELEBRADA', '#566A5D'];
+        return {
+          numero: 'Mesa ' + m.numero,
+          cuando: cuando.charAt(0).toUpperCase() + cuando.slice(1),
+          donde: m.restaurante + ' · ' + m.zona + ' · ' + m.formato,
+          sello: sello[0],
+          selloEstilo: 'display:inline-flex;align-items:center;min-height:26px;padding:0 11px;border-radius:999px;font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;white-space:nowrap;border:1px solid ' + sello[1] + ';color:' + sello[1],
+          // El NPS solo se enseña si alguien valoró. Un «0» donde no hay
+          // respuestas se lee como una mesa que salió fatal.
+          hayNps: m.nps != null,
+          nps: m.nps == null ? '' : 'NPS ' + String(m.nps).replace('.', ',') + ' · ' + m.valoraron + (m.valoraron === 1 ? ' respuesta' : ' respuestas'),
+          hayNotas: !!m.notas,
+          notas: m.notas,
+          comensales: m.comensales.map((c) => ({
+            nombre: c.nombre,
+            enlace: '/operacion/miembro?id=' + c.id,
+            // Solo se marca lo que se sale de lo normal. Poner «vino» junto
+            // a los cinco que vinieron es ruido; el que falta es la
+            // información, y es la que hace falta al mirar una mesa vieja.
+            marca: c.vino === 'no' ? ' · no vino' : '',
+            chip: 'display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 14px;border-radius:999px;text-decoration:none;background:#FFFBF0;border:1px solid ' + (c.vino === 'no' ? 'rgba(143,69,21,.45)' : 'rgba(20,52,42,.16)') + ';color:' + (c.vino === 'no' ? '#8F4515' : '#14342A') + ';font:500 14px/1 \'Inter Tight\',sans-serif'
+          })),
+          sinComensales: m.comensales.length === 0,
+          caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,22px)'
+        };
+      }),
+      hayMasHistorico: (St.paginasHistorico || 1) > 1,
+      textoMasHistorico: 'Página ' + (St.paginaHistorico || 1) + ' de ' + (St.paginasHistorico || 1)
+        + ' · ' + St.totalHistorico + (St.totalHistorico === 1 ? ' mesa' : ' mesas') + ' en total.',
+      hayAntesHistorico: (St.paginaHistorico || 1) > 1,
+      hayDespuesHistorico: (St.paginaHistorico || 1) < (St.paginasHistorico || 1),
+      irAntesHistorico: () => this.paginarHistorico(Math.max(1, (this.state.paginaHistorico || 1) - 1)),
+      irDespuesHistorico: () => this.paginarHistorico((this.state.paginaHistorico || 1) + 1),
+      tituloSinHistorico: !St.historico ? 'Cargando…'
+        : (String(St.qHistorico || '').trim() ? 'Nada con ese nombre.' : 'Todavía no hay mesas.'),
+      notaSinHistorico: !St.historico ? 'Leyendo las mesas.'
+        : (String(St.qHistorico || '').trim()
+          ? 'Se busca por zona, por restaurante y por persona a la vez. Prueba con menos letras, o con el nombre del sitio.'
+          : 'Una mesa existe desde que se reparte. En cuanto repartas una fecha, aparece aquí con quién se sentó dónde.'),
+      notaPieHistorico: 'Esto es de lectura. La ficha de cada persona se abre pinchando su nombre, y desde ahí se ve su historial completo.',
+
       notaPieGente: 'Desde aquí no sale ningún correo: esta pestaña sirve para saber, no para disparar.'
         + (St.esAdmin ? ' La exportación de leads queda anotada con quién la sacó.' : '')
         + ' El documento, el teléfono y el correo completo se abren en la ficha de una en una, y la cédula solo desde la cola de verificaciones.',
