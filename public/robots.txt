@@ -1,0 +1,25 @@
+# Aro Club · aro.club
+#
+# Todo abierto salvo lo que solo sirve estando dentro. No es seguridad
+# —esas rutas ya piden sesión— es higiene: que un buscador no gaste su
+# presupuesto de rastreo en pantallas que le van a devolver un login, y que
+# no acaben indexadas URLs con el correo de alguien en el parámetro.
+User-agent: *
+Allow: /
+
+Disallow: /operacion
+Disallow: /miembro
+Disallow: /locales
+Disallow: /cuenta
+Disallow: /mesa
+Disallow: /perfil
+Disallow: /pago
+Disallow: /clave
+Disallow: /baja
+Disallow: /datos
+Disallow: /cuestionario
+Disallow: /verificacion
+Disallow: /cancelar
+Disallow: /api/
+
+Sitemap: https://aro.club/sitemap.xml

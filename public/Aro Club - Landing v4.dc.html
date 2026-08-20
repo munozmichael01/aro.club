@@ -9,6 +9,190 @@
 <body>
 <x-dc>
 <helmet>
+
+  <!--
+    SEO y datos estructurados.
+
+    Van AQUÍ y no en `src/app/layout.tsx` porque esta pantalla es un fichero
+    estático servido por una reescritura: no pasa por el layout de Next, así
+    que los `metadata` de allí no la tocan. Es el tipo de cosa que se da por
+    hecha y deja una portada sin un solo meta.
+
+    El JSON-LD no es adorno de buscador: es lo que leen los asistentes que
+    hoy responden «¿dónde conozco gente en Caracas?» sin que nadie visite la
+    web. Las preguntas frecuentes van ahí COMPLETAS, con su respuesta, y
+    salen de las mismas de la pantalla.
+  -->
+  <title>Aro Club · Seis desconocidos, una mesa, cada semana en Caracas</title>
+  <meta name="description" content="Seis personas que no se conocen, verificadas una a una, cenando en un restaurante del este de Caracas. Una vez por semana. Ocho dólares el puesto." />
+  <link rel="canonical" href="https://aro.club/" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+  <meta name="theme-color" content="#14342A" />
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/correo/aro-verde.png" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Aro Club" />
+  <meta property="og:locale" content="es_VE" />
+  <meta property="og:url" content="https://aro.club/" />
+  <meta property="og:title" content="Seis desconocidos, una mesa, cada semana." />
+  <meta property="og:description" content="Cenas curadas en el este de Caracas. Verificamos a todo el mundo, uno a uno, y armamos la mesa según cómo eres." />
+  <meta property="og:image" content="https://aro.club/correo/mesa-de-seis.jpg" />
+  <meta property="og:image:alt" content="Seis personas cenando en una mesa" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Seis desconocidos, una mesa, cada semana." />
+  <meta name="twitter:description" content="Cenas curadas en el este de Caracas. Ocho dólares el puesto." />
+  <meta name="twitter:image" content="https://aro.club/correo/mesa-de-seis.jpg" />
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://aro.club/#org",
+      "name": "Aro Club",
+      "url": "https://aro.club/",
+      "logo": "https://aro.club/favicon.svg",
+      "email": "hola@aro.club",
+      "description": "Cenas de seis desconocidos verificados, una vez por semana, en el este de Caracas.",
+      "areaServed": {
+        "@type": "City",
+        "name": "Caracas",
+        "address": {
+          "@type": "PostalAddress",
+          "addressCountry": "VE"
+        }
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://aro.club/#web",
+      "url": "https://aro.club/",
+      "name": "Aro Club",
+      "inLanguage": "es-VE",
+      "publisher": {
+        "@id": "https://aro.club/#org"
+      }
+    },
+    {
+      "@type": "Service",
+      "name": "Cena Aro",
+      "provider": {
+        "@id": "https://aro.club/#org"
+      },
+      "serviceType": "Cena para conocer gente",
+      "areaServed": {
+        "@type": "City",
+        "name": "Caracas"
+      },
+      "description": "Seis personas que no se conocen, verificadas una a una, en un restaurante que elegimos nosotros. Una vez por semana.",
+      "offers": {
+        "@type": "Offer",
+        "price": "8",
+        "priceCurrency": "USD",
+        "description": "Ocho dólares por puesto, pagados en bolívares a la tasa del día. No incluye lo que consumas."
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://aro.club/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Qué incluye lo que pago?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Los 8 USD cubren el emparejamiento, la verificación de todo el grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio, como en cualquier salida: entre 20 y 35 USD según dónde sea. Nos dices tu tramo antes y elegimos el restaurante con el número más bajo de la mesa."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Y si no me cae bien nadie?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Pasa, y no es un fracaso. Son dos horas, a las nueve estás libre y no le debes nada a nadie. Nos lo cuentas después y eso entra en el emparejamiento de la próxima: qué no funcionó y con quién no volver a sentarte."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Puedo ir con un amigo?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Todo el grupo son desconocidos entre sí, incluidos ustedes dos. Con una pareja conocida en la mesa el resto se convierte en público, y eso rompe la noche para los demás."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cómo sé que las otras personas son reales?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Porque pasaron por lo mismo que tú: documento de identidad, una foto y una revisión humana que compara las dos. En la pantalla de tu mesa aparece explícito que todo el grupo tiene identidad verificada y edad confirmada."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿A qué hora es y cuánto dura?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A las siete de la tarde, y sobre las nueve estás libre. Es a propósito: una cena que no se come la noche entera es una cena a la que se dice que sí."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Y si soy el más joven de la mesa?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No lo vas a ser por mucho. Entre la persona más joven y la mayor de una mesa no hay más de diez años, así que si tienes 24 te sientas con gente de 20 a 34. Es una regla del emparejamiento, no una casualidad."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Soy vegetariano, ¿o tengo una alergia?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nos lo dices en el perfil y elegimos un sitio donde puedas comer sin negociar con la carta. No se lo contamos a la mesa: si quieres explicarlo tú, es cosa tuya."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cómo sé dónde es, y qué pasa si llego tarde?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "El jueves a las doce del mediodía se abre todo: restaurante, dirección y tu número de mesa. Si se te hace tarde, avisas desde la app con un toque y se lo decimos a la mesa. Nadie se queda mirando la puerta."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué pasa si alguien se comporta mal?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Lo reportas desde tu mesa después y lo lee una persona el mismo día. Puedes bloquear a alguien para que nunca vuelva a coincidir contigo sin que se entere, y quien acumula reportes sale del club. Sin escándalo y sin apelación pública."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Por qué preguntan mi edad y mi género?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Para que el grupo tenga referencias parecidas y esté balanceado. No se muestran a los demás: de ti solo ven el nombre con el que quieres que te llamen y tu sector."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cuándo hay mesa en mi zona?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Abrimos donde se junta suficiente gente que pueda llegar. Marca las tuyas arriba y te escribimos el día que se abre la primera. No antes: no queremos escribirte para nada."
+          }
+        }
+      ]
+    }
+  ]
+}
+  </script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
 <link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
