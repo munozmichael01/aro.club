@@ -50,3 +50,7 @@ supabase/.temp/
 # Esa sí se commitea: es la plantilla que dice qué variables hacen falta.
 .env
 .vercel
+
+# Material de marca y carrouseles: se trabajan aparte, no van al repo.
+Aro Club Brand/
+carrousel/
