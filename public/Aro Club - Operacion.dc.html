@@ -92,6 +92,9 @@
               <span style="flex:1;min-width:0;text-align:left">
                 <span style="{{ f.txt }}">{{ f.titulo }}</span>
                 <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ f.detalle }}</span>
+                <sc-if value="{{ f.hayAviso }}" hint-placeholder-val="{{ false }}">
+                  <span style="{{ f.avisoEstilo }}">{{ f.aviso }}</span>
+                </sc-if>
               </span>
               <span style="{{ f.sello }}">{{ f.estado }}</span>
             </button>
@@ -672,6 +675,9 @@
                       <span style="flex:1;min-width:0;text-align:left">
                         <span style="{{ a.txt }}">{{ a.titulo }}</span>
                         <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ a.detalle }}</span>
+                        <sc-if value="{{ a.hayAviso }}" hint-placeholder-val="{{ false }}">
+                          <span style="{{ a.avisoEstilo }}">{{ a.aviso }}</span>
+                        </sc-if>
                       </span>
                     </button>
                   </sc-for>
@@ -680,6 +686,10 @@
 
               <sc-if value="{{ hayQueVer }}" hint-placeholder-val="{{ true }}">
                 <div style="display:flex;flex-direction:column;gap:clamp(18px,2.4vw,26px)">
+
+                  <sc-if value="{{ hayAvisoVer }}" hint-placeholder-val="{{ false }}">
+                    <div style="{{ avisoVerCaja }}">{{ avisoVer }}</div>
+                  </sc-if>
 
                   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px">
                     <sc-for list="{{ verMetricas }}" as="m" hint-placeholder-count="4">
@@ -1900,12 +1910,16 @@ class Component extends DCLogic {
       apuntados: f.apuntados,
       porMesa: f.porMesa || 6,
       faltaSitio: f.faltaSitio || [],
+      noCaben: f.noCaben || 0,
+      noCabenGente: f.noCabenGente || [],
+      zonasSinLocal: f.zonasSinLocal || [],
       zonas: (f.zonas || []).map((z) => [z.zonaNombre, z.restaurante, z.zona, z.apuntados, z.sedeId, z.restauranteId, z.aguanta])
     }));
 
     const fr = FECHAS_REP[St.fechaRep] || FECHAS_REP[0] || {
       id: null, titulo: 'Sin fechas abiertas', formato: 'dinner', hora: '', cierra: '',
-      fam: 'cenas', apuntados: 0, porMesa: 6, faltaSitio: [], zonas: []
+      fam: 'cenas', apuntados: 0, porMesa: 6, faltaSitio: [], zonas: [],
+      noCaben: 0, noCabenGente: [], zonasSinLocal: []
     };
     const POR_MESA = fr.porMesa || 6;
     const vozRep = fr.fam !== 'movimiento'
@@ -2087,6 +2101,35 @@ class Component extends DCLogic {
         contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.22)' : 'rgba(20,52,42,.09)') + ';font:600 11px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#33513F') + ';font-variant-numeric:tabular-nums'
       };
     });
+    /**
+     * El aviso de una fecha, en una línea.
+     *
+     * Dos cosas que hasta ahora no decía nadie y que solo se veían restando:
+     *
+     *  - Quien no acepta NINGUNA zona abierta. El reparto lo manda a espera a
+     *    propósito y le sale `sin_mesa`, que es correcto — pero el jueves. La
+     *    única pista en el panel era que la cabecera dijera «1 apuntado» y su
+     *    única zona «0». Sabiéndolo antes se abre otra zona a tiempo.
+     *  - Una zona abierta sin local. `faltaSitio` ya lo miraba pero solo
+     *    saltaba con seis o más en esa zona; sin local está mal desde que se
+     *    abre, no desde el sexto.
+     *
+     * Se pinta en el riel de Reparto y en las dos listas de Fechas, porque el
+     * sitio donde hay que enterarse es cualquiera en el que se mire una fecha.
+     */
+    const avisoDeFecha = (f) => {
+      const t = [];
+      if (f.noCaben) {
+        t.push(f.noCaben === 1
+          ? '1 apuntado no cabe en ninguna zona abierta'
+          : f.noCaben + ' apuntados no caben en ninguna zona abierta');
+      }
+      if ((f.zonasSinLocal || []).length) {
+        t.push((f.zonasSinLocal.length === 1 ? 'Sin local en ' : 'Sin local en ') + f.zonasSinLocal.join(' ni '));
+      }
+      return t.join(' · ');
+    };
+
     const visibles = FECHAS_REP.map((f, i) => [f, i]).filter((x) => tipoRep === 'todo' || x[0].fam === tipoRep);
 
     const fechasRep = visibles.map((x) => {
@@ -2095,12 +2138,19 @@ class Component extends DCLogic {
       const nz = f.zonas.length;
       return {
         titulo: f.titulo, icono: on ? '✓' : '',
-        detalle: f.zonas.reduce((a, z) => a + z[3], 0) + ' apuntados · ' + nz + (nz === 1 ? ' zona' : ' zonas') + ' · ' + f.zonas.map((z) => z[0]).join(', '),
+        // `f.apuntados` y NO la suma de las zonas: quien acepta dos cuenta en
+        // las dos, y esta línea decía «3 apuntados» donde hay 2. Es el mismo
+        // «8 donde hay 7» que se arregló en las métricas de arriba el 19 de
+        // agosto; en el riel seguía vivo.
+        detalle: f.apuntados + (f.apuntados === 1 ? ' apuntado · ' : ' apuntados · ') + nz + (nz === 1 ? ' zona' : ' zonas') + ' · ' + f.zonas.map((z) => z[0]).join(', '),
         aro: aroDS(on),
         btn: 'flex:0 0 auto;scroll-snap-align:start;display:flex;align-items:center;gap:12px;width:clamp(268px,72vw,330px);min-height:64px;padding:12px 16px;border-radius:22px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
         txt: 'display:block;font:' + (on ? '600' : '500') + ' 15px/1.25 \'Inter Tight\',sans-serif;color:#14342A',
         estado: f.cierra.replace('CIERRA EN ', ''),
         sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;background:rgba(20,52,42,.07);font:600 11px/1 \'Inter Tight\',sans-serif;color:#2C4A38;white-space:nowrap',
+        hayAviso: !!avisoDeFecha(f),
+        aviso: avisoDeFecha(f),
+        avisoEstilo: 'display:block;font:500 12px/1.4 \'Inter Tight\',sans-serif;color:#8F4515;margin-top:3px',
         pick: () => this.setState({ fechaRep: i })
       };
     });
@@ -3180,6 +3230,9 @@ class Component extends DCLogic {
           titulo: f.titulo,
           detalle: f.apuntados + (f.apuntados === 1 ? ' apuntado · ' : ' apuntados · ')
             + (f.zonas.length === 1 ? '1 zona' : f.zonas.length + ' zonas'),
+          hayAviso: !!avisoDeFecha(f),
+          aviso: avisoDeFecha(f),
+          avisoEstilo: 'display:block;font:500 12px/1.4 \'Inter Tight\',sans-serif;color:#8F4515;margin-top:3px',
           icono: on ? '✓' : '', aro: aroDS(on),
           btn: 'display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:12px 16px;border-radius:22px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
           txt: 'display:block;font:' + (on ? '600' : '500') + ' 15px/1.25 \'Inter Tight\',sans-serif;color:#14342A',
@@ -3194,14 +3247,41 @@ class Component extends DCLogic {
           return {
             verTitulo: 'No hay ninguna fecha abierta.',
             verBajada: 'En cuanto abras una, aquí se ve cómo va: quién se apuntó, qué zonas están abiertas y cuánto queda para el cierre.',
-            verMetricas: [], verZonas: [], verGente: [], hayVerGente: false, verNotaGente: ''
+            verMetricas: [], verZonas: [], verGente: [], hayVerGente: false, verNotaGente: '',
+            hayAvisoVer: false, avisoVer: '', avisoVerCaja: ''
           };
         }
         const voz = f.fam !== 'movimiento' ? 'mesas' : 'grupos';
         // El cierre en palabras y no en fecha: «14 H» es lo accionable, y
         // «lunes 25 a las 19:00» obliga a restar mentalmente.
         const cierra = cuantoQueda(cruda.cierraEn);
+        const sinLocal = f.zonasSinLocal || [];
+        const noCaben = f.noCabenGente || [];
         return {
+          // Los dos avisos, arriba del todo y con nombre. Abajo hay una lista
+          // de apuntados y unas cifras por zona; si esto fuera un pie, la
+          // persona que no cabe seguiría siendo una resta que hay que hacer.
+          hayAvisoVer: noCaben.length > 0 || sinLocal.length > 0,
+          avisoVer: [
+            noCaben.length
+              ? (noCaben.length === 1
+                  ? noCaben[0].nombre + ' no acepta ninguna de las zonas abiertas.'
+                    + ' Al repartir va a espera y le sale «esta vez no entraste».'
+                    + ' Se arregla abriendo una zona que sí acepte: '
+                    + ((noCaben[0].zonas || []).map((z) => nombreZona(z)).join(', ') || 'no marcó ninguna')
+                    + '.'
+                  : noCaben.length + ' apuntados no aceptan ninguna de las zonas abiertas: '
+                    + noCaben.map((g) => g.nombre).join(', ')
+                    + '. Al repartir van a espera y les sale «esta vez no entraste».'
+                    + ' Se arregla abriendo una zona que sí acepten.')
+              : '',
+            sinLocal.length
+              ? (sinLocal.length === 1 ? 'La zona ' : 'Las zonas ') + sinLocal.join(' y ')
+                + (sinLocal.length === 1 ? ' está abierta y no tiene local' : ' están abiertas y no tienen local')
+                + ': se puede apuntar gente y no hay dónde sentarla. Publicar lo rechaza, pero eso es el jueves.'
+              : ''
+          ].filter(Boolean).join(' '),
+          avisoVerCaja: 'border-radius:22px;border:1px solid #8F4515;background:rgba(143,69,21,.06);padding:16px 18px;font:400 14px/1.55 \'Inter Tight\',sans-serif;color:#2C4A38;text-wrap:pretty',
           verTitulo: f.titulo,
           verBajada: f.hora + ' · ' + (cierra === 'CERRADA'
             ? 'Ya cerró: no entra nadie más.'

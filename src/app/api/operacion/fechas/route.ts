@@ -326,7 +326,48 @@ export async function GET() {
       }
     }
 
-    return { ...f, faltaSitio: avisos }
+    /**
+     * Zonas abiertas sin local, cuenten los apuntados que cuenten.
+     *
+     * `faltaSitio` ya miraba esto, pero solo saltaba con seis o más en la
+     * zona: `hacenFalta > 0`. Una zona sin local no está mal cuando llega el
+     * sexto, está mal desde que se abre — es una zona a la que se puede
+     * apuntar gente y en la que no hay dónde sentarla. Hoy hay dos fechas
+     * así, las dos del 26, y ninguna dice nada porque tienen cero apuntados.
+     *
+     * Y `publicar` lo rechaza al final del todo, que es el peor momento para
+     * enterarse: ya se repartió y la gente lleva días apuntada.
+     */
+    const zonasSinLocal = f.zonas
+      .filter((z) => !z.restauranteId)
+      .map((z) => z.zonaNombre ?? z.zona ?? '')
+      .filter((n, i, todas) => n && todas.indexOf(n) === i)
+
+    /**
+     * Quién NO cabe en ninguna de las zonas abiertas.
+     *
+     * El reparto los manda a espera a propósito —quien no acepta ninguna zona
+     * abierta no se puede sentar en ningún sitio— y les sale `sin_mesa`. Eso
+     * está bien; lo que no había es quién lo dijera ANTES.
+     *
+     * En el panel la única pista era una resta: la cabecera decía «1
+     * apuntado» y su única zona decía «0». `fueraDelPool` tampoco lo cuenta,
+     * y hace bien: mide otra cosa —pagados sin verificar—.
+     *
+     * Con esto se puede abrir otra zona a tiempo en vez de enterarse el
+     * jueves. Caso de hoy: la cena del martes 25 abre solo El Rosal y tiene
+     * una persona pagada que acepta Las Mercedes y Chacao.
+     */
+    const abiertas = new Set(f.zonas.map((z) => z.zona).filter(Boolean) as string[])
+    const noCabenGente = f.gente.filter((g) => !g.zonas.some((z) => abiertas.has(z)))
+
+    return {
+      ...f,
+      faltaSitio: avisos,
+      zonasSinLocal,
+      noCaben: noCabenGente.length,
+      noCabenGente,
+    }
   })
 
   return NextResponse.json({ fechas: conAviso })
