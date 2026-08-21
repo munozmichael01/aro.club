@@ -21,6 +21,26 @@
   ::selection { background:#14342A; color:#FAF3E4; }
   @keyframes aro-open { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+
+  /* El carril de pestañas.
+
+     Son nueve y en el móvil ocupaban 939 px dentro de 375: como ningún
+     contenedor tenía overflow, se arrastraba la PÁGINA entera y lo que
+     estabas leyendo se iba por el borde. Se veían tres de nueve y no había
+     forma de llegar a las otras seis sin perder el sitio.
+
+     Ahora se desliza el carril y la página no se mueve. `min-width:0` es lo
+     que hace que funcione: sin él, un hijo flex no se encoge por debajo de su
+     contenido y el overflow nunca llega a activarse.
+
+     `touch-action` se queda en `auto` A PROPÓSITO. El arrastre de personas
+     entre mesas pone `touch-action:none` en cada fila para quedarse el gesto
+     del dedo; aquí hace falta lo contrario, que el navegador se quede el
+     desplazamiento horizontal. Son sitios distintos del DOM y no se pisan:
+     el handler del arrastre solo hace `preventDefault` mientras hay un
+     arrastre vivo, y eso solo empieza al pulsar sobre una persona. */
+  .aro-carril { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; }
+  .aro-carril::-webkit-scrollbar { display: none; }
 </style>
 </helmet>
 
@@ -33,12 +53,16 @@
         <span style="font:400 18px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro</span>
         <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;border-left:1px solid rgba(20,52,42,.22);padding-left:12px">OPERACIÓN</span>
       </span>
-      <span style="flex:1"></span>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
-        <sc-for list="{{ pestanas }}" as="p" hint-placeholder-count="3">
-          <button onClick="{{ p.pick }}" style="{{ p.btn }}">{{ p.nombre }}<span style="{{ p.contador }}">{{ p.n }}</span></button>
-        </sc-for>
-        <span style="width:1px;height:24px;background:rgba(20,52,42,.18);margin:0 4px"></span>
+      <span style="flex:1 1 auto"></span>
+      <div style="display:flex;gap:8px;align-items:center;min-width:0;flex:1 1 auto;justify-content:flex-end">
+        <!-- Salir va FUERA del carril: es la salida y no puede quedarse
+             escondida a la derecha del deslizamiento. -->
+        <div class="aro-carril" data-carril style="display:flex;gap:5px;min-width:0;flex:0 1 auto">
+          <sc-for list="{{ pestanas }}" as="p" hint-placeholder-count="3">
+            <button onClick="{{ p.pick }}" data-pestana="{{ p.clave }}" data-activa="{{ p.activa }}" style="{{ p.btn }}">{{ p.nombre }}<span style="{{ p.contador }}">{{ p.n }}</span></button>
+          </sc-for>
+        </div>
+        <span style="flex:0 0 auto;width:1px;height:24px;background:rgba(20,52,42,.18)"></span>
         <button onClick="{{ salir }}" aria-label="Cerrar sesión" style="{{ botonSalir }}">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14.5 4.5h3.2a1.8 1.8 0 0 1 1.8 1.8v11.4a1.8 1.8 0 0 1-1.8 1.8h-3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M9.8 8.2 6 12l3.8 3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6 12h8.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
           {{ textoSalir }}
@@ -1082,6 +1106,73 @@ class Component extends DCLogic {
    * porque Equipo solo existe para admin: con índices a pelo, Gente es la 7
    * para un admin y la 6 para un ops, y una de las dos siempre se equivoca.
    */
+  /**
+   * Trae la pestaña activa a la vista dentro del carril.
+   *
+   * En un `setTimeout` de cero porque hay que esperar a que el render pinte
+   * el `data-activa` nuevo: llamarlo antes centra la pestaña ANTERIOR.
+   *
+   * `block: 'nearest'` es deliberado: sin él, `scrollIntoView` también
+   * desplaza la página en vertical, y entrar en el panel te dejaba con la
+   * cabecera pegada arriba y el contenido cortado.
+   *
+   * Solo se llama al montar y al cambiar de pestaña. En cada render pelearía
+   * con el dedo de quien está deslizando.
+   */
+  centrarPestana() {
+    // Trae la pestaña activa a la vista dentro del carril.
+    //
+    // No basta con centrar una vez. Los contadores llegan de sus rutas
+    // DESPUÉS del primer render —«Reparto 6», «Gente 22»— y cada cifra
+    // ensancha su pestaña: al entrar directo en `#historico` el carril se
+    // quedaba cinco píxeles corto y la última pestaña asomaba cortada. Y no
+    // se puede arreglar con un retardo fijo, porque esas rutas tardan lo que
+    // tardan: con 700 ms seguía llegando pronto.
+    //
+    // Así que se vigila el ANCHO, que es lo que de verdad cambia, durante
+    // tres segundos. En cuanto crece, se vuelve a centrar. Es un bucle
+    // acotado y con salida, no un observador vivo para siempre.
+    //
+    // Se corta en cuanto hay un dedo en el carril. Eso se detecta con
+    // `pointerdown` y NO comparando `scrollLeft`: al llegar un contador el
+    // desplazamiento cambia solo, sin que nadie haya tocado nada, y mirando
+    // la cifra el reajuste se saltaba siempre.
+    //
+    // El desplazamiento se calcula restando rectángulos en vez de usar
+    // `scrollIntoView`: con `inline:'nearest'` no llegaba al final, porque el
+    // carril vive dentro de una cabecera pegajosa con `backdrop-filter` y eso
+    // le cambia el bloque contenedor.
+    const MARGEN = 8;
+    const centrar = () => {
+      const carril = document.querySelector('[data-carril]');
+      const activa = carril && carril.querySelector('[data-activa]');
+      if (!activa) return null;
+      const r = activa.getBoundingClientRect();
+      const rc = carril.getBoundingClientRect();
+      if (r.left < rc.left) carril.scrollLeft -= (rc.left - r.left) + MARGEN;
+      else if (r.right > rc.right) carril.scrollLeft += (r.right - rc.right) + MARGEN;
+      return carril;
+    };
+
+    clearInterval(this._vigilarCarril);
+    setTimeout(() => {
+      const carril = centrar();
+      if (!carril) return;
+
+      let ancho = carril.scrollWidth;
+      let quedan = 15;                 // 15 × 200 ms = tres segundos
+      const parar = () => clearInterval(this._vigilarCarril);
+      carril.addEventListener('pointerdown', parar, { once: true });
+
+      this._vigilarCarril = setInterval(() => {
+        if (--quedan <= 0) { parar(); carril.removeEventListener('pointerdown', parar); return; }
+        if (carril.scrollWidth === ancho) return;
+        ancho = carril.scrollWidth;
+        centrar();
+      }, 200);
+    }, 0);
+  }
+
   clavesPestanas(esAdmin) {
     const admin = esAdmin === undefined ? this.state.esAdmin : esAdmin;
     return ['mesas', 'verificaciones', 'pagos', 'reportes', 'fechas', 'locales']
@@ -1101,6 +1192,7 @@ class Component extends DCLogic {
     const clave = String(window.location.hash || '').replace('#', '');
     const i = this.clavesPestanas(esAdmin).indexOf(clave);
     if (i >= 0) this.setState({ vista: i });
+    this.centrarPestana();
   }
 
   // --- carga -----------------------------------------------------------
@@ -2102,7 +2194,12 @@ class Component extends DCLogic {
       const on = v === i;
       return {
         nombre: p[0], n: p[1],
-        pick: () => this.setState({ vista: i }),
+        // Para poder encontrarla en el DOM y traerla a la vista. Sin esto, al
+        // entrar en Historial —la novena— el carril se queda en la primera y
+        // la pestaña en la que estás no se ve.
+        clave: CLAVES[i] || String(i),
+        activa: on ? '1' : null,
+        pick: () => { this.setState({ vista: i }); this.centrarPestana(); },
         btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#1B5138') + ';font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease',
         contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.22)' : 'rgba(20,52,42,.09)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#33513F') + ';font-variant-numeric:tabular-nums'
       };
