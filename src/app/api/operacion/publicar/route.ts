@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { abonarSinMesa } from '@/lib/creditos'
+import { abonarSinMesa, retirarAbonoSinMesa } from '@/lib/creditos'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
@@ -295,6 +295,47 @@ export async function POST(request: Request) {
   // mesas por publicar, quien está en ellas no es «espera».
   const sentadosAhora = new Set(mesas.flatMap((m) => m.integrantes.map((p) => p.profileId)))
   const enEspera = fuera.filter((id) => !sentadosAhora.has(id))
+
+  // --- y quien pasa de la espera a una mesa ---------------------------
+  //
+  // Al revés que lo de arriba, y es un camino real: se publica todo, quien no
+  // entró recibe su `sin_mesa` en cola; alguien se cae, se despublica una
+  // mesa, se vuelve a repartir y ahora sí entra. Su `sin_mesa` seguía vivo,
+  // así que a la hora de la revelación le salían LOS DOS correos: «esta vez
+  // no te tocó» y «tu mesa es la 04». Son tipos distintos, así que el índice
+  // único no lo impedía.
+  //
+  // Se retira solo si NO ha salido todavía. Si ya salió, esa persona leyó que
+  // no tenía mesa y borrar la fila no lo deshace: eso es el mismo caso que
+  // `yaAvisadosQueSeMueven` y se avisa a mano.
+  if (sentadosAhora.size) {
+    const { data: retirados, error: errorRetirar } = await admin
+      .from('scheduled_emails')
+      .delete()
+      .eq('event_id', corrida.event_id)
+      // `as never` porque `database.types.ts` está generado de antes de que
+      // el enum tuviera `sin_mesa`: el tipo no lo conoce, la base sí. Es el
+      // mismo apaño que ya usa el `upsert` de abajo. Se cae solo el día que
+      // se regeneren los tipos, que necesita la clave de la base.
+      .eq('kind', 'sin_mesa' as never)
+      .is('sent_at', null)
+      .in('profile_id', [...sentadosAhora])
+      .select('profile_id')
+
+    if (errorRetirar) console.error('[publicar] no se retiró el aviso de espera', errorRetirar)
+    if (retirados?.length) {
+      await anotar(actor, 'mesas_publicadas', 'evento', corrida.event_id, {
+        avisoDeEsperaRetirado: retirados.map((r) => r.profile_id),
+      })
+    }
+
+    // Y el abono, que es dinero. Quien entró en mesa no puede quedarse con el
+    // crédito que se le devolvió por no tenerla: cenaría gratis. Se recorren
+    // TODOS los sentados y no solo aquellos a quienes se retiró el aviso,
+    // porque el correo puede haber salido ya y el abono seguir puesto: son
+    // dos cosas distintas y la que cuesta dinero es esta.
+    for (const id of sentadosAhora) await retirarAbonoSinMesa(id, corrida.event_id)
+  }
 
   if (enEspera.length && quedan === 0) {
     // El aviso, a la hora de la revelación: se entera a la vez que quien sí
