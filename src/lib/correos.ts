@@ -177,8 +177,19 @@ export async function despacharPendientes(
 
       // No se puede armar y no se va a poder mañana: se cierra para que no se
       // reintente cada cuarto de hora para siempre.
+      //
+      // En seco NO se cierra. El ensayo existe para ver qué haría el envío, y
+      // hasta ahora lo que hacía con un correo que no se puede armar era
+      // MATARLO: ensayar la cola la vaciaba de todo lo roto, en silencio y en
+      // producción. Con el candado de la revelación eso pasa de raro a
+      // probable, porque un correo bloqueado es exactamente un correo que no
+      // se puede armar. El ensayo lo cuenta y no lo toca.
       if ('error' in listo) {
         console.error('[correos] no se pudo armar', fila.kind, listo.error)
+        if (seco) {
+          enSeco.push({ kind: fila.kind, asunto: `— no se pudo armar: ${listo.error}`, huecos: -1 })
+          continue
+        }
         await admin.from('scheduled_emails')
           .update({ sent_at: new Date().toISOString() } as never).eq('id', fila.id)
         continue

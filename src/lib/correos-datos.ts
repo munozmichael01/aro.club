@@ -64,7 +64,72 @@ export type FilaDeCola = {
 
 export type Preparado = { a: string; datos: Valores } | { error: string }
 
+/**
+ * Los datos que NO pueden salir antes de la revelación.
+ *
+ * Son el sitio, su dirección, su mapa, el número de mesa, la frase por la que
+ * preguntar al llegar y quién se sienta contigo: lo que devuelve `laMesaDe()`
+ * y exactamente lo que el producto promete no contar hasta la hora. Están
+ * aquí por NOMBRE DE CLAVE y no por plantilla a propósito — una plantilla
+ * nueva hereda el candado sin que nadie se acuerde de ponérselo.
+ *
+ * `zona` NO está, y no es un olvido. La zona no es el secreto: `abrimos_zona`
+ * anuncia «abrimos mesa en Las Mercedes» días antes, cuelga de su fecha y por
+ * tanto pasa por aquí. Con `zona` en la lista, ese correo se paraba — y como
+ * un correo que no se puede armar se marca como enviado para no reintentarlo
+ * eternamente, se habría perdido en silencio. El secreto es el restaurante,
+ * no el barrio.
+ */
+const ANTES_DE_LA_REVELACION_NO: readonly string[] = [
+  'sitio', 'direccion', 'mapa', 'numero', 'comoLlegar', 'gente',
+]
+
+/**
+ * De una fila de la cola a los datos, con el candado puesto.
+ *
+ * El candado no está para el fallo que acabamos de arreglar —ese se arregla
+ * cortando el dato en origen, y está cortado—, está para el siguiente: el día
+ * que alguien añada `sitio` a un correo que sale antes de las doce, esto lo
+ * para. Es la promesa central del producto y hasta hoy no la protegía nada,
+ * solo que ninguna plantilla lo hiciera.
+ *
+ * Para si el dato ESTÁ y tiene algo dentro. Un `sitio: ''` no filtra nada.
+ *
+ * La hora de revelación se lee AQUÍ y no se la pide a `armar`: un candado que
+ * confía en que lo vigilado le diga cuándo vigilarle no es un candado.
+ */
 export async function prepararCorreo(fila: FilaDeCola): Promise<Preparado> {
+  const listo = await armar(fila)
+  if ('error' in listo) return listo
+
+  const revelaEn = fila.event_id
+    ? (
+        await createAdminClient()
+          .from('events')
+          .select('reveal_at')
+          .eq('id', fila.event_id)
+          .maybeSingle()
+      ).data?.reveal_at ?? null
+    : null
+
+  if (revelaEn && Date.now() < new Date(revelaEn).getTime()) {
+    const filtradas = ANTES_DE_LA_REVELACION_NO.filter(
+      (k) => listo.datos[k] != null && String(listo.datos[k]).trim() !== '',
+    )
+    if (filtradas.length) {
+      // No se manda vaciando los huecos: eso deja «Hoy a las siete, en .» y
+      // un correo roto se lee peor que uno que no llega. Se para y se grita,
+      // porque esto solo puede pasar por un fallo nuestro.
+      return {
+        error: `«${filtradas.join('», «')}» antes de la revelación: ${fila.kind} destriparía la mesa`,
+      }
+    }
+  }
+
+  return listo
+}
+
+async function armar(fila: FilaDeCola): Promise<Preparado> {
   const admin = createAdminClient()
   const p = (fila.payload ?? {}) as Record<string, unknown>
 
@@ -94,12 +159,15 @@ export async function prepararCorreo(fila: FilaDeCola): Promise<Preparado> {
     starts_at: string
     format: string
     zone_slug: string | null
+    reveal_at: string
   } | null = null
 
   if (fila.event_id) {
     const { data } = await admin
       .from('events')
-      .select('starts_at, format, zone_slug')
+      // `reveal_at` no lo usa ninguna plantilla: lo usa el candado de
+      // `prepararCorreo` para saber si esta fecha ya se abrió.
+      .select('starts_at, format, zone_slug, reveal_at')
       .eq('id', fila.event_id)
       .maybeSingle()
     evento = data ?? null
@@ -231,12 +299,37 @@ export async function prepararCorreo(fila: FilaDeCola): Promise<Preparado> {
       return { a, datos: { ...base, enlace: (p.enlace as string) ?? '' } }
 
     // --- la mesa --------------------------------------------------------
-    case 'mesa_asignada':
-    case 'recordatorio': {
+    case 'mesa_asignada': {
       if (!fila.event_id) return { error: 'sin fecha' }
       const mesa = await laMesaDe(admin, fila.event_id, fila.profile_id)
       if (!mesa) return { error: 'sin mesa asignada' }
       return { a, datos: { ...base, ...mesa } }
+    }
+
+    /**
+     * El recordatorio de la mañana NO sabe dónde es.
+     *
+     * Iba junto a `mesa_asignada` en este mismo `case`, así que llamaba a
+     * `laMesaDe()` — y esa función lee el sitio, la dirección, el número y
+     * los cinco nombres de la base al enviar. El cron sale a las 13:00 UTC,
+     * las nueve de Caracas, y `reveal_at` es a las 16:00: cada jueves este
+     * correo contaba a las 09:01 lo que el producto promete no contar hasta
+     * mediodía. Tres horas antes, todas las semanas.
+     *
+     * No se arregla en la plantilla. Si el dato llega, alguien lo vuelve a
+     * poner: lo que no llega no se puede filtrar. Este correo dice que es
+     * hoy, a qué hora, y que a mediodía se abre todo — y nada más.
+     */
+    case 'recordatorio': {
+      if (!fila.event_id) return { error: 'sin fecha' }
+      if (!evento) return { error: 'sin fecha' }
+      return {
+        a,
+        datos: {
+          ...base,
+          revelaA: horaTexto(evento.reveal_at),
+        },
+      }
     }
 
     // --- el dinero ------------------------------------------------------

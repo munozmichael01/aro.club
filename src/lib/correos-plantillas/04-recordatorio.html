@@ -18,7 +18,7 @@
 </style>
 </head>
 <body style="margin:0;padding:0;background:#14342A;">
-<span style="display:none;font-size:1px;color:#14342A;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Hoy a las {{ horaEnLetra }} en {{ sitio }}, {{ zona }}. {{ Unidad }} {{ numero }}.</span>
+<span style="display:none;font-size:1px;color:#14342A;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Hoy a las {{ horaEnLetra }}. A las {{ revelaA }} sabrás dónde y con quién.</span>
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#14342A" style="background:#14342A;">
 <tr><td align="center" bgcolor="#14342A" style="padding:0;">
@@ -45,13 +45,13 @@
   </td></tr>
 
   <tr><td class="p" style="padding:16px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#C5D8CA;mso-line-height-rule:exactly;">
-    Hoy a las {{ horaEnLetra }}, en {{ sitio }}. Llega diez minutos antes y pregunta por la reserva de Aro, mesa 04.
+    Hoy a las {{ horaEnLetra }}. Todavía no sabes dónde ni con quién: eso se abre hoy a las {{ revelaA }}, y te llega aquí mismo. Deja el resto de la tarde libre.
   </td></tr>
 
   <tr><td class="p" style="padding:26px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#1B5138;border-radius:22px;">
-      <tr><td style="padding:20px 24px 13px 24px;border-bottom:1px solid #3C5A48;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#9CBBA6;mso-line-height-rule:exactly;">Dónde<br /><strong style="font-size:16px;color:#FAF3E4;">{{ sitio }} · {{ direccion }}, {{ zona }}</strong></td></tr>
-      <tr><td style="padding:13px 24px 13px 24px;border-bottom:1px solid #3C5A48;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#9CBBA6;mso-line-height-rule:exactly;">Cuándo<br /><strong style="font-size:16px;color:#FAF3E4;">Hoy a las {{ hora }} · {{ unidad }} {{ numero }}, a tu nombre</strong></td></tr>
+      <tr><td style="padding:20px 24px 13px 24px;border-bottom:1px solid #3C5A48;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#9CBBA6;mso-line-height-rule:exactly;">Cuándo<br /><strong style="font-size:16px;color:#FAF3E4;">Hoy a las {{ hora }}</strong></td></tr>
+      <tr><td style="padding:13px 24px 13px 24px;border-bottom:1px solid #3C5A48;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#9CBBA6;mso-line-height-rule:exactly;">Dónde y con quién<br /><strong style="font-size:16px;color:#FAF3E4;">Se abre hoy a las {{ revelaA }}</strong></td></tr>
       <tr><td style="padding:13px 24px 20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#9CBBA6;mso-line-height-rule:exactly;">Tu consumo<br /><strong style="font-size:16px;color:#FAF3E4;">Lo pagas en el sitio. Lo de Aro ya está pagado.</strong></td></tr>
     </table>
   </td></tr>
@@ -59,14 +59,14 @@
   <tr><td class="p" style="padding:28px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
       <td bgcolor="#FAF3E4" style="border-radius:999px;">
-        <a href="{{{ mapa }}}" style="display:block;padding:17px 30px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:16px;line-height:16px;color:#14342A;text-decoration:none;mso-line-height-rule:exactly;"><strong>Cómo llegar</strong></a>
+        <a href="{{{ sitioWeb }}}/mesa" style="display:block;padding:17px 30px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:16px;line-height:16px;color:#14342A;text-decoration:none;mso-line-height-rule:exactly;"><strong>Ver la cuenta atrás</strong></a>
       </td>
     </tr></table>
   </td></tr>
 
   <tr><td class="p" style="padding:28px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border:1px solid #6E340F;border-radius:22px;">
-      <tr><td style="padding:20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#C5D8CA;mso-line-height-rule:exactly;">¿Se te hace tarde? <a href="{{{ sitioWeb }}}/mi-mesa" style="color:#E39C63;text-decoration:underline;"><strong>Avísale a la mesa</strong></a>. Es un toque y evita que cinco personas miren la puerta.</td></tr>
+      <tr><td style="padding:20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#C5D8CA;mso-line-height-rule:exactly;">¿No vas a poder? <a href="{{{ sitioWeb }}}/mesa" style="color:#E39C63;text-decoration:underline;"><strong>Dilo antes de mediodía</strong></a>. A esa hora se reparte, y a partir de ahí tu sitio es el sitio que cinco personas cuentan contigo.</td></tr>
     </table>
   </td></tr>
 
