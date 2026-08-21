@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { valido } from '@/lib/reglas'
+import { faltanDePerfil, respuestasDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -53,13 +54,11 @@ export async function GET() {
     .order('screen')
     .order('sort_order')
 
-  const { data: respuestas } = await admin
-    .from('answers')
-    .select('question_key, value')
-    .eq('profile_id', user.id)
-    .eq('version_id', version?.id ?? 0)
-
-  const dadas = new Map((respuestas ?? []).map((a) => [a.question_key, a.value]))
+  // Los valores que se pintan en cada pregunta salen de la MISMA fuente con
+  // la que se cuenta lo que falta. Leyendo `answers` a secas aquí y contando
+  // con el respaldo allí, la pantalla podía decir «completo» y enseñar el
+  // campo del nacimiento vacío.
+  const dadas = new Map(Object.entries(await respuestasDePerfil(user.id)))
 
   // Sus cenas (§10): el historial vive aqui porque es identidad acumulada,
   // no algo que tengas que hacer, y en la portada era una lista sin techo.
@@ -127,28 +126,32 @@ export async function GET() {
     .eq('profile_id', user.id)
     .maybeSingle()
 
-  // El perfil completo son DIECINUEVE: las catorce preguntas obligatorias
-  // del cuestionario más los cinco datos base.
+  // El perfil completo son DIECINUEVE: las dieciséis preguntas obligatorias
+  // del cuestionario más los tres datos de contacto.
   //
-  // Contar solo las catorce decía «completo» a alguien sin fecha de
-  // nacimiento — y sin fecha de nacimiento no hay edad, sin edad no hay
-  // regla de ±10 años y sin género no hay balance en la mesa. O sea: el
-  // sello decía que estaba listo para el reparto cuando el reparto no
-  // podía sentarlo.
+  // Eran «catorce más cinco», y el cinco incluía nacimiento y género. Cuando
+  // esos dos pasaron a ser preguntas, las obligatorias subieron a dieciséis y
+  // los dos datos se quedaron ADEMÁS en la base: se contaban dos veces. Y
+  // como el hueco se cuenta desde sitios distintos —`answers` para la
+  // pregunta, la columna para el dato base— esta pantalla podía decir que
+  // faltaban dos mientras Inicio decía que no faltaba ninguna. El mismo
+  // usuario, el mismo día, dos respuestas.
+  //
+  // Ahora las preguntas se cuentan con `faltanDePerfil`, que es la MISMA
+  // función que usa Inicio. No es que las dos cuenten igual: es que cuentan
+  // una sola vez, en un solo sitio.
   const obligatorias = (preguntas ?? []).filter((q) => q.is_required)
-  const faltanPreguntas = obligatorias.filter((q) => !dadas.has(q.key)).length
+  const faltanPreguntas = (await faltanDePerfil(user.id)).length
 
   const base = {
     nombre: perfil?.full_name,
     trato: perfil?.display_name,
-    nacimiento: perfil?.birthdate,
-    genero: perfil?.gender,
     telefono: perfil?.phone_e164,
   }
   const faltanBase = Object.values(base).filter((v) => !v).length
 
   const faltan = faltanPreguntas + faltanBase
-  const total = obligatorias.length + 5
+  const total = obligatorias.length + Object.keys(base).length
 
   return NextResponse.json({
     verificada: tipos.has('id_document') && tipos.has('selfie'),

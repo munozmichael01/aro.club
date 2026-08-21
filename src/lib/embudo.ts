@@ -90,12 +90,58 @@ async function preguntasQueFaltan(respuestas: Record<string, unknown>): Promise<
     .map((p) => p.clave)
 }
 
+/**
+ * Lo que falta de CONTACTO: nombre y teléfono.
+ *
+ * El nacimiento ya no está aquí. Desde que es una pregunta del cuestionario
+ * lo cuenta `preguntasQueFaltan`, y tenerlo en los dos sitios hacía que el
+ * mismo dato ausente se contara dos veces. El género nunca estuvo.
+ */
 function contactoQueFalta(c: Contacto | null): Situacion['falta']['contacto'] {
   const falta: Situacion['falta']['contacto'] = []
   if (!c?.full_name?.trim()) falta.push('nombre')
-  if (!c?.birthdate) falta.push('nacimiento')
   if (!c?.phone_e164?.trim()) falta.push('telefono')
   return falta
+}
+
+/**
+ * Las respuestas de quien ya tiene cuenta, tal y como hay que contarlas.
+ *
+ * Se exporta porque hay DOS pantallas que preguntan lo mismo —Inicio, por
+ * `situacionDePerfil`, y Perfil, por `/api/mi-perfil`— y cada una lo estaba
+ * resolviendo por su cuenta. Resultado: Inicio decía «completas» y Perfil
+ * decía que faltaban dos, al mismo usuario y el mismo día. Dos pantallas no
+ * pueden dar dos respuestas a la misma pregunta; la forma de garantizarlo no
+ * es escribir el mismo parche dos veces, es que haya una sola función.
+ *
+ * Sobre el respaldo desde `profiles`: `nacimiento` y `genero` ya viven en
+ * `answers` —se rellenaron el 21 de agosto de 2026 y `convertir_lead` los
+ * escribe desde entonces—, así que esto no debería hacer falta nunca. Se
+ * queda como red: si una fila faltara, la columna sigue siendo el dato de
+ * verdad —de ella derivan los rasgos y el pool del reparto— y mandar a
+ * alguien a contestar otra vez algo que sí contestó es peor que la red.
+ */
+export async function respuestasDePerfil(
+  perfilId: string,
+): Promise<Record<string, unknown>> {
+  const admin = createAdminClient()
+
+  const [{ data: perfil }, { data: respuestas }] = await Promise.all([
+    admin.from('profiles').select('birthdate, gender').eq('id', perfilId).maybeSingle(),
+    admin.from('answers').select('question_key, value').eq('profile_id', perfilId),
+  ])
+
+  const dadas: Record<string, unknown> = Object.fromEntries(
+    (respuestas ?? []).map((r) => [r.question_key, r.value]),
+  )
+  if (dadas.nacimiento == null && perfil?.birthdate) dadas.nacimiento = perfil.birthdate
+  if (dadas.genero == null && perfil?.gender) dadas.genero = perfil.gender
+  return dadas
+}
+
+/** Cuántas obligatorias faltan, contando como cuenta todo el mundo. */
+export async function faltanDePerfil(perfilId: string): Promise<string[]> {
+  return preguntasQueFaltan(await respuestasDePerfil(perfilId))
 }
 
 function armar(
@@ -156,31 +202,19 @@ export async function situacionDeLead(correo: string): Promise<Situacion> {
 export async function situacionDePerfil(perfilId: string): Promise<Situacion> {
   const admin = createAdminClient()
 
-  const [{ data: perfil }, { data: respuestas }, { data: verificada }] = await Promise.all([
+  const [{ data: perfil }, preguntas, { data: verificada }] = await Promise.all([
     admin
       .from('profiles')
       .select('full_name, birthdate, phone_e164, gender')
       .eq('id', perfilId)
       .maybeSingle(),
-    admin.from('answers').select('question_key, value').eq('profile_id', perfilId),
+    faltanDePerfil(perfilId),
     admin.from('v_verified_profiles').select('id').eq('id', perfilId).maybeSingle(),
   ])
 
-  // El nacimiento y el género están contestados, pero NO en `answers`: viven
-  // en su columna de `profiles`, que es la fuente de la que derivan los
-  // rasgos. Sin añadirlos aquí, Mi cuenta le diría «te faltan 2 preguntas» a
-  // quien las contestó —y de paso mandaría al cuestionario a alguien que ya
-  // lo terminó—.
-  const dadas: Record<string, unknown> = {
-    ...Object.fromEntries((respuestas ?? []).map((r) => [r.question_key, r.value])),
-    nacimiento: perfil?.birthdate ?? null,
-    genero: perfil?.gender ?? null,
-  }
-  const preguntas = await preguntasQueFaltan(dadas)
-
   // El contacto va ANTES que las preguntas para quien ya tiene cuenta: sin
-  // nombre y nacimiento su verificación está bloqueada, y eso es lo primero
-  // que hay que resolver aunque le falten preguntas.
+  // nombre no se puede verificar, y eso es lo primero que hay que resolver
+  // aunque le falten preguntas.
   const contacto = contactoQueFalta(perfil)
   if (contacto.length) return armar('contacto', preguntas, contacto)
   if (preguntas.length) return armar('preguntas', preguntas, [])
