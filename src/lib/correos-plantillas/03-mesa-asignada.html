@@ -87,15 +87,28 @@
 
   <tr><td class="p" style="padding:32px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.4px;color:#9CBBA6;mso-line-height-rule:exactly;">{{ conQuien }}</td></tr>
 
-  <!-- los cinco, con la inicial en el aro de color -->
+  <!-- Los cinco, con la inicial en el aro de color.
+       Cada persona es UNA fila completa. Antes el `{{#cada}}` abria dentro de
+       la tabla del avatar y cerraba despues del `</tr>` de fuera: cada
+       repeticion escupia un `</table></td>` de mas y dos celdas sin fila, asi
+       que del segundo comensal en adelante el avatar se comia el ancho entero
+       y el nombre y el sector se salian de la tarjeta. En un navegador casi
+       se sostenia; Gmail de Android lo reordena y sale ilegible.
+       El sector va DEBAJO del nombre y no a la derecha: en una pantalla de
+       320 puntos, «Carlos Eduardo» y «Construccion» en la misma linea se
+       tocan, y esto es la parte del correo que mas se lee. -->
   <tr><td class="p" style="padding:16px 40px 0 40px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;">{{#cada gente}}
       <tr>
-        <td width="46" style="width:46px;padding:11px 0;border-bottom:1px solid #3C5A48;">
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0">{{#cada gente}}<tr><td width="36" height="36" align="center" bgcolor="#1B5138" style="width:36px;height:36px;border-radius:36px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:36px;color:#FAF3E4;mso-line-height-rule:exactly;"><strong>{{ inicial }}</strong></td></tr></table>
+        <td width="46" valign="top" style="width:46px;padding:11px 10px 11px 0;border-bottom:1px solid #3C5A48;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="36" style="width:36px;">
+            <tr><td width="36" height="36" align="center" bgcolor="#1B5138" style="width:36px;height:36px;border-radius:36px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:36px;color:#FAF3E4;mso-line-height-rule:exactly;"><strong>{{ inicial }}</strong></td></tr>
+          </table>
         </td>
-        <td style="padding:11px 0;border-bottom:1px solid #3C5A48;font-family:'Young Serif',Georgia,'Times New Roman',serif;font-weight:700;font-size:21px;line-height:26px;color:#FAF3E4;mso-line-height-rule:exactly;">{{ nombre }}</td>
-        <td align="right" style="padding:11px 0;border-bottom:1px solid #3C5A48;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:26px;color:#9CBBA6;mso-line-height-rule:exactly;">{{ sector }}</td>
+        <td valign="top" style="padding:11px 0;border-bottom:1px solid #3C5A48;">
+          <div style="font-family:'Young Serif',Georgia,'Times New Roman',serif;font-weight:700;font-size:21px;line-height:26px;color:#FAF3E4;mso-line-height-rule:exactly;">{{ nombre }}</div>
+          <div style="font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#9CBBA6;mso-line-height-rule:exactly;">{{ sector }}</div>
+        </td>
       </tr>{{/cada}}
     </table>
   </td></tr>
@@ -107,7 +120,7 @@
   <tr><td class="p" style="padding:28px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border:1px solid #6E340F;border-radius:22px;">
       <tr><td style="padding:20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#C5D8CA;mso-line-height-rule:exactly;">
-        ¿Se te hace tarde? <a href="{{{ sitioWeb }}}/mi-mesa" style="color:#E39C63;text-decoration:underline;"><strong>Avísale a{{ alGrupo }}</strong></a> y se lo decimos. Nadie se queda mirando la puerta.
+        ¿Se te hace tarde? <a href="{{{ sitioWeb }}}/mesa" style="color:#E39C63;text-decoration:underline;"><strong>Avísale a{{ alGrupo }}</strong></a> y se lo decimos. Nadie se queda mirando la puerta.
       </td></tr>
     </table>
   </td></tr>
