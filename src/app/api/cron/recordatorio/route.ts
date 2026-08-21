@@ -49,10 +49,22 @@ async function recordar() {
   let encolados = 0
 
   for (const ev of eventos) {
-    // Quien tiene SITIO, no quien reservó: sin mesa no hay dirección que dar.
+    // Quien tiene sitio, no quien reservó: a quien no se sentó no se le
+    // recuerda una cena que no tiene.
+    //
+    // Se piden los `profile_id` y NADA MÁS. Antes esta consulta traía también
+    // el restaurante, su dirección y el número de mesa, y los metía en el
+    // payload del correo. `correos-datos` ya no los sirve —el recordatorio
+    // dejó de llamar a `laMesaDe()`—, pero el dato salía igual de la zona
+    // segura por este otro camino y se quedaba en `scheduled_emails.payload`
+    // tres horas antes de la revelación. Hoy no se ve porque la plantilla no
+    // lo imprime; el día que alguien añada un campo a este correo, la fuga
+    // vuelve sin que nadie se entere. Lo que no se lee no se puede filtrar.
+    //
+    // Lo cazó cowork.
     const { data: sentados } = await admin
       .from('table_members')
-      .select('profile_id, dinner_tables!inner(event_id, table_number, restaurants!dinner_tables_restaurant_id_fkey(name, address))')
+      .select('profile_id, dinner_tables!inner(event_id)')
       .eq('dinner_tables.event_id', ev.id)
 
     if (!sentados?.length) continue
@@ -69,22 +81,11 @@ async function recordar() {
     for (const s of sentados) {
       if (yaTienen.has(s.profile_id)) continue
 
-      const mesa = s.dinner_tables as unknown as {
-        table_number: number
-        restaurants: { name: string; address: string } | null
-      } | null
-
-      await encolar(
-        { perfil: s.profile_id },
-        'recordatorio',
-        {
-          restaurante: mesa?.restaurants?.name ?? null,
-          direccion: mesa?.restaurants?.address ?? null,
-          numeroMesa: mesa?.table_number ?? null,
-          empiezaEn: ev.starts_at,
-        },
-        { eventoId: ev.id },
-      )
+      // El payload va vacío a propósito. La hora se lee del evento al
+      // componer, como todo lo demás: `empiezaEn` era una copia de
+      // `events.starts_at` que además podía quedarse vieja si la fecha se
+      // movía entre encolar y enviar.
+      await encolar({ perfil: s.profile_id }, 'recordatorio', {}, { eventoId: ev.id })
       encolados++
     }
   }
