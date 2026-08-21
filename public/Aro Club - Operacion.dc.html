@@ -34,10 +34,15 @@
         <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;border-left:1px solid rgba(20,52,42,.22);padding-left:12px">OPERACIÓN</span>
       </span>
       <span style="flex:1"></span>
-      <div style="display:flex;gap:5px">
+      <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
         <sc-for list="{{ pestanas }}" as="p" hint-placeholder-count="3">
           <button onClick="{{ p.pick }}" style="{{ p.btn }}">{{ p.nombre }}<span style="{{ p.contador }}">{{ p.n }}</span></button>
         </sc-for>
+        <span style="width:1px;height:24px;background:rgba(20,52,42,.18);margin:0 4px"></span>
+        <button onClick="{{ salir }}" aria-label="Cerrar sesión" style="{{ botonSalir }}">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14.5 4.5h3.2a1.8 1.8 0 0 1 1.8 1.8v11.4a1.8 1.8 0 0 1-1.8 1.8h-3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path d="M9.8 8.2 6 12l3.8 3.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6 12h8.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+          {{ textoSalir }}
+        </button>
       </div>
     </div>
   </div>
@@ -1048,7 +1053,7 @@ class Component extends DCLogic {
     // --- y el estado de trabajar con ellas ------------------------------
     trabajando: false, fallo: '', aviso: '',
     desdeMesa: null, sobreMesa: null, recalculando: [], repartiendo: false,
-    motivoCancelar: '', enlaceEquipo: ''
+    motivoCancelar: '', enlaceEquipo: '', saliendo: false
   };
 
   componentDidMount() {
@@ -2670,6 +2675,32 @@ class Component extends DCLogic {
         : (String(St.qHistorico || '').trim()
           ? 'Se busca por zona, por restaurante y por persona a la vez. Prueba con menos letras, o con el nombre del sitio.'
           : 'Una mesa existe desde que se reparte. En cuanto repartas una fecha, aparece aquí con quién se sentó dónde.'),
+      /**
+       * Salir del panel.
+       *
+       * No lo tenía. En Mi cuenta existe desde el primer día, y aquí —que es
+       * la pantalla con acceso a los datos de TODO el mundo, la cédula
+       * incluida— la única forma de cerrar sesión era irse a Mi cuenta a
+       * buscarlo, si es que a alguien se le ocurría. En un portátil prestado
+       * o compartido eso no es un detalle de comodidad.
+       *
+       * No es un enlace, es una llamada: el servidor borra la cookie y solo
+       * entonces se navega. Con un `<a>` a la portada la sesión seguía viva.
+       * Mismo mecanismo que en Mi cuenta, incluido el borrado de `aro-sesion`
+       * de localStorage — si se queda, la portada saluda por tu nombre a
+       * quien ya no tiene sesión.
+       */
+      textoSalir: St.saliendo ? 'Cerrando…' : 'Salir',
+      botonSalir: 'display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:transparent;color:#1B5138;font:500 14px/1 \'Inter Tight\',sans-serif;cursor:' + (St.saliendo ? 'wait' : 'pointer'),
+      salir: () => {
+        if (this.state.saliendo) return;
+        this.setState({ saliendo: true });
+        fetch('/api/salir', { method: 'POST' })
+          .then(() => { try { window.localStorage.removeItem('aro-sesion'); } catch (e) {} })
+          .catch(() => {})
+          .then(() => { window.location.href = '/'; });
+      },
+
       notaPieHistorico: 'Esto es de lectura. La ficha de cada persona se abre pinchando su nombre, y desde ahí se ve su historial completo.',
 
       notaPieGente: 'Desde aquí no sale ningún correo: esta pestaña sirve para saber, no para disparar.'

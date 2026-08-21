@@ -87,16 +87,8 @@
 
   <tr><td class="p" style="padding:32px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.4px;color:#9CBBA6;mso-line-height-rule:exactly;">{{ conQuien }}</td></tr>
 
-  <!-- Los cinco, con la inicial en el aro de color.
-       Cada persona es UNA fila completa. Antes el `{{#cada}}` abria dentro de
-       la tabla del avatar y cerraba despues del `</tr>` de fuera: cada
-       repeticion escupia un `</table></td>` de mas y dos celdas sin fila, asi
-       que del segundo comensal en adelante el avatar se comia el ancho entero
-       y el nombre y el sector se salian de la tarjeta. En un navegador casi
-       se sostenia; Gmail de Android lo reordena y sale ilegible.
-       El sector va DEBAJO del nombre y no a la derecha: en una pantalla de
-       320 puntos, «Carlos Eduardo» y «Construccion» en la misma linea se
-       tocan, y esto es la parte del correo que mas se lee. -->
+  <!-- Los cinco. Cada persona es UNA fila completa: el bucle NO puede abrir
+       ni cerrar a caballo de la tabla. El porque, en el commit. -->
   <tr><td class="p" style="padding:16px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;">{{#cada gente}}
       <tr>
