@@ -195,6 +195,8 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     // frase, y `publicar` SIEMPRE lo encola con su evento: si algún día
     // llegara sin él, es mejor no mandarlo que mandar «del  salieron».
     'sin_mesa',
+    // Nombra el día en el que cambió algo, y solo existe colgando de él.
+    'mesa_cambiada',
   ]
   if (NECESITAN_FECHA.includes(fila.kind) && !evento) {
     return { error: 'ese correo necesita su fecha y no la tiene' }
@@ -305,6 +307,39 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       const mesa = await laMesaDe(admin, fila.event_id, fila.profile_id)
       if (!mesa) return { error: 'sin mesa asignada' }
       return { a, datos: { ...base, ...mesa } }
+    }
+
+    /**
+     * La mesa cambió después de habérsela contado.
+     *
+     * El «ahora» se lee de la base como en `mesa_asignada` —mismo
+     * `laMesaDe()`, misma verdad— y el «antes» viene en el payload, porque es
+     * lo único que la base ya no sabe: es lo que le dijimos, y en cuanto se
+     * republica deja de existir en ninguna tabla.
+     *
+     * Solo se marca como cambiado lo que de verdad cambió. Enseñar el sitio
+     * tachado cuando lo único que se movió es el número de mesa obliga a leer
+     * las dos líneas para descubrir que una es igual.
+     */
+    case 'mesa_cambiada': {
+      if (!fila.event_id) return { error: 'sin fecha' }
+      const mesa = await laMesaDe(admin, fila.event_id, fila.profile_id)
+      if (!mesa) return { error: 'sin mesa asignada' }
+
+      const antesMesa = p.antesMesa == null ? null : String(p.antesMesa)
+      const antesSitio = p.antesSitio == null ? null : String(p.antesSitio)
+
+      // Si no cambió nada de lo que se puede contar, este correo no tiene
+      // nada que decir. Mejor no mandarlo que mandar «cambió tu mesa» y una
+      // tarjeta idéntica a la de antes.
+      const cambiaMesa = antesMesa != null && antesMesa !== String(mesa.numero)
+      const cambiaSitio = antesSitio != null && antesSitio !== mesa.sitio
+      if (!cambiaMesa && !cambiaSitio) return { error: 'no cambió nada que contar' }
+
+      return {
+        a,
+        datos: { ...base, ...mesa, antesMesa, antesSitio, cambiaMesa, cambiaSitio },
+      }
     }
 
     /**

@@ -210,9 +210,12 @@ export async function POST(request: Request) {
   // de antes.
   const { data: yaEncolados, error: errorLeyendo } = await admin
     .from('scheduled_emails')
-    .select('profile_id, sent_at')
+    .select('profile_id, sent_at, payload, kind')
     .eq('event_id', corrida.event_id)
-    .eq('kind', 'mesa_asignada')
+    // `as never[]`: los tipos generados son de antes de que el enum tuviera
+    // `mesa_cambiada`. Michael acaba de regenerarlos con `sin_mesa`, así que
+    // toca otra vez cuando pase por ahí — y entonces esto se cae solo.
+    .in('kind', ['mesa_asignada', 'mesa_cambiada'] as never[])
 
   if (errorLeyendo) {
     console.error('[publicar] no se pudo leer la cola', errorLeyendo)
@@ -222,7 +225,12 @@ export async function POST(request: Request) {
     )
   }
 
-  const conAviso = new Map((yaEncolados ?? []).map((f) => [f.profile_id, f.sent_at]))
+  type Encolado = { profile_id: string | null; sent_at: string | null; payload: unknown; kind: string }
+  const filas = (yaEncolados ?? []) as unknown as Encolado[]
+
+  const asignados = new Map(filas.filter((f) => f.kind === 'mesa_asignada').map((f) => [f.profile_id, f]))
+  const cambiados = new Map(filas.filter((f) => f.kind === 'mesa_cambiada').map((f) => [f.profile_id, f]))
+  const conAviso = new Map([...asignados].map(([id, f]) => [id, f.sent_at]))
 
   // Los que ya recibieron su mesa Y ahora están en otra. No se les toca la
   // fila —es el registro de lo que de verdad les dijimos— y no se les puede
@@ -231,10 +239,51 @@ export async function POST(request: Request) {
   // que el silencio. Necesitan un `mesa_cambiada` propio, que está pendiente
   // de Design. Hasta entonces salen por la respuesta, para que el panel lo
   // diga en voz alta en vez de dar por avisado a quien no lo está.
+  // Lo ÚLTIMO que le dijimos a cada uno: el `mesa_cambiada` si ya hubo un
+  // cambio antes, y si no el `mesa_asignada`. Comparar siempre contra el
+  // primero haría que el segundo cambio dijera «antes era la 4» cuando esa
+  // persona ya sabía que era la 2.
+  const loQueSabe = (id: string) => {
+    const f = cambiados.get(id) ?? asignados.get(id)
+    const pl = (f?.payload ?? {}) as { mesa?: unknown; sitio?: unknown }
+    return { mesa: pl.mesa == null ? null : String(pl.mesa), sitio: pl.sitio == null ? null : String(pl.sitio) }
+  }
+
   const seMueven: { profileId: string; mesa: number }[] = []
+  const avisosDeCambio: Record<string, unknown>[] = []
+
   for (const mesa of mesas) {
     for (const p of mesa.integrantes) {
-      if (conAviso.get(p.profileId)) seMueven.push({ profileId: p.profileId, mesa: mesa.numero })
+      if (!conAviso.get(p.profileId)) continue
+
+      const antes = loQueSabe(p.profileId)
+      const sitioAhora = mesa.restaurante ?? null
+
+      // Se le mandó su mesa y sigue en la misma, en el mismo sitio: para esa
+      // persona no ha cambiado nada y no hay nada que contarle.
+      const cambia =
+        (antes.mesa != null && antes.mesa !== String(mesa.numero)) ||
+        (antes.sitio != null && antes.sitio !== sitioAhora)
+      if (!cambia) continue
+
+      // Si YA se le mandó un `mesa_cambiada`, no cabe otro: el índice único
+      // es uno por persona y fecha. Es el segundo cambio después de la
+      // revelación, y sale por la respuesta para avisar a mano.
+      if (cambiados.get(p.profileId)?.sent_at) {
+        seMueven.push({ profileId: p.profileId, mesa: mesa.numero })
+        continue
+      }
+
+      // Sale YA, no a la hora de la revelación: esa hora ya pasó —por eso
+      // tiene su correo— y una corrección que espera es una corrección que
+      // llega cuando la persona ya está de camino al sitio viejo.
+      avisosDeCambio.push({
+        profile_id: p.profileId,
+        kind: 'mesa_cambiada',
+        event_id: corrida.event_id,
+        send_at: new Date().toISOString(),
+        payload: { antesMesa: antes.mesa, antesSitio: antes.sitio },
+      })
     }
   }
 
@@ -260,6 +309,25 @@ export async function POST(request: Request) {
   const { data: encolados, error: errorCorreos } = porEncolar.length
     ? await admin.from('scheduled_emails').insert(porEncolar as never).select('id')
     : { data: [], error: null }
+
+  // Los avisos de cambio. Van en su propio `upsert` y no con los de arriba
+  // porque aquí SÍ hay que reescribir: si ya había uno en cola sin enviar y
+  // la mesa vuelve a moverse, el «antes» que vale sigue siendo el primero
+  // —es lo último que esa persona leyó— y el «ahora» se compone al enviar.
+  // Dos cambios antes de que salga el correo son un solo correo.
+  let cambiosEncolados = 0
+  if (avisosDeCambio.length) {
+    const { data, error } = await admin
+      .from('scheduled_emails')
+      .upsert(avisosDeCambio as never, { onConflict: 'profile_id,kind,event_id', ignoreDuplicates: false })
+      .select('id')
+
+    if (error) {
+      console.error('[publicar] no se encolaron los avisos de cambio', error)
+    } else {
+      cambiosEncolados = data?.length ?? 0
+    }
+  }
 
   if (errorCorreos) {
     // Las mesas ya existen; sin correos nadie se entera de su mesa, así que
@@ -313,11 +381,7 @@ export async function POST(request: Request) {
       .from('scheduled_emails')
       .delete()
       .eq('event_id', corrida.event_id)
-      // `as never` porque `database.types.ts` está generado de antes de que
-      // el enum tuviera `sin_mesa`: el tipo no lo conoce, la base sí. Es el
-      // mismo apaño que ya usa el `upsert` de abajo. Se cae solo el día que
-      // se regeneren los tipos, que necesita la clave de la base.
-      .eq('kind', 'sin_mesa' as never)
+      .eq('kind', 'sin_mesa')
       .is('sent_at', null)
       .in('profile_id', [...sentadosAhora])
       .select('profile_id')
@@ -399,6 +463,13 @@ export async function POST(request: Request) {
     // reescribe la fila ni se les reencola nada: hay que escribirles a mano
     // hasta que exista `mesa_cambiada`. Va aquí para que el panel lo diga en
     // voz alta en vez de dar por avisado a quien no lo está.
+    // Cuántos avisos de cambio salen. Es distinto de `correosProgramados`:
+    // esos son los de quien se entera de su mesa por primera vez, y estos los
+    // de quien ya la sabía y ahora es otra.
+    avisosDeCambio: cambiosEncolados,
+    // Y a quién NO se le puede avisar: quien ya recibió un aviso de cambio y
+    // se le mueve otra vez. Solo cabe uno por persona y fecha, así que el
+    // segundo va a mano.
     yaAvisadosQueSeMueven: yaAvisadosQueSeMueven.length ? yaAvisadosQueSeMueven : null,
   })
 }

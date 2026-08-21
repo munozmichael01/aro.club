@@ -1523,6 +1523,7 @@ class Component extends DCLogic {
         // cero, y decir «los correos salen a la hora de revelación» cuando no
         // sale ninguno es la clase de promesa que ya nos costó un disgusto.
         const n = d.correosProgramados || 0;
+        const cambios = d.avisosDeCambio || 0;
         const mueven = d.yaAvisadosQueSeMueven || [];
         const quienes = mueven.map((x) => x.nombre + ' (mesa ' + String(x.mesa).padStart(2, '0') + ')').join(', ');
         this.setState({
@@ -1531,15 +1532,20 @@ class Component extends DCLogic {
             + (n === 0
               ? 'Ningún correo nuevo: los que entran ya lo tenían.'
               : n + (n === 1 ? ' correo sale' : ' correos salen') + ' a la hora de revelación.')
+            // Los avisos de cambio son otra cosa y salen a otra hora: quien ya
+            // sabía su mesa se entera AHORA, porque la revelación ya pasó.
+            + (cambios
+              ? ' Y ' + cambios + (cambios === 1 ? ' aviso de cambio sale ya' : ' avisos de cambio salen ya') + ', a quien ya sabía su mesa.'
+              : '')
             // Lo que el panel NO puede hacer, dicho en voz alta. A esta gente
             // ya le llegó su mesa y ahora está en otra: su fila no se toca
             // —es lo que de verdad les dijimos— y todavía no existe un correo
             // que sepa contar un cambio. Hay que escribirles a mano.
             + (mueven.length
               ? ' OJO: a ' + quienes + (mueven.length === 1
-                  ? ' ya le había llegado su mesa y ahora es otra. Avísale tú'
-                  : ' ya les había llegado su mesa y ahora es otra. Avísales tú')
-                + ': todavía no hay correo que sepa contar un cambio.'
+                  ? ' ya se le avisó de un cambio antes y vuelve a moverse. Avísale tú'
+                  : ' ya se les avisó de un cambio antes y vuelven a moverse. Avísales tú')
+                + ': solo cabe un aviso de cambio por persona y fecha.'
               : '')
         });
         this.cargarReparto(this.fechaElegida() && this.fechaElegida().id);

@@ -66,6 +66,11 @@ export type Correo =
   // el panel prometía dos veces «se les avisa hoy» y no salía nada. Alguien
   // pagó ocho dólares y se quedó fuera sin enterarse.
   | 'sin_mesa'
+  // Entrega 17: la mesa cambió DESPUÉS de habérsela contado. No vale reenviar
+  // `mesa_asignada`: esa dice «TU MESA · 04» como novedad, y mandarla dos
+  // veces con contenido distinto y sin explicar qué cambió deja a quien la
+  // lea rápido con la mesa equivocada y sin saber cuál de los dos vale.
+  | 'mesa_cambiada'
   | 'restablecer_clave'
   | 'abrimos_zona'
   // Entrega 14: el hueco de en medio. Alguien termina el perfil, sube la

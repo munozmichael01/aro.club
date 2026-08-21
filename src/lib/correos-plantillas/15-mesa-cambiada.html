@@ -3,7 +3,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
-<title>Tu mesa del jueves — Aro Club</title>
+<title>Cambió tu mesa — Aro Club</title>
 <style>
   @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 400; font-display: swap; src: url(https://fonts.gstatic.com/s/intertight/v7/NGSwv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjDw.woff2) format('woff2'); }
     @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 600; font-display: swap; src: url(https://fonts.gstatic.com/s/intertight/v7/NGSwv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjDw.woff2) format('woff2'); }
@@ -18,7 +18,7 @@
 </style>
 </head>
 <body style="margin:0;padding:0;background:#14342A;">
-<span style="display:none;font-size:1px;color:#14342A;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">{{ Unidad }} {{ numero }} en {{ sitio }}, {{ zona }}. {{ cuando }} a las {{ hora }} con cinco personas.</span>
+<span style="display:none;font-size:1px;color:#14342A;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Cambio de última hora: ahora es {{ unidad }} {{ numero }} en {{ sitio }}. Lo de antes ya no vale.</span>
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#14342A" style="background:#14342A;">
 <tr><td align="center" bgcolor="#14342A" style="padding:0;">
@@ -37,16 +37,16 @@
 
   <tr><td class="p" style="padding:30px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-      <td bgcolor="#6E340F" style="border-radius:999px;padding:10px 17px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.2px;color:#FFF8EA;mso-line-height-rule:exactly;"><strong>ABIERTO</strong></td>
+      <td bgcolor="#6E340F" style="border-radius:999px;padding:10px 17px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.2px;color:#FFF8EA;mso-line-height-rule:exactly;"><strong>CAMBIO DE ÚLTIMA HORA</strong></td>
     </tr></table>
   </td></tr>
 
   <tr><td class="p" style="padding:20px 40px 0 40px;font-family:'Young Serif',Georgia,'Times New Roman',serif;font-weight:700;font-size:42px;line-height:44px;color:#FAF3E4;mso-line-height-rule:exactly;">
-    Ya sabes con quién<br />cenas <span style="color:#E39C63;">esta noche.</span>
+    Cambió tu<br /><span style="color:#E39C63;">{{ unidad }}.</span>
   </td></tr>
 
   <tr><td class="p" style="padding:16px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#C5D8CA;mso-line-height-rule:exactly;">
-    Son las doce{{#si trato}}, {{ trato }}{{/si}}. Esto es lo que te tocó.
+    {{#si trato}}{{ trato }}, hubo{{/si}} un cambio en {{ art }} {{ unidad }} de {{ cuando }} y esto es lo que vale ahora. <strong style="color:#FAF3E4;">Lo que te dijimos antes ya no.</strong>
   </td></tr>
 
   <!-- la mesa, en negativo sobre crema -->
@@ -80,6 +80,25 @@
     </table>
   </td></tr>
 
+  <!-- Lo que cambia, dicho campo a campo.
+       Solo sale lo que de verdad cambio: repetir el sitio cuando lo unico que
+       se movio es el numero de mesa hace que haya que leer las dos lineas
+       para descubrir que una es igual. -->
+  <tr><td class="p" style="padding:26px 40px 0 40px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border:1px solid #6E340F;border-radius:22px;">
+      <tr><td style="padding:20px 24px 12px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.2px;color:#E39C63;mso-line-height-rule:exactly;">LO QUE CAMBIA</td></tr>
+      {{#si cambiaSitio}}<tr><td style="padding:0 24px 12px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#C5D8CA;mso-line-height-rule:exactly;">
+        El sitio<br /><span style="color:#9CBBA6;text-decoration:line-through;">{{ antesSitio }}</span> &nbsp;→&nbsp; <strong style="color:#FAF3E4;">{{ sitio }}</strong>
+      </td></tr>{{/si}}
+      {{#si cambiaMesa}}<tr><td style="padding:0 24px 12px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#C5D8CA;mso-line-height-rule:exactly;">
+        {{ Unidad }}<br /><span style="color:#9CBBA6;text-decoration:line-through;">{{ antesMesa }}</span> &nbsp;→&nbsp; <strong style="color:#FAF3E4;">{{ numero }}</strong>
+      </td></tr>{{/si}}
+      <tr><td style="padding:0 24px 20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#C5D8CA;mso-line-height-rule:exactly;">
+        Lo que NO cambia<br /><strong style="color:#FAF3E4;">El día y la hora: {{ cuando }} a las {{ hora }}</strong>
+      </td></tr>
+    </table>
+  </td></tr>
+
   <!-- la cinta: el mismo recurso que corre bajo el hero -->
   <tr><td style="padding:26px 0 0 0;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border-top:1px solid #3C5A48;border-bottom:1px solid #3C5A48;">
@@ -89,7 +108,7 @@
     </table>
   </td></tr>
 
-  <tr><td class="p" style="padding:32px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.4px;color:#9CBBA6;mso-line-height-rule:exactly;">{{ conQuien }}</td></tr>
+  <tr><td class="p" style="padding:32px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.4px;color:#9CBBA6;mso-line-height-rule:exactly;">{{ conQuien }} AHORA</td></tr>
 
   <!-- Los cinco. Cada persona es UNA fila completa: el bucle NO puede abrir
        ni cerrar a caballo de la tabla. El porque, en el commit. -->
@@ -125,7 +144,7 @@
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td height="1" bgcolor="#3C5A48" style="height:1px;line-height:1px;font-size:0;">&nbsp;</td></tr></table>
     <p style="margin:20px 0 0 0;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#9CBBA6;mso-line-height-rule:exactly;">
       Aro Club · Caracas, Venezuela<br />
-      Te escribimos porque tienes una reserva para hoy.<br />
+      Te escribimos porque cambió algo de tu reserva.<br />
       <a href="{{{ enlaceAjustes }}}" style="color:#9CBBA6;text-decoration:underline;">Ajustes de correo</a> · <a href="{{{ sitioWeb }}}/legal" style="color:#9CBBA6;text-decoration:underline;">Términos y privacidad</a>
     </p>
   </td></tr>
