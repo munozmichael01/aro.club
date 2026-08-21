@@ -397,7 +397,11 @@ class Component extends DCLogic {
         // reservar ni «esta noche» que valga a las siete de la mañana.
         tituloMov: 'Tu grupo de hoy.',
         cuerpoMov: 'Llega diez minutos antes al punto de encuentro y pregunta por Aro. Si se te hace tarde, avísanos y se lo decimos al grupo.',
-        accion: 'Cómo llegar', enlace: '/', secundaria: 'Volver al principio'
+        // A `/mesa`, que es donde está el mapa con la dirección de verdad.
+        // Iba a la portada, como iba «Ver mi reserva» hasta antes de ayer: el
+        // mismo fallo en la misma pantalla, y el peor día para tenerlo, que
+        // es el de la cena.
+        accion: 'Cómo llegar', enlace: '/mesa', secundaria: 'Volver al principio'
       }
     ];
     const FORMATOS = { dinner: 'Cenas', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' };

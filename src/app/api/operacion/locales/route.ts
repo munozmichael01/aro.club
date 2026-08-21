@@ -50,6 +50,10 @@ const alta = z.object({
   // Y los días que abre. Es el que impide que un sitio cerrado los jueves
   // reciba la cena del jueves. 0 = domingo, como getDay().
   dias: z.array(z.number().int().min(0).max(6)).min(1).optional(),
+  // El enlace de la ficha de Maps. Opcional al dar de alta —el local entra
+  // sin activar y se completa después, como la foto o el contacto— pero sin
+  // él no se puede activar, que es lo que impide que llegue a una cena.
+  mapa: z.string().trim().url().max(500).optional(),
 })
 
 const cambio = z.discriminatedUnion('accion', [
@@ -71,19 +75,38 @@ const cambio = z.discriminatedUnion('accion', [
   }),
 ])
 
-/** Lo que hace falta para poder ofrecerlo a una fecha. */
+/**
+ * Lo que hace falta para poder ofrecerlo a una fecha.
+ *
+ * El enlace del mapa entró aquí el 21 de agosto de 2026, y no por completismo.
+ * Los dos locales de la base no lo tienen, así que «Cómo llegar» —en el correo
+ * de la mesa y en `/mesa`— se caía a una búsqueda de Maps por nombre y
+ * dirección. Michael la pulsó camino de la cena y Maps no dio con el sitio.
+ *
+ * Una búsqueda acierta o no acierta; el enlace de la ficha lleva al sitio
+ * exacto y abre la app de mapas con la navegación puesta. Y este botón se
+ * pulsa yendo tarde a una dirección que no conoces: es el peor momento para
+ * que una aproximación no funcione.
+ *
+ * Va en el candado de activar y no en un aviso porque ya hay un candado que
+ * hace exactamente esto —sin ruido medido y sin foto de la entrada tampoco se
+ * ofrece— y porque el fallo no aparece al dar de alta, aparece la noche de la
+ * cena, cuando ya no hay quien lo arregle.
+ */
 function loQueFalta(l: {
   noise_level: number | null
   address: string | null
   contact_name: string | null
   contact_phone: string | null
   facade_photo_path: string | null
+  maps_url: string | null
 }) {
   const falta: string[] = []
   if (!l.noise_level) falta.push('medir el ruido')
   if (!l.address) falta.push('la dirección')
   if (!l.contact_name || !l.contact_phone) falta.push('un contacto')
   if (!l.facade_photo_path) falta.push('la foto de la entrada')
+  if (!l.maps_url?.trim()) falta.push('el enlace del mapa')
   return falta
 }
 
@@ -309,6 +332,7 @@ export async function POST(request: Request) {
       metro_nearby: d.metro?.trim() || null,
       metro_minutes: d.metroMinutos ?? null,
       table_shape: d.forma ?? null,
+      maps_url: d.mapa ?? null,
       // Si no se dicen, abre todos los días: es el default de la columna y es
       // lo que hacía hasta ahora. Decir «ninguno» sería peor que no saberlo.
       ...(d.dias?.length ? { open_days: [...new Set(d.dias)].sort() } : {}),
@@ -345,7 +369,7 @@ export async function PATCH(request: Request) {
 
   const { data: local } = await admin
     .from('restaurants')
-    .select('id, noise_level, address, contact_name, contact_phone, facade_photo_path')
+    .select('id, noise_level, address, contact_name, contact_phone, facade_photo_path, maps_url')
     .eq('id', d.id)
     .maybeSingle()
 

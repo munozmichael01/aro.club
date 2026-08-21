@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { enlaceDeMapa } from '@/lib/mapa'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
@@ -202,7 +203,10 @@ export async function GET() {
     empiezaEn: evento.starts_at,
     restaurante: mesa.restaurants?.name ?? null,
     direccion: mesa.restaurants?.address ?? null,
-    mapa: mesa.restaurants?.maps_url ?? null,
+    // El enlace ya montado, respaldo incluido. La pantalla lo pintaba y, si
+    // venía vacío, se inventaba el suyo: dos formas de armar el mismo botón,
+    // y la del navegador tampoco metía la ciudad.
+    mapa: enlaceDeMapa(mesa.restaurants),
     // Solo nombre de pila y sector. Sin apellidos, sin fotos, sin contacto.
     companeros: (companeros ?? []).map((c) => {
       const p = c.profiles as unknown as { display_name: string | null; full_name: string | null } | null

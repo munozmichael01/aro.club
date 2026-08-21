@@ -3,6 +3,7 @@ import 'server-only'
 import type { Correo } from '@/lib/correos'
 import { firmarBaja } from '@/lib/baja-token'
 import { firmar } from '@/lib/lead-token'
+import { enlaceDeMapa } from '@/lib/mapa'
 import { SITIO } from '@/lib/remitente'
 import { vozDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -504,8 +505,10 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
     zona: zonas[0] ?? '',
     // El de la ficha si lo tiene; si no, uno construido, que es mejor que un
     // botón que no lleva a ningún sitio.
-    mapa: mesa.restaurants?.maps_url ||
-      `https://maps.google.com/?q=${encodeURIComponent(`${mesa.restaurants?.name ?? ''} ${direccion}`)}`,
+    // Del mismo sitio que el de la web: `enlaceDeMapa`. Aquí se construía a
+    // mano y sin la ciudad, y en `Mi mesa` de otra forma distinta también sin
+    // ella. Dos botones con el mismo nombre y dos destinos.
+    mapa: enlaceDeMapa(mesa.restaurants) ?? '',
     comoLlegar: `la mesa de Aro, la ${numero}`,
     gente: (otros ?? []).map((o) => {
       const quien = o.profiles as unknown as { display_name: string | null; full_name: string | null } | null

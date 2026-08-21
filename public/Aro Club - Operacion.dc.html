@@ -411,6 +411,9 @@
               <span style="flex:2 1 170px;min-width:0">
                 <span style="display:block;font:500 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ l.nombre }}</span>
                 <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ l.nota }}</span>
+                <sc-if value="{{ l.hayFalta }}" hint-placeholder-val="{{ false }}">
+                  <span style="{{ l.faltaEstilo }}">{{ l.falta }}</span>
+                </sc-if>
               </span>
               <span style="flex:1 1 130px;display:flex;gap:5px;flex-wrap:wrap">
                 <sc-for list="{{ l.familias }}" as="f" hint-placeholder-count="2">
@@ -2007,6 +2010,14 @@ class Component extends DCLogic {
         fams: l.familias || [],
         activo: l.activo,
         nota: (l.zonaNombre || l.zona) + ' · ' + (trozos.length ? trozos.join(' · ') : 'sin ficha'),
+        // Lo que le falta para poder ofrecerse. La ruta lo manda desde el
+        // primer día y la pantalla no lo leía: un local podía llevar semanas
+        // sin foto de la entrada o sin enlace de mapa y aquí solo se veía
+        // «inactivo», sin decir por qué. Sin esto, «el enlace del mapa» sería
+        // un requisito nuevo que nadie ve hasta que intenta activar.
+        hayFalta: (l.falta || []).length > 0,
+        falta: 'Falta ' + (l.falta || []).join(', ') + '.',
+        faltaEstilo: 'display:block;font:500 12px/1.45 \'Inter Tight\',sans-serif;color:#8F4515;margin-top:3px',
         aforo: (l.aforo || 0) + ((l.aforo || 0) === 1 ? ' mesa' : ' mesas'),
         porCabeza: l.gastoDeclarado ? l.gastoDeclarado + ' USD' : '—',
         familias: (l.familias || []).map((x) => ({

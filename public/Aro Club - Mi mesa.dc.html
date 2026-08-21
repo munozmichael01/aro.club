@@ -107,7 +107,9 @@
         </div>
 
         <div style="display:flex;flex-wrap:wrap;gap:11px;margin-top:16px">
-          <a href="{{ mapa }}" style="{{ botonPrimario }}">Cómo llegar</a>
+          <sc-if value="{{ hayMapa }}" hint-placeholder-val="{{ true }}">
+            <a href="{{ mapa }}" target="_blank" rel="noopener" style="{{ botonPrimario }}">Cómo llegar</a>
+          </sc-if>
           <button onClick="{{ abrirTarde }}" style="{{ botonBorde }}">Voy tarde</button>
         </div>
 
@@ -585,7 +587,13 @@ class Component extends DCLogic {
            act.minutos ? act.minutos + ' min' : null,
            act.nivel ? 'nivel ' + act.nivel : null].filter(Boolean).join(' · ')
         : '',
-      mapa: (dt && dt.mapa) || ('https://maps.google.com/?q=' + encodeURIComponent(restaurante + ' ' + direccion)),
+      // El enlace viene armado del servidor, respaldo incluido. Aquí se
+      // montaba uno propio cuando faltaba, con otra forma de URL y sin la
+      // ciudad: dos botones con el mismo nombre y dos destinos distintos.
+      // Si el servidor no puede dar ninguno, no hay botón — mejor eso que uno
+      // que abre Maps en cualquier sitio.
+      mapa: (dt && dt.mapa) || '',
+      hayMapa: !!(dt && dt.mapa),
       // Estas dos frases llevaban dentro "Cardenal" y "la 04" escritos a
       // mano. Se arman con lo que devuelve la mesa o no se dicen.
       // "que son seis", no "que son 6": las cifras pequeñas van en letra,
