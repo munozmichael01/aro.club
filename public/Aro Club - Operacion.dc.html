@@ -656,6 +656,80 @@
           </div>
         </sc-if>
 
+        <sc-if value="{{ esVer }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <h1 style="{{ h1 }}">{{ verTitulo }}</h1>
+            <p style="{{ bajada }}">{{ verBajada }}</p>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(16px,2.4vw,26px);margin-top:clamp(22px,3vw,30px);align-items:start">
+
+              <div>
+                <div style="{{ etiqueta }}">QUÉ FECHA</div>
+                <div style="display:flex;flex-direction:column;gap:9px">
+                  <sc-for list="{{ fechasVer }}" as="a" hint-placeholder-count="3">
+                    <button onClick="{{ a.pick }}" style="{{ a.btn }}">
+                      <span style="{{ a.aro }}">{{ a.icono }}</span>
+                      <span style="flex:1;min-width:0;text-align:left">
+                        <span style="{{ a.txt }}">{{ a.titulo }}</span>
+                        <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ a.detalle }}</span>
+                      </span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <sc-if value="{{ hayQueVer }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column;gap:clamp(18px,2.4vw,26px)">
+
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px">
+                    <sc-for list="{{ verMetricas }}" as="m" hint-placeholder-count="4">
+                      <div style="border-radius:22px;background:#FAF3E4;padding:16px 18px">
+                        <span style="display:block;font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F">{{ m.etiqueta }}</span>
+                        <span style="{{ m.cifraEstilo }}">{{ m.cifra }}</span>
+                        <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:5px">{{ m.nota }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+
+                  <div>
+                    <div style="{{ etiqueta }}">ZONAS ABIERTAS</div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px">
+                      <sc-for list="{{ verZonas }}" as="z" hint-placeholder-count="2">
+                        <div style="{{ z.caja }}">
+                          <span style="{{ z.cifra }}">{{ z.n }}</span>
+                          <span style="display:block;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A;margin-top:7px">{{ z.zona }}</span>
+                          <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ z.sitio }}</span>
+                          <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ z.nota }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style="{{ etiqueta }}">QUIÉN ESTÁ APUNTADO</div>
+                    <sc-if value="{{ hayVerGente }}" hint-placeholder-val="{{ true }}">
+                      <div style="border-radius:24px;background:#FAF3E4;padding:4px clamp(16px,2vw,20px)">
+                        <sc-for list="{{ verGente }}" as="g" hint-placeholder-count="6">
+                          <a href="{{ g.enlace }}" style="{{ g.fila }}">
+                            <span style="{{ g.avatar }}">{{ g.inicial }}</span>
+                            <span style="flex:1;min-width:0">
+                              <span style="display:block;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ g.nombre }}</span>
+                              <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ g.zonas }}</span>
+                            </span>
+                          </a>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;max-width:60ch;text-wrap:pretty">{{ verNotaGente }}</div>
+                  </div>
+
+                </div>
+              </sc-if>
+
+            </div>
+          </div>
+        </sc-if>
+
         <sc-if value="{{ esCancelar }}" hint-placeholder-val="{{ false }}">
           <div>
             <h1 style="{{ h1 }}">Cancelar una fecha</h1>
@@ -3086,7 +3160,102 @@ class Component extends DCLogic {
       haySinCubrir: sinCubrir.length > 0,
       notaSinCubrir: 'No hay sitio de cenas en ' + sinCubrir.join(' ni ') + '. Una mesa que solo acepte esas zonas no se puede sentar.',
 
-      subFechas: [['Abrir una fecha', 'abrir'], ['Cancelar una fecha', 'cancelar']].map((t) => {
+      /**
+       * Ver una fecha ya abierta.
+       *
+       * En Fechas solo se podía abrir y cancelar. Para saber cómo va una que
+       * ya está abierta —quién se apuntó, qué zonas están abiertas y con qué
+       * local, cuánto falta para el cierre, cuántos hay por zona— había que
+       * irse a Reparto y deducirlo del reparto ya hecho: mirar el resultado
+       * para adivinar la entrada, y solo después de haber repartido.
+       *
+       * Es de LECTURA. Abrir, cerrar zonas y cancelar siguen donde estaban:
+       * una pantalla que enseña y toca a la vez es la que hace que alguien
+       * cancele mientras miraba.
+       */
+      hayQueVer: FECHAS_REP.length > 0,
+      fechasVer: FECHAS_REP.map((f, i) => {
+        const on = (St.fechaVer == null ? 0 : St.fechaVer) === i;
+        return {
+          titulo: f.titulo,
+          detalle: f.apuntados + (f.apuntados === 1 ? ' apuntado · ' : ' apuntados · ')
+            + (f.zonas.length === 1 ? '1 zona' : f.zonas.length + ' zonas'),
+          icono: on ? '✓' : '', aro: aroDS(on),
+          btn: 'display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:12px 16px;border-radius:22px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
+          txt: 'display:block;font:' + (on ? '600' : '500') + ' 15px/1.25 \'Inter Tight\',sans-serif;color:#14342A',
+          pick: () => this.setState({ fechaVer: i })
+        };
+      }),
+      ...(function () {
+        const i = St.fechaVer == null ? 0 : St.fechaVer;
+        const f = FECHAS_REP[i];
+        const cruda = FECHAS[i];
+        if (!f || !cruda) {
+          return {
+            verTitulo: 'No hay ninguna fecha abierta.',
+            verBajada: 'En cuanto abras una, aquí se ve cómo va: quién se apuntó, qué zonas están abiertas y cuánto queda para el cierre.',
+            verMetricas: [], verZonas: [], verGente: [], hayVerGente: false, verNotaGente: ''
+          };
+        }
+        const voz = f.fam !== 'movimiento' ? 'mesas' : 'grupos';
+        // El cierre en palabras y no en fecha: «14 H» es lo accionable, y
+        // «lunes 25 a las 19:00» obliga a restar mentalmente.
+        const cierra = cuantoQueda(cruda.cierraEn);
+        return {
+          verTitulo: f.titulo,
+          verBajada: f.hora + ' · ' + (cierra === 'CERRADA'
+            ? 'Ya cerró: no entra nadie más.'
+            : 'Cierra en ' + cierra.toLowerCase() + '.')
+            // Sin punto al final: `horaTexto` ya devuelve «12:00 p.m.» con el
+            // suyo, y sumarle otro daba «p.m..».
+            + ' La revelación es a las ' + horaTexto(cruda.revelaEn),
+          verMetricas: [
+            ['APUNTADOS', String(f.apuntados), f.zonas.length === 1 ? 'En 1 zona' : 'En ' + f.zonas.length + ' zonas', null],
+            ['CIERRA EN', cierra, cierra === 'CERRADA' ? 'No entra nadie más' : 'Después ya no se apunta nadie', cierra === 'CERRADA' ? '#8F4515' : null],
+            [voz.toUpperCase() + ' PUBLICADAS', String(cruda.publicadas || 0),
+              (cruda.publicadas || 0) === 0 ? 'Todavía sin repartir' : 'Ya fijas', null],
+            ['DAN PARA', String(Math.floor(f.apuntados / (f.porMesa || 6))),
+              'De ' + (f.porMesa || 6) + ' en ' + (f.fam !== 'movimiento' ? 'mesa' : 'grupo'), null]
+          ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) })),
+          // Por zona. `apuntados` es «cuántos ACEPTAN esta zona», así que la
+          // suma de las zonas puede pasar del total: quien acepta tres cuenta
+          // en las tres. Se dice, en vez de dejar que parezca un descuadre.
+          verZonas: f.zonas.map((z) => ({
+            zona: z[0],
+            sitio: z[1] || 'Sin local asignado',
+            sinSitio: !z[1],
+            n: String(z[3]),
+            nota: z[3] >= (f.porMesa || 6)
+              ? 'Da para ' + Math.floor(z[3] / (f.porMesa || 6)) + ' ' + voz
+              : 'Faltan ' + ((f.porMesa || 6) - z[3]) + ' para una',
+            caja: 'border-radius:22px;background:#FAF3E4;padding:16px 18px',
+            cifra: 'font:700 26px/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:' + (z[3] >= (f.porMesa || 6) ? '#1B5138' : '#8F4515')
+          })),
+          hayVerGente: (cruda.gente || []).length > 0,
+          verGente: (cruda.gente || []).map((g, k) => ({
+            nombre: g.nombre,
+            // Las tres primeras y cuántas más. Quien acepta «cualquier zona»
+            // marca las trece, y la fila entera se convertía en cuatro
+            // líneas de nombres de barrio que nadie lee: la lista es para
+            // saber QUIÉN hay, y las zonas de cada uno están en su ficha.
+            zonas: (function () {
+              const zs = (g.zonas || []).map((z) => nombreZona(z));
+              if (!zs.length) return 'sin zonas';
+              if (zs.length <= 3) return zs.join(', ');
+              return zs.slice(0, 3).join(', ') + ' y ' + (zs.length - 3) + ' zonas más';
+            })(),
+            enlace: '/operacion/miembro?id=' + g.id,
+            inicial: (g.nombre || '?').charAt(0),
+            avatar: avatarRep(k),
+            fila: 'display:flex;gap:11px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.09);text-decoration:none'
+          })),
+          verNotaGente: (cruda.gente || []).length
+            ? 'Solo verificados: quien no lo está no se sienta, así que tampoco cuenta aquí. Si alguien acepta tres zonas, cuenta en las tres de arriba.'
+            : 'Nadie apuntado todavía, o nadie verificado. Sin verificar no hay puesto.'
+        };
+      })(),
+
+      subFechas: [['Abrir una fecha', 'abrir'], ['Ver una fecha', 'ver'], ['Cancelar una fecha', 'cancelar']].map((t) => {
         const on = (St.sub || 'abrir') === t[1];
         return {
           nombre: t[0],
@@ -3095,6 +3264,7 @@ class Component extends DCLogic {
         };
       }),
       esAbrir: (St.sub || 'abrir') === 'abrir',
+      esVer: St.sub === 'ver',
       esCancelar: St.sub === 'cancelar',
 
       etiqueta: 'font:500 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:11px',

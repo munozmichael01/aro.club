@@ -222,6 +222,35 @@ export async function GET() {
     .select('event_id')
     .in('event_id', ids.length ? ids : vacio)
 
+  /**
+   * Quién, con nombre.
+   *
+   * Hasta ahora esta ruta solo decía CUÁNTOS. Para abrir una fecha basta,
+   * pero para mirar una que ya está abierta no: la pregunta de operación
+   * antes de repartir es «quién hay», y la única forma de contestarla era
+   * irse a la pestaña de Reparto y deducirlo del reparto ya hecho — o sea,
+   * mirando el resultado para adivinar la entrada.
+   *
+   * Del pool y no de `bookings`: quien no está verificado no se sienta, y
+   * enseñarlo aquí haría creer que una zona da para una mesa que no sale. Es
+   * la misma fuente con la que ya se cuenta, así que la lista y el número no
+   * pueden discrepar.
+   *
+   * El techo, dicho: son tantas filas como apuntados hay en las fechas
+   * abiertas, y se leen siempre aunque nadie abra el detalle. Con dos fechas
+   * y doce personas no se nota; el día que sean cientos, esto se pide por
+   * fecha y solo al abrirla.
+   */
+  const quienes = new Map<string, string>()
+  const idsPool = [...new Set((pool ?? []).map((p) => p.profile_id).filter(Boolean))] as string[]
+  if (idsPool.length) {
+    const { data: gente } = await admin
+      .from('profiles')
+      .select('id, display_name, full_name')
+      .in('id', idsPool)
+    for (const g of gente ?? []) quienes.set(g.id, g.display_name || g.full_name || 'Sin nombre')
+  }
+
   const fechas = (eventos ?? []).map((e) => {
     const suyas = (sedes ?? []).filter((v) => v.event_id === e.id)
     const suPool = (pool ?? []).filter((p) => p.event_id === e.id)
@@ -239,6 +268,15 @@ export async function GET() {
       actividad: e.activity ?? null,
       apuntados: suPool.length,
       publicadas: susMesas.length,
+      // Con nombre y con las zonas que aceptó cada uno, ordenados. Es lo que
+      // hace falta para mirar una fecha antes de repartirla.
+      gente: suPool
+        .map((p) => ({
+          id: p.profile_id,
+          nombre: quienes.get(p.profile_id ?? '') ?? 'Sin nombre',
+          zonas: ((p.zones ?? []) as string[]),
+        }))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
       zonas: suyas.map((v) => {
         const local = v.restaurants as unknown as {
           name: string
