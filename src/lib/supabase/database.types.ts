@@ -3434,6 +3434,7 @@ export type Database = {
         | "restablecer_clave"
         | "abrimos_zona"
         | "cuenta_lista"
+        | "sin_mesa"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -3661,6 +3662,7 @@ export const Constants = {
         "restablecer_clave",
         "abrimos_zona",
         "cuenta_lista",
+        "sin_mesa",
       ],
       event_format_t: [
         "dinner",
