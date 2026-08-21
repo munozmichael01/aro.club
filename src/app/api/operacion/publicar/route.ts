@@ -192,10 +192,74 @@ export async function POST(request: Request) {
     })),
   )
 
-  const { data: encolados, error: errorCorreos } = await admin
+  // --- a quién hay que avisar, que no son todos ------------------------
+  //
+  // Solo se avisa a quien CAMBIA de sitio. Si alguien se cae de una mesa y
+  // entra otro desde la espera, el que entra recibe su mesa; los cinco que ya
+  // estaban sentados no reciben nada, porque para ellos no ha cambiado nada.
+  //
+  // Antes esto era un `upsert` sobre `(profile_id, kind, event_id)`. No
+  // fallaba —el índice dejó de ser parcial en agosto—, hacía algo peor:
+  // REESCRIBÍA la fila que ya había, y devolvía 200. Al republicar, la fila
+  // de alguien a quien ya se le mandó su mesa se sobreescribía con la
+  // propuesta nueva sin que saliera ningún correo y sin que nadie se enterara.
+  //
+  // Y no hace falta reencolar para que el cambio llegue: `mesa_asignada` no
+  // usa el payload, se compone al enviar leyendo `table_members`. Quien tenga
+  // su correo todavía en cola recibirá el sitio NUEVO aunque su fila sea la
+  // de antes.
+  const { data: yaEncolados, error: errorLeyendo } = await admin
     .from('scheduled_emails')
-    .upsert(aviso as never, { onConflict: 'profile_id,kind,event_id' })
-    .select('id')
+    .select('profile_id, sent_at')
+    .eq('event_id', corrida.event_id)
+    .eq('kind', 'mesa_asignada')
+
+  if (errorLeyendo) {
+    console.error('[publicar] no se pudo leer la cola', errorLeyendo)
+    return NextResponse.json(
+      { error: 'Las mesas quedaron publicadas pero no pudimos comprobar los avisos. Vuelve a publicar.' },
+      { status: 500 },
+    )
+  }
+
+  const conAviso = new Map((yaEncolados ?? []).map((f) => [f.profile_id, f.sent_at]))
+
+  // Los que ya recibieron su mesa Y ahora están en otra. No se les toca la
+  // fila —es el registro de lo que de verdad les dijimos— y no se les puede
+  // reencolar el mismo correo: el 03 dice «TU MESA · 04» como novedad, y
+  // mandarlo dos veces con contenido distinto sin explicar qué cambió es peor
+  // que el silencio. Necesitan un `mesa_cambiada` propio, que está pendiente
+  // de Design. Hasta entonces salen por la respuesta, para que el panel lo
+  // diga en voz alta en vez de dar por avisado a quien no lo está.
+  const seMueven: { profileId: string; mesa: number }[] = []
+  for (const mesa of mesas) {
+    for (const p of mesa.integrantes) {
+      if (conAviso.get(p.profileId)) seMueven.push({ profileId: p.profileId, mesa: mesa.numero })
+    }
+  }
+
+  // Con nombre, porque el panel tiene que decir A QUIÉN hay que escribirle.
+  // Una lista de uuids no es un aviso, es un acertijo.
+  const { data: nombres } = seMueven.length
+    ? await admin.from('profiles').select('id, display_name, full_name')
+        .in('id', seMueven.map((x) => x.profileId))
+    : { data: [] }
+
+  const comoSeLlama = new Map(
+    (nombres ?? []).map((n) => [n.id, n.display_name || n.full_name || 'Sin nombre']),
+  )
+
+  const yaAvisadosQueSeMueven = seMueven.map((x) => ({
+    profileId: x.profileId,
+    nombre: comoSeLlama.get(x.profileId) ?? 'Sin nombre',
+    mesa: x.mesa,
+  }))
+
+  const porEncolar = aviso.filter((a) => !conAviso.has(a.profile_id))
+
+  const { data: encolados, error: errorCorreos } = porEncolar.length
+    ? await admin.from('scheduled_emails').insert(porEncolar as never).select('id')
+    : { data: [], error: null }
 
   if (errorCorreos) {
     // Las mesas ya existen; sin correos nadie se entera de su mesa, así que
@@ -290,5 +354,10 @@ export async function POST(request: Request) {
     publicadoConAvisos: conRoturas.length ? conRoturas : null,
     // La hora exacta a la que saldrán, para que el panel la enseñe.
     saldranEn: evento.reveal_at,
+    // A quién ya le habíamos mandado su mesa y ahora está en otra. No se les
+    // reescribe la fila ni se les reencola nada: hay que escribirles a mano
+    // hasta que exista `mesa_cambiada`. Va aquí para que el panel lo diga en
+    // voz alta en vez de dar por avisado a quien no lo está.
+    yaAvisadosQueSeMueven: yaAvisadosQueSeMueven.length ? yaAvisadosQueSeMueven : null,
   })
 }
