@@ -125,3 +125,69 @@ export async function abonarSinMesa(perfilId: string, eventoId: string): Promise
 
   if (error) console.error('[creditos] no se abonó la mesa no conseguida', reserva.id, error)
 }
+
+/**
+ * Deshace el abono por mesa no conseguida cuando esa persona SÍ acaba sentada.
+ *
+ * Es el camino de al lado del de arriba y llega igual de fácil: se publica
+ * todo, quien no entró recibe su abono; alguien se cae, se despublica una
+ * mesa, se vuelve a repartir y ahora sí entra. El `refund` seguía puesto, así
+ * que cenaba y se quedaba con el crédito. Cena gratis, y no por un fallo
+ * raro: por el flujo que el panel ofrece.
+ *
+ * No se BORRA la fila del abono. El libro de créditos es un libro: se apunta
+ * el contrario y quedan las dos, que es como se ve después qué pasó. Borrar
+ * dejaría un saldo correcto y una historia que no cuenta nada.
+ *
+ * Idempotente por el mismo par que el abono: si ya hay una retirada para esa
+ * reserva, no se apunta otra. Y si no hay abono que retirar, no hace nada —
+ * quien nunca estuvo en la espera no tiene nada que devolver.
+ */
+export async function retirarAbonoSinMesa(perfilId: string, eventoId: string): Promise<void> {
+  const admin = createAdminClient()
+
+  const { data: reserva } = await admin
+    .from('bookings')
+    .select('id')
+    .eq('profile_id', perfilId)
+    .eq('event_id', eventoId)
+    .maybeSingle()
+
+  if (!reserva) return
+
+  const { data: abono } = await admin
+    .from('credit_ledger')
+    .select('id')
+    .eq('booking_id', reserva.id)
+    .eq('reason', 'refund')
+    .limit(1)
+    .maybeSingle()
+
+  if (!abono) return
+
+  // ¿Ya se retiró? La retirada es un `event_charge` con su nota: el motivo no
+  // es un cargo nuevo por cenar —ese ya está— sino la vuelta atrás de la
+  // devolución, y `credit_reason_t` no tiene un valor mejor. La nota es lo
+  // que lo distingue del cargo original al mirar el libro.
+  const NOTA = 'Entró en mesa: se retira el abono por mesa no conseguida'
+
+  const { data: yaRetirado } = await admin
+    .from('credit_ledger')
+    .select('id')
+    .eq('booking_id', reserva.id)
+    .eq('note', NOTA)
+    .limit(1)
+    .maybeSingle()
+
+  if (yaRetirado) return
+
+  const { error } = await admin.from('credit_ledger').insert({
+    profile_id: perfilId,
+    delta: -1,
+    reason: 'event_charge',
+    booking_id: reserva.id,
+    note: NOTA,
+  } as never)
+
+  if (error) console.error('[creditos] no se retiró el abono', reserva.id, error)
+}
