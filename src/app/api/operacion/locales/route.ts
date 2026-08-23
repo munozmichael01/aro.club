@@ -50,10 +50,35 @@ const alta = z.object({
   // Y los días que abre. Es el que impide que un sitio cerrado los jueves
   // reciba la cena del jueves. 0 = domingo, como getDay().
   dias: z.array(z.number().int().min(0).max(6)).min(1).optional(),
-  // El enlace de la ficha de Maps. Opcional al dar de alta —el local entra
-  // sin activar y se completa después, como la foto o el contacto— pero sin
-  // él no se puede activar, que es lo que impide que llegue a una cena.
-  mapa: z.string().trim().url().max(500).optional(),
+  /**
+   * El enlace de la ficha de Maps. OBLIGATORIO desde el 22 de agosto de 2026.
+   *
+   * Era opcional aquí y solo hacía falta para activar. Michael lo sube al
+   * alta: la dirección se comprueba al dar de alta el local, no al pintar el
+   * enlace — si entra mal, se arregla en un sitio y no en los tres que la
+   * pintan.
+   *
+   * Y «localizable» se comprueba así y no geocodificando la dirección. Lo
+   * probé contra Nominatim: encuentra «Av. Tamanaco, El Rosal» y «Calle
+   * Madrid, Las Mercedes», pero NO «Cardenal, Calle Madrid con avenida
+   * Principal, Las Mercedes», que es la dirección real de un local de verdad
+   * — el «con avenida X» es cómo se escriben las direcciones en Caracas. Un
+   * validador que rechaza locales buenos es peor que ninguno, y además
+   * añadiría un tercero del que depender.
+   *
+   * Lo que sí prueba que el sitio existe es el enlace que alguien encontró en
+   * Maps. Se comprueba que sea de Maps y no una URL cualquiera: con
+   * `.url()` a secas valía `https://ejemplo.com`, y el botón «Cómo llegar»
+   * llevaría ahí.
+   */
+  mapa: z
+    .string()
+    .trim()
+    .url()
+    .max(500)
+    .refine((u) => /^https:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps)/i.test(u), {
+      message: 'El enlace tiene que ser de Google Maps.',
+    }),
 })
 
 const cambio = z.discriminatedUnion('accion', [
@@ -332,7 +357,7 @@ export async function POST(request: Request) {
       metro_nearby: d.metro?.trim() || null,
       metro_minutes: d.metroMinutos ?? null,
       table_shape: d.forma ?? null,
-      maps_url: d.mapa ?? null,
+      maps_url: d.mapa,
       // Si no se dicen, abre todos los días: es el default de la columna y es
       // lo que hacía hasta ahora. Decir «ninguno» sería peor que no saberlo.
       ...(d.dias?.length ? { open_days: [...new Set(d.dias)].sort() } : {}),

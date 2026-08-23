@@ -245,6 +245,15 @@
           </div>
 
           <div>
+            <label style="{{ etiquetaCampo }}" for="loc-mapa">Enlace del mapa</label>
+            <input id="loc-mapa" type="url" inputmode="url" value="{{ mapa }}" onChange="{{ onMapa }}" placeholder="https://maps.app.goo.gl/…" style="{{ campo }}" />
+            <div style="{{ ayudaCampo }}">Búscalo en Google Maps y pega el enlace de compartir. Es el botón «Cómo llegar» que se pulsa yendo tarde: una dirección escrita a mano no siempre la encuentra.</div>
+            <sc-if value="{{ hayAvisoMapa }}" hint-placeholder-val="{{ false }}">
+              <div style="{{ avisoMapaEstilo }}">{{ avisoMapa }}</div>
+            </sc-if>
+          </div>
+
+          <div>
             <div style="{{ etiquetaCampo }}">Para qué formatos sirve</div>
             <div style="display:flex;flex-wrap:wrap;gap:8px">
               <sc-for list="{{ formatosAlta }}" as="f" hint-placeholder-count="4">
@@ -306,7 +315,7 @@ class Component extends DCLogic {
   state = {
     vista: 'lista', abierto: null, filtro: 0,
     datos: null, error: '', trabajando: false, borrador: {},
-    nombre: '', direccion: '', zona: -1, formatos: [], aforo: -1, ruido: -1
+    nombre: '', direccion: '', mapa: '', zona: -1, formatos: [], aforo: -1, ruido: -1
   };
 
   componentDidMount() {
@@ -574,7 +583,26 @@ class Component extends DCLogic {
       };
     });
 
-    const listo = this.state.nombre.trim() && this.state.zona >= 0 && this.state.formatos.length > 0 && this.state.aforo > 0 && this.state.ruido > 0;
+    /**
+     * El enlace del mapa es obligatorio al dar de alta.
+     *
+     * La dirección se comprueba aquí y no al pintar el botón: si entra mal,
+     * se arregla en un sitio y no en los tres que la pintan. Y «localizable»
+     * no se puede comprobar geocodificando la dirección — lo probé contra
+     * Nominatim y no encuentra «Calle Madrid CON avenida Principal», que es
+     * como se escriben las direcciones en Caracas y es la de Cardenal, un
+     * local de verdad. Un validador que rechaza locales buenos es peor que
+     * ninguno.
+     *
+     * Lo que sí prueba que el sitio existe es el enlace que alguien encontró
+     * en Maps. Y es además lo que usa «Cómo llegar», así que exigirlo aquí
+     * arregla el botón en origen en vez de improvisar una búsqueda al
+     * pintarlo.
+     */
+    const mapaTxt = String(this.state.mapa || '').trim();
+    const mapaOk = /^https:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps)/i.test(mapaTxt);
+
+    const listo = this.state.nombre.trim() && this.state.zona >= 0 && this.state.formatos.length > 0 && this.state.aforo > 0 && this.state.ruido > 0 && mapaOk;
 
     return {
       enLista: v === 'lista', enFicha: v === 'ficha' && !!a, enAlta: v === 'alta',
@@ -604,8 +632,15 @@ class Component extends DCLogic {
 
       nombre: this.state.nombre,
       direccion: this.state.direccion,
+      mapa: this.state.mapa,
       onNombre: (e) => this.setState({ nombre: e.target.value, error: '' }),
       onDireccion: (e) => this.setState({ direccion: e.target.value, error: '' }),
+      onMapa: (e) => this.setState({ mapa: e.target.value, error: '' }),
+      // Solo se avisa cuando hay algo escrito y no cuadra. Enseñar «no es un
+      // enlace de Maps» sobre un campo vacío es regañar antes de tiempo.
+      hayAvisoMapa: !!mapaTxt && !mapaOk,
+      avisoMapa: 'Eso no es un enlace de Google Maps. Tiene que empezar por maps.app.goo.gl o google.com/maps.',
+      avisoMapaEstilo: 'font:500 13px/1.5 \'Inter Tight\',sans-serif;color:#8F4515;margin-top:6px',
       error: this.state.error,
       hayError: !!this.state.error,
       inerte: listo && !this.state.trabajando ? null : 'true',
@@ -617,7 +652,8 @@ class Component extends DCLogic {
             : this.state.zona < 0 ? 'la zona'
               : !this.state.formatos.length ? 'para qué formatos sirve'
                 : this.state.aforo < 0 ? 'cuántas mesas aguanta'
-                  : 'si se puede conversar';
+                  : this.state.ruido < 0 ? 'si se puede conversar'
+                    : 'el enlace del mapa';
           this.setState({ error: 'Falta ' + falta + '. Sin eso no se puede ofrecer a ninguna mesa.' });
           return;
         }
@@ -625,12 +661,13 @@ class Component extends DCLogic {
           nombre: this.state.nombre,
           zona: ZONAS[this.state.zona].slug,
           direccion: this.state.direccion,
+          mapa: mapaTxt,
           familias: this.state.formatos,
           aforo: this.state.aforo,
           ruido: this.state.ruido
         })
           .then(() => this.setState({
-            vista: 'lista', nombre: '', direccion: '', zona: -1, formatos: [], aforo: -1, ruido: -1, error: ''
+            vista: 'lista', nombre: '', direccion: '', mapa: '', zona: -1, formatos: [], aforo: -1, ruido: -1, error: ''
           }))
           .catch(() => {});
       }
