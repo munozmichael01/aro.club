@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { anotarPagoDeEvento } from '@/lib/creditos'
 import { campoDe, valido } from '@/lib/reglas'
+import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { encolar } from '@/lib/correos'
@@ -420,6 +421,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No pudimos apartarte el puesto.' }, { status: 500 })
     }
     bookingId = creada.id
+  }
+
+  // Apuntarse a esta fecha es declarar interés en su zona.
+  //
+  // Va aquí y no en `/api/reservar` porque este es el sitio donde se aparta
+  // el puesto de verdad: quien paga se apunta, y lo hace sabiendo en qué
+  // zona es la fecha. Si no coincide con ninguna de las que dijo, la zona se
+  // le añade en vez de dejarlo fuera del reparto sin que nadie se lo diga.
+  //
+  // No bloquea el pago si algo falla: se anota el error y se sigue. Perder
+  // una declaración de zona es recuperable; no apartar un puesto pagado, no.
+  const zonas = await declararZonasAlReservar(user.id, evento.id, bookingId)
+  if (zonas.anadidas.length) {
+    console.info('[pago] zona declarada al reservar', user.id, zonas.anadidas)
   }
 
   // Un puesto no se paga dos veces.
