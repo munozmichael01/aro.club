@@ -10,6 +10,19 @@ export const metadata: Metadata = {
   },
   description:
     'Un club para conocer gente en tu ciudad. Elegimos el sitio, armamos el grupo y reservamos a tu nombre.',
+  // Los mismos que declara la landing a mano. Van aqui porque `create-next-app`
+  // dejo un `src/app/favicon.ico` con el triangulo de Vercel: Next lo trata
+  // como fichero especial, lo sirve en /favicon.ico e inyecta su <link> en
+  // todo lo que renderiza. La landing se salvaba por declarar el suyo; el
+  // resto del sitio llevaba desde el 2 de agosto con el logo de Vercel en la
+  // pestana. Borrar el .ico sin poner esto deja las rutas sin ningun icono.
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icono-512.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
 }
 
 /**
