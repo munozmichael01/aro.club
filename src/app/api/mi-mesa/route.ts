@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { enlaceDeMapa } from '@/lib/mapa'
+import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
@@ -123,7 +123,14 @@ export async function GET() {
 
   const mesa = miembro.dinner_tables as unknown as {
     table_number: number
-    restaurants: { name: string; address: string; maps_url: string | null; facade_photo_path: string | null } | null
+    restaurants: {
+      name: string
+      address: string
+      maps_url: string | null
+      facade_photo_path: string | null
+      lat: number | null
+      lng: number | null
+    } | null
   }
 
   const { data: companeros } = await admin
@@ -207,6 +214,10 @@ export async function GET() {
     // venía vacío, se inventaba el suyo: dos formas de armar el mismo botón,
     // y la del navegador tampoco metía la ciudad.
     mapa: enlaceDeMapa(mesa.restaurants),
+    // Y el mismo sitio en Apple Maps, para el iPhone sin Google Maps: ahí el
+    // enlace normal cae en Safari, que es un mapa sin navegación. La pantalla
+    // elige, porque es el único sitio donde se sabe en qué teléfono se lee.
+    mapaApple: enlaceApple(mesa.restaurants),
     // Solo nombre de pila y sector. Sin apellidos, sin fotos, sin contacto.
     companeros: (companeros ?? []).map((c) => {
       const p = c.profiles as unknown as { display_name: string | null; full_name: string | null } | null

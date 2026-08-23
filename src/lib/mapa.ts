@@ -34,6 +34,8 @@ type Sitio = {
   name?: string | null
   address?: string | null
   maps_url?: string | null
+  lat?: number | string | null
+  lng?: number | string | null
 }
 
 /** Caracas, mientras sea la única ciudad abierta. */
@@ -51,4 +53,28 @@ export function enlaceDeMapa(sitio: Sitio | null | undefined): string | null {
   if (partes.length < 2) return null
 
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(partes.join(', '))}`
+}
+
+/**
+ * El mismo sitio para Apple Maps, cuando hay coordenadas.
+ *
+ * La grieta: `google.com/maps/search/?api=1` abre la app en Android y en un
+ * iPhone que tenga Google Maps, pero en un iPhone SIN Google Maps abre Safari
+ * — un mapa dentro del navegador, sin navegación, yendo tarde a una dirección
+ * que no conoces. Con `maps://` ese teléfono abre su app nativa.
+ *
+ * Solo con coordenadas. `maps://?q=<nombre>` sin más hace que Apple Maps
+ * busque, y buscar es lo que veníamos a dejar de hacer.
+ *
+ * Quién lo usa: la pantalla, que es el único sitio donde se puede saber en
+ * qué teléfono se está leyendo. En un correo no se puede.
+ */
+export function enlaceApple(sitio: Sitio | null | undefined): string | null {
+  const lat = Number(sitio?.lat)
+  const lng = Number(sitio?.lng)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+
+  const etiqueta = sitio?.name?.trim()
+  const q = etiqueta ? `${encodeURIComponent(etiqueta)}&ll=${lat},${lng}` : `${lat},${lng}`
+  return `maps://?q=${q}`
 }

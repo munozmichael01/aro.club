@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { anotar } from '@/lib/auditoria'
 import { FORMATOS_DE_FAMILIA, familiaDe } from '@/lib/formatos'
+import { buscarSitio } from '@/lib/places'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -82,6 +83,29 @@ const alta = z.object({
 })
 
 const cambio = z.discriminatedUnion('accion', [
+  /**
+   * Buscar el sitio en Google Places, por nombre.
+   *
+   * Devuelve candidatos y no escribe nada: elegir cuál es es una decisión de
+   * quien conoce el local. «Alto» en El Rosal devuelve varios.
+   */
+  z.object({
+    accion: z.literal('buscar'),
+    consulta: z.string().trim().min(3).max(200),
+  }),
+  /**
+   * Y fijar el elegido en un local que ya existe.
+   *
+   * Es lo que arregla los que se dieron de alta antes del candado: Cardenal y
+   * Alto entraron el 8 y el 9 de agosto, siguen activos y ninguno tiene
+   * `maps_url`, así que su «Cómo llegar» cae en una búsqueda por texto. El
+   * candado del alta solo mira los nuevos.
+   */
+  z.object({
+    accion: z.literal('fijar-sitio'),
+    id: z.string().uuid(),
+    placeId: z.string().min(3).max(300),
+  }),
   z.object({
     accion: z.literal('activar'),
     id: z.string().uuid(),
@@ -392,6 +416,22 @@ export async function PATCH(request: Request) {
   const d = parsed.data
   const admin = createAdminClient()
 
+  // Buscar va ANTES de leer el local: es la única acción que no habla de uno
+  // concreto —todavía no se ha elegido— y con el `select` delante el
+  // discriminante ni siquiera compila, porque `buscar` no trae `id`.
+  if (d.accion === 'buscar') {
+    const r = await buscarSitio(d.consulta)
+    if (!r.ok) {
+      // Se dice cuál de los tres motivos es: «no encontré el sitio» y «la
+      // clave no está puesta» piden cosas muy distintas de quien lo lee.
+      const porque = r.motivo === 'sin-clave'
+        ? 'Falta la clave de Google Maps en el servidor.'
+        : 'No pudimos preguntarle a Google Maps ahora mismo.'
+      return NextResponse.json({ error: porque, motivo: r.motivo }, { status: 502 })
+    }
+    return NextResponse.json({ sitios: r.sitios })
+  }
+
   const { data: local } = await admin
     .from('restaurants')
     .select('id, noise_level, address, contact_name, contact_phone, facade_photo_path, maps_url')
@@ -399,6 +439,60 @@ export async function PATCH(request: Request) {
     .maybeSingle()
 
   if (!local) return NextResponse.json({ error: 'Ese local no existe.' }, { status: 404 })
+
+  if (d.accion === 'fijar-sitio') {
+    // Se vuelve a preguntar a Places por el id en vez de fiarse de lo que
+    // mande la pantalla: así el `maps_url` y las coordenadas que se guardan
+    // son los de Google y no los que alguien pudo cambiar por el camino.
+    const r = await buscarSitio(`place_id:${d.placeId}`)
+    const elegido = r.ok ? r.sitios.find((s) => s.placeId === d.placeId) : null
+
+    // `place_id:` no es una consulta de texto que Places entienda, así que si
+    // no vuelve por ahí se busca por el nombre del local que ya tenemos.
+    const porNombre = elegido
+      ? null
+      : await (async () => {
+          const { data: l } = await admin
+            .from('restaurants')
+            .select('name, zone_slug, zones(name)')
+            .eq('id', d.id)
+            .maybeSingle()
+          if (!l) return null
+          const zona = (l.zones as unknown as { name: string } | null)?.name ?? ''
+          const otra = await buscarSitio(`${l.name}, ${zona}, Caracas`)
+          return otra.ok ? otra.sitios.find((s) => s.placeId === d.placeId) ?? null : null
+        })()
+
+    const sitio = elegido ?? porNombre
+    if (!sitio) {
+      return NextResponse.json(
+        { error: 'Google Maps ya no devuelve ese sitio. Busca otra vez.' },
+        { status: 409 },
+      )
+    }
+
+    const { error } = await admin
+      .from('restaurants')
+      .update({
+        place_id: sitio.placeId,
+        lat: sitio.lat,
+        lng: sitio.lng,
+        maps_url: sitio.mapa,
+        // La dirección de Google si el local no tenía ninguna. Si ya tenía
+        // una escrita a mano, se respeta: puede llevar la referencia que de
+        // verdad usa quien va —«al lado del banco»— y Google no la tiene.
+        ...(sitio.direccion ? { address: sitio.direccion } : {}),
+      } as never)
+      .eq('id', d.id)
+
+    if (error) {
+      console.error('[locales] fijar sitio', error)
+      return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+    }
+
+    await anotar(actor, 'local_editado', 'local', d.id, { placeId: sitio.placeId, mapa: sitio.mapa })
+    return NextResponse.json({ estado: 'fijado', sitio })
+  }
 
   if (d.accion === 'activar') {
     if (d.activo) {

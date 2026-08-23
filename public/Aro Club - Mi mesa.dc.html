@@ -592,8 +592,33 @@ class Component extends DCLogic {
       // ciudad: dos botones con el mismo nombre y dos destinos distintos.
       // Si el servidor no puede dar ninguno, no hay botón — mejor eso que uno
       // que abre Maps en cualquier sitio.
-      mapa: (dt && dt.mapa) || '',
-      hayMapa: !!(dt && dt.mapa),
+      /**
+       * «Cómo llegar», con la salida del iPhone sin Google Maps.
+       *
+       * El enlace normal —`google.com/maps/search/?api=1`— abre la app en
+       * Android y en un iPhone que tenga Google Maps. En un iPhone que NO la
+       * tenga abre Safari: un mapa dentro del navegador, sin navegación,
+       * yendo tarde a una dirección que no conoces. Ahí se manda `maps://`,
+       * que abre Apple Maps con las coordenadas.
+       *
+       * Esto solo se puede decidir AQUÍ. En el correo no se sabe en qué
+       * teléfono se está leyendo, así que allí va el de siempre.
+       *
+       * Se mira que sea iOS y que no haya Google Maps instalada — y como eso
+       * último no se puede preguntar, se usa el único indicio honesto: si el
+       * navegador es Safari. Quien tenga Chrome en el iPhone casi seguro
+       * tiene también Google Maps.
+       */
+      mapa: (function () {
+        const url = (dt && dt.mapa) || '';
+        const apple = (dt && dt.mapaApple) || '';
+        if (!apple) return url;
+        const ua = navigator.userAgent || '';
+        const esIOS = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+        const esSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|Chrome/.test(ua);
+        return esIOS && esSafari ? apple : url;
+      })(),
+      hayMapa: !!(dt && (dt.mapa || dt.mapaApple)),
       // Estas dos frases llevaban dentro "Cardenal" y "la 04" escritos a
       // mano. Se arman con lo que devuelve la mesa o no se dicen.
       // "que son seis", no "que son 6": las cifras pequeñas van en letra,

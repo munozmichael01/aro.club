@@ -61,3 +61,10 @@ carrousel/
 # suyos. Se coló dos veces en commits ajenos antes de llegar aquí.
 .sembrar-mesa.json
 .escena.json
+
+# Lo que baja `vercel env pull`: son las variables de produccion enteras, la
+# clave de servicio incluida. Los patrones de arriba (`.env`, `.env*.local`)
+# NO lo cubren, asi que estaba a un `git add -A` de distancia — y en este
+# repo hay otra sesion haciendo `git add -A`.
+.env.vercel
+.env.production.local
