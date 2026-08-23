@@ -162,6 +162,13 @@
                     </sc-for>
                   </div>
 
+                  <sc-if value="{{ t.hayCorta }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:12px">
+                      <span style="{{ iconoAviso }}">!</span>
+                      <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ t.textoCorta }}</span>
+                    </div>
+                  </sc-if>
+
                   <sc-if value="{{ t.hayRota }}" hint-placeholder-val="{{ false }}">
                     <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:12px">
                       <span style="{{ iconoAviso }}">!</span>
@@ -1983,6 +1990,23 @@ class Component extends DCLogic {
           texto: r.texto,
           chip: 'display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;font:500 11px/1 \'Inter Tight\',sans-serif;background:' + (r.ok ? 'rgba(20,52,42,.07)' : 'rgba(143,69,21,.13)') + ';color:' + (r.ok ? '#2C4A38' : '#8F4515')
         })),
+        /**
+         * Una mesa PUBLICADA que se quedó corta.
+         *
+         * `hayRota` no la cubre: solo salta cuando la mesa no está publicada
+         * —«falta una persona para poder publicarla»—, y una publicada a la
+         * que alguien se bajó no necesita publicarse, necesita decidirse.
+         *
+         * Desde que se rellena el hueco desde la espera, verla en cinco
+         * significa una cosa concreta: no encajó nadie. Los otros cinco no se
+         * tocan nunca, así que lo que queda es confirmarla así o cambiarla a
+         * mano, y eso es una decisión de operación, no algo que arregle el
+         * sistema metiendo a quien rompe una regla.
+         */
+        hayCorta: pub && g.length > 0 && g.length < POR_MESA,
+        textoCorta: 'Se quedó en ' + g.length + ' de ' + POR_MESA
+          + ': alguien se bajó y nadie de la espera encaja con esta ' + vozRep.unidad + '.'
+          + ' Los que están no se mueven. Decide tú: se confirma así o la cambias a mano.',
         hayRota: malas.length > 0 && !pub && !calc,
         textoRota: !tamOk
           ? (g.length < POR_MESA

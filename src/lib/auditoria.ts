@@ -48,7 +48,18 @@ export type Accion =
 type Entidad = 'verificacion' | 'pago' | 'evento' | 'local' | 'incidencia' | 'equipo' | 'leads'
 
 export async function anotar(
-  actorId: string,
+  /**
+   * Quién lo hizo, o `null` si no lo hizo una persona de operación.
+   *
+   * `null` es para lo que pasa SOLO: el disparador que anota una fecha
+   * borrada, o el hueco de una mesa que se rellena cuando alguien cancela.
+   * En esos casos no hay actor, y poner el perfil del miembro sería mentir
+   * dos veces: este registro es de lo que hace OPERACIÓN, y además la clave
+   * ajena `actor_id → profiles` deja ese perfil sin poder borrarse. Eso ya
+   * pasó: al anotar una cancelación con el id de quien cancelaba, el guion de
+   * limpieza dejó de poder borrar su cuenta de prueba.
+   */
+  actorId: string | null,
   accion: Accion,
   entidad: Entidad,
   entidadId: string | null,

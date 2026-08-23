@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { anotar } from '@/lib/auditoria'
+import { rellenarHueco } from '@/lib/reparto/rellenar'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { encolar } from '@/lib/correos'
@@ -115,7 +117,9 @@ export async function POST(request: Request) {
 
   const { data: reserva } = await admin
     .from('bookings')
-    .select('id, status, event_id, profile_id, events(starts_at)')
+    // `table_members` para saber de qué mesa se baja: hay que rellenar ESE
+    // hueco, no cualquiera.
+    .select('id, status, event_id, profile_id, events(starts_at), table_members(table_id)')
     .eq('id', parsed.data.reservaId)
     .maybeSingle()
 
@@ -146,10 +150,42 @@ export async function POST(request: Request) {
     })
     .eq('id', reserva.id)
 
-  // Sale de la mesa si ya la tenía. La mesa se queda en cinco: a menos de
-  // 24 horas no hay a quién meter, y a más de 24 el reparto se rehace solo
-  // cuando se vuelva a repartir.
+  // Sale de la mesa si ya la tenía, y el hueco se rellena desde la espera.
+  //
+  // Antes la mesa se quedaba en cinco y esto decía «a más de 24 horas el
+  // reparto se rehace solo cuando se vuelva a repartir». Eso mueve a gente
+  // que ya leyó «tu mesa es la 2», y no es una opción: quien ya tiene mesa no
+  // se cae a espera nunca. Los otros cinco no se tocan y entra alguien de la
+  // espera, si encaja con esa mesa.
+  const suMesa = ((reserva.table_members ?? []) as unknown as { table_id: string }[])[0] ?? null
   await admin.from('table_members').delete().eq('booking_id', reserva.id)
+
+  // Y su correo de la mesa, si todavía no ha salido. Se quedaba en cola: quien
+  // cancelaba el lunes recibía «tu mesa es la 1» el jueves a mediodía.
+  // `despublicar_mesa` ya lo hacía al deshacer una mesa entera; cancelar una
+  // reserva suelta, no.
+  await admin
+    .from('scheduled_emails')
+    .delete()
+    .eq('event_id', reserva.event_id)
+    .eq('profile_id', user.id)
+    .in('kind', ['mesa_asignada', 'mesa_cambiada', 'recordatorio'] as never[])
+    .is('sent_at', null)
+
+  // Si no encaja nadie, `rellenarHueco` devuelve null y la mesa se queda en
+  // cinco a propósito: confirmarla así o cambiarla a mano es una decisión, y
+  // el panel la enseña corta para que se tome.
+  const relleno = suMesa ? await rellenarHueco(reserva.event_id, suMesa.table_id) : null
+  if (suMesa) {
+    // Actor `null`: esto no lo hace operación, pasa solo al cancelar alguien.
+    // Con el id del miembro, además, su perfil ya no se puede borrar — la
+    // clave ajena de `ops_audit_log` lo retiene.
+    await anotar(null, 'mesas_repartidas', 'evento', reserva.event_id, {
+      huecoPor: user.id,
+      mesa: suMesa.table_id,
+      relleno: relleno ? { perfil: relleno.profileId, nombre: relleno.nombre } : null,
+    })
+  }
 
   if (conMargen) {
     // El crédito vuelve al libro mayor. No se "suma un crédito": se anota
