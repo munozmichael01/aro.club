@@ -24,7 +24,19 @@ const guardar = z.object({
   valor: z.union([z.string(), z.array(z.string()), z.null()]),
 })
 
-const BASE = new Set(['nombre', 'trato', 'nacimiento', 'genero', 'telefono'])
+/**
+ * `contacto` es `contact_email`, y no es lo mismo que `email`.
+ *
+ * El de la cuenta es con el que se entra —el de Google, si entró por ahí— y
+ * no se toca desde aquí: cambiarlo sería cambiar la llave de la puerta. El de
+ * contacto es a dónde van los correos, y son dos columnas distintas desde
+ * `convertir_lead`.
+ *
+ * Lo estrena la pantalla de «entraste con otra cuenta», que llevaba pintada
+ * desde su entrega sin nada que la encendiera. Y el día que Apple vuelva, su
+ * pantalla del correo oculto necesita exactamente esto.
+ */
+const BASE = new Set(['nombre', 'trato', 'nacimiento', 'genero', 'telefono', 'contacto'])
 
 export async function GET() {
   const supabase = await createClient()
@@ -211,6 +223,7 @@ export async function POST(request: Request) {
       nacimiento: 'birthdate',
       genero: 'gender',
       telefono: 'phone_e164',
+      contacto: 'contact_email',
     }[clave]!
 
     if (typeof valor !== 'string' || !valor.trim()) {
@@ -221,6 +234,10 @@ export async function POST(request: Request) {
     // miembros escribiendo desde fuera y exigir un móvil venezolano los
     // dejaba sin poder guardar el suyo. El del pago móvil sí es venezolano,
     // porque ahí es un dato del banco, y esa regla vive en `reglas.js`.
+    if (clave === 'contacto' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor.trim())) {
+      return NextResponse.json({ error: 'Ese correo no parece válido.' }, { status: 400 })
+    }
+
     if (clave === 'telefono' && !valido('telefonoPerfil', valor)) {
       return NextResponse.json(
         { error: 'Ese teléfono no parece válido. Ponlo con el prefijo de tu país.' },

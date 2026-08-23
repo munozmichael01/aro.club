@@ -69,10 +69,9 @@
                   <span>Continuar con Apple</span>
                 </button>
               </div>
-              <button onClick="{{ conGoogle }}" aria-disabled="{{ inerteGoogle }}" style="{{ botonProveedorApagado }}">
+              <button onClick="{{ conGoogle }}" style="{{ botonProveedor }}">
                 <svg width="19" height="19" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
                 <span>Continuar con Google</span>
-                <span style="{{ selloGoogle }}">PRONTO</span>
               </button>
             </div>
 
@@ -120,7 +119,7 @@
           <div style="animation:aro-open 380ms ease both">
             <div style="{{ selloAviso }}">CORREO DISTINTO</div>
             <h1 style="{{ h1 }}">Entraste con otra cuenta.</h1>
-            <p style="{{ bajada }}">Te registraste con <em style="font-weight:600;color:#FAF3E4">daniela@trabajo.com</em> y acabas de entrar con <em style="font-weight:600;color:#FAF3E4">daniela@gmail.com</em>. Es la misma cuenta, no pierdes nada.</p>
+            <p style="{{ bajada }}">Te registraste con <em style="font-weight:600;color:#FAF3E4">{{ correoRegistro }}</em> y acabas de entrar con <em style="font-weight:600;color:#FAF3E4">{{ correoEntrada }}</em>. Es la misma cuenta, no pierdes nada.</p>
 
             <div style="border-radius:26px;border:1px solid rgba(250,243,228,.22);padding:clamp(18px,2.4vw,24px);margin-top:clamp(24px,3vw,30px);max-width:440px">
               <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#9CBBA6;margin-bottom:13px">TE ESCRIBIREMOS A</div>
@@ -185,6 +184,11 @@ class Component extends DCLogic {
     // la primera vez que se autoriza, no al volver a entrar
     const h = (window.location.hash || '').replace('#', '');
     if (['inicio', 'correo', 'recuperar', 'otroCorreo', 'relay'].indexOf(h) >= 0) this.setState({ fase: h });
+
+    // Y por parámetro, que es como vuelve el callback de Google: `#` se
+    // pierde en una redirección de servidor, `?fase=` no.
+    const qf = new URLSearchParams(window.location.search).get('fase');
+    if (['otroCorreo', 'relay'].indexOf(qf) >= 0) this.setState({ fase: qf });
   }
 
   componentWillUnmount() { clearTimeout(this._t); }
@@ -220,8 +224,22 @@ class Component extends DCLogic {
 
     const aroDe = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#FAF3E4' : 'rgba(250,243,228,.4)') + ';background:' + (on ? '#E39C63' : 'transparent') + ';color:#14342A;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
 
-    const correosPosibles = ['daniela@gmail.com', 'daniela@trabajo.com'].map((label, i) => {
-      const on = this.state.destino === i;
+    /**
+     * «Entraste con otra cuenta»: los dos correos, de verdad.
+     *
+     * Esta pantalla llevaba pintada desde su entrega con dos direcciones
+     * escritas a mano —`daniela@trabajo.com` y `daniela@gmail.com`— y ni una
+     * línea que la encendiera. Los pone el callback de Google en la URL
+     * cuando el correo con el que se entra no es el del lead con el que se
+     * apuntó, que es el único caso en que hay algo que elegir.
+     */
+    const paramsEntrar = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.search);
+    const correoRegistro = (paramsEntrar.get('registro') || '').trim();
+    const correoEntrada = (paramsEntrar.get('entrada') || '').trim();
+    const hayDosCorreos = !!correoRegistro && !!correoEntrada && correoRegistro !== correoEntrada;
+
+    const correosPosibles = (hayDosCorreos ? [correoEntrada, correoRegistro] : []).map((label, i) => {
+      const on = (this.state.destino == null ? 0 : this.state.destino) === i;
       return {
         label, icono: on ? '✓' : '', aro: aroDe(on),
         pick: () => this.setState({ destino: i }),
@@ -236,16 +254,13 @@ class Component extends DCLogic {
     return {
       esInicio: f === 'inicio', esCorreo: f === 'correo', esRecuperar: f === 'recuperar',
       esOtroCorreo: f === 'otroCorreo', esRelay: f === 'relay', esEntrando: f === 'entrando',
+      correoRegistro, correoEntrada,
 
       h1: 'font:400 clamp(32px,6vw,52px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#FAF3E4;margin:0;max-width:15ch;text-wrap:balance',
       bajada: 'font:400 17px/1.55 \'Inter Tight\',sans-serif;color:#C5D8CA;max-width:46ch;margin:14px 0 0;text-wrap:pretty',
       selloAviso: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;background:#E39C63;color:#14342A;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;margin-bottom:16px',
 
       botonProveedor: btn('#FAF3E4', '#14342A', 'none', 'width:100%;font-size:16px'),
-      // Google va atenuado hasta que exista: medio velado y sin cursor de
-      // mano, como Zelle y Bizum en la pantalla de pago. Estilo PROPIO y no
-      // el compartido, para que el día que Apple vuelva no vuelva apagado.
-      botonProveedorApagado: btn('#FAF3E4', '#14342A', 'none', 'width:100%;font-size:16px;opacity:.5;cursor:not-allowed'),
       botonFantasmaGrande: btn('transparent', '#FAF3E4', '1px solid rgba(250,243,228,.34)', 'width:100%;max-width:400px;font-weight:500'),
       botonClaro: btn('#FAF3E4', '#14342A', 'none'),
       botonClaroSuelto: btn('#FAF3E4', '#14342A', 'none', 'margin-top:22px'),
@@ -293,27 +308,44 @@ class Component extends DCLogic {
       },
       conApple: () => this.setState({ fase: 'relay' }),
       /**
-       * Google, atenuado hasta que exista de verdad.
+       * Entrar con Google.
        *
-       * Llevaba días mintiendo: no hay `/auth/callback`, así que esto hacía
-       * `fase: 'otroCorreo'` y te dejaba en el formulario de correo, cuya
-       * bajada dice «El mismo con el que te registraste». Ese texto es
-       * correcto en su pantalla; leído después de pulsar «Continuar con
-       * Google» se lee como «te registraste con otro método», que es un error
-       * de cuenta que no ha pasado.
+       * No hay cliente de Supabase en esta pantalla —es un `.dc.html`— así
+       * que el botón no llama a `signInWithOAuth`: va a una ruta nuestra que
+       * arma la URL y redirige, el patrón de `/clave`.
        *
-       * Atenuado y sin acción, como Zelle y Bizum en la pantalla de pago. Un
-       * botón que no hace nada y lo parece es honesto; uno que no hace nada y
-       * parece que sí, no.
-       *
-       * Las consolas ya están y el redirect de Supabase funciona: lo que
-       * falta es la ruta de servidor y el cruce del lead por correo. Cuando
-       * esté, esto vuelve a ser un `window.location.href`.
+       * Se le pasa la llave del lead si la trae la URL. Es lo único que
+       * después permite cruzar a quien se apuntó con una dirección y entra
+       * con otra de Google — sin eso, se crea una cuenta vacía y sus
+       * diecinueve respuestas se quedan huérfanas sin que falle nada.
        */
-      conGoogle: () => {},
-      inerteGoogle: 'true',
-      selloGoogle: 'display:inline-flex;align-items:center;min-height:22px;padding:0 8px;border-radius:999px;background:rgba(20,52,42,.10);font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;color:#33513F;margin-left:auto',
-      aceptar: () => { window.location.href = '/cuenta'; },
+      conGoogle: () => {
+        const p = new URLSearchParams(window.location.search);
+        const q = new URLSearchParams({ destino: '/cuenta' });
+        if (p.get('t') && p.get('correo')) { q.set('t', p.get('t')); q.set('correo', p.get('correo')); }
+        window.location.href = '/api/auth/google?' + q.toString();
+      },
+      inerteGoogle: null,
+      /**
+       * Se guarda a cuál le escribimos y se sigue.
+       *
+       * `contact_email` y no `email`: el de la cuenta es el de Google y no se
+       * toca —es con el que se entra— y el de contacto es al que van los
+       * correos. Ya son dos columnas distintas desde `convertir_lead`.
+       *
+       * Si no se puede guardar, se sigue igual: quedarse aquí atascado
+       * después de haber entrado es peor que escribir al correo de Google,
+       * que es donde de todas formas iba a llegar.
+       */
+      aceptar: () => {
+        const elegido = (this.state.destino == null ? 0 : this.state.destino) === 0
+          ? correoEntrada : correoRegistro;
+        if (!elegido) { window.location.href = '/cuenta'; return; }
+        fetch('/api/mi-perfil', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clave: 'contacto', valor: elegido })
+        }).catch(() => {}).then(() => { window.location.href = '/cuenta'; });
+      },
 
       correosPosibles,
       contacto: this.state.contacto,
