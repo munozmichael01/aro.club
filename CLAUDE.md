@@ -39,6 +39,11 @@ Un `until` sin tope convierte un fallo de sesión en una inundación. Si hace
 falta esperar a un despliegue: una comprobación, y si no está lista, decirlo y
 seguir. Nunca un bucle sin número máximo de vueltas.
 
+Y **nunca `vercel login`**. Es lo que borra `auth.json` cuando el flujo no se
+completa, y a partir de ahí todo vuelve a pedir autorización. El token vive en
+`VERCEL_TOKEN` en el `~/.zshrc` de Michael y el CLI lo lee solo. Si un comando
+falla por sesión: se dice y se para.
+
 ---
 
 ## Antes de tocar un enum, una constante o un esquema
