@@ -26,6 +26,19 @@ y la persona sigue adelante creyendo que quedó.
 **No** correr `npm run build` con el dev server vivo: corrompe `.next` y
 produce un 500 fantasma.
 
+### Nunca un bucle esperando a un comando que puede pedir login
+
+Prohibido `until … npx vercel …; do sleep …; done` y cualquier variante. Ha
+pasado **dos veces**, desde dos sesiones distintas: la sesión del CLI caduca,
+`vercel ls` deja de listar y pide autorización de dispositivo, y el bucle la
+vuelve a pedir cada diez segundos. La primera vez fueron cuarenta y cinco
+horas y unas dieciséis mil peticiones; la segunda, veinte pestañas abiertas en
+el navegador de Michael.
+
+Un `until` sin tope convierte un fallo de sesión en una inundación. Si hace
+falta esperar a un despliegue: una comprobación, y si no está lista, decirlo y
+seguir. Nunca un bucle sin número máximo de vueltas.
+
 ---
 
 ## Antes de tocar un enum, una constante o un esquema
