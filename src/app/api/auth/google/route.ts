@@ -1,34 +1,42 @@
 import { NextResponse } from 'next/server'
 
-import { env } from '@/lib/env'
 import { verificar } from '@/lib/lead-token'
-import { firmarEstado } from '@/lib/oauth-estado'
+import { firmarEstado, COOKIE_ESTADO } from '@/lib/oauth-estado'
 import { SITIO } from '@/lib/remitente'
+import { createClient } from '@/lib/supabase/server'
 
 /**
  * Entrar con Google: la ruta que arma la URL y redirige.
  *
  * Las pantallas son `.dc.html` sin cliente de Supabase, así que el botón no
- * puede llamar a `signInWithOAuth` — no hay SDK en el navegador. El patrón es
- * el de `/clave`: una ruta nuestra que construye la URL y devuelve un 302.
+ * puede llamar a `signInWithOAuth` desde el navegador. El patrón es el de
+ * `/clave`: una ruta nuestra que construye la URL y devuelve un 302.
  *
- * ## Qué se le pasa a Supabase
+ * ## La URL la genera el cliente, no yo a mano
  *
- * `redirect_to` es SIEMPRE `https://aro.club/auth/callback`, a secas. Es la
- * única redirección registrada en la consola, y el destino de después viaja
- * dentro del `state` firmado. Meterlo como parámetro obligaría a listar cada
- * variante, y es por donde se cuelan los redirects abiertos.
+ * Esto la armaba a mano —`/auth/v1/authorize?provider=google&…`— y por eso no
+ * funcionaba: le faltaba el `code_challenge`. Sin PKCE, Supabase no vuelve con
+ * `?code=`, devuelve la sesión en el FRAGMENTO (`#access_token=…`), y el
+ * fragmento no lo manda el navegador al servidor. Así que `/auth/callback` no
+ * encontraba código y salía por `sin-codigo` — que es exactamente lo que veía
+ * Michael: la pantalla de Google funciona, das permiso, vuelves, y no hay
+ * sesión.
  *
- * ## Y el correo del lead
+ * Con `signInWithOAuth` la URL sale con su `code_challenge` Y el verificador
+ * queda escrito en una cookie por el adaptador que este cliente ya usa. Esa
+ * es la otra mitad: sin esa cookie, `exchangeCodeForSession` tampoco podría
+ * canjear el código aunque llegara.
  *
- * Si quien pulsa llega con su llave de lead —el `?t=` de los correos— se
- * mete en el `state`. Es lo único que después permite cruzar a quien se
- * apuntó con una dirección y entra con otra: sin eso, Google trae un correo
- * que no cruza con ningún lead y las diecinueve respuestas se quedan
- * huérfanas sin que falle nada.
+ * `skipBrowserRedirect` porque aquí no hay navegador que redirigir: estamos
+ * en el servidor y el 302 lo devolvemos nosotros.
  *
- * Google puede llegar desde un dispositivo sin esa llave. Entonces no va, y
- * se cruza solo por el correo que dé Google, que es lo que hay.
+ * ## Dónde va el destino ahora
+ *
+ * El `state` lo genera y lo usa Supabase para su propio flujo, así que ya no
+ * cabe el mío. Va en una COOKIE firmada, no en la URL de retorno: así la
+ * redirección registrada sigue siendo una sola —`/auth/callback` a secas— y
+ * no hay que listar una variante por destino, que es por donde se cuelan los
+ * redirects abiertos.
  */
 
 export async function GET(request: Request) {
@@ -41,19 +49,39 @@ export async function GET(request: Request) {
   const t = url.searchParams.get('t')
   const lead = correo && t && verificar(correo, t) ? correo : undefined
 
-  const state = firmarEstado({
-    destino: url.searchParams.get('destino') ?? '/cuenta',
-    lead,
+  const supabase = await createClient()
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${SITIO}/auth/callback`,
+      skipBrowserRedirect: true,
+      // Sin esto, quien ya tiene una sesión de Google en el navegador entra
+      // con ESA sin poder elegir, y en un ordenador compartido acaba dentro
+      // de la cuenta de Aro de otra persona.
+      queryParams: { prompt: 'select_account' },
+    },
   })
 
-  const autorizar = new URL(`${env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/authorize`)
-  autorizar.searchParams.set('provider', 'google')
-  autorizar.searchParams.set('redirect_to', `${SITIO}/auth/callback`)
-  // `prompt=select_account`: sin esto, quien ya tiene una sesión de Google en
-  // el navegador entra con ESA sin poder elegir, y en un ordenador compartido
-  // acaba dentro de la cuenta de Aro de otra persona.
-  autorizar.searchParams.set('query_params', new URLSearchParams({ prompt: 'select_account' }).toString())
-  autorizar.searchParams.set('state', state)
+  if (error || !data?.url) {
+    console.error('[google] no se pudo armar la URL de entrada', error)
+    return NextResponse.redirect(`${SITIO}/entrar?fallo=no-se-pudo`, 302)
+  }
 
-  return NextResponse.redirect(autorizar.toString(), 302)
+  const respuesta = NextResponse.redirect(data.url, 302)
+
+  respuesta.cookies.set(COOKIE_ESTADO, firmarEstado({
+    destino: url.searchParams.get('destino') ?? '/cuenta',
+    lead,
+  }), {
+    httpOnly: true,
+    secure: SITIO.startsWith('https://'),
+    // `lax` y no `strict`: la vuelta de Google es una navegación desde otro
+    // sitio, y con `strict` el navegador no mandaría la cookie justo cuando
+    // hace falta.
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 10 * 60,
+  })
+
+  return respuesta
 }

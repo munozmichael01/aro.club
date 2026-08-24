@@ -5,13 +5,19 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 import { serverEnv } from '@/lib/env'
 
 /**
- * El `state` de OAuth: firmado, y con el destino dentro.
+ * Lo nuestro de la vuelta de OAuth: firmado, y en una cookie.
  *
- * El destino va AQUÍ y no como parámetro de la redirección. Un parámetro
- * obliga a listar cada variante en la consola de Supabase, y es por donde se
- * cuelan los redirects abiertos: `?next=https://otro-sitio` en una URL que
- * nadie valida. La redirección registrada es una sola —`/auth/callback`— y a
- * dónde ir después viaja firmado por nosotros.
+ * Empezó llamándose `state` porque iba en el parámetro `state` de OAuth. Ya
+ * no cabe ahí: desde que la URL la genera `signInWithOAuth` —hace falta para
+ * el PKCE— ese parámetro lo usa Supabase para su propio flujo. Así que viaja
+ * en una cookie nuestra, que además es mejor sitio: la cookie no se ve en la
+ * URL ni queda en el historial.
+ *
+ * El destino NO va como parámetro de la redirección. Un parámetro obliga a
+ * listar cada variante en la consola de Supabase, y es por donde se cuelan
+ * los redirects abiertos: `?next=https://otro-sitio` en una URL que nadie
+ * valida. La redirección registrada es una sola —`/auth/callback`— y a dónde
+ * ir después viaja firmado por nosotros.
  *
  * Lleva también el correo del lead cuando se sabe, que es lo único que
  * permite cruzar a alguien que se apuntó con una dirección y entra con otra.
@@ -22,6 +28,9 @@ import { serverEnv } from '@/lib/env'
  * cualquiera podría mandarse a sí mismo a `/auth/callback` con el correo de
  * otro dentro y quedarse con su lead.
  */
+
+/** El nombre de la cookie. En un sitio, para que las dos rutas coincidan. */
+export const COOKIE_ESTADO = 'aro-oauth'
 
 function secreto(): string {
   return process.env.LEAD_TOKEN_SECRET || serverEnv().SUPABASE_SERVICE_ROLE_KEY

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { situacionDePerfil } from '@/lib/embudo'
-import { leerEstado } from '@/lib/oauth-estado'
+import { COOKIE_ESTADO, leerEstado } from '@/lib/oauth-estado'
 import { SITIO } from '@/lib/remitente'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
@@ -31,9 +31,23 @@ import { createClient } from '@/lib/supabase/server'
  *    pantalla de «correo distinto» para que elija a cuál le escribimos.
  */
 
+/**
+ * La cookie de la ida se gasta al volver.
+ *
+ * Dura diez minutos de todas formas, pero dejarla puesta significa que la
+ * siguiente vuelta —de otra pestaña, de otro intento— usaría el destino de la
+ * anterior.
+ */
+function conCookieBorrada(r: NextResponse): NextResponse {
+  r.cookies.set(COOKIE_ESTADO, '', { path: '/', maxAge: 0 })
+  return r
+}
+
 /** A la pantalla de entrar con un motivo, en vez de a una página en blanco. */
 function alFallo(motivo: string) {
-  return NextResponse.redirect(`${SITIO}/entrar?fallo=${encodeURIComponent(motivo)}`, 302)
+  return conCookieBorrada(
+    NextResponse.redirect(`${SITIO}/entrar?fallo=${encodeURIComponent(motivo)}`, 302),
+  )
 }
 
 export async function GET(request: Request) {
@@ -48,10 +62,26 @@ export async function GET(request: Request) {
   const code = url.searchParams.get('code')
   if (!code) return alFallo('sin-codigo')
 
-  const estado = leerEstado(url.searchParams.get('state'))
-  // Un `state` que no cuadra es una vuelta que no empezamos nosotros. No se
-  // continúa: es la protección contra que alguien te meta en su sesión.
-  if (!estado) return alFallo('estado-invalido')
+  // Lo nuestro viene en la cookie, no en `state`: ese parámetro lo usa
+  // Supabase para su propio flujo desde que la ida la genera
+  // `signInWithOAuth`, que es lo que trae el PKCE.
+  //
+  // Que falte NO corta la vuelta. La cookie es `lax` y dura diez minutos:
+  // quien tarde más en la pantalla de Google, o vuelva desde un navegador que
+  // no la mandó, entraría igual — y negarle la sesión después de que Google
+  // ya le pidió permiso sería dejarle fuera por nuestra contabilidad. Sin
+  // ella se entra al destino de siempre y sin cruce de lead por correo
+  // distinto, que es lo único que se pierde.
+  //
+  // Lo que SÍ protege contra que alguien te meta en su sesión es el PKCE: sin
+  // el verificador que está en su cookie, el código no se canjea.
+  const cookies = request.headers.get('cookie') ?? ''
+  const cruda = cookies
+    .split(';')
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${COOKIE_ESTADO}=`))
+  const estado = leerEstado(cruda ? decodeURIComponent(cruda.slice(COOKIE_ESTADO.length + 1)) : null)
+    ?? { destino: '/cuenta' }
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.exchangeCodeForSession(code)
@@ -148,7 +178,9 @@ export async function GET(request: Request) {
     // que elija entre una cosa.
     if (estado.lead && estado.lead !== correo) {
       const q = new URLSearchParams({ registro: estado.lead, entrada: correo })
-      return NextResponse.redirect(`${SITIO}/entrar?fase=otroCorreo&${q}`, 302)
+      return conCookieBorrada(
+        NextResponse.redirect(`${SITIO}/entrar?fase=otroCorreo&${q}`, 302),
+      )
     }
   }
 
@@ -158,5 +190,5 @@ export async function GET(request: Request) {
   const porDefecto =
     situacion.paso === 'preguntas' || situacion.paso === 'contacto' ? '/cuestionario' : estado.destino
 
-  return NextResponse.redirect(`${SITIO}${porDefecto}`, 302)
+  return conCookieBorrada(NextResponse.redirect(`${SITIO}${porDefecto}`, 302))
 }
