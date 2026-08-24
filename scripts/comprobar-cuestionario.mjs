@@ -239,5 +239,29 @@ if (!ld) {
   }
 }
 
+// --- la sexta copia: el favicon, una vez por pantalla ------------------
+//
+// Las pantallas son ficheros estaticos servidos por reescritura, asi que el
+// `metadata.icons` del layout de Next NO les llega: cada `<head>` tiene que
+// declararlo. Solo lo hacia la landing, y las otras dieciocho ensenaban el
+// favicon por defecto de `create-next-app` —el triangulo de Vercel— desde el
+// 2 de agosto. Se vio en /privacidad, tres semanas despues.
+//
+// No se puede unificar en un sitio: son ficheros sueltos. Asi que se vigila.
+const pantallas = fs.readdirSync(
+  fileURLToPath(new URL('../public', import.meta.url))).filter((f) => f.endsWith('.dc.html'))
+
+const sinIcono = pantallas.filter((f) => !fs.readFileSync(
+  fileURLToPath(new URL(`../public/${f}`, import.meta.url)), 'utf8').includes('rel="icon"'))
+
+if (sinIcono.length) {
+  errores++
+  console.error('\n\u2717 pantallas sin favicon')
+  sinIcono.forEach((f) => console.error(`    ${f}`))
+  console.error('  \u2192 ensenan el favicon por defecto de Next, que es el de Vercel')
+} else {
+  console.log(`\u2713 favicon (${pantallas.length} pantallas)`)
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)
