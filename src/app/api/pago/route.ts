@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { anotarPagoDeEvento } from '@/lib/creditos'
 import { campoDe, valido } from '@/lib/reglas'
 import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
+import { datosDePago } from '@/lib/datos-de-pago'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { encolar } from '@/lib/correos'
@@ -179,6 +180,34 @@ export async function GET(request: Request) {
       // canal que no miramos, y publicárselos a quien no está verificada
       // invita a transferir por un puesto que no se le va a apartar.
       cuenta: m.activo && verificada ? m.datos_cuenta : null,
+      /**
+       * Cada dato con su valor de PINTAR y su valor de COPIAR.
+       *
+       * Se lee `V-19.064.051` y se pega `19064051`: en la app del banco el
+       * tipo de documento se elige de una lista aparte y la V dentro del
+       * campo numérico lo rompe. Igual el punto de los miles del monto y los
+       * espacios del teléfono.
+       *
+       * Sale de aquí y no de la pantalla porque allí queda atado a cómo están
+       * escritos HOY estos valores: el día que se encienda Zelle habría que
+       * volver a tocarla, y su correo no se pela.
+       *
+       * El monto va dentro de la lista, no aparte: es un dato más que hay que
+       * pegar, y tenerlo fuera es lo que hacía que su botón se llevara el
+       * separador de miles y la moneda detrás.
+       */
+      datos:
+        m.activo && verificada
+          ? datosDePago(
+              m.datos_cuenta as Record<string, unknown> | null,
+              m.moneda === 'VES'
+                ? tasa
+                  ? Number((usd * Number(tasa.usd_to_ves) + centimos / 100).toFixed(2))
+                  : null
+                : usd,
+              m.moneda === 'VES' ? 'Bs' : m.moneda,
+            )
+          : [],
       // Para que la pantalla pueda avisar encima del numero.
       datosDePrueba: m.datosDePrueba,
       campos: m.campos,

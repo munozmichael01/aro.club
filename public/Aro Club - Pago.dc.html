@@ -444,7 +444,7 @@ class Component extends DCLogic {
     // encender Zelle un sábado exigiría un despliegue.
     const METODOS = (D.metodos || []).map((m) => ({
       id: m.id, nombre: m.nombre, activo: m.activo, manual: m.manual,
-      cuenta: m.cuenta, datosDePrueba: m.datosDePrueba, capturaObligatoria: m.capturaObligatoria,
+      cuenta: m.cuenta, datos: m.datos || [], datosDePrueba: m.datosDePrueba, capturaObligatoria: m.capturaObligatoria,
       // Los campos que pide ESTE metodo, tal como los define la base. Antes
       // el mapeo se los comia y la pantalla usaba su propia tabla.
       campos: m.campos || [],
@@ -460,7 +460,7 @@ class Component extends DCLogic {
       // los otros dos son el precio en su divisa.
       moneda: m.moneda === 'VES' ? dinero(D.montoLocal, 'Bs') : dinero(D.montoUsd, m.moneda)
     }));
-    const mSel = METODOS[S.metodo] || METODOS[0] || { id: '', nombre: '', moneda: '—', cuenta: null };
+    const mSel = METODOS[S.metodo] || METODOS[0] || { id: '', nombre: '', moneda: '—', cuenta: null, datos: [] };
 
     const metodos = METODOS.map((m, i) => {
       const on = S.metodo === i && m.activo;
@@ -478,22 +478,23 @@ class Component extends DCLogic {
     });
 
     // ── nuestros datos, distintos por método ─────────────────────────
-    // De la tabla. Escritos aqui, cambiar un numero de telefono seria un
-    // despliegue, y equivocarse en uno seria dinero que no llega.
-    const cuentaSel = (mSel && mSel.cuenta) || null;
-    const DATOS = {};
-    if (cuentaSel) {
-      DATOS[mSel.id] = Object.keys(cuentaSel)
-        .filter((k) => k !== 'pendiente_de_datos_reales')
-        .map((k) => [k, String(cuentaSel[k])])
-        .concat([['Monto exacto', mSel.moneda]]);
-    }
-    const datosPago = (DATOS[mSel.id] || []).map((x, i) => ({
-      campo: x[0], valor: x[1],
+    //
+    // Vienen HECHOS del servidor, cada uno con lo que se pinta y lo que se
+    // copia, que no son lo mismo: se lee `V-19.064.051` y se pega
+    // `19064051`, porque en la app del banco el tipo de documento se elige de
+    // una lista aparte y la V dentro del campo numérico lo rompe. Aquí se
+    // armaban a mano y se copiaba el texto de pintar tal cual — con la V, con
+    // los espacios del teléfono y con el punto de los miles del monto.
+    //
+    // Y no se resuelve aquí a propósito: quedaría atado a cómo están escritos
+    // hoy estos valores, y el día que se encienda Zelle habría que volver a
+    // tocar esta pantalla.
+    const datosPago = ((mSel && mSel.datos) || []).map((x, i) => ({
+      campo: x.campo, valor: x.valor,
       textoCopiar: S.copiado === i ? 'Copiado' : 'Copiar',
       botonCopiar: 'flex:0 0 auto;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid rgba(250,243,228,.3);background:transparent;color:' + (S.copiado === i ? '#E39C63' : '#FAF3E4') + ';font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
       copiar: () => {
-        try { if (navigator.clipboard) navigator.clipboard.writeText(x[1]); } catch (e) { /* sin permiso */ }
+        try { if (navigator.clipboard) navigator.clipboard.writeText(x.copiar); } catch (e) { /* sin permiso */ }
         this.setState({ copiado: i });
       }
     }));
