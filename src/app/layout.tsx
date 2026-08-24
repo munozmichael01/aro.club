@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   // pestana. Borrar el .ico sin poner esto deja las rutas sin ningun icono.
   icons: {
     icon: [
+      // El .ico primero y por su nombre de siempre: el rastreador de Google
+      // pide /favicon.ico antes que nada, y con un 404 se queda con el que
+      // tuviera cacheado —que era el triangulo de Vercel—.
+      { url: '/favicon.ico', sizes: '48x48' },
       { url: '/favicon.svg', type: 'image/svg+xml' },
       { url: '/icono-512.png', type: 'image/png', sizes: '512x512' },
     ],
