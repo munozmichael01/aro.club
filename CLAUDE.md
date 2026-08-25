@@ -82,6 +82,29 @@ que no se separen.
 
 ---
 
+## Las pantallas son ficheros sueltos, y eso tiene un precio
+
+Los `.dc.html` de `public/` se sirven **tal cual**, por reescrituras de
+`next.config.ts`. Next no los renderiza: son ficheros estáticos con una ruta
+limpia delante. Se compró a propósito —lo que entrega Design es exactamente lo
+que se sirve, sin traducción de por medio— y se paga con esto:
+
+**No hay un `<head>` compartido.** Nada de lo que declara Next les llega: ni
+`metadata.icons`, ni fuentes, ni etiquetas de SEO. Lo común vive en diecinueve
+sitios. El favicon de Vercel estuvo tres semanas en todas menos la landing por
+esto, y el SEO tuvo que escribirse a mano por lo mismo.
+
+Lo que no se puede unificar, **se vigila**: `comprobar-cuestionario.mjs` ya
+comprueba seis listas duplicadas, el favicon entre ellas. Antes de meter algo
+nuevo al `<head>`, o va en las diecinueve o va al comprobador. Preferiblemente
+las dos.
+
+**Y no lanzan excepción cuando se rompen.** Un `</div>` fuera de su `<sc-if>`
+hace que el navegador reanide en silencio: el pie del cuestionario —Atrás y
+Continuar— estuvo semanas sin pintarse y el capturador de errores no tenía nada
+que avisar, con razón. Al tocar markup anidado, mirar el resultado en el
+navegador, no solo el diff.
+
 ## Base de datos
 
 - **El proyecto es `qdydmklrbsdemzvjsldo`.** Las herramientas MCP de Supabase
@@ -107,6 +130,9 @@ evidentes al usarlo.
 - Panel de operación: `somos.aroclub+demo@gmail.com` / `AroDemo-2608`
   (`node scripts/cuenta-demo.mjs` la repone).
 - `scripts/banco-pruebas.mjs` crea una cuenta con el estado que se le pida.
+- **Probar como el desconocido**, no con una cuenta que arrastra estado. Una
+  cuenta de pruebas con lead previo escondió un 403 en todos los guardados del
+  cuestionario, y detrás había tres fallos más. La campaña entra por ahí.
 - Nunca dar algo por cerrado sin haberlo ejecutado. Si algo no se pudo probar,
   decirlo.
 
@@ -123,6 +149,21 @@ evidentes al usarlo.
 - **Las mesas se cuentan sobre verificados**, nunca sobre el total filtrado. Y
   cuando total y verificados difieren, se dice.
 - La validación de la IA se le pide al dueño del dato, no a operación.
+- **Quién vino lo marca operación, no el usuario.** Pedirle a quien acaba de
+  cenar que diga quién faltó es cobrarle un trabajo nuestro. Por lo mismo, la
+  encuesta de después no clasifica persona por persona: no volvemos a juntar a
+  la misma gente —el veto es de tres meses— así que un «sí repetiría con X» no
+  se puede usar. El único dato aplicable es el negativo, y va como salida
+  opcional, no como tarea.
+- Las escalas se guardan **más = mejor**, siempre, y la conversión desde el
+  índice de la pantalla vive en **una sola función del servidor**. En la
+  pantalla «Excelente» es el índice 0: guardar el índice tal cual deja la mejor
+  mesa como la peor sin fallar nada.
+- El cuestionario acepta **dos sesiones**: la de cuenta primero —quien entra con
+  Google ya está identificado y no se le pregunta nada— y el token de lead como
+  respaldo. Nunca fabricar un lead para quien ya tiene cuenta.
+- **Escribimos en venezolano:** celular y no móvil, computadora y no ordenador,
+  estacionamiento y no aparcamiento.
 - Nunca quitar funcionalidad, ni del diseño ni del código: el resultado es un
   superset. Componentizar en vez de duplicar markup.
 - Implementar los `.dc.html` de Design **fielmente** —pasos, estados, copy—, y
