@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { situacionDeLead } from '@/lib/embudo'
+import { respuestasDePerfil, situacionDeLead, situacionDePerfil } from '@/lib/embudo'
 import { verificar } from '@/lib/lead-token'
 import { leerCatalogo, validar } from '@/lib/questionnaire/catalogo'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -54,21 +55,80 @@ function heredadasDe(fila: FilaLead): Record<string, string | string[]> {
   return out
 }
 
+/**
+ * Quién está contestando: una cuenta o un lead.
+ *
+ * Son DOS entradas legítimas y en este orden. El token de lead existe para
+ * quien todavía no tiene cuenta —el camino normal: correo, preguntas, cuenta
+ * al final—. Con Google la cuenta llega primero, y esa persona tiene una
+ * sesión de Supabase de verdad: está MÁS autenticada que un lead y la ruta la
+ * rechazaba igual.
+ *
+ * Y no se le fabrica un lead. Duplicaría su identidad y metería un token en
+ * la URL de alguien que ya está identificado: es rodear la puerta en vez de
+ * abrirla.
+ */
+type Quien =
+  | { tipo: 'perfil'; id: string }
+  | { tipo: 'lead'; correo: string }
+
+async function quienContesta(correo: string | null, token: string | null): Promise<Quien | null> {
+  // La cuenta primero. Si hay sesión, manda ella: es la identidad fuerte.
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (user) return { tipo: 'perfil', id: user.id }
+
+  const parsed = CORREO.safeParse(correo)
+  if (!parsed.success || !verificar(parsed.data, token)) return null
+  return { tipo: 'lead', correo: parsed.data }
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url)
-  const correoCrudo = url.searchParams.get('correo')
-  const token = url.searchParams.get('token')
 
-  const parsed = CORREO.safeParse(correoCrudo)
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Correo inválido.' }, { status: 400 })
+  const quien = await quienContesta(
+    url.searchParams.get('correo'),
+    url.searchParams.get('token'),
+  )
+  if (!quien) return NextResponse.json({ error: 'Sesión no válida.' }, { status: 403 })
+
+  // --- quien ya tiene cuenta ------------------------------------------
+  //
+  // Sus respuestas viven en `answers`, no en `waitlist`. Y NO se le pasa por
+  // `convertir_lead`: no hay lead que convertir, hay una cuenta que contesta.
+  //
+  // `heredadas` va vacío a propósito. Quien llega por Google sin lead no ha
+  // contestado arraigo, zonas, días ni temas —no ha pasado por la landing—
+  // así que el cuestionario tiene que preguntárselas. Esconderlas como
+  // «heredadas» dejaría un perfil sin zonas, y un perfil sin zonas no se
+  // puede sentar en ninguna mesa.
+  if (quien.tipo === 'perfil') {
+    const respuestas = await respuestasDePerfil(quien.id)
+    const situacion = await situacionDePerfil(quien.id)
+    const { data: perfil } = await createAdminClient()
+      .from('profiles')
+      // `as never`: la columna es de esta entrega y los tipos generados no la
+      // conocen todavía.
+      .select('questionnaire_screen' as never)
+      .eq('id', quien.id)
+      .maybeSingle()
+
+    // La MISMA forma que la respuesta del lead. Dos formas distintas para la
+    // misma pantalla es la manera de que una de las dos se quede vieja.
+    return NextResponse.json({
+      respuestas,
+      heredadas: [],
+      pantalla: (perfil as { questionnaire_screen?: number } | null)?.questionnaire_screen ?? 0,
+      completado: situacion.falta.preguntas.length === 0,
+      faltan: situacion.falta.preguntas,
+      paso: situacion.paso,
+      donde: situacion.donde,
+    })
   }
-  const correo = parsed.data
 
-  if (!verificar(correo, token)) {
-    return NextResponse.json({ error: 'Sesión no válida.' }, { status: 403 })
-  }
-
+  const correo = quien.correo
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('waitlist')
@@ -105,8 +165,10 @@ export async function GET(request: Request) {
 }
 
 const cuerpo = z.object({
-  correo: CORREO,
-  token: z.string().min(1),
+  // Opcionales: quien entra con cuenta no tiene llave de lead que mandar, y
+  // exigirlas aquí lo dejaba fuera antes de mirar su sesión.
+  correo: CORREO.nullish(),
+  token: z.string().min(1).nullish(),
   clave: z.string().min(1).max(40),
   valor: z.union([z.string(), z.array(z.string()), z.null()]),
   /** Pantalla en la que está, para poder retomar. */
@@ -133,9 +195,8 @@ export async function POST(request: Request) {
   // servidor mirando lo guardado.
   const { correo, token, clave, valor, pantalla } = parsed.data
 
-  if (!verificar(correo, token)) {
-    return NextResponse.json({ error: 'Sesión no válida.' }, { status: 403 })
-  }
+  const quien = await quienContesta(correo ?? null, token ?? null)
+  if (!quien) return NextResponse.json({ error: 'Sesión no válida.' }, { status: 403 })
 
   const catalogo = await leerCatalogo()
   if (!catalogo) {
@@ -159,6 +220,107 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient()
 
+  // --- quien ya tiene cuenta: se guarda contra SU perfil ---------------
+  //
+  // No pasa por `waitlist` ni por `convertir_lead`: no hay lead que
+  // convertir, hay una cuenta que contesta.
+  //
+  // Todo va a `answers`, que es de donde `refrescar_rasgos` deriva
+  // `profile_traits` —zonas, días, temas, arraigo, sector…— o sea el pool del
+  // reparto. Y `nacimiento` y `genero` van ADEMÁS a su columna de `profiles`,
+  // porque de ahí es de donde esa misma función saca la edad y el género: sin
+  // ese espejo, el perfil quedaría con las respuestas puestas y sin edad, que
+  // es un perfil que no se puede sentar.
+  if (quien.tipo === 'perfil') {
+    const { data: version } = await supabase
+      .from('questionnaire_versions')
+      .select('id')
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (!version) {
+      return NextResponse.json({ error: 'No hay cuestionario activo.' }, { status: 500 })
+    }
+
+    if (valor === null) {
+      await supabase
+        .from('answers')
+        .delete()
+        .eq('profile_id', quien.id)
+        .eq('version_id', version.id)
+        .eq('question_key', clave)
+    } else {
+      const { error } = await supabase.from('answers').upsert(
+        {
+          profile_id: quien.id,
+          version_id: version.id,
+          question_key: clave,
+          value: valor as never,
+        } as never,
+        { onConflict: 'profile_id,version_id,question_key' },
+      )
+
+      if (error) {
+        console.error('[cuestionario] no se guardó la respuesta del perfil', error)
+        return NextResponse.json({ error: 'No pudimos guardar tu respuesta.' }, { status: 500 })
+      }
+    }
+
+    const espejo: Record<string, unknown> = { questionnaire_screen: pantalla ?? 0 }
+    if (clave === 'nacimiento') espejo.birthdate = valor
+    if (clave === 'genero') espejo.gender = Array.isArray(valor) ? valor[0] : valor
+    // `rootedness` también: es columna de `profiles` desde el primer día y la
+    // usa el panel. `refrescar_rasgos` la deriva de `answers`, así que esto
+    // es para que las dos digan lo mismo y no para que el reparto funcione.
+    if (clave === 'arraigo') espejo.rootedness = valor
+
+    const { error: errorEspejo } = await supabase
+      .from('profiles')
+      .update(espejo as never)
+      .eq('id', quien.id)
+
+    if (errorEspejo) {
+      console.error('[cuestionario] no se guardó el espejo del perfil', errorEspejo)
+      return NextResponse.json({ error: 'No pudimos guardar tu respuesta.' }, { status: 500 })
+    }
+
+    const situacionPerfil = await situacionDePerfil(quien.id)
+    const completoPerfil = situacionPerfil.falta.preguntas.length === 0
+
+    if (completoPerfil) {
+      /**
+       * Cerrado. En un perfil eso NO es `profile_completed_at` —esa columna
+       * es de `waitlist`, y `profiles` no la tiene— sino el estado: se pasa
+       * de «le falta el cuestionario» a «le falta verificarse», que es lo
+       * mismo que hace `convertir_lead` al crear la cuenta.
+       *
+       * Lo escribí con la columna del lead y el `update` moría con un 400 en
+       * silencio, porque no miraba el error. Ahora se mira.
+       */
+      const { error: errorCerrar } = await supabase
+        .from('profiles')
+        .update({ status: 'pending_verification' } as never)
+        .eq('id', quien.id)
+        .eq('status', 'pending_questionnaire')
+
+      if (errorCerrar) console.error('[cuestionario] no se cerró el perfil', errorCerrar)
+    }
+
+    return NextResponse.json({
+      estado: 'guardado',
+      // `completo`, con el mismo nombre que la rama del lead: la pantalla lee
+      // una sola clave y no tiene que saber por dónde entró.
+      completo: completoPerfil,
+      faltan: situacionPerfil.falta.preguntas,
+      paso: situacionPerfil.paso,
+      donde: situacionPerfil.donde,
+    })
+  }
+
+  // De aquí abajo es la rama del LEAD, y ahí el correo existe por
+  // construcción: `quienContesta` solo devuelve `lead` si validó la firma.
+  const correoLead = quien.correo
+
   // Las cuatro de la landing tienen columna propia: se escriben ahí para que
   // el panel y el matcher las vean donde esperan, no duplicadas en el jsonb.
   if ((HEREDABLES as readonly string[]).includes(clave)) {
@@ -175,7 +337,7 @@ export async function POST(request: Request) {
     const { error } = await supabase
       .from('waitlist')
       .update(columna as never)
-      .eq('email', correo)
+      .eq('email', correoLead)
 
     if (error) {
       console.error('[cuestionario] no se guardó', error)
@@ -187,7 +349,7 @@ export async function POST(request: Request) {
   // escribir aquí perdía respuestas: dos guardados seguidos leían el mismo
   // estado y el segundo borraba al primero.
   const { error } = await supabase.rpc('guardar_respuesta', {
-    p_email: correo,
+    p_email: correoLead,
     p_clave: clave,
     p_valor: (HEREDABLES as readonly string[]).includes(clave) ? null : (valor as never),
     p_pantalla: pantalla ?? 0,
@@ -209,7 +371,7 @@ export async function POST(request: Request) {
 
   // Se relee de la base, no del cuerpo de la petición: es la única forma de
   // que «completo» signifique «está escrito» y no «lo pulsó».
-  const situacion = await situacionDeLead(correo)
+  const situacion = await situacionDeLead(correoLead)
   const completo = situacion.falta.preguntas.length === 0
 
   // Se cierra con un update directo y NO con la RPC: ahí `p_valor = null`
@@ -220,7 +382,7 @@ export async function POST(request: Request) {
     await supabase
       .from('waitlist')
       .update({ profile_completed_at: new Date().toISOString() } as never)
-      .eq('email', correo)
+      .eq('email', correoLead)
       .is('profile_completed_at', null)
   }
 

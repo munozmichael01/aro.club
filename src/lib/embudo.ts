@@ -135,7 +135,21 @@ export async function respuestasDePerfil(
     (respuestas ?? []).map((r) => [r.question_key, r.value]),
   )
   if (dadas.nacimiento == null && perfil?.birthdate) dadas.nacimiento = perfil.birthdate
-  if (dadas.genero == null && perfil?.gender) dadas.genero = perfil.gender
+
+  // El género SOLO si no es el valor por defecto de la columna.
+  //
+  // `profiles.gender` es `not null default 'sin-decir'`, así que TODO perfil
+  // tiene género desde el instante en que se crea. Tomándolo por contestado,
+  // a quien entra con Google no se le preguntaba nunca y se quedaba en
+  // «prefiero no decirlo» para siempre — y con eso el reparto no puede
+  // equilibrar la mesa, que es justo para lo que se pregunta.
+  //
+  // Quien de verdad elija «prefiero no decirlo» tendrá su fila en `answers` y
+  // no pasa por aquí: este respaldo es solo para los perfiles anteriores al
+  // relleno del 21 de agosto.
+  if (dadas.genero == null && perfil?.gender && perfil.gender !== 'sin-decir') {
+    dadas.genero = perfil.gender
+  }
   return dadas
 }
 

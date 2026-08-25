@@ -188,6 +188,24 @@
 
   <sc-if value="{{ enPreguntas }}" hint-placeholder-val="{{ true }}">
     <div style="position:sticky;bottom:0;z-index:30;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-top:1px solid rgba(20,52,42,.1)">
+
+      <!-- Cuando algo no se está guardando, se dice. `sinSesion` y
+           `falloGuardar` se ponían en el estado y no los leía NADIE: la
+           pantalla se pintaba entera, se contestaba, y cada guardado moría en
+           silencio. Una pantalla que finge funcionar es peor que una que
+           falla. -->
+      <sc-if value="{{ hayAviso }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:720px;margin:0 auto;padding:12px clamp(16px,4vw,28px) 0">
+          <div style="display:flex;gap:11px;align-items:flex-start;border-radius:18px;background:rgba(143,69,21,.1);border:1px solid rgba(160,81,31,.35);padding:12px 15px">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#A0511F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+            <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ textoAviso }}</span>
+            <sc-if value="{{ hayEntrar }}" hint-placeholder-val="{{ false }}">
+              <a href="/entrar" style="flex:0 0 auto;font:600 14px/1.5 'Inter Tight',sans-serif;color:#8F4515;text-decoration:underline;text-underline-offset:4px">Entrar</a>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
       <div style="max-width:720px;margin:0 auto;padding:12px clamp(16px,4vw,28px) calc(12px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px">
         <sc-if value="{{ puedeAtras }}" hint-placeholder-val="{{ false }}">
           <button onClick="{{ atras }}" aria-label="Atrás" style="flex:0 0 auto;width:58px;height:58px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#1B5138;font:400 19px/1 'Inter Tight',sans-serif;cursor:pointer">←</button>
@@ -498,9 +516,37 @@ class Component extends DCLogic {
       .then((d) => this.ponerZonas(d.zonas))
       .catch(() => { /* se queda el orden por defecto */ });
 
+    /**
+     * La llave del correo, si viene en la URL.
+     *
+     * El correo de bienvenida lleva a `/cuestionario?t=<token>&correo=<x>` y
+     * esta pantalla no leía ese parámetro: solo miraba el localStorage, que
+     * lo escriben las landings. O sea que el enlace funcionaba únicamente en
+     * el mismo navegador donde te apuntaste — y el caso normal es abrir el
+     * correo en el teléfono habiéndote apuntado en el portátil.
+     *
+     * Se guarda como sesión para que volver mañana ya no dependa del enlace.
+     */
+    try {
+      const q = new URLSearchParams(window.location.search);
+      const correoURL = (q.get('correo') || '').trim().toLowerCase();
+      const tokenURL = q.get('t') || q.get('token');
+      if (correoURL && tokenURL) {
+        window.localStorage.setItem(this.SESION, JSON.stringify({ correo: correoURL, token: tokenURL }));
+      }
+    } catch (e) { /* sin localStorage: se sigue con lo que haya */ }
+
+    /**
+     * Quién contesta: una cuenta o un lead.
+     *
+     * Sin sesión de lead ya NO se para. Quien entra con Google tiene sesión
+     * de cuenta y ninguna llave de lead: la ruta la acepta desde hoy, y esta
+     * pantalla tiene que dejarle llegar hasta allí. Antes se plantaba aquí y
+     * ponía `sinSesion`, una bandera que además no leía nadie: la pantalla se
+     * pintaba entera, se contestaba, y cada guardado devolvía 403 en silencio.
+     */
     const s = this.sesion();
-    if (!s || !s.correo || !s.token) { this.setState({ sinSesion: true }); return; }
-    this._sesion = s;
+    this._sesion = (s && s.correo && s.token) ? s : null;
 
     // ¿Ya tiene cuenta? Esta pantalla trabaja con la sesion del lead y no lo
     // sabe, asi que se lo pregunta a quien lo sabe. Importa para la salida:
@@ -512,7 +558,10 @@ class Component extends DCLogic {
       .then((r) => { if (r.ok) this.setState({ tieneCuenta: true }); })
       .catch(() => {});
 
-    const q = '?correo=' + encodeURIComponent(s.correo) + '&token=' + encodeURIComponent(s.token);
+    // Con llave de lead se manda; sin ella, la ruta mira la sesión de cuenta.
+    const q = this._sesion
+      ? '?correo=' + encodeURIComponent(this._sesion.correo) + '&token=' + encodeURIComponent(this._sesion.token)
+      : '';
     fetch('/api/cuestionario' + q)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sesion'))))
       .then((d) => {
@@ -554,11 +603,16 @@ class Component extends DCLogic {
           est.dia = String(parseInt(nac.slice(8, 10), 10));
         }
 
-        // Si el SERVIDOR dice que lo que falta ya no son preguntas, esto se
-        // acabo: se ensena el cierre con la salida al paso siguiente en vez
-        // de devolver a la pantalla 1 a quien ya contesto todo. El recorrido
-        // es continuo y quien decide donde esta es la misma pieza para todos.
-        if (d.paso && d.paso !== 'preguntas') {
+        // El cierre se enseña cuando las preguntas están CONTESTADAS, y eso
+        // lo dice `completado`.
+        //
+        // Antes se deducía de `paso !== 'preguntas'`, y eso solo es cierto
+        // para un lead, donde el orden del embudo es preguntas → contacto →
+        // cuenta. Para quien YA tiene cuenta el orden es otro: `contacto` va
+        // primero, porque sin nombre y teléfono no se puede verificar. Así
+        // que a quien entraba con Google —cuenta sin teléfono— la pantalla le
+        // enseñaba «COMPLETO · Dieciséis respuestas» con cero contestadas.
+        if (d.completado) {
           est.fin = true;
         } else if (d.pantalla > 0 && !d.completado) {
           est.pantalla = d.pantalla; est.retomada = true;
@@ -621,14 +675,16 @@ class Component extends DCLogic {
    * que falta manda sobre lo que la pantalla creia.
    */
   enviar(id, valor) {
+    // Sin llave de lead se manda igual: la ruta mira la sesión de cuenta.
+    // Antes se salía aquí con `false` y la respuesta no llegaba a ningún
+    // sitio, sin decir nada — que es la mitad silenciosa del mismo fallo.
     const s = this._sesion;
-    if (!s) return Promise.resolve(false);
     this.setState({ guardando: true, falloGuardar: '' });
     return fetch('/api/cuestionario', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ correo: s.correo, token: s.token, clave: id, valor: valor,
-        pantalla: this.state.pantalla })
+      body: JSON.stringify({ correo: s ? s.correo : null, token: s ? s.token : null,
+        clave: id, valor: valor, pantalla: this.state.pantalla })
     })
       .then((r) => r.json().then((d) => ({ ok: r.ok, estado: r.status, d })).catch(() => ({ ok: r.ok, estado: r.status, d: {} })))
       .then(({ ok, estado, d }) => {
@@ -1029,6 +1085,19 @@ class Component extends DCLogic {
       hayRetomada: this.state.retomada && this.state.pantalla > 0 && !this.state.cerrada && !fin,
       textoRetomada: 'Te quedaste en la pantalla ' + (this.state.pantalla + 1) + '. Lo anterior está guardado.',
       cerrarRetomada: () => this.setState({ cerrada: true }),
+
+      /**
+       * El aviso de que algo no se está guardando.
+       *
+       * `sinSesion` gana sobre `falloGuardar`: una sesión muerta explica
+       * todos los fallos de guardado que vengan detrás, y enseñar los dos
+       * haría pensar que son dos problemas.
+       */
+      hayAviso: this.state.sinSesion || !!this.state.falloGuardar,
+      hayEntrar: !!this.state.sinSesion,
+      textoAviso: this.state.sinSesion
+        ? 'No estamos guardando tus respuestas: no pudimos identificarte. Entra otra vez y sigues justo donde lo dejaste — lo anterior está a salvo.'
+        : this.state.falloGuardar,
 
       puedeAtras: this.state.pantalla > 0,
       // Atras tambien sube: volver a una pantalla por su mitad desorienta
