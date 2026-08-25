@@ -169,6 +169,19 @@
       </div>
     </sc-if>
 
+    <sc-if value="{{ esSinSesion }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 380ms ease both;padding-top:clamp(10px,3vw,30px)">
+        <h1 style="font:400 clamp(32px,6.4vw,54px)/1 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance">{{ tituloSinSesion }}</h1>
+        <p style="font:400 clamp(16px,1.6vw,19px)/1.55 'Inter Tight',sans-serif;color:#456352;max-width:44ch;margin:16px 0 0;text-wrap:pretty">{{ cuerpoSinSesion }}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:11px;margin-top:clamp(26px,3.4vw,34px)">
+          <a href="/entrar" style="display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif">Entrar</a>
+          <sc-if value="{{ haySalidaNueva }}" hint-placeholder-val="{{ false }}">
+            <a href="/datos" style="display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 24px;border-radius:999px;border:1px solid rgba(20,52,42,.22);color:#1B5138;font:500 16px/1 'Inter Tight',sans-serif">Todavía no tengo cuenta</a>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ enCierre }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 480ms ease both;padding-top:clamp(10px,3vw,30px)">
         <span style="display:flex;width:52px;height:52px;border-radius:999px;border:1px solid rgba(27,81,56,.28);align-items:center;justify-content:center;margin-bottom:24px">
@@ -189,19 +202,17 @@
   <sc-if value="{{ enPreguntas }}" hint-placeholder-val="{{ true }}">
     <div style="position:sticky;bottom:0;z-index:30;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-top:1px solid rgba(20,52,42,.1)">
 
-      <!-- Cuando algo no se está guardando, se dice. `sinSesion` y
-           `falloGuardar` se ponían en el estado y no los leía NADIE: la
-           pantalla se pintaba entera, se contestaba, y cada guardado moría en
-           silencio. Una pantalla que finge funcionar es peor que una que
-           falla. -->
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Un guardado que falló por otra cosa —la red, un 500—. No es la
+           sesión: eso tiene pantalla propia y no deja seguir escribiendo. -->
       <sc-if value="{{ hayAviso }}" hint-placeholder-val="{{ false }}">
         <div style="max-width:720px;margin:0 auto;padding:12px clamp(16px,4vw,28px) 0">
           <div style="display:flex;gap:11px;align-items:flex-start;border-radius:18px;background:rgba(143,69,21,.1);border:1px solid rgba(160,81,31,.35);padding:12px 15px">
             <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#A0511F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
             <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ textoAviso }}</span>
-            <sc-if value="{{ hayEntrar }}" hint-placeholder-val="{{ false }}">
-              <a href="/entrar" style="flex:0 0 auto;font:600 14px/1.5 'Inter Tight',sans-serif;color:#8F4515;text-decoration:underline;text-underline-offset:4px">Entrar</a>
-            </sc-if>
           </div>
         </div>
       </sc-if>
@@ -242,7 +253,16 @@ class Component extends DCLogic {
     // sola fecha al guardarse. Igual que en la pantalla de datos.
     dia: '', mes: '', anio: '',
     // Lo que el SERVIDOR dice que falta. La pantalla ya no lo deduce.
-    faltan: null, guardando: false, falloGuardar: '' };
+    faltan: null, guardando: false, falloGuardar: '',
+    /**
+     * Si hay algo escrito en la base de esta persona.
+     *
+     * Decide cuál de los dos mensajes de «sin sesión» es VERDAD. Prometer
+     * «lo anterior está a salvo» a quien no ha guardado nada es mentir, y
+     * callar que sus catorce respuestas están ahí es hacerle empezar de cero
+     * por miedo.
+     */
+    algoGuardado: false };
 
   SESION = 'aro-sesion';
 
@@ -563,7 +583,11 @@ class Component extends DCLogic {
       ? '?correo=' + encodeURIComponent(this._sesion.correo) + '&token=' + encodeURIComponent(this._sesion.token)
       : '';
     fetch('/api/cuestionario' + q)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sesion'))))
+      // 401 y 403 son «no sabemos quién eres», y solo eso. Cualquier otro
+      // fallo —un 500, la red— NO lo es: mandaba a identificarse a quien ya
+      // estaba identificado, que es hacerle dar sus datos otra vez por un
+      // error nuestro.
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status === 401 || r.status === 403 ? 'sesion' : 'carga'))))
       .then((d) => {
         const C = this.COD;
         const r = Object.assign({}, this.state.r);
@@ -612,6 +636,8 @@ class Component extends DCLogic {
         // primero, porque sin nombre y teléfono no se puede verificar. Así
         // que a quien entraba con Google —cuenta sin teléfono— la pantalla le
         // enseñaba «COMPLETO · Dieciséis respuestas» con cero contestadas.
+        est.algoGuardado = Object.keys(d.respuestas || {}).length > 0;
+
         if (d.completado) {
           est.fin = true;
         } else if (d.pantalla > 0 && !d.completado) {
@@ -619,7 +645,9 @@ class Component extends DCLogic {
         }
         this.setState(est);
       })
-      .catch(() => this.setState({ sinSesion: true }));
+      .catch((e) => this.setState(e && e.message === 'sesion'
+        ? { sinSesion: true }
+        : { falloGuardar: 'No pudimos cargar tus respuestas. Recarga la página.' }));
   }
 
   componentWillUnmount() { clearTimeout(this._tEmpleador); }
@@ -688,12 +716,12 @@ class Component extends DCLogic {
     })
       .then((r) => r.json().then((d) => ({ ok: r.ok, estado: r.status, d })).catch(() => ({ ok: r.ok, estado: r.status, d: {} })))
       .then(({ ok, estado, d }) => {
-        if (estado === 403) { this.setState({ guardando: false, sinSesion: true }); return false; }
+        if (estado === 401 || estado === 403) { this.setState({ guardando: false, sinSesion: true }); return false; }
         if (!ok) {
           this.setState({ guardando: false, falloGuardar: d.error || 'No pudimos guardar esa respuesta.' });
           return false;
         }
-        this.setState({ guardando: false, falloGuardar: '', faltan: d.faltan || [] });
+        this.setState({ guardando: false, falloGuardar: '', faltan: d.faltan || [], algoGuardado: true });
         return true;
       })
       .catch(() => {
@@ -1048,10 +1076,13 @@ class Component extends DCLogic {
     const ultima = this.state.pantalla >= 4;
 
     return {
-      enPreguntas: !fin,
-      enCierre: fin,
+      enPreguntas: !fin && !this.state.sinSesion,
+      enCierre: fin && !this.state.sinSesion,
+      esSinSesion: !!this.state.sinSesion,
       barras,
-      etiquetaProgreso: fin ? 'COMPLETO' : 'PANTALLA ' + (this.state.pantalla + 1) + ' DE 5',
+      // Sin identidad no hay progreso que enseñar: «PANTALLA 1 DE 5» encima
+      // de una pantalla que no es ninguna de las cinco solo confunde.
+      etiquetaProgreso: this.state.sinSesion ? '' : (fin ? 'COMPLETO' : 'PANTALLA ' + (this.state.pantalla + 1) + ' DE 5'),
       // derivada del propio array: no vuelve a desincronizarse en el siguiente recorte
       textoCierre: (() => {
         // Solo las OBLIGATORIAS (§5 de la entrega 13). Contar las opcionales
@@ -1093,11 +1124,36 @@ class Component extends DCLogic {
        * todos los fallos de guardado que vengan detrás, y enseñar los dos
        * haría pensar que son dos problemas.
        */
-      hayAviso: this.state.sinSesion || !!this.state.falloGuardar,
-      hayEntrar: !!this.state.sinSesion,
-      textoAviso: this.state.sinSesion
-        ? 'No estamos guardando tus respuestas: no pudimos identificarte. Entra otra vez y sigues justo donde lo dejaste — lo anterior está a salvo.'
-        : this.state.falloGuardar,
+      /**
+       * Sin identidad no se enseña el cuestionario.
+       *
+       * Antes se enseñaba entero con una banda encima diciendo que no se
+       * estaba guardando nada. O sea: se le dejaba contestar dieciocho
+       * preguntas para tirarlas. Eso es hacerle retrabajar, y la banda encima
+       * lo endulzaba —«lo anterior está a salvo»— cuando en el caso normal no
+       * había nada anterior y no había nada a salvo.
+       *
+       * Se para ANTES de que escriba. Y se dicen dos cosas distintas según lo
+       * que de verdad haya pasado, porque son dos situaciones distintas:
+       *
+       *  - No se pudo identificar al cargar: no hay nada guardado ni lo va a
+       *    haber, y no ha perdido nada porque no le hemos dejado empezar.
+       *  - Se cayó a mitad: las respuestas anteriores SÍ están —se guardan
+       *    una a una según se contestan— y la última no. Eso se dice tal cual,
+       *    sin prometer de más.
+       */
+      tituloSinSesion: this.state.algoGuardado
+        ? 'Se cortó a mitad.'
+        : 'Necesitamos saber quién eres.',
+      cuerpoSinSesion: this.state.algoGuardado
+        ? 'Lo que contestaste hasta ahora está guardado: se guarda respuesta a respuesta. La última no llegó a guardarse. Entra otra vez y sigues desde ahí.'
+        : 'Sin identificarte no podemos guardar nada de lo que contestes, así que preferimos no hacerte empezar. Entra y seguimos.',
+      // A `/datos` solo se manda a quien no ha empezado: quien ya tiene
+      // respuestas guardadas tiene cuenta o lead, y lo suyo es entrar.
+      haySalidaNueva: !this.state.algoGuardado,
+
+      hayAviso: !!this.state.falloGuardar,
+      textoAviso: this.state.falloGuardar,
 
       puedeAtras: this.state.pantalla > 0,
       // Atras tambien sube: volver a una pantalla por su mitad desorienta
