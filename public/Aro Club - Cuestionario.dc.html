@@ -76,9 +76,12 @@
 
         <div style="display:flex;flex-direction:column;gap:clamp(34px,5vw,52px);margin-top:clamp(30px,4.4vw,46px)">
           <sc-for list="{{ preguntas }}" as="q" hint-placeholder-count="4">
-            <div id="{{ q.ancla }}">
+            <div id="{{ q.ancla }}" style="{{ q.caja }}">
               <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:baseline;margin-bottom:5px">
                 <span style="font:400 clamp(20px,2.6vw,26px)/1.2 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A;flex:1 1 auto;min-width:0;text-wrap:pretty">{{ q.pregunta }}</span>
+                <sc-if value="{{ q.marcada }}" hint-placeholder-val="{{ false }}">
+                  <span style="{{ q.selloFalta }}">TE FALTA ESTA</span>
+                </sc-if>
                 <sc-if value="{{ q.esOpcional }}" hint-placeholder-val="{{ false }}">
                   <span style="flex:0 0 auto;font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D;border:1px solid rgba(20,52,42,.2);border-radius:999px;padding:6px 10px">OPCIONAL</span>
                 </sc-if>
@@ -179,7 +182,8 @@
           <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Cómo te llamas, cómo quieres que te llamen en la mesa y a qué número te escribimos el día del encuentro. Ahí mismo creas tu cuenta.</div>
           <a href="{{ enlaceDatos }}" style="{{ botonClave }}">Continuar</a>
         </div>
-</sc-if>
+      </div>
+    </sc-if>
   </div>
 
   <sc-if value="{{ enPreguntas }}" hint-placeholder-val="{{ true }}">
@@ -204,6 +208,18 @@
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
   state = { pantalla: 0, r: { idiomas: [0] }, empleador: '', retomada: false, cerrada: false, fin: false, heredadas: [], sinSesion: false,
+    /**
+     * Si se han marcado las que faltan.
+     *
+     * Se enciende al pulsar Continuar con algo sin contestar, y NO antes: una
+     * pantalla que llega marcada en naranja antes de que hayas hecho nada es
+     * un formulario regañando, y esta pantalla guarda por pregunta y perdona
+     * que te vayas a medias. Solo tiene que decir dónde estás.
+     *
+     * Se apaga al cambiar de pantalla. Y cada pregunta deja de estar marcada
+     * en cuanto se contesta, sin tocar esto: la marca se calcula.
+     */
+    senalar: false,
     // El nacimiento: dia, mes y ano por separado mientras se escribe, y una
     // sola fecha al guardarse. Igual que en la pantalla de datos.
     dia: '', mes: '', anio: '',
@@ -820,11 +836,43 @@ class Component extends DCLogic {
     const visibles = p.preguntas.filter((q) => !heredada(q.id));
     const ocultas = p.preguntas.length - visibles.length;
 
+    // Vive AQUÍ y no más abajo porque la usan las dos cosas: marcar la
+    // pregunta que falta al pintarla, y decidir cuál nombra el botón. Estaba
+    // declarada después del mapa que ahora la necesita, y un `const` no se
+    // eleva: la pantalla habría reventado en blanco.
+    const contestada = (q) => {
+      if (q.opcional) return true;
+      const v = r[q.id];
+      if (q.tipo === 'texto') return this.state.empleador.trim().length > 0;
+      if (q.tipo === 'unica') return v != null;
+      return (v || []).length >= (q.min || 1);
+    };
+
     const preguntas = visibles.map((q) => {
       const val = r[q.id];
+      // Marcada solo si se pulsó Continuar y esta sigue sin contestar.
+      const marcada = this.state.senalar && !contestada(q)
+
       const base = {
         // Para poder llevar la pantalla hasta ella cuando falte.
         ancla: 'preg-' + q.id,
+        /**
+         * La marca de «esta falta», que es la mitad que no dependía del
+         * scroll.
+         *
+         * Antes, pulsar Continuar solo hacía `scrollIntoView`. Si la pregunta
+         * ya estaba en pantalla eso no mueve nada, y el botón parecía muerto
+         * — que es literalmente lo que le pasó a Michael en la primera
+         * pantalla, la que ve todo el que llega por la campaña.
+         *
+         * Se marca con el borde y un sello, no con un mensaje de error: no ha
+         * hecho nada mal, solo le falta contestar.
+         */
+        marcada,
+        caja: marcada
+          ? 'border-left:3px solid #A0511F;padding-left:clamp(12px,1.6vw,18px);margin-left:calc(clamp(12px,1.6vw,18px) * -1)'
+          : 'border-left:3px solid transparent;padding-left:clamp(12px,1.6vw,18px);margin-left:calc(clamp(12px,1.6vw,18px) * -1)',
+        selloFalta: 'flex:0 0 auto;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;color:#A0511F;border:1px solid rgba(160,81,31,.45);border-radius:999px;padding:6px 10px',
         pregunta: q.pregunta,
         ayuda: q.ayuda || '',
         hayAyuda: !!q.ayuda,
@@ -921,13 +969,6 @@ class Component extends DCLogic {
       return base;
     });
 
-    const contestada = (q) => {
-      if (q.opcional) return true;
-      const v = r[q.id];
-      if (q.tipo === 'texto') return this.state.empleador.trim().length > 0;
-      if (q.tipo === 'unica') return v != null;
-      return (v || []).length >= (q.min || 1);
-    };
     // CUAL falta, no solo que falta alguna. La tercera pregunta de la
     // primera pantalla —"¿Donde trabajas?"— queda debajo del pie fijo: se
     // respondia el sector, el boton seguia apagado sin decir por que, y la
@@ -940,6 +981,8 @@ class Component extends DCLogic {
       ? { id: cual.id, tipo: cual.tipo, ancla: 'preg-' + cual.id, corto: cual.corto || '' }
       : null;
     const completa = !faltante;
+    // Cuántas de ESTA pantalla, que es lo que hay que contestar para seguir.
+    const cuantasFaltan = visibles.filter((q) => !contestada(q)).length;
 
     const barras = [0, 1, 2, 3, 4].map((i) => ({
       estilo: 'flex:1;height:4px;border-radius:999px;background:' + (i < this.state.pantalla ? '#1B5138' : (i === this.state.pantalla ? '#A0511F' : 'rgba(20,52,42,.13)')) + ';transition:background 260ms ease'
@@ -992,27 +1035,62 @@ class Component extends DCLogic {
       // igual que llegar a ella por la mitad.
       atras: () => {
         window.scrollTo(0, 0);
-        this.setState((s) => ({ pantalla: Math.max(0, s.pantalla - 1), retomada: false }));
+        this.setState((s) => ({ pantalla: Math.max(0, s.pantalla - 1), retomada: false, senalar: false }));
       },
       // Deja de estar inerte: si falta algo, el boton LLEVA a lo que falta en
       // vez de no hacer nada.
       inerteContinuar: null,
+      /**
+       * Qué falta, y cuántas.
+       *
+       * «Falta una respuesta» delante de cinco preguntas obliga a repasarlas
+       * una por una — y la primera pantalla tiene CINCO obligatorias, no una:
+       * nacimiento, género, arraigo, sector y empleador. Con el número, ya
+       * sabes si te queda una o te queda media pantalla.
+       *
+       * Cuando queda una sola se la nombra, que es más útil que el número.
+       */
       textoContinuar: completa
         ? (ultima ? 'Terminar' : 'Continuar')
-        : (faltante && faltante.corto ? 'Falta ' + faltante.corto : 'Falta una respuesta'),
+        : (cuantasFaltan === 1
+          ? (faltante && faltante.corto ? 'Falta ' + faltante.corto : 'Falta una respuesta')
+          : 'Faltan ' + cuantasFaltan + ' en esta pantalla'),
       botonContinuar: 'flex:1;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + (completa ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (completa ? '#FAF3E4' : '#456352') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (completa ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
       continuar: () => {
         // Si falta algo, se va HASTA ello y se enfoca. Antes no pasaba nada
         // y la pregunta que faltaba estaba fuera de la vista.
         if (!completa) {
+          /**
+           * Lo primero: MARCAR. Antes esto solo se desplazaba, y ahí estaban
+           * los dos agujeros que dejaron el botón muerto para Michael:
+           *
+           *  - Si lo que falta ya está en pantalla, `scrollIntoView` no mueve
+           *    nada visible. Cero señal.
+           *  - Y si lo que falta es una pregunta de botones —género, arraigo,
+           *    sector— `querySelector('input')` devuelve null y no se enfoca
+           *    nada. Cero señal otra vez.
+           *
+           * Pulsó, no pasó nada, se fue. En la primera pantalla, que es la
+           * que ve todo el que llega por la campaña.
+           */
+          this.setState({ senalar: true });
+
           if (faltante) {
             const el = document.getElementById(faltante.ancla);
             if (el) {
+              // Solo se desplaza si de verdad hay que moverse. Saltar la
+              // pantalla hacia algo que ya estás mirando desorienta más que
+              // ayuda, y la marca ya lo dice.
+              const c = el.getBoundingClientRect();
+              const fuera = c.top < 80 || c.bottom > window.innerHeight - 120;
               // Instantaneo y no 'smooth': el suave depende del navegador y
               // con reduced-motion no se mueve nada. Y para "llevame a lo
               // que falta" llegar es mejor que el viaje.
-              el.scrollIntoView({ block: 'center' });
-              const campo = el.querySelector('input');
+              if (fuera) el.scrollIntoView({ block: 'center' });
+
+              // El primero que se pueda enfocar, sea campo o botón. Con
+              // `input` a secas, las preguntas de opciones no enfocaban nada.
+              const campo = el.querySelector('input, button, select, textarea, [tabindex]');
               if (campo) { try { campo.focus({ preventScroll: true }); } catch (e) {} }
             }
           }
@@ -1053,7 +1131,7 @@ class Component extends DCLogic {
           });
           return;
         }
-        this.setState((s) => ({ pantalla: s.pantalla + 1, retomada: false }));
+        this.setState((s) => ({ pantalla: s.pantalla + 1, retomada: false, senalar: false }));
       },
       // Sin token en la URL: /datos lee la misma llave del correo de
       // `localStorage` que usa esta pantalla. Un token en la barra acaba en
