@@ -1,0 +1,62 @@
+# Lo que tiene que pasar antes de que algo llegue a main.
+#
+# Existe porque hasta ahora dependía de que alguien se acordara de correr los
+# comprobadores antes de un push, y eso es el mismo modo de fallo que vienen a
+# quitar: silencioso y solo cuando importa.
+#
+# `comprobar-pantallas` es el que hacía más falta. `tsc` y eslint no ven ni una
+# de las quince mil líneas de `public/*.dc.html`, y de ahí salió todo lo que se
+# rompió sin avisar: un `</sc-if>` cruzado que dejó el botón de Continuar sin
+# pintarse durante semanas, un `{{#cada}}` a caballo de una tabla, enlaces a
+# rutas que devolvían 404.
+name: Comprobaciones
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Los tipos: el CI los exige y el dev server no los caza.
+      - name: Tipos
+        run: npx tsc --noEmit
+
+      - name: Estilo
+        run: npx eslint
+
+      # Las pantallas. No necesita base de datos ni red: lee los ficheros y
+      # las rutas de `next.config.ts`.
+      - name: Pantallas
+        run: node scripts/comprobar-pantallas.mjs
+
+      # Los correos: que ningún botón lleve a un 404 y que las plantillas
+      # cierren al repetir la lista de comensales.
+      - name: Correos
+        run: node scripts/comprobar-correos.mjs
+
+      # El cuestionario compara la pantalla con el catálogo de la base, así
+      # que necesita llaves. Sin ellas se salta con un aviso en vez de fallar:
+      # un CI que se cae por una variable que no está enseña a ignorarlo.
+      - name: Cuestionario
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "Sin llaves en el repositorio: me salto el cotejo del cuestionario."
+            echo "Ponlas en Settings → Secrets para que esto también corra."
+            exit 0
+          fi
+          printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' \
+            "$NEXT_PUBLIC_SUPABASE_URL" "$SUPABASE_SERVICE_ROLE_KEY" > .env.local
+          node scripts/comprobar-cuestionario.mjs

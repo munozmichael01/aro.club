@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 
 import { env } from '@/lib/env'
@@ -43,6 +44,19 @@ export default function RootLayout({
     // es-VE afecta a la partición de palabras, al corrector del navegador y a
     // los lectores de pantalla.
     <html lang="es-VE" className="h-full antialiased">
+      <head>
+        {/*
+          Los mismos dos ficheros que cargan las diecinueve pantallas, en el
+          mismo orden y por la misma razón: el capturador primero porque no
+          puede fallar, la analítica después porque puede.
+          
+          Esto cubre lo que renderice Next —hoy solo `/estado`— y se apunta al
+          MISMO fichero que ellas: escribir aquí una segunda copia del
+          fragmento de Google sería volver a tener dos verdades.
+        */}
+        <Script src="/errores.js" strategy="beforeInteractive" />
+        <Script src="/gtm.js" strategy="afterInteractive" />
+      </head>
       <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>
   )

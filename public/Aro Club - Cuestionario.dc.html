@@ -8,6 +8,7 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/icono-512.png">
 <script src="./errores.js"></script>
+<script src="./gtm.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
 </head>
@@ -201,10 +202,6 @@
 
   <sc-if value="{{ enPreguntas }}" hint-placeholder-val="{{ true }}">
     <div style="position:sticky;bottom:0;z-index:30;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-top:1px solid rgba(20,52,42,.1)">
-
-          </div>
-        </div>
-      </sc-if>
 
       <!-- Un guardado que falló por otra cosa —la red, un 500—. No es la
            sesión: eso tiene pantalla propia y no deja seguir escribiendo. -->
