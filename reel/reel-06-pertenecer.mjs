@@ -146,6 +146,11 @@ const IMG = Object.fromEntries(POLAROIDS.map(({ f }) => [
 // —«El jueves.»— es la que fija la cita. Entrando las dos últimas a la vez, se
 // perdía. Se separan medio respiro, sin cambiar la maqueta de dos líneas.
 const ARO_T = 12.30, SEIS = 12.70, MESA = 13.05, JUEVES = 13.40
+// La firma entra CON el viaje, no antes. Puesta abajo desde el principio caería
+// dentro del 12% inferior —la banda del cromo de la app— hasta que el bloque
+// suba; entrando a mitad de camino ya está fuera de esa franja, y además llega
+// como el remate de la pieza y no como un pie que estaba ahí desde antes.
+const FIRMA = 14.30
 // Cuando la frase se apaga, el bloque de marca se queda solo abajo y
 // descolgado: estaba puesto ahí para dejarle sitio a la frase, y la frase ya
 // no está. Así que viaja al centro y la pieza termina ahí.
@@ -153,9 +158,11 @@ const APAGA_FRASE_T = 14.00
 const VIAJE = 0.85
 
 // De donde a donde viaja el bloque de marca. Va del sitio bajo que ocupaba
-// mientras la frase mandaba arriba, hasta el centro exacto del lienzo.
+// mientras la frase mandaba arriba, hasta el centro exacto del lienzo. El pie
+// entra en la cuenta: sin él, el bloque quedaria centrado por el sitio que
+// ocupaba antes de tener firma y se veria alto.
 const CIERRE_ARRIBA = 1352 - 81      // el borde de arriba del aro
-const CIERRE_ABAJO = 1566 + 62       // el pie de la ultima linea
+const CIERRE_ABAJO = 1662 + 34       // el pie de la firma
 const CENTRAR = Math.round((CIERRE_ARRIBA + CIERRE_ABAJO) / 2 - 960)
 
 const kf = []
@@ -238,6 +245,18 @@ POLAROIDS.forEach((pl, i) => {
   // los 0,8 s de recogida se consumían en 0,3: las fotos no se recogían en
   // abanico, se esfumaban. Con el punto de media travesía la opacidad aguanta
   // mientras viajan y solo se apagan al llegar.
+  // Se van sin aspavientos, y se van SEGUIDO.
+  //
+  // Antes tenían una meseta: aguantaban al 100% hasta el 86% del viaje y ahí
+  // caían de golpe. Eso se ve como que se quedan a medias y luego se van de
+  // repente, que es peor que irse rápido. La corrección de la vuelta anterior
+  // —hacerlas aguantar para que no se esfumaran— se pasó de frenada y creó el
+  // escalón. Ahora la opacidad baja SEGUIDO y acelerando —1 · 0,86 · 0,52 · 0—
+  // sin ningún tramo plano: no hay instante en que la foto esté quieta
+  // esperando, y aun así sigue viéndose hasta el final del viaje. Bajarla
+  // lineal tampoco valía: a mitad de camino ya estaba tan clara que el hueco
+  // antes del aro se abría a 0,60 s.
+  //
   // Se van sin aspavientos. La relevada caía 190 px girando, y una foto que se
   // descuelga de la pila llama más la atención que la que entra: lo que hay
   // que mirar es la nueva. Ahora se queda donde está, encoge un pelo y se
@@ -245,18 +264,18 @@ POLAROIDS.forEach((pl, i) => {
   // centro entero —eso se leía como si las aspirara algo—, solo deriva un
   // tercio del camino mientras se apaga.
   const fin = releva
-    ? `transform:translate(-50%,-50%) rotate(${pl.giro}deg) scale(.972);opacity:0`
-    : `transform:translate(-50%,-50%) translate(${Math.round((540 - hueco.x) * 0.34)}px,${Math.round((1150 - hueco.y) * 0.34)}px) rotate(${(pl.giro * 0.5).toFixed(1)}deg) scale(.9);opacity:0`
+    ? `transform:translate(-50%,-50%) rotate(${pl.giro}deg) scale(.966);opacity:0`
+    : `transform:translate(-50%,-50%) translate(${Math.round((540 - hueco.x) * 0.55)}px,${Math.round((1150 - hueco.y) * 0.55)}px) rotate(${(pl.giro * 0.35).toFixed(1)}deg) scale(.86);opacity:0`
 
   kf.push(`@keyframes pol${i}{
    0%,${p(pl.t)}%{transform:translate(-50%,-50%) translate(0,-150px) rotate(${pl.giro * 1.6}deg) scale(1.06);opacity:0}
    ${p(pl.t + 0.10)}%{opacity:1}
    ${p(pl.t + 0.26)}%{transform:translate(-50%,-50%) translate(0,14px) rotate(${pl.giro * 0.92}deg) scale(.99);opacity:1}
    ${p(pl.t + 0.35)}%{transform:translate(-50%,-50%) rotate(${pl.giro}deg) scale(1);opacity:1}
-   ${p(sale)}%{transform:translate(-50%,-50%) rotate(${pl.giro}deg) scale(1);opacity:1;animation-timing-function:cubic-bezier(.4,0,.75,1)}
-   ${releva ? `${p(sale + dura * 0.5)}%{transform:translate(-50%,-50%) rotate(${pl.giro}deg) scale(.986);opacity:.72}`
-     : `${p(sale + dura * 0.55)}%{transform:translate(-50%,-50%) translate(${Math.round((540 - hueco.x) * 0.19)}px,${Math.round((1150 - hueco.y) * 0.19)}px) rotate(${(pl.giro * 0.72).toFixed(1)}deg) scale(.96);opacity:1}
-   ${p(sale + dura * 0.86)}%{transform:translate(-50%,-50%) translate(${Math.round((540 - hueco.x) * 0.29)}px,${Math.round((1150 - hueco.y) * 0.29)}px) rotate(${(pl.giro * 0.58).toFixed(1)}deg) scale(.92);opacity:.6}`}
+   ${p(sale)}%{transform:translate(-50%,-50%) rotate(${pl.giro}deg) scale(1);opacity:1;animation-timing-function:linear}
+   ${releva ? `${p(sale + dura * 0.5)}%{transform:translate(-50%,-50%) rotate(${pl.giro}deg) scale(.983);opacity:.55}`
+     : `${p(sale + dura * 0.45)}%{transform:translate(-50%,-50%) translate(${Math.round((540 - hueco.x) * 0.25)}px,${Math.round((1150 - hueco.y) * 0.25)}px) rotate(${(pl.giro * 0.71).toFixed(1)}deg) scale(.94);opacity:.86}
+   ${p(sale + dura * 0.78)}%{transform:translate(-50%,-50%) translate(${Math.round((540 - hueco.x) * 0.43)}px,${Math.round((1150 - hueco.y) * 0.43)}px) rotate(${(pl.giro * 0.51).toFixed(1)}deg) scale(.9);opacity:.52}`}
    ${p(sale + dura)}%,100%{${fin}}}`)
 })
 
@@ -281,6 +300,8 @@ kf.push(`@keyframes mesa{0%,${p(MESA)}%{opacity:0;transform:translate(-50%,6px)}
 // transform: sube con `top`, igual que las palabras de la frase.
 kf.push(`@keyframes jueves{0%,${p(JUEVES)}%{opacity:0;top:6px}
  ${p(JUEVES + 0.25)}%,100%{opacity:1;top:0}}`)
+kf.push(`@keyframes firma{0%,${p(FIRMA)}%{opacity:0;transform:translate(-50%,6px)}
+ ${p(FIRMA + 0.30)}%,100%{opacity:1;transform:translate(-50%,0)}}`)
 
 // El aro de marca, con sus proporciones.
 const AR = 74
@@ -377,6 +398,12 @@ ${puntos.map(([x, y], i) => `#aro .pt${i}{transform:translate(${x}px,${y}px)}`).
 #seis{top:1478px;font-size:62px;animation:seis ${D}s cubic-bezier(.2,1,.3,1) infinite}
 #mesa{top:1566px;font-size:62px;animation:mesa ${D}s cubic-bezier(.2,1,.3,1) infinite}
 #jueves{display:inline;position:relative;opacity:0;animation:jueves ${D}s cubic-bezier(.2,1,.3,1) infinite}
+#firma{position:absolute;left:50%;top:1662px;transform:translateX(-50%);opacity:0;z-index:5;
+  white-space:nowrap;line-height:1;
+  font-family:'Inter Tight',system-ui,sans-serif;font-weight:500;font-size:34px;
+  color:${C.verde};letter-spacing:-.005em;
+  animation:firma ${D}s cubic-bezier(.2,1,.3,1) infinite}
+#firma span{color:${C.terracota}}
 ${kf.join('\n')}
 </style></head><body>
 <div id="marco"><div id="lienzo">
@@ -392,6 +419,7 @@ ${kf.join('\n')}
     <div id="aro"><div class="anillo"></div>${puntos.map((_, i) => `<div class="pt pt${i}"></div>`).join('')}</div>
     <div class="cierre et" id="seis">Seis desconocidos.</div>
     <div class="cierre et" id="mesa">Una mesa. <span id="jueves">El jueves.</span></div>
+    <div class="et" id="firma">Aro Club · <span>aro.club · Caracas</span></div>
   </div>
 </div></div>
 <script>
