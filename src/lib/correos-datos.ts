@@ -257,11 +257,17 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           // cero. El token firmado es justo el mecanismo que ya existe para
           // seguir el alta desde otro dispositivo, y este es su caso exacto.
           //
+          // Los DOS parámetros, y no solo el token: la pantalla exige correo y
+          // token juntos —la firma se verifica contra la dirección, así que sin
+          // ella no se puede comprobar nada—. Mandando solo `t` no guardaba
+          // sesión y preguntaba «quién eres» a alguien que venía de nuestro propio
+          // correo. Nunca funcionó fuera del navegador donde te apuntaste.
+          //
           // Y para quien SÍ tiene cuenta —el empujón de «te falta verificar»—
           // el botón lleva a verificación, que es su siguiente paso de verdad.
           enlaceSeguir: fila.profile_id
             ? `${SITIO}/verificacion`
-            : `${SITIO}/cuestionario?t=${encodeURIComponent(firmar(a))}`,
+            : `${SITIO}/cuestionario?t=${encodeURIComponent(firmar(a))}&correo=${encodeURIComponent(a)}`,
         },
       }
     }
