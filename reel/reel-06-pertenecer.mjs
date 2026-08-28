@@ -38,26 +38,31 @@ const D = 15.0
 const p = (t) => +Math.max(0, Math.min(100, t / D * 100)).toFixed(3)
 
 // --- la frase, en cinco tiempos -----------------------------------------
-// El compás de la frase. Los cuatro primeros grupos iban separándose —0,90,
-// 1,30, 1,60— y una frase que se va frenando se lee como si costara decirla.
-// Ahora fluyen casi al mismo paso, como se habla. La pausa antes del remate se
-// queda en los 2,00 s del guion: comprimir lo de delante la había estirado a
-// 2,90 sin que nadie lo pidiera, y casi tres segundos de pantalla quieta en una
-// pieza de quince es un agujero, no un silencio. Lo que se gana por delante se
-// lo queda el final, no la espera.
+// La frase se ESCRIBE, palabra a palabra y en orden de lectura, no en cinco
+// bloques que aparecen enteros. Un bloque que se enciende de golpe se lee como
+// una diapositiva; una palabra detrás de otra se lee como alguien diciéndolo.
+//
+// El compás no es regular a propósito: las palabras cortas van más juntas y
+// hay un respiro donde lo habría al hablar, entre grupo y grupo. Y dos pausas
+// de verdad: una breve al llegar a «es» —0,66 s, el tiempo de coger aire antes
+// de rematar— y la larga antes de «creándolo.», ahora de 1,78 s en vez de 2,00.
 const FRASE = [
-  { t: 0.30, html: 'La mejor manera' },
-  { t: 1.05, html: 'de pertenecer' },
-  { t: 1.85, html: 'a un grupo de amigos' },
-  { t: 2.70, html: 'es' },
+  { t: 0.30, html: 'La' },
+  { t: 0.50, html: 'mejor' },
+  { t: 0.72, html: 'manera' },
+  { t: 1.00, html: 'de' },
+  { t: 1.20, html: 'pertenecer' },
+  { t: 1.54, html: 'a' },
+  { t: 1.70, html: 'un' },
+  { t: 1.88, html: 'grupo' },
+  { t: 2.08, html: 'de' },
+  { t: 2.26, html: 'amigos' },
+  { t: 2.92, html: 'es' },
   { t: 4.70, html: 'creándolo.', remate: true },
 ]
-// El remate respira antes de que se mueva nada. Entrando y subiendo en el
-// mismo instante, «creándolo.» tenía dos décimas a tamaño grande: aparecía y
-// ya se estaba yendo, que es justo lo contrario de lo que hace una frase que
-// termina en su palabra. Ahora aguanta medio segundo largo y la subida tarda
-// más del doble.
-const REMATE = 4.70
+const ANTES_DEL_REMATE = 2.92   // cuando entra «es»: de ahí arranca el empuje
+const REMATE = 4.70             // «creándolo.»
+
 const SUBE = 5.25          // el bloque entero se va arriba y encoge
 const SUBIDA = 0.92        // lo que tarda en irse. Antes 0,40 y se leía como un tirón
 // La frase NO vuelve al centro. El guion decía que a los 12,00 se recentraba y
@@ -136,7 +141,11 @@ const IMG = Object.fromEntries(POLAROIDS.map(({ f }) => [
 ]))
 
 // --- el cierre -----------------------------------------------------------
-const ARO_T = 12.30, SEIS = 12.70, MESA = 13.00
+// Tres golpes, no dos. «Seis desconocidos. / Una mesa. El jueves.» son dos
+// líneas en el papel, pero al leerlas en voz alta son tres cosas, y la última
+// —«El jueves.»— es la que fija la cita. Entrando las dos últimas a la vez, se
+// perdía. Se separan medio respiro, sin cambiar la maqueta de dos líneas.
+const ARO_T = 12.30, SEIS = 12.70, MESA = 13.05, JUEVES = 13.40
 // Cuando la frase se apaga, el bloque de marca se queda solo abajo y
 // descolgado: estaba puesto ahí para dejarle sitio a la frase, y la frase ya
 // no está. Así que viaja al centro y la pieza termina ahí.
@@ -184,10 +193,11 @@ kf.push(`@keyframes grano{${Array.from({ length: PASOS }, (_, i) => {
 }).join(' ')} 100%{background-image:var(--r0);opacity:.04}}`)
 
 FRASE.forEach((g, i) => {
-  // Entrada más larga y más blanda: a 0,20 s cada grupo aparecía de golpe y la
-  // frase se leía a saltos aunque el compás fuera bueno.
-  kf.push(`@keyframes fr${i}{0%,${p(g.t)}%{opacity:0;top:9px}
-   ${p(g.t + 0.34)}%,100%{opacity:1;top:0}}`)
+  // Cada palabra entra en 0,18 s. Más largo y se solaparían unas con otras y
+  // se perdería el orden, que es lo único que hace que esto se lea como
+  // escritura y no como un bloque encendiéndose.
+  kf.push(`@keyframes fr${i}{0%,${p(g.t)}%{opacity:0;top:7px}
+   ${p(g.t + 0.18)}%,100%{opacity:1;top:0}}`)
 })
 
 // El bloque entero: centrado y grande, arriba y pequeño, y de vuelta.
@@ -198,7 +208,7 @@ FRASE.forEach((g, i) => {
 // que hace una tarjeta sostenida en cualquier pieza en movimiento. No es
 // relleno para la medida: es la tensión que la pausa pedía y no tenía.
 kf.push(`@keyframes bloque{
- 0%,${p(FRASE[3].t)}%{transform:translate(-50%,-50%) scale(.962)}
+ 0%,${p(ANTES_DEL_REMATE)}%{transform:translate(-50%,-50%) scale(.962)}
  ${p(REMATE)}%{transform:translate(-50%,-50%) scale(1)}
  ${p(SUBE)}%{transform:translate(-50%,-50%) scale(1)}
  ${p(SUBE + SUBIDA)}%,100%{transform:translate(-50%,-50%) translateY(-472px) scale(.58)}}`)
@@ -211,7 +221,9 @@ POLAROIDS.forEach((pl, i) => {
   // que se recogen todas.
   const releva = POLAROIDS[i + 3]
   const sale = releva ? releva.t : RECOGE
-  const dura = releva ? 0.30 : RECOGIDA
+  // La relevada tarda más en irse que en ser tapada: 0,30 s se veía como un
+  // parpadeo, y un parpadeo en el borde del cuadro es justo lo que se nota.
+  const dura = releva ? 0.46 : RECOGIDA
   // Al recogerse convergen al centro; al ser relevadas se van por abajo, que
   // es hacia donde las empuja la que cae encima.
   //
@@ -226,9 +238,15 @@ POLAROIDS.forEach((pl, i) => {
   // los 0,8 s de recogida se consumían en 0,3: las fotos no se recogían en
   // abanico, se esfumaban. Con el punto de media travesía la opacidad aguanta
   // mientras viajan y solo se apagan al llegar.
+  // Se van sin aspavientos. La relevada caía 190 px girando, y una foto que se
+  // descuelga de la pila llama más la atención que la que entra: lo que hay
+  // que mirar es la nueva. Ahora se queda donde está, encoge un pelo y se
+  // apaga debajo de la que acaba de caer. Y el abanico ya no converge al
+  // centro entero —eso se leía como si las aspirara algo—, solo deriva un
+  // tercio del camino mientras se apaga.
   const fin = releva
-    ? `transform:translate(-50%,-50%) translate(0,190px) rotate(${pl.giro + (pl.giro > 0 ? 6 : -6)}deg) scale(.94);opacity:0`
-    : `transform:translate(-50%,-50%) translate(${540 - hueco.x}px,${1150 - hueco.y}px) rotate(0deg) scale(.72);opacity:0`
+    ? `transform:translate(-50%,-50%) rotate(${pl.giro}deg) scale(.972);opacity:0`
+    : `transform:translate(-50%,-50%) translate(${Math.round((540 - hueco.x) * 0.34)}px,${Math.round((1150 - hueco.y) * 0.34)}px) rotate(${(pl.giro * 0.5).toFixed(1)}deg) scale(.9);opacity:0`
 
   kf.push(`@keyframes pol${i}{
    0%,${p(pl.t)}%{transform:translate(-50%,-50%) translate(0,-150px) rotate(${pl.giro * 1.6}deg) scale(1.06);opacity:0}
@@ -236,8 +254,9 @@ POLAROIDS.forEach((pl, i) => {
    ${p(pl.t + 0.26)}%{transform:translate(-50%,-50%) translate(0,14px) rotate(${pl.giro * 0.92}deg) scale(.99);opacity:1}
    ${p(pl.t + 0.35)}%{transform:translate(-50%,-50%) rotate(${pl.giro}deg) scale(1);opacity:1}
    ${p(sale)}%{transform:translate(-50%,-50%) rotate(${pl.giro}deg) scale(1);opacity:1;animation-timing-function:cubic-bezier(.4,0,.75,1)}
-   ${releva ? '' : `${p(sale + dura * 0.55)}%{transform:translate(-50%,-50%) translate(${(540 - hueco.x) * 0.55}px,${(1150 - hueco.y) * 0.55}px) rotate(${pl.giro * 0.45}deg) scale(.88);opacity:1}
-   ${p(sale + dura * 0.86)}%{transform:translate(-50%,-50%) translate(${(540 - hueco.x) * 0.86}px,${(1150 - hueco.y) * 0.86}px) rotate(${pl.giro * 0.16}deg) scale(.78);opacity:.62}`}
+   ${releva ? `${p(sale + dura * 0.5)}%{transform:translate(-50%,-50%) rotate(${pl.giro}deg) scale(.986);opacity:.72}`
+     : `${p(sale + dura * 0.55)}%{transform:translate(-50%,-50%) translate(${Math.round((540 - hueco.x) * 0.19)}px,${Math.round((1150 - hueco.y) * 0.19)}px) rotate(${(pl.giro * 0.72).toFixed(1)}deg) scale(.96);opacity:1}
+   ${p(sale + dura * 0.86)}%{transform:translate(-50%,-50%) translate(${Math.round((540 - hueco.x) * 0.29)}px,${Math.round((1150 - hueco.y) * 0.29)}px) rotate(${(pl.giro * 0.58).toFixed(1)}deg) scale(.92);opacity:.6}`}
    ${p(sale + dura)}%,100%{${fin}}}`)
 })
 
@@ -258,6 +277,10 @@ kf.push(`@keyframes seis{0%,${p(SEIS)}%{opacity:0;transform:translate(-50%,6px)}
  ${p(SEIS + 0.25)}%,100%{opacity:1;transform:translate(-50%,0)}}`)
 kf.push(`@keyframes mesa{0%,${p(MESA)}%{opacity:0;transform:translate(-50%,6px)}
  ${p(MESA + 0.25)}%,100%{opacity:1;transform:translate(-50%,0)}}`)
+// «El jueves.» va dentro de la misma línea, así que es inline y no admite
+// transform: sube con `top`, igual que las palabras de la frase.
+kf.push(`@keyframes jueves{0%,${p(JUEVES)}%{opacity:0;top:6px}
+ ${p(JUEVES + 0.25)}%,100%{opacity:1;top:0}}`)
 
 // El aro de marca, con sus proporciones.
 const AR = 74
@@ -323,7 +346,7 @@ ${FRASE.map((g, i) => `#g${i}{opacity:0;animation:fr${i} ${D}s cubic-bezier(.25,
 /* El remate no se distingue solo por el color: también por el cuerpo. A ×1,12
    la diferencia se veía como un detalle tipográfico; a ×1,43 se lee como la
    palabra donde termina la frase. */
-#g4{color:${C.terracota};font-size:132px}
+#g${FRASE.length - 1}{color:${C.terracota};font-size:132px}
 
 /* El marco de polaroid, la misma regla para las diez. */
 .pol{position:absolute;z-index:3;opacity:0;will-change:transform;
@@ -353,6 +376,7 @@ ${puntos.map(([x, y], i) => `#aro .pt${i}{transform:translate(${x}px,${y}px)}`).
   font-family:'Young Serif',Georgia,serif;letter-spacing:-.03em;color:${C.verde}}
 #seis{top:1478px;font-size:62px;animation:seis ${D}s cubic-bezier(.2,1,.3,1) infinite}
 #mesa{top:1566px;font-size:62px;animation:mesa ${D}s cubic-bezier(.2,1,.3,1) infinite}
+#jueves{display:inline;position:relative;opacity:0;animation:jueves ${D}s cubic-bezier(.2,1,.3,1) infinite}
 ${kf.join('\n')}
 </style></head><body>
 <div id="marco"><div id="lienzo">
@@ -361,17 +385,13 @@ ${kf.join('\n')}
   ${POLAROIDS.map((pl, i) => `<div class="pol" id="pol${i}"><img src="data:image/jpeg;base64,${IMG[pl.f]}" alt=""></div>`).join('\n  ')}
 
   <div id="bloque" class="et">
-    <span class="g" id="g0">La mejor manera</span>
-    <span class="g" id="g1">de pertenecer</span>
-    <span class="g" id="g2">a un grupo de amigos</span>
-    <span class="g" id="g3">es</span>
-    <span class="g" id="g4">creándolo.</span>
+    ${FRASE.map((g, i) => `<span class="g" id="g${i}">${g.html}</span>`).join('\n    ')}
   </div>
 
   <div id="marca">
     <div id="aro"><div class="anillo"></div>${puntos.map((_, i) => `<div class="pt pt${i}"></div>`).join('')}</div>
     <div class="cierre et" id="seis">Seis desconocidos.</div>
-    <div class="cierre et" id="mesa">Una mesa. El jueves.</div>
+    <div class="cierre et" id="mesa">Una mesa. <span id="jueves">El jueves.</span></div>
   </div>
 </div></div>
 <script>
