@@ -255,7 +255,8 @@
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
   state = { paso: 0, correo: '', nombre: '', trato: '', dia: '', mes: '', anio: '', genero: -1,
-    prefijo: '+58', telefono: '', guardando: false, fallo: '' };
+    prefijo: '+58', telefono: '', guardando: false, fallo: '',
+    clave: '', clave2: '' };
 
   GENEROS = ['mujer', 'hombre', 'no-binario', 'sin-decir'];
 
@@ -582,6 +583,10 @@ class Component extends DCLogic {
       faltaCuenta: !!this._lead && p === 4,
       onClave: (e) => this.setState({ clave: e.target.value }),
       onClave2: (e) => this.setState({ clave2: e.target.value }),
+      // Las dos, y siempre juntas: un {{ }} que no existe se pinta como cadena
+      // vacia (support.js), asi que exponer solo una deja su campo escribiendose
+      // y borrandose en cada render, sin error de por medio.
+      clave: this.state.clave || '',
       clave2: this.state.clave2 || '',
 
       // Un solo campo tapado y sin repetir: un dedo torcido te deja fuera de
