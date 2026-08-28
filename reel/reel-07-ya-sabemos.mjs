@@ -54,32 +54,51 @@ const ESCALA = 2.55
 const px = (n) => Math.round(n * ESCALA)
 
 // --- el guion, con sus tiempos -------------------------------------------
-const TITULAR = [
-  { t: 0.40, html: 'Ya sabemos' },
-  { t: 1.30, html: 'con quién cenas' },
-  { t: 2.10, html: 'el jueves.' },
-]
-const SALE_TITULAR = 3.20
-
-// Tres, no cinco. Con cinco a 0,65 s nadie lee las de nueve palabras: es una
-// mancha parpadeando, no cinco cosas que sabemos.
+//
+// SEGUNDA ESTRUCTURA. La primera ponia el titular delante, luego tres frases,
+// y el remate al final. Eso parte la frase por la mitad: entre «Ya sabemos» y
+// «Tu no.» habia seis segundos y tres frases ajenas.
+//
+// Y «Tu no.» es una ELIPSIS. No significa nada sin su antecedente cerca: para
+// que se lea «tu no sabes», el «sabemos» tiene que seguir en la cabeza de
+// quien mira. A seis segundos ya no esta, y la frase se queda sin chiste. No
+// era un problema de ritmo, era gramatical.
+//
+// Ahora las tres frases van PRIMERO, sin presentacion, como un acertijo: no
+// sabes de quien hablan. Y la frase entera es la respuesta, junta y seguida.
+//
+// Con un anadido: la frase y «Tu no.» CONVIVEN en pantalla, no se sustituyen.
+// Asi el antecedente esta literalmente delante cuando llega el latigazo. Se
+// apagan las dos juntas y «Todavia.» entra sola, con la mesa ya abierta.
 const FRASES = [
-  { de: 3.50, a: 5.30, html: 'Otro va a pedir exactamente lo mismo que tú.' },
-  { de: 5.30, a: 7.10, html: 'Una se ríe antes de que termines el chiste.' },
-  // El golpe. Un pelo mas de aire que las dos anteriores, para entrar mejor
-  // en el silencio que viene detras.
-  { de: 7.10, a: 9.10, html: 'Uno vivió tres años en tu misma ciudad y ninguno de los dos lo sabe.' },
+  { de: 0.60, a: 2.40, html: 'Otro va a pedir exactamente lo mismo que tú.' },
+  { de: 2.40, a: 4.20, html: 'Una se ríe antes de que termines el chiste.' },
+  // La larga respira un pelo mas: es la que tiene que dejar la pregunta en el
+  // aire justo antes del respiro.
+  { de: 4.20, a: 6.30, html: 'Uno vivió tres años en tu misma ciudad y ninguno de los dos lo sabe.' },
 ]
 
-const TU_NO = 9.40, SALE_TU_NO = 12.00
-const VELO_BAJA = 11.80, VELO_TARDA = 0.80
-const TODAVIA = 12.60
-const ARO = 13.60, FIRMA = 14.00
+// El respiro. Pantalla sin texto: la pausa antes de que alguien conteste.
+const RESPIRO_HASTA = 7.20
 
-// El velo empieza a levantarse ANTES de que «Tu no.» se apague, a proposito:
+const FRASE = 7.20                      // «Ya sabemos con quién cenas el jueves.»
+const TU_NO = 8.75                      // el latigazo, con la frase todavia puesta
+const VELO_BAJA = 11.30, VELO_TARDA = 0.80
+const SALE_BLOQUE = 11.60               // se apagan las dos, ya con el velo subiendo
+const TODAVIA = 12.15
+const ARO = 13.15, FIRMA = 13.65
+
+// El silencio: de que «Tu no.» termina de entrar hasta que el velo se mueve.
+// Es la excepcion declarada a la regla de los 2 s, y ahora cae donde estaba
+// pensada —dentro de la frase, entre sus dos mitades— y no entre dos ideas
+// distintas.
+const SILENCIO = +(VELO_BAJA - (TU_NO + 0.25)).toFixed(2)
+if (SILENCIO < 2.0) throw new Error(`El silencio se quedo en ${SILENCIO}s y tiene que pasar de 2`)
+
+// El velo empieza a levantarse ANTES de que la frase se apague, a proposito:
 // asi se ve primero el gesto —la mesa aclarandose— y «Todavia» llega con la
-// mesa ya abierta, no a oscuras.
-if (VELO_BAJA >= SALE_TU_NO) throw new Error('El velo tiene que empezar antes de que se apague «Tú no.»')
+// mesa ya abierta, no a oscuras. Idea del guion, y es buena.
+if (VELO_BAJA >= SALE_BLOQUE) throw new Error('El velo tiene que empezar antes de que se apague la frase')
 
 const kf = []
 
@@ -120,16 +139,7 @@ for (let t = VELO_BAJA + VELO_TARDA + MEDIO, arriba = false; t < D; t += MEDIO, 
 respiro.push('100%{opacity:.25}')
 kf.push(`@keyframes velo{${respiro.join(' ')}}`)
 
-// --- el titular, por grupos ---------------------------------------------
-TITULAR.forEach((g, i) => {
-  kf.push(`@keyframes t${i}{
-   0%,${p(g.t)}%{opacity:0;transform:translateY(${px(8)}px)}
-   ${p(g.t + 0.30)}%{opacity:1;transform:translateY(0)}
-   ${p(SALE_TITULAR)}%{opacity:1;transform:translateY(0)}
-   ${p(SALE_TITULAR + 0.30)}%,100%{opacity:0;transform:translateY(0)}}`)
-})
-
-// --- las tres frases -----------------------------------------------------
+// --- las tres frases, ahora de entrada ------------------------------------
 FRASES.forEach((f, i) => {
   kf.push(`@keyframes f${i}{
    0%,${p(f.de)}%{opacity:0;transform:translateY(${px(5)}px)}
@@ -139,11 +149,19 @@ FRASES.forEach((f, i) => {
 })
 
 // --- el giro -------------------------------------------------------------
+// La frase y «Tu no.» comparten salida: se apagan a la vez, como una sola
+// cosa dicha por una sola voz.
+kf.push(`@keyframes frase{
+  0%,${p(FRASE)}%{opacity:0;transform:translateY(${px(8)}px)}
+  ${p(FRASE + 0.35)}%{opacity:1;transform:translateY(0)}
+  ${p(SALE_BLOQUE)}%{opacity:1;transform:translateY(0)}
+  ${p(SALE_BLOQUE + 0.30)}%,100%{opacity:0;transform:translateY(0)}}`)
+
 kf.push(`@keyframes tuno{
   0%,${p(TU_NO)}%{opacity:0;transform:scale(.95)}
   ${p(TU_NO + 0.25)}%{opacity:1;transform:scale(1)}
-  ${p(SALE_TU_NO)}%{opacity:1;transform:scale(1)}
-  ${p(SALE_TU_NO + 0.30)}%,100%{opacity:0;transform:scale(1)}}`)
+  ${p(SALE_BLOQUE)}%{opacity:1;transform:scale(1)}
+  ${p(SALE_BLOQUE + 0.30)}%,100%{opacity:0;transform:scale(1)}}`)
 
 kf.push(`@keyframes todavia{
   0%,${p(TODAVIA)}%{opacity:0;transform:translateY(${px(6)}px)}
@@ -210,31 +228,32 @@ body{display:grid;place-items:center}
      vacio seguia siendo lo mas luminoso del cuadro desde el segundo cero, y
      entonces el levantamiento del 11,80 no revela nada: solo aclara algo que
      ya se veia. Comprobado sacando el fotograma del 9,8. */
-  background:linear-gradient(180deg,rgba(20,52,42,.76) 0%,rgba(20,52,42,.86) 45%,rgba(20,52,42,.94) 100%);
+  background:linear-gradient(180deg,rgba(20,52,42,.66) 0%,rgba(20,52,42,.74) 35%,rgba(20,52,42,.88) 58%,rgba(20,52,42,.96) 100%);
   /* linear y no ease: con ease la animacion se frena en CADA fotograma
      clave, y en una respiracion eso son seis medios segundos planos por
      pieza. La luz de un comedor no se para en los extremos. */
   animation:velo ${D}s linear infinite}
 
-/* Lo que AFIRMA va a la izquierda */
-#titular{position:absolute;left:${px(43)}px;right:${px(43)}px;top:${px(157)}px;z-index:4}
-#titular div{font-family:'Young Serif',Georgia,serif;font-size:${px(44)}px;line-height:1.06;
-  letter-spacing:-.03em;color:${C.crema};opacity:0}
-${TITULAR.map((_, i) => `#t${i}{animation:t${i} ${D}s ease infinite}`).join('')}
-
-#frases{position:absolute;left:${px(43)}px;right:${px(43)}px;top:${px(392)}px;z-index:4}
+/* Las tres frases, a la izquierda: son observaciones, no la voz de la marca.
+   Y ahora abren la pieza sin presentacion, como un acertijo. */
+#frases{position:absolute;left:${px(43)}px;right:${px(43)}px;top:${px(240)}px;z-index:4}
 #frases div{position:absolute;left:0;right:0;top:0;opacity:0;
   font-family:'Inter Tight',sans-serif;font-weight:500;font-size:${px(26)}px;line-height:1.42;
   color:${C.crema};text-wrap:pretty}
 ${FRASES.map((_, i) => `#f${i}{animation:f${i} ${D}s ease infinite}`).join('')}
 
-/* Lo que GIRA va centrado, y los dos en el MISMO sitio: «Todavía» ocupa el
-   lugar exacto que ocupaba «Tú no.» */
-#tuno,#todavia{position:absolute;left:${px(43)}px;right:${px(43)}px;top:${px(157)}px;
+/* La frase entera y su latigazo. Centradas, una encima de otra y a la vez en
+   pantalla: «Tu no.» es una elipsis y necesita su antecedente delante. */
+#frase{position:absolute;left:${px(43)}px;right:${px(43)}px;top:${px(120)}px;
+  text-align:center;z-index:5;opacity:0;
+  font-family:'Young Serif',Georgia,serif;font-size:${px(44)}px;line-height:1.06;
+  letter-spacing:-.03em;color:${C.crema};animation:frase ${D}s ease infinite}
+
+#tuno,#todavia{position:absolute;left:${px(43)}px;right:${px(43)}px;
   text-align:center;z-index:5;opacity:0;
   font-family:'Young Serif',Georgia,serif;line-height:1.04;letter-spacing:-.035em}
-#tuno{font-size:${px(52)}px;color:${C.crema};animation:tuno ${D}s ease infinite}
-#todavia{font-size:${px(60)}px;color:${C.naranja};animation:todavia ${D}s ease infinite}
+#tuno{top:${px(272)}px;font-size:${px(52)}px;color:${C.crema};animation:tuno ${D}s ease infinite}
+#todavia{top:${px(157)}px;font-size:${px(60)}px;color:${C.naranja};animation:todavia ${D}s ease infinite}
 
 /* El cierre, todo en la mitad de arriba: abajo esta el plato que el velo
    acaba de descubrir, y taparlo seria apagar el gesto. */
@@ -262,7 +281,7 @@ ${kf.join('\n')}
   <div id="foto"></div>
   <div id="velo"></div>
 
-  <div id="titular">${TITULAR.map((g, i) => `<div id="t${i}">${g.html}</div>`).join('\n    ')}</div>
+  <div id="frase">Ya sabemos con quién cenas el jueves.</div>
   <div id="frases">${FRASES.map((f, i) => `<div id="f${i}">${f.html}</div>`).join('\n    ')}</div>
 
   <div id="cortina"></div>
