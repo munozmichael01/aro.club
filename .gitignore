@@ -68,3 +68,9 @@ carrousel/
 # repo hay otra sesion haciendo `git add -A`.
 .env.vercel
 .env.production.local
+
+# Los reels: el fuente sí, lo generado no. Cada render son 11 MB de MP4 y
+# 1,5 MB de HTML con las fuentes incrustadas, y salen de correr el .mjs.
+reel/*.html
+reel/*.mp4
+reel/fotogramas/
