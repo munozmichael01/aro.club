@@ -121,6 +121,126 @@ function sinCerrar(html) {
   return fallos
 }
 
+/**
+ * Cada `{{ nombre }}` del markup tiene que existir en el render.
+ *
+ * Es la comprobación que faltaba, y la que más ha costado no tener. El
+ * runtime pinta un `{{ }}` que no resuelve como CADENA VACÍA —`support.js`:
+ * `v == null ? "" : String(v)`— así que no falla, no avisa, y el síntoma
+ * depende de dónde estuviera la llave:
+ *
+ *   - en el `value` de un campo, el campo se borra en cada tecla. Es el
+ *     «Crea una contraseña» que no admitía nada: `clave2` estaba en el
+ *     render y `clave` no.
+ *   - en un `onClick`, el botón no hace nada. Es «Repasar mis respuestas»,
+ *     cuyo `reiniciar` aparece una sola vez en todo el fichero: en el
+ *     `onClick`.
+ *
+ * El mismo fallo con dos síntomas que no se parecen en nada, ninguno con
+ * error, y los dos encontrados usando la pantalla y no leyéndola.
+ *
+ * Las claves se leen POR LÍNEAS y no contando llaves a propósito: un regex
+ * como `/(\d{3})(?=\d)/` abre una llave que no cierra y descuadra cualquier
+ * contador. El objeto de `renderVals()` tiene una clave por línea a sangría
+ * fija, que es más simple y no se rompe.
+ */
+const LITERAL = /^(true|false|null|-?\d+(\.\d+)?|'[^']*'|"[^"]*")$/
+
+/**
+ * Parte una linea por las comas de NIVEL CERO.
+ *
+ * Sin esto, `body: JSON.stringify({ correo, token, clave: clave })` aportaba
+ * cuatro claves en vez de una, y una de ellas era `clave` — que es como el
+ * comprobador daba por buena la pantalla con el campo de contraseña muerto.
+ * Las comillas se vacian antes: una coma dentro de un `font:` de CSS no
+ * separa nada.
+ */
+function porComas(linea) {
+  const s = linea.replace(/'(?:\\.|[^'\\])*'/g, "''").replace(/"(?:\\.|[^"\\])*"/g, '""')
+  const trozos = []
+  let hondo = 0, desde = 0
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i]
+    if (c === '(' || c === '[' || c === '{') hondo++
+    else if (c === ')' || c === ']' || c === '}') hondo--
+    else if (c === ',' && hondo === 0) { trozos.push(s.slice(desde, i).trim()); desde = i + 1 }
+  }
+  trozos.push(s.slice(desde).trim())
+  return trozos.filter(Boolean)
+}
+
+/**
+ * Las claves que `renderVals()` pone a disposicion del markup.
+ *
+ * Las diecinueve pantallas componen las props de cuatro maneras distintas
+ * —devolviendo un objeto, con `return` anidados, juntando un `const marco =
+ * {...}`, y con `Object.assign(marco, {...})`— y enumerarlas fue una carrera
+ * que perdi cuatro veces. La regla que las cubre todas es mas tonta: vale
+ * cualquier linea que ABRA un objeto al final.
+ *
+ * Lo que queda fuera, que es lo unico que importa dejar fuera: el objeto que
+ * viaja como ARGUMENTO en una sola linea. En `Datos base` hay un
+ * `JSON.stringify({ correo, token, clave: clave })` dentro de un manejador, y
+ * contar ese `clave:` como clave del render era justo lo que impedia cazar el
+ * campo de contraseña congelado — el fallo para el que existe esto. Lo
+ * descubri reintroduciendolo a proposito, no leyendolo.
+ */
+function clavesDelRender(guiones) {
+  const lineas = guiones.split('\n')
+  const i = lineas.findIndex((l) => /^\s*renderVals\s*\(\s*\)\s*\{/.test(l))
+  if (i < 0) return null
+
+  const claves = new Set()
+  for (let k = i + 1; k < lineas.length; k++) {
+    const m = lineas[k].match(/^(\s*).*\{\s*$/)
+    if (!m) continue
+    const dentro = m[1]
+    for (let j = k + 1; j < lineas.length; j++) {
+      const sangria = lineas[j].match(/^\s*/)[0].length
+      // El cierre, a la sangria de quien abrio: `};`, `}`, `});`, `}),`.
+      if (lineas[j].trim().startsWith('}') && sangria === dentro.length) break
+      if (sangria !== dentro.length + 2) continue
+      for (const trozo of porComas(lineas[j].slice(dentro.length + 2))) {
+        // La clave va DELANTE. `esListo: f === 5, esFallo: f === 6` son dos
+        // trozos y por tanto dos claves; `body: JSON.stringify({ ..., clave:
+        // clave })` es uno solo, y su clave es `body` — el `clave:` de dentro
+        // es un dato que viaja al servidor, no algo que el markup pueda usar.
+        const m2 = trozo.match(/^([A-Za-z_$][\w$]*)\s*:/)
+        if (m2) { claves.add(m2[1]); continue }
+        // Abreviada: el trozo es un nombre a secas.
+        const m3 = trozo.match(/^([A-Za-z_$][\w$]*)$/)
+        if (m3) claves.add(m3[1])
+      }
+    }
+  }
+  return claves
+}
+
+function llavesHuerfanas(html) {
+  const guiones = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]).join('\n')
+  const claves = clavesDelRender(guiones)
+  // Sin `renderVals` no hay contrato que comprobar: es una pantalla estatica.
+  if (!claves) return []
+
+  const markup = html.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<!--[\s\S]*?-->/g, '')
+  // Los nombres que abre un `sc-for`: `as="p"` hace validos `p` y `p.loQueSea`.
+  const alcance = new Set([...html.matchAll(/\bas="([A-Za-z_$][\w$]*)"/g)].map((m) => m[1]))
+
+  const faltan = new Map()
+  for (const m of markup.matchAll(/\{\{\{?\s*([^}]+?)\s*\}?\}\}/g)) {
+    const expr = m[1].trim()
+    if (LITERAL.test(expr)) continue
+    // Solo nombres simples y rutas con punto. Una llamada o un operador no
+    // se juzgan: no sabria hacerlo sin equivocarme, y un falso positivo se
+    // ignora a la semana.
+    if (!/^[A-Za-z_$][\w$]*(\.[\w$]+)*$/.test(expr)) continue
+    const raiz = expr.split('.')[0]
+    if (alcance.has(raiz) || claves.has(raiz)) continue
+    if (!faltan.has(raiz)) faltan.set(raiz, expr)
+  }
+  return [...faltan.values()]
+}
+
 const pantallas = readdirSync(dir).filter((f) => f.endsWith('.dc.html')).sort()
 const rutasUsadas = new Map()
 
@@ -176,6 +296,12 @@ for (const nombre of pantallas) {
     const abre = (l.match(/\{\{/g) || []).length
     const cierra = (l.match(/\}\}/g) || []).length
     if (abre !== cierra) { di(`llave sin cerrar: ${l.trim().slice(0, 70)}`); break }
+  }
+
+  // --- 6 · que cada `{{ }}` exista en el render -----------------------
+  const huerfanas = llavesHuerfanas(html)
+  if (huerfanas.length) {
+    di(`llaves que el render no define, se pintan vacias:\n      -> ${huerfanas.join('\n      -> ')}`)
   }
 
   // --- 5 · los enlaces internos ---------------------------------------
