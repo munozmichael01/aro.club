@@ -1,0 +1,25 @@
+-- =====================================================================
+-- El empujon deja de ser una `bienvenida`.
+--
+-- `cron/empujon` encolaba con `kind: 'bienvenida'`, y existe
+-- `scheduled_emails_bienvenida_unica`: unico sobre (email) donde
+-- kind='bienvenida'. Uno por correo, para siempre.
+--
+-- Como el alta encola la bienvenida en el mismo segundo en que alguien
+-- deja su direccion, el empujon de una hora despues siempre choca. Y
+-- `encolar` trata el 23505 como respuesta buena —lo es para la
+-- bienvenida repetida—, asi que la colision no se ve en ningun sitio.
+--
+-- Lo dice la base: el empujon solo salio el 14 de agosto, cuando el alta
+-- todavia no encolaba nada. Desde el 18 de agosto, que es cuando volvio a
+-- hacerlo, no ha salido ni uno.
+--
+-- Tipo propio, entonces. La plantilla no cambia: 01-bienvenida ya pinta
+-- los dos estados segun `payload.falta`, y su contenido nunca fue una
+-- bienvenida sino la lista de lo que falta.
+--
+-- Va solo en este fichero porque Postgres no deja usar un valor de enum
+-- en la misma transaccion que lo anade. Los indices van en el siguiente.
+-- =====================================================================
+
+alter type email_kind_t add value if not exists 'empujon';

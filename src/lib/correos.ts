@@ -79,15 +79,29 @@ export type Correo =
   // medias y la de verificación llega al aprobar: entre las dos había
   // silencio justo después del único paso incómodo del embudo.
   | 'cuenta_lista'
+  // Entrega 18: el empujon deja de viajar como 'bienvenida'. Iba con el
+  // mismo tipo, y el indice unico de la bienvenida es por correo y para
+  // siempre: como el alta encola la suya en el segundo cero, el empujon de
+  // una hora despues chocaba siempre y `encolar` daba el 23505 por bueno.
+  // Misma plantilla —01-bienvenida ya pinta los dos estados de `falta`—,
+  // tipo propio y su propio indice de uno por persona y estado.
+  | 'empujon'
 
 type AQuien = { perfil: string } | { correo: string }
+
+/**
+ * Qué pasó al encolar. `repetido` no es un fallo —es el índice de «uno por
+ * persona» haciendo su trabajo— pero tampoco es un envío, y quien cuenta
+ * necesita saber cuál de los dos fue.
+ */
+export type Resultado = 'encolado' | 'repetido' | 'fallo'
 
 export async function encolar(
   aQuien: AQuien,
   tipo: Correo,
   detalle: Record<string, unknown> = {},
   opciones: { eventoId?: string | null; cuando?: Date } = {},
-): Promise<void> {
+): Promise<Resultado> {
   try {
     const { error } = await createAdminClient()
       .from('scheduled_emails')
@@ -102,12 +116,18 @@ export async function encolar(
         payload: detalle as never,
       } as never)
 
-    // 23505 es el índice único de la bienvenida: encolarla dos veces al mismo
-    // correo no es un error, es la respuesta correcta a que alguien vuelva a
-    // dejar su dirección.
-    if (error && error.code !== '23505') {
+    // 23505 es un índice de «uno por persona»: el de la bienvenida, el del
+    // empujón. Encolar dos veces no es un error, es la respuesta correcta a
+    // que alguien vuelva a dejar su dirección o a que el cron vuelva a pasar.
+    //
+    // Pero no es lo mismo que haberlo encolado, y hasta hoy quien llamaba no
+    // podía distinguirlo. El cron del empujón contaba `perfil++` después de
+    // cada llamada y habría informado de cinco empujones habiendo encolado
+    // cero: el mismo choque que lo tuvo diez días muerto, contado como éxito.
+    if (error?.code === '23505') return 'repetido'
+    if (error) {
       console.error('[correos] no se encoló', tipo, error)
-      return
+      return 'fallo'
     }
 
     // Y sale ya, sin esperar al cron.
@@ -125,8 +145,10 @@ export async function encolar(
     if (!opciones.cuando || opciones.cuando.getTime() <= Date.now()) {
       await despacharPendientes()
     }
+    return 'encolado'
   } catch (e) {
     console.error('[correos] no se encoló', tipo, e)
+    return 'fallo'
   }
 }
 

@@ -237,7 +237,10 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
 
   switch (fila.kind) {
     // --- el embudo ------------------------------------------------------
-    case 'bienvenida': {
+    case 'bienvenida':
+    // Mismo cuerpo: la plantilla decide entre «te falta el perfil» y «te
+    // falta verificarte» con `payload.falta`, que ya viene en `base`.
+    case 'empujon': {
       // Las zonas que dijo que acepta, para no prometerle mesa en un sitio
       // al que no puede ir.
       const zonas = await nombresDeZonas(admin, (p.zonas as string[]) ?? [], fila.profile_id)

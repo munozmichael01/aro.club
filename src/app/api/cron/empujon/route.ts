@@ -62,14 +62,31 @@ async function empujar() {
   const admin = createAdminClient()
   const corte = new Date(Date.now() - HORAS_DE_SILENCIO * 3600_000).toISOString()
 
-  // A quién se le mandó ya. Se pregunta una vez, no una por persona.
-  const { data: yaEnviados } = await admin
+  // A quién se le empujó ya. Se pregunta una vez, no una por persona.
+  //
+  // Por `empujon`, no por `bienvenida`. Preguntando por la bienvenida esto
+  // descartaba a TODO el que se hubiera dado de alta —el alta encola la suya
+  // en el segundo cero—, que es exactamente todo el mundo. La consulta se
+  // respondía sola: nadie pasaba de aquí.
+  //
+  // Y por estado, no por persona a secas: quien recibió «te falta el perfil»,
+  // lo terminó y ahora se ha parado en la verificación tiene que poder recibir
+  // el segundo. Lo que no se repite es el mismo empujón.
+  const { data: yaEmpujados } = await admin
     .from('scheduled_emails')
-    .select('email, profile_id')
-    .eq('kind', 'bienvenida')
+    .select('email, profile_id, payload')
+    // `as never` como en el resto del repo: los tipos generados van por
+    // detrás del enum y tampoco tienen `mesa_cambiada`.
+    .eq('kind', 'empujon' as never)
 
-  const correosHechos = new Set((yaEnviados ?? []).map((r) => r.email).filter(Boolean))
-  const perfilesHechos = new Set((yaEnviados ?? []).map((r) => r.profile_id).filter(Boolean))
+  const falta = (r: { payload: unknown }) =>
+    (r.payload as { falta?: string } | null)?.falta ?? ''
+  const correosHechos = new Set(
+    (yaEmpujados ?? []).filter((r) => r.email).map((r) => `${r.email}|${falta(r)}`),
+  )
+  const perfilesHechos = new Set(
+    (yaEmpujados ?? []).filter((r) => r.profile_id).map((r) => `${r.profile_id}|${falta(r)}`),
+  )
 
   // --- 1. dejó su correo y no terminó el perfil -------------------------
   const { data: aMedias } = await admin
@@ -78,14 +95,19 @@ async function empujar() {
     .is('converted_profile_id', null)
     .lt('created_at', corte)
 
+  // `repetidos` cuenta lo que chocó con el índice. Sin él, este cron informa
+  // de lo que intentó y no de lo que hizo, que es como estuvo diez días
+  // diciendo que empujaba a gente sin encolar una sola fila.
+  let repetidos = 0
   let perfil = 0
   for (const l of aMedias ?? []) {
-    if (!l.email || correosHechos.has(l.email)) continue
-    await encolar({ correo: l.email }, 'bienvenida', {
+    if (!l.email || correosHechos.has(`${l.email}|perfil`)) continue
+    const r = await encolar({ correo: l.email }, 'empujon', {
       falta: 'perfil',
       ciudad: l.city_slug ?? 'caracas',
     })
-    perfil++
+    if (r === 'encolado') perfil++
+    else repetidos++
   }
 
   // --- 2. terminó el perfil y no se ha verificado -----------------------
@@ -102,7 +124,7 @@ async function empujar() {
 
   let verificacion = 0
   for (const p of sinVerificar ?? []) {
-    if (perfilesHechos.has(p.id)) continue
+    if (perfilesHechos.has(`${p.id}|verificacion`)) continue
 
     // Si ya subió algo, está esperando revisión y no hay nada que empujar.
     const { count } = await admin
@@ -113,11 +135,12 @@ async function empujar() {
 
     if ((count ?? 0) > 0) continue
 
-    await encolar({ perfil: p.id }, 'bienvenida', { falta: 'verificacion' })
-    verificacion++
+    const r = await encolar({ perfil: p.id }, 'empujon', { falta: 'verificacion' })
+    if (r === 'encolado') verificacion++
+    else repetidos++
   }
 
-  return NextResponse.json({ perfil, verificacion })
+  return NextResponse.json({ perfil, verificacion, repetidos })
 }
 
 /** Mismo candado que los otros dos crones. */

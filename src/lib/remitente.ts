@@ -55,6 +55,10 @@ const PLANTILLA: Record<Correo, string> = {
   cuenta_lista: '13-cuenta-lista.html',
   sin_mesa: '14-sin-mesa.html',
   mesa_cambiada: '15-mesa-cambiada.html',
+  // El empujon comparte plantilla con la bienvenida a proposito: es la misma
+  // lista de lo que falta, pintada segun `payload.falta`. Lo que cambia es
+  // el momento y la regla de repeticion, no el contenido.
+  empujon: '01-bienvenida.html',
 }
 
 // Las plantillas se leen del disco una vez y se quedan: son quince ficheros
