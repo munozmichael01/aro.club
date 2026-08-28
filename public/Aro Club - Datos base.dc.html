@@ -154,12 +154,16 @@
                 <span style="flex:1 1 130px;font:400 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ r.campo }}</span>
                 <span style="flex:1 1 130px;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ r.valor }}</span>
                 <span style="{{ r.chip }}">{{ r.visible }}</span>
-                <button onClick="{{ r.corregir }}" aria-label="{{ r.etiquetaCorregir }}" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;margin:-8px 0;padding:0 10px;background:transparent;border:none;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:5px;cursor:pointer">Corregir</button>
+                <sc-if value="{{ r.hayCorregir }}" hint-placeholder-val="{{ true }}">
+  <button onClick="{{ r.corregir }}" aria-label="{{ r.etiquetaCorregir }}" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;margin:-8px 0;padding:0 10px;background:transparent;border:none;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:5px;cursor:pointer">Corregir</button>
+                </sc-if>
               </div>
             </sc-for>
           </div>
         </div>
-        <a href="{{ enlaceSiguiente }}" style="{{ botonPrimarioSuelto }}">{{ textoSiguiente5 }}</a>
+        <sc-if value="{{ salidaSinCuenta }}" hint-placeholder-val="{{ true }}">
+          <a href="{{ enlaceSiguiente }}" style="{{ botonPrimarioSuelto }}">{{ textoSiguiente5 }}</a>
+        </sc-if>
       </div>
     </sc-if>
 
@@ -190,6 +194,9 @@
               <button onClick="{{ alternarVerClave }}" aria-label="{{ etiquetaVerClave }}" style="{{ botonVer }}">{{ textoVerClave }}</button>
             </div>
             <input type="{{ tipoClave }}" placeholder="Repítela" value="{{ clave2 }}" onChange="{{ onClave2 }}" autocomplete="new-password" aria-label="Repite la contraseña" style="{{ campoClave2 }}" />
+            <sc-if value="{{ hayClaveDispar }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin:-3px 0 2px">Las dos contraseñas no coinciden.</div>
+            </sc-if>
             <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
           </div>
           <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
@@ -253,7 +260,7 @@
 class Component extends DCLogic {
   state = { paso: 0, correo: '', nombre: '', trato: '', dia: '', mes: '', anio: '', genero: -1,
     prefijo: '+58', telefono: '', guardando: false, fallo: '',
-    clave: '', clave2: '' };
+    clave: '', clave2: '', puedeCuenta: false };
 
   GENEROS = ['mujer', 'hombre', 'no-binario', 'sin-decir'];
 
@@ -309,6 +316,7 @@ class Component extends DCLogic {
           est.anio = p[0]; est.mes = String(parseInt(p[1], 10)); est.dia = String(parseInt(p[2], 10));
         }
         if (d.genero) est.genero = this.GENEROS.indexOf(d.genero);
+        est.puedeCuenta = !!d.puedeCuenta;
         this.setState(est);
       })
       // Aqui estaba el rebote a Entrar, y era el agujero del embudo: el
@@ -454,14 +462,20 @@ class Component extends DCLogic {
       },
       {
         eyebrow: 'LISTO',
-        // El orden cambio: las preguntas van ANTES y esto es el ultimo paso
-        // del alta, asi que aqui lo que queda es la cuenta —el bloque de
-        // contraseña esta justo debajo—. Decia «Ahora las preguntas» y
-        // mandaba a buscar un paso ya hecho.
-        titulo: this._lead ? 'Listo. Solo falta tu cuenta.' : 'Guardado.',
-        bajada: this._lead
-          ? 'Esto es lo que guardamos de ti, y quién lo ve. Debajo creas la contraseña con la que vuelves a entrar.'
-          : 'Esto es todo lo que guardamos de esta parte, y quién lo ve.',
+        // Este paso lo alcanzan DOS personas distintas y el titular tiene
+        // que decirle a cada una lo que le toca. Estaba escrito para una
+        // sola —«Solo falta tu cuenta»— dando por hecho que las preguntas
+        // van antes; y la landing trae aqui antes de preguntar nada, asi que
+        // a la mayoria le prometia una cuenta que el servidor no le iba a
+        // dejar crear todavia.
+        titulo: !this._lead
+          ? 'Guardado.'
+          : (this.state.puedeCuenta ? 'Listo. Solo falta tu cuenta.' : 'Guardado. Ahora las preguntas.'),
+        bajada: !this._lead
+          ? 'Esto es todo lo que guardamos de esta parte, y quién lo ve.'
+          : (this.state.puedeCuenta
+              ? 'Esto es lo que guardamos de ti, y quién lo ve. Debajo creas la contraseña con la que vuelves a entrar.'
+              : 'Esto es lo que guardamos de ti, y quién lo ve. Faltan las preguntas; al terminarlas creas tu cuenta.'),
         listo: true
       }
     ];
@@ -508,6 +522,11 @@ class Component extends DCLogic {
     // quien se equivocaba en el nombre o en el año se enteraba aqui, al
     // final, y no tenia mas salida que volver a empezar.
     const resumen = [
+      // El correo primero, y sin «Corregir»: en una pantalla cuyo trabajo es
+      // crear una cuenta, no enseñar CUAL es el peor dato que se puede
+      // omitir. Cambiarlo no es corregir un campo, es empezar de nuevo con
+      // otra direccion, y eso se hace desde la landing.
+      ['Tu correo', (this._lead ? this._lead.correo : this.state.correo) || '—', 'Solo el equipo', false, null],
       ['Tu nombre', this.state.nombre.trim() || '—', 'Solo el equipo', false, 0],
       ['En la mesa te llaman', trato, 'Lo ven los cinco', true, 0],
       ['Edad', edad !== null ? edad + ' años' : '—', 'No se muestra', false, 1],
@@ -515,7 +534,8 @@ class Component extends DCLogic {
       ['Teléfono', telBonito, 'Solo ese día', false, 3]
     ].map((r) => ({
       campo: r[0], valor: r[1], visible: r[2], chip: chip(r[3]),
-      corregir: () => this.setState({ paso: r[4] }),
+      corregir: r[4] === null ? null : () => this.setState({ paso: r[4] }),
+      hayCorregir: r[4] !== null,
       etiquetaCorregir: 'Corregir ' + r[0].toLowerCase()
     }));
 
@@ -577,7 +597,15 @@ class Component extends DCLogic {
       // pantalla es la de editar el telefono desde el perfil y ahi una
       // contraseña no pinta nada.
       // Al final de los cuatro pasos, y solo para quien no tiene cuenta.
-      faltaCuenta: !!this._lead && p === 4,
+      // Solo cuando `/api/cuenta` la vaya a aceptar. El servidor exige el
+      // cuestionario contestado —su embudo va preguntas, contacto, cuenta— y
+      // las pantallas traen aqui a la gente antes: enseñar el campo entonces
+      // era ofrecer un boton cuya unica respuesta posible era «te faltan 14
+      // preguntas».
+      faltaCuenta: !!this._lead && p === 4 && this.state.puedeCuenta,
+      // Y su contrario, para que en este paso haya UNA salida y no dos
+      // compitiendo: o creas la cuenta, o sigues con las preguntas.
+      salidaSinCuenta: !(!!this._lead && p === 4 && this.state.puedeCuenta),
       onClave: (e) => this.setState({ clave: e.target.value }),
       onClave2: (e) => this.setState({ clave2: e.target.value }),
       // Las dos, y siempre juntas: un {{ }} que no existe se pinta como cadena
@@ -596,6 +624,10 @@ class Component extends DCLogic {
       botonVer: 'position:absolute;right:8px;min-height:44px;padding:0 12px;background:transparent;border:none;font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138;cursor:pointer',
       campoClave: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none' + ';padding-right:78px',
       campoClave2: 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none' + (((this.state.clave2 || '') && this.state.clave !== this.state.clave2) ? ';border-color:#8F4515' : ''),
+      // El aviso vive JUNTO al campo, no solo en la etiqueta del boton.
+      // «No coinciden» estaba abajo, en el boton: el campo se ponia rojo y
+      // habia que mirar a otro sitio para saber por que.
+      hayClaveDispar: !!(this.state.clave2 || '') && this.state.clave !== this.state.clave2,
       textoClave: (this.state.clave || '').length < 8
         ? 'Al menos ocho caracteres'
         : (!(this.state.clave2 || '') ? 'Repite la contraseña'

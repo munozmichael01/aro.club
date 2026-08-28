@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { situacionDeLead } from '@/lib/embudo'
 import { verificar } from '@/lib/lead-token'
 import { valido } from '@/lib/reglas'
 
@@ -103,6 +104,19 @@ export async function GET(request: Request) {
     genero: data?.birthdate ? (data?.gender ?? null) : null,
     telefono: data?.phone_e164 ?? '',
     completado: Boolean(data?.birthdate && data?.full_name),
+    // Si la cuenta se puede crear YA, que es distinto de si faltan datos.
+    //
+    // La pantalla enseñaba el campo de contraseña a cualquier lead que
+    // llegara al último paso, y `/api/cuenta` la rechaza mientras el
+    // cuestionario no esté contestado: el embudo del servidor va preguntas →
+    // contacto → cuenta, y las pantallas mandan a `/datos` antes. Resultado:
+    // un campo que solo sabía contestar «te faltan 14 preguntas».
+    //
+    // Con esto la pantalla enseña una cosa o la otra, nunca las dos.
+    puedeCuenta:
+      quien.tabla === 'profiles'
+        ? false
+        : (await situacionDeLead(quien.correo)).paso === 'cuenta',
   })
 }
 
