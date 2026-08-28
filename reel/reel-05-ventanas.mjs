@@ -54,31 +54,36 @@ const Z0 = 1.14, Z1 = 1.00
 
 // --- las doce ventanas ---------------------------------------------------
 //
+// Nueve, no doce. Las tres que faltan —«Cancelando planes», «Comiendo de pie»,
+// «Poniéndose al día»— caían en el 12% de arriba o de abajo, que es donde
+// Instagram y TikTok ponen su propio cromo: ahí una etiqueta no queda
+// apretada, queda debajo de la interfaz. No se movieron hacia dentro porque
+// habría que despegarlas de su ventana entre 77 y 96 px, y que cada texto
+// pertenezca a una persona concreta es lo único que sostiene la pieza.
+//
 // `x`/`y` son la ETIQUETA en porcentaje sobre el lienzo final, tal cual la
 // tabla de Design. `lado` dice hacia dónde crece el texto desde ese punto:
 // 'izquierda' lo ancla por su borde izquierdo, 'derecha' por el derecho. Es lo
 // que evita que W6 y W7 —misma fila— se pisen, y lo mismo con W11 y W12.
 const VENTANAS = [
-  { t: 0.60, x: 65, y: 7,  lado: 'izquierda', texto: 'Cancelando planes' },
-  { t: 2.00, x: 80, y: 17, lado: 'derecha',   texto: 'Cenando sola' },
-  { t: 3.30, x: 14, y: 26, lado: 'izquierda', texto: 'Viendo fotos viejas' },
-  { t: 4.50, x: 80, y: 35, lado: 'derecha',   texto: 'Overthinking' },
-  { t: 5.60, x: 62, y: 46, lado: 'izquierda', texto: 'Pidiendo delivery' },
-  { t: 6.60, x: 34, y: 55, lado: 'derecha',   texto: 'Escribiéndole a la ex' },
-  { t: 7.50, x: 80, y: 55, lado: 'derecha',   texto: 'Buscando quién esté libre' },
-  { t: 8.30, x: 14, y: 64, lado: 'izquierda', texto: 'Diciendo «otro día»' },
+  { t: 0.60, x: 80, y: 17, lado: 'derecha',   texto: 'Cenando sola' },
+  { t: 2.10, x: 14, y: 26, lado: 'izquierda', texto: 'Viendo fotos viejas' },
+  { t: 3.50, x: 80, y: 35, lado: 'derecha',   texto: 'Overthinking' },
+  { t: 4.80, x: 62, y: 46, lado: 'izquierda', texto: 'Pidiendo delivery' },
+  { t: 6.00, x: 34, y: 55, lado: 'derecha',   texto: 'Escribiéndole a la ex' },
+  { t: 7.10, x: 80, y: 55, lado: 'derecha',   texto: 'Buscando quién esté libre' },
+  { t: 8.10, x: 14, y: 64, lado: 'izquierda', texto: 'Diciendo «otro día»' },
   { t: 9.00, x: 14, y: 73, lado: 'izquierda', texto: 'Repasando el grupo sin escribir' },
-  { t: 9.60, x: 58, y: 82, lado: 'derecha',   texto: 'Viendo stories' },
-  { t: 10.10, x: 40, y: 92, lado: 'derecha',  texto: 'Comiendo de pie' },
-  // Se acorta a propósito: es la etiqueta más larga en la ventana más pegada
-  // al borde derecho, y las treinta letras completas invadían a W11 o se
-  // salían del margen del 6%.
-  { t: 10.50, x: 82, y: 92, lado: 'derecha',  texto: 'Poniéndose al día' },
+  // Recuperada en la ronda 4. Estaba fuera por la banda del peor caso y sí
+  // cabe: entra a los 9,80 s, cuando el zoom ya bajó a 1,049, y ahí la franja
+  // útil llega al 86,2% — le sobran 52 px por abajo. Y su x se mueve de 58 a
+  // 73: la ventana con la figura caminando está más a la derecha.
+  { t: 9.80, x: 73, y: 82, lado: 'derecha',   texto: 'Viendo stories' },
 ]
 
 // Se apagan en el mismo orden en que entraron, escalonadas, mientras entra la
 // pregunta. La tabla de Design da el segundo exacto de cada una.
-const APAGA = [11.00, 11.15, 11.30, 11.42, 11.52, 11.62, 11.72, 11.82, 11.92, 12.05, 12.20, 12.35]
+const APAGA = [11.00, 11.12, 11.24, 11.36, 11.48, 11.60, 11.72, 11.84, 11.96]
 
 const PREGUNTA_1 = 11.00, PREGUNTA_2 = 11.60
 const SOMBRA = 12.00
