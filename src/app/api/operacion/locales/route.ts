@@ -223,6 +223,18 @@ export async function GET() {
 
   const nombreZona = new Map((zonas ?? []).map((z) => [z.slug, z.name]))
 
+  // La nota del SITIO, que sale de las cuatro preguntas del sitio de la
+  // encuesta del día después. Hasta la entrega 16 no existía y la ficha
+  // enseñaba `notaDeLasMesas`, que sale de «¿volverías a esa mesa?» y mide a
+  // la gente: renovar a un proveedor con esa nota castiga a un restaurante
+  // impecable porque a alguien le tocó una mesa aburrida.
+  const { data: notasDeSitio } = await admin
+    .from('v_nota_de_local')
+    .select('restaurant_id, valoracion, respuestas, ambiente, servicio, conversar, comida')
+  const notaDelSitio = new Map(
+    (notasDeSitio ?? []).map((n) => [n.restaurant_id as string, n]),
+  )
+
   const lista = (locales ?? []).map((l) => {
     const h = porSitio.get(l.id) ?? cero()
     const familias = [...new Set(((l.formats ?? []) as string[]).map(familiaDe).filter(Boolean))] as string[]
@@ -276,13 +288,24 @@ export async function GET() {
         //
         // La valoración del local todavía no existe: hay que preguntarla.
         notaDeLasMesas: h.votos ? Number((h.suma / h.votos).toFixed(2)) : null,
-        valoracion: null,
+        // Ya es suya. Sobre 4: Excelente vale 4 y Mal vale 1.
+        valoracion: notaDelSitio.get(l.id)?.valoracion ?? null,
+        detalleDelSitio: notaDelSitio.get(l.id)
+          ? {
+              respuestas: notaDelSitio.get(l.id)?.respuestas ?? 0,
+              ambiente: notaDelSitio.get(l.id)?.ambiente ?? null,
+              servicio: notaDelSitio.get(l.id)?.servicio ?? null,
+              conversar: notaDelSitio.get(l.id)?.conversar ?? null,
+              comida: notaDelSitio.get(l.id)?.comida ?? null,
+            }
+          : null,
       },
     }
   })
 
-  // La media de los locales que tengan nota PROPIA. Hoy ninguno la tiene,
-  // así que sale «—» en vez de un número que no es de lo que dice ser.
+  // La media de los locales que tengan nota PROPIA. Mientras nadie haya
+  // contestado la encuesta sale «—», que es mejor que un número que no es de
+  // lo que dice ser.
   const conNota = lista.filter((l) => l.historico.valoracion != null)
   const media = conNota.length
     ? conNota.reduce((t, l) => t + (l.historico.valoracion ?? 0), 0) / conNota.length

@@ -289,6 +289,15 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       }
     }
 
+    // Entrega 16 · la mañana después. Lo único que necesita del evento es
+    // dónde cenó, para que el correo no diga «anoche cenaste» a secas. El
+    // candado de la revelación no estorba: para cuando esto sale, `reveal_at`
+    // hace horas que pasó.
+    case 'encuesta_despues': {
+      const mesa = fila.event_id ? await laMesaDe(admin, fila.event_id, fila.profile_id) : null
+      return { a, datos: { ...base, sitio: mesa?.sitio ?? '' } }
+    }
+
     case 'cuenta_lista':
       return { a, datos: { ...base, correo: a } }
 

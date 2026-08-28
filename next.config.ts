@@ -54,6 +54,10 @@ const PANTALLAS: Array<[string, string]> = [
   // Entrega 3 · datos base y la revelación
   ['/datos', '/Aro Club - Datos base.dc.html'],
   ['/mesa', '/Aro Club - Mi mesa.dc.html'],
+  // Entrega 16 · el correo del día después enlaza aquí, y aquí no había nada.
+  // `/mesa` se queda: es la que llevan los correos ya enviados, y quitarla
+  // rompería los que estén en el buzón de alguien.
+  ['/mi-mesa', '/Aro Club - Mi mesa.dc.html'],
   // Entrega 4 · la transacción y la operación
   ['/pago', '/Aro Club - Pago.dc.html'],
   ['/cancelar', '/Aro Club - Cancelar.dc.html'],

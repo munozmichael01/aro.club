@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { notaDesdeIndice, notasDelSitio } from '@/lib/encuesta'
 import { createClient } from '@/lib/supabase/server'
 
 /**
@@ -32,8 +33,21 @@ const accion = z.discriminatedUnion('accion', [
   z.object({
     accion: z.literal('valorar'),
     mesaId: z.string().uuid(),
-    // 0 = no del todo, 1 = estuvo bien, 2 = sí sin dudarlo.
-    volveria: z.number().int().min(0).max(2),
+    // Entrega 16. Todo opcional: saltarse un bloque es lo normal, y un bloque
+    // en blanco no es un cero. Los índices van de mejor a peor —0 Excelente,
+    // 3 Mala— porque así están los botones; `notaDesdeIndice` los da la
+    // vuelta antes de tocar la base, en un solo sitio.
+    mesa: z.number().int().min(0).max(3).nullable().optional(),
+    sitio: z
+      .object({
+        ambiente: z.number().int().min(0).max(3).nullable().optional(),
+        servicio: z.number().int().min(0).max(3).nullable().optional(),
+        conversar: z.number().int().min(0).max(3).nullable().optional(),
+        comida: z.number().int().min(0).max(3).nullable().optional(),
+      })
+      .optional(),
+    // «¿Volverías a Aro Club?». No a esa mesa: esa mesa no se repite nunca.
+    volveriaAAro: z.boolean().nullable().optional(),
   }),
   z.object({
     accion: z.literal('bloquear'),
@@ -87,15 +101,22 @@ export async function POST(request: Request) {
   }
 
   if (d.accion === 'valorar') {
+    // Los cuatro bloques son opcionales por separado, así que se escribe solo
+    // lo que vino. Mandar `null` en el resto borraría lo que ya contestó
+    // quien vuelve a entrar a completar la encuesta.
+    const fila: Record<string, unknown> = { table_id: d.mesaId, profile_id: user.id }
+
+    const nota = notaDesdeIndice(d.mesa)
+    if (nota !== null) fila.conversation_rating = nota
+
+    for (const [columna, valor] of Object.entries(notasDelSitio(d.sitio))) {
+      if (valor !== null) fila[columna] = valor
+    }
+
+    if (typeof d.volveriaAAro === 'boolean') fila.would_repeat = d.volveriaAAro
+
     const { error } = await admin.from('table_feedback').upsert(
-      {
-        table_id: d.mesaId,
-        profile_id: user.id,
-        would_repeat: d.volveria >= 1,
-        // De tres opciones a la escala de cinco de la tabla, para poder
-        // promediarlo por restaurante después.
-        conversation_rating: [1, 3, 5][d.volveria],
-      },
+      fila as never,
       { onConflict: 'table_id,profile_id' },
     )
 

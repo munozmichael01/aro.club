@@ -44,8 +44,15 @@ export type Accion =
   // quién lo abre ni qué se manda desde él. Por eso deja rastro aunque no
   // cambie nada en la base.
   | 'leads_exportados'
+  // Entrega 16. Quién vino lo marca operación, no la persona que cenó, y
+  // decide `events_attended`, las reincidencias y el veto de tres meses. Un
+  // dato que decide eso tiene que llevar firma: un veto sin firma no se puede
+  // discutir con la persona a la que se le aplica.
+  | 'asistencia_marcada'
 
-type Entidad = 'verificacion' | 'pago' | 'evento' | 'local' | 'incidencia' | 'equipo' | 'leads'
+type Entidad =
+  | 'verificacion' | 'pago' | 'evento' | 'local' | 'incidencia' | 'equipo' | 'leads'
+  | 'reserva'
 
 export async function anotar(
   /**

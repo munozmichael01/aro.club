@@ -177,20 +177,41 @@
         <div style="{{ selloEspera }}">ANOCHE</div>
         <h1 style="{{ h1 }}">¿Qué tal estuvo?</h1>
         <p style="{{ bajada }}">{{ textoAnoche }}</p>
+
+        <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:8px">Pensado para cenas. Un café o una salida de movimiento se van a preguntar distinto más adelante.</div>
+
         <sc-if value="{{ sinContar }}" hint-placeholder-val="{{ true }}">
           <div style="margin-top:clamp(26px,3.6vw,36px)">
-            <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin-bottom:14px">¿VOLVERÍAS A ESA MESA?</div>
-            <div style="display:flex;flex-wrap:wrap;gap:9px">
-              <sc-for list="{{ valoraciones }}" as="v" hint-placeholder-count="3">
-                <button onClick="{{ v.pick }}" style="{{ v.btn }}">
-                  <span style="{{ v.aro }}">{{ v.icono }}</span>
-                  <span style="{{ v.txt }}">{{ v.label }}</span>
-                </button>
+
+            <div style="font:400 15px/1.4 'Young Serif',Georgia,serif;color:#14342A;margin-bottom:10px">¿Qué tal la mesa que armamos para ti?</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ mesaOpciones }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.pick }}" style="{{ o.btn }}">{{ o.label }}</button>
               </sc-for>
             </div>
 
-            <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin:clamp(26px,3.4vw,34px) 0 6px">¿CON QUIÉN NO QUIERES VOLVER A COINCIDIR?</div>
-            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-bottom:14px;max-width:46ch;text-wrap:pretty">{{ notaBloquear }}</div>
+            <div style="font:400 15px/1.4 'Young Serif',Georgia,serif;color:#14342A;margin:clamp(26px,3.4vw,32px) 0 10px">¿Qué tal el sitio?</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ sitioFilas }}" as="f" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                  <span style="{{ f.etiqueta }}">{{ f.nombre }}</span>
+                  <span style="display:flex;gap:8px;flex:1 1 auto">
+                    <sc-for list="{{ f.opciones }}" as="o" hint-placeholder-count="4">
+                      <button onClick="{{ o.pick }}" style="{{ o.btn }}">{{ o.label }}</button>
+                    </sc-for>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="font:400 15px/1.4 'Young Serif',Georgia,serif;color:#14342A;margin:clamp(26px,3.4vw,32px) 0 10px">¿Volverías a Aro Club?</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <button onClick="{{ volveriaSiPick }}" style="{{ volveriaSiBtn }}">Sí, volvería</button>
+              <button onClick="{{ volveriaNoPick }}" style="{{ volveriaNoBtn }}">No, no volvería</button>
+            </div>
+
+            <div style="font:400 15px/1.4 'Young Serif',Georgia,serif;color:#14342A;margin:clamp(26px,3.4vw,32px) 0 6px">¿Alguien con quien preferirías no volver a coincidir?</div>
+            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:10px">{{ notaBloquear }}</div>
             <div style="display:flex;flex-direction:column;gap:8px">
               <sc-for list="{{ bloqueables }}" as="b" hint-placeholder-count="5">
                 <button onClick="{{ b.pick }}" aria-disabled="{{ b.inerte }}" style="{{ b.btn }}">
@@ -216,11 +237,7 @@
         </sc-if>
 
         <sc-if value="{{ puedeReportar }}" hint-placeholder-val="{{ true }}">
-          <div style="border-radius:26px;border:1px solid rgba(143,69,21,.34);padding:clamp(19px,2.6vw,24px);margin-top:clamp(26px,3.6vw,36px)">
-            <div style="font:400 clamp(21px,2.4vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#6E340F">¿Pasó algo grave?</div>
-            <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:9px;max-width:46ch;text-wrap:pretty">Bloquear no es lo mismo que reportar. Si alguien se pasó de la raya, lo lee una persona de nuestro equipo hoy mismo.</div>
-            <button onClick="{{ abrirReporte }}" style="{{ botonBordeSuelto }}">Reportar algo</button>
-          </div>
+          <button onClick="{{ abrirReporte }}" style="{{ enlaceReportar }}">¿Pasó algo grave? Reportarlo →</button>
         </sc-if>
 
         <sc-if value="{{ contado }}" hint-placeholder-val="{{ false }}">
@@ -299,7 +316,15 @@
 class Component extends DCLogic {
   state = {
     fase: 0, ahora: Date.now(), tarde: false, retraso: 1, avisado: false,
-    valor: -1, bloqueados: [], contado: false,
+    // Entrega 16 · cuatro bloques, todos opcionales por separado.
+    //   mesaVal   el grupo entero, nunca persona a persona
+    //   sitio     ambiente, servicio, se podia conversar, comida
+    //   volveria  a Aro Club, no a esa mesa: esa mesa no se repite nunca
+    //   bloqueados  la unica salida por persona, y es la negativa
+    // Los indices van de mejor a peor porque asi estan los botones. El
+    // servidor los da la vuelta en notaDesdeIndice, y solo ahi.
+    mesaVal: -1, sitio: {}, volveria: -1,
+    bloqueados: [], contado: false,
     reporte: false, motivo: -1, quien: -1, reportado: false,
     datos: null, errorF11: '', enviando: false
   };
@@ -367,16 +392,36 @@ class Component extends DCLogic {
     return this.state.bloqueados.map((i) => cs[i] && cs[i].id).filter(Boolean);
   }
 
+  algoQueContar() {
+    return this.state.mesaVal >= 0
+      || this.state.volveria >= 0
+      || Object.keys(this.state.sitio).some((k) => this.state.sitio[k] >= 0)
+      || this.state.bloqueados.length > 0;
+  }
+
   guardarValoracion() {
-    if (this.state.valor < 0 || this.state.enviando) return;
+    // Todo es opcional, pero mandar la encuesta entera en blanco no dice
+    // nada y ademas escribiria una fila vacia en table_feedback. Para eso
+    // esta «Ahora no».
+    if (!this.algoQueContar() || this.state.enviando) return;
     this.setState({ enviando: true, errorF11: '' });
 
-    // La pantalla ordena de mejor a peor; la API al reves, para que el
-    // numero crezca con las ganas de repetir.
-    const volveria = 2 - this.state.valor;
     const aQuien = this.quienesBloquea();
+    const sitio = {};
+    Object.keys(this.state.sitio).forEach((k) => {
+      if (this.state.sitio[k] >= 0) sitio[k] = this.state.sitio[k];
+    });
 
-    this.enviar({ accion: 'valorar', volveria: volveria })
+    // Se manda el INDICE del boton, de mejor a peor. La vuelta a la escala
+    // de la base la hace el servidor en un solo sitio: si la hiciera aqui
+    // habria que acordarse en cada bloque, y el dia que Design anada uno
+    // mas se guardaria del reves sin que nada avise.
+    this.enviar({
+      accion: 'valorar',
+      mesa: this.state.mesaVal >= 0 ? this.state.mesaVal : null,
+      sitio: sitio,
+      volveriaAAro: this.state.volveria >= 0 ? this.state.volveria === 1 : null
+    })
       .then(() => (aQuien.length ? this.enviar({ accion: 'bloquear', aQuien: aQuien }) : null))
       .then(() => this.setState({ contado: true, enviando: false }))
       .catch(() => this.setState({ enviando: false, errorF11: 'No pudimos guardarlo. Vuelve a intentarlo.' }));
@@ -474,15 +519,54 @@ class Component extends DCLogic {
 
     const aroDe = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#8F4515' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
 
-    const valoraciones = ['Sí, sin dudarlo', 'Estuvo bien', 'No del todo'].map((label, i) => {
-      const on = this.state.valor === i;
+    // Un chip plano, sin aro: son escalas de cuatro y el aro las cargaba.
+    // El borde marron es el grado peor, para que se vea que lo es sin leer.
+    const chipPlano = (on, malo) => 'display:inline-flex;align-items:center;min-height:48px;padding:0 18px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? (malo ? '#6E340F' : '#1B5138') : 'rgba(20,52,42,.2)') + ';font:' + (on ? '600' : '400') + ' 14px/1 \'Inter Tight\',sans-serif;color:#14342A;cursor:pointer';
+
+    // Bloque 1 · la mesa entera. Nunca persona a persona: esa combinacion de
+    // seis no se repite, asi que un «si repetiria con X» no se puede aplicar.
+    const mesaOpciones = ['Excelente', 'Bien', 'Regular', 'Mala'].map((label, i) => ({
+      label,
+      pick: () => this.setState({ mesaVal: this.state.mesaVal === i ? -1 : i }),
+      btn: chipPlano(this.state.mesaVal === i, i === 3)
+    }));
+
+    // Bloque 2 · el sitio, en rejilla. Las cuatro filas comparten escala para
+    // que se lea como una sola barrida y no como cuatro preguntas.
+    const ESCALA_SITIO = ['Excelente', 'Bien', 'Regular', 'Mal'];
+    const SITIO_FILAS = [
+      ['ambiente', 'Ambiente'],
+      ['servicio', 'Servicio'],
+      // Asi se pregunta el ruido sin sonar raro dentro de esta escala.
+      ['conversar', 'Se podía conversar'],
+      ['comida', 'Comida']
+    ];
+    const sitioFilas = SITIO_FILAS.map(function (par) {
+      const clave = par[0], nombre = par[1];
       return {
-        label, icono: on ? '✓' : '', aro: aroDe(on),
-        pick: () => this.setState({ valor: i }),
-        btn: 'display:inline-flex;align-items:center;gap:10px;min-height:50px;padding:0 18px 0 13px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 180ms ease',
-        txt: 'font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A;white-space:nowrap'
+        nombre,
+        etiqueta: 'flex:0 0 140px;font:500 14px/1.3 \'Inter Tight\',sans-serif;color:#14342A',
+        opciones: ESCALA_SITIO.map((label, i) => {
+          const on = this.state.sitio[clave] === i;
+          return {
+            label,
+            pick: () => this.setState((st) => {
+              const copia = Object.assign({}, st.sitio);
+              copia[clave] = on ? -1 : i;
+              return { sitio: copia };
+            }),
+            btn: chipPlano(on, i === 3)
+          };
+        })
       };
-    });
+    }, this);
+
+    // Bloque 3 · si funciono la cena, no la mesa.
+    const vol = this.state.volveria;
+    const volveriaSiBtn = chipPlano(vol === 1, false);
+    const volveriaNoBtn = chipPlano(vol === 0, true);
+    const volveriaSiPick = () => this.setState({ volveria: vol === 1 ? -1 : 1 });
+    const volveriaNoPick = () => this.setState({ volveria: vol === 0 ? -1 : 0 });
 
     const bloqueables = comensales.map((c, i) => {
       const on = this.state.bloqueados.indexOf(i) >= 0;
@@ -571,7 +655,8 @@ class Component extends DCLogic {
       textoAccionVacia: 'Ver la próxima fecha',
       botonVacia: btn('#14342A', '#FAF3E4', 'none', 'margin-top:18px;text-decoration:none'),
 
-      cuenta, comensales, retrasos, valoraciones, bloqueables, motivos, reportables,
+      cuenta, comensales, retrasos, bloqueables, motivos, reportables,
+      mesaOpciones, sitioFilas, volveriaSiBtn, volveriaNoBtn, volveriaSiPick, volveriaNoPick,
       numeroMesa, restaurante, direccion, cuando,
 
       // --- el vocabulario, derivado del formato ------------------------
@@ -584,7 +669,7 @@ class Component extends DCLogic {
       textoAvisar: 'Avisar a' + (esMesa ? ' la mesa' : 'l grupo'),
       notaCompaneros: 'Todos con identidad verificada. No hay fotos ni apellidos: eso lo cuenta cada quien '
         + (esMesa ? 'en la mesa' : 'sobre la marcha') + ' si quiere.',
-      notaBloquear: 'Opcional, y no se le avisa nunca. Solo deja de salir en ' + VOZ.tu + 's ' + VOZ.unidades + '.',
+      notaBloquear: 'Opcional. No se le avisa a nadie, y no es una queja: si nadie te chocó, déjalo así. Solo deja de salir en ' + VOZ.tu + 's ' + VOZ.unidades + '.',
       // Y qué se hace, si el formato lo pide. En una cena el sitio ES el
       // plan y esto no se enseña.
       hayActividad: !esMesa && !!(act && act.ruta),
@@ -649,10 +734,17 @@ class Component extends DCLogic {
             ? 'La persona que marcaste no volverá'
             : 'Las personas que marcaste no volverán') + ' a coincidir contigo.'
         : 'Entra en el emparejamiento de tu próxima mesa.',
-      textoEnviar: this.state.enviando ? 'Enviando…' : (this.state.valor >= 0 ? 'Enviar' : 'Elige una respuesta'),
+      // Ya no exige una respuesta concreta: los cuatro bloques son
+      // opcionales. Lo unico que no vale es mandarla entera en blanco.
+      textoEnviar: this.state.enviando ? 'Enviando…' : 'Enviar',
       botonEnviar: btn(this.state.valor >= 0 ? '#14342A' : 'rgba(20,52,42,.12)', this.state.valor >= 0 ? '#FAF3E4' : '#2C4A38', 'none', this.state.valor >= 0 ? '' : 'cursor:not-allowed'),
       // no está `disabled`: sigue siendo enfocable y anuncia por qué no responde
-      enviarInerte: this.state.valor >= 0 ? null : 'true',
+      enviarInerte: this.algoQueContar() ? null : 'true',
+      // Reportar deja de ser una tarjeta con titulo propio. No es un paso del
+      // flujo —la inmensa mayoria de las cenas no tienen nada que reportar— y
+      // como tarjeta pesaba tanto como la encuesta entera. Enlace discreto,
+      // siempre visible, fuera de la tarjeta.
+      enlaceReportar: 'display:inline-block;margin-top:clamp(22px,3vw,28px);padding:6px 0;background:none;border:none;font:500 14px/1.4 \'Inter Tight\',sans-serif;color:#6E340F;text-decoration:underline;text-underline-offset:3px;cursor:pointer',
       reporteInerte: listoReporte ? null : 'true',
       botonPrimarioSuelto: btn('#14342A', '#FAF3E4', 'none', 'margin-top:16px'),
       botonReportar: btn(listoReporte ? '#6E340F' : 'rgba(20,52,42,.12)', listoReporte ? '#FFF8EA' : '#2C4A38', 'none', listoReporte ? '' : 'cursor:not-allowed'),

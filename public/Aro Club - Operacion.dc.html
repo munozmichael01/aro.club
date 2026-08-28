@@ -1091,7 +1091,10 @@
                 <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ m.donde }}</div>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
                   <sc-for list="{{ m.comensales }}" as="c" hint-placeholder-count="6">
-                    <a href="{{ c.enlace }}" style="{{ c.chip }}">{{ c.nombre }}{{ c.marca }}</a>
+                    <span style="display:inline-flex;align-items:center;gap:0">
+                      <a href="{{ c.enlace }}" style="{{ c.chip }}">{{ c.nombre }}{{ c.marca }}</a>
+                      <button onClick="{{ c.marcar }}" aria-label="{{ c.etiquetaVino }}" title="{{ c.etiquetaVino }}" style="{{ c.botonVino }}">{{ c.glifoVino }}</button>
+                    </span>
                   </sc-for>
                 </div>
                 <sc-if value="{{ m.sinComensales }}" hint-placeholder-val="{{ false }}">
@@ -1503,6 +1506,24 @@ class Component extends DCLogic {
   // Todas pasan por aquí y todas hacen lo mismo: pedir, contar qué pasó, y
   // recargar de la ruta en vez de retocar el estado a mano. Retocarlo a mano
   // es como el panel acababa enseñando una cosa y la base otra.
+
+  /**
+   * Marcar quien vino. Cicla sin marcar -> vino -> no vino -> sin marcar.
+   *
+   * Tres posiciones porque «todavia no se sabe» es un estado de verdad: el
+   * jueves a las nueve de la noche nadie ha venido aun, y un interruptor de
+   * dos posiciones obliga a mentir en uno de los dos sentidos.
+   *
+   * Recarga el historico en vez de tocar la lista a mano: el servidor es
+   * quien decide si una reserva cancelada admite la marca, y pintar aqui lo
+   * que creemos que paso dejaria la pantalla diciendo una cosa y la base otra.
+   */
+  marcarAsistencia(reservaId, vinoAhora) {
+    if (!reservaId) return;
+    const siguiente = vinoAhora === 'pendiente' ? true : vinoAhora === 'si' ? false : null;
+    this.mandar('/api/operacion/asistencia', { reservaId: reservaId, vino: siguiente })
+      .then((r) => { if (r.ok) this.cargarHistorico(); });
+  }
 
   mandar(ruta, cuerpo, metodo) {
     if (this.state.trabajando) return Promise.resolve({ ok: false });
@@ -2925,6 +2946,24 @@ class Component extends DCLogic {
             // a los cinco que vinieron es ruido; el que falta es la
             // información, y es la que hace falta al mirar una mesa vieja.
             marca: c.vino === 'no' ? ' · no vino' : '',
+            // El interruptor de asistencia. Quien vino lo marca operacion, y
+            // hasta hoy no lo marcaba nadie: `attended` no se escribia en
+            // ningun sitio de todo el codigo, y el Historico, la ficha del
+            // miembro y `events_attended` leian una columna que nunca cambiaba.
+            //
+            // Tres estados y no dos: «todavia no se sabe» es de verdad —el
+            // jueves a las nueve nadie ha venido aun— y un interruptor de dos
+            // posiciones obliga a mentir en uno de los dos sentidos.
+            etiquetaVino: c.vino === 'si' ? 'Vino. Pulsa para marcar que no vino'
+              : c.vino === 'no' ? 'No vino. Pulsa para dejarlo sin marcar'
+              : 'Sin marcar. Pulsa para marcar que vino',
+            glifoVino: c.vino === 'si' ? '✓' : c.vino === 'no' ? '×' : '·',
+            marcar: () => this.marcarAsistencia(c.reservaId, c.vino),
+            botonVino: 'flex:0 0 auto;margin-left:-1px;min-width:34px;min-height:38px;border-radius:0 999px 999px 0;cursor:pointer;background:'
+              + (c.vino === 'si' ? '#1B5138' : c.vino === 'no' ? '#8F4515' : '#FFFBF0')
+              + ';border:1px solid ' + (c.vino === 'si' ? '#1B5138' : c.vino === 'no' ? '#8F4515' : 'rgba(20,52,42,.16)')
+              + ';color:' + (c.vino === 'si' || c.vino === 'no' ? '#FFF8EA' : '#566A5D')
+              + ';font:600 13px/1 \'Inter Tight\',sans-serif',
             chip: 'display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 14px;border-radius:999px;text-decoration:none;background:#FFFBF0;border:1px solid ' + (c.vino === 'no' ? 'rgba(143,69,21,.45)' : 'rgba(20,52,42,.16)') + ';color:' + (c.vino === 'no' ? '#8F4515' : '#14342A') + ';font:500 14px/1 \'Inter Tight\',sans-serif'
           })),
           sinComensales: m.comensales.length === 0,
@@ -2970,7 +3009,10 @@ class Component extends DCLogic {
           .then(() => { window.location.href = '/'; });
       },
 
-      notaPieHistorico: 'Esto es de lectura. La ficha de cada persona se abre pinchando su nombre, y desde ahí se ve su historial completo.',
+      // Ya no es de lectura: el interruptor de al lado de cada nombre escribe.
+      // Dejar la frase vieja seria decirle a operacion que no puede tocar lo
+      // unico que solo puede tocar ella.
+      notaPieHistorico: 'El botón de al lado de cada nombre marca quién vino: sin marcar · , vino ✓ , no vino ×. Lo marca operación, nunca la persona que cenó, porque de ahí salen las cenas contadas y el veto de tres meses. La ficha de cada persona se abre pinchando su nombre.',
 
       notaPieGente: 'Desde aquí no sale ningún correo: esta pestaña sirve para saber, no para disparar.'
         + (St.esAdmin ? ' La exportación de leads queda anotada con quién la sacó.' : '')

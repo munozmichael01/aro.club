@@ -98,6 +98,9 @@ type Comensal = {
   estado: string
   /** Vino, no vino, o todavía no se sabe. Lo que se pinta. */
   vino: 'si' | 'no' | 'pendiente'
+  /** La reserva, que es lo que se marca. Sin esto el interruptor no sabe a
+   * qué fila escribir: la asistencia vive en `bookings`, no en la mesa. */
+  reservaId: string
 }
 
 type Mesa = {
@@ -205,6 +208,7 @@ export async function GET(request: Request) {
           nombre: p?.full_name || p?.display_name || 'Sin nombre',
           estado,
           vino: VINO.has(estado) ? 'si' : NO_VINO.has(estado) ? 'no' : 'pendiente',
+          reservaId: m.booking_id,
         } as Comensal
       })
 

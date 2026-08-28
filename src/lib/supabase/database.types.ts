@@ -2499,6 +2499,10 @@ export type Database = {
           nps: number | null
           profile_id: string
           restaurant_rating: number | null
+          sitio_ambiente: number | null
+          sitio_comida: number | null
+          sitio_conversar: number | null
+          sitio_servicio: number | null
           table_id: string
           would_repeat: boolean | null
         }
@@ -2512,6 +2516,10 @@ export type Database = {
           nps?: number | null
           profile_id: string
           restaurant_rating?: number | null
+          sitio_ambiente?: number | null
+          sitio_comida?: number | null
+          sitio_conversar?: number | null
+          sitio_servicio?: number | null
           table_id: string
           would_repeat?: boolean | null
         }
@@ -2525,6 +2533,10 @@ export type Database = {
           nps?: number | null
           profile_id?: string
           restaurant_rating?: number | null
+          sitio_ambiente?: number | null
+          sitio_comida?: number | null
+          sitio_conversar?: number | null
+          sitio_servicio?: number | null
           table_id?: string
           would_repeat?: boolean | null
         }
@@ -3338,6 +3350,26 @@ export type Database = {
         }
         Relationships: []
       }
+      v_nota_de_local: {
+        Row: {
+          ambiente: number | null
+          comida: number | null
+          conversar: number | null
+          respuestas: number | null
+          restaurant_id: string | null
+          servicio: number | null
+          valoracion: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dinner_tables_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_rechazos_por_perfil: {
         Row: {
           motivos: string[] | null
@@ -3512,6 +3544,7 @@ export type Database = {
         | "sin_mesa"
         | "mesa_cambiada"
         | "empujon"
+        | "encuesta_despues"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -3742,6 +3775,7 @@ export const Constants = {
         "sin_mesa",
         "mesa_cambiada",
         "empujon",
+        "encuesta_despues",
       ],
       event_format_t: [
         "dinner",

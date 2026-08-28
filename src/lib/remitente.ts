@@ -59,6 +59,7 @@ const PLANTILLA: Record<Correo, string> = {
   // lista de lo que falta, pintada segun `payload.falta`. Lo que cambia es
   // el momento y la regla de repeticion, no el contenido.
   empujon: '01-bienvenida.html',
+  encuesta_despues: '16-encuesta-despues.html',
 }
 
 // Las plantillas se leen del disco una vez y se quedan: son quince ficheros

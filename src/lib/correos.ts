@@ -86,6 +86,11 @@ export type Correo =
   // Misma plantilla —01-bienvenida ya pinta los dos estados de `falta`—,
   // tipo propio y su propio indice de uno por persona y estado.
   | 'empujon'
+  // Entrega 16: la encuesta del día después. La pantalla existía, guardaba
+  // bien y tenía cero respuestas, porque no había ningún correo que llevara a
+  // ella. Sale la mañana siguiente. No es imprescindible: quien se dio de
+  // baja no lo recibe, y por eso su plantilla lleva el enlace de ajustes.
+  | 'encuesta_despues'
 
 type AQuien = { perfil: string } | { correo: string }
 
