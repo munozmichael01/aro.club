@@ -45,8 +45,20 @@ const FRASE = [
   { t: 4.10, html: 'es' },
   { t: 6.10, html: 'creándolo.', remate: true },
 ]
-const SUBE = 6.10          // el bloque entero se va arriba y encoge
-const VUELVE = 12.00       // y se recentra a su tamaño de las 6,10
+// El remate respira antes de que se mueva nada. Entrando y subiendo en el
+// mismo instante, «creándolo.» tenía dos décimas a tamaño grande: aparecía y
+// ya se estaba yendo, que es justo lo contrario de lo que hace una frase que
+// termina en su palabra. Ahora aguanta medio segundo largo y la subida tarda
+// más del doble.
+const REMATE = 6.10
+const SUBE = 6.62          // el bloque entero se va arriba y encoge
+const SUBIDA = 0.92        // lo que tarda en irse. Antes 0,40 y se leía como un tirón
+// La frase NO vuelve al centro. El guion decía que a los 12,00 se recentraba y
+// recuperaba su tamaño, y así el último segundo tenía a la vez la frase entera
+// grande, el aro y el remate de marca: tres cosas peleándose por el mismo
+// sitio. `cierre-referencia.png` ya lo tenía resuelto y no lo vimos —la frase
+// se queda arriba y pequeña, y el centro es del aro y del cierre—: no sobra
+// texto, sobra jerarquía. Así no hay que quitar ni una palabra.
 const APAGA_FRASE = 14.00
 
 // --- las diez polaroids --------------------------------------------------
@@ -128,9 +140,7 @@ FRASE.forEach((g, i) => {
 // El bloque entero: centrado y grande, arriba y pequeño, y de vuelta.
 kf.push(`@keyframes bloque{
  0%,${p(SUBE)}%{transform:translate(-50%,-50%) scale(1)}
- ${p(SUBE + 0.40)}%{transform:translate(-50%,-50%) translateY(-472px) scale(.58)}
- ${p(VUELVE)}%{transform:translate(-50%,-50%) translateY(-472px) scale(.58)}
- ${p(VUELVE + 0.40)}%,100%{transform:translate(-50%,-50%) scale(1)}}`)
+ ${p(SUBE + SUBIDA)}%,100%{transform:translate(-50%,-50%) translateY(-472px) scale(.58)}}`)
 kf.push(`@keyframes frasePaso{0%,${p(APAGA_FRASE)}%{opacity:1}
  ${p(APAGA_FRASE + 0.30)}%,100%{opacity:0}}`)
 
