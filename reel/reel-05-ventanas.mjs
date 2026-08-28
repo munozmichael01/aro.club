@@ -163,13 +163,18 @@ ${VENTANAS.map((v, i) => {
 
 /* Tapa el rótulo del edificio. Dentro de la cámara, para que suba con él. */
 #sombra{position:absolute;left:0;right:0;bottom:0;height:26%;opacity:0;z-index:2;
+  /* Negra, no verde. En verde de marca esto se leía como una neblina
+     subiendo por la fachada en los últimos segundos, y una neblina de color
+     sobre una foto nocturna se nota y parece un fallo de etalonaje. Una
+     caída a negro sobre noche es invisible como recurso: se ve el efecto
+     —el rótulo desaparece— y no se ve la capa. Mismo perfil de opacidad. */
   background:linear-gradient(180deg,
-    rgba(20,52,42,0) 0%,
-    rgba(20,52,42,.30) 55%,
-    rgba(20,52,42,.45) 78%,
-    rgba(20,52,42,.86) 92%,
-    rgba(20,52,42,1) 97%,
-    rgba(20,52,42,1) 100%);
+    rgba(0,0,0,0) 0%,
+    rgba(0,0,0,.30) 55%,
+    rgba(0,0,0,.45) 78%,
+    rgba(0,0,0,.86) 92%,
+    rgba(0,0,0,1) 97%,
+    rgba(0,0,0,1) 100%);
   animation:sombra ${D}s ease infinite}
 
 /* La pregunta y el cierre NO van en la cámara: son nuestros, no del edificio,

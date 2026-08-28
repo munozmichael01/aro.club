@@ -74,3 +74,25 @@ carrousel/
 reel/*.html
 reel/*.mp4
 reel/fotogramas/
+
+# docs/entrega: lo escrito y las maquetas entran; los originales pesados no.
+#
+# Los 39 .md son 280 KB y los .dc.html de Design 3,8 MB: eso es el porqué de
+# las cosas dentro de seis meses y no se regenera. Los ~200 MB restantes son
+# originales de imagen y vídeo, que no se versionan aquí.
+docs/entrega/**/Gemini_Generated_Image_*
+docs/entrega/**/hf_2*
+docs/entrega/polaroids/final/
+docs/entrega/polaroids/final-etalonadas/
+docs/entrega/polaroids/etalonadas/
+docs/entrega/polaroids/seleccion/
+docs/entrega/polaroids/_preview/
+docs/entrega/polaroids/_rev/
+docs/entrega/metraje/
+docs/entrega/fotos/fachadas/_preview/
+docs/entrega/**/*.mp4
+
+# Fotogramas capturados de la competencia: se recapturan del original.
+docs/referencias-reels/
+
+.DS_Store
