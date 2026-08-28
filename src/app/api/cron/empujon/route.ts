@@ -75,9 +75,7 @@ async function empujar() {
   const { data: yaEmpujados } = await admin
     .from('scheduled_emails')
     .select('email, profile_id, payload')
-    // `as never` como en el resto del repo: los tipos generados van por
-    // detrás del enum y tampoco tienen `mesa_cambiada`.
-    .eq('kind', 'empujon' as never)
+    .eq('kind', 'empujon')
 
   const falta = (r: { payload: unknown }) =>
     (r.payload as { falta?: string } | null)?.falta ?? ''

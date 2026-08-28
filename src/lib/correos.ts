@@ -153,6 +153,41 @@ export async function encolar(
 }
 
 /**
+ * Qué le pasó a una fila de la cola.
+ *
+ * Los dos primeros la cierran —`sent_at`— porque mañana pasaría lo mismo.
+ * Los tres últimos la dejan viva: `sin_plantilla` se arregla desplegando y
+ * `error_de_envio` se arregla solo, así que cerrarlos sería tirar el correo.
+ */
+type Final =
+  | 'enviado'
+  | 'no_se_pudo_armar'
+  | 'dado_de_baja'
+  | 'sin_plantilla'
+  | 'error_de_envio'
+
+const CIERRAN: ReadonlySet<Final> = new Set(['enviado', 'no_se_pudo_armar', 'dado_de_baja'])
+
+/**
+ * Anota qué pasó. Antes los tres finales que cierran escribían exactamente
+ * la misma marca —`sent_at` y nada más—, así que «cuántos correos han
+ * salido» devolvía la suma de los enviados, los imposibles de armar y los de
+ * quien se dio de baja, y separarlos exigía buscar un `console.error` en los
+ * registros de Vercel.
+ */
+async function anotarFinal(
+  admin: ReturnType<typeof createAdminClient>,
+  id: string,
+  final: Final,
+  motivo: string | null = null,
+): Promise<void> {
+  const campos: Record<string, unknown> = { estado: final, motivo }
+  if (CIERRAN.has(final)) campos.sent_at = new Date().toISOString()
+  const { error } = await admin.from('scheduled_emails').update(campos as never).eq('id', id)
+  if (error) console.error('[correos] no se pudo anotar el final', final, error)
+}
+
+/**
  * Manda lo que esté vencido en la cola. Lo usan el cron y `encolar`.
  *
  * Nunca lanza: encolar un correo no puede fallar porque el envío falle. Si
@@ -217,8 +252,7 @@ export async function despacharPendientes(
           enSeco.push({ kind: fila.kind, asunto: `— no se pudo armar: ${listo.error}`, huecos: -1 })
           continue
         }
-        await admin.from('scheduled_emails')
-          .update({ sent_at: new Date().toISOString() } as never).eq('id', fila.id)
+        await anotarFinal(admin, fila.id, 'no_se_pudo_armar', listo.error)
         continue
       }
 
@@ -228,8 +262,7 @@ export async function despacharPendientes(
       if (dadosDeBaja.has(String(listo.a).trim().toLowerCase()) && !IMPRESCINDIBLES.has(fila.kind)) {
         // Se cierra en vez de dejarla pendiente: si no, cada vuelta del cron
         // volvería a mirarla para siempre.
-        await admin.from('scheduled_emails')
-          .update({ sent_at: new Date().toISOString() } as never).eq('id', fila.id)
+        await anotarFinal(admin, fila.id, 'dado_de_baja')
         continue
       }
 
@@ -237,7 +270,16 @@ export async function despacharPendientes(
       // así que el tipo de la base es más ancho que el de los correos. Si no
       // hay plantilla, `componer` devuelve null y se anota abajo.
       const pintado = await componer(fila.kind as Correo, listo.datos)
-      if (!pintado) { console.error('[correos] sin plantilla', fila.kind); continue }
+      if (!pintado) {
+        // NO se cierra. Un `kind` sin plantilla casi siempre es un despliegue
+        // por detrás de la base —el enum ya tiene el tipo, el código todavía
+        // no—, y eso se arregla solo al desplegar. Cerrarla quemaría el
+        // correo. Lo que sí hace falta es que la fila diga por qué lleva ahí
+        // parada, en vez de reintentarse cada cuarto de hora en silencio.
+        console.error('[correos] sin plantilla', fila.kind)
+        await anotarFinal(admin, fila.id, 'sin_plantilla', `no hay plantilla para ${fila.kind}`)
+        continue
+      }
 
       // El ensayo se para AQUI y no antes: asi pasa por el filtro de la baja
       // igual que un envio de verdad. Si se saliera antes, el ensayo diria que
@@ -262,11 +304,11 @@ export async function despacharPendientes(
       if (r.estado === 'error') {
         // Este sí se reintenta: un fallo de red se arregla solo.
         console.error('[correos] no salió', fila.kind, r.motivo)
+        await anotarFinal(admin, fila.id, 'error_de_envio', r.motivo)
         continue
       }
 
-      await admin.from('scheduled_emails')
-        .update({ sent_at: new Date().toISOString() } as never).eq('id', fila.id)
+      await anotarFinal(admin, fila.id, 'enviado')
       if (r.estado === 'enviado') mandados++
     }
 

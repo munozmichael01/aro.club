@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.17"
   }
   graphql_public: {
     Tables: {
@@ -661,6 +661,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      errores_cliente: {
+        Row: {
+          avisado_en: string | null
+          huella: string
+          mensaje: string
+          navegador: string | null
+          origen: string | null
+          pantalla: string
+          pila: string | null
+          primera_vez: string
+          resuelto_en: string | null
+          ultima_vez: string
+          veces: number
+        }
+        Insert: {
+          avisado_en?: string | null
+          huella: string
+          mensaje: string
+          navegador?: string | null
+          origen?: string | null
+          pantalla: string
+          pila?: string | null
+          primera_vez?: string
+          resuelto_en?: string | null
+          ultima_vez?: string
+          veces?: number
+        }
+        Update: {
+          avisado_en?: string | null
+          huella?: string
+          mensaje?: string
+          navegador?: string | null
+          origen?: string | null
+          pantalla?: string
+          pila?: string | null
+          primera_vez?: string
+          resuelto_en?: string | null
+          ultima_vez?: string
+          veces?: number
+        }
+        Relationships: []
+      }
+      errores_cliente_ip: {
+        Row: {
+          creado_en: string
+          ip_huella: string
+        }
+        Insert: {
+          creado_en?: string
+          ip_huella: string
+        }
+        Update: {
+          creado_en?: string
+          ip_huella?: string
+        }
+        Relationships: []
       }
       event_venues: {
         Row: {
@@ -1982,6 +2039,7 @@ export type Database = {
           notes_ops: string | null
           notificaciones: Json
           phone_e164: string | null
+          questionnaire_screen: number
           role: Database["public"]["Enums"]["app_role_t"]
           rootedness: Database["public"]["Enums"]["rootedness_t"] | null
           status: Database["public"]["Enums"]["member_status_t"]
@@ -2012,6 +2070,7 @@ export type Database = {
           notes_ops?: string | null
           notificaciones?: Json
           phone_e164?: string | null
+          questionnaire_screen?: number
           role?: Database["public"]["Enums"]["app_role_t"]
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
           status?: Database["public"]["Enums"]["member_status_t"]
@@ -2042,6 +2101,7 @@ export type Database = {
           notes_ops?: string | null
           notificaciones?: Json
           phone_e164?: string | null
+          questionnaire_screen?: number
           role?: Database["public"]["Enums"]["app_role_t"]
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
           status?: Database["public"]["Enums"]["member_status_t"]
@@ -2213,6 +2273,8 @@ export type Database = {
           is_active: boolean
           is_after_venue: boolean
           last_seating: string | null
+          lat: number | null
+          lng: number | null
           maps_url: string | null
           max_tables: number
           metro_minutes: number | null
@@ -2220,6 +2282,7 @@ export type Database = {
           name: string
           noise_level: number | null
           open_days: number[]
+          place_id: string | null
           safety_notes: string | null
           splits_bill: boolean | null
           table_shape: string | null
@@ -2245,6 +2308,8 @@ export type Database = {
           is_active?: boolean
           is_after_venue?: boolean
           last_seating?: string | null
+          lat?: number | null
+          lng?: number | null
           maps_url?: string | null
           max_tables?: number
           metro_minutes?: number | null
@@ -2252,6 +2317,7 @@ export type Database = {
           name: string
           noise_level?: number | null
           open_days?: number[]
+          place_id?: string | null
           safety_notes?: string | null
           splits_bill?: boolean | null
           table_shape?: string | null
@@ -2277,6 +2343,8 @@ export type Database = {
           is_active?: boolean
           is_after_venue?: boolean
           last_seating?: string | null
+          lat?: number | null
+          lng?: number | null
           maps_url?: string | null
           max_tables?: number
           metro_minutes?: number | null
@@ -2284,6 +2352,7 @@ export type Database = {
           name?: string
           noise_level?: number | null
           open_days?: number[]
+          place_id?: string | null
           safety_notes?: string | null
           splits_bill?: boolean | null
           table_shape?: string | null
@@ -2331,9 +2400,11 @@ export type Database = {
         Row: {
           created_at: string
           email: string | null
+          estado: string | null
           event_id: string | null
           id: string
           kind: Database["public"]["Enums"]["email_kind_t"]
+          motivo: string | null
           payload: Json
           profile_id: string | null
           send_at: string
@@ -2342,9 +2413,11 @@ export type Database = {
         Insert: {
           created_at?: string
           email?: string | null
+          estado?: string | null
           event_id?: string | null
           id?: string
           kind: Database["public"]["Enums"]["email_kind_t"]
+          motivo?: string | null
           payload?: Json
           profile_id?: string | null
           send_at: string
@@ -2353,9 +2426,11 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string | null
+          estado?: string | null
           event_id?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["email_kind_t"]
+          motivo?: string | null
           payload?: Json
           profile_id?: string | null
           send_at?: string
@@ -3435,6 +3510,8 @@ export type Database = {
         | "abrimos_zona"
         | "cuenta_lista"
         | "sin_mesa"
+        | "mesa_cambiada"
+        | "empujon"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -3663,6 +3740,8 @@ export const Constants = {
         "abrimos_zona",
         "cuenta_lista",
         "sin_mesa",
+        "mesa_cambiada",
+        "empujon",
       ],
       event_format_t: [
         "dinner",
