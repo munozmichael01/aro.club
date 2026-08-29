@@ -1,33 +1,55 @@
 /**
  * Pieza C · «Ya sabemos con quién cenas el jueves» · 15,0 s
  *
- * Guion: `docs/entrega/reels/GUION-C-ya-sabemos.md`
+ * Guion: `docs/entrega/reels/GUION-C-ya-sabemos.md` (el definitivo, el que
+ * sustituye a las tres versiones anteriores).
  * Foto:  `docs/entrega/fotos/mesa-cenital/mesa-sexto-puesto.jpg` (1080x1920)
  *
- * Una sola foto fija los quince segundos. Ni un corte de plano, ni un
- * movimiento de camara. Lo unico que cambia es el velo verde que la tapa, y
- * cambia una sola vez: a los 11,80 baja y aparece el sexto puesto vacio.
+ * Una sola foto fija los quince segundos: ni un corte, ni un movimiento de
+ * camara. La frase entera esta en pantalla desde el segundo cero, luego se
+ * suman cuatro voces de la mesa, y al final el velo se levanta sobre «Seis
+ * desconocidos verificados» y aparece el puesto vacio.
  *
- * Esa es toda la pieza. El texto dice tres cosas que sabemos de la mesa, luego
- * «Tu no.», luego dos segundos de nada, y entonces el velo se levanta y llega
- * «Todavia». El vacio del medio no es un descuido: es el tramo que decide si
- * «Tu no.» suena a burla o a invitacion.
+ * ---------------------------------------------------------------------------
+ * DOS DESVIOS DEL GUION, los dos medidos y los dos declarados
+ * ---------------------------------------------------------------------------
  *
- * Dos decisiones mias que conviene ver, porque no estan en el guion:
+ * 1 · EL CIERRE NO CABE DONDE LO MANDA EL GUION.
  *
- *  1. Los tamanos de Design vienen en otra referencia. El guion pide el
- *     titular en Young Serif 44px, y en un lienzo de 1080 eso son unos 16px
- *     en un telefono: ilegible en el feed. El titular de la pieza A, que sale
- *     del mismo Design, es 92px. Se escalan todos por igual con `ESCALA`, que
- *     es un solo numero: si Design dice otro, se cambia ahi y no en once
- *     sitios.
- *  2. El texto que afirma va a la izquierda; el que gira —«Tu no.»,
- *     «Todavia»— va centrado y en el mismo sitio, uno encima del otro. La
- *     respuesta ocupa el lugar exacto de la duda.
+ * El guion pone «una mesa, cada semana» en y 1660-1750, el aro en 1770 y la
+ * firma en 1830. El 12% de abajo del lienzo —desde y=1690— es donde Instagram
+ * y TikTok ponen su interfaz: esta escrito en `ZONA-SEGURA-A.md` y lo vigila
+ * `comprobar-etiquetas.mjs` en todas las piezas. Ahi los tres quedarian
+ * debajo del cromo de la aplicacion.
  *
- * Y todo el cierre vive en la MITAD DE ARRIBA. Cuando el velo baja, lo que
- * tiene que verse es el plato vacio de abajo: taparlo con el aro justo cuando
- * se descubre seria apagar el unico gesto de la pieza.
+ * De la banda de 340px que da el guion quedan 150px usables, y el bloque de
+ * cierre no baja de unos 450px. La escapatoria del guion —«se sube la firma,
+ * nunca el aro»— no alcanza: sobran 300px, no 40.
+ *
+ * Lo que se hace: las DOS LINEAS de la promesa se quedan abajo, que es donde
+ * el guion las quiere y por el motivo que da —se leen bajo la silla vacia—, y
+ * el aro y la firma suben a la banda de arriba, que con el velo levantado es
+ * la zona mas oscura disponible. La marca abre el cuadro, la silla vacia
+ * manda en el centro, y la promesa cierra abajo.
+ *
+ * 2 · EL VELO DEL GUION NO ESCONDE EL PUESTO VACIO.
+ *
+ * El guion pide 70% sobre la banda del plato. Medido fila por fila sobre la
+ * foto: el plato tiene luz media 143 y el resto del cuadro entre 53 y 81. Con
+ * 70% el plato queda en 64 y todo lo demas en 39: sigue siendo lo mas claro
+ * del cuadro, que es exactamente lo que el propio guion prohibe. Para que
+ * quede a la altura del resto hace falta 91%.
+ *
+ * Se respeta todo lo demas de su degradado —continuo, sin bordes, y con la
+ * banda de bruschettas como la mas tapada— y se corrige solo ese tramo.
+ *
+ * ---------------------------------------------------------------------------
+ * Y UNA COSA QUE NO ESTA EN EL GUION: el velo respira.
+ *
+ * Sin eso la pieza son once segundos de imagen congelada —la primera version
+ * daba 9,5 s parados—. La luz se abre y se cierra despacio, como la de un
+ * comedor. No es movimiento de camara ni es un corte: es la unica capa que el
+ * concepto deja viva.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -36,164 +58,158 @@ import { fileURLToPath } from 'node:url'
 const AQUI = path.dirname(fileURLToPath(import.meta.url))
 const F = JSON.parse(fs.readFileSync(path.join(AQUI, '.fuentes.json'), 'utf8'))
 
-// La foto se lee del entregable y se incrusta. No entra en `.fuentes.json`:
-// ese fichero lo comparten los reels anteriores y esta foto es de esta pieza.
 const MESA = fs.readFileSync(
   path.join(AQUI, '..', 'docs', 'entrega', 'fotos', 'mesa-cenital', 'mesa-sexto-puesto.jpg'),
 ).toString('base64')
 
 const C = {
-  crema: '#FAF3E4', verde: '#14342A', terracota: '#8F4515', naranja: '#E39C63',
+  crema: '#FAF3E4', verde: '#14342A', naranja: '#E39C63', dominio: '#C0662F',
 }
 
 const D = 15.0
 const p = (t) => +Math.max(0, Math.min(100, t / D * 100)).toFixed(3)
 
-/** Ver la nota 1 de la cabecera. Un solo numero, y de aqui salen todos. */
+/** Los tamanos del guion vienen en otra referencia; un solo numero los sube. */
 const ESCALA = 2.55
 const px = (n) => Math.round(n * ESCALA)
 
-// --- el guion, con sus tiempos -------------------------------------------
-//
-// SEGUNDA ESTRUCTURA. La primera ponia el titular delante, luego tres frases,
-// y el remate al final. Eso parte la frase por la mitad: entre «Ya sabemos» y
-// «Tu no.» habia seis segundos y tres frases ajenas.
-//
-// Y «Tu no.» es una ELIPSIS. No significa nada sin su antecedente cerca: para
-// que se lea «tu no sabes», el «sabemos» tiene que seguir en la cabeza de
-// quien mira. A seis segundos ya no esta, y la frase se queda sin chiste. No
-// era un problema de ritmo, era gramatical.
-//
-// Ahora las tres frases van PRIMERO, sin presentacion, como un acertijo: no
-// sabes de quien hablan. Y la frase entera es la respuesta, junta y seguida.
-//
-// Con un anadido: la frase y «Tu no.» CONVIVEN en pantalla, no se sustituyen.
-// Asi el antecedente esta literalmente delante cuando llega el latigazo. Se
-// apagan las dos juntas y «Todavia.» entra sola, con la mesa ya abierta.
-const FRASES = [
-  { de: 0.60, a: 2.40, html: 'Otro va a pedir exactamente lo mismo que tú.' },
-  { de: 2.40, a: 4.20, html: 'Una se ríe antes de que termines el chiste.' },
-  // La larga respira un pelo mas: es la que tiene que dejar la pregunta en el
-  // aire justo antes del respiro.
-  { de: 4.20, a: 6.30, html: 'Uno vivió tres años en tu misma ciudad y ninguno de los dos lo sabe.' },
+/** El 12% de arriba y de abajo es de la aplicacion, no nuestro. */
+const SEGURA_ARRIBA = Math.round(1920 * 0.12)   // 230
+const SEGURA_ABAJO = 1920 - SEGURA_ARRIBA       // 1690
+
+// --- tiempos, tal cual el guion ------------------------------------------
+const FRASE = 0.00, TU_NO = 1.60, TODAVIA = 3.20
+const SALE_BLOQUE = 4.60
+const CUATRO = [
+  { t: 5.20, html: 'Una se ríe antes de que termines el chiste.' },
+  { t: 6.50, html: 'Otro va a pedir exactamente lo mismo que tú.' },
+  // La mas larga: mas tiempo antes de la siguiente.
+  { t: 7.90, html: 'Uno vivió 3 años en tu misma zona y ninguno de los dos lo sabe.' },
+  { t: 9.60, html: 'La que propone el segundo sitio.' },
 ]
+const SALE_CUATRO = 11.00
+// El velo arranca 0,3 s antes de que la linea sea legible, no a la vez: si
+// entran juntos se lee la linea primero y el gesto de sinceridad se pierde.
+const VELO_SUBE = 11.00, VELO_TARDA = 0.90
+const CIERRE1 = 11.30, CIERRE2 = 11.90
+const ARO = 13.30, FIRMA = 13.80
 
-// El respiro. Pantalla sin texto: la pausa antes de que alguien conteste.
-const RESPIRO_HASTA = 7.20
+if (VELO_SUBE >= CIERRE1) throw new Error('El velo tiene que arrancar antes de la linea de cierre')
 
-const FRASE = 7.20                      // «Ya sabemos con quién cenas el jueves.»
-const TU_NO = 8.75                      // el latigazo, con la frase todavia puesta
-const VELO_BAJA = 11.30, VELO_TARDA = 0.80
-const SALE_BLOQUE = 11.60               // se apagan las dos, ya con el velo subiendo
-const TODAVIA = 12.15
-const ARO = 13.15, FIRMA = 13.65
+// --- posiciones, con la geografia medida delante -------------------------
+// Bandas reales de la foto, medidas fila por fila (luz media sobre 255):
+//   0-570     53   fondo de mesa: brazos, platos, copas
+//   570-1010  81   la tabla de bruschettas — pico 127, la mas ocupada
+//   1010-1540 143  el puesto vacio — pico 190, lo mas claro del cuadro
+//   1540-1690  20  limpia y usable
+//   1690-1920   0  negra, pero DEBAJO de la interfaz
+const Y_ARO = 280, Y_FIRMA = 470
+const Y_CIERRE1 = 1508, Y_CIERRE2 = 1588
+const ALTO_CIERRE = 70   // cada linea, con su interlineado
 
-// El silencio: de que «Tu no.» termina de entrar hasta que el velo se mueve.
-// Es la excepcion declarada a la regla de los 2 s, y ahora cae donde estaba
-// pensada —dentro de la frase, entre sus dos mitades— y no entre dos ideas
-// distintas.
-const SILENCIO = +(VELO_BAJA - (TU_NO + 0.25)).toFixed(2)
-if (SILENCIO < 2.0) throw new Error(`El silencio se quedo en ${SILENCIO}s y tiene que pasar de 2`)
-
-// El velo empieza a levantarse ANTES de que la frase se apague, a proposito:
-// asi se ve primero el gesto —la mesa aclarandose— y «Todavia» llega con la
-// mesa ya abierta, no a oscuras. Idea del guion, y es buena.
-if (VELO_BAJA >= SALE_BLOQUE) throw new Error('El velo tiene que empezar antes de que se apague la frase')
+for (const [que, y, alto] of [['aro', Y_ARO, px(72)], ['firma', Y_FIRMA, px(15)],
+  ['cierre1', Y_CIERRE1, ALTO_CIERRE], ['cierre2', Y_CIERRE2, ALTO_CIERRE]]) {
+  if (y < SEGURA_ARRIBA || y + alto > SEGURA_ABAJO) {
+    throw new Error(`El cierre «${que}» cae en el 12% de la aplicación: ${y}–${y + alto}`)
+  }
+  // La banda 570–1010 es la tabla con la comida: ahi el aro se dibuja encima
+  // del pan y pierde los puntos contra la miga. Ya paso una vez.
+  if (y + alto > 570 && y < 1010) throw new Error(`«${que}» cae sobre la comida: ${y}–${y + alto}`)
+}
 
 const kf = []
 
 // --- el velo -------------------------------------------------------------
-//
-// El velo RESPIRA, y esto no estaba en el guion. El guion da por hecho que la
-// regla 6 —el fondo siempre tiene una capa viva— la cumple el velo; pero el
-// velo se mueve una sola vez, en el 11,80. Los otros once segundos y pico la
-// imagen esta literalmente congelada, y se nota: la primera version daba 9,5 s
-// parados en siete tramos, de los cuales solo 2,0 s eran el silencio querido.
-//
-// Asi que la luz respira, despacio, como la de un comedor. No es un
-// movimiento de camara ni un corte: es la unica capa que el concepto de la
-// pieza deja viva. Y el levantamiento final deja de ser un evento suelto para
-// ser esa misma respiracion yendose del todo.
-//
-// La amplitud se eligio mirando el resultado, no calculandola: lo bastante
-// para que la imagen este viva, lo bastante poco para que no se lea como un
-// parpadeo.
-const MEDIO = 1.2          // medio ciclo, en segundos
-const HONDO = 0.10         // cuanto se abre la luz con el velo puesto
-const HONDO_FIN = 0.08     // y despues, ya con la mesa descubierta
+// Un solo degradado continuo de altura completa, sin punto donde termine: la
+// legibilidad sale del velo y no de un rectangulo con el canto a la vista.
+const VELO = `linear-gradient(180deg,
+  rgba(20,52,42,.58) 0%,
+  rgba(20,52,42,.66) 30%,
+  rgba(20,52,42,.82) 52%,
+  rgba(20,52,42,.91) 62%,
+  rgba(20,52,42,.91) 78%,
+  rgba(20,52,42,.62) 88%,
+  rgba(20,52,42,.45) 100%)`
 
-const respiro = []
-respiro.push('0%{opacity:0}')
-respiro.push(`${p(0.30)}%{opacity:1}`)
-for (let t = 0.30 + MEDIO, arriba = false; t < VELO_BAJA; t += MEDIO, arriba = !arriba) {
+const MEDIO = 1.2, HONDO = 0.09, HONDO_FIN = 0.07
+const respiro = ['0%{opacity:0}', `${p(0.20)}%{opacity:1}`]
+for (let t = 0.20 + MEDIO, arriba = false; t < VELO_SUBE; t += MEDIO, arriba = !arriba) {
   respiro.push(`${p(t)}%{opacity:${arriba ? 1 : (1 - HONDO).toFixed(2)}}`)
 }
-// El levantamiento. Sale de donde estuviera la respiracion, no de un valor
-// fijo: si saltara a 1 para bajar, ese salto seria el corte que la pieza no
-// puede tener.
-respiro.push(`${p(VELO_BAJA)}%{opacity:1}`)
-respiro.push(`${p(VELO_BAJA + VELO_TARDA)}%{opacity:.25}`)
-for (let t = VELO_BAJA + VELO_TARDA + MEDIO, arriba = false; t < D; t += MEDIO, arriba = !arriba) {
-  respiro.push(`${p(t)}%{opacity:${arriba ? '.25' : (0.25 - HONDO_FIN).toFixed(2)}}`)
+respiro.push(`${p(VELO_SUBE)}%{opacity:1}`)
+respiro.push(`${p(VELO_SUBE + VELO_TARDA)}%{opacity:.28}`)
+for (let t = VELO_SUBE + VELO_TARDA + MEDIO, arriba = false; t < D; t += MEDIO, arriba = !arriba) {
+  respiro.push(`${p(t)}%{opacity:${arriba ? '.28' : (0.28 - HONDO_FIN).toFixed(2)}}`)
 }
-respiro.push('100%{opacity:.25}')
+respiro.push('100%{opacity:.28}')
 kf.push(`@keyframes velo{${respiro.join(' ')}}`)
 
-// --- las tres frases, ahora de entrada ------------------------------------
-FRASES.forEach((f, i) => {
-  kf.push(`@keyframes f${i}{
-   0%,${p(f.de)}%{opacity:0;transform:translateY(${px(5)}px)}
-   ${p(f.de + 0.20)}%{opacity:1;transform:translateY(0)}
-   ${p(f.a - 0.20)}%{opacity:1;transform:translateY(0)}
-   ${p(f.a)}%,100%{opacity:0;transform:translateY(0)}}`)
+// La segunda capa, y por que existe.
+//
+// Con el velo levantado NO queda ningun sitio oscuro arriba para la marca:
+// medido por parches, el centro de la banda 240-560 va de 64 a 97 —ahi esta
+// la comida del fondo—, y mi «media 53» de antes promediaba los bordes
+// oscuros y lo escondia. El aro y la firma quedaban en blanco sobre claro.
+//
+// Asi que en vez de un rectangulo con el canto a la vista —lo que el guion
+// prohibe, y con razon: se veia cruzar la tabla— va otro DEGRADADO de altura
+// completa, sin punto donde termine, que solo pesa arriba y llega a cero
+// mucho antes del plato. La legibilidad sigue saliendo del velo.
+kf.push(`@keyframes velo2{
+  0%,${p(VELO_SUBE)}%{opacity:0}
+  ${p(VELO_SUBE + VELO_TARDA)}%,100%{opacity:.85}}`)
+
+// --- la frase, entera desde el arranque ----------------------------------
+// Fundido cortisimo a proposito: quien abre el reel tiene que encontrarse la
+// frase ya puesta, no verla aparecer.
+kf.push(`@keyframes frase{
+  0%{opacity:0} ${p(0.20)}%{opacity:1}
+  ${p(SALE_BLOQUE)}%{opacity:1}
+  ${p(SALE_BLOQUE + 0.30)}%,100%{opacity:0}}`)
+
+;[['tuno', TU_NO], ['todavia', TODAVIA]].forEach(([n, t]) => {
+  kf.push(`@keyframes ${n}{
+   0%,${p(t)}%{opacity:0;transform:translateY(${px(6)}px)}
+   ${p(t + 0.28)}%{opacity:1;transform:translateY(0)}
+   ${p(SALE_BLOQUE)}%{opacity:1;transform:translateY(0)}
+   ${p(SALE_BLOQUE + 0.30)}%,100%{opacity:0;transform:translateY(0)}}`)
 })
 
-// --- el giro -------------------------------------------------------------
-// La frase y «Tu no.» comparten salida: se apagan a la vez, como una sola
-// cosa dicha por una sola voz.
-kf.push(`@keyframes frase{
-  0%,${p(FRASE)}%{opacity:0;transform:translateY(${px(8)}px)}
-  ${p(FRASE + 0.35)}%{opacity:1;transform:translateY(0)}
-  ${p(SALE_BLOQUE)}%{opacity:1;transform:translateY(0)}
-  ${p(SALE_BLOQUE + 0.30)}%,100%{opacity:0;transform:translateY(0)}}`)
+// --- las cuatro, acumulandose --------------------------------------------
+// Se SUMAN, no se sustituyen. Con cuatro frases —una de trece palabras— dando
+// a cada una su lectura completa no caben quince segundos; y ademas cuatro
+// voces sumandose son la mesa llenandose, que es lo que la pieza dice.
+// Las anteriores bajan a media luz para que la ultima sea siempre la que mas
+// suena.
+const MEDIA_LUZ = 0.55
+CUATRO.forEach((f, i) => {
+  const sig = CUATRO[i + 1]
+  const baja = sig
+    ? `${p(sig.t)}%{opacity:1} ${p(sig.t + 0.30)}%{opacity:${MEDIA_LUZ}}
+       ${p(SALE_CUATRO)}%{opacity:${MEDIA_LUZ}}`
+    : `${p(SALE_CUATRO)}%{opacity:1}`
+  kf.push(`@keyframes c${i}{
+   0%,${p(f.t)}%{opacity:0;transform:translateY(${px(8)}px)}
+   ${p(f.t + 0.30)}%{opacity:1;transform:translateY(0)}
+   ${baja}
+   ${p(SALE_CUATRO + 0.30)}%,100%{opacity:0;transform:translateY(0)}}`)
+})
 
-kf.push(`@keyframes tuno{
-  0%,${p(TU_NO)}%{opacity:0;transform:scale(.95)}
-  ${p(TU_NO + 0.25)}%{opacity:1;transform:scale(1)}
-  ${p(SALE_BLOQUE)}%{opacity:1;transform:scale(1)}
-  ${p(SALE_BLOQUE + 0.30)}%,100%{opacity:0;transform:scale(1)}}`)
-
-kf.push(`@keyframes todavia{
-  0%,${p(TODAVIA)}%{opacity:0;transform:translateY(${px(6)}px)}
-  ${p(TODAVIA + 0.35)}%,100%{opacity:1;transform:translateY(0)}}`)
-
-// La cortina del cierre. Cuando el velo baja, la foto se vuelve clara y
-// ocupada justo donde va la marca: «Todavia» se perdia entre la pasta, el aro
-// quedaba encima de la tabla de bruschettas y la firma peleaba con los platos.
-// Esto le da suelo SOLO a la mitad de arriba —la de abajo, que es el plato que
-// acabamos de descubrir, se queda limpia—.
-kf.push(`@keyframes cortina{
-  0%,${p(VELO_BAJA + 0.30)}%{opacity:0}
-  ${p(TODAVIA)}%,100%{opacity:1}}`)
-
+// --- el cierre -----------------------------------------------------------
+;[['cierre1', CIERRE1], ['cierre2', CIERRE2], ['firma', FIRMA]].forEach(([n, t]) => {
+  kf.push(`@keyframes ${n}{
+   0%,${p(t)}%{opacity:0;transform:translateY(${px(6)}px)}
+   ${p(t + 0.30)}%,100%{opacity:1;transform:translateY(0)}}`)
+})
 kf.push(`@keyframes aro{
   0%,${p(ARO)}%{opacity:0;transform:scale(.9)}
   ${p(ARO + 0.30)}%,100%{opacity:1;transform:scale(1)}}`)
 
-kf.push(`@keyframes firma{
-  0%,${p(FIRMA)}%{opacity:0;transform:translateY(${px(6)}px)}
-  ${p(FIRMA + 0.30)}%,100%{opacity:1;transform:translateY(0)}}`)
-
-// El grano salta doce veces por segundo. Es textura, no ritmo: aqui no
-// sustituye a nada, porque a tamano pequeno el ruido se promedia y no cuenta
-// como cambio —esta medido en `comprobar-repetidos.mjs`—.
 const SALTOS = 12
 kf.push(`@keyframes grano{${Array.from({ length: SALTOS }, (_, i) =>
   `${(i / SALTOS * 100).toFixed(2)}%{background-position:${(i * 37) % 200}px ${(i * 61) % 200}px}`).join(' ')} 100%{background-position:0 0}}`)
 
-// --- el aro, con las proporciones del fichero de marca -------------------
-// Grosor 0,198 del radio, punto 0,221, seis cada 60 grados empezando a las
-// tres, y el naranja a las tres en punto.
+// Grosor 0,198 del radio, punto 0,221, seis cada 60 grados desde las tres.
 const aro = (trazo, acento, lado) => {
   const r = 27, gr = (r * 0.198).toFixed(2), pr = (r * 0.221).toFixed(2)
   return `<svg viewBox="0 0 100 100" width="${lado}" height="${lado}">
@@ -209,7 +225,6 @@ const html = `<!DOCTYPE html>
 <style>
 @font-face{font-family:'Young Serif';src:url(data:font/ttf;base64,${F.YoungSerif}) format('truetype');font-display:block}
 @font-face{font-family:'Inter Tight';font-weight:600;src:url(data:font/ttf;base64,${F.InterTight}) format('truetype');font-display:block}
-@font-face{font-family:'Inter Tight';font-weight:500;src:url(data:font/ttf;base64,${F.InterTightM}) format('truetype');font-display:block}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{background:${C.verde};height:100%;overflow:hidden}
 body{display:grid;place-items:center}
@@ -217,59 +232,44 @@ body{display:grid;place-items:center}
 #lienzo{width:1080px;height:1920px;position:absolute;inset:0;overflow:hidden;
   background:${C.verde};transform-origin:top left;transform:scale(var(--s,1))}
 
-/* La foto. Fija: ni zoom ni desplazamiento. El concepto es que la camara no
-   se mueve y lo unico que cambia es lo que nos dejamos ver. */
 #foto{position:absolute;inset:0;background:url(data:image/jpeg;base64,${MESA}) center/cover no-repeat}
+#velo{position:absolute;inset:0;opacity:0;background:${VELO};animation:velo ${D}s linear infinite}
+#velo2{position:absolute;inset:0;z-index:2;opacity:0;animation:velo2 ${D}s ease infinite;
+  background:linear-gradient(180deg,
+    rgba(20,52,42,.95) 0%, rgba(20,52,42,.80) 12%, rgba(20,52,42,.45) 24%,
+    rgba(20,52,42,.12) 34%, rgba(20,52,42,0) 46%, rgba(20,52,42,0) 100%)}
 
-/* El velo. Mas peso abajo, donde esta el plato vacio: si no, lo mas luminoso
-   del cuadro desde el segundo cero seria justo lo que queremos guardar. */
-#velo{position:absolute;inset:0;opacity:0;
-  /* Mucho mas peso abajo que en el guion (.94 y no .88). Con .88 el plato
-     vacio seguia siendo lo mas luminoso del cuadro desde el segundo cero, y
-     entonces el levantamiento del 11,80 no revela nada: solo aclara algo que
-     ya se veia. Comprobado sacando el fotograma del 9,8. */
-  background:linear-gradient(180deg,rgba(20,52,42,.66) 0%,rgba(20,52,42,.74) 35%,rgba(20,52,42,.88) 58%,rgba(20,52,42,.96) 100%);
-  /* linear y no ease: con ease la animacion se frena en CADA fotograma
-     clave, y en una respiracion eso son seis medios segundos planos por
-     pieza. La luz de un comedor no se para en los extremos. */
-  animation:velo ${D}s linear infinite}
+/* La frase entera y sus dos mitades. Conviven: «Tú no.» es una elipsis y
+   necesita su antecedente delante. */
+#frase,#tuno,#todavia{position:absolute;left:${px(43)}px;right:${px(43)}px;text-align:center;z-index:5;
+  font-family:'Young Serif',Georgia,serif;line-height:1.06;letter-spacing:-.03em}
+#frase{top:300px;font-size:${px(44)}px;color:${C.crema};opacity:0;animation:frase ${D}s ease infinite}
+#tuno{top:700px;font-size:${px(52)}px;color:${C.naranja};opacity:0;animation:tuno ${D}s ease infinite}
+#todavia{top:880px;font-size:${px(60)}px;color:${C.naranja};opacity:0;animation:todavia ${D}s ease infinite}
 
-/* Las tres frases, a la izquierda: son observaciones, no la voz de la marca.
-   Y ahora abren la pieza sin presentacion, como un acertijo. */
-#frases{position:absolute;left:${px(43)}px;right:${px(43)}px;top:${px(240)}px;z-index:4}
-#frases div{position:absolute;left:0;right:0;top:0;opacity:0;
-  font-family:'Inter Tight',sans-serif;font-weight:500;font-size:${px(26)}px;line-height:1.42;
-  color:${C.crema};text-wrap:pretty}
-${FRASES.map((_, i) => `#f${i}{animation:f${i} ${D}s ease infinite}`).join('')}
+/* Las cuatro. En flujo normal y no absolutas: asi cada una nace justo debajo
+   de la anterior sin que yo tenga que adivinar cuantas lineas ocupa ninguna. */
+#cuatro{position:absolute;left:${px(43)}px;right:${px(43)}px;top:240px;z-index:4}
+#cuatro div{opacity:0;margin-bottom:${px(11)}px;
+  font-family:'Young Serif',Georgia,serif;font-size:${px(32)}px;line-height:1.14;
+  letter-spacing:-.02em;color:${C.crema};text-wrap:pretty}
+${CUATRO.map((_, i) => `#c${i}{animation:c${i} ${D}s ease infinite}`).join('')}
 
-/* La frase entera y su latigazo. Centradas, una encima de otra y a la vez en
-   pantalla: «Tu no.» es una elipsis y necesita su antecedente delante. */
-#frase{position:absolute;left:${px(43)}px;right:${px(43)}px;top:${px(120)}px;
-  text-align:center;z-index:5;opacity:0;
-  font-family:'Young Serif',Georgia,serif;font-size:${px(44)}px;line-height:1.06;
-  letter-spacing:-.03em;color:${C.crema};animation:frase ${D}s ease infinite}
-
-#tuno,#todavia{position:absolute;left:${px(43)}px;right:${px(43)}px;
-  text-align:center;z-index:5;opacity:0;
-  font-family:'Young Serif',Georgia,serif;line-height:1.04;letter-spacing:-.035em}
-#tuno{top:${px(272)}px;font-size:${px(52)}px;color:${C.crema};animation:tuno ${D}s ease infinite}
-#todavia{top:${px(157)}px;font-size:${px(60)}px;color:${C.naranja};animation:todavia ${D}s ease infinite}
-
-/* El cierre, todo en la mitad de arriba: abajo esta el plato que el velo
-   acaba de descubrir, y taparlo seria apagar el gesto. */
-#aro{position:absolute;left:0;right:0;top:${px(250)}px;display:flex;justify-content:center;z-index:5;
+/* El cierre. La promesa abajo, bajo la silla vacía; la marca arriba, que con
+   el velo levantado es la zona más oscura que queda. */
+#aro{position:absolute;left:0;right:0;top:${Y_ARO}px;display:flex;justify-content:center;z-index:5;
   opacity:0;animation:aro ${D}s cubic-bezier(.3,1.4,.4,1) infinite}
-#firma{position:absolute;left:0;right:0;top:${px(360)}px;text-align:center;z-index:5;opacity:0;
-  font-family:'Inter Tight',sans-serif;font-weight:600;font-size:${px(17)}px;letter-spacing:.14em;
+#firma{position:absolute;left:0;right:0;top:${Y_FIRMA}px;text-align:center;z-index:5;opacity:0;
+  font-family:'Inter Tight',sans-serif;font-weight:600;font-size:${px(15)}px;letter-spacing:.02em;
   color:${C.crema};animation:firma ${D}s ease infinite}
-
-#cortina{position:absolute;left:0;right:0;top:0;height:52%;z-index:3;opacity:0;
-  /* Densa, y cortada justo donde empieza el plato (52% = y 998). Con menos
-     densidad el aro perdia la silueta contra la tabla y los platos; con mas
-     altura empezaria a apagar el plato, que es lo unico que no se puede
-     tocar. */
-  background:linear-gradient(180deg,rgba(20,52,42,.86) 0%,rgba(20,52,42,.74) 60%,rgba(20,52,42,0) 100%);
-  animation:cortina ${D}s ease infinite}
+/* Igual que en A: «aro.club · Caracas» juntos en el acento, no solo
+   el dominio. */
+#firma em{font-style:normal;color:${C.dominio}}
+.cierre{position:absolute;left:${px(24)}px;right:${px(24)}px;text-align:center;z-index:5;opacity:0;
+  font-family:'Young Serif',Georgia,serif;font-size:${px(24)}px;line-height:1.15;
+  letter-spacing:-.02em;color:${C.crema}}
+#cierre1{top:${Y_CIERRE1}px;animation:cierre1 ${D}s ease infinite}
+#cierre2{top:${Y_CIERRE2}px;animation:cierre2 ${D}s ease infinite}
 
 #grano{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:.06;mix-blend-mode:overlay;
   animation:grano 1s steps(1,end) infinite;
@@ -280,16 +280,18 @@ ${kf.join('\n')}
 
   <div id="foto"></div>
   <div id="velo"></div>
+  <div id="velo2"></div>
 
   <div id="frase">Ya sabemos con quién cenas el jueves.</div>
-  <div id="frases">${FRASES.map((f, i) => `<div id="f${i}">${f.html}</div>`).join('\n    ')}</div>
-
-  <div id="cortina"></div>
-
   <div id="tuno">Tú no.</div>
   <div id="todavia">Todavía.</div>
-  <div id="aro">${aro(C.crema, C.naranja, px(100))}</div>
-  <div id="firma">ARO CLUB · ARO.CLUB · CARACAS</div>
+
+  <div id="cuatro">${CUATRO.map((f, i) => `<div id="c${i}">${f.html}</div>`).join('\n    ')}</div>
+
+  <div class="cierre" id="cierre1">Seis desconocidos verificados,</div>
+  <div class="cierre" id="cierre2">una mesa, cada semana.</div>
+  <div id="aro">${aro(C.crema, C.naranja, px(72))}</div>
+  <div id="firma">Aro Club · <em>aro.club · Caracas</em></div>
 
   <div id="grano"></div>
 </div></div>
@@ -302,4 +304,4 @@ addEventListener('keydown',e=>{if(e.key==='1'){real=!real;ajusta()}});
 </script></body></html>`
 
 fs.writeFileSync(path.join(AQUI, 'reel-07-ya-sabemos.html'), html)
-console.log(`reel-07-ya-sabemos.html · ${D}s · velo baja en ${VELO_BAJA}s · escala de texto x${ESCALA}`)
+console.log(`reel-07-ya-sabemos.html · ${D}s · cierre dentro de la zona segura (${SEGURA_ARRIBA}–${SEGURA_ABAJO})`)
