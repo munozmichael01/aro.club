@@ -443,6 +443,27 @@ class Component extends DCLogic {
       ["35 a 50 USD", "35-50"],
       ["Más de 50 USD", "mas-50"],
     ],
+    // Cocinas de restaurante, no ingredientes: es lo que se puede buscar en un
+    // mapa. Pizza va aparte de italiana a proposito —una pizzeria y una
+    // trattoria son dos salidas distintas— y la parrilla aparte de las carnes
+    // por lo mismo.
+    comidas: [
+      ['Venezolana', 'venezolana'],
+      ['Parrilla y carnes', 'parrilla'],
+      ['Italiana', 'italiana'],
+      ['Pizza', 'pizza'],
+      ['Sushi y japonesa', 'japonesa'],
+      ['Hamburguesas', 'hamburguesas'],
+      ['Mediterránea', 'mediterranea'],
+      ['Española', 'espanola'],
+      ['Mexicana', 'mexicana'],
+      ['Peruana', 'peruana'],
+      ['China y asiática', 'asiatica'],
+      ['Mariscos', 'mariscos'],
+      ['Árabe', 'arabe'],
+      ['De mercado y vegetales', 'mercado'],
+    ],
+
     dieta: [
       ["Ninguna", "ninguna"],
       ["Vegetariano", "vegetariano"],
@@ -892,6 +913,9 @@ class Component extends DCLogic {
         preguntas: [
           { id: 'planes', corto: 'qué planes te interesan', tipo: 'multi', pregunta: '¿Qué planes te interesan?', ayuda: 'Hoy solo hay cenas. Lo demás lo abrimos según lo que pida la gente.', opciones: this.textos('planes') },
           { id: 'peso', corto: 'qué pesa más', tipo: 'unica', pregunta: 'En una cena, ¿qué pesa más para ti?', opciones: this.textos('peso') },
+          // Entre el «por qué vienes» y el «cuánto gastas»: primero qué te
+          // gusta, después cuánto. Al revés, el presupuesto tiñe la respuesta.
+          { id: 'comidas', corto: 'tus comidas', tipo: 'multi', min: 3, max: 3, pregunta: 'Elige tus 3 comidas favoritas', ayuda: 'Con esto elegimos el restaurante de tu fecha. No es una alergia: eso va en la última pregunta.', opciones: this.textos('comidas') },
           { id: 'gasto', corto: 'tu presupuesto', tipo: 'unica', pregunta: '¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?', ayuda: 'Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa, así que marcar de más solo hace que la noche te salga cara.', opciones: this.textos('gasto') },
         ]
       },
