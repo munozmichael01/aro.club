@@ -151,12 +151,15 @@ export async function GET() {
   const { data: fechas } = await admin
     .from('events')
     .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status')
-    // `locked` también, y esa es la novedad. Una fecha cerrada desaparecía de
-    // la agenda, y desaparecer es la peor forma de decir que algo pasó: quien
-    // llega desde una campaña ve una sola fecha y no sabe si el club está
-    // vivo. Cerrada y a la vista dice las dos cosas —esta ya no admite gente,
-    // la siguiente sí— y empuja a la siguiente, que es lo que se quiere.
-    .in('status', ['open', 'draft', 'locked'])
+    // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
+    // `draft`, así que una fecha cerrada o ya repartida DESAPARECÍA, y
+    // desaparecer es la peor forma de contar que algo pasó: quien llega desde
+    // una campaña ve una sola fecha y no sabe si el club está vivo. Verlas
+    // todas dice las dos cosas —estas ya no admiten gente, esta sí— y empuja
+    // a la que sí. Lo pasado no sale: para eso está el histórico.
+    //
+    // Cancelada fuera: una fecha que no se hace no es una fecha.
+    .neq('status', 'cancelled')
     .gte('starts_at', new Date().toISOString())
     .eq('city_slug', perfil.city_slug ?? 'caracas')
     .order('starts_at', { ascending: true })
@@ -330,7 +333,7 @@ export async function GET() {
       // «agotada» porque no lo está: aquí no hay cupo, las mesas se arman con
       // quien haya. Decir agotada sería lo primero que contamos que no es
       // verdad, y es justo lo que este producto no hace.
-      cerrada: f.status === 'locked',
+      cerrada: f.status !== 'open' && f.status !== 'draft',
       // Si ya está apuntada, la tarjeta lo dice en vez de ofrecerle
       // reservar otra vez.
       mia: mias.has(f.id),

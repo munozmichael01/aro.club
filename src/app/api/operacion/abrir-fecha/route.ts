@@ -49,17 +49,33 @@ export async function POST(request: Request) {
 
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
 
-  // Lo que ya pasó de `locked` no vuelve: si las mesas están repartidas,
-  // reabrir dejaría entrar gente a una fecha que ya tiene mesas hechas y
-  // nadie la volvería a repartir. Para eso está despublicar.
-  if (evento.status !== 'open' && evento.status !== 'locked') {
+  // Una fecha ya repartida TAMBIÉN se puede reabrir, y reabrirla no toca las
+  // mesas hechas: viven en `dinner_tables` y `table_members`, y el estado de
+  // la fecha no las mira. Lo que hace es volver a admitir gente; a quien
+  // entre después se le busca hueco con el rellenado o en el siguiente
+  // reparto. Cerrar la puerta por si acaso obligaba a despublicar la fecha
+  // entera —deshaciendo mesas buenas— para admitir a uno más.
+  //
+  // Lo cancelado sí se queda fuera: reabrir una fecha cancelada sería
+  // resucitarla a espaldas de quien ya recibió el aviso.
+  if (!['open', 'locked', 'matched'].includes(evento.status)) {
     return NextResponse.json(
       { error: `Esa fecha está en «${evento.status}» y esto solo abre y cierra.` },
       { status: 409 },
     )
   }
 
-  const nuevo = abierta ? 'open' : 'locked'
+  // Al cerrar, el estado sale de si la fecha TIENE MESAS, no de en qué estado
+  // está ahora. Mirando el estado actual, el viaje matched → open → locked
+  // dejaba una fecha con mesas publicadas marcada como si nunca se hubiera
+  // repartido: el panel dejaba de saberlo y `publicar` la habría vuelto a
+  // repartir encima. Lo comprobé haciendo el viaje de ida y vuelta.
+  const { count: mesas } = await admin
+    .from('dinner_tables')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', eventoId)
+
+  const nuevo = abierta ? 'open' : ((mesas ?? 0) > 0 ? 'matched' : 'locked')
   if (nuevo === evento.status) return NextResponse.json({ estado: evento.status })
 
   const { error } = await admin

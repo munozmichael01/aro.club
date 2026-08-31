@@ -131,6 +131,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Esa fecha ya cerró.' }, { status: 409 })
   }
 
+  // Y el cierre A MANO, que hasta ahora no lo miraba nadie. Esta ruta solo
+  // comprobaba el reloj, así que una fecha cerrada desde el panel seguía
+  // aceptando apuntados por API: la pantalla escondía el botón y el candado
+  // no existía. Un candado que solo está en la pantalla no es un candado.
+  if (evento.status !== 'open' && evento.status !== 'draft') {
+    return NextResponse.json(
+      { error: 'Esa fecha está cerrada. Mira la siguiente en tu inicio.' },
+      { status: 409 },
+    )
+  }
+
   // Solo zonas que se abrieron. Aceptar una que no existe esa noche la
   // dejaría fuera de todas las mesas sin que se entere.
   const { data: sedes } = await admin
