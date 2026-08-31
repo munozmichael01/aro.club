@@ -108,9 +108,9 @@
     "description": "Seis personas que no se conocen, verificadas una a una, en un restaurante que elegimos nosotros. Una vez por semana.",
     "offers": {
       "@type": "Offer",
-      "price": "8",
+      "price": "7",
       "priceCurrency": "USD",
-      "description": "Ocho dólares por puesto, pagados en bolívares a la tasa del día. No incluye lo que consumas."
+      "description": "Siete dólares por puesto, pagados en bolívares a la tasa del día. No incluye lo que consumas."
     }
   },
   {
@@ -122,7 +122,7 @@
         "name": "¿Qué incluye lo que pago?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Los 8 USD cubren el emparejamiento, la verificación de todo el grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio, como en cualquier salida: entre 20 y 35 USD según dónde sea. Nos dices tu tramo antes y elegimos el restaurante con el número más bajo de la mesa."
+          "text": "Los 7 USD cubren el emparejamiento, la verificación de todo el grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio, como en cualquier salida: entre 20 y 35 USD según dónde sea. Nos dices tu tramo antes y elegimos el restaurante con el número más bajo de la mesa."
         }
       },
       {
@@ -536,7 +536,7 @@
         <div>
           <div data-reveal="0" style="{{ eyebrow }}">LO QUE CUESTA</div>
           <div data-reveal="1" style="display:flex;align-items:baseline;gap:12px;margin-bottom:6px">
-            <span style="font:400 clamp(76px,12vw,148px)/0.86 'Young Serif',Georgia,serif;letter-spacing:-.05em;color:#14342A;font-variant-numeric:tabular-nums">8</span>
+            <span style="font:400 clamp(76px,12vw,148px)/0.86 'Young Serif',Georgia,serif;letter-spacing:-.05em;color:#14342A;font-variant-numeric:tabular-nums">{{ precioCifra }}</span>
             <span style="font:500 clamp(20px,2.2vw,28px)/1 'Inter Tight',sans-serif;color:#8F4515">USD</span>
           </div>
           <div data-reveal="2" style="font:400 clamp(19px,2vw,25px)/1.3 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A;max-width:18ch">Tu plaza en la mesa, pagada en bolívares a la tasa del día.</div>
@@ -545,7 +545,7 @@
 
         <div data-reveal="2">
           <div style="border-radius:26px;background:#FFFBF0;padding:clamp(22px,2.6vw,30px)">
-            <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:18px">QUÉ CUBREN ESOS 8 USD</div>
+            <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:18px">QUÉ CUBREN ESOS {{ precioTexto }}</div>
             <div style="display:flex;flex-direction:column;gap:0">
               <sc-for list="{{ cubre }}" as="c" hint-placeholder-count="3">
                 <div style="display:flex;gap:13px;align-items:flex-start;padding:13px 0;border-bottom:1px solid rgba(20,52,42,.11)">
@@ -989,7 +989,16 @@ class Component extends DCLogic {
     const marco = (rot, extra) => 'background:#FFFBF0;padding:9px 9px 0;border-radius:12px;box-shadow:0 16px 38px -20px rgba(20,52,42,.48);transform:rotate(' + rot + ');' + (extra || '');
 
     const marquesina = [];
-    const frases = ['8 USD la plaza', 'tu consumo va aparte', 'identidad verificada', 'sin perfiles', 'sin swipe', 'todo se abre a las 12:00'];
+    // El precio sale de la regla compartida, no escrito aqui: estaba en
+    // cuatro sitios solo en esta pantalla y bajarlo de 8 a 7 obligaba a
+    // acertar en los cuatro.
+    const precioTexto = AroReglas.precioTexto();
+    // La cifra suelta, para el bloque grande donde el numero y las siglas van
+    // en elementos distintos. Ahi el «8» no lo encontraba ningun grep de
+    // «8 USD» y se quedo atras al bajar el precio: lo caze mirando la pagina,
+    // no el fichero.
+    const precioCifra = String(AroReglas.PRECIO_USD);
+    const frases = [precioTexto + ' la plaza', 'tu consumo va aparte', 'identidad verificada', 'sin perfiles', 'sin swipe', 'todo se abre a las 12:00'];
     for (let k = 0; k < 2; k++) frases.forEach((f) => marquesina.push({ texto: f }));
 
     // ── los cuatro pasos: el único bloque numerado de la página ──────
@@ -1091,7 +1100,12 @@ class Component extends DCLogic {
       : 'tu zona';
 
     const faqDefs = [
-      ['¿Qué incluye lo que pago?', 'Los 8 USD cubren el emparejamiento, la verificación de todo el grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio, como en cualquier salida: entre 20 y 35 USD según dónde sea. Nos dices tu tramo antes y elegimos el restaurante con el número más bajo de la mesa.'],
+      // Literal, no la variable: el comprobador cruza esta lista con el
+      // JSON-LD de arriba palabra por palabra —para que Google y la pantalla
+      // no digan cosas distintas— y una concatenacion rompe esa comparacion.
+      // Son los dos unicos sitios donde el precio sigue escrito, y estan
+      // atados entre si por el comprobador.
+      ['¿Qué incluye lo que pago?', 'Los 7 USD cubren el emparejamiento, la verificación de todo el grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio, como en cualquier salida: entre 20 y 35 USD según dónde sea. Nos dices tu tramo antes y elegimos el restaurante con el número más bajo de la mesa.'],
       ['¿Y si no me cae bien nadie?', 'Pasa, y no es un fracaso. Son dos horas, a las nueve estás libre y no le debes nada a nadie. Nos lo cuentas después y eso entra en el emparejamiento de la próxima: qué no funcionó y con quién no volver a sentarte.'],
       ['¿Puedo ir con un amigo?', 'No. Todo el grupo son desconocidos entre sí, incluidos ustedes dos. Con una pareja conocida en la mesa el resto se convierte en público, y eso rompe la noche para los demás.'],
       ['¿Cómo sé que las otras personas son reales?', 'Porque pasaron por lo mismo que tú: documento de identidad, una foto y una revisión humana que compara las dos. En la pantalla de tu mesa aparece explícito que todo el grupo tiene identidad verificada y edad confirmada.'],
@@ -1169,6 +1183,7 @@ class Component extends DCLogic {
     const nombreCiudad = this.state.ciudad >= 0 ? ciudades[this.state.ciudad].nombre : 'tu ciudad';
 
     return {
+      precioTexto, precioCifra,
       // Hasta que el servidor no contesta no se pinta ninguno de los dos:
       // pintar "Entrar" mientras se sabe seria enseñar la puerta a quien ya
       // esta dentro, y corregirlo medio segundo despues se lee como un fallo.

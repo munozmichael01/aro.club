@@ -6,6 +6,7 @@ import { firmar } from '@/lib/lead-token'
 import { enlaceDeMapa } from '@/lib/mapa'
 import { SITIO } from '@/lib/remitente'
 import { vozDe } from '@/lib/reglas'
+import { precioTexto } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 
@@ -220,6 +221,11 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     : `${SITIO}/baja?correo=${encodeURIComponent(a)}&token=${encodeURIComponent(firmarBaja(a))}`
 
   const base: Valores = {
+    // El precio, de la regla compartida y no escrito en la plantilla. Estaba a
+    // mano en «abrimos tu zona» y en cuatro sitios de la landing: bajarlo
+    // obligaba a acertar en los siete, y el que se escape deja un correo
+    // diciendo un precio y el cobro haciendo otro.
+    precio: precioTexto(),
     trato,
     correo: a,
     enlaceAjustes,

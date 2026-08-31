@@ -351,6 +351,51 @@
       return m ? m[3] + '/' + m[2] + '/' + m[1] : ''
     },
 
+    /**
+     * EL PRECIO DE UN PUESTO, en un solo sitio.
+     *
+     * Estaba escrito a mano en siete: cuatro veces en la landing, dos en Mi
+     * cuenta, una en el correo de «abrimos tu zona» y dos como respaldo en la
+     * ruta del pago. Bajarlo de 8 a 7 obligaba a acertar en los siete y
+     * cualquiera que se escape deja la pantalla diciendo un precio y el cobro
+     * haciendo otro — que es la peor forma de equivocarse que tiene esto.
+     *
+     * La verdad operativa sigue siendo `events.price_usd`: cada fecha puede
+     * tener el suyo y es lo que se cobra. Esto es lo que se ENSEÑA cuando se
+     * habla del precio en general, sin una fecha delante.
+     */
+    /**
+     * Las cocinas. UN catalogo, no dos.
+     *
+     * Lo usan la pregunta «elige tus 3 comidas favoritas» del cuestionario y
+     * la ficha del local, y cruzar las dos es lo que dice que restaurante pide
+     * la bolsa de una fecha. Con dos listas paralelas —una en la pantalla del
+     * alta y otra en la del cuestionario— se desincronizan a su ritmo y el
+     * cruce empieza a fallar sin que nada avise, que es exactamente lo que ya
+     * paso aqui con las zonas.
+     */
+    COCINAS: [
+      ['Venezolana', 'venezolana'],
+      ['Parrilla y carnes', 'parrilla'],
+      ['Italiana', 'italiana'],
+      ['Pizza', 'pizza'],
+      ['Sushi y japonesa', 'japonesa'],
+      ['Hamburguesas', 'hamburguesas'],
+      ['Mediterránea', 'mediterranea'],
+      ['Española', 'espanola'],
+      ['Mexicana', 'mexicana'],
+      ['Peruana', 'peruana'],
+      ['China y asiática', 'asiatica'],
+      ['Mariscos', 'mariscos'],
+      ['Árabe', 'arabe'],
+      ['De mercado y vegetales', 'mercado'],
+    ],
+
+    PRECIO_USD: 7,
+    precioTexto: function () {
+      return this.PRECIO_USD + ' USD'
+    },
+
     aE164: function (valor) {
       var v = String(valor == null ? '' : valor).trim()
       var digitos = v.replace(/\D/g, '')

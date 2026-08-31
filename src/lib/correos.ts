@@ -64,7 +64,7 @@ export type Correo =
   // Entrega 16: quien pagó y no se sentó. `publicar` encolaba solo los
   // `mesa_asignada` de los sentados y no había ninguna rama para el resto:
   // el panel prometía dos veces «se les avisa hoy» y no salía nada. Alguien
-  // pagó ocho dólares y se quedó fuera sin enterarse.
+  // pagó su puesto y se quedó fuera sin enterarse.
   | 'sin_mesa'
   // Entrega 17: la mesa cambió DESPUÉS de habérsela contado. No vale reenviar
   // `mesa_asignada`: esa dice «TU MESA · 04» como novedad, y mandarla dos

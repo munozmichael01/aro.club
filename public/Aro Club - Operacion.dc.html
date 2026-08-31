@@ -2291,6 +2291,11 @@ class Component extends DCLogic {
       if (l.forma) trozos.push(FORMA[l.forma] || l.forma);
       if (l.ruidoTexto) trozos.push(l.ruidoTexto.toLowerCase());
       if (l.metro) trozos.push(l.metro + (l.metroMinutos != null ? ' · ' + l.metroMinutos + ' min a pie' : ''));
+      // Que se come. El nombre lo resuelve la ruta y no esta pantalla: aqui no
+      // se carga `reglas.js`, asi que traducirlo en el navegador dejaba los
+      // codigos en crudo. Va delante del ruido y del metro porque es lo
+      // primero que se mira al elegir sitio para una mesa.
+      if ((l.cocinasTexto || []).length) trozos.unshift(l.cocinasTexto.join(', '));
       return {
         id: l.id,
         nombre: l.nombre,

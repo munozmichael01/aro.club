@@ -719,13 +719,13 @@ class Component extends DCLogic {
         abierta,
         horas,
         cargo: 'Tu puesto en esta fecha',
-        precio: '8 USD en bolívares',
+        precio: AroReglas.precioTexto() + ' en bolívares',
         nota: 'Cubre el emparejamiento, la verificación del grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
         textoConfirmar: this.state.reservandoYa
           ? 'Apuntándote'
           : (d && d.verif !== 'ok'
               ? 'Verifica tu identidad primero'
-              : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : '8 USD')),
+              : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : AroReglas.precioTexto())),
         botonConfirmar: 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
         abrir: cerrada ? (() => {}) : (() => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0 }))),
         // Reservar de verdad. Antes solo se marcaba en la pantalla: al

@@ -39,6 +39,9 @@ type Api = {
   primerFallo: (valores: Partial<Record<Campo, unknown>>) => Campo | null
   campoDe: (definicion: { tipo?: string; prefijo?: string; largo?: number }) => Campo | null
   aE164: (valor: unknown) => string
+  PRECIO_USD: number
+  precioTexto: () => string
+  COCINAS: string[][]
   REGLAS: Record<Campo, { etiqueta: string; ayuda?: string }>
   vozDe: (formato: string | null | undefined) => {
     unidad: string; unidades: string; Unidad: string; Unidades: string
@@ -60,3 +63,18 @@ export const REGLAS = api.REGLAS
 /** Mesa o grupo, según el formato. La tabla vive en public/reglas.js. */
 export const vozDe = api.vozDe
 export type { Campo }
+
+/**
+ * El precio de un puesto para ENSEÑARLO. La verdad de lo que se cobra es
+ * `events.price_usd` de cada fecha; esto es lo que se dice cuando se habla del
+ * precio sin una fecha delante, y el respaldo si una fecha no lo trae.
+ */
+export const PRECIO_USD: number = api.PRECIO_USD
+export const precioTexto = api.precioTexto.bind(api)
+
+/** El catálogo de cocinas, uno solo: lo usan el cuestionario y la ficha del local. */
+export const COCINAS = api.COCINAS
+export const nombreDeCocina = (codigo: string): string => {
+  const par = api.COCINAS.find((c) => c[1] === codigo)
+  return par ? par[0] : codigo
+}

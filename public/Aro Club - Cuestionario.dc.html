@@ -447,6 +447,11 @@ class Component extends DCLogic {
     // mapa. Pizza va aparte de italiana a proposito —una pizzeria y una
     // trattoria son dos salidas distintas— y la parrilla aparte de las carnes
     // por lo mismo.
+    // La lista literal, como las demas: `comprobar-cuestionario.mjs` extrae
+    // este bloque y lo evalua, y una referencia a otro fichero lo rompe. El
+    // catalogo esta ademas en `AroReglas.COCINAS` para la ficha del local, y
+    // el comprobador vigila que los tres —esta lista, la regla y la base—
+    // digan lo mismo.
     comidas: [
       ['Venezolana', 'venezolana'],
       ['Parrilla y carnes', 'parrilla'],

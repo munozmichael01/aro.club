@@ -5,6 +5,7 @@ import { anotar } from '@/lib/auditoria'
 import { FORMATOS_DE_FAMILIA, familiaDe } from '@/lib/formatos'
 import { buscarSitio } from '@/lib/places'
 import { exigirOps } from '@/lib/ops'
+import { nombreDeCocina } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -37,6 +38,10 @@ const alta = z.object({
   familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee'])).min(1),
   aforo: z.number().int().min(1).max(20),
   ruido: z.number().int().min(1).max(3),
+  // Qué se come. Los mismos códigos que la pregunta «comidas» del
+  // cuestionario: cruzar los dos es lo que dice qué restaurante pide la bolsa
+  // de una fecha, y con dos catálogos paralelos el cruce falla en silencio.
+  cocinas: z.array(z.string().min(1).max(40)).max(6).optional(),
   // Tres columnas que el esquema define desde el 10 de agosto y que el alta
   // no pedía: se guardaban vacías y nadie las volvía a tocar.
   //
@@ -167,7 +172,7 @@ export async function GET() {
 
   const { data: locales, error } = await admin
     .from('restaurants')
-    .select('id, name, zone_slug, address, maps_url, facade_photo_path, contact_name, contact_phone, fixed_menu_usd, avg_check_usd, commission_pct, noise_level, max_tables, is_active, formats, created_at, metro_nearby, metro_minutes, table_shape, open_days')
+    .select('id, name, zone_slug, address, maps_url, facade_photo_path, contact_name, contact_phone, fixed_menu_usd, avg_check_usd, commission_pct, noise_level, max_tables, is_active, formats, created_at, metro_nearby, metro_minutes, table_shape, open_days, cuisines')
     .order('name')
 
   if (error) {
@@ -257,6 +262,12 @@ export async function GET() {
       gastoDeclarado: l.avg_check_usd != null ? Number(l.avg_check_usd) : null,
       comision: l.commission_pct != null ? Number(l.commission_pct) : null,
       ruido: l.noise_level,
+      // Las cocinas. El CÓDIGO para cruzar contra `profile_traits.cuisines`,
+      // y el nombre ya resuelto para pintar: esta pantalla no carga
+      // `reglas.js`, así que si la traducción viviera allí saldrían los
+      // códigos en crudo — que es lo que pasó al probarlo.
+      cocinas: (l as { cuisines?: string[] | null }).cuisines ?? [],
+      cocinasTexto: ((l as { cuisines?: string[] | null }).cuisines ?? []).map(nombreDeCocina),
       // Sin medir NO es «se puede conversar». Caer en el nivel 1 por defecto
       // es inventarse que un sitio es tranquilo, y eso sienta una mesa que
       // viene a conversar en un sitio donde no se oyen.
@@ -400,6 +411,7 @@ export async function POST(request: Request) {
       address: d.direccion?.trim() || '',
       max_tables: d.aforo,
       noise_level: d.ruido,
+      ...(d.cocinas?.length ? { cuisines: [...new Set(d.cocinas)] } : {}),
       formats: formatos as never,
       metro_nearby: d.metro?.trim() || null,
       metro_minutes: d.metroMinutos ?? null,

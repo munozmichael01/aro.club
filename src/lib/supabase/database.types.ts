@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   graphql_public: {
     Tables: {
@@ -1910,6 +1910,7 @@ export type Database = {
           budget_tier: number | null
           computed_at: string
           conversation_topics: string[]
+          cuisines: string[]
           dealbreakers: string[]
           dietary: string[]
           dining_focus: string | null
@@ -1935,6 +1936,7 @@ export type Database = {
           budget_tier?: number | null
           computed_at?: string
           conversation_topics?: string[]
+          cuisines?: string[]
           dealbreakers?: string[]
           dietary?: string[]
           dining_focus?: string | null
@@ -1960,6 +1962,7 @@ export type Database = {
           budget_tier?: number | null
           computed_at?: string
           conversation_topics?: string[]
+          cuisines?: string[]
           dealbreakers?: string[]
           dietary?: string[]
           dining_focus?: string | null
@@ -2261,6 +2264,7 @@ export type Database = {
           contact_name: string | null
           contact_phone: string | null
           created_at: string
+          cuisines: string[]
           deactivated_at: string | null
           deactivated_by: string | null
           facade_photo_path: string | null
@@ -2296,6 +2300,7 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          cuisines?: string[]
           deactivated_at?: string | null
           deactivated_by?: string | null
           facade_photo_path?: string | null
@@ -2331,6 +2336,7 @@ export type Database = {
           contact_name?: string | null
           contact_phone?: string | null
           created_at?: string
+          cuisines?: string[]
           deactivated_at?: string | null
           deactivated_by?: string | null
           facade_photo_path?: string | null

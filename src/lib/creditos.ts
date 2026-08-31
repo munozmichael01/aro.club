@@ -13,7 +13,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
  *
  * Se anotan DOS apuntes y no uno: la compra y el cargo, neto cero.
  *
- *   pack_purchase  +1   pagó ocho dólares y eso compra un puesto
+ *   pack_purchase  +1   pagó su puesto y eso compra una silla
  *   event_charge   -1   y lo gasta en esta fecha, ahora mismo
  *
  * Con uno solo el saldo quedaría en -1 para quien pagó, que es una deuda que

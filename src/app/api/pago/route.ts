@@ -5,6 +5,7 @@ import { anotarPagoDeEvento } from '@/lib/creditos'
 import { campoDe, valido } from '@/lib/reglas'
 import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
 import { datosDePago } from '@/lib/datos-de-pago'
+import { PRECIO_USD } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { encolar } from '@/lib/correos'
@@ -118,7 +119,7 @@ export async function GET(request: Request) {
   const nombreZona = zona?.name ?? null
 
   const tasa = await tasaDelDia(admin)
-  const usd = Number(evento.price_usd ?? 8)
+  const usd = Number(evento.price_usd ?? PRECIO_USD)
 
   // Los céntimos son un discriminador, no un capricho: hacen que monto y
   // fecha identifiquen el pago casi unívocamente contra el estado de cuenta
@@ -370,7 +371,7 @@ export async function POST(request: Request) {
 
   const tasa = await tasaDelDia(admin)
   if (!tasa && m.moneda === 'VES') {
-    // Sin tasa no se puede decir cuánto son ocho dólares hoy, y cobrar con
+    // Sin tasa no se puede decir cuánto son siete dólares hoy, y cobrar con
     // la de ayer es cobrar mal.
     return NextResponse.json(
       { error: 'No tenemos la tasa de hoy. Inténtalo en un rato.' },
@@ -378,7 +379,7 @@ export async function POST(request: Request) {
     )
   }
 
-  const usd = Number(evento.price_usd ?? 8)
+  const usd = Number(evento.price_usd ?? PRECIO_USD)
   const ahora = new Date().toISOString()
 
   // Vale la tasa que VIO, no la que hay cuando vuelve.

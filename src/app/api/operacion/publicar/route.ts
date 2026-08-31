@@ -349,7 +349,7 @@ export async function POST(request: Request) {
   //
   // Esta rama no existía: se encolaban los `mesa_asignada` de los sentados y
   // del resto no se decía nada, mientras el panel prometía dos veces «se les
-  // avisa hoy». Alguien pagó ocho dólares, se quedó fuera y se enteró de que
+  // avisa hoy». Alguien pagó su puesto, se quedó fuera y se enteró de que
   // no tenía mesa el jueves a mediodía, viendo que no le llegaba nada.
   //
   // Va aquí y no en el reparto porque hasta que no se PUBLICA no es verdad:
