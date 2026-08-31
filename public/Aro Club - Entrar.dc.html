@@ -238,7 +238,13 @@ class Component extends DCLogic {
     const dest = destinoDelServidor || '/cuenta';
     if (dest !== '/cuenta') return dest;
     const v = new URLSearchParams(location.search).get('volver') || '';
-    return /^\/[A-Za-z0-9\-\/#]*$/.test(v) && v.slice(0, 2) !== '//' ? v : dest;
+    // Rutas de esta casa y nada mas. Tiene que admitir la query —/pago sin
+    // su `?evento=` vuelve a «Falta la fecha»— pero no dos barras al principio
+    // (eso es otro dominio), ni dos puntos (eso es un esquema como javascript:
+    // o https:), ni un salto de linea.
+    const propia = v.charAt(0) === '/' && v.slice(0, 2) !== '//'
+      && v.indexOf(':') === -1 && !/[\s\\]/.test(v);
+    return propia ? v : dest;
   }
 
   renderVals() {

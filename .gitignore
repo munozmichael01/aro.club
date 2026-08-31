@@ -97,3 +97,19 @@ docs/referencias-reels/
 
 .DS_Store
 reel/polaroids/
+
+# El repo es CODIGO. Los vídeos, las referencias de la competencia y las fotos
+# de las entregas no arrancan nada ni se despliegan: pesaban 220 MB solo en
+# grabaciones de pantalla, y eso lo clona Vercel en cada despliegue.
+#
+# Lo que SI se queda: `public/` entero —esas fotos las sirve la plataforma— y
+# los .md de docs/, que son el porqué de las decisiones.
+docs/Vídeos para carrousels/
+docs/referencias-carrousels/
+docs/competencia/
+docs/**/*.jpg
+docs/**/*.jpeg
+docs/**/*.png
+docs/**/*.mp4
+docs/**/*.MP4
+docs/**/*.mov

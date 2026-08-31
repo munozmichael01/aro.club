@@ -362,7 +362,12 @@ class Component extends DCLogic {
         const primero = (d.metodos || []).findIndex((m) => m.activo);
         this.setState({ datos: d, metodo: primero < 0 ? 0 : primero, fase: fase });
       })
-      .catch(() => { window.location.href = '/entrar'; });
+      .catch(() => { // Al login DICIENDO a donde ibas. Sin esto, quien llega desde un correo
+      // —«Ver mi reserva», «Sube tu cedula», «Ver mi mesa»— aterriza en el
+      // login y ahi se corta el hilo: entra, y acaba en la pantalla de
+      // siempre en vez de en lo que venia a ver. Son seis destinos distintos
+      // en los correos y cuatro pantallas rebotaban igual.
+      window.location.href = '/entrar?volver=' + encodeURIComponent(location.pathname + location.search + location.hash); });
   }
 
   // El reporte. El puesto se aparta AQUI, antes de que nadie concilie.

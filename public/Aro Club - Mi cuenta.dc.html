@@ -289,7 +289,7 @@ class Component extends DCLogic {
       // puede no ser su reserva. Lo que se pierde no es un clic, es el hilo.
       .catch(() => {
         this.setState({ sinCuenta: true });
-        window.location.href = '/entrar?volver=' + encodeURIComponent(location.pathname + location.hash);
+        window.location.href = '/entrar?volver=' + encodeURIComponent(location.pathname + location.search + location.hash);
       });
 
     fetch('/api/mis-exclusiones')
