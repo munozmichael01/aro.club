@@ -28,6 +28,9 @@ export type Accion =
   | 'pago_no_cuadra'
   | 'fecha_abierta'
   | 'fecha_cancelada'
+  // Cerrar una fecha a mano. No es cancelarla —quien está apuntado sigue
+  // apuntado y la cena se hace— es dejar de admitir gente nueva.
+  | 'fecha_cerrada'
   // La escribe un DISPARADOR de `events`, no una ruta: borrar una fecha se
   // hace con la clave de servicio y no pasa por el panel.
   | 'fecha_borrada'

@@ -662,7 +662,8 @@ class Component extends DCLogic {
         a.zonas.join(' o ') || 'Zona por confirmar',
         a.apuntados,
         a.id,
-        a.mia
+        a.mia,
+        !!a.cerrada
       ];
     });
     const filtrados = crudos.filter((c) => this.state.filtro === 0 || c[1] === tipos[this.state.filtro]);
@@ -673,6 +674,11 @@ class Component extends DCLogic {
       const clave = c[1] + c[2];
       // Lo dice el servidor, no una marca local que se pierde al recargar.
       const mia = !!c[6];
+      // Cerrada: se ve pero no se puede reservar. Antes desaparecia de la
+      // agenda, y quien llega desde una campana veia una sola fecha sin saber
+      // si el club esta vivo. Verla cerrada dice las dos cosas y empuja a la
+      // siguiente. No pone «agotada»: aqui no hay cupo.
+      const cerrada = !!c[7];
       const abierta = this.state.reservando === clave;
       const m = marcas[c[1]];
       // La hora REAL de la fecha, una sola. Habia dos opciones por formato
@@ -693,19 +699,21 @@ class Component extends DCLogic {
       let g = semanas.find((x) => x.semana === c[0]);
       if (!g) { g = { semana: c[0], eventos: [] }; semanas.push(g); }
       g.eventos.push({
-        tipo: c[1], cuando: c[2], zona: c[3], glifo: mia ? '✓' : m[0],
+        tipo: c[1], cuando: c[2], zona: c[3], glifo: cerrada ? '·' : (mia ? '✓' : m[0]),
         enlace: '/',
-        estado: mia
+        estado: cerrada
+          ? (mia ? 'Ya estás apuntada · cerrada' : 'Cerrada · ' + n + (n === 1 ? ' apuntado' : ' apuntados'))
+          : mia
           ? 'Ya estás apuntada'
           : (n >= 6
             ? n + (n === 1 ? ' apuntado · ' : ' apuntados · ') + Math.ceil(n / 6) + (Math.ceil(n / 6) === 1 ? ' mesa' : ' mesas')
             : n + (n === 1 ? ' apuntado · ' : ' apuntados · ') + ((6 - n) === 1 ? 'falta 1' : 'faltan ' + (6 - n)) + ' para la primera mesa'),
-        estadoEstilo: 'font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (mia ? '#1B5138' : (va ? '#1B5138' : '#8F4515')) + ';white-space:nowrap',
-        caja: 'display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;border-radius:22px;padding:clamp(15px,2vw,18px);cursor:' + (mia ? 'default' : 'pointer') + ';background:' + (mia ? 'transparent' : (abierta ? '#F2E9D5' : '#FFFBF0')) + ';border:1px solid ' + (mia ? '#1B5138' : 'transparent'),
+        estadoEstilo: 'font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (cerrada ? '#566A5D' : (mia ? '#1B5138' : (va ? '#1B5138' : '#8F4515'))) + ';white-space:nowrap',
+        caja: 'display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;border-radius:22px;padding:clamp(15px,2vw,18px);opacity:' + (cerrada ? '.58' : '1') + ';cursor:' + (mia || cerrada ? 'default' : 'pointer') + ';background:' + (mia ? 'transparent' : (abierta ? '#F2E9D5' : '#FFFBF0')) + ';border:1px solid ' + (mia ? '#1B5138' : 'transparent'),
         icono: 'flex:0 0 auto;width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 15px/1 \'Inter Tight\',sans-serif;background:' + (mia ? '#1B5138' : m[2]) + ';color:' + (mia ? '#FAF3E4' : m[1]),
-        barraFondo: 'position:relative;display:' + (mia ? 'none' : 'block') + ';flex:1;max-width:132px;height:5px;border-radius:999px;background:rgba(20,52,42,.13);overflow:hidden',
+        barraFondo: 'position:relative;display:' + (mia || cerrada ? 'none' : 'block') + ';flex:1;max-width:132px;height:5px;border-radius:999px;background:rgba(20,52,42,.13);overflow:hidden',
         barra: 'position:absolute;left:0;top:0;bottom:0;width:' + Math.min(100, Math.round((n / 6) * 100)) + '%;border-radius:999px;background:' + (va ? '#1B5138' : '#8F4515'),
-        flecha: 'flex:0 0 auto;width:34px;height:34px;border-radius:999px;display:' + (mia ? 'none' : 'flex') + ';background:' + (abierta ? '#8F4515' : '#14342A') + ';color:#FAF3E4;align-items:center;justify-content:center;font:500 14px/1 \'Inter Tight\',sans-serif;margin-top:2px;transition:background 180ms ease',
+        flecha: 'flex:0 0 auto;width:34px;height:34px;border-radius:999px;display:' + (mia || cerrada ? 'none' : 'flex') + ';background:' + (abierta ? '#8F4515' : '#14342A') + ';color:#FAF3E4;align-items:center;justify-content:center;font:500 14px/1 \'Inter Tight\',sans-serif;margin-top:2px;transition:background 180ms ease',
         iconoFlecha: abierta ? '×' : '→',
         envoltorio: 'border-radius:22px;overflow:hidden;background:' + (abierta ? '#F2E9D5' : 'transparent'),
         abierta,
@@ -719,7 +727,7 @@ class Component extends DCLogic {
               ? 'Verifica tu identidad primero'
               : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : '8 USD')),
         botonConfirmar: 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
-        abrir: () => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0 })),
+        abrir: cerrada ? (() => {}) : (() => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0 }))),
         // Reservar de verdad. Antes solo se marcaba en la pantalla: al
         // recargar desaparecia, y en la base no habia nada.
         confirmar: () => {

@@ -705,6 +705,13 @@
                     <div style="{{ avisoVerCaja }}">{{ avisoVer }}</div>
                   </sc-if>
 
+                  <sc-if value="{{ puedeAbrirCerrar }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;border-radius:22px;background:#FAF3E4;padding:16px 18px">
+                      <button onClick="{{ abrirCerrar }}" style="{{ botonAbrirCerrar }}">{{ textoAbrirCerrar }}</button>
+                      <span style="flex:1;min-width:220px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ notaAbrirCerrar }}</span>
+                    </div>
+                  </sc-if>
+
                   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px">
                     <sc-for list="{{ verMetricas }}" as="m" hint-placeholder-count="4">
                       <div style="border-radius:22px;background:#FAF3E4;padding:16px 18px">
@@ -1518,6 +1525,13 @@ class Component extends DCLogic {
    * quien decide si una reserva cancelada admite la marca, y pintar aqui lo
    * que creemos que paso dejaria la pantalla diciendo una cosa y la base otra.
    */
+  /** Abrir o cerrar una fecha. Recarga: el estado lo decide el servidor. */
+  abrirCerrarFecha(eventoId, abierta) {
+    if (!eventoId) return;
+    this.mandar('/api/operacion/abrir-fecha', { eventoId: eventoId, abierta: abierta })
+      .then((r) => { if (r.ok) this.cargarFechas && this.cargarFechas(); });
+  }
+
   marcarAsistencia(reservaId, vinoAhora) {
     if (!reservaId) return;
     const siguiente = vinoAhora === 'pendiente' ? true : vinoAhora === 'si' ? false : null;
@@ -3362,6 +3376,24 @@ class Component extends DCLogic {
             // Sin punto al final: `horaTexto` ya devuelve «12:00 p.m.» con el
             // suyo, y sumarle otro daba «p.m..».
             + ' La revelación es a las ' + horaTexto(cruda.revelaEn),
+          // Abrir y cerrar a mano. Hasta ahora una fecha solo se cerraba sola
+          // al llegar su hora, y hace falta poder decirlo antes: la primera
+          // campaña manda a todo el mundo a UNA fecha, y la de la semana en
+          // curso tiene que dejar de recibir apuntados aunque falten días.
+          //
+          // No es un cupo. Se cierra la fecha entera, que es decisión de
+          // operación; dentro de una fecha abierta no se limita a nadie.
+          verCerrada: cruda.estado === 'locked',
+          textoAbrirCerrar: cruda.estado === 'locked' ? 'Volver a abrirla' : 'Cerrar esta fecha',
+          notaAbrirCerrar: cruda.estado === 'locked'
+            ? 'Está cerrada: se ve en Inicio como «Cerrada» y no admite gente nueva. Quien ya estaba apuntado sigue apuntado.'
+            : 'Cerrarla deja de admitir gente nueva. No cancela nada: quien ya está apuntado sigue, y la cena se hace igual.',
+          puedeAbrirCerrar: cruda.estado === 'open' || cruda.estado === 'locked',
+          botonAbrirCerrar: 'display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;'
+            + 'border:1px solid ' + (cruda.estado === 'locked' ? '#1B5138' : '#8F4515') + ';background:transparent;'
+            + 'color:' + (cruda.estado === 'locked' ? '#1B5138' : '#8F4515') + ';'
+            + 'font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+          abrirCerrar: () => this.abrirCerrarFecha(cruda.id, cruda.estado !== 'locked' ? false : true),
           verMetricas: [
             ['APUNTADOS', String(f.apuntados), f.zonas.length === 1 ? 'En 1 zona' : 'En ' + f.zonas.length + ' zonas', null],
             ['CIERRA EN', cierra, cierra === 'CERRADA' ? 'No entra nadie más' : 'Después ya no se apunta nadie', cierra === 'CERRADA' ? '#8F4515' : null],
