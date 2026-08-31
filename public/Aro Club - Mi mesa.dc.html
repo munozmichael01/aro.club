@@ -85,6 +85,10 @@
         </div>
 
         <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:20px;max-width:46ch;text-wrap:pretty">Cenas con cinco personas. Te avisamos por correo en cuanto se abra.</div>
+
+        <sc-if value="{{ sePuedeCancelar }}" hint-placeholder-val="{{ true }}">
+          <a href="/cancelar" style="{{ enlaceCancelar }}">Cancelar mi puesto</a>
+        </sc-if>
       </div>
     </sc-if>
 
@@ -169,6 +173,10 @@
           <div style="font:400 clamp(21px,2.4vw,25px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Al llegar</div>
           <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:9px;max-width:46ch;text-wrap:pretty">{{ textoLlegada }}</div>
         </div>
+
+        <sc-if value="{{ sePuedeCancelar }}" hint-placeholder-val="{{ true }}">
+          <a href="/cancelar" style="{{ enlaceCancelar }}">Cancelar mi puesto</a>
+        </sc-if>
       </div>
     </sc-if>
 
@@ -623,6 +631,15 @@ class Component extends DCLogic {
       // veía medio segundo de "00:00:00" y una cena sin fecha: números que
       // no son de nadie, y el primer golpe de vista es justo el que cuenta.
       esCerrada: !!dt && f === 0, esAbierta: !!dt && f === 1, esPasada: !!dt && f === 2,
+      // Cancelar existia solo en Inicio. Quien entra por el correo cae aqui,
+      // y desde aqui no habia forma de soltar el puesto: habia que adivinar
+      // que estaba en otra pantalla. El criterio es el mismo que alli —solo
+      // lo vivo se cancela— y el destino tambien, /cancelar, que es donde
+      // vive la regla de las 24 horas y el credito.
+      sePuedeCancelar: !!dt && f !== 2 && !dt.cancelada && dt.estado !== 'cancelled',
+      enlaceCancelar: 'display:inline-block;margin-top:clamp(20px,2.8vw,26px);padding:6px 0;'
+        + 'font:500 14px/1.4 \'Inter Tight\',sans-serif;color:#8F4515;'
+        + 'text-decoration:underline;text-underline-offset:5px',
 
       // --- el estado vacio, con sus tres razones -------------------------
       //

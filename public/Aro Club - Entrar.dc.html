@@ -216,12 +216,30 @@ class Component extends DCLogic {
       let j = {}; try { j = JSON.parse(t); } catch (e) { j = {}; }
       // El destino lo decide el servidor, que es quien sabe el rol. Antes
       // estaba fijo aqui y operacion aterrizaba en el panel de miembro.
-      if (j.estado === 'dentro') { window.location.href = j.destino || '/cuenta'; return; }
+      if (j.estado === 'dentro') { window.location.href = this.aDondeIba(j.destino); return; }
       this.setState({ fase: 'correo', error: j.error || 'Ese correo y esa contraseña no coinciden.' });
     })).catch(() => this.setState({
       fase: 'correo', error: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
     }));
   };
+
+  /**
+   * A donde mandar despues de entrar.
+   *
+   * Manda el servidor, que es quien sabe el rol —operacion no aterriza en el
+   * panel de miembro—. El `volver` solo se respeta si el servidor iba a
+   * mandar al sitio de siempre: asi quien llega desde un correo vuelve a lo
+   * que estaba mirando, y a operacion no se la desvia nunca.
+   *
+   * Y solo rutas de esta casa: una URL entera en un parametro es una puerta
+   * abierta para mandar a alguien a otro sitio desde un enlace nuestro.
+   */
+  aDondeIba(destinoDelServidor) {
+    const dest = destinoDelServidor || '/cuenta';
+    if (dest !== '/cuenta') return dest;
+    const v = new URLSearchParams(location.search).get('volver') || '';
+    return /^\/[A-Za-z0-9\-\/#]*$/.test(v) && v.slice(0, 2) !== '//' ? v : dest;
+  }
 
   renderVals() {
     const f = this.state.fase;

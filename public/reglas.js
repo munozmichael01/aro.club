@@ -54,16 +54,29 @@
         var d = String(v || '').replace(/\D/g, '')
         return d.length >= 8 && d.length <= 15
       },
-      ayuda: 'Con el prefijo de tu país. Entre 8 y 15 dígitos.',
+      ayuda: 'Con el prefijo de tu país. Da igual si escribes el 0 de delante.',
     },
 
     telefonoPagoMovil: {
       etiqueta: 'Teléfono',
-      filtrar: soloDigitos(10),
+      // El cero de delante se quita ANTES de cortar a diez.
+      //
+      // Con `soloDigitos(10)` a secas, quien teclea 0412-1234567 —que es como
+      // esta el numero en su agenda— acaba con '0412123456': se pierde la
+      // ultima cifra, el validador lo da por bueno porque son diez digitos, y
+      // lo que viaja al banco es un telefono que no existe. No falla nada; el
+      // pago no cuadra y lo descubre quien concilia, dias despues.
+      filtrar: function (v) {
+        var d = String(v == null ? '' : v).replace(/\D/g, '')
+        // Solo si al quitarlo queda un movil de diez: asi un numero que
+        // empiece por cero por otra razon no se toca.
+        if (d.length === 11 && d.charAt(0) === '0') d = d.slice(1)
+        return d.slice(0, 10)
+      },
       valido: function (v) {
         return /^\d{10}$/.test(String(v || ''))
       },
-      ayuda: 'Diez dígitos, sin el +58. Es el número registrado en tu banco.',
+      ayuda: 'Sin el +58. Da igual si escribes el 0 de delante.',
     },
 
     telefonoBizum: {
@@ -322,6 +335,22 @@
      * que es la única ciudad abierta, y se le pone el +58; en cuanto haya
      * otra ciudad esta suposición hay que revisarla.
      */
+    /**
+     * La fecha del pago tiene DOS formatos y no son negociables ninguno de los
+     * dos. Se guarda y se concilia como DD/MM/AAAA —es lo que lee quien cuadra
+     * contra el movimiento del banco— y el selector nativo del telefono habla
+     * AAAA-MM-DD, que es lo que exige `<input type="date">`. La traduccion vive
+     * aqui, en un sitio, y no repartida entre la pantalla y el servidor.
+     */
+    fechaAISO: function (v) {
+      var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(v || ''))
+      return m ? m[3] + '-' + m[2] + '-' + m[1] : ''
+    },
+    fechaDesdeISO: function (v) {
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || ''))
+      return m ? m[3] + '/' + m[2] + '/' + m[1] : ''
+    },
+
     aE164: function (valor) {
       var v = String(valor == null ? '' : valor).trim()
       var digitos = v.replace(/\D/g, '')
@@ -333,10 +362,30 @@
       // ni el filtro ni el validador lo cazaban y se guardaba tal cual.
       while (digitos.indexOf('5858') === 0) digitos = digitos.slice(2)
 
+      // EL CERO DE DELANTE. En Venezuela el numero se escribe y se dicta
+      // como 0412-1234567: el cero es el prefijo nacional de llamada y NO
+      // forma parte del numero internacional. Quien lo teclea —que es como lo
+      // teclea casi todo el mundo, porque es como esta en su agenda— mandaba
+      // '+5804121234567', y la restriccion de la base exige
+      // '^\+58(412|414|416|422|424|426)[0-9]{7}$'. La fila no entraba, la ruta
+      // devolvia un 500 y la pantalla decia «No pudimos guardar tus datos»
+      // sin decir cual.
+      //
+      // Se quita aqui y no en la pantalla porque esta funcion la usan el
+      // navegador y el servidor: arreglado en un solo sitio, no en dos que se
+      // desincronizan. Y se quita UNO solo, detras del pais: un numero que
+      // empiece por doble cero es otra cosa y no se toca.
+      var sinCeroNacional = function (pais, resto) {
+        return pais + resto.replace(/^0(?!0)/, '')
+      }
+
       // Con prefijo escrito, manda quien escribe.
-      if (v.charAt(0) === '+') return '+' + digitos
+      if (v.charAt(0) === '+') {
+        var m = digitos.match(/^(58|34)(.*)$/)
+        return m ? '+' + sinCeroNacional(m[1], m[2]) : '+' + digitos
+      }
       // Sin prefijo: venezolano, que es la unica ciudad abierta.
-      return '+58' + digitos.replace(/^58/, '')
+      return '+' + sinCeroNacional('58', digitos.replace(/^58/, ''))
     },
 
     /**

@@ -134,7 +134,7 @@
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(46%,132px),1fr));gap:clamp(10px,1.4vw,14px);margin-bottom:20px">
         <sc-for list="{{ filtros }}" as="f" hint-placeholder-count="4">
-          <button onClick="{{ f.pick }}" style="{{ f.marco }}">
+          <button onClick="{{ f.pick }}" aria-disabled="{{ f.inerte }}" style="{{ f.marco }}">
             <span style="{{ f.foto }}"><span style="{{ f.tinte }}"></span></span>
             <span style="{{ f.pie }}">{{ f.nombre }}</span>
             <span style="{{ f.cuenta }}">{{ f.detalle }}</span>
@@ -283,7 +283,14 @@ class Component extends DCLogic {
     fetch('/api/mi-cuenta')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((datos) => this.setState({ datos: datos }))
-      .catch(() => { this.setState({ sinCuenta: true }); window.location.href = '/entrar'; });
+      // Se va al login DICIENDO a donde ibas. Sin eso, quien llega desde el
+      // correo —«Ver mi reserva»— aterriza en el login y ahi se acaba el
+      // camino: entra, y el login le manda a donde el servidor decida, que
+      // puede no ser su reserva. Lo que se pierde no es un clic, es el hilo.
+      .catch(() => {
+        this.setState({ sinCuenta: true });
+        window.location.href = '/entrar?volver=' + encodeURIComponent(location.pathname + location.hash);
+      });
 
     fetch('/api/mis-exclusiones')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
@@ -597,17 +604,29 @@ class Component extends DCLogic {
     const fotos = { Cenas: 'fotos/cenas.jpg', Drinks: 'fotos/drinks.jpg', Movimiento: 'fotos/movimiento.jpg', Coffee: 'fotos/coffee.jpg' };
     const dias = { Cenas: 'Jueves y viernes', Drinks: 'Viernes y sábado', Movimiento: 'Sábado y domingo', Coffee: 'Sábado y domingo' };
     const rot = { Cenas: '-1.8deg', Drinks: '1.5deg', Movimiento: '-1.3deg', Coffee: '1.6deg' };
+    // Cuales tienen fecha abierta de verdad. Se DERIVA de la agenda que manda
+    // el servidor, no se escribe a mano: el dia que se abra la primera fecha
+    // de Drinks, la tarjeta deja de decir «Proximamente» sola. Escrito a mano
+    // habria que acordarse, y nadie se acuerda.
+    const conFecha = {};
+    ((d && d.agenda) || []).forEach((a) => { conFecha[FORMATOS[a.formato] || 'Cenas'] = true; });
+
     const filtros = ['Cenas', 'Drinks', 'Movimiento', 'Coffee'].map((nombre) => {
       const i = tipos.indexOf(nombre);
       const on = this.state.filtro === i;
+      // Sin fecha abierta, la tarjeta lo dice y no filtra: pulsarla llevaba a
+      // una lista vacia sin explicar por que estaba vacia, que se lee como que
+      // la pantalla se rompio.
+      const hay = !!conFecha[nombre];
       return {
-        nombre, detalle: dias[nombre],
-        pick: () => this.setState({ filtro: on ? 0 : i, reservando: null }),
-        marco: 'display:flex;flex-direction:column;background:#FFFBF0;padding:8px 8px 0;border:1px solid ' + (on ? '#8F4515' : 'transparent') + ';border-radius:12px;box-shadow:0 12px 30px -18px rgba(20,52,42,.45);transform:rotate(' + (on ? '0deg' : rot[nombre]) + ') scale(' + (on ? '1.03' : '1') + ');cursor:pointer;transition:all 220ms ease',
+        nombre, detalle: hay ? dias[nombre] : 'Próximamente',
+        pick: hay ? (() => this.setState({ filtro: on ? 0 : i, reservando: null })) : (() => {}),
+        inerte: hay ? null : 'true',
+        marco: 'display:flex;flex-direction:column;background:#FFFBF0;padding:8px 8px 0;border:1px solid ' + (on ? '#8F4515' : 'transparent') + ';border-radius:12px;box-shadow:0 12px 30px -18px rgba(20,52,42,.45);transform:rotate(' + (on ? '0deg' : rot[nombre]) + ') scale(' + (on ? '1.03' : '1') + ');cursor:' + (hay ? 'pointer' : 'default') + ';opacity:' + (hay ? '1' : '.62') + ';transition:all 220ms ease',
         foto: 'position:relative;display:block;aspect-ratio:1;overflow:hidden;border-radius:6px;background:#DCD3BC;background-image:url(\'' + fotos[nombre] + '\');background-size:cover;background-position:center;filter:grayscale(' + (this.state.filtro === 0 || on ? '.24' : '.85') + ') contrast(1.16) saturate(' + (this.state.filtro === 0 || on ? '.74' : '.3') + ') brightness(.9);transition:filter 220ms ease',
         tinte: 'position:absolute;inset:0;background:linear-gradient(rgba(20,52,42,.2),rgba(27,81,56,.26))',
         pie: 'display:block;font:400 clamp(16px,1.9vw,19px)/1.1 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:' + (on ? '#8F4515' : '#14342A') + ';text-align:center;padding:9px 4px 0',
-        cuenta: 'display:block;font:500 12px/1.35 \'Inter Tight\',sans-serif;color:#566A5D;text-align:center;padding:4px 4px 10px'
+        cuenta: 'display:block;font:500 12px/1.35 \'Inter Tight\',sans-serif;color:' + (hay ? '#566A5D' : '#8F4515') + ';text-align:center;padding:4px 4px 10px'
       };
     });
 

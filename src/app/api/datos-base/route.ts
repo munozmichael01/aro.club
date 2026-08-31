@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 import { situacionDeLead } from '@/lib/embudo'
 import { verificar } from '@/lib/lead-token'
-import { valido } from '@/lib/reglas'
+import { aE164, valido } from '@/lib/reglas'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
@@ -136,7 +136,19 @@ export async function POST(request: Request) {
     )
   }
 
-  const { nombre, trato, nacimiento, genero, telefono } = parsed.data
+  const { nombre, trato, nacimiento, genero } = parsed.data
+
+  // El cero de delante se quita AQUÍ también, no solo en la pantalla. En
+  // Venezuela el número se dicta como 0412-1234567 y ese cero es el prefijo
+  // nacional de llamada: no forma parte del número internacional. La base lo
+  // acepta —desde el 12 de agosto la restricción es E.164 a secas— así que
+  // no falla nada: se guarda un `+5804121234567` al que no llega un WhatsApp
+  // y nadie se entera hasta el día de la cena.
+  //
+  // La pantalla ya lo limpia, pero la pantalla se puede saltar y esta ruta
+  // acepta el correo y el token como identidad. Un dato de contacto que solo
+  // se normaliza en el navegador no está normalizado.
+  const telefono = aE164(parsed.data.telefono)
 
   // Dieciocho años. La comprobación ya está en la base como CHECK, pero un
   // 400 con motivo es mejor que un 500 sin él.
@@ -177,6 +189,26 @@ export async function POST(request: Request) {
 
   if (error) {
     console.error('[datos-base] no se guardó', error)
+
+    // `profiles.phone_e164` es UNIQUE. Quien pone un número que ya está en
+    // otra ficha chocaba con un 23505 y esta ruta lo convertía en «No pudimos
+    // guardar tus datos», que no dice nada: la persona reescribe el mismo
+    // número, vuelve a fallar y se queda ahí. Pasó de verdad, en el paso 4,
+    // probando con un número sembrado.
+    //
+    // Y no basta con decir «ya existe»: hay que decir CUÁL de los campos,
+    // porque el paso 4 pide teléfono y el 1 nombre, y el error salía igual.
+    if (error.code === '23505') {
+      return NextResponse.json(
+        {
+          error: /phone/.test(error.message)
+            ? 'Ese teléfono ya está en otra cuenta. Si es tuyo, entra con ella.'
+            : 'Esos datos ya están en otra cuenta.',
+          campo: /phone/.test(error.message) ? 'telefono' : null,
+        },
+        { status: 409 },
+      )
+    }
     return NextResponse.json({ error: 'No pudimos guardar tus datos.' }, { status: 500 })
   }
 

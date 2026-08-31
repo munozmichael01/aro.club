@@ -183,6 +183,9 @@
                     </sc-for>
                   </select>
                 </sc-if>
+                <sc-if value="{{ c.esFecha }}" hint-placeholder-val="{{ false }}">
+                <input type="date" max="{{ c.hoy }}" value="{{ c.valorISO }}" onChange="{{ c.onChangeFecha }}" aria-label="{{ c.etiqueta }}" style="{{ c.campo }}" />
+                </sc-if>
                 <sc-if value="{{ c.esTexto }}" hint-placeholder-val="{{ true }}">
                 <input type="text" inputmode="{{ c.modo }}" value="{{ c.valor }}" onChange="{{ c.onChange }}" placeholder="{{ c.pista }}" aria-label="{{ c.etiqueta }}" style="{{ c.campo }}" />
                 </sc-if>
@@ -548,7 +551,23 @@ class Component extends DCLogic {
       // El tipo `banco` ya venia declarado en la base; lo unico que faltaba
       // era que la pantalla lo pintara como lo que es.
       esBanco: c.tipo === 'banco',
-      esTexto: c.tipo !== 'banco',
+      // La fecha, con el selector del telefono. Escrita a mano en un campo de
+      // texto hay que teclear ocho cifras y acertar el formato, y el teclado
+      // que sale es el numerico: es el sitio donde mas gente se cae del
+      // reporte. El nativo ademas no deja poner un dia que no existe.
+      esFecha: c.tipo === 'fecha',
+      esTexto: c.tipo !== 'banco' && c.tipo !== 'fecha',
+      // Un pago no se reporta antes de hacerlo: el selector no ofrece futuro.
+      hoy: (function () {
+        var n = new Date()
+        var dd = String(n.getDate()).padStart(2, '0')
+        var mm = String(n.getMonth() + 1).padStart(2, '0')
+        return n.getFullYear() + '-' + mm + '-' + dd
+      })(),
+      valorISO: R ? R.fechaAISO(campo(c.campo)) : '',
+      // Entra en AAAA-MM-DD y se guarda en DD/MM/AAAA: lo que viaja al
+      // servidor y lo que ve quien concilia no cambia.
+      onChangeFecha: setCampo(c.campo, R ? ((v) => R.fechaDesdeISO(v)) : null),
       // La primera es vacia a proposito. Sin ella el desplegable ensena el
       // primer banco de la lista como si estuviera elegido mientras el campo
       // esta vacio, que es exactamente el fallo que tenia la V del documento:
