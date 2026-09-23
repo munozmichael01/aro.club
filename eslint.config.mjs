@@ -21,6 +21,12 @@ const eslintConfig = defineConfig([
     // React, ReactDOM y Babel, tal cual vienen de su publicacion. Son suyos,
     // no se tocan, y revisarlos aqui son 129 errores que no significan nada.
     "public/vendor/**",
+    // GSAP, tal cual viene de su publicación, para los reels. Mismo caso que
+    // los de arriba: ocho errores suyos que no vamos a arreglar nunca. Y
+    // aquí importa más de lo que parece, porque el fichero no está
+    // versionado: el día que alguien lo suba, el CI se pone rojo por una
+    // librería de terceros.
+    "reel/lib/**",
   ]),
 ]);
 

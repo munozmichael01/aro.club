@@ -581,7 +581,7 @@ async function elPagoDe(admin: Admin, perfilId: string | null, eventoId: string 
   const vacio = { referencia: '—', montoLocal: '—', montoUsd: '—', tasa: '—' }
   if (!perfilId) return vacio
 
-  let consulta = admin
+  const consulta = admin
     .from('payments')
     .select('amount_usd, amount_local, fx_rate, datos, reference_code, booking_id, bookings(event_id)')
     .eq('profile_id', perfilId)
