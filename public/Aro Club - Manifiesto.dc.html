@@ -58,6 +58,52 @@
   a { color:#1B5138; text-decoration:none; }
   a:hover { color:#8F4515; }
   ::selection { background:#1B5138; color:#FAF3E4; }
+
+  /*
+    El ancho de lectura manda, y por eso hay dos columnas y no una.
+
+    En una sola columna centrada, el texto ocupaba un tercio de una pantalla
+    de escritorio y los dos tercios restantes eran crema vacía a los lados:
+    la página se veía desaprovechada y, peor, se veía corta —un hilo
+    estrecho que no invita a empezar—. Ensanchar la columna no era la
+    salida: pasados los 75 caracteres por línea el ojo pierde el renglón al
+    volver, y esto son siete minutos de lectura seguidos.
+
+    Así que el espacio de la izquierda pasa a ser margen de verdad: ahí
+    cuelgan los títulos de cada bloque, como en un libro. El texto mantiene
+    su medida —unos 66 caracteres—, la página se llena, y de paso los
+    títulos dejan de partir la lectura en seis trozos: se leen al lado, no
+    en medio.
+
+    Por debajo de 880px no hay margen que valga, así que todo se apila.
+  */
+  .bl { margin-top: clamp(40px,6vw,56px); }
+  .bl:first-of-type { margin-top: 0; }
+  .bl-marca { display: none; }
+
+  /*
+    El título de cada bloque vive en el CSS y no en un estilo suelto porque
+    cambia de tamaño con el ancho, y eso un `style=` no lo sabe hacer: en el
+    móvil es un titular de 23px que parte el texto en seis, y en el
+    escritorio es una nota de 19px colgada en el margen que no lo parte.
+  */
+  .ti { font: 400 clamp(23px,3.2vw,28px)/1.14 'Young Serif', Georgia, serif; letter-spacing: -.025em; color: #14342A; margin: 0 0 clamp(14px,2vw,18px); max-width: 22ch; text-wrap: balance; }
+
+  /*
+    La raya del margen. Sin ella el margen izquierdo parece sobra de
+    maquetación; con ella se lee como lo que es, la columna donde cuelgan
+    los títulos. Es una raya de 1px: el mismo hilo que ya separa bloques en
+    el resto del producto.
+  */
+  .hoja { position: relative; }
+
+  @media (min-width: 900px) {
+    .hoja::before { content: ''; position: absolute; top: 0; bottom: 0; left: 232px; width: 1px; background: rgba(20,52,42,.13); }
+    .bl { display: grid; grid-template-columns: 208px minmax(0,660px); column-gap: 48px; margin-top: 62px; }
+    .bl > .ti { grid-column: 1; align-self: start; text-align: right; margin: 9px 0 0; max-width: none; font-size: 19px; line-height: 1.32; letter-spacing: -.01em; }
+    .bl > .cu, .bl > .ancho { grid-column: 2; }
+    .bl-marca { display: block; text-align: right; }
+  }
 </style>
 </helmet>
 
@@ -75,55 +121,87 @@
 -->
 <div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif">
 
-  <div style="max-width:648px;margin:0 auto;padding:clamp(22px,4vw,34px) clamp(22px,5vw,32px) 0">
+  <div style="max-width:916px;margin:0 auto;padding:clamp(20px,3.4vw,30px) clamp(22px,5vw,32px) 0">
     <a href="/" style="display:inline-flex;align-items:center;gap:9px;color:#14342A;min-height:44px">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
       <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
     </a>
   </div>
 
-  <div style="max-width:648px;margin:0 auto;padding:clamp(34px,6vw,62px) clamp(22px,5vw,32px) clamp(60px,9vw,104px)">
+  <div style="max-width:916px;margin:0 auto;padding:clamp(26px,4.5vw,46px) clamp(22px,5vw,32px) clamp(58px,8vw,96px)">
 
-    <h1 style="font:400 clamp(33px,6.6vw,52px)/1.06 'Young Serif',Georgia,serif;letter-spacing:-.032em;margin:0 0 clamp(26px,4vw,38px);max-width:14ch;text-wrap:balance">Por qué existe Aro Club</h1>
+    <div class="hoja">
 
-    <p style="{{ p }}">Después de muchos años, vine a Caracas de visita y, unos meses después, a quedarme. En las dos ocasiones me costó muchísimo hacer planes.</p>
-    <p style="{{ p }}">No por falta de gente. Unos ya no están, otros tienen las semanas llenas, y muchos de mis amigos tienen hijos y otro ritmo. Cuadrar una cena se volvía una cadena de mensajes que casi siempre terminaba en «la próxima».</p>
-    <p style="{{ p }}">Y hubo días en que directamente no tenía a quién escribirle, así que salí solo. Varias veces. Ahí entendí algo que no es mío sino de la ciudad: <em style="{{ fuerte }}">en Caracas la gente no sale sola.</em> Se sale en grupo, o mínimo en pareja. Sentarse solo en una mesa aquí se nota, y quien lo hace lo sabe. Así que no solo cuesta cuadrar con alguien, sino que la alternativa tampoco es cómoda.</p>
-    <p style="{{ p }}">Podía quejarme, que es lo fácil. O podía armar lo que me hacía falta. Eso es Aro Club.</p>
+      <div class="bl">
+        <h1 class="ancho" style="font:400 clamp(34px,5.6vw,58px)/1.04 'Young Serif',Georgia,serif;letter-spacing:-.032em;margin:0 0 clamp(26px,4vw,40px);max-width:15ch;text-wrap:balance">Por qué existe Aro Club</h1>
+        <div class="ti bl-marca" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" style="display:inline-block"><circle cx="12" cy="12" r="8.6" stroke="rgba(27,81,56,.34)" stroke-width="1.5"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="rgba(27,81,56,.34)"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="rgba(27,81,56,.34)"></circle><circle cx="3.4" cy="12" r="1.9" fill="rgba(27,81,56,.34)"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="rgba(27,81,56,.34)"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="rgba(27,81,56,.34)"></circle></svg></div>
+        <div class="cu">
+          <p style="{{ entrada }}">Después de muchos años, vine a Caracas de visita y, unos meses después, a quedarme. En las dos ocasiones me costó muchísimo hacer planes.</p>
+          <p style="{{ p }}">No por falta de gente. Unos ya no están, otros tienen las semanas llenas, y muchos de mis amigos tienen hijos y otro ritmo. Cuadrar una cena se volvía una cadena de mensajes que casi siempre terminaba en «la próxima».</p>
+          <p style="{{ p }}">Y hubo días en que directamente no tenía a quién escribirle, así que salí solo. Varias veces. Ahí entendí algo que no es mío sino de la ciudad: <em style="{{ fuerte }}">en Caracas la gente no sale sola.</em> Se sale en grupo, o mínimo en pareja. Sentarse solo en una mesa aquí se nota, y quien lo hace lo sabe. Así que no solo cuesta cuadrar con alguien, sino que la alternativa tampoco es cómoda.</p>
+          <p style="{{ p }}">Podía quejarme, que es lo fácil. O podía armar lo que me hacía falta. Eso es Aro Club.</p>
+        </div>
+      </div>
 
-    <h2 style="{{ h2 }}">Qué es</h2>
-    <p style="{{ p }}">Seis personas que no se conocen, una mesa, un jueves.</p>
-    <p style="{{ p }}">Nosotros armamos la mesa y reservamos. Tú apareces. No hay perfiles que mirar, no hay fotos, no hay a quién elegir, no hay conversación previa. La primera conversación es en la mesa.</p>
-    <p style="{{ p }}">Que no haya nada que elegir no es un recorte de funciones, es el producto. En el momento en que puedes escoger con quién te sientas, escoges a alguien parecido a ti y no conoces a nadie nuevo.</p>
-    <p style="{{ p }}">Y resuelve lo de arriba de una manera tonta y directa. Nadie llega solo a una mesa de Aro, porque la mesa ya existe antes de que llegues.</p>
+      <div class="bl">
+        <h2 class="ti">Qué es</h2>
+        <div class="cu">
+        <p style="{{ p }}">Seis personas que no se conocen, una mesa, un jueves.</p>
+        <p style="{{ p }}">Nosotros armamos la mesa y reservamos. Tú apareces. No hay perfiles que mirar, no hay fotos, no hay a quién elegir, no hay conversación previa. La primera conversación es en la mesa.</p>
+        <p style="{{ p }}">Que no haya nada que elegir no es un recorte de funciones, es el producto. En el momento en que puedes escoger con quién te sientas, escoges a alguien parecido a ti y no conoces a nadie nuevo.</p>
+        <p style="{{ p }}">Y resuelve lo de arriba de una manera tonta y directa. Nadie llega solo a una mesa de Aro, porque la mesa ya existe antes de que llegues.</p>
+        </div>
+      </div>
+      <div class="bl">
+        <h2 class="ti">Qué no es</h2>
+        <div class="cu">
+        <p style="{{ p }}">No es una aplicación de citas.</p>
+        <p style="{{ p }}">Puede pasar que dos personas se conozcan en una mesa y aquello vaya a otro lugar. Ojalá pase. Pero sería una consecuencia de haberse conocido de verdad, no la premisa con la que se sentaron. La premisa es una mesa, no una pareja.</p>
+        </div>
+      </div>
+      <div class="bl">
+        <h2 class="ti">Por qué cenas, y por qué no solo cenas</h2>
+        <div class="cu">
+        <p style="{{ p }}">Empezamos por cenas porque es a lo que más fácil se le dice que sí. Una cena tiene hora de inicio y de final, no te compromete la noche entera, y comer juntos es la excusa más vieja que existe.</p>
+        <p style="{{ p }}">Pero la mesa no es el punto, la gente sí. Después vienen los cafés, las salidas a tomar algo, un plan para correr un sábado por la mañana. Formatos distintos, porque no a todo el mundo le encaja lo mismo ni el mismo día. La cena es por dónde se empieza, no dónde se acaba.</p>
+        </div>
+      </div>
+      <div class="bl">
+        <h2 class="ti">Por qué ahora</h2>
+        <div class="cu">
+        <p style="{{ p }}">Caracas está llena de gente en movimiento. Hay quien volvió después de años. Quien está de paso. Quien vino unas semanas y se quedó. Quien nunca se fue y vio su círculo encogerse mientras los demás se iban. Quien trabaja a distancia y habla con veinte personas al día sin ver a ninguna en persona, y termina la semana sin un solo plan. Y quien simplemente quiere un círculo más grande que el que tiene.</p>
+        <p style="{{ p }}">Ninguna de esas seis personas tiene hoy una forma sencilla de sentarse a cenar con alguien nuevo. Eso es lo que queremos que deje de ser raro.</p>
+        </div>
+      </div>
+      <div class="bl">
+        <h2 class="ti">Por qué aquí, y hasta dónde</h2>
+        <div class="cu">
+        <p style="{{ p }}">Empezamos en Caracas porque es donde vivo y donde me pasó. Pero esto no pasa solo aquí, pasa igual en Valencia, en Maracaibo, en Mérida, en cualquier ciudad donde la gente se fue, volvió, o se quedó viendo cómo se iban los demás.</p>
+        <p style="{{ p }}">Empezamos aquí porque hay que empezar en algún lugar. Queremos que llegue a todo el país.</p>
+        <p style="{{ p }}">Conocer gente no debería requerir una excusa, ni una app de citas, ni esperar a que un amigo te presente a alguien. Compartir mesa con desconocidos debería ser normal, y en muchas ciudades del mundo ya lo es.</p>
+        </div>
+      </div>
+      <div class="bl">
+        <h2 class="ti">Y una cosa honesta</h2>
+        <div class="cu">
+        <p style="{{ p }}">Aro Club está empezando, y cada mesa la armamos pensando en quién se sienta con quién. Es una iniciativa que quiere aportar algo a la ciudad donde vivo, y que se sostiene si a la gente le sirve.</p>
+        <p style="{{ p }}">Por eso las primeras mesas importan tanto. No estamos buscando usuarios, estamos buscando a las primeras personas que se sienten, porque son las que van a decidir qué es esto realmente.</p>
+        </div>
+      </div>
+      <div class="bl">
+        <div class="ti" aria-hidden="true"></div>
+        <div class="cu">
+          <div style="padding-top:clamp(24px,3.6vw,32px);border-top:1px solid rgba(20,52,42,.16)">
+            <div style="font:400 clamp(26px,3.2vw,32px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Michael Muñoz</div>
+            <p style="font:600 clamp(15px,1.5vw,16px)/1.6 'Inter Tight',sans-serif;color:#456352;margin:9px 0 0;letter-spacing:.005em">Aro Club · aro.club · Caracas</p>
+            <a href="/" style="display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-top:18px;font:500 15px/1 'Inter Tight',sans-serif;color:#456352" style-hover="color:#8F4515">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              Volver al inicio
+            </a>
+          </div>
+        </div>
+      </div>
 
-    <h2 style="{{ h2 }}">Qué no es</h2>
-    <p style="{{ p }}">No es una aplicación de citas.</p>
-    <p style="{{ p }}">Puede pasar que dos personas se conozcan en una mesa y aquello vaya a otro lugar. Ojalá pase. Pero sería una consecuencia de haberse conocido de verdad, no la premisa con la que se sentaron. La premisa es una mesa, no una pareja.</p>
-
-    <h2 style="{{ h2 }}">Por qué cenas, y por qué no solo cenas</h2>
-    <p style="{{ p }}">Empezamos por cenas porque es a lo que más fácil se le dice que sí. Una cena tiene hora de inicio y de final, no te compromete la noche entera, y comer juntos es la excusa más vieja que existe.</p>
-    <p style="{{ p }}">Pero la mesa no es el punto, la gente sí. Después vienen los cafés, las salidas a tomar algo, un plan para correr un sábado por la mañana. Formatos distintos, porque no a todo el mundo le encaja lo mismo ni el mismo día. La cena es por dónde se empieza, no dónde se acaba.</p>
-
-    <h2 style="{{ h2 }}">Por qué ahora</h2>
-    <p style="{{ p }}">Caracas está llena de gente en movimiento. Hay quien volvió después de años. Quien está de paso. Quien vino unas semanas y se quedó. Quien nunca se fue y vio su círculo encogerse mientras los demás se iban. Quien trabaja a distancia y habla con veinte personas al día sin ver a ninguna en persona, y termina la semana sin un solo plan. Y quien simplemente quiere un círculo más grande que el que tiene.</p>
-    <p style="{{ p }}">Ninguna de esas seis personas tiene hoy una forma sencilla de sentarse a cenar con alguien nuevo. Eso es lo que queremos que deje de ser raro.</p>
-
-    <h2 style="{{ h2 }}">Por qué aquí, y hasta dónde</h2>
-    <p style="{{ p }}">Empezamos en Caracas porque es donde vivo y donde me pasó. Pero esto no pasa solo aquí, pasa igual en Valencia, en Maracaibo, en Mérida, en cualquier ciudad donde la gente se fue, volvió, o se quedó viendo cómo se iban los demás.</p>
-    <p style="{{ p }}">Empezamos aquí porque hay que empezar en algún lugar. Queremos que llegue a todo el país.</p>
-    <p style="{{ p }}">Conocer gente no debería requerir una excusa, ni una app de citas, ni esperar a que un amigo te presente a alguien. Compartir mesa con desconocidos debería ser normal, y en muchas ciudades del mundo ya lo es.</p>
-
-    <h2 style="{{ h2 }}">Y una cosa honesta</h2>
-    <p style="{{ p }}">Aro Club está empezando, y cada mesa la armamos pensando en quién se sienta con quién. Es una iniciativa que quiere aportar algo a la ciudad donde vivo, y que se sostiene si a la gente le sirve.</p>
-    <p style="{{ p }}">Por eso las primeras mesas importan tanto. No estamos buscando usuarios, estamos buscando a las primeras personas que se sienten, porque son las que van a decidir qué es esto realmente.</p>
-
-    <div style="margin-top:clamp(42px,7vw,64px);padding-top:clamp(26px,4vw,34px);border-top:1px solid rgba(20,52,42,.14)">
-      <p style="font:600 clamp(16px,1.7vw,18px)/1.6 'Inter Tight',sans-serif;color:#14342A;margin:0;letter-spacing:.005em">Aro Club · aro.club · Caracas</p>
-      <a href="/" style="display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-top:14px;font:500 15px/1 'Inter Tight',sans-serif;color:#456352" style-hover="color:#8F4515">
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M9.5 3.5 5 8l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        Volver al inicio
-      </a>
     </div>
 
   </div>
@@ -140,8 +218,8 @@ class Component extends DCLogic {
    */
   renderVals() {
     return {
-      p: 'font:400 clamp(17px,1.75vw,19px)/1.75 \'Inter Tight\',sans-serif;color:#2C4A3B;margin:0 0 1.15em;text-wrap:pretty',
-      h2: 'font:400 clamp(24px,3.6vw,32px)/1.12 \'Young Serif\',Georgia,serif;letter-spacing:-.025em;color:#14342A;margin:clamp(44px,7vw,66px) 0 clamp(16px,2.4vw,22px);max-width:22ch;text-wrap:balance',
+      p: 'font:400 clamp(17.5px,1.55vw,20px)/1.72 \'Inter Tight\',sans-serif;color:#2C4A3B;margin:0 0 1.1em;text-wrap:pretty',
+      entrada: 'font:400 clamp(19px,1.9vw,23px)/1.6 \'Inter Tight\',sans-serif;color:#14342A;margin:0 0 1.05em;text-wrap:pretty',
       fuerte: 'font-weight:600;color:#14342A'
     };
   }
