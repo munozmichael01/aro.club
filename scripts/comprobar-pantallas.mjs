@@ -1,5 +1,5 @@
 /**
- * Vigila las diecinueve pantallas, que es donde nada miraba.
+ * Vigila las veinte pantallas, que es donde nada miraba.
  *
  * `src/` tiene `tsc` y eslint encima. Las pantallas son ficheros estáticos:
  * Next ni las compila ni las mira, no hay tests, y ahí viven unas quince mil
@@ -9,9 +9,9 @@
  * Lo que comprueba, y de dónde sale cada comprobación:
  *
  *  1. LAS PIEZAS COMUNES. Que cada pantalla cargue `errores.js` y `gtm.js`,
- *     y en ese orden. El contenido vive una vez; lo que se copia diecinueve
- *     veces es la referencia, y la pantalla veinte nace sin ella. Ya pasó con
- *     el favicon: se quedó una fuera y hubo que volver.
+ *     y en ese orden. El contenido vive una vez; lo que se copia veinte
+ *     veces es la referencia, y la pantalla veintiuna nace sin ella. Ya pasó
+ *     con el favicon: se quedó una fuera y hubo que volver.
  *
  *  2. QUE EL HTML CIERRE. Un `</sc-if>` cerrado con dos `div` abiertos dejó
  *     el pie del cuestionario —Atrás y Continuar— sin pintarse durante
@@ -172,7 +172,7 @@ function porComas(linea) {
 /**
  * Las claves que `renderVals()` pone a disposicion del markup.
  *
- * Las diecinueve pantallas componen las props de cuatro maneras distintas
+ * Las veinte pantallas componen las props de cuatro maneras distintas
  * —devolviendo un objeto, con `return` anidados, juntando un `const marco =
  * {...}`, y con `Object.assign(marco, {...})`— y enumerarlas fue una carrera
  * que perdi cuatro veces. La regla que las cubre todas es mas tonta: vale

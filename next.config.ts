@@ -41,6 +41,11 @@ const PANTALLAS: Array<[string, string]> = [
   ['/reglas', '/Aro Club - Legal.dc.html'],
   ['/terminos', '/Aro Club - Legal.dc.html'],
   ['/privacidad', '/Aro Club - Legal.dc.html'],
+  // El manifiesto. Va enlazado SOLO desde el pie, a propósito: el mismo
+  // texto en la portada es publicidad y al fondo es una carta. Su uso real
+  // no es navegar hasta él, es pegarlo en un chat cuando alguien pregunta de
+  // qué va esto, así que la ruta tiene que poder dictarse en voz alta.
+  ['/por-que', '/Aro Club - Manifiesto.dc.html'],
   // Entrega 2 · área de miembro
   ['/entrar', '/Aro Club - Entrar.dc.html'],
   // Las dos pantallas sin sesión viven en el mismo fichero: comparten fondo
