@@ -87,7 +87,7 @@
     móvil es un titular de 23px que parte el texto en seis, y en el
     escritorio es una nota de 19px colgada en el margen que no lo parte.
   */
-  .ti { font: 400 clamp(23px,3.2vw,28px)/1.14 'Young Serif', Georgia, serif; letter-spacing: -.025em; color: #14342A; margin: 0 0 clamp(14px,2vw,18px); max-width: 22ch; text-wrap: balance; }
+  .ti { font: 400 clamp(26px,3.2vw,32px)/1.14 'Young Serif', Georgia, serif; letter-spacing: -.025em; color: #1B5138; margin: 0 0 clamp(14px,2vw,18px); max-width: 22ch; text-wrap: balance; }
 
   /*
     La raya del margen. Sin ella el margen izquierdo parece sobra de
@@ -98,9 +98,9 @@
   .hoja { position: relative; }
 
   @media (min-width: 900px) {
-    .hoja::before { content: ''; position: absolute; top: 0; bottom: 0; left: 232px; width: 1px; background: rgba(20,52,42,.13); }
-    .bl { display: grid; grid-template-columns: 208px minmax(0,660px); column-gap: 48px; margin-top: 62px; }
-    .bl > .ti { grid-column: 1; align-self: start; text-align: right; margin: 9px 0 0; max-width: none; font-size: 19px; line-height: 1.32; letter-spacing: -.01em; }
+    .hoja::before { content: ''; position: absolute; top: 0; bottom: 0; left: 280px; width: 1px; background: rgba(20,52,42,.13); }
+    .bl { display: grid; grid-template-columns: 256px minmax(0,656px); column-gap: 48px; margin-top: 66px; }
+    .bl > .ti { grid-column: 1; align-self: start; text-align: right; margin: 1px 0 0; max-width: none; }
     .bl > .cu, .bl > .ancho { grid-column: 2; }
     .bl-marca { display: block; text-align: right; }
   }
@@ -121,14 +121,14 @@
 -->
 <div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif">
 
-  <div style="max-width:916px;margin:0 auto;padding:clamp(20px,3.4vw,30px) clamp(22px,5vw,32px) 0">
+  <div style="max-width:1024px;margin:0 auto;padding:clamp(20px,3.4vw,30px) clamp(22px,5vw,32px) 0">
     <a href="/" style="display:inline-flex;align-items:center;gap:9px;color:#14342A;min-height:44px">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="1.7"></circle><circle cx="20.6" cy="12" r="1.9" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="1.9" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="1.9" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="1.9" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="1.9" fill="#1B5138"></circle></svg>
       <span style="font:400 19px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
     </a>
   </div>
 
-  <div style="max-width:916px;margin:0 auto;padding:clamp(26px,4.5vw,46px) clamp(22px,5vw,32px) clamp(58px,8vw,96px)">
+  <div style="max-width:1024px;margin:0 auto;padding:clamp(26px,4.5vw,46px) clamp(22px,5vw,32px) clamp(58px,8vw,96px)">
 
     <div class="hoja">
 
