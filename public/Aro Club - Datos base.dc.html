@@ -31,7 +31,13 @@
      valor tecleado: hay gente que cree que la fecha ya esta puesta. */
   ::placeholder { color:#7E9A8B; font-weight:400; letter-spacing:0; }
   @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+  @keyframes aro-vuelta { to { transform: rotate(360deg) } }
+  .aro-gira { animation: aro-vuelta 1.5s linear infinite; transform-origin: 50% 50%; }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+  /* Va DESPUÉS y con `!important` a propósito: la regla de arriba le pone a
+     todo una duración de .001ms, y a un giro infinito eso no lo para, lo
+     vuelve un temblor. Aquí se detiene de verdad y el aro se queda quieto. */
+  @media (prefers-reduced-motion: reduce) { .aro-gira { animation: none !important; } }
 </style>
 </helmet>
 
@@ -46,6 +52,41 @@
   </div>
 
   <div style="max-width:620px;margin:0 auto;padding:clamp(22px,4vw,34px) clamp(16px,4vw,24px) clamp(40px,7vw,64px)">
+
+    <!--
+      Mientras se sabe quién eres, el aro. No el paso 1.
+
+      Esta pantalla no puede saber en qué paso va hasta que el servidor le
+      dice qué tiene guardado de ti, y hasta entonces pintaba el paso 1 con
+      los campos vacíos. Daba igual mientras el destino solía ser el paso 1;
+      desde que quien lo tiene todo aterriza en el resumen, se ve el salto:
+      medio segundo de «¿Cómo te llamas?» y de golpe otra pantalla. Parece
+      que algo se ha ido.
+
+      Así que mientras no se sabe, no se enseña un paso: se enseña la marca.
+      El aro gira y el punto naranja —el sexto, el que en la marca eres tú—
+      da la vuelta. Es media vuelta de reloj en una conexión normal.
+
+      Y con un tope: si a los seis segundos el servidor no ha contestado, se
+      pinta lo que haya. Un velo que no se levanta nunca es peor que el salto
+      que vino a quitar.
+    -->
+    <sc-if value="{{ cargando }}" hint-placeholder-val="{{ false }}">
+      <div role="status" aria-live="polite" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;min-height:58vh;text-align:center">
+        <svg class="aro-gira" width="54" height="54" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.6" stroke="rgba(20,52,42,.2)" stroke-width="1.5"></circle>
+          <circle cx="20.6" cy="12" r="1.9" fill="#8F4515"></circle>
+          <circle cx="16.3" cy="19.45" r="1.9" fill="rgba(20,52,42,.48)"></circle>
+          <circle cx="7.7" cy="19.45" r="1.9" fill="rgba(20,52,42,.4)"></circle>
+          <circle cx="3.4" cy="12" r="1.9" fill="rgba(20,52,42,.32)"></circle>
+          <circle cx="7.7" cy="4.55" r="1.9" fill="rgba(20,52,42,.24)"></circle>
+          <circle cx="16.3" cy="4.55" r="1.9" fill="rgba(20,52,42,.16)"></circle>
+        </svg>
+        <span style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#566A5D">Un momento</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ pintar }}" hint-placeholder-val="{{ true }}">
 
     <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(22px,3vw,30px)">
       <div style="display:flex;gap:5px;flex:1;max-width:260px">
@@ -285,6 +326,8 @@
           </div>
         </div>
     </sc-if>
+
+    </sc-if><!-- pintar -->
       </div>
   </div>
 
@@ -293,7 +336,7 @@
 class Component extends DCLogic {
   state = { paso: 0, correo: '', nombre: '', trato: '', dia: '', mes: '', anio: '', genero: -1,
     prefijo: '+58', telefono: '', guardando: false, fallo: '',
-    clave: '', clave2: '', puedeCuenta: false };
+    clave: '', clave2: '', puedeCuenta: false, cargando: true };
 
   GENEROS = ['mujer', 'hombre', 'no-binario', 'sin-decir'];
 
@@ -317,6 +360,8 @@ class Component extends DCLogic {
     // miembro editandolos desde su cuenta y manda la sesion.
     const s = this.sesionLead();
     this._lead = (s && s.correo && s.token) ? s : null;
+    // El tope del velo. Si la respuesta no llega, se pinta lo que haya.
+    this._tope = setTimeout(() => this.setState({ cargando: false }), 6000);
     this.cargar(true);
   }
 
@@ -350,6 +395,8 @@ class Component extends DCLogic {
         }
         if (d.genero) est.genero = this.GENEROS.indexOf(d.genero);
         est.puedeCuenta = !!d.puedeCuenta;
+        est.cargando = false;
+        clearTimeout(this._tope);
 
         // Quien llega con los cuatro pasos ya contestados aterriza en el
         // resumen, no en el paso 1.
@@ -373,7 +420,10 @@ class Component extends DCLogic {
       // —«Empieza aqui», un enlace de un correo, escribir /datos— acababa
       // en una pantalla de entrar sin cuenta con la que entrar. Ahora se
       // pide aqui y el embudo arranca donde aterrices.
-      .catch(() => { if (pedirCorreo) this.setState({ paso: this.PASO_CORREO }); });
+      .catch(() => {
+        clearTimeout(this._tope);
+        this.setState(pedirCorreo ? { paso: this.PASO_CORREO, cargando: false } : { cargando: false });
+      });
   }
 
   /**
@@ -619,6 +669,8 @@ class Component extends DCLogic {
       textoSiguiente5: this._lead ? 'Seguir con las preguntas' : 'Volver a mi cuenta',
       etiquetaPaso: p === this.PASO_CORREO ? 'TU CORREO' : (p < 4 ? 'PASO ' + (p + 1) + ' DE 4' : 'COMPLETO'),
 
+      cargando: !!this.state.cargando,
+      pintar: !this.state.cargando,
       esCorreo: p === this.PASO_CORREO,
       correo: this.state.correo,
       onCorreo: (e) => this.setState({ correo: e.target.value }),
