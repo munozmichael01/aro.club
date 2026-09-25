@@ -62,6 +62,77 @@
       <p style="{{ estiloBajada }}">{{ textoBajada }}</p>
     </div>
 
+    <!--
+      La contraseña va ARRIBA, pegada al título, y no al final de la página.
+
+      Estaba debajo del resumen: en el teléfono eso son unos novecientos
+      píxeles de tarjeta antes de llegar a lo único que queda por hacer, así
+      que hasta que no bajabas no se entendía que la cuenta se completa aquí
+      mismo. El título decía «Listo. Solo falta tu cuenta.» y lo que se veía
+      debajo era una lista de datos ya guardados: se lee como una pantalla de
+      confirmación, no como una que pide algo.
+
+      Ahora el orden es el de la frase: lo que falta, y después lo que ya
+      está. El resumen no pierde nada —sigue entero, con sus «Corregir»— solo
+      deja de ir por delante de la acción.
+    -->
+    <sc-if value="{{ faltaCuenta }}" hint-placeholder-val="{{ false }}">
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(28px,4vw,38px);max-width:460px">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:6px">CÓMO QUIERES ENTRAR A PARTIR DE AHORA</div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar el jueves para ver tu mesa.</div>
+
+          <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
+            <div style="position:relative;display:flex;align-items:center">
+              <input type="{{ tipoClave }}" placeholder="Crea una contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
+              <button onClick="{{ alternarVerClave }}" aria-label="{{ etiquetaVerClave }}" style="{{ botonVer }}">{{ textoVerClave }}</button>
+            </div>
+            <input type="{{ tipoClave }}" placeholder="Repítela" value="{{ clave2 }}" onChange="{{ onClave2 }}" autocomplete="new-password" aria-label="Repite la contraseña" style="{{ campoClave2 }}" />
+            <sc-if value="{{ hayClaveDispar }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin:-3px 0 2px">Las dos contraseñas no coinciden.</div>
+            </sc-if>
+            <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
+          </div>
+          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
+
+          <sc-if value="{{ hayErrorCuenta }}" hint-placeholder-val="{{ false }}">
+            <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:13px;max-width:400px">
+              <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+              <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ errorCuenta }}</span>
+            </div>
+          </sc-if>
+
+          <div style="display:flex;align-items:center;gap:14px;margin:20px 0;max-width:400px">
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
+            <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">O</span>
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;max-width:400px">
+            <!-- Apple, escondido desde el 21 de agosto de 2026.
+                 Apple exige cuenta de desarrollador de pago y no toca ahora,
+                 y anunciar «pronto» algo sin fecha ocupa sitio y hace
+                 preguntas que no podemos contestar. El markup NO se borra:
+                 volver a encenderlo es quitar el `display:none` de este
+                 contenedor, no reconstruir nada. -->
+            <div style="display:none">
+              <a href="/entrar" style="{{ botonProveedor }}">
+                <svg width="19" height="22" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.8-1.6 0-3.1 1-3.9 2.4C.2 10.4 1.4 14.7 3 17c.8 1.1 1.7 2.4 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.8zM11.7 3.3c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"></path></svg>
+                <span>Continuar con Apple</span>
+              </a>
+            </div>
+            <!-- Google. Va directo a la ruta de servidor, no a /entrar: el
+                 rodeo existía cuando el botón de allí tampoco hacía nada.
+                 Sirve para registrarse igual que para entrar — quien no tiene
+                 cuenta llega al cuestionario con correo y nombre ya puestos. -->
+            <a href="/api/auth/google?destino=%2Fcuenta" style="{{ botonProveedor }}">
+              <svg width="19" height="19" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
+              <span>Continuar con Google</span>
+            </a>
+          </div>
+          <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;max-width:46ch;text-wrap:pretty">Al crear tu cuenta aceptas los <a href="/terminos" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Términos</a> y la <a href="/privacidad" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Privacidad</a>. Te pediremos la cédula y una selfie para verificar que eres quien dices; ahí se explica qué hacemos con ellas y cuándo se borran.</div>
+        </div>
+    </sc-if>
+
     <sc-if value="{{ esCorreo }}" hint-placeholder-val="{{ false }}">
       <div style="margin-top:clamp(26px,3.4vw,34px);animation:aro-open 300ms ease both">
         <label for="correo" style="{{ etiqueta }}">Tu correo</label>
@@ -150,12 +221,30 @@
           <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:16px">LO QUE GUARDAMOS</div>
           <div style="display:flex;flex-direction:column;gap:0">
             <sc-for list="{{ resumen }}" as="r" hint-placeholder-count="5">
-              <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.12)">
-                <span style="flex:1 1 130px;font:400 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ r.campo }}</span>
-                <span style="flex:1 1 130px;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ r.valor }}</span>
-                <span style="{{ r.chip }}">{{ r.visible }}</span>
+              <!--
+                Dos columnas, y «Corregir» SIEMPRE en la de la derecha.
+
+                Antes los cuatro trozos —campo, valor, chip y el botón— eran
+                hermanos en un solo `flex-wrap`. En el móvil no cabían en una
+                línea, así que el chip y «Corregir» caían juntos a la segunda
+                y quedaba «Solo el equipo · Corregir» a media altura, como si
+                la fila se hubiera roto. El botón acababa en un sitio
+                distinto en cada fila, según lo largo que fuera el valor.
+
+                Ahora el dato entero vive en una columna que puede plegarse
+                todo lo que haga falta, y la acción vive en la otra, arriba a
+                la derecha. Donde hay sitio siguen saliendo campo y valor en
+                la misma línea; donde no lo hay se apilan, y «Corregir» no se
+                mueve de su esquina.
+              -->
+              <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.12)">
+                <div style="flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline">
+                  <span style="flex:1 1 130px;font:400 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ r.campo }}</span>
+                  <span style="flex:1 1 130px;min-width:0;overflow-wrap:anywhere;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ r.valor }}</span>
+                  <span style="{{ r.chip }}">{{ r.visible }}</span>
+                </div>
                 <sc-if value="{{ r.hayCorregir }}" hint-placeholder-val="{{ true }}">
-  <button onClick="{{ r.corregir }}" aria-label="{{ r.etiquetaCorregir }}" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;margin:-8px 0;padding:0 10px;background:transparent;border:none;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:5px;cursor:pointer">Corregir</button>
+  <button onClick="{{ r.corregir }}" aria-label="{{ r.etiquetaCorregir }}" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;margin:-10px -10px 0 0;padding:0 10px;background:transparent;border:none;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:5px;cursor:pointer">Corregir</button>
                 </sc-if>
               </div>
             </sc-for>
@@ -184,61 +273,6 @@
     </sc-if>
   
     <sc-if value="{{ faltaCuenta }}" hint-placeholder-val="{{ false }}">
-        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(28px,4vw,38px);max-width:460px">
-          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:6px">CÓMO QUIERES ENTRAR A PARTIR DE AHORA</div>
-          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar el jueves para ver tu mesa.</div>
-
-          <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
-            <div style="position:relative;display:flex;align-items:center">
-              <input type="{{ tipoClave }}" placeholder="Crea una contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
-              <button onClick="{{ alternarVerClave }}" aria-label="{{ etiquetaVerClave }}" style="{{ botonVer }}">{{ textoVerClave }}</button>
-            </div>
-            <input type="{{ tipoClave }}" placeholder="Repítela" value="{{ clave2 }}" onChange="{{ onClave2 }}" autocomplete="new-password" aria-label="Repite la contraseña" style="{{ campoClave2 }}" />
-            <sc-if value="{{ hayClaveDispar }}" hint-placeholder-val="{{ false }}">
-              <div role="alert" style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin:-3px 0 2px">Las dos contraseñas no coinciden.</div>
-            </sc-if>
-            <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
-          </div>
-          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
-
-          <sc-if value="{{ hayErrorCuenta }}" hint-placeholder-val="{{ false }}">
-            <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:13px;max-width:400px">
-              <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
-              <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ errorCuenta }}</span>
-            </div>
-          </sc-if>
-
-          <div style="display:flex;align-items:center;gap:14px;margin:20px 0;max-width:400px">
-            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
-            <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">O</span>
-            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
-          </div>
-
-          <div style="display:flex;flex-direction:column;gap:10px;max-width:400px">
-            <!-- Apple, escondido desde el 21 de agosto de 2026.
-                 Apple exige cuenta de desarrollador de pago y no toca ahora,
-                 y anunciar «pronto» algo sin fecha ocupa sitio y hace
-                 preguntas que no podemos contestar. El markup NO se borra:
-                 volver a encenderlo es quitar el `display:none` de este
-                 contenedor, no reconstruir nada. -->
-            <div style="display:none">
-              <a href="/entrar" style="{{ botonProveedor }}">
-                <svg width="19" height="22" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.8-1.6 0-3.1 1-3.9 2.4C.2 10.4 1.4 14.7 3 17c.8 1.1 1.7 2.4 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.8zM11.7 3.3c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"></path></svg>
-                <span>Continuar con Apple</span>
-              </a>
-            </div>
-            <!-- Google. Va directo a la ruta de servidor, no a /entrar: el
-                 rodeo existía cuando el botón de allí tampoco hacía nada.
-                 Sirve para registrarse igual que para entrar — quien no tiene
-                 cuenta llega al cuestionario con correo y nombre ya puestos. -->
-            <a href="/api/auth/google?destino=%2Fcuenta" style="{{ botonProveedor }}">
-              <svg width="19" height="19" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
-              <span>Continuar con Google</span>
-            </a>
-          </div>
-          <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;max-width:46ch;text-wrap:pretty">Al crear tu cuenta aceptas los <a href="/terminos" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Términos</a> y la <a href="/privacidad" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Privacidad</a>. Te pediremos la cédula y una selfie para verificar que eres quien dices; ahí se explica qué hacemos con ellas y cuándo se borran.</div>
-        </div>
-
         <div style="border-radius:26px;border:1px solid rgba(20,52,42,.16);padding:clamp(20px,3vw,28px);margin-top:14px;max-width:460px">
           <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:16px">DESPUÉS DE ESTO</div>
           <div style="display:flex;gap:14px;align-items:flex-start">
@@ -250,7 +284,6 @@
             </span>
           </div>
         </div>
-
     </sc-if>
       </div>
   </div>
@@ -490,7 +523,7 @@ class Component extends DCLogic {
         bajada: !this._lead
           ? 'Esto es todo lo que guardamos de esta parte, y quién lo ve.'
           : (this.state.puedeCuenta
-              ? 'Esto es lo que guardamos de ti, y quién lo ve. Debajo creas la contraseña con la que vuelves a entrar.'
+              ? 'Crea la contraseña con la que vuelves a entrar el jueves a ver tu mesa. Debajo tienes todo lo que guardamos de ti, y quién lo ve.'
               : 'Esto es lo que guardamos de ti, y quién lo ve. Faltan las preguntas; al terminarlas creas tu cuenta.'),
         listo: true
       }
