@@ -317,6 +317,22 @@ class Component extends DCLogic {
         }
         if (d.genero) est.genero = this.GENEROS.indexOf(d.genero);
         est.puedeCuenta = !!d.puedeCuenta;
+
+        // Quien llega con los cuatro pasos ya contestados aterriza en el
+        // resumen, no en el paso 1.
+        //
+        // Es el camino NORMAL, no un caso raro: se rellenan los datos, se
+        // contestan las preguntas, y el cuestionario manda aquí al terminar.
+        // Hasta ahora eso abría «PASO 1 DE 4· ¿Cómo te llamas?» con el nombre
+        // ya escrito, y había que pulsar Continuar cuatro veces sobre campos
+        // rellenos para llegar a lo único que de verdad falta, que es la
+        // contraseña. Se lee como que no se guardó nada.
+        //
+        // Y quien viene a CORREGIR un dato también quiere el resumen: es la
+        // única pantalla desde la que se salta al campo concreto.
+        const completo = !!(d.nombre && d.trato && d.nacimiento && d.genero && d.telefono);
+        if (completo && this.state.paso === 0) est.paso = 4;
+
         this.setState(est);
       })
       // Aqui estaba el rebote a Entrar, y era el agujero del embudo: el
@@ -514,8 +530,23 @@ class Component extends DCLogic {
     const trato = this.state.trato.trim() || this.state.nombre.trim().split(' ')[0] || '—';
     // El prefijo sale del selector, no escrito a mano: con '+58' fijo, el
     // numero de quien vive en España se resumia como "+58 600 123456".
+    // Lo que se enseña tiene que ser lo que se guarda, y no lo era. Esta
+    // línea se armaba con lo TECLEADO —`04229998877`— así que el resumen
+    // decía «+58 042 29998877»: ni es el número de nadie ni es lo que va a
+    // la base, que es `+584229998877`. El cero de delante lo quita `aE164`
+    // al guardar, y aquí no se quitaba: quien acaba de escribir su teléfono
+    // leía un número que no es el suyo, y justo en la pantalla cuyo título
+    // es «esto es lo que guardamos de ti».
+    //
+    // Se formatea desde el E.164 que ESTA pantalla va a mandar, que es la
+    // misma expresión de `guardar()`. Dos formas de pintar el mismo dato es
+    // lo que produjo la diferencia.
+    const telE164 = AroReglas.aE164(this.state.prefijo + this.state.telefono);
+    const telResto = this.state.prefijo && telE164.indexOf(this.state.prefijo) === 0
+      ? telE164.slice(this.state.prefijo.length)
+      : telE164.replace(/^\+/, '');
     const telBonito = telOk
-      ? (this.state.prefijo ? this.state.prefijo + ' ' : '') + tel.replace(/(\d{3})(?=\d)/, '$1 ')
+      ? (this.state.prefijo ? this.state.prefijo + ' ' : '+') + telResto.replace(/(\d{3})(?=\d)/, '$1 ')
       : '—';
 
     // Cada fila vuelve a su paso. El resumen se leia y no se podia tocar:

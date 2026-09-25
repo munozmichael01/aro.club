@@ -193,7 +193,7 @@
 
         <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(28px,4vw,38px);max-width:460px">
           <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:6px">LO QUE FALTA</div>
-          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Cómo te llamas, cómo quieres que te llamen en la mesa y a qué número te escribimos el día del encuentro. Ahí mismo creas tu cuenta.</div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">{{ textoFalta }}</div>
           <a href="{{ enlaceDatos }}" style="{{ botonClave }}">Continuar</a>
         </div>
       </div>
@@ -250,7 +250,7 @@ class Component extends DCLogic {
     // sola fecha al guardarse. Igual que en la pantalla de datos.
     dia: '', mes: '', anio: '',
     // Lo que el SERVIDOR dice que falta. La pantalla ya no lo deduce.
-    faltan: null, guardando: false, falloGuardar: '',
+    faltan: null, guardando: false, falloGuardar: '', donde: '',
     /**
      * Si hay algo escrito en la base de esta persona.
      *
@@ -660,6 +660,11 @@ class Component extends DCLogic {
         // que a quien entraba con Google —cuenta sin teléfono— la pantalla le
         // enseñaba «COMPLETO · Dieciséis respuestas» con cero contestadas.
         est.algoGuardado = Object.keys(d.respuestas || {}).length > 0;
+
+        // Dónde está en el embudo, dicho por la MISMA pieza que se lo dice a
+        // todos los demás. El cierre lo necesita para no prometer trabajo que
+        // ya está hecho.
+        est.donde = d.donde || '';
 
         if (d.completado) {
           est.fin = true;
@@ -1119,6 +1124,18 @@ class Component extends DCLogic {
         const t = letras[n] || String(n);
         return t.charAt(0).toUpperCase() + t.slice(1) + (n === 1 ? ' respuesta.' : ' respuestas.');
       })(),
+      // Lo que falta DE VERDAD al terminar las preguntas.
+      //
+      // Este texto estaba escrito a mano y decía siempre lo mismo: «cómo te
+      // llamas, cómo quieres que te llamen y a qué número te escribimos». En
+      // el camino normal —datos primero, preguntas después, que es el que
+      // ofrece la propia landing— eso ya estaba contestado, así que la
+      // pantalla del final pedía tres cosas que la persona acababa de dar.
+      // Ahora sale de `donde`, que es el estado del embudo que ya devuelve la
+      // API y que nadie leía aquí.
+      textoFalta: this.state.donde === 'cuenta'
+        ? 'Solo la contraseña con la que vuelves a entrar. Tus datos ya están guardados.'
+        : 'Cómo te llamas, cómo quieres que te llamen en la mesa y a qué número te escribimos el día del encuentro. Ahí mismo creas tu cuenta.',
       // el acceso se elige aquí, cuando ya hay algo que guardar
       clave: this.state.clave || '',
       // pointer-events no bloquea el teclado: la inercia va en el handler
