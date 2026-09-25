@@ -1146,7 +1146,7 @@ class Component extends DCLogic {
         etiqueta: 'DÍAS', pregunta: '¿Qué días te sirven mejor?',
         ayuda: 'Marca todos los que puedas. Sin esto no podemos sentarte en ninguna mesa.',
         tipo: 'multi', clave: 'planes',
-        opciones: ['Martes noche', 'Miércoles noche', 'Jueves noche', 'Viernes noche', 'Sábado mañana', 'Sábado mediodía', 'Sábado noche', 'Domingo mañana', 'Domingo mediodía']
+        opciones: ['Jueves noche', 'Viernes noche', 'Sábado mañana', 'Sábado noche', 'Domingo mañana']
       },
       {
         etiqueta: 'CONVERSACIÓN', pregunta: '¿De qué podrías hablar dos horas seguidas?',
@@ -1268,7 +1268,7 @@ class Component extends DCLogic {
           const COD = {
             arraigo: ['volvio', 'se-quedo', 'mismos', 'remoto', 'interior', 'visita'],
             zonas: ['mercedes', 'palos-grandes', 'altamira', 'chacao', 'rosal', 'castellana', 'hatillo', 'trinidad', 'chuao', 'bello-monte'],
-            dias: ['mar', 'mie', 'jue', 'vie', 'sab-am', 'sab-md', 'sab', 'dom-am', 'dom-md'],
+            dias: ['jue', 'vie', 'sab-am', 'sab', 'dom-am'],
             temas: ['cocina', 'viajes', 'cine', 'musica', 'libros', 'deporte', 'negocios', 'arte', 'tecnologia', 'crianza']
           };
           this.guardarLead({

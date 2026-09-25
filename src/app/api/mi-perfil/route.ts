@@ -254,6 +254,35 @@ export async function POST(request: Request) {
       console.error('[mi-perfil] no se guardó el dato base', error)
       return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
     }
+    // Y la copia en `answers`, cuando la hay.
+    //
+    // `nacimiento` y `genero` viven en DOS sitios: su columna en `profiles`,
+    // que es la que usa el reparto, y una fila en `answers`, porque también
+    // son preguntas del cuestionario. Al guardar aquí se tocaba solo la
+    // columna, y `respuestasDePerfil` prefiere la fila: la fecha se guardaba
+    // de verdad —el reparto ya contaba la edad nueva— y la pantalla seguía
+    // enseñando la vieja para siempre. Comprobado cambiando mayo por junio:
+    // la columna decía junio, la pantalla decía mayo.
+    //
+    // No se unifican las dos copias aquí porque eso es cirugía en el
+    // cuestionario; lo que no puede pasar es que se separen al escribir.
+    // Es el mismo espejo que ya hace `/api/cuestionario` en el otro sentido
+    // —allí se guarda la respuesta y se copia a la columna—, con la misma
+    // llave de conflicto.
+    if (clave === 'nacimiento' || clave === 'genero') {
+      const { data: v } = await admin
+        .from('questionnaire_versions').select('id').eq('is_active', true).maybeSingle()
+      if (v) {
+        const { error: eAns } = await admin.from('answers').upsert(
+          { profile_id: user.id, version_id: v.id, question_key: clave, value: valor } as never,
+          { onConflict: 'profile_id,version_id,question_key' },
+        )
+        // No tumba el guardado: la columna, que es la que manda para el
+        // reparto, ya está escrita. Pero se deja dicho en el registro.
+        if (eAns) console.error('[mi-perfil] la copia en answers no se actualizó', clave, eAns)
+      }
+    }
+
     // El trigger de `profiles` recalcula los rasgos si cambió nacimiento o
     // género, así que el reparto se entera solo.
     return NextResponse.json({ estado: 'guardado' })

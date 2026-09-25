@@ -52,9 +52,25 @@
       filtrar: telefonoPerfil,
       valido: function (v) {
         var d = String(v || '').replace(/\D/g, '')
-        return d.length >= 8 && d.length <= 15
+        // El rango de E.164, que es el suelo para un pais que no conocemos.
+        if (d.length < 8 || d.length > 15) return false
+        // Y encima, el largo del pais cuando lo sabemos.
+        //
+        // `LARGO_POR_PREFIJO` llevaba aqui desde el principio y no lo miraba
+        // NADIE: se exportaba y ya. Con solo el rango generico, '+58123456'
+        // —seis cifras— pasaba por bueno, y '+58412123456' tambien, que es un
+        // numero venezolano al que le falta una. No falla nada al guardar: la
+        // fila entra, y el dia de la cena el WhatsApp no llega a ningun sitio.
+        for (var pre in LARGO_POR_PREFIJO) {
+          if (d.indexOf(pre) !== 0) continue
+          // El cero nacional se descuenta antes de medir, igual que en
+          // `aE164`: quien teclea 0412-1234567 escribe once cifras y son diez.
+          var resto = d.slice(pre.length).replace(/^0(?!0)/, '')
+          return resto.length === LARGO_POR_PREFIJO[pre]
+        }
+        return true
       },
-      ayuda: 'Con el prefijo de tu país. Da igual si escribes el 0 de delante.',
+      ayuda: 'Con el prefijo de tu país. Da igual si escribes el 0 de delante: en Venezuela son diez cifras sin él.',
     },
 
     telefonoPagoMovil: {

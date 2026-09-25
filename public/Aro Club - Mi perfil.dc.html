@@ -374,7 +374,19 @@ class Component extends DCLogic {
         s: Math.min(5, q.pantalla || 1),
         etiqueta: q.enunciado,
         ayuda: q.ayuda || undefined,
-        tipo: q.tipo === 'multi' ? 'multi' : (q.tipo === 'text' ? 'texto' : 'unica'),
+        // `date` tiene que llegar como 'fecha' o se cae en 'unica'.
+        //
+        // Aquí estaba el fallo del nacimiento. El catálogo manda la pregunta
+        // con `tipo:'date'`, este mapeo lo metía en el cajón de sastre —todo
+        // lo que no es multi ni texto es 'unica'— y una 'unica' sin opciones
+        // no pinta nada: la fila salía vacía aunque la fecha estuviera
+        // guardada, y al abrirla el valor que se mandaba era `null`, que el
+        // servidor rechaza. O sea que no se veía Y no se podía arreglar.
+        //
+        // La pantalla ya sabía pintar y editar 'fecha' —está en `BASE()` y
+        // tiene su selector de día, mes y año—; lo que no había era el camino
+        // hasta ahí.
+        tipo: q.tipo === 'multi' ? 'multi' : (q.tipo === 'text' ? 'texto' : (q.tipo === 'date' ? 'fecha' : 'unica')),
         min: q.min || undefined,
         max: q.max || undefined,
         codigos: (q.opciones || []).map((o) => o.value),
@@ -399,7 +411,7 @@ class Component extends DCLogic {
     };
     (d.preguntas || []).forEach((q) => {
       const cods = (q.opciones || []).map((o) => o.value);
-      if (q.tipo === 'text') v[q.clave] = q.valor || '';
+      if (q.tipo === 'text' || q.tipo === 'date') v[q.clave] = q.valor || '';
       else if (q.tipo === 'multi') v[q.clave] = (q.valor || []).map((x) => cods.indexOf(x)).filter((i) => i >= 0);
       else v[q.clave] = cods.indexOf(q.valor);
     });
@@ -454,7 +466,10 @@ class Component extends DCLogic {
         return { borrador: p.join('-') };
       });
       const sel = esUnica ? val : (val || []);
-      const bajo = !esUnica && c.min && sel.length < c.min;
+      // Una fecha incompleta no se guarda: `2026--14` entra como texto y la
+      // columna la rechaza con un error que no dice nada.
+      const fechaFloja = esFecha && !/^\d{4}-\d{2}-\d{1,2}$/.test(String(val || ''));
+      const bajo = fechaFloja || (!esUnica && !esFecha && c.min && sel.length < c.min);
 
       const opciones = (c.opciones || []).map((label, i) => {
         const marcada = esUnica ? sel === i : sel.indexOf(i) >= 0;
@@ -479,7 +494,7 @@ class Component extends DCLogic {
 
       return {
         etiqueta: c.etiqueta,
-        valor: on ? (bajo ? 'Elige al menos ' + c.min : 'Editando') : nombres(id, R[id]),
+        valor: on ? (bajo ? (esFecha ? 'Completa la fecha' : 'Elige al menos ' + c.min) : 'Editando') : nombres(id, R[id]),
         valorEstilo: 'display:block;font:400 14px/1.5 \'Inter Tight\',sans-serif;color:' + (c.privada ? '#8F4515' : '#566A5D') + ';margin-top:4px;text-wrap:pretty',
         icono: on ? '×' : '›',
         flecha: 'flex:0 0 auto;width:30px;height:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 17px/1 \'Inter Tight\',sans-serif;background:' + (on ? '#1B5138' : 'rgba(27,81,56,.09)') + ';color:' + (on ? '#FAF3E4' : '#1B5138'),
@@ -527,15 +542,28 @@ class Component extends DCLogic {
           const cods = c.codigos || [];
           const valor = c.tipo === 'texto'
             ? (id === 'telefono' ? AroReglas.aE164(b) : b)
-            : (c.tipo === 'multi'
-                ? (b || []).map((i) => cods[i]).filter(Boolean)
-                : (cods[b] || null));
+            : (c.tipo === 'fecha'
+                ? b
+                : (c.tipo === 'multi'
+                    ? (b || []).map((i) => cods[i]).filter(Boolean)
+                    : (cods[b] || null)));
           this.guardarCampo(id, valor);
         },
         cerrar: () => this.setState({ abierta: null, borrador: null }),
+        // `R`, no `s.r`. NO EXISTE NINGUN `state.r`.
+        //
+        // Esto hacia que NINGUNA fila del perfil se abriera: el actualizador
+        // reventaba con un TypeError dentro de `setState`, o sea en silencio
+        // —sin excepcion que llegue a la consola de nadie, sin fila roja, sin
+        // nada—. La pantalla entera se leia como de solo lectura: pulsabas y
+        // no pasaba absolutamente nada. Cada campo tenia su editor escrito y
+        // ninguno se podia abrir.
+        //
+        // Los valores ya estan calculados arriba en `R`, que es lo que lee el
+        // resto de esta funcion dos lineas mas arriba.
         abrir: () => this.setState((s) => (s.abierta === id
           ? { abierta: null, borrador: null }
-          : { abierta: id, borrador: Array.isArray(s.r[id]) ? s.r[id].slice() : s.r[id] }))
+          : { abierta: id, borrador: Array.isArray(R[id]) ? R[id].slice() : R[id] }))
       };
     };
 

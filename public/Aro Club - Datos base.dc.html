@@ -114,7 +114,7 @@
       confirmación, no como una que pide algo.
 
       Ahora el orden es el de la frase: lo que falta, y después lo que ya
-      está. El resumen no pierde nada —sigue entero, con sus «Corregir»— solo
+      está. El resumen no pierde nada —sigue entero, con sus «Editar»— solo
       deja de ir por delante de la acción.
     -->
     <sc-if value="{{ faltaCuenta }}" hint-placeholder-val="{{ false }}">
@@ -263,29 +263,37 @@
           <div style="display:flex;flex-direction:column;gap:0">
             <sc-for list="{{ resumen }}" as="r" hint-placeholder-count="5">
               <!--
-                Dos columnas, y «Corregir» SIEMPRE en la de la derecha.
+                Dos columnas, y «Editar» SIEMPRE en la de la derecha.
 
                 Antes los cuatro trozos —campo, valor, chip y el botón— eran
                 hermanos en un solo `flex-wrap`. En el móvil no cabían en una
-                línea, así que el chip y «Corregir» caían juntos a la segunda
-                y quedaba «Solo el equipo · Corregir» a media altura, como si
+                línea, así que el chip y el botón caían juntos a la segunda
+                y quedaba «Solo el equipo · Editar» a media altura, como si
                 la fila se hubiera roto. El botón acababa en un sitio
                 distinto en cada fila, según lo largo que fuera el valor.
 
                 Ahora el dato entero vive en una columna que puede plegarse
                 todo lo que haga falta, y la acción vive en la otra, arriba a
                 la derecha. Donde hay sitio siguen saliendo campo y valor en
-                la misma línea; donde no lo hay se apilan, y «Corregir» no se
+                la misma línea; donde no lo hay se apilan, y «Editar» no se
                 mueve de su esquina.
               -->
               <div style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.12)">
                 <div style="flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline">
                   <span style="flex:1 1 130px;font:400 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ r.campo }}</span>
                   <span style="flex:1 1 130px;min-width:0;overflow-wrap:anywhere;font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ r.valor }}</span>
-                  <span style="{{ r.chip }}">{{ r.visible }}</span>
+                  <!--
+                    El chip, en su propia línea SIEMPRE.
+                    Iba detrás del valor, y como cada valor mide distinto
+                    —«Prueba» y «+58 422 9998877» no ocupan lo mismo— los seis
+                    chips acababan cada uno a una altura y a una sangría, en
+                    zigzag. Con la línea entera para él, los seis empiezan
+                    donde empieza el texto.
+                  -->
+                  <span style="flex:1 1 100%;min-width:0;display:block"><span style="{{ r.chip }}">{{ r.visible }}</span></span>
                 </div>
                 <sc-if value="{{ r.hayCorregir }}" hint-placeholder-val="{{ true }}">
-  <button onClick="{{ r.corregir }}" aria-label="{{ r.etiquetaCorregir }}" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;margin:-10px -10px 0 0;padding:0 10px;background:transparent;border:none;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:5px;cursor:pointer">Corregir</button>
+  <button onClick="{{ r.corregir }}" aria-label="{{ r.etiquetaCorregir }}" style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;margin:-10px -10px 0 0;padding:0 10px;background:transparent;border:none;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:5px;cursor:pointer">Editar</button>
                 </sc-if>
               </div>
             </sc-for>
@@ -636,7 +644,7 @@ class Component extends DCLogic {
     // quien se equivocaba en el nombre o en el año se enteraba aqui, al
     // final, y no tenia mas salida que volver a empezar.
     const resumen = [
-      // El correo primero, y sin «Corregir»: en una pantalla cuyo trabajo es
+      // El correo primero, y sin «Editar»: en una pantalla cuyo trabajo es
       // crear una cuenta, no enseñar CUAL es el peor dato que se puede
       // omitir. Cambiarlo no es corregir un campo, es empezar de nuevo con
       // otra direccion, y eso se hace desde la landing.
@@ -650,7 +658,7 @@ class Component extends DCLogic {
       campo: r[0], valor: r[1], visible: r[2], chip: chip(r[3]),
       corregir: r[4] === null ? null : () => this.setState({ paso: r[4] }),
       hayCorregir: r[4] !== null,
-      etiquetaCorregir: 'Corregir ' + r[0].toLowerCase()
+      etiquetaCorregir: 'Editar ' + r[0].toLowerCase()
     }));
 
     const btn = (fondo, color, extra) => 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;background:' + fondo + ';color:' + color + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
