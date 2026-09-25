@@ -400,6 +400,11 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       return { a, datos: { ...base, ...pago, motivo: (p.motivo as string) ?? '' } }
     }
 
+    // El cupón no lleva importes a propósito: no hay ninguno. Lleva lo mismo
+    // que el resto —qué fecha, dónde y cuándo se revela— y nada de banco.
+    case 'puesto_con_cupon':
+      return { a, datos: { ...base, cupon: (p.cupon as string) ?? '' } }
+
     // --- lo que se cae --------------------------------------------------
     case 'cancelacion': {
       const pago = await elPagoDe(admin, fila.profile_id, fila.event_id)

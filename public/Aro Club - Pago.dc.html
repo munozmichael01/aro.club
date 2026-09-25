@@ -95,6 +95,38 @@
 
         <button onClick="{{ irDatos }}" style="{{ botonPagar }}">{{ textoIrDatos }}</button>
         <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;max-width:48ch;text-wrap:pretty">Cancelas con más de 24 horas y recuperas el crédito completo. Con menos, se pierde: la mesa ya está armada.</div>
+
+        <!--
+          El código, abajo y plegado.
+
+          Va DESPUÉS de los métodos y no antes por una razón: casi nadie
+          tiene uno. Un campo de código arriba del todo le pregunta a todo el
+          mundo por algo que solo unos pocos tienen, y al resto le deja la
+          duda de si están pagando de más. Plegado, quien tiene código lo
+          busca y lo encuentra; quien no, no se entera.
+        -->
+        <div style="margin-top:clamp(22px,3vw,28px);padding-top:clamp(18px,2.4vw,22px);border-top:1px solid rgba(20,52,42,.12)">
+          <sc-if value="{{ cuponPlegado }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ abrirCupon }}" style="display:inline-flex;align-items:center;min-height:44px;margin:-10px 0;padding:0;background:transparent;border:none;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:5px;cursor:pointer">¿Tienes un código de invitación?</button>
+          </sc-if>
+
+          <sc-if value="{{ cuponAbierto }}" hint-placeholder-val="{{ false }}">
+            <div style="animation:aro-open 260ms ease both">
+              <label for="cupon" style="display:block;font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin-bottom:10px">TU CÓDIGO</label>
+              <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                <input id="cupon" type="text" value="{{ cupon }}" onChange="{{ onCupon }}" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false" style="{{ campoCupon }}" />
+                <button onClick="{{ aplicarCupon }}" aria-disabled="{{ inerteCupon }}" style="{{ botonCupon }}">{{ textoCupon }}</button>
+              </div>
+              <sc-if value="{{ hayFalloCupon }}" hint-placeholder-val="{{ false }}">
+                <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(110,52,15,.09);padding:13px 15px;margin-top:12px;max-width:44ch">
+                  <span style="{{ iconoAviso }}">!</span>
+                  <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ falloCupon }}</span>
+                </div>
+              </sc-if>
+              <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:11px;max-width:46ch;text-wrap:pretty">Si el código cubre tu puesto, no tienes que pagar nada: queda confirmado aquí mismo.</div>
+            </div>
+          </sc-if>
+        </div>
       </div>
     </sc-if>
 
@@ -296,6 +328,31 @@
       </div>
     </sc-if>
 
+    <!--
+      El «listo» del cupón es OTRA pantalla, no la del pago.
+
+      La de pagar dice «cuadramos tu pago con el banco» y enseña un
+      comprobante con importes. A quien canjeó un código eso le cuenta una
+      transacción que no ocurrió, y con ceros dentro.
+    -->
+    <sc-if value="{{ esCupon }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 420ms ease both">
+        <div style="{{ selloListo }}">PUESTO APARTADO</div>
+        <h1 style="{{ h1 }}">Listo. Tu puesto es tuyo.</h1>
+        <p style="{{ bajada }}">Tu código cubre la plaza, así que no tienes que pagar nada ni reportar ningún pago. A las doce del mediodía del día de la cena se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
+
+        <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:14px 16px;margin-top:clamp(20px,3vw,26px);max-width:46ch">
+          <span style="{{ iconoAviso }}">!</span>
+          <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">Lo que consumas en la mesa va aparte y lo pagas en el restaurante, como en cualquier salida.</span>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
+          <a href="/cuenta" style="{{ botonPrimario }}">Ir a mi cuenta</a>
+          <a href="/mesa#cerrada" style="{{ botonFantasma }}">Ver mi reserva</a>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ esFallo }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 380ms ease both">
         <div style="{{ selloFallo }}">EL PAGO NO CUADRA</div>
@@ -335,6 +392,7 @@ class Component extends DCLogic {
   state = {
     // La captura: la RUTA que devuelve el servidor tras subirla, no un si/no.
     capturaRuta: '', capturaNombre: '', subiendoCaptura: false, fase: 0, metodo: 0, ev: null, rep: { doc_tipo: 'V' }, copiado: -1,
+    cupon: '', cuponAbierto: false, aplicandoCupon: false, falloCupon: '',
             datos: null, enviando: false, fallo: '' };
 
   componentDidMount() {
@@ -390,6 +448,37 @@ class Component extends DCLogic {
         this.setState({ subiendoCaptura: false, capturaRuta: x.ruta, capturaNombre: archivo.name || '' });
       })
       .catch(() => this.setState({ subiendoCaptura: false, fallo: 'No pudimos subir la captura. Revisa tu conexión.' }));
+  }
+
+  /**
+   * Canjear el código.
+   *
+   * No pasa por `/api/pago`: no hay método, ni tasa, ni referencia, ni
+   * captura, ni nada que cuadrar después. Es su propia ruta y su propia
+   * pantalla de «listo», porque la del pago habla de banco y de importes.
+   *
+   * El fallo se enseña AQUÍ, junto al campo, y no manda a la pantalla de
+   * error: un código mal tecleado se corrige donde se escribió, no después
+   * de perder los datos del formulario.
+   */
+  aplicarCupon() {
+    if (this.state.aplicandoCupon) return;
+    const codigo = (this.state.cupon || '').trim();
+    if (!codigo) return;
+    this.setState({ aplicandoCupon: true, falloCupon: '' });
+    fetch('/api/cupon', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventoId: this._evento, codigo: codigo })
+    })
+      .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
+      .then(({ ok, x }) => {
+        if (!ok) {
+          this.setState({ aplicandoCupon: false, falloCupon: x.error || 'No pudimos aplicar el código.' });
+          return;
+        }
+        this.setState({ aplicandoCupon: false, fase: 7 });
+      })
+      .catch(() => this.setState({ aplicandoCupon: false, falloCupon: 'No pudimos aplicar el código. Revisa tu conexión.' }));
   }
 
   reportar() {
@@ -682,6 +771,22 @@ class Component extends DCLogic {
       esReportar: f === 2 && puedePagar !== false,
       esEnviando: f === 3,
       esPendiente: f === 4, esListo: f === 5, esFallo: f === 6,
+      // 7 y no un estado aparte: la pantalla ya lleva las fases en un número
+      // y meter una bandera en paralelo es la forma de que un día se
+      // enciendan dos a la vez.
+      esCupon: f === 7,
+      cuponPlegado: !this.state.cuponAbierto,
+      cuponAbierto: !!this.state.cuponAbierto,
+      cupon: this.state.cupon,
+      hayFalloCupon: !!this.state.falloCupon,
+      falloCupon: this.state.falloCupon,
+      inerteCupon: this.state.aplicandoCupon || !this.state.cupon.trim(),
+      textoCupon: this.state.aplicandoCupon ? 'Aplicando' : 'Aplicar',
+      campoCupon: 'flex:1 1 160px;min-width:0;min-height:54px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;text-transform:uppercase;outline:none',
+      botonCupon: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:54px;padding:0 24px;border-radius:999px;border:none;background:' + (this.state.aplicandoCupon || !this.state.cupon.trim() ? 'rgba(27,81,56,.13)' : '#1B5138') + ';color:' + (this.state.aplicandoCupon || !this.state.cupon.trim() ? '#456352' : '#FAF3E4') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (this.state.aplicandoCupon || !this.state.cupon.trim() ? 'not-allowed' : 'pointer'),
+      abrirCupon: () => this.setState({ cuponAbierto: true }),
+      onCupon: (e) => this.setState({ cupon: String(e.target.value || '').toUpperCase().replace(/\s+/g, ''), falloCupon: '' }),
+      aplicarCupon: () => this.aplicarCupon(),
 
       metodos, datosPago, camposReporte, comprobante, pasosPendiente, salidas,
       // El aviso va ARRIBA del numero, no como un dato mas de la lista: ahi

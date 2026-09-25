@@ -93,9 +93,16 @@ export async function GET(request: Request) {
 
   // Todos, encendidos y apagados: los apagados se enseñan atenuados con
   // "Pronto". Esconderlos haría creer que no existen.
+  //
+  // Menos `cupon`, que no es una forma de pagar que alguien elija. Existe en
+  // la tabla porque `payments.metodo` es una clave foránea y el canje tiene
+  // que apuntar a algo; enseñarlo en la lista lo convertía en un «Cupón ·
+  // PRONTO» atenuado, que promete un método que no va a llegar nunca. El
+  // código se aplica abajo, en su propio campo.
   const { data: metodosRaw } = await admin
     .from('payment_methods')
     .select('id, nombre, moneda, manual, activo, datos_cuenta, campos, captura_obligatoria')
+    .neq('id', 'cupon')
     .order('orden')
 
   // `pendiente_de_datos_reales` empezó siendo una nota mía que no impedía

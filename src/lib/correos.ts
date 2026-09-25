@@ -43,6 +43,7 @@ const IMPRESCINDIBLES: ReadonlySet<string> = new Set([
   'pago_en_revision',
   'pago_confirmado',
   'pago_no_cuadra',
+  'puesto_con_cupon',
   'restablecer_clave',
 ])
 
@@ -55,6 +56,11 @@ export type Correo =
   | 'pago_en_revision'
   | 'pago_confirmado'
   | 'pago_no_cuadra'
+  // El acuse del cupón. No vale reusar `pago_confirmado`: esa plantilla
+  // imprime el importe en dólares y en bolívares, y a quien canjeó un código
+  // le llegaría un acuse diciendo 0 USD y 0 Bs, que se lee como un error de
+  // la máquina justo en el correo que tiene que tranquilizarle.
+  | 'puesto_con_cupon'
   // Entrega 13: el rechazo deja de ir dentro de `verificacion` con un
   // resultado en el payload. Son dos mensajes distintos —«ya puedes
   // reservar» y «repite esta foto»— y con un solo tipo el remitente tendria

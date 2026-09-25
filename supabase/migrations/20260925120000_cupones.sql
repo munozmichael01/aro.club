@@ -1,0 +1,35 @@
+-- El cupón: un método de pago que no cobra.
+--
+-- No es una pieza nueva colgada del producto. `/api/pago` ya tenía la rama
+-- que hace exactamente lo que un cupón necesita —confirmar el puesto en el
+-- acto, anotar el libro y mandar el acuse, sin pasar por conciliación— y
+-- estaba escrita para los métodos con `manual = false`. Hoy no la usa nadie
+-- porque el único método activo es Pago Móvil, que es manual.
+--
+-- Así que el cupón entra por ahí: `payments.metodo` apunta a la tabla de
+-- métodos, y se le añade uno, `cupon`, INACTIVO —para que no aparezca nunca
+-- como opción que alguien pueda elegir en la pantalla— pero existente, para
+-- que la fila del pago tenga a dónde apuntar y el histórico de operación no
+-- enseñe un pago huérfano.
+--
+-- ## Las tres decisiones de Michael, escritas donde se aplican
+--
+--   compartido    → un solo código para los seis, no uno cada uno
+--   100%          → `descuento_pct` nace en 100
+--   cualquier fecha → `event_id` va null
+--
+-- Y una cuarta que no estaba y que hace falta, porque con esas tres el
+-- código no tiene nada que lo contenga: **un uso por persona**. Es el índice
+-- único de `coupon_redemptions`. Sin él, «compartido» y «cualquier fecha»
+-- juntos significan barra libre indefinida para quien lo conozca; con él,
+-- significa un puesto gratis para cada invitado, que es lo que se quiso
+-- decir.
+
+-- --------------------------------------------------------------------
+-- Los valores nuevos de los enums van SOLOS y primero.
+--
+-- Postgres deja añadirlos dentro de una transacción, pero no deja usarlos en
+-- la misma. Por eso aquí solo se declaran: quien los escribe es el código.
+-- --------------------------------------------------------------------
+alter type credit_reason_t add value if not exists 'coupon';
+alter type email_kind_t add value if not exists 'puesto_con_cupon';

@@ -47,6 +47,7 @@ const PLANTILLA: Record<Correo, string> = {
   cancelacion: '05-cancelacion.html',
   pago_en_revision: '06-pago-en-revision.html',
   pago_confirmado: '07-pago-confirmado.html',
+  puesto_con_cupon: '17-puesto-con-cupon.html',
   pago_no_cuadra: '08-pago-no-cuadra.html',
   restablecer_clave: '09-restablecer-clave.html',
   verificacion_rechazada: '10-verificacion-rechazada.html',
