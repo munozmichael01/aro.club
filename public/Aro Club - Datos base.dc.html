@@ -32,7 +32,13 @@
   ::placeholder { color:#7E9A8B; font-weight:400; letter-spacing:0; }
   @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
   @keyframes aro-vuelta { to { transform: rotate(360deg) } }
-  .aro-gira { animation: aro-vuelta 1.5s linear infinite; transform-origin: 50% 50%; }
+  /* Gira un DIV, y no la propia pieza de SVG.
+     En Safari el `transform-origin` en porcentaje sobre un elemento SVG se
+     ha resuelto históricamente contra el sistema de coordenadas del
+     `viewBox` y no contra su caja, y entonces el aro no gira sobre su
+     centro: describe una órbita. Un div no tiene esa ambigüedad en ningún
+     navegador. */
+  .aro-gira { display: inline-block; line-height: 0; animation: aro-vuelta 1.5s linear infinite; transform-origin: 50% 50%; }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
   /* Va DESPUÉS y con `!important` a propósito: la regla de arriba le pone a
      todo una duración de .001ms, y a un giro infinito eso no lo para, lo
@@ -73,7 +79,8 @@
     -->
     <sc-if value="{{ cargando }}" hint-placeholder-val="{{ false }}">
       <div role="status" aria-live="polite" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;min-height:58vh;text-align:center">
-        <svg class="aro-gira" width="54" height="54" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <div class="aro-gira" aria-hidden="true">
+        <svg width="54" height="54" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <circle cx="12" cy="12" r="8.6" stroke="rgba(20,52,42,.2)" stroke-width="1.5"></circle>
           <circle cx="20.6" cy="12" r="1.9" fill="#8F4515"></circle>
           <circle cx="16.3" cy="19.45" r="1.9" fill="rgba(20,52,42,.48)"></circle>
@@ -82,6 +89,7 @@
           <circle cx="7.7" cy="4.55" r="1.9" fill="rgba(20,52,42,.24)"></circle>
           <circle cx="16.3" cy="4.55" r="1.9" fill="rgba(20,52,42,.16)"></circle>
         </svg>
+        </div>
         <span style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#566A5D">Un momento</span>
       </div>
     </sc-if>
@@ -370,7 +378,30 @@ class Component extends DCLogic {
     this._lead = (s && s.correo && s.token) ? s : null;
     // El tope del velo. Si la respuesta no llega, se pinta lo que haya.
     this._tope = setTimeout(() => this.setState({ cargando: false }), 6000);
+    // Y cuándo empezó, para que el velo no sea un parpadeo.
+    //
+    // En el teléfono, sobre datos buenos, `/api/datos-base` contesta en poco
+    // más de cien milisegundos: el aro aparece y desaparece antes de que a
+    // nadie le dé tiempo a verlo, y lo que queda es un fogonazo que se lee
+    // como que la pantalla saltó. Medio segundo es lo que hace falta para
+    // que se lea como «está cargando» y no como un fallo.
+    this._empezo = Date.now();
     this.cargar(true);
+  }
+
+  /**
+   * Levanta el velo, pero no antes de medio segundo.
+   *
+   * El estado nuevo se aplica al momento —los campos ya están rellenos por
+   * dentro— y lo único que espera es dejar de tapar. Así una respuesta
+   * rápida no se convierte en un parpadeo, y una lenta no espera de más.
+   */
+  quitarVelo(est) {
+    const MINIMO = 500;
+    const pasado = Date.now() - (this._empezo || 0);
+    if (pasado >= MINIMO) { this.setState(Object.assign({}, est, { cargando: false })); return; }
+    this.setState(est);
+    setTimeout(() => this.setState({ cargando: false }), MINIMO - pasado);
   }
 
   /**
@@ -403,7 +434,6 @@ class Component extends DCLogic {
         }
         if (d.genero) est.genero = this.GENEROS.indexOf(d.genero);
         est.puedeCuenta = !!d.puedeCuenta;
-        est.cargando = false;
         clearTimeout(this._tope);
 
         // Quien llega con los cuatro pasos ya contestados aterriza en el
@@ -421,7 +451,7 @@ class Component extends DCLogic {
         const completo = !!(d.nombre && d.trato && d.nacimiento && d.genero && d.telefono);
         if (completo && this.state.paso === 0) est.paso = 4;
 
-        this.setState(est);
+        this.quitarVelo(est);
       })
       // Aqui estaba el rebote a Entrar, y era el agujero del embudo: el
       // correo solo se pedia en la landing, asi que CUALQUIER otra puerta
@@ -430,7 +460,7 @@ class Component extends DCLogic {
       // pide aqui y el embudo arranca donde aterrices.
       .catch(() => {
         clearTimeout(this._tope);
-        this.setState(pedirCorreo ? { paso: this.PASO_CORREO, cargando: false } : { cargando: false });
+        this.quitarVelo(pedirCorreo ? { paso: this.PASO_CORREO } : {});
       });
   }
 
