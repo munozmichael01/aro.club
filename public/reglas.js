@@ -518,6 +518,28 @@
     },
 
     /**
+     * La hora de una fecha, en la zona del producto y como se dice.
+     *
+     * «12:00 p.m.» la calculaban por su cuenta la app, los correos y las
+     * pantallas, cada uno con su formato. Y la hora no es una regla: sale de
+     * `reveal_at` y de `starts_at`, que operacion pone al crear el evento,
+     * porque no todas las cenas son a la misma hora y ademas vienen brunch,
+     * cafes y formatos de movimiento.
+     */
+    horaDe: function (iso) {
+      if (!iso) return null
+      var d = new Date(iso)
+      if (isNaN(d.getTime())) return null
+      try {
+        return new Intl.DateTimeFormat('es-VE', {
+          timeZone: api.ZONA, hour: 'numeric', minute: '2-digit', hour12: true,
+        }).format(d).replace(/\s*a\.?\s*m\.?/i, ' a.m.').replace(/\s*p\.?\s*m\.?/i, ' p.m.')
+      } catch (e) {
+        return null
+      }
+    },
+
+    /**
      * Las cuatro preguntas de la puerta.
      *
      * Son las que se hacen antes de tener cuenta —en la portada y en la

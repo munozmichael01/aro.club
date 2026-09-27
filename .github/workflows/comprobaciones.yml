@@ -44,19 +44,18 @@ jobs:
       - name: Correos
         run: node scripts/comprobar-correos.mjs
 
-      # El cuestionario compara la pantalla con el catálogo de la base, así
-      # que necesita llaves. Sin ellas se salta con un aviso en vez de fallar:
-      # un CI que se cae por una variable que no está enseña a ignorarlo.
+      # El cuestionario compara la pantalla con el catalogo de la base.
+      #
+      # Con la llave PUBLICA, que es la que ya viaja a todos los navegadores
+      # que abren aro.club: `questions` tiene que ser legible o el
+      # cuestionario no se pintaria. Aqui no hay ningun secreto.
+      #
+      # Antes pedia la de servicio —la que salta RLS y lee cualquier tabla—
+      # y por no estar puesta este paso llevaba un mes saltandose solo, que
+      # es justo el modo de fallo que el CI viene a quitar. Un comprobador
+      # que no corre no comprueba nada.
       - name: Cuestionario
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
-            echo "Sin llaves en el repositorio: me salto el cotejo del cuestionario."
-            echo "Ponlas en Settings → Secrets para que esto también corra."
-            exit 0
-          fi
-          printf 'NEXT_PUBLIC_SUPABASE_URL=%s\nSUPABASE_SERVICE_ROLE_KEY=%s\n' \
-            "$NEXT_PUBLIC_SUPABASE_URL" "$SUPABASE_SERVICE_ROLE_KEY" > .env.local
-          node scripts/comprobar-cuestionario.mjs
+          NEXT_PUBLIC_SUPABASE_URL: https://qdydmklrbsdemzvjsldo.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeWRta2xyYnNkZW16dmpzbGRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2OTkwNzUsImV4cCI6MjEwMTI3NTA3NX0.F-epUAJHkqaSpmTFgQeeuQcn29POFk_Ier7YhxnlNOI
+        run: node scripts/comprobar-cuestionario.mjs

@@ -28,12 +28,42 @@ import fs from 'node:fs'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
-const env = Object.fromEntries(
-  fs.readFileSync(fileURLToPath(new URL('../.env.local', import.meta.url)), 'utf8')
-    .split('\n').filter((l) => l.includes('='))
-    .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()]),
-)
-const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY,
+/**
+ * Con la llave PUBLICA, no con la de servicio.
+ *
+ * Esto solo lee `questions`, que RLS deja leer a cualquiera —tiene que, o el
+ * cuestionario no se pintaria— y la llave publica ya viaja a todos los
+ * navegadores que abren aro.club. O sea que aqui no aporta ningun secreto.
+ *
+ * La de servicio si: es la que salta RLS entera y lee y escribe cualquier
+ * tabla. Tenerla en el CI de un repositorio para comprobar un catalogo
+ * publico es poner la llave maestra en la puerta de al lado del recibidor,
+ * y ademas sobra: sin ella el comprobador se saltaba, que es como se ha
+ * pasado un mes sin correr.
+ *
+ * `.env.local` es opcional: si no esta —en el CI no esta— se leen las
+ * variables del entorno.
+ */
+let deFichero = {}
+try {
+  deFichero = Object.fromEntries(
+    fs.readFileSync(fileURLToPath(new URL('../.env.local', import.meta.url)), 'utf8')
+      .split('\n').filter((l) => l.includes('='))
+      .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()]),
+  )
+} catch { /* en el CI no hay fichero: van por el entorno */ }
+
+const env = { ...deFichero, ...process.env }
+const URL_BASE = env.NEXT_PUBLIC_SUPABASE_URL
+const LLAVE = env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+if (!URL_BASE || !LLAVE) {
+  console.error('\n\u2717 faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY.')
+  console.error('  Las dos son publicas: viajan al navegador en cada visita.')
+  process.exit(1)
+}
+
+const admin = createClient(URL_BASE, LLAVE,
   { auth: { autoRefreshToken: false, persistSession: false } })
 
 // --- lo que ofrece la pantalla ----------------------------------------

@@ -346,10 +346,14 @@ class Component extends DCLogic {
       ["En pareja con hijos", "pareja-con-hijos"],
       ["Prefiero no decirlo", "no-decir"],
     ],
+    // En el orden del catalogo. Aqui estaban 'lleva' y 'depende' al reves:
+    // los codigos viajan con su texto, asi que no se corrompia nada, pero la
+    // misma pregunta salia en un orden en la app y en otro en la web, y
+    // «depende del momento» al final se lee como la opcion tibia.
     rol: [
       ["Escucho más de lo que hablo", "escucha"],
-      ["Suelo llevar la conversación", "lleva"],
       ["Depende del momento", "depende"],
+      ["Suelo llevar la conversación", "lleva"],
     ],
     motivo: [
       ["Ampliar mi círculo", "ampliar"],
@@ -890,7 +894,11 @@ class Component extends DCLogic {
           { id: 'nacimiento', corto: 'cuándo naciste', tipo: 'fecha', pregunta: '¿Cuándo naciste?', ayuda: 'Nadie ve tu edad exacta. La usamos para que en tu mesa no haya más de diez años de diferencia entre la persona más joven y la mayor: es lo que hace que la conversación fluya.' },
           { id: 'genero', corto: 'tu género', tipo: 'unica', pregunta: '¿Con qué género te identificas?', ayuda: 'No se muestra a nadie. Sirve para que la mesa quede balanceada y no acabes siendo la única persona de tu género en el grupo.', opciones: this.textos('genero') },
           { id: 'arraigo', corto: 'tu historia', tipo: 'unica', pregunta: '¿Cuál de estas se parece más a tu historia?', opciones: this.textos('arraigo') },
-          { id: 'sector', corto: 'tu sector', tipo: 'unica', pregunta: '¿En qué sector trabajas?', opciones: sectores, compacta: true },
+          // La ayuda no es de adorno: el sector es lo UNICO que se le enseña
+          // a los otros cinco junto con el nombre, y esta pantalla lo pedia
+          // sin decirlo. La de al lado —«dónde trabajas»— si aclara que no se
+          // muestra a nadie, asi que se deducia lo contrario de lo que pasa.
+          { id: 'sector', corto: 'tu sector', tipo: 'unica', pregunta: '¿En qué sector trabajas?', ayuda: 'Es lo único que ven los otros cinco, junto con cómo te llamamos. Por eso no pedimos el cargo.', opciones: sectores, compacta: true },
           { id: 'empleador', corto: 'dónde trabajas', tipo: 'texto', pregunta: '¿Dónde trabajas actualmente?', ayuda: 'Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.', fuente: empresas }
         ]
       },
