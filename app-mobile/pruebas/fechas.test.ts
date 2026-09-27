@@ -35,3 +35,15 @@ test('la cuenta atrás habla como la web', () => {
   assert.equal(cuentaAtras('2026-10-01T23:12:00Z', ahora), '3 h 12 min')
   assert.equal(cuentaAtras('2026-10-01T19:00:00Z', ahora), '0 h 0 min')
 })
+
+test('la hora y el cuándo se revela, calculados de la fecha real', async () => {
+  const { hora, cuandoSeRevela } = await import('../src/texto/fechas')
+  const REVELA = '2026-10-03T16:00:00+00:00' // 12:00 en Caracas
+  assert.equal(hora(REVELA, 'America/Caracas'), '12:00 p.m.')
+  assert.equal(hora(CENA, 'America/Caracas'), '8:00 p.m.')
+  assert.equal(cuandoSeRevela({ empiezaEn: CENA, revelaEn: REVELA }, 'America/Caracas'), 'el sábado a las 12:00 p.m.')
+  assert.equal(cuandoSeRevela({ empiezaEn: CENA }, 'America/Caracas'), 'el sábado')
+  assert.equal(cuandoSeRevela(null, 'America/Caracas'), null)
+  // Movida a un martes, dice martes sin tocar código (criterio 9.5).
+  assert.equal(cuandoSeRevela({ empiezaEn: '2026-10-07T00:00:00+00:00' }, 'America/Caracas'), 'el martes')
+})

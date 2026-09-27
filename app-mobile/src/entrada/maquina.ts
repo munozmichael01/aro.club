@@ -85,6 +85,17 @@ export function reducir(e: Estado, a: Accion): Estado {
 }
 
 /**
+ * Quien vuelve con un correo que ya existe. El servidor dice qué completó;
+ * el token, que solo tiene el celular donde se dio de alta, decide si puede
+ * seguir. Sin token (otro teléfono, otra persona) no se toca nada suyo: a
+ * «ya estás registrado» y a entrar (decisión del 27-09).
+ */
+export function destinoDeRepetido(r: { quizCompletado?: boolean }, tieneToken: boolean): 'quiz' | 'datos' | 'repetido' {
+  if (!tieneToken) return 'repetido'
+  return r.quizCompletado ? 'datos' : 'quiz'
+}
+
+/**
  * Lo que se manda a `/api/lead` al terminar: cada respuesta por su código.
  * `arraigo` va suelto porque es de una sola; las demás, como lista.
  */

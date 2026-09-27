@@ -32,6 +32,9 @@ const simulado: ReturnType<typeof crearServicioDatos> = {
     await espera(150)
     return { ok: false, error: 'Te faltan 14 preguntas del cuestionario.', status: 409 }
   },
+  async proxima() {
+    return { ok: true, datos: { hay: true, empiezaEn: '2026-10-04T00:00:00+00:00' } }
+  },
   async catalogo() {
     return {
       ok: true,

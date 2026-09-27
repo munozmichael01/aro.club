@@ -15,7 +15,7 @@ import { test } from 'node:test'
 const RAIZ = path.resolve(import.meta.dirname, '../src')
 
 /** El sitio de los días, y los catálogos de desarrollo, que no son producto. */
-const PERMITIDOS = new Set(['texto/fechas.ts', 'app/catalogo-entrada.tsx', 'diseno/Catalogo.tsx'])
+const PERMITIDOS = new Set(['texto/fechas.ts', 'app/catalogo-entrada.tsx', 'app/catalogo-datos.tsx', 'diseno/Catalogo.tsx'])
 
 const PROHIBIDO = [
   /\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)\b/i,

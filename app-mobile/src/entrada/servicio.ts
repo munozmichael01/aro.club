@@ -43,7 +43,12 @@ async function intentar<T>(f: () => Promise<Response>, sinRed: string): Promise<
   }
 }
 
-export type RespuestaLead = { estado: 'nuevo' | 'repetido' | 'completado'; token?: string }
+export type RespuestaLead = {
+  estado: 'nuevo' | 'repetido' | 'completado'
+  token?: string
+  quizCompletado?: boolean
+  perfilCompletado?: boolean
+}
 
 export function crearServicio(api: Api) {
   return {

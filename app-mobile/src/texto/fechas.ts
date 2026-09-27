@@ -49,3 +49,23 @@ export function cuentaAtras(hasta: string, ahora: number): string {
   const mm = Math.floor(s / 60) % 60
   return `${hh} h ${mm} min`
 }
+
+/**
+ * La hora como la dicen los correos: «12:00 p.m.», «8:00 p.m.». El mismo
+ * formato en las tres superficies (TEXTO-tres-superficies §2B).
+ */
+export function hora(iso: string, zona: string): string {
+  const { hora: h, minuto: m } = partes(iso, zona)
+  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'a.m.' : 'p.m.'}`
+}
+
+/**
+ * Cuándo se sabe la mesa, dicho con lo que haya: día y hora si se conoce la
+ * revelación; solo el día si solo se conoce la cena (se revela ese mismo
+ * día); nada si no hay fecha abierta. Nunca un día escrito a mano.
+ */
+export function cuandoSeRevela(f: { empiezaEn?: string | null; revelaEn?: string | null } | null, zona: string): string | null {
+  if (f?.revelaEn) return `el ${nombreDia(f.revelaEn, zona)} a las ${hora(f.revelaEn, zona)}`
+  if (f?.empiezaEn) return `el ${nombreDia(f.empiezaEn, zona)}`
+  return null
+}

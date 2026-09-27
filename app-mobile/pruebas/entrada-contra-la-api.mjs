@@ -10,7 +10,7 @@ import fs from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 
 import { crearServicio } from '../src/entrada/servicio.ts'
-import { cuerpoDeRespuestas, inicial, reducir } from '../src/entrada/maquina.ts'
+import { cuerpoDeRespuestas, destinoDeRepetido, inicial, reducir } from '../src/entrada/maquina.ts'
 import { preguntasDeEntrada } from '../src/entrada/preguntas.ts'
 import { crearApi } from '../src/sesion/api.ts'
 
@@ -42,6 +42,13 @@ try {
   const nuevo = await s.dejarCorreo(CORREO)
   ok(nuevo.ok && nuevo.datos.estado === 'nuevo' && !!nuevo.datos.token, `correo nuevo → ${nuevo.ok ? nuevo.datos.estado : nuevo.error}, con token`)
 
+  // Se va sin contestar y vuelve con el mismo correo, en el mismo celular (tiene su token).
+  const vuelve = await s.dejarCorreo(CORREO)
+  ok(vuelve.ok && vuelve.datos.estado === 'repetido' && vuelve.datos.quizCompletado === false,
+    `vuelve sin haber contestado → ${vuelve.ok ? vuelve.datos.estado : vuelve.error}, quizCompletado=${vuelve.ok && vuelve.datos.quizCompletado}`)
+  ok(destinoDeRepetido(vuelve.datos, true) === 'quiz', '  con su token → a las preguntas')
+  ok(destinoDeRepetido(vuelve.datos, false) === 'repetido', '  desde otro teléfono, sin token → «ya estás registrado»')
+
   // Las cuatro respuestas, con la máquina: la primera opción de cada una y, en temas, las dos primeras.
   let e = { ...inicial(CORREO), fase: 'quiz' }
   for (const p of P) {
@@ -72,6 +79,7 @@ try {
   // Repetido: sin token.
   const otra = await s.dejarCorreo(CORREO)
   ok(otra.ok && otra.datos.estado === 'repetido' && !otra.datos.token, `mismo correo otra vez → ${otra.ok ? otra.datos.estado : otra.error}, sin token`)
+  ok(otra.ok && destinoDeRepetido(otra.datos, true) === 'datos', '  y como ya contestó, con su token va a los datos')
   ok(reducir({ ...inicial(CORREO), fase: 'enviando' }, { tipo: 'guardado', repetido: true }).fase === 'repetido', 'y la máquina lo lleva a «repetido», no al quiz')
 } finally {
   const { error } = await admin.from('waitlist').delete().eq('email', CORREO)

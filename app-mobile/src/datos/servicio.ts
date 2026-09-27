@@ -73,5 +73,9 @@ export function crearServicioDatos(api: Api) {
       ),
 
     catalogo: () => intentar<{ version: string; preguntas: PreguntaCatalogo[] }>(() => api.pedir('/questions'), sinRespuesta.servidor),
+
+    /** La fecha abierta: de ella sale el día (y, cuando el servidor la dé, la hora) de las frases. */
+    proxima: () =>
+      intentar<{ hay: boolean; empiezaEn?: string; revelaEn?: string; zonaHoraria?: string }>(() => api.pedir('/proxima'), sinRespuesta.servidor),
   }
 }

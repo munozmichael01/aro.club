@@ -93,3 +93,11 @@ test('zonas: tope de cinco en la puerta, aunque el catálogo no lo traiga', () =
   for (const v of ['a', 'b', 'c', 'd', 'e', 'f']) e = reducir(e, { tipo: 'marcar', pregunta: zonas, valor: v })
   assert.deepEqual(e.respuestas.zonas, ['a', 'b', 'c', 'd', 'e'])
 })
+
+test('quien vuelve va a lo que le falta; sin token, a «ya estás registrado»', async () => {
+  const { destinoDeRepetido } = await import('../src/entrada/maquina')
+  assert.equal(destinoDeRepetido({ quizCompletado: false }, true), 'quiz')
+  assert.equal(destinoDeRepetido({ quizCompletado: true }, true), 'datos')
+  assert.equal(destinoDeRepetido({ quizCompletado: false }, false), 'repetido')
+  assert.equal(destinoDeRepetido({ quizCompletado: true }, false), 'repetido')
+})

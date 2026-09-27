@@ -10,7 +10,7 @@ import * as T from '../texto/entrada'
 import { cuentaAtras } from '../texto/fechas'
 import { CIUDAD_PRODUCTO } from '../texto/zona'
 import { Cabecera, FaseCorreo, FaseEnviando, FaseFinal, FaseQuiz, FaseRepetido, FaseSinPreguntas, Portada } from './Fases'
-import { cuerpoDeRespuestas, inicial, reducir } from './maquina'
+import { cuerpoDeRespuestas, destinoDeRepetido, inicial, reducir } from './maquina'
 import { preguntasDeEntrada, type Pregunta } from './preguntas'
 import type { crearServicio } from './servicio'
 
@@ -68,8 +68,22 @@ export function Entrada(p: { servicio: Servicio; onEntrar: () => void; onComplet
     if (r.datos.token) {
       setToken(r.datos.token)
       await guardarLead({ correo: e.correo.trim(), token: r.datos.token })
+      return despachar({ tipo: 'guardado', repetido: false })
     }
-    despachar({ tipo: 'guardado', repetido: r.datos.estado === 'repetido' })
+    // Un correo que ya existe. Si es el de este celular (su token está en el
+    // llavero), sigue donde lo dejó; si no, «ya estás registrado».
+    const guardado = await leerLead()
+    const suyo = !!guardado && guardado.correo.trim().toLowerCase() === e.correo.trim().toLowerCase()
+    const destino = destinoDeRepetido(r.datos, suyo)
+    if (destino === 'quiz' && guardado) {
+      setToken(guardado.token)
+      return despachar({ tipo: 'guardado', repetido: false })
+    }
+    if (destino === 'datos') {
+      despachar({ tipo: 'reiniciar' })
+      return p.onCompletar()
+    }
+    despachar({ tipo: 'guardado', repetido: true })
   }, [e.correo, p.servicio])
 
   const siguiente = useCallback(async () => {

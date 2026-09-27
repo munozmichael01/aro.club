@@ -2,10 +2,10 @@
  * El texto de los datos personales, copiado de `Datos base.dc.html`.
  * Casilla B de TEXTO-tres-superficies: vive aquí hasta `public/textos.js`.
  *
- * PROVISIONAL (pendiente de Michael): tres frases de la web llevan el día
- * escrito dentro —«el sábado a mediodía, cuando se revela» y dos veces
- * «vuelves a entrar el sábado»—. Aquí van sin día, como se decidió con el
- * titular. Marcadas con «SIN DÍA».
+ * Tres frases de la web llevan el día escrito («el sábado a mediodía», dos
+ * veces «el sábado»). Aquí el día y la hora llegan calculados desde la fecha
+ * real (`cuando`, de `texto/fechas.cuandoSeRevela`); sin fecha abierta, la
+ * frase va sin día (decisión del 27-09).
  */
 
 export const correo = {
@@ -14,8 +14,8 @@ export const correo = {
   bajada: 'Es lo único que hace falta para empezar. Después vienen cuatro datos y las preguntas.',
   etiqueta: 'Tu correo',
   ejemplo: 'daniela@correo.com',
-  // SIN DÍA. Web: «el sábado a mediodía, cuando se revela».
-  pista: 'Es por donde te avisamos de tu mesa: el día de la cena, en cuanto se revela. No hay lista de difusión ni nada que no hayas pedido.',
+  pista: (cuando: string | null) =>
+    `Es por donde te avisamos de tu mesa: ${cuando ?? 'el día de la cena'}, cuando se revela. No hay lista de difusión ni nada que no hayas pedido.`,
   vacio: 'Escribe tu correo',
   revisar: 'Revisa el correo',
 }
@@ -105,12 +105,11 @@ export const fin = {
   eyebrow: 'LISTO',
   titulo: (conLead: boolean, puedeCuenta: boolean) =>
     !conLead ? 'Guardado.' : puedeCuenta ? 'Listo. Solo falta tu cuenta.' : 'Guardado. Ahora las preguntas.',
-  bajada: (conLead: boolean, puedeCuenta: boolean) =>
+  bajada: (conLead: boolean, puedeCuenta: boolean, cuando: string | null) =>
     !conLead
       ? 'Esto es todo lo que guardamos de esta parte, y quién lo ve.'
       : puedeCuenta
-        ? // SIN DÍA. Web: «con la que vuelves a entrar el sábado a ver tu mesa».
-          'Crea la contraseña con la que vuelves a entrar a ver tu mesa. Debajo tienes todo lo que guardamos de ti, y quién lo ve.'
+        ? `Crea la contraseña con la que vuelves a entrar${cuando ? ' ' + cuando : ''} a ver tu mesa. Debajo tienes todo lo que guardamos de ti, y quién lo ve.`
         : 'Esto es lo que guardamos de ti, y quién lo ve. Faltan las preguntas; al terminarlas creas tu cuenta.',
   guardamos: 'LO QUE GUARDAMOS',
   filas: {
@@ -135,8 +134,8 @@ export const fin = {
 
 export const cuenta = {
   titulo: 'CÓMO QUIERES ENTRAR A PARTIR DE AHORA',
-  // SIN DÍA. Web: «Es con lo que vuelves a entrar el sábado para ver tu mesa».
-  cuerpo: 'Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar para ver tu mesa.',
+  cuerpo: (cuando: string | null) =>
+    `Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar${cuando ? ' ' + cuando : ''} para ver tu mesa.`,
   clave: 'Crea una contraseña',
   repetir: 'Repítela',
   repetirEtiqueta: 'Repite la contraseña',

@@ -31,7 +31,8 @@ import { reglas } from '../reglas'
 import { borrarLead, guardarLead, leerLead, type Lead } from '../sesion/lead'
 import * as T from '../texto/datos'
 import { repetido as R } from '../texto/entrada'
-import { MESES_CORTOS } from '../texto/fechas'
+import { MESES_CORTOS, cuandoSeRevela } from '../texto/fechas'
+import { zonaDe } from '../texto/zona'
 import {
   PASO_CORREO,
   PASO_FIN,
@@ -103,6 +104,7 @@ export function Datos(p: {
   const [fallo, setFallo] = useState('')
   const [yaRegistrado, setYaRegistrado] = useState(false)
   const [errorCuenta, setErrorCuenta] = useState('')
+  const [cuando, setCuando] = useState<string | null>(null)
   const hoy = useMemo(() => new Date(), [])
 
   const cargar = useCallback(
@@ -120,7 +122,9 @@ export function Datos(p: {
     ;(async () => {
       const l = await leerLead()
       setLead(l)
-      const [, cat] = await Promise.all([cargar(l, true), p.servicio.catalogo()])
+      const [, cat, prox] = await Promise.all([cargar(l, true), p.servicio.catalogo(), p.servicio.proxima()])
+      // El día de las frases sale de la fecha abierta, en la zona de su ciudad.
+      if (prox.ok && prox.datos.hay) setCuando(cuandoSeRevela(prox.datos, zonaDe(prox.datos)))
       // El género sale del catálogo, por código, como las preguntas.
       if (cat.ok) {
         const g = cat.datos.preguntas.find((x) => x.clave === 'genero')
@@ -190,7 +194,7 @@ export function Datos(p: {
   const paso = e.paso === PASO_CORREO ? null : e.paso < PASO_FIN ? T.pasos[e.paso] : null
   const eyebrow = e.paso === PASO_CORREO ? T.correo.eyebrow : paso ? paso.eyebrow : T.fin.eyebrow
   const titulo = e.paso === PASO_CORREO ? T.correo.titulo : paso ? paso.titulo : T.fin.titulo(conLead, e.puedeCuenta)
-  const bajada = e.paso === PASO_CORREO ? T.correo.bajada : paso ? paso.bajada(conLead) : T.fin.bajada(conLead, e.puedeCuenta)
+  const bajada = e.paso === PASO_CORREO ? T.correo.bajada : paso ? paso.bajada(conLead) : T.fin.bajada(conLead, e.puedeCuenta, cuando)
   const etiquetaPaso =
     e.paso === PASO_CORREO ? T.nav.etiquetaCorreo : e.paso < PASO_FIN ? T.nav.etiquetaPaso(e.paso + 1) : T.nav.etiquetaCompleto
   const textoBoton = guardando
@@ -238,7 +242,7 @@ export function Datos(p: {
           <Tarjeta style={{ marginTop: 30, gap: 11 }}>
             <Texto variante="etiquetaChica">{T.cuenta.titulo}</Texto>
             <Texto variante="cuerpoChico" style={{ marginBottom: 7 }}>
-              {T.cuenta.cuerpo}
+              {T.cuenta.cuerpo(cuando)}
             </Texto>
             <CampoClave
               value={e.clave}
@@ -302,7 +306,7 @@ export function Datos(p: {
                 textContentType="emailAddress"
                 accessibilityLabel={T.correo.etiqueta}
               />
-              <Pista>{T.correo.pista}</Pista>
+              <Pista>{T.correo.pista(cuando)}</Pista>
               {yaRegistrado ? (
                 <View style={{ marginTop: 16, gap: 12 }}>
                   <Aviso tono="neutro" titulo={R.titulo} />
