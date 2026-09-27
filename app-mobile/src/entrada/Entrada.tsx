@@ -9,7 +9,7 @@ import { guardarLead, leerLead } from '../sesion/lead'
 import * as T from '../texto/entrada'
 import { cuentaAtras } from '../texto/fechas'
 import { CIUDAD_PRODUCTO } from '../texto/zona'
-import { Cabecera, FaseCorreo, FaseEnviando, FaseFinal, FaseQuiz, FaseRepetido, FaseSinPreguntas, Portada } from './Fases'
+import { Cabecera, ChipFecha, FaseCorreo, FaseEnviando, FaseFinal, FaseQuiz, FaseRepetido, FaseSinPreguntas } from './Fases'
 import { cuerpoDeRespuestas, destinoDeRepetido, inicial, reducir } from './maquina'
 import { reglas } from '../reglas'
 import { preguntasDeEntrada, type Pregunta } from './preguntas'
@@ -156,7 +156,7 @@ export function Entrada(p: { servicio: Servicio; onEntrar: () => void; onComplet
         contentContainerStyle={[estilos.pagina, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 }]}
       >
         <Cabecera onEntrar={e.fase === 'correo' ? p.onEntrar : undefined} />
-        {e.fase === 'correo' ? <Portada chip={chip} /> : null}
+        {e.fase === 'correo' ? <ChipFecha chip={chip} /> : null}
         {cuerpo}
       </ScrollView>
     </KeyboardAvoidingView>

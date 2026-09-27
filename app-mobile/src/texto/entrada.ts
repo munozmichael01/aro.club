@@ -17,6 +17,12 @@ export const titular = {
   enfasis: 'Tú no. Todavía.',
 }
 
+/** La bienvenida de la app: una pantalla quieta, dos puertas del mismo tamaño. Los dos textos son los de la navegación de la web. */
+export const bienvenida = {
+  empezar: 'Empezar',
+  entrar: 'Entrar',
+}
+
 export const chip = (ciudad: string, cierraEn: string | null) =>
   cierraEn
     ? `${ciudad} · la próxima se cierra en ${cierraEn}`

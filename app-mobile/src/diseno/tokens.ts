@@ -124,10 +124,14 @@ function estilo(familia: string, tam: number, interlineado: number, espaciadoEm 
 }
 
 export const tipo = {
-  /** El titular de la portada (h1 de la landing, 44 en celular). */
-  portada: estilo(fuente.titular, 44, 0.94, -0.04),
-  /** Los titulares del registro: «Empecemos por tu correo.» (36 en celular). */
-  titularGrande: estilo(fuente.titular, 36, 0.98, -0.035),
+  /**
+   * El titular de la portada. La web usa 44 con interlineado 0,94; en el
+   * celular el suelo de 1,42 hacía crecer el bloque un 50 %, así que el aire
+   * se saca del tamaño y no del interlineado (decisión del 27-09).
+   */
+  portada: estilo(fuente.titular, 34, 0.94, -0.04),
+  /** Los titulares del registro: «Empecemos por tu correo.». Mismo criterio: 36 → 30. */
+  titularGrande: estilo(fuente.titular, 30, 0.98, -0.035),
   display: estilo(fuente.titular, 30, 1, -0.035),
   titulo: estilo(fuente.titular, 25, 1.05, -0.03),
   subtitulo: estilo(fuente.titular, 23, 1.15, -0.02),

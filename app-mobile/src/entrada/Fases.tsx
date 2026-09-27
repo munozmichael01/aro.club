@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native'
 
-import { AroCarga, Boton, Campo, Enfasis, Marca, Opcion, Puntos, Texto, color, cremaAlfa, radio } from '../diseno'
+import { AroCarga, Boton, Campo, Marca, Opcion, Puntos, Texto, color, cremaAlfa, radio } from '../diseno'
 import * as T from '../texto/entrada'
 import { completa, enTope, marcadas, type Estado } from './maquina'
 import type { Pregunta } from './preguntas'
@@ -27,23 +27,17 @@ export function Cabecera({ onEntrar }: { onEntrar?: () => void }) {
   )
 }
 
-/** La cabecera de la portada: el chip de la fecha y el titular. */
-export function Portada({ chip }: { chip: string | null }) {
-  const t = T.titular
+/**
+ * El chip de la fecha: lo único que dice que hay algo abierto esta semana.
+ * Salió de la bienvenida, pero no del recorrido: va en el primer paso de
+ * Empezar (decisión del 27-09).
+ */
+export function ChipFecha({ chip }: { chip: string }) {
   return (
-    <View style={{ gap: 18, marginBottom: 36 }}>
-      {chip ? (
-        <View style={estilos.chip}>
-          <View style={estilos.puntoChip} />
-          <Texto variante="nota" tono="crema" style={{ flexShrink: 1 }}>
-            {chip}
-          </Texto>
-        </View>
-      ) : null}
-      <Texto variante="portada" tono="crema">
-        {t.linea}
-        {'\n'}
-        <Enfasis sobreVerde>{t.enfasis}</Enfasis>
+    <View style={[estilos.chip, { marginBottom: 26 }]}>
+      <View style={estilos.puntoChip} />
+      <Texto variante="nota" tono="crema" style={{ flexShrink: 1 }}>
+        {chip}
       </Texto>
     </View>
   )

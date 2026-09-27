@@ -90,7 +90,6 @@ export const boton = {
 
 export const pie = {
   guardado: 'Guardado. Puedes salir y volver cuando quieras.',
-  alMomento: 'Guardamos cada respuesta al momento.',
   despues: 'Seguir después',
 }
 

@@ -428,7 +428,7 @@ export function Cuestionario(p: {
         </View>
         <View style={estilos.lineaPie}>
           <Texto variante="nota" style={{ flex: 1 }}>
-            {completa ? T.pie.guardado : T.pie.alMomento}
+            {completa ? T.pie.guardado : ''}
           </Texto>
           {p.tieneCuenta ? (
             <Pressable onPress={p.alCuenta} accessibilityRole="button" style={{ minHeight: medida.toqueMinimo, justifyContent: 'center' }}>
