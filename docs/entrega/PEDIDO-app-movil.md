@@ -57,8 +57,13 @@ mal, se dice y se decide; no se cambia por cuenta propia.
 
 ## 3 · Lo que ya existe, y hay que reutilizar
 
-**No se construye un backend nuevo.** El que hay está en producción, con datos
-reales, y es la fuente de verdad. La app es otro cliente del mismo sistema.
+**No se construye un backend nuevo.** El que hay está en producción y es la
+fuente de verdad. La app es otro cliente del mismo sistema.
+
+Una precisión que importa para trabajar con tranquilidad: **hasta el
+lanzamiento, lo que hay en esa base es de prueba**. No es un entorno intocable
+—se puede crear y borrar cuentas desechables, que es como se verifica aquí—
+pero sí es el único que hay: no existe staging, y un `push` a `main` despliega.
 
 - **Backend**: Next.js 15 (App Router) desplegado en Vercel.
 - **Base de datos y auth**: Supabase (Postgres + Auth + Storage). Hay **un solo
@@ -91,6 +96,8 @@ Todas bajo `https://aro.club/api/`. Las que necesita la app, por orden de uso:
 | `GET/POST /cuestionario` | Las diecisiete preguntas del perfil, por código |
 | `GET /questions` | El catálogo de preguntas y sus opciones |
 | `GET/POST /datos-base` | Nombre, cómo te llaman, nacimiento, género, teléfono |
+| `POST /cuenta` | Crea la cuenta y registra la aceptación de términos |
+| `GET /api/auth/google` | Entrar o registrarse con Google, ida y vuelta |
 | `POST /entrar`, `POST /clave`, `POST /salir` | Sesión |
 | `GET/POST /verificacion` | Subida de cédula y selfie, y su estado |
 | `GET /mi-cuenta` | El estado completo de la persona: en qué punto está, créditos, próxima fecha, agenda |
@@ -104,6 +111,8 @@ Todas bajo `https://aro.club/api/`. Las que necesita la app, por orden de uso:
 | `POST /cancelar` | Soltar el puesto |
 | `GET/POST /despues` | La encuesta del día después |
 | `GET/POST /mis-avisos` | Qué notificaciones quiere recibir |
+| `GET/POST /mis-exclusiones` | Con quién no quiere volver a coincidir |
+| `POST /baja` | **Borrar la cuenta.** Obligatoria en la app, ver 7 |
 
 **Si la app necesita algo que no está, se pide y se añade al backend.** No se
 hacen consultas directas a Postgres desde el móvil saltándose estas rutas: las
@@ -254,6 +263,11 @@ Links y App Links sobre `aro.club`.
   in-app, tanto en Apple como en Google. **Conviene tenerlo argumentado por
   escrito antes de la primera revisión**, porque es el motivo de rechazo más
   probable y el más caro si sale mal.
+- **Borrar la cuenta desde dentro de la app es obligatorio en Apple** para toda
+  app que permita crearla, y es motivo de rechazo directo. `POST /baja` ya
+  existe y está bien pensada: borra respuestas, datos y documentos, y **no**
+  arrastra la facturación, que la ley obliga a conservar diez años. Tiene que
+  estar alcanzable desde el perfil, sin escribir a nadie.
 - **Sign in with Apple** es obligatorio en iOS si se ofrece Google.
 - La app pide **cámara** (verificación) y **notificaciones**. Las dos necesitan
   su texto de permiso explicando para qué, en venezolano y sin jerga.
@@ -284,7 +298,13 @@ Links y App Links sobre `aro.club`.
 3. **Qué pasa sin conexión.** Mínimo: que la pantalla de la mesa ya revelada
    —dirección incluida— se pueda ver sin datos, porque se consulta llegando al
    restaurante.
-4. **Versionado y despliegue.** Cada cambio de las tiendas tarda; el backend se
+4. **Cuándo se empieza, que no es una cuestión técnica.** La web todavía no se
+   ha lanzado: hay una lista de cosas abiertas y las primeras cenas están por
+   ocurrir. Si la app arranca antes de cerrar eso, las dos compiten por el
+   mismo backend y por la misma cabeza. Y el plan de notificaciones obliga a
+   tocar la cola de correos, que es de lo que depende hoy el producto entero.
+   Se quiere una propuesta de orden, no una fecha.
+5. **Versionado y despliegue.** Cada cambio de las tiendas tarda; el backend se
    despliega varias veces al día. Hay que decir cómo se evita que una app vieja
    se rompa contra una API nueva.
 

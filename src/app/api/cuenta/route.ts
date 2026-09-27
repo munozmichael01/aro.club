@@ -12,7 +12,8 @@ import { createClient } from '@/lib/supabase/server'
  *
  * El acceso se elige cuando ya hay algo que guardar, no antes. Aquí solo
  * va la vía de contraseña: Apple y Google los inicia el navegador contra
- * Supabase y vuelven por `/api/cuenta/proveedor`.
+ * Supabase y vuelven por `/api/auth/google`. (Decía `/api/cuenta/proveedor`,
+ * que no existe: un agente que leyó este comentario dio la ruta por buena.)
  *
  * La cuenta se ata al lead por su FIRMA, no por el correo: si alguien se
  * registró con juan@trabajo.com y luego entra con Google como

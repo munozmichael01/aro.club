@@ -1,6 +1,6 @@
 # Aro Club
 
-Seis desconocidos verificados, una cena curada por semana en Caracas, 8 USD
+Seis desconocidos verificados, una cena curada por semana en Caracas, 7 USD
 pagados en bolívares. Next.js 15 App Router · TypeScript strict · Supabase ·
 Vercel Pro.
 

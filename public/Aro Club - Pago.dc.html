@@ -70,23 +70,6 @@
             <span style="flex:1 1 auto;font:600 16px/1.4 'Inter Tight',sans-serif;color:#14342A">Total a pagar</span>
             <span style="{{ totalEstilo }}">{{ totalTexto }}</span>
           </div>
-          <!--
-            Los céntimos, explicados donde se ven.
-
-            El importe no es siete por la tasa: lleva unos céntimos propios de
-            cada persona y cada fecha, y son los que permiten reconocer el
-            pago en el extracto del banco cuando dos transfieren lo mismo el
-            mismo día. Estaban puestos a propósito desde el principio y no lo
-            decía ningún sitio.
-
-            Quien echa la cuenta ve que no cuadra por veintitrés céntimos,
-            supone un error de redondeo y transfiere «el número bueno». Ese
-            pago es el que no se puede cuadrar. O sea que callarlo producía
-            exactamente el problema que los céntimos venían a evitar.
-          -->
-          <sc-if value="{{ hayCentimos }}" hint-placeholder-val="{{ true }}">
-            <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:11px;max-width:46ch;text-wrap:pretty">Los céntimos del final son tuyos y de esta fecha: son los que nos dejan reconocer tu pago en el banco. <em style="font-weight:600;color:#14342A">Transfiere el monto exacto</em>, sin redondear.</div>
-          </sc-if>
         </div>
 
         <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:14px 16px;margin-top:14px">
@@ -812,9 +795,6 @@ class Component extends DCLogic {
       datosDePrueba: !!(mSel && mSel.datosDePrueba),
       nombreEv, detalleEv,
       metodoElegido: mSel.nombre,
-      // Solo cuando el importe va en bolívares: en dólares no hay céntimos
-      // que explicar, y una nota que no aplica es ruido.
-      hayCentimos: mSel.moneda === 'VES' && !!D.montoLocal,
       totalTexto: mSel.moneda,
       // Las dos salian escritas en el marcado: «8,00 USD» y «1 USD = 62,40
       // Bs». La segunda mentia por un factor de doce.

@@ -41,16 +41,6 @@ const cuerpo = z.object({
   tasaVista: z.number().positive().optional(),
 })
 
-/**
- * Los céntimos de esta persona en esta fecha. Estables entre cargas y
- * distintos entre personas, que es lo que se les pide.
- */
-function centimosDe(profileId: string, eventoId: string) {
-  const semilla = `${profileId}:${eventoId}`
-  let h = 0
-  for (let i = 0; i < semilla.length; i++) h = (h * 31 + semilla.charCodeAt(i)) % 100_000
-  return h % 100
-}
 
 /** La tasa del día. Sin ella no se puede cobrar en bolívares. */
 async function tasaDelDia(admin: ReturnType<typeof createAdminClient>) {
@@ -135,7 +125,6 @@ export async function GET(request: Request) {
   // Y son DETERMINISTAS. Con Math.random() cambiaban en cada carga: la
   // persona veía 499,94, recargaba y veía 499,72, pagaba uno de los dos y
   // nosotros buscábamos el otro. Justo lo contrario de para lo que están.
-  const centimos = centimosDe(user.id, evento.id)
 
   const { data: reserva } = await admin
     .from('bookings')
@@ -175,8 +164,7 @@ export async function GET(request: Request) {
     tasaDe: tasa?.rate_date ?? null,
     // El monto exacto con los céntimos ya dentro: es el que tiene que
     // transferir, y el que operación busca en el banco.
-    montoLocal: tasa ? Number((usd * Number(tasa.usd_to_ves) + centimos / 100).toFixed(2)) : null,
-    centimos,
+    montoLocal: tasa ? Number((usd * Number(tasa.usd_to_ves)).toFixed(2)) : null,
     metodos: (metodos ?? []).map((m) => ({
       id: m.id,
       nombre: m.nombre,
@@ -210,7 +198,7 @@ export async function GET(request: Request) {
               m.datos_cuenta as Record<string, unknown> | null,
               m.moneda === 'VES'
                 ? tasa
-                  ? Number((usd * Number(tasa.usd_to_ves) + centimos / 100).toFixed(2))
+                  ? Number((usd * Number(tasa.usd_to_ves)).toFixed(2))
                   : null
                 : usd,
               m.moneda === 'VES' ? 'Bs' : m.moneda,
@@ -422,7 +410,7 @@ export async function POST(request: Request) {
           error: 'La tasa cambió mientras pagabas. Revisa el monto y vuelve a reportarlo.',
           tasa: tasaAplicada,
           montoLocal: tasaAplicada
-            ? Number((usd * tasaAplicada + centimosDe(user.id, evento.id) / 100).toFixed(2))
+            ? Number((usd * tasaAplicada).toFixed(2))
             : null,
         },
         { status: 409 },
@@ -519,9 +507,20 @@ export async function POST(request: Request) {
     // y el que operación busca en el banco.
     amount_local:
       m.moneda === 'VES' && tasaAplicada
-        ? Number((usd * tasaAplicada + centimosDe(user.id, evento.id) / 100).toFixed(2))
+        ? Number((usd * tasaAplicada).toFixed(2))
         : null,
-    cents_token: centimosDe(user.id, evento.id),
+    // Sin céntimos discriminadores. El pago se reconoce por la REFERENCIA
+    // que reporta la persona, que es lo que operación busca en el extracto,
+    // más el monto. Los céntimos eran un segundo mecanismo para lo mismo, y
+    // tenían un coste que no compensaba: el importe dejaba de ser 7 por la
+    // tasa, quien echaba la cuenta veía un descuadre de veinte céntimos y
+    // transfería «el número bueno», que es justo el que no cuadra.
+    //
+    // La columna se queda en null. El índice único que colgaba de ella era
+    // `(charge_date, cents_token) where cents_token is not null`, así que con
+    // null no aplica; aun así se retira en su migración para que nadie
+    // vuelva a apoyarse en él.
+    cents_token: null,
     fx_rate: m.moneda === 'VES' ? tasaAplicada : null,
     fx_congelado_en: m.moneda === 'VES' ? ahora : null,
     reportado_en: ahora,
