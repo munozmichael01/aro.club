@@ -36,6 +36,12 @@ function diaTexto(iso: string | null | undefined): string {
   return `${DIAS[d.getUTCDay()]} ${d.getUTCDate()}`
 }
 
+/** «Sábado 3», con mayúscula, para los bloques grandes. */
+function diaCorto(iso: string | null | undefined): string {
+  const t = diaTexto(iso)
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : ''
+}
+
 function horaTexto(iso: string | null | undefined): string {
   if (!iso) return ''
   const d = enCaracas(iso)
@@ -431,6 +437,11 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         datos: {
           ...base,
           zona: zonas[0] ?? '',
+          // La fecha corta para el bloque grande. La plantilla llevaba
+          // «Sábado 21» ESCRITO A MANO, y el aforo también: «18 personas
+          // apuntadas · faltan pocas plazas». Los dos salieron a gente real.
+          // El día venía preparado desde aquí y la plantilla no lo usaba.
+          cuandoCorto: evento?.starts_at ? diaCorto(evento.starts_at) : '',
           cuandoFrase: evento?.starts_at ? `El primero es el ${diaTexto(evento.starts_at)}.` : '',
           horaFrase: evento?.starts_at ? `A las ${horaEnLetra(evento.starts_at)}` : '',
         },
