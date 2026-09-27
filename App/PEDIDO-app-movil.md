@@ -281,6 +281,15 @@ Links y App Links sobre `aro.club`.
 
 **Ya está decidido:**
 
+- **Se empieza ya, y en paralelo a la web.** La web está a días de su primera
+  cena real y sigue cambiando; la app no espera a eso.
+- **La app no puede tener dependencias para salir.** Es la condición que manda
+  sobre las demás: se construye contra la superficie de API que existe HOY, y
+  nada de lo que haga la app puede quedarse esperando a que el backend cambie.
+  Si falta algo, se propone **aditivo** —una ruta nueva o un campo nuevo que no
+  altera lo que ya responde— y se pide con su porqué, pero el plan no se
+  bloquea mientras llega. Lo mismo vale al revés: un despliegue del backend no
+  puede romper una versión de la app que esté en las tiendas.
 - La app es cliente del backend que existe. No se duplica lógica de negocio.
 - El diseño es el que hay. No se rediseña.
 - Español de Venezuela. Una sola lengua en la v1.
@@ -298,12 +307,6 @@ Links y App Links sobre `aro.club`.
 3. **Qué pasa sin conexión.** Mínimo: que la pantalla de la mesa ya revelada
    —dirección incluida— se pueda ver sin datos, porque se consulta llegando al
    restaurante.
-4. **Cuándo se empieza, que no es una cuestión técnica.** La web todavía no se
-   ha lanzado: hay una lista de cosas abiertas y las primeras cenas están por
-   ocurrir. Si la app arranca antes de cerrar eso, las dos compiten por el
-   mismo backend y por la misma cabeza. Y el plan de notificaciones obliga a
-   tocar la cola de correos, que es de lo que depende hoy el producto entero.
-   Se quiere una propuesta de orden, no una fecha.
 5. **Versionado y despliegue.** Cada cambio de las tiendas tarda; el backend se
    despliega varias veces al día. Hay que decir cómo se evita que una app vieja
    se rompa contra una API nueva.
