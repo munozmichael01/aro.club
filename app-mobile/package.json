@@ -38,7 +38,8 @@
     "prueba:api": "tsx pruebas/contra-la-api.mjs",
     "web": "expo start --web --port 8090",
     "prueba:entrada": "tsx pruebas/entrada-contra-la-api.mjs",
-    "prueba:datos": "tsx pruebas/datos-contra-la-api.mjs"
+    "prueba:datos": "tsx pruebas/datos-contra-la-api.mjs",
+    "telefono": "expo start --go --lan --port 8081"
   },
   "private": true
 }
