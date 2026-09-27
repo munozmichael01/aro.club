@@ -50,6 +50,7 @@
         <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
           <a href="{{ n.enlace }}" aria-current="{{ n.actual }}" style="{{ n.estilo }}">{{ n.texto }}</a>
         </sc-for>
+        <button onClick="{{ salir }}" style="{{ estiloSalir }}">{{ textoSalir }}</button>
       </div>
     </div>
   </div>
@@ -63,6 +64,14 @@
       </sc-for>
     </div>
     <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:52ch;margin:18px 0 0;text-wrap:pretty">De ti, los otros cinco solo ven tu nombre y tu sector. Todo lo demás vive aquí y no se le muestra a nadie.</p>
+
+    <div style="margin-top:14px;font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D">
+      Entras con <span style="font-weight:600;color:#14342A;word-break:break-all">{{ correo }}</span>.
+      <sc-if value="{{ contactoDistinto }}" hint-placeholder-val="{{ false }}">
+        Te escribimos a <span style="font-weight:600;color:#14342A;word-break:break-all">{{ contacto }}</span>.
+      </sc-if>
+      <span style="display:block;margin-top:2px">Para cambiarlo, <a href="mailto:hola@aro.club" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">escríbenos</a>.</span>
+    </div>
 
     <sc-for list="{{ secciones }}" as="s" hint-placeholder-count="4">
       <div style="margin-top:clamp(30px,4vw,44px)">
@@ -249,7 +258,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { abierta: null, borrador: null, datos: null, guardando: false, fallo: '',
+  state = { saliendo: false, abierta: null, borrador: null, datos: null, guardando: false, fallo: '',
             exclusiones: null, quitando: null, baja: false, palabraBaja: '' };
 
   componentDidMount() {
@@ -370,6 +379,20 @@ class Component extends DCLogic {
     // Las pantallas del cuestionario 1..5 se mapean a las secciones 1..5;
     // la 0 son los datos base.
     (d.preguntas || []).forEach((q) => {
+      // Los datos base NO se pisan con la version del catalogo.
+      //
+      // `nacimiento` y `genero` estan en los dos sitios: son columnas de
+      // `profiles` y ademas preguntas de la pantalla 1 del cuestionario. Este
+      // bucle iba despues de `BASE()` y los sobreescribia, asi que acababan
+      // en la seccion 1 —«Tu contexto», cuya nota dice «con esto evitamos
+      // sentarte con alguien de tu empresa»— en vez de en «Datos
+      // personales», que es donde uno va a buscar su fecha de nacimiento.
+      //
+      // Se llevaban ademas la redaccion larga del catalogo («¿Cuándo
+      // naciste?» entre preguntas de trabajo) y perdian la ayuda que explica
+      // por que se piden. El servidor los guarda por el camino de BASE, no
+      // por el de respuestas, asi que la definicion buena es la de aqui.
+      if (c[q.clave] && c[q.clave].s === 0) return;
       c[q.clave] = {
         s: Math.min(5, q.pantalla || 1),
         etiqueta: q.enunciado,
@@ -686,6 +709,12 @@ class Component extends DCLogic {
       hayCenas: !!(D && D.historial && D.historial.length),
       sinCenas: !!D.historial && D.historial.length === 0,
       nav: AroNav.items('perfil', !!this.state.hayMesa, this.state.formatoMesa),
+      textoSalir: AroNav.salida(this.state.saliendo).texto,
+      estiloSalir: AroNav.salida(this.state.saliendo).estilo,
+      salir: () => {
+        if (this.state.saliendo) return;
+        AroNav.salir((v) => this.setState({ saliendo: v }));
+      },
       hayFalloAvisos: !!this.state.falloAvisos,
       falloAvisos: this.state.falloAvisos || '',
       hayExclusiones: exclusiones.length > 0,
@@ -693,6 +722,13 @@ class Component extends DCLogic {
       // "no has bloqueado a nadie" sin saberlo es inventarse un dato.
       sinExclusiones: !!this.state.exclusiones && exclusiones.length === 0,
       saludo: (R.trato || 'Tu perfil') + '.',
+      // El correo de la cuenta. No se edita desde aqui: cambiarlo es cambiar
+      // la llave de la puerta, y con Google de por medio no es nuestro.
+      correo: D.correo || '',
+      contacto: D.contacto || '',
+      // Solo se dice cuando de verdad son dos. Enseñar el mismo dos veces
+      // hace pensar que hay algo que arreglar.
+      contactoDistinto: !!D.contacto && D.contacto !== D.correo,
       botonFantasma: 'display:inline-flex;align-items:center;min-height:48px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
       enlacePie: 'display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.18);font:500 14px/1 \'Inter Tight\',sans-serif;color:#1B5138'
     };

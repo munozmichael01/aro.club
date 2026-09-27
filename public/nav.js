@@ -56,7 +56,43 @@
       })
   }
 
-  var api = { items: items }
+  /**
+   * Cerrar sesión, en la barra y en las tres pantallas.
+   *
+   * Estaba en UNA sola —abajo del todo del Inicio, detrás de todas las
+   * tarjetas— así que desde Perfil o desde Mi mesa había que volver al
+   * Inicio y bajar hasta el pie para salir. Michael lo pidió tres veces:
+   * uno solo, y en la barra.
+   *
+   * NO es un enlace. Llama al servidor, que borra la cookie, y solo
+   * entonces navega. Cuando era un `<a>` a la portada la sesión seguía
+   * viva: se veía «Entrar» el instante que tarda el fetch y volvía a «Mi
+   * cuenta».
+   *
+   * `alCambiar(saliendo)` lo llama la pantalla para pintar «Cerrando…» y no
+   * dejar pulsar dos veces; si no se pasa, sale igual.
+   */
+  function salir(alCambiar) {
+    if (typeof alCambiar === 'function') alCambiar(true)
+    fetch('/api/salir', { method: 'POST' })
+      .then(function () { try { raiz.localStorage.removeItem('aro-sesion') } catch (e) {} })
+      .catch(function () {})
+      .then(function () { raiz.location.href = '/' })
+  }
+
+  /** Cómo se pinta. `margin-left:auto` la manda al extremo de la fila. */
+  function salida(saliendo) {
+    return {
+      texto: saliendo ? 'Cerrando…' : 'Cerrar sesión',
+      estilo:
+        'margin-left:auto;display:inline-flex;align-items:center;min-height:44px;' +
+        'padding:0;background:transparent;border:none;cursor:pointer;' +
+        "font:500 15px/1 'Inter Tight',sans-serif;color:" + APAGADO + ';' +
+        'transition:color 180ms ease',
+    }
+  }
+
+  var api = { items: items, salir: salir, salida: salida }
   raiz.AroNav = api
   if (typeof module !== 'undefined' && module.exports) module.exports = api
 })(typeof globalThis !== 'undefined' ? globalThis : this)

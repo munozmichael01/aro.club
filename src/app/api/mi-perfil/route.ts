@@ -49,7 +49,7 @@ export async function GET() {
 
   const { data: perfil } = await admin
     .from('profiles')
-    .select('full_name, display_name, birthdate, gender, phone_e164')
+    .select('full_name, display_name, birthdate, gender, phone_e164, contact_email')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -175,6 +175,15 @@ export async function GET() {
     faltanPreguntas,
     faltanBase,
     creditos: saldo?.balance ?? 0,
+    // El correo con el que entra. No estaba: el perfil enseñaba el teléfono
+    // y el nombre y no decía con qué cuenta habías entrado, que es
+    // justamente lo que uno viene a comprobar cuando tiene dos.
+    //
+    // Y son dos columnas: `email` es la llave de la puerta —la de Google, si
+    // entró por ahí— y `contact_email` es a dónde van los correos. Se
+    // devuelven las dos para poder decirlo cuando no coinciden.
+    correo: user.email ?? '',
+    contacto: perfil?.contact_email ?? '',
     base: {
       nombre: perfil?.full_name ?? '',
       trato: perfil?.display_name ?? '',

@@ -53,6 +53,7 @@
         <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
           <a href="{{ n.enlace }}" aria-current="{{ n.actual }}" style="{{ n.estilo }}">{{ n.texto }}</a>
         </sc-for>
+        <button onClick="{{ salir }}" style="{{ estiloSalir }}">{{ textoSalir }}</button>
       </div>
     </div>
   </div>
@@ -278,7 +279,6 @@
       <sc-for list="{{ pie }}" as="p" hint-placeholder-count="3">
         <a href="{{ p.enlace }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.18);font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138">{{ p.nombre }}</a>
       </sc-for>
-      <button onClick="{{ salir }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:transparent;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;cursor:pointer">{{ textoSalir }}</button>
     </div>
   </div>
 </div>
@@ -859,18 +859,15 @@ class Component extends DCLogic {
     return {
       comensales, atajos, pie, filtros,
 
-      // Cerrar sesion NO es un enlace: llama al servidor, que borra la
-      // cookie, y solo entonces navega. Antes era un <a> a la landing y la
-      // sesion seguia viva: se veia "Entrar" el instante que tarda el fetch
-      // y volvia a "Mi cuenta".
-      textoSalir: this.state.saliendo ? 'Cerrando…' : 'Cerrar sesión',
+      // Cerrar sesion vive en `nav.js`, con la barra, porque ahora esta en
+      // las tres pantallas de la cuenta. Estaba solo aqui y abajo del todo:
+      // desde Perfil o desde Mi mesa habia que volver al Inicio y bajar
+      // hasta el pie para salir.
+      textoSalir: AroNav.salida(this.state.saliendo).texto,
+      estiloSalir: AroNav.salida(this.state.saliendo).estilo,
       salir: () => {
         if (this.state.saliendo) return;
-        this.setState({ saliendo: true });
-        fetch('/api/salir', { method: 'POST' })
-          .then(() => { try { window.localStorage.removeItem('aro-sesion'); } catch (e) {} })
-          .catch(() => {})
-          .then(() => { window.location.href = '/'; });
+        AroNav.salir((v) => this.setState({ saliendo: v }));
       },
       hayFiltro: this.state.filtro !== 0,
       quitarFiltro: () => this.setState({ filtro: 0, reservando: null }),
