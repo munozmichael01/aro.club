@@ -544,14 +544,19 @@
         // Diez de las dieciocho del catálogo, a propósito: en la puerta
         // dieciocho fichas son demasiadas para el primer minuto. El
         // cuestionario sí las ofrece todas.
+        //
+        // Las diez van con la redacción EXACTA del catálogo. Decían «Cocina»
+        // y «Negocios» y el cuestionario los llama «Cocina y restaurantes» y
+        // «Negocios y emprender»: quien marcaba uno en la puerta lo veía con
+        // otro nombre en su perfil y no sabía si era lo mismo.
         opciones: [
-          ['Cocina', 'cocina'],
+          ['Cocina y restaurantes', 'cocina'],
           ['Viajes', 'viajes'],
           ['Cine y series', 'cine'],
           ['Música', 'musica'],
           ['Libros', 'libros'],
           ['Deporte', 'deporte'],
-          ['Negocios', 'negocios'],
+          ['Negocios y emprender', 'negocios'],
           ['Arte y diseño', 'arte'],
           ['Tecnología', 'tecnologia'],
           ['Crianza', 'crianza'],

@@ -9,9 +9,9 @@ import { leerCatalogo } from '@/lib/questionnaire/catalogo'
  * su cuenta cuáles esconder según lo ya respondido en la landing. Filtrar
  * aquí obligaría a mantener en dos sitios la lista de qué se hereda.
  *
- * Cada opción viaja con su `valor` explícito. Nunca su posición: la landing
- * muestra 10 zonas y el cuestionario 13, en distinto orden, y el índice de
- * una no significa nada en la otra.
+ * Cada opción viaja con su `valor` explícito. Nunca su posición: la puerta
+ * —portada y app— enseña 10 temas de los 18 y en otro orden, y el índice de
+ * una lista no significa nada en la otra.
  */
 export async function GET() {
   const catalogo = await leerCatalogo()
