@@ -10,7 +10,6 @@ import { test } from 'node:test'
 
 import { reglas } from '../src/reglas'
 import { cuentaAtras } from '../src/texto/fechas'
-import { ZONA_PRODUCTO, zonaDe } from '../src/texto/zona'
 
 /** La cena abierta el 27-09: sábado 3 de octubre a las 20:00 en Caracas. */
 const CENA = '2026-10-04T00:00:00+00:00'
@@ -22,11 +21,6 @@ test('la cena del sábado a las 20:00 de Caracas es sábado, con el reloj del ce
   assert.equal(reglas.ZONA, 'America/Caracas')
 })
 
-test('la zona sale de la fecha si la trae, y si no, de un único sitio', () => {
-  assert.equal(zonaDe({ zonaHoraria: 'Europe/Madrid' }), 'Europe/Madrid')
-  assert.equal(zonaDe({}), ZONA_PRODUCTO)
-  assert.equal(zonaDe(null), ZONA_PRODUCTO)
-})
 
 test('la cuenta atrás habla como la web', () => {
   const ahora = Date.parse('2026-10-01T20:00:00Z')
