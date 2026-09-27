@@ -568,13 +568,25 @@
         clave: 'arraigo', etiqueta: 'ARRAIGO', tipo: 'unica',
         pregunta: '¿Cuál de estas eres tú?',
         ayuda: 'Una sola. Nos dice quién está llegando a Aro, y por dónde abrir.',
+        // La MISMA redacción que el cuestionario y que el catálogo. Habia
+        // tres, y dos de ellas no querian decir lo mismo: «Llegué y no
+        // conozco a nadie» aqui, «Me mudé a Caracas desde el interior» en el
+        // cuestionario y «Llegué de otra ciudad y no conozco a nadie» en la
+        // base. Quien acaba de mudarse desde fuera del pais encontraba su
+        // casilla o no segun por donde entrara, y con esto se decide su mesa.
+        //
+        // `interior` no dice de donde se llega A PROPOSITO. La entrega 7
+        // retiro `extranjero` y lo fusiono aqui —esta escrito en su
+        // migracion— asi que este cajon es «acabo de llegar y no conozco a
+        // nadie», se venga de Valencia o de Madrid. Tampoco nombra la ciudad:
+        // sigue valiendo el dia que se abra otra.
         opciones: [
-          ['Volví después de años fuera', 'volvio'],
-          ['Nunca me fui, y se fue casi toda mi gente', 'se-quedo'],
+          ['Me fui del país y volví', 'volvio'],
+          ['Nunca me fui, pero casi todos sí', 'se-quedo'],
+          ['Llegué hace poco y no conozco a nadie', 'interior'],
+          ['Estoy de paso', 'visita'],
           ['Sigo con la gente de siempre', 'mismos'],
           ['Trabajo remoto y casi no veo gente', 'remoto'],
-          ['Llegué y no conozco a nadie', 'interior'],
-          ['Estoy de paso', 'visita'],
         ],
       },
       zonas: {
