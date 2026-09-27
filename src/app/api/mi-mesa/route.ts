@@ -92,7 +92,29 @@ export async function GET() {
       .select('zone_slug')
       .eq('booking_id', reserva.id)
 
-    const slugs = (suyas ?? []).map((z) => z.zone_slug)
+    // Y cruzadas con las que esta fecha abrió DE VERDAD.
+    //
+    // Sin el cruce se le listaban las cinco que aceptó —«Las Mercedes,
+    // Chacao, Altamira, La Castellana o Los Palos Grandes»— para una fecha
+    // que solo abrió Chacao. Las otras cuatro no son una respuesta a medias:
+    // son imposibles, y encima contradicen a la tarjeta de la fecha, que sí
+    // dice «Chacao».
+    //
+    // No adelanta nada de la revelación: las zonas abiertas están a la vista
+    // en su inicio desde que la fecha se abre. Lo que sigue sin saber es el
+    // sitio, que es lo que se revela.
+    const { data: abiertas } = await admin
+      .from('event_venues')
+      .select('zone_slug')
+      .eq('event_id', reserva.event_id)
+
+    const deLaFecha = new Set((abiertas ?? []).map((z) => z.zone_slug))
+    const suyasSlugs = (suyas ?? []).map((z) => z.zone_slug)
+    const cruzadas = suyasSlugs.filter((z) => deLaFecha.has(z))
+    // Si el cruce sale vacío —no debería, porque reservar lo exige— se cae a
+    // las suyas antes que a nada: una lista de más es mejor que un hueco.
+    const slugs = cruzadas.length ? cruzadas : suyasSlugs
+
     const { data: nombres } = await admin
       .from('zones')
       .select('name')
