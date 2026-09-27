@@ -121,7 +121,11 @@ export const tipo = {
   rotulo: estilo(fuente.textoSemi, 15, 1.3),
   etiqueta: estilo(fuente.textoMedia, 12, 1.25, 0.14),
   etiquetaChica: estilo(fuente.textoMedia, 11, 1.25, 0.14),
+  /** El texto de un chip: «Lo ven los cinco». */
+  chip: estilo(fuente.textoMedia, 12, 1.25),
   cifra: { ...estilo(fuente.textoNegrita, 28, 1, -0.04), fontVariant: ['tabular-nums'] },
+  /** Lo que se teclea en un campo de cifras: el día, el año. */
+  cifraCampo: { ...estilo(fuente.textoSemi, 20, 1.2, -0.02), fontVariant: ['tabular-nums'] },
 } satisfies Record<string, TextStyle>
 
 /** Radios. Cápsula para botones y fichas; 20–22 para tarjetas. */

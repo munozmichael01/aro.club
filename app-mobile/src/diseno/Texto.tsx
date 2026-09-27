@@ -35,7 +35,9 @@ const TONO_POR_DEFECTO: Record<Variante, Tono> = {
   rotulo: 'tinta',
   etiqueta: 'secundario',
   etiquetaChica: 'secundario',
+  chip: 'cuerpo',
   cifra: 'tinta',
+  cifraCampo: 'tinta',
 }
 
 type Props = TextProps & { variante?: Variante; tono?: Tono; children: ReactNode }

@@ -13,6 +13,7 @@
     "expo-router": "~57.0.23",
     "expo-secure-store": "~57.0.4",
     "expo-status-bar": "~57.0.1",
+    "expo-web-browser": "~57.0.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
@@ -36,7 +37,8 @@
     "test": "TZ=Europe/Madrid tsx --test pruebas/*.test.ts && TZ=UTC tsx --test pruebas/*.test.ts",
     "prueba:api": "tsx pruebas/contra-la-api.mjs",
     "web": "expo start --web --port 8090",
-    "prueba:entrada": "tsx pruebas/entrada-contra-la-api.mjs"
+    "prueba:entrada": "tsx pruebas/entrada-contra-la-api.mjs",
+    "prueba:datos": "tsx pruebas/datos-contra-la-api.mjs"
   },
   "private": true
 }

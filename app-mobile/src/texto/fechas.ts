@@ -10,6 +10,9 @@
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
 
+/** Los meses abreviados del selector de nacimiento, en el orden del calendario: el índice + 1 es el mes. */
+export const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
 /** Las partes de una fecha en una zona. `Intl` hace el cambio de zona, con su horario de verano si lo hay. */
 function partes(iso: string, zona: string) {
   const f = new Intl.DateTimeFormat('en-US', {

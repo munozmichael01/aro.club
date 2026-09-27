@@ -22,3 +22,13 @@ export async function leerLead(): Promise<Lead | null> {
 export async function guardarLead(lead: Lead): Promise<void> {
   await almacenSeguro.setItem(CLAVE_LEAD, JSON.stringify(lead))
 }
+
+/**
+ * Al crear la cuenta, la llave del lead sobra y guardada es una trampa: las
+ * rutas que aceptan las dos credenciales la seguirían recibiendo, y algún
+ * día una escribiría en la fila vieja en vez de en el perfil (la web lo
+ * aprendió así).
+ */
+export async function borrarLead(): Promise<void> {
+  await almacenSeguro.removeItem(CLAVE_LEAD)
+}

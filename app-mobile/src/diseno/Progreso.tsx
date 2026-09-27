@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native'
 
-import { color, cremaAlfa } from './tokens'
+import { color, cremaAlfa, tinta } from './tokens'
 
 /**
  * Los puntos de progreso del registro: el actual se alarga, los hechos y el
@@ -31,3 +31,25 @@ const estilos = StyleSheet.create({
   fila: { flexDirection: 'row', gap: 6 },
   punto: { height: 8, borderRadius: 4 },
 })
+
+/**
+ * Las barras de los pasos sobre crema: hechas en verde, la actual en
+ * terracota, las que faltan en tinta suave. Como `Datos base`.
+ */
+export function Barras({ total, actual }: { total: number; actual: number }) {
+  return (
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 1, max: total, now: Math.min(actual + 1, total) }}
+      style={{ flexDirection: 'row', gap: 5, flex: 1, maxWidth: 260 }}
+    >
+      {Array.from({ length: total }, (_, i) => (
+        <View
+          key={i}
+          style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i < actual ? color.verde : i === actual ? color.terracota : tinta(0.13) }}
+        />
+      ))}
+    </View>
+  )
+}
