@@ -41,7 +41,12 @@
     "extra": {
       "api": "https://aro.club/api",
       "supabaseUrl": "https://qdydmklrbsdemzvjsldo.supabase.co",
-      "sitio": "https://aro.club"
-    }
+      "sitio": "https://aro.club",
+      "router": {},
+      "eas": {
+        "projectId": "51c36ee0-0e19-4c87-bf88-f041afc965a9"
+      }
+    },
+    "owner": "somos.aroclub"
   }
 }
