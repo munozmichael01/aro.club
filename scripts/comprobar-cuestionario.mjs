@@ -63,6 +63,23 @@ const enBase = new Map(
     .map((q) => [q.key, q.options]),
 )
 
+// Un catálogo vacío NO es un catálogo sin descuadres.
+//
+// Sin esto, una lectura que devuelve cero filas —el proyecto equivocado, una
+// política de RLS nueva, la tabla vaciada, un filtro que se lleva por delante
+// lo que buscaba— hacía que TODAS las preguntas cayeran en «no está en el
+// catálogo», que se cuenta como aviso. Cero errores, salida 0, «todo bien»: el
+// comprobador pasaba más fuerte cuanto menos podía comprobar.
+//
+// Y es exactamente la clase de fallo que este script vino a impedir, con otra
+// ropa. Un `error` de la consulta sí se cazaba; una consulta que va bien y no
+// trae nada, no.
+if (!enBase.size) {
+  console.error('\n✗ el catálogo volvió vacío: ninguna pregunta con opciones.')
+  console.error('  No es que la pantalla esté bien: es que no hay con qué compararla.')
+  process.exit(1)
+}
+
 let errores = 0
 let avisos = 0
 
@@ -112,6 +129,17 @@ for (const [id, pares] of Object.entries(OPC)) {
   } else {
     console.log(`✓ ${id}`)
   }
+}
+
+// Ni media docena de avisos «no está en el catálogo» son media docena de
+// coincidencias: si NINGUNA de las preguntas de la pantalla aparece, lo que
+// falla es la lectura —otra versión del cuestionario, otro proyecto— y no las
+// quince pantallas a la vez.
+const encontradas = Object.keys(OPC).filter((id) => enBase.has(id)).length
+if (Object.keys(OPC).length && !encontradas) {
+  console.error('\n✗ ninguna pregunta de la pantalla está en el catálogo leído.')
+  console.error('  Eso no son quince descuadres: es que se leyó el catálogo equivocado.')
+  process.exit(1)
 }
 
 // --- las preguntas de tipo fecha --------------------------------------
