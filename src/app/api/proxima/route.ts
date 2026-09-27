@@ -19,7 +19,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export async function GET() {
   const { data } = await createAdminClient()
     .from('events')
-    .select('id, starts_at, booking_closes_at, format')
+    .select('id, starts_at, booking_closes_at, reveal_at, format')
     .eq('status', 'open')
     .gt('booking_closes_at', new Date().toISOString())
     .order('starts_at', { ascending: true })
@@ -32,6 +32,14 @@ export async function GET() {
     hay: !!data,
     empiezaEn: data?.starts_at ?? null,
     cierraEn: data?.booking_closes_at ?? null,
+    // Cuándo se abre todo. Es público desde siempre —«a mediodía del día de
+    // la cena» está escrito en la portada, en la FAQ y en los correos— pero
+    // salía de ahí como una regla, no del evento, así que una cena que se
+    // revelara a otra hora dejaba mintiendo a cinco pantallas a la vez.
+    //
+    // Lo pidió la app para poder decir la hora sin escribirla. Aditivo: quien
+    // no lo lea sigue igual.
+    revelaEn: data?.reveal_at ?? null,
     formato: data?.format ?? null,
   })
 }
