@@ -8,7 +8,6 @@ export type Variante = keyof typeof tipo
 const TONOS = {
   tinta: color.verdeProfundo,
   cuerpo: color.cuerpo,
-  cuerpoEntregas: color.cuerpoEntregas,
   secundario: color.secundario,
   verde: color.verde,
   terracota: color.terracota,

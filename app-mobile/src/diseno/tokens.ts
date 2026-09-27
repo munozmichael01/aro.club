@@ -4,9 +4,12 @@ import type { TextStyle } from 'react-native'
  * Los tokens del sistema de diseño, trasladados de la web.
  *
  * Fuente: `public/Aro Club - Sistema v3.dc.html` (la hoja del sistema) y el
- * recuento de uso real en las veinte pantallas `.dc.html` (27-09). Nada se
- * inventa aquí: si una pantalla necesita un valor que no está, primero se
- * mira de dónde lo saca su maqueta.
+ * recuento de uso real en las veinte pantallas `.dc.html` (27-09). Los
+ * contrastes están medidos con la fórmula de WCAG, no copiados de la hoja,
+ * que los da inflados en torno a un 7 %.
+ *
+ * UN valor por papel. Si una maqueta trae un tono que no está aquí, se usa
+ * el token del papel y se anota la diferencia (PEDIDO §6 bis).
  */
 
 export const color = {
@@ -19,21 +22,21 @@ export const color = {
   cremaFria: '#F2E9D5',
 
   // --- Verde: la tinta y lo que pesa -----------------------------------
-  /** Texto principal y fondo de las secciones que pesan. 13.1:1 sobre crema. */
+  /** Texto principal y fondo de las secciones que pesan. 12,23:1 sobre crema. */
   verdeProfundo: '#14342A',
   /** Botón primario, enlaces. */
   verde: '#1B5138',
   /**
-   * Cuerpo de texto según la hoja del sistema. 6.43:1 sobre crema.
+   * Cuerpo de texto. UNO: 7,95:1 sobre crema, AAA.
    *
-   * OJO: las pantallas de la entrega 3 en adelante (Pago, Mi mesa, Datos,
-   * Cancelar) usan `cuerpoEntregas` para lo mismo. Cada pantalla usa el de
-   * su maqueta hasta que se decida cuál es el canónico.
+   * La web tiene dos (#456352 en la hoja, #33513F en las entregas 3+) y eso
+   * es deriva, no sistema. Se eligió el AAA (decisión del 27-09): el texto
+   * más largo del producto son siete minutos de lectura, es el de las
+   * pantallas más recientes y dobla al otro en uso. Si una maqueta trae
+   * #456352, se usa este igual y se anota; no se replica la diferencia.
    */
-  cuerpo: '#456352',
-  /** El cuerpo tal como lo usan las entregas 3+. Ver `cuerpo`. */
-  cuerpoEntregas: '#33513F',
-  /** Secundario y terciario: etiquetas, pistas. 5.62:1 sobre crema. */
+  cuerpo: '#33513F',
+  /** Secundario y terciario: etiquetas, pistas. 5,26:1 sobre crema. */
   secundario: '#566A5D',
   /** Verde claro para texto secundario sobre verde profundo. */
   sobreVerdeSecundario: '#9CBBA6',
@@ -42,7 +45,7 @@ export const color = {
 
   // --- Terracota: el único acento --------------------------------------
   /**
-   * Terracota oscura. La que SÍ puede llevar texto pequeño (6.70:1). Siempre
+   * Terracota oscura. La que SÍ puede llevar texto pequeño (6,27:1). Siempre
    * significa lo mismo: esto está marcado, o esto es tuyo.
    */
   terracota: '#8F4515',
