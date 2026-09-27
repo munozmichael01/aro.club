@@ -32,7 +32,6 @@ import { borrarLead, guardarLead, leerLead, type Lead } from '../sesion/lead'
 import * as T from '../texto/datos'
 import { repetido as R } from '../texto/entrada'
 import { MESES_CORTOS, cuandoSeRevela } from '../texto/fechas'
-import { zonaDe } from '../texto/zona'
 import {
   PASO_CORREO,
   PASO_FIN,
@@ -124,7 +123,7 @@ export function Datos(p: {
       setLead(l)
       const [, cat, prox] = await Promise.all([cargar(l, true), p.servicio.catalogo(), p.servicio.proxima()])
       // El día de las frases sale de la fecha abierta, en la zona de su ciudad.
-      if (prox.ok && prox.datos.hay) setCuando(cuandoSeRevela(prox.datos, zonaDe(prox.datos)))
+      if (prox.ok && prox.datos.hay) setCuando(cuandoSeRevela(prox.datos))
       // El género sale del catálogo, por código, como las preguntas.
       if (cat.ok) {
         const g = cat.datos.preguntas.find((x) => x.clave === 'genero')

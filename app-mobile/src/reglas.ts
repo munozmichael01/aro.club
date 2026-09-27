@@ -25,6 +25,8 @@ type Api = {
   ZONA: string
   /** «sábado»: el nombre del día de una fecha, en `ZONA`. `null` si la fecha no vale. */
   diaDe: (iso: string | null | undefined) => string | null
+  /** «12:00 p.m.»: la hora de una fecha, en `ZONA`. La misma que usan los correos. */
+  horaDe: (iso: string | null | undefined) => string | null
   /** Las cuatro preguntas de la puerta, UN sitio para web y app. Opciones como [texto, código]. */
   PUERTA: Record<string, PreguntaPuerta>
   ORDEN_PUERTA: string[]

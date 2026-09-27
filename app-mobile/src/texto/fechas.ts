@@ -4,30 +4,15 @@
  * Con la forma que tendrá `public/textos.js` (TEXTO-tres-superficies §2B):
  * cuando exista, esto se sustituye por la importación y se borra.
  *
- * Todo recibe la zona explícita. Ningún nombre de día se escribe a mano en
- * una pantalla: sale de aquí, calculado desde la fecha del evento.
+ * El día y la hora salen de `reglas.js` (`diaDe`, `horaDe`), en su `ZONA`:
+ * el mismo cálculo que la web y los correos. Ningún nombre de día se escribe
+ * a mano en una pantalla: sale de aquí, calculado desde la fecha del evento.
  */
 
 import { reglas } from '../reglas'
 
 /** Los meses abreviados del selector de nacimiento, en el orden del calendario: el índice + 1 es el mes. */
 export const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
-
-/** Las partes de una fecha en una zona. `Intl` hace el cambio de zona, con su horario de verano si lo hay. */
-function partes(iso: string, zona: string) {
-  const f = new Intl.DateTimeFormat('en-US', {
-    timeZone: zona,
-    day: 'numeric',
-    month: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    hourCycle: 'h23',
-  })
-  const p = Object.fromEntries(f.formatToParts(new Date(iso)).map((x) => [x.type, x.value]))
-  return { dia: +p.day, mes: +p.month, anio: +p.year, hora: +p.hour, minuto: +p.minute }
-}
-
 
 /**
  * Lo que falta hasta un instante, como lo dice la web: «1 día y 3 h»,
@@ -45,23 +30,16 @@ export function cuentaAtras(hasta: string, ahora: number): string {
 }
 
 /**
- * La hora como la dicen los correos: «12:00 p.m.», «8:00 p.m.». El mismo
- * formato en las tres superficies (TEXTO-tres-superficies §2B).
- */
-export function hora(iso: string, zona: string): string {
-  const { hora: h, minuto: m } = partes(iso, zona)
-  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'a.m.' : 'p.m.'}`
-}
-
-/**
  * Cuándo se sabe la mesa, dicho con lo que haya: día y hora si se conoce la
  * revelación; solo el día si solo se conoce la cena (se revela ese mismo
  * día); nada si no hay fecha abierta. Nunca un día escrito a mano.
  */
-export function cuandoSeRevela(f: { empiezaEn?: string | null; revelaEn?: string | null } | null, zona: string): string | null {
-  // El día, de reglas.js (`diaDe`): el mismo cálculo que la web.
+export function cuandoSeRevela(f: { empiezaEn?: string | null; revelaEn?: string | null } | null): string | null {
+  // Día y hora, de reglas.js (`diaDe`, `horaDe`): el mismo cálculo que la
+  // web y los correos, en un solo sitio (y en la zona de reglas.js).
   const dia = (iso: string) => reglas.diaDe(iso)
-  if (f?.revelaEn && dia(f.revelaEn)) return `el ${dia(f.revelaEn)} a las ${hora(f.revelaEn, zona)}`
+  const hora = reglas.horaDe(f?.revelaEn)
+  if (f?.revelaEn && dia(f.revelaEn) && hora) return `el ${dia(f.revelaEn)} a las ${hora}`
   if (f?.empiezaEn && dia(f.empiezaEn)) return `el ${dia(f.empiezaEn)}`
   return null
 }
