@@ -251,6 +251,19 @@ async function sembrar(fechaAjena) {
         zone_slug: 'mercedes', city_slug: 'caracas',
       }),
     })
+
+    // La SEDE de la fecha. `restaurant_id` y `zone_slug` en el evento son de
+    // antes de que las zonas se movieran a `event_venues`: las columnas siguen
+    // existiendo, asi que el insert no falla — simplemente la fecha se queda
+    // sin ninguna zona abierta y el reparto no puede sentar a nadie.
+    await rest('event_venues', {
+      method: 'POST',
+      headers: H,
+      body: JSON.stringify({
+        event_id: evento.id, restaurant_id: rest1.id,
+        zone_slug: 'mercedes', max_tables: 6,
+      }),
+    })
     eventoId = evento.id
     rastro.evento = evento.id
     writeFileSync(RASTRO, JSON.stringify(rastro, null, 2))
