@@ -93,9 +93,6 @@
           </sc-for>
         </div>
 
-        <button onClick="{{ irDatos }}" style="{{ botonPagar }}">{{ textoIrDatos }}</button>
-        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;max-width:48ch;text-wrap:pretty">Cancelas con más de 24 horas y recuperas el crédito completo. Con menos, se pierde: la mesa ya está armada.</div>
-
         <!--
           El código, abajo y plegado.
 
@@ -127,6 +124,10 @@
             </div>
           </sc-if>
         </div>
+
+        <button onClick="{{ irDatos }}" style="{{ botonPagar }}">{{ textoIrDatos }}</button>
+        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;max-width:48ch;text-wrap:pretty">Cancelas con más de 24 horas y recuperas el crédito completo. Con menos, se pierde: la mesa ya está armada.</div>
+
       </div>
     </sc-if>
 
