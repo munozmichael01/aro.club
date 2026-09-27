@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { encolar } from '@/lib/correos'
-import { firmar } from '@/lib/lead-token'
+import { firmar, verificar } from '@/lib/lead-token'
 import { leerCatalogo, validarConjunto } from '@/lib/questionnaire/catalogo'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -40,12 +40,14 @@ const paso1 = z.object({
    * convierte mejor, así que ensuciarla ensucia la única cifra para la que
    * existe el campo.
    */
-  origen: z.enum(['landing', 'datos']).optional(),
+  origen: z.enum(['landing', 'datos', 'app']).optional(),
   // Campo oculto: una persona nunca lo rellena.
   website: z.string().max(0).optional(),
 })
 
 const paso2 = paso1.extend({
+  // El token del correo, para la rama que ESCRIBE respuestas.
+  token: z.string().optional(),
   arraigo: z.string().nullable().optional(),
   zonas: z.array(z.string()).optional(),
   dias: z.array(z.string()).optional(),
@@ -91,6 +93,23 @@ export async function POST(request: Request) {
     if (problemas.length) {
       console.error('[lead] respuestas fuera de catálogo', problemas)
       return NextResponse.json({ error: 'No pudimos guardar tus respuestas.' }, { status: 400 })
+    }
+
+    // Y quién escribe. Esta rama no pedía NADA.
+    //
+    // Leer los datos de otro ya se cerró; escribirlos seguía abierto:
+    // cualquiera que supiera un correo podía sobrescribir el arraigo, las
+    // zonas, los días y los temas de esa persona — que son exactamente los
+    // cuatro campos con los que se decide con quién se sienta. No se veía
+    // nada y no fallaba nada: la mesa de alguien salía distinta y ya.
+    //
+    // La portada tiene el token desde el primer paso y solo le faltaba
+    // mandarlo; la app lo manda desde el principio.
+    if (!verificar(correo, parsed.data.token)) {
+      return NextResponse.json(
+        { error: 'No pudimos guardar tus respuestas.' },
+        { status: 403 },
+      )
     }
 
     // Solo se escribe lo que viene. Con `?? []` un guardado parcial vaciaba

@@ -906,8 +906,14 @@ class Component extends DCLogic {
   // variante, que cada pagina declara por su cuenta: sin eso, el
   // experimento costaria un esquema y un endpoint aparte.
   guardarLead(extra) {
+    // El token del correo, si ya lo tenemos. Guardar las respuestas lo exige
+    // desde hoy: sin él, cualquiera que supiera una dirección podía
+    // sobrescribir con quién se sienta esa persona.
+    let guardado = null;
+    try { guardado = JSON.parse(window.localStorage.getItem('aro-sesion') || 'null'); } catch (e) { /* modo privado */ }
     const cuerpo = Object.assign({
       correo: (this.state.correo || '').trim(),
+      token: (guardado && guardado.token) || undefined,
       ciudad: this.state.ciudad >= 0 ? this.CIUDADES[this.state.ciudad] : 'caracas',
       variante: 'v4'
     }, extra || {});
