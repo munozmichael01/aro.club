@@ -35,26 +35,14 @@ token**. El servidor nunca recibe el refresh token, así que nunca lo rota a
 espaldas de la app. Si responde 401, la app refresca una vez y reintenta.
 Funciona **hoy, sin tocar una línea del backend**.
 
-### Tres hallazgos fuera del encargo, por orden de gravedad
+### Hallazgos fuera del encargo (ya cerrados)
 
-1. **Seguridad · el token de lead no protege nada para un correo ya
-   registrado.** `POST /api/lead` con un correo existente responde `repetido`
-   **y devuelve el token firmado de ese correo**. Probado con un lead
-   desechable: un tercero que solo sabe el correo obtiene el mismo token y
-   `GET /api/datos-base?correo=…&token=…` le responde 200 con el objeto de
-   nombre, nacimiento, género y teléfono. Además, la rama de las cuatro
-   preguntas de `/lead` escribe por correo sin pedir token. Es justo lo que
-   `lead-token.ts` dice que existe para impedir. Arreglarlo cambia el flujo de
-   «volví con el mismo correo» (p. ej., mandar un enlace al correo en vez del
-   token), así que es decisión tuya, no la toco. **La app ya se diseña para
-   que funcione con el arreglo:** si `repetido` llega sin token, lo trata como
-   «revisa tu correo» o «entra».
-2. **El día cableado, en producción.** `/api/mis-avisos` responde
-   `titulo: "Tu mesa del jueves"` (`src/app/api/mis-avisos/route.ts:43`),
-   con cenas en sábado. La clave `mesa_jueves` puede quedarse, porque los
-   códigos son códigos. El título tiene que derivarse de la fecha.
-3. **El pedido.** El §8 salta del 3 al 5, y el §11 dice «antes de escribir
-   código», cosa que contradice lo decidido en el §8.
+- Un fallo de exposición de datos en el alta de leads, arreglado en
+  producción el 26-09. **Consecuencia para la app:** `POST /lead` con un
+  correo ya registrado responde `repetido` **sin token**, y la app lo trata
+  como «revisa tu correo» o «entra».
+- El título «Tu mesa del jueves» en `/mis-avisos`, la numeración del pedido y
+  la exclusión de `App` en `tsconfig.json`: arreglados.
 
 ---
 
@@ -97,9 +85,8 @@ navegador, y la cámara y el push serían justo las dos piezas mal resueltas.
 
 **Dónde vive el código:** en `App/` dentro de este repositorio, para que
 cargue `public/reglas.js` sin copias y para que el comprobador de contrato
-(§e) corra en el mismo CI. Una condición: el `tsconfig.json` de la raíz
-incluye `**/*.ts`, así que **hay que excluir `App`** antes del primer fichero,
-o el `tsc --noEmit` de la web intentará compilar la app.
+(§e) corra en el mismo CI. El `tsconfig.json` de la raíz ya excluye `App`, y
+la app tiene el suyo.
 
 ---
 
@@ -185,7 +172,7 @@ Leyenda: **igual** = mismos pasos, estados y copy que el `.dc.html`;
 |---|---|---|---|---|
 | 1 | `/` entrada + 4 preguntas | Entrada | `POST /lead` | **Igual.** El token de lead se guarda en el almacén seguro del celular. Tolera `repetido` sin token (ver §0.1). |
 | 2 | `/datos` (4 pasos) | Datos | `GET/POST /datos-base` | **Igual.** Validación con `reglas.js`, el mismo fichero. |
-| 2b | Crear cuenta | Crear cuenta | `POST /cuenta` | **Se aparta en una cosa: solo contraseña en la v1.** Detrás, la app entra con el SDK con las mismas credenciales. Google, ver abajo. |
+| 2b | Crear cuenta | Crear cuenta | `POST /cuenta`; Google y Apple por `POST /auth/nativo` (§g) | **Igual**, con contraseña, Google o Apple. Con contraseña, la app entra después con el SDK con las mismas credenciales. |
 | 3 | `/cuestionario` (17 en 5) | Cuestionario **nativo** | `GET /questions` (v3), `GET/POST /cuestionario` | **Igual en pasos y copy, construido desde el catálogo.** `/questions` trae clave, tipo, `valor` por opción, `pantalla` y `exclusiva`, así que la app guarda **por código por construcción** y la trampa de `OPC`/`COD` no puede darse. Si llega un `tipo` que la app no conoce, esa pantalla abre la web (§e). |
 | 4 | `/verificacion` | Verificación con cámara | `GET/POST /verificacion` (multipart `tipo` + `archivo`, ≤ 4 MB, jpeg/png/webp/heic) | **Se aparta a propósito, que es lo pedido:** guía de encuadre (rectángulo de cédula; óvalo para la selfie), vista previa y **«Usar esta» / «Repetir»** en las dos. La app comprime por debajo de 4 MB antes de subir. |
 | 5 | `/cuenta` inicio | Inicio | `GET /mi-cuenta` | **Igual.** Estado, único paso siguiente y agenda. Si `esOps`, un enlace «El panel está en la web». |
@@ -199,7 +186,8 @@ Leyenda: **igual** = mismos pasos, estados y copy que el `.dc.html`;
 | — | Exclusiones | Exclusiones | `GET/POST /mis-exclusiones` | Igual |
 | — | Cancelar | Cancelar | `POST /cancelar` | Igual |
 | — | Baja | **Borrar mi cuenta**, desde Perfil, sin escribir a nadie | `POST /baja` | Igual. Obligatoria para Apple. |
-| — | Entrar | Entrar | SDK `signInWithPassword` | Se aparta por dentro, no a la vista: entra con el SDK, no con `/entrar`, porque la sesión la guarda el SDK. |
+| — | Entrar | Entrar | SDK `signInWithPassword`, o Google/Apple + `POST /auth/nativo` | Se aparta por dentro, no a la vista: entra con el SDK, no con `/entrar`, porque la sesión la guarda el SDK. |
+| — | `/entrar?fase=otroCorreo` y `fase=relay` | Las mismas dos fases | `POST /mi-perfil {clave:'contacto'}` | **Igual.** Las decide la respuesta de `/auth/nativo` en vez de una redirección. |
 | — | Recuperar clave | Recuperar | `POST /entrar {accion:'recuperar'}` | **Igual y por la API, no por el SDK:** el de Supabase mandaría su propio correo y se saltaría el tope de 3 por hora. El enlace del correo abre `/clave` **en la web** en la v1. |
 | — | Términos y privacidad | Navegador del sistema dentro de la app | — | **Única pantalla «embebida», y a propósito:** es texto legal. Tiene que ser la misma versión que se acepta (`VERSION_LEGAL`), y así lo es por construcción. |
 
@@ -208,24 +196,7 @@ cuestionario, pero `/questions` lo hace innecesario y, además, más seguro que
 la web. Embeber un `.dc.html` exigiría un «modo app» en la web para quitarle
 su cabecera, y eso sería una dependencia.
 
-**Google en la app.** La vuelta de Google (`/auth/callback`) tiene lógica de
-negocio: cruza el lead por correo, llama a `convertir_lead`, crea el perfil y
-avisa si el correo de Google no es el del lead. Un login nativo con
-`signInWithIdToken` se la saltaría, y reimplementarla en el celular duplica
-lógica. Así que:
-
-- **La v1 sale solo con contraseña.** Con eso, además, **Sign in with Apple no
-  es obligatorio** (solo lo es si se ofrece un login de terceros). Se elimina
-  la dependencia de tienda más enredada.
-- Quien se registró con Google en la web y abre la app: «¿Entraste con
-  Google? Crea tu contraseña» → el mismo recuperar. **Por verificar en la
-  primera semana** con una cuenta desechable de Google que `/clave` le deja
-  poner contraseña. Y **es copy nuevo, así que lo decides tú.**
-- **Pieza aditiva para después:** `POST /api/auth/nativo`, que recibe el
-  token de Google o Apple, abre la sesión y ejecuta **la misma función** que
-  hoy corre en `/auth/callback`, extraída sin cambiarla. Con eso entran Google
-  **y** Apple a la vez en una actualización. Encaja con «cuentas, Google y
-  Apple al final».
+**Google y Apple** entran en la v1 por la ruta nueva del §g.
 
 ### Qué hace la web cuando exista la app
 
@@ -256,16 +227,16 @@ Un desarrollador RN con experiencia, dedicado. Semanas de calendario.
 | Semana | Trabajo |
 |---|---|
 | **0 (días 1–3)** | Proyecto Expo con dev builds; tokens del sistema de diseño, Young Serif e Inter Tight empaquetadas, el aro de carga; cliente de API con la sesión del §0; esquemas de contrato. **Abrir cuentas de desarrollador el día 1** (ver abajo). |
-| 1–2 | Entrada, datos, crear cuenta, entrar, recuperar; cuestionario desde el catálogo |
+| 1–2 | Entrada, datos, crear cuenta, entrar, recuperar; **Google y Apple nativos contra `/auth/nativo`** (§g); cuestionario desde el catálogo |
 | 3 | Verificación con cámara (las dos, con repetir) y su estado. **Arranca la prueba cerrada de Google Play.** |
 | 4 | Inicio, agenda, reservar, pago (Pago Móvil + reporte), cupón, cancelar |
 | 5 | Mesa: espera, revelación, sin conexión; notificaciones locales; después; perfil, avisos, exclusiones, baja |
 | 6 | Los criterios del §9 uno a uno en teléfono real (el más pequeño, letra al máximo, fecha movida a martes, sesión a una semana); fichas de tienda; TestFlight |
 | 7 | Envío a revisión; margen para un rechazo |
 
-**Salida estimada: 7 semanas, con una de margen para un rechazo.** El push
-remoto y Google/Apple entran como actualización cuando lleguen sus piezas
-aditivas, sin retrasar nada de lo anterior.
+**Salida estimada: 7 a 8 semanas, con una de margen para un rechazo.** Google
+y Apple en la v1 suman de tres a cuatro días entre app y ruta. El push remoto
+entra como actualización cuando llegue su pieza, sin retrasar nada.
 
 ### Dependencias de tienda: lo que no se puede comprimir
 
@@ -280,8 +251,18 @@ aditivas, sin retrasar nada de lo anterior.
   pasar 14 días seguidos de prueba cerrada con al menos 12 personas** antes de
   poder publicar. Las de organización están exentas, pero piden D-U-N-S. Por
   eso la prueba cerrada arranca en la semana 3 y no en la 6.
-- **Sign in with Apple**: no hace falta en la v1 (solo contraseña). Entra con
-  Google en la misma actualización.
+- **Sign in with Apple**: va en la v1, porque la app ofrece Google (guía
+  4.8). Está incluido en la membresía y no cuesta nada aparte. Pide tres
+  cosas de configuración, **todas tuyas porque viven en consolas**:
+  - la capacidad «Sign in with Apple» en el App ID;
+  - **encender el proveedor Apple en Supabase** con el *bundle ID* como
+    Client ID;
+  - en el proveedor Google de Supabase, **añadir los Client ID de iOS y
+    Android** a los autorizados (sin eso, `signInWithIdToken` rechaza el
+    token del celular).
+- **Borrar la cuenta de quien entró con Apple** tiene una exigencia más:
+  Apple pide **revocar su token** con su API al darse de baja. Supabase no lo
+  hace solo. Es una pieza de backend en `/baja` (§g.5) y la revisión la mira.
 - **La cuenta del revisor**: Apple entra con una cuenta y tiene que ver el
   producto, no una pantalla de «en revisión». Hace falta una cuenta
   **verificada, con reserva y con mesa revelada** en producción. El banco de
@@ -295,6 +276,7 @@ aditivas, sin retrasar nada de lo anterior.
 | **3.1.1 · pagos fuera de la compra in-app** | Guía 3.1.3(e): bienes y servicios que se consumen fuera de la app. Es un puesto en una cena física en un restaurante, se paga por Pago Móvil y no hay contenido digital desbloqueado. Va en las notas de revisión desde el primer envío. |
 | 5.1.1(v) · borrar la cuenta | Perfil → Borrar mi cuenta → `POST /baja`. Se explica en las notas qué se conserva (la facturación, 10 años por ley) y por qué. |
 | 2.1 · no pudimos probarla | La cuenta del revisor, con mesa revelada. |
+| 4.8 · login con Apple | Sign in with Apple ofrecido junto a Google, con el mismo peso visual. |
 | 4.2 · funcionalidad mínima | Pantallas nativas, cámara, notificaciones. |
 | Privacidad · documentos de identidad | Declarado en la ficha: fotos de documento y selfie, fin (verificación humana), bucket privado, borrado a los 90 días de aprobar. |
 
@@ -332,22 +314,140 @@ Cinco capas, de la que no depende de nadie a la que pide algo:
 
 ---
 
-## f · Lo que se pide al backend, todo aditivo y nada bloqueante
+## f · Lo que se pide al backend
+
+Todo aditivo. **Una pieza bloquea la salida**, y es consecuencia directa de
+sacar la v1 con Google: `/auth/nativo`. Lo demás no bloquea nada.
 
 | Pieza | Para qué | Sin ella, la app… |
 |---|---|---|
+| **`POST /auth/nativo`** (§g) | Google y Apple en la app | **…no sale.** Es la única dependencia de la v1, así que va la primera. Mientras llega, se desarrolla y se prueba todo con contraseña. |
+| **Revocar el token de Apple en `/baja`** (§g.5) | Guía 5.1.1(v) con Sign in with Apple | …la revisión puede rechazarla |
 | `device_tokens` + `POST/DELETE /dispositivos` + push en `despacharPendientes` | Push remoto | …avisa por locales (revelación y día) y por correo |
 | Tipo de aviso «verificación aprobada» | Que sepa cuándo cambia | …lo muestra al abrir |
-| `POST /auth/nativo` (la lógica de `/auth/callback`, extraída) | Google + Apple en la app | …sale solo con contraseña |
 | `/.well-known/…` (AASA + assetlinks) | Que los correos abran la app | …los correos abren la web, como hoy |
 | `/app/estado.json` | Forzar actualización | …no fuerza nada |
-| Excluir `App` en `tsconfig.json` | Que el `tsc` de la web no compile la app | **Esta sí hace falta el primer día**, y es una línea |
+
+---
+
+## g · La ruta nueva: `POST /api/auth/nativo`
+
+### El problema
+
+En la web, Google vuelve por `/auth/callback`, que después de canjear el
+código aplica cuatro reglas en orden:
+
+1. sin correo verificado por el proveedor, no se entra;
+2. si no hay perfil, se cruza el lead por correo y se llama a
+   `convertir_lead`, o se crea el perfil con lo que da el proveedor;
+3. si el correo de entrada no es el del lead, pantalla de «correo distinto»;
+4. el destino lo decide `situacionDePerfil`.
+
+En el celular, el login es nativo: el SDK de Google o el de Apple dan un
+*ID token*, y `supabase.auth.signInWithIdToken` abre la sesión **sin pasar
+por `/auth/callback`**. Sin una ruta que aplique esas cuatro reglas, quien
+entra con Google desde la app se queda sin perfil, o con uno vacío y las
+respuestas del lead huérfanas. Es justo lo que la regla 2 existe para impedir.
+
+### La propuesta
+
+**La sesión la abre el SDK en el celular, y la ruta solo aplica las reglas.**
+La ruta no recibe ni canjea tokens de Google o Apple: la sesión ya existe y le
+llega por la misma cookie que el resto de rutas (§0). Así la ruta no manipula
+credenciales de proveedores, y el SDK sigue siendo el único dueño de la
+sesión.
+
+```
+POST /api/auth/nativo
+Cookie: sb-…-auth-token   (la sesión recién abierta con signInWithIdToken)
+
+{
+  "lead":   { "correo": "…", "token": "…" },   // opcional: el token de lead, si la app lo tiene
+  "nombre": "María Pérez"                      // opcional: solo Apple, que da el nombre
+}                                              //   en la credencial y solo la primera vez
+```
+
+Respuestas:
+
+| Caso | Respuesta |
+|---|---|
+| Sin sesión | `401 {error:'sin-sesion'}` |
+| Correo sin verificar | `403 {error:'correo-sin-verificar'}`, y se cierra la sesión en el servidor, como hace `/auth/callback` |
+| Fallo al convertir o crear | `500 {error:'no-se-pudo'}` |
+| Dentro | `200 {estado:'dentro', paso, otroCorreo?: {registro, entrada}, relay?: true}` |
+
+- `paso` es el `Paso` de `situacionDePerfil`, sin traducir. La app elige la
+  pantalla con el mismo criterio que la web: `preguntas` o `contacto` →
+  cuestionario; si no, inicio.
+- `otroCorreo` sale en el mismo caso en que la web redirige a
+  `/entrar?fase=otroCorreo`. La app enseña esa fase y guarda la elección con
+  `POST /mi-perfil {clave:'contacto'}`, **igual que la web hoy**.
+- `relay` sale cuando Apple entrega un correo `@privaterelay.appleid.com`.
+  La app enseña la fase `relay` que ya está diseñada en `Entrar.dc.html`
+  (hoy la dispara el botón de Apple apagado). El correo de contacto se guarda
+  por la misma vía.
+
+### Aditiva de verdad: se extrae, no se copia
+
+Duplicar las cuatro reglas en otra ruta es la receta de dos copias que
+divergen, que es de lo que este repo más ha sufrido. Así que:
+
+1. **Se extrae** el cuerpo de `/auth/callback`, desde que hay usuario, a
+   `src/lib/tras-entrar.ts`:
+   `trasEntrar(usuario, leadFirmado?, nombre?) → {tipo:'dentro', paso, otroCorreo?, relay?} | {tipo:'fallo', motivo}`.
+   Devuelve **qué pasó**, no a dónde ir.
+2. `/auth/callback` llama a esa función y traduce el resultado a **las mismas
+   redirecciones que hoy**, con la misma cookie borrada. Sus respuestas no
+   cambian.
+3. `/api/auth/nativo` llama a la misma función y traduce a JSON.
+
+Dos cambios dentro de la función, los dos sin efecto en lo que hoy responde
+la web:
+
+- **La regla 1 acepta `google` y `apple`**, no solo `google`. En la web Apple
+  está apagado, así que hoy no cambia nada.
+- **El lead llega firmado**, igual que en la web: allí viaja en la cookie
+  `aro-oauth` firmada; aquí, como `{correo, token}` verificado con
+  `verificar()`. Un lead sin firma válida se ignora, como en `/api/auth/google`.
+  Nunca se acepta un correo de lead a secas: es la puerta por la que se toma
+  una cuenta ajena.
+
+**Cómo se comprueba que la web no cambió** (en el navegador, no leyendo el
+diff): el recorrido de Google de la web con una cuenta desechable, en los
+tres casos: sin lead, con lead del mismo correo y con lead de otro correo.
+Mismas pantallas y mismas filas en `profiles` y `waitlist` que antes.
+
+### Idempotente, porque el celular se cuelga
+
+Entre `signInWithIdToken` y la llamada a la ruta, la app puede morir (sin
+señal, la cierran). La web tiene la misma ventana entre el canje y el alta del
+perfil. Por eso:
+
+- la ruta es **idempotente**: con perfil ya creado, salta a la regla 4 y
+  responde `dentro`, que ya es lo que hace hoy `/auth/callback`;
+- la app guarda «falta el tras-entrar» junto a la sesión y **lo reintenta al
+  abrir** antes de enseñar nada.
+
+### g.5 · Borrar la cuenta de quien entró con Apple
+
+Apple exige que, al borrar una cuenta creada con Sign in with Apple, la app
+**revoque el token** con `POST https://appleid.apple.com/auth/revoke`. Para
+eso:
+
+- la app manda el `authorizationCode` de Apple en el primer login;
+- `/auth/nativo` lo canjea por el *refresh token* de Apple y lo guarda aparte
+  (tabla con RLS cerrada, solo servicio);
+- `/baja` lo revoca antes de borrar, y si Apple falla, lo registra y sigue:
+  la baja no puede quedarse a medias por un tercero.
+
+Hace falta la clave privada de Sign in with Apple (`.p8`) como secreto en
+Vercel. **La saca quien abra la cuenta de Apple.**
 
 ---
 
 ## Siguiente paso
 
-Si la arquitectura (a) te vale, el día 1 va en este orden: excluir `App` del
-`tsconfig`, crear el proyecto Expo en `App/` con la sesión del §0 como primer
-módulo, y abrir las cuentas de Apple y Google. Esto último es tuyo: yo no
-puedo crearlas ni pagar.
+En marcha: el proyecto Expo en `App/`, con la sesión como primer módulo. La
+ruta `/auth/nativo` es la primera pieza de backend y la única que bloquea la
+salida. **Si el diseño del §g te vale, la escribo yo o la escribe quien
+mantiene el backend**, como prefieras.
