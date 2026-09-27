@@ -218,6 +218,53 @@ identidad y se usa como indicador de carga (el aro gira).
 
 ---
 
+## 6 bis · El error que la web sí cometió, y que no puede repetirse
+
+Esto es lo que más importa de todo el documento.
+
+La web tiene veinte pantallas que son ficheros HTML sueltos, sin cabecera
+compartida y sin componentes. En Expo eso no se puede reproducir, así que la
+versión mecánica del problema desaparece sola. Pero **el problema nunca fue el
+formato del fichero: fue copiar en vez de importar**, y eso se hace igual de
+bien en cualquier stack.
+
+La factura, con nombres:
+
+- Cambiar el día de la cena de jueves a sábado fueron **71 sustituciones en 24
+  ficheros**, y por el camino dos listas de nombres de días se quedaron con dos
+  sábados y sin jueves.
+- `DIAS = ['domingo', 'lunes', …]` está escrito por separado en Mi cuenta, en
+  Mi mesa, en Pago y en los correos.
+- Dos relojes calculaban la hora de la revelación cada uno por su cuenta y
+  **discrepaban a la vista de la persona**: uno decía «ABRE EN 4D» y el otro
+  «6d 16h» sobre la misma cena.
+- El favicon estuvo tres semanas en diecinueve pantallas y en una no.
+
+Reglas para la app, entonces:
+
+1. **Los colores, las tipografías y los espaciados viven en UN fichero de
+   tokens.** En la web están escritos dentro de cada `style=`, y por eso
+   cambiar un color son veinte ediciones. No se repite.
+2. **Ningún nombre de día ni hora escrita a mano.** Salen de la fecha del
+   evento y de `revelaEn`. Si en alguna pantalla aparece la palabra «sábado»
+   como literal, está mal.
+3. **Un cálculo, un sitio.** Si la app necesita saber cuánto falta para la
+   revelación, eso es una función, no dos pantallas haciéndolo cada una.
+4. **Nada de datos de ejemplo en el camino de pintado.** En la web, Mi cuenta
+   llevaba un estado de muestra con «4 de 4 créditos · Cuatro encuentros
+   comprados» que se servía en producción durante el segundo que tardaba la
+   respuesta. Los esqueletos van vacíos.
+5. **`reglas.js` se carga, no se reescribe.** Ya lo consumen el navegador y el
+   servidor; la app es el tercero, no una tercera versión.
+
+Y el riesgo NUEVO que trae la app, que no arregla ningún framework: **el mismo
+texto pasará a existir en tres sitios —web, correos y app—**. Hoy son dos y ya
+costó lo del jueves. Se quiere una propuesta explícita para esto: qué frases se
+repiten entre superficies, cuáles deberían venir del servidor —varias APIs ya
+devuelven el estado del embudo en vez de que la pantalla lo deduzca— y qué se
+vigila con un comprobador, que es como este repo sostiene lo que no puede
+unificar.
+
 ## 7 · Lo específico del móvil
 
 Esto es lo que hay que diseñar de cero, porque en la web no existe o existe a
