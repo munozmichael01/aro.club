@@ -80,5 +80,28 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  /**
+   * Lo que responde una API no es de dominio público.
+   *
+   * Next pone por defecto `cache-control: public, max-age=0,
+   * must-revalidate` en las rutas de API. En la práctica no se cachea nada
+   * —`must-revalidate` con edad cero, y la CDN no guarda respuestas de
+   * peticiones con cookie— pero `public` es la palabra que le dice a
+   * CUALQUIER caché intermedia —una CDN, un proxy de oficina, la caché
+   * compartida del navegador— «esto no es de nadie en particular, guárdalo».
+   * Y lo que devuelve `/api/mi-cuenta` es el nombre de una persona, sus
+   * créditos y su reserva.
+   *
+   * Hoy no hay fuga: se comprobó pidiendo la ruta dos veces y mirando las
+   * cabeceras. Esto es cerrar la puerta antes de que alguien ponga delante
+   * una caché que sí obedezca al `public`.
+   *
+   * Va en el middleware y no en cada ruta a propósito: hay treinta y pico y
+   * la treinta y siete nacería sin ello.
+   */
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    response.headers.set('Cache-Control', 'private, no-store')
+  }
+
   return response
 }
