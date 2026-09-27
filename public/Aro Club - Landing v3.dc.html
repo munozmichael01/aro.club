@@ -468,7 +468,7 @@
         <div style="max-width:620px;animation:aro-open 520ms ease both">
           <div style="display:inline-flex;align-items:center;gap:9px;font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#FAF3E4;border:1px solid rgba(250,243,228,.34);border-radius:999px;padding:11px 17px;margin-bottom:24px">YA TIENES PUESTO</div>
           <h2 style="font:400 clamp(34px,5vw,68px)/1 'Young Serif',Georgia,serif;letter-spacing:-.03em;margin:0 0 16px;max-width:16ch;text-wrap:balance">Este correo ya está registrado.</h2>
-          <p style="font:400 clamp(16px,1.4vw,20px)/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin:0 0 28px;max-width:42ch;text-wrap:pretty">Te apuntaste con <strong style="font-weight:600;color:#FAF3E4">{{ correo }}</strong> el 14 de julio y no perdiste el turno. Sigue donde lo dejaste.</p>
+          <p style="font:400 clamp(16px,1.4vw,20px)/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin:0 0 28px;max-width:42ch;text-wrap:pretty">Ya te habías apuntado con <strong style="font-weight:600;color:#FAF3E4">{{ correo }}</strong> y no perdiste el turno. Si ya creaste tu cuenta, entra por aquí. Si no, el enlace para seguir está en el correo que te mandamos.</p>
           <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center">
             <a href="/cuestionario" style="display:inline-flex;align-items:center;min-height:58px;padding:0 28px;border-radius:999px;border:1px solid rgba(250,243,228,.34);color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;transition:all 220ms ease" style-hover="background:#FAF3E4;color:#14342A">Continuar mi perfil</a>
             <button onClick="{{ reiniciar }}" style="min-height:58px;padding:0 8px;background:transparent;border:none;color:#9CBBA6;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Usar otro correo</button>
@@ -602,6 +602,9 @@ class Component extends DCLogic {
   }
 
   recordarSesion(j) {
+    // Sin token no hay sesión que recordar. Guardar `{correo}` a secas dejaba
+    // una sesión coja que otras pantallas leen y dan por buena.
+    if (!j || !j.token) return;
     try {
       window.localStorage.setItem('aro-sesion', JSON.stringify({
         correo: (this.state.correo || '').trim(), token: j.token

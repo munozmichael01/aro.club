@@ -307,7 +307,7 @@ Links y App Links sobre `aro.club`.
 3. **Qué pasa sin conexión.** Mínimo: que la pantalla de la mesa ya revelada
    —dirección incluida— se pueda ver sin datos, porque se consulta llegando al
    restaurante.
-5. **Versionado y despliegue.** Cada cambio de las tiendas tarda; el backend se
+4. **Versionado y despliegue.** Cada cambio de las tiendas tarda; el backend se
    despliega varias veces al día. Hay que decir cómo se evita que una app vieja
    se rompa contra una API nueva.
 
@@ -345,9 +345,10 @@ producto.
 
 ---
 
-## 11 · Lo primero que hay que pedir
+## 11 · Lo primero que se espera
 
-Antes de escribir código, se espera:
+Se empieza ya. Esto no es una puerta antes del código: va en los primeros días,
+en paralelo al arranque.
 
 - La recomendación de arquitectura con sus razones (punto 8.1).
 - El plan de notificaciones acordado con el backend (punto 7).

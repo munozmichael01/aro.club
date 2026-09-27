@@ -154,9 +154,22 @@ export async function POST(request: Request) {
       .from('waitlist')
       .update({ city_slug: ciudadFinal })
       .eq('email', correo)
+    // SIN TOKEN. Este es el agujero que tenía esta rama.
+    //
+    // Devolvía `firmar(correo)` a cualquiera que escribiera un correo ya
+    // registrado. Con ese token, `GET /api/datos-base` responde 200 y entrega
+    // nombre, fecha de nacimiento, género y teléfono de esa persona. O sea
+    // que bastaba con saber la dirección de alguien —o probar direcciones—
+    // para leer sus datos personales. Es exactamente lo que `lead-token.ts`
+    // dice que este token existe para impedir.
+    //
+    // Quien de verdad volvió con su correo sigue teniendo su enlace: se lo
+    // mandamos por correo cuando se apuntó, y el empujón se lo recuerda. El
+    // enlace tiene que llegar a su buzón, no al navegador de quien teclea la
+    // dirección. Esa es toda la diferencia entre una identidad y una
+    // afirmación.
     return NextResponse.json({
       estado: 'repetido',
-      token: firmar(correo),
       quizCompletado: existente.quiz_completed_at !== null,
       perfilCompletado: existente.profile_completed_at !== null,
     })

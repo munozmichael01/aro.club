@@ -738,7 +738,7 @@
         <div style="max-width:640px;animation:aro-open 520ms ease both">
           <div style="display:inline-flex;align-items:center;gap:9px;font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#FAF3E4;border:1px solid rgba(250,243,228,.34);border-radius:999px;padding:12px 18px;margin-bottom:24px">YA TIENES PUESTO</div>
           <h2 style="font:400 clamp(36px,6vw,80px)/0.98 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0 0 18px;max-width:15ch;text-wrap:balance">Este correo ya está registrado.</h2>
-          <p style="font:400 clamp(16px,1.4vw,20px)/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin:0 0 28px;max-width:44ch;text-wrap:pretty">Te apuntaste con <em style="font-weight:600;color:#FAF3E4">{{ correo }}</em> el 14 de julio y no perdiste el turno. Sigue donde lo dejaste.</p>
+          <p style="font:400 clamp(16px,1.4vw,20px)/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin:0 0 28px;max-width:44ch;text-wrap:pretty">Ya te habías apuntado con <em style="font-weight:600;color:#FAF3E4">{{ correo }}</em> y no perdiste el turno. Si ya creaste tu cuenta, entra por aquí. Si no, el enlace para seguir donde lo dejaste está en el correo que te mandamos.</p>
           <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center">
             <a href="/entrar" style="display:inline-flex;align-items:center;min-height:58px;padding:0 28px;border-radius:999px;border:1px solid rgba(250,243,228,.34);color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;transition:all 220ms ease" style-hover="background:#FAF3E4;color:#14342A">Entrar a mi cuenta</a>
             <button onClick="{{ reiniciar }}" style="min-height:58px;padding:0 8px;background:transparent;border:none;color:#9CBBA6;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px">Usar otro correo</button>
@@ -926,6 +926,9 @@ class Component extends DCLogic {
   }
 
   recordarSesion(j) {
+    // Sin token no hay sesión que recordar. Guardar `{correo}` a secas dejaba
+    // una sesión coja que otras pantallas leen y dan por buena.
+    if (!j || !j.token) return;
     try {
       window.localStorage.setItem('aro-sesion', JSON.stringify({
         correo: (this.state.correo || '').trim(), token: j.token
@@ -959,9 +962,14 @@ class Component extends DCLogic {
         return;
       }
       this.recordarSesion(j);
-      // Repetido solo si ademas ya paso por el quiz: quien dejo el correo y
-      // se fue vuelve a entrar donde lo dejo.
-      const repetir = j.estado === 'repetido' && j.quizCompletado;
+      // Repetido es repetido, haya hecho el quiz o no.
+      //
+      // Antes, quien no lo había terminado seguía aquí mismo, y eso solo era
+      // posible porque el servidor le devolvía el token a quien escribiera la
+      // dirección. Ya no lo devuelve: sin él no hay con qué seguir, y
+      // continuar donde lo dejó es algo que se hace desde el enlace que tiene
+      // en su correo.
+      const repetir = j.estado === 'repetido';
       this.setState({ fase: repetir ? 'repetido' : (fuera ? 'final' : 'quiz'), paso: 0 });
     }).catch(() => this.setState({
       fase: 'correo',
