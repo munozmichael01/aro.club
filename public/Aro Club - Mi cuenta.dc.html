@@ -355,26 +355,29 @@ class Component extends DCLogic {
     document.removeEventListener('visibilitychange', this._alVolver);
   }
 
+  /**
+   * Cuánto falta para que se abra la mesa de la próxima fecha.
+   *
+   * Cuenta a la revelación REAL que manda el servidor, no a un día de la
+   * semana escrito aquí. Contaba «al próximo jueves a mediodía» —y luego al
+   * próximo sábado— y eso producía el fallo que se veía desde fuera: esta
+   * pantalla decía «ABRE EN 4D» mientras Mi mesa, que sí lee el `reveal_at`
+   * de la fecha, decía «6d 16h». Dos relojes discrepando sobre lo único que
+   * esta pantalla promete, y quien había reservado no sabía cuál creer.
+   *
+   * Sin fecha abierta no hay nada que contar, y entonces no se enseña un
+   * reloj: enseñar una cuenta atrás a una fecha que no existe es peor que
+   * no enseñar ninguna.
+   */
   reloj() {
-    const d = new Date(this.state.ahora);
-    // 6 = sábado. Era 4, el jueves, y con la única fecha abierta en sábado
-    // este reloj contaba a un día que no existe: la cuenta decía «ABRE EN
-    // 4D» y Mi mesa —que sí cuenta a la revelación REAL de la fecha— decía
-    // «6d 16h». Dos relojes discrepando sobre lo único que esta pantalla
-    // promete.
-    //
-    // Sigue siendo un día de la semana escrito a mano, y eso es lo que hay
-    // que quitar: tiene que salir del `reveal_at` de la próxima fecha, como
-    // en Mi mesa. Mientras tanto, que al menos apunte al día que hay.
-    let dias = (6 - d.getDay() + 7) % 7;
-    const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0);
-    if (dias === 0 && d.getTime() >= t.getTime()) dias = 7;
-    t.setDate(t.getDate() + dias);
-    const s = Math.max(0, Math.floor((t.getTime() - d.getTime()) / 1000));
+    const d = this.state.datos;
+    const cuando = d && d.proximaFecha && d.proximaFecha.revelaEn;
+    if (!cuando) return '';
+    const s = Math.max(0, Math.floor((new Date(cuando).getTime() - this.state.ahora) / 1000));
+    if (s === 0) return 'YA ESTÁ ABIERTA';
     const p = (n) => (n < 10 ? '0' + n : '' + n);
     return 'ABRE EN ' + Math.floor(s / 86400) + 'D ' + p(Math.floor(s / 3600) % 24) + ':' + p(Math.floor(s / 60) % 60);
   }
-
   renderVals() {
     // los seis estados del bloque principal, en el orden real del recorrido
     const estados = [
@@ -845,6 +848,8 @@ class Component extends DCLogic {
       ['Privacidad', '/privacidad']
     ].map((p) => ({ nombre: p[0], enlace: p[1] }));
 
+    const cuentaAtras = this.reloj();
+
     return {
       comensales, atajos, pie, filtros,
 
@@ -909,8 +914,12 @@ class Component extends DCLogic {
         const t = h < 12 ? 'a.m.' : 'p.m.'; h = h % 12 || 12;
         return DIAS[f.getDay()] + ' ' + f.getDate() + ' · ' + h + ':' + (mi < 10 ? '0' + mi : mi) + ' ' + t;
       })(),
-      hayReloj: !!e.reloj,
-      reloj: this.reloj(),
+      // El mismo valor decide si se enseña y qué se enseña. Leía `e.reloj`
+      // —el del estado de ejemplo— para decidir, y `this.reloj()` para
+      // pintar: dos fuentes para una cosa, y bastaba con que discreparan una
+      // vez para enseñar un reloj vacío o esconder uno bueno.
+      hayReloj: !!cuentaAtras,
+      reloj: cuentaAtras,
 
       textoAccion: e.accion,
       accionEnlace: e.enlace,

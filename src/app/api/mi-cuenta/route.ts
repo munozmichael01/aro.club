@@ -119,7 +119,7 @@ export async function GET() {
   const { data: proxima } = await admin
     .from('events')
     .select(
-      'id, starts_at, booking_closes_at, restaurants!events_restaurant_id_fkey(name, zone_slug)',
+      'id, starts_at, booking_closes_at, reveal_at, restaurants!events_restaurant_id_fkey(name, zone_slug)',
     )
     .in('status', ['open', 'draft'])
     .gte('starts_at', new Date().toISOString())
@@ -342,6 +342,10 @@ export async function GET() {
       ? {
           empiezaEn: proxima.starts_at,
           cierraEn: proxima.booking_closes_at,
+          // La revelación REAL de esta fecha. La cuenta la contaba a ojo —al
+          // próximo día de la semana a mediodía— y Mi mesa la cuenta desde
+          // aquí: dos relojes sobre lo mismo, discrepando a la vista.
+          revelaEn: proxima.reveal_at,
           zona: zonaProxima,
           apuntados: apuntadosProxima,
         }
