@@ -482,6 +482,87 @@
     },
 
     /**
+     * Las cuatro preguntas de la puerta.
+     *
+     * Son las que se hacen antes de tener cuenta —en la portada y en la
+     * entrada de la app— y viven aquí por la misma razón que el resto de
+     * este fichero: eran dos sitios escribiendo la misma lista a mano, y
+     * con la app iban a ser tres.
+     *
+     * Cada opción es un par `[texto, código]` en UNA sola lista. Antes eran
+     * dos listas —los textos arriba y `COD` doscientas líneas más abajo—
+     * unidas solo por el índice. Es exactamente lo que rompió el
+     * cuestionario en agosto: se reordenó una y la respuesta se archivó como
+     * otra, sin error, sin validación fallida y sin verse en ninguna
+     * pantalla. Aquí no se puede: el código viaja pegado a su texto.
+     *
+     * `zonas` va sin opciones a propósito. Las zonas se abren y se cierran
+     * desde el panel, así que las trae `/api/zonas` en caliente; escritas a
+     * mano se quedaron en diez cuando la base tenía trece, y quien vivía en
+     * las otras tres no podía decirlo.
+     *
+     * Los códigos son los del catálogo (`questions`), que es lo que manda al
+     * guardar. `comprobar-cuestionario.mjs` lo verifica contra la base: un
+     * código que no exista ahí no llega a producción.
+     */
+    PUERTA: {
+      arraigo: {
+        clave: 'arraigo', etiqueta: 'ARRAIGO', tipo: 'unica',
+        pregunta: '¿Cuál de estas eres tú?',
+        ayuda: 'Una sola. Nos dice quién está llegando a Aro, y por dónde abrir.',
+        opciones: [
+          ['Volví después de años fuera', 'volvio'],
+          ['Nunca me fui, y se fue casi toda mi gente', 'se-quedo'],
+          ['Sigo con la gente de siempre', 'mismos'],
+          ['Trabajo remoto y casi no veo gente', 'remoto'],
+          ['Llegué y no conozco a nadie', 'interior'],
+          ['Estoy de paso', 'visita'],
+        ],
+      },
+      zonas: {
+        clave: 'zonas', etiqueta: 'ZONAS', tipo: 'multi', max: 5,
+        pregunta: '¿Dónde te queda cómodo salir?',
+        ayuda: 'Hasta cinco. Son las mismas que puedes marcar arriba.',
+        opciones: [],
+      },
+      dias: {
+        clave: 'dias', etiqueta: 'DÍAS', tipo: 'multi',
+        pregunta: '¿Qué días te sirven mejor?',
+        ayuda: 'Marca todos los que puedas. Sin esto no podemos sentarte en ninguna mesa.',
+        opciones: [
+          ['Jueves noche', 'jue'],
+          ['Viernes noche', 'vie'],
+          ['Sábado mañana', 'sab-am'],
+          ['Sábado noche', 'sab'],
+          ['Domingo mañana', 'dom-am'],
+        ],
+      },
+      temas: {
+        clave: 'temas', etiqueta: 'CONVERSACIÓN', tipo: 'multi', min: 2, max: 4,
+        pregunta: '¿De qué podrías hablar dos horas seguidas?',
+        ayuda: 'Entre dos y cuatro. Es con lo que armamos tu mesa.',
+        // Diez de las dieciocho del catálogo, a propósito: en la puerta
+        // dieciocho fichas son demasiadas para el primer minuto. El
+        // cuestionario sí las ofrece todas.
+        opciones: [
+          ['Cocina', 'cocina'],
+          ['Viajes', 'viajes'],
+          ['Cine y series', 'cine'],
+          ['Música', 'musica'],
+          ['Libros', 'libros'],
+          ['Deporte', 'deporte'],
+          ['Negocios', 'negocios'],
+          ['Arte y diseño', 'arte'],
+          ['Tecnología', 'tecnologia'],
+          ['Crianza', 'crianza'],
+        ],
+      },
+    },
+
+    /** El orden en que se hacen. */
+    ORDEN_PUERTA: ['arraigo', 'zonas', 'dias', 'temas'],
+
+    /**
      * Cómo se llama esto según el formato: mesa o grupo.
      *
      * Once formatos y un solo vocabulario: la pantalla se llamaba «Mi mesa»

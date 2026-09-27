@@ -25,6 +25,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import fs from 'node:fs'
+import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
 const env = Object.fromEntries(
@@ -289,6 +290,83 @@ if (sinIcono.length) {
   console.error('  \u2192 ensenan el favicon por defecto de Next, que es el de Vercel')
 } else {
   console.log(`\u2713 favicon (${pantallas.length} pantallas)`)
+}
+
+// --- las cuatro preguntas de la puerta --------------------------------
+//
+// `AroReglas.PUERTA` son las que se hacen ANTES de tener cuenta: la portada y
+// la entrada de la app leen las dos ese mismo fichero. Sus códigos tienen que
+// existir en el catálogo, porque son los que se guardan en `waitlist` y los
+// que deciden con quién se sienta la persona.
+//
+// Esto no falla a la vista. Un código que el catálogo no conoce se escribe
+// igual —la columna es texto— y lo que se rompe es el reparto, semanas
+// después, cuando nadie lo relaciona con haber tocado una lista.
+//
+// Las zonas no se miran: van vacías a propósito y las trae `/api/zonas`.
+// `reglas.js` es UMD a propósito —el navegador lo carga con un <script>—,
+// así que se lee con `require`, no con `import`: el import trae el módulo
+// entero en `default` y los nombres sueltos vienen vacíos.
+const { PUERTA, ORDEN_PUERTA } = createRequire(import.meta.url)('../public/reglas.js')
+
+const codigosMalos = []
+const textosDistintos = []
+
+for (const clave of ORDEN_PUERTA) {
+  const d = PUERTA[clave]
+  if (!d.opciones.length) continue
+  const cat = enBase.get(clave)
+  if (!cat) { codigosMalos.push(`${clave}: no está en el catálogo`); continue }
+  const porCodigo = new Map(cat.map((o) => [o.value, o.label]))
+  for (const [texto, codigo] of d.opciones) {
+    if (!porCodigo.has(codigo)) { codigosMalos.push(`${clave} · «${texto}» → '${codigo}'`); continue }
+    if (porCodigo.get(codigo) !== texto) {
+      textosDistintos.push(`${clave} · '${codigo}': puerta «${texto}» · catálogo «${porCodigo.get(codigo)}»`)
+    }
+  }
+}
+
+if (codigosMalos.length) {
+  errores++
+  console.error('\n✗ códigos de la puerta que el catálogo no conoce')
+  codigosMalos.forEach((l) => console.error(`    ${l}`))
+  console.error('  → se guardan igual y el reparto no sabe leerlos')
+} else {
+  console.log(`✓ puerta (${ORDEN_PUERTA.length} preguntas, códigos en el catálogo)`)
+}
+
+// La redacción distinta NO es un fallo: la puerta es más corta a propósito.
+// Pero se dice, porque la misma pregunta con dos redacciones se ve.
+if (textosDistintos.length) {
+  avisos += textosDistintos.length
+  console.log('\n· la puerta y el catálogo redactan distinto')
+  textosDistintos.forEach((l) => console.log(`    ${l}`))
+}
+
+// --- «Catorce preguntas más» ------------------------------------------
+//
+// La portada promete cuántas preguntas quedan después de apuntarse. Era una
+// cifra escrita a mano: decía diez cuando eran catorce, y antes de eso
+// diecisiete. Nadie la mira al añadir una pregunta al catálogo.
+const CIFRAS = ['Cero', 'Una', 'Dos', 'Tres', 'Cuatro', 'Cinco', 'Seis', 'Siete',
+  'Ocho', 'Nueve', 'Diez', 'Once', 'Doce', 'Trece', 'Catorce', 'Quince',
+  'Dieciséis', 'Diecisiete', 'Dieciocho', 'Diecinueve', 'Veinte']
+
+// Las que NO se preguntan antes: las cuatro de la puerta y las dos que pide
+// la pantalla de datos personales.
+const YA_PREGUNTADAS = [...ORDEN_PUERTA, 'nacimiento', 'genero']
+const restantes = (catalogo ?? []).filter((q) => !YA_PREGUNTADAS.includes(q.key)).length
+const prometidas = landing.match(/'(\w+) preguntas más/)
+
+if (!prometidas) {
+  errores++
+  console.error('\n✗ la portada ya no dice cuántas preguntas quedan')
+} else if (prometidas[1] !== CIFRAS[restantes]) {
+  errores++
+  console.error(`\n✗ la portada promete «${prometidas[1]} preguntas más» y quedan ${restantes}`)
+  console.error(`  → deberia decir «${CIFRAS[restantes] ?? restantes} preguntas más»`)
+} else {
+  console.log(`✓ «${prometidas[1]} preguntas más» (${restantes} en el catálogo)`)
 }
 
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)

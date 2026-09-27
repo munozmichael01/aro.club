@@ -1116,8 +1116,10 @@ class Component extends DCLogic {
 
     // Cinco, no tres. Con tres, quien se mueve por media ciudad tenia que
     // dejarse fuera zonas a las que si puede llegar, y eso reduce las mesas
-    // en las que encaja. Un solo numero para las dos listas.
-    const MAX_ZONAS = 5;
+    // en las que encaja. Un solo numero para las dos listas, y vive en
+    // `reglas.js` porque la entrada de la app hace esta misma pregunta.
+    const PUERTA = AroReglas.PUERTA;
+    const MAX_ZONAS = PUERTA.zonas.max;
     // Los nombres salen de la MISMA lista emparejada que los códigos, y esa
     // lista la reescribe el servidor. Antes eran dos arrays paralelos
     // —`zonaDefs` aquí y `COD.zonas` en el guardado— unidos solo por la
@@ -1183,41 +1185,35 @@ class Component extends DCLogic {
     });
 
     // ── quiz ────────────────────────────────────────────────────────
-    const preguntas = [
-      {
-        etiqueta: 'ARRAIGO', pregunta: '¿Cuál de estas eres tú?',
-        ayuda: 'Una sola. Nos dice quién está llegando a Aro, y por dónde abrir.',
-        tipo: 'unica', clave: 'arraigo',
-        opciones: ['Volví después de años fuera', 'Nunca me fui, y se fue casi toda mi gente', 'Sigo con la gente de siempre', 'Trabajo remoto y casi no veo gente', 'Llegué y no conozco a nadie', 'Estoy de paso']
-      },
-      {
-        etiqueta: 'ZONAS', pregunta: '¿Dónde te queda cómodo salir?',
-        ayuda: 'Hasta cinco. Son las mismas que puedes marcar arriba.',
-        tipo: 'multi', clave: 'zonas', max: MAX_ZONAS, opciones: zonaDefs
-      },
-      {
-        etiqueta: 'DÍAS', pregunta: '¿Qué días te sirven mejor?',
-        ayuda: 'Marca todos los que puedas. Sin esto no podemos sentarte en ninguna mesa.',
-        tipo: 'multi', clave: 'planes',
-        opciones: ['Jueves noche', 'Viernes noche', 'Sábado mañana', 'Sábado noche', 'Domingo mañana']
-      },
-      {
-        etiqueta: 'CONVERSACIÓN', pregunta: '¿De qué podrías hablar dos horas seguidas?',
-        ayuda: 'Entre dos y cuatro. Es con lo que armamos tu mesa.',
-        tipo: 'multi', clave: 'temas', max: 4, min: 2,
-        opciones: ['Cocina', 'Viajes', 'Cine y series', 'Música', 'Libros', 'Deporte', 'Negocios', 'Arte y diseño', 'Tecnología', 'Crianza']
-      }
-    ];
+    //
+    // Las cuatro preguntas NO se escriben aquí: vienen de `AroReglas.PUERTA`,
+    // donde cada opción es un par `[texto, código]`. La entrada de la app
+    // hace estas mismas cuatro y lee el mismo fichero, así que la puerta es
+    // una sola por construcción y no dos que se parecen.
+    //
+    // Las zonas son el único caso en caliente: se abren desde el panel, así
+    // que las trae `/api/zonas` y se pegan aquí con su código.
+    const preguntas = AroReglas.ORDEN_PUERTA.map((clave) => {
+      const d = PUERTA[clave];
+      return {
+        etiqueta: d.etiqueta, pregunta: d.pregunta, ayuda: d.ayuda,
+        tipo: d.tipo, clave: clave, min: d.min, max: d.max,
+        pares: clave === 'zonas' ? this.ZONAS : d.opciones
+      };
+    });
     const q = preguntas[Math.min(this.state.paso, 3)];
     const esUnica = q.tipo === 'unica';
-    const sel = esUnica ? this.state.arraigo : this.state[q.clave];
+    // El estado de los días se llama `planes` desde la primera entrega.
+    const enEstado = q.clave === 'dias' ? 'planes' : q.clave;
+    const sel = esUnica ? this.state.arraigo : this.state[enEstado];
 
-    const quizOpciones = q.opciones.map((label, i) => {
+    const quizOpciones = q.pares.map((par, i) => {
+      const label = par[0];
       const on = esUnica ? sel === i : sel.indexOf(i) >= 0;
       const tope = !esUnica && q.max && sel.length >= q.max && !on;
       return {
         label, icono: on ? '✓' : '',
-        pick: esUnica ? () => this.setState({ arraigo: i }) : () => this.alterna(q.clave, i, q.max),
+        pick: esUnica ? () => this.setState({ arraigo: i }) : () => this.alterna(enEstado, i, q.max),
         btn: esUnica
           ? 'display:flex;align-items:center;gap:14px;width:100%;padding:16px 20px;border-radius:999px;background:' + (on ? '#FAF3E4' : 'rgba(250,243,228,.06)') + ';border:1px solid ' + (on ? '#FAF3E4' : 'rgba(250,243,228,.22)') + ';cursor:pointer;text-align:left;min-height:58px;transition:all 200ms ease'
           : 'display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 20px 0 16px;border-radius:999px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#FAF3E4' : 'rgba(250,243,228,.24)') + ';cursor:pointer;transition:all 200ms ease;opacity:' + (tope ? '.45' : '1'),
@@ -1322,18 +1318,21 @@ class Component extends DCLogic {
       siguiente: () => {
         if (!completa || this.state.guardandoQuiz) return;
         if (ultimo) {
-          const COD = {
-            arraigo: ['volvio', 'se-quedo', 'mismos', 'remoto', 'interior', 'visita'],
-            zonas: this.ZONAS.map((z) => z[1]),
-            dias: ['jue', 'vie', 'sab-am', 'sab', 'dom-am'],
-            temas: ['cocina', 'viajes', 'cine', 'musica', 'libros', 'deporte', 'negocios', 'arte', 'tecnologia', 'crianza']
+          // El código sale del MISMO par del que salió el texto que la
+          // persona tocó. Antes había aquí una segunda lista, `COD`, a
+          // doscientas líneas de los textos y unida a ellos solo por el
+          // índice: reordenar arriba y no tocar abajo archivaba la respuesta
+          // como otra, en silencio. Ya pasó una vez en el cuestionario.
+          const cod = (clave, i) => {
+            const pares = clave === 'zonas' ? this.ZONAS : PUERTA[clave].opciones;
+            return pares[i] ? pares[i][1] : null;
           };
           this.setState({ guardandoQuiz: true, falloQuiz: '' });
           this.guardarLead({
-            arraigo: this.state.arraigo >= 0 ? COD.arraigo[this.state.arraigo] : null,
-            zonas: this.state.zonas.map((i) => COD.zonas[i]),
-            dias: this.state.planes.map((i) => COD.dias[i]),
-            temas: this.state.temas.map((i) => COD.temas[i])
+            arraigo: this.state.arraigo >= 0 ? cod('arraigo', this.state.arraigo) : null,
+            zonas: this.state.zonas.map((i) => cod('zonas', i)),
+            dias: this.state.planes.map((i) => cod('dias', i)),
+            temas: this.state.temas.map((i) => cod('temas', i))
           // Y se ESPERA a que se guarden.
           //
           // Antes se mandaban y se saltaba a «Tienes puesto» sin mirar. Si
@@ -1378,7 +1377,7 @@ class Component extends DCLogic {
       // reservar por no habernos dicho como se llama.
       pendientes: [
         { n: '1', titulo: 'Tus datos personales', cuerpo: 'Nombre, cuándo naciste, género y un teléfono. Cuatro campos, medio minuto.' },
-        { n: '2', titulo: 'El resto del perfil', cuerpo: 'Diez preguntas más sobre días, comida y qué prefieres esquivar. Cinco minutos, cuando quieras.' },
+        { n: '2', titulo: 'El resto del perfil', cuerpo: 'Catorce preguntas más sobre comida, planes y qué prefieres esquivar. Cinco minutos, cuando quieras.' },
         { n: '3', titulo: 'Verificar tu identidad', cuerpo: 'Solo cuando haya mesa cerca. Sin esto no se puede reservar, y es lo que hace que el grupo confíe.' }
       ],
       botonFinal: 'display:inline-flex;align-items:center;min-height:58px;padding:0 28px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;transition:background 220ms ease',
