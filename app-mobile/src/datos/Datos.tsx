@@ -12,6 +12,7 @@ import {
   Campo,
   CampoClave,
   Chip,
+  Fecha,
   Marca,
   Opcion,
   Selector,
@@ -22,7 +23,6 @@ import {
   medida,
   radio,
   tinta,
-  tipo,
   useVelo,
 } from '../diseno'
 import { tiempo } from '../diseno/tokens'
@@ -329,38 +329,16 @@ export function Datos(p: {
 
           {e.paso === 1 ? (
             <View>
-              <Etiqueta>{T.nacimiento.dia}</Etiqueta>
-              <View style={{ width: 136 }}>
-                <Campo
-                  value={e.dia}
-                  onChangeText={(t) => poner({ dia: reglas.filtrar('dia', t) })}
-                  placeholder={T.nacimiento.ejemploDia}
-                  keyboardType="number-pad"
-                  maxLength={2}
-                  style={estilos.cifra}
-                  accessibilityLabel={T.nacimiento.dia}
-                />
-              </View>
-              <Etiqueta suelta>{T.nacimiento.mes}</Etiqueta>
-              <View style={estilos.meses}>
-                {MESES_CORTOS.map((m, i) => (
-                  <View key={m} style={{ width: '31%' }}>
-                    <Opcion texto={m} marcada={e.mes === i + 1} onPress={() => poner({ mes: i + 1 })} />
-                  </View>
-                ))}
-              </View>
-              <Etiqueta suelta>{T.nacimiento.anio}</Etiqueta>
-              <View style={{ width: 136 }}>
-                <Campo
-                  value={e.anio}
-                  onChangeText={(t) => poner({ anio: reglas.filtrar('anio', t) })}
-                  placeholder={T.nacimiento.ejemploAnio}
-                  keyboardType="number-pad"
-                  maxLength={4}
-                  style={estilos.cifra}
-                  accessibilityLabel={T.nacimiento.anio}
-                />
-              </View>
+              <Fecha
+                dia={e.dia}
+                mes={e.mes}
+                anio={e.anio}
+                meses={MESES_CORTOS}
+                textos={T.nacimiento}
+                onDia={(t) => poner({ dia: reglas.filtrar('dia', t) })}
+                onMes={(mes) => poner({ mes })}
+                onAnio={(t) => poner({ anio: reglas.filtrar('anio', t) })}
+              />
               {x !== null && x >= 18 && x <= 99 ? (
                 <View style={{ marginTop: 12 }}>
                   <Chip destacado texto={T.nacimiento.edad(x)} />
@@ -502,8 +480,6 @@ const estilos = StyleSheet.create({
   pagina: { paddingHorizontal: medida.margenLateral, maxWidth: 620, width: '100%', alignSelf: 'center' },
   cabecera: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: medida.toqueMinimo, alignSelf: 'flex-start', marginBottom: 22 },
   progreso: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 26 },
-  cifra: { ...tipo.cifraCampo, textAlign: 'center' },
-  meses: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between' },
   acciones: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 13, marginTop: 30 },
   fila: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 11, borderBottomWidth: 1, borderColor: tinta(0.12) },
   editar: { minHeight: medida.toqueMinimo, justifyContent: 'center', paddingHorizontal: 10, marginTop: -10, marginRight: -10 },

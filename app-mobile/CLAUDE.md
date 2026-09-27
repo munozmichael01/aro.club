@@ -27,12 +27,13 @@ fechas se dicen en la zona de la ciudad, esté donde esté el celular. Y
 incluye la prueba de que ningún día ni hora está escrito a mano fuera de
 `src/texto/fechas.ts`.
 
-Si tocaste la entrada o los datos personales, contra la API real (escribe una fila de `waitlist`
+Si tocaste la entrada, los datos o el cuestionario, contra la API real (escribe una fila de `waitlist`
 con un correo desechable y la borra):
 
 ```bash
 npm run prueba:entrada
 npm run prueba:datos
+npm run prueba:alta      # el alta entera: correo → preguntas → datos → cuenta → entrar
 ```
 
 Y si tocaste `src/sesion/`, también contra la API real, con la cuenta

@@ -117,6 +117,8 @@ export const tipo = {
   cuerpoChico: estilo(fuente.texto, 14, 1.5),
   /** Lo más pequeño que se lee: garantías, chips. */
   nota: estilo(fuente.texto, 13, 1.5),
+  /** El texto de cada pregunta del cuestionario. */
+  pregunta: estilo(fuente.textoSemi, 17, 1.35, -0.01),
   /** Un título dentro de una lista (el paso pendiente). */
   rotulo: estilo(fuente.textoSemi, 15, 1.3),
   etiqueta: estilo(fuente.textoMedia, 12, 1.25, 0.14),

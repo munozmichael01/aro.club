@@ -61,18 +61,24 @@ type Props = Omit<PressableProps, 'children' | 'style'> & {
   texto: string
   /** Ocupa todo el ancho: lo normal en celular para el paso siguiente. */
   ancho?: boolean
+  /**
+   * Se VE apagado pero se puede pulsar: el «Faltan 2 en esta pantalla» del
+   * cuestionario, que al pulsarlo lleva a lo que falta. Un botón muerto en
+   * una pantalla que parece terminada se lee como que está rota.
+   */
+  apagado?: boolean
 }
 
-export function Boton({ tipo = 'primario', texto, ancho, disabled, ...resto }: Props) {
+export function Boton({ tipo = 'primario', texto, ancho, disabled, apagado, ...resto }: Props) {
   const fantasma = tipo === 'fantasma' || tipo === 'fantasmaSobreVerde'
   return (
     <Pressable
       {...resto}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityState={{ disabled: !!disabled }}
+      aria-disabled={!!disabled}
       style={({ pressed }) => {
-        const e = ESTADOS[tipo][disabled ? 'inerte' : pressed ? 'presionado' : 'reposo']
+        const e = ESTADOS[tipo][disabled || apagado ? 'inerte' : pressed ? 'presionado' : 'reposo']
         return [
           estilos.base,
           ancho && estilos.ancho,
@@ -82,7 +88,7 @@ export function Boton({ tipo = 'primario', texto, ancho, disabled, ...resto }: P
       }}
     >
       {({ pressed }) => {
-        const e = ESTADOS[tipo][disabled ? 'inerte' : pressed ? 'presionado' : 'reposo']
+        const e = ESTADOS[tipo][disabled || apagado ? 'inerte' : pressed ? 'presionado' : 'reposo']
         return (
           <Text style={[estilos.texto, fantasma && estilos.textoFantasma, { color: e.texto }]}>{texto}</Text>
         )

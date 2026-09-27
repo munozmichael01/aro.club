@@ -63,7 +63,7 @@ export function Opcion({ texto, marcada, onPress, unica, fondo = 'crema', enTope
     <Pressable
       onPress={onPress}
       accessibilityRole={unica ? 'radio' : 'checkbox'}
-      accessibilityState={{ checked: marcada }}
+      aria-checked={marcada}
       style={[
         estilos.base,
         unica ? estilos.unica : estilos.pildora,

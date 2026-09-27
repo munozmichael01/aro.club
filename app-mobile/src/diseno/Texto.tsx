@@ -33,6 +33,7 @@ const TONO_POR_DEFECTO: Record<Variante, Tono> = {
   cuerpoChico: 'cuerpo',
   nota: 'secundario',
   rotulo: 'tinta',
+  pregunta: 'tinta',
   etiqueta: 'secundario',
   etiquetaChica: 'secundario',
   chip: 'cuerpo',
