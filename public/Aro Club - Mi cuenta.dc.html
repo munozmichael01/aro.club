@@ -489,11 +489,25 @@ class Component extends DCLogic {
       return 'Hay cena el ' + DIAS[f.getDay()] +
         (d.proximaFecha.zona ? ' en ' + d.proximaFecha.zona : '') + '.';
     };
+    /**
+     * Por debajo de esto no se enseña el número de apuntados.
+     *
+     * «0 apuntados · faltan 6 para la primera mesa» es verdad y desanima:
+     * quien lo lee entiende que no va nadie y se va. Y con 2 tampoco ayuda.
+     * A partir de 3 el número empieza a jugar a favor y se enseña tal cual.
+     *
+     * Lo que sale debajo del umbral NO es una frase de relleno optimista
+     * —«ya se está llenando» con cero apuntados es mentira, y si luego ve el
+     * número real se nota—. Es la mitad útil de lo que decía antes: que la
+     * mesa es de seis.
+     */
+    const UMBRAL_APUNTADOS = 3;
+
     const cuerpoReservar = (d, base) => {
       if (!d.proximaFecha) return 'Te avisamos por correo en cuanto abramos la próxima. No hay que hacer nada.';
       const n = d.proximaFecha.apuntados;
       const c = new Date(d.proximaFecha.cierraEn);
-      const gente = n === 0 ? 'Eres de los primeros' : (n === 1 ? 'Va una persona apuntada' : 'Ya van ' + n + ' apuntados');
+      const gente = n < UMBRAL_APUNTADOS ? 'Recién abierta' : 'Ya van ' + n + ' apuntados';
       return gente + ' y se cierra el ' + DIAS[c.getDay()] + '. ' + base;
     };
 
@@ -753,12 +767,14 @@ class Component extends DCLogic {
         tipo: c[1], cuando: c[2], zona: c[3], glifo: cerrada ? '·' : (mia ? '✓' : m[0]),
         enlace: '/',
         estado: cerrada
-          ? (mia ? 'Ya estás apuntada · cerrada' : 'Cerrada · ' + n + (n === 1 ? ' apuntado' : ' apuntados'))
+          ? (mia ? 'Ya tienes puesto · cerrada' : 'Cerrada · ' + n + (n === 1 ? ' apuntado' : ' apuntados'))
           : mia
-          ? 'Ya estás apuntada'
-          : (n >= 6
-            ? n + (n === 1 ? ' apuntado · ' : ' apuntados · ') + Math.ceil(n / 6) + (Math.ceil(n / 6) === 1 ? ' mesa' : ' mesas')
-            : n + (n === 1 ? ' apuntado · ' : ' apuntados · ') + ((6 - n) === 1 ? 'falta 1' : 'faltan ' + (6 - n)) + ' para la primera mesa'),
+          ? 'Ya tienes puesto'
+          : (n < UMBRAL_APUNTADOS
+            ? 'Una mesa son seis'
+            : (n >= 6
+              ? n + ' apuntados · ' + Math.ceil(n / 6) + (Math.ceil(n / 6) === 1 ? ' mesa' : ' mesas')
+              : n + ' apuntados · ' + ((6 - n) === 1 ? 'falta 1' : 'faltan ' + (6 - n)) + ' para la primera mesa')),
         estadoEstilo: 'font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (cerrada ? '#566A5D' : (mia ? '#1B5138' : (va ? '#1B5138' : '#8F4515'))) + ';white-space:nowrap',
         caja: 'display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;border-radius:22px;padding:clamp(15px,2vw,18px);opacity:' + (cerrada ? '.58' : '1') + ';cursor:' + (mia || cerrada ? 'default' : 'pointer') + ';background:' + (mia ? 'transparent' : (abierta ? '#F2E9D5' : '#FFFBF0')) + ';border:1px solid ' + (mia ? '#1B5138' : 'transparent'),
         icono: 'flex:0 0 auto;width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 15px/1 \'Inter Tight\',sans-serif;background:' + (mia ? '#1B5138' : m[2]) + ';color:' + (mia ? '#FAF3E4' : m[1]),
