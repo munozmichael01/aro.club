@@ -482,6 +482,42 @@
     },
 
     /**
+     * La zona en la que habla el producto.
+     *
+     * Escrita una vez porque el dia de una cena depende de ella: la del
+     * sabado 3 a las ocho de la noche de Caracas es medianoche del 4 en UTC,
+     * asi que `getDay()` a secas la cuenta como domingo. Ya paso en el
+     * servidor —el panel y las fechas de borrado decian un dia de mas— y en
+     * el navegador pasa igual con quien viaje.
+     *
+     * Es lo que hay que cambiar el dia que `cities` tenga su columna de zona
+     * horaria: entonces cada cena hablara en la hora de SU ciudad.
+     */
+    ZONA: 'America/Caracas',
+
+    /**
+     * El dia de la semana de una fecha, en la zona del producto.
+     *
+     * Existe porque el dia estaba ESCRITO: «vuelves a entrar el sábado»,
+     * «el sábado a mediodía». Era verdad mientras todas las cenas cayeran en
+     * sábado, y dejo de serlo el jueves que hubo que barrer la web entera,
+     * el panel y los correos para cambiar una palabra.
+     *
+     * Sin fecha abierta devuelve null, y la frase se dice sin dia. Es mejor
+     * que inventarse uno.
+     */
+    diaDe: function (iso) {
+      if (!iso) return null
+      var d = new Date(iso)
+      if (isNaN(d.getTime())) return null
+      try {
+        return new Intl.DateTimeFormat('es-VE', { timeZone: api.ZONA, weekday: 'long' }).format(d)
+      } catch (e) {
+        return null
+      }
+    },
+
+    /**
      * Las cuatro preguntas de la puerta.
      *
      * Son las que se hacen antes de tener cuenta —en la portada y en la

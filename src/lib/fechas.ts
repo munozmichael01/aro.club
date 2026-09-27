@@ -23,8 +23,14 @@
  * Está en una constante y no repartida porque es lo que hay que cambiar el
  * día que `cities` tenga su columna de zona horaria: entonces el producto
  * hablará en la hora de la ciudad de cada cena, y no en la de esta.
+ *
+ * Y sale de `reglas.js`, no escrita aquí otra vez: el navegador la necesita
+ * igual —las pantallas dicen en qué día es la cena— y dos constantes con la
+ * misma zona es la forma en que este repo ya ha divergido varias veces.
  */
-const ZONA = 'America/Caracas'
+import reglas from '../../public/reglas.js'
+
+const ZONA: string = reglas.ZONA
 
 /** Las partes de una fecha en la zona del producto, no en la del servidor. */
 function partes(iso: string): { dia: number; mes: number; ano: number } {
