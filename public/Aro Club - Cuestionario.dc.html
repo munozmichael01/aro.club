@@ -456,6 +456,12 @@ class Component extends DCLogic {
     // mapa. Pizza va aparte de italiana a proposito —una pizzeria y una
     // trattoria son dos salidas distintas— y la parrilla aparte de las carnes
     // por lo mismo.
+    //
+    // Tailandesa e India salieron de dentro de `asiatica`, que se llamaba
+    // «China y asiática» y era un cajon donde no se podia pedir tailandes sin
+    // pedir chino. Por eso `asiatica` se llama ahora «China»: el CODIGO se
+    // queda —cambiarlo romperia las respuestas dadas— y la etiqueta deja de
+    // parecerse al codigo a proposito.
     // La lista literal, como las demas: `comprobar-cuestionario.mjs` extrae
     // este bloque y lo evalua, y una referencia a otro fichero lo rompe. El
     // catalogo esta ademas en `AroReglas.COCINAS` para la ficha del local, y
@@ -466,16 +472,19 @@ class Component extends DCLogic {
       ['Parrilla y carnes', 'parrilla'],
       ['Italiana', 'italiana'],
       ['Pizza', 'pizza'],
-      ['Sushi y japonesa', 'japonesa'],
-      ['Hamburguesas', 'hamburguesas'],
-      ['Mediterránea', 'mediterranea'],
-      ['Española', 'espanola'],
-      ['Mexicana', 'mexicana'],
+      ['Japonesa', 'japonesa'],
+      ['China', 'asiatica'],
+      ['Tailandesa', 'tailandesa'],
+      ['India', 'india'],
       ['Peruana', 'peruana'],
-      ['China y asiática', 'asiatica'],
-      ['Mariscos', 'mariscos'],
+      ['Mexicana', 'mexicana'],
+      ['Española', 'espanola'],
+      ['Mediterránea', 'mediterranea'],
       ['Árabe', 'arabe'],
-      ['De mercado y vegetales', 'mercado'],
+      ['Pescados y mariscos', 'mariscos'],
+      ['De autor y fusión', 'autor'],
+      ['De mercado y vegetariana', 'mercado'],
+      ['Hamburguesas', 'hamburguesas'],
     ],
 
     dieta: [
