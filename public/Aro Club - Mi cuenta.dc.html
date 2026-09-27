@@ -607,7 +607,13 @@ class Component extends DCLogic {
       // Llevaba a '/', que es la landing: un atajo que dice "Mis creditos" y
       // te saca del producto. Va al legal, que es donde se explica cuando
       // vuelve un credito y cuando se pierde.
-      ['Mis créditos', e.creditosCuerpo, e.creditos, '/terminos'],
+      //
+      // Y lo DICE, que es lo que faltaba: un atajo titulado «Mis créditos»
+      // que aterriza en los términos se lee como un enlace roto, porque quien
+      // lo pulsa espera una pantalla suya. No hay tal pantalla —el número y
+      // su explicación están aquí mismo— así que lo honesto es decir a dónde
+      // lleva en vez de dejar que lo descubra pulsando.
+      ['Mis créditos', e.creditosCuerpo + ' Cómo funcionan, en los términos.', e.creditos, '/terminos'],
       ['Mi verificación', 'Estado de tu cédula y tu selfie.', pieVerif, '/verificacion'],
       // El "Ninguna" estaba escrito a mano y el enlace iba al legal: un dato
       // inventado y un enlace que decia una cosa y llevaba a otra.
