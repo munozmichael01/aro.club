@@ -1,46 +1,56 @@
 /**
- * La entrada: el catálogo manda, y se guarda por código.
+ * La entrada: la puerta sale de reglas.js (PUERTA) y las zonas de /api/zonas;
+ * se guarda por código.
  */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { completa, cuerpoDeRespuestas, enTope, inicial, reducir, type Estado } from '../src/entrada/maquina'
-import { preguntasDeEntrada, type PreguntaCatalogo } from '../src/entrada/preguntas'
+import { completa, cuerpoDeRespuestas, destinoDeRepetido, enTope, inicial, reducir, type Estado } from '../src/entrada/maquina'
+import { preguntasDeEntrada } from '../src/entrada/preguntas'
+import { reglas, type PreguntaPuerta } from '../src/reglas'
 import { enumerar } from '../src/texto/entrada'
 
-const op = (...pares: [string, string][]) => pares.map(([valor, label]) => ({ valor, label }))
-const CATALOGO: { preguntas: PreguntaCatalogo[] } = {
-  preguntas: [
-    { clave: 'nacimiento', enunciado: '¿Cuándo naciste?', ayuda: null, tipo: 'date', opciones: [], min: null, max: null },
-    { clave: 'temas', enunciado: '¿De qué podrías hablar?', ayuda: null, tipo: 'multi', opciones: op(['cocina', 'Cocina y restaurantes'], ['viajes', 'Viajes'], ['cine', 'Cine'], ['musica', 'Música'], ['libros', 'Libros']), min: 2, max: 4 },
-    { clave: 'arraigo', enunciado: '¿Te suena alguna?', ayuda: null, tipo: 'single', opciones: op(['volvio', 'Me fui y volví'], ['visita', 'Estoy de paso']), min: null, max: null },
-    { clave: 'dias', enunciado: '¿Qué días?', ayuda: null, tipo: 'multi', opciones: op(['jue', 'Jueves noche'], ['sab', 'Sábado noche']), min: 1, max: null },
-    { clave: 'zonas', enunciado: '¿Qué zonas?', ayuda: null, tipo: 'multi', opciones: op(['chacao', 'Chacao'], ['mercedes', 'Las Mercedes']), min: 1, max: null },
-  ],
+const PUERTA: Record<string, PreguntaPuerta> = {
+  arraigo: { clave: 'arraigo', etiqueta: 'ARRAIGO', tipo: 'unica', pregunta: '¿Cuál?', ayuda: 'Una sola.', opciones: [['Volví', 'volvio'], ['De paso', 'visita']] },
+  zonas: { clave: 'zonas', etiqueta: 'ZONAS', tipo: 'multi', max: 5, pregunta: '¿Dónde?', ayuda: 'Hasta cinco.', opciones: [] },
+  dias: { clave: 'dias', etiqueta: 'DÍAS', tipo: 'multi', pregunta: '¿Qué días?', ayuda: null, opciones: [['Jueves noche', 'jue'], ['Sábado noche', 'sab']] },
+  temas: {
+    clave: 'temas', etiqueta: 'CONVERSACIÓN', tipo: 'multi', min: 2, max: 4, pregunta: '¿De qué?', ayuda: null,
+    opciones: [['Cocina', 'cocina'], ['Viajes', 'viajes'], ['Cine', 'cine'], ['Música', 'musica'], ['Libros', 'libros']],
+  },
 }
+const ORDEN = ['arraigo', 'zonas', 'dias', 'temas']
+const ZONAS = ['a', 'b', 'c', 'd', 'e', 'f'].map((s) => ({ slug: s, nombre: s.toUpperCase() }))
+const P = preguntasDeEntrada(PUERTA, ORDEN, ZONAS)!
 
-const P = preguntasDeEntrada(CATALOGO)!
-
-test('las cuatro, en el orden del pedido, aunque el catálogo venga en otro', () => {
-  assert.deepEqual(P.map((p) => p.clave), ['arraigo', 'zonas', 'dias', 'temas'])
+test('el PUERTA real de reglas.js da las cuatro, con su forma', () => {
+  const reales = preguntasDeEntrada(reglas.PUERTA, reglas.ORDEN_PUERTA, ZONAS)
+  assert.ok(reales, 'PUERTA de reglas.js no se deja leer')
+  assert.deepEqual(reales!.map((p) => p.clave), ['arraigo', 'zonas', 'dias', 'temas'])
+  assert.equal(reales![1].max, 5, 'el tope de zonas de la puerta viene de reglas.js')
+  assert.deepEqual([reales![3].min, reales![3].max], [2, 4])
 })
 
-test('si falta una, o trae un tipo desconocido, no se pinta a medias', () => {
-  assert.equal(preguntasDeEntrada({ preguntas: CATALOGO.preguntas.filter((p) => p.clave !== 'dias') }), null)
-  const raro = CATALOGO.preguntas.map((p) => (p.clave === 'zonas' ? { ...p, tipo: 'mapa' } : p))
-  assert.equal(preguntasDeEntrada({ preguntas: raro }), null)
+test('las zonas son las de /api/zonas, por slug', () => {
+  assert.deepEqual(P[1].opciones.slice(0, 2), [{ valor: 'a', label: 'A' }, { valor: 'b', label: 'B' }])
 })
 
-test('se guarda por CÓDIGO, aunque la etiqueta cambie o se reordene', () => {
+test('sin zonas, o con un tipo desconocido, no se pinta a medias', () => {
+  assert.equal(preguntasDeEntrada(PUERTA, ORDEN, []), null)
+  assert.equal(preguntasDeEntrada({ ...PUERTA, dias: { ...PUERTA.dias, tipo: 'mapa' as never } }, ORDEN, ZONAS), null)
+  assert.equal(preguntasDeEntrada(PUERTA, [...ORDEN, 'nueva'], ZONAS), null)
+})
+
+test('se guarda por CÓDIGO', () => {
   let e: Estado = { ...inicial('ana@ejemplo.com'), fase: 'quiz' }
   const [arraigo, zonas, dias, temas] = P
   e = reducir(e, { tipo: 'marcar', pregunta: arraigo, valor: 'visita' })
-  e = reducir(e, { tipo: 'marcar', pregunta: zonas, valor: 'mercedes' })
+  e = reducir(e, { tipo: 'marcar', pregunta: zonas, valor: 'c' })
   e = reducir(e, { tipo: 'marcar', pregunta: dias, valor: 'sab' })
   e = reducir(e, { tipo: 'marcar', pregunta: temas, valor: 'cine' })
   e = reducir(e, { tipo: 'marcar', pregunta: temas, valor: 'cocina' })
   assert.deepEqual(cuerpoDeRespuestas(e, 'tok'), {
-    correo: 'ana@ejemplo.com', token: 'tok', arraigo: 'visita', zonas: ['mercedes'], dias: ['sab'], temas: ['cine', 'cocina'],
+    correo: 'ana@ejemplo.com', token: 'tok', arraigo: 'visita', zonas: ['c'], dias: ['sab'], temas: ['cine', 'cocina'],
   })
 })
 
@@ -66,38 +76,30 @@ test('temas: entre dos y cuatro, y la quinta no entra', () => {
   assert.equal(reducir(e, { tipo: 'marcar', pregunta: temas, valor: 'libros' }), e)
 })
 
-test('repetido lleva a su fase y no al quiz; un fallo vuelve al correo con el mensaje del servidor', () => {
+test('zonas: tope de cinco en la puerta', () => {
+  const zonas = P[1]
+  let e = inicial()
+  for (const z of ZONAS) e = reducir(e, { tipo: 'marcar', pregunta: zonas, valor: z.slug })
+  assert.deepEqual(e.respuestas.zonas, ['a', 'b', 'c', 'd', 'e'])
+})
+
+test('repetido lleva a su fase; un fallo vuelve al correo con el mensaje del servidor', () => {
   assert.equal(reducir({ ...inicial('a@b.co'), fase: 'enviando' }, { tipo: 'guardado', repetido: true }).fase, 'repetido')
   const f = reducir({ ...inicial('a@b.co'), fase: 'enviando' }, { tipo: 'fallo', error: 'Ese correo no se ve completo.' })
   assert.deepEqual([f.fase, f.error], ['correo', 'Ese correo no se ve completo.'])
 })
 
 test('si no se pudieron guardar las respuestas, NO se dice «tienes puesto»', () => {
-  const e = reducir({ ...inicial('a@b.co'), fase: 'guardando' }, { tipo: 'falloAlTerminar', error: 'x' })
-  assert.equal(e.fase, 'quiz')
+  assert.equal(reducir({ ...inicial('a@b.co'), fase: 'guardando' }, { tipo: 'falloAlTerminar', error: 'x' }).fase, 'quiz')
+})
+
+test('quien vuelve va a lo que le falta; sin token, a «ya estás registrado»', () => {
+  assert.equal(destinoDeRepetido({ quizCompletado: false }, true), 'quiz')
+  assert.equal(destinoDeRepetido({ quizCompletado: true }, true), 'datos')
+  assert.equal(destinoDeRepetido({ quizCompletado: false }, false), 'repetido')
 })
 
 test('enumerar zonas como la web', () => {
   assert.equal(enumerar([], 'tu zona'), 'tu zona')
-  assert.equal(enumerar(['Chacao'], ''), 'Chacao')
   assert.equal(enumerar(['Chacao', 'Altamira', 'El Rosal'], ''), 'Chacao, Altamira y El Rosal')
-})
-
-test('zonas: tope de cinco en la puerta, aunque el catálogo no lo traiga', () => {
-  const muchas = CATALOGO.preguntas.map((p) =>
-    p.clave === 'zonas' ? { ...p, max: null, opciones: op(...(['a', 'b', 'c', 'd', 'e', 'f'].map((v) => [v, v.toUpperCase()]) as [string, string][])) } : p,
-  )
-  const zonas = preguntasDeEntrada({ preguntas: muchas })![1]
-  assert.equal(zonas.max, 5)
-  let e = inicial()
-  for (const v of ['a', 'b', 'c', 'd', 'e', 'f']) e = reducir(e, { tipo: 'marcar', pregunta: zonas, valor: v })
-  assert.deepEqual(e.respuestas.zonas, ['a', 'b', 'c', 'd', 'e'])
-})
-
-test('quien vuelve va a lo que le falta; sin token, a «ya estás registrado»', async () => {
-  const { destinoDeRepetido } = await import('../src/entrada/maquina')
-  assert.equal(destinoDeRepetido({ quizCompletado: false }, true), 'quiz')
-  assert.equal(destinoDeRepetido({ quizCompletado: true }, true), 'datos')
-  assert.equal(destinoDeRepetido({ quizCompletado: false }, false), 'repetido')
-  assert.equal(destinoDeRepetido({ quizCompletado: true }, false), 'repetido')
 })

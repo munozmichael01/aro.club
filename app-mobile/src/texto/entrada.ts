@@ -36,14 +36,6 @@ export const correo = {
 
 export const enviando = { titulo: 'Guardando tu puesto.' }
 
-/** La etiqueta de cada paso es de la portada; la pregunta y las opciones, del catálogo. */
-export const etiquetaDePaso: Record<string, string> = {
-  arraigo: 'ARRAIGO',
-  zonas: 'ZONAS',
-  dias: 'DÍAS',
-  temas: 'CONVERSACIÓN',
-}
-
 export const quiz = {
   progreso: (paso: number, total: number) => `PREGUNTA ${paso + 1} DE ${total}`,
   siguiente: 'Siguiente',

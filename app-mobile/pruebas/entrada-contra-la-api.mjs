@@ -13,6 +13,7 @@ import { crearServicio } from '../src/entrada/servicio.ts'
 import { cuerpoDeRespuestas, destinoDeRepetido, inicial, reducir } from '../src/entrada/maquina.ts'
 import { preguntasDeEntrada } from '../src/entrada/preguntas.ts'
 import { crearApi } from '../src/sesion/api.ts'
+import { reglas } from '../src/reglas.ts'
 
 const env = Object.fromEntries(
   fs.readFileSync(new URL('../../.env.local', import.meta.url), 'utf8').split('\n').filter((l) => l.includes('='))
@@ -29,10 +30,10 @@ let fallos = 0
 const ok = (c, t) => { console.log((c ? '✓ ' : '✗ ') + t); if (!c) fallos++ }
 
 try {
-  // El catálogo de verdad da las cuatro.
-  const cat = await s.catalogo()
-  const P = cat.ok ? preguntasDeEntrada(cat.datos) : null
-  ok(!!P, `el catálogo (${cat.ok ? cat.datos.version : 'sin respuesta'}) da las cuatro preguntas: ${P?.map((p) => `${p.clave}(${p.opciones.length})`).join(', ')}`)
+  // La puerta de reglas.js y las zonas activas dan las cuatro.
+  const z = await s.zonas()
+  const P = z.ok ? preguntasDeEntrada(reglas.PUERTA, reglas.ORDEN_PUERTA, z.datos.zonas) : null
+  ok(!!P, `PUERTA + /api/zonas dan las cuatro preguntas: ${P?.map((p) => `${p.clave}(${p.opciones.length})`).join(', ')}`)
 
   // Correo mal escrito: el mensaje es el del servidor.
   const malo = await s.dejarCorreo('esto-no-es-un-correo')

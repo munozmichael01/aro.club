@@ -13,6 +13,7 @@ import type { Pregunta } from '../entrada/preguntas'
  */
 const PREGUNTA: Pregunta = {
   clave: 'temas',
+  etiqueta: 'CONVERSACIÓN',
   enunciado: '¿De qué podrías hablar dos horas seguidas?',
   ayuda: null,
   unica: false,
@@ -22,6 +23,7 @@ const PREGUNTA: Pregunta = {
 }
 const ARRAIGO: Pregunta = {
   clave: 'arraigo',
+  etiqueta: 'ARRAIGO',
   enunciado: '¿Te suena alguna de estas?',
   ayuda: null,
   unica: true,

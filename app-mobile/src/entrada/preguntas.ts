@@ -1,14 +1,21 @@
+import type { PreguntaPuerta } from '../reglas'
+
 /**
- * Las cuatro preguntas de la entrada, sacadas del catálogo (`/api/questions`).
+ * Las cuatro preguntas de la puerta.
  *
- * El catálogo es el autoritativo: trae cada opción con su CÓDIGO, así que la
- * app guarda por código por construcción. La portada web las tiene escritas
- * a mano en dos listas —textos y códigos— emparejadas por posición, que es
- * justo la trampa que ya corrompió respuestas en el cuestionario.
+ * Salen de `reglas.js` (`PUERTA` y `ORDEN_PUERTA`), el mismo sitio del que
+ * las saca la web: textos, códigos, mínimos y topes, una vez para las dos
+ * (decisión del 27-09). Las opciones van como pares [texto, código], nunca en
+ * dos listas emparejadas por posición. Las zonas no están ahí: vienen de
+ * `/api/zonas`, que son las activas.
+ *
+ * El catálogo (`/api/questions`) sigue siendo el de las diecisiete del
+ * cuestionario; `comprobar-cuestionario.mjs` vigila que la puerta no invente
+ * códigos que la base no tenga.
  */
 
+/** La forma de una pregunta del catálogo. La usa el cuestionario (y los datos, para el género). */
 export type OpcionCatalogo = { valor: string | null; label: string }
-
 export type PreguntaCatalogo = {
   clave: string
   enunciado: string
@@ -21,6 +28,7 @@ export type PreguntaCatalogo = {
 
 export type Pregunta = {
   clave: string
+  etiqueta: string
   enunciado: string
   ayuda: string | null
   unica: boolean
@@ -29,38 +37,32 @@ export type Pregunta = {
   max: number | null
 }
 
-/**
- * Tope de zonas EN LA PUERTA: cinco, para que se elija de verdad (decisión
- * del 27-09). En el perfil completo no hay tope, y por eso el catálogo no lo
- * trae. Vive aquí hasta que las reglas de la puerta pasen a `reglas.js`,
- * junto con el recorte de temas.
- */
-export const TOPE_ZONAS_ENTRADA = 5
-
-/** El orden de la entrada, el del pedido: arraigo, zonas, días y temas. */
-export const CLAVES_ENTRADA = ['arraigo', 'zonas', 'dias', 'temas'] as const
+export type Zona = { slug: string; nombre: string }
 
 /**
- * Del catálogo a las cuatro preguntas. Devuelve `null` si falta alguna o
- * trae un tipo que la app no sabe pintar: mejor no enseñar la pregunta que
- * enseñar una que no se puede guardar bien (PROPUESTA §e.1).
+ * De `PUERTA` y las zonas activas a las preguntas, en el orden de
+ * `ORDEN_PUERTA`. `null` si falta alguna, trae un tipo que la app no sabe
+ * pintar o se queda sin opciones: mejor no enseñar la pregunta que enseñar
+ * una que no se puede contestar bien (PROPUESTA §e.1).
  */
-export function preguntasDeEntrada(catalogo: { preguntas: PreguntaCatalogo[] }): Pregunta[] | null {
+export function preguntasDeEntrada(puerta: Record<string, PreguntaPuerta>, orden: string[], zonas: Zona[]): Pregunta[] | null {
   const salida: Pregunta[] = []
-  for (const clave of CLAVES_ENTRADA) {
-    const p = catalogo.preguntas.find((x) => x.clave === clave)
-    if (!p || (p.tipo !== 'single' && p.tipo !== 'multi')) return null
+  for (const clave of orden) {
+    const p = puerta[clave]
+    if (!p || (p.tipo !== 'unica' && p.tipo !== 'multi')) return null
+    const opciones =
+      clave === 'zonas' ? zonas.map((z) => ({ valor: z.slug, label: z.nombre })) : p.opciones.map(([label, valor]) => ({ valor, label }))
+    if (!opciones.length) return null
+    const unica = p.tipo === 'unica'
     salida.push({
       clave,
-      enunciado: p.enunciado,
-      ayuda: p.ayuda,
-      unica: p.tipo === 'single',
-      // Una opción sin código es, a propósito, «no es una respuesta» (hoy
-      // «Cualquier zona de la ciudad» en el cuestionario). Aquí no hay
-      // ninguna; si apareciera, no se ofrece antes de saber qué hace.
-      opciones: p.opciones.filter((o): o is { valor: string; label: string } => typeof o.valor === 'string'),
-      min: p.tipo === 'single' ? 1 : Math.max(1, p.min ?? 1),
-      max: p.tipo === 'single' ? 1 : clave === 'zonas' ? TOPE_ZONAS_ENTRADA : p.max,
+      etiqueta: p.etiqueta,
+      enunciado: p.pregunta,
+      ayuda: p.ayuda ?? null,
+      unica,
+      opciones,
+      min: unica ? 1 : Math.max(1, p.min ?? 1),
+      max: unica ? 1 : (p.max ?? null),
     })
   }
   return salida

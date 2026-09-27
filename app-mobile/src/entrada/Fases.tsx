@@ -159,7 +159,7 @@ export function FaseQuiz(p: {
         </Texto>
       </View>
       <Texto variante="etiqueta" tono="terracotaSobreVerde" style={{ marginBottom: 16 }}>
-        {T.etiquetaDePaso[q.clave] ?? ''}
+        {q.etiqueta}
       </Texto>
       <Texto variante="display" tono="crema" style={{ marginBottom: 12 }}>
         {q.enunciado}

@@ -11,6 +11,7 @@ import { cuentaAtras } from '../texto/fechas'
 import { CIUDAD_PRODUCTO } from '../texto/zona'
 import { Cabecera, FaseCorreo, FaseEnviando, FaseFinal, FaseQuiz, FaseRepetido, FaseSinPreguntas, Portada } from './Fases'
 import { cuerpoDeRespuestas, destinoDeRepetido, inicial, reducir } from './maquina'
+import { reglas } from '../reglas'
 import { preguntasDeEntrada, type Pregunta } from './preguntas'
 import type { crearServicio } from './servicio'
 
@@ -57,7 +58,7 @@ export function Entrada(p: { servicio: Servicio; onEntrar: () => void; onComplet
 
   const cargarPreguntas = useCallback(() => {
     setPreguntas(undefined)
-    p.servicio.catalogo().then((r) => setPreguntas(r.ok ? preguntasDeEntrada(r.datos) : null))
+    p.servicio.zonas().then((r) => setPreguntas(r.ok ? preguntasDeEntrada(reglas.PUERTA, reglas.ORDEN_PUERTA, r.datos.zonas) : null))
   }, [p.servicio])
   useEffect(cargarPreguntas, [cargarPreguntas])
 

@@ -1,7 +1,7 @@
 import type { crearApi } from '../sesion/api'
 import { CIUDAD_PRODUCTO } from '../texto/zona'
 import { sinRespuesta } from '../texto/entrada'
-import type { PreguntaCatalogo } from './preguntas'
+import type { Zona } from './preguntas'
 
 /**
  * El origen de todas las altas desde la app. Sin él, el servidor las cuenta
@@ -80,7 +80,8 @@ export function crearServicio(api: Api) {
         sinRespuesta.respuestas,
       ),
 
-    catalogo: () => intentar<{ version: string; preguntas: PreguntaCatalogo[] }>(() => api.pedir('/questions'), sinRespuesta.preguntas),
+    /** Las zonas activas: las opciones de la pregunta de zonas. */
+    zonas: () => intentar<{ zonas: Zona[] }>(() => api.pedir('/zonas'), sinRespuesta.preguntas),
 
     proxima: () =>
       intentar<{ hay: boolean; empiezaEn?: string; cierraEn?: string; zonaHoraria?: string }>(

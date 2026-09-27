@@ -21,6 +21,27 @@ type Api = {
   fechaDesdeISO: (v: string) => string
   PRECIO_USD: number
   precioTexto: () => string
+  /** La zona del producto. Cuando `cities` tenga su columna, se cambia aquí para web y app. */
+  ZONA: string
+  /** «sábado»: el nombre del día de una fecha, en `ZONA`. `null` si la fecha no vale. */
+  diaDe: (iso: string | null | undefined) => string | null
+  /** Las cuatro preguntas de la puerta, UN sitio para web y app. Opciones como [texto, código]. */
+  PUERTA: Record<string, PreguntaPuerta>
+  ORDEN_PUERTA: string[]
 }
 
-export const reglas = crudo as Api
+export type PreguntaPuerta = {
+  clave: string
+  etiqueta: string
+  tipo: 'unica' | 'multi'
+  pregunta: string
+  ayuda: string | null
+  min?: number
+  max?: number
+  /** [texto, código]. Vacío en zonas: esas vienen de /api/zonas. */
+  opciones: [string, string][]
+}
+
+// JavaScript sin tipos a propósito: se declara la forma que la app usa y se
+// fía de ella. Si `reglas.js` cambiara esa forma, lo cazan las pruebas.
+export const reglas = crudo as unknown as Api

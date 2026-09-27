@@ -8,7 +8,7 @@
  * una pantalla: sale de aquí, calculado desde la fecha del evento.
  */
 
-const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
+import { reglas } from '../reglas'
 
 /** Los meses abreviados del selector de nacimiento, en el orden del calendario: el índice + 1 es el mes. */
 export const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
@@ -17,7 +17,6 @@ export const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'a
 function partes(iso: string, zona: string) {
   const f = new Intl.DateTimeFormat('en-US', {
     timeZone: zona,
-    weekday: 'short',
     day: 'numeric',
     month: 'numeric',
     year: 'numeric',
@@ -26,14 +25,9 @@ function partes(iso: string, zona: string) {
     hourCycle: 'h23',
   })
   const p = Object.fromEntries(f.formatToParts(new Date(iso)).map((x) => [x.type, x.value]))
-  const semana = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(p.weekday)
-  return { semana, dia: +p.day, mes: +p.month, anio: +p.year, hora: +p.hour, minuto: +p.minute }
+  return { dia: +p.day, mes: +p.month, anio: +p.year, hora: +p.hour, minuto: +p.minute }
 }
 
-/** «sábado», en minúscula: el nombre del día de una fecha, en su zona. */
-export function nombreDia(iso: string, zona: string): string {
-  return DIAS[partes(iso, zona).semana]
-}
 
 /**
  * Lo que falta hasta un instante, como lo dice la web: «1 día y 3 h»,
@@ -65,7 +59,9 @@ export function hora(iso: string, zona: string): string {
  * día); nada si no hay fecha abierta. Nunca un día escrito a mano.
  */
 export function cuandoSeRevela(f: { empiezaEn?: string | null; revelaEn?: string | null } | null, zona: string): string | null {
-  if (f?.revelaEn) return `el ${nombreDia(f.revelaEn, zona)} a las ${hora(f.revelaEn, zona)}`
-  if (f?.empiezaEn) return `el ${nombreDia(f.empiezaEn, zona)}`
+  // El día, de reglas.js (`diaDe`): el mismo cálculo que la web.
+  const dia = (iso: string) => reglas.diaDe(iso)
+  if (f?.revelaEn && dia(f.revelaEn)) return `el ${dia(f.revelaEn)} a las ${hora(f.revelaEn, zona)}`
+  if (f?.empiezaEn && dia(f.empiezaEn)) return `el ${dia(f.empiezaEn)}`
   return null
 }

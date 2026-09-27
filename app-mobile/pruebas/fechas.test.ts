@@ -8,18 +8,18 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { cuentaAtras, nombreDia } from '../src/texto/fechas'
+import { reglas } from '../src/reglas'
+import { cuentaAtras } from '../src/texto/fechas'
 import { ZONA_PRODUCTO, zonaDe } from '../src/texto/zona'
 
 /** La cena abierta el 27-09: sábado 3 de octubre a las 20:00 en Caracas. */
 const CENA = '2026-10-04T00:00:00+00:00'
 
 test('la cena del sábado a las 20:00 de Caracas es sábado, con el reloj del celular donde sea', () => {
-  assert.equal(nombreDia(CENA, 'America/Caracas'), 'sábado')
-})
-
-test('en la zona de Madrid ese instante ya es domingo: por eso nunca se usa la del celular', () => {
-  assert.equal(nombreDia(CENA, 'Europe/Madrid'), 'domingo')
+  // Esta prueba corre dos veces, con TZ de Madrid y de UTC: en esas zonas el
+  // instante ya es domingo. diaDe (reglas.js, el de la web) no mira el reloj.
+  assert.equal(reglas.diaDe(CENA), 'sábado')
+  assert.equal(reglas.ZONA, 'America/Caracas')
 })
 
 test('la zona sale de la fecha si la trae, y si no, de un único sitio', () => {
