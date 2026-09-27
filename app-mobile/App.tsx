@@ -1,31 +1,35 @@
+import { useFonts } from 'expo-font'
 import { StatusBar } from 'expo-status-bar'
-import { useEffect, useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { Platform } from 'react-native'
 
-import { listo, supabase } from './src/sesion'
+import { Catalogo } from './src/Catalogo'
+import { Velo } from './src/diseno'
 
 /**
- * Provisional: solo arranca la sesión y dice si hay alguien dentro. Las
- * pantallas del recorrido —y el sistema de diseño— llegan encima de esto.
+ * Las fuentes van EMBEBIDAS en la app al compilar (plugin `expo-font` en
+ * `app.json`): no se cargan de la red ni al arrancar. En el navegador ese
+ * plugin no existe, así que allí se cargan con `useFonts`, desde los mismos
+ * ficheros.
  */
+const FUENTES_WEB =
+  Platform.OS === 'web'
+    ? {
+        'YoungSerif-Regular': require('./assets/fuentes/YoungSerif-Regular.ttf'),
+        'InterTight-Regular': require('./assets/fuentes/InterTight-Regular.ttf'),
+        'InterTight-Medium': require('./assets/fuentes/InterTight-Medium.ttf'),
+        'InterTight-SemiBold': require('./assets/fuentes/InterTight-SemiBold.ttf'),
+        'InterTight-Bold': require('./assets/fuentes/InterTight-Bold.ttf'),
+      }
+    : {}
+
+/** Provisional: el catálogo del sistema. El recorrido llega encima. */
 export default function App() {
-  const [estado, setEstado] = useState('…')
-
-  useEffect(() => {
-    listo
-      .then(() => supabase.auth.getSession())
-      .then(({ data }) => setEstado(data.session ? 'con sesión' : 'sin sesión'))
-  }, [])
-
+  const [listas] = useFonts(FUENTES_WEB)
+  if (!listas) return <Velo />
   return (
-    <View style={estilos.fondo}>
-      <Text style={estilos.texto}>Aro Club · {estado}</Text>
+    <>
+      <Catalogo />
       <StatusBar style="dark" />
-    </View>
+    </>
   )
 }
-
-const estilos = StyleSheet.create({
-  fondo: { flex: 1, backgroundColor: '#FAF3E4', alignItems: 'center', justifyContent: 'center' },
-  texto: { color: '#14342A' },
-})

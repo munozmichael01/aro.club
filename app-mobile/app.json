@@ -22,7 +22,19 @@
       "predictiveBackGestureEnabled": false
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fuentes/YoungSerif-Regular.ttf",
+            "./assets/fuentes/InterTight-Regular.ttf",
+            "./assets/fuentes/InterTight-Medium.ttf",
+            "./assets/fuentes/InterTight-SemiBold.ttf",
+            "./assets/fuentes/InterTight-Bold.ttf"
+          ]
+        }
+      ]
     ],
     "extra": {
       "api": "https://aro.club/api",
