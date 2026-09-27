@@ -8,6 +8,36 @@
  * la que ve operación es una promesa rota, aunque sea por un día.
  */
 
+/**
+ * La zona en la que habla el producto.
+ *
+ * Estas funciones usaban `getDate()` y `getMonth()` a secas, que es la hora
+ * LOCAL DEL SERVIDOR. En Vercel eso es UTC, porque nadie la fija. Y una cena
+ * del sábado 3 a las ocho de la noche de Caracas es medianoche del 4 en UTC:
+ * la ficha de miembro del panel y las fechas de «revisada el» y «se borra el»
+ * de `/api/verificacion` —que sí lee la persona— decían un día de más.
+ *
+ * Los correos ya formateaban en Caracas por su cuenta, así que además eran
+ * dos relojes distintos para el mismo dato.
+ *
+ * Está en una constante y no repartida porque es lo que hay que cambiar el
+ * día que `cities` tenga su columna de zona horaria: entonces el producto
+ * hablará en la hora de la ciudad de cada cena, y no en la de esta.
+ */
+const ZONA = 'America/Caracas'
+
+/** Las partes de una fecha en la zona del producto, no en la del servidor. */
+function partes(iso: string): { dia: number; mes: number; ano: number } {
+  const f = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ZONA,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(iso))
+  const [ano, mes, dia] = f.split('-').map(Number)
+  return { dia, mes: mes - 1, ano }
+}
+
 const MESES = [
   'enero',
   'febrero',
@@ -26,15 +56,15 @@ const MESES = [
 /** «Agosto de 2026». */
 export function mesYAno(iso: string | null): string {
   if (!iso) return '—'
-  const d = new Date(iso)
-  return MESES[d.getMonth()].charAt(0).toUpperCase() + MESES[d.getMonth()].slice(1) + ' de ' + d.getFullYear()
+  const { mes, ano } = partes(iso)
+  return MESES[mes].charAt(0).toUpperCase() + MESES[mes].slice(1) + ' de ' + ano
 }
 
 /** «12 de agosto de 2026». */
 export function diaCompleto(iso: string | null): string {
   if (!iso) return '—'
-  const d = new Date(iso)
-  return `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`
+  const { dia, mes, ano } = partes(iso)
+  return `${dia} de ${MESES[mes]} de ${ano}`
 }
 
 /**
@@ -45,6 +75,6 @@ export function diaCompleto(iso: string | null): string {
  */
 export function diaYMes(iso: string | null): string {
   if (!iso) return '—'
-  const d = new Date(iso)
-  return `${d.getDate()} de ${MESES[d.getMonth()]}`
+  const { dia, mes } = partes(iso)
+  return `${dia} de ${MESES[mes]}`
 }
