@@ -61,6 +61,7 @@ const PLANTILLA: Record<Correo, string> = {
   // el momento y la regla de repeticion, no el contenido.
   empujon: '01-bienvenida.html',
   encuesta_despues: '16-encuesta-despues.html',
+  llego_tarde: '18-llego-tarde.html',
 }
 
 // Las plantillas se leen del disco una vez y se quedan: son quince ficheros

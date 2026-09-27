@@ -137,8 +137,11 @@
                 </button>
               </sc-for>
             </div>
+            <sc-if value="{{ hayFalloTarde }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="border-radius:20px;background:rgba(110,52,15,.1);padding:14px 16px;margin-top:14px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#14342A">{{ falloTarde }}</div>
+            </sc-if>
             <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:center;margin-top:18px">
-              <button onClick="{{ avisar }}" style="{{ botonPrimario }}">{{ textoAvisar }}</button>
+              <button onClick="{{ avisar }}" aria-disabled="{{ avisando }}" style="{{ botonPrimario }}">{{ textoAvisar }}</button>
               <button onClick="{{ abrirTarde }}" style="{{ botonFantasma }}">Cancelar</button>
             </div>
           </div>
@@ -325,6 +328,7 @@
 class Component extends DCLogic {
   state = { saliendo: false,
     fase: 0, ahora: Date.now(), tarde: false, retraso: 1, avisado: false,
+    avisando: false, falloTarde: '', minutosAvisados: 0,
     // Entrega 16 · cuatro bloques, todos opcionales por separado.
     //   mesaVal   el grupo entero, nunca persona a persona
     //   sitio     ambiente, servicio, se podia conversar, comida
@@ -695,7 +699,7 @@ class Component extends DCLogic {
       // hacer. Lo que hay es dónde y a qué hora se ve la gente.
       selloReserva: esMesa ? 'Reserva a tu nombre' : 'Punto de encuentro',
       notaTarde: 'Se lo decimos a' + (esMesa ? ' la mesa' : 'l grupo') + '. Nadie se queda mirando la puerta.',
-      textoAvisar: 'Avisar a' + (esMesa ? ' la mesa' : 'l grupo'),
+      textoAvisar: this.state.avisando ? 'Avisando…' : ('Avisar a' + (esMesa ? ' la mesa' : 'l grupo')),
       notaCompaneros: 'Todos con identidad verificada. No hay fotos ni apellidos: eso lo cuenta cada quien '
         + (esMesa ? 'en la mesa' : 'sobre la marcha') + ' si quiere.',
       notaBloquear: 'Opcional. No se le avisa a nadie, y no es una queja: si nadie te chocó, déjalo así. Solo deja de salir en ' + VOZ.tu + 's ' + VOZ.unidades + '.',
@@ -817,9 +821,40 @@ class Component extends DCLogic {
       })(),
       tardeAbierto: this.state.tarde,
       avisado: this.state.avisado,
-      textoAvisado: 'Avisamos que llegas ' + ['10 minutos', '20 minutos', 'media hora'][this.state.retraso] + ' tarde',
+      textoAvisado: 'Avisamos que llegas '
+        + (this.state.minutosAvisados === 30 ? 'media hora' : (this.state.minutosAvisados || 20) + ' minutos')
+        + ' tarde',
       abrirTarde: () => this.setState((st) => ({ tarde: !st.tarde })),
-      avisar: () => this.setState({ tarde: false, avisado: true }),
+      // AVISA DE VERDAD.
+      //
+      // Esto era `setState({ avisado: true })` y nada mas: la pantalla decia
+      // «Avisamos que llegas 20 minutos tarde» y a la mesa no le llegaba
+      // nada. La portada lo promete ademas en la FAQ. Quien lo pulsara
+      // llegaba tarde a cinco desconocidos a los que nadie dijo nada,
+      // convencida de que si. Es peor que no tener el boton.
+      avisando: this.state.avisando,
+      hayFalloTarde: !!this.state.falloTarde,
+      falloTarde: this.state.falloTarde || '',
+      avisar: () => {
+        if (this.state.avisando) return;
+        const minutos = [10, 20, 30][this.state.retraso];
+        this.setState({ avisando: true, falloTarde: '' });
+        fetch('/api/mi-mesa/tarde', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ minutos: minutos })
+        })
+          .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+          .then(({ ok, d }) => {
+            if (!ok || !d.avisado) {
+              this.setState({ avisando: false, falloTarde: (d && d.error) || 'No pudimos avisar. Intentalo otra vez.' });
+              return;
+            }
+            this.setState({ avisando: false, tarde: false, avisado: true,
+              minutosAvisados: d.minutos || minutos, falloTarde: '' });
+          })
+          .catch(() => this.setState({ avisando: false, falloTarde: 'No pudimos avisar. Revisa tu conexion.' }));
+      },
 
       h1: 'font:400 clamp(34px,8vw,50px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:14px 0 0;max-width:14ch;text-wrap:balance',
       bajada: 'font:400 17px/1.55 \'Inter Tight\',sans-serif;color:#2C4A38;max-width:44ch;margin:14px 0 0;text-wrap:pretty',

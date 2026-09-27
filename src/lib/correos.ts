@@ -45,6 +45,10 @@ const IMPRESCINDIBLES: ReadonlySet<string> = new Set([
   'pago_no_cuadra',
   'puesto_con_cupon',
   'restablecer_clave',
+  // Avisa de que alguien de TU mesa llega tarde, media hora antes de sentarte
+  // con esa persona. Apagarlo no es respetar una baja, es dejar a cinco
+  // personas mirando la puerta.
+  'llego_tarde',
 ])
 
 export type Correo =
@@ -78,6 +82,10 @@ export type Correo =
   // lea rápido con la mesa equivocada y sin saber cuál de los dos vale.
   | 'mesa_cambiada'
   | 'restablecer_clave'
+  // El aviso de retraso. El boton existia desde su entrega y no mandaba nada:
+  // `avisar` solo cambiaba la pantalla, asi que la persona leia «avisamos que
+  // llegas 20 minutos tarde» y a la mesa no le llegaba nada.
+  | 'llego_tarde'
   | 'abrimos_zona'
   // Entrega 14: el hueco de en medio. Alguien termina el perfil, sube la
   // cédula y la selfie —todo lo que le pedimos— y no recibía nada hasta que

@@ -1339,6 +1339,66 @@ export type Database = {
           },
         ]
       }
+      late_notices: {
+        Row: {
+          created_at: string
+          id: string
+          minutes: number
+          profile_id: string
+          table_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          minutes: number
+          profile_id: string
+          table_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          minutes?: number
+          profile_id?: string
+          table_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "late_notices_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "late_notices_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "late_notices_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "late_notices_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "late_notices_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "dinner_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matching_runs: {
         Row: {
           algo_version: string
@@ -3695,6 +3755,7 @@ export type Database = {
         | "empujon"
         | "encuesta_despues"
         | "puesto_con_cupon"
+        | "llego_tarde"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -3928,6 +3989,7 @@ export const Constants = {
         "empujon",
         "encuesta_despues",
         "puesto_con_cupon",
+        "llego_tarde",
       ],
       event_format_t: [
         "dinner",

@@ -49,6 +49,9 @@ type Api = {
     sitio: string; Sitio: string; sitioCorto: string
     sentados: string; juntarse: string; mia: string; TU: string
   }
+  ZONA: string
+  diaDe: (iso: string | null | undefined) => string | null
+  horaDe: (iso: string | null | undefined) => string | null
 }
 
 const api = reglas as Api
@@ -62,6 +65,15 @@ export const aE164 = api.aE164
 export const REGLAS = api.REGLAS
 /** Mesa o grupo, según el formato. La tabla vive en public/reglas.js. */
 export const vozDe = api.vozDe
+/**
+ * El dia y la hora de una fecha, en la zona del producto.
+ *
+ * Del mismo fichero que los usa el navegador y la app: la hora de una cena
+ * no es una regla —sale del evento— y calcularla en tres sitios es como se
+ * acaba diciendo «a las siete» donde son las ocho.
+ */
+export const diaDe = api.diaDe
+export const horaDe = api.horaDe
 export type { Campo }
 
 /**
