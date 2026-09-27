@@ -462,9 +462,9 @@ class Component extends DCLogic {
 
     const dt = this.state.datos;
 
-    // Cuenta atrás a la revelación REAL de esta fecha, no al próximo jueves
+    // Cuenta atrás a la revelación REAL de esta fecha, no al próximo sábado
     // de calendario: si una semana se mueve la cena, el reloj se movería con
-    // ella y la pantalla seguiría contando a un jueves que ya no aplica.
+    // ella y la pantalla seguiría contando a un sábado que ya no aplica.
     const d = new Date(this.state.ahora);
     const t = dt && dt.revelaEn ? new Date(dt.revelaEn) : d;
     const s = Math.max(0, Math.floor((t.getTime() - d.getTime()) / 1000));
@@ -659,12 +659,12 @@ class Component extends DCLogic {
       bajadaVacia: revisando
         ? 'Lo mira una persona, no un programa. Suele estar en menos de 24 horas y te avisamos por correo en cuanto esté.'
         : (sinMesaAun
-          ? 'Ya estás dentro de esta fecha. Falta armar los grupos, y eso se hace el mismo jueves.'
+          ? 'Ya estás dentro de esta fecha. Falta armar los grupos, y eso se hace el mismo sábado.'
           : 'Cuando apartes puesto en una fecha, aquí aparece tu mesa: el sitio, la hora y quiénes son los otros cinco.'),
       notaVacia: revisando
         ? 'Mientras tanto no tienes que hacer nada. En cuanto te verifiquemos podrás apartar puesto en la próxima fecha.'
         : (sinMesaAun
-          ? 'El jueves a mediodía se abre todo: el sitio, la dirección, tu número de mesa y los otros cinco.'
+          ? 'El sábado a mediodía se abre todo: el sitio, la dirección, tu número de mesa y los otros cinco.'
           : 'Cada semana se abre una fecha. Son seis personas, y el sitio lo elegimos nosotros.'),
       // Quien esta en revision no tiene boton: no hay nada que pueda pulsar
       // todavia, y un boton que lleva a una puerta cerrada es peor que nada.
@@ -788,7 +788,7 @@ class Component extends DCLogic {
       errorF11: this.state.errorF11,
       hayErrorF11: !!this.state.errorF11,
 
-      // "jueves 14" con la cena el 13, y "SE ABRE EL JUEVES" fijo. Las tres
+      // "sábado 14" con la cena el 13, y "SE ABRE EL SÁBADO" fijo. Las tres
       // salen de la fecha real: si la cena se mueve, el texto se mueve.
       // El sello va en 24h ("A LAS 12:00"), como lo escribió Design; el
       // "7:00 p.m." de abajo es la hora de la cena y esa sí va en formato

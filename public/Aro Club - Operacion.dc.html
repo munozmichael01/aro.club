@@ -1518,7 +1518,7 @@ class Component extends DCLogic {
    * Marcar quien vino. Cicla sin marcar -> vino -> no vino -> sin marcar.
    *
    * Tres posiciones porque «todavia no se sabe» es un estado de verdad: el
-   * jueves a las nueve de la noche nadie ha venido aun, y un interruptor de
+   * sábado a las nueve de la noche nadie ha venido aun, y un interruptor de
    * dos posiciones obliga a mentir en uno de los dos sentidos.
    *
    * Recarga el historico en vez de tocar la lista a mano: el servidor es
@@ -2173,7 +2173,7 @@ class Component extends DCLogic {
      * Dos cosas que hasta ahora no decía nadie y que solo se veían restando:
      *
      *  - Quien no acepta NINGUNA zona abierta. El reparto lo manda a espera a
-     *    propósito y le sale `sin_mesa`, que es correcto — pero el jueves. La
+     *    propósito y le sale `sin_mesa`, que es correcto — pero el sábado. La
      *    única pista en el panel era que la cabecera dijera «1 apuntado» y su
      *    única zona «0». Sabiéndolo antes se abre otra zona a tiempo.
      *  - Una zona abierta sin local. `faltaSitio` ya lo miraba pero solo
@@ -2971,7 +2971,7 @@ class Component extends DCLogic {
             // miembro y `events_attended` leian una columna que nunca cambiaba.
             //
             // Tres estados y no dos: «todavia no se sabe» es de verdad —el
-            // jueves a las nueve nadie ha venido aun— y un interruptor de dos
+            // sábado a las nueve nadie ha venido aun— y un interruptor de dos
             // posiciones obliga a mentir en uno de los dos sentidos.
             etiquetaVino: c.vino === 'si' ? 'Vino. Pulsa para marcar que no vino'
               : c.vino === 'no' ? 'No vino. Pulsa para dejarlo sin marcar'
@@ -3370,7 +3370,7 @@ class Component extends DCLogic {
             sinLocal.length
               ? (sinLocal.length === 1 ? 'La zona ' : 'Las zonas ') + sinLocal.join(' y ')
                 + (sinLocal.length === 1 ? ' está abierta y no tiene local' : ' están abiertas y no tienen local')
-                + ': se puede apuntar gente y no hay dónde sentarla. Publicar lo rechaza, pero eso es el jueves.'
+                + ': se puede apuntar gente y no hay dónde sentarla. Publicar lo rechaza, pero eso es el sábado.'
               : ''
           ].filter(Boolean).join(' '),
           avisoVerCaja: 'border-radius:22px;border:1px solid #8F4515;background:rgba(143,69,21,.06);padding:16px 18px;font:400 14px/1.55 \'Inter Tight\',sans-serif;color:#2C4A38;text-wrap:pretty',

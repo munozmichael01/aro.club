@@ -519,7 +519,7 @@ class Component extends DCLogic {
       : n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' ' + moneda;
 
     // La cabecera sale de la fecha de verdad. Antes venia de parametros de
-    // la URL y, sin ellos, de «Jueves 14 · Las Mercedes»: una fecha y un
+    // la URL y, sin ellos, de «Sábado 14 · Las Mercedes»: una fecha y un
     // sitio inventados justo encima del importe que va a transferir.
     const ev = S.ev || { tipo: 'Cenas' };
     const titulos = { Cenas: 'Cena', Drinks: 'Drinks', Movimiento: 'Movimiento', Coffee: 'Coffee' };

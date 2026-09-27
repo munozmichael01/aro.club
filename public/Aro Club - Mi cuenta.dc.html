@@ -130,7 +130,7 @@
 
     <div id="agenda" style="margin-top:clamp(32px,4.4vw,48px);scroll-margin-top:80px">
       <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:12px">Lo que viene en Caracas</div>
-      <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:54ch;margin:0 0 18px;text-wrap:pretty">Te apuntas a una fecha, no a una mesa. <em style="font-weight:600;color:#14342A">Cenas siempre con cinco personas.</em> Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y el jueves a las doce sabes en cuál te tocó. Cada fecha se cierra 48 horas antes.</p>
+      <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:54ch;margin:0 0 18px;text-wrap:pretty">Te apuntas a una fecha, no a una mesa. <em style="font-weight:600;color:#14342A">Cenas siempre con cinco personas.</em> Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y el sábado a las doce sabes en cuál te tocó. Cada fecha se cierra 48 horas antes.</p>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(46%,132px),1fr));gap:clamp(10px,1.4vw,14px);margin-bottom:20px">
         <sc-for list="{{ filtros }}" as="f" hint-placeholder-count="4">
@@ -299,7 +299,7 @@ class Component extends DCLogic {
 
     // La mesa, de la MISMA fuente que Mi mesa. Este bloque tenia el
     // restaurante, la direccion, la fecha, el numero de mesa y los cinco
-    // comensales escritos a mano —Cardenal, Calle Madrid, jueves 14, mesa
+    // comensales escritos a mano —Cardenal, Calle Madrid, sábado 14, mesa
     // 04, "Andres, Gabriela, Jose Manuel, Andreina, Luis"—: la pantalla que
     // te dice donde presentarte a cenar se lo inventaba entero.
     //
@@ -315,7 +315,16 @@ class Component extends DCLogic {
 
   reloj() {
     const d = new Date(this.state.ahora);
-    let dias = (4 - d.getDay() + 7) % 7;
+    // 6 = sábado. Era 4, el jueves, y con la única fecha abierta en sábado
+    // este reloj contaba a un día que no existe: la cuenta decía «ABRE EN
+    // 4D» y Mi mesa —que sí cuenta a la revelación REAL de la fecha— decía
+    // «6d 16h». Dos relojes discrepando sobre lo único que esta pantalla
+    // promete.
+    //
+    // Sigue siendo un día de la semana escrito a mano, y eso es lo que hay
+    // que quitar: tiene que salir del `reveal_at` de la próxima fecha, como
+    // en Mi mesa. Mientras tanto, que al menos apunte al día que hay.
+    let dias = (6 - d.getDay() + 7) % 7;
     const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0);
     if (dias === 0 && d.getTime() >= t.getTime()) dias = 7;
     t.setDate(t.getDate() + dias);
@@ -372,8 +381,8 @@ class Component extends DCLogic {
         id: 'reservar', sello: 'LISTA PARA RESERVAR',
         verif: 'ok', respuestas: 'Completas', creditos: '4 de 4',
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
-        titulo: 'Hay cena el jueves en Las Mercedes.',
-        cuerpo: 'Te apuntas a la fecha, pagas en bolívares, y el jueves al mediodía sabes en qué mesa te tocó y con quién.',
+        titulo: 'Hay cena el sábado en Las Mercedes.',
+        cuerpo: 'Te apuntas a la fecha, pagas en bolívares, y el sábado al mediodía sabes en qué mesa te tocó y con quién.',
         // El boton dice lo que hace. Decia «Reservar mi puesto» y no reserva:
         // baja a la agenda, que es donde se elige zona y hora y donde esta el
         // boton que si aparta el puesto. El texto honesto ya existia catorce
@@ -384,7 +393,7 @@ class Component extends DCLogic {
       {
         id: 'porconfirmar', sello: 'PAGO EN REVISIÓN',
         verif: 'ok', respuestas: 'Completas', creditos: '3 de 4',
-        creditosCuerpo: 'Uno está apartado para el jueves, a la espera de confirmar el pago.',
+        creditosCuerpo: 'Uno está apartado para el sábado, a la espera de confirmar el pago.',
         titulo: 'Tu puesto está apartado.',
         cuerpo: 'Reportaste el pago y una persona lo está cuadrando con el banco. Suele tardar menos de una hora. Nadie más puede tomar tu puesto mientras tanto.',
         accion: 'Ver mi reserva', enlace: '/mesa', secundaria: 'Algo no cuadra'
@@ -392,9 +401,9 @@ class Component extends DCLogic {
       {
         id: 'reservada', sello: 'TIENES MESA', reloj: true,
         verif: 'ok', respuestas: 'Completas', creditos: '3 de 4',
-        creditosCuerpo: 'Uno está reservado para el jueves. Los otros tres no caducan.',
-        titulo: 'Jueves 14, siete de la noche.',
-        cuerpo: 'Ya está reservada a tu nombre. El jueves al mediodía se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.',
+        creditosCuerpo: 'Uno está reservado para el sábado. Los otros tres no caducan.',
+        titulo: 'Sábado 14, siete de la noche.',
+        cuerpo: 'Ya está reservada a tu nombre. El sábado al mediodía se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.',
         // A /mesa, no a la landing. «Ver mi reserva» llevaba a la portada
         // pública —la rama de al lado, `porconfirmar`, ya apuntaba bien—, así
         // que quien tenía mesa pulsaba «ver mi reserva» y acababa en la
@@ -429,7 +438,7 @@ class Component extends DCLogic {
       return dias < 7 ? 'Esta semana' : (dias < 14 ? 'La semana que viene' : 'Más adelante');
     };
     const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-    // "Hay cena el jueves en Las Mercedes" y "Ya van 34 apuntados y se
+    // "Hay cena el sábado en Las Mercedes" y "Ya van 34 apuntados y se
     // cierra el martes" estaban escritos a mano. Con doce apuntados y otra
     // fecha, la pantalla que mas se abre mentia en dos cifras.
     const tituloReservar = (d) => {
@@ -475,7 +484,7 @@ class Component extends DCLogic {
         : (d.creditos === 1 ? '1 crédito' : d.creditos + ' créditos'),
       creditosCuerpo: d.creditos === 0
         ? (d.reserva
-            ? 'Tu puesto del jueves ya está pagado. Si cancelas con más de 24 horas, el crédito vuelve aquí.'
+            ? 'Tu puesto del sábado ya está pagado. Si cancelas con más de 24 horas, el crédito vuelve aquí.'
             : 'Se paga cada cena al reservarla. Si cancelas con más de 24 horas, el crédito queda aquí para la siguiente.')
         : (d.creditos === 1
             ? 'Un crédito sin usar, de una cena que cancelaste a tiempo. No caduca.'
@@ -483,7 +492,7 @@ class Component extends DCLogic {
       sello: d.estado === 'perfil'
         ? 'TE FALTAN ' + d.respuestas.faltan + (d.respuestas.faltan === 1 ? ' PREGUNTA' : ' PREGUNTAS')
         : base.sello,
-      // La fecha venía escrita a mano en el copy y decía "Jueves 14" con la
+      // La fecha venía escrita a mano en el copy y decía "Sábado 14" con la
       // cena el 13. Ninguna cifra derivable se escribe a mano (regla 4).
       titulo: d.reserva && (d.estado === 'reservada' || d.estado === 'abierta')
         ? (() => {
@@ -602,7 +611,7 @@ class Component extends DCLogic {
     const tipos = ['Todo', 'Cenas', 'Drinks', 'Movimiento', 'Coffee'];
     // la polaroid ES el filtro: el elemento con más fuerza de la marca hace de navegación
     const fotos = { Cenas: 'fotos/cenas.jpg', Drinks: 'fotos/drinks.jpg', Movimiento: 'fotos/movimiento.jpg', Coffee: 'fotos/coffee.jpg' };
-    const dias = { Cenas: 'Jueves y viernes', Drinks: 'Viernes y sábado', Movimiento: 'Sábado y domingo', Coffee: 'Sábado y domingo' };
+    const dias = { Cenas: 'Sábado y viernes', Drinks: 'Viernes y sábado', Movimiento: 'Sábado y domingo', Coffee: 'Sábado y domingo' };
     const rot = { Cenas: '-1.8deg', Drinks: '1.5deg', Movimiento: '-1.3deg', Coffee: '1.6deg' };
     // Cuales tienen fecha abierta de verdad. Se DERIVA de la agenda que manda
     // el servidor, no se escribe a mano: el dia que se abra la primera fecha
@@ -642,7 +651,7 @@ class Component extends DCLogic {
     // y el umbral es el mínimo para que esa fecha salga adelante.
     const MINIMO = 12;
 
-    // Seis fechas escritas a mano —con "Jueves 14" y 34 apuntados— en la
+    // Seis fechas escritas a mano —con "Sábado 14" y 34 apuntados— en la
     // pantalla donde se decide si vas a cenar. Ahora salen de la base.
     const agendaSrv = (d && d.agenda) || [];
     const yaApuntada = (() => {

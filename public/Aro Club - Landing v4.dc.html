@@ -53,7 +53,7 @@
 <meta property="og:site_name" content="Aro Club" />
 <meta property="og:locale" content="es_VE" />
 <meta property="og:url" content="https://aro.club/" />
-<meta property="og:title" content="Ya sabemos con quién cenas el jueves." />
+<meta property="og:title" content="Ya sabemos con quién cenas el sábado." />
 <meta property="og:description" content="Un club para conocer gente en tu ciudad. Elegimos el sitio, armamos el grupo y reservamos a tu nombre — tú llegas a las siete." />
 <meta property="og:image" content="https://aro.club/correo/mesa-de-seis.jpg" />
 <meta property="og:image:alt" content="Seis personas cenando en una mesa" />
@@ -178,7 +178,7 @@
         "name": "¿Cómo sé dónde es, y qué pasa si llego tarde?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "El jueves a las doce del mediodía se abre todo: restaurante, dirección y tu número de mesa. Si se te hace tarde, avisas desde la app con un toque y se lo decimos a la mesa. Nadie se queda mirando la puerta."
+          "text": "El sábado a las doce del mediodía se abre todo: restaurante, dirección y tu número de mesa. Si se te hace tarde, avisas desde la app con un toque y se lo decimos a la mesa. Nadie se queda mirando la puerta."
         }
       },
       {
@@ -341,7 +341,7 @@
         <span style="flex:0 0 auto;width:6px;height:6px;border-radius:999px;background:#E39C63"></span><span>{{ textoChip }}</span>
       </div>
 
-      <h1 data-reveal="1" style="font:400 clamp(44px,8.4vw,112px)/0.94 'Young Serif',Georgia,serif;letter-spacing:-.04em;color:#FAF3E4;margin:0;max-width:14ch;text-wrap:balance">Ya sabemos con quién cenas el jueves.<br /><em style="color:#E39C63">Tú no. Todavía.</em></h1>
+      <h1 data-reveal="1" style="font:400 clamp(44px,8.4vw,112px)/0.94 'Young Serif',Georgia,serif;letter-spacing:-.04em;color:#FAF3E4;margin:0;max-width:14ch;text-wrap:balance">Ya sabemos con quién cenas el sábado.<br /><em style="color:#E39C63">Tú no. Todavía.</em></h1>
 
       <p data-reveal="2" style="font:400 clamp(17px,1.7vw,23px)/1.5 'Inter Tight',sans-serif;color:#E4EDE6;max-width:44ch;margin:clamp(22px,3vw,32px) 0 0;text-wrap:pretty">Un club para conocer gente en tu ciudad. Empezamos por la cena: <em style="font-weight:600;color:#FAF3E4">seis desconocidos verificados, una mesa, cada semana.</em></p>
 
@@ -422,7 +422,7 @@
               <span style="{{ pasoCuando }}">Dos minutos</span>
             </span>
           </div>
-          <div style="{{ pasoCuerpo }}">Eliges el jueves que te sirve y pagas en bolívares. La plaza queda tuya.</div>
+          <div style="{{ pasoCuerpo }}">Eliges el sábado que te sirve y pagas en bolívares. La plaza queda tuya.</div>
           <div style="{{ pantalla }}">
             <div style="{{ pantallaCab }}"><span>9:41</span><span style="display:flex;gap:4px"><span style="{{ punto }}"></span><span style="{{ punto }}"></span></span></div>
             <div style="padding:13px 14px">
@@ -445,7 +445,7 @@
             <span style="{{ pasoNumOsc }}">04</span>
             <span style="flex:1;min-width:0">
               <span style="{{ pasoTituloOsc }}">Cenas</span>
-              <span style="{{ pasoCuandoOsc }}">El jueves a las 12:00</span>
+              <span style="{{ pasoCuandoOsc }}">El sábado a las 12:00</span>
             </span>
           </div>
           <div style="{{ pasoCuerpoOsc }}">Se abre todo: el restaurante, la dirección, tu número de mesa y los otros cinco nombres.</div>
@@ -871,7 +871,7 @@ class Component extends DCLogic {
     if (nuevos.length) setTimeout(() => nuevos.forEach(ver), 2400);
   }
 
-  // el martes a las 19:00, que es cuando se cierra la fecha del jueves
+  // el martes a las 19:00, que es cuando se cierra la fecha del sábado
   reloj() {
     const d = new Date(this.state.ahora);
     const p = this.state.proxima;
@@ -1012,7 +1012,7 @@ class Component extends DCLogic {
       avatar: 'flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#A0511F') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 10px/1 \'Inter Tight\',sans-serif'
     }));
     const eventos = [
-      ['Jueves 14 · 7:00 p.m.', '#A0511F'], ['Jueves 21 · 7:00 p.m.', '#1B5138'], ['Viernes 22 · 8:00 p.m.', '#2D6A4F']
+      ['Sábado 14 · 7:00 p.m.', '#A0511F'], ['Sábado 21 · 7:00 p.m.', '#1B5138'], ['Viernes 22 · 8:00 p.m.', '#2D6A4F']
     ].map((e, i) => ({
       cuando: e[0],
       caja: 'display:flex;gap:10px;align-items:center;padding:9px;border-radius:14px;background:' + (i === 0 ? '#F2E9D5' : 'transparent') + ';border:1px solid ' + (i === 0 ? 'transparent' : 'rgba(20,52,42,.12)'),
@@ -1040,7 +1040,7 @@ class Component extends DCLogic {
     }));
 
     const planDefs = [
-      ['Cenas', 'Jueves y viernes', 'fotos/cenas.jpg', '-1.8deg', true],
+      ['Cenas', 'Sábado y viernes', 'fotos/cenas.jpg', '-1.8deg', true],
       ['Drinks', 'Una copa y conversación', 'fotos/drinks.jpg', '1.5deg', false],
       ['En movimiento', 'Correr, caminar el cerro, entrenar', 'fotos/movimiento.jpg', '-1.3deg', false],
       ['Coffee', 'Café de sábado por la mañana', 'fotos/coffee.jpg', '1.6deg', false]
@@ -1113,7 +1113,7 @@ class Component extends DCLogic {
       ['¿A qué hora es y cuánto dura?', 'A las siete de la tarde, y sobre las nueve estás libre. Es a propósito: una cena que no se come la noche entera es una cena a la que se dice que sí.'],
       ['¿Y si soy el más joven de la mesa?', 'No lo vas a ser por mucho. Entre la persona más joven y la mayor de una mesa no hay más de diez años, así que si tienes 24 y eres el más joven, el mayor tendrá 34 como mucho. Es una regla del emparejamiento, no una casualidad.'],
       ['Soy vegetariano, ¿o tengo una alergia?', 'Nos lo dices en el perfil y elegimos un sitio donde puedas comer sin negociar con la carta. No se lo contamos a la mesa: si quieres explicarlo tú, es cosa tuya.'],
-      ['¿Cómo sé dónde es, y qué pasa si llego tarde?', 'El jueves a las doce del mediodía se abre todo: restaurante, dirección y tu número de mesa. Si se te hace tarde, avisas desde la app con un toque y se lo decimos a la mesa. Nadie se queda mirando la puerta.'],
+      ['¿Cómo sé dónde es, y qué pasa si llego tarde?', 'El sábado a las doce del mediodía se abre todo: restaurante, dirección y tu número de mesa. Si se te hace tarde, avisas desde la app con un toque y se lo decimos a la mesa. Nadie se queda mirando la puerta.'],
       ['¿Qué pasa si alguien se comporta mal?', 'Lo reportas desde tu mesa después y lo lee una persona el mismo día. Puedes bloquear a alguien para que nunca vuelva a coincidir contigo sin que se entere, y quien acumula reportes sale del club. Sin escándalo y sin apelación pública.'],
       ['¿Por qué preguntan mi edad y mi género?', 'Para que el grupo tenga referencias parecidas y esté balanceado. No se muestran a los demás: de ti solo ven el nombre con el que quieres que te llamen y tu sector.'],
       ['¿Cuándo hay mesa en mi zona?', 'Abrimos donde se junta suficiente gente que pueda llegar. Marca las tuyas arriba y te escribimos el día que se abre la primera. No antes: no queremos escribirte para nada.']

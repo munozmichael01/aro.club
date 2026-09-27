@@ -10,7 +10,7 @@ Podía quejarme, que es lo fácil. O podía armar lo que me hacía falta. Eso es
 
 ## Qué es
 
-Seis personas que no se conocen, una mesa, un jueves.
+Seis personas que no se conocen, una mesa, un sábado.
 
 Nosotros armamos la mesa y reservamos. Tú apareces. No hay perfiles que mirar, no hay fotos, no hay a quién elegir, no hay conversación previa. La primera conversación es en la mesa.
 

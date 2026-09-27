@@ -69,8 +69,8 @@
           <div data-reveal="0" style="display:inline-flex;align-items:center;gap:9px;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(27,81,56,.22);font:500 12px/1 'Inter Tight',sans-serif;color:#1B5138;margin-bottom:clamp(18px,2.2vw,26px)">
             <span style="width:6px;height:6px;border-radius:999px;background:#C0662F"></span>Caracas · próxima mesa en {{ relojCorto }}
           </div>
-          <h1 data-reveal="1" style="font:400 clamp(40px,6.2vw,86px)/0.98 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance">Ya sabemos con quién cenas el jueves.<br /><em style="color:#8F4515">Tú no. Todavía.</em></h1>
-          <p data-reveal="2" style="font:500 clamp(17px,1.5vw,22px)/1.4 'Inter Tight',sans-serif;letter-spacing:-.01em;color:#1B5138;max-width:32ch;margin:clamp(18px,2.2vw,26px) 0 0">Seis desconocidos, una mesa, el jueves.</p>
+          <h1 data-reveal="1" style="font:400 clamp(40px,6.2vw,86px)/0.98 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance">Ya sabemos con quién cenas el sábado.<br /><em style="color:#8F4515">Tú no. Todavía.</em></h1>
+          <p data-reveal="2" style="font:500 clamp(17px,1.5vw,22px)/1.4 'Inter Tight',sans-serif;letter-spacing:-.01em;color:#1B5138;max-width:32ch;margin:clamp(18px,2.2vw,26px) 0 0">Seis desconocidos, una mesa, el sábado.</p>
           <p data-reveal="3" style="font:400 clamp(15px,1.2vw,18px)/1.55 'Inter Tight',sans-serif;color:#456352;max-width:40ch;margin:14px 0 0;text-wrap:pretty">Te sentamos con cinco personas de tu ciudad que no conoces. A las doce del mediodía se abre todo: el sitio, tu mesa y quiénes son.</p>
           <div data-reveal="4" style="margin-top:clamp(24px,3vw,34px)">
             <a href="#registro" style="display:inline-flex;align-items:center;min-height:58px;padding:0 30px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 17px/1 'Inter Tight',sans-serif;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Encuentra tu mesa</a>
@@ -232,7 +232,7 @@
             <div style="{{ pasoNum }}">04</div>
             <div style="{{ pasoTitulo }}">Cenas</div>
             <div style="{{ pasoCuerpo }}">A las 12:00 en punto se abre todo: sitio, dirección, tu número de mesa y los otros cinco nombres.</div>
-            <div style="{{ pasoChip }}">El jueves</div>
+            <div style="{{ pasoChip }}">El sábado</div>
           </div>
         </div>
       </div>
@@ -554,7 +554,16 @@ class Component extends DCLogic {
 
   reloj() {
     const d = new Date(this.state.ahora);
-    let dias = (4 - d.getDay() + 7) % 7;
+    // 6 = sábado. Era 4, el jueves, y con la única fecha abierta en sábado
+    // este reloj contaba a un día que no existe: la cuenta decía «ABRE EN
+    // 4D» y Mi mesa —que sí cuenta a la revelación REAL de la fecha— decía
+    // «6d 16h». Dos relojes discrepando sobre lo único que esta pantalla
+    // promete.
+    //
+    // Sigue siendo un día de la semana escrito a mano, y eso es lo que hay
+    // que quitar: tiene que salir del `reveal_at` de la próxima fecha, como
+    // en Mi mesa. Mientras tanto, que al menos apunte al día que hay.
+    let dias = (6 - d.getDay() + 7) % 7;
     const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0);
     if (dias === 0 && d.getTime() >= t.getTime()) dias = 7;
     t.setDate(t.getDate() + dias);
@@ -653,7 +662,7 @@ class Component extends DCLogic {
     const marco = (rot, extra) => 'background:#FFFBF0;padding:9px 9px 0;border-radius:12px;box-shadow:0 14px 34px -18px rgba(20,52,42,.45);transform:rotate(' + rot + ');' + (extra || '');
 
     const polDefs = [
-      ['fotos/cenas.jpg', 'cenas · jueves y viernes', '-2.2deg'],
+      ['fotos/cenas.jpg', 'cenas · sábados', '-2.2deg'],
       ['fotos/drinks.jpg', 'drinks · viernes y sábado', '1.8deg'],
       ['fotos/movimiento.jpg', 'movimiento · sábado y domingo', '1.4deg'],
       ['fotos/coffee.jpg', 'coffee · sábado y domingo', '-1.6deg']
@@ -671,7 +680,7 @@ class Component extends DCLogic {
       ['La mesa que dejaste ya no existe', 'Te fuiste unos años. La ciudad está igual pero tu grupo se deshizo: uno en Madrid, dos en Bogotá, el resto con horarios imposibles.', 'fotos/reco-volvio.jpg', '1.4deg'],
       ['Conoces la ciudad, no conoces a nadie', 'Llegaste hace poco. Ya sabes moverte, ya tienes rutina. Pero los grupos de aquí están cerrados desde el colegio.', wiki('Autopista Francisco Fajardo y el cerro el Ávila en la noche noche, Caracas.jpg'), '-1.2deg'],
       ['Llevas años y sigues siendo el nuevo', 'Llegaste de otro país. Hablas el idioma, entiendes el humor, y casi todo tu círculo es gente que también llegó.', 'fotos/reco-extranjero.jpg', '1.7deg'],
-      ['Vienes dos semanas y no quieres pasarlas en casa', 'Aterrizas en diciembre o en agosto, ves a la familia, y de repente son las siete de un jueves y no hay a quién llamar.', wiki('Caracas desde el teleférico.JPG'), '-1.5deg']
+      ['Vienes dos semanas y no quieres pasarlas en casa', 'Aterrizas en diciembre o en agosto, ves a la familia, y de repente son las siete de un sábado y no hay a quién llamar.', wiki('Caracas desde el teleférico.JPG'), '-1.5deg']
     ];
     const reconocimientos = recoDefs.map((r) => ({
       frase: r[0], cuerpo: r[1], tinte: TINTE,
@@ -680,7 +689,7 @@ class Component extends DCLogic {
     }));
 
     const planDefs = [
-      ['Cenas', 'Jueves y viernes', 'fotos/cenas.jpg', '-1.8deg'],
+      ['Cenas', 'Sábado y viernes', 'fotos/cenas.jpg', '-1.8deg'],
       ['Drinks', 'Viernes y sábado', 'fotos/drinks.jpg', '1.5deg'],
       ['Movimiento', 'Sábado y domingo', 'fotos/movimiento.jpg', '-1.3deg'],
       ['Coffee', 'Sábado y domingo', 'fotos/coffee.jpg', '1.6deg']
@@ -700,7 +709,7 @@ class Component extends DCLogic {
     }));
 
     const eventos = [
-      ['Cena', 'Jueves 14 · 7:00 p.m.', '◍', '#A0511F'],
+      ['Cena', 'Sábado 14 · 7:00 p.m.', '◍', '#A0511F'],
       ['Drinks', 'Viernes 15 · 8:00 p.m.', '◍', '#1B5138'],
       ['Movimiento', 'Domingo 17 · 7:00 a.m.', '◍', '#2D6A4F']
     ].map((e, i) => ({

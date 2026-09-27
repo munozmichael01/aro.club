@@ -17,7 +17,7 @@ import type { Valores } from '@/lib/plantillas'
  * si la cancelación lleva cortesía—, pero lo demás se vuelve a leer de la
  * base al mandar y no se copia al encolar. La razón es que entre encolar y
  * mandar pueden pasar días: el correo de la mesa se programa al publicar y
- * sale el jueves a mediodía, y si el sitio cambió por el camino, el correo
+ * sale el sábado a mediodía, y si el sitio cambió por el camino, el correo
  * tiene que decir el sitio nuevo. Un payload con todo dentro es una foto
  * vieja que se manda como si fuera de hoy.
  */
@@ -258,7 +258,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           zonas: zonas.length ? unirCon(zonas, ' o ') : 'tu zona',
           // El pie de la tarjeta. En minúscula, como lo diseñó Design, pero
           // con la zona de verdad y no con «las mercedes» escrito a mano.
-          pieDeZona: zonas.length ? `jueves · ${zonas[0].toLowerCase()}` : 'jueves',
+          pieDeZona: zonas.length ? `sábado · ${zonas[0].toLowerCase()}` : 'sábado',
           // El botón. NO puede ser `/cuestionario` a secas.
           //
           // Este correo lo recibe quien dejó su correo y se quedó a medias: no
@@ -372,7 +372,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
      * Iba junto a `mesa_asignada` en este mismo `case`, así que llamaba a
      * `laMesaDe()` — y esa función lee el sitio, la dirección, el número y
      * los cinco nombres de la base al enviar. El cron sale a las 13:00 UTC,
-     * las nueve de Caracas, y `reveal_at` es a las 16:00: cada jueves este
+     * las nueve de Caracas, y `reveal_at` es a las 16:00: cada sábado este
      * correo contaba a las 09:01 lo que el producto promete no contar hasta
      * mediodía. Tres horas antes, todas las semanas.
      *

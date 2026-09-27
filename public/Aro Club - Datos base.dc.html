@@ -128,7 +128,7 @@
     <sc-if value="{{ faltaCuenta }}" hint-placeholder-val="{{ false }}">
         <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(28px,4vw,38px);max-width:460px">
           <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:6px">CÓMO QUIERES ENTRAR A PARTIR DE AHORA</div>
-          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar el jueves para ver tu mesa.</div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Guardamos tus respuestas en esta cuenta. Es con lo que vuelves a entrar el sábado para ver tu mesa.</div>
 
           <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
             <div style="position:relative;display:flex;align-items:center">
@@ -186,7 +186,7 @@
       <div style="margin-top:clamp(26px,3.4vw,34px);animation:aro-open 300ms ease both">
         <label for="correo" style="{{ etiqueta }}">Tu correo</label>
         <input id="correo" type="email" value="{{ correo }}" onChange="{{ onCorreo }}" placeholder="daniela@correo.com" autocomplete="email" inputmode="email" style="{{ campo }}" />
-        <div style="{{ pista }}">Es por donde te avisamos de tu mesa: el jueves a mediodía, cuando se revela. No hay lista de difusión ni nada que no hayas pedido.</div>
+        <div style="{{ pista }}">Es por donde te avisamos de tu mesa: el sábado a mediodía, cuando se revela. No hay lista de difusión ni nada que no hayas pedido.</div>
       </div>
     </sc-if>
 
@@ -611,7 +611,7 @@ class Component extends DCLogic {
         bajada: !this._lead
           ? 'Esto es todo lo que guardamos de esta parte, y quién lo ve.'
           : (this.state.puedeCuenta
-              ? 'Crea la contraseña con la que vuelves a entrar el jueves a ver tu mesa. Debajo tienes todo lo que guardamos de ti, y quién lo ve.'
+              ? 'Crea la contraseña con la que vuelves a entrar el sábado a ver tu mesa. Debajo tienes todo lo que guardamos de ti, y quién lo ve.'
               : 'Esto es lo que guardamos de ti, y quién lo ve. Faltan las preguntas; al terminarlas creas tu cuenta.'),
         listo: true
       }
