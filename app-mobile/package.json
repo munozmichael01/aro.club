@@ -1,0 +1,31 @@
+{
+  "name": "aro-club-app",
+  "version": "0.1.0",
+  "main": "index.ts",
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@supabase/supabase-js": "^2.117.2",
+    "expo": "~57.0.25",
+    "expo-constants": "~57.0.19",
+    "expo-secure-store": "~57.0.4",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-url-polyfill": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/react": "~19.2.2",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "tipos": "tsc --noEmit && tsc --noEmit -p pruebas",
+    "test": "tsx --test pruebas/*.test.ts",
+    "prueba:api": "tsx pruebas/contra-la-api.mjs"
+  },
+  "private": true
+}

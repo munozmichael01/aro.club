@@ -42,7 +42,7 @@ Funciona **hoy, sin tocar una línea del backend**.
   correo ya registrado responde `repetido` **sin token**, y la app lo trata
   como «revisa tu correo» o «entra».
 - El título «Tu mesa del jueves» en `/mis-avisos`, la numeración del pedido y
-  la exclusión de `App` en `tsconfig.json`: arreglados.
+  la exclusión de la app en `tsconfig.json`: arreglados.
 
 ---
 
@@ -83,9 +83,9 @@ existen y tienta, pero Apple rechaza por la 4.2 (funcionalidad mínima) las
 apps que son una web con marco. Además, la sesión web va por cookie de
 navegador, y la cámara y el push serían justo las dos piezas mal resueltas.
 
-**Dónde vive el código:** en `App/` dentro de este repositorio, para que
+**Dónde vive el código:** en `app-mobile/` dentro de este repositorio, para que
 cargue `public/reglas.js` sin copias y para que el comprobador de contrato
-(§e) corra en el mismo CI. El `tsconfig.json` de la raíz ya excluye `App`, y
+(§e) corra en el mismo CI. El `tsconfig.json` de la raíz ya la excluye, y
 la app tiene el suyo.
 
 ---
@@ -300,7 +300,7 @@ Cinco capas, de la que no depende de nadie a la que pide algo:
 2. **Solo cambios aditivos en las rutas que usa la app.** Quitar o renombrar
    un campo pasa a ser una ruta nueva, no un cambio. Y, como todo aquí, **se
    vigila en vez de confiar**: `scripts/comprobar-contrato-app.mjs` valida
-   las respuestas reales contra los esquemas de `App/contrato/` y corre antes
+   las respuestas reales contra los esquemas de `app-mobile/contrato/` y corre antes
    de cada push, junto a `comprobar-cuestionario.mjs`. Quien rompa el contrato
    se entera en su terminal, no por una reseña de una estrella.
 3. **La app se identifica**: cabecera `X-Aro-App: ios/1.0.0 (12)`. El
@@ -447,7 +447,7 @@ Vercel. **La saca quien abra la cuenta de Apple.**
 
 ## Siguiente paso
 
-En marcha: el proyecto Expo en `App/`, con la sesión como primer módulo. La
+En marcha: el proyecto Expo en `app-mobile/`, con la sesión como primer módulo. La
 ruta `/auth/nativo` es la primera pieza de backend y la única que bloquea la
 salida. **Si el diseño del §g te vale, la escribo yo o la escribe quien
 mantiene el backend**, como prefieras.

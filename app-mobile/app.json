@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Aro Club",
+    "slug": "aro-club",
+    "scheme": "aroclub",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "club.aro.app",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "club.aro.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FAF3E4",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-secure-store"
+    ],
+    "extra": {
+      "api": "https://aro.club/api",
+      "supabaseUrl": "https://qdydmklrbsdemzvjsldo.supabase.co"
+    }
+  }
+}

@@ -31,12 +31,9 @@ const eslintConfig = defineConfig([
     // no tiene nada que decir sobre ella, y si lo intenta el CI se pone rojo
     // por un fichero que no es suyo.
     //
-    // Van los dos nombres mientras dura la mudanza. `App/` hay que sacarla
-    // porque en un Mac el sistema de ficheros no distingue mayúsculas: `App/`
-    // ES `app/`, Next la toma por su carpeta de rutas, encuentra una sin
-    // rutas y todo da 404. `app-mobile/` no choca: la colisión es solo con el
-    // nombre exacto.
-    "App/**",
+    // Se llama `app-mobile/` y no `App/` a propósito: en un Mac el sistema de
+    // ficheros no distingue mayúsculas, `App/` ES `app/`, Next la toma por su
+    // carpeta de rutas, encuentra una sin rutas y todo da 404 en local.
     "app-mobile/**",
   ]),
 ]);
