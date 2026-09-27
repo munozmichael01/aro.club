@@ -87,16 +87,38 @@ export const fuente = {
 } as const
 
 /**
+ * El interlineado mínimo de cada familia, MEDIDO en los propios TTF (métricas
+ * `hhea`: lo que sube por encima de la línea base —ascendentes y tildes— más
+ * lo que baja): Young Serif 1,046 + 0,366 = 1,412; Inter Tight 0,969 + 0,241
+ * = 1,210.
+ *
+ * Por qué hace falta: en CSS, un `line-height` menor que la letra solo
+ * solapa líneas y la letra se pinta entera; en React Native el `lineHeight`
+ * RECORTA la caja, y se comen las ascendentes y las tildes. La web usa 0,94
+ * en la portada y en el celular salía cortada (lo vio Michael el 27-09). Por
+ * debajo de este suelo no se baja, aunque la hoja diga menos.
+ */
+export const SUELO_INTERLINEADO: Record<string, number> = {
+  [fuente.titular]: 1.42,
+  [fuente.texto]: 1.21,
+  [fuente.textoMedia]: 1.21,
+  [fuente.textoSemi]: 1.21,
+  [fuente.textoNegrita]: 1.21,
+}
+
+/**
  * La escala tipográfica, con los tamaños de celular: el mínimo de cada
  * `clamp()` de la hoja, que es lo que la web pinta a 390 px. En React Native
  * el interlineado y el espaciado son absolutos, así que se derivan aquí del
- * tamaño con las mismas proporciones que la hoja.
+ * tamaño con las mismas proporciones que la hoja, nunca por debajo del suelo
+ * de la familia (`SUELO_INTERLINEADO`).
  */
 function estilo(familia: string, tam: number, interlineado: number, espaciadoEm = 0) {
+  const suelo = SUELO_INTERLINEADO[familia] ?? 1.21
   return {
     fontFamily: familia,
     fontSize: tam,
-    lineHeight: Math.round(tam * interlineado),
+    lineHeight: Math.max(Math.round(tam * interlineado), Math.ceil(tam * suelo)),
     letterSpacing: +(tam * espaciadoEm).toFixed(2),
   }
 }
