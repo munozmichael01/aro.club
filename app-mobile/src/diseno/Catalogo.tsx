@@ -14,7 +14,7 @@ import {
   tipo,
   useVelo,
   type Variante,
-} from './diseno'
+} from '.'
 
 /**
  * El catálogo del sistema, dentro de la app: lo mismo que
@@ -36,6 +36,8 @@ const COLORES: Array<[string, string, string]> = [
 ]
 
 const ESCALA: Array<[Variante, string]> = [
+  ['portada', 'Tú no. Todavía.'],
+  ['titularGrande', 'Empecemos por tu correo.'],
   ['display', 'Ya sabemos con quién cenas'],
   ['titulo', 'Cinco maneras de llegar'],
   ['subtitulo', 'El resto del perfil'],
@@ -81,9 +83,7 @@ export function Catalogo() {
     <ScrollView style={{ backgroundColor: color.crema }} contentContainerStyle={estilos.pagina}>
       <View style={estilos.cabecera}>
         <Marca />
-        <Texto variante="subtitulo" style={{ fontSize: 19, lineHeight: 19 }}>
-          Aro Club
-        </Texto>
+        <Texto variante="marca">Aro Club</Texto>
       </View>
 
       <Texto variante="display">

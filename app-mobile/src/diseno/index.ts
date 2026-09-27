@@ -1,5 +1,8 @@
 export { AroCarga, Marca } from './Aro'
 export { Boton, type TipoBoton } from './Boton'
+export { Campo } from './Campo'
+export { Opcion } from './Opcion'
+export { Puntos } from './Progreso'
 export { Tarjeta } from './Tarjeta'
 export { Enfasis, Texto, type Tono, type Variante } from './Texto'
 export * from './tokens'

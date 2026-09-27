@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SecureStore from 'expo-secure-store'
+import { Platform } from 'react-native'
 
 /**
  * Dónde vive la sesión: en el llavero del sistema, entera.
@@ -41,7 +42,7 @@ async function borrarTrozos(k: string) {
   await SecureStore.deleteItemAsync(`${k}.n`, OPCIONES)
 }
 
-export const almacenSeguro = {
+const llavero = {
   async getItem(clave: string): Promise<string | null> {
     const k = limpia(clave)
     const n = Number((await SecureStore.getItemAsync(`${k}.n`, OPCIONES)) ?? 0)
@@ -72,6 +73,14 @@ export const almacenSeguro = {
     await borrarTrozos(limpia(clave))
   },
 }
+
+/**
+ * En el navegador no hay llavero. La app nunca corre ahí: solo el catálogo
+ * de desarrollo, que se abre en el navegador mientras no hay simulador. Para
+ * él, AsyncStorage (que en web es el almacén del navegador). Nunca en un
+ * celular.
+ */
+export const almacenSeguro = Platform.OS === 'web' ? AsyncStorage : llavero
 
 /** Llamar una vez al arrancar, antes de leer la sesión. */
 export async function vaciarSiEsInstalacionNueva(claves: string[]): Promise<void> {

@@ -22,6 +22,18 @@ raíz: valen aquí igual.
 npm run tipos && npm test
 ```
 
+`npm test` corre dos veces, con el reloj de Madrid y con el de UTC: las
+fechas se dicen en la zona de la ciudad, esté donde esté el celular. Y
+incluye la prueba de que ningún día ni hora está escrito a mano fuera de
+`src/texto/fechas.ts`.
+
+Si tocaste la entrada, contra la API real (escribe una fila de `waitlist`
+con un correo desechable y la borra):
+
+```bash
+npm run prueba:entrada
+```
+
 Y si tocaste `src/sesion/`, también contra la API real, con la cuenta
 desechable del banco:
 

@@ -36,12 +36,16 @@ export const color = {
    * #456352, se usa este igual y se anota; no se replica la diferencia.
    */
   cuerpo: '#33513F',
+  /** Texto de un botón deshabilitado sobre crema. */
+  inerte: '#9DAEA2',
   /** Secundario y terciario: etiquetas, pistas. 5,26:1 sobre crema. */
   secundario: '#566A5D',
   /** Verde claro para texto secundario sobre verde profundo. */
   sobreVerdeSecundario: '#9CBBA6',
-  /** Texto deshabilitado sobre verde. */
-  sobreVerdeInerte: '#C5D8CA',
+  /** Cuerpo sobre verde profundo (las bajadas del registro) y texto deshabilitado sobre verde: el mismo tono. */
+  cuerpoSobreVerde: '#C5D8CA',
+  /** Aviso sobre verde profundo: el error del campo de correo en el registro. */
+  avisoSobreVerde: '#F0BE9C',
 
   // --- Terracota: el único acento --------------------------------------
   /**
@@ -98,12 +102,25 @@ function estilo(familia: string, tam: number, interlineado: number, espaciadoEm 
 }
 
 export const tipo = {
+  /** El titular de la portada (h1 de la landing, 44 en celular). */
+  portada: estilo(fuente.titular, 44, 0.94, -0.04),
+  /** Los titulares del registro: «Empecemos por tu correo.» (36 en celular). */
+  titularGrande: estilo(fuente.titular, 36, 0.98, -0.035),
   display: estilo(fuente.titular, 30, 1, -0.035),
   titulo: estilo(fuente.titular, 25, 1.05, -0.03),
   subtitulo: estilo(fuente.titular, 23, 1.15, -0.02),
+  /** «Aro Club» junto a la marca, en la cabecera. */
+  marca: estilo(fuente.titular, 19, 1.05, -0.02),
   cuerpoGrande: estilo(fuente.texto, 17, 1.55),
   cuerpo: estilo(fuente.texto, 15, 1.6),
+  /** Texto de apoyo: avisos, pasos pendientes. */
+  cuerpoChico: estilo(fuente.texto, 14, 1.5),
+  /** Lo más pequeño que se lee: garantías, chips. */
+  nota: estilo(fuente.texto, 13, 1.5),
+  /** Un título dentro de una lista (el paso pendiente). */
+  rotulo: estilo(fuente.textoSemi, 15, 1.3),
   etiqueta: estilo(fuente.textoMedia, 12, 1.25, 0.14),
+  etiquetaChica: estilo(fuente.textoMedia, 11, 1.25, 0.14),
   cifra: { ...estilo(fuente.textoNegrita, 28, 1, -0.04), fontVariant: ['tabular-nums'] },
 } satisfies Record<string, TextStyle>
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AccessibilityInfo, Animated, Easing, View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 
-import { color, tinta, tiempo } from './tokens'
+import { color, cremaAlfa, tinta, tiempo } from './tokens'
 
 /**
  * La marca: un aro con seis puntos. Cinco del color de la tinta y UNO en
@@ -35,16 +35,15 @@ function Dibujo({ tam = 22, anillo, grosor, puntos }: Props) {
   )
 }
 
-/** La marca quieta, como en la cabecera de cada pantalla. */
-export function Marca({ tam = 22 }: { tam?: number }) {
-  return (
-    <Dibujo
-      tam={tam}
-      anillo={color.verdeProfundo}
-      grosor={1.8}
-      puntos={[color.terracota, ...Array(5).fill(color.verdeProfundo)]}
-    />
-  )
+/**
+ * La marca quieta, como en la cabecera de cada pantalla. Sobre verde
+ * profundo va en verde claro con el punto en terracota clara, como en el pie
+ * de la web.
+ */
+export function Marca({ tam = 22, sobreVerde }: { tam?: number; sobreVerde?: boolean }) {
+  const trazo = sobreVerde ? color.sobreVerdeSecundario : color.verdeProfundo
+  const tuyo = sobreVerde ? color.terracotaSobreVerde : color.terracota
+  return <Dibujo tam={tam} anillo={trazo} grosor={sobreVerde ? 1.7 : 1.8} puntos={[tuyo, ...Array(5).fill(trazo)]} />
 }
 
 /**
@@ -52,6 +51,8 @@ export function Marca({ tam = 22 }: { tam?: number }) {
  * detrás, como una estela. Los alfas son los de la web.
  */
 const ESTELA = [color.terracota, tinta(0.48), tinta(0.4), tinta(0.32), tinta(0.24), tinta(0.16)]
+/** La misma estela sobre verde profundo: crema que se desvanece y el punto en terracota clara. */
+const ESTELA_VERDE = [color.terracotaSobreVerde, cremaAlfa(0.62), cremaAlfa(0.5), cremaAlfa(0.38), cremaAlfa(0.26), cremaAlfa(0.16)]
 
 /**
  * Gira un CONTENEDOR, nunca el propio SVG.
@@ -65,7 +66,7 @@ const ESTELA = [color.terracota, tinta(0.48), tinta(0.4), tinta(0.32), tinta(0.2
  * Con «reducir movimiento» del sistema, el aro se queda quieto: un giro
  * infinito no se puede acortar, solo parar.
  */
-export function AroCarga({ tam = 54 }: { tam?: number }) {
+export function AroCarga({ tam = 54, sobreVerde }: { tam?: number; sobreVerde?: boolean }) {
   const giro = useRef(new Animated.Value(0)).current
   const [quieto, setQuieto] = useState(false)
 
@@ -102,7 +103,7 @@ export function AroCarga({ tam = 54 }: { tam?: number }) {
       style={{ width: tam, height: tam, transform: [{ rotate }] }}
     >
       <View style={{ pointerEvents: 'none' }}>
-        <Dibujo tam={tam} anillo={tinta(0.2)} grosor={1.5} puntos={ESTELA} />
+        <Dibujo tam={tam} anillo={sobreVerde ? cremaAlfa(0.2) : tinta(0.2)} grosor={1.5} puntos={sobreVerde ? ESTELA_VERDE : ESTELA} />
       </View>
     </Animated.View>
   )

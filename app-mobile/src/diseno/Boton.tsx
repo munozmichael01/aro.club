@@ -11,7 +11,13 @@ import { color, cremaAlfa, fuente, medida, radio, tinta, verdeAlfa } from './tok
  * Cada uno tiene tres estados —reposo, presionado, deshabilitado— con los
  * colores exactos de la hoja.
  */
-export type TipoBoton = 'primario' | 'secundario' | 'fantasma' | 'sobreVerde'
+export type TipoBoton =
+  | 'primario'
+  | 'secundario'
+  | 'fantasma'
+  | 'sobreVerde'
+  | 'secundarioSobreVerde'
+  | 'fantasmaSobreVerde'
 
 type Estado = { fondo: string; texto: string; borde?: string }
 
@@ -24,17 +30,29 @@ const ESTADOS: Record<TipoBoton, { reposo: Estado; presionado: Estado; inerte: E
   secundario: {
     reposo: { fondo: 'transparent', texto: color.verde, borde: tinta(0.22) },
     presionado: { fondo: color.cremaElevada, texto: color.terracota, borde: color.terracota },
-    inerte: { fondo: 'transparent', texto: '#9DAEA2', borde: tinta(0.1) },
+    inerte: { fondo: 'transparent', texto: color.inerte, borde: tinta(0.1) },
   },
   fantasma: {
     reposo: { fondo: 'transparent', texto: color.secundario },
     presionado: { fondo: 'transparent', texto: color.terracota },
-    inerte: { fondo: 'transparent', texto: '#9DAEA2' },
+    inerte: { fondo: 'transparent', texto: color.inerte },
   },
   sobreVerde: {
     reposo: { fondo: color.crema, texto: color.verdeProfundo },
     presionado: { fondo: color.terracotaSobreVerde, texto: color.verdeProfundo },
-    inerte: { fondo: cremaAlfa(0.16), texto: color.sobreVerdeInerte },
+    inerte: { fondo: cremaAlfa(0.16), texto: color.cuerpoSobreVerde },
+  },
+  // Los dos del registro, sobre verde profundo: «Entrar a mi cuenta» y
+  // «Atrás» / «Lo hago después» / «Usar otro correo».
+  secundarioSobreVerde: {
+    reposo: { fondo: 'transparent', texto: color.crema, borde: cremaAlfa(0.34) },
+    presionado: { fondo: color.crema, texto: color.verdeProfundo, borde: color.crema },
+    inerte: { fondo: 'transparent', texto: color.cuerpoSobreVerde, borde: cremaAlfa(0.16) },
+  },
+  fantasmaSobreVerde: {
+    reposo: { fondo: 'transparent', texto: color.sobreVerdeSecundario },
+    presionado: { fondo: 'transparent', texto: color.terracotaSobreVerde },
+    inerte: { fondo: 'transparent', texto: cremaAlfa(0.3) },
   },
 }
 
@@ -46,7 +64,7 @@ type Props = Omit<PressableProps, 'children' | 'style'> & {
 }
 
 export function Boton({ tipo = 'primario', texto, ancho, disabled, ...resto }: Props) {
-  const fantasma = tipo === 'fantasma'
+  const fantasma = tipo === 'fantasma' || tipo === 'fantasmaSobreVerde'
   return (
     <Pressable
       {...resto}

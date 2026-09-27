@@ -6,6 +6,7 @@ import { AppState, Platform } from 'react-native'
 
 import { almacenSeguro, vaciarSiEsInstalacionNueva } from './almacen'
 import { crearApi, type Sesion } from './api'
+import { CLAVE_LEAD } from './lead'
 
 /**
  * La sesión de la app. El SDK de Supabase es su único dueño: la abre (con
@@ -44,7 +45,7 @@ AppState.addEventListener('change', (estado) => {
 })
 
 /** Antes de enseñar nada: deshace la sesión que iOS deja tras reinstalar. */
-export const listo = vaciarSiEsInstalacionNueva([CLAVE_SESION])
+export const listo = vaciarSiEsInstalacionNueva([CLAVE_SESION, CLAVE_LEAD])
 
 const version = `${Platform.OS}/${Constants.expoConfig?.version ?? '0'}`
 

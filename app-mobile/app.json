@@ -34,7 +34,8 @@
             "./assets/fuentes/InterTight-Bold.ttf"
           ]
         }
-      ]
+      ],
+      "expo-router"
     ],
     "extra": {
       "api": "https://aro.club/api",

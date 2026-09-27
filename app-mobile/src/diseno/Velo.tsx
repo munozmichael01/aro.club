@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native'
 
 import { AroCarga } from './Aro'
 import { Texto } from './Texto'
-import { tiempo } from './tokens'
+import { color, tiempo } from './tokens'
 import { esperaParaLevantar } from './velo-tiempo'
 
 /**
@@ -42,11 +42,15 @@ export function useVelo() {
 }
 
 /** Lo que se ve mientras está tapado: el aro y «Un momento», como en la web. */
-export function Velo() {
+export function Velo({ sobreVerde }: { sobreVerde?: boolean }) {
   return (
-    <View accessibilityRole="progressbar" accessibilityLiveRegion="polite" style={estilos.velo}>
-      <AroCarga />
-      <Texto variante="cuerpo" tono="secundario">
+    <View
+      accessibilityRole="progressbar"
+      accessibilityLiveRegion="polite"
+      style={[estilos.velo, { backgroundColor: sobreVerde ? color.verdeProfundo : color.crema }]}
+    >
+      <AroCarga sobreVerde={sobreVerde} />
+      <Texto variante="cuerpo" tono={sobreVerde ? 'sobreVerdeSecundario' : 'secundario'}>
         Un momento
       </Texto>
     </View>
