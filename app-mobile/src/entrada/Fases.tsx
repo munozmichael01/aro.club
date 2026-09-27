@@ -28,8 +28,8 @@ export function Cabecera({ onEntrar }: { onEntrar?: () => void }) {
 }
 
 /** La cabecera de la portada: el chip de la fecha y el titular. */
-export function Portada({ chip, dia }: { chip: string | null; dia: string | null }) {
-  const t = T.titular(dia)
+export function Portada({ chip }: { chip: string | null }) {
+  const t = T.titular
   return (
     <View style={{ gap: 18, marginBottom: 36 }}>
       {chip ? (

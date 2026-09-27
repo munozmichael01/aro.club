@@ -8,11 +8,14 @@
  * parámetro, ya calculados por `texto/fechas.ts`.
  */
 
-/** «el sábado» sale de la fecha abierta. Sin fecha no se nombra ningún día. */
-export const titular = (dia: string | null) => ({
-  linea: dia ? `Ya sabemos con quién cenas el ${dia}.` : 'Ya sabemos con quién cenas.',
+/**
+ * Fijo y sin día (decisión del 27-09, igual en la web): «esta semana» dice
+ * que la cena es semanal sin atarse a un día que mañana puede cambiar.
+ */
+export const titular = {
+  linea: 'Ya sabemos con quién cenas esta semana.',
   enfasis: 'Tú no. Todavía.',
-})
+}
 
 export const chip = (ciudad: string, cierraEn: string | null) =>
   cierraEn

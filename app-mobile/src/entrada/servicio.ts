@@ -4,6 +4,13 @@ import { sinRespuesta } from '../texto/entrada'
 import type { PreguntaCatalogo } from './preguntas'
 
 /**
+ * El origen de todas las altas desde la app. Sin él, el servidor las cuenta
+ * como de la portada (`landing`, variante `v3`) y ensucia la única cifra para
+ * la que existe el campo.
+ */
+const ORIGEN = 'app'
+
+/**
  * Las llamadas de la entrada. Recibe la `api` en vez de importarla para que
  * las pruebas contra el servidor de verdad usen este mismo código.
  */
@@ -47,19 +54,23 @@ export function crearServicio(api: Api) {
           api.pedir('/lead', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ correo: correo.trim(), ciudad: CIUDAD_PRODUCTO.slug }),
+            body: JSON.stringify({ correo: correo.trim(), ciudad: CIUDAD_PRODUCTO.slug, origen: ORIGEN }),
           }),
         sinRespuesta.conexion,
       ),
 
-    /** Paso 2: las cuatro respuestas, por código. */
+    /**
+     * Paso 2: las cuatro respuestas, por código. Exige el token (403 si no
+     * cuadra), y el token solo llega con un alta NUEVA: un correo que ya
+     * existía va a «ya estás registrado», nunca aquí.
+     */
     guardarRespuestas: (cuerpo: object) =>
       intentar<RespuestaLead>(
         () =>
           api.pedir('/lead', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...cuerpo, ciudad: CIUDAD_PRODUCTO.slug }),
+            body: JSON.stringify({ ...cuerpo, ciudad: CIUDAD_PRODUCTO.slug, origen: ORIGEN }),
           }),
         sinRespuesta.respuestas,
       ),

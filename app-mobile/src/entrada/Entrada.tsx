@@ -7,8 +7,8 @@ import { esperaParaLevantar } from '../diseno/velo-tiempo'
 import { tiempo } from '../diseno/tokens'
 import { guardarLead, leerLead } from '../sesion/lead'
 import * as T from '../texto/entrada'
-import { cuentaAtras, nombreDia } from '../texto/fechas'
-import { CIUDAD_PRODUCTO, zonaDe } from '../texto/zona'
+import { cuentaAtras } from '../texto/fechas'
+import { CIUDAD_PRODUCTO } from '../texto/zona'
 import { Cabecera, FaseCorreo, FaseEnviando, FaseFinal, FaseQuiz, FaseRepetido, FaseSinPreguntas, Portada } from './Fases'
 import { cuerpoDeRespuestas, inicial, reducir } from './maquina'
 import { preguntasDeEntrada, type Pregunta } from './preguntas'
@@ -83,7 +83,6 @@ export function Entrada(p: { servicio: Servicio; onEntrar: () => void; onComplet
   }, [e, preguntas, token, p.servicio])
 
   const hayFecha = !!proxima?.hay
-  const dia = hayFecha && proxima?.empiezaEn ? nombreDia(proxima.empiezaEn, zonaDe(proxima)) : null
   const chip = T.chip(CIUDAD_PRODUCTO.nombre, hayFecha && proxima?.cierraEn ? cuentaAtras(proxima.cierraEn, ahora) : null)
 
   const nombresZonas = useMemo(() => {
@@ -142,7 +141,7 @@ export function Entrada(p: { servicio: Servicio; onEntrar: () => void; onComplet
         contentContainerStyle={[estilos.pagina, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 }]}
       >
         <Cabecera onEntrar={e.fase === 'correo' ? p.onEntrar : undefined} />
-        {e.fase === 'correo' ? <Portada chip={chip} dia={dia} /> : null}
+        {e.fase === 'correo' ? <Portada chip={chip} /> : null}
         {cuerpo}
       </ScrollView>
     </KeyboardAvoidingView>

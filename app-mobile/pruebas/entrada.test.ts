@@ -82,3 +82,14 @@ test('enumerar zonas como la web', () => {
   assert.equal(enumerar(['Chacao'], ''), 'Chacao')
   assert.equal(enumerar(['Chacao', 'Altamira', 'El Rosal'], ''), 'Chacao, Altamira y El Rosal')
 })
+
+test('zonas: tope de cinco en la puerta, aunque el catálogo no lo traiga', () => {
+  const muchas = CATALOGO.preguntas.map((p) =>
+    p.clave === 'zonas' ? { ...p, max: null, opciones: op(...(['a', 'b', 'c', 'd', 'e', 'f'].map((v) => [v, v.toUpperCase()]) as [string, string][])) } : p,
+  )
+  const zonas = preguntasDeEntrada({ preguntas: muchas })![1]
+  assert.equal(zonas.max, 5)
+  let e = inicial()
+  for (const v of ['a', 'b', 'c', 'd', 'e', 'f']) e = reducir(e, { tipo: 'marcar', pregunta: zonas, valor: v })
+  assert.deepEqual(e.respuestas.zonas, ['a', 'b', 'c', 'd', 'e'])
+})

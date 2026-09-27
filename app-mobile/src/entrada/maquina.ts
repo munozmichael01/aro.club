@@ -91,7 +91,7 @@ export function reducir(e: Estado, a: Accion): Estado {
 export function cuerpoDeRespuestas(e: Estado, token: string | null) {
   return {
     correo: e.correo.trim(),
-    // El servidor aún no lo pide en este paso; cuando lo pida, ya viaja.
+    // Obligatorio desde el 27-09: sin él, 403.
     ...(token ? { token } : {}),
     arraigo: marcadas(e, 'arraigo')[0] ?? null,
     zonas: marcadas(e, 'zonas'),

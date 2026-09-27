@@ -49,6 +49,14 @@ try {
     for (const o of p.opciones.slice(0, cuantas)) e = reducir(e, { tipo: 'marcar', pregunta: p, valor: o.valor })
   }
   const cuerpo = cuerpoDeRespuestas(e, nuevo.ok ? nuevo.datos.token : null)
+
+  // Sin token, o con uno ajeno: el servidor no deja sobrescribir las respuestas de nadie.
+  const { token: _t, ...sinToken } = cuerpo
+  const sinT = await api.pedir('/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...sinToken, origen: 'app' }) })
+  ok(sinT.status === 403, `respuestas sin token → ${sinT.status}`)
+  const ajeno = await api.pedir('/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...cuerpo, token: 'x'.repeat(43), origen: 'app' }) })
+  ok(ajeno.status === 403, `respuestas con un token que no es suyo → ${ajeno.status}`)
+
   const guardado = await s.guardarRespuestas(cuerpo)
   ok(guardado.ok && guardado.datos.estado === 'completado', `respuestas → ${guardado.ok ? guardado.datos.estado : guardado.error}`)
 
@@ -59,7 +67,7 @@ try {
   ok(JSON.stringify(fila?.days) === JSON.stringify(cuerpo.dias), `días: ${JSON.stringify(fila?.days)}`)
   ok(JSON.stringify(fila?.conversation_topics) === JSON.stringify(cuerpo.temas), `temas: ${JSON.stringify(fila?.conversation_topics)}`)
   ok(!!fila?.quiz_completed_at, 'quiz marcado como completado')
-  console.log(`  (origen grabado: ${fila?.source} · ciudad: ${fila?.city_slug})`)
+  ok(fila?.source === 'app', `origen grabado: ${fila?.source} (ciudad: ${fila?.city_slug})`)
 
   // Repetido: sin token.
   const otra = await s.dejarCorreo(CORREO)

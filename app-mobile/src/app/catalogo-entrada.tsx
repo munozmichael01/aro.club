@@ -52,7 +52,7 @@ export default function Pantalla() {
     <ScrollView style={{ backgroundColor: color.verdeProfundo }} contentContainerStyle={{ padding: 16, paddingTop: 48 }}>
       <Cabecera onEntrar={nada} />
       <Muestra nombre="PORTADA + CORREO">
-        <Portada chip="Caracas · la próxima se cierra en 4 días y 3 h" dia="sábado" />
+        <Portada chip="Caracas · la próxima se cierra en 4 días y 3 h" />
         <FaseCorreo correo="" error="" yaTienePuesto={false} onCambio={nada} onEnviar={nada} />
       </Muestra>
       <Muestra nombre="CORREO CON ERROR">

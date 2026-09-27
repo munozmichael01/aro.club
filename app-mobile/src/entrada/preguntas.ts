@@ -29,6 +29,14 @@ export type Pregunta = {
   max: number | null
 }
 
+/**
+ * Tope de zonas EN LA PUERTA: cinco, para que se elija de verdad (decisión
+ * del 27-09). En el perfil completo no hay tope, y por eso el catálogo no lo
+ * trae. Vive aquí hasta que las reglas de la puerta pasen a `reglas.js`,
+ * junto con el recorte de temas.
+ */
+export const TOPE_ZONAS_ENTRADA = 5
+
 /** El orden de la entrada, el del pedido: arraigo, zonas, días y temas. */
 export const CLAVES_ENTRADA = ['arraigo', 'zonas', 'dias', 'temas'] as const
 
@@ -52,7 +60,7 @@ export function preguntasDeEntrada(catalogo: { preguntas: PreguntaCatalogo[] }):
       // ninguna; si apareciera, no se ofrece antes de saber qué hace.
       opciones: p.opciones.filter((o): o is { valor: string; label: string } => typeof o.valor === 'string'),
       min: p.tipo === 'single' ? 1 : Math.max(1, p.min ?? 1),
-      max: p.tipo === 'single' ? 1 : p.max,
+      max: p.tipo === 'single' ? 1 : clave === 'zonas' ? TOPE_ZONAS_ENTRADA : p.max,
     })
   }
   return salida
