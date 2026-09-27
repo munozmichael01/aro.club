@@ -699,6 +699,13 @@
               </sc-for>
             </div>
 
+            <sc-if value="{{ hayFalloQuiz }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(227,156,99,.16);padding:13px 15px;margin-top:22px;max-width:44ch">
+                <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#E39C63;color:#14342A;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+                <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#FAF3E4;text-wrap:pretty">{{ falloQuiz }}</span>
+              </div>
+            </sc-if>
+
             <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:clamp(28px,3.4vw,40px)">
               <button onClick="{{ siguiente }}" style="{{ botonSiguiente }}">{{ textoSiguiente }}</button>
               <sc-if value="{{ puedeAtras }}" hint-placeholder-val="{{ false }}">
@@ -777,12 +784,35 @@
 class Component extends DCLogic {
   state = {
     faq: -1, fase: 'correo', correo: '', error: '', ahora: Date.now(),
-    paso: 0, arraigo: -1, zonas: [], planes: [], temas: [], ciudad: -1,
+    paso: 0, arraigo: -1, zonas: [], planes: [], temas: [], ciudad: -1, guardandoQuiz: false, falloQuiz: '',
     sesion: null, sesionSabida: false
   };
 
+  /**
+   * Las zonas, emparejadas: nombre y código juntos, nunca en dos listas.
+   *
+   * Nace con las que había escritas aquí para que nadie se quede sin poder
+   * contestar si la petición falla, y el servidor la reescribe entera con las
+   * activas de verdad — que son trece, no diez.
+   */
+  ZONAS = [['Las Mercedes', 'mercedes'], ['Los Palos Grandes', 'palos-grandes'], ['Altamira', 'altamira'],
+           ['Chacao', 'chacao'], ['El Rosal', 'rosal'], ['La Castellana', 'castellana'],
+           ['El Hatillo', 'hatillo'], ['La Trinidad y La Tahona', 'trinidad'], ['Chuao', 'chuao'],
+           ['Bello Monte', 'bello-monte']];
+
   componentDidMount() {
     this._t = setInterval(() => this.setState({ ahora: Date.now() }), 30000);
+
+    // Las zonas de verdad. Se piden una vez y se reescriben nombre y código a
+    // la vez, para que el orden que mande el servidor no pueda descuadrarlos.
+    fetch('/api/zonas')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin zonas'))))
+      .then((d) => {
+        if (!d.zonas || !d.zonas.length) return;
+        this.ZONAS = d.zonas.map((z) => [z.nombre, z.slug]);
+        this.forceUpdate();
+      })
+      .catch(() => { /* se quedan las de arriba: nadie deja de poder contestar */ });
     this.armar();
     this.parallax();
     this.leerSesion();
@@ -1088,7 +1118,16 @@ class Component extends DCLogic {
     // dejarse fuera zonas a las que si puede llegar, y eso reduce las mesas
     // en las que encaja. Un solo numero para las dos listas.
     const MAX_ZONAS = 5;
-    const zonaDefs = ['Las Mercedes', 'Los Palos Grandes', 'Altamira', 'Chacao', 'El Rosal', 'La Castellana', 'El Hatillo', 'La Trinidad y La Tahona', 'Chuao', 'Bello Monte'];
+    // Los nombres salen de la MISMA lista emparejada que los códigos, y esa
+    // lista la reescribe el servidor. Antes eran dos arrays paralelos
+    // —`zonaDefs` aquí y `COD.zonas` en el guardado— unidos solo por la
+    // posición, que es la trampa que este repo ya conoce.
+    //
+    // Y estaban cortos: diez zonas escritas a mano contra trece activas. El
+    // Cafetal, Los Naranjos y Sebucán existían en la base y NO se podían
+    // elegir desde la portada. Quien vive ahí se apuntaba marcando otra cosa,
+    // y eso decide a qué mesa puede ir.
+    const zonaDefs = this.ZONAS.map((z) => z[0]);
     const zonas = zonaDefs.map((z, i) => {
       const on = this.state.zonas.indexOf(i) >= 0;
       const tope = this.state.zonas.length >= MAX_ZONAS && !on;
@@ -1274,24 +1313,52 @@ class Component extends DCLogic {
       quizOpciones,
       quizContenedor: esUnica ? 'display:flex;flex-direction:column;gap:9px;max-width:540px' : 'display:flex;flex-wrap:wrap;gap:9px',
       botonSiguiente: 'display:inline-flex;align-items:center;min-height:58px;padding:0 30px;border-radius:999px;border:none;background:' + (completa ? '#FAF3E4' : 'rgba(250,243,228,.14)') + ';color:' + (completa ? '#14342A' : '#C5D8CA') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (completa ? 'pointer' : 'not-allowed') + ';transition:all 200ms ease',
-      textoSiguiente: completa ? (ultimo ? 'Terminar' : 'Siguiente') : 'Elige para seguir',
+      textoSiguiente: this.state.guardandoQuiz
+        ? 'Guardando'
+        : (completa ? (ultimo ? 'Terminar' : 'Siguiente') : 'Elige para seguir'),
+      hayFalloQuiz: !!this.state.falloQuiz,
+      falloQuiz: this.state.falloQuiz,
       puedeAtras: this.state.paso > 0,
       siguiente: () => {
-        if (!completa) return;
+        if (!completa || this.state.guardandoQuiz) return;
         if (ultimo) {
           const COD = {
             arraigo: ['volvio', 'se-quedo', 'mismos', 'remoto', 'interior', 'visita'],
-            zonas: ['mercedes', 'palos-grandes', 'altamira', 'chacao', 'rosal', 'castellana', 'hatillo', 'trinidad', 'chuao', 'bello-monte'],
+            zonas: this.ZONAS.map((z) => z[1]),
             dias: ['jue', 'vie', 'sab-am', 'sab', 'dom-am'],
             temas: ['cocina', 'viajes', 'cine', 'musica', 'libros', 'deporte', 'negocios', 'arte', 'tecnologia', 'crianza']
           };
+          this.setState({ guardandoQuiz: true, falloQuiz: '' });
           this.guardarLead({
             arraigo: this.state.arraigo >= 0 ? COD.arraigo[this.state.arraigo] : null,
             zonas: this.state.zonas.map((i) => COD.zonas[i]),
             dias: this.state.planes.map((i) => COD.dias[i]),
             temas: this.state.temas.map((i) => COD.temas[i])
-          }).catch(() => { /* el lead ya esta capturado desde el paso 1 */ });
-          this.setState({ fase: 'final' });
+          // Y se ESPERA a que se guarden.
+          //
+          // Antes se mandaban y se saltaba a «Tienes puesto» sin mirar. Si
+          // fallaban, la persona leía que tenía puesto y sus cuatro
+          // respuestas no existían. Ya pasó aquí una vez, con el
+          // cuestionario: cada guardado devolvía 403, la pantalla se los
+          // tragó y dijo «COMPLETO» sobre una base vacía. Nadie escribe para
+          // contar que un formulario no guardó; simplemente no vuelve.
+          //
+          // El lead sí está capturado desde el paso 1, así que no se pierde a
+          // la persona. Lo que se pierde son las respuestas, que es lo que
+          // arma su mesa.
+          }).then(({ ok, j }) => {
+            if (!ok) {
+              this.setState({
+                guardandoQuiz: false,
+                falloQuiz: (j && j.error) || 'No pudimos guardar tus respuestas. Inténtalo otra vez.'
+              });
+              return;
+            }
+            this.setState({ guardandoQuiz: false, falloQuiz: '', fase: 'final' });
+          }).catch(() => this.setState({
+            guardandoQuiz: false,
+            falloQuiz: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
+          }));
           return;
         }
         this.setState((s) => ({ paso: s.paso + 1 }));
