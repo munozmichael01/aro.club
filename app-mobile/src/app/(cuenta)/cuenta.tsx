@@ -3,10 +3,10 @@ import { router } from 'expo-router'
 import { openBrowserAsync } from 'expo-web-browser'
 import { useMemo } from 'react'
 
-import { Inicio } from '../cuenta/Inicio'
-import { crearServicioCuenta } from '../cuenta/servicio'
-import { api, supabase } from '../sesion'
-import { borrarLead } from '../sesion/lead'
+import { Inicio } from '../../cuenta/Inicio'
+import { crearServicioCuenta } from '../../cuenta/servicio'
+import { api, supabase } from '../../sesion'
+import { borrarLead } from '../../sesion/lead'
 
 const SITIO = (Constants.expoConfig?.extra as { sitio: string }).sitio
 

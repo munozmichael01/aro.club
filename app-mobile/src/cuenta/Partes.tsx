@@ -62,16 +62,12 @@ function useLatido(desde: number, hasta: number, ms: number) {
 
 // --- Cabecera ---------------------------------------------------------------
 
-export function Cabecera(p: {
-  pestanas: { id: string; texto: string; ruta: string }[]
-  actual: string
-  esOps: boolean
-  saliendo: boolean
-  alIr: (ruta: string) => void
-  alOperacion: () => void
-  alSalir: () => void
-  arriba: number
-}) {
+/**
+ * La cabecera: la marca, la puerta al panel si es de operación, y cerrar
+ * sesión. Inicio, Mi mesa y Perfil viven en la barra de abajo
+ * (`Pestanas.tsx`); cerrar sesión se queda aquí hasta que exista Perfil.
+ */
+export function Cabecera(p: { esOps: boolean; saliendo: boolean; alOperacion: () => void; alSalir: () => void; arriba: number }) {
   return (
     <View style={[estilos.cabecera, { paddingTop: p.arriba }]}>
       <View style={estilos.cabeceraFila}>
@@ -79,36 +75,20 @@ export function Cabecera(p: {
           <Marca tam={22} />
           <Texto variante="marca">Aro Club</Texto>
         </View>
-        {p.esOps ? (
-          <Pressable onPress={p.alOperacion} accessibilityRole="link" style={estilos.operacion}>
-            <Texto variante="etiqueta" tono="verde" style={{ fontFamily: fuente.textoSemi, letterSpacing: 0.5 }}>
-              {T.nav.operacion}
-            </Texto>
-          </Pressable>
-        ) : null}
-      </View>
-      <View style={estilos.pestanas} accessibilityRole="tablist">
-        {p.pestanas.map((t) => {
-          const on = t.id === p.actual
-          return (
-            <Pressable
-              key={t.id}
-              onPress={() => (on ? null : p.alIr(t.ruta))}
-              accessibilityRole="tab"
-              aria-selected={on}
-              style={[estilos.pestana, { borderBottomColor: on ? color.verde : 'transparent' }]}
-            >
-              <Texto variante="cuerpoChico" tono={on ? 'verde' : 'secundario'} style={{ fontFamily: on ? fuente.textoSemi : fuente.textoMedia }}>
-                {t.texto}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {p.esOps ? (
+            <Pressable onPress={p.alOperacion} accessibilityRole="link" style={estilos.operacion}>
+              <Texto variante="etiqueta" tono="verde" style={{ fontFamily: fuente.textoSemi, letterSpacing: 0.5 }}>
+                {T.nav.operacion}
               </Texto>
             </Pressable>
-          )
-        })}
-        <Pressable onPress={p.alSalir} disabled={p.saliendo} accessibilityRole="button" style={[estilos.pestana, { marginLeft: 'auto' }]}>
-          <Texto variante="cuerpoChico" tono="secundario" style={{ fontFamily: fuente.textoMedia }}>
-            {p.saliendo ? T.nav.saliendo : T.nav.salir}
-          </Texto>
-        </Pressable>
+          ) : null}
+          <Pressable onPress={p.alSalir} disabled={p.saliendo} accessibilityRole="button" style={estilos.salir}>
+            <Texto variante="cuerpoChico" tono="secundario" style={{ fontFamily: fuente.textoMedia }}>
+              {p.saliendo ? T.nav.saliendo : T.nav.salir}
+            </Texto>
+          </Pressable>
+        </View>
       </View>
     </View>
   )
@@ -591,14 +571,7 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderColor: tinta(0.22),
   },
-  pestanas: {
-    flexDirection: 'row',
-    gap: 18,
-    paddingHorizontal: medida.margenLateral,
-    borderTopWidth: 1,
-    borderTopColor: tinta(0.08),
-  },
-  pestana: { minHeight: medida.toqueMinimo, justifyContent: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  salir: { minHeight: medida.toqueMinimo, justifyContent: 'center', paddingHorizontal: 8 },
   bloque: { borderRadius: 30, padding: 22 },
   selloFila: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 16 },
   sello: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 14, borderRadius: radio.capsula },

@@ -8,6 +8,7 @@ import { test } from 'node:test'
 
 import * as M from '../src/cuenta/maquina'
 import * as F from '../src/texto/fechas'
+import { reglas } from '../src/reglas'
 
 // Sábado 3 de octubre de 2026, 20:00 en Caracas (UTC-4) = domingo 00:00 UTC.
 const CENA = '2026-10-04T00:00:00+00:00'
@@ -41,7 +42,11 @@ test('las fechas se dicen en la hora de la ciudad, no en la del celular', () => 
   assert.equal(F.cuandoSeSabe(null), 'cuando se abra la mesa')
   assert.equal(F.relojDeRevelacion(REVELA, AHORA), 'ABRE EN 5D 04:00')
   assert.equal(F.relojDeRevelacion(null, AHORA), '')
-  assert.equal(F.diasDe([CENA, '2026-10-02T23:30:00Z', CENA]), 'Viernes y sábado')
+  // Con la zona de la fecha (`zonaHoraria`), se dice en la de SU ciudad.
+  assert.equal(F.fechaCorta(CENA, 'Asia/Tokyo'), 'Domingo 4 · 9:00 a.m.')
+  assert.equal(F.fechaCorta(CENA, 'America/Caracas'), 'Sábado 3 · 8:00 p.m.')
+  assert.equal(F.titularDeReserva(CENA, 'Europe/Madrid'), 'Domingo 4, dos de la noche.')
+  assert.equal(F.diasDe([CENA, '2026-10-02T23:30:00Z', CENA].map((iso) => ({ iso }))), 'Viernes y sábado')
 })
 
 test('lista para reservar: titular y cuerpo desde la próxima fecha real', () => {
@@ -83,8 +88,7 @@ test('con mesa reservada: su fecha como titular, en oscuro, y la mesa solo si /a
 test('movimiento habla de grupo', () => {
   const reserva = { id: 'r', formato: 'walk', empiezaEn: CENA, revelaEn: REVELA, revelado: true }
   assert.equal(M.tarjeta(base({ estado: 'abierta', reserva }), null, AHORA).titulo, 'Sábado 3, ocho de la noche.')
-  assert.equal(M.pestanas(base({ reserva }))[1].texto, 'Mi grupo')
-  assert.deepEqual(M.pestanas(base()).map((x) => x.id), ['inicio', 'perfil'], 'sin reserva no hay pestaña de mesa')
+  assert.equal(reglas.vozDe(reserva.formato).mia, 'Mi grupo', 'y la pestaña se llama «Mi grupo»')
 })
 
 test('la agenda: polaroids derivadas, grupos por semana y el estado de cada fecha', () => {

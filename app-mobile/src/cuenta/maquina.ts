@@ -21,6 +21,8 @@ export type FechaAgenda = {
   apuntados: number
   cerrada: boolean
   mia: boolean
+  /** La zona de la ciudad de ESTA fecha: el día y la hora se dicen en ella. */
+  zonaHoraria?: string | null
 }
 
 export type Plan = {
@@ -31,6 +33,7 @@ export type Plan = {
   pasada: boolean
   restaurante: string | null
   numeroMesa: number | null
+  zonaHoraria?: string | null
 }
 
 export type MiCuenta = {
@@ -39,19 +42,20 @@ export type MiCuenta = {
   porValorar: { cuando: string; sitio: string | null } | null
   planes: Plan[]
   agenda: FechaAgenda[]
-  proximaFecha: { empiezaEn: string; cierraEn: string | null; revelaEn: string | null; zona: string | null; apuntados: number } | null
+  proximaFecha: { empiezaEn: string; cierraEn: string | null; revelaEn: string | null; zona: string | null; apuntados: number; zonaHoraria?: string | null } | null
   estado: EstadoCuenta
   verif: 'sin' | 'revision' | 'ok'
   motivoRechazo: string | null
   respuestas: { faltan: number; total: number }
   creditos: number
-  reserva: { id: string; formato: string | null; empiezaEn: string | null; revelaEn: string | null; revelado: boolean } | null
+  reserva: { id: string; formato: string | null; empiezaEn: string | null; revelaEn: string | null; revelado: boolean; zonaHoraria?: string | null } | null
 }
 
 export type MiMesa = {
   mesaId?: string
   numeroMesa?: number | null
   empiezaEn?: string | null
+  zonaHoraria?: string | null
   restaurante?: string | null
   direccion?: string | null
   companeros?: { id: string; nombre: string | null; sector: string | null }[]
@@ -81,7 +85,8 @@ export type Tarjeta = {
 
 export function tarjeta(d: MiCuenta, m: MiMesa | null, ahora: number): Tarjeta {
   const base = T.ESTADOS[d.estado] ?? T.ESTADOS.perfil
-  const cuando = F.cuandoSeSabe(d.proximaFecha?.revelaEn)
+  const pf = d.proximaFecha
+  const cuando = F.cuandoSeSabe(pf?.revelaEn, pf?.zonaHoraria)
   const movimiento = reglas.vozDe(d.reserva?.formato).unidad === 'grupo'
 
   let titulo = movimiento && base.tituloMov ? base.tituloMov : base.titulo
@@ -89,13 +94,15 @@ export function tarjeta(d: MiCuenta, m: MiMesa | null, ahora: number): Tarjeta {
   let accion = base.accion
 
   if ((d.estado === 'reservada' || d.estado === 'abierta') && d.reserva?.empiezaEn) {
-    titulo = F.titularDeReserva(d.reserva.empiezaEn) || titulo
+    const z = d.reserva.zonaHoraria
+    titulo = F.titularDeReserva(d.reserva.empiezaEn, z) || titulo
     // Quien ya reservó se entera cuando se revela SU fecha, no la próxima.
-    if (d.estado === 'reservada') cuerpo = base.cuerpo(F.cuandoSeSabe(d.reserva.revelaEn ?? d.proximaFecha?.revelaEn))
+    if (d.estado === 'reservada')
+      cuerpo = base.cuerpo(d.reserva.revelaEn ? F.cuandoSeSabe(d.reserva.revelaEn, z) : F.cuandoSeSabe(pf?.revelaEn, pf?.zonaHoraria))
   }
   if (d.estado === 'reservar') {
-    titulo = F.tituloHayCena(d.proximaFecha)
-    cuerpo = d.proximaFecha ? T.cuerpoReservar(d.proximaFecha.apuntados, F.seCierra(d.proximaFecha.cierraEn), cuerpo) : T.sinFecha
+    titulo = F.tituloHayCena(pf)
+    cuerpo = pf ? T.cuerpoReservar(pf.apuntados, F.seCierra(pf.cierraEn, pf.zonaHoraria), cuerpo) : T.sinFecha
     if (!d.proximaFecha) accion = T.verAgenda
   }
 
@@ -118,7 +125,7 @@ export function tarjeta(d: MiCuenta, m: MiMesa | null, ahora: number): Tarjeta {
           numero: m.numeroMesa == null ? '' : String(m.numeroMesa).padStart(2, '0'),
           sitio: m.restaurante ?? '',
           direccion: m.direccion ?? '',
-          cuando: m.empiezaEn ? F.fechaCorta(m.empiezaEn) : '',
+          cuando: m.empiezaEn ? F.fechaCorta(m.empiezaEn, m.zonaHoraria) : '',
           otros: (m.companeros ?? []).map((c) => ({
             nombre: c.nombre || '—',
             inicial: (c.nombre || '?').charAt(0).toUpperCase(),
@@ -152,7 +159,7 @@ export function filtros(agenda: FechaAgenda[], elegido: string | null): Filtro[]
     return {
       formato: f,
       nombre: T.FORMATOS[f].plural,
-      detalle: hay ? F.diasDe(suyas.map((a) => a.empiezaEn)) : T.agenda.proximamente,
+      detalle: hay ? F.diasDe(suyas.map((a) => ({ iso: a.empiezaEn, zona: a.zonaHoraria }))) : T.agenda.proximamente,
       hay,
       elegido: elegido === f,
     }
@@ -189,8 +196,8 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       id: a.id,
       formato,
       tipo: T.FORMATOS[formato].plural,
-      cuando: F.fechaCorta(a.empiezaEn),
-      hora: reglas.horaDe(a.empiezaEn) ?? '',
+      cuando: F.fechaCorta(a.empiezaEn, a.zonaHoraria),
+      hora: reglas.horaDe(a.empiezaEn, a.zonaHoraria) ?? '',
       // Las zonas ABIERTAS de esa fecha, no un sitio: el sitio se decide al
       // armar la mesa y nadie lo sabe hasta la revelación.
       zona: a.zonas.join(' o ') || T.agenda.zonaPorConfirmar,
@@ -236,7 +243,7 @@ export function proximos(planes: Plan[]): Proximo[] {
         ? p.restaurante + (p.numeroMesa != null ? T.proximo.mesa(p.numeroMesa) : '')
         : (T.FORMATOS[p.formato] ?? T.FORMATOS.dinner).singular
       const e = pendiente ? T.proximo.porConfirmar : T.proximo.confirmada
-      return { sitio, cuando: F.fechaLarga(p.empiezaEn), detalle: e.detalle, estado: e.estado, pendiente }
+      return { sitio, cuando: F.fechaLarga(p.empiezaEn, p.zonaHoraria), detalle: e.detalle, estado: e.estado, pendiente }
     })
 }
 
@@ -252,14 +259,5 @@ export function atajos(d: MiCuenta, nExclusiones: number | null): Atajo[] {
     { titulo: A.verificacion.titulo, cuerpo: A.verificacion.cuerpo, pie: A.verificacion.pie[d.verif] ?? '', destino: '/verificacion' },
     { titulo: A.exclusiones.titulo, cuerpo: A.exclusiones.cuerpo, pie: A.exclusiones.pie(nExclusiones), destino: '/perfil' },
     { titulo: A.cenas.titulo, cuerpo: A.cenas.cuerpo, pie: A.cenas.pie(cenas), destino: '/perfil' },
-  ]
-}
-
-/** «Mi mesa» solo si hay reserva: una pestaña que rebota a donde ya estabas no es navegación. */
-export function pestanas(d: MiCuenta | null) {
-  return [
-    { id: 'inicio', texto: T.nav.inicio, ruta: '/cuenta' },
-    ...(d?.reserva ? [{ id: 'mesa', texto: reglas.vozDe(d.reserva.formato).mia, ruta: '/mesa' }] : []),
-    { id: 'perfil', texto: T.nav.perfil, ruta: '/perfil' },
   ]
 }

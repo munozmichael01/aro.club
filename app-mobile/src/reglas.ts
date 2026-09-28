@@ -24,14 +24,32 @@ type Api = {
   /** La zona del producto. Cuando `cities` tenga su columna, se cambia aquí para web y app. */
   ZONA: string
   /** «sábado»: el nombre del día de una fecha, en `ZONA`. `null` si la fecha no vale. */
-  diaDe: (iso: string | null | undefined) => string | null
+  diaDe: (iso: string | null | undefined, zona?: string | null) => string | null
   /** «12:00 p.m.»: la hora de una fecha, en `ZONA`. La misma que usan los correos. */
-  horaDe: (iso: string | null | undefined) => string | null
+  horaDe: (iso: string | null | undefined, zona?: string | null) => string | null
+  /** Las partes de una fecha en la zona que se pase (`zonaHoraria` de esa fecha); sin zona, `ZONA`. */
+  partesDe: (iso: string | null | undefined, zona?: string | null) => PartesFecha | null
   /** Las cuatro preguntas de la puerta, UN sitio para web y app. Opciones como [texto, código]. */
   PUERTA: Record<string, PreguntaPuerta>
   ORDEN_PUERTA: string[]
   /** Mesa o grupo según el formato: «Mi mesa» / «Mi grupo», y el resto del vocabulario. */
   vozDe: (formato: string | null | undefined) => { unidad: 'mesa' | 'grupo'; mia: string } & Record<string, string>
+}
+
+export type PartesFecha = {
+  /** «sábado» */
+  dia: string
+  /** 0 = domingo */
+  diaNumero: number
+  numero: number
+  /** «octubre» */
+  mes: string
+  mesNumero: number
+  ano: number
+  horas: number
+  minutos: number
+  /** «8:00 p.m.» */
+  hora: string | null
 }
 
 export type PreguntaPuerta = {

@@ -9,6 +9,7 @@ import * as T from '../texto/cuenta'
 import * as M from './maquina'
 import { Agenda, Atajos, Cabecera, Esqueleto, LoProximo, Pie, Seccion, TarjetaEstado, Valorar } from './Partes'
 import type { crearServicioCuenta } from './servicio'
+import { contarFormato } from './voz'
 
 type Servicio = ReturnType<typeof crearServicioCuenta>
 
@@ -72,6 +73,9 @@ export function Inicio(p: {
   useEffect(() => {
     cargarTodo()
   }, [cargarTodo])
+
+  // La pestaña de abajo dice «Mi mesa» o «Mi grupo» según lo reservado.
+  useEffect(() => contarFormato(datos?.reserva?.formato), [datos])
 
   // Dos disparos, los dos baratos: al volver a la app (lo que hace de verdad
   // quien está pendiente) y cada veinte segundos SOLO mientras la
@@ -138,7 +142,7 @@ export function Inicio(p: {
       <Esqueleto />
     )
   } else if (vista) {
-    const cuando = F.cuandoSeSabe(datos.proximaFecha?.revelaEn)
+    const cuando = F.cuandoSeSabe(datos.proximaFecha?.revelaEn, datos.proximaFecha?.zonaHoraria)
     cuerpo = (
       <>
         <Texto variante="display" style={{ marginBottom: 22 }}>
@@ -192,17 +196,14 @@ export function Inicio(p: {
     <View style={{ flex: 1, backgroundColor: color.crema }}>
       <Cabecera
         arriba={insets.top}
-        pestanas={M.pestanas(datos)}
-        actual="inicio"
         esOps={!!datos?.esOps}
         saliendo={saliendo}
-        alIr={p.ir}
         alOperacion={() => p.ir('web:/operacion')}
         alSalir={salir}
       />
       <ScrollView
         ref={scroll}
-        contentContainerStyle={[estilos.pagina, { paddingBottom: insets.bottom + 48 }]}
+        contentContainerStyle={[estilos.pagina, { paddingBottom: 40 }]}
         refreshControl={
           <RefreshControl
             refreshing={refrescando}

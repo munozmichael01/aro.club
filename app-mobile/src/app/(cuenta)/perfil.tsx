@@ -1,4 +1,4 @@
-import { Pendiente } from '../Pendiente'
+import { Pendiente } from '../../Pendiente'
 
 /** /perfil: todavía no está en la app. */
 export default function Pantalla() {
