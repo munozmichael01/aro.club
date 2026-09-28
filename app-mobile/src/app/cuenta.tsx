@@ -8,6 +8,7 @@ export default function Pantalla() {
   return (
     <Pendiente
       ruta="/cuenta"
+      enlaces={[{ texto: 'Ir a la verificación (prueba)', ruta: '/verificacion' }]}
       onSalir={async () => {
         await supabase.auth.signOut()
         await borrarLead()

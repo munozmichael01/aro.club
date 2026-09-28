@@ -11,11 +11,12 @@ import { Boton, Texto, color } from './diseno'
  * existe —con sesión, la app va directa aquí y no había forma de volver a
  * probar la bienvenida y el alta—.
  */
-export function Pendiente({ ruta, onSalir }: { ruta: string; onSalir?: () => void }) {
+export function Pendiente({ ruta, onSalir, enlaces }: { ruta: string; onSalir?: () => void; enlaces?: { texto: string; ruta: string }[] }) {
   return (
     <View style={{ flex: 1, backgroundColor: color.crema, padding: 24, justifyContent: 'center', gap: 16 }}>
       <Texto variante="etiqueta">{ruta}</Texto>
       <Texto variante="titulo">Esta pantalla todavía no está hecha.</Texto>
+      {enlaces?.map((l) => <Boton key={l.ruta} tipo="secundario" texto={l.texto} onPress={() => router.push(l.ruta as never)} />)}
       {onSalir ? (
         <Boton texto="Cerrar sesión (prueba)" onPress={onSalir} />
       ) : (

@@ -36,6 +36,13 @@ npm run prueba:datos
 npm run prueba:alta      # el alta entera: correo → preguntas → datos → cuenta → entrar
 ```
 
+Y la verificación, con la cuenta del banco y una imagen GENERADA (nunca un
+documento de verdad); borra filas y ficheros al terminar:
+
+```bash
+node ../scripts/banco-pruebas.mjs && IMAGEN=<jpg generado> npm run prueba:verificacion; node ../scripts/banco-pruebas.mjs borrar
+```
+
 Y si tocaste `src/sesion/`, también contra la API real, con la cuenta
 desechable del banco:
 

@@ -7,8 +7,11 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "^2.117.2",
     "expo": "~57.0.25",
+    "expo-camera": "~57.0.5",
     "expo-constants": "~57.0.19",
     "expo-font": "~57.0.4",
+    "expo-image-manipulator": "~57.0.20",
+    "expo-image-picker": "~57.0.20",
     "expo-linear-gradient": "~57.0.2",
     "expo-linking": "~57.0.11",
     "expo-router": "~57.0.23",
@@ -41,7 +44,8 @@
     "prueba:entrada": "tsx pruebas/entrada-contra-la-api.mjs",
     "prueba:datos": "tsx pruebas/datos-contra-la-api.mjs",
     "telefono": "expo start --go --lan --port 8081",
-    "prueba:alta": "tsx pruebas/alta-completa-contra-la-api.mjs"
+    "prueba:alta": "tsx pruebas/alta-completa-contra-la-api.mjs",
+    "prueba:verificacion": "tsx pruebas/verificacion-contra-la-api.mjs"
   },
   "private": true
 }

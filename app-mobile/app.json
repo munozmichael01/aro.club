@@ -36,7 +36,23 @@
         }
       ],
       "expo-router",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Aro Club usa la cámara para la foto de tu cédula y una selfie. Con ellas una persona del equipo comprueba que eres tú; nadie más las ve y se borran a los 90 días de aprobarse.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aro Club te deja elegir de tu galería la foto de tu cédula o tu selfie para verificar que eres tú. Solo se sube la foto que elijas.",
+          "cameraPermission": "Aro Club usa la cámara para la foto de tu cédula y una selfie. Con ellas una persona del equipo comprueba que eres tú; nadie más las ve y se borran a los 90 días de aprobarse.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "extra": {
       "api": "https://aro.club/api",
