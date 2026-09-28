@@ -1,3 +1,5 @@
+import { File } from 'expo-file-system'
+
 import type { crearApi } from '../sesion/api'
 import * as T from '../texto/verificacion'
 import { TIPOS, type DeServidor, type Toma } from './maquina'
@@ -43,9 +45,13 @@ export function crearServicioVerificacion(api: Api) {
     subir: (toma: Toma, uri: string) => {
       const cuerpo = new FormData()
       cuerpo.append('tipo', TIPOS[toma])
-      // La forma de React Native para adjuntar un fichero local. El nombre
-      // lleva la extensión: el servidor decide la ruta, pero mira el tipo.
-      cuerpo.append('archivo', { uri, name: `${TIPOS[toma]}.jpg`, type: 'image/jpeg' } as unknown as Blob)
+      // El fichero local como `File` de expo-file-system, que es un Blob de
+      // verdad. La forma clásica de React Native ({ uri, name, type }) la
+      // rechaza el fetch de Expo 57 («Unsupported FormDataPart
+      // implementation»): lo cazaron los registros en el iPhone de Michael.
+      const archivo = new File(uri)
+      if (__DEV__) console.log(`[verificación] adjunto ${TIPOS[toma]}: tipo «${(archivo as unknown as Blob).type}», ${archivo.size} bytes`)
+      cuerpo.append('archivo', archivo as unknown as Blob, `${TIPOS[toma]}.jpg`)
       return intentar<{ estado: string }>(
         () => api.pedir('/verificacion', { method: 'POST', body: cuerpo }),
         T.sinRespuesta.subir,
