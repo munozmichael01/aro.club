@@ -5,7 +5,7 @@ import { anotar } from '@/lib/auditoria'
 import { FORMATOS_DE_FAMILIA, familiaDe } from '@/lib/formatos'
 import { buscarSitio } from '@/lib/places'
 import { exigirOps } from '@/lib/ops'
-import { nombreDeCocina } from '@/lib/reglas'
+import { COCINAS, nombreDeCocina } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -115,6 +115,25 @@ const cambio = z.discriminatedUnion('accion', [
     accion: z.literal('activar'),
     id: z.string().uuid(),
     activo: z.boolean(),
+  }),
+  /**
+   * Las cocinas del local.
+   *
+   * Van aparte de `editar` porque no son un campo de texto: son una lista de
+   * códigos y hay que comprobarlos contra `AroReglas.COCINAS`, que es la misma
+   * lista que se le ofrece a la gente en el cuestionario. Un código que no esté
+   * ahí se guarda igual —la columna es un array de texto— y lo que se rompe es
+   * el cruce, en silencio.
+   *
+   * Esto faltaba entero. La pregunta «elige tus 3 comidas favoritas» lleva
+   * desde el principio y NINGUN local tiene cocina asignada, así que esa
+   * respuesta no se cruzaba con nada: la gente elegía y el dato moría ahí.
+   * Del panel solo se podían leer; para ponerlas había que entrar a la base.
+   */
+  z.object({
+    accion: z.literal('cocinas'),
+    id: z.string().uuid(),
+    cocinas: z.array(z.string()).max(8),
   }),
   z.object({
     accion: z.literal('editar'),
@@ -360,6 +379,12 @@ export async function GET() {
 
   return NextResponse.json({
     locales: lista,
+    // El catálogo de cocinas, de `AroReglas.COCINAS`, que es la MISMA lista
+    // que se le ofrece a la gente en el cuestionario. La ficha no carga
+    // `reglas.js` —es una pantalla de operación y no lo necesita para nada
+    // más— así que viaja aquí en vez de copiarse allí: una copia y la ficha
+    // ofrecería cocinas que nadie puede elegir, o al revés.
+    catalogoCocinas: COCINAS.map((c) => ({ codigo: c[1], nombre: c[0] })),
     zonas: (zonas ?? []).map((z) => ({
       slug: z.slug,
       nombre: z.name,
@@ -527,6 +552,31 @@ export async function PATCH(request: Request) {
 
     await anotar(actor, 'local_editado', 'local', d.id, { placeId: sitio.placeId, mapa: sitio.mapa })
     return NextResponse.json({ estado: 'fijado', sitio })
+  }
+
+  if (d.accion === 'cocinas') {
+    // Contra la lista compartida, no contra una copia. `COCINAS` es la que
+    // usan el cuestionario, la app y la ficha, así que si una cocina se
+    // retira mañana esto deja de aceptarla el mismo día.
+    const validas = new Set(COCINAS.map((c) => c[1]))
+    const malas = d.cocinas.filter((c) => !validas.has(c))
+    if (malas.length) {
+      return NextResponse.json(
+        { error: `No conocemos ${malas.join(' ni ')}.` },
+        { status: 400 },
+      )
+    }
+
+    const { error } = await admin
+      .from('restaurants')
+      .update({ cuisines: [...new Set(d.cocinas)] })
+      .eq('id', d.id)
+
+    if (error) {
+      console.error('[locales] no se guardaron las cocinas', error)
+      return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+    }
+    return NextResponse.json({ ok: true })
   }
 
   if (d.accion === 'activar') {

@@ -506,6 +506,32 @@ class Component extends DCLogic {
           btn: 'display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (sel ? '#6E340F' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';color:#14342A;font:' + (sel ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer'
         };
       })
+    }]).concat(!a ? [] : [{
+      // Qué se come. Selección MÚLTIPLE con la misma forma que las demás
+      // —`pick` y `btn`— para no tocar el markup: lo que cambia es que `pick`
+      // manda la lista entera con la cocina quitada o puesta, no un valor.
+      //
+      // Esto faltaba entero. La pregunta «elige tus 3 comidas favoritas» lleva
+      // desde el principio, NINGÚN local tenía cocina asignada y del panel
+      // solo se podían leer: para ponerlas había que entrar a la base. O sea
+      // que la gente elegía sus tres comidas y el dato no se cruzaba con nada.
+      etiqueta: '¿Qué se come?', valor: '', pista: 'Lo que la gente elige en su perfil. Sin esto, su respuesta no cruza con este local.',
+      esTexto: false, esOpciones: true, campo: campoEstilo,
+      opciones: ((D && D.catalogoCocinas) || []).map((c) => {
+        const puestas = a.cocinas || [];
+        const sel = puestas.indexOf(c.codigo) >= 0;
+        return {
+          label: c.nombre,
+          pick: () => {
+            const nuevas = sel
+              ? puestas.filter((x) => x !== c.codigo)
+              : puestas.concat([c.codigo]);
+            if (!a) return;
+            this.enviar('PATCH', { accion: 'cocinas', id: a.id, cocinas: nuevas }).catch(() => {});
+          },
+          btn: 'display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (sel ? '#6E340F' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';color:#14342A;font:' + (sel ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer'
+        };
+      })
     }]);
 
     const ficha = !a ? {
