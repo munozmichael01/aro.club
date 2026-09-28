@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { router } from 'expo-router'
 
 import { Perfil } from '../perfil/Perfil'
@@ -24,7 +25,7 @@ let avisos: Aviso[] = [
 
 export default function Pantalla() {
   const espera = () => new Promise((ok) => setTimeout(ok, 500))
-  const servicio: ReturnType<typeof crearServicioPerfil> = {
+  const servicio = useMemo((): ReturnType<typeof crearServicioPerfil> => ({
     perfil: async () => ({ ok: true, datos: REAL }),
     guardar: async () => (await espera(), { ok: false, error: 'Simulado: en el catálogo no se guarda nada.' }),
     avisos: async () => ({ ok: true, datos: { avisos, whatsappDesde: null } }),
@@ -42,7 +43,7 @@ export default function Pantalla() {
     }),
     quitarExclusion: async () => (await espera(), { ok: false, error: 'No pudimos quitarlo.' }),
     baja: async () => (await espera(), { ok: false, error: 'Simulado: en el catálogo no se da de baja a nadie.' }),
-  }
+  }), []) // estable: si no, la carga se relanzaría en cada render
   return (
     <Perfil
       servicio={servicio}

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 
 import { Verificacion } from '../verificacion/Verificacion'
@@ -25,7 +26,7 @@ const ESTADOS: Record<string, DeServidor> = {
 
 export default function Pantalla() {
   const { estado = 'sin-empezar' } = useLocalSearchParams<{ estado?: string }>()
-  const simulado: ReturnType<typeof crearServicioVerificacion> = {
+  const simulado = useMemo((): ReturnType<typeof crearServicioVerificacion> => ({
     async estado() {
       return { ok: true, datos: ESTADOS[estado] ?? ESTADOS['sin-empezar'] }
     },
@@ -33,6 +34,6 @@ export default function Pantalla() {
       await new Promise((ok) => setTimeout(ok, 700))
       return { ok: true, datos: { estado: 'recibida' } }
     },
-  }
+  }), [estado]) // estable: si no, la carga se relanzaría en cada render
   return <Verificacion key={estado} servicio={simulado} camara={false} alCuenta={() => router.push('/cuenta')} alEntrar={() => router.push('/entrar')} />
 }

@@ -26,21 +26,23 @@ Hecho y probado contra producción, y en el iPhone de Michael (Expo Go):
 | `/verificacion` | Cédula + selfie (sin la fase QR, que es del ordenador) | Verificación |
 | `/entrar` | Entrar, sobre verde, con pie | Entrar |
 | `/cuenta` | Inicio: estado, agenda, lo próximo, atajos | Mi cuenta |
+| `/mesa` | Mi mesa: vacía (3 casos), cerrada, abierta, lo de después | Mi mesa |
+| `/perfil` | Perfil: datos y respuestas editables, exclusiones, cenas, avisos, baja | Mi perfil |
 
 La cuenta (`src/app/(cuenta)/`) lleva **pestañas abajo: Inicio, Mi mesa y
 Perfil, SIEMPRE las tres** (decidido 28-09: una barra que cambia de forma
 entre visitas desorienta). «Mi mesa» se llama «Mi grupo» si lo reservado es
-de movimiento (`reglas.vozDe`, vía `src/cuenta/voz.ts`). Cerrar sesión vive
-en la cabecera del Inicio hasta que exista Perfil.
+de movimiento (`reglas.vozDe`, vía `src/cuenta/voz.ts`). La cabecera
+(`src/cuenta/Cabecera.tsx`) y cerrar sesión (`src/cuenta/salir.ts`) son las
+mismas en las tres. Cada pestaña se relee al volver a ella (`useFocusEffect`):
+se quedan montadas, y lo hecho en una cambia lo que dicen las otras.
 
 **Andamio** (`src/Pendiente.tsx`, «Esta pantalla todavía no está hecha»):
-`/mesa`, `/perfil`, `/pago`, `/cancelar`. Ninguna sale a tienda así. Mi mesa
-sin reserva debe decir lo que ya dice la web («aún no tienes mesa»).
+`/pago` y `/cancelar`. Ninguna sale a tienda así.
 
-Por hacer, en este orden salvo que Michael diga otra cosa: Mi mesa (con «Voy
-tarde» = `POST /api/mi-mesa/tarde {minutos}`, y notificación push, que
-Michael quiere), Perfil (respuestas, exclusiones, historial, cerrar sesión),
-pago, cupón, cancelar, después, avisos, baja. Y Google + Apple cuando exista
+Por hacer, en este orden salvo que Michael diga otra cosa: pago (con cupón),
+cancelar, y la notificación push de «Voy tarde» (necesita una build nativa:
+Expo Go ya no recibe push remotas). Y Google + Apple cuando exista
 `/api/auth/nativo`: hoy los botones de Entrar enseñan un aviso provisional.
 
 ---
@@ -72,6 +74,14 @@ pago, cupón, cancelar, después, avisos, baja. Y Google + Apple cuando exista
 - **Fotos con el filtro cocido** en el fichero (`scripts/cocer-foto.py`, con
   las matrices de CSS). Se regeneran desde `public/fotos/`, no se editan.
 - **Iconos en SVG** (`src/diseno/Iconos.tsx`), nunca glifos (◗ ✓ → ×) ni emojis.
+- **Componentes del sistema antes que estilos sueltos**: `Opcion` (con `pie`
+  y `fija` para las personas de Mi mesa), `Ficha` (las escalas), `Interruptor`
+  (propio: el `Switch` del sistema pinta otro color en cada plataforma),
+  `Boton tipo="grave"` (enviar un reporte, darse de baja: la terracota #6E340F).
+- **Cómo llegar** abre Apple Maps en iOS y el enlace de Google en Android
+  (`mesa/maquina.mapa`): aquí se sabe el teléfono, la web lo adivina.
+- **Las fechas de nacimiento no pasan por `Date`** (`fechaDeNacimiento`):
+  medianoche UTC es el día anterior en Caracas.
 - **Fuentes embebidas** (plugin `expo-font`) y además `useFonts` para web y
   Expo Go. Cada fichero se llama con su nombre PostScript.
 - **El texto** vive en `src/texto/*.ts` (casilla B: calcado de la maqueta;
@@ -110,6 +120,11 @@ pago, cupón, cancelar, después, avisos, baja. Y Google + Apple cuando exista
   iPhone de Michael o en el catálogo web.
 - **Carrera de estado** con dos toques seguidos: guardar el estado vivo en un
   ref (`actual`), como el cuestionario y el Inicio.
+- **Callbacks de props fuera de las dependencias de la carga** (`useUltimo`):
+  la ruta los escribe en línea y cambian cada vez que ella se pinta.
+- **En el navegador no se puede probar contra la API**: el navegador no deja
+  poner la cabecera `Cookie` y aro.club no da CORS a localhost. El navegador
+  es para los catálogos; la API se prueba con `npm run prueba:*`.
 - **La caché de npm del sistema está corrupta**: si `npx` falla, correrlo con
   `npm_config_cache=<carpeta temporal>`.
 - **`App/` en macOS es `app/`** y Next la toma por su carpeta de rutas (todo
@@ -165,6 +180,23 @@ solo prueba el «no» del servidor:
 node ../scripts/banco-pruebas.mjs lista revelada && ESPERA=abierta npm run prueba:cuenta; node ../scripts/banco-pruebas.mjs borrar
 ```
 
+Mi mesa, solo leyendo (de «Voy tarde» solo se prueba el «no» de antes de
+abrirse: el «sí» manda un correo a los otros cinco). `ESPERA` = vacia,
+cerrada (`lista mesa`), abierta (`lista revelada`) o pasada (`lista cenas`):
+
+```bash
+node ../scripts/banco-pruebas.mjs lista mesa && ESPERA=cerrada npm run prueba:mesa; node ../scripts/banco-pruebas.mjs borrar
+```
+
+Perfil: edita y lee de vuelta, alterna un aviso y, con `BAJA=1`, da de baja
+la cuenta del banco (solo esa: la prueba se niega con otra). Con
+`GUARDAR=pruebas/datos/mi-perfil.json` refresca la respuesta real que usan
+el catálogo y `pruebas/perfil.test.ts`:
+
+```bash
+node ../scripts/banco-pruebas.mjs lista && BAJA=1 npm run prueba:perfil; node ../scripts/banco-pruebas.mjs borrar
+```
+
 La sesión, si tocaste `src/sesion/`:
 
 ```bash
@@ -174,7 +206,9 @@ node ../scripts/banco-pruebas.mjs && npm run prueba:api; node ../scripts/banco-p
 Cada pantalla se ve en el navegador (config `app-catalogo`, puerto 8090) con
 servidor simulado: `/catalogo`, `/catalogo-entrada`, `/catalogo-datos`,
 `/catalogo-cuestionario`, `/catalogo-verificacion?estado=…`,
-`/catalogo-cuenta?estado=reservar|reservada|abierta|…`.
+`/catalogo-cuenta?estado=reservar|reservada|abierta|…`,
+`/catalogo-mesa?estado=revision|sin-reserva|sin-mesa|cerrada|abierta|movimiento|pasada|valorada`,
+`/catalogo-perfil`.
 
 Instalar siempre con `npx expo install`. Las pruebas usan los tipos de Node y
 la app no: por eso tienen su propio `tsconfig`. Un `Buffer` en `src/` compila

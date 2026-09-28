@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { AppState, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useUltimo } from '../util/useUltimo'
+import { useFocusEffect } from 'expo-router'
 
 import { Aviso, Boton, Ficha, IconoCheck, Opcion, Texto, color, cremaAlfa, fuente, medida, radio, tinta, verdeAlfa } from '../diseno'
 import { Cabecera } from '../cuenta/Cabecera'
@@ -27,23 +29,27 @@ export function MiMesa(p: { servicio: Servicio; ir: (destino: string) => void; a
   const [fallo, setFallo] = useState('')
   const [refrescando, setRefrescando] = useState(false)
   const [saliendo, setSaliendo] = useState(false)
-  const { servicio, alEntrar } = p
+  const { servicio } = p
+  const alEntrar = useUltimo(p.alEntrar)
 
   const cargar = useCallback(async () => {
     const r = await servicio.mesa()
     if (r.ok) {
       setD(r.datos)
       setFallo('')
-    } else if (r.status === 401) alEntrar()
+    } else if (r.status === 401) alEntrar.current()
     else setFallo(r.error)
   }, [servicio, alEntrar])
 
-  useEffect(() => {
-    cargar()
-    // Al volver a la app: la mesa se abre a una hora, y quien espera vuelve a mirar.
-    const s = AppState.addEventListener('change', (e) => e === 'active' && cargar())
-    return () => s.remove()
-  }, [cargar])
+  // Al entrar en la pestaña, al volver a ella y al volver a la app: la mesa
+  // se abre a una hora, y quien espera vuelve a mirar.
+  useFocusEffect(
+    useCallback(() => {
+      cargar()
+      const s = AppState.addEventListener('change', (e) => e === 'active' && cargar())
+      return () => s.remove()
+    }, [cargar]),
+  )
 
   let cuerpo: ReactNode
   if (!d) {

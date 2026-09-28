@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState, RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useUltimo } from '../util/useUltimo'
+import { useFocusEffect } from 'expo-router'
 
 import { Aviso, Boton, Texto, color, medida } from '../diseno'
 import { reglas } from '../reglas'
@@ -49,7 +51,8 @@ export function Inicio(p: {
   const actual = useRef<M.MiCuenta | null>(null)
   actual.current = datos
 
-  const { servicio, alEntrar } = p
+  const { servicio } = p
+  const alEntrar = useUltimo(p.alEntrar)
 
   /** Relee la cuenta. Si el servidor dice que no, no se toca lo que había. */
   const releer = useCallback(async () => {
@@ -57,7 +60,7 @@ export function Inicio(p: {
     if (r.ok) {
       setDatos(r.datos)
       setFallo('')
-    } else if (r.status === 401) alEntrar()
+    } else if (r.status === 401) alEntrar.current()
     else if (!actual.current) setFallo(r.error)
     return r.ok
   }, [servicio, alEntrar])
@@ -71,9 +74,13 @@ export function Inicio(p: {
     return ok
   }, [releer, servicio])
 
-  useEffect(() => {
-    cargarTodo()
-  }, [cargarTodo])
+  // Al entrar y cada vez que se vuelve a la pestaña: las pestañas se quedan
+  // montadas, y lo hecho en Mi mesa o en Perfil cambia lo que dice el Inicio.
+  useFocusEffect(
+    useCallback(() => {
+      cargarTodo()
+    }, [cargarTodo]),
+  )
 
   // La pestaña de abajo dice «Mi mesa» o «Mi grupo» según lo reservado.
   useEffect(() => contarFormato(datos?.reserva?.formato), [datos])

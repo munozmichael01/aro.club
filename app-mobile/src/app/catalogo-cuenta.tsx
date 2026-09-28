@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 
 import { Inicio } from '../cuenta/Inicio'
@@ -57,7 +58,7 @@ const MESA: MiMesa = {
 
 export default function Pantalla() {
   const { estado = 'reservar' } = useLocalSearchParams<{ estado?: string }>()
-  const servicio: ReturnType<typeof crearServicioCuenta> = {
+  const servicio = useMemo((): ReturnType<typeof crearServicioCuenta> => ({
     async cuenta() {
       if (estado === 'cargando') return new Promise(() => {})
       if (estado === 'fallo') return { ok: false, error: 'No pudimos cargar tu cuenta. Revisa tu conexión e inténtalo otra vez.' }
@@ -73,7 +74,7 @@ export default function Pantalla() {
       await new Promise((ok) => setTimeout(ok, 700))
       return { ok: false, error: 'No te quedan encuentros.' }
     },
-  }
+  }), [estado]) // estable: si no, la carga se relanzaría en cada render
   return (
     <Inicio
       key={estado}

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 
 import { MiMesa } from '../mesa/MiMesa'
@@ -38,7 +39,7 @@ const ESTADOS: Record<string, DeServidor> = {
 export default function Pantalla() {
   const { estado = 'abierta' } = useLocalSearchParams<{ estado?: string }>()
   const espera = () => new Promise((ok) => setTimeout(ok, 600))
-  const servicio: ReturnType<typeof crearServicioMesa> = {
+  const servicio = useMemo((): ReturnType<typeof crearServicioMesa> => ({
     async mesa() {
       if (estado === 'fallo') return { ok: false, error: 'No pudimos cargar tu mesa. Revisa tu conexión e inténtalo otra vez.' }
       return { ok: true, datos: ESTADOS[estado] ?? ABIERTA }
@@ -55,7 +56,7 @@ export default function Pantalla() {
       await espera()
       return { ok: true, datos: { ok: true } }
     },
-  }
+  }), [estado]) // estable: si no, la carga se relanzaría en cada render
   return (
     <MiMesa
       key={estado}

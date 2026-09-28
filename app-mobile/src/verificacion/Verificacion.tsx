@@ -1,6 +1,7 @@
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import * as ImagePicker from 'expo-image-picker'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useUltimo } from '../util/useUltimo'
 import { Image, Linking, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Path } from 'react-native-svg'
@@ -89,14 +90,18 @@ export function Verificacion(p: {
   const camara = useRef<CameraView>(null)
   const conCamara = p.camara !== false
 
+  // `p` entero NO va en las dependencias: cambia cada vez que el padre se
+  // pinta, y relanzaría la carga sin motivo (ver `useUltimo`).
+  const alEntrar = useUltimo(p.alEntrar)
+  const servicio = p.servicio
   const cargar = useCallback(async () => {
     setErrorCarga('')
-    const r = await p.servicio.estado()
+    const r = await servicio.estado()
     if (r.ok) setE((s) => desdeServidor(s, r.datos))
-    else if (r.status === 401) p.alEntrar()
+    else if (r.status === 401) alEntrar.current()
     else setErrorCarga(r.error)
     levantar()
-  }, [levantar, p])
+  }, [levantar, servicio, alEntrar])
 
   useEffect(() => {
     cargar()

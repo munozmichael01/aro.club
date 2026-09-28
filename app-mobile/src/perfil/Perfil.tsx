@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useUltimo } from '../util/useUltimo'
+import { useFocusEffect } from 'expo-router'
 
 import { Cabecera } from '../cuenta/Cabecera'
 import { Aviso, Boton, Campo, EnlacePie, Fecha, IconoAbrir, IconoCruz, Interruptor, Opcion, Texto, color, fuente, medida, radio, tinta, verdeAlfa } from '../diseno'
@@ -23,7 +25,8 @@ type Servicio = ReturnType<typeof crearServicioPerfil>
  */
 export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntrar: () => void; alSalir: () => Promise<void>; alBaja: () => Promise<void> }) {
   const insets = useSafeAreaInsets()
-  const { servicio, alEntrar } = p
+  const { servicio } = p
+  const alEntrar = useUltimo(p.alEntrar)
   const [d, setD] = useState<M.DeServidor | null>(null)
   const [fallo, setFallo] = useState('')
   const [refrescando, setRefrescando] = useState(false)
@@ -52,7 +55,7 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
     if (r.ok) {
       setD(r.datos)
       setFallo('')
-    } else if (r.status === 401) alEntrar()
+    } else if (r.status === 401) alEntrar.current()
     else setFallo(r.error)
   }, [servicio, alEntrar])
   const leerExcl = useCallback(async () => {
@@ -69,9 +72,12 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
   }, [servicio])
   const todo = useCallback(() => Promise.all([leerPerfil(), leerExcl(), leerAvisos()]), [leerPerfil, leerExcl, leerAvisos])
 
-  useEffect(() => {
-    todo()
-  }, [todo])
+  // Al entrar y al volver a la pestaña (una exclusión puesta en Mi mesa aparece aquí).
+  useFocusEffect(
+    useCallback(() => {
+      todo()
+    }, [todo]),
+  )
 
   const campos = d ? M.campos(d) : []
   const vals = d ? M.valores(d) : {}
