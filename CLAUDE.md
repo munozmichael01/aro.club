@@ -105,6 +105,38 @@ Continuar— estuvo semanas sin pintarse y el capturador de errores no tenía na
 que avisar, con razón. Al tocar markup anidado, mirar el resultado en el
 navegador, no solo el diff.
 
+## El día de una cena no lo decide ningún reloj local
+
+Ni el del servidor ni el del navegador. `getDay()`, `getDate()`, `getMonth()`
+y `getHours()` son la hora de la máquina que ejecuta, y una cena del **sábado
+3 a las ocho de la noche de Caracas es medianoche del domingo 4 en Madrid**.
+
+Ha mordido dos veces, en los dos lados:
+
+- **En el servidor**, donde Vercel corre en UTC: el panel y las fechas de
+  «se borra el» decían un día de más. Se arregló con `src/lib/fechas.ts`.
+- **En el navegador**: Mi cuenta pintaba diez fechas con el reloj de quien
+  mirara. A quien estuviera fuera de Venezuela le decía otro día. Lo encontró
+  el agente de la app comparando su pantalla con la web desde Madrid.
+
+```js
+AroReglas.partesDe(iso, zona)   // día, número, mes, hora — en la zona de la ciudad
+AroReglas.diaDe(iso, zona)      // solo el día
+AroReglas.horaDe(iso, zona)     // solo la hora
+```
+
+`zona` es `zonaHoraria`, que viaja **junto a cada fecha** en `/api/proxima`,
+`/api/mi-mesa` y `/api/mi-cuenta` desde que existe `cities.timezone`. Nunca en
+la raíz de la respuesta: una persona puede tener una cena en Caracas y otra en
+otra ciudad.
+
+`comprobar-cuestionario.mjs` lleva la cuenta de las apariciones que quedan,
+pantalla por pantalla, y falla si alguna sube. Quedan cuatro por migrar
+—Operación, Pago, Mi mesa, Cancelar—; las demás miran fechas de **nacimiento**,
+que no llevan hora ni zona, y ahí el `Date` vale.
+
+---
+
 ## Base de datos
 
 - **El proyecto es `qdydmklrbsdemzvjsldo`.** Las herramientas MCP de Supabase
