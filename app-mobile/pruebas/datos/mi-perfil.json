@@ -1,0 +1,1002 @@
+{
+  "verificada": true,
+  "completo": true,
+  "faltan": 0,
+  "total": 20,
+  "faltanPreguntas": 0,
+  "faltanBase": 0,
+  "creditos": 0,
+  "correo": "banco-pruebas@aro.club",
+  "contacto": "",
+  "base": {
+    "nombre": "Banco Pruebas",
+    "trato": "Banco",
+    "nacimiento": "1990-05-12",
+    "genero": "mujer",
+    "telefono": "+584121234567"
+  },
+  "preguntas": [
+    {
+      "clave": "nacimiento",
+      "enunciado": "¿Cuándo naciste?",
+      "ayuda": "Nadie ve tu edad exacta. La usamos para que en tu mesa no haya más de diez años de diferencia entre la persona más joven y la mayor: es lo que hace que la conversación fluya.",
+      "tipo": "date",
+      "opciones": null,
+      "min": null,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 1,
+      "valor": "1990-05-12"
+    },
+    {
+      "clave": "genero",
+      "enunciado": "¿Con qué género te identificas?",
+      "ayuda": "No se muestra a nadie. Sirve para que la mesa quede balanceada y no acabes siendo la única persona de tu género en el grupo.",
+      "tipo": "single",
+      "opciones": [
+        {
+          "label": "Mujer",
+          "value": "mujer"
+        },
+        {
+          "label": "Hombre",
+          "value": "hombre"
+        },
+        {
+          "label": "No binario",
+          "value": "no-binario"
+        },
+        {
+          "label": "Prefiero no decirlo",
+          "value": "sin-decir"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 1,
+      "valor": "mujer"
+    },
+    {
+      "clave": "arraigo",
+      "enunciado": "¿Te suena alguna de estas?",
+      "ayuda": null,
+      "tipo": "single",
+      "opciones": [
+        {
+          "label": "Me fui del país y volví",
+          "value": "volvio"
+        },
+        {
+          "label": "Nunca me fui, pero casi todos sí",
+          "value": "se-quedo"
+        },
+        {
+          "label": "Llegué hace poco y no conozco a nadie",
+          "value": "interior"
+        },
+        {
+          "label": "Estoy de paso",
+          "value": "visita"
+        },
+        {
+          "label": "Sigo con la gente de siempre",
+          "value": "mismos"
+        },
+        {
+          "label": "Trabajo remoto y casi no veo gente",
+          "value": "remoto"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 1,
+      "valor": "volvio"
+    },
+    {
+      "clave": "sector",
+      "enunciado": "¿En qué sector trabajas?",
+      "ayuda": "Es lo único que ven los otros cinco, junto con cómo te llamamos. Por eso no pedimos el cargo.",
+      "tipo": "single",
+      "opciones": [
+        {
+          "label": "Tecnología",
+          "value": "tecnologia"
+        },
+        {
+          "label": "Finanzas",
+          "value": "finanzas"
+        },
+        {
+          "label": "Salud",
+          "value": "salud"
+        },
+        {
+          "label": "Educación",
+          "value": "educacion"
+        },
+        {
+          "label": "Consultoría",
+          "value": "consultoria"
+        },
+        {
+          "label": "Legal",
+          "value": "legal"
+        },
+        {
+          "label": "Marketing",
+          "value": "marketing"
+        },
+        {
+          "label": "Medios",
+          "value": "medios"
+        },
+        {
+          "label": "Diseño",
+          "value": "diseno"
+        },
+        {
+          "label": "Comercio",
+          "value": "comercio"
+        },
+        {
+          "label": "Manufactura",
+          "value": "manufactura"
+        },
+        {
+          "label": "Energía",
+          "value": "energia"
+        },
+        {
+          "label": "Construcción",
+          "value": "construccion"
+        },
+        {
+          "label": "Gastronomía",
+          "value": "gastronomia"
+        },
+        {
+          "label": "ONG",
+          "value": "ong"
+        },
+        {
+          "label": "Gobierno",
+          "value": "gobierno"
+        },
+        {
+          "label": "Emprendo por mi cuenta",
+          "value": "emprendo"
+        },
+        {
+          "label": "Estudio",
+          "value": "estudio"
+        },
+        {
+          "label": "Entre trabajos",
+          "value": "entre-trabajos"
+        },
+        {
+          "label": "Otro",
+          "value": "otro"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 1,
+      "valor": "tecnologia"
+    },
+    {
+      "clave": "empleador",
+      "enunciado": "¿Dónde trabajas actualmente?",
+      "ayuda": "Solo lo usamos para intentar no sentarte con alguien de tu empresa. No se le muestra a nadie.",
+      "tipo": "text",
+      "opciones": null,
+      "min": null,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 1,
+      "valor": "Banco de pruebas"
+    },
+    {
+      "clave": "momento",
+      "enunciado": "¿En qué momento estás?",
+      "ayuda": null,
+      "tipo": "single",
+      "opciones": [
+        {
+          "label": "Soltero sin hijos",
+          "value": "soltero-sin-hijos"
+        },
+        {
+          "label": "Soltero con hijos",
+          "value": "soltero-con-hijos"
+        },
+        {
+          "label": "En pareja sin hijos",
+          "value": "pareja-sin-hijos"
+        },
+        {
+          "label": "En pareja con hijos",
+          "value": "pareja-con-hijos"
+        },
+        {
+          "label": "Prefiero no decirlo",
+          "value": "no-decir"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 2,
+      "valor": "soltero-sin-hijos"
+    },
+    {
+      "clave": "rol",
+      "enunciado": "En una mesa con gente que no conoces, ¿cómo eres?",
+      "ayuda": null,
+      "tipo": "single",
+      "opciones": [
+        {
+          "label": "Escucho más de lo que hablo",
+          "value": "escucha"
+        },
+        {
+          "label": "Depende del momento",
+          "value": "depende"
+        },
+        {
+          "label": "Suelo llevar la conversación",
+          "value": "lleva"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 2,
+      "valor": "escucha"
+    },
+    {
+      "clave": "motivo",
+      "enunciado": "¿Qué te trae?",
+      "ayuda": null,
+      "tipo": "single",
+      "opciones": [
+        {
+          "label": "Ampliar mi círculo",
+          "value": "ampliar"
+        },
+        {
+          "label": "Volver a salir después de un tiempo",
+          "value": "volver-a-salir"
+        },
+        {
+          "label": "Conocer gente fuera del trabajo",
+          "value": "fuera-del-trabajo"
+        },
+        {
+          "label": "Reconectar con Caracas después de volver",
+          "value": "reconectar"
+        },
+        {
+          "label": "Red profesional",
+          "value": "red-profesional"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 2,
+      "valor": "ampliar"
+    },
+    {
+      "clave": "romance",
+      "enunciado": "Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?",
+      "ayuda": "Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla del producto. Solo la usa el algoritmo para no juntar expectativas opuestas.",
+      "tipo": "single",
+      "opciones": [
+        {
+          "label": "Abierto, si surge algo bienvenido",
+          "value": "abierto"
+        },
+        {
+          "label": "Me da igual, vengo por la conversación",
+          "value": "indiferente"
+        },
+        {
+          "label": "Prefiero una mesa sin esa energía",
+          "value": "cerrado"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": false,
+      "exclusiva": null,
+      "pantalla": 2,
+      "valor": null
+    },
+    {
+      "clave": "temas",
+      "enunciado": "¿De qué podrías hablar dos horas seguidas?",
+      "ayuda": null,
+      "tipo": "multi",
+      "opciones": [
+        {
+          "label": "Cocina y restaurantes",
+          "value": "cocina"
+        },
+        {
+          "label": "Viajes",
+          "value": "viajes"
+        },
+        {
+          "label": "Cine y series",
+          "value": "cine"
+        },
+        {
+          "label": "Música",
+          "value": "musica"
+        },
+        {
+          "label": "Libros",
+          "value": "libros"
+        },
+        {
+          "label": "Deporte",
+          "value": "deporte"
+        },
+        {
+          "label": "Negocios y emprender",
+          "value": "negocios"
+        },
+        {
+          "label": "Tecnología",
+          "value": "tecnologia"
+        },
+        {
+          "label": "Arte y diseño",
+          "value": "arte"
+        },
+        {
+          "label": "Arquitectura",
+          "value": "arquitectura"
+        },
+        {
+          "label": "Ciencia",
+          "value": "ciencia"
+        },
+        {
+          "label": "Historia",
+          "value": "historia"
+        },
+        {
+          "label": "Psicología",
+          "value": "psicologia"
+        },
+        {
+          "label": "Política",
+          "value": "politica"
+        },
+        {
+          "label": "Economía",
+          "value": "economia"
+        },
+        {
+          "label": "Crianza",
+          "value": "crianza"
+        },
+        {
+          "label": "Salud y bienestar",
+          "value": "salud"
+        },
+        {
+          "label": "Humor y absurdos",
+          "value": "humor"
+        }
+      ],
+      "min": 2,
+      "max": 4,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 3,
+      "valor": [
+        "cocina",
+        "viajes"
+      ]
+    },
+    {
+      "clave": "evitar",
+      "enunciado": "¿Hay algún tema que prefieras que no salga?",
+      "ayuda": "Se lo decimos al anfitrión de la mesa, sin decir de quién viene.",
+      "tipo": "multi",
+      "opciones": [
+        {
+          "label": "Política y situación del país",
+          "value": "politica"
+        },
+        {
+          "label": "Religión y fe",
+          "value": "religion"
+        },
+        {
+          "label": "Dinero, sueldos y precios",
+          "value": "dinero"
+        },
+        {
+          "label": "Vida amorosa y relaciones",
+          "value": "vida-amorosa"
+        },
+        {
+          "label": "Crianza e hijos",
+          "value": "crianza"
+        },
+        {
+          "label": "Trabajo, vengo a desconectarme",
+          "value": "trabajo"
+        },
+        {
+          "label": "Ninguno, hablo de todo",
+          "value": "ninguno"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": false,
+      "exclusiva": "ninguno",
+      "pantalla": 3,
+      "valor": null
+    },
+    {
+      "clave": "actividades",
+      "enunciado": "Escoge lo que de verdad haces, no lo que te gustaría hacer",
+      "ayuda": null,
+      "tipo": "multi",
+      "opciones": [
+        {
+          "label": "Cocinar",
+          "value": "cocinar"
+        },
+        {
+          "label": "Salir a comer",
+          "value": "salir-a-comer"
+        },
+        {
+          "label": "Correr",
+          "value": "correr"
+        },
+        {
+          "label": "Gimnasio",
+          "value": "gimnasio"
+        },
+        {
+          "label": "Yoga o pilates",
+          "value": "yoga"
+        },
+        {
+          "label": "Ciclismo",
+          "value": "ciclismo"
+        },
+        {
+          "label": "Senderismo",
+          "value": "senderismo"
+        },
+        {
+          "label": "Playa",
+          "value": "playa"
+        },
+        {
+          "label": "Pádel o tenis",
+          "value": "padel"
+        },
+        {
+          "label": "Fútbol",
+          "value": "futbol"
+        },
+        {
+          "label": "Béisbol",
+          "value": "beisbol"
+        },
+        {
+          "label": "Nadar",
+          "value": "nadar"
+        },
+        {
+          "label": "Bailar",
+          "value": "bailar"
+        },
+        {
+          "label": "Conciertos",
+          "value": "conciertos"
+        },
+        {
+          "label": "Cine",
+          "value": "cine"
+        },
+        {
+          "label": "Teatro",
+          "value": "teatro"
+        },
+        {
+          "label": "Museos",
+          "value": "museos"
+        },
+        {
+          "label": "Leer",
+          "value": "leer"
+        },
+        {
+          "label": "Escribir",
+          "value": "escribir"
+        },
+        {
+          "label": "Fotografía",
+          "value": "fotografia"
+        },
+        {
+          "label": "Tocar un instrumento",
+          "value": "instrumento"
+        },
+        {
+          "label": "Videojuegos",
+          "value": "videojuegos"
+        },
+        {
+          "label": "Juegos de mesa",
+          "value": "juegos-de-mesa"
+        },
+        {
+          "label": "Viajar",
+          "value": "viajar"
+        },
+        {
+          "label": "Voluntariado",
+          "value": "voluntariado"
+        },
+        {
+          "label": "Estudiar algo por mi cuenta",
+          "value": "estudiar"
+        },
+        {
+          "label": "Cuidar plantas",
+          "value": "plantas"
+        }
+      ],
+      "min": 3,
+      "max": 6,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 3,
+      "valor": [
+        "cocinar",
+        "salir-a-comer",
+        "correr"
+      ]
+    },
+    {
+      "clave": "planes",
+      "enunciado": "¿Qué planes te interesan?",
+      "ayuda": "Hoy solo hay cenas. Lo demás lo abrimos según lo que pida la gente.",
+      "tipo": "multi",
+      "opciones": [
+        {
+          "label": "Cena informal",
+          "value": "cena"
+        },
+        {
+          "label": "Cena gourmet",
+          "value": "cena-gastronomica"
+        },
+        {
+          "label": "Café o desayuno de networking",
+          "value": "cafe"
+        },
+        {
+          "label": "Drinks / after office",
+          "value": "drinks"
+        },
+        {
+          "label": "Correr",
+          "value": "correr"
+        },
+        {
+          "label": "Senderismo",
+          "value": "senderismo"
+        },
+        {
+          "label": "Pádel o tenis",
+          "value": "padel"
+        },
+        {
+          "label": "Yoga o pilates",
+          "value": "pilates"
+        },
+        {
+          "label": "Ciclismo",
+          "value": "ciclismo"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 4,
+      "valor": [
+        "cena"
+      ]
+    },
+    {
+      "clave": "peso",
+      "enunciado": "En una cena, ¿qué pesa más para ti?",
+      "ayuda": null,
+      "tipo": "single",
+      "opciones": [
+        {
+          "label": "La conversación, el restaurante es la excusa",
+          "value": "conversacion"
+        },
+        {
+          "label": "La comida, vengo por la experiencia gastronómica",
+          "value": "comida"
+        },
+        {
+          "label": "Las dos cosas por igual",
+          "value": "ambas"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 4,
+      "valor": "conversacion"
+    },
+    {
+      "clave": "comidas",
+      "enunciado": "Elige tus 3 comidas favoritas",
+      "ayuda": "Con esto elegimos el restaurante de tu fecha. Asiática incluye china, tailandesa, india y vietnamita. No es una alergia: eso va en la última pregunta.",
+      "tipo": "multi",
+      "opciones": [
+        {
+          "label": "Venezolana",
+          "value": "venezolana"
+        },
+        {
+          "label": "Parrilla y carnes",
+          "value": "parrilla"
+        },
+        {
+          "label": "Italiana",
+          "value": "italiana"
+        },
+        {
+          "label": "Pizza",
+          "value": "pizza"
+        },
+        {
+          "label": "Japonesa",
+          "value": "japonesa"
+        },
+        {
+          "label": "Asiática",
+          "value": "asiatica"
+        },
+        {
+          "label": "Peruana",
+          "value": "peruana"
+        },
+        {
+          "label": "Mexicana",
+          "value": "mexicana"
+        },
+        {
+          "label": "Española",
+          "value": "espanola"
+        },
+        {
+          "label": "Mediterránea",
+          "value": "mediterranea"
+        },
+        {
+          "label": "Árabe",
+          "value": "arabe"
+        },
+        {
+          "label": "Pescados y mariscos",
+          "value": "mariscos"
+        },
+        {
+          "label": "De autor y fusión",
+          "value": "autor"
+        },
+        {
+          "label": "De mercado y vegetariana",
+          "value": "mercado"
+        },
+        {
+          "label": "Hamburguesas",
+          "value": "hamburguesas"
+        }
+      ],
+      "min": 3,
+      "max": 3,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 4,
+      "valor": [
+        "venezolana",
+        "parrilla",
+        "italiana"
+      ]
+    },
+    {
+      "clave": "gasto",
+      "enunciado": "¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?",
+      "ayuda": "Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa, así que marcar de más solo hace que la noche te salga cara.",
+      "tipo": "single",
+      "opciones": [
+        {
+          "label": "Hasta 20 USD",
+          "value": "hasta-20"
+        },
+        {
+          "label": "20 a 35 USD",
+          "value": "20-35"
+        },
+        {
+          "label": "35 a 50 USD",
+          "value": "35-50"
+        },
+        {
+          "label": "Más de 50 USD",
+          "value": "mas-50"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 4,
+      "valor": "hasta-20"
+    },
+    {
+      "clave": "zonas",
+      "enunciado": "¿En qué zonas puedes asistir sin problema?",
+      "ayuda": null,
+      "tipo": "multi",
+      "opciones": [
+        {
+          "label": "Las Mercedes",
+          "value": "mercedes"
+        },
+        {
+          "label": "El Rosal",
+          "value": "rosal"
+        },
+        {
+          "label": "Bello Monte",
+          "value": "bello-monte"
+        },
+        {
+          "label": "Chacao",
+          "value": "chacao"
+        },
+        {
+          "label": "Altamira",
+          "value": "altamira"
+        },
+        {
+          "label": "La Castellana",
+          "value": "castellana"
+        },
+        {
+          "label": "Los Palos Grandes",
+          "value": "palos-grandes"
+        },
+        {
+          "label": "Sebucán y Los Dos Caminos",
+          "value": "sebucan"
+        },
+        {
+          "label": "Chuao",
+          "value": "chuao"
+        },
+        {
+          "label": "El Cafetal y Santa Paula",
+          "value": "cafetal"
+        },
+        {
+          "label": "Los Naranjos y Cerro Verde",
+          "value": "naranjos"
+        },
+        {
+          "label": "La Trinidad y La Tahona",
+          "value": "trinidad"
+        },
+        {
+          "label": "El Hatillo",
+          "value": "hatillo"
+        }
+      ],
+      "min": 1,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 5,
+      "valor": [
+        "mercedes"
+      ]
+    },
+    {
+      "clave": "dias",
+      "enunciado": "¿Qué días te sirven mejor?",
+      "ayuda": null,
+      "tipo": "multi",
+      "opciones": [
+        {
+          "label": "Jueves noche",
+          "value": "jue"
+        },
+        {
+          "label": "Viernes noche",
+          "value": "vie"
+        },
+        {
+          "label": "Sábado noche",
+          "value": "sab"
+        },
+        {
+          "label": "Sábado mañana",
+          "value": "sab-am"
+        },
+        {
+          "label": "Domingo mañana",
+          "value": "dom-am"
+        }
+      ],
+      "min": 1,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 5,
+      "valor": [
+        "jue"
+      ]
+    },
+    {
+      "clave": "idiomas",
+      "enunciado": "¿En qué idiomas conversas cómodo?",
+      "ayuda": null,
+      "tipo": "multi",
+      "opciones": [
+        {
+          "label": "Español",
+          "value": "es"
+        },
+        {
+          "label": "Inglés",
+          "value": "en"
+        },
+        {
+          "label": "Portugués",
+          "value": "pt"
+        },
+        {
+          "label": "Italiano",
+          "value": "it"
+        },
+        {
+          "label": "Francés",
+          "value": "fr"
+        },
+        {
+          "label": "Alemán",
+          "value": "de"
+        },
+        {
+          "label": "Árabe",
+          "value": "ar"
+        },
+        {
+          "label": "Chino",
+          "value": "zh"
+        }
+      ],
+      "min": 1,
+      "max": null,
+      "obligatoria": true,
+      "exclusiva": null,
+      "pantalla": 5,
+      "valor": [
+        "es"
+      ]
+    },
+    {
+      "clave": "dieta",
+      "enunciado": "¿Alguna restricción alimentaria?",
+      "ayuda": null,
+      "tipo": "multi",
+      "opciones": [
+        {
+          "label": "Ninguna",
+          "value": "ninguna"
+        },
+        {
+          "label": "Vegetariano",
+          "value": "vegetariano"
+        },
+        {
+          "label": "Vegano",
+          "value": "vegano"
+        },
+        {
+          "label": "Pescetariano",
+          "value": "pescetariano"
+        },
+        {
+          "label": "Sin gluten",
+          "value": "sin-gluten"
+        },
+        {
+          "label": "Sin lactosa",
+          "value": "sin-lactosa"
+        },
+        {
+          "label": "Kosher",
+          "value": "kosher"
+        },
+        {
+          "label": "Halal",
+          "value": "halal"
+        },
+        {
+          "label": "No como cerdo",
+          "value": "sin-cerdo"
+        },
+        {
+          "label": "No como carnes rojas",
+          "value": "sin-carnes-rojas"
+        },
+        {
+          "label": "Diabético",
+          "value": "diabetico"
+        },
+        {
+          "label": "Alergias",
+          "value": "alergias"
+        }
+      ],
+      "min": null,
+      "max": null,
+      "obligatoria": false,
+      "exclusiva": "ninguna",
+      "pantalla": 5,
+      "valor": null
+    }
+  ],
+  "cenas": 2,
+  "historial": [
+    {
+      "cuando": "2026-09-27T19:22:03.404+00:00",
+      "formato": "dinner",
+      "sitio": "Local Prueba QA",
+      "numeroMesa": 1,
+      "estado": "fuiste"
+    },
+    {
+      "cuando": "2026-08-29T03:22:03.681+00:00",
+      "formato": "dinner",
+      "sitio": "Local Prueba QA",
+      "numeroMesa": 2,
+      "estado": "fuiste"
+    }
+  ]
+}

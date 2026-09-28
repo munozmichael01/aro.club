@@ -48,7 +48,8 @@
     "prueba:alta": "tsx pruebas/alta-completa-contra-la-api.mjs",
     "prueba:verificacion": "tsx pruebas/verificacion-contra-la-api.mjs",
     "prueba:cuenta": "tsx pruebas/cuenta-contra-la-api.mjs",
-    "prueba:mesa": "tsx pruebas/mesa-contra-la-api.mjs"
+    "prueba:mesa": "tsx pruebas/mesa-contra-la-api.mjs",
+    "prueba:perfil": "tsx pruebas/perfil-contra-la-api.mjs"
   },
   "private": true
 }

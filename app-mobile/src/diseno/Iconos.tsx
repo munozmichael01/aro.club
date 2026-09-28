@@ -80,3 +80,12 @@ export function IconoPunto({ tam = 14, color }: P) {
     </Svg>
   )
 }
+
+/** «›»: una fila que se abre. */
+export function IconoAbrir({ tam = 14, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 16 16">
+      <Path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke={color} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}

@@ -195,3 +195,31 @@ export function elMismoDia(empiezaEn: string | null | undefined, zona: Zona): st
 
 /** La hora sola, en la zona de la fecha: «8:00 p.m.». */
 export const horaEn = (iso: string | null | undefined, zona: Zona) => reglas.horaDe(iso, zona) ?? ''
+
+// --- Perfil -------------------------------------------------------------------
+
+const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+
+/**
+ * «12 de mayo de 1990»: una fecha de nacimiento («AAAA-MM-DD»). Sin hora ni
+ * zona, así que se lee del texto y NO se pasa por `Date`: medianoche UTC en
+ * Caracas es el día anterior.
+ */
+export function fechaDeNacimiento(v: string | null | undefined): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v ?? '')
+  if (!m || +m[2] < 1 || +m[2] > 12) return null
+  return `${+m[3]} de ${MESES_LARGOS[+m[2] - 1]} de ${m[1]}`
+}
+
+/** «3 de octubre de 2026»: una cena del historial, en la zona de la ciudad. */
+export function fechaCompleta(iso: string | null | undefined, zona?: Zona): string {
+  const p = reglas.partesDe(iso, zona)
+  return p ? `${p.numero} de ${p.mes} de ${p.ano}` : ''
+}
+
+/** «03/10/2026»: cuándo activó WhatsApp. */
+export function fechaNumerica(iso: string | null | undefined, zona?: Zona): string {
+  const p = reglas.partesDe(iso, zona)
+  const d = (n: number) => String(n).padStart(2, '0')
+  return p ? `${d(p.numero)}/${d(p.mesNumero + 1)}/${p.ano}` : ''
+}
