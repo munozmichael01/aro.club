@@ -18,6 +18,7 @@ export type TipoBoton =
   | 'sobreVerde'
   | 'secundarioSobreVerde'
   | 'fantasmaSobreVerde'
+  | 'grave'
 
 type Estado = { fondo: string; texto: string; borde?: string }
 
@@ -48,6 +49,14 @@ const ESTADOS: Record<TipoBoton, { reposo: Estado; presionado: Estado; inerte: E
     reposo: { fondo: 'transparent', texto: color.crema, borde: cremaAlfa(0.34) },
     presionado: { fondo: color.crema, texto: color.verdeProfundo, borde: color.crema },
     inerte: { fondo: 'transparent', texto: color.cuerpoSobreVerde, borde: cremaAlfa(0.16) },
+  },
+  // Enviar un reporte en Mi mesa: la única acción grave del producto, en la
+  // terracota más oscura de la web (#6E340F). No es el primario: no es «el
+  // paso siguiente», es algo que se hace con cuidado.
+  grave: {
+    reposo: { fondo: '#6E340F', texto: color.sobreTerracota },
+    presionado: { fondo: color.terracota, texto: color.sobreTerracota },
+    inerte: { fondo: tinta(0.12), texto: color.cuerpo },
   },
   fantasmaSobreVerde: {
     reposo: { fondo: 'transparent', texto: color.sobreVerdeSecundario },

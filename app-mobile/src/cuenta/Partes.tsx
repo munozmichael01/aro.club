@@ -62,38 +62,6 @@ function useLatido(desde: number, hasta: number, ms: number) {
 
 // --- Cabecera ---------------------------------------------------------------
 
-/**
- * La cabecera: la marca, la puerta al panel si es de operación, y cerrar
- * sesión. Inicio, Mi mesa y Perfil viven en la barra de abajo
- * (`Pestanas.tsx`); cerrar sesión se queda aquí hasta que exista Perfil.
- */
-export function Cabecera(p: { esOps: boolean; saliendo: boolean; alOperacion: () => void; alSalir: () => void; arriba: number }) {
-  return (
-    <View style={[estilos.cabecera, { paddingTop: p.arriba }]}>
-      <View style={estilos.cabeceraFila}>
-        <View style={estilos.marca} accessibilityRole="header">
-          <Marca tam={22} />
-          <Texto variante="marca">Aro Club</Texto>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          {p.esOps ? (
-            <Pressable onPress={p.alOperacion} accessibilityRole="link" style={estilos.operacion}>
-              <Texto variante="etiqueta" tono="verde" style={{ fontFamily: fuente.textoSemi, letterSpacing: 0.5 }}>
-                {T.nav.operacion}
-              </Texto>
-            </Pressable>
-          ) : null}
-          <Pressable onPress={p.alSalir} disabled={p.saliendo} accessibilityRole="button" style={estilos.salir}>
-            <Texto variante="cuerpoChico" tono="secundario" style={{ fontFamily: fuente.textoMedia }}>
-              {p.saliendo ? T.nav.saliendo : T.nav.salir}
-            </Texto>
-          </Pressable>
-        </View>
-      </View>
-    </View>
-  )
-}
-
 // --- Esqueleto --------------------------------------------------------------
 
 /** Un esqueleto con la forma del bloque que viene, no un spinner: el salto se nota más que la espera. */
@@ -554,24 +522,6 @@ export function Seccion({ children, arriba = 40, onLayout }: { children: ReactNo
 }
 
 const estilos = StyleSheet.create({
-  cabecera: { backgroundColor: 'rgba(250,243,228,0.97)', borderBottomWidth: 1, borderBottomColor: tinta(0.1) },
-  cabeceraFila: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: medida.margenLateral,
-    minHeight: 56,
-  },
-  marca: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: medida.toqueMinimo },
-  operacion: {
-    minHeight: medida.toqueMinimo,
-    justifyContent: 'center',
-    paddingHorizontal: 15,
-    borderRadius: radio.capsula,
-    borderWidth: 1,
-    borderColor: tinta(0.22),
-  },
-  salir: { minHeight: medida.toqueMinimo, justifyContent: 'center', paddingHorizontal: 8 },
   bloque: { borderRadius: 30, padding: 22 },
   selloFila: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 16 },
   sello: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 14, borderRadius: radio.capsula },

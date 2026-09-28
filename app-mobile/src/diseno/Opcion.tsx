@@ -22,6 +22,12 @@ type Props = {
   fondo?: 'crema' | 'verde'
   /** Hay tope y esta no está marcada: se atenúa, pero se puede tocar (ver `nota` en la pantalla). */
   enTope?: boolean
+  /** Texto a la derecha: el sector de una persona en Mi mesa. */
+  pie?: string
+  /** El pie en terracota: «Bloqueada por tu reporte». */
+  pieFuerte?: boolean
+  /** Fija: se ve marcada y no se puede desmarcar. */
+  fija?: boolean
 }
 
 const TONOS = {
@@ -57,11 +63,12 @@ function Visto() {
   )
 }
 
-export function Opcion({ texto, marcada, onPress, unica, fondo = 'crema', enTope }: Props) {
+export function Opcion({ texto, marcada, onPress, unica, fondo = 'crema', enTope, pie, pieFuerte, fija }: Props) {
   const t = TONOS[fondo]
   return (
     <Pressable
-      onPress={onPress}
+      onPress={fija ? undefined : onPress}
+      aria-disabled={fija || undefined}
       accessibilityRole={unica ? 'radio' : 'checkbox'}
       aria-checked={marcada}
       style={[
@@ -87,10 +94,16 @@ export function Opcion({ texto, marcada, onPress, unica, fondo = 'crema', enTope
           estilos.texto,
           { fontFamily: marcada ? fuente.textoSemi : fuente.texto, color: marcada ? t.textoMarcada : t.texto },
           unica ? { fontSize: 16 } : null,
+          pie ? { flex: 1 } : null,
         ]}
       >
         {texto}
       </Text>
+      {pie ? (
+        <Text style={[estilos.pie, { color: pieFuerte ? color.terracota : fondo === 'verde' ? t.texto : color.cuerpo, fontFamily: pieFuerte ? fuente.textoMedia : fuente.texto }]}>
+          {pie}
+        </Text>
+      ) : null}
     </Pressable>
   )
 }
@@ -101,4 +114,5 @@ const estilos = StyleSheet.create({
   pildora: { gap: 10, minHeight: 52, paddingVertical: 12, paddingLeft: 16, paddingRight: 20 },
   aro: { width: 20, height: 20, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   texto: { fontSize: 15, lineHeight: 20, letterSpacing: -0.15, flexShrink: 1 },
+  pie: { fontSize: 13, lineHeight: 17, flexShrink: 0, maxWidth: '45%', textAlign: 'right' },
 })

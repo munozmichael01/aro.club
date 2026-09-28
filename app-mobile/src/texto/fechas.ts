@@ -140,3 +140,58 @@ export function relojDeRevelacion(revelaEn: string | null | undefined, ahora: nu
   const p = (n: number) => String(n).padStart(2, '0')
   return `ABRE EN ${Math.floor(s / 86400)}D ${p(Math.floor(s / 3600) % 24)}:${p(Math.floor(s / 60) % 60)}`
 }
+
+// --- Mi mesa ----------------------------------------------------------------
+
+/** ¿Caen dos instantes en el mismo día del calendario de la ciudad? */
+function mismoDia(a: string | number, b: string | number, zona?: Zona): boolean {
+  const pa = reglas.partesDe(new Date(a).toISOString(), zona)
+  const pb = reglas.partesDe(new Date(b).toISOString(), zona)
+  return !!pa && !!pb && pa.ano === pb.ano && pa.mesNumero === pb.mesNumero && pa.numero === pb.numero
+}
+
+/** «4d 03h 12m», o en el último día «03:12:45»: la cuenta grande de Mi mesa. */
+export function cuentaMesa(hasta: string | null | undefined, ahora: number): string {
+  const s = hasta ? Math.max(0, Math.floor((new Date(hasta).getTime() - ahora) / 1000)) : 0
+  const p = (n: number) => String(n).padStart(2, '0')
+  const hh = Math.floor(s / 3600)
+  return hh >= 24 ? `${Math.floor(s / 86400)}d ${p(hh % 24)}h ${p(Math.floor(s / 60) % 60)}m` : `${p(hh)}:${p(Math.floor(s / 60) % 60)}:${p(s % 60)}`
+}
+
+/** «SE ABRE HOY A LAS 12:00 P.M.» / «SE ABRE EL SÁBADO A LAS 12:00 P.M.». */
+export function selloSeAbre(revelaEn: string | null | undefined, zona: Zona, ahora: number): string {
+  const p = reglas.partesDe(revelaEn, zona)
+  if (!revelaEn || !p) return 'SE ABRE PRONTO'
+  const hoy = new Date(revelaEn).getTime() - ahora < 86400000 && mismoDia(revelaEn, ahora, zona)
+  // La hora como la dice el resto de la pantalla («12:00 P.M.»), no en 24 h
+  // como la web: el sello y la frase de debajo decían la misma hora distinta.
+  return `SE ABRE ${hoy ? 'HOY' : 'EL ' + p.dia.toUpperCase()} A LAS ${(p.hora ?? '').toUpperCase()}`
+}
+
+/** «Tienes puesto el sábado.» */
+export function tienesPuesto(empiezaEn: string | null | undefined, zona: Zona): string {
+  const dia = reglas.diaDe(empiezaEn, zona)
+  return dia ? `Tienes puesto el ${dia}.` : 'Tienes puesto.'
+}
+
+/** «Cena · sábado 3». */
+export function cenaCorta(etiqueta: string, empiezaEn: string | null | undefined, zona: Zona): string {
+  const p = reglas.partesDe(empiezaEn, zona)
+  return p ? `${etiqueta} · ${p.dia} ${p.numero}` : etiqueta
+}
+
+/** «Hoy · 8:00 p.m.» o «Sábado · 8:00 p.m.»: la pastilla de la mesa abierta. */
+export function cuandoMesa(empiezaEn: string | null | undefined, zona: Zona, ahora: number): string {
+  const p = reglas.partesDe(empiezaEn, zona)
+  if (!empiezaEn || !p) return ''
+  return `${mismoDia(empiezaEn, ahora, zona) ? 'Hoy' : mayuscula(p.dia)} · ${p.hora ?? ''}`.trim()
+}
+
+/** «el mismo sábado» (el día de la cena), o «antes de la cena» si no se sabe. */
+export function elMismoDia(empiezaEn: string | null | undefined, zona: Zona): string {
+  const dia = reglas.diaDe(empiezaEn, zona)
+  return dia ? `el mismo ${dia}` : 'antes de la cena'
+}
+
+/** La hora sola, en la zona de la fecha: «8:00 p.m.». */
+export const horaEn = (iso: string | null | undefined, zona: Zona) => reglas.horaDe(iso, zona) ?? ''

@@ -47,7 +47,8 @@
     "telefono": "expo start --go --lan --port 8081",
     "prueba:alta": "tsx pruebas/alta-completa-contra-la-api.mjs",
     "prueba:verificacion": "tsx pruebas/verificacion-contra-la-api.mjs",
-    "prueba:cuenta": "tsx pruebas/cuenta-contra-la-api.mjs"
+    "prueba:cuenta": "tsx pruebas/cuenta-contra-la-api.mjs",
+    "prueba:mesa": "tsx pruebas/mesa-contra-la-api.mjs"
   },
   "private": true
 }

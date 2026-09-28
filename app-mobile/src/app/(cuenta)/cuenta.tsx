@@ -5,8 +5,8 @@ import { useMemo } from 'react'
 
 import { Inicio } from '../../cuenta/Inicio'
 import { crearServicioCuenta } from '../../cuenta/servicio'
-import { api, supabase } from '../../sesion'
-import { borrarLead } from '../../sesion/lead'
+import { salir } from '../../cuenta/salir'
+import { api } from '../../sesion'
 
 const SITIO = (Constants.expoConfig?.extra as { sitio: string }).sitio
 
@@ -22,11 +22,7 @@ export default function Pantalla() {
         router.push({ pathname: destino as never, params })
       }}
       alEntrar={() => router.replace('/entrar')}
-      alSalir={async () => {
-        await supabase.auth.signOut()
-        await borrarLead()
-        router.replace('/')
-      }}
+      alSalir={salir}
     />
   )
 }
