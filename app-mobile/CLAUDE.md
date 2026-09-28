@@ -43,6 +43,16 @@ documento de verdad); borra filas y ficheros al terminar:
 node ../scripts/banco-pruebas.mjs && IMAGEN=<jpg generado> npm run prueba:verificacion; node ../scripts/banco-pruebas.mjs borrar
 ```
 
+El Inicio, contra la API real, en el estado que monte el banco (sin
+reservar nada: solo prueba el «no» de reservar sin créditos):
+
+```bash
+node ../scripts/banco-pruebas.mjs cenas && ESPERA=datos npm run prueba:cuenta; node ../scripts/banco-pruebas.mjs borrar
+```
+
+Cada estado de la tarjeta se ve en el navegador en
+`/catalogo-cuenta?estado=reservar|reservada|abierta|…` (config `app-catalogo`).
+
 Y si tocaste `src/sesion/`, también contra la API real, con la cuenta
 desechable del banco:
 

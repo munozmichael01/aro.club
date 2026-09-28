@@ -30,6 +30,8 @@ type Api = {
   /** Las cuatro preguntas de la puerta, UN sitio para web y app. Opciones como [texto, código]. */
   PUERTA: Record<string, PreguntaPuerta>
   ORDEN_PUERTA: string[]
+  /** Mesa o grupo según el formato: «Mi mesa» / «Mi grupo», y el resto del vocabulario. */
+  vozDe: (formato: string | null | undefined) => { unidad: 'mesa' | 'grupo'; mia: string } & Record<string, string>
 }
 
 export type PreguntaPuerta = {

@@ -20,6 +20,9 @@ from PIL import Image
 HERO = [("grayscale", 0.3), ("contrast", 1.14), ("saturate", 0.62), ("brightness", 0.66)]
 # El token de marca (Sistema v3): el de las demás fotos, p. ej. la de Entrar.
 MARCA = [("grayscale", 0.24), ("contrast", 1.16), ("saturate", 0.74), ("brightness", 0.9)]
+# Las polaroids de la agenda (Mi cuenta) cuando NO están elegidas: más
+# apagadas, para que la elegida se note. Mismo orden que la web.
+APAGADA = [("grayscale", 0.85), ("contrast", 1.16), ("saturate", 0.3), ("brightness", 0.9)]
 
 
 def matriz(nombre, v):
@@ -44,8 +47,12 @@ def matriz(nombre, v):
     raise ValueError(nombre)
 
 
-def cocer(origen, destino, filtro, ancho=1200):
+def cocer(origen, destino, filtro, ancho=1200, cuadrada=False):
     im = Image.open(origen).convert("RGB")
+    if cuadrada:
+        lado = min(im.width, im.height)
+        x, y = (im.width - lado) // 2, (im.height - lado) // 2
+        im = im.crop((x, y, x + lado, y + lado))
     if im.width > ancho:
         im = im.resize((ancho, round(im.height * ancho / im.width)), Image.LANCZOS)
     px = np.asarray(im, dtype=np.float64) / 255.0
@@ -58,4 +65,9 @@ def cocer(origen, destino, filtro, ancho=1200):
 if __name__ == "__main__":
     cocer("../public/fotos/cenas.jpg", "assets/fotos/portada.jpg", HERO)
     cocer("../public/fotos/cenas.jpg", "assets/fotos/entrar.jpg", MARCA)
-    print("assets/fotos/portada.jpg, assets/fotos/entrar.jpg")
+    # Las polaroids: cuadradas (la web las pinta con aspect-ratio 1 y
+    # cover centrado), en las dos versiones.
+    for f in ("cenas", "drinks", "movimiento", "coffee"):
+        cocer(f"../public/fotos/{f}.jpg", f"assets/fotos/filtro-{f}.jpg", MARCA, ancho=360, cuadrada=True)
+        cocer(f"../public/fotos/{f}.jpg", f"assets/fotos/filtro-{f}-apagada.jpg", APAGADA, ancho=360, cuadrada=True)
+    print("assets/fotos/: portada, entrar y las ocho polaroids")
