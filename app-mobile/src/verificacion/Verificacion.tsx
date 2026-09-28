@@ -80,6 +80,12 @@ export function Verificacion(p: {
   const [e, setE] = useState<Estado>(inicial)
   const [errorCarga, setErrorCarga] = useState('')
   const [permiso, pedirPermiso] = useCameraPermissions()
+  /**
+   * Mientras la foto se encoge. «Usar esta» espera a que termine: si no,
+   * se podía subir la ORIGINAL (varios megas en un iPhone), que pasa del
+   * límite de 4,5 MB de Vercel y no llega. Pasó en el iPhone de Michael.
+   */
+  const [preparando, setPreparando] = useState(false)
   const camara = useRef<CameraView>(null)
   const conCamara = p.camara !== false
 
@@ -101,8 +107,10 @@ export function Verificacion(p: {
     if (!foto) return
     setE((s) => conFoto(s, foto.uri))
     // Se encoge ya, mientras se mira la previa: al pulsar «Usar esta» sube al momento.
+    setPreparando(true)
     const chica = await encoger(foto.uri, foto.width, foto.height)
     setE((s) => (s.previa === foto.uri ? conFoto(s, chica) : s))
+    setPreparando(false)
   }
 
   const deGaleria = async () => {
@@ -110,12 +118,14 @@ export function Verificacion(p: {
     if (r.canceled || !r.assets[0]) return
     const a = r.assets[0]
     setE((s) => conFoto(s, a.uri))
+    setPreparando(true)
     const chica = await encoger(a.uri, a.width, a.height)
     setE((s) => (s.previa === a.uri ? conFoto(s, chica) : s))
+    setPreparando(false)
   }
 
   const usarEsta = async () => {
-    if (!e.previa || e.subiendo) return
+    if (!e.previa || e.subiendo || preparando) return
     setE(subiendo)
     const r = await p.servicio.subir(e.toma, e.previa)
     setE((s) => (r.ok ? subida(s) : falloAlSubir(s, r.error)))
@@ -347,7 +357,7 @@ export function Verificacion(p: {
       <View style={estilos.acciones}>
         {e.previa ? (
           <>
-            <Boton texto={T.usarEsta} onPress={usarEsta} disabled={e.subiendo} />
+            <Boton texto={T.usarEsta} onPress={usarEsta} disabled={e.subiendo || preparando} />
             <Boton tipo="fantasma" texto={T.captura.repetir} onPress={() => setE(repetir)} disabled={e.subiendo} />
           </>
         ) : (

@@ -120,6 +120,8 @@ export const permiso = {
 /** Lo que el servidor no dice porque no contestó. */
 export const sinRespuesta = {
   subir: 'No pudimos subir la foto. Puede ser la conexión: prueba otra vez.',
+  /** El servidor contestó, pero mal: no es la conexión de nadie. */
+  subirServidor: 'No pudimos subir la foto. Es cosa nuestra, no tuya: vuelve a intentarlo en un momento.',
   cargar: 'No pudimos cargar tu verificación. Revisa tu conexión e inténtalo otra vez.',
   reintentar: 'Reintentar',
 }

@@ -15,7 +15,8 @@ export async function encoger(uri: string, ancho: number, alto: number): Promise
     const img = await ctx.renderAsync()
     const hecha = await img.saveAsync({ compress: 0.82, format: SaveFormat.JPEG })
     return hecha.uri
-  } catch {
+  } catch (err) {
+    if (__DEV__) console.warn('[verificación] no se pudo encoger la foto; va la original', String(err))
     return uri
   }
 }
