@@ -143,7 +143,7 @@
     -->
     <div id="agenda" style="margin-top:clamp(32px,4.4vw,48px);scroll-margin-top:80px">
       <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:12px">Lo que viene en Caracas</div>
-      <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:54ch;margin:0 0 18px;text-wrap:pretty">Te apuntas a una fecha, no a una mesa. <em style="font-weight:600;color:#14342A">Cenas siempre con cinco personas.</em> Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y el sábado a las doce sabes en cuál te tocó. Cada fecha se cierra 48 horas antes.</p>
+      <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:54ch;margin:0 0 18px;text-wrap:pretty">Te apuntas a una fecha, no a una mesa. <em style="font-weight:600;color:#14342A">Cenas siempre con cinco personas.</em> Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y {{ cuandoSeSabe }} sabes en cuál te tocó. Cada fecha se cierra 48 horas antes.</p>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(46%,132px),1fr));gap:clamp(10px,1.4vw,14px);margin-bottom:20px">
         <sc-for list="{{ filtros }}" as="f" hint-placeholder-count="4">
@@ -858,6 +858,25 @@ class Component extends DCLogic {
 
     return {
       comensales, atajos, pie, filtros,
+
+      // Cuándo se abre la mesa: del `revelaEn` de la próxima fecha, no
+      // escrito. Decía «el sábado a las doce», que era verdad por casualidad
+      // —la fecha abierta cae en sábado— y deja de serlo en cuanto operación
+      // ponga una a otra hora u otro día. Es el mismo fallo que ya obligó a
+      // barrer la web entera para cambiar jueves por sábado.
+      //
+      // Sin fecha abierta se dice sin día: «cuando se abra la mesa».
+      cuandoSeSabe: (() => {
+        const iso = d && d.proximaFecha && d.proximaFecha.revelaEn;
+        const dia = iso && window.AroReglas ? window.AroReglas.diaDe(iso) : null;
+        const hora = iso && window.AroReglas ? window.AroReglas.horaDe(iso) : null;
+        if (!dia) return 'cuando se abra la mesa';
+        // «A mediodía» cuando de verdad son las doce, que es el caso normal:
+        // «el sábado a las 12:00 p.m.» se lee peor que lo que había escrito.
+        // Y la hora exacta cuando no lo es, que es para lo que existe esto.
+        if (!hora) return 'el ' + dia;
+        return 'el ' + dia + (/^12:00\s*p\.m\./i.test(hora) ? ' a mediodía' : ' a las ' + hora);
+      })(),
 
       // Cerrar sesion vive en `nav.js`, con la barra, porque ahora esta en
       // las tres pantallas de la cuenta. Estaba solo aqui y abajo del todo:

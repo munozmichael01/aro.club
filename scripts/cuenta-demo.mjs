@@ -50,6 +50,33 @@ if (borrar) {
   await admin.from('verifications').delete().eq('profile_id', existente.id)
   await admin.from('scheduled_emails').delete().eq('profile_id', existente.id)
 
+  // Y TODO LO QUE ESTA CUENTA FIRMÓ, que es trabajo sobre gente real.
+  //
+  // Esto faltaba y bloqueaba el borrado entero. Una cuenta de operación deja
+  // su rastro por todas partes: cada cédula que aprobó, cada pago que revisó,
+  // cada reparto que lanzó. Diez columnas apuntan a `profiles(id)` sin
+  // `on delete`, así que cualquiera de ellas impide borrar el perfil, y el
+  // error solo menciona la primera: se arreglaba una y aparecía la siguiente.
+  //
+  // Se suelta la FIRMA, no se borra la fila. La aprobación de alguien no deja
+  // de haber ocurrido porque la cuenta que la firmó fuera de prueba, y borrar
+  // esas filas le quitaría la verificación a una persona que sí la tiene.
+  const FIRMAS = [
+    ['verifications', 'reviewed_by'],
+    ['employer_aliases', 'confirmed_by'],
+    ['exclusions', 'created_by'],
+    ['bookings', 'attended_marked_by'],
+    ['fx_rates', 'set_by'],
+    ['payments', 'reviewed_by'],
+    ['matching_runs', 'created_by'],
+    ['incident_reports', 'resolved_by'],
+    ['waitlist', 'converted_profile_id'],
+  ]
+  for (const [tabla, columna] of FIRMAS) {
+    const { error } = await admin.from(tabla).update({ [columna]: null }).eq(columna, existente.id)
+    if (error) console.error(`  aviso: ${tabla}.${columna} → ${error.message}`)
+  }
+
   const { error: ep } = await admin.from('profiles').delete().eq('id', existente.id)
   if (ep) { console.error('no se pudo borrar el perfil:', ep.message); process.exit(1) }
 
