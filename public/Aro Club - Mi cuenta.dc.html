@@ -474,10 +474,24 @@ class Component extends DCLogic {
     ];
     const FORMATOS = { dinner: 'Cenas', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' };
     const DIASEM = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    const hhmm = (f) => {
-      const h = f.getHours();
-      return (h % 12 || 12) + ':' + (f.getMinutes() < 10 ? '0' : '') + f.getMinutes() + ' ' + (h < 12 ? 'a.m.' : 'p.m.');
-    };
+
+    /**
+     * Las piezas de una fecha, EN LA HORA DE SU CIUDAD.
+     *
+     * Esta pantalla las sacaba con `getDay()`, `getDate()`, `getMonth()` y
+     * `getHours()`, que son la hora local del NAVEGADOR. La cena del sábado 3
+     * a las ocho de la noche de Caracas es medianoche del domingo 4 en Madrid:
+     * a quien esté fuera de Venezuela —o a cualquiera que viaje— la pantalla
+     * le decía el día equivocado, en las diez fechas que pinta.
+     *
+     * Es el mismo fallo que ya se arregló en el servidor, donde Vercel corre
+     * en UTC y el panel decía un día de más. Lo encontró el agente de la app
+     * comparando su pantalla con esta desde Madrid.
+     *
+     * `zonaHoraria` viaja con cada fecha desde que `cities.timezone` existe;
+     * sin ella, la del producto.
+     */
+    const piezas = (iso, zona) => window.AroReglas.partesDe(iso, zona);
     const semanaDe = (f) => {
       const dias = Math.floor((f - new Date()) / 86400000);
       return dias < 7 ? 'Esta semana' : (dias < 14 ? 'La semana que viene' : 'Más adelante');
@@ -488,8 +502,8 @@ class Component extends DCLogic {
     // fecha, la pantalla que mas se abre mentia en dos cifras.
     const tituloReservar = (d) => {
       if (!d.proximaFecha) return 'Todavía no hay fecha abierta.';
-      const f = new Date(d.proximaFecha.empiezaEn);
-      return 'Hay cena el ' + DIAS[f.getDay()] +
+      const p = piezas(d.proximaFecha.empiezaEn, d.proximaFecha.zonaHoraria);
+      return 'Hay cena el ' + (p ? p.dia : 'próximo día') +
         (d.proximaFecha.zona ? ' en ' + d.proximaFecha.zona : '') + '.';
     };
     /**
@@ -509,9 +523,9 @@ class Component extends DCLogic {
     const cuerpoReservar = (d, base) => {
       if (!d.proximaFecha) return 'Te avisamos por correo en cuanto abramos la próxima. No hay que hacer nada.';
       const n = d.proximaFecha.apuntados;
-      const c = new Date(d.proximaFecha.cierraEn);
+      const c = piezas(d.proximaFecha.cierraEn, d.proximaFecha.zonaHoraria);
       const gente = n < UMBRAL_APUNTADOS ? 'Recién abierta' : 'Ya van ' + n + ' apuntados';
-      return gente + ' y se cierra el ' + DIAS[c.getDay()] + '. ' + base;
+      return gente + (c ? ' y se cierra el ' + c.dia : '') + '. ' + base;
     };
 
     // Los huesos van en el verde de la marca al 9%, no en gris: un gris
@@ -555,12 +569,12 @@ class Component extends DCLogic {
       // cena el 13. Ninguna cifra derivable se escribe a mano (regla 4).
       titulo: d.reserva && (d.estado === 'reservada' || d.estado === 'abierta')
         ? (() => {
-            const f = new Date(d.reserva.empiezaEn);
-            const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-            const h = f.getHours();
+            const p = piezas(d.reserva.empiezaEn, d.reserva.zonaHoraria);
+            if (!p) return base.titulo;
+            const h = p.horas;
             const letras = ['doce','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once'];
             const enLetra = letras[h % 12];
-            return dias[f.getDay()] + ' ' + f.getDate() + ', ' + enLetra +
+            return DIASEM[p.diaNumero] + ' ' + p.numero + ', ' + enLetra +
               // Las siete son de la noche, no de la tarde: es como lo dice
               // el copy original y como se dice en Caracas.
               (h >= 19 || h < 6 ? ' de la noche.' : h >= 12 ? ' de la tarde.' : ' de la mañana.');
@@ -637,9 +651,9 @@ class Component extends DCLogic {
     // Malabar que nadie tuvo— en la pantalla que hace de historial.
     const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
     const crudosMios = ((d && d.planes) || []).map((p) => {
-      const f = p.empiezaEn ? new Date(p.empiezaEn) : null;
-      const cuando = f
-        ? DIASEM[f.getDay()] + ' ' + f.getDate() + ' de ' + MESES[f.getMonth()] + ' · ' + hhmm(f)
+      const q = piezas(p.empiezaEn, p.zonaHoraria);
+      const cuando = q
+        ? DIASEM[q.diaNumero] + ' ' + q.numero + ' de ' + MESES[q.mesNumero] + ' · ' + q.hora
         : '';
       const titulo = p.restaurante
         ? p.restaurante + (p.numeroMesa != null ? ' · mesa ' + String(p.numeroMesa).padStart(2, '0') : '')
@@ -722,15 +736,18 @@ class Component extends DCLogic {
     const yaApuntada = (() => {
       const m = agendaSrv.find((a) => a.mia);
       if (!m) return null;
-      const f = new Date(m.empiezaEn);
-      return DIASEM[f.getDay()] + ' ' + f.getDate() + ' · ' + hhmm(f);
+      const q = piezas(m.empiezaEn, m.zonaHoraria);
+      return q ? DIASEM[q.diaNumero] + ' ' + q.numero + ' · ' + q.hora : '';
     })();
     const crudos = agendaSrv.map((a) => {
       const f = new Date(a.empiezaEn);
+      const q = piezas(a.empiezaEn, a.zonaHoraria);
       return [
+        // `semanaDe` compara dos instantes, no dos calendarios: ahí la zona
+        // no cambia el resultado y el `Date` vale.
         semanaDe(f),
         FORMATOS[a.formato] || 'Cenas',
-        DIASEM[f.getDay()] + ' ' + f.getDate() + ' · ' + hhmm(f),
+        q ? DIASEM[q.diaNumero] + ' ' + q.numero + ' · ' + q.hora : '',
         // Las zonas ABIERTAS de esa fecha, no un sitio: el sitio se decide
         // al armar la mesa y ella no lo sabe hasta la revelación.
         a.zonas.join(' o ') || 'Zona por confirmar',
@@ -930,11 +947,10 @@ class Component extends DCLogic {
       direccionSitio: (M && M.direccion) || '',
       cuandoMesa: (function () {
         if (!M || !M.empiezaEn) return '';
-        const f = new Date(M.empiezaEn);
+        const q = piezas(M.empiezaEn, M.zonaHoraria);
+        if (!q) return '';
         const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-        let h = f.getHours(); const mi = f.getMinutes();
-        const t = h < 12 ? 'a.m.' : 'p.m.'; h = h % 12 || 12;
-        return DIAS[f.getDay()] + ' ' + f.getDate() + ' · ' + h + ':' + (mi < 10 ? '0' + mi : mi) + ' ' + t;
+        return DIAS[q.diaNumero] + ' ' + q.numero + ' · ' + q.hora;
       })(),
       // El mismo valor decide si se enseña y qué se enseña. Leía `e.reloj`
       // —el del estado de ejemplo— para decidir, y `this.reloj()` para

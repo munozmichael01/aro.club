@@ -399,5 +399,60 @@ if (!prometidas) {
   console.log(`✓ «${prometidas[1]} preguntas más» (${restantes} en el catálogo)`)
 }
 
+// --- el reloj del navegador no decide qué día es --------------------
+//
+// `getDay()`, `getDate()`, `getMonth()` y `getHours()` son la hora LOCAL del
+// navegador. La cena del sábado 3 a las ocho de la noche de Caracas es
+// medianoche del domingo 4 en Madrid, así que a quien esté fuera de Venezuela
+// —o a cualquiera que viaje— la pantalla le dice el día equivocado.
+//
+// Lo encontró el agente de la app comparando su Inicio con el de la web desde
+// Madrid. Estaba en cuarenta y seis sitios de diez pantallas. Se usa
+// `AroReglas.partesDe(iso, zona)`, que formatea en la zona de la ciudad de esa
+// fecha, y la zona viaja en las respuestas como `zonaHoraria`.
+//
+// Las pantallas de PENDIENTES siguen teniéndolo y están listadas para que no
+// se olviden y para que la cuenta no pueda subir. Cuando una se arregle, se
+// quita de aquí; si alguna sube, esto falla.
+const RELOJ = /\.(getDay|getDate|getMonth|getHours)\(\)/g
+const PENDIENTES = {
+  // Las que pintan fechas de EVENTOS. Estas dicen el día equivocado fuera de
+  // Venezuela y hay que migrarlas: Mi cuenta ya está, estas cuatro no.
+  'Aro Club - Operacion.dc.html': 15,
+  'Aro Club - Pago.dc.html': 12,
+  'Aro Club - Mi mesa.dc.html': 10,
+  'Aro Club - Cancelar.dc.html': 5,
+  // Estas tres miran fechas de NACIMIENTO, que no llevan hora ni zona: ahí
+  // el reloj del navegador no cambia nada y el `Date` vale.
+  'Aro Club - Datos base.dc.html': 6,
+  'Aro Club - Cuestionario.dc.html': 6,
+  'Aro Club - Mi perfil.dc.html': 2,
+  // El alta de un local: «desde» es un día sin hora.
+  'Aro Club - Locales.dc.html': 1,
+  // La portada vieja, que sigue viva en /v3.
+  'Aro Club - Landing v3.dc.html': 4,
+}
+
+const relojes = []
+for (const f of pantallas) {
+  const texto = fs.readFileSync(
+    fileURLToPath(new URL(`../public/${f}`, import.meta.url)), 'utf8')
+  // Sin los comentarios: varios explican precisamente por qué ya no se usan.
+  const sinComentarios = texto.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
+  const n = (sinComentarios.match(RELOJ) ?? []).length
+  const tope = PENDIENTES[f] ?? 0
+  if (n > tope) relojes.push(`${f}: ${n}, y el tope es ${tope}`)
+}
+
+if (relojes.length) {
+  errores++
+  console.error('\n✗ pantallas que sacan el día del reloj del navegador')
+  relojes.forEach((l) => console.error(`    ${l}`))
+  console.error('  → usa AroReglas.partesDe(iso, zona); fuera de Venezuela dicen otro día')
+} else {
+  const quedan = Object.values(PENDIENTES).reduce((a, b) => a + b, 0)
+  console.log(`✓ el reloj del navegador no decide el día (quedan ${quedan} por migrar, listados)`)
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)

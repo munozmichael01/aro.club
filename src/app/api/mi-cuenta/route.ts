@@ -206,7 +206,7 @@ export async function GET() {
   const { data: todasSusReservas } = await admin
     .from('bookings')
     .select(
-      'id, status, cancelled_at, event_id, events(starts_at, format, reveal_at), table_members(table_id, dinner_tables(table_number, restaurants!dinner_tables_restaurant_id_fkey(name)))',
+      'id, status, cancelled_at, event_id, events(starts_at, format, reveal_at, city_slug), table_members(table_id, dinner_tables(table_number, restaurants!dinner_tables_restaurant_id_fkey(name)))',
     )
     .eq('profile_id', user.id)
     .order('created_at', { ascending: false })
@@ -262,7 +262,7 @@ export async function GET() {
     }
   }
   const evento = reserva?.events as
-    | { starts_at: string; reveal_at: string; status: string; format: string; restaurants: { name: string; address: string; zone_slug: string | null } | null }
+    | { starts_at: string; reveal_at: string; status: string; format: string; city_slug: string; restaurants: { name: string; address: string; zone_slug: string | null } | null }
     | null
     | undefined
 
@@ -309,7 +309,11 @@ export async function GET() {
   const zonas = await zonasDeCiudades([
     perfil.city_slug,
     proxima?.city_slug,
+    evento?.city_slug,
     ...(fechas ?? []).map((f) => f.city_slug),
+    ...(todasSusReservas ?? []).map(
+      (b) => (b.events as unknown as { city_slug?: string } | null)?.city_slug,
+    ),
   ])
   const zonaDe = (slug: string | null | undefined) =>
     zonas.get(slug ?? 'caracas') ?? zonas.get('caracas') ?? 'America/Caracas'
@@ -319,13 +323,14 @@ export async function GET() {
     esOps: perfil.role === 'ops' || perfil.role === 'admin',
     porValorar,
     planes: (todasSusReservas ?? []).map((b) => {
-      const ev = b.events as unknown as { starts_at: string; format: string; reveal_at: string } | null
+      const ev = b.events as unknown as { starts_at: string; format: string; reveal_at: string; city_slug: string } | null
       const mesa = (b.table_members as unknown as {
         dinner_tables: { table_number: number; restaurants: { name: string } | null } | null
       }[])?.[0]?.dinner_tables
       const revelada = ev ? Date.now() >= new Date(ev.reveal_at).getTime() : false
       return {
         empiezaEn: ev?.starts_at ?? null,
+        zonaHoraria: zonaDe(ev?.city_slug),
         formato: ev?.format ?? 'dinner',
         estado: b.status,
         cancelada: !!b.cancelled_at,
@@ -380,6 +385,7 @@ export async function GET() {
           formato: evento?.format ?? null,
           empiezaEn: evento?.starts_at ?? null,
           revelaEn: evento?.reveal_at ?? null,
+          zonaHoraria: zonaDe(evento?.city_slug),
           revelado,
           restaurante: revelado ? (evento?.restaurants?.name ?? null) : null,
           direccion: revelado ? (evento?.restaurants?.address ?? null) : null,

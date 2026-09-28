@@ -507,12 +507,66 @@
      * Sin fecha abierta devuelve null, y la frase se dice sin dia. Es mejor
      * que inventarse uno.
      */
-    diaDe: function (iso) {
+    diaDe: function (iso, zona) {
       if (!iso) return null
       var d = new Date(iso)
       if (isNaN(d.getTime())) return null
       try {
-        return new Intl.DateTimeFormat('es-VE', { timeZone: api.ZONA, weekday: 'long' }).format(d)
+        return new Intl.DateTimeFormat('es-VE', { timeZone: zona || api.ZONA, weekday: 'long' }).format(d)
+      } catch (e) {
+        return null
+      }
+    },
+
+    /**
+     * Las piezas de una fecha, en la zona que toque.
+     *
+     * Existe porque las pantallas las sacaban con `getDay()`, `getDate()`,
+     * `getMonth()` y `getHours()`, que son la hora LOCAL DEL NAVEGADOR. La
+     * cena del sábado a las ocho de la noche de Caracas es medianoche del
+     * domingo en Madrid, así que a quien esté fuera de Venezuela —o a
+     * cualquiera que viaje— la pantalla le dice el día equivocado.
+     *
+     * Es el mismo fallo que ya se arregló en el servidor, donde Vercel corre
+     * en UTC y el panel decía un día de más. Aquí estaba vivo en cuarenta y
+     * seis sitios.
+     *
+     * `zona` es la de la ciudad de esa fecha, que viaja en las respuestas
+     * como `zonaHoraria`. Sin ella, la del producto.
+     */
+    partesDe: function (iso, zona) {
+      if (!iso) return null
+      var d = new Date(iso)
+      if (isNaN(d.getTime())) return null
+      var z = zona || api.ZONA
+      try {
+        var partes = {}
+        new Intl.DateTimeFormat('es-VE', {
+          timeZone: z, weekday: 'long', day: 'numeric', month: 'long',
+          year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
+        }).formatToParts(d).forEach(function (p) { partes[p.type] = p.value })
+
+        // Y el día de la semana como número, que es lo que usan las tablas de
+        // la pantalla. `en-US` para que el nombre sea estable y no dependa de
+        // acentos ni de mayúsculas.
+        var ingles = new Intl.DateTimeFormat('en-US', { timeZone: z, weekday: 'short' }).format(d)
+        var DIAS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+        return {
+          dia: partes.weekday || '',
+          diaNumero: DIAS.indexOf(ingles.slice(0, 3)),
+          numero: parseInt(partes.day, 10),
+          mes: partes.month || '',
+          mesNumero: parseInt(new Intl.DateTimeFormat('en-CA', {
+            timeZone: z, month: '2-digit',
+          }).format(d), 10) - 1,
+          ano: parseInt(partes.year, 10),
+          horas: parseInt(new Intl.DateTimeFormat('en-GB', {
+            timeZone: z, hour: '2-digit', hour12: false,
+          }).format(d), 10),
+          minutos: parseInt(partes.minute, 10),
+          hora: api.horaDe(iso, z),
+        }
       } catch (e) {
         return null
       }
@@ -527,13 +581,13 @@
      * porque no todas las cenas son a la misma hora y ademas vienen brunch,
      * cafes y formatos de movimiento.
      */
-    horaDe: function (iso) {
+    horaDe: function (iso, zona) {
       if (!iso) return null
       var d = new Date(iso)
       if (isNaN(d.getTime())) return null
       try {
         return new Intl.DateTimeFormat('es-VE', {
-          timeZone: api.ZONA, hour: 'numeric', minute: '2-digit', hour12: true,
+          timeZone: zona || api.ZONA, hour: 'numeric', minute: '2-digit', hour12: true,
         }).format(d).replace(/\s*a\.?\s*m\.?/i, ' a.m.').replace(/\s*p\.?\s*m\.?/i, ' p.m.')
       } catch (e) {
         return null

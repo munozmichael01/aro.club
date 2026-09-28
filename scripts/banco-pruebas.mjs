@@ -49,9 +49,31 @@ async function limpiar() {
   return u.id
 }
 
-const [orden, ...resto] = process.argv.slice(2)
+/**
+ * Los modos, TODOS los argumentos.
+ *
+ * Esto era `const [orden, ...resto] = process.argv.slice(2)`, y `orden` solo
+ * se usaba para `borrar`: el primer modo que se escribiera caía ahí y se
+ * ignoraba en silencio. `banco-pruebas.mjs lista` creaba una cuenta desnuda
+ * —sin datos, sin verificar, sin respuestas— y anunciaba «lista». Solo
+ * funcionaba escribiéndolo segundo, que nadie iba a adivinar.
+ *
+ * Lo encontró el agente de la app intentando probar los estados de reserva; yo
+ * lo tuve delante unas horas antes, vi «Sin verificar» después de pedir
+ * `verificada`, y no lo perseguí.
+ *
+ * Y ahora un modo que no existe FALLA. Silencioso es como esto pasó.
+ */
+const MODOS = ['borrar', 'verificada', 'purgada', 'cenas', 'mesa', 'revelada', 'lista']
+const resto = process.argv.slice(2)
+const desconocidos = resto.filter((x) => !MODOS.includes(x))
+if (desconocidos.length) {
+  console.error('No conozco ' + desconocidos.join(' ni ') + '.')
+  console.error('Los modos son: ' + MODOS.join(', ') + '.')
+  process.exit(1)
+}
 
-if (orden === 'borrar') {
+if (resto.includes('borrar')) {
   const id = await limpiar()
   console.log(id ? 'borrada ' + id : 'no habia nada')
   process.exit(0)
@@ -184,12 +206,31 @@ if (resto.includes('lista')) {
   // Las respuestas obligatorias, con el primer codigo de cada una.
   const { data: v } = await admin.from('questionnaire_versions').select('id').eq('is_active', true).maybeSingle()
   const { data: qs } = await admin.from('questions')
-    .select('key, options, input_type').eq('version_id', v.id).eq('is_required', true)
+    .select('key, options, input_type, min_select, exclusive_value')
+    .eq('version_id', v.id).eq('is_required', true)
+
+  // Respuestas que de verdad VALEN, no filas que ocupen sitio.
+  //
+  // Antes eran `cods.slice(0, 2)` para todo lo múltiple y `cods[0] ?? 'x'`
+  // para el resto, y eso dejaba tres preguntas mal sin que nada lo dijera:
+  // `nacimiento` guardaba la letra «x» —es una fecha y no tiene opciones—, y
+  // `comidas` y `actividades` se quedaban en dos cuando piden tres. La cuenta
+  // salía «completa» y la pantalla seguía pidiendo cosas, que es exactamente
+  // lo que hizo perder una tarde probando los estados de reserva.
+  //
+  // Y se evita la opción EXCLUSIVA —«cualquier zona», «ninguna»—: marcarla
+  // con otra al lado es un estado que la pantalla no deja producir.
   const filas = (qs || []).map((q) => {
-    const cods = (q.options || []).map((o) => o.value)
-    const valor = q.input_type === 'multi' ? cods.slice(0, 2) : (cods[0] ?? 'x')
+    const cods = (q.options || [])
+      .map((o) => o.value)
+      .filter((c) => c !== q.exclusive_value)
+    let valor
+    if (q.input_type === 'date') valor = '1990-05-12'
+    else if (q.input_type === 'text') valor = 'Banco de pruebas'
+    else if (q.input_type === 'multi') valor = cods.slice(0, Math.max(q.min_select || 1, 1))
+    else valor = cods[0] ?? null
     return { profile_id: id, version_id: v.id, question_key: q.key, value: valor }
-  })
+  }).filter((f) => f.value !== null && !(Array.isArray(f.value) && !f.value.length))
   if (filas.length) await admin.from('answers').insert(filas)
   console.log('  perfil completo, verificado, ' + filas.length + ' respuestas')
 }
