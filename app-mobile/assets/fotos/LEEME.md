@@ -8,6 +8,7 @@ entra en la misma excepción que el correo: el filtro va cocido en el fichero.
 | Fichero | Sale de | Filtro |
 |---|---|---|
 | `portada.jpg` | `public/fotos/cenas.jpg` | el del hero de la portada web |
+| `entrar.jpg` | `public/fotos/cenas.jpg` | el token de marca (como en Entrar de la web) |
 
 Se generan con `python3 scripts/cocer-foto.py`. No se editan a mano: si cambia
 el filtro o la foto natural, se vuelve a correr el script.

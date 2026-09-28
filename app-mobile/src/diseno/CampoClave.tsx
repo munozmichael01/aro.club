@@ -14,13 +14,15 @@ type Props = TextInputProps & {
   onAlternar?: () => void
   textos?: { ver: string; ocultar: string; verEtiqueta: string; ocultarEtiqueta: string }
   dispar?: boolean
+  fondo?: 'crema' | 'verde'
 }
 
-export function CampoClave({ visible, onAlternar, textos, dispar, ...resto }: Props) {
+export function CampoClave({ visible, onAlternar, textos, dispar, fondo = 'crema', ...resto }: Props) {
   return (
     <View style={{ justifyContent: 'center' }}>
       <Campo
         {...resto}
+        fondo={fondo}
         secureTextEntry={!visible}
         autoCapitalize="none"
         autoCorrect={false}
@@ -33,7 +35,7 @@ export function CampoClave({ visible, onAlternar, textos, dispar, ...resto }: Pr
           accessibilityLabel={visible ? textos.ocultarEtiqueta : textos.verEtiqueta}
           style={estilos.ver}
         >
-          <Texto variante="cuerpoChico" tono="verde">
+          <Texto variante="cuerpoChico" tono={fondo === 'verde' ? 'sobreVerdeSecundario' : 'verde'}>
             {visible ? textos.ocultar : textos.ver}
           </Texto>
         </Pressable>

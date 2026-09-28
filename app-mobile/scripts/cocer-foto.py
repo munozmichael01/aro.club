@@ -18,6 +18,8 @@ from PIL import Image
 
 # El hero de la portada web (Landing v4): su filtro exacto.
 HERO = [("grayscale", 0.3), ("contrast", 1.14), ("saturate", 0.62), ("brightness", 0.66)]
+# El token de marca (Sistema v3): el de las demás fotos, p. ej. la de Entrar.
+MARCA = [("grayscale", 0.24), ("contrast", 1.16), ("saturate", 0.74), ("brightness", 0.9)]
 
 
 def matriz(nombre, v):
@@ -55,4 +57,5 @@ def cocer(origen, destino, filtro, ancho=1200):
 
 if __name__ == "__main__":
     cocer("../public/fotos/cenas.jpg", "assets/fotos/portada.jpg", HERO)
-    print("assets/fotos/portada.jpg")
+    cocer("../public/fotos/cenas.jpg", "assets/fotos/entrar.jpg", MARCA)
+    print("assets/fotos/portada.jpg, assets/fotos/entrar.jpg")

@@ -40,9 +40,10 @@ function Dibujo({ tam = 22, anillo, grosor, puntos }: Props) {
  * profundo va en verde claro con el punto en terracota clara, como en el pie
  * de la web.
  */
-export function Marca({ tam = 22, sobreVerde }: { tam?: number; sobreVerde?: boolean }) {
-  const trazo = sobreVerde ? color.sobreVerdeSecundario : color.verdeProfundo
-  const tuyo = sobreVerde ? color.terracotaSobreVerde : color.terracota
+export function Marca({ tam = 22, sobreVerde, crema }: { tam?: number; sobreVerde?: boolean; crema?: boolean }) {
+  // `crema`: sobre verde, en crema entero, como la cabecera de Entrar en la web.
+  const trazo = crema ? color.crema : sobreVerde ? color.sobreVerdeSecundario : color.verdeProfundo
+  const tuyo = sobreVerde || crema ? color.terracotaSobreVerde : color.terracota
   return <Dibujo tam={tam} anillo={trazo} grosor={sobreVerde ? 1.7 : 1.8} puntos={[tuyo, ...Array(5).fill(trazo)]} />
 }
 
