@@ -331,18 +331,21 @@ export type Database = {
           name: string
           slug: string
           sort_order: number
+          timezone: string
         }
         Insert: {
           is_open?: boolean
           name: string
           slug: string
           sort_order?: number
+          timezone?: string
         }
         Update: {
           is_open?: boolean
           name?: string
           slug?: string
           sort_order?: number
+          timezone?: string
         }
         Relationships: []
       }

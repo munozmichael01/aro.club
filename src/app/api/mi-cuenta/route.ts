@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { situacionDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { sePuedeValorar } from '@/lib/ventana-mesa'
 
@@ -119,7 +120,7 @@ export async function GET() {
   const { data: proxima } = await admin
     .from('events')
     .select(
-      'id, starts_at, booking_closes_at, reveal_at, restaurants!events_restaurant_id_fkey(name, zone_slug)',
+      'id, starts_at, booking_closes_at, reveal_at, city_slug, restaurants!events_restaurant_id_fkey(name, zone_slug)',
     )
     .in('status', ['open', 'draft'])
     .gte('starts_at', new Date().toISOString())
@@ -299,6 +300,20 @@ export async function GET() {
   else if (!revelado) estado = 'reservada'
   else estado = 'abierta'
 
+  // En qué hora habla cada fecha. Un solo viaje a `cities` para todas: esto
+  // se pinta una vez por fecha de la agenda.
+  //
+  // Va JUNTO A CADA FECHA y no en la raíz de la respuesta: una persona puede
+  // tener una cena en Caracas y otra en otra ciudad, y una sola zona para las
+  // dos sería la constante de antes con más pasos.
+  const zonas = await zonasDeCiudades([
+    perfil.city_slug,
+    proxima?.city_slug,
+    ...(fechas ?? []).map((f) => f.city_slug),
+  ])
+  const zonaDe = (slug: string | null | undefined) =>
+    zonas.get(slug ?? 'caracas') ?? zonas.get('caracas') ?? 'America/Caracas'
+
   return NextResponse.json({
     nombre: perfil.display_name || perfil.full_name || null,
     esOps: perfil.role === 'ops' || perfil.role === 'admin',
@@ -333,6 +348,7 @@ export async function GET() {
       // «agotada» porque no lo está: aquí no hay cupo, las mesas se arman con
       // quien haya. Decir agotada sería lo primero que contamos que no es
       // verdad, y es justo lo que este producto no hace.
+      zonaHoraria: zonaDe(f.city_slug),
       cerrada: f.status !== 'open' && f.status !== 'draft',
       // Si ya está apuntada, la tarjeta lo dice en vez de ofrecerle
       // reservar otra vez.
@@ -346,6 +362,7 @@ export async function GET() {
           // próximo día de la semana a mediodía— y Mi mesa la cuenta desde
           // aquí: dos relojes sobre lo mismo, discrepando a la vista.
           revelaEn: proxima.reveal_at,
+          zonaHoraria: zonaDe(proxima.city_slug),
           zona: zonaProxima,
           apuntados: apuntadosProxima,
         }

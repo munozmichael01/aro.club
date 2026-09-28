@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
 
@@ -28,7 +29,7 @@ export async function GET() {
 
   const { data: reservas } = await admin
     .from('bookings')
-    .select('id, event_id, events(starts_at, reveal_at, status, format, activity)')
+    .select('id, event_id, events(starts_at, reveal_at, status, format, activity, city_slug)')
     .eq('profile_id', user.id)
     .in('status', ['confirmed', 'attended'])
 
@@ -60,7 +61,7 @@ export async function GET() {
     porValorar ?? proxima ?? (reservas ?? []).sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
 
   const evento = reserva?.events as
-    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown }
+    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string }
     | null
     | undefined
 
@@ -81,6 +82,10 @@ export async function GET() {
 
   const revelaEn = new Date(evento.reveal_at).getTime()
   const empiezaEn = new Date(evento.starts_at).getTime()
+
+  // En qué hora habla esta fecha. Viaja con ella y no en la raíz: una persona
+  // puede tener una cena en Caracas y otra en otra ciudad.
+  const zonaHoraria = await zonaDeCiudad(evento.city_slug)
 
   if (ahora < revelaEn) {
     // Cerrada: la hora y las zonas que ELLA acepto. Ya no es informacion
@@ -125,6 +130,7 @@ export async function GET() {
       fase: 'cerrada',
       formato: evento.format,
       revelaEn: evento.reveal_at,
+      zonaHoraria,
       empiezaEn: evento.starts_at,
       zonas: (nombres ?? []).map((z) => z.name),
       faltanSegundos: Math.round((revelaEn - ahora) / 1000),
@@ -140,7 +146,7 @@ export async function GET() {
 
   if (!miembro) {
     // Apuntada y revelada pero sin mesa: no se inventa nada.
-    return NextResponse.json({ fase: 'sin-mesa', formato: evento.format, empiezaEn: evento.starts_at })
+    return NextResponse.json({ fase: 'sin-mesa', formato: evento.format, empiezaEn: evento.starts_at, zonaHoraria })
   }
 
   const mesa = miembro.dinner_tables as unknown as {
@@ -226,6 +232,7 @@ export async function GET() {
     // De qué es esto: decide si la pantalla dice mesa y restaurante o grupo
     // y punto de encuentro. Once formatos y una sola palabra no se sostiene.
     formato: evento.format,
+    zonaHoraria,
     // Y qué se hace, cuando el sitio no lo dice: la ruta, los kilómetros y
     // el nivel de una caminata no caben en una dirección.
     actividad: evento.activity ?? null,

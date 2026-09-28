@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { zonaDeCiudad } from '@/lib/zona-ciudad'
 
 /**
  * La próxima fecha abierta. Pública: la portada la necesita sin sesión.
@@ -19,12 +20,16 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export async function GET() {
   const { data } = await createAdminClient()
     .from('events')
-    .select('id, starts_at, booking_closes_at, reveal_at, format')
+    .select('id, starts_at, booking_closes_at, reveal_at, format, city_slug')
     .eq('status', 'open')
     .gt('booking_closes_at', new Date().toISOString())
     .order('starts_at', { ascending: true })
     .limit(1)
     .maybeSingle()
+
+  // En qué hora habla esta fecha. Viaja con ella y no en la raíz: una
+  // persona puede tener una cena en Caracas y otra en otra ciudad.
+  const zonaHoraria = data ? await zonaDeCiudad(data.city_slug) : null
 
   // `null` y no un 404: «no hay fecha abierta» es una respuesta legítima, y
   // la portada tiene que poder decirlo con esas palabras.
@@ -40,6 +45,7 @@ export async function GET() {
     // Lo pidió la app para poder decir la hora sin escribirla. Aditivo: quien
     // no lo lea sigue igual.
     revelaEn: data?.reveal_at ?? null,
+    zonaHoraria,
     formato: data?.format ?? null,
   })
 }

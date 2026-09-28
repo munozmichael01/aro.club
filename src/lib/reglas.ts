@@ -72,6 +72,15 @@ export const vozDe = api.vozDe
  * no es una regla —sale del evento— y calcularla en tres sitios es como se
  * acaba diciendo «a las siete» donde son las ocho.
  */
+/**
+ * La zona del producto, para cuando una fecha no tiene ciudad conocida.
+ *
+ * Se llama POR DEFECTO y no `ZONA` a secas desde que `cities.timezone`
+ * existe: la zona buena es la de la ciudad de cada fecha, y esta es solo el
+ * respaldo. Con el nombre viejo era fácil escribirla donde tocaba pedir la
+ * de la ciudad, que es la trampa que la columna vino a quitar.
+ */
+export const ZONA_POR_DEFECTO: string = api.ZONA
 export const diaDe = api.diaDe
 export const horaDe = api.horaDe
 export type { Campo }
