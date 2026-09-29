@@ -143,6 +143,15 @@ no recibe push remotas) y trabajo del backend (guardar tokens y mandar).
   Al integrarlo: probar la idempotencia matando la app entre el login y la
   llamada, y quitar el aviso provisional de Entrar.
 
+## Lo que es solo para desarrollo no se publica
+
+Decisión de Michael (29-09): **ningún atajo de desarrollo llega a la app
+publicada.** Todo va detrás de `__DEV__` (en una build de producción es
+`false` y el código ni se conecta), y `pruebas/solo-desarrollo.test.ts`
+falla si sale de esa condición. Hoy hay uno: mantener pulsado el logo de
+Entrar olvida que ya se vio la bienvenida, para volver a probarla. Si se añade
+otro, va a esa prueba.
+
 ## Trampas que ya mordieron
 
 - **Subir un fichero:** el fetch de Expo 57 NO acepta `{ uri, name, type }`

@@ -95,6 +95,8 @@ export function Entrar(p: {
   /** Viene del alta con un correo que ya tiene cuenta: se abre en «correo» con él puesto y el aviso. */
   correoInicial?: string
   avisoInicial?: string
+  /** SOLO DESARROLLO: olvidar que se vio la bienvenida. Nunca se conecta fuera de `__DEV__`. */
+  alOlvidarBienvenida?: () => void
 }) {
   const insets = useSafeAreaInsets()
   const [fase, setFase] = useState<Fase>(p.correoInicial ? 'correo' : 'inicio')
@@ -376,12 +378,24 @@ export function Entrar(p: {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[estilos.pagina, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 28 }]}
       >
-        <View style={estilos.cabecera}>
+        {/*
+          SOLO DESARROLLO, NUNCA EN LA APP PUBLICADA (decisión de Michael,
+          29-09): mantener pulsado el logo olvida que ya se vio la bienvenida,
+          para volver a probarla. Va detrás de `__DEV__`, que en una build de
+          producción es `false`: ahí el gesto ni siquiera se conecta.
+          `pruebas/solo-desarrollo.test.ts` falla si sale de esa condición.
+        */}
+        <Pressable
+          onLongPress={__DEV__ ? p.alOlvidarBienvenida : undefined}
+          disabled={!__DEV__}
+          accessible={false}
+          style={estilos.cabecera}
+        >
           <Marca tam={24} crema />
           <Texto variante="marca" tono="crema">
             Aro Club
           </Texto>
-        </View>
+        </Pressable>
         {cuerpo}
         <Image source={require('../../assets/fotos/entrar.jpg')} style={estilos.foto} resizeMode="cover" accessibilityIgnoresInvertColors />
         <View style={estilos.pie}>

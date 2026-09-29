@@ -10,8 +10,7 @@ import { api, listo, supabase } from '../sesion'
 import { destinoDePaso, hayPendiente, terminarEntrada } from '../sesion/nativo'
 import * as T from '../texto/entrar'
 
-/** Ya vio la bienvenida en este celular. No es un secreto: va en el almacén normal, y al reinstalar se borra solo. */
-const VISTA = 'aro.bienvenida.vista'
+import { BIENVENIDA_VISTA as VISTA } from '../entrada/bienvenida-vista'
 
 /**
  * La puerta. Con sesión, a la cuenta. Sin ella, la bienvenida, pero SOLO LA

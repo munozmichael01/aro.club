@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useMemo, useRef } from 'react'
 
+import { BIENVENIDA_VISTA } from '../entrada/bienvenida-vista'
 import { Entrar, type TrasProveedor } from '../entrar/Entrar'
 import * as MP from '../puerta/maquina'
 import { crearServicioPuerta } from '../puerta/servicio'
@@ -107,6 +108,15 @@ export default function Pantalla() {
         }
       }}
       alDentro={alDentro}
+      // SOLO DESARROLLO (ver Entrar.tsx): en la app publicada `__DEV__` es false y esto no existe.
+      alOlvidarBienvenida={
+        __DEV__
+          ? async () => {
+              await AsyncStorage.removeItem(BIENVENIDA_VISTA).catch(() => {})
+              router.replace('/')
+            }
+          : undefined
+      }
       correoInicial={correoInicial}
       avisoInicial={yaTiene ? TP.yaExiste : undefined}
       alEmpezar={() => router.replace('/puerta')}
