@@ -74,15 +74,25 @@ export async function POST(request: Request) {
     .eq('email', correo)
     .maybeSingle()
 
-  // Sin lead Y sin llave: alta directa. Es lo que hace la app.
+  // Sin llave: alta directa. Es lo que hace la app.
   //
-  // Lo que se pierde de comprobar aquí no es seguridad —la llave nunca probó
-  // nada— sino el candado de «no se crea una cuenta a medias», que mira que
-  // el lead tenga ya sus respuestas y sus datos. En la app ese candado no
-  // aplica: las respuestas se mandan JUSTO DESPUÉS, con la sesión. Y si la
-  // app muere en medio, `embudo.ts` dirá `preguntas` y se las volverá a
-  // pedir, que es exactamente para lo que está.
-  const altaDirecta = !lead && !token
+  // Lo que decide el camino es QUIÉN LLAMA, no si hay lead. Lo escribí como
+  // `!lead && !token` y estaba mal: alguien que dejó su correo en la web
+  // alguna vez y luego se daba de alta desde la app caía en el camino de la
+  // web y recibía «Te faltan 17 preguntas del cuestionario» —un error que en
+  // la app no significa nada, porque ahí las respuestas van DESPUÉS—. Y no es
+  // un caso raro: es exactamente la persona a la que le hablamos por la web
+  // y luego se instala la app.
+  //
+  // Su lead no se pierde: `trasEntrar()` lo cruza por correo y se lleva sus
+  // respuestas, igual que hace Google.
+  //
+  // Lo que se deja de comprobar no es seguridad —la llave nunca probó nada—
+  // sino el candado de «no se crea una cuenta a medias». En la app ese
+  // candado no aplica: las respuestas se mandan justo después, con la sesión,
+  // y si la app muere en medio `embudo.ts` dirá `preguntas` y se las volverá
+  // a pedir. Para eso está.
+  const altaDirecta = !token
 
   if (!lead && !altaDirecta) {
     return NextResponse.json({ error: 'Sesión no válida.' }, { status: 403 })

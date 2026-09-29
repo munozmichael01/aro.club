@@ -647,7 +647,11 @@
       zonas: {
         clave: 'zonas', etiqueta: 'ZONAS', tipo: 'multi', max: 5,
         pregunta: '¿Dónde te queda cómodo salir?',
-        ayuda: 'Hasta cinco. Son las mismas que puedes marcar arriba.',
+        // Neutra: este texto lo comparten la portada y la app, y en la app
+        // no hay nada «arriba» —la pregunta llega sola, sin el selector de
+        // zonas de la portada delante—. Decía «son las mismas que puedes
+        // marcar arriba» y ahí no señalaba a nada.
+        ayuda: 'Hasta cinco. Marca todas a las que puedas llegar sin pensarlo.',
         opciones: [],
       },
       dias: {
