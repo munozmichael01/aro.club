@@ -1,12 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { router } from 'expo-router'
-import { useRef } from 'react'
+import { router, useLocalSearchParams } from 'expo-router'
+import { useMemo, useRef } from 'react'
 
 import { Entrar, type TrasProveedor } from '../entrar/Entrar'
+import * as MP from '../puerta/maquina'
+import { crearServicioPuerta } from '../puerta/servicio'
 import { api, supabase } from '../sesion'
 import { destinoDePaso, terminarEntrada } from '../sesion/nativo'
 import { disponible, entrarCon } from '../sesion/proveedores'
 import * as T from '../texto/entrar'
+import { cuenta as TP, guardando as TG } from '../texto/puerta'
 
 const NOMBRE = { apple: 'Apple', google: 'Google' } as const
 
@@ -18,6 +21,32 @@ const NOMBRE = { apple: 'Apple', google: 'Google' } as const
 export default function Pantalla() {
   // A dónde seguir cuando termine la fase de correo distinto o de relay.
   const destino = useRef<string>('/')
+  // Llega del alta (`/puerta`) con un correo que ya tenía cuenta.
+  const { correo: correoInicial, yaTiene } = useLocalSearchParams<{ correo?: string; yaTiene?: string }>()
+  const puerta = useMemo(() => crearServicioPuerta(api), [])
+
+  /**
+   * Si quedó un borrador del alta (se registró con un correo que ya tenía
+   * cuenta, o cerró la app a mitad), sus respuestas se mandan ahora que hay
+   * sesión, y se sigue a donde diga el embudo. Si no, al destino de siempre.
+   */
+  const alDentro = async () => {
+    const crudo = await AsyncStorage.getItem(MP.CLAVE_BORRADOR).catch(() => null)
+    if (crudo) {
+      try {
+        const envios = MP.envios(JSON.parse(crudo) as MP.Borrador, new Date())
+        const g = envios.length ? await puerta.guardar(envios, TG.fallo) : { ok: true as const }
+        if (g.ok) {
+          await AsyncStorage.removeItem(MP.CLAVE_BORRADOR).catch(() => {})
+          const e = await puerta.estado()
+          destino.current = MP.destinoDeEstado(e.ok ? e.datos.estado : null)
+        }
+      } catch {
+        /* borrador ilegible: se sigue sin él */
+      }
+    }
+    router.replace(destino.current as never)
+  }
 
   const conProveedor = async (p: 'apple' | 'google'): Promise<TrasProveedor> => {
     const r = await entrarCon(p)
@@ -77,7 +106,9 @@ export default function Pantalla() {
           return false
         }
       }}
-      alDentro={() => router.replace(destino.current as never)}
+      alDentro={alDentro}
+      correoInicial={correoInicial}
+      avisoInicial={yaTiene ? TP.yaExiste : undefined}
       alEmpezar={() => router.replace('/puerta')}
     />
   )

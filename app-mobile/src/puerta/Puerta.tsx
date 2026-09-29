@@ -18,6 +18,9 @@ import * as M from './maquina'
 import type { crearServicioPuerta } from './servicio'
 
 type Servicio = ReturnType<typeof crearServicioPuerta>
+/** El `error` literal del 409 de `/api/cuenta` cuando el correo ya tiene cuenta (contrato del 29-09). */
+const YA_TIENE_CUENTA = 'Ese correo ya tiene cuenta. Entra con tu contraseña.'
+
 type Fase = 'quiz' | 'nacimiento' | 'cuenta' | 'guardando' | 'fallo'
 
 /**
@@ -126,15 +129,16 @@ export function Puerta(p: {
     setTrabajando(true)
     setAviso('')
     const r = await servicio.crearCuenta(c, clave, T.cuenta.noCreada)
-    if (!r.ok) {
-      setTrabajando(false)
-      // Un 409 aquí es el del lead a medias de la web, con su propio texto.
-      return setAviso(r.error)
-    }
-    if (r.datos.estado === 'ya_existe') {
-      setTrabajando(false)
-      return setAviso(T.cuenta.yaExiste)
-    }
+    // «Ya tiene cuenta» llega de dos formas: un 409 con ese texto literal, o
+    // un 200 con `ya_existe` (quien ya convirtió su lead). Las dos, a Entrar
+    // con el correo puesto: las respuestas siguen en el borrador y se mandan
+    // al entrar. No vale mirar solo el 409: también sale si el teléfono ya
+    // está en otra cuenta, y ese se enseña tal cual.
+    const yaTiene = (!r.ok && r.status === 409 && r.error === YA_TIENE_CUENTA) || (r.ok && r.datos.estado === 'ya_existe')
+    setTrabajando(false)
+    if (yaTiene) return p.alEntrar(c)
+    if (!r.ok) return setAviso(r.error)
+    setTrabajando(true)
     const dentro = await p.entrarConClave(c, clave)
     setTrabajando(false)
     if (!dentro) return setAviso(T.cuenta.noCreada)

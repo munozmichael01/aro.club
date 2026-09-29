@@ -92,14 +92,18 @@ export function Entrar(p: {
   hayProveedor: (p: 'apple' | 'google') => boolean
   /** Guardar el correo al que escribimos (`contacto`). */
   guardarContacto: (correo: string) => Promise<boolean>
+  /** Viene del alta con un correo que ya tiene cuenta: se abre en «correo» con él puesto y el aviso. */
+  correoInicial?: string
+  avisoInicial?: string
 }) {
   const insets = useSafeAreaInsets()
-  const [fase, setFase] = useState<Fase>('inicio')
-  const [correo, setCorreo] = useState('')
+  const [fase, setFase] = useState<Fase>(p.correoInicial ? 'correo' : 'inicio')
+  const [correo, setCorreo] = useState(p.correoInicial ?? '')
   const [clave, setClave] = useState('')
   const [ver, setVer] = useState(false)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [avisoCorreo] = useState(p.avisoInicial ?? '')
   const [dos, setDos] = useState<{ registro: string; entrada: string } | null>(null)
   const [elegido, setElegido] = useState(0)
   const [contacto, setContacto] = useState('')
@@ -267,6 +271,11 @@ export function Entrar(p: {
         <Texto variante="cuerpoGrande" tono="cuerpoSobreVerde" style={{ marginTop: 14 }}>
           {T.correo.bajada}
         </Texto>
+        {avisoCorreo ? (
+          <Texto variante="cuerpoChico" tono="avisoSobreVerde" style={{ marginTop: 12 }}>
+            {avisoCorreo}
+          </Texto>
+        ) : null}
         <View style={{ gap: 11, marginTop: 28 }}>
           <Campo
             fondo="verde"

@@ -35,7 +35,7 @@ export default function Pantalla() {
       }}
       entrarConClave={async (correo, clave) => !(await supabase.auth.signInWithPassword({ email: correo, password: clave })).error}
       alTerminar={(destino) => router.replace(destino as never)}
-      alEntrar={() => router.push('/entrar')}
+      alEntrar={(correo) => router.push({ pathname: '/entrar', params: correo ? { correo, yaTiene: '1' } : {} })}
     />
   )
 }
