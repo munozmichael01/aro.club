@@ -46,13 +46,34 @@ Pago y Cancelar van FUERA de las pestañas (`src/app/pago.tsx`,
 `cancelar.tsx`): son flujos con principio y final, y una barra invita a irse
 a mitad. Llevan su propia vuelta atrás.
 
-Por hacer: Google + Apple cuando exista `/api/auth/nativo` (hoy los botones
-de Entrar enseñan un aviso provisional). Qué hace la app si muere entre el
-login y esa llamada está acordado con el agente de la web: marca «entrada
-nativa pendiente» en el llavero antes de llamar, se borra con el 200; al
-arrancar con sesión y la marca puesta, se vuelve a llamar (es idempotente)
-y se aterriza según su `paso`. Y la notificación push de «Voy tarde»
-(necesita build nativa: Expo Go ya no recibe push remotas).
+**Google y Apple, del lado de la app, hechos** (`src/sesion/proveedores.ts`,
+`nativo.ts`): SDK nativo → `signInWithIdToken` → `POST /api/auth/nativo`, con
+la marca «entrada pendiente» (AsyncStorage) que `src/app/index.tsx` usa para
+repetir la llamada si la app murió a mitad, y el aterrizaje por `paso`
+(`destinoDePaso`, lo decide `embudo.ts`). Entrar tiene las fases «correo
+distinto» y relay de Apple, que guardan el `contacto` por `/api/mi-perfil`.
+En Expo Go los dos botones dicen que aún no funcionan (los tokens saldrían a
+nombre de Expo Go). **Para que funcionen de verdad falta, fuera del código:**
+- la cuenta de Apple Developer, la capacidad *Sign in with Apple* en el App ID
+  `club.aro.app` y el proveedor Apple en Supabase con ese *bundle ID*;
+- los *client ID* de Google (web, iOS, Android) en Google Cloud, añadidos al
+  proveedor Google de Supabase (y «Skip nonce check» para iOS), y puestos en
+  `app.json` → `extra.google` (`webClientId`, `iosClientId`);
+- el plugin `@react-native-google-signin/google-signin` en `app.json` con su
+  `iosUrlScheme` (el client ID de iOS al revés). Está QUITADO a propósito:
+  sin ese esquema tumba la build;
+- una build de desarrollo con EAS (el módulo de Google no está en Expo Go).
+
+El alta nueva de la app (acordada con el agente de la web el 29-09): las
+cuatro de la puerta y el nacimiento en local (borrador guardado; la puerta de
+los 18 antes de crear nada), después «crea tu cuenta» (Apple, Google, o
+correo y contraseña por `/api/cuenta` sin lead, que abre él), y con la
+sesión las cinco respuestas por `POST /api/cuestionario {clave, valor}`,
+una por llamada. Luego manda `embudo.ts`. `/api/datos-base` NO acepta
+guardados parciales, a propósito. La web conserva su orden (correo primero).
+
+La push de «Voy tarde» y de la revelación necesita build nativa (Expo Go ya
+no recibe push remotas) y trabajo del backend (guardar tokens y mandar).
 
 ---
 

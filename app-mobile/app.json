@@ -9,7 +9,8 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "club.aro.app",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "club.aro.app",
@@ -61,7 +62,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#14342A"
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "extra": {
       "api": "https://aro.club/api",
@@ -70,6 +72,10 @@
       "router": {},
       "eas": {
         "projectId": "51c36ee0-0e19-4c87-bf88-f041afc965a9"
+      },
+      "google": {
+        "webClientId": "",
+        "iosClientId": ""
       }
     },
     "owner": "somos.aroclub"

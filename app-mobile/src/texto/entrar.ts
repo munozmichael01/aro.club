@@ -15,7 +15,9 @@ export const inicio = {
    * ANDAMIO de desarrollo: Google y Apple entran cuando exista
    * /api/auth/nativo (PROPUESTA §g). Se quita antes de publicar.
    */
-  proveedoresPendientes: 'Google y Apple se conectan en cuanto esté lista su ruta en el servidor. Mientras tanto, entra con tu correo.',
+  /** Casilla C: en Expo Go, o sin los identificadores del proveedor, el botón no puede hacer nada. */
+  noDisponible: (p: string) => `Entrar con ${p} todavía no funciona en esta versión de la app. Mientras tanto, entra con tu correo.`,
+  falloProveedor: (p: string) => `No pudimos entrar con ${p}. Inténtalo otra vez o entra con tu correo.`,
 }
 
 export const pie = [
@@ -58,3 +60,35 @@ export const entrando = { titulo: 'Entrando.' }
 export const noCoinciden = 'Ese correo y esa contraseña no coinciden.'
 export const sinRed = 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
 export const tuCorreo = 'tu correo'
+
+/** Entraste con otra cuenta (Google o Apple con un correo distinto del del registro). De `Entrar.dc.html`. */
+export const otroCorreo = {
+  sello: 'CORREO DISTINTO',
+  titulo: 'Entraste con otra cuenta.',
+  bajadaAntes: 'Te registraste con ',
+  bajadaMedio: ' y acabas de entrar con ',
+  bajadaFin: '. Es la misma cuenta, no pierdes nada.',
+  teEscribiremos: 'TE ESCRIBIREMOS A',
+  nota: 'Ahí llega el correo con tu mesa, el día de la cena. Puedes cambiarlo cuando quieras desde tu perfil.',
+  continuar: 'Continuar',
+}
+
+/** Apple ocultó el correo: solo hay una dirección de reenvío. De `Entrar.dc.html`. */
+export const relay = {
+  sello: 'FALTA UN CORREO',
+  titulo: '¿A qué correo te escribimos?',
+  bajada:
+    'Entraste con Apple ocultando tu correo, así que solo tenemos una dirección de reenvío. Si algún día desvinculas Aro desde los ajustes de tu iPhone, ese reenvío deja de funcionar y nos quedamos sin forma de avisarte de tu mesa.',
+  ejemplo: 'tu@correo.com',
+  etiqueta: 'Correo de contacto',
+  guardar: (guardando: boolean, ok: boolean) => (guardando ? 'Guardando…' : ok ? 'Guardar y seguir' : 'Escribe tu correo'),
+  nota: 'Tu correo de Apple sigue oculto para nosotros. Este solo lo usamos para escribirte, y no lo ve nadie de tu mesa.',
+}
+
+/** Casilla C: la entrada con proveedor no terminó (se reintenta al abrir la app). */
+export const sinTerminar = {
+  titulo: 'No pudimos terminar de entrar.',
+  bajada: 'Tu cuenta está bien. Falta un paso que depende de la conexión.',
+  reintentar: 'Reintentar',
+  noGuardado: 'No pudimos guardarlo. Inténtalo otra vez.',
+}

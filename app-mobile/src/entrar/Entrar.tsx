@@ -5,18 +5,28 @@ import { Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Path } from 'react-native-svg'
 
-import { AroCarga, Boton, Campo, CampoClave, EnlacePie, Marca, Texto, color, cremaAlfa, fuente, medida, radio } from '../diseno'
+import { AroCarga, Boton, Campo, CampoClave, EnlacePie, Marca, Opcion, Texto, color, cremaAlfa, fuente, medida, radio } from '../diseno'
 import { reglas } from '../reglas'
 import * as T from '../texto/entrar'
 
-type Fase = 'inicio' | 'correo' | 'recuperar' | 'entrando'
+type Fase = 'inicio' | 'correo' | 'recuperar' | 'entrando' | 'otroCorreo' | 'relay'
+
+/** Lo que devuelve entrar con un proveedor, ya resuelto por quien monta la pantalla. */
+export type TrasProveedor =
+  | { tipo: 'dentro' }
+  | { tipo: 'cancelado' }
+  | { tipo: 'aviso'; texto: string }
+  | { tipo: 'otroCorreo'; registro: string; entrada: string }
+  | { tipo: 'relay' }
 const SITIO = (Constants.expoConfig?.extra as { sitio: string }).sitio
 
 /**
  * Entrar, calcado de `Entrar.dc.html`: sobre verde profundo, las fases
  * inicio → correo → recuperar / entrando, la foto (debajo, como la web en
- * celular) y el pie con sus tres enlaces. Las fases de Google y Apple
- * («correo distinto», relay) llegan con /api/auth/nativo.
+ * celular) y el pie con sus tres enlaces. Con Apple o Google, además, las
+ * dos fases que dependen de `/api/auth/nativo`: «entraste con otra cuenta»
+ * (elegir a qué correo escribimos) y el relay de Apple (pedir uno real).
+ * Apple solo se ofrece en iOS: en Android no hay inicio nativo.
  *
  * La sesión la abre el SDK; recuperar va por /api/entrar, que pone el tope
  * de tres correos por hora y no dice si la cuenta existe.
@@ -44,6 +54,17 @@ function LogoApple() {
   )
 }
 
+/** El sello melocotón de las fases de aviso («CORREO DISTINTO», «FALTA UN CORREO»). */
+function SelloAviso({ texto }: { texto: string }) {
+  return (
+    <View style={estilos.selloAviso}>
+      <Texto variante="etiquetaChica" tono="tinta" style={{ fontFamily: fuente.textoSemi, letterSpacing: 1.4 }}>
+        {texto}
+      </Texto>
+    </View>
+  )
+}
+
 /** El botón de proveedor: crema, con su logo (los colores de Google son los de su marca). */
 function Proveedor({ texto, logo, onPress }: { texto: string; logo: ReactNode; onPress: () => void }) {
   return (
@@ -65,6 +86,12 @@ export function Entrar(p: {
   recuperar: (correo: string) => Promise<boolean>
   alDentro: () => void
   alEmpezar: () => void
+  /** Entrar con Apple o Google y terminar la entrada en el servidor. */
+  conProveedor: (p: 'apple' | 'google') => Promise<TrasProveedor>
+  /** ¿Se enseña el botón de este proveedor? */
+  hayProveedor: (p: 'apple' | 'google') => boolean
+  /** Guardar el correo al que escribimos (`contacto`). */
+  guardarContacto: (correo: string) => Promise<boolean>
 }) {
   const insets = useSafeAreaInsets()
   const [fase, setFase] = useState<Fase>('inicio')
@@ -73,6 +100,35 @@ export function Entrar(p: {
   const [ver, setVer] = useState(false)
   const [error, setError] = useState('')
   const [aviso, setAviso] = useState('')
+  const [dos, setDos] = useState<{ registro: string; entrada: string } | null>(null)
+  const [elegido, setElegido] = useState(0)
+  const [contacto, setContacto] = useState('')
+  const [guardando, setGuardando] = useState(false)
+
+  const conProveedor = async (prov: 'apple' | 'google') => {
+    setAviso('')
+    setFase('entrando')
+    const r = await p.conProveedor(prov)
+    if (r.tipo === 'dentro') return p.alDentro()
+    if (r.tipo === 'otroCorreo') {
+      setDos({ registro: r.registro, entrada: r.entrada })
+      setElegido(0)
+      return setFase('otroCorreo')
+    }
+    if (r.tipo === 'relay') return setFase('relay')
+    setFase('inicio')
+    if (r.tipo === 'aviso') setAviso(r.texto)
+  }
+
+  const guardarYSeguir = async (c: string) => {
+    if (guardando) return
+    setGuardando(true)
+    setError('')
+    const ok = await p.guardarContacto(c)
+    setGuardando(false)
+    if (!ok) return setError(T.sinTerminar.noGuardado)
+    p.alDentro()
+  }
 
   const listo = reglas.valido('correo', correo.trim()) && clave.length > 0
 
@@ -96,7 +152,84 @@ export function Entrar(p: {
   }
 
   let cuerpo: ReactNode
-  if (fase === 'entrando') {
+  if (fase === 'otroCorreo' && dos) {
+    const opciones = [dos.entrada, dos.registro]
+    cuerpo = (
+      <View>
+        <SelloAviso texto={T.otroCorreo.sello} />
+        <Texto variante="titularGrande" tono="crema">
+          {T.otroCorreo.titulo}
+        </Texto>
+        <Texto variante="cuerpoGrande" tono="cuerpoSobreVerde" style={{ marginTop: 14 }}>
+          {T.otroCorreo.bajadaAntes}
+          <Texto variante="cuerpoGrande" tono="crema" style={{ fontFamily: fuente.textoSemi }}>
+            {dos.registro}
+          </Texto>
+          {T.otroCorreo.bajadaMedio}
+          <Texto variante="cuerpoGrande" tono="crema" style={{ fontFamily: fuente.textoSemi }}>
+            {dos.entrada}
+          </Texto>
+          {T.otroCorreo.bajadaFin}
+        </Texto>
+        <View style={estilos.recuadro}>
+          <Texto variante="etiquetaChica" tono="sobreVerdeSecundario" style={{ marginBottom: 13 }}>
+            {T.otroCorreo.teEscribiremos}
+          </Texto>
+          <View style={{ gap: 9 }}>
+            {opciones.map((c, i) => (
+              <Opcion key={c} unica fondo="verde" texto={c} marcada={elegido === i} onPress={() => setElegido(i)} />
+            ))}
+          </View>
+          <Texto variante="nota" tono="sobreVerdeSecundario" style={{ marginTop: 13 }}>
+            {T.otroCorreo.nota}
+          </Texto>
+        </View>
+        {error ? (
+          <Texto variante="cuerpoChico" tono="avisoSobreVerde" style={{ marginTop: 13 }}>
+            {error}
+          </Texto>
+        ) : null}
+        <View style={{ marginTop: 22 }}>
+          <Boton tipo="sobreVerde" texto={guardando ? T.relay.guardar(true, true) : T.otroCorreo.continuar} onPress={() => guardarYSeguir(opciones[elegido])} />
+        </View>
+      </View>
+    )
+  } else if (fase === 'relay') {
+    const ok = reglas.valido('correo', contacto.trim())
+    cuerpo = (
+      <View>
+        <SelloAviso texto={T.relay.sello} />
+        <Texto variante="titularGrande" tono="crema">
+          {T.relay.titulo}
+        </Texto>
+        <Texto variante="cuerpoGrande" tono="cuerpoSobreVerde" style={{ marginTop: 14 }}>
+          {T.relay.bajada}
+        </Texto>
+        <View style={{ gap: 11, marginTop: 26 }}>
+          <Campo
+            fondo="verde"
+            value={contacto}
+            onChangeText={(v) => (setContacto(v), setError(''))}
+            placeholder={T.relay.ejemplo}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+            accessibilityLabel={T.relay.etiqueta}
+          />
+          <Boton tipo="sobreVerde" ancho texto={T.relay.guardar(guardando, ok)} apagado={!ok || guardando} onPress={() => ok && guardarYSeguir(contacto.trim())} />
+        </View>
+        {error ? (
+          <Texto variante="cuerpoChico" tono="avisoSobreVerde" style={{ marginTop: 13 }}>
+            {error}
+          </Texto>
+        ) : null}
+        <Texto variante="cuerpoChico" tono="sobreVerdeSecundario" style={{ marginTop: 16 }}>
+          {T.relay.nota}
+        </Texto>
+      </View>
+    )
+  } else if (fase === 'entrando') {
     cuerpo = (
       <View>
         <Texto variante="titularGrande" tono="crema">
@@ -188,7 +321,6 @@ export function Entrar(p: {
       </View>
     )
   } else {
-    const pendiente = () => setAviso(T.inicio.proveedoresPendientes)
     cuerpo = (
       <View>
         <Texto variante="titularGrande" tono="crema">
@@ -208,8 +340,8 @@ export function Entrar(p: {
           <View style={estilos.linea} />
         </View>
         <View style={{ gap: 10 }}>
-          <Proveedor texto={T.inicio.apple} logo={<LogoApple />} onPress={pendiente} />
-          <Proveedor texto={T.inicio.google} logo={<LogoGoogle />} onPress={pendiente} />
+          {p.hayProveedor('apple') ? <Proveedor texto={T.inicio.apple} logo={<LogoApple />} onPress={() => conProveedor('apple')} /> : null}
+          {p.hayProveedor('google') ? <Proveedor texto={T.inicio.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} /> : null}
         </View>
         {aviso ? (
           <Texto variante="cuerpoChico" tono="avisoSobreVerde" accessibilityLiveRegion="polite" style={{ marginTop: 13 }}>
@@ -282,6 +414,8 @@ const estilos = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
   },
+  selloAviso: { alignSelf: 'flex-start', minHeight: 36, justifyContent: 'center', paddingHorizontal: 15, borderRadius: radio.capsula, backgroundColor: color.terracotaSobreVerde, marginBottom: 16 },
+  recuadro: { borderRadius: 26, borderWidth: 1, borderColor: cremaAlfa(0.22), padding: 18, marginTop: 24 },
   empezar: { marginTop: 30, paddingTop: 22, borderTopWidth: 1, borderColor: cremaAlfa(0.18) },
   enlace: { fontFamily: fuente.textoSemi, textDecorationLine: 'underline' },
   foto: { width: '100%', aspectRatio: 4 / 5, maxHeight: 470, borderRadius: 28, marginTop: 36, backgroundColor: color.verdeProfundo },
