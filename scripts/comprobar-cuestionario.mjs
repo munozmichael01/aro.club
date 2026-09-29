@@ -422,11 +422,15 @@ const PENDIENTES = {
   'Aro Club - Pago.dc.html': 12,
   'Aro Club - Mi mesa.dc.html': 10,
   'Aro Club - Cancelar.dc.html': 5,
-  // Estas tres miran fechas de NACIMIENTO, que no llevan hora ni zona: ahí
+  // Estas dos miran fechas de NACIMIENTO, que no llevan hora ni zona: ahí
   // el reloj del navegador no cambia nada y el `Date` vale.
+  //
+  // Mi perfil estaba aquí por error mío: su `getDate()` no era un
+  // nacimiento, era el HISTORIAL DE CENAS, y una cena del 3 a las ocho de
+  // la noche se leía «4 de octubre» desde Madrid. Ya está migrada.
   'Aro Club - Datos base.dc.html': 6,
   'Aro Club - Cuestionario.dc.html': 6,
-  'Aro Club - Mi perfil.dc.html': 2,
+  'Aro Club - Mi perfil.dc.html': 0,
   // El alta de un local: «desde» es un día sin hora.
   'Aro Club - Locales.dc.html': 1,
   // La portada vieja, que sigue viva en /v3.

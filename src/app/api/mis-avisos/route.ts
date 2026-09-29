@@ -44,8 +44,12 @@ const QUE_ES: Record<string, { titulo: string; cuerpo: string }> = {
     // es una migración. El título sí se lee, y decía jueves con las cenas ya
     // en sábado. Y no se pone «del sábado»: el día sale de la fecha, y esto
     // es un texto fijo que no la tiene delante, así que se dice sin día.
+    //
+    // Por lo mismo se fue «a las doce». La hora de la revelación sale de
+    // `reveal_at`, que operación pone al crear cada fecha; aquí no hay
+    // ninguna fecha delante, así que decir una hora es escribirla a mano.
     titulo: 'Tu mesa, al abrirse',
-    cuerpo: 'El sitio, la hora y con quién cenas, en cuanto se abre a las doce.',
+    cuerpo: 'El sitio, la hora y con quién cenas, en cuanto se abre.',
   },
   dia_cena: {
     titulo: 'El día de la cena',

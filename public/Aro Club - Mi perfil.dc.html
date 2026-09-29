@@ -692,7 +692,6 @@ class Component extends DCLogic {
       // El historial. Sale del servidor ya ordenado: la pantalla no decide
       // que cuenta como cena a la que fuiste.
       cenas: ((D && D.historial) || []).map((c) => {
-        const f = c.cuando ? new Date(c.cuando) : null;
         const MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
         const fuiste = c.estado === 'fuiste';
         const cancelo = c.estado === 'cancelaste';
@@ -700,7 +699,14 @@ class Component extends DCLogic {
           sitio: c.sitio
             ? c.sitio + (c.numeroMesa != null ? ' · mesa ' + String(c.numeroMesa).padStart(2, '0') : '')
             : ({ dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' }[c.formato] || 'Cena'),
-          cuando: f ? f.getDate() + ' de ' + MES[f.getMonth()] + ' de ' + f.getFullYear() : '',
+          // En la hora de la ciudad de esa cena, no en la de quien mira. Con
+          // `getDate()` una cena del sábado 3 a las ocho de la noche de
+          // Caracas se leía «4 de octubre» desde Madrid, en el historial de
+          // alguien que estuvo allí el 3.
+          cuando: (() => {
+            const q = window.AroReglas.partesDe(c.cuando, c.zonaHoraria);
+            return q ? q.numero + ' de ' + MES[q.mesNumero] + ' de ' + q.ano : '';
+          })(),
           estado: fuiste ? 'Fuiste' : (cancelo ? 'Cancelaste' : 'No llegaste'),
           chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;font:500 12px/1 \'Inter Tight\',sans-serif;' +
             (fuiste ? 'background:rgba(27,81,56,.11);color:#1B5138' : 'color:#566A5D')

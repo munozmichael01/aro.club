@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { valido } from '@/lib/reglas'
 import { faltanDePerfil, respuestasDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 
 /**
@@ -81,16 +82,24 @@ export async function GET() {
   const { data: susCenas } = await admin
     .from('bookings')
     .select(
-      'id, status, cancelled_at, events(starts_at, format, reveal_at), table_members(dinner_tables(table_number, restaurants!dinner_tables_restaurant_id_fkey(name)))',
+      'id, status, cancelled_at, events(starts_at, format, reveal_at, city_slug), table_members(dinner_tables(table_number, restaurants!dinner_tables_restaurant_id_fkey(name)))',
     )
     .eq('profile_id', user.id)
     .order('created_at', { ascending: false })
     .limit(60)
 
+  // En qué hora habla cada cena. Lo pidió el agente de la app: sin esto la
+  // pantalla formatea en Caracas por defecto, y una cena del sábado a las
+  // ocho se lee como domingo para quien esté fuera de Venezuela. Un solo
+  // viaje a `cities` para todas.
+  const zonas = await zonasDeCiudades(
+    (susCenas ?? []).map((b) => (b.events as unknown as { city_slug?: string } | null)?.city_slug),
+  )
+
   const ahoraMs = Date.now()
   const historial = (susCenas ?? [])
     .map((b) => {
-      const ev = b.events as unknown as { starts_at: string; format: string; reveal_at: string } | null
+      const ev = b.events as unknown as { starts_at: string; format: string; reveal_at: string; city_slug: string } | null
       if (!ev) return null
       const empiezaMs = new Date(ev.starts_at).getTime()
       // Solo lo que ya paso: lo que tiene fecha por delante vive en "Lo
@@ -102,6 +111,7 @@ export async function GET() {
       }[])?.[0]?.dinner_tables
       return {
         cuando: ev.starts_at,
+        zonaHoraria: zonas.get(ev.city_slug ?? 'caracas') ?? 'America/Caracas',
         formato: ev.format,
         sitio: mesa?.restaurants?.name ?? null,
         numeroMesa: mesa?.table_number ?? null,
