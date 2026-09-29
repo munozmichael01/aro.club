@@ -28,6 +28,8 @@ Hecho y probado contra producción, y en el iPhone de Michael (Expo Go):
 | `/cuenta` | Inicio: estado, agenda, lo próximo, atajos | Mi cuenta |
 | `/mesa` | Mi mesa: vacía (3 casos), cerrada, abierta, lo de después | Mi mesa |
 | `/perfil` | Perfil: datos y respuestas editables, exclusiones, cenas, avisos, baja | Mi perfil |
+| `/pago?evento=` | Pago: método, datos para pagar, reporte, cupón, pendiente/confirmado/no cuadra | Pago |
+| `/cancelar` | Cancelar: con margen o sin él, el porqué, y los créditos de verdad | Cancelar |
 
 La cuenta (`src/app/(cuenta)/`) lleva **pestañas abajo: Inicio, Mi mesa y
 Perfil, SIEMPRE las tres** (decidido 28-09: una barra que cambia de forma
@@ -37,13 +39,20 @@ de movimiento (`reglas.vozDe`, vía `src/cuenta/voz.ts`). La cabecera
 mismas en las tres. Cada pestaña se relee al volver a ella (`useFocusEffect`):
 se quedan montadas, y lo hecho en una cambia lo que dicen las otras.
 
-**Andamio** (`src/Pendiente.tsx`, «Esta pantalla todavía no está hecha»):
-`/pago` y `/cancelar`. Ninguna sale a tienda así.
+**Ya no queda ninguna pantalla de andamio.** `src/Pendiente.tsx` se queda
+por si hace falta otra.
 
-Por hacer, en este orden salvo que Michael diga otra cosa: pago (con cupón),
-cancelar, y la notificación push de «Voy tarde» (necesita una build nativa:
-Expo Go ya no recibe push remotas). Y Google + Apple cuando exista
-`/api/auth/nativo`: hoy los botones de Entrar enseñan un aviso provisional.
+Pago y Cancelar van FUERA de las pestañas (`src/app/pago.tsx`,
+`cancelar.tsx`): son flujos con principio y final, y una barra invita a irse
+a mitad. Llevan su propia vuelta atrás.
+
+Por hacer: Google + Apple cuando exista `/api/auth/nativo` (hoy los botones
+de Entrar enseñan un aviso provisional). Qué hace la app si muere entre el
+login y esa llamada está acordado con el agente de la web: marca «entrada
+nativa pendiente» en el llavero antes de llamar, se borra con el 200; al
+arrancar con sesión y la marca puesta, se vuelve a llamar (es idempotente)
+y se aterriza según su `paso`. Y la notificación push de «Voy tarde»
+(necesita build nativa: Expo Go ya no recibe push remotas).
 
 ---
 
@@ -198,6 +207,20 @@ el catálogo y `pruebas/perfil.test.ts`:
 node ../scripts/banco-pruebas.mjs lista && BAJA=1 npm run prueba:perfil; node ../scripts/banco-pruebas.mjs borrar
 ```
 
+Pago: GET, un código que no existe y, con `REPORTAR=1`, un Pago Móvil
+inventado (aparta un puesto de verdad; el banco lo borra). La captura no se
+sube: dejaría un fichero que el banco no limpia. Y Cancelar, que cancela la
+reserva de pruebas y comprueba que el crédito vuelve:
+
+```bash
+node ../scripts/banco-pruebas.mjs lista && REPORTAR=1 npm run prueba:pago; node ../scripts/banco-pruebas.mjs borrar
+node ../scripts/banco-pruebas.mjs lista mesa && npm run prueba:cancelar; node ../scripts/banco-pruebas.mjs borrar
+```
+
+`pruebas/datos/pago.json` es la respuesta real de `GET /api/pago` con los
+datos de la cuenta que recibe CAMBIADOS por inventados: nunca subir al repo
+los de verdad (banco, cédula, teléfono).
+
 La sesión, si tocaste `src/sesion/`:
 
 ```bash
@@ -209,7 +232,8 @@ servidor simulado: `/catalogo`, `/catalogo-entrada`, `/catalogo-datos`,
 `/catalogo-cuestionario`, `/catalogo-verificacion?estado=…`,
 `/catalogo-cuenta?estado=reservar|reservada|abierta|…`,
 `/catalogo-mesa?estado=revision|sin-reserva|sin-mesa|cerrada|abierta|movimiento|pasada|valorada`,
-`/catalogo-perfil`.
+`/catalogo-perfil`, `/catalogo-pago?estado=elegir|sin-verificar|pendiente|listo|fallo|prueba`
+(el código «REGALO» sale bien), `/catalogo-cancelar?estado=margen|tarde|revelada|fallo`.
 
 Instalar siempre con `npx expo install`. Las pruebas usan los tipos de Node y
 la app no: por eso tienen su propio `tsconfig`. Un `Buffer` en `src/` compila
