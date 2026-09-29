@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { situacionDeLead } from '@/lib/embudo'
 import { VERSION_LEGAL } from '@/lib/legal'
 import { verificar } from '@/lib/lead-token'
+import { trasEntrar } from '@/lib/tras-entrar'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -22,7 +23,21 @@ import { createClient } from '@/lib/supabase/server'
 
 const cuerpo = z.object({
   correo: z.string().trim().toLowerCase().email().max(254),
-  token: z.string().min(1),
+  /**
+   * La llave del lead. OPCIONAL desde que existe la app.
+   *
+   * En la web siempre hay lead: el correo se pide primero y la llave sale de
+   * ahí. En la app el orden es otro —las cuatro preguntas se guardan en el
+   * celular y se mandan DESPUÉS, con la sesión— así que al llegar aquí no hay
+   * lead ni llave que mandar.
+   *
+   * No baja la guardia: la llave es `HMAC(correo)` y la emite `/api/lead` a
+   * quien escriba esa dirección, así que nunca probó nada sobre quién es. Lo
+   * que de verdad protege una cuenta es la contraseña que se pone aquí.
+   */
+  token: z.string().min(1).nullish(),
+  /** De dónde sale el alta, para no perder la atribución. */
+  origen: z.enum(['landing', 'datos', 'app']).nullish(),
   // Ocho es el mínimo del contrato. El máximo es de bcrypt, que trunca a 72.
   clave: z.string().min(8).max(72),
 })
@@ -43,9 +58,11 @@ export async function POST(request: Request) {
     )
   }
 
-  const { correo, token, clave } = parsed.data
+  const { correo, token, clave, origen } = parsed.data
 
-  if (!verificar(correo, token)) {
+  // Con llave se comprueba. Sin ella, se sigue: es el camino de la app, donde
+  // no hay lead porque las respuestas van después.
+  if (token && !verificar(correo, token)) {
     return NextResponse.json({ error: 'Sesión no válida.' }, { status: 403 })
   }
 
@@ -57,10 +74,20 @@ export async function POST(request: Request) {
     .eq('email', correo)
     .maybeSingle()
 
-  if (!lead) {
+  // Sin lead Y sin llave: alta directa. Es lo que hace la app.
+  //
+  // Lo que se pierde de comprobar aquí no es seguridad —la llave nunca probó
+  // nada— sino el candado de «no se crea una cuenta a medias», que mira que
+  // el lead tenga ya sus respuestas y sus datos. En la app ese candado no
+  // aplica: las respuestas se mandan JUSTO DESPUÉS, con la sesión. Y si la
+  // app muere en medio, `embudo.ts` dirá `preguntas` y se las volverá a
+  // pedir, que es exactamente para lo que está.
+  const altaDirecta = !lead && !token
+
+  if (!lead && !altaDirecta) {
     return NextResponse.json({ error: 'Sesión no válida.' }, { status: 403 })
   }
-  if (lead.converted_profile_id) {
+  if (lead?.converted_profile_id) {
     // Ya tenía cuenta. No es un error (§3.8): se le manda a entrar.
     return NextResponse.json({ estado: 'ya_existe' })
   }
@@ -74,8 +101,10 @@ export async function POST(request: Request) {
   // Lo que falta lo dice la MISMA pieza que se lo dice al cuestionario y a
   // Mi cuenta: si cada uno lo decidiera por su cuenta volveríamos a tener
   // huecos entre pantallas, que es de donde salió todo esto.
-  const situacion = await situacionDeLead(correo)
-  if (situacion.paso !== 'cuenta') {
+  const situacion = altaDirecta
+    ? null
+    : await situacionDeLead(correo)
+  if (situacion && situacion.paso !== 'cuenta') {
     return NextResponse.json(
       {
         // Se NOMBRA lo que falta. «Faltan datos» obliga a repasar cuatro
@@ -118,11 +147,24 @@ export async function POST(request: Request) {
     )
   }
 
-  const { error: errorConversion } = await admin.rpc('convertir_lead', {
-    p_profile_id: creado.user.id,
-    p_lead_email: correo,
-    p_auth_email: correo,
-  })
+  // El perfil. Con lead se convierte —con sus respuestas y su atribución—; sin
+  // lead lo crea `trasEntrar()`, la MISMA pieza que usan Google y la app. Así
+  // hay una sola verdad sobre qué pasa al entrar, entre por donde entre.
+  const rEntrar = altaDirecta
+    ? await trasEntrar({
+        usuarioId: creado.user.id,
+        correo,
+        origen: origen ?? 'app',
+      })
+    : null
+
+  const errorConversion = altaDirecta
+    ? (rEntrar && !rEntrar.ok ? { code: null, details: null } : null)
+    : (await admin.rpc('convertir_lead', {
+        p_profile_id: creado.user.id,
+        p_lead_email: correo,
+        p_auth_email: correo,
+      })).error
 
   if (errorConversion) {
     // El usuario de auth ya existe pero sin perfil: se deshace para que
