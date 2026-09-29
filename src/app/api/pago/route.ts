@@ -7,6 +7,7 @@ import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
 import { datosDePago } from '@/lib/datos-de-pago'
 import { PRECIO_USD } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { encolar } from '@/lib/correos'
 
@@ -75,7 +76,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, price_usd, booking_closes_at, zone_slug')
+    .select('id, starts_at, price_usd, booking_closes_at, zone_slug, reveal_at, city_slug')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -152,6 +153,10 @@ export async function GET(request: Request) {
       id: evento.id,
       empiezaEn: evento.starts_at,
       cierraEn: evento.booking_closes_at,
+      // Cuándo se abre todo. Lo pidió la app: sin esto tiene que escribir «a
+      // mediodía» a mano, y la hora sale del evento.
+      revelaEn: evento.reveal_at,
+      zonaHoraria: await zonaDeCiudad(evento.city_slug),
       zona: nombreZona,
     },
     montoUsd: usd,

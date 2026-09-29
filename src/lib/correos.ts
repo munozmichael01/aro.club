@@ -143,7 +143,28 @@ export async function encolar(
     // podía distinguirlo. El cron del empujón contaba `perfil++` después de
     // cada llamada y habría informado de cinco empujones habiendo encolado
     // cero: el mismo choque que lo tuvo diez días muerto, contado como éxito.
-    if (error?.code === '23505') return 'repetido'
+    if (error?.code === '23505') {
+      // Y si el que choca es IMPRESCINDIBLE, se grita.
+      //
+      // Un «repetido» en la bienvenida o en el empujón es la respuesta
+      // correcta. En un acuse no: significa que alguien hizo algo —canceló,
+      // pagó— y no recibió la confirmación. Michael canceló dos veces la
+      // misma fecha y el segundo correo no salió; el índice lo rechazó,
+      // `encolar` devolvió «repetido» y nadie se enteró en ningún sitio.
+      //
+      // El índice ya no cubre esos tipos, así que esto no debería pasar. Pero
+      // si vuelve a pasar —otro índice, otro tipo— tiene que verse, porque lo
+      // que se pierde es un correo que la persona está esperando.
+      if (IMPRESCINDIBLES.has(tipo)) {
+        console.error(
+          '[correos] CORREO IMPRESCINDIBLE PERDIDO:', tipo,
+          'chocó con un índice único y no se encoló.',
+          'perfil:', 'perfil' in aQuien ? aQuien.perfil : aQuien.correo,
+          'evento:', opciones.eventoId ?? null,
+        )
+      }
+      return 'repetido'
+    }
     if (error) {
       console.error('[correos] no se encoló', tipo, error)
       return 'fallo'
@@ -199,9 +220,14 @@ async function anotarFinal(
   id: string,
   final: Final,
   motivo: string | null = null,
+  idProveedor: string | null = null,
 ): Promise<void> {
   const campos: Record<string, unknown> = { estado: final, motivo }
   if (CIERRAN.has(final)) campos.sent_at = new Date().toISOString()
+  // Con qué buscarlo si alguien dice que no le llegó. `sent_at` solo dice que
+  // Resend lo aceptó; si de verdad se entregó lo sabe Resend, y para
+  // preguntárselo hace falta su id. Lo devolvía y lo tirábamos.
+  if (idProveedor) campos.provider_id = idProveedor
   const { error } = await admin.from('scheduled_emails').update(campos as never).eq('id', id)
   if (error) console.error('[correos] no se pudo anotar el final', final, error)
 }
@@ -327,7 +353,7 @@ export async function despacharPendientes(
         continue
       }
 
-      await anotarFinal(admin, fila.id, 'enviado')
+      await anotarFinal(admin, fila.id, 'enviado', null, 'id' in r ? r.id : null)
       if (r.estado === 'enviado') mandados++
     }
 

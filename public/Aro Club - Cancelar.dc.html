@@ -77,6 +77,22 @@
           </sc-for>
         </div>
 
+        <!--
+          El fallo, que se calculaba y no se pintaba.
+
+          `hayFallo` y `fallo` estaban en la logica desde su entrega y ningun
+          sitio del markup los leia: si la cancelacion fallaba, la pantalla no
+          decia NADA. La persona se iba creyendo que habia cancelado, con su
+          puesto todavia apartado y su dinero cobrado, y no aparecia esa noche.
+          Lo encontro el agente de la app al no poder copiarlo.
+        -->
+        <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="display:flex;gap:12px;align-items:flex-start;border-radius:24px;background:rgba(110,52,15,.1);padding:clamp(15px,2.2vw,19px);margin-top:18px">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+            <span style="flex:1;min-width:0;font:400 15px/1.45 'Inter Tight',sans-serif;color:#14342A">{{ fallo }}</span>
+          </div>
+        </sc-if>
+
         <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
           <button onClick="{{ cancelar }}" style="{{ botonCancelar }}">Sí, cancelar mi puesto</button>
           <a href="/cuenta" style="{{ botonFantasma }}">Mantener mi puesto</a>
@@ -139,6 +155,7 @@ class Component extends DCLogic {
   }
 
   renderVals() {
+    const d = this.state.datos;
     const f = this.state.fase;
     const tarde = this.state.tarde;
     const fases = ['CON MARGEN', 'MENOS DE 24 H', 'CANCELADO'];
@@ -211,7 +228,10 @@ class Component extends DCLogic {
       cancelar: () => this.cancelar(),
       hayFallo: !!this.state.fallo,
       fallo: this.state.fallo,
-      creditosRestantes: tarde ? '3' : '4',
+      // Del saldo de verdad. Decia «3» si cancelaba tarde y «4» si a tiempo,
+      // sin mirar nada: dos cifras inventadas en la pantalla que le dice a
+      // alguien si acaba de perder su dinero.
+      creditosRestantes: String((d && d.creditos != null) ? d.creditos : 0),
       resumenHecho: tarde
         ? 'Avisaste con menos de 24 horas, así que ese crédito se pierde. Gracias por decirlo igual: preferimos una mesa de cinco a un puesto vacío.'
         : 'Tu crédito volvió entero. Puedes apuntarte a otra fecha cuando quieras.'

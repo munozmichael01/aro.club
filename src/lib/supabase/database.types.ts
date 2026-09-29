@@ -2618,6 +2618,7 @@ export type Database = {
           motivo: string | null
           payload: Json
           profile_id: string | null
+          provider_id: string | null
           send_at: string
           sent_at: string | null
         }
@@ -2631,6 +2632,7 @@ export type Database = {
           motivo?: string | null
           payload?: Json
           profile_id?: string | null
+          provider_id?: string | null
           send_at: string
           sent_at?: string | null
         }
@@ -2644,6 +2646,7 @@ export type Database = {
           motivo?: string | null
           payload?: Json
           profile_id?: string | null
+          provider_id?: string | null
           send_at?: string
           sent_at?: string | null
         }

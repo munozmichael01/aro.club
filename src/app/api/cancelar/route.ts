@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { anotar } from '@/lib/auditoria'
 import { rellenarHueco } from '@/lib/reparto/rellenar'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { encolar } from '@/lib/correos'
 
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
   let q = admin
     .from('bookings')
     .select(
-      'id, status, event_id, events(starts_at, reveal_at, format, restaurants!events_restaurant_id_fkey(name, zone_slug)), table_members(table_id)',
+      'id, status, event_id, events(starts_at, reveal_at, format, city_slug, restaurants!events_restaurant_id_fkey(name, zone_slug)), table_members(table_id)',
     )
     .eq('profile_id', user.id)
     .in('status', ['pending_payment', 'confirmed'])
@@ -86,8 +87,19 @@ export async function GET(request: Request) {
     zona = z?.name ?? null
   }
 
+  // Cuántos créditos tiene AHORA. La pantalla escribía «3» si cancelaba tarde
+  // y «4» si a tiempo, sin mirar nada: dos cifras inventadas en la pantalla
+  // que decide si alguien pierde su dinero. Lo encontró el agente de la app
+  // al no poder copiarlas.
+  const { data: saldo } = await admin
+    .from('v_credit_balance')
+    .select('balance')
+    .eq('profile_id', user.id)
+    .maybeSingle()
+
   return NextResponse.json({
     reservaId: reserva.id,
+    creditos: saldo?.balance ?? 0,
     empiezaEn: evento?.starts_at ?? null,
     formato: evento?.format ?? 'dinner',
     zona,
@@ -98,6 +110,11 @@ export async function GET(request: Request) {
     // Si ya tiene mesa, cancelar la deja en cinco: nadie ocupa su sitio a
     // estas alturas.
     yaTieneMesa: ((reserva.table_members ?? []) as unknown[]).length > 0,
+    // En qué hora habla esta fecha. Lo pidió la app; sin esto formatea en
+    // Caracas por defecto y desde fuera de Venezuela dice otro día.
+    zonaHoraria: await zonaDeCiudad(
+      (reserva.events as unknown as { city_slug?: string } | null)?.city_slug,
+    ),
   })
 }
 
