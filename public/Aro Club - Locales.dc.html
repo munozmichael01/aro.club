@@ -517,7 +517,18 @@ class Component extends DCLogic {
       ['aforo', 'Cuántas mesas caben', a.aforo, '6'],
       ['mapa', 'Enlace de Google Maps', a.mapa, 'https://maps.app.goo.gl/…'],
       ['metro', 'Metro más cercano', a.metro, 'Chacaíto'],
-      ['metroMinutos', 'Minutos a pie desde el metro', a.metroMinutos, '7']
+      ['metroMinutos', 'Minutos a pie desde el metro', a.metroMinutos, '7'],
+      // Los que hasta hoy solo se podian poner entrando a la base.
+      //
+      // `nombre` y `zona` porque un sitio se renombra y una zona se pone mal
+      // el dia del alta; sin esto habia que borrarlo y volver a crearlo, y con
+      // el se iria su historico de mesas.
+      ['nombre', 'Cómo se llama', a.nombre, 'Cardenal'],
+      // Lo DECLARADO al abrir el local. Lo real sale de lo que reportan las
+      // que cenaron, en `venue_feedback`, y no se mezclan.
+      ['gasto', 'Gasto medio por persona (USD, declarado)', a.gastoDeclarado, '28'],
+      ['ultimaEntrada', 'Última hora a la que sientan (24 h)', a.ultimaEntrada, '22:30'],
+      ['notas', 'Notas de seguridad', a.notas, 'Lo que haya que saber al llegar de noche']
     ].map((c) => {
       const guardado = c[2] == null ? '' : String(c[2]);
       const enCurso = this.state.borrador[c[0]];
@@ -554,6 +565,82 @@ class Component extends DCLogic {
         };
       })
     }]).concat(!a ? [] : [{
+      // La ZONA. Decide a qué mesas se le puede ofrecer, y hasta hoy una zona
+      // mal puesta el día del alta obligaba a borrar el local y volver a
+      // crearlo — perdiendo su histórico de mesas por el camino.
+      etiqueta: '¿En qué zona está?', valor: '', pista: '',
+      hayPista: false, ayuda: '',
+      esTexto: false, esOpciones: true, campo: campoEstilo,
+      opciones: ((D && D.zonas) || []).map((z) => {
+        const sel = a.zona === z.slug;
+        return {
+          label: z.nombre, icono: sel ? '\u2713' : '',
+          pick: () => editarCampo('zona', z.slug),
+          aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (sel ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease', btn: 'display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 16px 0 12px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';cursor:pointer;transition:all 180ms ease', txt: 'font:' + (sel ? '600' : '400') + " 14px/1.2 'Inter Tight',sans-serif;" + 'letter-spacing:-.01em;color:#14342A;white-space:nowrap'
+        };
+      })
+    }]).concat(!a ? [] : [{
+      // Los FORMATOS. Un sitio que solo hace cenas no puede recibir un café,
+      // y esto solo se podía decir al darlo de alta.
+      etiqueta: '¿Para qué sirve el sitio?', valor: '', pista: '',
+      hayPista: true, ayuda: 'Al menos uno. Una fecha solo se le ofrece si admite ese formato.',
+      esTexto: false, esOpciones: true, campo: campoEstilo,
+      opciones: [['cenas','Cenas'],['drinks','Drinks'],['movimiento','Movimiento'],['coffee','Coffee']].map((o) => {
+        const puestas = a.familias || [];
+        const sel = puestas.indexOf(o[0]) >= 0;
+        return {
+          label: o[1], icono: sel ? '\u2713' : '',
+          pick: () => {
+            const nuevas = sel ? puestas.filter((x) => x !== o[0]) : puestas.concat([o[0]]);
+            // Sin ningún formato no se le puede ofrecer nada, y la ruta lo
+            // rechaza: se para aquí para no enseñar un error evitable.
+            if (!nuevas.length || !a) return;
+            this.enviar('PATCH', { accion: 'familias', id: a.id, familias: nuevas }).catch(() => {});
+          },
+          aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (sel ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease', btn: 'display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 16px 0 12px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';cursor:pointer;transition:all 180ms ease', txt: 'font:' + (sel ? '600' : '400') + " 14px/1.2 'Inter Tight',sans-serif;" + 'letter-spacing:-.01em;color:#14342A;white-space:nowrap'
+        };
+      })
+    }]).concat(!a ? [] : [{
+      // El tramo de precio. OJO: hoy no lo lee nadie —el `budget_tier` que usa
+      // el reparto es el de la PERSONA, no el del local—, así que esto se
+      // rellena para operación y para cuando el reparto lo cruce.
+      etiqueta: '¿Qué tan caro es?', valor: '', pista: '',
+      hayPista: true, ayuda: 'De 1 a 4. Hoy solo lo ve operación: el reparto todavía no lo cruza con lo que la gente dice que quiere gastar.',
+      esTexto: false, esOpciones: true, campo: campoEstilo,
+      opciones: [[1,'1 · barato'],[2,'2 · medio'],[3,'3 · caro'],[4,'4 · muy caro']].map((o) => {
+        const sel = a.tramo === o[0];
+        return {
+          label: o[1], icono: sel ? '\u2713' : '',
+          pick: () => editarCampo('tramo', o[0]),
+          aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (sel ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease', btn: 'display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 16px 0 12px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';cursor:pointer;transition:all 180ms ease', txt: 'font:' + (sel ? '600' : '400') + " 14px/1.2 'Inter Tight',sans-serif;" + 'letter-spacing:-.01em;color:#14342A;white-space:nowrap'
+        };
+      })
+    }]).concat(!a ? [] : [['estacionamiento', '¿Tiene estacionamiento?', ''],
+      ['terraza', '¿Tiene terraza?', ''],
+      ['accesible', '¿Es accesible?', 'Para quien llega en silla de ruedas o con movilidad reducida.'],
+      ['divide', '¿Dividen la cuenta?', 'Seis desconocidos pagando: un sitio que no divide arruina el final de la noche.'],
+      ['segundoActo', '¿Sirve para el segundo acto?', 'Si la mesa quiere seguir después, sin cambiar de sitio.']
+    ].map((b) => ({
+      // Los sí o no, que la migración que los creó ya decía que había que
+      // «hacer editables en la ficha». Nunca se hizo: se ponían por base.
+      //
+      // Se puede dejar sin contestar y eso se ve: ninguna de las dos marcada
+      // es «no lo sabemos», que no es lo mismo que «no».
+      etiqueta: b[1], valor: '', pista: '',
+      hayPista: !!b[2], ayuda: b[2],
+      esTexto: false, esOpciones: true, campo: campoEstilo,
+      opciones: [[true, 'Sí'], [false, 'No']].map((o) => {
+        const sel = a[b[0]] === o[0];
+        return {
+          label: o[1], icono: sel ? '\u2713' : '',
+          // Pulsar la que ya esta marcada la quita: vuelve a «no lo sabemos»,
+          // que es distinto de «no» y es donde nacen. Sin esto, contestar una
+          // por error la dejaba contestada para siempre.
+          pick: () => editarCampo(b[0], sel ? null : o[0]),
+          aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (sel ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease', btn: 'display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 16px 0 12px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';cursor:pointer;transition:all 180ms ease', txt: 'font:' + (sel ? '600' : '400') + " 14px/1.2 'Inter Tight',sans-serif;" + 'letter-spacing:-.01em;color:#14342A;white-space:nowrap'
+        };
+      })
+    }))).concat(!a ? [] : [{
       // La forma de la mesa y los días que abre. Los dos los aceptaba la ruta
       // y la ficha no los ofrecía: un sitio compra una mesa larga o deja de
       // abrir los lunes, y eso decide a qué fechas se le puede ofrecer.

@@ -143,8 +143,36 @@ const cambio = z.discriminatedUnion('accion', [
       // Los tres del alta, también editables desde la ficha: un sitio cambia
       // los días que abre y la mesa larga que compró el mes pasado.
       'metro', 'metroMinutos', 'forma', 'dias',
+      // Lo que solo se podía poner entrando a la base.
+      //
+      // `nombre` y `zona` porque un sitio se renombra y una zona se pone mal
+      // el día del alta; sin esto había que borrarlo y volver a crearlo, y con
+      // él se iría su histórico de mesas.
+      'nombre', 'zona',
+      // `gasto` es lo DECLARADO al abrir el local; lo real sale de lo que
+      // reportan las que cenaron, en `venue_feedback`. No se mezclan.
+      'gasto', 'tramo',
+      // La migración que las creó dice que `has_parking` «solo se hace
+      // editable en la ficha». Nunca se hizo, y las cinco de al lado tampoco.
+      'estacionamiento', 'terraza', 'accesible', 'divide', 'segundoActo',
+      'ultimaEntrada', 'notas',
     ]),
-    valor: z.union([z.string(), z.number(), z.array(z.number().int().min(0).max(6)), z.null()]),
+    valor: z.union([
+      z.string(), z.number(), z.boolean(),
+      z.array(z.number().int().min(0).max(6)), z.null(),
+    ]),
+  }),
+  /**
+   * Los formatos que admite el sitio.
+   *
+   * Aparte de `editar` porque son una lista de familias que la ruta traduce a
+   * los once formatos de la base —igual que en el alta— y porque un sitio sin
+   * ningún formato no se le puede ofrecer a nada.
+   */
+  z.object({
+    accion: z.literal('familias'),
+    id: z.string().uuid(),
+    familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee'])).min(1),
   }),
 ])
 
@@ -191,7 +219,7 @@ export async function GET() {
 
   const { data: locales, error } = await admin
     .from('restaurants')
-    .select('id, name, zone_slug, address, maps_url, facade_photo_path, contact_name, contact_phone, fixed_menu_usd, avg_check_usd, commission_pct, noise_level, max_tables, is_active, formats, created_at, metro_nearby, metro_minutes, table_shape, open_days, cuisines')
+    .select('id, name, zone_slug, address, maps_url, facade_photo_path, contact_name, contact_phone, fixed_menu_usd, avg_check_usd, budget_tier, commission_pct, noise_level, max_tables, is_active, formats, created_at, metro_nearby, metro_minutes, table_shape, open_days, cuisines, has_parking, has_terrace, is_accessible, splits_bill, is_after_venue, last_seating, safety_notes')
     .order('name')
 
   if (error) {
@@ -301,6 +329,19 @@ export async function GET() {
       metroMinutos: l.metro_minutes,
       // En una mesa larga de seis, los dos extremos no se oyen.
       forma: l.table_shape,
+      // Lo que hasta hoy solo se podía ver entrando a la base.
+      tramo: (l as { budget_tier?: number | null }).budget_tier ?? null,
+      estacionamiento: (l as { has_parking?: boolean }).has_parking ?? false,
+      terraza: (l as { has_terrace?: boolean | null }).has_terrace ?? null,
+      accesible: (l as { is_accessible?: boolean | null }).is_accessible ?? null,
+      divide: (l as { splits_bill?: boolean | null }).splits_bill ?? null,
+      segundoActo: (l as { is_after_venue?: boolean }).is_after_venue ?? false,
+      // Sin los segundos. La columna es `time` y devuelve «22:30:00»; el campo
+      // de la ficha pide «22:30» y lo valida así, de modo que al reeditarla
+      // sin tocar nada se rechazaba lo que la propia pantalla acababa de
+      // enseñar.
+      ultimaEntrada: ((l as { last_seating?: string | null }).last_seating ?? '').slice(0, 5) || null,
+      notas: (l as { safety_notes?: string | null }).safety_notes ?? null,
       // Los días que abre, para que el selector de una fecha no ofrezca un
       // sitio cerrado ese día. 0 = domingo.
       dias: l.open_days ?? [],
@@ -643,6 +684,20 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ estado: 'fijado', sitio })
   }
 
+  if (d.accion === 'familias') {
+    const formatos = [...new Set(d.familias.flatMap((x) => FORMATOS_DE_FAMILIA[x]))]
+    const { error } = await admin
+      .from('restaurants')
+      .update({ formats: formatos as never })
+      .eq('id', d.id)
+
+    if (error) {
+      console.error('[locales] no se guardaron los formatos', error)
+      return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+    }
+    return NextResponse.json({ ok: true })
+  }
+
   if (d.accion === 'cocinas') {
     // Contra la lista compartida, no contra una copia. `COCINAS` es la que
     // usan el cuestionario, la app y la ficha, así que si una cocina se
@@ -709,7 +764,21 @@ export async function PATCH(request: Request) {
     metroMinutos: 'metro_minutes',
     forma: 'table_shape',
     dias: 'open_days',
+    nombre: 'name',
+    zona: 'zone_slug',
+    gasto: 'avg_check_usd',
+    tramo: 'budget_tier',
+    estacionamiento: 'has_parking',
+    terraza: 'has_terrace',
+    accesible: 'is_accessible',
+    divide: 'splits_bill',
+    segundoActo: 'is_after_venue',
+    ultimaEntrada: 'last_seating',
+    notas: 'safety_notes',
   }
+
+  /** Las que son sí o no. Se guardan tal cual, sin pasar por el texto. */
+  const SI_O_NO = new Set(['estacionamiento', 'terraza', 'accesible', 'divide', 'segundoActo'])
 
   // Los días son una lista, no un valor suelto: se validan aparte y salen por
   // su propio camino antes de que el resto los trate como texto.
@@ -740,10 +809,55 @@ export async function PATCH(request: Request) {
     }
   }
 
-  const NUMERICOS = new Set(['menu', 'comision', 'aforo', 'ruido', 'metroMinutos'])
-  let valor: string | number | null = d.valor as string | number | null
+  // El nombre no puede quedarse vacío: es como se le llama al sitio en el
+  // correo de la mesa y en «Mi mesa».
+  if (d.campo === 'nombre') {
+    const nombre = String(d.valor ?? '').trim()
+    if (!nombre) {
+      return NextResponse.json({ error: 'El sitio necesita un nombre.' }, { status: 400 })
+    }
+  }
 
-  if (NUMERICOS.has(d.campo)) {
+  // La zona decide a qué mesas se le puede ofrecer, así que tiene que existir.
+  if (d.campo === 'zona') {
+    const { data: z } = await admin
+      .from('zones')
+      .select('slug')
+      .eq('slug', String(d.valor ?? ''))
+      .maybeSingle()
+    if (!z) return NextResponse.json({ error: 'Esa zona no existe.' }, { status: 400 })
+  }
+
+  // La última entrada es una hora, no un texto libre: la columna es `time` y
+  // rechaza cualquier otra cosa con un error que no dice nada.
+  if (d.campo === 'ultimaEntrada' && d.valor !== null && d.valor !== '') {
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(d.valor))) {
+      return NextResponse.json(
+        { error: 'La hora va como 22:30, en formato de 24 horas.' },
+        { status: 400 },
+      )
+    }
+  }
+
+  const NUMERICOS = new Set(['menu', 'comision', 'aforo', 'ruido', 'metroMinutos', 'gasto', 'tramo'])
+  let valor: string | number | boolean | null = d.valor as string | number | boolean | null
+
+  // Sí o no van tal cual: pasarlos por el camino del texto los convertiría en
+  // la cadena «true», que la columna booleana rechaza.
+  if (SI_O_NO.has(d.campo)) {
+    // `null` se acepta: es «no lo sabemos», que no es lo mismo que «no» y es
+    // el estado en el que nacen. Sin esto, contestar una por error la dejaba
+    // contestada para siempre.
+    //
+    // `has_parking` e `is_after_venue` son `not null` en la base, así que ahí
+    // vaciarlas es volver a su valor de nacimiento: falso.
+    if (valor !== null && typeof valor !== 'boolean') {
+      return NextResponse.json({ error: 'Eso es sí o no.' }, { status: 400 })
+    }
+    if (valor === null && (d.campo === 'estacionamiento' || d.campo === 'segundoActo')) {
+      valor = false
+    }
+  } else if (NUMERICOS.has(d.campo)) {
     if (valor === '' || valor === null) valor = null
     else {
       const n = Number(valor)
@@ -758,6 +872,12 @@ export async function PATCH(request: Request) {
       }
       if (d.campo === 'metroMinutos' && (n < 0 || n > 60)) {
         return NextResponse.json({ error: 'Los minutos andando van de 0 a 60.' }, { status: 400 })
+      }
+      if (d.campo === 'tramo' && ![1, 2, 3, 4].includes(n)) {
+        return NextResponse.json({ error: 'El tramo de precio va de 1 a 4.' }, { status: 400 })
+      }
+      if (d.campo === 'gasto' && (n < 0 || n > 500)) {
+        return NextResponse.json({ error: 'Ese gasto por persona no cuadra.' }, { status: 400 })
       }
       valor = n
     }
