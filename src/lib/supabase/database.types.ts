@@ -2250,6 +2250,7 @@ export type Database = {
           questionnaire_screen: number
           role: Database["public"]["Enums"]["app_role_t"]
           rootedness: Database["public"]["Enums"]["rootedness_t"] | null
+          source: string | null
           status: Database["public"]["Enums"]["member_status_t"]
           terms_accepted_at: string | null
           terms_version: string | null
@@ -2281,6 +2282,7 @@ export type Database = {
           questionnaire_screen?: number
           role?: Database["public"]["Enums"]["app_role_t"]
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
+          source?: string | null
           status?: Database["public"]["Enums"]["member_status_t"]
           terms_accepted_at?: string | null
           terms_version?: string | null
@@ -2312,6 +2314,7 @@ export type Database = {
           questionnaire_screen?: number
           role?: Database["public"]["Enums"]["app_role_t"]
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
+          source?: string | null
           status?: Database["public"]["Enums"]["member_status_t"]
           terms_accepted_at?: string | null
           terms_version?: string | null

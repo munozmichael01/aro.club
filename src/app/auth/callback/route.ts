@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
 
-import { situacionDePerfil } from '@/lib/embudo'
 import { COOKIE_ESTADO, leerEstado } from '@/lib/oauth-estado'
 import { SITIO } from '@/lib/remitente'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { trasEntrar } from '@/lib/tras-entrar'
 
 /**
  * La vuelta de Google.
@@ -110,85 +109,35 @@ export async function GET(request: Request) {
     return alFallo('correo-sin-verificar')
   }
 
-  const admin = createAdminClient()
+  // --- 2, 3 y 4 · el perfil, el lead y el correo distinto -------------
+  //
+  // Las tres viven en `trasEntrar()` desde que existe la app: necesita
+  // exactamente lo mismo y no puede usar esta ruta —no hay redirecciones que
+  // seguir ni cookie de ida que leer, y lo que le hace falta de vuelta es
+  // JSON—. Aquí no cambia nada: se sigue cruzando el lead por CORREO, se
+  // sigue creando la cuenta con lo que da Google, y se sigue preguntando por
+  // el correo distinto solo cuando de verdad hay dos.
+  const r = await trasEntrar({
+    usuarioId: usuario.id,
+    correo,
+    nombre: (usuario.user_metadata?.full_name as string | undefined) ?? null,
+    leadPrevio: estado.lead ?? null,
+    origen: 'google',
+  })
 
-  // --- 2 · ¿ya tiene perfil? -------------------------------------------
-  const { data: perfil } = await admin
-    .from('profiles')
-    .select('id, full_name, display_name, contact_email')
-    .eq('id', usuario.id)
-    .maybeSingle()
+  if (!r.ok) return alFallo('no-se-pudo')
 
-  if (!perfil) {
-    // --- 3 · el cruce del lead, por correo ------------------------------
-    //
-    // Primero el correo de Google, que es el caso normal. Y si no hay, el
-    // del `state`: quien pulsó desde un correo nuestro y entró con otra
-    // dirección de Google.
-    const candidatos = [correo, estado.lead].filter(Boolean) as string[]
-
-    const { data: leads } = await admin
-      .from('waitlist')
-      .select('id, email, full_name, display_name')
-      .in('email', candidatos)
-      .is('converted_profile_id', null)
-
-    // Se prefiere el del propio Google: si los dos existen, el suyo es el que
-    // acaba de usar para entrar.
-    const lead =
-      (leads ?? []).find((l) => l.email === correo) ??
-      (leads ?? []).find((l) => l.email === estado.lead) ??
-      null
-
-    if (lead) {
-      const { error: errorConvertir } = await admin.rpc('convertir_lead', {
-        p_profile_id: usuario.id,
-        p_lead_email: lead.email,
-        p_auth_email: correo,
-      })
-
-      if (errorConvertir) {
-        console.error('[google] no se pudo convertir el lead', errorConvertir)
-        return alFallo('no-se-pudo')
-      }
-    } else {
-      // Sin lead: cuenta nueva con lo que da Google, que son las dos primeras
-      // cosas que pedimos de todas formas.
-      const nombre = (usuario.user_metadata?.full_name as string | undefined)?.trim() || null
-      const { error: errorAlta } = await admin.from('profiles').insert({
-        id: usuario.id,
-        email: correo,
-        contact_email: correo,
-        full_name: nombre,
-        display_name: nombre ? nombre.split(' ')[0] : null,
-        city_slug: 'caracas',
-        status: 'pending_questionnaire',
-      } as never)
-
-      if (errorAlta) {
-        console.error('[google] no se pudo crear el perfil', errorAlta)
-        return alFallo('no-se-pudo')
-      }
-    }
-
-    // --- 4 · ¿entró con un correo distinto del que se apuntó? -----------
-    //
-    // Solo se pregunta cuando de verdad hay dos, que es cuando la pantalla
-    // tiene algo que decir. Enseñarla con una sola dirección sería pedirle
-    // que elija entre una cosa.
-    if (estado.lead && estado.lead !== correo) {
-      const q = new URLSearchParams({ registro: estado.lead, entrada: correo })
-      return conCookieBorrada(
-        NextResponse.redirect(`${SITIO}/entrar?fase=otroCorreo&${q}`, 302),
-      )
-    }
+  if (r.otroCorreo) {
+    const q = new URLSearchParams({ registro: r.otroCorreo.registro, entrada: r.otroCorreo.entrada })
+    return conCookieBorrada(
+      NextResponse.redirect(`${SITIO}/entrar?fase=otroCorreo&${q}`, 302),
+    )
   }
 
-  // A dónde. La misma pieza que decide qué le falta a cualquiera: si aquí se
-  // decidiera aparte, Google mandaría a un sitio y el resto del embudo a otro.
-  const situacion = await situacionDePerfil(usuario.id)
+  // A dónde. El paso lo decide la MISMA pieza que se lo dice a todos; lo que
+  // decide esta ruta es a qué URL lleva cada paso, que es lo suyo.
   const porDefecto =
-    situacion.paso === 'preguntas' || situacion.paso === 'contacto' ? '/cuestionario' : estado.destino
+    r.paso === 'preguntas' || r.paso === 'contacto' ? '/cuestionario' : estado.destino
 
   return conCookieBorrada(NextResponse.redirect(`${SITIO}${porDefecto}`, 302))
 }
