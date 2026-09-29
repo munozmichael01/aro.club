@@ -198,10 +198,24 @@
                   <sc-if value="{{ c.esTexto }}" hint-placeholder-val="{{ true }}">
                     <input type="text" value="{{ c.valor }}" onChange="{{ c.escribir }}" onBlur="{{ c.guardar }}" placeholder="{{ c.pista }}" style="{{ c.campo }}" />
                   </sc-if>
+                  <sc-if value="{{ c.hayPista }}" hint-placeholder-val="{{ false }}">
+                    <div style="font:400 12px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin:-3px 0 9px;max-width:52ch;text-wrap:pretty">{{ c.ayuda }}</div>
+                  </sc-if>
                   <sc-if value="{{ c.esOpciones }}" hint-placeholder-val="{{ false }}">
                     <div style="display:flex;flex-wrap:wrap;gap:8px">
                       <sc-for list="{{ c.opciones }}" as="o" hint-placeholder-count="3">
-                        <button onClick="{{ o.pick }}" style="{{ o.btn }}">{{ o.label }}</button>
+                        <!--
+                          Con su aro, como en todo el producto.
+
+                          Iba sin marca —solo un borde de 1px y un crema casi
+                          igual al fondo— y con quince cocinas eso es
+                          invisible: Michael las marcó, no vio nada cambiar y
+                          dio por hecho que la ficha no guardaba. Guardaba.
+                        -->
+                        <button onClick="{{ o.pick }}" style="{{ o.btn }}">
+                          <span style="{{ o.aro }}">{{ o.icono }}</span>
+                          <span style="{{ o.txt }}">{{ o.label }}</span>
+                        </button>
                       </sc-for>
                     </div>
                   </sc-if>
@@ -472,7 +486,14 @@ class Component extends DCLogic {
       ['contacto', 'A quién llamamos', a.contacto, 'Nombre de la persona'],
       ['telefono', 'Su teléfono', a.telefono, '+58 412 555 0134'],
       ['menu', 'Menú cerrado (USD por persona)', a.menu, 'Vacío si no tiene'],
-      ['comision', 'Nuestra comisión (%)', a.comision, '15']
+      ['comision', 'Nuestra comisión (%)', a.comision, '15'],
+      // Estos cuatro los aceptaba la ruta desde el principio y la ficha no
+      // los ofrecia, asi que solo se podian poner por base. El aforo ademas
+      // decide cuantas mesas se pueden sentar ahi.
+      ['aforo', 'Cuántas mesas caben', a.aforo, '6'],
+      ['mapa', 'Enlace de Google Maps', a.mapa, 'https://maps.app.goo.gl/…'],
+      ['metro', 'Metro más cercano', a.metro, 'Chacaíto'],
+      ['metroMinutos', 'Minutos a pie desde el metro', a.metroMinutos, '7']
     ].map((c) => {
       const guardado = c[2] == null ? '' : String(c[2]);
       const enCurso = this.state.borrador[c[0]];
@@ -501,9 +522,48 @@ class Component extends DCLogic {
       opciones: RUIDO.map((r) => {
         const sel = a.ruido === r[0];
         return {
-          label: r[1],
+          label: r[1], icono: sel ? '\u2713' : '',
           pick: () => editarCampo('ruido', r[0]),
-          btn: 'display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (sel ? '#6E340F' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';color:#14342A;font:' + (sel ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer'
+          aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (sel ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease',
+          btn: 'display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 16px 0 12px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';cursor:pointer;transition:all 180ms ease',
+          txt: 'font:' + (sel ? '600' : '400') + " 14px/1.2 'Inter Tight',sans-serif;" + 'letter-spacing:-.01em;color:#14342A;white-space:nowrap'
+        };
+      })
+    }]).concat(!a ? [] : [{
+      // La forma de la mesa y los días que abre. Los dos los aceptaba la ruta
+      // y la ficha no los ofrecía: un sitio compra una mesa larga o deja de
+      // abrir los lunes, y eso decide a qué fechas se le puede ofrecer.
+      etiqueta: '¿Cómo son sus mesas?', valor: '', pista: '',
+      hayPista: false, ayuda: '',
+      esTexto: false, esOpciones: true, campo: campoEstilo,
+      opciones: [['redonda', 'Mesa redonda'], ['larga', 'Mesa larga'], ['ambas', 'Redonda y larga']].map((o) => {
+        const sel = a.forma === o[0];
+        return {
+          label: o[1], icono: sel ? '\u2713' : '',
+          pick: () => editarCampo('forma', o[0]),
+          aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (sel ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease', btn: 'display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 16px 0 12px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';cursor:pointer;transition:all 180ms ease', txt: 'font:' + (sel ? '600' : '400') + " 14px/1.2 'Inter Tight',sans-serif;" + 'letter-spacing:-.01em;color:#14342A;white-space:nowrap'
+        };
+      })
+    }]).concat(!a ? [] : [{
+      etiqueta: '¿Qué días abre?', valor: '', pista: '',
+      hayPista: true,
+      ayuda: 'Una fecha solo se le puede ofrecer si ese día abre. Al menos uno.',
+      esTexto: false, esOpciones: true, campo: campoEstilo,
+      // Domingo primero, como en el resto del producto y como los cuenta la
+      // base (`open_days` guarda 0 = domingo).
+      opciones: ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map((nombre, i) => {
+        const puestos = a.dias || [];
+        const sel = puestos.indexOf(i) >= 0;
+        return {
+          label: nombre, icono: sel ? '\u2713' : '',
+          pick: () => {
+            const nuevos = sel ? puestos.filter((x) => x !== i) : puestos.concat([i]);
+            // Sin ningún día no puede recibir mesas, y la ruta lo rechaza:
+            // se para aquí para no enseñar un error que no hace falta.
+            if (!nuevos.length) return;
+            editarCampo('dias', nuevos.sort());
+          },
+          aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (sel ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease', btn: 'display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 16px 0 12px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';cursor:pointer;transition:all 180ms ease', txt: 'font:' + (sel ? '600' : '400') + " 14px/1.2 'Inter Tight',sans-serif;" + 'letter-spacing:-.01em;color:#14342A;white-space:nowrap'
         };
       })
     }]).concat(!a ? [] : [{
@@ -515,13 +575,17 @@ class Component extends DCLogic {
       // desde el principio, NINGÚN local tenía cocina asignada y del panel
       // solo se podían leer: para ponerlas había que entrar a la base. O sea
       // que la gente elegía sus tres comidas y el dato no se cruzaba con nada.
-      etiqueta: '¿Qué se come?', valor: '', pista: 'Lo que la gente elige en su perfil. Sin esto, su respuesta no cruza con este local.',
+      etiqueta: '¿Qué se come?', valor: '', pista: '',
+      hayPista: true,
+      ayuda: 'Lo que la gente elige en su perfil. Sin esto, su respuesta no cruza con este local.',
       esTexto: false, esOpciones: true, campo: campoEstilo,
       opciones: ((D && D.catalogoCocinas) || []).map((c) => {
         const puestas = a.cocinas || [];
         const sel = puestas.indexOf(c.codigo) >= 0;
         return {
-          label: c.nombre,
+          label: c.nombre, icono: sel ? '\u2713' : '',
+          aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (sel ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease',
+          txt: 'font:' + (sel ? '600' : '400') + " 14px/1.2 'Inter Tight',sans-serif;" + 'letter-spacing:-.01em;color:#14342A;white-space:nowrap',
           pick: () => {
             const nuevas = sel
               ? puestas.filter((x) => x !== c.codigo)
@@ -529,7 +593,7 @@ class Component extends DCLogic {
             if (!a) return;
             this.enviar('PATCH', { accion: 'cocinas', id: a.id, cocinas: nuevas }).catch(() => {});
           },
-          btn: 'display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (sel ? '#6E340F' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';color:#14342A;font:' + (sel ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer'
+          btn: 'display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 16px 0 12px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';cursor:pointer;transition:all 180ms ease'
         };
       })
     }]);
