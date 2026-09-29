@@ -10,6 +10,7 @@ import fs from 'node:fs'
 
 import { createClient } from '@supabase/supabase-js'
 
+import * as C from '../src/cuestionario/maquina.ts'
 import * as M from '../src/puerta/maquina.ts'
 import { crearServicioPuerta } from '../src/puerta/servicio.ts'
 import { crearApi } from '../src/sesion/api.ts'
@@ -43,6 +44,16 @@ const g = await s.guardar(M.envios(b, new Date()), 'no se guardó')
 ok(g.ok, `las cinco respuestas: ${g.ok ? 'guardadas' : g.error}`)
 const e = await s.estado()
 ok(e.ok && e.datos.estado === 'datos', `el embudo manda a: ${e.ok ? e.datos.estado : e.error} → ${M.destinoDeEstado(e.ok ? e.datos.estado : null)}`)
+
+// El cuestionario de la app, con el catálogo real: no vuelve a preguntar las cinco.
+const cat = await (await api.pedir('/questions')).json()
+const preguntas = C.armar(cat.preguntas, zonas)
+const guardado = await (await api.pedir('/cuestionario')).json()
+const est = C.desdeServidor(C.inicial(), guardado, preguntas)
+ok(['arraigo', 'zonas', 'dias', 'temas', 'nacimiento'].every((k) => est.heredadas.includes(k)), `heredadas: ${est.heredadas.join(', ')}`)
+const repetidas = preguntas.filter((q) => ['arraigo', 'zonas', 'dias', 'temas', 'nacimiento'].includes(q.clave) && !est.heredadas.includes(q.clave))
+ok(repetidas.length === 0, `ninguna de las cinco se vuelve a enseñar${repetidas.length ? ': ' + repetidas.map((q) => q.clave).join(', ') : ''}`)
+console.log('   faltan según el servidor:', guardado.faltan?.length)
 
 const { data: lead } = await admin.from('waitlist').select('id').eq('email', CORREO).maybeSingle()
 ok(!lead, 'no se fabricó ningún lead')

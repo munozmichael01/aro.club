@@ -175,6 +175,17 @@ export function desdeServidor(e: Estado, d: DeServidor, preguntas: Pregunta[]): 
 export const visibles = (e: Estado, preguntas: Pregunta[]) =>
   preguntas.filter((q) => q.pantalla === e.pantalla && !e.heredadas.includes(q.clave))
 
+/**
+ * La pantalla de al lado CON algo que preguntar (`dir` 1 adelante, -1 atrás),
+ * o `null` si no queda ninguna. Una pantalla cuyas preguntas vinieron todas
+ * contestadas (heredadas) se salta: enseñarla vacía se lee como un fallo.
+ */
+export function vecina(e: Pick<Estado, 'pantalla' | 'heredadas'>, preguntas: Pregunta[], dir: 1 | -1): number | null {
+  for (let x = e.pantalla + dir; x >= 0 && x < TOTAL_PANTALLAS; x += dir)
+    if (preguntas.some((q) => q.pantalla === x && !e.heredadas.includes(q.clave))) return x
+  return null
+}
+
 export function contestada(e: Estado, q: Pregunta, hoy = new Date()): boolean {
   if (!q.obligatoria) return true
   if (q.tipo === 'texto') return e.empleador.trim().length > 0

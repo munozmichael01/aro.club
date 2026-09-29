@@ -96,7 +96,7 @@ export const nav = {
   atras: 'Atrás',
   faltaDato: 'Falta este dato',
   etiquetaCorreo: 'TU CORREO',
-  etiquetaPaso: (n: number) => `PASO ${n} DE 4`,
+  etiquetaPaso: (n: number, total = 4) => `PASO ${n} DE ${total}`,
   etiquetaCompleto: 'COMPLETO',
   volver: 'Volver',
 }

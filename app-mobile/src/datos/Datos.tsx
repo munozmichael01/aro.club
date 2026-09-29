@@ -46,6 +46,9 @@ import {
   tratoSugerido,
   validar,
   type Estado,
+  pasoAnterior,
+  pasoSiguiente,
+  pasosVisibles,
 } from './maquina'
 import type { crearServicioDatos } from './servicio'
 
@@ -162,7 +165,7 @@ export function Datos(p: {
       await cargar(lead, false)
       return poner({ paso: PASO_FIN })
     }
-    poner({ paso: Math.min(PASO_FIN, e.paso + 1) })
+    poner({ paso: pasoSiguiente(e) })
   }
 
   const clave = estadoClave(e)
@@ -195,7 +198,7 @@ export function Datos(p: {
   const titulo = e.paso === PASO_CORREO ? T.correo.titulo : paso ? paso.titulo : T.fin.titulo(conLead, e.puedeCuenta)
   const bajada = e.paso === PASO_CORREO ? T.correo.bajada : paso ? paso.bajada(conLead) : T.fin.bajada(conLead, e.puedeCuenta, cuando)
   const etiquetaPaso =
-    e.paso === PASO_CORREO ? T.nav.etiquetaCorreo : e.paso < PASO_FIN ? T.nav.etiquetaPaso(e.paso + 1) : T.nav.etiquetaCompleto
+    e.paso === PASO_CORREO ? T.nav.etiquetaCorreo : e.paso < PASO_FIN ? T.nav.etiquetaPaso(pasosVisibles(e).indexOf(e.paso) + 1, pasosVisibles(e).length) : T.nav.etiquetaCompleto
   const textoBoton = guardando
     ? e.paso === PASO_CORREO
       ? T.nav.unMomento
@@ -223,7 +226,7 @@ export function Datos(p: {
         </Pressable>
 
         <View style={estilos.progreso}>
-          <Barras total={4} actual={e.paso === PASO_CORREO ? -1 : e.paso} />
+          <Barras total={pasosVisibles(e).length} actual={e.paso === PASO_CORREO ? -1 : e.paso >= PASO_FIN ? pasosVisibles(e).length : pasosVisibles(e).indexOf(e.paso)} />
           <Texto variante="etiqueta" tono="cuerpo">
             {etiquetaPaso}
           </Texto>
@@ -444,7 +447,7 @@ export function Datos(p: {
           {e.paso < PASO_FIN ? (
             <View style={estilos.acciones}>
               <Boton texto={textoBoton} disabled={!v.listo || guardando} onPress={siguiente} />
-              {e.paso > 0 ? <Boton tipo="fantasma" texto={T.nav.atras} onPress={() => poner({ paso: e.paso - 1 })} /> : null}
+              {e.paso > 0 ? <Boton tipo="fantasma" texto={T.nav.atras} onPress={() => poner({ paso: pasoAnterior(e) })} /> : null}
             </View>
           ) : null}
 

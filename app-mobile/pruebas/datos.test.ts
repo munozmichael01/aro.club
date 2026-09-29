@@ -78,3 +78,14 @@ test('el resumen: el correo no se edita; cada fila vuelve a su paso; el trato ca
   assert.equal(filas[3].valor, '32 años')
   assert.equal(filas.filter((f) => f.loVen).length, 1, 'solo el trato lo ven los cinco')
 })
+
+test('el nacimiento que ya dio en el alta no se vuelve a preguntar', async () => {
+  const { desdeServidor, inicial, pasoSiguiente, pasoAnterior, pasosVisibles } = await import('../src/datos/maquina')
+  const e = desdeServidor(inicial(), { nacimiento: '1990-05-12' })
+  assert.equal(e.nacimientoDado, true)
+  assert.deepEqual(pasosVisibles(e), [0, 2, 3])
+  assert.equal(pasoSiguiente({ ...e, paso: 0 }), 2, 'del nombre salta al género')
+  assert.equal(pasoAnterior({ ...e, paso: 2 }), 0, 'y al volver, al nombre')
+  const sin = desdeServidor(inicial(), {})
+  assert.deepEqual(pasosVisibles(sin), [0, 1, 2, 3], 'sin nacimiento, se pregunta')
+})

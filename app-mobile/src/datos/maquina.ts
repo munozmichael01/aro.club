@@ -29,9 +29,16 @@ export type Estado = {
   clave2: string
   verClave: boolean
   puedeCuenta: boolean
+  /**
+   * El nacimiento ya lo tiene el servidor (en el alta de la app viaja con las
+   * cuatro de la puerta): su paso se salta, porque a nadie se le pregunta dos
+   * veces lo mismo. Sigue en el resumen, para editarlo.
+   */
+  nacimientoDado: boolean
 }
 
 export const inicial = (): Estado => ({
+  nacimientoDado: false,
   paso: 0,
   correo: '',
   nombre: '',
@@ -149,8 +156,23 @@ export function desdeServidor(e: Estado, d: DeServidor): Estado {
     prefijo: tel.prefijo,
     telefono: tel.resto,
     puedeCuenta: !!d.puedeCuenta,
+    nacimientoDado: !!fecha,
     paso: completo && e.paso === 0 ? PASO_FIN : e.paso,
   }
+}
+
+/** Los pasos que se preguntan (0 nombre, 1 nacimiento, 2 género, 3 teléfono), sin los ya contestados. */
+export const pasosVisibles = (e: Pick<Estado, 'nacimientoDado'>) => [0, 1, 2, 3].filter((x) => !(x === 1 && e.nacimientoDado))
+
+/** El paso de después y el de antes, saltándose lo ya contestado. */
+export function pasoSiguiente(e: Pick<Estado, 'paso' | 'nacimientoDado'>): number {
+  const v = pasosVisibles(e)
+  return v.find((x) => x > e.paso) ?? PASO_FIN
+}
+export function pasoAnterior(e: Pick<Estado, 'paso' | 'nacimientoDado'>): number {
+  const v = pasosVisibles(e)
+  const antes = v.filter((x) => x < e.paso)
+  return antes.length ? antes[antes.length - 1] : 0
 }
 
 /** Lo que se manda a `/api/datos-base`: los cuatro de una vez, validados juntos. */

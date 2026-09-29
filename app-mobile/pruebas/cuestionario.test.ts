@@ -132,3 +132,12 @@ test('el cierre cuenta las obligatorias del catálogo, y lo que falta se nombra'
   assert.deepEqual(nombresDe(['sector', 'zonas']), ['tu sector', 'tus zonas'])
   assert.equal(faltantes({ ...inicial(), pantalla: 2 }, P, HOY).length, 1)
 })
+
+test('una pantalla con todo ya contestado se salta, adelante y atrás', async () => {
+  const { vecina } = await import('../src/cuestionario/maquina')
+  const q = (clave: string, pantalla: number) => ({ clave, pantalla }) as never
+  const preguntas = [q('a', 0), q('b', 1), q('c', 2)]
+  assert.equal(vecina({ pantalla: 0, heredadas: ['b'] }, preguntas, 1), 2)
+  assert.equal(vecina({ pantalla: 2, heredadas: ['b'] }, preguntas, -1), 0)
+  assert.equal(vecina({ pantalla: 2, heredadas: [] }, preguntas, 1), null, 'no hay más: es la última')
+})

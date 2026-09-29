@@ -44,6 +44,7 @@ import {
   textoEdad,
   todasMarcadas,
   valorDe,
+  vecina,
   visibles,
   type Estado,
   type Pregunta,
@@ -158,7 +159,8 @@ export function Cuestionario(p: {
   const ocultas = preguntas.filter((q) => q.pantalla === e.pantalla).length - lista.length
   const f = faltantes(e, preguntas, hoy)
   const completa = f.length === 0
-  const ultima = e.pantalla >= TOTAL_PANTALLAS - 1
+  // La última con algo que preguntar: las que vinieron contestadas enteras no cuentan.
+  const ultima = vecina(e, preguntas, 1) === null
 
   const marcar = (q: Pregunta, valor: string | null) => {
     const antes = actual.current
@@ -195,7 +197,7 @@ export function Cuestionario(p: {
     const ahora = actual.current
     for (const q of aReenviar(ahora, preguntas)) await enviar(q.clave, valorDe(ahora, q), ahora.pantalla)
     scroll.current?.scrollTo({ y: 0, animated: false })
-    if (!ultima) return setE((s) => ({ ...s, pantalla: s.pantalla + 1, retomada: false, senalar: false }))
+    if (!ultima) return setE((s) => ({ ...s, pantalla: vecina(s, preguntas, 1) ?? s.pantalla, retomada: false, senalar: false }))
     // En la última NO se declara el fin por pulsar: se cree lo que diga el
     // servidor sobre lo que falta.
     if (tEmpleador.current) clearTimeout(tEmpleador.current)
@@ -409,11 +411,11 @@ export function Cuestionario(p: {
 
       <View style={[estilos.pie, { paddingBottom: insets.bottom + 12 }]}>
         <View style={estilos.botones}>
-          {e.pantalla > 0 ? (
+          {vecina(e, preguntas, -1) !== null ? (
             <Pressable
               onPress={() => {
                 scroll.current?.scrollTo({ y: 0, animated: false })
-                setE((s) => ({ ...s, pantalla: s.pantalla - 1, retomada: false, senalar: false }))
+                setE((s) => ({ ...s, pantalla: vecina(s, preguntas, -1) ?? s.pantalla, retomada: false, senalar: false }))
               }}
               accessibilityRole="button"
               accessibilityLabel={T.boton.atras}
