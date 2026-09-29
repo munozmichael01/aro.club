@@ -56,7 +56,8 @@
     "prueba:mesa": "tsx pruebas/mesa-contra-la-api.mjs",
     "prueba:perfil": "tsx pruebas/perfil-contra-la-api.mjs",
     "prueba:pago": "tsx pruebas/pago-contra-la-api.mjs",
-    "prueba:cancelar": "tsx pruebas/cancelar-contra-la-api.mjs"
+    "prueba:cancelar": "tsx pruebas/cancelar-contra-la-api.mjs",
+    "prueba:puerta": "tsx pruebas/puerta-contra-la-api.mjs"
   },
   "private": true
 }

@@ -21,11 +21,13 @@ type Props = {
   onDia: (v: string) => void
   onMes: (m: number) => void
   onAnio: (v: string) => void
+  /** Sobre verde profundo (el alta de la app). Por defecto, crema. */
+  fondo?: 'crema' | 'verde'
 }
 
-function Etiqueta({ children, suelta }: { children: string; suelta?: boolean }) {
+function Etiqueta({ children, suelta, verde }: { children: string; suelta?: boolean; verde?: boolean }) {
   return (
-    <Texto variante="etiqueta" tono="cuerpo" style={{ marginTop: suelta ? 26 : 0, marginBottom: 11 }}>
+    <Texto variante="etiqueta" tono={verde ? 'sobreVerdeSecundario' : 'cuerpo'} style={{ marginTop: suelta ? 26 : 0, marginBottom: 11 }}>
       {children}
     </Texto>
   )
@@ -34,9 +36,10 @@ function Etiqueta({ children, suelta }: { children: string; suelta?: boolean }) 
 export function Fecha(p: Props) {
   return (
     <View>
-      <Etiqueta>{p.textos.dia}</Etiqueta>
+      <Etiqueta verde={p.fondo === 'verde'}>{p.textos.dia}</Etiqueta>
       <View style={{ width: 136 }}>
         <Campo
+          fondo={p.fondo}
           value={p.dia}
           onChangeText={p.onDia}
           placeholder={p.textos.ejemploDia}
@@ -46,17 +49,18 @@ export function Fecha(p: Props) {
           accessibilityLabel={p.textos.dia}
         />
       </View>
-      <Etiqueta suelta>{p.textos.mes}</Etiqueta>
+      <Etiqueta suelta verde={p.fondo === 'verde'}>{p.textos.mes}</Etiqueta>
       <View style={estilos.meses}>
         {p.meses.map((m, i) => (
           <View key={m} style={{ width: '31%' }}>
-            <Opcion texto={m} marcada={p.mes === i + 1} onPress={() => p.onMes(i + 1)} />
+            <Opcion fondo={p.fondo} texto={m} marcada={p.mes === i + 1} onPress={() => p.onMes(i + 1)} />
           </View>
         ))}
       </View>
-      <Etiqueta suelta>{p.textos.anio}</Etiqueta>
+      <Etiqueta suelta verde={p.fondo === 'verde'}>{p.textos.anio}</Etiqueta>
       <View style={{ width: 136 }}>
         <Campo
+          fondo={p.fondo}
           value={p.anio}
           onChangeText={p.onAnio}
           placeholder={p.textos.ejemploAnio}

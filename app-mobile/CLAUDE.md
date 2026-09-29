@@ -64,6 +64,14 @@ nombre de Expo Go). **Para que funcionen de verdad falta, fuera del código:**
   sin ese esquema tumba la build;
 - una build de desarrollo con EAS (el módulo de Google no está en Expo Go).
 
+**El alta nueva está en `/puerta`** (`src/puerta/`), probada contra
+producción con sesión (`npm run prueba:puerta`). La Bienvenida TODAVÍA
+manda a `/empezar` (el alta vieja, con lead): se cambia a `/puerta` cuando
+el agente despliegue `/api/cuenta` sin lead, porque hasta entonces quien no
+tiene cuenta no puede terminarla (la contraseña da 403 y Google/Apple no van
+en Expo Go). Quien entra con Google y le faltan las cuatro (`paso:
+preguntas`) ya va a `/puerta`, que con sesión se salta la cuenta.
+
 El alta nueva de la app (acordada con el agente de la web el 29-09): las
 cuatro de la puerta y el nacimiento en local (borrador guardado; la puerta de
 los 18 antes de crear nada), después «crea tu cuenta» (Apple, Google, o
@@ -255,7 +263,8 @@ servidor simulado: `/catalogo`, `/catalogo-entrada`, `/catalogo-datos`,
 `/catalogo-cuenta?estado=reservar|reservada|abierta|…`,
 `/catalogo-mesa?estado=revision|sin-reserva|sin-mesa|cerrada|abierta|movimiento|pasada|valorada`,
 `/catalogo-perfil`, `/catalogo-pago?estado=elegir|sin-verificar|pendiente|listo|fallo|prueba`
-(el código «REGALO» sale bien), `/catalogo-cancelar?estado=margen|tarde|revelada|fallo`.
+(el código «REGALO» sale bien), `/catalogo-cancelar?estado=margen|tarde|revelada|fallo`,
+`/catalogo-bienvenida`, `/catalogo-puerta[?sesion=1]`.
 
 Instalar siempre con `npx expo install`. Las pruebas usan los tipos de Node y
 la app no: por eso tienen su propio `tsconfig`. Un `Buffer` en `src/` compila

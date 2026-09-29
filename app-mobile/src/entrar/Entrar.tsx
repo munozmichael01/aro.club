@@ -32,7 +32,7 @@ const SITIO = (Constants.expoConfig?.extra as { sitio: string }).sitio
  * de tres correos por hora y no dice si la cuenta existe.
  */
 
-function LogoGoogle() {
+export function LogoGoogle() {
   return (
     <Svg width={19} height={19} viewBox="0 0 18 18">
       <Path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z" />
@@ -43,7 +43,7 @@ function LogoGoogle() {
   )
 }
 
-function LogoApple() {
+export function LogoApple() {
   return (
     <Svg width={17} height={20} viewBox="0 0 17 20">
       <Path
@@ -66,7 +66,7 @@ function SelloAviso({ texto }: { texto: string }) {
 }
 
 /** El botón de proveedor: crema, con su logo (los colores de Google son los de su marca). */
-function Proveedor({ texto, logo, onPress }: { texto: string; logo: ReactNode; onPress: () => void }) {
+export function Proveedor({ texto, logo, onPress }: { texto: string; logo: ReactNode; onPress: () => void }) {
   return (
     <Pressable
       onPress={onPress}

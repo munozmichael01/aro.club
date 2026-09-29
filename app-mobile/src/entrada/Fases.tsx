@@ -139,17 +139,20 @@ export function FaseQuiz(p: {
   onMarcar: (valor: string) => void
   onSiguiente: () => void
   onAtras: () => void
+  /** Pasos que vienen DESPUÉS de estas preguntas (el alta de la app pide luego el nacimiento): cuentan en el progreso, y la última ya no dice «Terminar». */
+  pasosDespues?: number
 }) {
   const { estado: e, pregunta: q } = p
   const lista = completa(e, q)
-  const ultimo = e.paso >= p.total - 1
+  const despues = p.pasosDespues ?? 0
+  const ultimo = e.paso >= p.total - 1 && despues === 0
   const sel = marcadas(e, q.clave)
   return (
     <View>
       <View style={estilos.progreso}>
-        <Puntos total={p.total} actual={e.paso} />
+        <Puntos total={p.total + despues} actual={e.paso} />
         <Texto variante="etiqueta" tono="sobreVerdeSecundario">
-          {T.quiz.progreso(e.paso, p.total)}
+          {T.quiz.progreso(e.paso, p.total + despues)}
         </Texto>
       </View>
       <Texto variante="etiqueta" tono="terracotaSobreVerde" style={{ marginBottom: 16 }}>
@@ -198,6 +201,18 @@ export function FaseQuiz(p: {
         )}
         {e.paso > 0 && !p.guardando ? <Boton tipo="fantasmaSobreVerde" texto={T.quiz.atras} onPress={p.onAtras} /> : null}
       </View>
+    </View>
+  )
+}
+
+/** El progreso suelto, para un paso que no es del catálogo (el nacimiento del alta de la app). */
+export function Progreso({ paso, total }: { paso: number; total: number }) {
+  return (
+    <View style={estilos.progreso}>
+      <Puntos total={total} actual={paso} />
+      <Texto variante="etiqueta" tono="sobreVerdeSecundario">
+        {T.quiz.progreso(paso, total)}
+      </Texto>
     </View>
   )
 }
