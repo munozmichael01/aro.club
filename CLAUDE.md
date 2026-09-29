@@ -6,9 +6,31 @@ Vercel Pro.
 
 Las pantallas son ficheros estáticos `.dc.html` en `public/`, servidos por
 rutas limpias en `next.config.ts`, con el runtime DCLogic de `public/support.js`
-(`<x-dc>`, `<sc-for>`, `<sc-if>`). Las reglas compartidas viven en
-`public/reglas.js` y las consume el navegador **y** el servidor vía
-`src/lib/reglas.ts`. Design entrega pantallas en `docs/entrega/entrega N/`.
+(`<x-dc>`, `<sc-for>`, `<sc-if>`). Design entrega pantallas en
+`docs/entrega/entrega N/`.
+
+## Hay una app, y comparte fichero con la web
+
+`app-mobile/` (Expo, React Native), con su propio `CLAUDE.md`. **Nunca `App/`**:
+en el Mac colisiona con `app/` y Next la toma por su carpeta de rutas.
+
+Lo que comparten vive en **`public/reglas.js`**, y lo cargan los tres: el
+navegador con un `<script>`, el servidor vía `src/lib/reglas.ts`, y la app
+leyéndolo con Metro sin copiarlo. Dentro:
+
+```js
+AroReglas.PUERTA / ORDEN_PUERTA   // las 4 preguntas de antes de tener cuenta,
+                                  // cada opción como par [texto, código]
+AroReglas.partesDe(iso, zona)     // día, número, mes y hora de una fecha
+AroReglas.ZONA · vozDe · COCINAS · valido · filtrar · PRECIO_USD
+```
+
+Si un texto o una lista tiene que estar en los dos sitios, va ahí. Una copia
+en la app es la misma forma de fallo que este repo ya ha pagado tres veces con
+la web, con un sitio más donde diverger.
+
+Cuando algo lo pide la app, el cambio del servidor es **aditivo**: un campo
+nuevo en una respuesta, nunca uno que cambie de forma.
 
 ---
 
@@ -131,9 +153,78 @@ la raíz de la respuesta: una persona puede tener una cena en Caracas y otra en
 otra ciudad.
 
 `comprobar-cuestionario.mjs` lleva la cuenta de las apariciones que quedan,
-pantalla por pantalla, y falla si alguna sube. Quedan cuatro por migrar
+pantalla por pantalla, y falla si alguna sube. Quedan **cuatro por migrar**
 —Operación, Pago, Mi mesa, Cancelar—; las demás miran fechas de **nacimiento**,
 que no llevan hora ni zona, y ahí el `Date` vale.
+
+Cuidado al clasificar una como «es un nacimiento»: Mi perfil estaba en esa
+lista y su `getDate()` era el HISTORIAL DE CENAS. Quien cenó el 29 leía «30 de
+agosto» en su propio historial.
+
+---
+
+## Una sola verdad sobre qué le falta a alguien
+
+`src/lib/embudo.ts`: `correo → preguntas → contacto → cuenta → verificación`.
+Lo consumen **seis** sitios —`/api/mi-cuenta`, `/api/cuenta`,
+`/api/cuestionario`, `/api/datos-base`, `/api/mi-perfil` y `/auth/callback`— y
+antes vivía escondido dentro de uno. Ninguna pantalla lleva su propia lista de
+lo que falta; preguntan aquí.
+
+De ahí sale la regla que más se ha pagado: **el nacimiento va primero de todo,
+porque es la puerta de los 18 y no se rechaza a nadie después de diecisiete
+preguntas.** Generalizada: no dejes que alguien invierta esfuerzo antes de la
+puerta que puede rechazarlo.
+
+### Y una sola sobre qué pasa al entrar
+
+`src/lib/trasEntrar()` cruza el lead por correo, crea el perfil y detecta el
+«entré con otro correo». La llaman las **tres** puertas:
+
+| | |
+|---|---|
+| `/auth/callback` | Google en el navegador. Responde con redirecciones. |
+| `/api/auth/nativo` | Apple y Google en la app. Responde JSON con el `paso`. |
+| `/api/cuenta` | Correo y contraseña, con lead (web) o sin él (app). |
+
+Lo que NO está ahí, a propósito: canjear el código y comprobar que el correo
+viene **verificado por el proveedor** —cada puerta lo hace a su manera y es la
+condición que impide que quien controle una dirección se quede con la cuenta
+de quien la usó— y a dónde se va después, que la web resuelve con una URL y la
+app con una pantalla.
+
+`/api/auth/nativo` **no recibe tokens de Google ni de Apple**: la sesión viaja
+en la misma cookie que el resto y quién es lo dice Supabase. Y es idempotente,
+porque la app la reintenta al arrancar si murió entre el login y la llamada.
+
+**Lo que decide el camino en `/api/cuenta` es quién llama, no si hay lead.**
+Escribirlo al revés hizo que quien dejó su correo en la web y luego se daba de
+alta en la app recibiera «te faltan 17 preguntas», que ahí no significa nada.
+
+**La atribución vive en dos sitios y hay que llevarla.** `waitlist.source`
+para quien aún no tiene cuenta y `profiles.source` para quien ya la tiene.
+Durante meses la segunda no existía: todo el que entraba directo con Google no
+tenía atribución ninguna.
+
+---
+
+## Correos: los que anuncian y los que acusan
+
+`scheduled_emails` tiene un índice único `(profile_id, kind, event_id)` y
+**solo cubre los que ANUNCIAN algo una vez**: `abrimos_zona`, `recordatorio`,
+`fecha_cancelada`. Lo que no esté en esa lista se puede repetir, y tiene que
+poder.
+
+Cubría todo, y por eso Michael canceló, volvió a reservar y canceló otra vez
+sin recibir el segundo correo: `encolar` devolvió «repetido» y nadie se
+enteró. Meter `booking_id` en el índice no lo arregla —una reserva se
+REACTIVA, así que la misma fila sirve para las dos cancelaciones—. Un choque
+en un correo **imprescindible** ahora grita en los registros.
+
+**`sent_at` no significa entregado**, significa que Resend lo aceptó. Lo que
+pasó después se consulta con `provider_id`, que es el id que devuelve Resend
+y que durante meses se tiraba: cuando alguien decía «no me llegó» no había con
+qué preguntar.
 
 ---
 
@@ -159,9 +250,20 @@ fallos que han importado —el borrado en Storage, los crons parados, los correo
 con el logo roto, la aprobación que no aprobaba— eran invisibles en el código y
 evidentes al usarlo.
 
-- Panel de operación: `somos.aroclub+demo@gmail.com` / `AroDemo-2608`
-  (`node scripts/cuenta-demo.mjs` la repone).
-- `scripts/banco-pruebas.mjs` crea una cuenta con el estado que se le pida.
+- **El repositorio es público.** Ninguna contraseña en un fichero. Aquí había
+  una —la de la cuenta demo— a la vista de cualquiera.
+- Panel de operación: se entra con una cuenta de rol `admin`. Michael tiene
+  dos; la demo que vivía aquí se borró. `node scripts/cuenta-demo.mjs` la
+  repone si hace falta, y `borrar` la quita: eso último estuvo roto mucho
+  tiempo porque **diez columnas apuntan a `profiles(id)` sin `on delete`** y
+  una cuenta de operación las llena todas. Se suelta la FIRMA y no se borra la
+  fila: que la cuenta que aprobó una cédula fuera de prueba no significa que
+  esa persona no esté verificada.
+- `scripts/banco-pruebas.mjs <modos>` crea una cuenta con el estado que se le
+  pida: `lista`, `verificada`, `mesa`, `revelada`, `cenas`, `purgada`,
+  `borrar`. Un modo que no exista **falla diciendo cuáles hay**: se tragaba el
+  primer argumento en silencio y anunciaba «lista» sobre una cuenta desnuda,
+  lo que costó una tarde de pruebas.
 - **Probar como el desconocido**, no con una cuenta que arrastra estado. Una
   cuenta de pruebas con lead previo escondió un 403 en todos los guardados del
   cuestionario, y detrás había tres fallos más. La campaña entra por ahí.
@@ -227,3 +329,11 @@ que no funcionó.
 - Commit y push juntos.
 - No ser complaciente: vigilar el secuenciado, no solo la solución.
 - Correo, cuentas, Google y Apple van al **final**.
+- **Probar contra producción con una cuenta desechable, y borrarla.** No hay
+  staging: eso no es excusa para no probar, es el motivo de limpiar después.
+- **Decir lo que no se pudo probar.** El ida y vuelta de Google no se puede
+  comprobar sin una cuenta de Google: se deja verificado el resto, se dice, y
+  lo confirma Michael con un clic.
+- Cuando un hallazgo venga de fuera —del agente de la app, de un revisor—,
+  **verificarlo en el código antes de arreglarlo**. Varias veces era cierto y
+  más grande de lo que decía; alguna, la causa estaba en otro sitio.
