@@ -227,10 +227,33 @@
 
           <div style="min-width:0">
             <div style="{{ ficha.marcoFoto }}">
-              <div style="{{ ficha.foto }}"></div>
+              <sc-if value="{{ ficha.hayFoto }}" hint-placeholder-val="{{ false }}">
+                <img src="{{ ficha.fotoUrl }}" alt="La entrada de {{ ficha.nombre }}" style="{{ ficha.fotoImagen }}" />
+              </sc-if>
+              <sc-if value="{{ ficha.sinFoto }}" hint-placeholder-val="{{ true }}">
+                <div style="{{ ficha.foto }}">{{ ficha.textoSinFoto }}</div>
+              </sc-if>
               <div style="font:400 13px/1.4 'Young Serif',Georgia,serif;color:#456352;text-align:center;padding:10px 10px 12px">{{ ficha.pieFoto }}</div>
             </div>
-            <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:10px;max-width:44ch;text-wrap:pretty">Es la foto que va en el correo del sábado y en Mi mesa. Sirve para reconocer la puerta de noche, no para enseñar el sitio.</div>
+            <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:10px;max-width:44ch;text-wrap:pretty">Es la foto que va en el correo de la mesa y en Mi mesa. Sirve para reconocer la puerta de noche, no para enseñar el sitio.</div>
+
+            <!--
+              Y por fin se puede subir.
+
+              Es una de las cuatro cosas que impiden ofrecer un local a una
+              fecha, y era la unica sin ningun camino: el marco de arriba
+              estaba y el texto la prometia, pero para ponerla habia que entrar
+              a la base. Michael se quedo sin poder activar un sitio por eso.
+            -->
+            <div style="margin-top:12px">
+              <label style="{{ ficha.botonFoto }}">
+                {{ ficha.textoFoto }}
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ ficha.subirFoto }}" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" />
+              </label>
+              <sc-if value="{{ ficha.hayFalloFoto }}" hint-placeholder-val="{{ false }}">
+                <div role="alert" style="border-radius:18px;background:rgba(110,52,15,.1);padding:12px 14px;margin-top:10px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#14342A">{{ ficha.falloFoto }}</div>
+              </sc-if>
+            </div>
 
             <div style="border-radius:22px;background:#14342A;color:#FAF3E4;padding:clamp(18px,2.4vw,24px);margin-top:16px">
               <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#9CBBA6;margin-bottom:16px">CÓMO SE HA PORTADO</div>
@@ -362,7 +385,8 @@ class Component extends DCLogic {
   state = {
     vista: 'lista', abierto: null, filtro: 0,
     datos: null, error: '', trabajando: false, borrador: {},
-    nombre: '', direccion: '', mapa: '', zona: -1, formatos: [], aforo: -1, ruido: -1
+    nombre: '', direccion: '', mapa: '', zona: -1, formatos: [], aforo: -1, ruido: -1,
+    subiendoFoto: false, falloFoto: ''
   };
 
   componentDidMount() {
@@ -602,6 +626,9 @@ class Component extends DCLogic {
       nombre: '', direccion: '', estado: '', selloEstado: '', formatos: [],
       operativo: [], notaOperativa: '', dinero: [], contacto: '', telefono: '',
       desde: '', marcoFoto: '', foto: '', pieFoto: '', historico: [], lectura: '',
+      hayFoto: false, sinFoto: true, fotoUrl: '', fotoImagen: '', textoSinFoto: '',
+      botonFoto: '', textoFoto: 'Subir la foto', subirFoto: () => {},
+      hayFalloFoto: false, falloFoto: '',
       tituloBaja: '', cuerpoBaja: '', textoBaja: '', botonBaja: '', hayFalta: false, falta: '',
       editables: [],
       estadoSitio: '', consultaSitio: '', onConsultaSitio: () => {}, buscarSitio: () => {},
@@ -689,6 +716,33 @@ class Component extends DCLogic {
       marcoFoto: 'background:#FAF3E4;padding:10px 10px 0;border-radius:14px;box-shadow:0 14px 34px -18px rgba(20,52,42,.4)',
       foto: 'aspect-ratio:4/3;border-radius:8px;background:#E8DFC6;display:flex;align-items:center;justify-content:center;font:400 14px/1.4 \'Inter Tight\',sans-serif;color:#456352',
       pieFoto: a.foto ? 'la entrada · ' + a.nombre.toLowerCase() : 'falta la foto de la entrada',
+      hayFoto: !!a.fotoUrl,
+      sinFoto: !a.fotoUrl,
+      fotoUrl: a.fotoUrl || '',
+      fotoImagen: 'display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px',
+      textoSinFoto: 'Sin foto todavía',
+      botonFoto: 'position:relative;display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;background:' + (this.state.subiendoFoto ? 'rgba(27,81,56,.5)' : '#1B5138') + ';color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (this.state.subiendoFoto ? 'progress' : 'pointer'),
+      textoFoto: this.state.subiendoFoto ? 'Subiendo…' : (a.foto ? 'Cambiar la foto' : 'Subir la foto'),
+      hayFalloFoto: !!this.state.falloFoto,
+      falloFoto: this.state.falloFoto || '',
+      subirFoto: (e) => {
+        const archivo = e.target.files && e.target.files[0];
+        if (!archivo || this.state.subiendoFoto) return;
+        this.setState({ subiendoFoto: true, falloFoto: '' });
+        const cuerpo = new FormData();
+        cuerpo.append('id', a.id);
+        cuerpo.append('archivo', archivo);
+        fetch('/api/operacion/locales', { method: 'PUT', body: cuerpo })
+          .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+          .then(({ ok, d }) => {
+            if (!ok) { this.setState({ subiendoFoto: false, falloFoto: (d && d.error) || 'No pudimos subirla.' }); return; }
+            this.setState({ subiendoFoto: false, falloFoto: '' });
+            // Se relee la ficha entera: con la foto puesta puede haber dejado
+            // de faltar lo ultimo, y entonces el local ya se puede activar.
+            this.leer();
+          })
+          .catch(() => this.setState({ subiendoFoto: false, falloFoto: 'No pudimos subirla. Revisa tu conexión.' }));
+      },
       historico: [
         [a.historico.mesas ? String(a.historico.mesas) : '—', 'mesas que mandamos'],
         [a.historico.personas ? String(a.historico.personas) : '—', 'personas que cenaron'],

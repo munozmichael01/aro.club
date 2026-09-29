@@ -272,6 +272,9 @@ export async function GET() {
       direccion: l.address,
       mapa: l.maps_url,
       foto: l.facade_photo_path,
+      // Y la URL para verla. El bucket es privado, como los otros dos, asi
+      // que se firma al vuelo; cinco minutos, lo mismo que las verificaciones.
+      fotoUrl: null as string | null,
       contacto: l.contact_name,
       telefono: l.contact_phone,
       menu: l.fixed_menu_usd != null ? Number(l.fixed_menu_usd) : null,
@@ -377,6 +380,15 @@ export async function GET() {
     }
   }
 
+  // Las fotos que hay, firmadas. El bucket es privado —una foto de la puerta
+  // de un local no tiene por que ser publica— asi que la URL se firma al
+  // vuelo, cinco minutos, igual que las de verificacion.
+  for (const l of lista) {
+    if (!l.foto) continue
+    const { data } = await admin.storage.from('locales').createSignedUrl(l.foto, 300)
+    l.fotoUrl = data?.signedUrl ?? null
+  }
+
   return NextResponse.json({
     locales: lista,
     // El catálogo de cocinas, de `AroReglas.COCINAS`, que es la MISMA lista
@@ -405,6 +417,83 @@ export async function GET() {
       zonasSinCena: sinCena,
     },
   })
+}
+
+/**
+ * La foto de la entrada.
+ *
+ * Es una de las cuatro cosas que impiden ofrecer un local a una fecha, y era
+ * la unica SIN NINGUN CAMINO: la ficha tiene el marco y hasta el texto que la
+ * promete —«los precios, el contacto y la foto de la entrada se rellenan desde
+ * su ficha»— y no habia por donde subirla. Michael se quedo sin poder activar
+ * un sitio por una foto que la pantalla decia que se podia poner.
+ *
+ * Va aparte de `PATCH` porque lleva un fichero: `PATCH` es JSON.
+ *
+ * Para que sirve, y por que no es una foto bonita del sitio: es para
+ * reconocer la PUERTA de noche, llegando. Va en el correo de la mesa y en
+ * `/mesa`.
+ */
+const MAXIMO_FOTO = 8 * 1024 * 1024
+const MIMES_FOTO = ['image/jpeg', 'image/png', 'image/webp']
+
+export async function PUT(request: Request) {
+  const actor = await exigirOps()
+  if (!actor) return new NextResponse(null, { status: 404 })
+
+  const form = await request.formData().catch(() => null)
+  const id = String(form?.get('id') ?? '')
+  const archivo = form?.get('archivo')
+
+  if (!id || !(archivo instanceof File)) {
+    return NextResponse.json({ error: 'Falta la foto.' }, { status: 400 })
+  }
+  if (archivo.size > MAXIMO_FOTO) {
+    return NextResponse.json({ error: 'Esa foto pesa demasiado. El tope son 8 MB.' }, { status: 400 })
+  }
+  if (!MIMES_FOTO.includes(archivo.type)) {
+    return NextResponse.json({ error: 'Ese archivo no es una foto.' }, { status: 400 })
+  }
+
+  const admin = createAdminClient()
+  const { data: local } = await admin
+    .from('restaurants')
+    .select('id, facade_photo_path')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (!local) return NextResponse.json({ error: 'Ese local no existe.' }, { status: 404 })
+
+  const ext = archivo.type === 'image/png' ? 'png' : archivo.type === 'image/webp' ? 'webp' : 'jpg'
+  const ruta = `${id}/entrada-${Date.now()}.${ext}`
+
+  const { error: errorSubida } = await admin.storage
+    .from('locales')
+    .upload(ruta, archivo, { contentType: archivo.type, upsert: false })
+
+  if (errorSubida) {
+    console.error('[locales] no se subio la foto', errorSubida)
+    return NextResponse.json({ error: 'No pudimos guardar la foto.' }, { status: 500 })
+  }
+
+  const { error } = await admin
+    .from('restaurants')
+    .update({ facade_photo_path: ruta })
+    .eq('id', id)
+
+  if (error) {
+    console.error('[locales] no se guardo la ruta de la foto', error)
+    return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+  }
+
+  // La anterior se borra DESPUES de que la nueva este guardada: si se borra
+  // antes y la subida falla, el local se queda sin foto y sin poder ofrecerse.
+  if (local.facade_photo_path) {
+    await admin.storage.from('locales').remove([local.facade_photo_path])
+  }
+
+  const { data: firmada } = await admin.storage.from('locales').createSignedUrl(ruta, 300)
+  return NextResponse.json({ ok: true, fotoUrl: firmada?.signedUrl ?? null })
 }
 
 export async function POST(request: Request) {
