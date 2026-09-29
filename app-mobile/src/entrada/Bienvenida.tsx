@@ -1,62 +1,120 @@
-import { LinearGradient } from 'expo-linear-gradient'
 import { StatusBar } from 'expo-status-bar'
-import { ImageBackground, StyleSheet, View } from 'react-native'
+import { Image, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { Boton, Enfasis, Marca, Texto, medida, tinta } from '../diseno'
+import { Boton, Enfasis, Texto, color, fuente, medida } from '../diseno'
 import * as T from '../texto/entrada'
 
 /**
- * Lo primero que se ve al abrir la app sin sesión. Una pantalla quieta, al
- * modo de Meetup (decisión del 27-09): la foto del hero de la web a sangre,
- * el titular, y Empezar y Entrar igual de visibles —quien reinstala entra
- * por la segunda—. Nada que vender: eso lo hace la web.
+ * Lo primero que se ve al abrir la app sin sesión: 1b de
+ * `Design/Aro Club - Bienvenida app.dc.html`. Arriba las cuatro polaroids,
+ * debajo el titular del hero, la línea de apoyo, «Encuentra tu mesa» y
+ * «Ya tengo cuenta · Entrar». Pensada para verse sin scroll en 390 × 844;
+ * en un teléfono más pequeño o con la letra al máximo, se desplaza.
  *
- * La foto es `assets/fotos/portada.jpg`, con el filtro del hero cocido por
- * `scripts/cocer-foto.py` (la app no tiene filtros CSS). El degradado es el
- * de la web, con la tinta del sistema.
+ * Diferencias con la maqueta, por las reglas de la app:
+ * - el fondo es `verdeProfundo` y no #0F2820, y la línea de apoyo va en
+ *   `cuerpoSobreVerde` y no #E4EDE6: un valor por papel (§6 bis);
+ * - las fotos llevan el filtro de marca cocido (`scripts/cocer-foto.py`),
+ *   como todas las de la app;
+ * - el titular dice «esta semana», no «el jueves».
  *
- * El video de fondo (Timeleft, 222) queda para cuando haya material de una
- * cena real; con banco de imágenes, no.
+ * Sin permisos, sin precio y sin ciudad (notas de Design).
  */
+
+const FOTOS: Record<string, number> = {
+  dinner: require('../../assets/fotos/filtro-cenas.jpg'),
+  drinks: require('../../assets/fotos/filtro-drinks.jpg'),
+  coffee: require('../../assets/fotos/filtro-coffee.jpg'),
+  movement: require('../../assets/fotos/filtro-movimiento.jpg'),
+}
+
+/** Dónde cae cada polaroid, en las medidas de la maqueta (una caja de 346 × 292). */
+const SITIO = [
+  { x: 4, y: 6, giro: '-6deg' },
+  { x: 176, y: 0, giro: '5deg' },
+  { x: 28, y: 124, giro: '4deg' },
+  { x: 186, y: 132, giro: '-4deg' },
+]
+const ANCHO_MAQUETA = 346
+const ALTO_MAQUETA = 292
+
+function Polaroids({ ancho }: { ancho: number }) {
+  // Se escala con el ancho, sin pasar del 120 %: en una tableta no se hacen enormes.
+  const k = Math.min(ancho / ANCHO_MAQUETA, 1.2)
+  return (
+    <View style={{ height: ALTO_MAQUETA * k, width: ANCHO_MAQUETA * k, alignSelf: 'center' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {T.bienvenida.polaroids.map((p, i) => (
+        <View
+          key={p.formato}
+          style={[
+            estilos.polaroid,
+            { left: SITIO[i].x * k, top: SITIO[i].y * k, width: 156 * k, padding: 8 * k, paddingBottom: 0, transform: [{ rotate: SITIO[i].giro }] },
+          ]}
+        >
+          <Image source={FOTOS[p.formato]} style={{ width: 140 * k, height: 140 * k }} resizeMode="cover" />
+          <Texto style={{ fontFamily: fuente.titular, fontSize: 15 * k, lineHeight: Math.ceil(15 * k * 1.42), color: color.verdeProfundo, paddingTop: 8 * k, paddingBottom: 10 * k, paddingHorizontal: 2 }}>
+            {p.nombre}
+          </Texto>
+        </View>
+      ))}
+    </View>
+  )
+}
+
 export function Bienvenida({ onEmpezar, onEntrar }: { onEmpezar: () => void; onEntrar: () => void }) {
   const insets = useSafeAreaInsets()
+  const { width } = useWindowDimensions()
+  const ancho = Math.min(width, 560) - 44
   const t = T.titular
+  const b = T.bienvenida
   return (
-    <ImageBackground
-      source={require('../../assets/fotos/portada.jpg')}
-      resizeMode="cover"
-      style={estilos.fondo}
-      imageStyle={{ transform: [{ scale: 1.08 }] }}
-      accessibilityIgnoresInvertColors
-    >
+    <View style={{ flex: 1, backgroundColor: color.verdeProfundo }}>
       <StatusBar style="light" />
-      <LinearGradient colors={[tinta(0.42), tinta(0.72), tinta(0.94)]} locations={[0, 0.55, 1]} style={StyleSheet.absoluteFill} />
-      <View style={[estilos.contenido, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 24 }]}>
-        <View style={estilos.marca}>
-          <Marca sobreVerde />
-          <Texto variante="marca" tono="crema">
-            Aro Club
-          </Texto>
-        </View>
-        <View style={{ gap: 30 }}>
+      <ScrollView
+        contentContainerStyle={[estilos.pagina, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 24 }]}
+        bounces={false}
+      >
+        <Polaroids ancho={ancho} />
+        <View style={estilos.abajo}>
           <Texto variante="portada" tono="crema" accessibilityRole="header">
-            {t.linea}
-            {'\n'}
-            <Enfasis sobreVerde>{t.enfasis}</Enfasis>
+            {t.linea} <Enfasis sobreVerde>{t.enfasis}</Enfasis>
           </Texto>
-          <View style={{ gap: 12 }}>
-            <Boton tipo="sobreVerde" texto={T.bienvenida.empezar} ancho onPress={onEmpezar} />
-            <Boton tipo="secundarioSobreVerde" texto={T.bienvenida.entrar} ancho onPress={onEntrar} />
+          <Texto variante="cuerpoGrande" tono="cuerpoSobreVerde" style={{ marginTop: 16 }}>
+            {b.bajada}{' '}
+            <Texto variante="cuerpoGrande" tono="crema" style={{ fontFamily: fuente.textoSemi }}>
+              {b.bajadaEnfasis}
+            </Texto>
+          </Texto>
+          <View style={{ marginTop: 26, gap: 6 }}>
+            <Boton tipo="sobreVerde" texto={b.empezar} ancho onPress={onEmpezar} />
+            <Pressable onPress={onEntrar} accessibilityRole="link" accessibilityLabel={`${b.yaTengo}${b.entrar}`} style={estilos.entrar}>
+              <Texto variante="cuerpo" tono="cuerpoSobreVerde" style={{ fontFamily: fuente.textoMedia }}>
+                {b.yaTengo}
+                <Texto variante="cuerpo" tono="crema" style={{ fontFamily: fuente.textoSemi }}>
+                  {b.entrar}
+                </Texto>
+              </Texto>
+            </Pressable>
           </View>
         </View>
-      </View>
-    </ImageBackground>
+      </ScrollView>
+    </View>
   )
 }
 
 const estilos = StyleSheet.create({
-  fondo: { flex: 1, overflow: 'hidden' },
-  contenido: { flex: 1, justifyContent: 'space-between', paddingHorizontal: medida.margenLateral, maxWidth: 560, width: '100%', alignSelf: 'center' },
-  marca: { flexDirection: 'row', alignItems: 'center', gap: 9, minHeight: medida.toqueMinimo },
+  pagina: { flexGrow: 1, paddingHorizontal: 22, maxWidth: 560, width: '100%', alignSelf: 'center' },
+  abajo: { flexGrow: 1, justifyContent: 'flex-end', marginTop: 24 },
+  polaroid: {
+    position: 'absolute',
+    backgroundColor: color.cremaElevada,
+    borderRadius: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 13,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 8,
+  },
+  entrar: { minHeight: medida.toqueMinimo, alignItems: 'center', justifyContent: 'center' },
 })

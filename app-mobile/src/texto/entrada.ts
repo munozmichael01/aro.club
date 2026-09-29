@@ -17,10 +17,25 @@ export const titular = {
   enfasis: 'Tú no. Todavía.',
 }
 
-/** La bienvenida de la app: una pantalla quieta, dos puertas del mismo tamaño. Los dos textos son los de la navegación de la web. */
+/**
+ * La bienvenida de la app (1b de `Design/Bienvenida app.dc.html`). El
+ * titular es el de arriba, con «esta semana» y no el «jueves» de la
+ * maqueta: el día de la cena no se escribe (§6 bis) y la web dice lo mismo.
+ * Sin precio ni ciudad, por nota de Design.
+ */
 export const bienvenida = {
-  empezar: 'Empezar',
+  bajada: 'Te sentamos con cinco personas afines y verificadas.',
+  bajadaEnfasis: 'Tú solo apareces.',
+  empezar: 'Encuentra tu mesa',
+  yaTengo: 'Ya tengo cuenta · ',
   entrar: 'Entrar',
+  /** Las cuatro polaroids, en el orden de la maqueta (los nombres son los de la maqueta). */
+  polaroids: [
+    { formato: 'dinner', nombre: 'Cenas' },
+    { formato: 'drinks', nombre: 'Drinks' },
+    { formato: 'coffee', nombre: 'Coffee' },
+    { formato: 'movement', nombre: 'En movimiento' },
+  ] as const,
 }
 
 export const chip = (ciudad: string, cierraEn: string | null) =>

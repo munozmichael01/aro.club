@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#E9E1CF; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding:56px 48px 80px;font-family:'Inter Tight',system-ui,sans-serif;color:#14342A">
+  <div style="max-width:980px;margin:0 0 40px">
+    <div style="font:700 13px/1 'Inter Tight',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8F4515">App miembro · primera apertura</div>
+    <h1 style="font:400 44px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em;margin:12px 0 0">Lo que ve al descargar y abrir</h1>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start">
+
+    <div id="1a" style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 8px;border-radius:999px;background:#14342A;color:#FAF3E4;font:700 12px/1 'Inter Tight',sans-serif">1a</span>
+        <span style="font:600 15px/1 'Inter Tight',sans-serif">Splash · menos de 1 s</span>
+      </div>
+      <div data-screen-label="Splash" style="width:390px;height:844px;border-radius:54px;border:10px solid #0B1A15;overflow:hidden;position:relative;background:#14342A;box-shadow:0 30px 60px rgba(20,52,42,.22)">
+        <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:34px;border-radius:999px;background:#0B1A15"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px">
+          <svg width="112" height="112" viewBox="0 0 240 240" fill="none" aria-label="Aro Club">
+            <circle cx="120" cy="120" r="86" stroke="#FAF3E4" stroke-width="17"></circle>
+            <circle cx="206" cy="120" r="19" fill="#E39C63"></circle>
+            <circle cx="163" cy="194.5" r="19" fill="#FAF3E4"></circle>
+            <circle cx="77" cy="194.5" r="19" fill="#FAF3E4"></circle>
+            <circle cx="34" cy="120" r="19" fill="#FAF3E4"></circle>
+            <circle cx="77" cy="45.5" r="19" fill="#FAF3E4"></circle>
+            <circle cx="163" cy="45.5" r="19" fill="#FAF3E4"></circle>
+          </svg>
+          <div style="font:400 34px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#FAF3E4">Aro Club</div>
+        </div>
+        <div style="position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:rgba(250,243,228,.5)"></div>
+      </div>
+    </div>
+
+    <div id="1b" style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 8px;border-radius:999px;background:#14342A;color:#FAF3E4;font:700 12px/1 'Inter Tight',sans-serif">1b</span>
+        <span style="font:600 15px/1 'Inter Tight',sans-serif">Bienvenida</span>
+      </div>
+      <div data-screen-label="Bienvenida" style="width:390px;height:844px;border-radius:54px;border:10px solid #0B1A15;overflow:hidden;position:relative;background:#0F2820;box-shadow:0 30px 60px rgba(20,52,42,.22)">
+        <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:34px;border-radius:999px;background:#0B1A15;z-index:3"></div>
+        <div style="position:absolute;top:0;left:0;right:0;height:54px;padding:18px 30px 0;display:flex;justify-content:space-between;font:600 15px/1 'Inter Tight',sans-serif;color:#FAF3E4;z-index:2">
+          <span>9:41</span><span style="letter-spacing:.06em">▪▪▪</span>
+        </div>
+
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:62px 22px 30px">
+
+          <div style="position:relative;height:292px;flex:0 0 auto">
+            <div style="position:absolute;left:4px;top:6px;width:156px;padding:8px 8px 0;background:#FFF8EA;border-radius:3px;box-shadow:0 12px 26px rgba(0,0,0,.35);transform:rotate(-6deg)">
+              <div style="width:140px;height:140px;background:url('fotos/cenas.jpg') center/cover"></div>
+              <div style="font:400 15px/1 'Young Serif',Georgia,serif;color:#14342A;padding:10px 2px 12px">Cenas</div>
+            </div>
+            <div style="position:absolute;left:176px;top:0;width:156px;padding:8px 8px 0;background:#FFF8EA;border-radius:3px;box-shadow:0 12px 26px rgba(0,0,0,.35);transform:rotate(5deg)">
+              <div style="width:140px;height:140px;background:url('fotos/drinks.jpg') center/cover"></div>
+              <div style="font:400 15px/1 'Young Serif',Georgia,serif;color:#14342A;padding:10px 2px 12px">Drinks</div>
+            </div>
+            <div style="position:absolute;left:28px;top:124px;width:156px;padding:8px 8px 0;background:#FFF8EA;border-radius:3px;box-shadow:0 12px 26px rgba(0,0,0,.35);transform:rotate(4deg)">
+              <div style="width:140px;height:140px;background:url('fotos/coffee.jpg') center/cover"></div>
+              <div style="font:400 15px/1 'Young Serif',Georgia,serif;color:#14342A;padding:10px 2px 12px">Coffee</div>
+            </div>
+            <div style="position:absolute;left:186px;top:132px;width:156px;padding:8px 8px 0;background:#FFF8EA;border-radius:3px;box-shadow:0 12px 26px rgba(0,0,0,.35);transform:rotate(-4deg)">
+              <div style="width:140px;height:140px;background:url('fotos/movimiento.jpg') center/cover"></div>
+              <div style="font:400 15px/1 'Young Serif',Georgia,serif;color:#14342A;padding:10px 2px 12px">En movimiento</div>
+            </div>
+          </div>
+
+          <div style="flex:1 1 auto;display:flex;flex-direction:column;justify-content:flex-end">
+            <h1 style="font:400 42px/0.94 'Young Serif',Georgia,serif;letter-spacing:-.04em;color:#FAF3E4;margin:0;text-wrap:balance">Ya sabemos con quién cenas el jueves. <span style="color:#E39C63">Tú no. Todavía.</span></h1>
+            <p style="font:400 16px/1.45 'Inter Tight',sans-serif;color:#E4EDE6;margin:16px 0 0;text-wrap:pretty">Te sentamos con cinco personas afines y verificadas. <span style="font-weight:600;color:#FAF3E4">Tú solo apareces.</span></p>
+
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:26px">
+              <a href="#" style="display:flex;align-items:center;justify-content:center;min-height:56px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif" style-hover="background:#E39C63;color:#14342A">Encuentra tu mesa</a>
+              <a href="#" style="display:flex;align-items:center;justify-content:center;min-height:44px;color:#C5D8CA;font:500 15px/1 'Inter Tight',sans-serif" style-hover="color:#FAF3E4">Ya tengo cuenta · <span style="color:#FAF3E4;font-weight:600;margin-left:4px">Entrar</span></a>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:rgba(250,243,228,.5)"></div>
+      </div>
+    </div>
+
+    <div style="max-width:320px;display:flex;flex-direction:column;gap:18px;padding-top:42px">
+      <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8F4515">Para Code</div>
+      <div style="display:flex;flex-direction:column;gap:14px;font:400 15px/1.5 'Inter Tight',sans-serif;color:#14342A">
+        <div><span style="font-weight:600">Encuentra tu mesa</span> abre la primera de las 4 preguntas de la portada, las mismas que la landing. La cuenta se pide después: Apple y Google como iguales, y la contraseña en texto debajo.</div>
+        <div><span style="font-weight:600">Entrar</span> lleva a la pantalla de acceso.</div>
+        <div><span style="font-weight:600">Sin permisos aquí.</span> Las notificaciones se piden al reservar y la cámara al verificar.</div>
+        <div><span style="font-weight:600">Solo se ve una vez.</span> Con sesión abierta, la app abre en Inicio.</div>
+        <div><span style="font-weight:600">Sin precio ni ciudad</span> en esta pantalla.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

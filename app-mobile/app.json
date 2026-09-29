@@ -52,6 +52,15 @@
           "cameraPermission": "Aro Club usa la cámara para la foto de tu cédula y una selfie. Con ellas una persona del equipo comprueba que eres tú; nadie más las ve y se borran a los 90 días de aprobarse.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 161,
+          "resizeMode": "contain",
+          "backgroundColor": "#14342A"
+        }
       ]
     ],
     "extra": {

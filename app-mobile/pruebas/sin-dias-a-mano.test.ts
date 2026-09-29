@@ -15,7 +15,7 @@ import { test } from 'node:test'
 const RAIZ = path.resolve(import.meta.dirname, '../src')
 
 /** El sitio de los días, y los catálogos de desarrollo, que no son producto. */
-const PERMITIDOS = new Set(['texto/fechas.ts', 'app/catalogo-entrada.tsx', 'app/catalogo-datos.tsx', 'app/catalogo-cuestionario.tsx', 'app/catalogo-verificacion.tsx', 'app/catalogo-cuenta.tsx', 'app/catalogo-mesa.tsx', 'app/catalogo-perfil.tsx', 'app/catalogo-pago.tsx', 'app/catalogo-cancelar.tsx', 'diseno/Catalogo.tsx'])
+const PERMITIDOS = new Set(['texto/fechas.ts', 'app/catalogo-entrada.tsx', 'app/catalogo-datos.tsx', 'app/catalogo-cuestionario.tsx', 'app/catalogo-verificacion.tsx', 'app/catalogo-cuenta.tsx', 'app/catalogo-mesa.tsx', 'app/catalogo-perfil.tsx', 'app/catalogo-pago.tsx', 'app/catalogo-cancelar.tsx', 'app/catalogo-bienvenida.tsx', 'diseno/Catalogo.tsx'])
 
 const PROHIBIDO = [
   /\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)\b/i,

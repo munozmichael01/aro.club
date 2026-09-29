@@ -19,7 +19,7 @@ Hecho y probado contra producción, y en el iPhone de Michael (Expo Go):
 
 | Ruta | Qué es | Maqueta |
 |---|---|---|
-| `/` | Bienvenida (foto, Empezar, Entrar) | Landing, modo Meetup |
+| `/` | Bienvenida: polaroids, titular, «Encuentra tu mesa», «Ya tengo cuenta · Entrar». Solo la primera vez; después, sin sesión, abre en Entrar | `Design/Bienvenida app.dc.html` (1b) |
 | `/empezar` | La puerta: correo + cuatro preguntas | Landing / entrada |
 | `/datos` | Datos personales | Datos base |
 | `/cuestionario` | El cuestionario, del catálogo | Cuestionario |
@@ -82,6 +82,7 @@ y se aterriza según su `paso`. Y la notificación push de «Voy tarde»
 - **Nada de cache-buster en `/api/questions`**: se cachea 5 min a propósito.
 - **Fotos con el filtro cocido** en el fichero (`scripts/cocer-foto.py`, con
   las matrices de CSS). Se regeneran desde `public/fotos/`, no se editan.
+- **Splash** (1a de Bienvenida app): `assets/splash.png`, generado por `scripts/splash.py` desde la geometría del SVG de Design, sobre `#14342A` en la config de `expo-splash-screen`. Se oculta al cargar las fuentes. Expo Go no lo enseña: solo una build.
 - **Iconos en SVG** (`src/diseno/Iconos.tsx`), nunca glifos (◗ ✓ → ×) ni emojis.
 - **Componentes del sistema antes que estilos sueltos**: `Opcion` (con `pie`
   y `fija` para las personas de Mi mesa), `Ficha` (las escalas), `Interruptor`

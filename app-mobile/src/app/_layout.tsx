@@ -1,6 +1,8 @@
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
+import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
+import { useEffect } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 import { Velo } from '../diseno'
@@ -23,8 +25,20 @@ const FUENTES = {
   'InterTight-Bold': require('../../assets/fuentes/InterTight-Bold.ttf'),
 }
 
+/**
+ * El splash (1a de «Bienvenida app»: el isologo y el nombre sobre verde
+ * profundo) lo pinta el sistema desde `app.json`, y se queda hasta que están
+ * las fuentes: menos de un segundo, porque van embebidas. Expo Go enseña el
+ * icono en su lugar; el de verdad solo se ve en una build.
+ */
+SplashScreen.preventAutoHideAsync().catch(() => {})
+SplashScreen.setOptions({ duration: 250, fade: true })
+
 export default function Raiz() {
   const [listas] = useFonts(FUENTES)
+  useEffect(() => {
+    if (listas) SplashScreen.hideAsync().catch(() => {})
+  }, [listas])
   return (
     <SafeAreaProvider>
       {listas ? <Stack screenOptions={{ headerShown: false }} /> : <Velo />}
