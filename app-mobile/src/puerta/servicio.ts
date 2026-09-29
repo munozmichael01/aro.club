@@ -39,8 +39,9 @@ export function crearServicioPuerta(api: Api) {
       }
       return { ok: true, datos: true }
     },
+    /** `estado`: `creada`, `creada_sin_sesion` o `ya_existe` (un 200 también). */
     crearCuenta: (correo: string, clave: string, porDefecto: string) =>
-      intentar<{ ok?: boolean }>(() => api.pedir('/cuenta', json({ correo, clave, origen: 'app' })), porDefecto),
+      intentar<{ estado?: 'creada' | 'creada_sin_sesion' | 'ya_existe' }>(() => api.pedir('/cuenta', json({ correo, clave, origen: 'app' })), porDefecto),
     /** En qué punto está: lo decide el embudo del servidor. */
     estado: () => intentar<{ estado: string }>(() => api.pedir('/mi-cuenta'), ''),
   }

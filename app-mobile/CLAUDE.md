@@ -64,13 +64,13 @@ nombre de Expo Go). **Para que funcionen de verdad falta, fuera del código:**
   sin ese esquema tumba la build;
 - una build de desarrollo con EAS (el módulo de Google no está en Expo Go).
 
-**El alta nueva está en `/puerta`** (`src/puerta/`), probada contra
-producción con sesión (`npm run prueba:puerta`). La Bienvenida TODAVÍA
-manda a `/empezar` (el alta vieja, con lead): se cambia a `/puerta` cuando
-el agente despliegue `/api/cuenta` sin lead, porque hasta entonces quien no
-tiene cuenta no puede terminarla (la contraseña da 403 y Google/Apple no van
-en Expo Go). Quien entra con Google y le faltan las cuatro (`paso:
-preguntas`) ya va a `/puerta`, que con sesión se salta la cuenta.
+**El alta nueva está en `/puerta`** (`src/puerta/`) y es la que abre la
+Bienvenida («Encuentra tu mesa») y el «Empezar» de Entrar. `/empezar` (el
+alta vieja, con lead) sigue existiendo pero ya no se enlaza. Probada entera
+contra producción con `npm run prueba:alta-app` (cuenta sin lead →
+respuestas → embudo; sin lead fabricado; `profiles.source = 'app'`).
+Quien entra con Google y le faltan las cuatro (`paso: preguntas`) va a
+`/puerta`, que con sesión se salta la cuenta.
 
 El alta nueva de la app (acordada con el agente de la web el 29-09): las
 cuatro de la puerta y el nacimiento en local (borrador guardado; la puerta de

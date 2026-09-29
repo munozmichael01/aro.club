@@ -65,5 +65,5 @@ export default function Inicio() {
     )
   if (destino === 'cuenta') return <Redirect href="/cuenta" />
   if (destino === 'entrar') return <Redirect href="/entrar" />
-  return <Bienvenida onEmpezar={() => router.push('/empezar')} onEntrar={() => router.push('/entrar')} />
+  return <Bienvenida onEmpezar={() => router.push('/puerta')} onEntrar={() => router.push('/entrar')} />
 }

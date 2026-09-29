@@ -78,7 +78,7 @@ export default function Pantalla() {
         }
       }}
       alDentro={() => router.replace(destino.current as never)}
-      alEmpezar={() => router.replace('/empezar')}
+      alEmpezar={() => router.replace('/puerta')}
     />
   )
 }

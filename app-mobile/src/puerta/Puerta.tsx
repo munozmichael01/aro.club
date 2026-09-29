@@ -128,7 +128,12 @@ export function Puerta(p: {
     const r = await servicio.crearCuenta(c, clave, T.cuenta.noCreada)
     if (!r.ok) {
       setTrabajando(false)
-      return setAviso(r.status === 409 ? T.cuenta.yaExiste : r.error)
+      // Un 409 aquí es el del lead a medias de la web, con su propio texto.
+      return setAviso(r.error)
+    }
+    if (r.datos.estado === 'ya_existe') {
+      setTrabajando(false)
+      return setAviso(T.cuenta.yaExiste)
     }
     const dentro = await p.entrarConClave(c, clave)
     setTrabajando(false)
