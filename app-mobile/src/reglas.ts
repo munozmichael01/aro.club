@@ -6,7 +6,20 @@
  */
 import crudo from '../../public/reglas.js'
 
-export type Campo = 'correo' | 'clave' | 'telefonoPerfil' | 'dia' | 'mes' | 'anio' | 'cedula' | 'referencia'
+export type Campo =
+  | 'correo'
+  | 'clave'
+  | 'telefonoPerfil'
+  | 'dia'
+  | 'mes'
+  | 'anio'
+  | 'cedula'
+  | 'referencia'
+  | 'telefonoPagoMovil'
+  | 'telefonoBizum'
+  | 'fechaPago'
+  | 'otp'
+  | 'banco'
 
 type Api = {
   filtrar: (campo: Campo, valor: unknown) => string
@@ -33,7 +46,22 @@ type Api = {
   PUERTA: Record<string, PreguntaPuerta>
   ORDEN_PUERTA: string[]
   /** Mesa o grupo según el formato: «Mi mesa» / «Mi grupo», y el resto del vocabulario. */
+  /** Los bancos de Venezuela, por código: se guarda el código, que es lo que sale en el movimiento. */
+  BANCOS: { codigo: string; nombre: string }[]
+  /** Qué regla aplica a un campo de un método de pago (`null`: solo que no esté vacío). */
+  campoDe: (definicion: CampoDePago) => Campo | null
   vozDe: (formato: string | null | undefined) => { unidad: 'mesa' | 'grupo'; mia: string } & Record<string, string>
+}
+
+/** Un campo de un método de pago, tal como lo define `payment_methods.campos`. */
+export type CampoDePago = {
+  campo: string
+  etiqueta: string
+  tipo?: 'tel' | 'documento' | 'banco' | 'fecha' | 'numero' | 'texto' | string
+  prefijo?: string
+  conTipo?: boolean
+  largo?: number
+  requerido?: boolean
 }
 
 export type PartesFecha = {

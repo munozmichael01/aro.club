@@ -223,3 +223,42 @@ export function fechaNumerica(iso: string | null | undefined, zona?: Zona): stri
   const d = (n: number) => String(n).padStart(2, '0')
   return p ? `${d(p.numero)}/${d(p.mesNumero + 1)}/${p.ano}` : ''
 }
+
+// --- Pago -----------------------------------------------------------------------
+
+/** «2026-09-28»: el día de hoy en la ciudad (no en el celular). */
+export function hoyISO(ahora: number, zona?: Zona): string {
+  const p = reglas.partesDe(new Date(ahora).toISOString(), zona)
+  const d = (n: number) => String(n).padStart(2, '0')
+  return p ? `${p.ano}-${d(p.mesNumero + 1)}-${d(p.numero)}` : ''
+}
+
+/**
+ * La etiqueta de la tasa: «de hoy» solo si la fila ES de hoy (en Caracas).
+ * El cron del BCV puede no haber pasado —fin de semana, festivo— y entonces
+ * se dice de qué día es, en vez de llamarla de hoy.
+ */
+export function deQueDiaEsLaTasa(tasaDe: string | null | undefined, ahora: number): 'hoy' | { dia: number; mes: string } | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tasaDe ?? '')
+  if (!m) return null
+  if (tasaDe === hoyISO(ahora)) return 'hoy'
+  return { dia: +m[3], mes: MESES_LARGOS[+m[2] - 1] }
+}
+
+/** «Sábado 4»: la cabecera de la fecha que se paga. */
+export function diaYNumero(iso: string | null | undefined, zona?: Zona): string {
+  const p = reglas.partesDe(iso, zona)
+  return p ? `${mayuscula(p.dia)} ${p.numero}` : ''
+}
+
+/** «sábado» y 4, para «Nos vemos el sábado 4.». */
+export function diaMinusculaYNumero(iso: string | null | undefined, zona?: Zona): { dia: string; numero: number } | null {
+  const p = reglas.partesDe(iso, zona)
+  return p ? { dia: p.dia, numero: p.numero } : null
+}
+
+/** ¿«DD/MM/AAAA» cae después de hoy en la ciudad? Un pago no se reporta antes de hacerlo. */
+export function esFutura(ddmmaaaa: string, ahora: number, zona?: Zona): boolean {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(ddmmaaaa)
+  return !!m && `${m[3]}-${m[2]}-${m[1]}` > hoyISO(ahora, zona)
+}

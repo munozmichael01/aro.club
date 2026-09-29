@@ -1,0 +1,204 @@
+{
+  "evento": {
+    "id": "fe264f53-3ae9-4bde-9fa3-41f9383df9d1",
+    "empiezaEn": "2026-10-04T00:00:00+00:00",
+    "cierraEn": "2026-10-02T00:00:00+00:00",
+    "zona": null
+  },
+  "montoUsd": 7,
+  "tasa": 857.0058,
+  "tasaDe": "2026-09-28",
+  "montoLocal": 5999.04,
+  "metodos": [
+    {
+      "id": "pm",
+      "nombre": "Pago Móvil",
+      "moneda": "VES",
+      "activo": true,
+      "manual": true,
+      "cuenta": {
+        "Banco": "0000 · Banco de ejemplo",
+        "Documento": "V-00.000.000",
+        "Teléfono": "0400 000 0000"
+      },
+      "datos": [
+        {
+          "campo": "Banco",
+          "valor": "0000 · Banco de ejemplo",
+          "copiar": "0000"
+        },
+        {
+          "campo": "Documento",
+          "valor": "V-00.000.000",
+          "copiar": "00000000"
+        },
+        {
+          "campo": "Teléfono",
+          "valor": "0400 000 0000",
+          "copiar": "04000000000"
+        },
+        {
+          "campo": "Monto exacto",
+          "valor": "5.999,04 Bs",
+          "copiar": "5999,04"
+        }
+      ],
+      "datosDePrueba": false,
+      "campos": [
+        {
+          "tipo": "tel",
+          "campo": "tel",
+          "prefijo": "+58",
+          "etiqueta": "Teléfono emisor",
+          "requerido": true
+        },
+        {
+          "tipo": "documento",
+          "campo": "doc",
+          "conTipo": true,
+          "etiqueta": "Cédula del titular",
+          "requerido": true
+        },
+        {
+          "tipo": "banco",
+          "campo": "banco",
+          "etiqueta": "Banco emisor",
+          "requerido": true
+        },
+        {
+          "tipo": "numero",
+          "campo": "ref",
+          "largo": 6,
+          "etiqueta": "Referencia",
+          "requerido": true
+        },
+        {
+          "tipo": "fecha",
+          "campo": "fecha",
+          "etiqueta": "Fecha del pago",
+          "requerido": true
+        }
+      ],
+      "capturaObligatoria": false
+    },
+    {
+      "id": "zelle",
+      "nombre": "Zelle",
+      "moneda": "USD",
+      "activo": false,
+      "manual": true,
+      "cuenta": null,
+      "datos": [],
+      "datosDePrueba": true,
+      "campos": [
+        {
+          "campo": "titular",
+          "etiqueta": "Nombre del titular que envió",
+          "requerido": true
+        },
+        {
+          "campo": "contacto",
+          "etiqueta": "Correo o teléfono desde el que enviaste",
+          "requerido": true
+        },
+        {
+          "campo": "ref",
+          "etiqueta": "Código de confirmación",
+          "requerido": true
+        },
+        {
+          "campo": "fecha",
+          "etiqueta": "Fecha del pago",
+          "requerido": true
+        }
+      ],
+      "capturaObligatoria": false
+    },
+    {
+      "id": "bizum",
+      "nombre": "Bizum",
+      "moneda": "EUR",
+      "activo": false,
+      "manual": true,
+      "cuenta": null,
+      "datos": [],
+      "datosDePrueba": true,
+      "campos": [
+        {
+          "tipo": "texto",
+          "campo": "titular",
+          "etiqueta": "Nombre del titular",
+          "requerido": true
+        },
+        {
+          "tipo": "tel",
+          "campo": "tel",
+          "prefijo": "+34",
+          "etiqueta": "Teléfono",
+          "requerido": true
+        },
+        {
+          "tipo": "fecha",
+          "campo": "fecha",
+          "etiqueta": "Fecha del pago",
+          "requerido": true
+        }
+      ],
+      "capturaObligatoria": true
+    },
+    {
+      "id": "debito",
+      "nombre": "Débito inmediato",
+      "moneda": "VES",
+      "activo": false,
+      "manual": false,
+      "cuenta": null,
+      "datos": [],
+      "datosDePrueba": false,
+      "campos": [
+        {
+          "tipo": "tel",
+          "campo": "tel",
+          "prefijo": "+58",
+          "etiqueta": "Teléfono",
+          "requerido": true
+        },
+        {
+          "tipo": "documento",
+          "campo": "doc",
+          "conTipo": true,
+          "etiqueta": "Cédula",
+          "requerido": true
+        },
+        {
+          "tipo": "banco",
+          "campo": "banco",
+          "etiqueta": "Banco",
+          "requerido": true
+        },
+        {
+          "tipo": "numero",
+          "campo": "otp",
+          "largo": 8,
+          "etiqueta": "Código que te mandó el banco",
+          "requerido": true
+        }
+      ],
+      "capturaObligatoria": false
+    },
+    {
+      "id": "tarjeta",
+      "nombre": "Tarjeta",
+      "moneda": "VES",
+      "activo": false,
+      "manual": false,
+      "cuenta": null,
+      "datos": [],
+      "datosDePrueba": false,
+      "campos": [],
+      "capturaObligatoria": false
+    }
+  ],
+  "verificada": true,
+  "pago": null
+}

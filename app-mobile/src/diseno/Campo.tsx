@@ -9,9 +9,13 @@ import { color, cremaAlfa, fuente, radio, tinta } from './tokens'
  * `minHeight` y no `height`: con la letra del sistema al máximo, el campo
  * crece en vez de cortar lo que se escribe (criterio 9.6).
  */
-type Props = TextInputProps & { fondo?: 'crema' | 'verde' }
+type Props = TextInputProps & {
+  fondo?: 'crema' | 'verde'
+  /** Sin cápsula propia: va dentro de otra (el teléfono con su prefijo, la cédula con V/E). */
+  desnudo?: boolean
+}
 
-export function Campo({ fondo = 'crema', style, ...resto }: Props) {
+export function Campo({ fondo = 'crema', desnudo, style, ...resto }: Props) {
   const verde = fondo === 'verde'
   return (
     <View
@@ -20,6 +24,7 @@ export function Campo({ fondo = 'crema', style, ...resto }: Props) {
         verde
           ? { borderColor: cremaAlfa(0.32), backgroundColor: cremaAlfa(0.06) }
           : { borderColor: tinta(0.18), backgroundColor: color.cremaElevada },
+        desnudo ? { borderWidth: 0, backgroundColor: 'transparent', borderRadius: 0 } : null,
       ]}
     >
       <TextInput

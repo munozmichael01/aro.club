@@ -113,7 +113,8 @@ Expo Go ya no recibe push remotas). Y Google + Apple cuando exista
 - **El servidor de Expo Go lo apaga la app de escritorio** tras ~30 min sin
   actividad. Antes de que Michael pruebe: `preview_start` con `app-telefono`
   (el launch.json está en `Documents/Dev/.claude/`). Dirección
-  `exp://192.168.68.54:8081`, misma wifi. Cuenta de Expo `somos.aroclub`,
+  `exp://<IP del Mac>:8081`, misma wifi. La IP CAMBIA (fue .54, luego .58):
+  mirarla con `ipconfig getifaddr en0` antes de dársela a Michael. Cuenta de Expo `somos.aroclub`,
   proyecto `@somos.aroclub/aro-club` (el `projectId` de `app.json` hace falta:
   sin él el manifiesto sale como `@anonymous`).
 - **Esta Mac no tiene Xcode**: no hay simulador de iOS. Se prueba en el
