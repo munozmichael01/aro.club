@@ -99,11 +99,23 @@ export async function GET(request: Request) {
   // Sus respuestas viven en `answers`, no en `waitlist`. Y NO se le pasa por
   // `convertir_lead`: no hay lead que convertir, hay una cuenta que contesta.
   //
-  // `heredadas` va vacío a propósito. Quien llega por Google sin lead no ha
-  // contestado arraigo, zonas, días ni temas —no ha pasado por la landing—
-  // así que el cuestionario tiene que preguntárselas. Esconderlas como
-  // «heredadas» dejaría un perfil sin zonas, y un perfil sin zonas no se
-  // puede sentar en ninguna mesa.
+  // `heredadas` sale de lo que DE VERDAD está contestado, no de si hubo lead.
+  //
+  // Iba vacío a fijo, y el motivo escrito era bueno para su momento: quien
+  // llegaba por Google sin lead no había contestado arraigo, zonas, días ni
+  // temas, así que esconderlas como «heredadas» dejaría un perfil sin zonas,
+  // y un perfil sin zonas no se sienta en ninguna mesa.
+  //
+  // Lo que ese razonamiento no preveía es la app: ahí la persona contesta las
+  // cuatro y el nacimiento ANTES de crear la cuenta, y las manda por aquí con
+  // su sesión. Con `heredadas` vacío el cuestionario se las vuelve a
+  // preguntar —las cinco, ya contestadas—, que es exactamente lo que la web
+  // lleva resolviendo desde su entrega.
+  //
+  // Derivarlo del dato quita las dos trampas de un golpe: lo contestado se
+  // esconde y lo que falta se pregunta, sin que nadie tenga que acordarse de
+  // qué puerta usó esa persona. `falta.preguntas` es la MISMA cuenta que
+  // decide si el cuestionario está completo.
   if (quien.tipo === 'perfil') {
     const respuestas = await respuestasDePerfil(quien.id)
     const situacion = await situacionDePerfil(quien.id)
@@ -119,7 +131,9 @@ export async function GET(request: Request) {
     // misma pantalla es la manera de que una de las dos se quede vieja.
     return NextResponse.json({
       respuestas,
-      heredadas: [],
+      heredadas: Object.keys(respuestas).filter(
+        (clave) => !situacion.falta.preguntas.includes(clave),
+      ),
       pantalla: (perfil as { questionnaire_screen?: number } | null)?.questionnaire_screen ?? 0,
       completado: situacion.falta.preguntas.length === 0,
       faltan: situacion.falta.preguntas,
