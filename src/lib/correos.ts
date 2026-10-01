@@ -248,7 +248,11 @@ async function anotarFinal(
  */
 export async function despacharPendientes(
   seco = false,
-): Promise<{ mandados: number; quedan: number; seco?: { kind: string; asunto: string; huecos: number }[] }> {
+): Promise<{
+  mandados: number
+  quedan: number
+  seco?: { kind: string; asunto: string; huecos: number; baja: boolean }[]
+}> {
   try {
     // Se importan aquí dentro y no arriba porque `correos-datos` necesita el
     // tipo `Correo` de este mismo fichero: en la cabecera sería un ciclo.
@@ -299,7 +303,7 @@ export async function despacharPendientes(
     // Lo que se ve en el ensayo: qué asunto sale y si quedó algún hueco sin
     // rellenar. Es la comprobación que importa —una plantilla con un {{ }} a
     // medias se manda igual y se lee fatal— y no enseña el contenido de nadie.
-    const enSeco: { kind: string; asunto: string; huecos: number }[] = []
+    const enSeco: { kind: string; asunto: string; huecos: number; baja: boolean }[] = []
 
     // Quién se dio de baja. Se lee una vez para toda la vuelta, no una por
     // correo: son pocas filas y la cola trae hasta veinticinco.
@@ -330,7 +334,12 @@ export async function despacharPendientes(
       if ('error' in listo) {
         console.error('[correos] no se pudo armar', fila.kind, listo.error)
         if (seco) {
-          enSeco.push({ kind: fila.kind, asunto: `— no se pudo armar: ${listo.error}`, huecos: -1 })
+          enSeco.push({
+            kind: fila.kind,
+            asunto: `— no se pudo armar: ${listo.error}`,
+            huecos: -1,
+            baja: false,
+          })
           continue
         }
         await anotarFinal(admin, fila.id, 'no_se_pudo_armar', listo.error)
@@ -371,6 +380,11 @@ export async function despacharPendientes(
           kind: fila.kind,
           asunto: pintado.asunto,
           huecos: (pintado.html.match(/\{\{/g) ?? []).length,
+          // Si lleva la cabecera de baja. El ensayo existe para ver qué
+          // saldría, y desde que hay cabeceras «qué saldría» es también esto:
+          // sin ella Gmail manda el correo a Promociones y no hay forma de
+          // mirarlo desde aquí una vez enviado.
+          baja: !!cabecerasDe(fila.kind, listo.a),
         })
         mandados++
         continue
