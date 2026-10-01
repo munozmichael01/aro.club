@@ -176,6 +176,12 @@ otro, va a esa prueba.
   es para los catálogos; la API se prueba con `npm run prueba:*`.
 - **La caché de npm del sistema está corrupta**: si `npx` falla, correrlo con
   `npm_config_cache=<carpeta temporal>`.
+- **El `overrides` de `react-native-worklets` en `package.json` no se quita.**
+  `expo-modules-core` lo pide como peer opcional `^0.10` y Reanimated exige
+  0.13. El npm 11 de esta Mac lo tolera, pero el npm de EAS no: `npm ci`
+  falla con «Missing: react-native-worklets@0.10.4 from lock file». Antes de
+  lanzar una build: `npx npm@10 ci --dry-run` en una copia. El log de una
+  build fallida viene en brotli: se lee con `zlib.brotliDecompressSync` de Node.
 - **`App/` en macOS es `app/`** y Next la toma por su carpeta de rutas (todo
   404 en la web local). Por eso la app vive en `app-mobile/`.
 - **La base es producción y no hay staging.** Nunca insertar filas a mano ni
