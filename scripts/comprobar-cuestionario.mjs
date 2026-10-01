@@ -28,6 +28,9 @@ import fs from 'node:fs'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
+/** Las reglas compartidas, una sola vez: las usan varias comprobaciones. */
+const reglas = createRequire(import.meta.url)('../public/reglas.js')
+
 /**
  * Con la llave PUBLICA, no con la de servicio.
  *
@@ -263,10 +266,12 @@ if (sinFamilia.length || familiaFantasma.length) {
 const landing = fs.readFileSync(
   fileURLToPath(new URL('../public/Aro Club - Landing v4.dc.html', import.meta.url)), 'utf8')
 
-const iniFaq = landing.search(/faqDefs\s*=\s*\[/)
-const finFaq = landing.indexOf('];', iniFaq)
-const enPantalla = [...landing.slice(iniFaq, finFaq).matchAll(/\['((?:[^'\\]|\\.)*)',\s*'((?:[^'\\]|\\.)*)'\]/g)]
-  .map((m) => [m[1].replace(/\\'/g, "'"), m[2].replace(/\\'/g, "'")])
+// La lista que ven las personas ya no esta escrita en la landing: vive en
+// `reglas.js`, que comparten la landing, la pagina de ayuda y la app. Con tres
+// pantallas enseñandolas, tenerlas literales en una de ellas era pedir que se
+// separaran. Las dos copias que quedan —la compartida y el JSON-LD— siguen
+// vigiladas aqui, que es lo que importa.
+const enPantalla = reglas.FRECUENTES
 
 const ld = landing.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)
 if (!ld) {
@@ -337,7 +342,7 @@ if (sinIcono.length) {
 // `reglas.js` es UMD a propósito —el navegador lo carga con un <script>—,
 // así que se lee con `require`, no con `import`: el import trae el módulo
 // entero en `default` y los nombres sueltos vienen vacíos.
-const { PUERTA, ORDEN_PUERTA } = createRequire(import.meta.url)('../public/reglas.js')
+const { PUERTA, ORDEN_PUERTA } = reglas
 
 const codigosMalos = []
 const textosDistintos = []

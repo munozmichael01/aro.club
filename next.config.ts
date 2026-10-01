@@ -54,6 +54,10 @@ const PANTALLAS: Array<[string, string]> = [
   ['/clave', '/Aro Club - Sin sesion.dc.html'],
   ['/baja', '/Aro Club - Sin sesion.dc.html'],
   ['/verificacion', '/Aro Club - Verificacion.dc.html'],
+  // La App Store no publica una app sin una URL de soporte donde se vea cómo
+  // contactar. Daba 404, que es peor que no tenerla: el enlace de la ficha de
+  // la tienda llevaba a una página rota.
+  ['/ayuda', '/Aro Club - Ayuda.dc.html'],
   ['/cuenta', '/Aro Club - Mi cuenta.dc.html'],
   ['/perfil', '/Aro Club - Mi perfil.dc.html'],
   // Entrega 3 · datos base y la revelación

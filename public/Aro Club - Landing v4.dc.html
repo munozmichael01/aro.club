@@ -1155,24 +1155,9 @@ class Component extends DCLogic {
       ? (nombresZonas.length === 1 ? nombresZonas[0] : nombresZonas.slice(0, -1).join(', ') + ' y ' + nombresZonas[nombresZonas.length - 1])
       : 'tu zona';
 
-    const faqDefs = [
-      // Literal, no la variable: el comprobador cruza esta lista con el
-      // JSON-LD de arriba palabra por palabra —para que Google y la pantalla
-      // no digan cosas distintas— y una concatenacion rompe esa comparacion.
-      // Son los dos unicos sitios donde el precio sigue escrito, y estan
-      // atados entre si por el comprobador.
-      ['¿Qué incluye lo que pago?', 'Los 7 USD cubren el emparejamiento, la verificación de todo el grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio, como en cualquier salida: entre 20 y 35 USD según dónde sea. Nos dices tu tramo antes y elegimos el restaurante con el número más bajo de la mesa.'],
-      ['¿Y si no me cae bien nadie?', 'Pasa, y no es un fracaso. Son dos horas, a las nueve estás libre y no le debes nada a nadie. Nos lo cuentas después y eso entra en el emparejamiento de la próxima: qué no funcionó y con quién no volver a sentarte.'],
-      ['¿Puedo ir con un amigo?', 'No. Todo el grupo son desconocidos entre sí, incluidos ustedes dos. Con una pareja conocida en la mesa el resto se convierte en público, y eso rompe la noche para los demás.'],
-      ['¿Cómo sé que las otras personas son reales?', 'Porque pasaron por lo mismo que tú: documento de identidad, una foto y una revisión humana que compara las dos. En la pantalla de tu mesa aparece explícito que todo el grupo tiene identidad verificada y edad confirmada.'],
-      ['¿A qué hora es y cuánto dura?', 'La hora va en cada fecha —la ves antes de apartar tu puesto— y dura unas dos horas. Es a propósito: un plan que no se come la noche entera es un plan al que se dice que sí.'],
-      ['¿Y si soy el más joven de la mesa?', 'No lo vas a ser por mucho. Entre la persona más joven y la mayor de una mesa no hay más de diez años, así que si tienes 24 y eres el más joven, el mayor tendrá 34 como mucho. Es una regla del emparejamiento, no una casualidad.'],
-      ['¿Y si soy vegetariano o tengo una alergia?', 'Nos lo dices en el perfil y elegimos un sitio donde puedas comer sin negociar con la carta. No se lo contamos a la mesa: si quieres explicarlo tú, es cosa tuya.'],
-      ['¿Cómo sé dónde es, y qué pasa si llego tarde?', 'El día de la cena, a mediodía, se abre todo: restaurante, dirección y tu número de mesa. Si se te hace tarde, avisas con un toque y se lo decimos a la mesa. Nadie se queda mirando la puerta.'],
-      ['¿Qué pasa si alguien se comporta mal?', 'Lo reportas desde tu mesa después y lo lee una persona el mismo día. Puedes bloquear a alguien para que nunca vuelva a coincidir contigo sin que se entere, y quien acumula reportes sale del club. Sin escándalo y sin apelación pública.'],
-      ['¿Por qué preguntan mi edad y mi género?', 'Para que el grupo tenga referencias parecidas y esté balanceado. No se muestran a los demás: de ti solo ven el nombre con el que quieres que te llamen y tu sector.'],
-      ['¿Cuándo hay mesa en mi zona?', 'Abrimos donde se junta suficiente gente que pueda llegar. Marca las tuyas arriba y te escribimos el día que se abre la primera. No antes: no queremos escribirte para nada.']
-    ];
+    // La lista vive en `reglas.js`, que comparten la landing, la página de
+    // ayuda y la app. Aquí solo se pinta.
+    const faqDefs = AroReglas.FRECUENTES;
     const faq = faqDefs.map((q, i) => {
       const on = this.state.faq === i;
       return {
