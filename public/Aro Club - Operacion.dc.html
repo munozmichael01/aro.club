@@ -2152,6 +2152,31 @@ class Component extends DCLogic {
       ['NO PUEDEN SALIR', oNada(rotas), (!repartoListo ? sinSaber : (rotas ? 'Rompen alguna de las siete reglas' : 'Ninguna rompe reglas')), rotas ? '#8F4515' : null]
     ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifraRep(m[3]) }));
 
+    // Antes de repartir no hay espera: hay apuntados, y hasta hoy no se veía
+    // ninguno. El panel enseñaba «2 apuntados» y ni una cara hasta que alguien
+    // armara las mesas, que es justo al revés de lo que hace falta: se mira
+    // quién se apuntó PARA decidir si ya se reparte o se espera a que entre
+    // más gente.
+    //
+    // Se pintan en la misma caja que la espera y no en una nueva: es la misma
+    // lista de personas sin sitio, cambia el motivo. Lo único que no hacen es
+    // arrastrarse, porque no hay mesas a las que llevarlos todavía.
+    const sinRepartir = repartoPedido && !CORRIDA;
+    // Apuntados que NO entran al reparto: sin verificar o sin cuestionario. El
+    // servidor ya lo calculaba y la pantalla no lo decía en ningún sitio, así
+    // que la caja podía enseñar dos caras habiendo tres apuntados y nadie
+    // sabía por qué falta uno.
+    const fueraDelPool = (REP && REP.fueraDelPool) || 0;
+    const APUNTADOS_SRV = sinRepartir ? ((REP && REP.pool) || []) : [];
+    const apuntados = APUNTADOS_SRV.map((p, i) => ({
+      nombre: p.nombre, inicial: (p.nombre || '—').charAt(0), avatar: avatarRep(i, true),
+      pastilla: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 8px 0 8px;border-radius:999px;background:#FAF3E4;border:1px solid transparent;font:500 14px/1 \'Inter Tight\',sans-serif;color:#14342A',
+      enlace: 'flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:0 -9px 0 0;border-radius:999px',
+      circulo: 'width:26px;height:26px;border-radius:999px;background:rgba(20,52,42,.09);color:#1B5138;display:flex;align-items:center;justify-content:center;font:500 12px/1 \'Inter Tight\',sans-serif',
+      perfil: '/miembro?id=' + p.profileId,
+      tomar: null
+    }));
+
     // quien está en espera se arrastra igual que quien está en una mesa:
     // meterlo en un hueco es la mitad del trabajo de repartir.
     const espera = ESPERA_SRV.map((p, i) => ({
@@ -2812,7 +2837,7 @@ class Component extends DCLogic {
     }));
 
     return {
-      pestanas, metricas, espera, colas, metricasPago, pagos,
+      pestanas, metricas, colas, metricasPago, pagos,
       fechasRep, zonasRep, tiposRep,
       // Mientras no hemos preguntado todavía no se dice que no hay nada: en
       // el primer pintado el panel afirmaba «no hay fechas abiertas» con
@@ -2874,9 +2899,16 @@ class Component extends DCLogic {
       })),
       unidadVoz: vozRep.unidad,
       cajaEspera: 'border-radius:22px;padding:clamp(18px,2.4vw,24px);margin-top:clamp(24px,3vw,32px);transition:all 180ms ease;border:1px dashed ' + (St.arrastrando ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (St.arrastrando ? '#F2E9D5' : 'transparent'),
-      hayEspera: espera.length > 0 || !!St.arrastrando,
-      tituloEspera: espera.length + ' en espera',
-      notaEspera: 'No dan para ' + vozRep.art + ' ' + vozRep.unidad + ' de seis. Se les avisa hoy y su crédito no se toca.',
+      hayEspera: espera.length > 0 || apuntados.length > 0 || !!St.arrastrando,
+      // La misma caja cuenta dos cosas distintas y tiene que decir cuál.
+      espera: sinRepartir ? apuntados : espera,
+      tituloEspera: sinRepartir
+        ? (apuntados.length === 1 ? 'Una persona apuntada' : apuntados.length + ' apuntados')
+        : espera.length + ' en espera',
+      notaEspera: sinRepartir
+        ? ('Todavía sin repartir: nadie tiene ' + vozRep.unidad + ' aún. Dale a «Volver a repartir» para armarlas.'
+          + (fueraDelPool ? ' Hay ' + fueraDelPool + ' más apuntado' + (fueraDelPool === 1 ? '' : 's') + ' que no entra' + (fueraDelPool === 1 ? '' : 'n') + ' al reparto: sin verificar o sin cuestionario.' : ''))
+        : 'No dan para ' + vozRep.art + ' ' + vozRep.unidad + ' de seis. Se les avisa hoy y su crédito no se toca.',
       cola, hayCola: porConciliar > 0, sinCola: porConciliar === 0,
       esMesas: esta('mesas'), esVerificaciones: esta('verificaciones'), esPagos: esta('pagos'),
       esReportes: esta('reportes'), esFechas: esta('fechas'), esLocales: esta('locales'),

@@ -94,7 +94,7 @@
     </sc-if>
 
     <sc-if value="{{ esAbierta }}" hint-placeholder-val="{{ true }}">
-      <div style="animation:aro-open 460ms ease both">
+      <div id="abierta" style="animation:aro-open 460ms ease both">
 
         <div style="{{ selloAbierto }}">ABIERTO</div>
 
@@ -185,7 +185,7 @@
     </sc-if>
 
     <sc-if value="{{ esPasada }}" hint-placeholder-val="{{ false }}">
-      <div style="animation:aro-open 380ms ease both">
+      <div id="pasada" style="animation:aro-open 380ms ease both">
         <div style="{{ selloEspera }}">ANOCHE</div>
         <h1 style="{{ h1 }}">¿Qué tal estuvo?</h1>
         <p style="{{ bajada }}">{{ textoAnoche }}</p>

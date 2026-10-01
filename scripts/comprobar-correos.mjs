@@ -128,6 +128,8 @@ function sinCerrar(html) {
 }
 
 const rutas = new Map()
+/** ruta → anclas que los correos prometen dentro de esa pantalla. */
+const anclas = new Map()
 const problemas = []
 const avisos = []
 
@@ -156,9 +158,18 @@ for (const fichero of readdirSync(dir).filter((f) => f.endsWith('.html')).sort()
     // `{{{ sitioWeb }}}/loquesea` → una ruta que se puede pedir.
     const interna = href.match(/^\{\{\{\s*sitioWeb\s*\}\}\}(\/[^"]*)$/)
     if (interna) {
-      const ruta = interna[1].split('#')[0]
+      const [ruta, ancla] = interna[1].split('#')
       if (!rutas.has(ruta)) rutas.set(ruta, new Set())
       rutas.get(ruta).add(`${fichero} (${tipo})`)
+      // El ancla se comprobaba tirándola a la basura. `/mi-mesa#pasada` daba
+      // ✓ 200 durante meses y el botón del correo no llevaba a ninguna parte:
+      // las fases de Mi mesa se recorrían por hash en su entrega, eso se quitó
+      // a propósito —la fase la decide el servidor— y dos de los tres `id` se
+      // fueron con el cambio. Un 200 no dice que el ancla exista.
+      if (ancla) {
+        if (!anclas.has(ruta)) anclas.set(ruta, new Set())
+        anclas.get(ruta).add({ ancla, quien: `${fichero} (${tipo})` })
+      }
       continue
     }
 
@@ -187,9 +198,11 @@ for (const fichero of readdirSync(dir).filter((f) => f.endsWith('.html')).sort()
 console.log(`Pidiendo ${rutas.size} rutas a ${SITIO}\n`)
 for (const [ruta, quien] of [...rutas].sort()) {
   let code = 0
+  let cuerpo = ''
   try {
     const r = await fetch(SITIO + ruta, { redirect: 'follow', signal: AbortSignal.timeout(15_000) })
     code = r.status
+    if (anclas.has(ruta)) cuerpo = await r.text()
   } catch {
     code = 0
   }
@@ -198,6 +211,18 @@ for (const [ruta, quien] of [...rutas].sort()) {
   console.log(`${bien ? '✓' : '✗'} ${String(code).padEnd(4)} ${ruta.padEnd(16)} ${lista}`)
   if (!bien) {
     problemas.push(`${ruta} responde ${code || 'nada'} · lo usan: ${lista}`)
+    continue
+  }
+
+  // Y que el ancla exista DENTRO de esa pantalla.
+  for (const { ancla, quien: deQuien } of anclas.get(ruta) ?? []) {
+    const hay = new RegExp(`(id|name)="${ancla.replace(/[^\w-]/g, '')}"`).test(cuerpo)
+    console.log(`${hay ? '✓' : '✗'}      ${('#' + ancla).padEnd(16)} ${deQuien}`)
+    if (!hay) {
+      problemas.push(
+        `${ruta}#${ancla} no existe en esa pantalla · lo usa: ${deQuien}`
+        + '\n      → la pantalla carga pero el botón no salta a ningún sitio')
+    }
   }
 }
 

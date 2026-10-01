@@ -63,8 +63,24 @@ export async function GET(request: Request) {
 
   const { data: pool } = await admin
     .from('v_matching_pool')
-    .select('profile_id')
+    .select('profile_id, zones')
     .eq('event_id', evento.id)
+
+  // Quiénes son, no cuántos.
+  //
+  // Hasta ahora esto devolvía solo el número y el panel no podía enseñar a
+  // nadie hasta que hubiera una corrida: entrabas a una fecha con dos
+  // apuntados, veías «2» y ninguna cara. Pero apuntarse pasa antes de
+  // repartir, y saber quién se apuntó es justo lo que hace falta para decidir
+  // si vale la pena repartir ya o esperar a que entre más gente.
+  const { data: nombres } = await admin
+    .from('profiles')
+    .select('id, display_name, full_name')
+    .in('id', (pool ?? []).map((x) => x.profile_id).filter((x): x is string => !!x))
+
+  const nombreDe = new Map(
+    (nombres ?? []).map((n) => [n.id, n.display_name || n.full_name || 'Sin nombre']),
+  )
 
   const { count: reservas } = await admin
     .from('bookings')
@@ -125,6 +141,13 @@ export async function GET(request: Request) {
         (evento.restaurants as unknown as { name: string } | null)?.name ?? null,
     },
     apuntados: reservas ?? 0,
+    // Los que entran al reparto, con nombre y con las zonas que aceptan. El
+    // panel los enseña mientras no hay corrida.
+    pool: (pool ?? []).map((x) => ({
+      profileId: x.profile_id,
+      nombre: nombreDe.get(x.profile_id as string) ?? 'Sin nombre',
+      zonas: (x.zones ?? []) as string[],
+    })),
     // Apuntados que NO entran al reparto: sin verificar o sin rasgos. Es la
     // diferencia entre quien se apuntó y quien puede sentarse.
     fueraDelPool: Math.max(0, (reservas ?? 0) - (pool ?? []).length),
