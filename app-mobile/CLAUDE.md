@@ -54,8 +54,9 @@ repetir la llamada si la app murió a mitad, y el aterrizaje por `paso`
 distinto» y relay de Apple, que guardan el `contacto` por `/api/mi-perfil`.
 En Expo Go los dos botones dicen que aún no funcionan (los tokens saldrían a
 nombre de Expo Go). **Para que funcionen de verdad falta, fuera del código:**
-- la cuenta de Apple Developer, la capacidad *Sign in with Apple* en el App ID
-  `club.aro.app` y el proveedor Apple en Supabase con ese *bundle ID*;
+- ~~la cuenta de Apple Developer y la capacidad *Sign in with Apple* en el App
+  ID `club.aro.app`~~ (hecho el 01-10: equipo 696DAG5UG5, individual). Falta
+  el proveedor Apple en Supabase con `club.aro.app` en *Client IDs*;
 - los *client ID* de Google (web, iOS, Android) en Google Cloud, añadidos al
   proveedor Google de Supabase (y «Skip nonce check» para iOS), y puestos en
   `app.json` → `extra.google` (`webClientId`, `iosClientId`);
@@ -63,6 +64,16 @@ nombre de Expo Go). **Para que funcionen de verdad falta, fuera del código:**
   `iosUrlScheme` (el client ID de iOS al revés). Está QUITADO a propósito:
   sin ese esquema tumba la build;
 - una build de desarrollo con EAS (el módulo de Google no está en Expo Go).
+
+**Builds y tiendas (01-10):**
+- Android: build `production` (AAB) hecha con el icono de Design. La cuenta de
+  Play Console (`somos.aroclub`, personal, nombre público «Aro Club») está en
+  verificación. La primera AAB se sube a mano a *Closed testing* (12 testers
+  × 14 días).
+- iOS: certificados en EAS hasta oct-2027. La build 1 se subió con
+  `eas submit` a TestFlight (grupo interno «Team (Expo)»).
+- EAS guarda la API key de App Store Connect y `eas.json` tiene el `ascAppId`,
+  así que `eas submit -p ios --latest --non-interactive` ya no pide nada.
 
 **El alta nueva está en `/puerta`** (`src/puerta/`) y es la que abre la
 Bienvenida («Encuentra tu mesa») y el «Empezar» de Entrar. `/empezar` (el
