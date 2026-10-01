@@ -60,5 +60,8 @@
     "prueba:puerta": "tsx pruebas/puerta-contra-la-api.mjs",
     "prueba:alta-app": "tsx pruebas/alta-app-contra-la-api.mjs"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "react-native-worklets": "0.13.0"
+  }
 }
