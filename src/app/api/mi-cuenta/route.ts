@@ -4,7 +4,7 @@ import { situacionDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
-import { sePuedeValorar } from '@/lib/ventana-mesa'
+import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
 
 /**
  * El estado de Mi cuenta, derivado del servidor.
@@ -97,7 +97,7 @@ export async function GET() {
   // events tiene DOS claves hacia restaurants —el sitio y el bar del
   // segundo acto— y sin decir cuál, PostgREST responde 300 y la reserva
   // llegaba vacía sin que nada fallara.
-  const { data: reserva, error: errorReserva } = await admin
+  const { data: reservas, error: errorReserva } = await admin
     .from('bookings')
     .select(
       'id, status, event_id, events(starts_at, reveal_at, status, format, restaurants!events_restaurant_id_fkey(name, address, zone_slug))',
@@ -108,10 +108,34 @@ export async function GET() {
     // le ofreciera reservar otra vez algo que ya tiene.
     .in('status', ['pending_payment', 'confirmed', 'attended'])
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    // Varias y no una: la más reciente puede ser la de una cena que ya pasó,
+    // y entonces la viva es la siguiente.
+    .limit(5)
 
   if (errorReserva) console.error('[mi-cuenta] reserva', errorReserva)
+
+  /**
+   * «Viva» es la que todavía no ha terminado.
+   *
+   * Esto no filtraba por fecha, y el efecto era que **la mañana después de tu
+   * cena esta pantalla seguía diciendo «ABIERTO · Tu mesa de esta noche»**,
+   * con el restaurante y los otros cinco, hasta que reservaras otra. No es un
+   * caso raro: le pasa a todo el mundo después de su primera cena.
+   *
+   * Mi mesa sí lo hacía bien —pasa a «anoche» cinco horas después de
+   * empezar—, así que las dos pantallas decían cosas distintas de la misma
+   * cena. Es el mismo fallo que ya se arregló en el reloj de arriba: dos
+   * relojes discrepando sobre lo único que la pantalla promete.
+   *
+   * El umbral sale de `ventana-mesa`, que es de donde sale el de Mi mesa. Una
+   * cifra escrita aquí volvería a separarlos.
+   */
+  const reserva =
+    (reservas ?? []).find((r) => {
+      const ev = r.events as unknown as { starts_at: string } | null
+      if (!ev) return false
+      return Date.now() < new Date(ev.starts_at).getTime() + FIN_CENA
+    }) ?? null
 
   // La próxima fecha abierta, para quien todavía no ha reservado. El copy
   // decía "Ya van 34 apuntados y se cierra el martes" con doce apuntados y

@@ -34,6 +34,53 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const BUZON = process.env.CORREO_REENVIO ?? ''
 
 /**
+ * El cuerpo de un correo entrante, que el webhook no trae.
+ *
+ * `GET /emails/receiving/{id}` devuelve `text`, `html`, `headers` y la lista
+ * de adjuntos. Es una llamada más por correo recibido, y no hay forma de
+ * ahorrársela: el webhook es solo el aviso de que llegó algo.
+ *
+ * **Nunca lanza.** Si esto falla, el correo se guarda igual con lo que haya
+ * —de quién, para quién, el asunto— y se anota el motivo. Perder el cuerpo es
+ * malo; perder además la constancia de que alguien escribió, peor.
+ */
+async function cuerpoDe(
+  id: string | null,
+): Promise<{ text: string | null; html: string | null; adjuntos: number; fallo?: string } | null> {
+  const clave = process.env.RESEND_API_KEY
+  if (!id || !clave) return null
+
+  try {
+    const r = await fetch(`https://api.resend.com/emails/receiving/${encodeURIComponent(id)}`, {
+      headers: { Authorization: `Bearer ${clave}` },
+      signal: AbortSignal.timeout(15_000),
+    })
+
+    if (!r.ok) {
+      const motivo = `${r.status} ${(await r.text().catch(() => '')).slice(0, 160)}`
+      console.error('[correo entrante] no se pudo leer el cuerpo', motivo)
+      return { text: null, html: null, adjuntos: 0, fallo: motivo }
+    }
+
+    const j = (await r.json()) as {
+      text?: string | null
+      html?: string | null
+      attachments?: unknown[]
+    }
+
+    return {
+      text: typeof j.text === 'string' ? j.text : null,
+      html: typeof j.html === 'string' ? j.html : null,
+      adjuntos: Array.isArray(j.attachments) ? j.attachments.length : 0,
+    }
+  } catch (e) {
+    const motivo = e instanceof Error ? e.message : 'sin respuesta'
+    console.error('[correo entrante] no se pudo leer el cuerpo', motivo)
+    return { text: null, html: null, adjuntos: 0, fallo: motivo }
+  }
+}
+
+/**
  * Comprueba la firma del webhook (esquema Svix, que es el que usa Resend).
  *
  * Sin esto, cualquiera que sepa la URL puede meternos correos inventados en
@@ -138,14 +185,31 @@ export async function POST(request: Request) {
     .is('deleted_at', null)
     .maybeSingle()
 
+  const proveedorId =
+    typeof d.email_id === 'string' ? d.email_id : typeof d.id === 'string' ? d.id : null
+
+  // El cuerpo NO viene en el webhook, y esto costó caro.
+  //
+  // Resend manda solo los metadatos —de, para, asunto, adjuntos— y lo dice en
+  // su documentación: «Webhooks do not include the email body, headers, or
+  // attachments, only their metadata». Leíamos `d.text` y `d.html`, que nunca
+  // existen, así que cada correo entrante se guardaba con el cuerpo en NULL y
+  // el reenvío salía con la cabecera puesta y nada debajo. El código de
+  // verificación de Play Console llegó así y se perdió.
+  //
+  // El cuerpo se pide aparte, con el id del correo.
+  const contenido = await cuerpoDe(proveedorId)
+
   const fila = {
     de,
     para: soloCorreo(direccionDe(d.to)) || null,
     asunto: typeof d.subject === 'string' ? d.subject : null,
-    texto: typeof d.text === 'string' ? d.text : null,
-    html: typeof d.html === 'string' ? d.html : null,
+    // Lo que diga la API manda; el webhook queda de respaldo por si algún día
+    // sí lo trae.
+    texto: contenido?.text ?? (typeof d.text === 'string' ? d.text : null),
+    html: contenido?.html ?? (typeof d.html === 'string' ? d.html : null),
     profile_id: perfil?.id ?? null,
-    proveedor_id: typeof d.email_id === 'string' ? d.email_id : (typeof d.id === 'string' ? d.id : null),
+    proveedor_id: proveedorId,
     crudo: evento as never,
   }
 
@@ -172,6 +236,12 @@ export async function POST(request: Request) {
     `border-bottom:1px solid #DCD3BC;padding-bottom:10px;margin-bottom:16px">` +
     `Respuesta a <strong>${fila.para ?? 'Aro Club'}</strong> de <strong>${de}</strong>` +
     (perfil ? ' · es un miembro' : ' · no está en la base') +
+    // Los adjuntos se piden por otra API y hoy no se traen. Decirlo es la
+    // diferencia entre «no mandó nada» y «mandó algo que no estás viendo».
+    (contenido?.adjuntos
+      ? ` · <strong>trae ${contenido.adjuntos} adjunto${contenido.adjuntos === 1 ? '' : 's'}</strong>, míralo en Resend`
+      : '') +
+    (contenido?.fallo ? ` · <strong>no pudimos leer el cuerpo</strong> (${contenido.fallo})` : '') +
     `</div>`
 
   const r = await enviar(
@@ -184,7 +254,12 @@ export async function POST(request: Request) {
     .from('correos_entrantes')
     .update({
       reenviado_at: r.estado === 'enviado' ? new Date().toISOString() : null,
-      error_reenvio: r.estado === 'enviado' ? null : (r.estado === 'error' ? r.motivo : 'sin remitente'),
+      error_reenvio:
+        r.estado === 'enviado'
+          ? (contenido?.fallo ? `cuerpo: ${contenido.fallo}` : null)
+          : r.estado === 'error'
+            ? r.motivo
+            : 'sin remitente',
     } as never)
     .eq('id', guardado?.id ?? '')
 
