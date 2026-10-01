@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { situacionDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -131,6 +132,50 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Esa fecha ya cerró.' }, { status: 409 })
   }
 
+  // Antes que las zonas, a propósito.
+  //
+  // El filtro de zonas respondía primero, y a quien no ha contestado el
+  // cuestionario le decía «esta fecha no abre ninguna de tus zonas» — que es
+  // verdad y además engañoso: no tiene zonas porque no ha contestado. La
+  // respuesta útil es la de más atrás en el embudo.
+  // Lista para reservar: TODO el embudo, no solo la verificación.
+  //
+  // Esto miraba `v_verified_profiles` y nada más, y por ahí se colaba el caso
+  // que encontró Michael con una cuenta nueva de Apple: cinco respuestas de
+  // diecisiete, identidad aprobada, y reservar la dejaba pasar. Inicio decía
+  // «te faltan preguntas» y esta ruta decía que sí: dos sitios contestando
+  // distinto a la misma pregunta.
+  //
+  // `situacionDePerfil` es el único que sabe qué falta —lo usan Inicio, el
+  // cuestionario y las tres puertas—, y `puedeReservar` ya incluye la
+  // verificación. Preguntarle aquí es lo que hace que no puedan discrepar.
+  const situacion = await situacionDePerfil(user.id)
+
+  if (!situacion.puedeReservar) {
+    const faltan = situacion.falta.preguntas.length
+    return NextResponse.json(
+      {
+        // El texto sigue al PASO, no a la cifra. Si no, decía «te faltan 17
+        // preguntas» y `donde` mandaba a /datos: el mensaje y el destino
+        // contando cosas distintas, que es el fallo que estamos arreglando.
+        error:
+          situacion.paso === 'verificacion'
+            ? 'Verifica tu identidad antes de reservar.'
+            : situacion.paso === 'preguntas'
+              ? `Te ${faltan === 1 ? 'falta 1 pregunta' : `faltan ${faltan} preguntas`} por contestar.`
+              : 'Te faltan tus datos de contacto antes de reservar.',
+        motivo: 'perfil-incompleto',
+        // Para que quien llame no tenga que deducirlo del texto del error:
+        // en qué paso se quedó y a qué pantalla hay que mandarla.
+        paso: situacion.paso,
+        donde: situacion.donde,
+        faltan,
+      },
+      { status: 409 },
+    )
+  }
+
+
   // Y el cierre A MANO, que hasta ahora no lo miraba nadie. Esta ruta solo
   // comprobaba el reloj, así que una fecha cerrada desde el panel seguía
   // aceptando apuntados por API: la pantalla escondía el botón y el candado
@@ -172,18 +217,6 @@ export async function POST(request: Request) {
       },
       { status: 409 },
     )
-  }
-
-  // Verificada, o no hay mesa. Es la regla que sostiene que cinco
-  // desconocidos se sienten con ella.
-  const { data: verificada } = await admin
-    .from('v_verified_profiles')
-    .select('id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!verificada) {
-    return NextResponse.json({ error: 'Verifica tu identidad antes de reservar.' }, { status: 409 })
   }
 
   const { data: saldo } = await admin

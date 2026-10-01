@@ -258,7 +258,10 @@
 class Component extends DCLogic {
   state = { fase: 'intro', movil: true, toma: 0, tomas: {}, previas: {}, intentos: 0, repetirSolo: null,
             subiendo: false, fallo: '', motivo: null,
-            celdas: [], ladoQr: 0, traspaso: null };
+            celdas: [], ladoQr: 0, traspaso: null,
+            // null = todavía no lo sabemos. No es lo mismo que cero, y la
+            // pantalla no puede afirmar «completo» mientras no haya llegado.
+            faltan: null, donde: '/cuestionario' };
 
   TIPOS = ['cedula', 'selfie'];
 
@@ -283,7 +286,7 @@ class Component extends DCLogic {
     fetch('/api/verificacion' + (t ? '?t=' + encodeURIComponent(t) : ''))
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((d) => {
-        if (d.estado === 'revision') { this.setState({ fase: 'revision' }); return; }
+        if (d.estado === 'revision') { this.setState({ fase: 'revision', faltan: d.faltan, donde: d.donde }); return; }
         if (d.estado === 'rechazada') { this.setState({ fase: 'rechazo', motivo: d.motivo }); return; }
         // Antes se le expulsaba a Mi cuenta. Pero esta pantalla le prometio
         // que sus fotos se borran a los noventa dias, y echarle de aqui
@@ -502,10 +505,21 @@ class Component extends DCLogic {
         ';transition:background 260ms ease'
     }));
 
+    // La cifra la pone el servidor, no esta pantalla.
+    //
+    // Decía «Tu perfil está completo» como texto fijo, con un comentario que
+    // explicaba por qué no llevaba cifra: no pedía el catálogo. El efecto es
+    // que a quien subió la cédula con cinco respuestas de diecisiete se le
+    // afirmaba que estaba completo, mientras Inicio le decía que le faltaban
+    // doce. Ahora `/api/verificacion` devuelve `faltan` y aquí solo se afirma
+    // lo que de verdad es. `null` —todavía sin respuesta— no afirma nada.
+    const faltanPreg = this.state.faltan;
     const mientras = [
-      // Sin cifra: esta pantalla no pide el catalogo, y un numero escrito
-      // aqui es un numero que se queda viejo sin que nadie se entere.
-      ['✓', 'Tu perfil está completo', 'Tus respuestas ya están guardadas. No hay que tocar nada más.'],
+      faltanPreg
+        ? ['·',
+           faltanPreg === 1 ? 'Te falta 1 pregunta' : 'Te faltan ' + faltanPreg + ' preguntas',
+           'Puedes contestarlas mientras revisamos tu identidad. Sin ellas no podemos sentarte en una mesa.']
+        : ['✓', 'Tu perfil está completo', 'Tus respuestas ya están guardadas. No hay que tocar nada más.'],
       ['·', 'Te avisamos cuando haya mesa', 'En cuanto se apruebe y se abra mesa en tu zona, llega un solo correo con el día y la hora.']
     ].map((m) => ({
       icono: m[0], titulo: m[1], cuerpo: m[2],

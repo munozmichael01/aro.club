@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { encolar } from '@/lib/correos'
 import { diaCompleto } from '@/lib/fechas'
 import { cerrarTraspasos, perfilDeTraspaso } from '@/lib/traspaso'
+import { situacionDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -115,11 +116,25 @@ export async function GET(request: Request) {
       ? new Date(new Date(revisadaEl).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
       : null
 
+  // Qué le queda del cuestionario.
+  //
+  // La pantalla de «en revisión» decía «Tu perfil está completo · Tus
+  // respuestas ya están guardadas» como texto fijo, y su comentario explicaba
+  // por qué no llevaba cifra: no pedía el catálogo. Así que a quien subió la
+  // cédula con cinco respuestas de diecisiete se le decía que estaba completo
+  // mientras Inicio le decía lo contrario. La cifra la pone esta ruta, que sí
+  // puede preguntársela al embudo.
+  const situacion = await situacionDePerfil(user)
+
   return NextResponse.json({
     estado,
     cedulaLista: Boolean(doc && doc.status !== 'rejected'),
     selfieLista: Boolean(selfie && selfie.status !== 'rejected'),
     motivo,
+    faltan: situacion.falta.preguntas.length,
+    paso: situacion.paso,
+    donde: situacion.donde,
+    puedeReservar: situacion.puedeReservar,
     // Escritas aquí, como en el resto: la pantalla no arma fechas a mano.
     revisadaEl: revisadaEl ? diaCompleto(revisadaEl) : null,
     seBorraEl: seBorraEl ? diaCompleto(seBorraEl) : null,

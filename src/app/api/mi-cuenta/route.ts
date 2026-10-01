@@ -397,6 +397,18 @@ export async function GET() {
         }
       : null,
     estado,
+    // El embudo en crudo, además del `estado` que esta pantalla usa para
+    // elegir tarjeta.
+    //
+    // `estado` es una decisión de ESTA pantalla —seis tarjetas— y la app
+    // tenía que adivinar el embudo a partir de `verif`, que solo habla de la
+    // identidad. De ahí salía el caso de la cuenta nueva de Apple: cinco
+    // respuestas de diecisiete, identidad aprobada, y el botón de reservar
+    // encendido. Con esto, quien pinta el botón mira lo mismo que mira
+    // `/api/reservar` al decidir si deja pasar.
+    paso: situacion.paso,
+    donde: situacion.donde,
+    puedeReservar: situacion.puedeReservar,
     verif,
     motivoRechazo: rechazada?.rejection_reason ?? null,
     respuestas: { faltan, total: totalPreguntas },
