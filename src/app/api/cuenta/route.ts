@@ -21,6 +21,28 @@ import { createClient } from '@/lib/supabase/server'
  * juan@gmail.com, casar por correo dejaría el lead huérfano.
  */
 
+/**
+ * Por qué no se pudo, en un campo y no en una frase.
+ *
+ * Toda respuesta que no sea un alta lleva `motivo`, que es estable, y `error`,
+ * que es lo que lee la persona y puede reescribirse cuando a alguien no le
+ * guste cómo suena. La app pedía esto: estaba comparando el TEXTO del error
+ * para saber si un correo ya tenía cuenta, y el día que cambiemos una palabra
+ * se le rompe sin que nada falle.
+ *
+ *   ya_tiene_cuenta     ese correo ya tiene cuenta → a Entrar
+ *   telefono_repetido   el teléfono está en otra cuenta → que use otro
+ *   falta               el embudo dice que falta algo (solo por la web)
+ *   sesion_no_valida    la llave no cuadra
+ *   nuestro             se rompió algo nuestro; se puede reintentar tal cual
+ */
+export type MotivoCuenta =
+  | 'ya_tiene_cuenta'
+  | 'telefono_repetido'
+  | 'falta'
+  | 'sesion_no_valida'
+  | 'nuestro'
+
 const cuerpo = z.object({
   correo: z.string().trim().toLowerCase().email().max(254),
   /**
@@ -47,13 +69,13 @@ export async function POST(request: Request) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Cuerpo inválido.' }, { status: 400 })
+    return NextResponse.json({ error: 'Cuerpo inválido.', motivo: 'nuestro' }, { status: 400 })
   }
 
   const parsed = cuerpo.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(
-      { error: 'La contraseña necesita al menos ocho caracteres.' },
+      { error: 'La contraseña necesita al menos ocho caracteres.', motivo: 'nuestro' },
       { status: 400 },
     )
   }
@@ -63,7 +85,10 @@ export async function POST(request: Request) {
   // Con llave se comprueba. Sin ella, se sigue: es el camino de la app, donde
   // no hay lead porque las respuestas van después.
   if (token && !verificar(correo, token)) {
-    return NextResponse.json({ error: 'Sesión no válida.' }, { status: 403 })
+    return NextResponse.json(
+      { error: 'Sesión no válida.', motivo: 'sesion_no_valida' },
+      { status: 403 },
+    )
   }
 
   const admin = createAdminClient()
@@ -95,11 +120,17 @@ export async function POST(request: Request) {
   const altaDirecta = !token
 
   if (!lead && !altaDirecta) {
-    return NextResponse.json({ error: 'Sesión no válida.' }, { status: 403 })
+    return NextResponse.json(
+      { error: 'Sesión no válida.', motivo: 'sesion_no_valida' },
+      { status: 403 },
+    )
   }
   if (lead?.converted_profile_id) {
     // Ya tenía cuenta. No es un error (§3.8): se le manda a entrar.
-    return NextResponse.json({ estado: 'ya_existe' })
+    // 200 y no 409, porque no es un fallo (§3.8): se le manda a entrar. Lleva
+    // el MISMO motivo que el 409 de abajo para que quien lo lea no tenga que
+    // saberse los dos caminos que llevan a lo mismo.
+    return NextResponse.json({ estado: 'ya_existe', motivo: 'ya_tiene_cuenta' })
   }
 
   // No se crea una cuenta a medias. La pantalla guía y el servidor impide,
@@ -128,6 +159,7 @@ export async function POST(request: Request) {
             + (situacion.falta.contacto.length > 1
                 ? ' y ' + (situacion.falta.contacto.length - 1) + ' dato más.'
                 : '.'),
+        motivo: 'falta',
         paso: situacion.paso,
         donde: situacion.donde,
         falta: situacion.falta,
@@ -152,6 +184,7 @@ export async function POST(request: Request) {
         error: yaRegistrado
           ? 'Ese correo ya tiene cuenta. Entra con tu contraseña.'
           : 'No pudimos crear tu cuenta. Es cosa nuestra: inténtalo otra vez.',
+        motivo: yaRegistrado ? 'ya_tiene_cuenta' : 'nuestro',
       },
       { status: yaRegistrado ? 409 : 500 },
     )
@@ -194,6 +227,7 @@ export async function POST(request: Request) {
         error: repetido
           ? 'Ese teléfono ya está en otra cuenta. Usa otro número o entra con la cuenta que ya tienes.'
           : 'No pudimos crear tu cuenta. Es cosa nuestra: inténtalo otra vez.',
+        motivo: repetido ? 'telefono_repetido' : 'nuestro',
       },
       { status: repetido ? 409 : 500 },
     )
