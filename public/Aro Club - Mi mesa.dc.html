@@ -770,7 +770,19 @@ class Component extends DCLogic {
       // Ya no exige una respuesta concreta: los cuatro bloques son
       // opcionales. Lo unico que no vale es mandarla entera en blanco.
       textoEnviar: this.state.enviando ? 'Enviando…' : 'Enviar',
-      botonEnviar: btn(this.state.valor >= 0 ? '#14342A' : 'rgba(20,52,42,.12)', this.state.valor >= 0 ? '#FAF3E4' : '#2C4A38', 'none', this.state.valor >= 0 ? '' : 'cursor:not-allowed'),
+      // El aspecto sale de LO MISMO que decide si el botón hace algo.
+      //
+      // Miraba `this.state.valor`, que en esta pantalla no existe —se llama
+      // `mesaVal` desde que la encuesta pasó a cuatro bloques opcionales—, y
+      // `undefined >= 0` es falso SIEMPRE. O sea: el botón se pintaba gris y
+      // con «no permitido» marcaras lo que marcaras, mientras `aria-disabled`
+      // decía otra cosa. Quien rellenaba la encuesta veía un botón muerto; si
+      // lo pulsaba sin marcar nada tampoco pasaba nada y tampoco se le decía
+      // por qué. Dos fuentes para una sola respuesta, otra vez.
+      botonEnviar: (() => {
+        const hay = this.algoQueContar();
+        return btn(hay ? '#14342A' : 'rgba(20,52,42,.12)', hay ? '#FAF3E4' : '#2C4A38', 'none', hay ? '' : 'cursor:not-allowed');
+      })(),
       // no está `disabled`: sigue siendo enfocable y anuncia por qué no responde
       enviarInerte: this.algoQueContar() ? null : 'true',
       // Reportar deja de ser una tarjeta con titulo propio. No es un paso del
