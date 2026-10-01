@@ -128,7 +128,11 @@ export function Inicio(p: {
     setFalloReserva('')
     const res = await servicio.reservar(id)
     setReservando(false)
-    if (!res.ok) return setFalloReserva(res.error)
+    if (!res.ok) {
+      // El candado del servidor: si falta algo del embudo, se lleva allí.
+      if (res.motivo === 'perfil-incompleto' && res.donde) return p.ir(res.donde)
+      return setFalloReserva(res.error)
+    }
     setAbierta(null)
     // El estado de la cuenta cambia con la reserva: se relee todo.
     cargarTodo()

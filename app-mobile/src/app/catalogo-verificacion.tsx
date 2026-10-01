@@ -14,8 +14,8 @@ import type { crearServicioVerificacion } from '../verificacion/servicio'
 const ESTADOS: Record<string, DeServidor> = {
   'sin-empezar': { estado: 'sin-empezar', cedulaLista: false, selfieLista: false },
   cedula: { estado: 'sin-empezar', cedulaLista: true, selfieLista: false },
-  revision: { estado: 'revision', cedulaLista: true, selfieLista: true },
-  'revision-faltan': { estado: 'revision', cedulaLista: true, selfieLista: true },
+  revision: { estado: 'revision', cedulaLista: true, selfieLista: true, faltan: 0 },
+  'revision-faltan': { estado: 'revision', cedulaLista: true, selfieLista: true, faltan: 12 },
   rechazada: {
     estado: 'rechazada',
     cedulaLista: false,
@@ -30,9 +30,6 @@ export default function Pantalla() {
   const simulado = useMemo((): ReturnType<typeof crearServicioVerificacion> => ({
     async estado() {
       return { ok: true, datos: ESTADOS[estado] ?? ESTADOS['sin-empezar'] }
-    },
-    async faltan() {
-      return estado === 'revision-faltan' ? 12 : 0
     },
     async subir() {
       await new Promise((ok) => setTimeout(ok, 700))

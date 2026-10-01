@@ -53,6 +53,8 @@ export type DeServidor = {
   revisadaEl?: string | null
   seBorraEl?: string | null
   yaBorradas?: boolean
+  /** Preguntas obligatorias pendientes, contadas por el embudo. */
+  faltan?: number
 }
 
 const faltan = (d: DeServidor): Toma[] => [...(d.cedulaLista ? [] : [0 as Toma]), ...(d.selfieLista ? [] : [1 as Toma])]

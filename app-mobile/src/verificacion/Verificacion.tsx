@@ -83,6 +83,8 @@ export function Verificacion(p: {
   const { tapado, levantar } = useVelo()
   const [e, setE] = useState<Estado>(inicial)
   const [errorCarga, setErrorCarga] = useState('')
+  /** Preguntas pendientes, del servidor; `null` si no las dice (y entonces no se afirma nada). */
+  const [faltan, setFaltan] = useState<number | null>(null)
   const [permiso, pedirPermiso] = useCameraPermissions()
   /**
    * Mientras la foto se encoge. «Usar esta» espera a que termine: si no,
@@ -100,7 +102,10 @@ export function Verificacion(p: {
   const cargar = useCallback(async () => {
     setErrorCarga('')
     const r = await servicio.estado()
-    if (r.ok) setE((s) => desdeServidor(s, r.datos))
+    if (r.ok) {
+      setE((s) => desdeServidor(s, r.datos))
+      setFaltan(typeof r.datos.faltan === 'number' ? r.datos.faltan : null)
+    }
     else if (r.status === 401) alEntrar.current()
     else setErrorCarga(r.error)
     levantar()
@@ -110,17 +115,6 @@ export function Verificacion(p: {
     cargar()
   }, [cargar])
 
-  // En revisión se dice cuántas preguntas faltan; mientras no se sabe, nada.
-  const [faltan, setFaltan] = useState<number | null>(null)
-  const enRevision = e.fase === 'revision'
-  useEffect(() => {
-    if (!enRevision) return
-    let vivo = true
-    servicio.faltan().then((n) => vivo && setFaltan(n))
-    return () => {
-      vivo = false
-    }
-  }, [enRevision, servicio])
 
   const hacerFoto = async () => {
     const foto = await camara.current?.takePictureAsync({ quality: 0.9 })

@@ -123,6 +123,9 @@ test('reservar: sin preguntas o datos no se reserva, y se va a completarlos (no 
   // Aunque la verificación esté en revisión: las preguntas van antes.
   assert.equal(M.botonReservar(base({ estado: 'perfil', verif: 'revision', respuestas: { faltan: 1, total: 17 } }), false).texto, 'Te falta 1 pregunta para reservar')
   assert.equal(M.botonReservar(base({ estado: 'datos' }), false).destino, '/datos')
+  // Con los campos del embudo, manda `paso`/`donde` del servidor.
+  const conPaso = M.botonReservar(base({ paso: 'preguntas', donde: '/cuestionario', puedeReservar: false, respuestas: { faltan: 3, total: 17 } }), false)
+  assert.deepEqual(conPaso, { accion: 'completar', texto: 'Te faltan 3 preguntas para reservar', destino: '/cuestionario' })
 })
 
 test('lo próximo: solo lo vivo, y el pago reportado no es confirmada', () => {

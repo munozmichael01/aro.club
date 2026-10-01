@@ -7,7 +7,9 @@ import type { MiCuenta, MiMesa } from './maquina'
  * para que la prueba contra el servidor use este mismo código.
  */
 type Api = ReturnType<typeof crearApi>
-export type Resultado<T> = { ok: true; datos: T } | { ok: false; error: string; status?: number }
+export type Resultado<T> =
+  | { ok: true; datos: T }
+  | { ok: false; error: string; status?: number; motivo?: string; donde?: string }
 
 async function intentar<T>(f: () => Promise<Response>, porDefecto: string): Promise<Resultado<T>> {
   let r: Response
@@ -25,7 +27,9 @@ async function intentar<T>(f: () => Promise<Response>, porDefecto: string): Prom
     /* no era JSON */
   }
   if (r.ok && j) return { ok: true, datos: j as T }
-  return { ok: false, error: j?.error || porDefecto, status: r.status }
+  // `motivo` es el código estable del servidor (p. ej. 'perfil-incompleto'),
+  // y `donde` la ruta del paso pendiente: con eso se lleva, no solo se avisa.
+  return { ok: false, error: j?.error || porDefecto, status: r.status, motivo: j?.motivo, donde: j?.donde }
 }
 
 export function crearServicioCuenta(api: Api) {

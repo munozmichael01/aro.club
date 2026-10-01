@@ -47,6 +47,10 @@ export type MiCuenta = {
   verif: 'sin' | 'revision' | 'ok'
   motivoRechazo: string | null
   respuestas: { faltan: number; total: number }
+  /** Del embudo (01-10-2026). Opcionales: un servidor anterior no los manda y entonces vale `estado`. */
+  paso?: 'correo' | 'preguntas' | 'contacto' | 'cuenta' | 'verificacion' | 'listo'
+  donde?: string
+  puedeReservar?: boolean
   creditos: number
   reserva: { id: string; formato: string | null; empiezaEn: string | null; revelaEn: string | null; revelado: boolean; zonaHoraria?: string | null } | null
 }
@@ -220,9 +224,11 @@ export function botonReservar(d: MiCuenta, reservando: boolean): Reserva {
   // reparto no puede sentar a quien no conoce. Qué falta lo dice el servidor
   // con `estado`, que sale del embudo; antes aquí solo se miraba `verif`, y
   // a quien le faltaban doce preguntas se le mandaba a verificarse.
-  if (d.estado === 'datos') return { accion: 'completar', texto: T.agenda.datosPrimero, destino: T.ESTADOS.datos.destino }
-  if (d.estado === 'perfil')
-    return { accion: 'completar', texto: T.agenda.preguntasPrimero(d.respuestas.faltan), destino: T.ESTADOS.perfil.destino }
+  const paso = d.paso ?? (d.estado === 'perfil' ? 'preguntas' : d.estado === 'datos' ? 'contacto' : undefined)
+  if (paso === 'preguntas')
+    return { accion: 'completar', texto: T.agenda.preguntasPrimero(d.respuestas.faltan), destino: d.donde ?? T.ESTADOS.perfil.destino }
+  if (paso === 'contacto' || paso === 'cuenta')
+    return { accion: 'completar', texto: T.agenda.datosPrimero, destino: d.donde ?? T.ESTADOS.datos.destino }
   // Quien YA subió la verificación no va a repetirla: ya hizo su parte.
   if (d.verif === 'revision') return { accion: 'nada', texto: T.agenda.enRevision }
   if (d.verif !== 'ok') return { accion: 'verificar', texto: T.agenda.verificaPrimero }
