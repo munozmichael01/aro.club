@@ -42,6 +42,13 @@ export function crearServicioVerificacion(api: Api) {
   return {
     estado: () => intentar<DeServidor>(() => api.pedir('/verificacion'), T.sinRespuesta.cargar, T.sinRespuesta.cargar, 'estado'),
 
+    /** Cuántas preguntas faltan, con la cuenta del embudo (la de Inicio). `null` si no se sabe. */
+    faltan: async (): Promise<number | null> => {
+      const r = await intentar<{ respuestas?: { faltan?: number } }>(() => api.pedir('/mi-cuenta'), '', '', 'faltan')
+      const n = r.ok ? r.datos.respuestas?.faltan : undefined
+      return typeof n === 'number' ? n : null
+    },
+
     subir: (toma: Toma, uri: string) => {
       const cuerpo = new FormData()
       cuerpo.append('tipo', TIPOS[toma])

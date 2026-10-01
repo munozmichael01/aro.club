@@ -15,6 +15,7 @@ const ESTADOS: Record<string, DeServidor> = {
   'sin-empezar': { estado: 'sin-empezar', cedulaLista: false, selfieLista: false },
   cedula: { estado: 'sin-empezar', cedulaLista: true, selfieLista: false },
   revision: { estado: 'revision', cedulaLista: true, selfieLista: true },
+  'revision-faltan': { estado: 'revision', cedulaLista: true, selfieLista: true },
   rechazada: {
     estado: 'rechazada',
     cedulaLista: false,
@@ -30,10 +31,13 @@ export default function Pantalla() {
     async estado() {
       return { ok: true, datos: ESTADOS[estado] ?? ESTADOS['sin-empezar'] }
     },
+    async faltan() {
+      return estado === 'revision-faltan' ? 12 : 0
+    },
     async subir() {
       await new Promise((ok) => setTimeout(ok, 700))
       return { ok: true, datos: { estado: 'recibida' } }
     },
   }), [estado]) // estable: si no, la carga se relanzaría en cada render
-  return <Verificacion key={estado} servicio={simulado} camara={false} alCuenta={() => router.push('/cuenta')} alEntrar={() => router.push('/entrar')} />
+  return <Verificacion key={estado} servicio={simulado} camara={false} alCuenta={() => router.push('/cuenta')} alPreguntas={() => router.push('/cuestionario')} alEntrar={() => router.push('/entrar')} />
 }

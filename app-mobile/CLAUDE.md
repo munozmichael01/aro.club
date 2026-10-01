@@ -98,6 +98,16 @@ no recibe push remotas) y trabajo del backend (guardar tokens y mandar).
 
 ## Decisiones tomadas (no se reabren)
 
+- **Sin las preguntas obligatorias (y los datos) no se reserva** (Michael,
+  01-10-2026). Qué falta lo dice el servidor (`embudo.ts`, vía `estado` y
+  `respuestas.faltan` de `/api/mi-cuenta`); ninguna pantalla lo decide por
+  su cuenta. El botón Reservar manda a completar, no a verificarse, y «en
+  revisión» solo dice «perfil completo» si `faltan === 0`. El candado del
+  servidor (`/api/reservar`) lo pone el agente de la web.
+- **Todo ajuste se hace en la app Y en la web.** Lo de la web y el servidor
+  va en un mensaje al agente (ficheros y líneas); lo compartido, primero al
+  servidor.
+
 - **Un color de cuerpo: `#33513F`** (AAA). La web tiene dos y es deriva. Si
   una maqueta trae otro tono para el mismo papel, se usa el token y se anota.
   La tabla de contrastes de la hoja está inflada ~7 %: medir con WCAG.

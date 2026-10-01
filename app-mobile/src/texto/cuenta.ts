@@ -135,6 +135,8 @@ export const agenda = {
   apuntandote: 'Apuntándote',
   enRevision: 'Te avisamos al aprobarla',
   verificaPrimero: 'Verifica tu identidad primero',
+  preguntasPrimero: (n: number) => (n === 1 ? 'Te falta 1 pregunta para reservar' : `Te faltan ${n} preguntas para reservar`),
+  datosPrimero: 'Completa tus datos para reservar',
   reservar: (conCredito: boolean, precioTexto: string) => `Reservar mi puesto · ${conCredito ? '1 encuentro' : precioTexto}`,
   zonaPorConfirmar: 'Zona por confirmar',
   noPudimos: 'No pudimos apuntarte.',

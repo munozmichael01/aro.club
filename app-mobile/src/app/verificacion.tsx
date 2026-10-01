@@ -8,5 +8,5 @@ import { crearServicioVerificacion } from '../verificacion/servicio'
 /** /verificacion, como en la web: cédula y selfie, que revisa una persona. */
 export default function Pantalla() {
   const servicio = useMemo(() => crearServicioVerificacion(api), [])
-  return <Verificacion servicio={servicio} alCuenta={() => router.replace('/cuenta')} alEntrar={() => router.replace('/entrar')} />
+  return <Verificacion servicio={servicio} alCuenta={() => router.replace('/cuenta')} alPreguntas={() => router.push('/cuestionario')} alEntrar={() => router.replace('/entrar')} />
 }

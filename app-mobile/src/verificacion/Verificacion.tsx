@@ -33,6 +33,7 @@ import {
   empezar,
   falloAlSubir,
   inicial,
+  pasosRevision,
   repetir,
   subida,
   subiendo,
@@ -71,6 +72,8 @@ function Encabezado({ eyebrow, titulo, bajada }: { eyebrow: string; titulo: stri
 export function Verificacion(p: {
   servicio: Servicio
   alCuenta: () => void
+  /** A las preguntas que falten (desde «en revisión»). */
+  alPreguntas?: () => void
   /** Sin sesión: a entrar, diciendo que se venía aquí. */
   alEntrar: () => void
   /** La cámara de verdad; en el catálogo de desarrollo se sustituye. */
@@ -106,6 +109,18 @@ export function Verificacion(p: {
   useEffect(() => {
     cargar()
   }, [cargar])
+
+  // En revisión se dice cuántas preguntas faltan; mientras no se sabe, nada.
+  const [faltan, setFaltan] = useState<number | null>(null)
+  const enRevision = e.fase === 'revision'
+  useEffect(() => {
+    if (!enRevision) return
+    let vivo = true
+    servicio.faltan().then((n) => vivo && setFaltan(n))
+    return () => {
+      vivo = false
+    }
+  }, [enRevision, servicio])
 
   const hacerFoto = async () => {
     const foto = await camara.current?.takePictureAsync({ quality: 0.9 })
@@ -216,7 +231,7 @@ export function Verificacion(p: {
         </Texto>
         <Tarjeta style={{ marginTop: 28, gap: 16 }}>
           <Texto variante="etiquetaChica">{T.revision.mientras}</Texto>
-          {T.revision.pasos.map((m) => (
+          {pasosRevision(faltan).map((m) => (
             <View key={m.titulo} style={{ flexDirection: 'row', gap: 13 }}>
               <View style={[estilos.marquita, { backgroundColor: m.hecho ? color.verde : verdeAlfa(0.14) }]}>
                 {m.hecho ? <Visto c={color.crema} tam={16} /> : null}
@@ -231,7 +246,8 @@ export function Verificacion(p: {
           ))}
         </Tarjeta>
         <View style={estilos.acciones}>
-          <Boton texto={T.revision.cuenta} onPress={p.alCuenta} />
+          {faltan && p.alPreguntas ? <Boton texto={T.revision.responder} onPress={p.alPreguntas} /> : null}
+          <Boton tipo={faltan && p.alPreguntas ? 'fantasma' : undefined} texto={T.revision.cuenta} onPress={p.alCuenta} />
         </View>
       </View>,
     )

@@ -1,3 +1,4 @@
+import * as T from '../texto/verificacion'
 /**
  * La verificación, sin React. Las fases de la web (sin la del QR, que es del
  * ordenador) con un cambio que pide el pedido (§7, criterio 9.3): la foto NO
@@ -98,4 +99,17 @@ export const atascado = (e: Estado) => e.intentos >= 2
 /** Las barras de los dos pasos: hechos, el actual, y lo que falta. */
 export function barras(e: Estado): ('hecha' | 'actual' | 'falta')[] {
   return ([0, 1] as Toma[]).map((t) => (!e.pendientes.includes(t) ? 'hecha' : t === e.toma ? 'actual' : 'falta'))
+}
+
+export type PasoRevision = { hecho: boolean; titulo: string; cuerpo: string }
+
+/**
+ * Lo de «mientras tanto» en revisión. Antes decía «Tu perfil está completo»
+ * siempre, sin preguntar: a quien le faltaban doce preguntas le daba por
+ * terminado (pasó el 01-10-2026, cuenta nueva con Apple). Cuántas faltan lo
+ * cuenta el servidor; si no se sabe (`null`), no se afirma nada.
+ */
+export function pasosRevision(faltan: number | null): PasoRevision[] {
+  if (faltan == null) return [T.revision.aviso]
+  return [faltan > 0 ? T.revision.faltan(faltan) : T.revision.completo, T.revision.aviso]
 }

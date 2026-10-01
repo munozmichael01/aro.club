@@ -212,10 +212,17 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
 }
 
 /** Qué hace «Reservar» según quién lo pulsa. El candado de verdad está en el servidor. */
-export type Reserva = { accion: 'nada' | 'verificar' | 'pagar' | 'reservar'; texto: string }
+export type Reserva = { accion: 'nada' | 'completar' | 'verificar' | 'pagar' | 'reservar'; texto: string; destino?: string }
 
 export function botonReservar(d: MiCuenta, reservando: boolean): Reserva {
   if (reservando) return { accion: 'nada', texto: T.agenda.apuntandote }
+  // Sin las preguntas o los datos no se reserva (decidido el 01-10-2026): el
+  // reparto no puede sentar a quien no conoce. Qué falta lo dice el servidor
+  // con `estado`, que sale del embudo; antes aquí solo se miraba `verif`, y
+  // a quien le faltaban doce preguntas se le mandaba a verificarse.
+  if (d.estado === 'datos') return { accion: 'completar', texto: T.agenda.datosPrimero, destino: T.ESTADOS.datos.destino }
+  if (d.estado === 'perfil')
+    return { accion: 'completar', texto: T.agenda.preguntasPrimero(d.respuestas.faltan), destino: T.ESTADOS.perfil.destino }
   // Quien YA subió la verificación no va a repetirla: ya hizo su parte.
   if (d.verif === 'revision') return { accion: 'nada', texto: T.agenda.enRevision }
   if (d.verif !== 'ok') return { accion: 'verificar', texto: T.agenda.verificaPrimero }

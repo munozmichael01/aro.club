@@ -116,6 +116,15 @@ test('reservar: el botón dice lo que va a pasar según quién lo pulsa', () => 
   assert.equal(M.botonReservar(base(), true).texto, 'Apuntándote')
 })
 
+test('reservar: sin preguntas o datos no se reserva, y se va a completarlos (no a verificarse)', () => {
+  // Pasó el 01-10-2026: con 12 preguntas pendientes, el botón mandaba a verificarse.
+  const sinPreguntas = M.botonReservar(base({ estado: 'perfil', verif: 'sin', respuestas: { faltan: 12, total: 17 } }), false)
+  assert.deepEqual(sinPreguntas, { accion: 'completar', texto: 'Te faltan 12 preguntas para reservar', destino: '/cuestionario' })
+  // Aunque la verificación esté en revisión: las preguntas van antes.
+  assert.equal(M.botonReservar(base({ estado: 'perfil', verif: 'revision', respuestas: { faltan: 1, total: 17 } }), false).texto, 'Te falta 1 pregunta para reservar')
+  assert.equal(M.botonReservar(base({ estado: 'datos' }), false).destino, '/datos')
+})
+
 test('lo próximo: solo lo vivo, y el pago reportado no es confirmada', () => {
   const plan = (x: Partial<M.Plan>): M.Plan => ({ empiezaEn: CENA, formato: 'dinner', estado: 'confirmed', cancelada: false, pasada: false, restaurante: null, numeroMesa: null, ...x })
   const p = M.proximos([plan({}), plan({ estado: 'pending_payment' }), plan({ pasada: true }), plan({ cancelada: true }), plan({ restaurante: 'Casa', numeroMesa: 3 })])

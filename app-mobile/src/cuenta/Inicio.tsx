@@ -121,6 +121,7 @@ export function Inicio(p: {
     if (!datos || !vista) return
     const r = vista.reservar
     if (r.accion === 'nada') return
+    if (r.accion === 'completar' && r.destino) return p.ir(r.destino)
     if (r.accion === 'verificar') return p.ir('/verificacion')
     if (r.accion === 'pagar') return p.ir('/pago', { evento: id })
     setReservando(true)
