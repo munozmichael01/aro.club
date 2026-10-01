@@ -166,6 +166,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
   let evento: {
     starts_at: string
     format: string
+    booking_closes_at: string
     zone_slug: string | null
     reveal_at: string
   } | null = null
@@ -175,7 +176,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       .from('events')
       // `reveal_at` no lo usa ninguna plantilla: lo usa el candado de
       // `prepararCorreo` para saber si esta fecha ya se abrió.
-      .select('starts_at, format, zone_slug, reveal_at')
+      .select('starts_at, format, zone_slug, reveal_at, booking_closes_at')
       .eq('id', fila.event_id)
       .maybeSingle()
     evento = data ?? null
@@ -428,6 +429,29 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     case 'fecha_cancelada': {
       const pago = await elPagoDe(admin, fila.profile_id, fila.event_id)
       return { a, datos: { ...base, conCortesia: p.conCortesia === true, referencia: pago.referencia } }
+    }
+
+    /**
+     * «Esta fecha se cierra mañana».
+     *
+     * Todo sale del evento, nada del payload: el día, la hora y cuándo cierra.
+     * Si la fecha se mueve entre encolar y enviar —y el cron encola con un día
+     * de margen— lo que se manda es lo de ahora, no lo de entonces.
+     */
+    case 'cierra_pronto': {
+      const zonas = await nombresDeZonas(admin, (p.zonas as string[]) ?? [])
+      const cierra = evento?.booking_closes_at ? diaTexto(evento.booking_closes_at) : ''
+      return {
+        a,
+        datos: {
+          ...base,
+          zona: zonas[0] ?? '',
+          cuando: evento?.starts_at ? diaCorto(evento.starts_at) : '',
+          hora: evento?.starts_at ? horaTexto(evento.starts_at) : '',
+          cierra: cierra ? `el ${cierra}` : 'pronto',
+          CIERRA: (cierra ? `EL ${cierra}` : 'PRONTO').toUpperCase(),
+        },
+      }
     }
 
     case 'abrimos_zona': {

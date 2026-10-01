@@ -3765,6 +3765,7 @@ export type Database = {
         | "encuesta_despues"
         | "puesto_con_cupon"
         | "llego_tarde"
+        | "cierra_pronto"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -3999,6 +4000,7 @@ export const Constants = {
         "encuesta_despues",
         "puesto_con_cupon",
         "llego_tarde",
+        "cierra_pronto",
       ],
       event_format_t: [
         "dinner",

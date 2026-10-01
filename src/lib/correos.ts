@@ -82,6 +82,13 @@ export type Correo =
   // lea rápido con la mesa equivocada y sin saber cuál de los dos vale.
   | 'mesa_cambiada'
   | 'restablecer_clave'
+  /**
+   * «Esta fecha se cierra mañana», a quien puede llegar y no se apuntó.
+   *
+   * No es imprescindible: es un empujón, y quien apagó «fechas nuevas en tus
+   * zonas» tampoco quiere este. Usa esa misma preferencia a propósito.
+   */
+  | 'cierra_pronto'
   // El aviso de retraso. El boton existia desde su entrega y no mandaba nada:
   // `avisar` solo cambiaba la pantalla, asi que la persona leia «avisamos que
   // llegas 20 minutos tarde» y a la mesa no le llegaba nada.

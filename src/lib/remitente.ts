@@ -62,6 +62,7 @@ const PLANTILLA: Record<Correo, string> = {
   empujon: '01-bienvenida.html',
   encuesta_despues: '16-encuesta-despues.html',
   llego_tarde: '18-llego-tarde.html',
+  cierra_pronto: '19-cierra-pronto.html',
 }
 
 // Las plantillas se leen del disco una vez y se quedan: son quince ficheros
