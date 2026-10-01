@@ -313,8 +313,22 @@ export async function GET() {
   // pendientes para todo el mundo—.
   const faltan = situacion.falta.preguntas.length
 
-  if (situacion.paso === 'contacto') estado = 'datos'
-  else if (situacion.paso === 'preguntas') estado = 'perfil'
+  // Una reserva viva manda sobre el embudo.
+  //
+  // El orden era al revés y tenía una trampa que solo se dispara el día que
+  // el catálogo gane una pregunta obligatoria: a quien YA tiene su puesto
+  // apartado, `paso` pasaría a 'preguntas', la tarjeta principal diría
+  // «te faltan preguntas» y su cena DESAPARECERÍA de la pantalla. Se
+  // enteraría de que sigue teniendo mesa el día de la cena, o no.
+  //
+  // Lo decidido es que no se pueda RESERVAR sin contestar —y eso lo sostiene
+  // `/api/reservar`, que es el candado de verdad—. Quitarle de la vista una
+  // reserva que ya tiene no es ese acuerdo: es perder la única pantalla donde
+  // puede comprobar que su puesto sigue ahí. `faltan`, `paso` y `donde` van en
+  // la respuesta igual, así que la pantalla puede pedírselas sin esconderle la
+  // cena.
+  if (!reserva && situacion.paso === 'contacto') estado = 'datos'
+  else if (!reserva && situacion.paso === 'preguntas') estado = 'perfil'
   else if (!verificada && !enRevision) estado = 'verificar'
   else if (enRevision) estado = 'revision'
   else if (!reserva) estado = 'reservar'

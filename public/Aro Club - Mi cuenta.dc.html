@@ -814,16 +814,33 @@ class Component extends DCLogic {
         cargo: 'Tu puesto en esta fecha',
         precio: AroReglas.precioTexto() + ' en bolívares',
         nota: 'Cubre el emparejamiento, la verificación del grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
+        // Lo que de verdad falta, en el orden del embudo.
+        //
+        // Esto solo miraba `d.verif`, o sea solo la identidad. Con el
+        // cuestionario a medias y la cédula aprobada, el botón decía «Reservar
+        // mi puesto» y te mandaba a pagar; el «no» llegaba después, desde el
+        // servidor. Las preguntas van ANTES que la verificación, incluso si
+        // está en revisión: sin ellas no se puede repartir una mesa, y es lo
+        // único que puede hacer mientras espera.
+        //
+        // `paso` y `donde` los sirve `/api/mi-cuenta` desde `embudo.ts`, que es
+        // el mismo que `/api/reservar` consulta para decidir si deja pasar.
         textoConfirmar: this.state.reservandoYa
           ? 'Apuntándote'
-          // «Verifica tu identidad primero» a quien YA la subió se lee como
-          // que no llegó, y manda a repetir cédula y selfie. Son dos estados
-          // distintos y hasta ahora decían lo mismo.
-          : (d && d.verif === 'revision'
-              ? 'Te avisamos al aprobarla'
-              : (d && d.verif !== 'ok'
-                  ? 'Verifica tu identidad primero'
-                  : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : AroReglas.precioTexto()))),
+          : (d && d.paso === 'preguntas'
+              ? (d.respuestas && d.respuestas.faltan === 1
+                  ? 'Te falta 1 pregunta para reservar'
+                  : 'Te faltan ' + ((d.respuestas && d.respuestas.faltan) || 0) + ' preguntas para reservar')
+              : (d && (d.paso === 'contacto' || d.paso === 'cuenta')
+                  ? 'Completa tus datos para reservar'
+                  // «Verifica tu identidad primero» a quien YA la subió se lee
+                  // como que no llegó, y manda a repetir cédula y selfie. Son
+                  // dos estados distintos y hasta ahora decían lo mismo.
+                  : (d && d.verif === 'revision'
+                      ? 'Te avisamos al aprobarla'
+                      : (d && d.verif !== 'ok'
+                          ? 'Verifica tu identidad primero'
+                          : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : AroReglas.precioTexto()))))),
         botonConfirmar: 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
         abrir: cerrada ? (() => {}) : (() => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0 }))),
         // Reservar de verdad. Antes solo se marcaba en la pantalla: al
@@ -833,6 +850,13 @@ class Component extends DCLogic {
           // decide. Antes se le mandaba a pagar y el candado saltaba al final,
           // despues de ver los datos del banco: el "no" llegaba cuando ya
           // habia transferido.
+          // Primero lo que falta del embudo, que es lo que puede resolver
+          // ahora mismo. `donde` lo dice el servidor: una ruta escrita aquí
+          // volvería a separarse el día que cambie.
+          if (d && (d.paso === 'preguntas' || d.paso === 'contacto' || d.paso === 'cuenta')) {
+            window.location.href = d.donde || '/cuestionario';
+            return;
+          }
           // En revisión no se va a ningún sitio: ya hizo su parte y la
           // pantalla de verificación le ofrecería subirla de nuevo.
           if (d && d.verif === 'revision') return;
