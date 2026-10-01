@@ -2134,13 +2134,22 @@ class Component extends DCLogic {
     // Mientras el reparto de ESTA fecha no ha llegado, las cifras no son
     // cero: es que no se saben. Un cero aquí dice «no hay mesas» justo
     // cuando lo que pasa es que todavía no hemos preguntado.
-    const repartoListo = !!(REP && REP.evento && fr.id && REP.evento.id === fr.id);
+    const repartoPedido = !!(REP && REP.evento && fr.id && REP.evento.id === fr.id);
+    // Que la respuesta haya llegado NO es que se haya repartido. Sin corrida
+    // guardada no hay cero mesas: hay un reparto que nadie ha hecho todavía.
+    // El panel llegaba aquí con `repartoListo` en true, pintaba 0 mesas, 0 en
+    // espera y remataba con «todos los apuntados tienen mesa» teniendo dos
+    // apuntados sentados en ninguna parte. Es la misma trampa que ya se
+    // arregló en las cifras: distinguir «no hay» de «no se sabe», y ahora
+    // también de «no se ha hecho».
+    const repartoListo = repartoPedido && !!CORRIDA;
     const oNada = (n) => (repartoListo ? String(n) : '—');
+    const sinSaber = repartoPedido ? 'Todavía sin repartir' : 'Leyendo el reparto';
     const metricas = [
       ['APUNTADOS', String(apuntadosRep), 'En ' + fr.zonas.length + (fr.zonas.length === 1 ? ' zona' : ' zonas'), null],
-      [vozRep.Unidades.toUpperCase(), oNada(totalMesas), (repartoListo ? sentados + ' ' + vozRep.sent + (desiguales ? ', ' + desiguales + ' sin seis' : ', ' + (totalMesas === 1 ? 'de ' + POR_MESA : 'todas de ' + POR_MESA)) : 'Leyendo el reparto'), desiguales ? '#8F4515' : null],
-      ['PUBLICADAS', repartoListo ? publicadas + ' de ' + totalMesas : '—', (!repartoListo ? 'Leyendo el reparto' : (publicadas === totalMesas ? 'Todas fijas' : 'El resto sigue moviéndose')), publicadas === totalMesas ? '#1B5138' : null],
-      ['NO PUEDEN SALIR', oNada(rotas), (!repartoListo ? 'Leyendo el reparto' : (rotas ? 'Rompen alguna de las siete reglas' : 'Ninguna rompe reglas')), rotas ? '#8F4515' : null]
+      [vozRep.Unidades.toUpperCase(), oNada(totalMesas), (repartoListo ? sentados + ' ' + vozRep.sent + (desiguales ? ', ' + desiguales + ' sin seis' : ', ' + (totalMesas === 1 ? 'de ' + POR_MESA : 'todas de ' + POR_MESA)) : sinSaber), desiguales ? '#8F4515' : null],
+      ['PUBLICADAS', repartoListo ? publicadas + ' de ' + totalMesas : '—', (!repartoListo ? sinSaber : (publicadas === totalMesas ? 'Todas fijas' : 'El resto sigue moviéndose')), publicadas === totalMesas ? '#1B5138' : null],
+      ['NO PUEDEN SALIR', oNada(rotas), (!repartoListo ? sinSaber : (rotas ? 'Rompen alguna de las siete reglas' : 'Ninguna rompe reglas')), rotas ? '#8F4515' : null]
     ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifraRep(m[3]) }));
 
     // quien está en espera se arrastra igual que quien está en una mesa:
