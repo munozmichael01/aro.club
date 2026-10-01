@@ -226,6 +226,21 @@ pasó después se consulta con `provider_id`, que es el id que devuelve Resend
 y que durante meses se tiraba: cuando alguien decía «no me llegó» no había con
 qué preguntar.
 
+**Todo lo que no es imprescindible sale con `List-Unsubscribe`** y su
+`List-Unsubscribe-Post` de un clic, que apunta a `/api/baja-correos/un-clic`.
+Sin esa cabecera Gmail empuja a Promociones. El enlace lleva SIEMPRE el token
+firmado, también para quien tiene cuenta: lo pulsa el cliente de correo, sin
+sesión. Los imprescindibles no la llevan a propósito — se mandan aunque la
+persona esté de baja, así que ofrecer apagarlos sería ofrecer algo que no
+ocurre.
+
+**Probar un cron que encola es MANDAR correos.** No hay staging, esta base es
+la de producción y `/api/cron/correos` la recorre cada quince minutos. La llave
+de Resend del `.env.local` es inválida, lo que engaña: en local no sale nada
+porque lo manda producción. `/api/cron/cierra` y `/api/cron/encuesta` aceptan
+`?seco=1`, que calcula sin escribir. Cualquier cron nuevo que encole nace con
+su pasada en seco.
+
 ---
 
 ## Base de datos
