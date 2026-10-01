@@ -252,10 +252,39 @@ export async function despacharPendientes(
   try {
     // Se importan aquí dentro y no arriba porque `correos-datos` necesita el
     // tipo `Correo` de este mismo fichero: en la cabecera sería un ciclo.
-    const [{ prepararCorreo }, { componer, enviar }] = await Promise.all([
+    const [{ prepararCorreo }, { componer, enviar, SITIO }, { firmarBaja }] = await Promise.all([
       import('@/lib/correos-datos'),
       import('@/lib/remitente'),
+      import('@/lib/baja-token'),
     ])
+
+    /**
+     * La cabecera de baja, para los que NO son imprescindibles.
+     *
+     * Un acuse no la lleva y es a propósito: `despacharPendientes` ya manda
+     * los imprescindibles aunque la persona esté de baja —son la confirmación
+     * de algo que pidió—, así que ofrecerle apagarlos sería ofrecerle algo que
+     * no va a pasar.
+     *
+     * El enlace va SIEMPRE con el token firmado, también para quien tiene
+     * cuenta. El pie del correo manda a `/cuenta` a quien puede entrar, pero
+     * esto lo pulsa el cliente de correo sin sesión ninguna: una URL que
+     * exigiera entrar no daría de baja a nadie.
+     */
+    const cabecerasDe = (tipo: string, a: string): Record<string, string> | undefined => {
+      if (IMPRESCINDIBLES.has(tipo)) return undefined
+      const correo = a.trim().toLowerCase()
+      const enlace = `${SITIO}/api/baja-correos/un-clic`
+        + `?correo=${encodeURIComponent(correo)}&token=${encodeURIComponent(firmarBaja(correo))}`
+      // Solo la URL, sin el `mailto:` que suele acompañarla. Un `mailto:` de
+      // baja promete que alguien lee ese buzón y actúa; hoy el correo entrante
+      // se guarda y se reenvía, y nadie da de baja a nadie leyéndolo. Ponerlo
+      // sería ofrecer una baja que no ocurre, que es peor que no ofrecerla.
+      return {
+        'List-Unsubscribe': `<${enlace}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      }
+    }
 
     const admin = createAdminClient()
     const { data: pendientes } = await admin
@@ -347,7 +376,12 @@ export async function despacharPendientes(
         continue
       }
 
-      const r = await enviar(listo.a, pintado.asunto, pintado.html)
+      const r = await enviar(
+        listo.a,
+        pintado.asunto,
+        pintado.html,
+        cabecerasDe(fila.kind, listo.a),
+      )
 
       // Sin remitente configurado no se toca nada: la cola espera al día que
       // exista y no se pierde ninguno.

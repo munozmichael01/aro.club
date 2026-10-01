@@ -133,7 +133,19 @@ export function esDePrueba(direccion: string): boolean {
  * exige es un dominio verificado, y de ahí que esto no pueda encenderse
  * hasta que `aro.club` exista.
  */
-export async function enviar(a: string, asunto: string, html: string): Promise<Resultado> {
+export async function enviar(
+  a: string,
+  asunto: string,
+  html: string,
+  /**
+   * Cabeceras extra. Hoy solo `List-Unsubscribe`, y no es decoración: Gmail y
+   * Yahoo la piden desde 2024 para todo lo que no sea estrictamente un acuse,
+   * y sin ella su clasificador empuja el correo a Promociones —donde nadie
+   * mira— o directo a spam. Quién la lleva lo decide `correos.ts`, que es
+   * donde vive la lista de los imprescindibles.
+   */
+  cabeceras?: Record<string, string>,
+): Promise<Resultado> {
   // Antes que nada: a una dirección de prueba no se le escribe, y no es un
   // error. Se resuelve y se sigue.
   if (esDePrueba(a)) return { estado: 'de-prueba' }
@@ -147,7 +159,13 @@ export async function enviar(a: string, asunto: string, html: string): Promise<R
         Authorization: `Bearer ${CLAVE}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from: DE, to: [a], subject: asunto, html }),
+      body: JSON.stringify({
+        from: DE,
+        to: [a],
+        subject: asunto,
+        html,
+        ...(cabeceras && Object.keys(cabeceras).length ? { headers: cabeceras } : {}),
+      }),
       signal: AbortSignal.timeout(15_000),
     })
 
