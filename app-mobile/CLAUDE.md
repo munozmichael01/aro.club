@@ -57,13 +57,16 @@ nombre de Expo Go). **Para que funcionen de verdad falta, fuera del código:**
 - ~~la cuenta de Apple Developer y la capacidad *Sign in with Apple* en el App
   ID `club.aro.app`~~ (hecho el 01-10: equipo 696DAG5UG5, individual). Falta
   el proveedor Apple en Supabase con `club.aro.app` en *Client IDs*;
-- los *client ID* de Google (web, iOS, Android) en Google Cloud, añadidos al
-  proveedor Google de Supabase (y «Skip nonce check» para iOS), y puestos en
-  `app.json` → `extra.google` (`webClientId`, `iosClientId`);
-- el plugin `@react-native-google-signin/google-signin` en `app.json` con su
-  `iosUrlScheme` (el client ID de iOS al revés). Está QUITADO a propósito:
-  sin ese esquema tumba la build;
-- una build de desarrollo con EAS (el módulo de Google no está en Expo Go).
+- ~~Google en iOS~~ (hecho el 01-10, ad5a862): proyecto de Google Cloud
+  «My First Project» (el del login web), cliente web `…ce8up` y cliente iOS
+  `…gl33e` en `app.json` → `extra.google`, plugin con `iosUrlScheme`, y los
+  dos en *Client IDs* del proveedor Google de Supabase con «Skip nonce
+  checks». Pantalla de consentimiento: en producción, externa.
+- **Falta Google en Android:** dos clientes Android (`club.aro.app`) en
+  Google Cloud, con el SHA-1 de la clave de firma de Play (Play Console →
+  Integridad de la app, tras subir la primera AAB) y el de la clave de EAS
+  (`eas credentials -p android`), y sus IDs añadidos en Supabase. Sin eso,
+  Google en Android da `DEVELOPER_ERROR`.
 
 **Builds y tiendas (01-10):**
 - Android: build `production` (AAB) hecha con el icono de Design. La cuenta de
