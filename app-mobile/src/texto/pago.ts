@@ -167,6 +167,13 @@ export const cuponListo = {
   consumo: 'Lo que consumas en la mesa va aparte y lo pagas en el restaurante, como en cualquier salida.',
 }
 
+export const cerrada = {
+  sello: 'FECHA CERRADA',
+  titulo: 'Esta fecha ya cerró.',
+  bajada: 'Cerramos las apuntadas antes de la cena para armar las mesas. No te cobramos nada: elige otra fecha.',
+  otraFecha: 'Ver otras fechas',
+}
+
 export const fallo = {
   sello: 'EL PAGO NO CUADRA',
   titulo: 'No encontramos tu pago.',

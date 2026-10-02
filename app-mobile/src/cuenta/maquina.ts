@@ -194,6 +194,9 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
     const formato = T.FORMATOS[a.formato] ? a.formato : 'dinner'
     if (filtro && formato !== filtro) continue
     const semana = F.semanaDe(a.empiezaEn, ahora)
+    // Cerrada por estado O porque ya pasó su cierre: el estado de la fecha no
+    // cambia solo al llegar la hora, y se veía abierta (01-10-2026).
+    const cerrada = a.cerrada || (a.cierraEn != null && Date.parse(a.cierraEn) <= ahora)
     let g = grupos.find((x) => x.semana === semana)
     if (!g) grupos.push((g = { semana, filas: [] }))
     g.filas.push({
@@ -205,9 +208,9 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       // Las zonas ABIERTAS de esa fecha, no un sitio: el sitio se decide al
       // armar la mesa y nadie lo sabe hasta la revelación.
       zona: a.zonas.join(' o ') || T.agenda.zonaPorConfirmar,
-      estado: T.estadoDeFecha(a.apuntados, a.mia, a.cerrada),
+      estado: T.estadoDeFecha(a.apuntados, a.mia, cerrada),
       mia: a.mia,
-      cerrada: a.cerrada,
+      cerrada,
       llenado: Math.min(1, a.apuntados / T.MESA),
       va: a.apuntados >= T.MESA,
     })

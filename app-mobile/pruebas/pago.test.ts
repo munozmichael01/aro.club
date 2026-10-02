@@ -25,7 +25,7 @@ test('dinero, tasa y cabecera', () => {
 })
 
 test('las fases salen de lo que ya reportó', () => {
-  assert.equal(M.faseDeServidor(REAL), 'elegir')
+  assert.equal(M.faseDeServidor(REAL, AHORA), 'elegir')
   const pago = { metodo: 'pm', reportadoEn: '' }
   assert.equal(M.faseDeServidor({ ...REAL, pago: { ...pago, estado: 'under_review' } }), 'pendiente')
   assert.equal(M.faseDeServidor({ ...REAL, pago: { ...pago, estado: 'confirmed' } }), 'listo')
@@ -73,4 +73,15 @@ test('el comprobante no inventa: sin zona dice que se sabe al abrirse', () => {
   assert.equal(c[1].valor, 'Se sabe al abrirse')
   assert.equal(c[0].valor, 'Sábado 3, 8:00 p.m.')
   assert.equal(M.cuandoSeAbre(REAL), null, 'sin revelaEn no se dice ninguna hora')
+})
+
+test('fecha cerrada: no se enseñan los datos para pagar (01-10-2026)', () => {
+  const cierra = Date.parse(REAL.evento.cierraEn!)
+  assert.equal(M.faseDeServidor(REAL, cierra + 1), 'cerrada')
+  assert.equal(M.faseDeServidor(REAL, cierra - 1), 'elegir')
+  // Quien ya reportó ve su pago, aunque la fecha haya cerrado después.
+  assert.equal(M.faseDeServidor({ ...REAL, pago: { metodo: 'pm', reportadoEn: '', estado: 'under_review' } }, cierra + 1), 'pendiente')
+  assert.ok(M.esFechaCerrada({ status: 409, error: 'Esa fecha ya cerró.' }))
+  assert.ok(M.esFechaCerrada({ status: 409, motivo: 'fecha-cerrada', error: 'x' }))
+  assert.ok(!M.esFechaCerrada({ status: 409, error: 'Ese pago ya está reportado.' }))
 })

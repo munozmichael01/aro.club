@@ -66,9 +66,10 @@ test('pocos apuntados no se enseñan; sin fecha, ni día ni reloj', () => {
   assert.deepEqual([sin.titulo, sin.accion, sin.reloj], ['Todavía no hay fecha abierta.', 'Ver la agenda', ''])
 })
 
-test('el sello de preguntas cuenta las que faltan', () => {
+test('el sello de preguntas: el número solo si son pocas (01-10-2026)', () => {
   assert.equal(M.tarjeta(base({ estado: 'perfil', respuestas: { faltan: 1, total: 14 } }), null, AHORA).sello, 'TE FALTAN 1 PREGUNTA')
-  assert.equal(M.tarjeta(base({ estado: 'perfil', respuestas: { faltan: 13, total: 14 } }), null, AHORA).sello, 'TE FALTAN 13 PREGUNTAS')
+  assert.equal(M.tarjeta(base({ estado: 'perfil', respuestas: { faltan: 13, total: 14 } }), null, AHORA).sello, 'UN PASO MÁS')
+  assert.equal(M.tarjeta(base({ estado: 'perfil', respuestas: { faltan: 3, total: 14 } }), null, AHORA).sello, 'TE FALTAN 3 PREGUNTAS')
 })
 
 test('con mesa reservada: su fecha como titular, en oscuro, y la mesa solo si /api/mi-mesa la trae', () => {
@@ -119,13 +120,13 @@ test('reservar: el botón dice lo que va a pasar según quién lo pulsa', () => 
 test('reservar: sin preguntas o datos no se reserva, y se va a completarlos (no a verificarse)', () => {
   // Pasó el 01-10-2026: con 12 preguntas pendientes, el botón mandaba a verificarse.
   const sinPreguntas = M.botonReservar(base({ estado: 'perfil', verif: 'sin', respuestas: { faltan: 12, total: 17 } }), false)
-  assert.deepEqual(sinPreguntas, { accion: 'completar', texto: 'Te faltan 12 preguntas para reservar', destino: '/cuestionario' })
+  assert.deepEqual(sinPreguntas, { accion: 'completar', texto: 'Termina tu perfil para reservar', destino: '/cuestionario' })
   // Aunque la verificación esté en revisión: las preguntas van antes.
-  assert.equal(M.botonReservar(base({ estado: 'perfil', verif: 'revision', respuestas: { faltan: 1, total: 17 } }), false).texto, 'Te falta 1 pregunta para reservar')
+  assert.equal(M.botonReservar(base({ estado: 'perfil', verif: 'revision', respuestas: { faltan: 1, total: 17 } }), false).texto, 'Termina tu perfil para reservar')
   assert.equal(M.botonReservar(base({ estado: 'datos' }), false).destino, '/datos')
   // Con los campos del embudo, manda `paso`/`donde` del servidor.
   const conPaso = M.botonReservar(base({ paso: 'preguntas', donde: '/cuestionario', puedeReservar: false, respuestas: { faltan: 3, total: 17 } }), false)
-  assert.deepEqual(conPaso, { accion: 'completar', texto: 'Te faltan 3 preguntas para reservar', destino: '/cuestionario' })
+  assert.deepEqual(conPaso, { accion: 'completar', texto: 'Termina tu perfil para reservar', destino: '/cuestionario' })
 })
 
 test('lo próximo: solo lo vivo, y el pago reportado no es confirmada', () => {

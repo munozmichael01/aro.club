@@ -98,7 +98,10 @@ export const ESTADOS: Record<EstadoCuenta, Copia> = {
   },
 }
 
-export const selloPreguntas = (faltan: number) => `TE FALTAN ${faltan} ${faltan === 1 ? 'PREGUNTA' : 'PREGUNTAS'}`
+/** El número solo cuando es pequeño: «te faltan 15» desanima; «te faltan 2», empuja (Michael, 01-10-2026). */
+export const POCAS = 3
+export const selloPreguntas = (faltan: number) =>
+  faltan > POCAS || faltan < 1 ? 'UN PASO MÁS' : `TE FALTAN ${faltan} ${faltan === 1 ? 'PREGUNTA' : 'PREGUNTAS'}`
 
 export const saludo = (nombre: string | null) => (nombre ? `Hola, ${nombre}.` : 'Hola.')
 
@@ -135,7 +138,7 @@ export const agenda = {
   apuntandote: 'Apuntándote',
   enRevision: 'Te avisamos al aprobarla',
   verificaPrimero: 'Verifica tu identidad primero',
-  preguntasPrimero: (n: number) => (n === 1 ? 'Te falta 1 pregunta para reservar' : `Te faltan ${n} preguntas para reservar`),
+  preguntasPrimero: (_n: number) => 'Termina tu perfil para reservar',
   datosPrimero: 'Completa tus datos para reservar',
   reservar: (conCredito: boolean, precioTexto: string) => `Reservar mi puesto · ${conCredito ? '1 encuentro' : precioTexto}`,
   zonaPorConfirmar: 'Zona por confirmar',

@@ -68,7 +68,8 @@ test('la foto se encoge a 1600 de lado largo, sin agrandar las pequeñas', async
 test('en revisión no da el perfil por completo si faltan preguntas', () => {
   // Pasó el 01-10-2026: cuenta nueva con 12 preguntas pendientes y la pantalla
   // decía «Tu perfil está completo».
-  assert.equal(pasosRevision(12)[0].titulo, 'Te faltan 12 preguntas')
+  assert.equal(pasosRevision(12)[0].titulo, 'Termina tu perfil')
+  assert.equal(pasosRevision(2)[0].titulo, 'Te faltan 2 preguntas')
   assert.equal(pasosRevision(12)[0].hecho, false)
   assert.equal(pasosRevision(1)[0].titulo, 'Te falta 1 pregunta')
   assert.equal(pasosRevision(0)[0].titulo, 'Tu perfil está completo')

@@ -38,11 +38,14 @@ export type DeServidor = {
  * Las fases de la web, con nombre en vez de número: elegir → datos →
  * reportar → enviando → pendiente | listo | fallo, y cupón aparte.
  */
-export type Fase = 'elegir' | 'datos' | 'reportar' | 'enviando' | 'pendiente' | 'listo' | 'fallo' | 'cupon'
+export type Fase = 'elegir' | 'datos' | 'reportar' | 'enviando' | 'pendiente' | 'listo' | 'fallo' | 'cupon' | 'cerrada'
 
 /** Si ya reportó, no se le vuelve a pedir: se le enseña en qué va. */
-export function faseDeServidor(d: DeServidor): Fase {
-  if (!d.pago) return 'elegir'
+export function faseDeServidor(d: DeServidor, ahora: number = Date.now()): Fase {
+  // Sin pago reportado y con la fecha ya cerrada, no se enseñan los datos
+  // para pagar: antes se llegaba hasta «Reportar mi pago» y ahí el servidor
+  // decía «Esa fecha ya cerró» (Michael, 01-10-2026).
+  if (!d.pago) return fechaCerrada(d, ahora) ? 'cerrada' : 'elegir'
   if (d.pago.estado === 'confirmed') return 'listo'
   if (d.pago.estado === 'rejected') return 'fallo'
   return 'pendiente'
@@ -168,3 +171,14 @@ export const cuandoSeAbre = (d: DeServidor) => (d.evento.revelaEn ? F.cuandoSeSa
 
 /** El código se escribe en mayúsculas y sin espacios. */
 export const normalizarCupon = (v: string) => v.toUpperCase().replace(/\s+/g, '')
+
+/** Si ya pasó el cierre de la fecha (lo da el servidor en `cierraEn`). */
+export function fechaCerrada(d: DeServidor, ahora: number): boolean {
+  const c = d.evento.cierraEn ? Date.parse(d.evento.cierraEn) : NaN
+  return Number.isFinite(c) && c <= ahora
+}
+
+/** El rechazo del servidor por fecha cerrada. Con `motivo` si lo manda; si no, por el texto. */
+export function esFechaCerrada(r: { status?: number; motivo?: string; error: string }): boolean {
+  return r.status === 409 && (r.motivo === 'fecha-cerrada' || /ya cerr/i.test(r.error))
+}

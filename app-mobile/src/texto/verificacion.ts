@@ -71,8 +71,9 @@ export const revision = {
   completo: { hecho: true, titulo: 'Tu perfil está completo', cuerpo: 'Tus respuestas ya están guardadas. No hay que tocar nada más.' },
   faltan: (n: number) => ({
     hecho: false,
-    titulo: n === 1 ? 'Te falta 1 pregunta' : `Te faltan ${n} preguntas`,
-    cuerpo: 'Sin ellas no podemos sentarte en una mesa. Respóndelas mientras revisamos esto y, cuando se apruebe, ya puedes reservar.',
+    // El número solo si son pocas (como el sello de Inicio).
+    titulo: n > 3 ? 'Termina tu perfil' : n === 1 ? 'Te falta 1 pregunta' : `Te faltan ${n} preguntas`,
+    cuerpo: 'Son unos minutos. Respóndelo mientras revisamos esto y, cuando se apruebe, ya puedes reservar.',
   }),
   aviso: { hecho: false, titulo: 'Te avisamos cuando haya mesa', cuerpo: 'En cuanto se apruebe y se abra mesa en tu zona, llega un solo correo con el día y la hora.' },
   responder: 'Responder las preguntas',

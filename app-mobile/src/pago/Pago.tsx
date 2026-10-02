@@ -68,7 +68,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     const r = await servicio.cargar(evento)
     if (r.ok) {
       setD(r.datos)
-      setFase(M.faseDeServidor(r.datos))
+      setFase(M.faseDeServidor(r.datos, ahora()))
       setMetodo(M.metodoInicial(r.datos))
       setFallo('')
     } else if (r.status === 401) alEntrar.current()
@@ -122,6 +122,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     setFase('enviando')
     const r = await servicio.reportar(M.cuerpoReporte(d, m, rep, captura))
     if (!r.ok) {
+      if (M.esFechaCerrada(r)) return setFase('cerrada')
       setFase('reportar')
       return setFallo(r.error)
     }
@@ -429,6 +430,17 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
         <Acciones>
           <Boton texto={T.listo.irCuenta} onPress={() => p.ir('/cuenta')} />
           <Boton tipo="fantasma" texto={T.listo.verReserva} onPress={() => p.ir('/mesa')} />
+        </Acciones>
+      </View>
+    )
+  } else if (fase === 'cerrada') {
+    cuerpo = (
+      <View>
+        <Sello tono="borde" texto={T.cerrada.sello} />
+        <Titular>{T.cerrada.titulo}</Titular>
+        <Bajada>{T.cerrada.bajada}</Bajada>
+        <Acciones>
+          <Boton texto={T.cerrada.otraFecha} onPress={() => p.ir('/cuenta')} />
         </Acciones>
       </View>
     )
