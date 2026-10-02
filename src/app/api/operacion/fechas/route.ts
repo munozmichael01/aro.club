@@ -53,9 +53,9 @@ import { HORAS_DE_CIERRE } from '@/lib/reglas'
 /** Y a mediodía se revela todo. */
 const HORA_REVELACION = 12
 
-function enUTC(dia: string, horaCaracas: number): Date {
+function enUTC(dia: string, horaCaracas: number, minutos = 0): Date {
   const [a, m, d] = dia.split('-').map(Number)
-  return new Date(Date.UTC(a, m - 1, d, horaCaracas + CARACAS, 0, 0, 0))
+  return new Date(Date.UTC(a, m - 1, d, horaCaracas + CARACAS, minutos, 0, 0))
 }
 
 /**
@@ -75,6 +75,75 @@ function revelacionDe(dia: string, horaDeInicio: number): Date {
   const mediodia = enUTC(dia, HORA_REVELACION)
   if (horaDeInicio >= HORA_REVELACION) return mediodia
   return new Date(mediodia.getTime() - 24 * 3600_000)
+}
+
+
+/**
+ * Avisar de que se abre una fecha, a quien le sirva.
+ *
+ * Vive aparte porque la usan DOS momentos: al crear la fecha y, si se creó
+ * callada, al darle a «avisar» después. Dos copias de esta regla serían dos
+ * ideas distintas de a quién se le escribe, y la de abajo es la que importa:
+ * a quien tenga alguna de esas zonas Y el aviso encendido. Escribir a quien
+ * no puede llegar es ruido; escribir a quien lo apagó es ignorar lo que
+ * pidió.
+ *
+ * No hace falta llevar la cuenta de si ya se avisó: `abrimos_zona` entra en
+ * el índice de «uno por persona y fecha», así que mandarlo dos veces no
+ * duplica nada — y a quien se haya apuntado al club EN MEDIO sí le llega,
+ * que es justo lo que se quiere.
+ */
+async function avisarDeLaApertura(
+  eventoId: string,
+  slugs: string[],
+  dia: string,
+  /**
+   * En seco: cuenta a cuánta gente escribiría y NO escribe.
+   *
+   * No es solo para probar. Antes de mandar un correo a medio club conviene
+   * ver a cuántos va, y el panel no tenía forma de saberlo sin mandarlo. Que
+   * además haga imposible probar esto sin escribirle a nadie es la otra
+   * mitad: no hay staging, esta base es la de producción y el cron de envío
+   * pasa cada quince minutos. Probándolo salió un aviso de verdad.
+   */
+  seco = false,
+): Promise<number> {
+  const admin = createAdminClient()
+
+  const { data: candidatos } = await admin
+    .from('answers')
+    .select('profile_id, value')
+    .eq('question_key', 'zonas')
+
+  const interesados = (candidatos ?? [])
+    .filter((a) => Array.isArray(a.value) && (a.value as string[]).some((z) => slugs.includes(z)))
+    .map((a) => a.profile_id)
+    .filter((id): id is string => !!id)
+
+  if (!interesados.length) return 0
+
+  const { data: perfiles } = await admin
+    .from('profiles')
+    .select('id, notificaciones')
+    .in('id', interesados)
+    .is('deleted_at', null)
+
+  let avisados = 0
+  for (const p of perfiles ?? []) {
+    // Encendido por defecto: solo se salta a quien lo apagó a propósito.
+    const avisos = (p.notificaciones ?? {}) as Record<string, boolean>
+    if (avisos.apertura_zona === false) continue
+
+    if (seco) {
+      avisados++
+      continue
+    }
+
+    const r = await encolar({ perfil: p.id }, 'abrimos_zona', { zonas: slugs, dia }, { eventoId })
+    if (r === 'encolado') avisados++
+  }
+
+  return avisados
 }
 
 /** El día de la semana de una fecha del calendario. 0 = domingo, como getDay(). */
@@ -123,8 +192,28 @@ async function revisarSitio(
 }
 
 const cuerpo = z.object({
-  // Solo el día. La hora la pone el formato.
   dia: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha no se entiende.'),
+  /**
+   * La hora, si no vale la del formato.
+   *
+   * La hora la ponía el formato y no se podía tocar: todas las cenas a las
+   * siete. Pero el sitio manda —un restaurante que solo tiene mesa a las
+   * ocho y media no se negocia desde aquí— y hasta ahora la única salida era
+   * cambiarla en la base después de crearla.
+   *
+   * Opcional a propósito: sin ella sigue mandando el formato, que es lo que
+   * hace que abrir una cena normal siga siendo un clic.
+   */
+  hora: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'La hora no se entiende.').optional(),
+  /**
+   * Si al crearla se avisa a quien puede llegar.
+   *
+   * Por defecto sí, que es lo que hacía siempre. En `false` la fecha nace
+   * abierta y callada: sirve para dejarla montada —con su sitio y su hora—
+   * antes de contarla. El aviso se puede mandar después, desde el panel, con
+   * la acción `avisar`, mientras la fecha no haya cerrado.
+   */
+  avisar: z.boolean().default(true),
   formato: z
     .enum([
       'dinner', 'foodie_dinner', 'women_dinner', 'coffee', 'drinks',
@@ -204,6 +293,20 @@ export async function GET() {
   const ids = (eventos ?? []).map((e) => e.id)
   const vacio = ['00000000-0000-0000-0000-000000000000']
 
+  // Qué fechas ya se contaron.
+  //
+  // Sin columna nueva: la verdad está en la cola de correos. Una fecha está
+  // avisada si existe algún `abrimos_zona` suyo, y eso lo escribe la MISMA
+  // función que manda el aviso. Una bandera en `events` sería una segunda
+  // opinión que se queda vieja el día que alguien encole a mano.
+  const { data: avisos } = await admin
+    .from('scheduled_emails')
+    .select('event_id')
+    .eq('kind', 'abrimos_zona')
+    .in('event_id', ids.length ? ids : vacio)
+
+  const yaAvisadas = new Set((avisos ?? []).map((a) => a.event_id))
+
   const { data: sedes } = await admin
     .from('event_venues')
     .select('id, event_id, zone_slug, restaurant_id, max_tables, restaurants(name, max_tables, commission_pct), zones(name)')
@@ -262,6 +365,9 @@ export async function GET() {
       id: e.id,
       formato: e.format,
       empiezaEn: e.starts_at,
+      // Si ya se le contó a alguien. El panel ofrece «avisar» solo a las que
+      // no, y solo mientras no hayan cerrado.
+      avisada: yaAvisadas.has(e.id),
       cierraEn: e.booking_closes_at,
       revelaEn: e.reveal_at,
       estado: e.status,
@@ -388,8 +494,12 @@ export async function POST(request: Request) {
   }
 
   const d = parsed.data
-  const horaDeInicio = HORA_DE[d.formato] ?? 19
-  const empieza = enUTC(d.dia, horaDeInicio)
+  // La elegida manda; si no viene, la del formato.
+  const [horaElegida, minElegidos] = d.hora
+    ? d.hora.split(':').map(Number)
+    : [HORA_DE[d.formato] ?? 19, 0]
+  const horaDeInicio = horaElegida
+  const empieza = enUTC(d.dia, horaDeInicio, minElegidos)
   const cierra = new Date(empieza.getTime() - HORAS_DE_CIERRE * 3600_000)
   const revela = revelacionDe(d.dia, horaDeInicio)
 
@@ -490,38 +600,7 @@ export async function POST(request: Request) {
   })
 
   // --- el aviso, a quien le sirva ---------------------------------------
-  //
-  // A quien tenga alguna de esas zonas Y el aviso encendido. Las dos
-  // condiciones: escribir a quien no puede llegar es ruido, y escribir a
-  // quien lo apagó es ignorar lo que nos pidió.
-  const slugs = d.zonas.map((z) => z.zona)
-
-  const { data: candidatos } = await admin
-    .from('answers')
-    .select('profile_id, value')
-    .eq('question_key', 'zonas')
-
-  const interesados = (candidatos ?? [])
-    .filter((a) => Array.isArray(a.value) && (a.value as string[]).some((z) => slugs.includes(z)))
-    .map((a) => a.profile_id)
-
-  let avisados = 0
-  if (interesados.length) {
-    const { data: perfiles } = await admin
-      .from('profiles')
-      .select('id, notificaciones')
-      .in('id', interesados)
-      .is('deleted_at', null)
-
-    for (const p of perfiles ?? []) {
-      // Encendido por defecto: solo se salta a quien lo apagó a propósito.
-      const avisos = (p.notificaciones ?? {}) as Record<string, boolean>
-      if (avisos.apertura_zona === false) continue
-
-      await encolar({ perfil: p.id }, 'abrimos_zona', { zonas: slugs, dia: d.dia }, { eventoId: evento.id })
-      avisados++
-    }
-  }
+  const avisados = d.avisar ? await avisarDeLaApertura(evento.id, d.zonas.map((z) => z.zona), d.dia) : 0
 
   return NextResponse.json({
     estado: 'abierta',
@@ -572,6 +651,20 @@ const sitio = z.discriminatedUnion('accion', [
     eventoId: z.string().uuid(),
     zona: z.string().regex(/^[a-z-]+$/),
   }),
+  /**
+   * Avisar de una fecha que se creó callada.
+   *
+   * Crear y avisar dejaron de ser lo mismo: se puede montar la fecha —con su
+   * hora y su sitio— y contarla cuando esté lista. Esto es la segunda mitad,
+   * y vale mientras la fecha no haya cerrado: avisar de algo a lo que ya no
+   * se puede uno apuntar es mandar a la gente a una puerta cerrada.
+   */
+  z.object({
+    accion: z.literal('avisar'),
+    eventoId: z.string().uuid(),
+    /** Cuenta a cuántos iría y no manda nada. */
+    seco: z.boolean().default(false),
+  }),
 ])
 
 export async function PATCH(request: Request) {
@@ -591,13 +684,51 @@ export async function PATCH(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, format, starts_at, status')
+    .select('id, format, starts_at, booking_closes_at, status')
     .eq('id', d.eventoId)
     .maybeSingle()
 
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
   if (evento.status === 'cancelled') {
     return NextResponse.json({ error: 'Esa fecha está cancelada.' }, { status: 409 })
+  }
+
+  if (d.accion === 'avisar') {
+    // Después del cierre no: sería mandar a la gente a una puerta cerrada.
+    if (new Date(evento.booking_closes_at).getTime() <= Date.now()) {
+      return NextResponse.json(
+        { error: 'Esa fecha ya cerró: avisar ahora sería mandar a la gente a una puerta cerrada.', motivo: 'fecha-cerrada' },
+        { status: 409 },
+      )
+    }
+
+    // Las zonas que esta fecha abrió. Sin ninguna no hay a quién escribir, y
+    // decirlo es mejor que mandar cero correos en silencio.
+    const { data: sedes } = await admin
+      .from('event_venues')
+      .select('zone_slug')
+      .eq('event_id', evento.id)
+
+    const slugs = (sedes ?? []).map((v) => v.zone_slug).filter((z): z is string => !!z)
+    if (!slugs.length) {
+      return NextResponse.json(
+        { error: 'Esa fecha no tiene ninguna zona abierta todavía.', motivo: 'sin-zonas' },
+        { status: 409 },
+      )
+    }
+
+    // El día en hora de Caracas, que es lo que lee la plantilla.
+    const diaCaracas = new Date(new Date(evento.starts_at).getTime() - CARACAS * 3600_000)
+      .toISOString()
+      .slice(0, 10)
+
+    const avisados = await avisarDeLaApertura(evento.id, slugs, diaCaracas, d.seco)
+
+    // En seco no se anota: no ha pasado nada que rastrear.
+    if (d.seco) return NextResponse.json({ estado: 'seco', avisados })
+
+    await anotar(actor, 'fecha_avisada', 'evento', evento.id, { zonas: slugs, avisados })
+    return NextResponse.json({ estado: 'avisada', avisados })
   }
 
   if (d.accion === 'quitar') {

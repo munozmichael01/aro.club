@@ -736,14 +736,17 @@
      * portada, en Legal y en el correo de fecha cancelada. Vive aquí porque la
      * leen el panel al abrir una fecha, el copy que la promete y la app.
      *
-     * **Era 48 y pasa a 24 por decisión de Michael.** Lo que compra: más
-     * tiempo para que se apunte gente. Lo que cuesta: operación tiene menos
-     * de un día entre el cierre y la cena para armar las mesas y reservar los
-     * restaurantes, y la promesa de avisar con antelación si una fecha se
-     * cancela queda acotada por esta misma cifra — no se puede avisar con 48
-     * horas de algo que no se sabe hasta 24 horas antes.
+     * **Vuelve a 48 después de un día en 24.** Se bajó para dar más tiempo a
+     * que se apuntara gente, y Michael la devolvió al ver lo que costaba:
+     * operación se quedaba con menos de un día entre el cierre y la cena para
+     * armar las mesas y reservar los restaurantes, y el aviso de que una
+     * fecha se cancela no puede darse antes del cierre — con 24 no había
+     * margen para avisar a nadie con tiempo.
+     *
+     * El copy que la menciona la LEE de aquí, así que moverla otra vez es
+     * cambiar este número y nada más. Estuvo escrita a mano en cinco sitios.
      */
-    HORAS_DE_CIERRE: 24,
+    HORAS_DE_CIERRE: 48,
 
     /** Los formatos que salen a la calle: ahí no hay mesa. */
     DE_MOVIMIENTO: ['walk', 'hike', 'run', 'padel', 'pilates', 'cycling'],

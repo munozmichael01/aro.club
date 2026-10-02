@@ -31,6 +31,10 @@ export type Accion =
   // Cerrar una fecha a mano. No es cancelarla —quien está apuntado sigue
   // apuntado y la cena se hace— es dejar de admitir gente nueva.
   | 'fecha_cerrada'
+  // Mandar el «abrimos mesa en tu zona» de una fecha que se creó callada.
+  // Crear y avisar dejaron de ser lo mismo, así que el aviso es un acto
+  // propio y tiene que poder rastrearse: dice a cuánta gente se escribió.
+  | 'fecha_avisada'
   // La escribe un DISPARADOR de `events`, no una ruta: borrar una fecha se
   // hace con la clave de servicio y no pasa por el panel.
   | 'fecha_borrada'

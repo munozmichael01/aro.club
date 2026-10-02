@@ -557,7 +557,7 @@
                       </button>
                     </sc-for>
                   </div>
-                  <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:10px;max-width:52ch;text-wrap:pretty">Solo el día. La hora la pone el formato, y el cierre y la revelación salen de ahí: no se pueden escribir a mano. Los formatos de mañana se revelan el mediodía anterior, porque a las doce del mismo día ya habrían pasado.</div>
+                  <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:10px;max-width:52ch;text-wrap:pretty">El día, y la hora si no vale la del formato. El cierre y la revelación salen de ahí: no se escriben a mano. Los formatos de mañana se revelan el mediodía anterior, porque a las doce del mismo día ya habrían pasado.</div>
                 </div>
 
                 <div>
@@ -592,6 +592,16 @@
                     </div>
                   </div>
                 </sc-if>
+
+                <div>
+                  <div style="{{ etiqueta }}">LA HORA</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center">
+                    <span style="{{ envCampo }}">
+                      <input type="time" value="{{ hora }}" onChange="{{ onHora }}" aria-label="Hora de inicio" style="{{ campoNum }}" />
+                    </span>
+                    <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F;white-space:nowrap">{{ notaHora }}</span>
+                  </div>
+                </div>
 
                 <div>
                   <div style="{{ etiqueta }}">EL PRECIO</div>
@@ -662,6 +672,7 @@
                 </div>
 
                 <button onClick="{{ abrir }}" aria-disabled="{{ inerteAbrir }}" style="{{ botonAbrir }}">{{ textoAbrir }}</button>
+                <button onClick="{{ abrirCallada }}" style="{{ botonCallada }}">{{ textoCallada }}</button>
                 <sc-if value="{{ abierta }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(27,81,56,.11);padding:14px 16px;margin-top:12px;animation:aro-open 260ms ease both">
                     <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
@@ -708,6 +719,9 @@
                   <sc-if value="{{ puedeAbrirCerrar }}" hint-placeholder-val="{{ true }}">
                     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;border-radius:22px;background:#FAF3E4;padding:16px 18px">
                       <button onClick="{{ abrirCerrar }}" style="{{ botonAbrirCerrar }}">{{ textoAbrirCerrar }}</button>
+                      <sc-if value="{{ puedeAvisar }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ avisar }}" style="{{ botonAvisar }}">{{ textoAvisar }}</button>
+                      </sc-if>
                       <span style="flex:1;min-width:220px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ notaAbrirCerrar }}</span>
                     </div>
                   </sc-if>
@@ -1532,6 +1546,27 @@ class Component extends DCLogic {
       .then((r) => { if (r.ok) this.cargarFechas && this.cargarFechas(); });
   }
 
+  /**
+   * Contar una fecha que se abrió callada.
+   *
+   * Pregunta primero EN SECO a cuánta gente iría y lo confirma: esto escribe
+   * a medio club de una vez, y pulsar un botón sin saber a cuántos va es
+   * justo donde no se puede volver atrás. El servidor cuenta igual que manda,
+   * así que la cifra del aviso es la de verdad.
+   */
+  avisarFecha(eventoId) {
+    if (!eventoId) return;
+    this.mandar('/api/operacion/fechas', { accion: 'avisar', eventoId: eventoId, seco: true }, 'PATCH')
+      .then((r) => {
+        if (!r.ok) return;
+        const n = (r.d && r.d.avisados) || 0;
+        if (!n) { window.alert('No hay nadie a quien avisar en esas zonas.'); return; }
+        if (!window.confirm('Se le va a escribir a ' + n + (n === 1 ? ' persona' : ' personas') + '. ¿Lo mando?')) return;
+        this.mandar('/api/operacion/fechas', { accion: 'avisar', eventoId: eventoId }, 'PATCH')
+          .then((r2) => { if (r2.ok) this.cargarFechas && this.cargarFechas(); });
+      });
+  }
+
   marcarAsistencia(reservaId, vinoAhora) {
     if (!reservaId) return;
     const siguiente = vinoAhora === 'pendiente' ? true : vinoAhora === 'si' ? false : null;
@@ -1955,6 +1990,9 @@ class Component extends DCLogic {
       formato: f.formato,
       hora: horaTexto(f.empiezaEn),
       cierra: cuantoQueda(f.cierraEn),
+      // Si ya se le contó a alguien, y si todavía da tiempo de contarlo.
+      avisada: !!f.avisada,
+      cierraEn: f.cierraEn,
       fam: FAM_DE_FORMATO[f.formato] || 'cenas',
       apuntados: f.apuntados,
       porMesa: f.porMesa || 6,
@@ -2226,6 +2264,12 @@ class Component extends DCLogic {
       }
       if ((f.zonasSinLocal || []).length) {
         t.push((f.zonasSinLocal.length === 1 ? 'Sin local en ' : 'Sin local en ') + f.zonasSinLocal.join(' ni '));
+      }
+      // Abierta y callada: existe, admite gente y nadie lo sabe. Solo
+      // mientras quede tiempo — avisar de una fecha cerrada es mandar a la
+      // gente a una puerta cerrada, y la ruta lo rechaza igual.
+      if (!f.avisada && f.cierraEn && new Date(f.cierraEn).getTime() > Date.now()) {
+        t.push('Sin avisar todavía');
       }
       return t.join(' · ');
     };
@@ -2540,6 +2584,7 @@ class Component extends DCLogic {
       'Pilates': 'Clase de reformer, nivel principiante', 'Ciclismo': '20 km por la Cota Mil'
     };
     const actOk = deMesa || (String(St.actividad || '').trim().length >= 4);
+    const horaSel = /^([01]\d|2[0-3]):[0-5]\d$/.test(String(St.hora || '')) ? String(St.hora) : '';
     const precioNum = parseFloat(String(St.precio === undefined ? '8' : St.precio).replace(',', '.')) || 0;
     const cupoOk = true;
     const precioOk = precioNum > 0;
@@ -3440,6 +3485,12 @@ class Component extends DCLogic {
             + 'color:' + (cruda.estado === 'locked' ? '#1B5138' : '#8F4515') + ';'
             + 'font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
           abrirCerrar: () => this.abrirCerrarFecha(cruda.id, cruda.estado !== 'locked' ? false : true),
+          // Avisar después: solo si no se ha avisado y todavía da tiempo.
+          puedeAvisar: !f.avisada && cierra !== 'CERRADA',
+          textoAvisar: 'Avisar de esta fecha',
+          notaAvisar: 'Se abrió sin avisar. Esto manda «abrimos mesa en tu zona» a quien pueda llegar y no lo haya apagado. Dice a cuántos antes de mandarlo.',
+          botonAvisar: 'display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+          avisar: () => this.avisarFecha(cruda.id),
           verMetricas: [
             ['APUNTADOS', String(f.apuntados), f.zonas.length === 1 ? 'En 1 zona' : 'En ' + f.zonas.length + ' zonas', null],
             ['CIERRA EN', cierra, cierra === 'CERRADA' ? 'No entra nadie más' : 'Después ya no se apunta nadie', cierra === 'CERRADA' ? '#8F4515' : null],
@@ -3512,6 +3563,11 @@ class Component extends DCLogic {
       // acabar sentado —basta con que otro cancele— y en movimiento el
       // límite de verdad se resuelve consiguiendo más sitio, no sentando a
       // menos gente. El precio sí es del evento: 8 USD es el arranque.
+      // La hora. Vacía quiere decir «la del formato», que es como funcionaba
+      // antes y sigue siendo un clic para una cena normal.
+      hora: St.hora || '',
+      onHora: (e) => this.setState({ hora: e.target.value }),
+      notaHora: horaSel ? 'Hora de Caracas' : 'Vacía = la del formato',
       precio: St.precio === undefined ? '8' : St.precio,
       onPrecio: (e) => this.setState({ precio: e.target.value.replace(/[^0-9,.]/g, '').slice(0, 6), abierta: false }),
       precioBs: precioNum > 0 ? '= ' + bs(precioNum) + ' Bs a la tasa de hoy' : 'Escribe el precio',
@@ -3533,7 +3589,35 @@ class Component extends DCLogic {
       campoCorto: 'flex:0 0 auto;width:96px;min-height:52px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#1B5138;font:400 15px/1 \'Inter Tight\',sans-serif;outline:none;text-align:center',
       niveles: ['Suave', 'Media', 'Exigente'].map((label, i) => {
         const on = St.nivel === i;
-        return {
+        // El cuerpo de la fecha nueva, que comparten los dos botones: abrir y
+    // avisar, y abrir callada. Dos copias serían dos fechas distintas.
+  const cuerpoNuevaFecha = (avisar) => {
+      const y = (n) => String(n).padStart(2, '0');
+      const cuerpo = {
+        dia: dSel.getFullYear() + '-' + y(dSel.getMonth() + 1) + '-' + y(dSel.getDate()),
+        formato: CODIGO_FORMATO[fSel[0]] || 'dinner',
+        // Vacía = la del formato, que es lo que hacía siempre.
+        hora: horaSel || undefined,
+        avisar: avisar,
+        precioUsd: precioNum,
+        zonas: idxZonas.map((i) => ({
+          zona: ZONAS_OP[i][3],
+          // El local, si ya se sabe. Si no, la zona se abre sin él.
+          restauranteId: (ZONAS_OP[i][2].filter((l) => l[0] === zSel[i])[0] || [])[3] || null
+        }))
+      };
+      if (!deMesa) {
+        cuerpo.actividad = {
+          ruta: String(St.actividad || '').trim(),
+          km: St.distancia ? parseFloat(String(St.distancia).replace(',', '.')) : null,
+          minutos: St.duracion ? parseInt(St.duracion, 10) : null,
+          nivel: St.nivel >= 0 ? ['suave', 'medio', 'exigente'][St.nivel] : null
+        };
+      }
+    return cuerpo;
+  };
+
+    return {
           label, icono: on ? '✓' : '', aro: aroDS(on), btn: past(on), txt: txtDS(on),
           pick: () => this.setState({ nivel: i, abierta: false })
         };
@@ -3558,29 +3642,17 @@ class Component extends DCLogic {
               : (!actOk ? 'Describe la actividad'
                 : 'Abrir y avisar a ' + genteTotal)))),
       botonAbrir: 'display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:56px;margin-top:16px;padding:0 24px;border-radius:999px;border:none;background:' + (listoAbrir ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (listoAbrir ? '#FAF3E4' : '#456352') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (listoAbrir ? 'pointer' : 'not-allowed'),
-      abrir: () => {
-        if (!listoAbrir) return;
-        const y = (n) => String(n).padStart(2, '0');
-        const cuerpo = {
-          dia: dSel.getFullYear() + '-' + y(dSel.getMonth() + 1) + '-' + y(dSel.getDate()),
-          formato: CODIGO_FORMATO[fSel[0]] || 'dinner',
-          precioUsd: precioNum,
-          zonas: idxZonas.map((i) => ({
-            zona: ZONAS_OP[i][3],
-            // El local, si ya se sabe. Si no, la zona se abre sin él.
-            restauranteId: (ZONAS_OP[i][2].filter((l) => l[0] === zSel[i])[0] || [])[3] || null
-          }))
-        };
-        if (!deMesa) {
-          cuerpo.actividad = {
-            ruta: String(St.actividad || '').trim(),
-            km: St.distancia ? parseFloat(String(St.distancia).replace(',', '.')) : null,
-            minutos: St.duracion ? parseInt(St.duracion, 10) : null,
-            nivel: St.nivel >= 0 ? ['suave', 'medio', 'exigente'][St.nivel] : null
-          };
-        }
-        this.abrirFecha(cuerpo);
-      },
+      abrir: () => { if (listoAbrir) this.abrirFecha(cuerpoNuevaFecha(true)); },
+      // Abrir sin contarlo todavía.
+      //
+      // Crear y avisar eran lo mismo, así que montar una fecha para dejarla
+      // lista —ponerle la hora, elegir el sitio— significaba mandar el correo
+      // en ese momento o no crearla. Ahora son dos actos, y el aviso sigue
+      // disponible hasta que la fecha cierre.
+      textoCallada: 'Abrir sin avisar',
+      botonCallada: 'display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:52px;margin-top:9px;padding:0 24px;border-radius:999px;border:1px solid ' + (listoAbrir ? 'rgba(20,52,42,.28)' : 'rgba(20,52,42,.12)') + ';background:transparent;color:' + (listoAbrir ? '#1B5138' : '#456352') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (listoAbrir ? 'pointer' : 'not-allowed'),
+      abrirCallada: () => { if (listoAbrir) this.abrirFecha(cuerpoNuevaFecha(false)); },
+
       abierta: !!St.abierta,
       textoAbierta: St.aviso || '',
 
