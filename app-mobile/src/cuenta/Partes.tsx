@@ -210,7 +210,9 @@ function Polaroid({ f, algunoElegido, alPulsar }: { f: Filtro; algunoElegido: bo
       ]}
     >
       <View style={estilos.polaroidFoto}>
-        <Image source={viva ? FOTOS[f.formato].on : FOTOS[f.formato].off} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        {/* Ancho y alto explícitos: con `absoluteFill`, iOS pintaba la foto a su
+            tamaño propio (360 pt) y se veía ampliada y cortada (TestFlight, 02-10-2026). */}
+        <Image source={viva ? FOTOS[f.formato].on : FOTOS[f.formato].off} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
         <View style={[StyleSheet.absoluteFill, { backgroundColor: verdeAlfa(0.23) }]} />
       </View>
       <Texto variante="rotulo" style={{ fontFamily: fuente.titular, fontSize: 16, textAlign: 'center', paddingTop: 9, color: f.elegido ? color.terracota : color.verdeProfundo }}>

@@ -29,15 +29,22 @@ const FOTOS: Record<string, number> = {
   movement: require('../../assets/fotos/filtro-movimiento.jpg'),
 }
 
-/** Dónde cae cada polaroid, en las medidas de la maqueta (una caja de 346 × 292). */
+/**
+ * Dónde cae cada polaroid. La maqueta (346 × 292) montaba la fila de abajo
+ * sobre la de arriba y tapaba la mitad de Cenas y Drinks, con sus nombres
+ * (Michael, 02-10-2026): ahora son algo más chicas y la segunda fila empieza
+ * donde acaba el nombre de la primera. Se siguen tocando, como polaroids
+ * sobre una mesa, pero ninguna tapa la foto ni el nombre de otra.
+ */
 const SITIO = [
-  { x: 4, y: 6, giro: '-6deg' },
-  { x: 176, y: 0, giro: '5deg' },
-  { x: 28, y: 124, giro: '4deg' },
-  { x: 186, y: 132, giro: '-4deg' },
+  { x: 10, y: 8, giro: '-5deg' },
+  { x: 184, y: 0, giro: '4deg' },
+  { x: 24, y: 176, giro: '3deg' },
+  { x: 192, y: 182, giro: '-4deg' },
 ]
+const FOTO = 124
 const ANCHO_MAQUETA = 346
-const ALTO_MAQUETA = 292
+const ALTO_MAQUETA = 362
 
 function Polaroids({ ancho }: { ancho: number }) {
   // Se escala con el ancho, sin pasar del 120 %: en una tableta no se hacen enormes.
@@ -49,10 +56,10 @@ function Polaroids({ ancho }: { ancho: number }) {
           key={p.formato}
           style={[
             estilos.polaroid,
-            { left: SITIO[i].x * k, top: SITIO[i].y * k, width: 156 * k, padding: 8 * k, paddingBottom: 0, transform: [{ rotate: SITIO[i].giro }] },
+            { left: SITIO[i].x * k, top: SITIO[i].y * k, width: (FOTO + 16) * k, padding: 8 * k, paddingBottom: 0, transform: [{ rotate: SITIO[i].giro }] },
           ]}
         >
-          <Image source={FOTOS[p.formato]} style={{ width: 140 * k, height: 140 * k }} resizeMode="cover" />
+          <Image source={FOTOS[p.formato]} style={{ width: FOTO * k, height: FOTO * k }} resizeMode="cover" />
           <Texto style={{ fontFamily: fuente.titular, fontSize: 15 * k, lineHeight: Math.ceil(15 * k * 1.42), color: color.verdeProfundo, paddingTop: 8 * k, paddingBottom: 10 * k, paddingHorizontal: 2 }}>
             {p.nombre}
           </Texto>
