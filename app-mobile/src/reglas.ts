@@ -33,6 +33,8 @@ type Api = {
   /** «AAAA-MM-DD» → «DD/MM/AAAA», o '' si no cuadra. */
   fechaDesdeISO: (v: string) => string
   PRECIO_USD: number
+  /** Cuántas horas antes de empezar cierra una fecha (24 desde el 01-10-2026). Web, servidor y app leen esta. */
+  HORAS_DE_CIERRE: number
   precioTexto: () => string
   /** La zona del producto. Cuando `cities` tenga su columna, se cambia aquí para web y app. */
   ZONA: string

@@ -11,6 +11,7 @@
  *   abiertas de verdad (`diasDe`).
  */
 
+import { reglas } from '../reglas'
 import { CIUDAD_PRODUCTO } from './zona'
 
 export type EstadoCuenta = 'perfil' | 'datos' | 'verificar' | 'revision' | 'reservar' | 'porconfirmar' | 'reservada' | 'abierta'
@@ -126,7 +127,7 @@ export const agenda = {
   intro: 'Te apuntas a una fecha, no a una mesa.',
   introEnfasis: 'Cenas siempre con cinco personas.',
   introResto: (cuando: string) =>
-    `Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y ${cuando} sabes en cuál te tocó. Cada fecha se cierra 48 horas antes.`,
+    `Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y ${cuando} sabes en cuál te tocó. Cada fecha se cierra ${reglas.HORAS_DE_CIERRE} horas antes.`,
   proximamente: 'Próximamente',
   verTodo: 'Ver todo',
   vacia: 'Nada de ese tipo abierto ahora mismo. Abrimos según lo que pida la gente: marca ese plan en tu perfil y cuentas para que salga.',
@@ -182,7 +183,7 @@ export const proximo = {
   vacioCuerpo: 'Cuando te apuntes a una fecha aparece aquí, y después de ir podrás contarnos qué tal fue. Eso entra en el emparejamiento de la siguiente.',
   verLoQueViene: 'Ver lo que viene',
   porConfirmar: { detalle: 'Pago en revisión · puesto apartado', estado: 'Por confirmar' },
-  confirmada: { detalle: 'Confirmada, se cierra 48 h antes', estado: 'Confirmada' },
+  confirmada: { detalle: `Confirmada, se cierra ${reglas.HORAS_DE_CIERRE} h antes`, estado: 'Confirmada' },
   mesa: (n: number) => ` · mesa ${String(n).padStart(2, '0')}`,
 }
 
