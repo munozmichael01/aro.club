@@ -257,9 +257,18 @@ vibra ningún teléfono, a propósito — una push que no aporta es la que hace 
 se apaguen todas.
 
 **Una fila se marca enviada solo si llegó a algún teléfono vivo.** Con el
-único token muerto queda `push_motivo = 'token_muerto'`, no «enviada»: es el
-mismo motivo por el que `sent_at` no significa entregado. `DeviceNotRegistered`
-—en la respuesta y en los recibos— da de baja el token solo.
+único token muerto queda `push_motivo = 'token_muerto'`, no «enviada».
+
+Y como en el correo, `push_at` no significa entregado: significa que Expo la
+aceptó. `push_ticket` guarda `[{t: ticket, k: id del token}]` —atado a SU
+token, porque alguien puede tener dos teléfonos y dar de baja el equivocado no
+es algo que se deba adivinar— y `push_recibo` lo que dijo Expo después.
+
+**El recibo se lee en una pasada POSTERIOR**, no al mandar: Expo tarda
+minutos en tenerlo, y pedirlo en el mismo segundo devuelve un hueco. Lo hace
+`leerRecibos()` dentro del mismo cron de correos, que ya pasa cada cuarto de
+hora. Ahí es donde aparece el `DeviceNotRegistered` de quien desinstaló la
+app, y ahí se da de baja su token.
 
 ---
 

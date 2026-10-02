@@ -2668,6 +2668,8 @@ export type Database = {
           provider_id: string | null
           push_at: string | null
           push_motivo: string | null
+          push_recibo: string | null
+          push_ticket: Json | null
           send_at: string
           sent_at: string | null
         }
@@ -2684,6 +2686,8 @@ export type Database = {
           provider_id?: string | null
           push_at?: string | null
           push_motivo?: string | null
+          push_recibo?: string | null
+          push_ticket?: Json | null
           send_at: string
           sent_at?: string | null
         }
@@ -2700,6 +2704,8 @@ export type Database = {
           provider_id?: string | null
           push_at?: string | null
           push_motivo?: string | null
+          push_recibo?: string | null
+          push_ticket?: Json | null
           send_at?: string
           sent_at?: string | null
         }

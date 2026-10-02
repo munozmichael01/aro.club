@@ -251,19 +251,28 @@ export async function despacharPendientes(
 ): Promise<{
   mandados: number
   pushes: number
+  /** Cuántas filas supieron por fin si su push llegó de verdad. */
+  recibos: number
   quedan: number
   seco?: { kind: string; asunto: string; huecos: number; baja: boolean }[]
 }> {
   try {
     // Se importan aquí dentro y no arriba porque `correos-datos` necesita el
     // tipo `Correo` de este mismo fichero: en la cabecera sería un ciclo.
-    const [{ prepararCorreo }, { componer, enviar, SITIO }, { firmarBaja }, { mandarPush }] =
+    const [{ prepararCorreo }, { componer, enviar, SITIO }, { firmarBaja }, { mandarPush, leerRecibos }] =
       await Promise.all([
         import('@/lib/correos-datos'),
         import('@/lib/remitente'),
         import('@/lib/baja-token'),
         import('@/lib/push'),
       ])
+
+    // Los recibos de las push de vueltas anteriores, antes de nada.
+    //
+    // Aquí y no en un cron propio: este ya pasa cada cuarto de hora, que es
+    // justo el retraso que Expo pide para tener el recibo listo. En seco no:
+    // leer un recibo escribe en la fila.
+    const recibos = seco ? 0 : await leerRecibos()
 
     /**
      * La cabecera de baja, para los que NO son imprescindibles.
@@ -399,7 +408,9 @@ export async function despacharPendientes(
             datos: listo.datos as Record<string, unknown>,
           }],
           seco,
-        ).catch(() => new Map<string, { ok: boolean; motivo?: string }>())
+        ).catch(
+          () => new Map<string, { ok: boolean; motivo?: string; ticket?: { t: string; k: string }[] }>(),
+        )
 
         const q = quedo.get(fila.id)
         if (q && !seco) {
@@ -408,6 +419,10 @@ export async function despacharPendientes(
             .update({
               push_at: q.ok ? new Date().toISOString() : null,
               push_motivo: q.ok ? null : (q.motivo ?? 'error'),
+              // El ticket de Expo, que es el `provider_id` de las push: sin
+              // él, «no me llegó» no se puede investigar. El recibo llega
+              // minutos después y lo escribe `leerRecibos` en otra pasada.
+              push_ticket: q.ticket?.length ? (q.ticket as never) : null,
             } as never)
             .eq('id', fila.id)
         }
@@ -457,9 +472,9 @@ export async function despacharPendientes(
       .is('sent_at', null)
       .lte('send_at', new Date().toISOString())
 
-    return { mandados, pushes, quedan: count ?? 0, seco: seco ? enSeco : undefined }
+    return { mandados, pushes, recibos, quedan: count ?? 0, seco: seco ? enSeco : undefined }
   } catch (e) {
     console.error('[correos] fallo despachando', e)
-    return { mandados: 0, pushes: 0, quedan: 0 }
+    return { mandados: 0, pushes: 0, recibos: 0, quedan: 0 }
   }
 }

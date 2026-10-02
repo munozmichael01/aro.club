@@ -154,7 +154,7 @@ export type Salida =
    * Eso convierte «no me llegó la push» en una pregunta sin respuesta, que es
    * exactamente lo que `provider_id` arregló para el correo.
    */
-  | { estado: 'hecho'; vivos: Set<string> }
+  | { estado: 'hecho'; vivos: Set<string>; tickets: Map<string, string> }
   | { estado: 'error'; motivo: string }
 
 /**
@@ -191,13 +191,13 @@ async function mandarLote(mensajes: Mensaje[], porToken: Map<string, string>): P
     }
 
     const muertos: string[] = []
-    const recibos: string[] = []
     const vivos = new Set<string>()
+    const tickets = new Map<string, string>()
 
     ;(j.data ?? []).forEach((res, i) => {
       if (res.status === 'ok') {
         vivos.add(mensajes[i].to)
-        if (res.id) recibos.push(res.id)
+        if (res.id) tickets.set(mensajes[i].to, res.id)
         return
       }
       if (res.details?.error === 'DeviceNotRegistered') {
@@ -207,56 +207,103 @@ async function mandarLote(mensajes: Mensaje[], porToken: Map<string, string>): P
     })
 
     if (muertos.length) await darDeBaja(muertos)
-    if (recibos.length) await mirarRecibos(recibos, porToken, mensajes)
 
-    return { estado: 'hecho', vivos }
+    // El recibo NO se pide aquí.
+    //
+    // Expo tarda minutos en tenerlo, así que preguntarlo en el mismo segundo
+    // devuelve un hueco y deja la fila diciendo que no se sabe nada. Lo lee
+    // `leerRecibos()` en una pasada posterior del mismo cron, que ya corre
+    // cada cuarto de hora.
+    return { estado: 'hecho', vivos, tickets }
   } catch (e) {
     return { estado: 'error', motivo: e instanceof Error ? e.message : 'sin respuesta' }
   }
 }
 
 /**
- * Los recibos, que es donde Expo dice si el teléfono la recibió de verdad.
+ * Los recibos: lo que dice Expo minutos después, cuando ya sabe si el
+ * teléfono la recibió.
  *
- * La primera respuesta solo dice que Expo aceptó el mensaje, igual que
- * `sent_at` en el correo solo dice que Resend lo aceptó. Lo que pasó después
- * está aquí, y es donde aparece el `DeviceNotRegistered` de quien desinstaló
- * la app.
+ * El ticket solo dice que Expo la ACEPTÓ, igual que `sent_at` en el correo
+ * solo dice que Resend lo aceptó. Lo que pasó después está aquí, y es donde
+ * aparece el `DeviceNotRegistered` de quien desinstaló la app.
  *
- * Nunca lanza: un recibo que no se puede leer no puede tumbar un envío que ya
- * salió.
+ * Corre en la misma pasada del cron de correos, que ya pasa cada cuarto de
+ * hora: no hace falta un cron nuevo y el retraso natural es justo el que Expo
+ * pide. Solo mira filas con ticket y sin recibo, y deja un margen para no
+ * preguntar por algo que todavía no existe.
+ *
+ * Nunca lanza: un recibo que no se puede leer no puede tumbar el envío de los
+ * correos que van en la misma vuelta.
  */
-async function mirarRecibos(
-  ids: string[],
-  porToken: Map<string, string>,
-  mensajes: Mensaje[],
-): Promise<void> {
+const MARGEN_RECIBO = 10 * 60 * 1000
+
+export async function leerRecibos(): Promise<number> {
+  const admin = createAdminClient()
+
   try {
+    const { data: filas } = await admin
+      .from('scheduled_emails')
+      .select('id, push_ticket')
+      .not('push_ticket', 'is', null)
+      .is('push_recibo', null)
+      .lte('push_at', new Date(Date.now() - MARGEN_RECIBO).toISOString())
+      .limit(100)
+
+    if (!filas?.length) return 0
+
+    // ticket → de qué fila y de qué token es. Sin esto, dar de baja a alguien
+    // con dos teléfonos sería adivinar cuál.
+    const deTicket = new Map<string, { fila: string; token: string }>()
+    for (const f of filas) {
+      for (const t of (f.push_ticket ?? []) as { t?: string; k?: string }[]) {
+        if (t?.t && t?.k) deTicket.set(t.t, { fila: f.id, token: t.k })
+      }
+    }
+
+    const ids = [...deTicket.keys()]
+    if (!ids.length) return 0
+
     const r = await fetch(EXPO_RECIBOS, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ ids }),
       signal: AbortSignal.timeout(15_000),
     })
-    if (!r.ok) return
+    if (!r.ok) return 0
 
     const j = (await r.json()) as {
       data?: Record<string, { status: string; details?: { error?: string } }>
     }
 
     const muertos: string[] = []
-    for (const [reciboId, res] of Object.entries(j.data ?? {})) {
-      if (res.details?.error !== 'DeviceNotRegistered') continue
-      // El recibo no trae el token, así que se cruza por posición: los ids
-      // llegan en el mismo orden en que se mandaron los mensajes.
-      const i = ids.indexOf(reciboId)
-      const id = i >= 0 && mensajes[i] ? porToken.get(mensajes[i].to) : null
-      if (id) muertos.push(id)
+    const porFila = new Map<string, string[]>()
+
+    for (const [ticket, res] of Object.entries(j.data ?? {})) {
+      const quien = deTicket.get(ticket)
+      if (!quien) continue
+
+      const dicho = res.status === 'ok' ? 'ok' : (res.details?.error ?? res.status)
+      const lista = porFila.get(quien.fila) ?? []
+      lista.push(dicho)
+      porFila.set(quien.fila, lista)
+
+      if (res.details?.error === 'DeviceNotRegistered') muertos.push(quien.token)
     }
 
     if (muertos.length) await darDeBaja(muertos)
+
+    for (const [fila, dichos] of porFila) {
+      await admin
+        .from('scheduled_emails')
+        .update({ push_recibo: [...new Set(dichos)].join(', ') } as never)
+        .eq('id', fila)
+    }
+
+    return porFila.size
   } catch {
-    // Silencio a propósito: ya está mandada.
+    // Silencio a propósito: las push ya salieron y los correos van detrás.
+    return 0
   }
 }
 
@@ -286,8 +333,11 @@ export async function mandarPush(
     datos: Record<string, unknown>
   }[],
   seco = false,
-): Promise<Map<string, { ok: boolean; motivo?: string }>> {
-  const resultado = new Map<string, { ok: boolean; motivo?: string }>()
+): Promise<Map<string, { ok: boolean; motivo?: string; ticket?: { t: string; k: string }[] }>> {
+  const resultado = new Map<
+    string,
+    { ok: boolean; motivo?: string; ticket?: { t: string; k: string }[] }
+  >()
 
   const conCopy = filas
     .map((f) => ({ fila: f, copy: f.profile_id ? copyDe(f.kind, f.datos) : null }))
@@ -361,10 +411,24 @@ export async function mandarPush(
     // muerto, no la recibió nadie y la fila lo dice.
     for (let k = 0; k < lote.length; k++) {
       const id = idsLote[k]
-      const llego = r.vivos.has(lote[k].to)
+      const destino = lote[k].to
+      const llego = r.vivos.has(destino)
       const previo = resultado.get(id)
-      if (llego) resultado.set(id, { ok: true })
-      else if (!previo?.ok) resultado.set(id, { ok: false, motivo: 'token_muerto' })
+
+      if (!llego) {
+        if (!previo?.ok) resultado.set(id, { ok: false, motivo: 'token_muerto' })
+        continue
+      }
+
+      // El ticket, atado a SU token: es con lo que el recibo sabrá después a
+      // qué teléfono dar de baja si resulta que ya no existe.
+      const ticket = r.tickets.get(destino)
+      const tokenId = porToken.get(destino)
+      const acumulado = previo?.ticket ?? []
+      resultado.set(id, {
+        ok: true,
+        ticket: ticket && tokenId ? [...acumulado, { t: ticket, k: tokenId }] : acumulado,
+      })
     }
   }
 
