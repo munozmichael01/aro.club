@@ -44,10 +44,8 @@ está decidido.
 ## URLs
 
 - Política de privacidad: `https://aro.club/privacidad` (existe).
-- Soporte: **falta** una página. `/ayuda` da 404. Apple exige que la URL de
-  soporte lleve a una forma de contacto. Pedir al agente de la web una
-  `/ayuda` sencilla (preguntas frecuentes + `hola@aro.club`). Mientras
-  tanto vale `https://aro.club/legal`, que trae el correo.
+- Soporte: `https://aro.club/ayuda` (existe desde el 01-10: correo arriba,
+  las preguntas frecuentes de `AroReglas.FRECUENTES` y cómo borrar la cuenta).
 - Marketing (opcional): `https://aro.club`.
 
 ## Clasificación por edad
@@ -85,9 +83,20 @@ diagnósticos ni datos de uso.
 
 ## Notas para la revisión de Apple
 
-Cuenta de demostración **ya verificada**, con una fecha abierta y, a ser
-posible, una mesa revelada. Si el revisor choca con la verificación (la
-revisa una persona), rechaza la app. Texto propuesto:
+Cuenta de demostración: la monta `node scripts/cuenta-revision.mjs` (desde
+la raíz de `aro-club/`). Usuario y contraseña los tiene Michael: **nunca en
+este fichero**, el repositorio es público. Van en el formulario de App Store
+Connect.
+
+- Está verificada, con créditos y una mesa **revelada** (restaurante, mesa y
+  los otros cinco, que son cuentas `@prueba.aro.club` a las que el remitente
+  no escribe nunca). Su fecha nace `locked`, así que no sale en la portada.
+- **Caduca:** la cena es a las ~30 h de montarla. El día que se envía a
+  revisión, y otra vez si Apple la devuelve, correr `--refrescar`. Si el
+  revisor ve Mi mesa vacía, es esto y no un fallo.
+- `--borrar` quita lo que creó y nada más.
+
+Texto propuesto:
 
 > Aro Club organiza cenas de seis personas en Caracas, Venezuela. Para entrar
 > hay que verificarse con documento y selfie, que revisa una persona. La
