@@ -46,7 +46,18 @@ La única dependencia aceptada es `POST /api/auth/nativo` (ver abajo).
   `/api/cuenta`, dejar de comparar el texto.
 - Opcional: `eas submit` para Android (con cuenta de servicio de Play) y EAS
   Update para mandar arreglos de JS sin hacer build.
-- v1.1: las push (ver `NOTIFICACIONES.md`).
+- **Push:** el lado de la app está hecho (69663e1, `src/avisos/`), pero aún
+  no va en ninguna build. Faltan tres cosas, detalladas en
+  `NOTIFICACIONES.md` → «Estado al 02-10»:
+  - Michael: la llave de APNs y Firebase;
+  - el agente: `/api/push/token` y el envío;
+  - yo: pasar a `app.config.js` para el `google-services.json`, que no se
+    commitea.
+
+  **Ojo:** la próxima build de iOS lleva `expo-notifications`, que pide la
+  capacidad de push en el perfil. Sin la llave de APNs ya creada, la build no
+  interactiva puede fallar al firmar. Lanzarla después del paso 1, o que la
+  lance Michael en su terminal.
 
 **La cena del 03-10 (influencers):** no se hace, y se deja pasar SIN
 TOCARLA. Mientras siga en `open` y sin mesas no sale ningún correo: ni
