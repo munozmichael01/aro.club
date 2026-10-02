@@ -245,6 +245,8 @@ async function sembrar(fechaAjena) {
         format: 'dinner', starts_at: jueves.toISOString(),
         booking_closes_at: cierra.toISOString(), reveal_at: revela.toISOString(),
         restaurant_id: rest1.id, status: 'locked', seats_per_table: 6,
+        // Marcada: no sale en la agenda de nadie ni en la portada.
+        es_prueba: true,
         min_tables: 1, max_seats: 36, price_usd: 8, credit_cost: 1,
         // La columna es `city_slug`. `city` no existe: el insert entero
         // fallaba con 400 y el guion no sembraba nada.

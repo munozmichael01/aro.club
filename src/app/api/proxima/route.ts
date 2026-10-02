@@ -22,6 +22,8 @@ export async function GET() {
     .from('events')
     .select('id, starts_at, booking_closes_at, reveal_at, format, city_slug')
     .eq('status', 'open')
+    // Y nunca una de prueba, aunque alguien la deje en `open` por error.
+    .eq('es_prueba', false)
     .gt('booking_closes_at', new Date().toISOString())
     .order('starts_at', { ascending: true })
     .limit(1)

@@ -287,7 +287,7 @@ export async function GET() {
 
   const { data: eventos } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug')
+    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug, es_prueba')
     .in('status', ['draft', 'open', 'locked', 'matched'])
     .order('starts_at', { ascending: true })
 
@@ -383,6 +383,10 @@ export async function GET() {
        * cuándo termina una cena.
        */
       pasada: new Date(e.starts_at).getTime() + FIN_CENA <= Date.now(),
+      // El panel SÍ las ve, y a propósito: esconder de operación la basura
+      // que crean sus propios guiones es esconderla en vez de poder barrerla.
+      // Lo que no puede es parecer una fecha de verdad.
+      esPrueba: !!e.es_prueba,
       cierraEn: e.booking_closes_at,
       revelaEn: e.reveal_at,
       estado: e.status,

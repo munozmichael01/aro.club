@@ -1999,6 +1999,7 @@ class Component extends DCLogic {
       avisada: !!f.avisada,
       cierraEn: f.cierraEn,
       pasada: !!f.pasada,
+      esPrueba: !!f.esPrueba,
       fam: FAM_DE_FORMATO[f.formato] || 'cenas',
       apuntados: f.apuntados,
       porMesa: f.porMesa || 6,
@@ -2028,7 +2029,11 @@ class Component extends DCLogic {
     const verPasadas = !!St.verPasadas;
     const seVe = (f) => verPasadas || !f.pasada;
 
-    const fr = FECHAS_REP[St.fechaRep] || FECHAS_REP[0] || {
+    // La elegida, o la primera que se ve. `FECHAS_REP[0]` era la primera de
+    // TODAS, así que con las pasadas ocultas el carril enseñaba tres fechas
+    // vivas y el detalle de abajo una cena de agosto.
+    const porDefecto = FECHAS_REP.filter(seVe)[0];
+    const fr = (seVe(FECHAS_REP[St.fechaRep] || {}) ? FECHAS_REP[St.fechaRep] : null) || porDefecto || {
       id: null, titulo: 'Sin fechas abiertas', formato: 'dinner', hora: '', cierra: '',
       fam: 'cenas', apuntados: 0, porMesa: 6, faltaSitio: [], zonas: [],
       noCaben: 0, noCabenGente: [], zonasSinLocal: []
@@ -2255,7 +2260,10 @@ class Component extends DCLogic {
     const tipoRep = St.tipoRep || 'todo';
     const tiposRep = ['todo', 'cenas', 'drinks', 'coffee', 'movimiento'].map((t) => {
       const on = tipoRep === t;
-      const n = t === 'todo' ? FECHAS_REP.length : FECHAS_REP.filter((f) => f.fam === t).length;
+      // De lo que se ve, no de todo lo que existe: con las pasadas ocultas,
+      // «Cenas 8» sobre tres fechas visibles es una cuenta de otra lista.
+      const aLaVista = FECHAS_REP.filter(seVe);
+      const n = t === 'todo' ? aLaVista.length : aLaVista.filter((f) => f.fam === t).length;
       return {
         nombre: t === 'todo' ? 'Todo' : NOMBRE_FILTRO[t], n: String(n),
         pick: () => this.setState({ tipoRep: t }),
@@ -2296,6 +2304,9 @@ class Component extends DCLogic {
       if (!f.avisada && f.cierraEn && new Date(f.cierraEn).getTime() > Date.now()) {
         t.push('Sin avisar todavía');
       }
+      // Dicho, no escondido: no sale en la agenda de ningún miembro, pero
+      // aquí tiene que distinguirse de una fecha de verdad.
+      if (f.esPrueba) t.push('DE PRUEBA · no la ve ningún miembro');
       return t.join(' · ');
     };
 

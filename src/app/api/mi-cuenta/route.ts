@@ -146,6 +146,7 @@ export async function GET() {
     .select(
       'id, starts_at, booking_closes_at, reveal_at, city_slug, restaurants!events_restaurant_id_fkey(name, zone_slug)',
     )
+    .eq('es_prueba', false)
     .in('status', ['open', 'draft'])
     .gte('starts_at', new Date().toISOString())
     .order('starts_at', { ascending: true })
@@ -176,6 +177,8 @@ export async function GET() {
   const { data: fechas } = await admin
     .from('events')
     .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status')
+    // Las de prueba no son de nadie más que de quien las creó.
+    .eq('es_prueba', false)
     // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
     // `draft`, así que una fecha cerrada o ya repartida DESAPARECÍA, y
     // desaparecer es la peor forma de contar que algo pasó: quien llega desde

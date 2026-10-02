@@ -935,6 +935,7 @@ export type Database = {
           after_venue_id: string | null
           age_band_max: number | null
           age_band_min: number | null
+          es_prueba: boolean
           booking_closes_at: string
           city_slug: string
           created_at: string
@@ -958,6 +959,7 @@ export type Database = {
           after_venue_id?: string | null
           age_band_max?: number | null
           age_band_min?: number | null
+          es_prueba?: boolean
           booking_closes_at: string
           city_slug: string
           created_at?: string
@@ -981,6 +983,7 @@ export type Database = {
           after_venue_id?: string | null
           age_band_max?: number | null
           age_band_min?: number | null
+          es_prueba?: boolean
           booking_closes_at?: string
           city_slug?: string
           created_at?: string

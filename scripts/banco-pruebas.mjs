@@ -178,6 +178,11 @@ if (resto.includes('mesa') || resto.includes('revelada')) {
     // la reserva la inserta el propio guion, y /api/pago no mira el estado
     // del evento sino su cierre.
     restaurant_id: restId, status: 'locked', price_usd: 8, city_slug: 'caracas',
+    // Marcada: no sale en la agenda de nadie, ni en la portada, ni en ningún
+    // recuento público. `locked` no bastaba — ese estado dice «no admite gente
+    // nueva», que es una decisión sobre una fecha REAL, y la de pruebas se
+    // colaba cada vez que alguien ampliaba una consulta con buen criterio.
+    es_prueba: true,
   }).select('id').single()
   if (ee) console.log('  ! fecha:', ee.message)
   else {

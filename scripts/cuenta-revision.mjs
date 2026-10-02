@@ -243,6 +243,11 @@ const ev = oExplota('la fecha', await admin.from('events').insert({
   // `locked`, nunca `open`: /api/proxima filtra por `open`, y una fecha de
   // pruebas abierta saldría contando atrás en la portada pública.
   status: 'locked', price_usd: 8, city_slug: 'caracas',
+  // Marcada: no sale en la agenda de nadie, ni en la portada, ni en ningún
+  // recuento público. `locked` no bastaba — ese estado dice «no admite gente
+  // nueva», que es una decisión sobre una fecha REAL, y la de pruebas se
+  // colaba cada vez que alguien ampliaba una consulta con buen criterio.
+  es_prueba: true,
 }).select('id').single())
 
 const reserva = oExplota('la reserva', await admin.from('bookings')
