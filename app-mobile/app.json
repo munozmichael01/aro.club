@@ -69,7 +69,13 @@
           "backgroundColor": "#14342A"
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.357121226241-i4bartubu2r6eh3ugh79atuquobgl33e"
+        }
+      ]
     ],
     "extra": {
       "api": "https://aro.club/api",
@@ -80,8 +86,8 @@
         "projectId": "51c36ee0-0e19-4c87-bf88-f041afc965a9"
       },
       "google": {
-        "webClientId": "",
-        "iosClientId": ""
+        "webClientId": "357121226241-uvr8sjgrd4i21vscc2d3rh1bqn9ce8up.apps.googleusercontent.com",
+        "iosClientId": "357121226241-i4bartubu2r6eh3ugh79atuquobgl33e.apps.googleusercontent.com"
       }
     },
     "owner": "somos.aroclub"
