@@ -46,18 +46,24 @@ La única dependencia aceptada es `POST /api/auth/nativo` (ver abajo).
   `/api/cuenta`, dejar de comparar el texto.
 - Opcional: `eas submit` para Android (con cuenta de servicio de Play) y EAS
   Update para mandar arreglos de JS sin hacer build.
-- **Push:** el lado de la app está hecho (69663e1, `src/avisos/`), pero aún
-  no va en ninguna build. Faltan tres cosas, detalladas en
-  `NOTIFICACIONES.md` → «Estado al 02-10»:
-  - Michael: la llave de APNs y Firebase;
-  - el agente: `/api/push/token` y el envío;
-  - yo: pasar a `app.config.js` para el `google-services.json`, que no se
-    commitea.
+- **Push (02-10): todo montado, falta la prueba de punta a punta.**
+  - **App:** `src/avisos/` (69663e1).
+  - **Servidor:** el agente. Salen desde `despacharPendientes` con la fila
+    del correo; el resultado queda en `scheduled_emails.push_at` /
+    `push_motivo`; solo 7 tipos; quien se dio de baja de los correos
+    tampoco recibe push.
+  - **iOS:** llave de APNs en EAS y capacidad Push activada; build 5 con push
+    en TestFlight.
+  - **Android:** proyecto de Firebase `aro-club`, con `google-services.json`
+    como variable de fichero de EAS `GOOGLE_SERVICES_JSON` (vía
+    `app.config.js`, nunca en el repo) y la clave FCM V1 subida a EAS por
+    Michael. La build con push (`bf0c5ed0…`) hay que subirla a mano a
+    *Internal testing*.
 
-  **Ojo:** la próxima build de iOS lleva `expo-notifications`, que pide la
-  capacidad de push en el perfil. Sin la llave de APNs ya creada, la build no
-  interactiva puede fallar al firmar. Lanzarla después del paso 1, o que la
-  lance Michael en su terminal.
+  **Prueba:** una cuenta del banco en el teléfono reserva (ahí pide el
+  permiso), el agente encola uno de los 7 tipos para ella, y hay que ver que
+  llega y que al tocarla abre su pantalla. `/api/cron/correos?seco=1`
+  devuelve `pushes` sin llamar a Expo.
 
 **La cena del 03-10 (influencers):** no se hace, y se deja pasar SIN
 TOCARLA. Mientras siga en `open` y sin mesas no sale ningún correo: ni
