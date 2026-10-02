@@ -62,11 +62,13 @@ nombre de Expo Go). **Para que funcionen de verdad falta, fuera del código:**
   `…gl33e` en `app.json` → `extra.google`, plugin con `iosUrlScheme`, y los
   dos en *Client IDs* del proveedor Google de Supabase con «Skip nonce
   checks». Pantalla de consentimiento: en producción, externa.
-- **Falta Google en Android:** dos clientes Android (`club.aro.app`) en
-  Google Cloud, con el SHA-1 de la clave de firma de Play (Play Console →
-  Integridad de la app, tras subir la primera AAB) y el de la clave de EAS
-  (`eas credentials -p android`), y sus IDs añadidos en Supabase. Sin eso,
-  Google en Android da `DEVELOPER_ERROR`.
+- **Google en Android** (02-10): dos clientes Android (`club.aro.app`) en
+  el mismo proyecto de Google Cloud, con los SHA-1 de Play Console → App
+  signing: clave de firma de Play `D4:88:0E:…:BC:30` (lo que se instala
+  desde Play) y clave de subida de EAS `99:01:C4:…:86:87`. No van a
+  Supabase ni a `app.json`: en Android el SDK pide el token con el
+  `webClientId`, y los clientes Android solo prueban que la app es nuestra.
+  Sin ellos, `DEVELOPER_ERROR`.
 
 **Builds y tiendas (01-10):**
 - Android: build `production` (AAB) hecha con el icono de Design. La cuenta de

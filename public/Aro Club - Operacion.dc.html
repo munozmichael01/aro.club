@@ -107,6 +107,11 @@
             </button>
           </sc-for>
         </div>
+        <sc-if value="{{ hayPasadas }}" hint-placeholder-val="{{ true }}">
+          <div style="margin:-18px 0 clamp(24px,3vw,32px)">
+            <button onClick="{{ tocarPasadas }}" style="{{ botonPasadas }}">{{ textoPasadas }}</button>
+          </div>
+        </sc-if>
         <sc-if value="{{ sinFechasTipo }}" hint-placeholder-val="{{ false }}">
           <div style="border-radius:22px;border:1px dashed rgba(20,52,42,.28);padding:clamp(18px,2.4vw,24px);margin-bottom:clamp(24px,3vw,32px);max-width:56ch">
             <div style="font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloSinFechas }}</div>
@@ -1993,6 +1998,7 @@ class Component extends DCLogic {
       // Si ya se le contó a alguien, y si todavía da tiempo de contarlo.
       avisada: !!f.avisada,
       cierraEn: f.cierraEn,
+      pasada: !!f.pasada,
       fam: FAM_DE_FORMATO[f.formato] || 'cenas',
       apuntados: f.apuntados,
       porMesa: f.porMesa || 6,
@@ -2002,6 +2008,25 @@ class Component extends DCLogic {
       zonasSinLocal: f.zonasSinLocal || [],
       zonas: (f.zonas || []).map((z) => [z.zonaNombre, z.restaurante, z.zona, z.apuntados, z.sedeId, z.restauranteId, z.aguanta])
     }));
+
+    /**
+     * Las que todavía piden algo, y las que ya pasaron.
+     *
+     * El panel las enseñaba TODAS: once fechas, y siete de ellas cenas de
+     * agosto. Lo que ya ocurrió no aporta en la primera pantalla —si no se
+     * puede hacer nada con ello, estorba— pero hace falta poder consultarlo,
+     * así que no se esconde: se mueve detrás de un interruptor que dice
+     * cuántas hay.
+     *
+     * El corte es si la cena YA OCURRIÓ, no si está cerrada. Una fecha
+     * cerrada con la cena por delante es justo donde EMPIEZA el trabajo de
+     * operación —armar las mesas, reservar el sitio—, así que esconder esa
+     * sería esconder el trabajo.
+     */
+    const FECHAS_VIVAS = FECHAS_REP.filter((f) => !f.pasada);
+    const FECHAS_PASADAS = FECHAS_REP.filter((f) => f.pasada);
+    const verPasadas = !!St.verPasadas;
+    const seVe = (f) => verPasadas || !f.pasada;
 
     const fr = FECHAS_REP[St.fechaRep] || FECHAS_REP[0] || {
       id: null, titulo: 'Sin fechas abiertas', formato: 'dinner', hora: '', cierra: '',
@@ -2274,7 +2299,8 @@ class Component extends DCLogic {
       return t.join(' · ');
     };
 
-    const visibles = FECHAS_REP.map((f, i) => [f, i]).filter((x) => tipoRep === 'todo' || x[0].fam === tipoRep);
+    const visibles = FECHAS_REP.map((f, i) => [f, i])
+      .filter((x) => seVe(x[0]) && (tipoRep === 'todo' || x[0].fam === tipoRep));
 
     const fechasRep = visibles.map((x) => {
       const f = x[0], i = x[1];
@@ -2461,11 +2487,11 @@ class Component extends DCLogic {
     const CLAVES = this.clavesPestanas();
     const esta = (clave) => v === CLAVES.indexOf(clave);
     const pestanas = [
-      ['Reparto', String(FECHAS_REP.length)],
+      ['Reparto', String(FECHAS_VIVAS.length)],
       ['Verificaciones', String(pendientes)],
       ['Pagos', String(porConciliar)],
       ['Reportes', String(sinResolver)],
-      ['Fechas', String(FECHAS_REP.length)],
+      ['Fechas', String(FECHAS_VIVAS.length)],
       ['Locales', String(locales.length)]
     ].concat(St.esAdmin ? [['Equipo', String(conAcceso)]] : [])
       .concat([['Gente', String(St.totalGente || 0)],
@@ -2884,6 +2910,14 @@ class Component extends DCLogic {
     return {
       pestanas, metricas, colas, metricasPago, pagos,
       fechasRep, zonasRep, tiposRep,
+      // Se enseña solo si hay algo que enseñar: un botón que no cambia nada
+      // es ruido.
+      hayPasadas: FECHAS_PASADAS.length > 0,
+      textoPasadas: verPasadas
+        ? 'Ocultar las que ya pasaron'
+        : 'Ver las ' + FECHAS_PASADAS.length + ' que ya pasaron',
+      botonPasadas: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:' + (verPasadas ? '#F2E9D5' : 'transparent') + ';font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F;cursor:pointer;white-space:nowrap',
+      tocarPasadas: () => this.setState({ verPasadas: !verPasadas, fechaRep: 0, fechaVer: 0 }),
       // Mientras no hemos preguntado todavía no se dice que no hay nada: en
       // el primer pintado el panel afirmaba «no hay fechas abiertas» con
       // todos los contadores a cero, y eso es una respuesta, no una espera.
@@ -3416,7 +3450,7 @@ class Component extends DCLogic {
           txt: 'display:block;font:' + (on ? '600' : '500') + ' 15px/1.25 \'Inter Tight\',sans-serif;color:#14342A',
           pick: () => this.setState({ fechaVer: i })
         };
-      }),
+      }).filter((_, i) => seVe(FECHAS_REP[i])),
       ...(function () {
         const i = St.fechaVer == null ? 0 : St.fechaVer;
         const f = FECHAS_REP[i];

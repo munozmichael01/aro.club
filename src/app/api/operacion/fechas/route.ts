@@ -49,6 +49,7 @@ const HORA_DE: Record<string, number> = {
 // La cifra vive en `reglas.js`: la comparten el panel, el copy que la promete
 // y la app. Escrita aquí, bajarla de 48 a 24 dejaba cuatro textos mintiendo.
 import { HORAS_DE_CIERRE } from '@/lib/reglas'
+import { FIN_CENA } from '@/lib/ventana-mesa'
 
 /** Y a mediodía se revela todo. */
 const HORA_REVELACION = 12
@@ -368,6 +369,20 @@ export async function GET() {
       // Si ya se le contó a alguien. El panel ofrece «avisar» solo a las que
       // no, y solo mientras no hayan cerrado.
       avisada: yaAvisadas.has(e.id),
+      /**
+       * Si la cena YA PASÓ.
+       *
+       * No es lo mismo que estar cerrada, y confundirlo es lo que llenó el
+       * panel: una fecha cerrada con la cena por delante es justo donde
+       * empieza el trabajo de operación —armar las mesas, reservar el sitio—,
+       * así que esa tiene que estar a la vista. La que ya ocurrió no aporta
+       * en la primera pantalla, pero sigue haciendo falta para consultarla.
+       *
+       * El umbral es `FIN_CENA`, el mismo con el que Mi mesa decide que una
+       * cena es «de anoche». Una cifra propia aquí sería otra opinión sobre
+       * cuándo termina una cena.
+       */
+      pasada: new Date(e.starts_at).getTime() + FIN_CENA <= Date.now(),
       cierraEn: e.booking_closes_at,
       revelaEn: e.reveal_at,
       estado: e.status,
