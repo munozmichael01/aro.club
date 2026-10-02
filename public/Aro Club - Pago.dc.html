@@ -46,6 +46,20 @@
 
   <div style="max-width:620px;margin:0 auto;padding:clamp(22px,4vw,34px) clamp(16px,4vw,24px) clamp(40px,7vw,64px)">
 
+    <!-- La fecha ya cerró: se dice ANTES del importe y de los datos del
+         banco, no al pulsar «Reportar mi pago». El candado vivía solo en el
+         POST, así que se podía recorrer la pantalla entera y recibir el «ya
+         cerró» con la transferencia hecha. -->
+    <sc-if value="{{ fechaCerrada }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 340ms ease both">
+        <h1 style="{{ h1 }}">Esa fecha ya cerró.</h1>
+        <p style="{{ bajada }}">Se cerró {{ horasCierre }} horas antes de la cena, que es cuando operación arma las mesas. No transfieras nada: no podríamos apuntarte.</p>
+        <div style="margin-top:clamp(24px,3.4vw,32px)">
+          <a href="/cuenta" style="{{ botonVolver }}">Ver las fechas abiertas</a>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ esElegir }}" hint-placeholder-val="{{ true }}">
       <div style="animation:aro-open 340ms ease both">
         <h1 style="{{ h1 }}">Tu puesto.</h1>
@@ -523,6 +537,9 @@ class Component extends DCLogic {
     // la URL y, sin ellos, de «Sábado 14 · Las Mercedes»: una fecha y un
     // sitio inventados justo encima del importe que va a transferir.
     const ev = S.ev || { tipo: 'Cenas' };
+    // Lo dice el servidor, no un reloj de esta pantalla: `/api/pago` compara
+    // contra `booking_closes_at` y devuelve `cerrada`.
+    const cerrada = !!(D.evento && D.evento.cerrada);
     const titulos = { Cenas: 'Cena', Drinks: 'Drinks', Movimiento: 'Movimiento', Coffee: 'Coffee' };
     const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
     const dosCifras = (n) => (n < 10 ? '0' + n : '' + n);
@@ -766,10 +783,15 @@ class Component extends DCLogic {
       // Sin verificar no se enseña ni el primer paso: la ruta ya no manda los
       // datos de la cuenta, y dejar la pantalla andando seria pedirle que
       // elija metodo para un pago que el servidor va a rechazar al final.
-      faltaVerificar: puedePagar === false,
-      esElegir: f === 0 && puedePagar !== false,
-      esDatos: f === 1 && puedePagar !== false,
-      esReportar: f === 2 && puedePagar !== false,
+      faltaVerificar: puedePagar === false && !cerrada,
+      // Cerrada manda sobre todo lo demas: ni elegir metodo, ni datos del
+      // banco, ni «falta verificar». No hay pago que hacer.
+      fechaCerrada: cerrada,
+      horasCierre: AroReglas.HORAS_DE_CIERRE,
+      botonVolver: btn('#1B5138', '#FAF3E4', 'text-decoration:none'),
+      esElegir: f === 0 && puedePagar !== false && !cerrada,
+      esDatos: f === 1 && puedePagar !== false && !cerrada,
+      esReportar: f === 2 && puedePagar !== false && !cerrada,
       esEnviando: f === 3,
       esPendiente: f === 4, esListo: f === 5, esFallo: f === 6,
       // 7 y no un estado aparte: la pantalla ya lleva las fases en un número

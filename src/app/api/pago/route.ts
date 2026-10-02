@@ -153,6 +153,13 @@ export async function GET(request: Request) {
       id: evento.id,
       empiezaEn: evento.starts_at,
       cierraEn: evento.booking_closes_at,
+      // Si ya cerró, DICHO AQUÍ y no al final.
+      //
+      // El candado estaba solo en el POST, así que se podía recorrer la
+      // pantalla entera —el importe, la tasa, los datos del banco— y recibir
+      // el «ya cerró» justo al pulsar «Reportar mi pago». Quien hubiera
+      // transferido ya lo había hecho.
+      cerrada: new Date(evento.booking_closes_at).getTime() <= Date.now(),
       // Cuándo se abre todo. Lo pidió la app: sin esto tiene que escribir «a
       // mediodía» a mano, y la hora sale del evento.
       revelaEn: evento.reveal_at,
@@ -342,7 +349,12 @@ export async function POST(request: Request) {
 
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
   if (new Date(evento.booking_closes_at).getTime() < Date.now()) {
-    return NextResponse.json({ error: 'Esa fecha ya cerró.' }, { status: 409 })
+    return NextResponse.json(
+      // `motivo` es un código estable: quien llama no tiene que leer el texto
+      // del error para saber qué pasó, y la app lo usa para pintar la pantalla.
+      { error: 'Esa fecha ya cerró.', motivo: 'fecha-cerrada' },
+      { status: 409 },
+    )
   }
 
   // Verificada, o no hay puesto.

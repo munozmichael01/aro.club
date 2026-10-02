@@ -143,7 +143,7 @@
     -->
     <div id="agenda" style="margin-top:clamp(32px,4.4vw,48px);scroll-margin-top:80px">
       <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:12px">Lo que viene en Caracas</div>
-      <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:54ch;margin:0 0 18px;text-wrap:pretty">Te apuntas a una fecha, no a una mesa. <em style="font-weight:600;color:#14342A">Cenas siempre con cinco personas.</em> Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y {{ cuandoSeSabe }} sabes en cuál te tocó. Cada fecha se cierra 48 horas antes.</p>
+      <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:54ch;margin:0 0 18px;text-wrap:pretty">Te apuntas a una fecha, no a una mesa. <em style="font-weight:600;color:#14342A">Cenas siempre con cinco personas.</em> Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y {{ cuandoSeSabe }} sabes en cuál te tocó. Cada fecha se cierra {{ horasCierre }} horas antes.</p>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(46%,132px),1fr));gap:clamp(10px,1.4vw,14px);margin-bottom:20px">
         <sc-for list="{{ filtros }}" as="f" hint-placeholder-count="4">
@@ -562,8 +562,16 @@ class Component extends DCLogic {
         : (d.creditos === 1
             ? 'Un crédito sin usar, de una cena que cancelaste a tiempo. No caduca.'
             : d.creditos + ' créditos sin usar, de cenas que cancelaste a tiempo. No caducan.'),
+      // La cifra solo cuando es pequeña.
+      //
+      // «TE FALTAN 13 PREGUNTAS» es una cuesta, no un empujón: el número
+      // grande desanima justo a quien todavía no ha entrado. Con tres o menos
+      // dice cuántas, porque entonces el número anima; con más, solo que
+      // queda un paso. Decisión de Michael.
       sello: d.estado === 'perfil'
-        ? 'TE FALTAN ' + d.respuestas.faltan + (d.respuestas.faltan === 1 ? ' PREGUNTA' : ' PREGUNTAS')
+        ? (d.respuestas.faltan <= 3
+            ? 'TE FALTAN ' + d.respuestas.faltan + (d.respuestas.faltan === 1 ? ' PREGUNTA' : ' PREGUNTAS')
+            : 'UN PASO MÁS')
         : base.sello,
       // La fecha venía escrita a mano en el copy y decía "Sábado 14" con la
       // cena el 13. Ninguna cifra derivable se escribe a mano (regla 4).
@@ -828,9 +836,12 @@ class Component extends DCLogic {
         textoConfirmar: this.state.reservandoYa
           ? 'Apuntándote'
           : (d && d.paso === 'preguntas'
-              ? (d.respuestas && d.respuestas.faltan === 1
-                  ? 'Te falta 1 pregunta para reservar'
-                  : 'Te faltan ' + ((d.respuestas && d.respuestas.faltan) || 0) + ' preguntas para reservar')
+              // Misma regla que el sello: la cifra solo si es pequeña.
+              ? ((d.respuestas && d.respuestas.faltan) <= 3
+                  ? (d.respuestas.faltan === 1
+                      ? 'Te falta 1 pregunta para reservar'
+                      : 'Te faltan ' + d.respuestas.faltan + ' preguntas para reservar')
+                  : 'Termina tu perfil para reservar')
               : (d && (d.paso === 'contacto' || d.paso === 'cuenta')
                   ? 'Completa tus datos para reservar'
                   // «Verifica tu identidad primero» a quien YA la subió se lee
@@ -907,6 +918,10 @@ class Component extends DCLogic {
       // barrer la web entera para cambiar jueves por sábado.
       //
       // Sin fecha abierta se dice sin día: «cuando se abra la mesa».
+      // De `reglas.js`, no escrita aquí: bajarla de 48 a 24 dejaba este
+      // párrafo, el de Legal y el correo de fecha cancelada diciendo otra cosa
+      // que el panel al abrir la fecha.
+      horasCierre: AroReglas.HORAS_DE_CIERRE,
       cuandoSeSabe: (() => {
         const iso = d && d.proximaFecha && d.proximaFecha.revelaEn;
         const dia = iso && window.AroReglas ? window.AroReglas.diaDe(iso) : null;

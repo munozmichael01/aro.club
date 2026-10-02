@@ -61,7 +61,12 @@ export async function POST(request: Request) {
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
 
   if (new Date(evento.booking_closes_at).getTime() < Date.now()) {
-    return NextResponse.json({ error: 'Esa fecha ya cerró.' }, { status: 409 })
+    return NextResponse.json(
+      // `motivo` es un código estable: quien llama no tiene que leer el texto
+      // del error para saber qué pasó, y la app lo usa para pintar la pantalla.
+      { error: 'Esa fecha ya cerró.', motivo: 'fecha-cerrada' },
+      { status: 409 },
+    )
   }
 
   if (evento.status !== 'open' && evento.status !== 'draft') {

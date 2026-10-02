@@ -5,8 +5,7 @@ import { firmarBaja } from '@/lib/baja-token'
 import { firmar } from '@/lib/lead-token'
 import { enlaceDeMapa } from '@/lib/mapa'
 import { SITIO } from '@/lib/remitente'
-import { vozDe } from '@/lib/reglas'
-import { precioTexto } from '@/lib/reglas'
+import { HORAS_DE_CIERRE, precioTexto, vozDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 
@@ -233,6 +232,10 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     // obligaba a acertar en los siete, y el que se escape deja un correo
     // diciendo un precio y el cobro haciendo otro.
     precio: precioTexto(),
+    // Las horas con que se cierra una fecha. Misma razón que el precio: estaba
+    // escrita a mano en la plantilla de fecha cancelada, y bajarla de 48 a 24
+    // obligaba a acertar en todos los sitios donde se promete.
+    horasCierre: HORAS_DE_CIERRE,
     trato,
     correo: a,
     enlaceAjustes,

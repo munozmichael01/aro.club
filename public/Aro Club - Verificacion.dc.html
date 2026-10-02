@@ -516,9 +516,14 @@ class Component extends DCLogic {
     const faltanPreg = this.state.faltan;
     const mientras = [
       faltanPreg
-        ? ['·',
-           faltanPreg === 1 ? 'Te falta 1 pregunta' : 'Te faltan ' + faltanPreg + ' preguntas',
-           'Puedes contestarlas mientras revisamos tu identidad. Sin ellas no podemos sentarte en una mesa.']
+        // La cifra solo cuando es pequeña: «te faltan 13» aquí, encima de
+        // estar esperando a que le aprueben la cédula, es una cuesta.
+        ? (faltanPreg <= 3
+            ? ['·',
+               faltanPreg === 1 ? 'Te falta 1 pregunta' : 'Te faltan ' + faltanPreg + ' preguntas',
+               'Puedes contestarlas mientras revisamos tu identidad. Sin ellas no podemos sentarte en una mesa.']
+            : ['·', 'Termina tu perfil',
+               'Son unos minutos. Respóndelo mientras revisamos esto y, cuando se apruebe, ya puedes reservar.'])
         : ['✓', 'Tu perfil está completo', 'Tus respuestas ya están guardadas. No hay que tocar nada más.'],
       ['·', 'Te avisamos cuando haya mesa', 'En cuanto se apruebe y se abra mesa en tu zona, llega un solo correo con el día y la hora.']
     ].map((m) => ({

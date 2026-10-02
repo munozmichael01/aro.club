@@ -392,7 +392,15 @@ export async function GET() {
       // quien haya. Decir agotada sería lo primero que contamos que no es
       // verdad, y es justo lo que este producto no hace.
       zonaHoraria: zonaDe(f.city_slug),
-      cerrada: f.status !== 'open' && f.status !== 'draft',
+      // Y cerrada también cuando ya pasó su hora de cierre, aunque siga en
+      // `open`. Miraba solo el estado, y el estado lo cambia operación cuando
+      // pasa por el panel: entre que la fecha vence y alguien la toca, la
+      // tarjeta se ofrecía como abierta. Michael llegó hasta «Reportar mi
+      // pago» —con los datos del banco delante— antes de que `/api/pago` le
+      // dijera que ya había cerrado.
+      cerrada:
+        (f.status !== 'open' && f.status !== 'draft') ||
+        new Date(f.booking_closes_at).getTime() <= Date.now(),
       // Si ya está apuntada, la tarjeta lo dice en vez de ofrecerle
       // reservar otra vez.
       mia: mias.has(f.id),

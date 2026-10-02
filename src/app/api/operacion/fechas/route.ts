@@ -46,7 +46,9 @@ const HORA_DE: Record<string, number> = {
 }
 
 /** Cuánto antes cierra: el reparto necesita el pool cerrado dos días antes. */
-const HORAS_DE_CIERRE = 48
+// La cifra vive en `reglas.js`: la comparten el panel, el copy que la promete
+// y la app. Escrita aquí, bajarla de 48 a 24 dejaba cuatro textos mintiendo.
+import { HORAS_DE_CIERRE } from '@/lib/reglas'
 
 /** Y a mediodía se revela todo. */
 const HORA_REVELACION = 12
@@ -394,7 +396,7 @@ export async function POST(request: Request) {
   // Una fecha que ya cerró nace muerta: nadie puede apuntarse.
   if (cierra.getTime() <= Date.now()) {
     return NextResponse.json(
-      { error: 'Esa fecha cierra en el pasado: hacen falta 48 horas de margen.' },
+      { error: `Esa fecha cierra en el pasado: hacen falta ${HORAS_DE_CIERRE} horas de margen.` },
       { status: 400 },
     )
   }

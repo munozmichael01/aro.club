@@ -638,7 +638,13 @@
         opciones: [
           ['Me fui del país y volví', 'volvio'],
           ['Nunca me fui, pero casi todos sí', 'se-quedo'],
-          ['Llegué hace poco y no conozco a nadie', 'interior'],
+          // «Soy nueva o nuevo en la ciudad» y no «Llegué hace poco y no conozco
+          // a nadie»: quien volvió de fuera leía las dos y no sabía cuál era
+          // la suya —«me fui del país y volví» también llegó hace poco y
+          // tampoco conoce a nadie—. El código NO cambia: las respuestas ya
+          // guardadas siguen valiendo, y el catálogo se mueve con su migración
+          // para que la pantalla y la base no digan cosas distintas.
+          ['Soy nueva o nuevo en la ciudad', 'interior'],
           ['Estoy de paso', 'visita'],
           ['Sigo con la gente de siempre', 'mismos'],
           ['Trabajo remoto y casi no veo gente', 'remoto'],
@@ -722,6 +728,22 @@
       sitio: 'punto de encuentro', Sitio: 'Punto de encuentro', sitioCorto: 'el punto',
       sentados: 'repartidos', juntarse: 'juntarse', mia: 'Mi grupo', TU: 'TU GRUPO',
     },
+
+    /**
+     * Cuántas horas antes de la cena se cierra el apuntarse.
+     *
+     * Estaba escrita en `/api/operacion/fechas` y repetida en texto en la
+     * portada, en Legal y en el correo de fecha cancelada. Vive aquí porque la
+     * leen el panel al abrir una fecha, el copy que la promete y la app.
+     *
+     * **Era 48 y pasa a 24 por decisión de Michael.** Lo que compra: más
+     * tiempo para que se apunte gente. Lo que cuesta: operación tiene menos
+     * de un día entre el cierre y la cena para armar las mesas y reservar los
+     * restaurantes, y la promesa de avisar con antelación si una fecha se
+     * cancela queda acotada por esta misma cifra — no se puede avisar con 48
+     * horas de algo que no se sabe hasta 24 horas antes.
+     */
+    HORAS_DE_CIERRE: 24,
 
     /** Los formatos que salen a la calle: ahí no hay mesa. */
     DE_MOVIMIENTO: ['walk', 'hike', 'run', 'padel', 'pilates', 'cycling'],

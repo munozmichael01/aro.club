@@ -40,6 +40,7 @@ type Api = {
   campoDe: (definicion: { tipo?: string; prefijo?: string; largo?: number }) => Campo | null
   aE164: (valor: unknown) => string
   PRECIO_USD: number
+  HORAS_DE_CIERRE: number
   precioTexto: () => string
   COCINAS: string[][]
   REGLAS: Record<Campo, { etiqueta: string; ayuda?: string }>
@@ -65,6 +66,15 @@ export const aE164 = api.aE164
 export const REGLAS = api.REGLAS
 /** Mesa o grupo, según el formato. La tabla vive en public/reglas.js. */
 export const vozDe = api.vozDe
+
+/**
+ * Horas de antelación con que se cierra el apuntarse a una fecha.
+ *
+ * Vive en `reglas.js` y no aquí: la leen el panel, el copy de la portada, el
+ * de Legal, el correo de fecha cancelada y la app. Estaba escrita a mano en
+ * `/api/operacion/fechas` y repetida en texto en cuatro sitios más.
+ */
+export const HORAS_DE_CIERRE: number = api.HORAS_DE_CIERRE
 /**
  * El dia y la hora de una fecha, en la zona del producto.
  *
