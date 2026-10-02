@@ -39,3 +39,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Firebase de Android: va a EAS como variable de tipo fichero, nunca al repo (es público)
+google-services*.json
+GoogleService-Info*.plist
