@@ -250,17 +250,20 @@ export async function despacharPendientes(
   seco = false,
 ): Promise<{
   mandados: number
+  pushes: number
   quedan: number
   seco?: { kind: string; asunto: string; huecos: number; baja: boolean }[]
 }> {
   try {
     // Se importan aquí dentro y no arriba porque `correos-datos` necesita el
     // tipo `Correo` de este mismo fichero: en la cabecera sería un ciclo.
-    const [{ prepararCorreo }, { componer, enviar, SITIO }, { firmarBaja }] = await Promise.all([
-      import('@/lib/correos-datos'),
-      import('@/lib/remitente'),
-      import('@/lib/baja-token'),
-    ])
+    const [{ prepararCorreo }, { componer, enviar, SITIO }, { firmarBaja }, { mandarPush }] =
+      await Promise.all([
+        import('@/lib/correos-datos'),
+        import('@/lib/remitente'),
+        import('@/lib/baja-token'),
+        import('@/lib/push'),
+      ])
 
     /**
      * La cabecera de baja, para los que NO son imprescindibles.
@@ -293,13 +296,16 @@ export async function despacharPendientes(
     const admin = createAdminClient()
     const { data: pendientes } = await admin
       .from('scheduled_emails')
-      .select('id, profile_id, email, kind, event_id, payload')
+      .select('id, profile_id, email, kind, event_id, payload, push_at, push_motivo')
       .is('sent_at', null)
       .lte('send_at', new Date().toISOString())
       .order('send_at')
       .limit(25)
 
     let mandados = 0
+    // Las push que salieron en esta vuelta. Se cuentan aparte del correo: son
+    // dos canales y uno puede salir sin el otro.
+    let pushes = 0
     // Lo que se ve en el ensayo: qué asunto sale y si quedó algún hueco sin
     // rellenar. Es la comprobación que importa —una plantilla con un {{ }} a
     // medias se manda igual y se lee fatal— y no enseña el contenido de nadie.
@@ -375,6 +381,39 @@ export async function despacharPendientes(
       // igual que un envio de verdad. Si se saliera antes, el ensayo diria que
       // manda un correo que en realidad no se manda, y el ensayo es justo lo
       // que se usa para comprobar que esto esta bien.
+      // La push, con los MISMOS datos que acaba de usar el correo.
+      //
+      // Aquí y no en otro sitio: así no hay una segunda idea de a quién se
+      // avisa ni de cuándo. Lo que no se encoló no se manda por ningún canal,
+      // y las preferencias ya se miraron al encolar.
+      //
+      // Si falla, el correo sigue. Son dos canales del mismo aviso y que uno
+      // se caiga no puede llevarse al otro por delante.
+      if (!fila.push_at && !fila.push_motivo) {
+        const quedo = await mandarPush(
+          [{
+            id: fila.id,
+            profile_id: fila.profile_id,
+            kind: fila.kind,
+            event_id: fila.event_id,
+            datos: listo.datos as Record<string, unknown>,
+          }],
+          seco,
+        ).catch(() => new Map<string, { ok: boolean; motivo?: string }>())
+
+        const q = quedo.get(fila.id)
+        if (q && !seco) {
+          await admin
+            .from('scheduled_emails')
+            .update({
+              push_at: q.ok ? new Date().toISOString() : null,
+              push_motivo: q.ok ? null : (q.motivo ?? 'error'),
+            } as never)
+            .eq('id', fila.id)
+        }
+        if (q?.ok) pushes++
+      }
+
       if (seco) {
         enSeco.push({
           kind: fila.kind,
@@ -418,9 +457,9 @@ export async function despacharPendientes(
       .is('sent_at', null)
       .lte('send_at', new Date().toISOString())
 
-    return { mandados, quedan: count ?? 0, seco: seco ? enSeco : undefined }
+    return { mandados, pushes, quedan: count ?? 0, seco: seco ? enSeco : undefined }
   } catch (e) {
     console.error('[correos] fallo despachando', e)
-    return { mandados: 0, quedan: 0 }
+    return { mandados: 0, pushes: 0, quedan: 0 }
   }
 }

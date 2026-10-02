@@ -1714,6 +1714,47 @@ export type Database = {
           },
         ]
       }
+      push_tokens: {
+        Row: {
+          baja_en: string | null
+          creado_en: string
+          id: string
+          plataforma: string
+          profile_id: string
+          token: string
+          version: string | null
+          visto_en: string
+        }
+        Insert: {
+          baja_en?: string | null
+          creado_en?: string
+          id?: string
+          plataforma: string
+          profile_id: string
+          token: string
+          version?: string | null
+          visto_en?: string
+        }
+        Update: {
+          baja_en?: string | null
+          creado_en?: string
+          id?: string
+          plataforma?: string
+          profile_id?: string
+          token?: string
+          version?: string | null
+          visto_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_tokens_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_methods: {
         Row: {
           activo: boolean
@@ -2625,6 +2666,8 @@ export type Database = {
           payload: Json
           profile_id: string | null
           provider_id: string | null
+          push_at: string | null
+          push_motivo: string | null
           send_at: string
           sent_at: string | null
         }
@@ -2639,6 +2682,8 @@ export type Database = {
           payload?: Json
           profile_id?: string | null
           provider_id?: string | null
+          push_at?: string | null
+          push_motivo?: string | null
           send_at: string
           sent_at?: string | null
         }
@@ -2653,6 +2698,8 @@ export type Database = {
           payload?: Json
           profile_id?: string | null
           provider_id?: string | null
+          push_at?: string | null
+          push_motivo?: string | null
           send_at?: string
           sent_at?: string | null
         }

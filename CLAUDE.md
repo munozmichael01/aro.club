@@ -241,6 +241,26 @@ porque lo manda producción. `/api/cron/cierra` y `/api/cron/encuesta` aceptan
 `?seco=1`, que calcula sin escribir. Cualquier cron nuevo que encole nace con
 su pasada en seco.
 
+### Las push viajan en la misma fila
+
+No hay cola de push. Se mandan desde `despacharPendientes`, con los MISMOS
+datos que acaba de usar el correo y el mismo `send_at`, y el resultado se
+escribe en `scheduled_emails.push_at` / `push_motivo`. Una segunda cola serían
+dos ideas de cuándo se avisa a alguien.
+
+De ahí hereda lo que costó construir: el índice de «uno por persona y fecha»,
+las preferencias ya miradas al encolar, y los imprescindibles. Quien se dio de
+baja de los correos tampoco recibe push: pidió que dejáramos de escribirle.
+
+Solo **siete tipos** tienen copy (`copyDe` en `src/lib/push.ts`); el resto no
+vibra ningún teléfono, a propósito — una push que no aporta es la que hace que
+se apaguen todas.
+
+**Una fila se marca enviada solo si llegó a algún teléfono vivo.** Con el
+único token muerto queda `push_motivo = 'token_muerto'`, no «enviada»: es el
+mismo motivo por el que `sent_at` no significa entregado. `DeviceNotRegistered`
+—en la respuesta y en los recibos— da de baja el token solo.
+
 ---
 
 ## Base de datos
