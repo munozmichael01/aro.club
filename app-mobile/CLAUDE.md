@@ -13,6 +13,49 @@ La única dependencia aceptada es `POST /api/auth/nativo` (ver abajo).
 
 ---
 
+## Dónde lo dejamos (02-10-2026) — empezar por aquí
+
+**En las tiendas:**
+- **iOS:** en TestFlight, con testers externos ya aceptados. La build 4
+  (`d33b2a5e…`) se está compilando y se sube sola con `--auto-submit`. Trae
+  las polaroids nuevas de la Bienvenida y las fotos de Inicio arregladas.
+  Apple y Google funcionan: los probaron Michael y un tester.
+- **Android:** la cuenta de Play está verificada, la app creada y la AAB
+  (versionCode 4) en *Internal testing*. Los dos clientes Android de Google
+  están creados. Falta que Michael confirme que «Continuar con Google»
+  funciona en Android. Las AAB se suben A MANO: EAS todavía no tiene cuenta
+  de servicio de Play.
+
+**Pendiente de Michael:**
+- Ver la build 4: cerrar sesión → borrar la app → instalar desde TestFlight.
+  El llavero de iOS guarda la sesión aunque se borre la app, y con sesión no
+  se ve la Bienvenida.
+- Probar Google en Android.
+- Revisar la ficha de App Store (`tienda/app-store.md`) y ver si el
+  cuestionario pregunta algo que Apple considera «sensible».
+- *Closed testing* de Android: 12 testers × 14 días antes de producción.
+- Textos de permiso de cámara y fotos (`app.json`).
+
+**Pendiente mío (app):**
+- Capturas de 1320 × 2868 para la App Store. Chrome sin ventana recorta la
+  maqueta, porque su ancho mínimo no es el del teléfono. Probar con el
+  iPhone de Michael o con otra herramienta.
+- «Cerrada · 0 apuntados»: propuse decir solo «Cerrada» por debajo de 3
+  apuntados, en la app y en la web. **Michael no lo ha confirmado.**
+- Cuando el agente mande `motivo: 'ya_tiene_cuenta'` en el 409 de
+  `/api/cuenta`, dejar de comparar el texto.
+- Opcional: `eas submit` para Android (con cuenta de servicio de Play) y EAS
+  Update para mandar arreglos de JS sin hacer build.
+- v1.1: las push (ver `NOTIFICACIONES.md`).
+
+**La cena del 03-10 (influencers):** no se hace, y se deja pasar SIN
+TOCARLA. Mientras siga en `open` y sin mesas no sale ningún correo: ni
+revelación, ni recordatorio, ni encuesta, ni cancelación. El agente lo
+comprobó en `scheduled_emails`. Cancelarla desde Operación SÍ mandaría el
+correo.
+
+---
+
 ## Estado: qué está hecho y qué es andamio
 
 Hecho y probado contra producción, y en el iPhone de Michael (Expo Go):
@@ -54,9 +97,14 @@ repetir la llamada si la app murió a mitad, y el aterrizaje por `paso`
 distinto» y relay de Apple, que guardan el `contacto` por `/api/mi-perfil`.
 En Expo Go los dos botones dicen que aún no funcionan (los tokens saldrían a
 nombre de Expo Go). **Para que funcionen de verdad falta, fuera del código:**
-- ~~la cuenta de Apple Developer y la capacidad *Sign in with Apple* en el App
-  ID `club.aro.app`~~ (hecho el 01-10: equipo 696DAG5UG5, individual). Falta
-  el proveedor Apple en Supabase con `club.aro.app` en *Client IDs*;
+- ~~Apple~~ (hecho el 01-10):
+  - cuenta de Apple Developer: equipo 696DAG5UG5, individual,
+    `somos.aroclub@gmail.com`;
+  - capacidad *Sign in with Apple* en `club.aro.app`;
+  - proveedor Apple de Supabase con `club.aro.app` en *Client IDs*, sin
+    *Secret Key* (solo la necesita la web).
+
+  El panel de Supabase es de **munozmichael01@hotmail.com**;
 - ~~Google en iOS~~ (hecho el 01-10, ad5a862): proyecto de Google Cloud
   «My First Project» (el del login web), cliente web `…ce8up` y cliente iOS
   `…gl33e` en `app.json` → `extra.google`, plugin con `iosUrlScheme`, y los
@@ -70,15 +118,19 @@ nombre de Expo Go). **Para que funcionen de verdad falta, fuera del código:**
   `webClientId`, y los clientes Android solo prueban que la app es nuestra.
   Sin ellos, `DEVELOPER_ERROR`.
 
-**Builds y tiendas (01-10):**
-- Android: build `production` (AAB) hecha con el icono de Design. La cuenta de
-  Play Console (`somos.aroclub`, personal, nombre público «Aro Club») está en
-  verificación. La primera AAB se sube a mano a *Closed testing* (12 testers
-  × 14 días).
-- iOS: certificados en EAS hasta oct-2027. La build 1 se subió con
-  `eas submit` a TestFlight (grupo interno «Team (Expo)»).
-- EAS guarda la API key de App Store Connect y `eas.json` tiene el `ascAppId`,
-  así que `eas submit -p ios --latest --non-interactive` ya no pide nada.
+**Builds y tiendas:**
+- Para lanzar: `npx eas-cli@latest build -p ios --profile production
+  --non-interactive --auto-submit --no-wait`. Se sube sola a TestFlight: EAS
+  guarda la API key de App Store Connect y `eas.json` el `ascAppId`. Para
+  Android es `… -p android …`, y la AAB se sube a mano a Play Console.
+- Los certificados de iOS están en EAS hasta oct-2027. Con `appVersionSource:
+  remote` y `autoIncrement`, el número de build lo lleva EAS.
+- App Store Connect: app 6818022672, grupo interno «Team (Expo)». Play:
+  `club.aro.app`, cuenta `somos.aroclub` (personal, nombre público «Aro Club»).
+- La ficha de App Store está en `tienda/app-store.md`, con soporte en
+  `https://aro.club/ayuda`. La cuenta del revisor la monta
+  `node scripts/cuenta-revision.mjs` (desde `aro-club/`). Su mesa caduca a
+  las ~30 h: correr `--refrescar` el día que se envía.
 
 **El alta nueva está en `/puerta`** (`src/puerta/`) y es la que abre la
 Bienvenida («Encuentra tu mesa») y el «Empezar» de Entrar. `/empezar` (el
@@ -109,6 +161,19 @@ no recibe push remotas) y trabajo del backend (guardar tokens y mandar).
   su cuenta. El botón Reservar manda a completar, no a verificarse, y «en
   revisión» solo dice «perfil completo» si `faltan === 0`. El candado del
   servidor (`/api/reservar`) lo pone el agente de la web.
+- **Las fechas cierran `AroReglas.HORAS_DE_CIERRE` horas antes** (24 desde
+  el 01-10). El copy lee la constante, nunca el número a pelo.
+  - Una fecha cerrada no enseña los datos para pagar: fase `cerrada` de
+    Pago, y el 409 `motivo: 'fecha-cerrada'` lleva ahí.
+  - En la agenda se ve cerrada también si pasó su `cierraEn`, aunque el
+    estado siga `open`.
+- **«Te faltan N preguntas» solo con N ≤ 3** (Michael, 01-10). Si son más:
+  «UN PASO MÁS», «Termina tu perfil para reservar», «Termina tu perfil».
+- **Arraigo `interior` = «Soy nueva o nuevo en la ciudad».** El copy es
+  neutro siempre: nada de masculino genérico. La etiqueta vive en `reglas.js`.
+- **Las fechas de prueba no le salen a nadie:** `events.es_prueba`, que
+  `/api/mi-cuenta` y `/api/proxima` filtran. Si la app lista fechas desde
+  otra consulta, que filtre por esa columna.
 - **Todo ajuste se hace en la app Y en la web.** Lo de la web y el servidor
   va en un mensaje al agente (ficheros y líneas); lo compartido, primero al
   servidor.
@@ -219,8 +284,16 @@ otro, va a esa prueba.
 Él mantiene `aro.club/api`, `public/reglas.js` y `scripts/banco-pruebas.mjs`.
 Se le pide lo que falta como cambio aditivo, con el hallazgo concreto (qué
 pantalla, qué dato, qué se ve mal) y sin el paso a paso de un fallo de
-seguridad en el repo. Pendiente de su lado: `/api/auth/nativo`. Pendiente de
-Michael: revisar los textos de permiso de cámara y fotos (`app.json`).
+seguridad en el repo. Lo que es de la web va en UN mensaje con ficheros y
+líneas, que Michael reenvía. Ya hecho de su lado:
+- `/api/auth/nativo` y `/api/cuenta` sin lead;
+- `paso`, `donde` y `puedeReservar` en `/api/mi-cuenta`, y `faltan` en
+  `GET /api/verificacion`;
+- los 409 `perfil-incompleto` de `/api/reservar` y `fecha-cerrada`;
+- `HORAS_DE_CIERRE` y `es_prueba`;
+- `/ayuda`, con `AroReglas.FRECUENTES`;
+- el cuerpo de los correos que entran a `hola@aro.club`: el webhook de
+  Resend no lo trae.
 
 La cuenta de prueba de Michael `munozmichael01+app@gmail.com` se mantiene
 hasta que él termine de probar; después se borra con sus ficheros de
@@ -244,6 +317,14 @@ y la borran):
 npm run prueba:entrada
 npm run prueba:datos
 npm run prueba:alta      # el alta entera: correo → preguntas → datos → cuenta → entrar
+```
+
+El embudo, con la cuenta del banco: una cuenta nueva con solo la puerta.
+Comprueba `paso` y `donde`, el botón de Reservar, el `faltan` de la
+verificación y el 409 `perfil-incompleto`:
+
+```bash
+node ../scripts/banco-pruebas.mjs borrar && npm run prueba:embudo; node ../scripts/banco-pruebas.mjs borrar
 ```
 
 La verificación, con la cuenta del banco y una imagen GENERADA (nunca un
@@ -300,7 +381,7 @@ node ../scripts/banco-pruebas.mjs && npm run prueba:api; node ../scripts/banco-p
 
 Cada pantalla se ve en el navegador (config `app-catalogo`, puerto 8090) con
 servidor simulado: `/catalogo`, `/catalogo-entrada`, `/catalogo-datos`,
-`/catalogo-cuestionario`, `/catalogo-verificacion?estado=…`,
+`/catalogo-cuestionario`, `/catalogo-verificacion?estado=…` (`revision-faltan` incluido),
 `/catalogo-cuenta?estado=reservar|reservada|abierta|…`,
 `/catalogo-mesa?estado=revision|sin-reserva|sin-mesa|cerrada|abierta|movimiento|pasada|valorada`,
 `/catalogo-perfil`, `/catalogo-pago?estado=elegir|sin-verificar|pendiente|listo|fallo|prueba`
