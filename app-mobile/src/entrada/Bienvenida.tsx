@@ -32,19 +32,19 @@ const FOTOS: Record<string, number> = {
 /**
  * Dónde cae cada polaroid. La maqueta (346 × 292) montaba la fila de abajo
  * sobre la de arriba y tapaba la mitad de Cenas y Drinks, con sus nombres
- * (Michael, 02-10-2026): ahora son algo más chicas y la segunda fila empieza
+ * (Michael, 02-10-2026): ahora la segunda fila empieza
  * donde acaba el nombre de la primera. Se siguen tocando, como polaroids
  * sobre una mesa, pero ninguna tapa la foto ni el nombre de otra.
  */
 const SITIO = [
-  { x: 10, y: 8, giro: '-5deg' },
-  { x: 184, y: 0, giro: '4deg' },
-  { x: 24, y: 176, giro: '3deg' },
-  { x: 192, y: 182, giro: '-4deg' },
+  { x: 20, y: 2, giro: '-5deg' },
+  { x: 174, y: 0, giro: '4deg' },
+  { x: 28, y: 190, giro: '3deg' },
+  { x: 178, y: 186, giro: '-4deg' },
 ]
-const FOTO = 124
+const FOTO = 136
 const ANCHO_MAQUETA = 346
-const ALTO_MAQUETA = 362
+const ALTO_MAQUETA = 384
 
 function Polaroids({ ancho }: { ancho: number }) {
   // Se escala con el ancho, sin pasar del 120 %: en una tableta no se hacen enormes.
