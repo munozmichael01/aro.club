@@ -5,7 +5,7 @@ import { Platform } from 'react-native'
 
 import { api } from '../sesion'
 import { color } from '../diseno/tokens'
-import { destinoDe, hayQueMandar, type DatosPush } from './maquina'
+import { debePreguntar, destinoDe, hayQueMandar, type DatosPush, type Momento, type Permiso } from './maquina'
 import { crearServicioPush } from './servicio'
 
 /**
@@ -139,4 +139,40 @@ export async function olvidarAvisos(): Promise<void> {
   } catch {
     /* si falla, el servidor lo limpia cuando Expo diga que el token ya no vale */
   }
+}
+
+// --- La pregunta previa ------------------------------------------------------
+
+const CLAVE_VISTOS = 'aro.push.preguntado'
+
+async function permisoActual(): Promise<Permiso> {
+  if (enExpoGo || !nativo) return { estado: 'denied', puedePreguntar: false }
+  try {
+    const { status, canAskAgain } = await Notifications.getPermissionsAsync()
+    return { estado: status as Permiso['estado'], puedePreguntar: canAskAgain }
+  } catch {
+    return { estado: 'denied', puedePreguntar: false }
+  }
+}
+
+/**
+ * ¿Sale la pregunta en este momento? Si sale, se apunta como vista. Si el
+ * permiso ya está dado (Android antiguo lo da solo), se registra el teléfono
+ * en silencio: la sesión puede ser nueva y el arranque no lo hizo.
+ */
+export async function tocaPreguntar(momento: Momento): Promise<boolean> {
+  const permiso = await permisoActual()
+  if (permiso.estado === 'granted') {
+    refrescarAvisos()
+    return false
+  }
+  let vistos: Momento[] = []
+  try {
+    vistos = JSON.parse((await AsyncStorage.getItem(CLAVE_VISTOS)) ?? '[]')
+  } catch {
+    /* nada guardado */
+  }
+  if (!debePreguntar(permiso, vistos, momento)) return false
+  await AsyncStorage.setItem(CLAVE_VISTOS, JSON.stringify([...vistos, momento])).catch(() => {})
+  return true
 }

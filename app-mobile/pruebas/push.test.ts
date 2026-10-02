@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { destinoDe, hayQueMandar, SEMANA } from '../src/avisos/maquina'
+import { debePreguntar, destinoDe, hayQueMandar, SEMANA, zonaParaPregunta } from '../src/avisos/maquina'
 import { crearServicioPush } from '../src/avisos/servicio'
 
 const EV = '3f2a1c9e-1111-4222-8333-944455556666'
@@ -57,4 +57,23 @@ test('registrar y olvidar: el contrato, y un 404 no rompe nada', async () => {
   assert.equal(await s.registrar('t', 'android', '0.1.0'), false)
   const caida = crearServicioPush({ pedir: async () => { throw new Error('sin red') } } as never)
   assert.equal(await caida.registrar('t', 'android', '0.1.0'), false)
+})
+
+test('la pregunta previa: tres momentos, cada uno una vez, y nunca si el sistema ya respondió', () => {
+  const sin = { estado: 'undetermined' as const, puedePreguntar: true }
+  assert.ok(debePreguntar(sin, [], 'alta'))
+  assert.ok(!debePreguntar(sin, ['alta'], 'alta'))
+  // Dijo «Ahora no» en el alta: se le vuelve a ofrecer al verificar y al reservar.
+  assert.ok(debePreguntar(sin, ['alta'], 'verificacion'))
+  assert.ok(debePreguntar(sin, ['alta', 'verificacion'], 'reserva'))
+  // Con el sí o el no del sistema, nunca más.
+  assert.ok(!debePreguntar({ estado: 'granted', puedePreguntar: true }, [], 'reserva'))
+  assert.ok(!debePreguntar({ estado: 'denied', puedePreguntar: false }, [], 'alta'))
+  assert.ok(!debePreguntar({ estado: 'undetermined', puedePreguntar: false }, [], 'alta'))
+})
+
+test('la zona de la pregunta del alta', () => {
+  assert.equal(zonaParaPregunta(['Chacao']), 'Chacao')
+  assert.equal(zonaParaPregunta(['Chacao', 'Altamira']), 'Chacao y otras')
+  assert.equal(zonaParaPregunta([]), null)
 })

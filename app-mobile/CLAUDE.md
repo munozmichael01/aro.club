@@ -191,6 +191,14 @@ no recibe push remotas) y trabajo del backend (guardar tokens y mandar).
 - **Las fechas de prueba no le salen a nadie:** `events.es_prueba`, que
   `/api/mi-cuenta` y `/api/proxima` filtran. Si la app lista fechas desde
   otra consulta, que filtre por esa columna.
+- **El permiso de las push se pide con una pregunta previa nuestra**
+  (`PreguntaAvisos`). El texto de iOS no se cambia y solo sale una vez, y
+  «Ahora no» no lo gasta. Se pregunta en tres momentos, una vez cada uno,
+  y nunca más cuando el sistema ya tiene su sí o su no (Michael, 02-10):
+  - **al terminar el alta**, con el nombre de su zona: «abrimos fecha en tu
+    zona» llega aunque no verifique ni reserve;
+  - **al subir la verificación**;
+  - **al reservar** o reportar el pago.
 - **Todo ajuste se hace en la app Y en la web.** Lo de la web y el servidor
   va en un mensaje al agente (ficheros y líneas); lo compartido, primero al
   servidor.
@@ -403,7 +411,7 @@ servidor simulado: `/catalogo`, `/catalogo-entrada`, `/catalogo-datos`,
 `/catalogo-mesa?estado=revision|sin-reserva|sin-mesa|cerrada|abierta|movimiento|pasada|valorada`,
 `/catalogo-perfil`, `/catalogo-pago?estado=elegir|sin-verificar|pendiente|listo|fallo|prueba`
 (el código «REGALO» sale bien), `/catalogo-cancelar?estado=margen|tarde|revelada|fallo`,
-`/catalogo-bienvenida`, `/catalogo-puerta[?sesion=1]`.
+`/catalogo-bienvenida`, `/catalogo-puerta[?sesion=1]`, `/catalogo-avisos?momento=alta|verificacion|reserva`.
 
 Instalar siempre con `npx expo install`. Las pruebas usan los tipos de Node y
 la app no: por eso tienen su propio `tsconfig`. Un `Buffer` en `src/` compila

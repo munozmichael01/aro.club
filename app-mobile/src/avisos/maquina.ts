@@ -53,3 +53,30 @@ export const SEMANA = 7 * 24 * 3600 * 1000
 export function hayQueMandar(ultimo: { token: string; en: number } | null, token: string, ahora: number): boolean {
   return !ultimo || ultimo.token !== token || ahora - ultimo.en > SEMANA
 }
+
+// --- La pregunta previa ------------------------------------------------------
+//
+// El texto de iOS no se puede cambiar y solo sale UNA vez: si dicen que no,
+// recuperarlo depende de que vayan a Ajustes. Por eso antes sale la nuestra
+// («¿Te avisamos…?»): solo «Sí, avísame» gasta la del sistema, y «Ahora no»
+// la guarda para otro momento.
+//
+// Tres momentos, decididos con Michael el 02-10-2026, cada uno una vez:
+//   alta          al terminar el alta: «abrimos fecha en tu zona» llega
+//                 aunque no haya verificado ni reservado;
+//   verificacion  al subir la cédula y la selfie: espera un resultado;
+//   reserva       al apartar puesto: espera su mesa.
+// Si el sistema ya tiene respuesta (sí o no), no se pregunta nunca más.
+
+export type Momento = 'alta' | 'verificacion' | 'reserva'
+export type Permiso = { estado: 'granted' | 'denied' | 'undetermined'; puedePreguntar: boolean }
+
+export function debePreguntar(permiso: Permiso, vistos: Momento[], momento: Momento): boolean {
+  return permiso.estado === 'undetermined' && permiso.puedePreguntar && !vistos.includes(momento)
+}
+
+/** «Chacao», «Chacao y otras» o nada: el nombre de la zona para la pregunta del alta. */
+export function zonaParaPregunta(nombres: string[]): string | null {
+  if (!nombres.length) return null
+  return nombres.length === 1 ? nombres[0] : `${nombres[0]} y otras`
+}

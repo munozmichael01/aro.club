@@ -7,6 +7,8 @@ import { AroCarga, Boton, Campo, CampoClave, Fecha, Texto, Velo, color, cremaAlf
 import { LogoApple, LogoGoogle, Proveedor } from '../entrar/Entrar'
 import { Cabecera, FaseQuiz, FaseSinPreguntas, Progreso } from '../entrada/Fases'
 import { inicial, reducir, type Estado } from '../entrada/maquina'
+import { zonaParaPregunta } from '../avisos/maquina'
+import { usePreguntaAvisos } from '../avisos/PreguntaAvisos'
 import type { Pregunta } from '../entrada/preguntas'
 import { reglas } from '../reglas'
 import { cuenta as TC } from '../texto/datos'
@@ -89,6 +91,12 @@ export function Puerta(p: {
     // Solo al montar: `cargar` cambia con las props, y el borrador se lee una vez.
   }, [])
 
+  // El nombre de su zona para la pregunta de los avisos, de las opciones que ya tiene la pantalla.
+  const pZonas = preguntas?.find((q) => q.clave === 'zonas')
+  const misZonas = (e.respuestas.zonas as string[] | undefined) ?? []
+  const zona = zonaParaPregunta(misZonas.map((v) => pZonas?.opciones.find((o) => o.valor === v)?.label).filter((x): x is string => !!x))
+  const { preguntar, hoja } = usePreguntaAvisos(zona)
+
   const borrador: M.Borrador = { respuestas: e.respuestas, nacimiento: nac }
   // Se guarda con cada cambio: es barato y es lo que hace que cerrar la app no cueste nada.
   useEffect(() => {
@@ -107,6 +115,10 @@ export function Puerta(p: {
     }
     await AsyncStorage.removeItem(M.CLAVE_BORRADOR).catch(() => {})
     const est = await servicio.estado()
+    // Primer momento de la pregunta previa: «abrimos fecha en tu zona» le
+    // llega aunque no verifique ni reserve, así que se pregunta aquí, con el
+    // nombre de su zona, antes de seguir.
+    await preguntar('alta')
     alTerminar.current(M.destinoDeEstado(est.ok ? est.datos.estado : null))
   }
 
@@ -321,6 +333,7 @@ export function Puerta(p: {
         <Cabecera onEntrar={fase === 'quiz' && e.paso === 0 && !conSesion ? () => p.alEntrar() : undefined} />
         {cuerpo}
       </ScrollView>
+      {hoja}
     </KeyboardAvoidingView>
   )
 }

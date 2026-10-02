@@ -89,3 +89,19 @@ export function IconoAbrir({ tam = 14, color }: P) {
     </Svg>
   )
 }
+
+/** Campana: la pregunta de los avisos. */
+export function IconoCampana({ tam = 22, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24">
+      <Path
+        d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 1.9H4.4zM10 20.6a2.1 2.1 0 0 0 4 0"
+        fill="none"
+        stroke={color}
+        strokeWidth={1.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  )
+}

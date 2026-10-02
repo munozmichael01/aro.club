@@ -24,6 +24,7 @@ import {
   useVelo,
   verdeAlfa,
 } from '../diseno'
+import { usePreguntaAvisos } from '../avisos/PreguntaAvisos'
 import * as T from '../texto/verificacion'
 import { encoger } from './foto'
 import {
@@ -115,6 +116,14 @@ export function Verificacion(p: {
     cargar()
   }, [cargar])
 
+  // Segundo momento de la pregunta previa: subió la cédula y la selfie y
+  // espera un resultado (solo si al terminar el alta dijo «Ahora no»).
+  const { preguntar, hoja } = usePreguntaAvisos()
+  const enRevision = e.fase === 'revision'
+  useEffect(() => {
+    if (enRevision) preguntar('verificacion')
+  }, [enRevision, preguntar])
+
 
   const hacerFoto = async () => {
     const foto = await camara.current?.takePictureAsync({ quality: 0.9 })
@@ -171,6 +180,7 @@ export function Verificacion(p: {
       ) : (
         hijos
       )}
+      {hoja}
     </ScrollView>
   )
 

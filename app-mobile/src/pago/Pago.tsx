@@ -25,7 +25,7 @@ import {
   terracotaAlfa,
   tinta,
 } from '../diseno'
-import { pedirAvisos } from '../avisos/push'
+import { usePreguntaAvisos } from '../avisos/PreguntaAvisos'
 import { reglas, type CampoDePago } from '../reglas'
 import { MESES_CORTOS } from '../texto/fechas'
 import * as F from '../texto/fechas'
@@ -64,6 +64,8 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   const [aplicando, setAplicando] = useState(false)
   const [falloCupon, setFalloCupon] = useState('')
 
+  const { preguntar, hoja } = usePreguntaAvisos()
+
   const cargar = useCallback(async () => {
     if (!evento) return
     const r = await servicio.cargar(evento)
@@ -101,7 +103,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     // El fallo se enseña junto al campo: un código mal tecleado se corrige donde se escribió.
     if (!r.ok) return setFalloCupon(r.error)
     setFase('cupon')
-    pedirAvisos()
+    preguntar('reserva')
   }
 
   const adjuntar = async () => {
@@ -129,9 +131,9 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
       return setFallo(r.error)
     }
     setFase(r.datos.estado === 'confirmado' ? 'listo' : 'pendiente')
-    // Reportar el pago aparta el puesto: lo siguiente que pasa es la mesa, y
-    // eso es lo que avisan las push. Aquí se pide el permiso.
-    pedirAvisos()
+    // Reportar el pago aparta el puesto: lo siguiente que pasa es la mesa.
+    // Tercer momento de la pregunta previa.
+    preguntar('reserva')
   }
 
   let cuerpo: ReactNode = null
@@ -494,6 +496,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
         </Pressable>
         {cuerpo}
       </ScrollView>
+      {hoja}
     </View>
   )
 }
