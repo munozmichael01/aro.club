@@ -1,10 +1,11 @@
 import { useFonts } from 'expo-font'
-import { Stack } from 'expo-router'
+import { router, Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
+import { escucharToques } from '../avisos/push'
 import { Velo } from '../diseno'
 
 /**
@@ -38,6 +39,13 @@ export default function Raiz() {
   const [listas] = useFonts(FUENTES)
   useEffect(() => {
     if (listas) SplashScreen.hideAsync().catch(() => {})
+  }, [listas])
+  // Tocar una push con la app viva lleva a su pantalla. Sin sesión, esa
+  // pantalla manda a Entrar como siempre.
+  useEffect(() => {
+    if (!listas) return
+    const s = escucharToques((ruta) => router.push(ruta as never))
+    return () => s?.remove()
   }, [listas])
   return (
     <SafeAreaProvider>

@@ -64,3 +64,71 @@ con un hueco; la encuesta mejora el producto pero no lo sostiene.
   igual para la push, y los imprescindibles siguen sin poder apagarse.
 - Criterio del pedido (§9.2): la de la revelación llega a la hora, en iOS y
   Android, con la app cerrada, y abre la pantalla correcta.
+
+## Estado al 02-10-2026: el lado de la app, hecho
+
+En `src/avisos/` (commit «Push: el lado de la app»):
+
+- **Permiso:** se pide al **reservar**, al **reportar un pago** y al usar un
+  **código**. Nunca al abrir la app. Si ya dijo que no, no se insiste: iOS no
+  deja volver a preguntar.
+- **Token:** se registra con `POST /api/push/token`. Se vuelve a mandar al
+  arrancar si cambió o si pasó una semana. Al cerrar sesión se manda
+  `DELETE /api/push/token`, antes del `signOut`.
+- **Tocar una push abre su pantalla**, con la app viva o cerrada.
+  `destinoDe` lo decide con una lista cerrada de rutas: primero
+  `data.ruta`, si no `data.tipo`, y `data.eventoId` para Pago. Si no
+  reconoce la push, no navega.
+- **Android:** canal `aro`, icono blanco `assets/notificacion.png` (el aro)
+  y color `#14342A`.
+- **Expo Go y web:** no hacen nada.
+
+### Contrato que se le pide al agente de la web
+
+```
+POST   /api/push/token  { token, plataforma: 'ios'|'android', version }  sesión de cuenta → 200
+DELETE /api/push/token  { token }                                         sesión de cuenta → 200
+```
+
+- Una tabla `push_tokens` con `profile_id`, `token` único, `plataforma`,
+  `version`, `creado_en`, `visto_en` y `baja_en`. Un mismo teléfono que
+  cambia de cuenta mueve el token a la nueva.
+- **Enviar en el mismo sitio donde se encola el correo**, con la misma
+  `send_at`. Va por la API de Expo (`https://exp.host/--/api/v2/push/send`),
+  en lotes de hasta 100. `data` lleva `{ tipo, ruta?, eventoId? }`, con el
+  mismo `tipo` que el correo.
+- Se respetan las preferencias de Perfil («Cómo te escribimos»). Los
+  imprescindibles no se pueden apagar.
+- Leer los *receipts*: con `DeviceNotRegistered`, el token pasa a `baja_en`.
+- Probar con `?seco=1` y con tokens del banco de pruebas. **Una push encolada
+  SE MANDA**, igual que un correo.
+
+### Copy propuesto (neutro, corto; el servidor lo arma con `partesDe`)
+
+| tipo | título | cuerpo |
+|---|---|---|
+| `mesa_asignada` | Ya sabes con quién cenas | Tu mesa está abierta: el sitio, la hora y los otros cinco. |
+| `recordatorio` | Es hoy | Abre tu mesa para ver dónde es y cómo llegar. |
+| `verificacion` | Tu identidad está verificada | Ya puedes apartar puesto en cualquier fecha abierta. |
+| `verificacion_rechazada` | Hay que repetir una foto | Te contamos qué pasó y cuál repetir. |
+| `abrimos_zona` | Nueva fecha en {zona} | {Día} a las {hora}. Se cierra {N} horas antes. |
+| `pago_confirmado` | Pago confirmado | Tu puesto está apartado. Te avisamos cuando se abra tu mesa. |
+| `llego_tarde` | Alguien de tu mesa llega tarde | {Nombre} llega unos {n} minutos tarde. |
+
+### Lo que hace falta fuera del código (Michael)
+
+1. **iOS, la llave de APNs:** `npx eas-cli@latest credentials -p ios` →
+   production → *Push Notifications* → generar una llave nueva, entrando con
+   Apple.
+2. **Android, Firebase:**
+   - Crear un proyecto en console.firebase.google.com sobre el MISMO
+     proyecto de Google Cloud («My First Project»), sin Analytics.
+   - Añadir una app Android `club.aro.app`, descargar `google-services.json`
+     y dejarlo en `app-mobile/` **sin commitear**: el repo es público. Va a
+     EAS como variable de tipo fichero, y para eso hay que pasar `app.json`
+     a `app.config.js` (`googleServicesFile`).
+   - *Service accounts* → *Generate new private key*. **Es un secreto: no se
+     pega en el chat.** Subirlo con `npx eas-cli@latest credentials -p
+     android` → *Google Service Account* → *FCM V1* y borrar el JSON después.
+3. Hecho eso, una build de cada plataforma y la prueba de §9.2: la
+   revelación llega a su hora, con la app cerrada, y abre Mi mesa.

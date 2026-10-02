@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useUltimo } from '../util/useUltimo'
 import { useFocusEffect } from 'expo-router'
 
+import { pedirAvisos } from '../avisos/push'
 import { Aviso, Boton, Texto, color, medida } from '../diseno'
 import { reglas } from '../reglas'
 import * as F from '../texto/fechas'
@@ -134,6 +135,9 @@ export function Inicio(p: {
       return setFalloReserva(res.error)
     }
     setAbierta(null)
+    // Apartó puesto: ahora tiene algo que esperar, y es el momento de pedir
+    // el permiso de las push (nunca al abrir la app).
+    pedirAvisos()
     // El estado de la cuenta cambia con la reserva: se relee todo.
     cargarTodo()
   }

@@ -25,6 +25,7 @@ import {
   terracotaAlfa,
   tinta,
 } from '../diseno'
+import { pedirAvisos } from '../avisos/push'
 import { reglas, type CampoDePago } from '../reglas'
 import { MESES_CORTOS } from '../texto/fechas'
 import * as F from '../texto/fechas'
@@ -100,6 +101,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     // El fallo se enseña junto al campo: un código mal tecleado se corrige donde se escribió.
     if (!r.ok) return setFalloCupon(r.error)
     setFase('cupon')
+    pedirAvisos()
   }
 
   const adjuntar = async () => {
@@ -127,6 +129,9 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
       return setFallo(r.error)
     }
     setFase(r.datos.estado === 'confirmado' ? 'listo' : 'pendiente')
+    // Reportar el pago aparta el puesto: lo siguiente que pasa es la mesa, y
+    // eso es lo que avisan las push. Aquí se pide el permiso.
+    pedirAvisos()
   }
 
   let cuerpo: ReactNode = null
