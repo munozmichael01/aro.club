@@ -4,7 +4,8 @@ La imagen del splash (1a de «Bienvenida app.dc.html»): el isologo en crema
 transparente: el verde profundo lo pone la config de expo-splash-screen.
 
 Geometría del SVG de Design (viewBox 240, pintado a 112 px): anillo r86 con
-trazo 17, seis puntos r19; 22 px de hueco y el nombre a 34 px. Se dibuja a
+trazo 24, seis puntos r25 (entrega 17: el isologo engorda y es una sola
+geometría para todos los tamaños); 22 px de hueco y el nombre a 34 px. Se dibuja a
 cuatro veces el tamaño final y se reduce, para que los bordes salgan suaves.
 
     python3 scripts/splash.py
@@ -40,12 +41,12 @@ def c(x, y):
 
 # Anillo
 x, y = c(120, 120)
-r, t = 86 * k, 17 * k
+r, t = 86 * k, 24 * k
 d.ellipse([x - r - t / 2, y - r - t / 2, x + r + t / 2, y + r + t / 2], outline=CREMA, width=round(t))
 # Los seis puestos: el de la derecha es el tuyo
 for i, (px_, py_) in enumerate([(206, 120), (163, 194.5), (77, 194.5), (34, 120), (77, 45.5), (163, 45.5)]):
     x, y = c(px_, py_)
-    rr = 19 * k
+    rr = 25 * k
     d.ellipse([x - rr, y - rr, x + rr, y + rr], fill=MELOCOTON if i == 0 else CREMA)
 # El nombre
 tx = (ancho - ancho_txt) / 2 - caja[0]

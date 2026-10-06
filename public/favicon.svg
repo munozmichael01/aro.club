@@ -1,6 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Favicon Aro Club">
-  <title>Favicon Aro Club</title>
-  <rect width="32" height="32" rx="7" fill="#1B5138"></rect>
-  <circle cx="16" cy="16" r="8.5" fill="none" stroke="#FAF3E4" stroke-width="2.6"></circle>
-  <circle cx="24.5" cy="16" r="2.6" fill="#E39C63"></circle>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="32" height="32" role="img" aria-label="Aro Club">
+  <title>Aro Club</title>
+  <!-- La geometría es la de `marca/favicon.svg` (entrega 17): anillo r=86 con
+       trazo 24 y seis puntos de 25, sobre la cuadrícula de 240.
+
+       Los colores van escritos aquí porque el fichero de la entrega usa clases
+       —`tinta`, `acento`, `punto`— sin hoja de estilo: suelto se pinta negro y
+       el anillo se queda sin trazo. Son los de `favicon.png` de esa misma
+       entrega, que sí los lleva: crema de fondo, isologo verde, punto naranja.
+
+       El fondo va dibujado y no transparente: en la pestaña de un navegador en
+       modo oscuro, un isologo verde sin fondo se pierde. -->
+  <rect width="240" height="240" rx="52" fill="#FAF3E4"></rect>
+  <circle cx="120" cy="120" r="86" fill="none" stroke="#1B5138" stroke-width="24"></circle>
+  <circle cx="206" cy="120" r="25" fill="#C0662F"></circle>
+  <circle cx="163" cy="194.5" r="25" fill="#1B5138"></circle>
+  <circle cx="77" cy="194.5" r="25" fill="#1B5138"></circle>
+  <circle cx="34" cy="120" r="25" fill="#1B5138"></circle>
+  <circle cx="77" cy="45.5" r="25" fill="#1B5138"></circle>
+  <circle cx="163" cy="45.5" r="25" fill="#1B5138"></circle>
 </svg>
