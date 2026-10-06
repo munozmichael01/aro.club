@@ -4,6 +4,7 @@ import { Texto, color, cremaAlfa } from '../diseno'
 import { Cabecera, ChipFecha, FaseCorreo, FaseEnviando, FaseFinal, FaseQuiz, FaseRepetido, FaseSinPreguntas } from '../entrada/Fases'
 import { inicial, reducir, type Estado } from '../entrada/maquina'
 import type { Pregunta } from '../entrada/preguntas'
+import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Las fases de la entrada, una debajo de otra, con datos fijos. Es el
@@ -49,7 +50,7 @@ function Muestra({ nombre, children }: { nombre: string; children: React.ReactNo
 
 const nada = () => {}
 
-export default function Pantalla() {
+function Pantalla() {
   return (
     <ScrollView style={{ backgroundColor: color.verdeProfundo }} contentContainerStyle={{ padding: 16, paddingTop: 48 }}>
       <Cabecera onEntrar={nada} />
@@ -81,3 +82,5 @@ export default function Pantalla() {
     </ScrollView>
   )
 }
+
+export default soloDesarrollo(Pantalla)

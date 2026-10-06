@@ -6,6 +6,7 @@ import type { MiCuenta, MiMesa } from '../cuenta/maquina'
 import type { crearServicioCuenta } from '../cuenta/servicio'
 import type { EstadoCuenta } from '../texto/cuenta'
 import { sabado } from '../util/sabados'
+import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * El Inicio con un servidor SIMULADO, para ver cada estado en el navegador:
@@ -73,7 +74,7 @@ const MESA: MiMesa = {
   ],
 }
 
-export default function Pantalla() {
+function Pantalla() {
   const { estado = 'reservar', captura } = useLocalSearchParams<{ estado?: string; captura?: string }>()
   const servicio = useMemo((): ReturnType<typeof crearServicioCuenta> => ({
     async cuenta() {
@@ -103,3 +104,5 @@ export default function Pantalla() {
     />
   )
 }
+
+export default soloDesarrollo(Pantalla)

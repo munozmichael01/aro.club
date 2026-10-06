@@ -2,6 +2,7 @@ import { router } from 'expo-router'
 
 import { Datos } from '../datos/Datos'
 import type { crearServicioDatos } from '../datos/servicio'
+import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Los datos personales con un servidor SIMULADO, para recorrer la pantalla de
@@ -61,7 +62,7 @@ const simulado: ReturnType<typeof crearServicioDatos> = {
   },
 }
 
-export default function Pantalla() {
+function Pantalla() {
   return (
     <Datos
       servicio={simulado}
@@ -74,3 +75,5 @@ export default function Pantalla() {
     />
   )
 }
+
+export default soloDesarrollo(Pantalla)

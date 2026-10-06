@@ -279,6 +279,14 @@ falla si sale de esa condición. Hoy hay uno: mantener pulsado el logo de
 Entrar olvida que ya se vio la bienvenida, para volver a probarla. Si se añade
 otro, va a esa prueba.
 
+**Las páginas del catálogo (`src/app/catalogo*.tsx`) tampoco** (Michael,
+06-10). Como todo `src/app/` viaja en la build, se exportan envueltas en
+`soloDesarrollo()` (`src/util/soloDesarrollo.tsx`). Fuera de `__DEV__`
+mandan al inicio. Comprobado con un export web de producción:
+`/catalogo-juego` va a la bienvenida y `/entrar` sigue igual. La misma
+prueba vigila que todo catálogo nuevo pase por ahí y que ninguna pantalla
+real importe un catálogo.
+
 ## Trampas que ya mordieron
 
 - **Subir un fichero:** el fetch de Expo 57 NO acepta `{ uri, name, type }`

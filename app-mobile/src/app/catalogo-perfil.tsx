@@ -4,6 +4,7 @@ import { router } from 'expo-router'
 import { Perfil } from '../perfil/Perfil'
 import type { Aviso, DeServidor } from '../perfil/maquina'
 import type { crearServicioPerfil } from '../perfil/servicio'
+import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Perfil con un servidor SIMULADO, para verlo en el navegador: /catalogo-perfil.
@@ -23,7 +24,7 @@ let avisos: Aviso[] = [
   { clave: 'whatsapp', titulo: 'Avisarte por WhatsApp', cuerpo: 'Además del correo. Solo lo de arriba, nunca nada más.', encendido: false, fijo: false },
 ]
 
-export default function Pantalla() {
+function Pantalla() {
   const espera = () => new Promise((ok) => setTimeout(ok, 500))
   const servicio = useMemo((): ReturnType<typeof crearServicioPerfil> => ({
     perfil: async () => ({ ok: true, datos: REAL }),
@@ -54,3 +55,5 @@ export default function Pantalla() {
     />
   )
 }
+
+export default soloDesarrollo(Pantalla)

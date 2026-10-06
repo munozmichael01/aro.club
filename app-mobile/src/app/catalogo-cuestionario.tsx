@@ -2,6 +2,7 @@ import { router } from 'expo-router'
 
 import { Cuestionario } from '../cuestionario/Cuestionario'
 import type { CatalogoCompleto, crearServicioCuestionario } from '../cuestionario/servicio'
+import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * El cuestionario con un servidor SIMULADO, para recorrerlo en el navegador.
@@ -49,7 +50,7 @@ const simulado: ReturnType<typeof crearServicioCuestionario> = {
   },
 }
 
-export default function Pantalla() {
+function Pantalla() {
   return (
     <Cuestionario
       servicio={simulado}
@@ -61,3 +62,5 @@ export default function Pantalla() {
     />
   )
 }
+
+export default soloDesarrollo(Pantalla)

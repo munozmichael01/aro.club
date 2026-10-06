@@ -6,6 +6,7 @@ import { sabado } from '../util/sabados'
 import { MiMesa } from '../mesa/MiMesa'
 import type { DeServidor } from '../mesa/maquina'
 import type { crearServicioMesa } from '../mesa/servicio'
+import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Mi mesa con un servidor SIMULADO, para ver cada fase en el navegador:
@@ -40,7 +41,7 @@ const ESTADOS: Record<string, DeServidor> = {
   valorada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10), yaValoro: true, yaBloqueados: [CINCO[2].id], yaReporto: CINCO[2].id },
 }
 
-export default function Pantalla() {
+function Pantalla() {
   const { estado = 'abierta', captura } = useLocalSearchParams<{ estado?: string; captura?: string }>()
   const espera = () => new Promise((ok) => setTimeout(ok, 600))
   const servicio = useMemo((): ReturnType<typeof crearServicioMesa> => ({
@@ -73,3 +74,5 @@ export default function Pantalla() {
     />
   )
 }
+
+export default soloDesarrollo(Pantalla)

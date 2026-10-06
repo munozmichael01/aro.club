@@ -7,6 +7,7 @@ const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 const PUERTO = 9339
 const [, , salida, ...pares] = process.argv // pares: nombre=url
 const ALTO = Number(process.env.ALTO ?? 956)
+const ANCHO = Number(process.env.ANCHO ?? 440)
 
 const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${PUERTO}`, `--user-data-dir=${salida}/perfil`, '--hide-scrollbars', 'about:blank'], { stdio: 'ignore' })
 const espera = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -25,7 +26,7 @@ const pend = new Map()
 ws.addEventListener('message', (e) => { const m = JSON.parse(e.data); if (m.id && pend.has(m.id)) { pend.get(m.id)(m); pend.delete(m.id) } })
 const cdp = (method, params = {}) => new Promise((r) => { const n = ++id; pend.set(n, r); ws.send(JSON.stringify({ id: n, method, params })) })
 
-await cdp('Emulation.setDeviceMetricsOverride', { width: 440, height: ALTO, deviceScaleFactor: 3, mobile: true })
+await cdp('Emulation.setDeviceMetricsOverride', { width: ANCHO, height: ALTO, deviceScaleFactor: 3, mobile: true })
 await cdp('Emulation.setTouchEmulationEnabled', { enabled: true })
 for (const par of pares) {
   const [nombre, url] = par.split('=').length > 2 ? [par.slice(0, par.indexOf('=')), par.slice(par.indexOf('=') + 1)] : par.split('=')

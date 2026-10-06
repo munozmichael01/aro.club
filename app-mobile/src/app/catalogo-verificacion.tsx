@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { Verificacion } from '../verificacion/Verificacion'
 import type { DeServidor } from '../verificacion/maquina'
 import type { crearServicioVerificacion } from '../verificacion/servicio'
+import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * La verificación con un servidor SIMULADO y sin cámara, para ver cada fase
@@ -25,7 +26,7 @@ const ESTADOS: Record<string, DeServidor> = {
   aprobada: { estado: 'aprobada', cedulaLista: true, selfieLista: true, revisadaEl: '3 de octubre de 2026', seBorraEl: '1 de enero de 2027' },
 }
 
-export default function Pantalla() {
+function Pantalla() {
   const { estado = 'sin-empezar' } = useLocalSearchParams<{ estado?: string }>()
   const simulado = useMemo((): ReturnType<typeof crearServicioVerificacion> => ({
     async estado() {
@@ -38,3 +39,5 @@ export default function Pantalla() {
   }), [estado]) // estable: si no, la carga se relanzaría en cada render
   return <Verificacion key={estado} servicio={simulado} camara={false} alCuenta={() => router.push('/cuenta')} alPreguntas={() => router.push('/cuestionario')} alEntrar={() => router.push('/entrar')} />
 }
+
+export default soloDesarrollo(Pantalla)

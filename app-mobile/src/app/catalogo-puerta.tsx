@@ -5,6 +5,7 @@ import { preguntasDeEntrada } from '../entrada/preguntas'
 import { Puerta } from '../puerta/Puerta'
 import type { crearServicioPuerta } from '../puerta/servicio'
 import { reglas } from '../reglas'
+import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * El alta de la app con un servidor SIMULADO: /catalogo-puerta[?sesion=1]
@@ -17,7 +18,7 @@ const ZONAS = [
   { slug: 'altamira', nombre: 'Altamira' },
 ]
 
-export default function Pantalla() {
+function Pantalla() {
   const { sesion } = useLocalSearchParams<{ sesion?: string }>()
   const servicio = useMemo(
     (): ReturnType<typeof crearServicioPuerta> => ({
@@ -40,3 +41,5 @@ export default function Pantalla() {
     />
   )
 }
+
+export default soloDesarrollo(Pantalla)

@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import type { DeServidor } from '../pago/maquina'
 import { Pago } from '../pago/Pago'
 import type { crearServicioPago } from '../pago/servicio'
+import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Pago con un servidor SIMULADO, para verlo en el navegador:
@@ -15,7 +16,7 @@ import type { crearServicioPago } from '../pago/servicio'
  */
 const REAL = require('../../pruebas/datos/pago.json') as DeServidor
 
-export default function Pantalla() {
+function Pantalla() {
   const { estado = 'elegir' } = useLocalSearchParams<{ estado?: string }>()
   const servicio = useMemo((): ReturnType<typeof crearServicioPago> => {
     const espera = () => new Promise((ok) => setTimeout(ok, 700))
@@ -35,3 +36,5 @@ export default function Pantalla() {
   }, [estado])
   return <Pago key={estado} evento={REAL.evento.id} servicio={servicio} ir={(d) => console.log('[catálogo] ir a', d)} alEntrar={() => router.push('/entrar')} />
 }
+
+export default soloDesarrollo(Pantalla)

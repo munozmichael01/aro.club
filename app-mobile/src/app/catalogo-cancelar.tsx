@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { Cancelar } from '../cancelar/Cancelar'
 import type { DeServidor } from '../cancelar/maquina'
 import type { crearServicioCancelar } from '../cancelar/servicio'
+import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Cancelar con un servidor SIMULADO: /catalogo-cancelar?estado=margen|tarde|revelada|fallo
@@ -11,7 +12,7 @@ import type { crearServicioCancelar } from '../cancelar/servicio'
  */
 const en = (h: number) => new Date(Date.now() + h * 3600_000).toISOString()
 
-export default function Pantalla() {
+function Pantalla() {
   const { estado = 'margen' } = useLocalSearchParams<{ estado?: string }>()
   const servicio = useMemo((): ReturnType<typeof crearServicioCancelar> => {
     const tarde = estado !== 'margen'
@@ -30,3 +31,5 @@ export default function Pantalla() {
   }, [estado])
   return <Cancelar key={estado} servicio={servicio} ir={(x) => console.log('[catálogo] ir a', x)} alEntrar={() => router.push('/entrar')} />
 }
+
+export default soloDesarrollo(Pantalla)

@@ -18,3 +18,23 @@ test('el atajo de olvidar la bienvenida solo se conecta con __DEV__', () => {
   const ruta = leer('app/entrar.tsx')
   assert.match(ruta, /alOlvidarBienvenida=\{\s*__DEV__\s*\?/, 'la ruta solo lo pasa en desarrollo')
 })
+
+test('las páginas del catálogo no se abren en la app publicada', () => {
+  const dir = new URL('../src/app/', import.meta.url)
+  const catalogos = fs.readdirSync(dir).filter((f) => /^catalogo.*\.tsx$/.test(f))
+  assert.ok(catalogos.length > 0, 'hay catálogos')
+  for (const f of catalogos) {
+    const s = leer(`app/${f}`)
+    assert.match(s, /export default soloDesarrollo\(Pantalla\)/, `${f} se exporta sin soloDesarrollo`)
+    assert.equal((s.match(/export default/g) ?? []).length, 1, `${f}: un solo export default`)
+  }
+  // Y la envoltura solo deja pasar en desarrollo.
+  assert.match(leer('util/soloDesarrollo.tsx'), /if \(__DEV__\) return Pantalla/)
+})
+
+test('ninguna pantalla de producción importa un catálogo', () => {
+  const todos = (d: string): string[] =>
+    fs.readdirSync(new URL(`../src/${d}`, import.meta.url), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? todos(`${d}${e.name}/`) : /\.tsx?$/.test(e.name) ? [`${d}${e.name}`] : []))
+  const culpables = todos('').filter((f) => !/^app\/catalogo/.test(f) && /from ['"][^'"]*app\/catalogo/.test(leer(f)))
+  assert.deepEqual(culpables, [])
+})

@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 
 import { Juego } from '../juego/Juego'
 import type { Estado } from '../juego/maquina'
+import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /** Catálogo: el juego con una mesa de ejemplo. ?paso=reglas|pregunta|cambio|final (las preguntas, de reglas.js). */
 const PASOS: Record<string, Estado> = {
@@ -12,8 +13,10 @@ const PASOS: Record<string, Estado> = {
   final: { paso: 'final', ronda: 2, indice: 1 },
 }
 
-export default function Pantalla() {
+function Pantalla() {
   const { paso } = useLocalSearchParams<{ paso?: string }>()
   const desde = useMemo(() => (paso ? PASOS[paso] : undefined), [paso])
   return <Juego key={paso ?? 'vivo'} desde={desde} mesaId="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" alSalir={() => router.push('/catalogo-mesa?estado=juego-abierto')} />
 }
+
+export default soloDesarrollo(Pantalla)
