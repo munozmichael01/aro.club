@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   if (!corrida) return NextResponse.json({ error: 'Esa corrida no existe.' }, { status: 404 })
   const { data: evento } = await admin
     .from('events')
-    .select('id, reveal_at, format')
+    .select('id, reveal_at, starts_at, format')
     .eq('id', corrida.event_id)
     .maybeSingle()
 
@@ -133,6 +133,7 @@ export async function POST(request: Request) {
   // cambia despublicándola a propósito.
 
   const creadas: string[] = []
+  const sentados: { mesaId: string; perfiles: string[] }[] = []
   for (const mesa of mesas) {
     const { data: fila, error } = await admin
       .from('dinner_tables')
@@ -171,7 +172,31 @@ export async function POST(request: Request) {
     }
 
     creadas.push(fila.id)
+    // El id de la mesa, atado a quién se sentó en ella: la push del juego lo
+    // necesita para abrir el juego DE ESA mesa.
+    sentados.push({ mesaId: fila.id, perfiles: mesa.integrantes.map((p) => p.profileId) })
   }
+
+  /**
+   * «¿Ya pidieron?», veinte minutos después de sentarse.
+   *
+   * Se encola AQUÍ y no en un cron propio: la hora se sabe desde que se
+   * publica la mesa —`starts_at` más veinte minutos— y la cola ya sabe
+   * esperar. Un cron más sería otra idea de cuándo se avisa a alguien.
+   *
+   * Solo push: no hay correo. Un correo diciendo «abran el juego» llegaría
+   * cuando ya están cenando, y en una mesa nadie mira el correo.
+   */
+  const alJuego = new Date(new Date(evento.starts_at).getTime() + 20 * 60_000).toISOString()
+  const juego = sentados.flatMap((m) =>
+    m.perfiles.map((perfilId) => ({
+      profile_id: perfilId,
+      kind: 'juego' as const,
+      event_id: corrida.event_id,
+      send_at: alJuego,
+      payload: { mesaId: m.mesaId },
+    })),
+  )
 
   // Los correos quedan EN COLA para la hora de la revelación. No salen.
   const aviso = mesas.flatMap((mesa) =>
@@ -309,6 +334,18 @@ export async function POST(request: Request) {
   const { data: encolados, error: errorCorreos } = porEncolar.length
     ? await admin.from('scheduled_emails').insert(porEncolar as never).select('id')
     : { data: [], error: null }
+
+  // La push del juego, con su propia hora. `upsert` y no `insert`: republicar
+  // una mesa no puede dejar dos avisos al mismo teléfono, y el índice de
+  // «uno por persona y fecha» ya existe para eso.
+  if (juego.length) {
+    const { error } = await admin
+      .from('scheduled_emails')
+      .upsert(juego as never, { onConflict: 'profile_id,kind,event_id', ignoreDuplicates: true })
+    // No tumba la publicación: las mesas ya están puestas y el aviso del
+    // juego es lo último que debe impedir que alguien sepa dónde cena.
+    if (error) console.error('[publicar] no se encoló el juego', error)
+  }
 
   // Los avisos de cambio. Van en su propio `upsert` y no con los de arriba
   // porque aquí SÍ hay que reescribir: si ya había uno en cola sin enviar y

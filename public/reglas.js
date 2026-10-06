@@ -787,10 +787,10 @@
 
       /** Se enseñan antes de empezar, en este orden. */
       reglas: [
-        'Una persona lleva el juego desde su teléfono y lee en voz alta. Nadie le pasa el teléfono a nadie: si otra quiere llevar la ronda siguiente, la abre en el suyo.',
-        'Una pregunta, responden todos, empezando por quien la leyó. Nadie le pregunta a otro directamente.',
-        'Siempre se puede pasar, sin explicar nada.',
-        'Son tres rondas y van de menos a más. Unos quince o veinte minutos.',
+        'Una persona lee en voz alta, desde su teléfono.',
+        'Responden todos, empezando por quien leyó.',
+        'Cualquiera puede pasar, sin explicar nada.',
+        'Tres rondas, de menos a más.',
       ],
 
       /** Cuando se acaba la ronda 3. */
@@ -800,7 +800,7 @@
         {
           clave: 'quien-eres',
           titulo: 'Quién eres hoy',
-          bajada: 'Fácil. Abre la mesa sin exigir nada.',
+          bajada: 'Fácil. Para abrir la mesa sin exigir nada.',
           preguntas: [
             '¿Qué te tiene con ilusión estos días, aunque sea algo pequeño?',
             '¿Qué haces que te hace perder la noción del tiempo?',
@@ -834,7 +834,7 @@
         {
           clave: 'lo-que-no-se-dice',
           titulo: 'Lo que no se suele decir',
-          bajada: 'Más profunda. Aquí más que nunca: se puede pasar.',
+          bajada: 'Más profunda. Aquí más que nunca: cualquiera puede pasar.',
           preguntas: [
             '¿Qué piensa la gente de ti que no es verdad?',
             '¿Cuándo fue la última vez que te sentiste en soledad de verdad?',

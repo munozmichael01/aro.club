@@ -35,7 +35,7 @@ servidor por mesa.
 
 ## Ronda 1 · Quién eres hoy
 
-Fácil. Abre la mesa sin exigir nada.
+Fácil. Para abrir la mesa sin exigir nada.
 
 1. ¿Qué te tiene con ilusión estos días, aunque sea algo pequeño?
 2. ¿Qué haces que te hace perder la noción del tiempo?
@@ -65,7 +65,7 @@ Decisiones, cambios, lo que importa.
 
 ## Ronda 3 · Lo que no se suele decir
 
-Más profunda. Aquí más que nunca: se puede pasar.
+Más profunda. Aquí más que nunca: cualquiera puede pasar.
 
 1. ¿Qué piensa la gente de ti que no es verdad?
 2. ¿Cuándo fue la última vez que te sentiste en soledad de verdad?

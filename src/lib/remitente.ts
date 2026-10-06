@@ -39,7 +39,10 @@ const CLAVE = process.env.RESEND_API_KEY
 export const SITIO = process.env.NEXT_PUBLIC_SITE_URL || 'https://aro.club'
 
 /** Qué plantilla usa cada tipo. El nombre del fichero es de Design. */
-const PLANTILLA: Record<Correo, string> = {
+// `Partial`: desde que hay avisos de SOLO PUSH, no todo tipo tiene fichero.
+// `componer` ya devuelve null cuando falta, y `correos.ts` cierra esas filas
+// antes de llegar aquí.
+const PLANTILLA: Partial<Record<Correo, string>> = {
   bienvenida: '01-bienvenida.html',
   verificacion: '02-verificacion.html',
   mesa_asignada: '03-mesa-asignada.html',

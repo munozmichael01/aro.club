@@ -1339,7 +1339,7 @@ class Component extends DCLogic {
         // panel salta de fecha solo.
         const antes = this.fechaElegida();
         const i = antes ? Math.max(0, d.fechas.findIndex((f) => f.id === antes.id)) : 0;
-        return { fechas: d.fechas, fechaRep: i };
+        return { fechas: d.fechas, horasFormato: d.horasFormato || null, fechaRep: i };
       },
       { fechas: [] });
   }
@@ -1910,8 +1910,8 @@ class Component extends DCLogic {
     // en /api/operacion/fechas, así que esta tabla solo las enseña. Si las
     // dos dejaran de coincidir, la que manda es la del servidor.
     const FORMATOS = [
-      ['Cena', '7:00 p.m.', 'dinner', 19], ['Cena foodie', '7:00 p.m.', 'foodie_dinner', 19],
-      ['Cena de mujeres', '7:00 p.m.', 'women_dinner', 19], ['Drinks', '8:00 p.m.', 'drinks', 20],
+      ['Cena', '7:30 p.m.', 'dinner', 19], ['Cena foodie', '7:30 p.m.', 'foodie_dinner', 19],
+      ['Cena de mujeres', '7:30 p.m.', 'women_dinner', 19], ['Drinks', '8:00 p.m.', 'drinks', 20],
       ['Coffee', '10:00 a.m.', 'coffee', 10], ['Caminata', '9:00 a.m.', 'walk', 9],
       ['Senderismo', '7:00 a.m.', 'hike', 7], ['Correr', '6:00 a.m.', 'run', 6],
       ['Pádel', '8:00 a.m.', 'padel', 8], ['Pilates', '8:00 a.m.', 'pilates', 8],
@@ -2544,7 +2544,11 @@ class Component extends DCLogic {
     const formatos = FORMATOS.map((f, i) => {
       const on = St.formatoSel === i;
       return {
-        label: f[0], horaTxt: f[1], icono: on ? '✓' : '', aro: aroDS(on),
+        // La hora, del servidor. La de la tabla es el respaldo de mientras
+        // carga: moverla allí y no aquí dejaba el panel diciendo «7:00 p.m.»
+        // con la cena ya a las 7:30.
+        label: f[0], horaTxt: (((St.horasFormato || {})[f[2]] || {}).texto) || f[1],
+        icono: on ? '✓' : '', aro: aroDS(on),
         btn: past(on), txt: txtDS(on),
         hora: 'font:500 12px/1.2 \'Inter Tight\',sans-serif;color:' + (on ? '#8F4515' : '#33513F') + ';white-space:nowrap',
         pick: () => this.setState((st) => {

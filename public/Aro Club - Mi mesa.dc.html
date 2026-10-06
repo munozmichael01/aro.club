@@ -652,9 +652,14 @@ class Component extends DCLogic {
     // La hora de apertura y CÓMO se dice, las dos derivadas: si mañana se
     // mueve `abreMin`, esta frase se mueve con ella.
     const horaAbre = vent ? AroReglas.horaDe(new Date(vent.abre).toISOString(), dJ && dJ.zonaHoraria) : '';
+    // Las mismas palabras que la app, y derivadas de `abreMin`: si mañana se
+    // vuelve a adelantar, la frase se mueve con el número.
+    const minAbre = Math.abs(J.abreMin);
     const cuandoAbre = J.abreMin === 0
-      ? 'a la hora de la cena'
-      : (J.abreMin < 0 ? 'media hora antes de la cena' : '');
+      ? 'cuando empieza la cena'
+      : (J.abreMin < 0
+          ? (minAbre === 30 ? 'media hora antes de la cena' : minAbre + ' minutos antes de la cena')
+          : (minAbre === 30 ? 'media hora después de empezar' : minAbre + ' minutos después de empezar'));
     const jg = this.state.juego;
     const rondaIdx = jg ? jg.ronda : 0;
     const R = J.rondas[rondaIdx] || J.rondas[0];

@@ -39,10 +39,26 @@ const CARACAS = 4
  * una familia —caminar, correr, pádel— y cada uno tiene su hora. Si el
  * formato no está aquí, la cena es la hora por defecto.
  */
-const HORA_DE: Record<string, number> = {
-  dinner: 19, foodie_dinner: 19, women_dinner: 19,
-  drinks: 20, coffee: 10,
-  walk: 9, hike: 7, run: 6, padel: 8, pilates: 8, cycling: 6,
+const HORA_DE: Record<string, string> = {
+  // Las cenas, a las 7:30 (Michael, 06-10). Con minutos: la hora de una cena
+  // la manda el sitio, y media hora importa.
+  dinner: '19:30', foodie_dinner: '19:30', women_dinner: '19:30',
+  drinks: '20:00', coffee: '10:00',
+  walk: '09:00', hike: '07:00', run: '06:00',
+  padel: '08:00', pilates: '08:00', cycling: '06:00',
+}
+
+/** «19:30» → [19, 30]. Sin minutos, cero. */
+function partesHora(h: string): [number, number] {
+  const [a, b] = String(h).split(':')
+  return [Number(a) || 0, Number(b) || 0]
+}
+
+/** «7:30 p.m.», para que el panel no escriba las horas a mano. */
+function horaBonita(h: string): string {
+  const [hh, mm] = partesHora(h)
+  const doce = hh % 12 || 12
+  return `${doce}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a.m.' : 'p.m.'}`
 }
 
 /** Cuánto antes cierra: el reparto necesita el pool cerrado dos días antes. */
@@ -497,7 +513,15 @@ export async function GET() {
     }
   })
 
-  return NextResponse.json({ fechas: conAviso })
+  return NextResponse.json({
+    fechas: conAviso,
+    // Las horas por formato, para que el panel no las escriba a mano: las
+    // tenía duplicadas, y moverlas aquí lo dejaba diciendo «7:00 p.m.» con la
+    // cena ya a las 7:30.
+    horasFormato: Object.fromEntries(
+      Object.entries(HORA_DE).map(([k, v]) => [k, { hora: v, texto: horaBonita(v) }]),
+    ),
+  })
 }
 
 export async function POST(request: Request) {
@@ -514,9 +538,7 @@ export async function POST(request: Request) {
 
   const d = parsed.data
   // La elegida manda; si no viene, la del formato.
-  const [horaElegida, minElegidos] = d.hora
-    ? d.hora.split(':').map(Number)
-    : [HORA_DE[d.formato] ?? 19, 0]
+  const [horaElegida, minElegidos] = partesHora(d.hora || HORA_DE[d.formato] || '19:30')
   const horaDeInicio = horaElegida
   const empieza = enUTC(d.dia, horaDeInicio, minElegidos)
   const cierra = new Date(empieza.getTime() - HORAS_DE_CIERRE * 3600_000)

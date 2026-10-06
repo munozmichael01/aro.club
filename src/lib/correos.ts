@@ -112,6 +112,26 @@ export type Correo =
   // ella. Sale la mañana siguiente. No es imprescindible: quien se dio de
   // baja no lo recibe, y por eso su plantilla lleva el enlace de ajustes.
   | 'encuesta_despues'
+  /**
+   * «¿Ya pidieron?», veinte minutos después de sentarse.
+   *
+   * El primero que es SOLO PUSH: no tiene plantilla ni correo. Un correo
+   * diciendo «abran el juego» llegaría cuando ya están cenando, y en una mesa
+   * nadie mira el correo. La push llega en el momento en que ya pidieron y se
+   * hace el silencio, que es para lo que existe el juego.
+   */
+  | 'juego'
+
+/**
+ * Los que NO llevan correo.
+ *
+ * Van por la misma cola —mismo `send_at`, mismo índice, mismas
+ * preferencias— pero al despacharlos no se compone nada: se manda la push y
+ * la fila se cierra como `solo_push`. Sin esta lista se cerrarían como
+ * `sin_plantilla`, que es un estado de ERROR —«falta desplegar el fichero»—
+ * y dejaría la fila viva reintentándose para siempre.
+ */
+const SOLO_PUSH: ReadonlySet<string> = new Set(['juego'])
 
 type AQuien = { perfil: string } | { correo: string }
 
@@ -212,8 +232,13 @@ type Final =
   | 'dado_de_baja'
   | 'sin_plantilla'
   | 'error_de_envio'
+  /** No llevaba correo: la push salió y la fila terminó. */
+  | 'solo_push'
 
-const CIERRAN: ReadonlySet<Final> = new Set(['enviado', 'no_se_pudo_armar', 'dado_de_baja'])
+// `solo_push` cierra: ese aviso ya hizo todo lo que tenía que hacer. Sin esto
+// la fila se queda viva y el cron la recoge cada cuarto de hora para siempre,
+// aunque la push ya saliera.
+const CIERRAN: ReadonlySet<Final> = new Set(['enviado', 'no_se_pudo_armar', 'dado_de_baja', 'solo_push'])
 
 /**
  * Anota qué pasó. Antes los tres finales que cierran escribían exactamente
@@ -374,22 +399,6 @@ export async function despacharPendientes(
       // La columna admite algún `kind` sin plantilla propia —'comprobante'—,
       // así que el tipo de la base es más ancho que el de los correos. Si no
       // hay plantilla, `componer` devuelve null y se anota abajo.
-      const pintado = await componer(fila.kind as Correo, listo.datos)
-      if (!pintado) {
-        // NO se cierra. Un `kind` sin plantilla casi siempre es un despliegue
-        // por detrás de la base —el enum ya tiene el tipo, el código todavía
-        // no—, y eso se arregla solo al desplegar. Cerrarla quemaría el
-        // correo. Lo que sí hace falta es que la fila diga por qué lleva ahí
-        // parada, en vez de reintentarse cada cuarto de hora en silencio.
-        console.error('[correos] sin plantilla', fila.kind)
-        await anotarFinal(admin, fila.id, 'sin_plantilla', `no hay plantilla para ${fila.kind}`)
-        continue
-      }
-
-      // El ensayo se para AQUI y no antes: asi pasa por el filtro de la baja
-      // igual que un envio de verdad. Si se saliera antes, el ensayo diria que
-      // manda un correo que en realidad no se manda, y el ensayo es justo lo
-      // que se usa para comprobar que esto esta bien.
       // La push, con los MISMOS datos que acaba de usar el correo.
       //
       // Aquí y no en otro sitio: así no hay una segunda idea de a quién se
@@ -429,6 +438,30 @@ export async function despacharPendientes(
         if (q?.ok) pushes++
       }
 
+
+      // Los de solo push terminan aquí: no hay correo que componer.
+      if (SOLO_PUSH.has(fila.kind)) {
+        if (!seco) await anotarFinal(admin, fila.id, 'solo_push')
+        else enSeco.push({ kind: fila.kind, asunto: '— solo push', huecos: 0, baja: false })
+        continue
+      }
+
+      const pintado = await componer(fila.kind as Correo, listo.datos)
+      if (!pintado) {
+        // NO se cierra. Un `kind` sin plantilla casi siempre es un despliegue
+        // por detrás de la base —el enum ya tiene el tipo, el código todavía
+        // no—, y eso se arregla solo al desplegar. Cerrarla quemaría el
+        // correo. Lo que sí hace falta es que la fila diga por qué lleva ahí
+        // parada, en vez de reintentarse cada cuarto de hora en silencio.
+        console.error('[correos] sin plantilla', fila.kind)
+        await anotarFinal(admin, fila.id, 'sin_plantilla', `no hay plantilla para ${fila.kind}`)
+        continue
+      }
+
+      // El ensayo se para AQUI y no antes: asi pasa por el filtro de la baja
+      // igual que un envio de verdad. Si se saliera antes, el ensayo diria que
+      // manda un correo que en realidad no se manda, y el ensayo es justo lo
+      // que se usa para comprobar que esto esta bien.
       if (seco) {
         enSeco.push({
           kind: fila.kind,

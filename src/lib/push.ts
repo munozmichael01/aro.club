@@ -100,6 +100,16 @@ export function copyDe(
         cuerpo: 'Tu puesto está apartado. Te avisamos cuando se abra tu mesa.',
         ruta: '/cuenta',
       }
+    case 'juego': {
+      // La única que no tiene correo detrás. Y la única cuya `ruta` necesita
+      // el id de la mesa: la app abre el juego DE ESA mesa, que es lo que
+      // hace que los seis teléfonos vean las mismas preguntas.
+      return {
+        titulo: '¿Ya pidieron?',
+        cuerpo: 'Que una persona abra el juego de la mesa y lea la primera pregunta.',
+        ruta: '/juego',
+      }
+    }
     case 'llego_tarde': {
       const quien = t('nombre')
       const min = t('minutos')
@@ -381,6 +391,9 @@ export async function mandarPush(
           tipo: fila.kind,
           ...(copy!.ruta ? { ruta: copy!.ruta } : {}),
           ...(fila.event_id ? { eventoId: fila.event_id } : {}),
+          // La mesa, cuando el aviso es de una mesa concreta. La app la
+          // necesita para abrir el juego de ESA mesa y no de otra.
+          ...(typeof fila.datos.mesaId === 'string' ? { mesaId: fila.datos.mesaId } : {}),
         },
         channelId: 'aro',
         sound: 'default',

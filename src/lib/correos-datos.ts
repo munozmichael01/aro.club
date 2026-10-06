@@ -322,6 +322,20 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       return { a, datos: { ...base, sitio: mesa?.sitio ?? '' } }
     }
 
+    /**
+     * El juego de la mesa. No tiene plantilla: es solo push.
+     *
+     * Pasa por aquí igual que los demás porque aquí es donde se resuelve a
+     * quién va y se juntan sus datos. Sin este caso caía en «tipo
+     * desconocido» y la fila se cerraba como imposible de armar, sin llegar
+     * nunca a mandar la push.
+     *
+     * Lleva el id de la mesa: la app abre el juego DE ESA mesa, y es lo que
+     * hace que los seis teléfonos vean las mismas preguntas.
+     */
+    case 'juego':
+      return { a, datos: { ...base, mesaId: (p.mesaId as string) ?? '' } }
+
     case 'cuenta_lista':
       return { a, datos: { ...base, correo: a } }
 
