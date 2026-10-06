@@ -15,7 +15,7 @@ const MIN = 60_000
 
 export type Ventana = 'antes' | 'abierto' | 'cerrado'
 
-/** Se abre `abreMin` antes de la cena y se cierra `cierraMin` después. */
+/** Se abre en `abreMin` (minutos respecto al inicio; 0 = a la hora de la cena) y se cierra en `cierraMin`. */
 export function ventana(empiezaEn: string | null | undefined, ahora: number): Ventana {
   const t = empiezaEn ? Date.parse(empiezaEn) : NaN
   if (!Number.isFinite(t)) return 'cerrado'
