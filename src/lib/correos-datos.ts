@@ -268,7 +268,15 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           zonas: zonas.length ? unirCon(zonas, ' o ') : 'tu zona',
           // El pie de la tarjeta. En minúscula, como lo diseñó Design, pero
           // con la zona de verdad y no con «las mercedes» escrito a mano.
-          pieDeZona: zonas.length ? `sábado · ${zonas[0].toLowerCase()}` : 'sábado',
+          //
+          // Y SIN el día escrito a mano tampoco. Decía «sábado» siempre, y
+          // este correo lo recibe quien dejó su correo: si trae fecha, es la
+          // suya —y hoy hay abiertas un viernes y un martes—; si no trae
+          // ninguna, no hay día que prometer. Prometer un día que luego no
+          // sale es peor que no decirlo.
+          pieDeZona: [diaTexto(evento?.starts_at), zonas[0]?.toLowerCase()]
+            .filter(Boolean)
+            .join(' · ') || 'tu zona',
           // El botón. NO puede ser `/cuestionario` a secas.
           //
           // Este correo lo recibe quien dejó su correo y se quedó a medias: no
