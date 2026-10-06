@@ -34,6 +34,8 @@ const ESTADOS: Record<string, DeServidor> = {
   cerrada: { fase: 'cerrada', formato: 'dinner', zonaHoraria: 'America/Caracas', revelaEn: en(26), empiezaEn: en(34), zonas: ['Las Mercedes', 'Chacao', 'Altamira'] },
   abierta: ABIERTA,
   movimiento: { ...ABIERTA, formato: 'walk', restaurante: 'Entrada de Sabas Nieves', direccion: 'Av. Boyacá, Altamira', actividad: { ruta: 'Sabas Nieves → La Silla', km: 7, minutos: 150, nivel: 'medio' } },
+  // El juego de la mesa: cerrado (la cena es en 5 h) y abierto (empezó hace 10 min).
+  'juego-abierto': { ...ABIERTA, empiezaEn: en(-1 / 6) },
   pasada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10) },
   valorada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10), yaValoro: true, yaBloqueados: [CINCO[2].id], yaReporto: CINCO[2].id },
 }

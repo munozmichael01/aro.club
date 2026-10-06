@@ -199,6 +199,17 @@ no recibe push remotas) y trabajo del backend (guardar tokens y mandar).
     zona» llega aunque no verifique ni reserve;
   - **al subir la verificación**;
   - **al reservar** o reportar el pago.
+- **El juego de la mesa** (entrega 18 de Design, en `app-mobile/Juego de la
+  mesa/entrega/entrega 18/`):
+  - Va en Mi mesa revelada, debajo de «Con quién cenas», y solo en cenas.
+  - La tarjeta tiene dos estados: cerrada (con candado) y abierta.
+  - La pantalla `/juego?mesa=` tiene reglas, pregunta, cambio de ronda y
+    final, con la pantalla siempre encendida (`expo-keep-awake`).
+  - El mazo, las reglas, `porRonda` y la ventana (`abreMin`, `cierraMin`)
+    salen de `AroReglas.JUEGO`. El orden de las preguntas, de
+    `preguntasDeRonda(mesaId, ronda)`, igual en todos los teléfonos.
+  - Cada teléfono recuerda la última ronda vista. Una persona lee y responden
+    todos (Michael, 06-10).
 - **Todo ajuste se hace en la app Y en la web.** Lo de la web y el servidor
   va en un mensaje al agente (ficheros y líneas); lo compartido, primero al
   servidor.

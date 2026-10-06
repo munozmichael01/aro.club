@@ -105,3 +105,21 @@ export function IconoCampana({ tam = 22, color }: P) {
     </Svg>
   )
 }
+
+/** Candado: el juego de la mesa, antes de su hora. */
+export function IconoCandado({ tam = 22, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M6.5 10.5h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2zM8 10.5V7.5a4 4 0 0 1 8 0v3" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}
+
+/** Atrás (‹): el círculo de «pregunta anterior» del juego. */
+export function IconoAtras({ tam = 22, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M15 5l-7 7 7 7" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}

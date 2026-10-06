@@ -15,7 +15,7 @@ import { test } from 'node:test'
 const RAIZ = path.resolve(import.meta.dirname, '../src')
 
 /** El sitio de los días, y los catálogos de desarrollo, que no son producto. */
-const PERMITIDOS = new Set(['texto/fechas.ts', 'app/catalogo-entrada.tsx', 'app/catalogo-datos.tsx', 'app/catalogo-cuestionario.tsx', 'app/catalogo-verificacion.tsx', 'app/catalogo-cuenta.tsx', 'app/catalogo-mesa.tsx', 'app/catalogo-perfil.tsx', 'app/catalogo-pago.tsx', 'app/catalogo-cancelar.tsx', 'app/catalogo-bienvenida.tsx', 'app/catalogo-puerta.tsx', 'app/catalogo-avisos.tsx', 'diseno/Catalogo.tsx',
+const PERMITIDOS = new Set(['texto/fechas.ts', 'app/catalogo-entrada.tsx', 'app/catalogo-datos.tsx', 'app/catalogo-cuestionario.tsx', 'app/catalogo-verificacion.tsx', 'app/catalogo-cuenta.tsx', 'app/catalogo-mesa.tsx', 'app/catalogo-perfil.tsx', 'app/catalogo-pago.tsx', 'app/catalogo-cancelar.tsx', 'app/catalogo-bienvenida.tsx', 'app/catalogo-puerta.tsx', 'app/catalogo-avisos.tsx', 'app/catalogo-juego.tsx', 'diseno/Catalogo.tsx',
   // Solo para las fechas de ejemplo de las capturas de tienda (catálogos con ?captura=1).
   'util/sabados.ts',
 ])

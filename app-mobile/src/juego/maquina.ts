@@ -29,8 +29,18 @@ export type Estado = { paso: Paso; ronda: number; indice: number }
 
 export const inicial: Estado = { paso: 'reglas', ronda: 0, indice: 0 }
 
-/** Para seguir desde otro teléfono: directamente en una ronda, sin repetir las reglas. */
-export const empezarEn = (ronda: number): Estado => ({ paso: 'pregunta', ronda: Math.max(0, Math.min(ronda, reglas.JUEGO.rondas.length - 1)), indice: 0 })
+/**
+ * Para seguir desde otro teléfono («¿Ya empezaron? Ronda 2 · Ronda 3»), o al
+ * volver a abrir el juego: la pausa de esa ronda, con su nombre y su bajada,
+ * como en el diseño. La ronda 1 no tiene pausa: van las reglas.
+ */
+export function empezarEn(ronda: number): Estado {
+  const r = Math.max(0, Math.min(ronda, reglas.JUEGO.rondas.length - 1))
+  return r === 0 ? inicial : { paso: 'cambio', ronda: r, indice: 0 }
+}
+
+/** Es solo para las cenas por ahora (entrega 18): café y movimiento tendrán su versión. */
+export const hayJuego = (formato: string | null | undefined) => !!formato && /dinner/.test(formato)
 
 export const preguntas = (mesaId: string, ronda: number) => reglas.preguntasDeRonda(mesaId, ronda)
 

@@ -10,6 +10,9 @@ import { FORMATOS } from '../texto/cuenta'
 import * as F from '../texto/fechas'
 import * as T from '../texto/mesa'
 import * as M from './maquina'
+import * as J from '../juego/maquina'
+import { TarjetaJuego } from '../juego/TarjetaJuego'
+import { reglas } from '../reglas'
 import type { crearServicioMesa } from './servicio'
 
 type Servicio = ReturnType<typeof crearServicioMesa>
@@ -249,6 +252,15 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
   const act = M.actividad(d)
   const mapa = M.mapa(d, Platform.OS)
 
+  // El juego de la mesa: se abre y se cierra a su hora sin tener que recargar.
+  const [ahora, setAhora] = useState(() => Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setAhora(Date.now()), 30_000)
+    return () => clearInterval(t)
+  }, [])
+  const ventanaJuego = J.ventana(d.empiezaEn, ahora)
+  const abreJuego = d.empiezaEn ? new Date(Date.parse(d.empiezaEn) + reglas.JUEGO.abreMin * 60_000).toISOString() : null
+
   const avisar = async () => {
     if (avisando) return
     const minutos = T.tarde.opciones[retraso].minutos
@@ -371,6 +383,13 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
         <Texto variante="cuerpoChico" style={{ marginTop: 16 }}>
           {T.abierta.notaCompaneros(mesa)}
         </Texto>
+        {d.mesaId && J.hayJuego(d.formato) ? (
+          <TarjetaJuego
+            ventana={ventanaJuego}
+            horaAbre={F.horaEn(abreJuego, d.zonaHoraria ?? null)}
+            alAbrir={() => ir(`/juego?mesa=${d.mesaId}`)}
+          />
+        ) : null}
       </View>
 
       <View style={[estilos.caja, { backgroundColor: 'transparent', borderWidth: 1, borderColor: tinta(0.18), marginTop: 30 }]}>

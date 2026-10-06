@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { atras, empezarEn, inicial, preguntas, siguiente, ventana, vista, type Estado } from '../src/juego/maquina'
+import { atras, empezarEn, hayJuego, inicial, preguntas, siguiente, ventana, vista, type Estado } from '../src/juego/maquina'
 import { reglas } from '../src/reglas'
 
 const J = reglas.JUEGO
@@ -50,7 +50,15 @@ test('atrás deshace el camino, y otro teléfono puede seguir en su ronda', () =
   assert.deepEqual(atras({ paso: 'pregunta', ronda: 1, indice: 0 }, MESA), { paso: 'cambio', ronda: 1, indice: 0 })
   assert.deepEqual(atras({ paso: 'cambio', ronda: 1, indice: 0 }, MESA), { paso: 'pregunta', ronda: 0, indice: N - 1 })
   assert.deepEqual(atras({ paso: 'pregunta', ronda: 0, indice: 0 }, MESA), inicial)
+  // Otro teléfono que toca «Ronda 2»: la pausa de la ronda 2 y, al seguir, la misma primera pregunta.
   const otro = empezarEn(1)
-  assert.equal(vista(otro, MESA).pregunta, preguntas(MESA, 1)[0])
+  assert.deepEqual(otro, { paso: 'cambio', ronda: 1, indice: 0 })
+  assert.equal(vista(siguiente(otro, MESA), MESA).pregunta, preguntas(MESA, 1)[0])
   assert.equal(vista(otro, MESA).ronda.titulo, J.rondas[1].titulo)
+  assert.deepEqual(empezarEn(0), inicial)
+})
+
+test('solo en las cenas', () => {
+  assert.ok(hayJuego('dinner') && hayJuego('foodie_dinner'))
+  assert.ok(!hayJuego('coffee') && !hayJuego('run') && !hayJuego(null))
 })
