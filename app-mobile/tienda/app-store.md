@@ -73,14 +73,13 @@ Todo lo de abajo va **vinculado a la identidad** y con el fin
 | Contenido del usuario → Otro | Respuestas del cuestionario (también *Personalización*: arman la mesa), valoraciones y reportes |
 | Identificadores → ID de usuario | El de la cuenta |
 | Otros tipos de datos | Fecha de nacimiento, género, situación (pareja, hijos), sector y empleador, idiomas |
-| **Información sensible** | La dieta: «Kosher» y «Halal» dicen la religión (revisado el 05-10-2026 contra `/api/questions`) |
 
-Revisado el 05-10-2026 contra el catálogo de `/api/questions`. Lo único
-sensible para Apple es la dieta: «Kosher» y «Halal» dicen la religión, así
-que se declara **Información sensible**. Lo demás no está en su lista:
-situación de pareja e hijos, «abierto a que surja algo», los temas que se
-prefieren evitar (política o religión: es lo que NO se quiere hablar, no lo
-que se cree) y el género. La selfie no es biométrica: la compara una
+Revisado el 05-10-2026 contra el catálogo de `/api/questions`. **Sin
+información sensible:** la dieta tenía «Kosher» y «Halal», que dicen la
+religión, y Michael decidió quitarlas (el agente las sacó del catálogo, sin
+ninguna respuesta guardada con esos códigos). Lo demás no está en la lista de
+Apple: situación de pareja e hijos, «abierto a que surja algo», los temas que
+se prefieren evitar y el género. La selfie no es biométrica: la compara una
 persona, no un algoritmo.
 
 No se recoge: ubicación (las zonas se eligen a mano), contactos, historial,

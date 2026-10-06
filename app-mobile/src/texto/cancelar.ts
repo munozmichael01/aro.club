@@ -14,7 +14,7 @@ export const preguntar = {
   credito: (tarde: boolean) => (tarde ? 'Se pierde' : 'Vuelve entero'),
   aviso: (tarde: boolean) =>
     tarde
-      ? 'Con menos de 24 horas el crédito no se devuelve: el restaurante ya tiene la reserva y los otros cinco cuentan con seis. Aun así, cancelar es mejor que no aparecer — un puesto vacío se nota en una mesa de seis.'
+      ? 'Con menos de 24 horas el crédito no se devuelve: el restaurante ya tiene la reserva y los otros cinco cuentan con seis. Aun así, cancelar es mejor que no aparecer. Un puesto vacío se nota en una mesa de seis.'
       : 'Cancelas con margen, así que el crédito vuelve entero a tu cuenta y no pasa nada. Nadie de la mesa se entera.',
   porQue: '¿POR QUÉ CANCELAS?',
   porQueNota: 'Opcional, y nos sirve de verdad: si el problema es la zona o la hora, lo arreglamos para la próxima.',
