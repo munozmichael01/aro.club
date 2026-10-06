@@ -463,5 +463,78 @@ if (relojes.length) {
   console.log(`✓ el reloj del navegador no decide el día (quedan ${quedan} por migrar, listados)`)
 }
 
+
+// --- el mazo del juego, en dos sitios ---------------------------------
+//
+// Las preguntas viven en `reglas.js` —que es lo que leen la app y la web— y
+// el mazo aprobado vive en `app-mobile/JUEGO.md`, que es lo que edita
+// Michael. Son dos copias a la fuerza, como las FAQ y su JSON-LD, así que se
+// cruzan aquí: cambiar una pregunta en el documento y no en el código no
+// falla nada visible, simplemente la mesa lee otra cosa que la aprobada.
+//
+// Y se comprueba que `preguntasDeRonda` sigue siendo determinista, que es lo
+// único que sostiene que seis teléfonos vean lo mismo sin servidor.
+{
+  const juego = reglas.JUEGO
+  const doc = fs.readFileSync(
+    fileURLToPath(new URL('../app-mobile/JUEGO.md', import.meta.url)), 'utf8')
+
+  const delDoc = (cabecera) => {
+    const ini = doc.indexOf(cabecera)
+    if (ini < 0) return null
+    const resto = doc.slice(ini + cabecera.length)
+    const fin = resto.indexOf('\n## ')
+    return [...(fin < 0 ? resto : resto.slice(0, fin)).matchAll(/^\d+\.\s+(.+)$/gm)].map((m) => m[1].trim())
+  }
+
+  const cabeceras = [
+    '## Ronda 1 · Quién eres hoy',
+    '## Ronda 2 · Lo que te mueve',
+    '## Ronda 3 · Lo que no se suele decir',
+  ]
+
+  const distintas = []
+  juego.rondas.forEach((r, i) => {
+    const enDoc = delDoc(cabeceras[i])
+    if (!enDoc) { distintas.push(`${r.clave}: no encuentro su ronda en JUEGO.md`); return }
+    if (enDoc.length !== r.preguntas.length) {
+      distintas.push(`${r.clave}: el documento tiene ${enDoc.length} y reglas.js ${r.preguntas.length}`)
+      return
+    }
+    r.preguntas.forEach((q, k) => {
+      if (q !== enDoc[k]) distintas.push(`${r.clave} #${k + 1}: «${q}» / el documento dice «${enDoc[k]}»`)
+    })
+  })
+
+  if (distintas.length) {
+    errores++
+    console.error('\n✗ el mazo del juego: reglas.js y JUEGO.md no coinciden')
+    distintas.slice(0, 6).forEach((d) => console.error('    ' + d))
+    console.error('  → la mesa leería preguntas distintas de las aprobadas')
+  } else {
+    console.log(`✓ el juego (${juego.rondas.length} rondas de ${juego.rondas[0].preguntas.length}, iguales al documento)`)
+  }
+
+  // Determinista y bien formado: sin esto, cada teléfono vería otra cosa.
+  const mesa = 'comprobador-0000-4000-8000-000000000001'
+  const malas = []
+  juego.rondas.forEach((r, i) => {
+    const a = reglas.preguntasDeRonda(mesa, i)
+    const b = reglas.preguntasDeRonda(mesa, r.clave)
+    if (a.length !== juego.porRonda) malas.push(`${r.clave}: devuelve ${a.length} y no ${juego.porRonda}`)
+    if (JSON.stringify(a) !== JSON.stringify(b)) malas.push(`${r.clave}: por índice y por clave da distinto`)
+    if (new Set(a).size !== a.length) malas.push(`${r.clave}: repite una pregunta`)
+    if (!a.every((q) => r.preguntas.includes(q))) malas.push(`${r.clave}: saca una pregunta de otra ronda`)
+  })
+  if (malas.length) {
+    errores++
+    console.error('\n✗ preguntasDeRonda')
+    malas.forEach((m) => console.error('    ' + m))
+    console.error('  → los teléfonos de una misma mesa dejarían de ver lo mismo')
+  } else {
+    console.log('✓ preguntasDeRonda (determinista, por índice y por clave)')
+  }
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)

@@ -753,6 +753,159 @@
      */
     HORAS_DE_CIERRE: 24,
 
+    /**
+     * El juego de la mesa.
+     *
+     * El mazo aprobado vive en `app-mobile/JUEGO.md` y se copia aquí a
+     * propósito: aquí es donde lo leen los dos, la app y la web. Cambiar una
+     * pregunta es cambiarla en este fichero y en ese documento, no en cinco
+     * pantallas.
+     *
+     * **El juego no necesita nada del servidor.** No hay estado por mesa, ni
+     * sincronización, ni una llamada que pueda fallar en un restaurante con
+     * mal wifi. Lo único que hace falta para que seis teléfonos vean lo mismo
+     * es el id de la mesa, que todos ya tienen, y `preguntasDeRonda`.
+     */
+    JUEGO: {
+      /** Cuántas salen de cada mazo de diez. */
+      porRonda: 4,
+
+      /**
+       * Cuándo se abre, en minutos respecto a `starts_at`.
+       *
+       * Antes de la cena no: el juego es para cuando ya están sentados, no
+       * para la espera. Y se cierra a las cuatro horas porque a esa altura la
+       * mesa o se disolvió o ya no lo necesita, y una pantalla que sigue
+       * ofreciendo preguntas a la una de la mañana es ruido.
+       */
+      abreMin: -30,
+      cierraMin: 240,
+
+      /** Se enseñan antes de empezar, en este orden. */
+      reglas: [
+        'Una persona lleva el juego desde su teléfono y lee en voz alta. Nadie le pasa el teléfono a nadie: si otra quiere llevar la ronda siguiente, la abre en el suyo.',
+        'Una pregunta, responden todos, empezando por quien la leyó. Nadie le pregunta a otro directamente.',
+        'Siempre se puede pasar, sin explicar nada.',
+        'Son tres rondas y van de menos a más. Unos quince o veinte minutos.',
+      ],
+
+      /** Cuando se acaba la ronda 3. */
+      final: 'Hasta aquí el juego. Lo demás es suyo.',
+
+      rondas: [
+        {
+          clave: 'quien-eres',
+          titulo: 'Quién eres hoy',
+          bajada: 'Fácil. Abre la mesa sin exigir nada.',
+          preguntas: [
+            '¿Qué te tiene con ilusión estos días, aunque sea algo pequeño?',
+            '¿Qué haces que te hace perder la noción del tiempo?',
+            '¿Cuándo fue la última vez que te reíste hasta llorar, y de qué?',
+            'Si mañana tuvieras el día libre y sin compromisos, ¿qué harías desde que te levantas?',
+            '¿Qué cosa simple te arregla un mal día?',
+            '¿Qué aprendiste este año que no esperabas aprender?',
+            '¿Cuál es el plan que siempre dices que vas a hacer y nunca haces?',
+            '¿Qué canción, libro o serie te tiene enganchado o enganchada ahora?',
+            '¿En qué eres mejor de lo que la gente imagina?',
+            '¿Qué te gustaba de chamo o chama que todavía te gusta?',
+          ],
+        },
+        {
+          clave: 'lo-que-te-mueve',
+          titulo: 'Lo que te mueve',
+          bajada: 'Decisiones, cambios, lo que importa.',
+          preguntas: [
+            '¿Qué decisión tomaste que la gente no entendió y hoy volverías a tomar?',
+            '¿En qué has cambiado de opinión en los últimos años?',
+            '¿Qué te da miedo intentar, aunque te gustaría?',
+            '¿Quién te enseñó algo que todavía usas todos los días?',
+            '¿Qué es lo más valiente que has hecho?',
+            '¿Qué te hace sentir en casa, estés donde estés?',
+            '¿Qué te gustaría que te salga bien en el próximo año?',
+            '¿A qué le dices que sí con demasiada facilidad?',
+            '¿Qué haces cuando nadie te ve que dice mucho de ti?',
+            '¿De qué estás orgulloso u orgullosa y casi nunca lo cuentas?',
+          ],
+        },
+        {
+          clave: 'lo-que-no-se-dice',
+          titulo: 'Lo que no se suele decir',
+          bajada: 'Más profunda. Aquí más que nunca: se puede pasar.',
+          preguntas: [
+            '¿Qué piensa la gente de ti que no es verdad?',
+            '¿Cuándo fue la última vez que te sentiste en soledad de verdad?',
+            '¿Qué le dirías a la persona que eras hace diez años?',
+            '¿Qué te gustaría que esta mesa supiera de ti y nadie te pregunta?',
+            '¿Qué te cuesta pedir?',
+            '¿Qué te gustaría que te preguntaran más seguido?',
+            '¿Qué conversación tienes pendiente con alguien?',
+            '¿Qué parte de ti estás aprendiendo a querer?',
+            '¿Qué te gustaría hacer antes de que se te pase el momento?',
+            'Si esta fuera la última cena que compartes con gente nueva, ¿qué te llevarías de ella?',
+          ],
+        },
+      ],
+    },
+
+    /**
+     * Las cuatro preguntas de una ronda, para una mesa.
+     *
+     * **Deterministas, y por eso vive aquí.** Seis teléfonos tienen que
+     * enseñar las mismas preguntas en el mismo orden sin hablar entre ellos y
+     * sin preguntarle al servidor, que en un restaurante con mal wifi es la
+     * diferencia entre un juego y una pantalla cargando. La semilla sale de
+     * lo único que todos comparten: el id de la mesa y la ronda.
+     *
+     * Por eso también se puede cambiar de lector: quien abra el juego en SU
+     * teléfono en la ronda 2 ve exactamente lo que verían los demás.
+     *
+     * Nada de `Math.random` ni de la hora: las dos darían una lista distinta
+     * por teléfono. Y nada de coma flotante en el revoltijo —`Math.imul` y
+     * `>>> 0`, enteros de 32 bits— para que la app y el navegador no puedan
+     * discrepar por cómo redondea cada motor.
+     *
+     * La ronda se puede pasar como índice (0, 1, 2) o como clave
+     * («lo-que-te-mueve»): las dos se resuelven a la MISMA clave antes de
+     * sembrar, así que dan el mismo resultado.
+     */
+    preguntasDeRonda: function (mesaId, ronda) {
+      var rondas = api.JUEGO.rondas
+      var r = null
+      for (var i = 0; i < rondas.length; i++) {
+        if (i === ronda || rondas[i].clave === ronda) { r = rondas[i]; break }
+      }
+      if (!r) return []
+
+      // FNV-1a de 32 bits sobre «mesa:ronda». Pequeño, sin dependencias y
+      // con el mismo resultado en todos los motores.
+      var semilla = 2166136261
+      var texto = String(mesaId || '') + ':' + r.clave
+      for (var k = 0; k < texto.length; k++) {
+        semilla ^= texto.charCodeAt(k)
+        semilla = Math.imul(semilla, 16777619) >>> 0
+      }
+
+      // mulberry32: un generador de una línea, estable y sin estado global.
+      var siguiente = function () {
+        semilla = (semilla + 0x6d2b79f5) >>> 0
+        var t = semilla
+        t = Math.imul(t ^ (t >>> 15), t | 1) >>> 0
+        t = (t ^ (t + Math.imul(t ^ (t >>> 7), t | 61))) >>> 0
+        return (t ^ (t >>> 14)) >>> 0
+      }
+
+      // Fisher-Yates con esa semilla, sobre una copia: el mazo no se toca.
+      var mazo = r.preguntas.slice()
+      for (var j = mazo.length - 1; j > 0; j--) {
+        var m = siguiente() % (j + 1)
+        var tmp = mazo[j]
+        mazo[j] = mazo[m]
+        mazo[m] = tmp
+      }
+
+      return mazo.slice(0, api.JUEGO.porRonda)
+    },
+
     /** Los formatos que salen a la calle: ahí no hay mesa. */
     DE_MOVIMIENTO: ['walk', 'hike', 'run', 'padel', 'pilates', 'cycling'],
 
