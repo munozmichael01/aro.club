@@ -9,18 +9,27 @@ universal; lo venezolano está en la voz, no en el tema.
 
 ## Las reglas (se enseñan antes de empezar)
 
-1. **Un teléfono en el centro**, no seis. Quien lo tiene lee en voz alta y
-   lo pasa a la izquierda.
-2. **Una pregunta, responden todos**, empezando por quien la leyó: quien
+1. **Una persona lleva el juego desde SU teléfono, y no lo suelta.** Lee en
+   voz alta. Nadie le pasa su teléfono a cinco desconocidos (Michael,
+   05-10-2026). Si otra persona quiere llevar la ronda siguiente, la abre en
+   su propio teléfono.
+2. **Todos los teléfonos de la mesa ven las mismas preguntas, en el mismo
+   orden.** El orden sale de la mesa misma (semilla = id de la mesa + ronda),
+   sin que el servidor sincronice nada. Por eso se puede cambiar de lector
+   entre rondas.
+3. **Una pregunta, responden todos**, empezando por quien la leyó: quien
    pregunta también se expone. Nadie le pregunta a otro directamente.
-3. **Siempre se puede pasar**, sin explicar nada.
-4. **Tres rondas, de menos a más.** Unos 15–20 minutos. Al final: «Ahora
+4. **Siempre se puede pasar**, sin explicar nada.
+5. **Tres rondas, de menos a más.** Unos 15–20 minutos. Al final: «Ahora
    guarden el teléfono».
 
-Cada ronda saca 3 o 4 preguntas al azar de sus 10. Las que tocan un tema que
-alguien de la mesa marcó en «De qué prefieres no hablar» no salen en esa
-mesa. Las marcas entre corchetes son los códigos de esa pregunta del
-cuestionario.
+Cada ronda saca 3 o 4 preguntas de sus 10, las mismas en toda la mesa. **No
+se filtra por temas** (Michael): quien no quiera responder una, pasa.
+
+**Dónde vive el mazo:** en `public/reglas.js` (por ejemplo
+`AroReglas.JUEGO`), como `FRECUENTES`. Así la app y la web leen el mismo, y
+cambiar una pregunta es cambiarla en los dos. El juego no necesita nada del
+servidor por mesa.
 
 ---
 
@@ -49,7 +58,7 @@ Decisiones, cambios, lo que importa.
 4. ¿Quién te enseñó algo que todavía usas todos los días?
 5. ¿Qué es lo más valiente que has hecho?
 6. ¿Qué te hace sentir en casa, estés donde estés?
-7. ¿Qué te gustaría que te salga bien en el próximo año? [trabajo]
+7. ¿Qué te gustaría que te salga bien en el próximo año?
 8. ¿A qué le dices que sí con demasiada facilidad?
 9. ¿Qué haces cuando nadie te ve que dice mucho de ti?
 10. ¿De qué estás orgulloso u orgullosa y casi nunca lo cuentas?
@@ -63,17 +72,17 @@ Más profunda. Aquí más que nunca: se puede pasar.
 3. ¿Qué le dirías a la persona que eras hace diez años?
 4. ¿Qué te gustaría que esta mesa supiera de ti y nadie te pregunta?
 5. ¿Qué te cuesta pedir?
-6. ¿Qué pérdida te cambió la forma de ver las cosas?
-7. ¿Qué conversación tienes pendiente con alguien? [vida amorosa]
+6. ¿Qué te gustaría que te preguntaran más seguido?
+7. ¿Qué conversación tienes pendiente con alguien?
 8. ¿Qué parte de ti estás aprendiendo a querer?
 9. ¿Qué te gustaría hacer antes de que se te pase el momento?
 10. Si esta fuera la última cena que compartes con gente nueva, ¿qué te llevarías de ella?
 
 ---
 
-## Para Michael
+## Decidido con Michael (05-10-2026)
 
-- **Edita libremente:** cambiar, quitar o sumar. Más de 10 por ronda está bien: el juego saca al azar.
-- **Las marcas `[…]`** solo las puse donde la pregunta roza un tema de «evitar». Si ves otra que roce política, religión, dinero, pareja, hijos o trabajo, márcala.
-- **La 2 y la 6 de la ronda 3** son las más fuertes. Decide si se quedan.
+- Nadie pasa su teléfono: lo lleva una persona, y se cambia de lector entre rondas.
+- Sin marcas ni filtro de temas: se puede pasar cualquier pregunta.
+- Se quitó «¿Qué pérdida te cambió la forma de ver las cosas?». «¿Cuándo te sentiste en soledad de verdad?» se queda.
 - **El final:** cuando se acaba la ronda 3, la pantalla dice algo como «Hasta aquí el juego. Lo demás es suyo». Y el teléfono, a guardar.
