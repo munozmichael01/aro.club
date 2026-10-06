@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 
+import { sabado } from '../util/sabados'
+
 import { MiMesa } from '../mesa/MiMesa'
 import type { DeServidor } from '../mesa/maquina'
 import type { crearServicioMesa } from '../mesa/servicio'
@@ -37,12 +39,14 @@ const ESTADOS: Record<string, DeServidor> = {
 }
 
 export default function Pantalla() {
-  const { estado = 'abierta' } = useLocalSearchParams<{ estado?: string }>()
+  const { estado = 'abierta', captura } = useLocalSearchParams<{ estado?: string; captura?: string }>()
   const espera = () => new Promise((ok) => setTimeout(ok, 600))
   const servicio = useMemo((): ReturnType<typeof crearServicioMesa> => ({
     async mesa() {
       if (estado === 'fallo') return { ok: false, error: 'No pudimos cargar tu mesa. Revisa tu conexión e inténtalo otra vez.' }
-      return { ok: true, datos: ESTADOS[estado] ?? ABIERTA }
+      const d = ESTADOS[estado] ?? ABIERTA
+      // ?captura=1: el sábado a las 7 p.m., y los cinco con su sector, para las capturas de las tiendas.
+      return { ok: true, datos: captura ? { ...d, empiezaEn: sabado(0), companeros: CINCO.map((c) => ({ ...c, sector: c.sector ?? 'Educación' })) } : d }
     },
     async tarde(minutos) {
       await espera()
@@ -56,7 +60,7 @@ export default function Pantalla() {
       await espera()
       return { ok: true, datos: { ok: true } }
     },
-  }), [estado]) // estable: si no, la carga se relanzaría en cada render
+  }), [estado, captura]) // estable: si no, la carga se relanzaría en cada render
   return (
     <MiMesa
       key={estado}

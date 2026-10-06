@@ -5,6 +5,7 @@ import { Inicio } from '../cuenta/Inicio'
 import type { MiCuenta, MiMesa } from '../cuenta/maquina'
 import type { crearServicioCuenta } from '../cuenta/servicio'
 import type { EstadoCuenta } from '../texto/cuenta'
+import { sabado } from '../util/sabados'
 
 /**
  * El Inicio con un servidor SIMULADO, para ver cada estado en el navegador:
@@ -13,6 +14,22 @@ import type { EstadoCuenta } from '../texto/cuenta'
  * real (pruebas/cuenta-contra-la-api.mjs); las fechas se cuentan desde hoy.
  */
 const en = (h: number) => new Date(Date.now() + h * 3600_000).toISOString()
+
+/** ?captura=1: las fechas en sábados a las 7 p.m., para las capturas de las tiendas. */
+function deCaptura(d: MiCuenta): MiCuenta {
+  const s0 = sabado(0)
+  const menos = (iso: string, h: number) => new Date(Date.parse(iso) - h * 3600_000).toISOString()
+  return {
+    ...d,
+    porValorar: null,
+    agenda: [
+      { id: 'a', formato: 'dinner', empiezaEn: s0, cierraEn: menos(s0, 24), creditos: 1, zonas: ['Chacao', 'Los Palos Grandes'], apuntados: 9, cerrada: false, mia: false },
+      { id: 'b', formato: 'dinner', empiezaEn: sabado(1), cierraEn: menos(sabado(1), 24), creditos: 1, zonas: ['Las Mercedes', 'Altamira'], apuntados: 4, cerrada: false, mia: false },
+      { id: 'c', formato: 'dinner', empiezaEn: sabado(2), cierraEn: menos(sabado(2), 24), creditos: 1, zonas: ['La Castellana'], apuntados: 2, cerrada: false, mia: false },
+    ],
+    proximaFecha: { empiezaEn: s0, cierraEn: menos(s0, 24), revelaEn: menos(s0, 7), zona: 'Chacao', apuntados: 9, zonaHoraria: 'America/Caracas' },
+  }
+}
 
 function simulada(estado: EstadoCuenta): MiCuenta {
   const conReserva = estado === 'porconfirmar' || estado === 'reservada' || estado === 'abierta'
@@ -57,12 +74,13 @@ const MESA: MiMesa = {
 }
 
 export default function Pantalla() {
-  const { estado = 'reservar' } = useLocalSearchParams<{ estado?: string }>()
+  const { estado = 'reservar', captura } = useLocalSearchParams<{ estado?: string; captura?: string }>()
   const servicio = useMemo((): ReturnType<typeof crearServicioCuenta> => ({
     async cuenta() {
       if (estado === 'cargando') return new Promise(() => {})
       if (estado === 'fallo') return { ok: false, error: 'No pudimos cargar tu cuenta. Revisa tu conexión e inténtalo otra vez.' }
-      return { ok: true, datos: simulada(estado as EstadoCuenta) }
+      const d = simulada(estado as EstadoCuenta)
+      return { ok: true, datos: captura ? deCaptura(d) : d }
     },
     async mesa() {
       return { ok: true, datos: estado === 'abierta' ? MESA : {} }
@@ -74,7 +92,7 @@ export default function Pantalla() {
       await new Promise((ok) => setTimeout(ok, 700))
       return { ok: false, error: 'No te quedan encuentros.' }
     },
-  }), [estado]) // estable: si no, la carga se relanzaría en cada render
+  }), [estado, captura]) // estable: si no, la carga se relanzaría en cada render
   return (
     <Inicio
       key={estado}
