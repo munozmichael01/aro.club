@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#E9E1CF; -webkit-font-smoothing:antialiased; }
+  * { box-sizing:border-box; }
+  a { color:#1B5138; } a:hover { color:#8F4515; }
+  button { font-family:inherit; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding:56px 48px 96px;font-family:'Inter Tight',system-ui,sans-serif;color:#14342A">
+  <div style="max-width:900px;margin:0 0 44px;display:flex;flex-direction:column;gap:12px">
+    <div style="font:700 13px/1 'Inter Tight',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8F4515">Mi mesa · app y web</div>
+    <h1 style="font:400 48px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em;margin:0">El juego de la mesa</h1>
+    <p style="font:400 17px/1.5 'Inter Tight',sans-serif;margin:0;max-width:640px;text-wrap:pretty">Todos los estados, de izquierda a derecha. La primera pantalla funciona: tócala para recorrer el juego entero.</p>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+    <sc-for list="{{ pantallas }}" as="p" hint-placeholder-count="7">
+      <div id="{{ p.id }}" style="display:flex;flex-direction:column;gap:14px;width:390px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 9px;border-radius:999px;background:#14342A;color:#FAF3E4;font:700 12px/1 'Inter Tight',sans-serif">{{ p.id }}</span>
+          <span style="font:600 15px/1.2 'Inter Tight',sans-serif">{{ p.label }}</span>
+        </div>
+
+        <div data-screen-label="{{ p.label }}" style="width:390px;height:844px;border-radius:54px;border:10px solid #0B1A15;overflow:hidden;position:relative;box-shadow:0 30px 60px rgba(20,52,42,.22)">
+
+          <sc-if value="{{ p.esMesa }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;background:#FAF3E4;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:0 20px 32px">
+              <div style="position:absolute;top:0;left:0;right:0;height:64px;background:linear-gradient(#FAF3E4 55%,rgba(250,243,228,0));z-index:1"></div>
+              <div style="flex:0 0 auto">
+              <div style="border-radius:28px;background:#14342A;color:#FAF3E4;padding:24px 22px">
+                <div style="display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;background:#E39C63;color:#14342A;font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;margin-bottom:16px">ABIERTO</div>
+                <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#9CBBA6;margin-bottom:8px">TU MESA</div>
+                <div style="font:700 72px/1 'Inter Tight',sans-serif;letter-spacing:-.05em;font-variant-numeric:tabular-nums">04</div>
+                <div style="height:1px;background:rgba(250,243,228,.2);margin:20px 0"></div>
+                <div style="font:400 30px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.025em">Cardenal</div>
+                <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:8px">Calle Madrid con avenida Principal<br />Las Mercedes</div>
+                <div style="font:500 15px/1.4 'Inter Tight',sans-serif;color:#FAF3E4;margin-top:12px">Hoy · 7:00 p.m. · a tu nombre</div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;margin-top:20px">Cómo llegar</div>
+              <div style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;border:1px solid rgba(20,52,42,.24);color:#1B5138;font:600 16px/1 'Inter Tight',sans-serif;margin-top:10px">Llego tarde</div>
+
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin:26px 0 10px">CON QUIÉN CENAS</div>
+              <div style="display:flex;flex-direction:column">
+                <sc-for list="{{ invitados }}" as="g" hint-placeholder-count="5">
+                  <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(20,52,42,.1)">
+                    <span style="flex:0 0 auto;width:40px;height:40px;border-radius:999px;background:#C5D8CA;color:#14342A;display:flex;align-items:center;justify-content:center;font:400 18px/1 'Young Serif',Georgia,serif">{{ g.ini }}</span>
+                    <span style="flex:1;min-width:0;font:400 20px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ g.nombre }}</span>
+                    <span style="font:400 13px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ g.sector }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;text-wrap:pretty">Todos con identidad verificada. Al llegar, di que vas a la mesa de Aro, la 04.</div>
+
+              <div style="margin-top:28px">
+                <sc-if value="{{ p.mesaAbierta }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:#F2E9D5;border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:14px">
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                      <div style="font:400 22px/1.1 'Young Serif',Georgia,serif;color:#14342A">El juego de la mesa</div>
+                      <div style="font:400 15px/1.45 'Inter Tight',sans-serif;color:#33513F">Tres rondas de preguntas para romper el hielo. Quince minutos, y se guarda el teléfono.</div>
+                    </div>
+                    <button onClick="{{ p.alAbrir }}" style="display:flex;align-items:center;justify-content:center;min-height:48px;border:1.5px solid #1B5138;border-radius:999px;background:transparent;color:#1B5138;font:600 16px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#1B5138;color:#FAF3E4">Abrir el juego</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ p.mesaCerrada }}" hint-placeholder-val="{{ true }}">
+                  <div style="background:#F2E9D5;border-radius:20px;padding:20px;display:flex;gap:14px;align-items:flex-start">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#456352" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto;margin-top:3px"><rect x="4.5" y="10.5" width="15" height="10" rx="2"></rect><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path></svg>
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                      <div style="font:400 22px/1.1 'Young Serif',Georgia,serif;color:#14342A">El juego de la mesa</div>
+                      <div style="font:400 15px/1.45 'Inter Tight',sans-serif;color:#456352">Se abre a las 7:00 p.m., media hora antes de la cena.</div>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ p.esJuego }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;background:#14342A;display:flex;flex-direction:column;padding:62px 24px 30px;color:#FAF3E4">
+              <div style="display:flex;align-items:center;justify-content:space-between;min-height:44px">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#E39C63">{{ p.cabecera }}</div>
+                  <div style="font:600 13px/1 'Inter Tight',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#C5D8CA">{{ p.subcabecera }}</div>
+                </div>
+                <button onClick="{{ p.alSalir }}" aria-label="Salir del juego" style="width:44px;height:44px;border-radius:999px;border:0;background:rgba(250,243,228,.1);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:rgba(250,243,228,.18)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                </button>
+              </div>
+
+              <sc-if value="{{ p.esReglas }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:28px">
+                  <div style="font:400 44px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em">Antes de empezar</div>
+                  <div style="display:flex;flex-direction:column;gap:18px">
+                    <sc-for list="{{ reglas }}" as="r" hint-placeholder-count="4">
+                      <div style="display:flex;gap:14px;align-items:baseline">
+                        <div style="flex:0 0 auto;font:400 20px/1 'Young Serif',Georgia,serif;color:#E39C63;width:18px">{{ r.n }}</div>
+                        <div style="font:400 20px/1.35 'Inter Tight',sans-serif;color:#FAF3E4;text-wrap:pretty">{{ r.texto }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:14px">
+                  <button onClick="{{ p.alEmpezar }}" style="min-height:58px;border:0;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#E39C63">Empezar</button>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:6px;font:500 15px/1 'Inter Tight',sans-serif;color:#C5D8CA">
+                    <span>¿Ya empezaron?</span>
+                    <button onClick="{{ p.alRonda2 }}" style="min-height:44px;padding:0 8px;border:0;background:none;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:4px">Ronda 2</button>
+                    <span>·</span>
+                    <button onClick="{{ p.alRonda3 }}" style="min-height:44px;padding:0 8px;border:0;background:none;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:4px">Ronda 3</button>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ p.esPregunta }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:6px;margin-top:22px">
+                  <sc-for list="{{ p.progreso }}" as="d" hint-placeholder-count="4">
+                    <sc-if value="{{ d.hecha }}" hint-placeholder-val="{{ false }}"><div style="flex:1;height:4px;border-radius:999px;background:#FAF3E4"></div></sc-if>
+                    <sc-if value="{{ d.pendiente }}" hint-placeholder-val="{{ true }}"><div style="flex:1;height:4px;border-radius:999px;background:rgba(250,243,228,.22)"></div></sc-if>
+                  </sc-for>
+                </div>
+                <div style="flex:1;display:flex;align-items:center">
+                  <div style="font:400 42px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#FAF3E4;text-wrap:pretty">{{ p.pregunta }}</div>
+                </div>
+                <div style="display:flex;gap:12px">
+                  <button onClick="{{ p.alAtras }}" aria-label="Pregunta anterior" style="flex:0 0 auto;width:58px;height:58px;border-radius:999px;border:1.5px solid rgba(250,243,228,.45);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="border-color:#FAF3E4">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+                  </button>
+                  <button onClick="{{ p.alSiguiente }}" style="flex:1;min-height:58px;border:0;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#E39C63">Siguiente</button>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ p.esCambio }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:20px">
+                  <div style="font:700 13px/1 'Inter Tight',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#E39C63">{{ p.cambioEyebrow }}</div>
+                  <div style="font:400 50px/1 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#FAF3E4;text-wrap:balance">{{ p.cambioNombre }}</div>
+                  <div style="font:400 20px/1.4 'Inter Tight',sans-serif;color:#E4EDE6;text-wrap:pretty">{{ p.cambioBajada }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:16px">
+                  <div style="border-top:1px solid rgba(250,243,228,.18);padding-top:16px;font:400 15px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ p.cambioLector }}</div>
+                  <button onClick="{{ p.alSeguirRonda }}" style="min-height:58px;border:0;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#E39C63">{{ p.cambioBoton }}</button>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ p.esFinal }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:28px">
+                  <svg width="88" height="88" viewBox="0 0 240 240" aria-hidden="true"><circle cx="120" cy="120" r="86" fill="none" stroke="#FAF3E4" stroke-width="24"></circle><circle cx="206" cy="120" r="25" fill="#E39C63"></circle><circle cx="163" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="34" cy="120" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="45.5" r="25" fill="#FAF3E4"></circle><circle cx="163" cy="45.5" r="25" fill="#FAF3E4"></circle></svg>
+                  <div style="font:400 50px/1 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#FAF3E4">Hasta aquí el juego. <span style="color:#E39C63">Lo demás es suyo.</span></div>
+                  <div style="font:400 20px/1.4 'Inter Tight',sans-serif;color:#E4EDE6">Ya pueden guardar el teléfono.</div>
+                </div>
+                <button onClick="{{ p.alSalir }}" style="min-height:52px;border:1.5px solid rgba(250,243,228,.45);border-radius:999px;background:none;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="border-color:#FAF3E4">Volver a Mi mesa</button>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:120px;height:34px;border-radius:999px;background:#0B1A15"></div>
+          <div style="position:absolute;bottom:9px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:999px;background:rgba(127,127,127,.5)"></div>
+        </div>
+        <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#456352;text-wrap:pretty">{{ p.nota }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="max-width:860px;margin-top:64px;display:flex;flex-direction:column;gap:14px">
+    <div style="font:700 13px/1 'Inter Tight',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8F4515">Para Code</div>
+    <div style="display:flex;flex-direction:column;gap:10px;font:400 16px/1.55 'Inter Tight',sans-serif">
+      <div><span style="font-weight:600">Fondo verde profundo en todo el juego:</span> crema sobre #14342A da 12:1, se lee en penumbra y con el brillo bajo. En Mi mesa, la entrada es una tarjeta secundaria (#F2E9D5, botón con borde) debajo de «Con quién cenas»: la tarjeta verde de la mesa sigue siendo lo principal.</div>
+      <div><span style="font-weight:600">Pregunta en Young Serif 42 px</span> y nada más en el centro. Los botones van abajo, al alcance del pulgar: «Siguiente» ocupa el ancho y «atrás» es un círculo de 58 px. No hay «Pasar»: pasa la persona, no la pregunta.</div>
+      <div><span style="font-weight:600">Cambio de lector:</span> las reglas tienen «¿Ya empezaron? Ronda 2 · Ronda 3». Quien abre el juego en otro teléfono salta a esa ronda y ve las mismas preguntas, porque el orden sale de la semilla (id de mesa + ronda).</div>
+      <div><span style="font-weight:600">La X de arriba</span> vuelve a Mi mesa sin confirmación. Al volver a abrir el juego, retoma la última ronda vista en ese teléfono.</div>
+      <div><span style="font-weight:600">Mantener la pantalla encendida</span> mientras el juego está abierto (keep-awake en la app y Wake Lock en la web), porque el teléfono pasa minutos sin tocarse mientras todos responden.</div>
+      <div><span style="font-weight:600">En la web</span> es la misma pantalla, centrada a 430 px de ancho sobre verde profundo.</div>
+      <div><span style="font-weight:600">Dato de ejemplo:</span> el sitio, la hora y los nombres de Mi mesa. El copy del juego es definitivo y las preguntas salen de AroReglas.JUEGO.</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { paso: 'mesa', ronda: 0, idx: 0 };
+
+  renderVals() {
+    const RONDAS = [
+      { nombre: 'Quién eres hoy', bajada: 'Fácil. Para abrir la mesa sin exigir nada.',
+        preguntas: ['¿Qué te tiene con ilusión estos días, aunque sea algo pequeño?', '¿Qué haces que te hace perder la noción del tiempo?', '¿Qué cosa simple te arregla un mal día?', '¿En qué eres mejor de lo que la gente imagina?'] },
+      { nombre: 'Lo que te mueve', bajada: 'Decisiones, cambios, lo que importa.',
+        preguntas: ['¿En qué has cambiado de opinión en los últimos años?', '¿Qué decisión tomaste que la gente no entendió y hoy volverías a tomar?', '¿Qué te hace sentir en casa, estés donde estés?', '¿A qué le dices que sí con demasiada facilidad?'] },
+      { nombre: 'Lo que no se suele decir', bajada: 'Más profunda. Aquí más que nunca: cualquiera puede pasar.',
+        preguntas: ['¿Qué te cuesta pedir?', '¿Qué le dirías a la persona que eras hace diez años?', '¿Qué te gustaría que te preguntaran más seguido?', '¿Qué te gustaría que esta mesa supiera de ti y nadie te pregunta?'] }
+    ];
+    const nada = () => {};
+    const go = (s) => this.setState(s);
+    const vacio = { esMesa: false, mesaAbierta: false, mesaCerrada: false, esJuego: false, esReglas: false, esPregunta: false, esCambio: false, esFinal: false,
+      cabecera: '', subcabecera: '', pregunta: '', progreso: [], cambioEyebrow: '', cambioNombre: '', cambioBajada: '', cambioLector: '', cambioBoton: '',
+      alAbrir: nada, alSalir: nada, alEmpezar: nada, alRonda2: nada, alRonda3: nada, alAtras: nada, alSiguiente: nada, alSeguirRonda: nada, nota: '' };
+
+    const pantalla = (paso, ronda, idx, vivo) => {
+      const h = vivo ? {
+        alAbrir: () => go({ paso: 'reglas', ronda: 0, idx: 0 }),
+        alSalir: () => go({ paso: 'mesa', ronda: 0, idx: 0 }),
+        alEmpezar: () => go({ paso: 'pregunta', ronda: 0, idx: 0 }),
+        alRonda2: () => go({ paso: 'cambio', ronda: 1, idx: 0 }),
+        alRonda3: () => go({ paso: 'cambio', ronda: 2, idx: 0 }),
+        alAtras: () => {
+          if (idx > 0) go({ idx: idx - 1 });
+          else if (ronda > 0) go({ paso: 'cambio', ronda, idx: 0 });
+          else go({ paso: 'reglas', idx: 0 });
+        },
+        alSiguiente: () => {
+          if (idx < 3) go({ idx: idx + 1 });
+          else if (ronda < 2) go({ paso: 'cambio', ronda: ronda + 1, idx: 0 });
+          else go({ paso: 'final' });
+        },
+        alSeguirRonda: () => go({ paso: 'pregunta', ronda, idx: 0 })
+      } : {};
+      const R = RONDAS[ronda];
+      const base = Object.assign({}, vacio, h);
+      if (paso === 'mesa' || paso === 'mesaCerrada') return Object.assign(base, { esMesa: true, mesaAbierta: paso === 'mesa', mesaCerrada: paso === 'mesaCerrada' });
+      const j = Object.assign(base, { esJuego: true });
+      if (paso === 'reglas') return Object.assign(j, { esReglas: true, cabecera: 'El juego de la mesa', subcabecera: 'Tres rondas · 15 minutos' });
+      if (paso === 'pregunta') return Object.assign(j, { esPregunta: true, cabecera: 'Ronda ' + (ronda + 1) + ' · ' + R.nombre, subcabecera: (idx + 1) + ' de 4',
+        pregunta: R.preguntas[idx], progreso: [0, 1, 2, 3].map((k) => ({ hecha: k <= idx, pendiente: k > idx })) });
+      if (paso === 'cambio') return Object.assign(j, { esCambio: true, cabecera: 'El juego de la mesa', subcabecera: 'Ronda ' + ronda + ' terminada',
+        cambioEyebrow: 'Ronda ' + (ronda + 1) + ' de 3', cambioNombre: R.nombre, cambioBajada: R.bajada,
+        cambioLector: '¿Otra persona quiere leer? Que abra el juego en su teléfono y toque «Ronda ' + (ronda + 1) + '». Verá las mismas preguntas.',
+        cambioBoton: 'Empezar la ronda ' + (ronda + 1) });
+      return Object.assign(j, { esFinal: true, cabecera: 'El juego de la mesa', subcabecera: 'Tres rondas' });
+    };
+
+    const s = this.state;
+    const pantallas = [
+      Object.assign(pantalla(s.paso, s.ronda, s.idx, true), { id: '1a', label: 'Prototipo · tócalo', nota: 'Empieza en Mi mesa con el juego abierto. Recorre reglas, preguntas, cambios de ronda y final.' }),
+      Object.assign(pantalla('mesaCerrada', 0, 0, false), { id: '1b', label: 'Mi mesa · juego cerrado', nota: 'Mi mesa ya revelada, antes de la hora. El juego se ve apagado al final de la pantalla, debajo de los comensales. Sin botón.' }),
+      Object.assign(pantalla('mesa', 0, 0, false), { id: '1c', label: 'Mi mesa · juego abierto', nota: 'Desde media hora antes de la cena (la cifra exacta vive en reglas.js). Tarjeta secundaria con botón de borde: no compite con la mesa.' }),
+      Object.assign(pantalla('reglas', 0, 0, false), { id: '1d', label: 'Reglas', nota: 'Cuatro líneas y un botón. Abajo, el atajo para quien toma el relevo como lector en otro teléfono.' }),
+      Object.assign(pantalla('pregunta', 1, 1, false), { id: '1e', label: 'Pregunta', nota: 'La ronda y su número arriba, la pregunta sola en el centro, los botones donde llega el pulgar.' }),
+      Object.assign(pantalla('cambio', 2, 0, false), { id: '1f', label: 'Cambio de ronda', nota: 'Pausa breve con el nombre y la bajada. La ronda 3 recuerda que se puede pasar. Aquí se cambia de lector.' }),
+      Object.assign(pantalla('final', 2, 0, false), { id: '1g', label: 'Final', nota: 'Invita a guardar el teléfono. La única salida es volver a Mi mesa.' })
+    ];
+    return {
+      pantallas,
+      invitados: [['Andrés', 'Tecnología'], ['Gabriela', 'Salud'], ['José Manuel', 'Finanzas'], ['Andreína', 'Educación'], ['Valentina', 'Arquitectura']].map((g) => ({ ini: g[0].charAt(0), nombre: g[0], sector: g[1] })),
+      reglas: [
+        { n: '1', texto: 'Una persona lee en voz alta, desde su teléfono.' },
+        { n: '2', texto: 'Responden todos, empezando por quien leyó.' },
+        { n: '3', texto: 'Cualquiera puede pasar, sin explicar nada.' },
+        { n: '4', texto: 'Tres rondas, de menos a más.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

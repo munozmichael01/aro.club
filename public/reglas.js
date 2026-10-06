@@ -768,17 +768,21 @@
      */
     JUEGO: {
       /** Cuántas salen de cada mazo de diez. */
-      porRonda: 4,
+      porRonda: 2,
 
       /**
        * Cuándo se abre, en minutos respecto a `starts_at`.
        *
-       * Antes de la cena no: el juego es para cuando ya están sentados, no
-       * para la espera. Y se cierra a las cuatro horas porque a esa altura la
-       * mesa o se disolvió o ya no lo necesita, y una pantalla que sigue
-       * ofreciendo preguntas a la una de la mañana es ruido.
+       * **A la hora de la cena, ni un minuto antes** (Michael, 06-10): si se
+       * abriera media hora antes, quien llega pronto se lee las preguntas y
+       * llega a la mesa con las respuestas pensadas, que es justo lo que el
+       * juego no quiere.
+       *
+       * Y se cierra a las cuatro horas porque a esa altura la mesa o se
+       * disolvió o ya no lo necesita, y una pantalla que sigue ofreciendo
+       * preguntas a la una de la mañana es ruido.
        */
-      abreMin: -30,
+      abreMin: 0,
       cierraMin: 240,
 
       /** Se enseñan antes de empezar, en este orden. */
