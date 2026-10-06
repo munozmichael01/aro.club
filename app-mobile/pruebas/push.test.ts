@@ -79,3 +79,10 @@ test('la zona de la pregunta del alta', () => {
   assert.equal(zonaParaPregunta(['Chacao', 'Altamira']), 'Chacao y otras')
   assert.equal(zonaParaPregunta([]), null)
 })
+
+test('la push del juego abre el juego de su mesa', () => {
+  const MESA = '3f2a1c9e-1111-4222-8333-944455556666'
+  assert.equal(destinoDe({ tipo: 'juego', ruta: '/juego', mesaId: MESA }), `/juego?mesa=${MESA}`)
+  assert.equal(destinoDe({ tipo: 'juego' }), '/mesa')
+  assert.equal(destinoDe({ tipo: 'juego', mesaId: 'x?y=1' }), '/mesa')
+})

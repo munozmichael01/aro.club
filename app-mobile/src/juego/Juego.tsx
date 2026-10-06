@@ -20,16 +20,17 @@ import * as M from './maquina'
  */
 const CLAVE = (mesa: string) => `aro.juego.${mesa}`
 
-export function Juego(p: { mesaId: string; alSalir: () => void }) {
+export function Juego(p: { mesaId: string; alSalir: () => void; /** Solo el catálogo: abre en este paso. */ desde?: M.Estado }) {
   useKeepAwake()
   const insets = useSafeAreaInsets()
   const [e, setE] = useState<M.Estado | null>(null)
 
   useEffect(() => {
+    if (p.desde) return setE(p.desde)
     AsyncStorage.getItem(CLAVE(p.mesaId))
       .catch(() => null)
       .then((v) => setE(M.empezarEn(Number(v) || 0)))
-  }, [p.mesaId])
+  }, [p.mesaId, p.desde])
 
   const ir = (s: M.Estado) => {
     setE(s)

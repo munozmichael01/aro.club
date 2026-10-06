@@ -30,12 +30,19 @@ const POR_TIPO: Record<string, string> = {
 /** Las rutas que una push puede abrir. `/pago` solo con su `evento`. */
 const PERMITIDAS = ['/mesa', '/verificacion', '/cuenta', '/perfil', '/pago']
 
-export type DatosPush = { tipo?: unknown; ruta?: unknown; eventoId?: unknown }
+export type DatosPush = { tipo?: unknown; ruta?: unknown; eventoId?: unknown; mesaId?: unknown }
 
 /** La pantalla que abre una push, o `null` si no se sabe (entonces no se navega). */
 export function destinoDe(data: DatosPush | null | undefined): string | null {
   if (!data) return null
   const evento = typeof data.eventoId === 'string' && /^[0-9a-f-]{36}$/i.test(data.eventoId) ? data.eventoId : null
+
+  // La push del juego (a la hora de la cena + 20 min, a toda la mesa): abre el
+  // juego de ESA mesa. Sin un id de mesa válido no se abre nada.
+  if (data.tipo === 'juego' || data.ruta === '/juego') {
+    const mesa = typeof data.mesaId === 'string' && /^[0-9a-f-]{36}$/i.test(data.mesaId) ? data.mesaId : null
+    return mesa ? `/juego?mesa=${mesa}` : '/mesa'
+  }
 
   // Si el servidor dice la ruta, manda ella, siempre que sea de la lista.
   const ruta = typeof data.ruta === 'string' ? data.ruta : null
