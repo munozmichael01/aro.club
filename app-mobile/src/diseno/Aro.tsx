@@ -8,8 +8,11 @@ import { color, cremaAlfa, tinta, tiempo } from './tokens'
  * La marca: un aro con seis puntos. Cinco del color de la tinta y UNO en
  * terracota, que es la persona.
  *
- * La geometría es la de la web (viewBox 24, radio 8.6, puntos de 1.9) y es
- * una sola: la usan la marca quieta de la cabecera y el aro de carga.
+ * La geometría es la de `marca/` (entrega 17 de Design, cuadrícula de 240):
+ * anillo de radio 86 con trazo 24 y puntos de radio 25. Aquí, en viewBox 24:
+ * 8.6, 2.4 y 2.5. Es una sola: la usan la marca quieta de la cabecera y el
+ * aro de carga. A tamaños muy chicos (16 px) los puntos se funden con el
+ * anillo; por debajo de ~20 px, mejor no usarla.
  */
 
 /** Los seis puntos, empezando por el de la persona (a las tres) y en sentido horario. */
@@ -22,6 +25,9 @@ const PUNTOS: ReadonlyArray<readonly [number, number]> = [
   [16.3, 4.55],
 ]
 
+/** El trazo del anillo de la entrega 17 (24 sobre 240). */
+const TRAZO = 2.4
+
 type Props = { tam?: number; anillo: string; grosor: number; puntos: readonly string[] }
 
 function Dibujo({ tam = 22, anillo, grosor, puntos }: Props) {
@@ -29,7 +35,7 @@ function Dibujo({ tam = 22, anillo, grosor, puntos }: Props) {
     <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
       <Circle cx={12} cy={12} r={8.6} stroke={anillo} strokeWidth={grosor} />
       {PUNTOS.map(([cx, cy], i) => (
-        <Circle key={i} cx={cx} cy={cy} r={1.9} fill={puntos[i]} />
+        <Circle key={i} cx={cx} cy={cy} r={2.5} fill={puntos[i]} />
       ))}
     </Svg>
   )
@@ -44,7 +50,7 @@ export function Marca({ tam = 22, sobreVerde, crema }: { tam?: number; sobreVerd
   // `crema`: sobre verde, en crema entero, como la cabecera de Entrar en la web.
   const trazo = crema ? color.crema : sobreVerde ? color.sobreVerdeSecundario : color.verdeProfundo
   const tuyo = sobreVerde || crema ? color.terracotaSobreVerde : color.terracota
-  return <Dibujo tam={tam} anillo={trazo} grosor={sobreVerde ? 1.7 : 1.8} puntos={[tuyo, ...Array(5).fill(trazo)]} />
+  return <Dibujo tam={tam} anillo={trazo} grosor={TRAZO} puntos={[tuyo, ...Array(5).fill(trazo)]} />
 }
 
 /**
