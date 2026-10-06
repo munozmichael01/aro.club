@@ -72,7 +72,11 @@ export type Momento = 'alta' | 'verificacion' | 'reserva'
 export type Permiso = { estado: 'granted' | 'denied' | 'undetermined'; puedePreguntar: boolean }
 
 export function debePreguntar(permiso: Permiso, vistos: Momento[], momento: Momento): boolean {
-  return permiso.estado === 'undetermined' && permiso.puedePreguntar && !vistos.includes(momento)
+  // Sin respuesta del sistema = todo lo que no es «granted» y aún se puede
+  // preguntar. iOS dice `undetermined`; Android, antes de preguntar, puede
+  // decir `denied` con `canAskAgain: true`, y con solo `undetermined` la
+  // hoja no salía nunca en Android (testers, 05-10-2026).
+  return permiso.estado !== 'granted' && permiso.puedePreguntar && !vistos.includes(momento)
 }
 
 /** «Chacao», «Chacao y otras» o nada: el nombre de la zona para la pregunta del alta. */

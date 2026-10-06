@@ -11,6 +11,11 @@ import { tipo } from './tokens'
  * escrito: «no se reinventa»—, así que vive aquí una vez.
  *
  * Lo que se puede teclear lo filtra quien lo usa (con `reglas.js`).
+ *
+ * `selectTextOnFocus`: con `maxLength`, un campo ya lleno (Pago trae la
+ * fecha de hoy, el alta recupera el borrador) no dejaba escribir nada al
+ * tocarlo, y parecía bloqueado (testers, 05-10-2026). Seleccionado, lo que
+ * se teclea lo reemplaza.
  */
 type Props = {
   dia: string
@@ -45,6 +50,7 @@ export function Fecha(p: Props) {
           placeholder={p.textos.ejemploDia}
           keyboardType="number-pad"
           maxLength={2}
+          selectTextOnFocus
           style={estilos.cifra}
           accessibilityLabel={p.textos.dia}
         />
@@ -66,6 +72,7 @@ export function Fecha(p: Props) {
           placeholder={p.textos.ejemploAnio}
           keyboardType="number-pad"
           maxLength={4}
+          selectTextOnFocus
           style={estilos.cifra}
           accessibilityLabel={p.textos.anio}
         />

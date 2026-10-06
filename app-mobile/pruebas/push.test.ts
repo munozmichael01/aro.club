@@ -70,6 +70,8 @@ test('la pregunta previa: tres momentos, cada uno una vez, y nunca si el sistema
   assert.ok(!debePreguntar({ estado: 'granted', puedePreguntar: true }, [], 'reserva'))
   assert.ok(!debePreguntar({ estado: 'denied', puedePreguntar: false }, [], 'alta'))
   assert.ok(!debePreguntar({ estado: 'undetermined', puedePreguntar: false }, [], 'alta'))
+  // Android sin preguntar todavía: «denied» pero se puede preguntar.
+  assert.ok(debePreguntar({ estado: 'denied', puedePreguntar: true }, [], 'alta'))
 })
 
 test('la zona de la pregunta del alta', () => {
