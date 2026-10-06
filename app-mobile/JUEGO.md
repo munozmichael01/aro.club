@@ -23,7 +23,7 @@ universal; lo venezolano está en la voz, no en el tema.
 5. **Tres rondas, de menos a más.** Unos 15–20 minutos. Al final: «Ahora
    guarden el teléfono».
 
-Cada ronda saca 3 o 4 preguntas de sus 10, las mismas en toda la mesa. **No
+Cada ronda saca **4 preguntas** de sus 10 (`porRonda: 4`), las mismas en toda la mesa. **No
 se filtra por temas** (Michael): quien no quiera responder una, pasa.
 
 **Dónde vive el mazo:** en `public/reglas.js` (por ejemplo

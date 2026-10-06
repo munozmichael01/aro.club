@@ -35,6 +35,10 @@ type Api = {
   PRECIO_USD: number
   /** Cuántas horas antes de empezar cierra una fecha (24 desde el 01-10-2026). Web, servidor y app leen esta. */
   HORAS_DE_CIERRE: number
+  /** El juego de la mesa (mazo aprobado por Michael, JUEGO.md). */
+  JUEGO: JuegoDeMesa
+  /** Las `porRonda` preguntas de una ronda, deterministas por mesa: todos los teléfonos de la mesa ven las mismas. `ronda` = índice o clave; `[]` si no existe. */
+  preguntasDeRonda: (mesaId: string, ronda: number | string) => string[]
   precioTexto: () => string
   /** La zona del producto. Cuando `cities` tenga su columna, se cambia aquí para web y app. */
   ZONA: string
@@ -92,6 +96,17 @@ export type PreguntaPuerta = {
   max?: number
   /** [texto, código]. Vacío en zonas: esas vienen de /api/zonas. */
   opciones: [string, string][]
+}
+
+export type RondaDeJuego = { clave: string; titulo: string; bajada: string; preguntas: string[] }
+export type JuegoDeMesa = {
+  rondas: RondaDeJuego[]
+  porRonda: number
+  /** Minutos respecto a `starts_at`: se abre a `abreMin` (negativo, antes) y se cierra a `cierraMin`. */
+  abreMin: number
+  cierraMin: number
+  reglas: string[]
+  final: string
 }
 
 // JavaScript sin tipos a propósito: se declara la forma que la app usa y se
