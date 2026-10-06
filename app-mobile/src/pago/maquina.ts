@@ -98,7 +98,7 @@ export function filtrar(c: CampoDePago, v: string): string {
 }
 
 export function cumple(c: CampoDePago, v: string | undefined): boolean {
-  const s = (v ?? '').trim()
+  const s = c.tipo === 'fecha' ? conCeros((v ?? '').trim()) : (v ?? '').trim()
   if (!s) return false
   const regla = reglas.campoDe(c)
   return regla ? reglas.valido(regla, s) : s.length >= 3
@@ -113,7 +113,7 @@ export function estadoReporte(m: Metodo, rep: Record<string, string>, conCaptura
   // el botón se enciende y el 400 llega sin que se vea por qué.
   const faltaLetra = m.campos.some((c) => c.conTipo) && !rep.doc_tipo
   const campoFecha = m.campos.find((c) => c.tipo === 'fecha')
-  const fechaFutura = !!campoFecha && F.esFutura(rep[campoFecha.campo] ?? '', ahora)
+  const fechaFutura = !!campoFecha && F.esFutura(conCeros(rep[campoFecha.campo] ?? ''), ahora)
   const camposOk = m.campos.length > 0 && !falta && !faltaLetra && !fechaFutura
   return {
     ok: camposOk && (!m.capturaObligatoria || conCaptura),
@@ -127,7 +127,7 @@ export function estadoReporte(m: Metodo, rep: Record<string, string>, conCaptura
 /** Lo que viaja a `POST /api/pago`: solo los campos del método (y la letra si la pide). */
 export function cuerpoReporte(d: DeServidor, m: Metodo, rep: Record<string, string>, captura: string | null) {
   const datos: Record<string, string> = {}
-  for (const c of m.campos) datos[c.campo] = (rep[c.campo] ?? '').trim()
+  for (const c of m.campos) datos[c.campo] = c.tipo === 'fecha' ? conCeros((rep[c.campo] ?? '').trim()) : (rep[c.campo] ?? '').trim()
   if (m.campos.some((c) => c.conTipo)) datos.doc_tipo = rep.doc_tipo ?? 'V'
   return {
     eventoId: d.evento.id,
@@ -145,8 +145,18 @@ export function partesDeFechaPago(v: string | undefined): { dia: string; mes: nu
   return { dia: dd, mes: parseInt(mm, 10) || 0, anio: aaaa }
 }
 export function fechaPagoDePartes(p: { dia: string; mes: number; anio: string }): string {
-  const dd = p.dia.length === 1 ? `0${p.dia}` : p.dia
-  return `${dd}/${p.mes ? String(p.mes).padStart(2, '0') : ''}/${p.anio}`
+  // El día tal cual se teclea, SIN el cero delante: poniéndolo aquí, «1» se
+  // volvía «01» al instante, el campo (2 cifras) quedaba lleno y no dejaba
+  // escribir la segunda; y borrar dejaba «00», imposible de vaciar (testers,
+  // Android, 06-10-2026). El cero se pone al validar y al enviar: `conCeros`.
+  return `${p.dia}/${p.mes ? String(p.mes).padStart(2, '0') : ''}/${p.anio}`
+}
+
+/** «5/10/2026» → «05/10/2026»: la forma que valida `reglas.js` y la que viaja al servidor. */
+export function conCeros(v: string): string {
+  const [d = '', m = '', a = ''] = v.split('/')
+  const dos = (x: string) => (x.length === 1 ? `0${x}` : x)
+  return v.includes('/') ? `${dos(d)}/${dos(m)}/${a}` : v
 }
 
 // --- Después ----------------------------------------------------------------------

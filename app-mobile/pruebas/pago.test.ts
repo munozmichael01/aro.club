@@ -85,3 +85,20 @@ test('fecha cerrada: no se enseñan los datos para pagar (01-10-2026)', () => {
   assert.ok(M.esFechaCerrada({ status: 409, motivo: 'fecha-cerrada', error: 'x' }))
   assert.ok(!M.esFechaCerrada({ status: 409, error: 'Ese pago ya está reportado.' }))
 })
+
+test('el día del pago se puede escribir y borrar (testers, Android, 06-10-2026)', () => {
+  // Escribir «1» y luego «5»: el campo guarda lo tecleado, sin cero delante.
+  let f = M.fechaPagoDePartes({ dia: '1', mes: 10, anio: '2026' })
+  assert.equal(M.partesDeFechaPago(f).dia, '1')
+  f = M.fechaPagoDePartes({ ...M.partesDeFechaPago(f), dia: '15' })
+  assert.equal(M.partesDeFechaPago(f).dia, '15')
+  // Borrar hasta vaciar: no aparece un «00» imposible de quitar.
+  f = M.fechaPagoDePartes({ ...M.partesDeFechaPago(f), dia: '' })
+  assert.equal(M.partesDeFechaPago(f).dia, '')
+  // Al validar y al enviar, con su cero.
+  assert.equal(M.conCeros('5/10/2026'), '05/10/2026')
+  assert.equal(M.conCeros('27/09/2026'), '27/09/2026')
+  const PM = REAL.metodos.find((m) => m.campos.some((c) => c.tipo === 'fecha'))!
+  const campo = PM.campos.find((c) => c.tipo === 'fecha')!
+  assert.ok(M.cumple(campo, '5/09/2026'))
+})
