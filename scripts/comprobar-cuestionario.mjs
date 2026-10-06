@@ -536,5 +536,39 @@ if (relojes.length) {
   }
 }
 
+
+// --- los campos cortos se seleccionan al enfocarse ---------------------
+//
+// Un `<input maxlength="2">` con el día ya puesto IGNORA lo que escribas: el
+// cursor queda al final, el tope está lleno y no pasa nada. Se lee como un
+// campo bloqueado, y no falla nada que se vea. Lo reportaron los testers de
+// la app y en la web pasaba igual, en seis campos de tres pantallas.
+//
+// Se arregla seleccionando el contenido al entrar, y se vigila aquí porque el
+// día que alguien añada otro campo de fecha va a volver a pasar.
+{
+  const sinSeleccion = []
+  const carpeta = fileURLToPath(new URL('../public', import.meta.url))
+  for (const f of pantallas) {
+    const html = fs.readFileSync(`${carpeta}/${f}`, 'utf8')
+    for (const m of html.matchAll(/<input\b[^>]*>/g)) {
+      const tag = m[0]
+      if (!/maxlength="\d+"/.test(tag)) continue
+      if (!/inputmode="numeric"/.test(tag)) continue
+      if (/onFocus=/.test(tag)) continue
+      const id = (tag.match(/(?:id|aria-label)="([^"]*)"/) || [])[1] ?? tag.slice(0, 48)
+      sinSeleccion.push(`${f}: ${id}`)
+    }
+  }
+  if (sinSeleccion.length) {
+    errores++
+    console.error('\n✗ campos cortos sin seleccionar al enfocar')
+    sinSeleccion.forEach((x) => console.error('    ' + x))
+    console.error('  → con valor puesto, escribir no hace nada: parece bloqueado')
+  } else {
+    console.log('✓ los campos cortos se seleccionan al enfocarse')
+  }
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)

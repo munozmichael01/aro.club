@@ -102,7 +102,7 @@
 
                   <sc-if value="{{ f.esFecha }}" hint-placeholder-val="{{ false }}">
                     <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:9px">DÍA</div>
-                    <input type="text" value="{{ f.dia }}" onChange="{{ f.onDia }}" placeholder="DD" inputmode="numeric" maxlength="2" aria-label="Día" style="{{ f.campoCifra }}" />
+                    <input type="text" value="{{ f.dia }}" onChange="{{ f.onDia }}" onFocus="{{ f.alEnfocarCifra }}" placeholder="DD" inputmode="numeric" maxlength="2" aria-label="Día" style="{{ f.campoCifra }}" />
 
                     <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin:18px 0 9px">MES</div>
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(30%,96px),1fr));gap:8px">
@@ -115,7 +115,7 @@
                     </div>
 
                     <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin:18px 0 9px">AÑO</div>
-                    <input type="text" value="{{ f.anio }}" onChange="{{ f.onAnio }}" placeholder="AAAA" inputmode="numeric" maxlength="4" aria-label="Año" style="{{ f.campoAnio }}" />
+                    <input type="text" value="{{ f.anio }}" onChange="{{ f.onAnio }}" onFocus="{{ f.alEnfocarCifra }}" placeholder="AAAA" inputmode="numeric" maxlength="4" aria-label="Año" style="{{ f.campoAnio }}" />
                   </sc-if>
 
                   <div style="{{ f.contenedorOpciones }}">
@@ -567,6 +567,21 @@ class Component extends DCLogic {
           };
         }),
         onAnio: (e) => ponFecha(0, (typeof AroReglas !== 'undefined' ? AroReglas.filtrar('anio', e.target.value) : e.target.value)),
+        // Seleccionar al enfocar.
+        //
+        // El campo tiene `maxlength`, así que con el día ya puesto el navegador
+        // ignora lo que escribas: el cursor queda al final, el tope está lleno y
+        // no pasa nada. Se lee como que el campo está bloqueado. Lo reportaron
+        // los testers de la app y en la web pasa igual.
+        //
+        // Seleccionar el contenido al entrar hace que la primera tecla lo
+        // reemplace, que es lo que cualquiera espera de un campo de dos cifras.
+        //
+        // En el fotograma SIGUIENTE, no en el mismo: el navegador coloca el
+        // cursor después de que corra este manejador, así que un `select()`
+        // directo se deshace solo. Comprobado en el navegador: sin aplazarlo,
+        // la selección sale en cero.
+        alEnfocarCifra: (e) => { const el = e.target; requestAnimationFrame(() => { try { el.select(); } catch (err) {} }); },
         onDia: (e) => ponFecha(2, (typeof AroReglas !== 'undefined' ? AroReglas.filtrar('dia', e.target.value) : e.target.value)),
         campo: campoBase + ';width:100%',
         campoCifra: campoBase + ';width:88px;text-align:center;font-variant-numeric:tabular-nums',

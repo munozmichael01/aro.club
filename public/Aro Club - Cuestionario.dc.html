@@ -99,7 +99,7 @@
               <sc-if value="{{ q.esFecha }}" hint-placeholder-val="{{ false }}">
                 <div style="margin-top:16px;max-width:460px">
                   <label for="q-dia" style="{{ q.etiquetaFecha }}">DÍA</label>
-                  <input id="q-dia" type="text" value="{{ q.dia }}" onChange="{{ q.onDia }}" placeholder="DD" inputmode="numeric" maxlength="2" style="{{ q.campoCifra }}" />
+                  <input id="q-dia" type="text" value="{{ q.dia }}" onChange="{{ q.onDia }}" onFocus="{{ q.alEnfocarCifra }}" placeholder="DD" inputmode="numeric" maxlength="2" style="{{ q.campoCifra }}" />
 
                   <div style="{{ q.etiquetaFechaSuelta }}">MES</div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(30%,96px),1fr));gap:8px">
@@ -112,7 +112,7 @@
                   </div>
 
                   <label for="q-anio" style="{{ q.etiquetaFechaSuelta }}">AÑO</label>
-                  <input id="q-anio" type="text" value="{{ q.anio }}" onChange="{{ q.onAnio }}" placeholder="AAAA" inputmode="numeric" maxlength="4" style="{{ q.campoCifra }}" />
+                  <input id="q-anio" type="text" value="{{ q.anio }}" onChange="{{ q.onAnio }}" onFocus="{{ q.alEnfocarCifra }}" placeholder="AAAA" inputmode="numeric" maxlength="4" style="{{ q.campoCifra }}" />
                   <sc-if value="{{ q.hayEdad }}" hint-placeholder-val="{{ false }}">
                     <div style="{{ q.chipEdad }}">{{ q.textoEdad }}</div>
                   </sc-if>
@@ -1045,6 +1045,21 @@ class Component extends DCLogic {
         base.etiquetaFecha = 'display:block;font:500 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:8px';
         base.etiquetaFechaSuelta = 'display:block;font:500 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#33513F;margin:16px 0 8px';
         base.campoCifra = 'width:100%;max-width:160px;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none;font-variant-numeric:tabular-nums';
+        // Seleccionar al enfocar.
+        //
+        // El campo tiene `maxlength`, así que con el día ya puesto el navegador
+        // ignora lo que escribas: el cursor queda al final, el tope está lleno y
+        // no pasa nada. Se lee como que el campo está bloqueado. Lo reportaron
+        // los testers de la app y en la web pasa igual.
+        //
+        // Seleccionar el contenido al entrar hace que la primera tecla lo
+        // reemplace, que es lo que cualquiera espera de un campo de dos cifras.
+        //
+        // En el fotograma SIGUIENTE, no en el mismo: el navegador coloca el
+        // cursor después de que corra este manejador, así que un `select()`
+        // directo se deshace solo. Comprobado en el navegador: sin aplazarlo,
+        // la selección sale en cero.
+        base.alEnfocarCifra = (e) => { const el = e.target; requestAnimationFrame(() => { try { el.select(); } catch (err) {} }); };
         base.onDia = (e) => this.setFecha({ dia: String(e.target.value).replace(/\D/g, '').slice(0, 2) });
         base.onAnio = (e) => this.setFecha({ anio: String(e.target.value).replace(/\D/g, '').slice(0, 4) });
         base.meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'].map((nombre, i) => {
