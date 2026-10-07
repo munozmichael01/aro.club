@@ -11,6 +11,11 @@
  *       veinte, que es cuando toca la push del juego: así se encola para
  *       AHORA y no hay que esperar sentado.
  *
+ *   node scripts/mesa-del-juego.mjs --pares
+ *       Deshace SOLO los pares y deja la mesa en pie. Para cuando la mesa de
+ *       prueba se queda como cena pasada pero no debe impedir que esa gente
+ *       coincida en una cena de verdad.
+ *
  *   node scripts/mesa-del-juego.mjs --borrar
  *       Desmonta: la fecha con todo lo que cuelga de ella, el sitio, los
  *       acompañantes y —esto es lo que importa— los pares.
@@ -52,11 +57,30 @@ const BASE = env.NEXT_PUBLIC_SUPABASE_URL
 const KEY = env.SUPABASE_SERVICE_ROLE_KEY
 const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' }
 
-const SITIO = 'Prueba del juego'
-const PLAZAS = 6
+/**
+ * La tanda: qué mesa de prueba de las que puede haber a la vez.
+ *
+ * Son dos mesas distintas con dos rastros distintos, y hace falta porque una
+ * puede quedarse puesta —como cena pasada, para mirar el flujo de después—
+ * mientras otra se monta para comprobar otra cosa. Con un solo rastro, montar
+ * la segunda obligaba a tirar la primera.
+ *
+ * La tanda es también la de `sembrar-mesa`: sus acompañantes llevan correos y
+ * teléfonos propios por tanda, y las dos columnas son únicas.
+ */
+const args = process.argv.slice(2)
+const iTanda = args.indexOf('--tanda')
+const TANDA = iTanda >= 0 ? Number(args[iTanda + 1]) : 1
+
+const SITIO = TANDA === 1 ? 'Prueba del juego' : `Prueba del juego ${TANDA}`
+const iPlazas = args.indexOf('--plazas')
+const PLAZAS = iPlazas >= 0 ? Number(args[iPlazas + 1]) : 6
 
 /** Lo que creó este guion. Sin este fichero no se borra nada. */
-const RASTRO = new URL('../.mesa-del-juego.json', import.meta.url).pathname
+const RASTRO = new URL(
+  TANDA === 1 ? '../.mesa-del-juego.json' : `../.mesa-del-juego-${TANDA}.json`,
+  import.meta.url,
+).pathname
 
 async function rest(path, opciones = {}) {
   const r = await fetch(`${BASE}/rest/v1/${path}`, { headers: H, ...opciones })
@@ -141,6 +165,42 @@ async function borrar() {
   }
 
   unlinkSync(RASTRO)
+}
+
+/**
+ * Deshacer SOLO los pares, dejando la mesa en pie.
+ *
+ * Hace falta porque una mesa de prueba puede querer quedarse —como cena
+ * pasada, para ver el flujo de despues y que salga en el historial— y aun asi
+ * no debe cobrarse el veto. Son dos cosas distintas que estaban pegadas en
+ * `--borrar`: lo que la mesa CUENTA (que esta gente cenó junta, y eso se
+ * quiere conservar) y lo que la mesa PROHIBE (que vuelvan a coincidir en tres
+ * meses, y eso no).
+ */
+async function soloPares() {
+  if (!existsSync(RASTRO)) {
+    console.log('Sin rastro en disco: no se toca nada.')
+    return
+  }
+  const r = JSON.parse(readFileSync(RASTRO, 'utf8'))
+  if (!r.gente?.length) {
+    console.log('El rastro no sabe quién se sentó: no se toca nada.')
+    return
+  }
+
+  const ids = r.gente.map((g) => g.id)
+  const lista = `(${ids.join(',')})`
+  const antes = await paresEntre(ids)
+  await rest(`pair_encounters?profile_a=in.${lista}&profile_b=in.${lista}`, { method: 'DELETE' })
+  if (r.pares?.length) await crear('pair_encounters', r.pares)
+
+  const despues = await paresEntre(ids)
+  console.log(`Pares entre los ${ids.length} de la mesa: ${antes.length} → ${despues.length}`)
+  console.log(r.pares?.length
+    ? `   repuestos los ${r.pares.length} que había antes de la prueba`
+    : '   antes de la prueba no había ninguno, así que no queda ninguno')
+  console.log('\nLa mesa, las reservas y la fecha siguen en pie.')
+  console.log('El veto de no repetir ya no los alcanza: el reparto puede volver a sentarlos juntos.')
 }
 
 async function montar(correos, minutosDesdeQueEmpezo) {
@@ -248,7 +308,7 @@ async function montar(correos, minutosDesdeQueEmpezo) {
         '--sin-borrar',
         // Tanda propia: los correos Y los teléfonos de la siembra del 29
         // siguen ocupados, y las dos columnas son únicas.
-        '--tanda', '1',
+        '--tanda', String(TANDA),
       ],
       { stdio: 'inherit' },
     )
@@ -285,14 +345,21 @@ async function montar(correos, minutosDesdeQueEmpezo) {
   }
   console.log('\nFalta repartir y PUBLICAR desde el panel. Publicar es lo que')
   console.log('siembra la mesa, registra los pares y encola la push del juego.')
-  console.log('\nAl acabar:  node scripts/mesa-del-juego.mjs --borrar\n')
+  // CON SU TANDA. Sin ella, `--borrar` se lleva la tanda 1, que puede ser
+  // justo la que se quiere conservar.
+  const cola = TANDA === 1 ? '' : ` --tanda ${TANDA}`
+  console.log(`\nAl acabar:  node scripts/mesa-del-juego.mjs --borrar${cola}\n`)
 }
 
 // --- argumentos -------------------------------------------------------
-const args = process.argv.slice(2)
 
 if (args.includes('--borrar')) {
   await borrar()
+  process.exit(0)
+}
+
+if (args.includes('--pares')) {
+  await soloPares()
   process.exit(0)
 }
 
@@ -303,9 +370,24 @@ const minutos = iEmpezo >= 0 ? Number(args[iEmpezo + 1]) : 20
 // `indexOf` devuelve -1 y el valor caía en la posición 0.
 const correos = args.filter((a) => a.includes('@'))
 
-if (!correos.length) {
+if (!(TANDA >= 1 && TANDA <= 4)) {
+  console.error('--tanda va de 1 a 4')
+  process.exit(1)
+}
+
+if (!(PLAZAS >= 2 && PLAZAS <= 6)) {
+  console.error('--plazas va de 2 a 6')
+  process.exit(1)
+}
+
+// Sin correos la mesa es toda de relleno. Vale para comprobar el circuito
+// —que publicar encola lo que tiene que encolar— sin que vibre el teléfono de
+// nadie: las cuentas de relleno no tienen ninguno.
+if (!correos.length && !args.includes('--solo-relleno')) {
   console.error('Dame al menos un correo de una cuenta que exista.\n')
   console.error('   node scripts/mesa-del-juego.mjs alguien@correo.com otra@correo.com')
+  console.error('   node scripts/mesa-del-juego.mjs --solo-relleno --tanda 2 --plazas 5')
+  console.error('   node scripts/mesa-del-juego.mjs --pares')
   console.error('   node scripts/mesa-del-juego.mjs --borrar')
   process.exit(1)
 }
