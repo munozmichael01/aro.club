@@ -161,7 +161,6 @@ export function Inicio(p: {
       <Esqueleto />
     )
   } else if (vista) {
-    const cuando = F.cuandoSeSabe(datos.proximaFecha?.revelaEn, datos.proximaFecha?.zonaHoraria)
     cuerpo = (
       <>
         <Texto variante="display" style={{ marginBottom: 22 }}>
@@ -174,7 +173,6 @@ export function Inicio(p: {
             ciudadCerrada={datos?.ciudad && !datos.ciudad.abierta ? datos.ciudad.nombre : null}
             filtros={vista.filtros}
             grupos={vista.grupos}
-            cuandoSeSabe={cuando}
             abierta={abierta}
             textoReservar={vista.reservar.texto}
             precio={T.agenda.precio(reglas.precioTexto())}

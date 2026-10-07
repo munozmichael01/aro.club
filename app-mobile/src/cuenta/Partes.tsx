@@ -320,6 +320,9 @@ function FilaFecha(p: {
             </View>
             <Texto variante="rotulo">{f.hora}</Texto>
           </View>
+          <Texto variante="cuerpoChico" tono="secundario" style={{ marginBottom: 14 }}>
+            {T.agenda.comoFunciona}
+          </Texto>
           <View style={estilos.cargo}>
             <Texto variante="cuerpoChico" tono="tinta" style={{ flex: 1, fontFamily: fuente.textoMedia }}>
               {T.agenda.cargo}
@@ -350,7 +353,6 @@ function FilaFecha(p: {
 export function Agenda(p: {
   filtros: Filtro[]
   grupos: { semana: string; filas: FilaAgenda[] }[]
-  cuandoSeSabe: string
   abierta: string | null
   textoReservar: string
   precio: string
@@ -378,13 +380,6 @@ export function Agenda(p: {
     <View>
       <Texto variante="titulo" accessibilityRole="header" style={{ marginBottom: 12 }}>
         {T.agenda.titulo}
-      </Texto>
-      <Texto variante="cuerpo" tono="secundario" style={{ marginBottom: 18 }}>
-        {T.agenda.intro}{' '}
-        <Texto variante="cuerpo" tono="tinta" style={{ fontFamily: fuente.textoSemi }}>
-          {T.agenda.introEnfasis}
-        </Texto>{' '}
-        {T.agenda.introResto(p.cuandoSeSabe)}
       </Texto>
 
       {/* Una sola fila que se desliza, de borde a borde, con el margen de la página dentro. */}

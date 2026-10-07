@@ -124,10 +124,8 @@ export const mesa = {
 
 export const agenda = {
   titulo: `Lo que viene en ${CIUDAD_PRODUCTO.nombre}`,
-  intro: 'Te apuntas a una fecha, no a una mesa.',
-  introEnfasis: 'Cenas siempre con cinco personas.',
-  introResto: (cuando: string) =>
-    `Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y ${cuando} sabes en cuál te tocó. Cada fecha se cierra ${reglas.HORAS_DE_CIERRE} horas antes.`,
+  /** Cómo se arma la mesa. Va en la hoja de reservar, no encima de la agenda: allí empujaba la primera fecha fuera de la pantalla (entrega 19), y es al reservar cuando hace falta. */
+  comoFunciona: `Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona, y antes de la cena te decimos en cuál te tocó. La fecha se cierra ${reglas.HORAS_DE_CIERRE} horas antes.`,
   verTodo: 'Ver todo',
   vacia: 'Nada de ese tipo abierto ahora mismo. Abrimos según lo que pida la gente: marca ese plan en tu perfil y cuentas para que salga.',
   eligeHora: 'ELIGE LA HORA',
