@@ -179,11 +179,8 @@ export function Inicio(p: {
             precio={T.agenda.precio(reglas.precioTexto())}
             fallo={falloReserva}
             alFiltro={(f) => {
-              setFiltro((x) => (x === f ? null : f))
-              setAbierta(null)
-            }}
-            alQuitarFiltro={() => {
-              setFiltro(null)
+              // «Todos» deja la lista entera; tocar otra vez la elegida no desmarca (entrega 19).
+              setFiltro(f === M.TODOS ? null : f)
               setAbierta(null)
             }}
             alAbrir={(id) => {

@@ -98,8 +98,9 @@ test('la agenda: polaroids derivadas, grupos por semana y el estado de cada fech
   })
   const ag = [fecha('a', {}), fecha('b', { empiezaEn: '2026-10-10T00:00:00Z', apuntados: 13 }), fecha('c', { mia: true }), fecha('d', { cerrada: true, apuntados: 1 })]
   const fl = M.filtros(ag, null)
-  assert.deepEqual(fl.map((f) => [f.nombre, f.detalle, f.hay]), [
-    ['Cenas', 'Sábado y viernes', true], ['Drinks', 'Próximamente', false], ['Movimiento', 'Próximamente', false], ['Coffee', 'Próximamente', false],
+  // Un solo formato con fechas: escaparate, sin «Todos» ni filtro, y cenas solo con su nombre.
+  assert.deepEqual(fl.map((f) => [f.nombre, f.detalle, f.hay, f.toca]), [
+    ['Cenas', '', true, false], ['Drinks', 'Próximamente', false, false], ['Movimiento', 'Próximamente', false, false], ['Coffee', 'Próximamente', false, false],
   ])
   const g = M.agenda(ag, null, AHORA)
   assert.deepEqual(g.map((x) => x.semana), ['Esta semana', 'La semana que viene'])
@@ -146,4 +147,27 @@ test('los atajos cuentan de verdad: créditos, cenas que ocurrieron y exclusione
   assert.match(a[0].cuerpo, /^Las 14 del cuestionario/)
   assert.equal(M.atajos(base(), 0)[3].pie, 'Ninguna')
   assert.doesNotMatch(M.atajos(base({ reserva: { id: 'r', formato: 'dinner', empiezaEn: CENA, revelaEn: REVELA, revelado: false } }), 0)[1].cuerpo, /sábado/i)
+})
+
+test('las polaroids como filtro: «Todos» aparece cuando hay más de un formato con fechas (entrega 19)', () => {
+  const base = { cierraEn: null, creditos: 1, zonas: [], apuntados: 3, cerrada: false, mia: false }
+  const ag = [
+    { ...base, id: 'a', formato: 'dinner', empiezaEn: '2026-10-10T23:30:00Z' },
+    { ...base, id: 'b', formato: 'drinks', empiezaEn: '2026-10-14T00:30:00Z' },
+  ] as M.FechaAgenda[]
+  const todos = M.filtros(ag, null)
+  assert.deepEqual(todos.map((f) => [f.formato, f.elegido, f.toca, f.apagada]), [
+    ['todos', true, true, false], ['dinner', false, true, false], ['drinks', false, true, false], ['movement', false, false, true], ['coffee', false, false, true],
+  ])
+  assert.equal(todos[0].detalle, 'Todo lo que viene')
+  assert.notEqual(todos[1].detalle, '', 'con filtro, cada formato lleva sus días')
+  // Elegido drinks: se marca, las otras con fechas pierden color pero siguen tocables.
+  const dr = M.filtros(ag, 'drinks')
+  assert.deepEqual(dr.map((f) => [f.formato, f.elegido, f.apagada, f.toca]), [
+    ['todos', false, false, true], ['dinner', false, true, true], ['drinks', true, false, true], ['movement', false, true, false], ['coffee', false, true, false],
+  ])
+  assert.equal(M.agenda(ag, 'drinks', Date.parse('2026-10-07T12:00:00Z')).flatMap((g) => g.filas).length, 1)
+  assert.equal(M.agenda(ag, M.TODOS, Date.parse('2026-10-07T12:00:00Z')).flatMap((g) => g.filas).length, 2)
+  // Un elegido sin fechas no filtra: vuelve a «Todos».
+  assert.equal(M.filtros(ag, 'coffee')[0].elegido, true)
 })

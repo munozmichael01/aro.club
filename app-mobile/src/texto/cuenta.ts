@@ -142,6 +142,8 @@ export const agenda = {
   datosPrimero: 'Completa tus datos para reservar',
   reservar: (conCredito: boolean, precioTexto: string) => `Reservar mi puesto · ${conCredito ? '1 encuentro' : precioTexto}`,
   proximamente: 'Próximamente',
+  todos: 'Todos',
+  todoLoQueViene: 'Todo lo que viene',
   zonaPorConfirmar: 'Zona por confirmar',
   noPudimos: 'No pudimos apuntarte.',
 }

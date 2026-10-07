@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { AccessibilityInfo, Animated, Image, Pressable, StyleSheet, View } from 'react-native'
+import { AccessibilityInfo, Animated, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
 import {
   Aviso,
@@ -188,40 +188,51 @@ const FOTOS: Record<string, { on: number; off: number }> = {
   movement: { on: require('../../assets/fotos/filtro-movimiento.jpg'), off: require('../../assets/fotos/filtro-movimiento-apagada.jpg') },
   coffee: { on: require('../../assets/fotos/filtro-coffee.jpg'), off: require('../../assets/fotos/filtro-coffee-apagada.jpg') },
 }
-const GIRO: Record<string, string> = { dinner: '-1.8deg', drinks: '1.5deg', movement: '-1.3deg', coffee: '1.6deg' }
+const GIRO: Record<string, string> = { todos: '-1.2deg', dinner: '1.4deg', drinks: '-1.6deg', movement: '1.2deg', coffee: '-1.4deg' }
 
-/** La polaroid ES el filtro: el elemento con más fuerza de la marca hace de navegación. */
-function Polaroid({ f, algunoElegido, alPulsar }: { f: Filtro; algunoElegido: boolean; alPulsar: () => void }) {
-  const viva = !algunoElegido || f.elegido
+/** Las medidas de la entrega 19: polaroids de 112 de ancho, 12 de separación. */
+const ANCHO_POLAROID = 112
+const SEPARACION = 12
+
+/**
+ * La polaroid ES el filtro (entrega 19). Marcada: recta, borde terracota de 2 y
+ * nombre en terracota. Sin fechas, o con otro formato elegido: pierde color.
+ * Sin filtro (un solo formato con fechas) no responde al toque.
+ */
+function Polaroid({ f, alPulsar }: { f: Filtro; alPulsar: () => void }) {
+  const foto = (formato: string) => (f.apagada ? FOTOS[formato].off : FOTOS[formato].on)
   return (
     <Pressable
-      onPress={f.hay ? alPulsar : undefined}
-      accessibilityRole="button"
-      aria-disabled={!f.hay}
+      onPress={f.toca ? alPulsar : undefined}
+      disabled={!f.toca}
+      accessibilityRole={f.toca ? 'button' : undefined}
       aria-selected={f.elegido}
       accessibilityLabel={f.detalle ? `${f.nombre}. ${f.detalle}` : f.nombre}
       style={[
         estilos.polaroid,
         {
+          width: ANCHO_POLAROID,
           borderColor: f.elegido ? color.terracota : 'transparent',
-          opacity: f.hay ? 1 : 0.62,
-          transform: [{ rotate: f.elegido ? '0deg' : GIRO[f.formato] }, { scale: f.elegido ? 1.03 : 1 }],
+          transform: [{ rotate: f.elegido ? '0deg' : GIRO[f.formato] ?? '0deg' }],
         },
       ]}
     >
       <View style={estilos.polaroidFoto}>
-        {/* Ancho y alto explícitos: con `absoluteFill`, iOS pintaba la foto a su
-            tamaño propio (360 pt) y se veía ampliada y cortada (TestFlight, 02-10-2026). */}
-        <Image source={viva ? FOTOS[f.formato].on : FOTOS[f.formato].off} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: verdeAlfa(0.23) }]} />
+        {f.mosaico ? (
+          <View style={estilos.mosaico}>
+            {T.ORDEN_FORMATOS.map((x) => (
+              <Image key={x} source={FOTOS[x].on} style={estilos.mosaicoFoto} resizeMode="cover" />
+            ))}
+          </View>
+        ) : (
+          // Ancho y alto explícitos: con `absoluteFill`, iOS pintaba la foto a
+          // su tamaño propio (360 pt) y se veía ampliada (TestFlight, 02-10-2026).
+          <Image source={foto(f.formato)} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        )}
       </View>
-      <Texto variante="rotulo" style={{ fontFamily: fuente.titular, fontSize: 16, textAlign: 'center', paddingTop: 9, color: f.elegido ? color.terracota : color.verdeProfundo }}>
-        {f.nombre}
-      </Texto>
-      <Texto variante="etiqueta" tono={f.hay ? 'secundario' : 'terracota'} style={{ letterSpacing: 0, textAlign: 'center', paddingTop: 4, paddingBottom: 10 }}>
-        {/* Sin fechas no hay detalle; el espacio mantiene todas las polaroids del mismo alto. */}
-        {f.detalle || ' '}
-      </Texto>
+      <Texto style={[estilos.polaroidNombre, { color: f.elegido ? color.terracota : f.hay ? color.verdeProfundo : color.secundario }]}>{f.nombre}</Texto>
+      {/* Siempre la línea, aunque vaya vacía: todas las polaroids del mismo alto. */}
+      <Texto style={estilos.polaroidDetalle}>{f.detalle || ' '}</Texto>
     </Pressable>
   )
 }
@@ -345,11 +356,9 @@ export function Agenda(p: {
   precio: string
   fallo: string
   alFiltro: (formato: string) => void
-  alQuitarFiltro: () => void
   alAbrir: (id: string) => void
   alConfirmar: (id: string) => void
 }) {
-  const algunoElegido = p.filtros.some((f) => f.elegido)
   return (
     <View>
       <Texto variante="titulo" accessibilityRole="header" style={{ marginBottom: 12 }}>
@@ -363,21 +372,19 @@ export function Agenda(p: {
         {T.agenda.introResto(p.cuandoSeSabe)}
       </Texto>
 
-      <View style={estilos.polaroids}>
+      {/* Una sola fila que se desliza, de borde a borde, con el margen de la página dentro. */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={ANCHO_POLAROID + SEPARACION}
+        decelerationRate="fast"
+        style={estilos.carril}
+        contentContainerStyle={estilos.carrilDentro}
+      >
         {p.filtros.map((f) => (
-          <View key={f.formato} style={{ width: '47%' }}>
-            <Polaroid f={f} algunoElegido={algunoElegido} alPulsar={() => p.alFiltro(f.formato)} />
-          </View>
+          <Polaroid key={f.formato} f={f} alPulsar={() => p.alFiltro(f.formato)} />
         ))}
-      </View>
-      {algunoElegido ? (
-        <Pressable onPress={p.alQuitarFiltro} accessibilityRole="button" style={estilos.verTodo}>
-          <IconoCruz tam={12} color={color.verde} />
-          <Texto variante="cuerpoChico" tono="verde" style={{ fontFamily: fuente.textoMedia }}>
-            {T.agenda.verTodo}
-          </Texto>
-        </Pressable>
-      ) : null}
+      </ScrollView>
 
       {p.grupos.map((g) => (
         <View key={g.semana} style={{ marginBottom: 20 }}>
@@ -541,13 +548,18 @@ const estilos = StyleSheet.create({
   },
   otros: { gap: 10, marginTop: 20, paddingTop: 18, borderTopWidth: 1, borderTopColor: cremaAlfa(0.2) },
   avatar: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  polaroids: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 14, marginBottom: 20 },
+  carril: { marginHorizontal: -medida.margenLateral, marginBottom: 14 },
+  carrilDentro: { paddingHorizontal: medida.margenLateral, paddingTop: 10, paddingBottom: 16, gap: SEPARACION },
+  mosaico: { flex: 1, flexDirection: 'row', flexWrap: 'wrap' },
+  mosaicoFoto: { width: '50%', height: '50%' },
+  polaroidNombre: { fontFamily: fuente.titular, fontSize: 16, lineHeight: 23, textAlign: 'center', paddingTop: 8 },
+  polaroidDetalle: { fontFamily: fuente.textoMedia, fontSize: 11, lineHeight: 14, textAlign: 'center', paddingTop: 3, paddingBottom: 9, color: '#566A5D' },
   polaroid: {
     backgroundColor: color.cremaElevada,
-    paddingHorizontal: 8,
-    paddingTop: 8,
-    borderWidth: 1,
-    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingTop: 6,
+    borderWidth: 2,
+    borderRadius: 10,
     shadowColor: color.verdeProfundo,
     shadowOpacity: 0.18,
     shadowRadius: 14,

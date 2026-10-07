@@ -142,32 +142,56 @@ export function tarjeta(d: MiCuenta, m: MiMesa | null, ahora: number): Tarjeta {
 
 // --- La agenda --------------------------------------------------------------
 
+/** «Todos»: la polaroid de las cuatro fotos que deja la lista entera (entrega 19). */
+export const TODOS = 'todos'
+
 export type Filtro = {
   formato: string
   nombre: string
   detalle: string
-  /** Sin fecha abierta la polaroid lo dice y no filtra. */
+  /** Tiene fechas publicadas. Sin ellas: «Próximamente», apagada y sin tocar. */
   hay: boolean
   elegido: boolean
+  /** Responde al toque: solo cuando hay filtro (más de un formato con fechas) y ella tiene fechas. */
+  toca: boolean
+  /** Hay un formato concreto elegido y no es esta: pierde color (sigue tocable). */
+  apagada: boolean
+  /** La de «Todos»: las cuatro fotos en mosaico. */
+  mosaico?: boolean
 }
 
 /**
- * Las cuatro polaroids. Cuáles tienen fecha se DERIVA de la agenda, no se
- * escribe: el día que se abra la primera de Drinks, deja de decir
- * «Próximamente» sola. Y el detalle son los días de sus fechas de verdad.
+ * Las polaroids de Inicio (entrega 19, «Las polaroids, como filtro»). Cuáles
+ * tienen fecha se DERIVA de la agenda, nunca de una lista fija.
+ *
+ * - Un solo formato con fechas (hoy, cenas): sin «Todos» y sin filtro. Son
+ *   escaparate: la que tiene fechas, solo con el nombre; las demás,
+ *   «Próximamente», apagadas y sin responder.
+ * - Más de uno: «Todos» primero y marcado de entrada; las que tienen fechas
+ *   llevan sus días y filtran. Tocar la elegida otra vez no desmarca: para
+ *   eso está «Todos».
  */
 export function filtros(agenda: FechaAgenda[], elegido: string | null): Filtro[] {
-  return T.ORDEN_FORMATOS.map((f) => {
-    const suyas = agenda.filter((a) => (T.FORMATOS[a.formato] ? a.formato : 'dinner') === f)
+  const tiene = (f: string) => agenda.filter((a) => (T.FORMATOS[a.formato] ? a.formato : 'dinner') === f)
+  const conFechas = T.ORDEN_FORMATOS.filter((f) => tiene(f).length > 0)
+  const filtra = conFechas.length > 1
+  // Un elegido que ya no tiene fechas vuelve a «Todos».
+  const sel = filtra ? (elegido && conFechas.includes(elegido as never) ? elegido : TODOS) : null
+  const cuatro: Filtro[] = T.ORDEN_FORMATOS.map((f) => {
+    const suyas = tiene(f)
     const hay = suyas.length > 0
     return {
       formato: f,
       nombre: T.FORMATOS[f].plural,
-      detalle: hay ? F.diasDe(suyas.map((a) => ({ iso: a.empiezaEn, zona: a.zonaHoraria }))) : T.agenda.proximamente,
+      detalle: !hay ? T.agenda.proximamente : filtra ? F.diasDe(suyas.map((a) => ({ iso: a.empiezaEn, zona: a.zonaHoraria }))) : '',
       hay,
-      elegido: elegido === f,
+      elegido: filtra && sel === f,
+      toca: filtra && hay,
+      apagada: !hay || (filtra && sel !== TODOS && sel !== f),
     }
   })
+  if (!filtra) return cuatro
+  return [{ formato: TODOS, nombre: T.agenda.todos, detalle: T.agenda.todoLoQueViene, hay: true, elegido: sel === TODOS, toca: true, apagada: false, mosaico: true }, ...cuatro]
 }
 
 export type FilaAgenda = {
@@ -192,7 +216,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
   const ordenadas = [...fechas].sort((a, b) => new Date(a.empiezaEn).getTime() - new Date(b.empiezaEn).getTime())
   for (const a of ordenadas) {
     const formato = T.FORMATOS[a.formato] ? a.formato : 'dinner'
-    if (filtro && formato !== filtro) continue
+    if (filtro && filtro !== TODOS && formato !== filtro) continue
     const semana = F.semanaDe(a.empiezaEn, ahora)
     // Cerrada por estado O porque ya pasó su cierre: el estado de la fecha no
     // cambia solo al llegar la hora, y se veía abierta (01-10-2026).
