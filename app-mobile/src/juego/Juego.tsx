@@ -16,7 +16,8 @@ import * as M from './maquina'
  * penumbra). La pantalla no se apaga mientras está abierto: el teléfono pasa
  * minutos sin tocarse mientras todos responden.
  *
- * Cada teléfono recuerda la última ronda vista: al volver a abrir, retoma ahí.
+ * Cada teléfono recuerda la última ronda vista: al volver a abrir a mitad de
+ * juego, retoma ahí. Si lo terminó, vuelve a empezar desde las reglas.
  */
 const CLAVE = (mesa: string) => `aro.juego.${mesa}`
 
@@ -35,6 +36,10 @@ export function Juego(p: { mesaId: string; alSalir: () => void; /** Solo el cat�
   const ir = (s: M.Estado) => {
     setE(s)
     if (s.paso === 'pregunta') AsyncStorage.setItem(CLAVE(p.mesaId), String(s.ronda)).catch(() => {})
+    // Terminado, se olvida: al reabrirlo empieza en las reglas (con sus atajos
+    // a cada ronda). Recordar la ronda 3 dejaba atrapado en su pausa, que no
+    // tiene «atrás» (Michael, 07-10-2026). Retomar sirve solo a mitad de juego.
+    if (s.paso === 'final') AsyncStorage.removeItem(CLAVE(p.mesaId)).catch(() => {})
   }
 
   if (!e) return <View style={{ flex: 1, backgroundColor: color.verdeProfundo }} />
