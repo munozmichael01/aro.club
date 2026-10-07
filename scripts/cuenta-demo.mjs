@@ -18,6 +18,7 @@
  * No toca ninguna otra cuenta.
  */
 import { createClient } from '@supabase/supabase-js'
+import { borrarCuentaDeOperacion } from './firmas.mjs'
 import fs from 'node:fs'
 
 const env = Object.fromEntries(
@@ -61,27 +62,11 @@ if (borrar) {
   // Se suelta la FIRMA, no se borra la fila. La aprobación de alguien no deja
   // de haber ocurrido porque la cuenta que la firmó fuera de prueba, y borrar
   // esas filas le quitaría la verificación a una persona que sí la tiene.
-  const FIRMAS = [
-    ['verifications', 'reviewed_by'],
-    ['employer_aliases', 'confirmed_by'],
-    ['exclusions', 'created_by'],
-    ['bookings', 'attended_marked_by'],
-    ['fx_rates', 'set_by'],
-    ['payments', 'reviewed_by'],
-    ['matching_runs', 'created_by'],
-    ['incident_reports', 'resolved_by'],
-    ['waitlist', 'converted_profile_id'],
-  ]
-  for (const [tabla, columna] of FIRMAS) {
-    const { error } = await admin.from(tabla).update({ [columna]: null }).eq(columna, existente.id)
-    if (error) console.error(`  aviso: ${tabla}.${columna} → ${error.message}`)
-  }
-
-  const { error: ep } = await admin.from('profiles').delete().eq('id', existente.id)
-  if (ep) { console.error('no se pudo borrar el perfil:', ep.message); process.exit(1) }
-
-  const { error: eu } = await admin.auth.admin.deleteUser(existente.id)
-  if (eu) { console.error('no se pudo borrar el usuario:', eu.message); process.exit(1) }
+  // La lista vive en `firmas.mjs`: estaba escrita aqui y en `ops-test.mjs`,
+  // y las dos se quedaron cortas. A esta le faltaban cuatro columnas que
+  // llegaron en migraciones posteriores.
+  const fallo = await borrarCuentaDeOperacion(admin, existente.id)
+  if (fallo) { console.error(fallo); process.exit(1) }
 
   console.log('cuenta demo borrada')
   process.exit(0)
