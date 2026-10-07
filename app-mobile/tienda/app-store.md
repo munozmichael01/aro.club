@@ -1,36 +1,42 @@
-# Ficha de App Store — borrador
+# Ficha de App Store · borrador
 
 Borrador del 01-10-2026, para que Michael lo revise antes de pegarlo en App
 Store Connect (Aro Club → Distribución → versión 1.0). Los límites de
-caracteres son los de Apple. **No nombra el día de la semana**: todavía no
-está decidido.
+caracteres son los de Apple. **No nombra el día de la semana** ni la hora:
+salen de cada fecha.
 
 ## Textos (español)
 
 **Nombre** (30): `Aro Club`
 
-**Subtítulo** (30): `Cena con cinco desconocidos` (27)
+**Subtítulo** (30): `Conoce gente nueva en persona` (29)
 
 **Texto promocional** (170, se cambia sin nueva versión):
-> Te sentamos con cinco personas afines y verificadas en Caracas. Tú solo apareces.
+> Te juntamos con cinco personas afines y verificadas. Nosotros elegimos el sitio y armamos el grupo; tú solo llegas.
 
-**Descripción** (4000). Sin café ni movimiento hasta que existan: Apple rechaza fichas que prometen funciones que la app no tiene (norma 2.3.1).
-> Ya sabemos con quién cenas esta semana. Tú no. Todavía.
->
-> Aro Club te sienta en una mesa de seis con cinco personas que no conoces, elegidas para que la conversación funcione. Respondes unas preguntas sobre cómo eres en la mesa, de qué te gusta hablar y qué días puedes; nosotros armamos el grupo.
+**Descripción** (4000). General (Michael, 06-10-2026): todos los formatos y no solo Caracas. Lo que aún no existe se dice como «muy pronto», nunca como si ya estuviera: Apple rechaza fichas que prometen funciones que la app no tiene (norma 2.3.1). Cuando la app deje anotarse desde otra ciudad, la sección DÓNDE puede decir «Si estás en otra ciudad, anótate y te avisamos cuando abramos allí».
+> Un club para conocer gente nueva en tu ciudad. Te juntamos con cinco personas afines y verificadas: nosotros elegimos el sitio, armamos el grupo y reservamos a tu nombre. Tú solo llegas.
 >
 > CÓMO FUNCIONA
-> • Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona.
-> • El mismo día sabes dónde y con quién: el restaurante, la hora y el nombre y el sector de los otros cinco. Nada más.
+> • Respondes unas preguntas sobre cómo eres, de qué te gusta hablar y qué días puedes.
+> • Te apuntas a una fecha, no a un grupo. Con todos los apuntados armamos grupos de seis por afinidad.
+> • El mismo día sabes dónde y con quién: el sitio, la hora y el nombre y el sector de los otros cinco. Nada más.
+> • Para romper el hielo, el juego de la mesa: preguntas en tres rondas, de menos a más.
 > • Al terminar, cuentas qué tal. Puedes pedir no volver a coincidir con alguien, y nadie se entera.
+>
+> HOY CENAS, MUY PRONTO MÁS PLANES
+> Empezamos con cenas. Muy pronto, café, drinks y planes en movimiento.
 >
 > TODOS VERIFICADOS
 > Cada persona sube su cédula y una selfie, y las revisa alguien del equipo, no un programa. Nadie más las ve, y se borran a los 90 días de aprobarse.
 >
 > SIN SORPRESAS
-> Tu puesto cuesta 7 USD, en bolívares. Cubre el emparejamiento, la verificación del grupo y la mesa reservada a tu nombre; lo que consumes lo pagas en el sitio. Si cancelas con más de 24 horas, recuperas el crédito.
+> Tu puesto cuesta 7 USD, en bolívares. Cubre el emparejamiento, la verificación del grupo y la reserva a tu nombre; lo que consumes lo pagas en el sitio. Si cancelas con más de 24 horas, recuperas el crédito.
 >
-> Solo para mayores de 18. Hoy en Caracas.
+> DÓNDE
+> Empezamos en Caracas, y pronto abrimos en más ciudades.
+>
+> Solo para mayores de 18.
 
 **Palabras clave** (100, separadas por coma, sin espacios; no repetir el nombre ni el subtítulo):
 `cenar,amigos,gente nueva,caracas,planes,conocer gente,grupo,restaurante,social,venezuela,café` (95)

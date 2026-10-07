@@ -128,7 +128,6 @@ export const agenda = {
   introEnfasis: 'Cenas siempre con cinco personas.',
   introResto: (cuando: string) =>
     `Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y ${cuando} sabes en cuál te tocó. Cada fecha se cierra ${reglas.HORAS_DE_CIERRE} horas antes.`,
-  proximamente: 'Próximamente',
   verTodo: 'Ver todo',
   vacia: 'Nada de ese tipo abierto ahora mismo. Abrimos según lo que pida la gente: marca ese plan en tu perfil y cuentas para que salga.',
   eligeHora: 'ELIGE LA HORA',

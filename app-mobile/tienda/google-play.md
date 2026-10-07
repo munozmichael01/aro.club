@@ -9,27 +9,33 @@ marca) y sin nombrar un día escrito a mano.
 **Nombre de la app** (30): `Aro Club`
 
 **Descripción breve** (80):
-> Cena con cinco personas afines y verificadas en Caracas. Tú solo apareces.
+> Conoce gente nueva: te juntamos con cinco personas afines y verificadas.
 
-(74 caracteres)
+(72 caracteres)
 
-**Descripción completa** (4000):
-> Ya sabemos con quién cenas esta semana. Tú no. Todavía.
->
-> Aro Club te sienta en una mesa de seis con cinco personas que no conoces, elegidas para que la conversación funcione. Respondes unas preguntas sobre cómo eres en la mesa, de qué te gusta hablar y qué días puedes; nosotros armamos el grupo.
+**Descripción completa** (4000), la misma que la de App Store:
+> Un club para conocer gente nueva en tu ciudad. Te juntamos con cinco personas afines y verificadas: nosotros elegimos el sitio, armamos el grupo y reservamos a tu nombre. Tú solo llegas.
 >
 > CÓMO FUNCIONA
-> • Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona.
-> • El día de la cena sabes dónde y con quién: el restaurante, la hora y el nombre y el sector de los otros cinco. Nada más.
+> • Respondes unas preguntas sobre cómo eres, de qué te gusta hablar y qué días puedes.
+> • Te apuntas a una fecha, no a un grupo. Con todos los apuntados armamos grupos de seis por afinidad.
+> • El mismo día sabes dónde y con quién: el sitio, la hora y el nombre y el sector de los otros cinco. Nada más.
+> • Para romper el hielo, el juego de la mesa: preguntas en tres rondas, de menos a más.
 > • Al terminar, cuentas qué tal. Puedes pedir no volver a coincidir con alguien, y nadie se entera.
+>
+> HOY CENAS, MUY PRONTO MÁS PLANES
+> Empezamos con cenas. Muy pronto, café, drinks y planes en movimiento.
 >
 > TODOS VERIFICADOS
 > Cada persona sube su cédula y una selfie, y las revisa alguien del equipo, no un programa. Nadie más las ve, y se borran a los 90 días de aprobarse.
 >
 > SIN SORPRESAS
-> Tu puesto cuesta 7 USD, en bolívares. Cubre el emparejamiento, la verificación del grupo y la mesa reservada a tu nombre; lo que consumes lo pagas en el sitio. Si cancelas con más de 24 horas, recuperas el crédito.
+> Tu puesto cuesta 7 USD, en bolívares. Cubre el emparejamiento, la verificación del grupo y la reserva a tu nombre; lo que consumes lo pagas en el sitio. Si cancelas con más de 24 horas, recuperas el crédito.
 >
-> Solo para mayores de 18. Hoy en Caracas.
+> DÓNDE
+> Empezamos en Caracas, y pronto abrimos en más ciudades.
+>
+> Solo para mayores de 18.
 
 **Gráficos:**
 - Icono de 512 × 512: `Design/icono/play-store-512.png`.

@@ -199,7 +199,7 @@ function Polaroid({ f, algunoElegido, alPulsar }: { f: Filtro; algunoElegido: bo
       accessibilityRole="button"
       aria-disabled={!f.hay}
       aria-selected={f.elegido}
-      accessibilityLabel={`${f.nombre}. ${f.detalle}`}
+      accessibilityLabel={f.detalle ? `${f.nombre}. ${f.detalle}` : f.nombre}
       style={[
         estilos.polaroid,
         {
@@ -219,7 +219,8 @@ function Polaroid({ f, algunoElegido, alPulsar }: { f: Filtro; algunoElegido: bo
         {f.nombre}
       </Texto>
       <Texto variante="etiqueta" tono={f.hay ? 'secundario' : 'terracota'} style={{ letterSpacing: 0, textAlign: 'center', paddingTop: 4, paddingBottom: 10 }}>
-        {f.detalle}
+        {/* Sin fechas no hay detalle; el espacio mantiene todas las polaroids del mismo alto. */}
+        {f.detalle || ' '}
       </Texto>
     </Pressable>
   )
