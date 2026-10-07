@@ -110,16 +110,9 @@ export function cuandoSeSabe(revelaEn: string | null | undefined, zona?: Zona): 
   return /^12:00\s*p\.m\./i.test(hora) ? `el ${dia} a mediodía` : `el ${dia} a las ${hora}`
 }
 
-/** Los días de la semana en que caen unas fechas, sin repetir: «Sábado», «Viernes y sábado». */
+/** Los días de la semana en que caen unas fechas, sin repetir: «Sábado», «Viernes y sábado». Vive en `reglas.js`, que la web usa igual. */
 export function diasDe(fechas: { iso: string; zona?: Zona }[]): string {
-  const vistos: string[] = []
-  for (const f of [...fechas].sort((a, b) => new Date(a.iso).getTime() - new Date(b.iso).getTime())) {
-    const d = reglas.diaDe(f.iso, f.zona)
-    if (d && !vistos.includes(d)) vistos.push(d)
-  }
-  if (!vistos.length) return ''
-  const lista = vistos.length === 1 ? vistos[0] : `${vistos.slice(0, -1).join(', ')} y ${vistos[vistos.length - 1]}`
-  return mayuscula(lista)
+  return reglas.diasDe(fechas)
 }
 
 /** «Esta semana», «La semana que viene», «Más adelante»: los grupos de la agenda. */
