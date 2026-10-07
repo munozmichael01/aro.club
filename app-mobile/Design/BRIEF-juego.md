@@ -8,8 +8,8 @@ brief es solo la pantalla.
 
 Preguntas para romper el hielo **durante** la cena. Van de la vida, no de
 datos sobre la mesa: lo que te gustaría saber de alguien y casi nunca te
-atreves a preguntar. Tres rondas que suben de profundidad. Unos 15–20
-minutos, y después se guarda el teléfono.
+atreves a preguntar. Tres rondas que suben de profundidad, y después se
+guarda el teléfono.
 
 ## Cómo se juega (lo que la pantalla tiene que hacer posible)
 
@@ -20,7 +20,7 @@ minutos, y después se guarda el teléfono.
 - **Se puede cambiar de lector entre rondas:** otra persona abre el juego en
   su teléfono y sigue en la ronda que toca. Todos los teléfonos de la mesa
   ven las mismas preguntas en el mismo orden.
-- Cada ronda tiene 4 preguntas, que salen del mazo de la ronda.
+- Cada ronda tiene 2 preguntas (`porRonda` de `reglas.js`), que salen del mazo de la ronda.
 
 ## Pantallas y estados
 
@@ -37,7 +37,7 @@ minutos, y después se guarda el teléfono.
    - En grande y legible a la luz de un restaurante, porque se lee en voz
      alta.
    - Arriba: la ronda y su nombre («Ronda 2 · Lo que te mueve») y en qué
-     pregunta van (2 de 4).
+     pregunta van (2 de 2).
    - Acciones: «Siguiente» y volver atrás. «Pasar» no hace falta en pantalla:
      pasa la persona, no la pregunta.
 4. **El cambio de ronda.** Una pausa breve con el nombre y la bajada de la
