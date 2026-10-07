@@ -542,6 +542,38 @@
     },
 
     /**
+     * Los dias de la semana en que caen unas fechas, sin repetir.
+     *
+     * «Sabado». «Viernes y sabado». Es lo que va debajo del nombre de cada
+     * formato en el filtro de la agenda, y se DERIVA de las fechas que hay
+     * abiertas: un mapa escrito a mano —«Cenas: jueves y viernes»— miente el
+     * dia que se abre una cena en sabado, y miente en silencio.
+     *
+     * Vivia en la app (`texto/fechas.ts`), que lo estreno. Sube aqui porque
+     * la web lo necesita igual y porque la web tenia su propia version: un
+     * objeto fijo con «Sabado y viernes» para Cenas, en ese orden, que no
+     * miraba ninguna fecha.
+     *
+     * Ordena por fecha antes de listar: «Viernes y sabado» y no «Sabado y
+     * viernes» no es cosmetica, es el orden en que van a ocurrir.
+     */
+    diasDe: function (fechas) {
+      var vistos = []
+      var lista = (fechas || []).slice().sort(function (a, b) {
+        return new Date(a.iso).getTime() - new Date(b.iso).getTime()
+      })
+      for (var i = 0; i < lista.length; i++) {
+        var d = api.diaDe(lista[i].iso, lista[i].zona)
+        if (d && vistos.indexOf(d) < 0) vistos.push(d)
+      }
+      if (!vistos.length) return ''
+      var texto = vistos.length === 1
+        ? vistos[0]
+        : vistos.slice(0, -1).join(', ') + ' y ' + vistos[vistos.length - 1]
+      return texto.charAt(0).toUpperCase() + texto.slice(1)
+    },
+
+    /**
      * Las piezas de una fecha, en la zona que toque.
      *
      * Existe porque las pantallas las sacaban con `getDay()`, `getDate()`,

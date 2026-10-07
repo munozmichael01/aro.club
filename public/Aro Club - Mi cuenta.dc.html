@@ -28,6 +28,26 @@
   a:hover { color:#8F4515; }
   input, button { font: inherit; color: inherit; }
   ::selection { background:#1B5138; color:#FAF3E4; }
+  /* El carril del filtro de formatos (entrega 19).
+     Sin barra visible: es una fila de polaroids, no un contenedor de lista.
+
+     EL CARRIL SIEMPRE PUEDE DESLIZARSE, tambien en computadora. La entrega
+     dice que ahi caben las cinco sin deslizar, y caben — pero solo si la
+     columna da para 948px de polaroids. Quitarle el deslizamiento a partir
+     de un ancho fijo deja las ultimas fuera de alcance en todo lo que haya
+     entre medias: a 1024px la columna mide 704 y Coffee se quedaba cortada
+     sin forma de llegar a ella. Cuando caben, no se desliza porque no hace
+     falta; cuando no, se desliza. El mismo CSS para los dos casos.
+
+     Las polaroids crecen a 180px solo donde las cinco entran enteras, que
+     con 12px de hueco es a partir de 1280px de ventana. */
+  .carril::-webkit-scrollbar { display:none }
+  @media (min-width: 760px) {
+    .carril-fechas { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px }
+  }
+  @media (min-width: 1280px) {
+    .carril > button { width:180px !important }
+  }
   @keyframes aro-latido { 0%,100% { opacity:.55 } 50% { opacity:.28 } }
   @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
   @keyframes aro-trace { from { stroke-dashoffset:96 } to { stroke-dashoffset:0 } }
@@ -145,23 +165,30 @@
       <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:12px">Lo que viene en Caracas</div>
       <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:54ch;margin:0 0 18px;text-wrap:pretty">Te apuntas a una fecha, no a una mesa. <em style="font-weight:600;color:#14342A">Cenas siempre con cinco personas.</em> Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y {{ cuandoSeSabe }} sabes en cuál te tocó. Cada fecha se cierra {{ horasCierre }} horas antes.</p>
 
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(46%,132px),1fr));gap:clamp(10px,1.4vw,14px);margin-bottom:20px">
-        <sc-for list="{{ filtros }}" as="f" hint-placeholder-count="4">
-          <button onClick="{{ f.pick }}" aria-disabled="{{ f.inerte }}" style="{{ f.marco }}">
-            <span style="{{ f.foto }}"><span style="{{ f.tinte }}"></span></span>
+      <div class="carril" style="display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;scroll-padding-left:20px;scroll-snap-type:x mandatory;margin:0 -20px 20px;padding:4px 20px 10px">
+        <sc-for list="{{ filtros }}" as="f" hint-placeholder-count="5">
+          <button onClick="{{ f.pick }}" aria-pressed="{{ f.marcada }}" aria-disabled="{{ f.inerte }}" style="{{ f.marco }}">
+            <span style="{{ f.foto }}">
+              <sc-if value="{{ f.esTodos }}" hint-placeholder-val="{{ false }}">
+                <span style="position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:2px">
+                  <span style="background:url('fotos/cenas.jpg') center/cover"></span>
+                  <span style="background:url('fotos/drinks.jpg') center/cover"></span>
+                  <span style="background:url('fotos/movimiento.jpg') center/cover"></span>
+                  <span style="background:url('fotos/coffee.jpg') center/cover"></span>
+                </span>
+              </sc-if>
+              <span style="{{ f.tinte }}"></span>
+            </span>
             <span style="{{ f.pie }}">{{ f.nombre }}</span>
             <span style="{{ f.cuenta }}">{{ f.detalle }}</span>
           </button>
         </sc-for>
       </div>
-      <sc-if value="{{ hayFiltro }}" hint-placeholder-val="{{ false }}">
-        <button onClick="{{ quitarFiltro }}" style="display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-bottom:16px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#1B5138;font:500 14px/1 'Inter Tight',sans-serif;cursor:pointer">× Ver todo</button>
-      </sc-if>
 
       <sc-for list="{{ agenda }}" as="g" hint-placeholder-count="2">
         <div style="margin-bottom:20px">
           <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:10px">{{ g.semana }}</div>
-          <div style="display:flex;flex-direction:column;gap:9px">
+          <div class="carril-fechas" style="display:flex;flex-direction:column;gap:9px">
             <sc-for list="{{ g.eventos }}" as="ev" hint-placeholder-count="3">
               <div style="{{ ev.envoltorio }}">
               <button onClick="{{ ev.abrir }}" style="{{ ev.caja }}">
@@ -698,31 +725,77 @@ class Component extends DCLogic {
     const tipos = ['Todo', 'Cenas', 'Drinks', 'Movimiento', 'Coffee'];
     // la polaroid ES el filtro: el elemento con más fuerza de la marca hace de navegación
     const fotos = { Cenas: 'fotos/cenas.jpg', Drinks: 'fotos/drinks.jpg', Movimiento: 'fotos/movimiento.jpg', Coffee: 'fotos/coffee.jpg' };
-    const dias = { Cenas: 'Sábado y viernes', Drinks: 'Viernes y sábado', Movimiento: 'Sábado y domingo', Coffee: 'Sábado y domingo' };
-    const rot = { Cenas: '-1.8deg', Drinks: '1.5deg', Movimiento: '-1.3deg', Coffee: '1.6deg' };
-    // Cuales tienen fecha abierta de verdad. Se DERIVA de la agenda que manda
-    // el servidor, no se escribe a mano: el dia que se abra la primera fecha
-    // de Drinks, la tarjeta deja de decir «Proximamente» sola. Escrito a mano
-    // habria que acordarse, y nadie se acuerda.
-    const conFecha = {};
-    ((d && d.agenda) || []).forEach((a) => { conFecha[FORMATOS[a.formato] || 'Cenas'] = true; });
+    const rot = { Todos: '-1.2deg', Cenas: '1.4deg', Drinks: '-1.6deg', Movimiento: '1.2deg', Coffee: '-1.4deg' };
 
-    const filtros = ['Cenas', 'Drinks', 'Movimiento', 'Coffee'].map((nombre) => {
-      const i = tipos.indexOf(nombre);
-      const on = this.state.filtro === i;
+    // Cuales tienen fecha abierta de verdad, y CUALES SON SUS FECHAS. Se
+    // derivan de la agenda que manda el servidor, no se escriben a mano: el
+    // dia que se abra la primera fecha de Drinks, la tarjeta deja de decir
+    // «Proximamente» sola. Escrito a mano habria que acordarse, y nadie se
+    // acuerda.
+    const suyas = {};
+    ((d && d.agenda) || []).forEach((a) => {
+      const n = FORMATOS[a.formato] || 'Cenas';
+      (suyas[n] = suyas[n] || []).push({ iso: a.empiezaEn, zona: a.zonaHoraria });
+    });
+    const conFecha = {};
+    Object.keys(suyas).forEach((n) => { conFecha[n] = true; });
+
+    /**
+     * Si el filtro existe o no lo decide CUANTOS formatos tienen fechas.
+     *
+     * Con uno solo, las polaroids son escaparate: filtrar una lista que ya
+     * esta entera no quita nada de en medio, y «Todos» al lado de una sola
+     * cosa se lee como que falta algo. Con dos o mas, el filtro gana su
+     * sitio y «Todos» entra el primero y marcado.
+     *
+     * Sale de las fechas publicadas y no de una lista fija, asi que el paso
+     * de un estado al otro ocurre solo el dia que se abra la primera fecha
+     * de otro formato.
+     */
+    const cuantos = Object.keys(conFecha).length;
+    const filtra = cuantos > 1;
+    const sel = filtra ? (this.state.filtro || 0) : 0;
+
+    const nombres = (filtra ? ['Todos'] : []).concat(['Cenas', 'Drinks', 'Movimiento', 'Coffee']);
+
+    const filtros = nombres.map((nombre) => {
+      const esTodos = nombre === 'Todos';
+      const i = esTodos ? 0 : tipos.indexOf(nombre);
+      const hay = esTodos || !!conFecha[nombre];
+      const marcada = filtra && sel === i;
       // Sin fecha abierta, la tarjeta lo dice y no filtra: pulsarla llevaba a
       // una lista vacia sin explicar por que estaba vacia, que se lee como que
       // la pantalla se rompio.
-      const hay = !!conFecha[nombre];
+      //
+      // Y volver a pulsar la que YA esta marcada no la desmarca: para eso esta
+      // «Todos». Desmarcarla dejaba la fila sin ninguna marcada y la lista
+      // entera debajo, dos cosas que se contradicen.
+      const activa = filtra && hay && !marcada;
+      // Con el filtro puesto, las que no son la elegida pierden color pero
+      // siguen tocables. Las que no tienen fechas se apagan mas y no responden.
+      const tono = !hay
+        ? 'grayscale(.9) saturate(.3) brightness(.95)'
+        : (filtra && sel !== 0 && !marcada
+          ? 'grayscale(.8) saturate(.35)'
+          : 'grayscale(.2) contrast(1.12) saturate(.78) brightness(.92)');
       return {
-        nombre, detalle: hay ? dias[nombre] : 'Próximamente',
-        pick: hay ? (() => this.setState({ filtro: on ? 0 : i, reservando: null })) : (() => {}),
-        inerte: hay ? null : 'true',
-        marco: 'display:flex;flex-direction:column;background:#FFFBF0;padding:8px 8px 0;border:1px solid ' + (on ? '#8F4515' : 'transparent') + ';border-radius:12px;box-shadow:0 12px 30px -18px rgba(20,52,42,.45);transform:rotate(' + (on ? '0deg' : rot[nombre]) + ') scale(' + (on ? '1.03' : '1') + ');cursor:' + (hay ? 'pointer' : 'default') + ';opacity:' + (hay ? '1' : '.62') + ';transition:all 220ms ease',
-        foto: 'position:relative;display:block;aspect-ratio:1;overflow:hidden;border-radius:6px;background:#DCD3BC;background-image:url(\'' + fotos[nombre] + '\');background-size:cover;background-position:center;filter:grayscale(' + (this.state.filtro === 0 || on ? '.24' : '.85') + ') contrast(1.16) saturate(' + (this.state.filtro === 0 || on ? '.74' : '.3') + ') brightness(.9);transition:filter 220ms ease',
+        nombre, esTodos,
+        // El dia debajo del nombre solo cuando la fila filtra: en escaparate
+        // el nombre se basta, y repetir «Jueves y viernes» debajo de la unica
+        // que hay es ruido. Sale de las fechas de VERDAD, por `AroReglas`.
+        detalle: !hay
+          ? 'Próximamente'
+          : (filtra
+            ? (esTodos ? 'Todo lo que viene' : (window.AroReglas ? window.AroReglas.diasDe(suyas[nombre] || []) : ''))
+            : ''),
+        marcada: marcada ? 'true' : 'false',
+        pick: activa ? (() => this.setState({ filtro: i, reservando: null })) : (() => {}),
+        inerte: hay && filtra ? null : 'true',
+        marco: 'flex:0 0 auto;width:112px;scroll-snap-align:start;display:flex;flex-direction:column;background:#FFFBF0;padding:6px 6px 0;border-radius:10px;border:2px solid ' + (marcada ? '#8F4515' : 'transparent') + ';box-shadow:0 10px 22px -16px rgba(20,52,42,.5);transform:rotate(' + (marcada ? '0deg' : rot[nombre]) + ');transition:all 200ms ease;cursor:' + (activa ? 'pointer' : 'default'),
+        foto: 'position:relative;display:block;aspect-ratio:1;overflow:hidden;border-radius:5px;background:#DCD3BC' + (fotos[nombre] ? ';background-image:url(\'' + fotos[nombre] + '\');background-size:cover;background-position:center' : '') + ';filter:' + tono + ';transition:filter 200ms ease',
         tinte: 'position:absolute;inset:0;background:linear-gradient(rgba(20,52,42,.2),rgba(27,81,56,.26))',
-        pie: 'display:block;font:400 clamp(16px,1.9vw,19px)/1.1 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:' + (on ? '#8F4515' : '#14342A') + ';text-align:center;padding:9px 4px 0',
-        cuenta: 'display:block;font:500 12px/1.35 \'Inter Tight\',sans-serif;color:' + (hay ? '#566A5D' : '#8F4515') + ';text-align:center;padding:4px 4px 10px'
+        pie: 'display:block;font:400 16px/1.1 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;text-align:center;padding:8px 2px 0;color:' + (marcada ? '#8F4515' : (hay ? '#14342A' : '#566A5D')),
+        cuenta: 'display:block;font:500 11px/1.3 \'Inter Tight\',sans-serif;text-align:center;padding:3px 2px 9px;min-height:14px;color:#566A5D'
       };
     });
 
@@ -765,7 +838,12 @@ class Component extends DCLogic {
         !!a.cerrada
       ];
     });
-    const filtrados = crudos.filter((c) => this.state.filtro === 0 || c[1] === tipos[this.state.filtro]);
+    // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato
+    // con fechas, la fila deja de filtrar y la seleccion guardada tiene que
+    // dejar de aplicarse tambien. Si no, se cierra la ultima fecha de Drinks
+    // con Drinks elegido y la agenda se queda vacia para siempre, sin ninguna
+    // polaroid marcada que explique por que.
+    const filtrados = crudos.filter((c) => sel === 0 || c[1] === tipos[sel]);
     const semanas = [];
     filtrados.forEach((c) => {
       const n = c[4];
@@ -944,8 +1022,6 @@ class Component extends DCLogic {
         if (this.state.saliendo) return;
         AroNav.salir((v) => this.setState({ saliendo: v }));
       },
-      hayFiltro: this.state.filtro !== 0,
-      quitarFiltro: () => this.setState({ filtro: 0, reservando: null }),
       botonFantasmaOscuro: 'display:inline-flex;align-items:center;min-height:50px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
       hayDatos: !!this.state.datos,
       hayFalloReserva: !!this.state.falloReserva,
