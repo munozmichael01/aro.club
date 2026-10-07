@@ -152,7 +152,30 @@
       // mire —y quien lo cuadra contra el movimiento del banco lee fechas
       // todo el dia—, asi que la ambiguedad la paga el que concilia.
       filtrar: function (v) {
-        var d = String(v == null ? '' : v).replace(/\D/g, '').slice(0, 8)
+        var bruto = String(v == null ? '' : v)
+        // Una barra TECLEADA cierra el grupo: quien escribe «7/» ya dijo que
+        // el dia es el 7, y ahi el cero delante se agradece. Rellenar uno que
+        // aun se esta escribiendo es el fallo CONTRARIO —te pone el cero
+        // delante del 7 y el 15 ya no se puede teclear—, y es el que la app
+        // tuvo que quitar de su pantalla de pago. De ahi que se rellene solo
+        // lo que la persona dio por terminado.
+        //
+        // Sin barras no se adivina nada: el teclado numerico del telefono no
+        // tiene «/», asi que ahi se teclean las ocho cifras y la pista del
+        // campo —DD/MM/AAAA— es la que lo dice.
+        var grupos = bruto.split(/\D+/)
+        var acabaEnBarra = /\D$/.test(bruto)
+        var d = ''
+        for (var i = 0; i < grupos.length; i++) {
+          var g = grupos[i]
+          if (!g) continue
+          var cerrado = i < grupos.length - 1 || acabaEnBarra
+          // El limite de cuatro deja fuera el anio: ahi una cifra sola es el
+          // principio de 2026, no un 2 al que le falte el cero.
+          if (cerrado && g.length === 1 && d.length < 4) g = '0' + g
+          d += g
+        }
+        d = d.slice(0, 8)
         if (d.length <= 2) return d
         if (d.length <= 4) return d.slice(0, 2) + '/' + d.slice(2)
         return d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4)

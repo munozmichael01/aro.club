@@ -570,5 +570,45 @@ if (relojes.length) {
   }
 }
 
+// --- la fecha del pago se escribe como la escribe la gente -------------
+//
+// El metodo activo —Pago Movil— declara un campo `tipo: 'fecha'`, y de ahi
+// `campoDe` saca la regla `fechaPago`, cuyo `filtrar` se aplica a CADA tecla
+// en la pantalla de pagar. Un filtro que se equivoca ahi no da error: deja
+// una fecha invalida en el campo, el boton se queda bloqueado y la persona
+// no tiene nada que tocar para desbloquearlo. Es el sitio mas caro de todos
+// para eso, porque es el que aparta el puesto.
+//
+// Las dos mitades de la regla, que tiran en sentidos contrarios:
+//   · con barras tecleadas se rellena el grupo CERRADO —«7/» es el dia 7—,
+//   · y una cifra sola NO se rellena nunca, porque «07» en pantalla impide
+//     teclear el 15. Ese es el fallo que la app tuvo que quitar del suyo.
+{
+  const teclear = (texto) => {
+    let v = ''
+    for (const k of texto) v = reglas.filtrar('fechaPago', v + k)
+    return v
+  }
+  const malas = []
+  for (const forma of ['7/8/2026', '07/08/2026', '16082026', '7/08/2026', '1/1/2026']) {
+    const salida = teclear(forma)
+    if (!reglas.valido('fechaPago', salida)) malas.push(`${forma} -> ${salida}`)
+  }
+  // Y al reves: lo que no se cerro se queda como esta.
+  for (const suelta of ['7', '1', '3']) {
+    if (reglas.filtrar('fechaPago', suelta) !== suelta) {
+      malas.push(`rellena «${suelta}» sin que nadie cierre el grupo`)
+    }
+  }
+  if (malas.length) {
+    errores++
+    console.error('\n✗ fechaPago.filtrar')
+    malas.forEach((x) => console.error('    ' + x))
+    console.error('  → en la pantalla de pagar el campo se queda invalido y el boton bloqueado')
+  } else {
+    console.log('✓ fechaPago.filtrar (barra cierra el grupo, cifra sola no se rellena)')
+  }
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)
