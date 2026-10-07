@@ -7,6 +7,8 @@ import { situacionDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
+import { avisoDeVerificacion } from '@/lib/avisos-equipo'
+
 /**
  * F4 · Verificación de identidad.
  *
@@ -240,6 +242,13 @@ export async function POST(request: Request) {
   if (tipos.has('id_document') && tipos.has('selfie')) {
     await cerrarTraspasos(user)
     await avisarCuentaLista(user)
+    // Y al equipo, que hasta hoy no se enteraba: subir la cédula solo le
+    // escribía a quien la subía, y la cola se descubría entrando al panel.
+    // Aquí y no al subir la primera foto: con una sola no hay nada que
+    // revisar, así que avisar sería avisar dos veces de lo mismo.
+    await avisoDeVerificacion(user).catch((e) =>
+      console.error('[verificacion] no se pudo avisar al equipo', e),
+    )
   }
 
   return NextResponse.json({ estado: 'recibida' })

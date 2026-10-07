@@ -11,6 +11,8 @@ import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { encolar } from '@/lib/correos'
 
+import { avisoDePago } from '@/lib/avisos-equipo'
+
 /**
  * F7 · Reportar un pago.
  *
@@ -510,7 +512,7 @@ export async function POST(request: Request) {
     )
   }
 
-  const { error: errorPago } = await admin.from('payments').insert({
+  const { data: pagoCreado, error: errorPago } = await admin.from('payments').insert({
     profile_id: user.id,
     booking_id: bookingId,
     // El metodo real, por su id. Antes aqui iba ademas `method: 'pago_movil'`
@@ -558,6 +560,11 @@ export async function POST(request: Request) {
     // este estado entero.
     status: m.manual ? 'under_review' : 'confirmed',
   })
+    // El id, para poder avisar al equipo de ESTE pago. Sin `.select()` el
+    // insert no devuelve nada y el aviso tendría que volver a buscarlo, que
+    // es cómo se acaba avisando del pago de otro.
+    .select('id')
+    .single()
 
   if (errorPago) {
     // 23505 es el índice único: dos reportes a la vez, uno gana. Que el
@@ -581,6 +588,23 @@ export async function POST(request: Request) {
       .from('bookings')
       .update({ status: 'confirmed', confirmed_at: ahora })
       .eq('id', bookingId)
+  }
+
+  /**
+   * Y al equipo, al momento.
+   *
+   * Solo los manuales: son los que entran en `under_review` y llenan la cola
+   * de Pagos. Un pago confirmado por el banco no espera a nadie, y avisar de
+   * él sería avisar de que no hay nada que hacer.
+   *
+   * `catch` a propósito: quien acaba de reportar su pago no puede ver un
+   * error porque nuestro buzón esté caído. Su pago quedó registrado; lo que
+   * falla es nuestro aviso, y eso se mira en los registros.
+   */
+  if (m.manual && pagoCreado?.id) {
+    await avisoDePago(pagoCreado.id).catch((e) =>
+      console.error('[pago] no se pudo avisar al equipo', e),
+    )
   }
 
   // El aviso queda EN COLA. Hoy no hay remitente y no sale nada, pero el
