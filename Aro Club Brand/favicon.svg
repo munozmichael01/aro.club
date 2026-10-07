@@ -1,6 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Favicon Aro Club">
-  <title>Favicon Aro Club</title>
-  <rect width="32" height="32" rx="7" fill="#1B5138"></rect>
-  <circle cx="16" cy="16" r="8.5" fill="none" stroke="#FAF3E4" stroke-width="2.6"></circle>
-  <circle cx="24.5" cy="16" r="2.6" fill="#E39C63"></circle>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="32" height="32" role="img" aria-label="Aro Club">
+  <title>Aro Club</title>
+  <!-- Geometría y colores de `marca/favicon.svg` (entrega 19): anillo r=86 con
+       trazo 24 y seis puntos de 25 sobre la cuadrícula de 240.
+
+       DOS COSAS SE CORRIGEN DE LO ENTREGADO, las dos invisibles al abrir el
+       fichero en un visor:
+
+       1. Traía 7,7 KB de metadatos C2PA —el 91% del peso— en un fichero que
+          el navegador pide en cada visita. La entrega decía «sin metadatos».
+
+       2. Traía las clases `tinta`, `acento` y `punto` y NINGUNA hoja de
+          estilo. Suelto, eso no pinta nada: la variante de pestaña oscura que
+          describe la entrega no existía en el fichero. Es exactamente lo que
+          pasó en la 17, cuando el isologo se habría visto negro.
+
+       Por eso el color va DOS VECES: en los atributos `fill`/`stroke`, que es
+       lo que ve cualquier cosa que no entienda CSS, y en la hoja de abajo, que
+       es la que cambia en pestaña oscura. Si algún día divergen, manda el
+       atributo, que es el que no se puede ignorar.
+
+       Sin fondo dibujado, a propósito y al contrario que la versión anterior:
+       con la variante oscura el anillo se vuelve crema y se ve solo. Un
+       rectángulo crema fijo lo que hace es meter un cuadrado claro en una
+       barra oscura. -->
+  <style>
+    .tinta  { stroke: #1B5138 }
+    .punto  { fill:   #1B5138 }
+    .acento { fill:   #C0662F }
+    @media (prefers-color-scheme: dark) {
+      .tinta  { stroke: #FAF3E4 }
+      .punto  { fill:   #FAF3E4 }
+      .acento { fill:   #E39C63 }
+    }
+  </style>
+  <circle class="tinta" cx="120" cy="120" r="86" fill="none" stroke="#1B5138" stroke-width="24"></circle>
+  <circle class="acento" cx="206" cy="120" r="25" fill="#C0662F"></circle>
+  <circle class="punto" cx="163" cy="194.5" r="25" fill="#1B5138"></circle>
+  <circle class="punto" cx="77" cy="194.5" r="25" fill="#1B5138"></circle>
+  <circle class="punto" cx="34" cy="120" r="25" fill="#1B5138"></circle>
+  <circle class="punto" cx="77" cy="45.5" r="25" fill="#1B5138"></circle>
+  <circle class="punto" cx="163" cy="45.5" r="25" fill="#1B5138"></circle>
 </svg>
