@@ -14,7 +14,7 @@ está decidido.
 **Texto promocional** (170, se cambia sin nueva versión):
 > Te sentamos con cinco personas afines y verificadas en Caracas. Tú solo apareces.
 
-**Descripción** (4000):
+**Descripción** (4000). Sin café ni movimiento hasta que existan: Apple rechaza fichas que prometen funciones que la app no tiene (norma 2.3.1).
 > Ya sabemos con quién cenas esta semana. Tú no. Todavía.
 >
 > Aro Club te sienta en una mesa de seis con cinco personas que no conoces, elegidas para que la conversación funcione. Respondes unas preguntas sobre cómo eres en la mesa, de qué te gusta hablar y qué días puedes; nosotros armamos el grupo.
@@ -26,9 +26,6 @@ está decidido.
 >
 > TODOS VERIFICADOS
 > Cada persona sube su cédula y una selfie, y las revisa alguien del equipo, no un programa. Nadie más las ve, y se borran a los 90 días de aprobarse.
->
-> CENA, CAFÉ O EN MOVIMIENTO
-> Elige el plan que te pide el cuerpo esa semana.
 >
 > SIN SORPRESAS
 > Tu puesto cuesta 7 USD, en bolívares. Cubre el emparejamiento, la verificación del grupo y la mesa reservada a tu nombre; lo que consumes lo pagas en el sitio. Si cancelas con más de 24 horas, recuperas el crédito.
