@@ -28,7 +28,7 @@ function deCaptura(d: MiCuenta): MiCuenta {
       { id: 'b', formato: 'dinner', empiezaEn: sabado(1), cierraEn: menos(sabado(1), 24), creditos: 1, zonas: ['Las Mercedes', 'Altamira'], apuntados: 4, cerrada: false, mia: false },
       { id: 'c', formato: 'dinner', empiezaEn: sabado(2), cierraEn: menos(sabado(2), 24), creditos: 1, zonas: ['La Castellana'], apuntados: 2, cerrada: false, mia: false },
     ],
-    proximaFecha: { empiezaEn: s0, cierraEn: menos(s0, 24), revelaEn: menos(s0, 7), zona: 'Chacao', apuntados: 9, zonaHoraria: 'America/Caracas' },
+    proximaFecha: { empiezaEn: s0, cierraEn: menos(s0, 24), revelaEn: menos(s0, 7.5), zona: 'Chacao', apuntados: 9, zonaHoraria: 'America/Caracas' },
   }
 }
 
