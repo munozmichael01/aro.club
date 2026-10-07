@@ -99,7 +99,7 @@ test('la agenda: polaroids derivadas, grupos por semana y el estado de cada fech
   const ag = [fecha('a', {}), fecha('b', { empiezaEn: '2026-10-10T00:00:00Z', apuntados: 13 }), fecha('c', { mia: true }), fecha('d', { cerrada: true, apuntados: 1 })]
   const fl = M.filtros(ag, null)
   assert.deepEqual(fl.map((f) => [f.nombre, f.detalle, f.hay]), [
-    ['Cenas', 'Sábado y viernes', true], ['Drinks', '', false], ['Movimiento', '', false], ['Coffee', '', false],
+    ['Cenas', 'Sábado y viernes', true], ['Drinks', 'Próximamente', false], ['Movimiento', 'Próximamente', false], ['Coffee', 'Próximamente', false],
   ])
   const g = M.agenda(ag, null, AHORA)
   assert.deepEqual(g.map((x) => x.semana), ['Esta semana', 'La semana que viene'])

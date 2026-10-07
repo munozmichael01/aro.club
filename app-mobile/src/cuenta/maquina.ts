@@ -153,9 +153,8 @@ export type Filtro = {
 
 /**
  * Las cuatro polaroids. Cuáles tienen fecha se DERIVA de la agenda, no se
- * escribe. Sin fechas, solo el nombre, sin «Próximamente» (Michael,
- * 06-10-2026): la polaroid apagada ya dice que no hay. Con fechas, el
- * detalle son los días de sus fechas de verdad.
+ * escribe: el día que se abra la primera de Drinks, deja de decir
+ * «Próximamente» sola. Y el detalle son los días de sus fechas de verdad.
  */
 export function filtros(agenda: FechaAgenda[], elegido: string | null): Filtro[] {
   return T.ORDEN_FORMATOS.map((f) => {
@@ -164,7 +163,7 @@ export function filtros(agenda: FechaAgenda[], elegido: string | null): Filtro[]
     return {
       formato: f,
       nombre: T.FORMATOS[f].plural,
-      detalle: hay ? F.diasDe(suyas.map((a) => ({ iso: a.empiezaEn, zona: a.zonaHoraria }))) : '',
+      detalle: hay ? F.diasDe(suyas.map((a) => ({ iso: a.empiezaEn, zona: a.zonaHoraria }))) : T.agenda.proximamente,
       hay,
       elegido: elegido === f,
     }
