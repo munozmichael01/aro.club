@@ -13,6 +13,22 @@ La única dependencia aceptada es `POST /api/auth/nativo` (ver abajo).
 
 ---
 
+## App Store: enviada a revisión (07-10-2026)
+
+- **Versión 1.0, build 13**, enviada el 07-10 a la 1:41 (Caracas), con
+  publicación MANUAL. La versión de la app es «1.0» porque App Store Connect
+  creó la versión así; las builds tienen que coincidir.
+- La ficha solo está en Español (España). Las capturas obligatorias son las
+  de «iPhone con Dynamic Island (pantalla mediana)», de 1206 × 2622, en
+  `tienda/capturas/iphone-6.1-mediana/`. Precio 0, 174 países (todos menos
+  China continental, que pide un registro ICP), sin Mac ni Vision Pro.
+- **Cuenta del revisor:** `node scripts/cuenta-revision.mjs` la crea e
+  imprime la contraseña UNA vez, que no se guarda en ningún sitio. Si la
+  revisión empieza más de 30 h después de crearla, `--refrescar` (mueve la
+  cena y deja la contraseña).
+- Si Apple responde, sale en «Revisión de apps» y llega por correo a
+  `somos.aroclub@gmail.com`.
+
 ## Dónde lo dejamos (02-10-2026) — empezar por aquí
 
 **En las tiendas:**
