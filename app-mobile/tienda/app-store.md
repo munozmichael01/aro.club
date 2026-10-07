@@ -38,8 +38,8 @@ salen de cada fecha.
 >
 > Solo para mayores de 18.
 
-**Palabras clave** (100, separadas por coma, sin espacios; no repetir el nombre ni el subtítulo):
-`cenar,amigos,gente nueva,caracas,planes,conocer gente,grupo,restaurante,social,venezuela,café` (95)
+**Palabras clave** (100, separadas por coma, sin espacios; no repetir lo del nombre ni del subtítulo, que Apple ya cuenta):
+`cenar,amigos,caracas,planes,grupo,restaurante,social,venezuela,cena,salir,café,drinks,desconocidos` (98)
 
 **Categoría:** principal *Estilo de vida*; secundaria *Redes sociales*.
 (*Redes sociales* como principal invita a más revisión de contenido de usuarios.)
