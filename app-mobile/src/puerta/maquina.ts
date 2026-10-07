@@ -12,7 +12,25 @@ import { edad } from '../datos/maquina'
 export type Borrador = {
   respuestas: Record<string, string[]>
   nacimiento: { dia: string; mes: number; anio: string }
+  /**
+   * Quien no vive en Caracas: el slug de su ciudad (`/api/ciudades`). Solo se
+   * guarda la ciudad, nunca zonas de una ciudad que no está abierta (Michael,
+   * 06-10-2026). Sin ciudad, es Caracas.
+   */
+  ciudad?: string
 }
+
+export type Ciudad = { slug: string; nombre: string; abierta: boolean }
+
+/** Vive en una ciudad que todavía no abre: se salta lo que solo sirve en Caracas. */
+export const esFuera = (b: Borrador) => !!b.ciudad && b.ciudad !== 'caracas'
+
+/** Las que se ofrecen en «¿No vives en Caracas?»: todas menos Caracas, en el orden de la tabla. */
+export const otrasCiudades = (cs: Ciudad[]) => cs.filter((c) => c.slug !== 'caracas')
+
+/** «Valencia», o «tu ciudad» para «Otra ciudad». */
+export const nombreDeCiudad = (cs: Ciudad[], slug: string | undefined) =>
+  !slug || slug === 'otra' ? 'tu ciudad' : cs.find((c) => c.slug === slug)?.nombre ?? 'tu ciudad'
 
 export const vacio = (): Borrador => ({ respuestas: {}, nacimiento: { dia: '', mes: 0, anio: '' } })
 
@@ -44,7 +62,8 @@ export function envios(b: Borrador, hoy: Date): { clave: string; valor: string |
   const r = b.respuestas
   const lista: { clave: string; valor: string | string[] }[] = []
   if (r.arraigo?.[0]) lista.push({ clave: 'arraigo', valor: r.arraigo[0] })
-  for (const k of ['zonas', 'dias', 'temas']) if (r[k]?.length) lista.push({ clave: k, valor: r[k] })
+  // Fuera de Caracas: ni zonas ni lo demás de la puerta, que es de Caracas.
+  if (!esFuera(b)) for (const k of ['zonas', 'dias', 'temas']) if (r[k]?.length) lista.push({ clave: k, valor: r[k] })
   const n = nacimientoISO(b, hoy)
   if (n) lista.push({ clave: 'nacimiento', valor: n })
   return lista

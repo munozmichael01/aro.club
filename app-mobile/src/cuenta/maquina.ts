@@ -51,6 +51,8 @@ export type MiCuenta = {
   paso?: 'correo' | 'preguntas' | 'contacto' | 'cuenta' | 'verificacion' | 'listo'
   donde?: string
   puedeReservar?: boolean
+  /** Su ciudad (agente de la web, 07-10-2026). Cerrada: sin agenda ni próxima fecha. */
+  ciudad?: { slug: string; nombre: string; abierta: boolean }
   creditos: number
   reserva: { id: string; formato: string | null; empiezaEn: string | null; revelaEn: string | null; revelado: boolean; zonaHoraria?: string | null } | null
 }

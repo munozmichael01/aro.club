@@ -35,3 +35,14 @@ test('después, a donde diga el embudo', () => {
   assert.equal(M.destinoDeEstado('reservar'), '/cuenta')
   assert.equal(M.destinoDeEstado(null), '/cuenta')
 })
+
+test('fuera de Caracas: solo la ciudad, ni zonas ni lo demás de la puerta', () => {
+  const b = { ...M.vacio(), respuestas: { arraigo: ['volvio'], zonas: ['chacao'], dias: ['sabado-noche'], temas: ['viajes'] }, ciudad: 'valencia' }
+  assert.ok(M.esFuera(b))
+  assert.deepEqual(M.envios(b, new Date('2026-10-07T12:00:00Z')).map((e) => e.clave), ['arraigo'])
+  assert.ok(!M.esFuera({ ...b, ciudad: 'caracas' }))
+  const cs = [{ slug: 'caracas', nombre: 'Caracas', abierta: true }, { slug: 'valencia', nombre: 'Valencia', abierta: false }, { slug: 'otra', nombre: 'Otra ciudad', abierta: false }]
+  assert.deepEqual(M.otrasCiudades(cs).map((c) => c.slug), ['valencia', 'otra'])
+  assert.equal(M.nombreDeCiudad(cs, 'valencia'), 'Valencia')
+  assert.equal(M.nombreDeCiudad(cs, 'otra'), 'tu ciudad')
+})

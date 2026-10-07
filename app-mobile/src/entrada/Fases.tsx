@@ -141,6 +141,8 @@ export function FaseQuiz(p: {
   onAtras: () => void
   /** Pasos que vienen DESPUÉS de estas preguntas (el alta de la app pide luego el nacimiento): cuentan en el progreso, y la última ya no dice «Terminar». */
   pasosDespues?: number
+  /** Algo debajo de las opciones de esta pregunta (en las zonas del alta: «¿No vives en Caracas?»). */
+  pie?: ReactNode
 }) {
   const { estado: e, pregunta: q } = p
   const lista = completa(e, q)
@@ -181,6 +183,7 @@ export function FaseQuiz(p: {
           />
         ))}
       </View>
+      {p.pie}
       {e.error ? (
         <Texto variante="cuerpoChico" tono="avisoSobreVerde" accessibilityLiveRegion="polite" style={{ marginTop: 18 }}>
           {e.error}

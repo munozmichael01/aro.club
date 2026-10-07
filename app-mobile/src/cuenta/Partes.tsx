@@ -358,7 +358,22 @@ export function Agenda(p: {
   alFiltro: (formato: string) => void
   alAbrir: (id: string) => void
   alConfirmar: (id: string) => void
+  /** Vive en una ciudad que aún no abre: su nombre. Sin polaroids ni fechas de otra ciudad. */
+  ciudadCerrada?: string | null
 }) {
+  if (p.ciudadCerrada)
+    return (
+      <View>
+        <Texto variante="titulo" accessibilityRole="header" style={{ marginBottom: 12 }}>
+          {T.agenda.tituloCiudad(p.ciudadCerrada === 'Otra ciudad' ? 'tu ciudad' : p.ciudadCerrada)}
+        </Texto>
+        <View style={estilos.vacia}>
+          <Texto variante="cuerpo" tono="secundario">
+            {T.agenda.ciudadCerrada(p.ciudadCerrada === 'Otra ciudad' ? 'tu ciudad' : p.ciudadCerrada)}
+          </Texto>
+        </View>
+      </View>
+    )
   return (
     <View>
       <Texto variante="titulo" accessibilityRole="header" style={{ marginBottom: 12 }}>

@@ -42,6 +42,10 @@ export function crearServicioPuerta(api: Api) {
     /** `estado`: `creada`, `creada_sin_sesion` o `ya_existe` (un 200 también). */
     crearCuenta: (correo: string, clave: string, porDefecto: string) =>
       intentar<{ estado?: 'creada' | 'creada_sin_sesion' | 'ya_existe' }>(() => api.pedir('/cuenta', json({ correo, clave, origen: 'app' })), porDefecto),
+    /** Las ciudades, de la tabla `cities` (agente de la web, 07-10-2026). */
+    ciudades: () => intentar<{ ciudades: { slug: string; nombre: string; abierta: boolean }[] }>(() => api.pedir('/ciudades'), ''),
+    /** Su ciudad, en el perfil. Con la sesión ya abierta, sea cual sea la puerta (correo, Apple o Google). */
+    ponerCiudad: (slug: string, porDefecto: string) => intentar<{ ok?: boolean }>(() => api.pedir('/mi-perfil', json({ clave: 'ciudad', valor: slug })), porDefecto),
     /** En qué punto está: lo decide el embudo del servidor. */
     estado: () => intentar<{ estado: string }>(() => api.pedir('/mi-cuenta'), ''),
   }

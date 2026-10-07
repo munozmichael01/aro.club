@@ -77,12 +77,14 @@ const MESA: MiMesa = {
 }
 
 function Pantalla() {
-  const { estado = 'reservar', captura, varios } = useLocalSearchParams<{ estado?: string; captura?: string; varios?: string }>()
+  const { estado = 'reservar', captura, varios, ciudad } = useLocalSearchParams<{ estado?: string; captura?: string; varios?: string; ciudad?: string }>()
   const servicio = useMemo((): ReturnType<typeof crearServicioCuenta> => ({
     async cuenta() {
       if (estado === 'cargando') return new Promise(() => {})
       if (estado === 'fallo') return { ok: false, error: 'No pudimos cargar tu cuenta. Revisa tu conexión e inténtalo otra vez.' }
       const d = simulada(estado as EstadoCuenta)
+      // ?ciudad=Valencia: vive en una ciudad que aún no abre (sin agenda ni próxima fecha).
+      if (ciudad) return { ok: true, datos: { ...d, ciudad: { slug: 'x', nombre: ciudad, abierta: false }, agenda: [], proximaFecha: null } }
       return { ok: true, datos: captura ? deCaptura(d, !!varios) : d }
     },
     async mesa() {
@@ -95,7 +97,7 @@ function Pantalla() {
       await new Promise((ok) => setTimeout(ok, 700))
       return { ok: false, error: 'No te quedan encuentros.' }
     },
-  }), [estado, captura, varios]) // estable: si no, la carga se relanzaría en cada render
+  }), [estado, captura, varios, ciudad]) // estable: si no, la carga se relanzaría en cada render
   return (
     <Inicio
       key={estado}

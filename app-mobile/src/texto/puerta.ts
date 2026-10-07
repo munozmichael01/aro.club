@@ -31,3 +31,20 @@ export const guardando = {
   fallo: 'Tu cuenta está creada, pero no pudimos guardar tus respuestas. Inténtalo otra vez.',
   reintentar: 'Reintentar',
 }
+
+/**
+ * Quien no vive en Caracas (como en la landing, «¿No vives en Caracas?»).
+ * Solo se guarda la ciudad: nunca zonas de una ciudad que no está abierta.
+ */
+export const fuera = {
+  enlace: '¿No vives en Caracas?',
+  ayuda: 'Dinos dónde estás. Abrimos ciudad cuando hay suficiente gente que pueda llegar a la misma mesa el mismo día.',
+  etiqueta: 'Tu ciudad',
+  elige: 'Elige tu ciudad',
+  seguir: (ciudad: string) => `Seguir con ${ciudad}`,
+  titulo: (ciudad: string) => `Anotado. Eres de los primeros de ${ciudad}.`,
+  cuerpo: (ciudad: string) =>
+    `Abrimos ciudad cuando hay suficiente gente que pueda llegar a la misma mesa el mismo día, así que no te damos fecha: te avisamos en cuanto ${ciudad} llegue a ese número.`,
+  completar: 'Completar mi perfil igual',
+  noGuardada: 'No pudimos guardar tu ciudad. Inténtalo otra vez.',
+}

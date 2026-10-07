@@ -25,6 +25,18 @@ function Pantalla() {
       guardar: async (envios) => (console.log('[catálogo] guardar', JSON.stringify(envios)), { ok: true, datos: true }),
       crearCuenta: async () => ({ ok: false, status: 409, error: 'Ese correo ya tiene cuenta.' }),
       estado: async () => ({ ok: true, datos: { estado: 'datos' } }),
+      ciudades: async () => ({
+        ok: true,
+        datos: {
+          ciudades: [
+            { slug: 'caracas', nombre: 'Caracas', abierta: true },
+            { slug: 'valencia', nombre: 'Valencia', abierta: false },
+            { slug: 'maracaibo', nombre: 'Maracaibo', abierta: false },
+            { slug: 'otra', nombre: 'Otra ciudad', abierta: false },
+          ],
+        },
+      }),
+      ponerCiudad: async () => ({ ok: true, datos: { ok: true } }),
     }),
     [],
   )

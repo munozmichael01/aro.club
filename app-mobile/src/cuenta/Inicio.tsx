@@ -171,6 +171,7 @@ export function Inicio(p: {
 
         <Seccion onLayout={(y) => (yAgenda.current = y)}>
           <Agenda
+            ciudadCerrada={datos?.ciudad && !datos.ciudad.abierta ? datos.ciudad.nombre : null}
             filtros={vista.filtros}
             grupos={vista.grupos}
             cuandoSeSabe={cuando}

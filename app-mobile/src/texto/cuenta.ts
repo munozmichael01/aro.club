@@ -144,6 +144,10 @@ export const agenda = {
   proximamente: 'Próximamente',
   todos: 'Todos',
   todoLoQueViene: 'Todo lo que viene',
+  /** Quien vive en una ciudad que aún no abre (no se le dice «Caracas» ni se le empuja a reservar). */
+  tituloCiudad: (ciudad: string) => `Lo que viene en ${ciudad}`,
+  ciudadCerrada: (ciudad: string) =>
+    `Todavía no abrimos en ${ciudad}. Abrimos ciudad cuando hay suficiente gente que pueda llegar a la misma mesa el mismo día, y te avisamos en cuanto pase.`,
   zonaPorConfirmar: 'Zona por confirmar',
   noPudimos: 'No pudimos apuntarte.',
 }

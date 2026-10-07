@@ -61,7 +61,8 @@
     "prueba:cancelar": "tsx pruebas/cancelar-contra-la-api.mjs",
     "prueba:puerta": "tsx pruebas/puerta-contra-la-api.mjs",
     "prueba:alta-app": "tsx pruebas/alta-app-contra-la-api.mjs",
-    "prueba:embudo": "tsx pruebas/embudo-contra-la-api.mjs"
+    "prueba:embudo": "tsx pruebas/embudo-contra-la-api.mjs",
+    "prueba:ciudad": "tsx pruebas/ciudad-contra-la-api.mjs"
   },
   "private": true,
   "overrides": {
