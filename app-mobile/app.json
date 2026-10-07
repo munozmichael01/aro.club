@@ -3,7 +3,7 @@
     "name": "Aro Club",
     "slug": "aro-club",
     "scheme": "aroclub",
-    "version": "1.0.0",
+    "version": "1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
