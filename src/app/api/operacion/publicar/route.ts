@@ -339,9 +339,32 @@ export async function POST(request: Request) {
   // una mesa no puede dejar dos avisos al mismo teléfono, y el índice de
   // «uno por persona y fecha» ya existe para eso.
   if (juego.length) {
-    const { error } = await admin
+    // NO es un `upsert`, y no puede serlo.
+    //
+    // `scheduled_emails_una_por_persona` es un índice PARCIAL —solo cubre los
+    // tipos que anuncian algo una vez— y Postgres solo acepta un índice
+    // parcial como árbitro de un ON CONFLICT si la sentencia repite su
+    // WHERE. Ni PostgREST ni supabase-js lo emiten, así que el `upsert`
+    // fallaba entero con 42P10 y el juego no se encolaba NUNCA. No se vio
+    // porque el error aquí solo se registra: publicar devolvía 200 y el
+    // panel decía PUBLICADA con la cola sin una sola fila de juego.
+    //
+    // Se lee primero y se inserta lo que falta, que es lo que ya hace el
+    // aviso de la mesa unas líneas más arriba. El índice sigue haciendo
+    // falta: es lo que impide dos avisos al mismo teléfono si dos pestañas
+    // publican a la vez, y ahí el 23505 es la red, no el camino.
+    const { data: yaTienen } = await admin
       .from('scheduled_emails')
-      .upsert(juego as never, { onConflict: 'profile_id,kind,event_id', ignoreDuplicates: true })
+      .select('profile_id')
+      .eq('event_id', corrida.event_id)
+      .eq('kind', 'juego' as never)
+
+    const conJuego = new Set((yaTienen ?? []).map((f) => f.profile_id))
+    const nuevas = juego.filter((f) => !conJuego.has(f.profile_id))
+
+    const { error } = nuevas.length
+      ? await admin.from('scheduled_emails').insert(nuevas as never)
+      : { error: null }
     // No tumba la publicación: las mesas ya están puestas y el aviso del
     // juego es lo último que debe impedir que alguien sepa dónde cena.
     if (error) console.error('[publicar] no se encoló el juego', error)

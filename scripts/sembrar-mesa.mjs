@@ -11,14 +11,30 @@
  *       jueves que viene— y siembra DOCE personas. Para probar el reparto
  *       en frío, sin tocar ninguna fecha real.
  *
- *   node scripts/sembrar-mesa.mjs --fecha <uuid>
- *       Siembra CINCO acompañantes sobre una fecha que YA EXISTE. Es el
- *       modo para acompañar a un tester que reservó en la fecha abierta de
- *       verdad: con él son seis y la mesa se puede repartir. No crea
- *       restaurante ni fecha, y esa fecha NUNCA se borra: no es suya.
+ *   node scripts/sembrar-mesa.mjs --fecha <uuid> [--cuantos N]
+ *       Siembra acompañantes sobre una fecha que YA EXISTE —cinco por
+ *       defecto—. Es el modo para acompañar a un tester que reservó en la
+ *       fecha abierta de verdad: con él son seis y la mesa se puede
+ *       repartir. No crea restaurante ni fecha, y esa fecha NUNCA se borra:
+ *       no es suya.
+ *
+ *       `--cuantos` existe porque a veces los de verdad son DOS —dos
+ *       testers que quieren probar juntos—, y entonces sobran acompañantes:
+ *       siete personas en una mesa de seis dejan a uno fuera, y quién se
+ *       queda fuera lo decide el algoritmo. Puede ser justamente el tester.
  *
  *   node scripts/sembrar-mesa.mjs --borrar
  *       Deja la base como estaba: quita SOLO lo que sembró este guion.
+ *
+ *   ... --fecha <uuid> --sin-borrar --tanda 1
+ *       Siembra sin barrer antes. Hace falta porque el barrido de arriba no
+ *       distingue siembras: se lleva TODAS las cuentas del dominio de prueba
+ *       y la fecha anotada en el rastro, que puede ser una que nadie ha
+ *       decidido tirar —la del 29, con sus doce cuentas y el bloqueo que
+ *       Michael dejó puesto a mano—. Sembrar sobre una fecha ajena no tiene
+ *       por qué cobrarse la siembra anterior, y quien pide `--sin-borrar` se
+ *       hace cargo de limpiar lo suyo. `--tanda` le da correos y teléfonos
+ *       propios, que es lo que hace que las dos siembras convivan.
  *
  * SOBRE EL BORRADO. La versión anterior borraba con
  * `events?city=eq.Caracas&price_usd=eq.8`, un filtro que no distingue lo
@@ -90,7 +106,7 @@ const GENTE = [
 ]
 
 /**
- * Los cinco que acompañan a un tester, y por qué esos cinco.
+ * Los que acompañan a un tester, y por qué esos y en ese orden.
  *
  * Se eligen para que la mesa de seis sea *sentable* y el panel no marque
  * REVISAR por culpa de la siembra: tres hombres y dos mujeres —el tester
@@ -101,8 +117,15 @@ const GENTE = [
  *
  * Si el tester fuese hombre, el equilibrio de género sale 4/2 y hay que
  * cambiar la selección. Se dice aquí para que no sorprenda en el panel.
+ *
+ * El ORDEN importa desde que existe `--cuantos`: va alternando mujer y
+ * hombre para que cortar la lista por cualquier sitio siga dejando una mesa
+ * sentable. Los cinco son los mismos de antes; cortados a cuatro quedan dos
+ * y dos, que es lo que hace falta cuando los de verdad son una mujer y un
+ * hombre. Ordenarlos por comodidad y cortar luego es cómo se llega a una
+ * mesa de cinco hombres sin que nadie lo haya decidido.
  */
-const CINCO = [1, 3, 5, 0, 4]
+const CINCO = [1, 0, 5, 4, 3]
 
 /**
  * La energía social de cada uno de los cinco, por su índice en GENTE.
@@ -130,7 +153,23 @@ const RESPUESTAS_BASE = {
   dieta: ['ninguna'], idiomas: ['es'], momento: 'soltero-sin-hijos',
 }
 
-const correoDe = (i) => `mesa${i + 1}@${DOMINIO}`
+/**
+ * El correo y el teléfono de cada acompañante, por tanda.
+ *
+ * La tanda existe por `--sin-borrar`: una siembra anterior sigue ocupando
+ * `mesa1@…` Y `+584141234501`, y las dos columnas son únicas —`waitlist.email`
+ * y `profiles.phone_e164`—. Cambiar solo el correo no vale: se pasa el primer
+ * choque y revienta en el segundo, con la cuenta de auth ya creada. Las dos
+ * se mueven juntas o no se mueve ninguna.
+ *
+ * El teléfono mueve las TRES últimas cifras en centenas: 502 → 602 en la
+ * tanda 1. Las primeras siete se dejan igual para que siga pareciendo un
+ * celular venezolano, que es lo que validan las pantallas.
+ */
+const correoDe = (i, tanda = 0) => `mesa${i + 1}${tanda ? `-${tanda}` : ''}@${DOMINIO}`
+
+const telDe = (tel, tanda = 0) =>
+  tanda ? tel.slice(0, 7) + String(Number(tel.slice(7)) + tanda * 100) : tel
 
 function leerRastro() {
   if (!existsSync(RASTRO)) return null
@@ -202,7 +241,7 @@ async function fechaExistente(id) {
   return filas[0]
 }
 
-async function sembrar(fechaAjena) {
+async function sembrar(fechaAjena, cuantos = CINCO.length, tanda = 0) {
   let eventoId
   let rastro = { evento: null, restaurante: null }
 
@@ -273,19 +312,19 @@ async function sembrar(fechaAjena) {
   }
 
   // --- la gente ---
-  const indices = fechaAjena ? CINCO : GENTE.map((_, i) => i)
+  const indices = fechaAjena ? CINCO.slice(0, cuantos) : GENTE.map((_, i) => i)
   const perfiles = []
 
   for (const i of indices) {
     const [nombre, trato, nacimiento, genero, tel, sector, empresa, arraigo, intereses] = GENTE[i]
-    const correo = correoDe(i)
+    const correo = correoDe(i, tanda)
 
     await rest('waitlist', {
       method: 'POST',
       body: JSON.stringify({
         email: correo, city_slug: 'caracas', source: 'siembra',
         full_name: nombre, display_name: trato, birthdate: nacimiento,
-        gender: genero, phone_e164: `+58${tel}`,
+        gender: genero, phone_e164: `+58${telDe(tel, tanda)}`,
         rootedness: arraigo, zones: ['mercedes', 'chacao'], days: ['jue'],
         conversation_topics: ['cocina', 'viajes'],
         profile_answers: {
@@ -382,5 +421,37 @@ if (iFecha >= 0 && !fechaAjena) {
   process.exit(1)
 }
 
-await borrar()
-if (!soloBorrar) await sembrar(fechaAjena)
+const iCuantos = args.indexOf('--cuantos')
+const cuantos = iCuantos >= 0 ? Number(args[iCuantos + 1]) : CINCO.length
+
+if (iCuantos >= 0 && !(cuantos >= 1 && cuantos <= CINCO.length)) {
+  console.error(`--cuantos va de 1 a ${CINCO.length}`)
+  process.exit(1)
+}
+
+if (iCuantos >= 0 && iFecha < 0) {
+  // Sin `--fecha` siembra las doce a propósito, para que el reparto tenga
+  // que partir en dos mesas. Recortarlas ahí seria otra prueba.
+  console.error('--cuantos solo tiene sentido con --fecha')
+  process.exit(1)
+}
+
+const sinBorrar = args.includes('--sin-borrar')
+const iTanda = args.indexOf('--tanda')
+const tanda = iTanda >= 0 ? Number(args[iTanda + 1]) : 0
+
+if (iTanda >= 0 && !(tanda >= 1 && tanda <= 4)) {
+  console.error('--tanda va de 1 a 4: más allá el teléfono deja de ser un celular')
+  process.exit(1)
+}
+
+if (sinBorrar && soloBorrar) {
+  console.error('--sin-borrar y --borrar dicen lo contrario')
+  process.exit(1)
+}
+
+// En modo `--fecha` el rastro no se escribe nunca, así que saltarse el
+// barrido deja el de la siembra anterior intacto: es exactamente lo que se
+// busca.
+if (!sinBorrar) await borrar()
+if (!soloBorrar) await sembrar(fechaAjena, cuantos, tanda)

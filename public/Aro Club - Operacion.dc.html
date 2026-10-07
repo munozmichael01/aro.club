@@ -1522,9 +1522,27 @@ class Component extends DCLogic {
   }
 
   /** La fecha que se está trabajando ahora mismo. */
+  /**
+   * Sobre qué fecha actúan los botones.
+   *
+   * LA MISMA REGLA QUE PINTA EL DETALLE, y por eso está escrita aquí en vez
+   * de `fs[0]`. El render ya la tenía —«la primera que SE VE», no la primera
+   * de todas—, pero las acciones se quedaron con la vieja, así que el panel
+   * enseñaba una fecha y los botones trabajaban sobre otra.
+   *
+   * Pasó de verdad: al entrar, `fechaRep` es 0 y la primera de la lista es
+   * una cena de agosto que está oculta. La pantalla decía «Cena · martes 6»
+   * y «Volver a repartir» repartió agosto. No rompió nada porque una
+   * propuesta no se materializa hasta publicar, pero el operador ve que no
+   * pasa nada y vuelve a darle. Con `publicar` delante, el mismo descuadre
+   * publica la fecha equivocada.
+   */
   fechaElegida() {
     const fs = this.state.fechas || [];
-    return fs[this.state.fechaRep] || fs[0] || null;
+    const seVe = (f) => !!this.state.verPasadas || !f.pasada;
+    const elegida = fs[this.state.fechaRep];
+    if (elegida && seVe(elegida)) return elegida;
+    return fs.filter(seVe)[0] || fs[0] || null;
   }
 
   // --- acciones --------------------------------------------------------

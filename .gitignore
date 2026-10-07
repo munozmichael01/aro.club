@@ -60,6 +60,7 @@ carrousel/
 # commitearlo hace que `--borrar` de otra máquina apunte a ids que no son
 # suyos. Se coló dos veces en commits ajenos antes de llegar aquí.
 .sembrar-mesa.json
+.mesa-del-juego.json
 .escena.json
 
 # Lo que baja `vercel env pull`: son las variables de produccion enteras, la
