@@ -163,7 +163,6 @@
     -->
     <div id="agenda" style="margin-top:clamp(32px,4.4vw,48px);scroll-margin-top:80px">
       <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:12px">Lo que viene en Caracas</div>
-      <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;max-width:54ch;margin:0 0 18px;text-wrap:pretty">Te apuntas a una fecha, no a una mesa. <em style="font-weight:600;color:#14342A">Cenas siempre con cinco personas.</em> Los apuntados de cada fecha se reparten en mesas de seis por toda la zona, y {{ cuandoSeSabe }} sabes en cuál te tocó. Cada fecha se cierra {{ horasCierre }} horas antes.</p>
 
       <div class="carril" style="display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;scroll-padding-left:20px;scroll-snap-type:x mandatory;margin:0 -20px 20px;padding:4px 20px 10px">
         <sc-for list="{{ filtros }}" as="f" hint-placeholder-count="5">
@@ -220,6 +219,13 @@
                       </button>
                     </sc-for>
                   </div>
+
+                  <!-- Como funciona, aqui y no encima de la agenda.
+                       Arriba eran 120px de explicacion entre el titulo y la
+                       primera fecha, y empujaban la primera fecha fuera de la
+                       pantalla en un telefono. Aqui llega cuando hace falta:
+                       justo antes de decir lo que se paga. -->
+                  <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:16px;max-width:50ch;text-wrap:pretty">{{ comoFunciona }}</div>
 
                   <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:14px 0;border-top:1px solid rgba(20,52,42,.12);border-bottom:1px solid rgba(20,52,42,.12);margin-bottom:16px">
                     <span style="flex:1 1 auto;font:500 14px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ ev.cargo }}</span>
@@ -1000,6 +1006,10 @@ class Component extends DCLogic {
       // párrafo, el de Legal y el correo de fecha cancelada diciendo otra cosa
       // que el panel al abrir la fecha.
       horasCierre: AroReglas.HORAS_DE_CIERRE,
+      // El MISMO texto que la app (`texto/cuenta.ts`, `agenda.comoFunciona`).
+      // Sin el dia escrito: en la hoja la fecha ya esta a la vista dos lineas
+      // mas arriba, y repetirla es decirle a alguien lo que acaba de leer.
+      comoFunciona: 'Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona, y antes de la cena te decimos en cuál te tocó. La fecha se cierra ' + AroReglas.HORAS_DE_CIERRE + ' horas antes.',
       cuandoSeSabe: (() => {
         const iso = d && d.proximaFecha && d.proximaFecha.revelaEn;
         const dia = iso && window.AroReglas ? window.AroReglas.diaDe(iso) : null;

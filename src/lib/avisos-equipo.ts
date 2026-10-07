@@ -101,25 +101,87 @@ export function componerAviso(a: Aviso): { asunto: string; html: string } {
  * y lo que falla es nuestro aviso. Se registra, que es lo que permite darse
  * cuenta.
  */
+/**
+ * A quién: el buzón del equipo MÁS quien tenga rol en el panel.
+ *
+ * Así, quien entra al equipo empieza a recibirlos sin que nadie toque una
+ * variable de entorno ni despliegue nada, y quien sale deja de recibirlos al
+ * quitarle el rol. Una lista escrita en la configuración es una lista que se
+ * queda vieja justo cuando importa: el día que entra alguien nuevo.
+ *
+ * Sin repetir, y sin lápidas: `deleted_at` marca a quien se dio de baja, y su
+ * correo ya no es suyo.
+ */
+async function aQuien(): Promise<string[]> {
+  const vistos = new Set<string>()
+  const lista: string[] = []
+  const meter = (correo?: string | null) => {
+    const c = (correo ?? '').trim().toLowerCase()
+    if (!c || vistos.has(c)) return
+    vistos.add(c)
+    lista.push(c)
+  }
+
+  meter(AVISOS_A)
+
+  const { data, error } = await createAdminClient()
+    .from('profiles')
+    .select('email, role')
+    .in('role', ['admin', 'ops'])
+    .is('deleted_at', null)
+
+  // Si la consulta falla, el aviso sale igual al buzón del equipo. Quedarse
+  // sin avisar a nadie porque no se pudo leer quién más debía enterarse es
+  // perder lo importante por lo accesorio.
+  if (error) console.error('[avisos] no se pudo leer el equipo', error)
+  for (const p of data ?? []) meter(p.email)
+
+  return lista
+}
+
+/**
+ * Manda el aviso, o lo devuelve sin mandarlo.
+ *
+ * UNO POR DESTINATARIO y no un solo correo con todos en copia: así nadie ve
+ * la lista de quién más lo recibe, y un `reply all` no existe. Son pocos.
+ *
+ * Un fallo aquí NO tumba lo que lo disparó. Quien acaba de subir su cédula no
+ * puede ver un error porque nuestro buzón esté caído: lo suyo quedó guardado,
+ * y lo que falla es nuestro aviso. Se registra, que es lo que permite darse
+ * cuenta.
+ */
 export async function mandarAviso(
   a: Aviso,
   seco = false,
-): Promise<{ estado: string; asunto: string; html: string }> {
+): Promise<{ estado: string; asunto: string; html: string; a: string[] }> {
   const { asunto, html } = componerAviso(a)
-  if (seco) return { estado: 'seco', asunto, html }
+  const destinos = await aQuien()
+  if (seco) return { estado: 'seco', asunto, html, a: destinos }
 
-  try {
-    const r = await enviar(AVISOS_A, asunto, html)
-    if (r.estado !== 'enviado') {
-      console.error(
-        '[avisos] el aviso al equipo NO salió · ' +
-          JSON.stringify({ estado: r.estado, asunto }),
-      )
+  const estados: string[] = []
+  for (const destino of destinos) {
+    try {
+      const r = await enviar(destino, asunto, html)
+      estados.push(r.estado)
+      if (r.estado !== 'enviado') {
+        console.error(
+          '[avisos] el aviso al equipo NO salió · ' +
+            JSON.stringify({ estado: r.estado, asunto, a: destino }),
+        )
+      }
+    } catch (e) {
+      estados.push('error')
+      console.error('[avisos] el aviso al equipo reventó para ' + destino, e)
     }
-    return { estado: r.estado, asunto, html }
-  } catch (e) {
-    console.error('[avisos] el aviso al equipo reventó', e)
-    return { estado: 'error', asunto, html }
+  }
+
+  // «enviado» si llegó a alguno. Que uno de cinco buzones rebote no convierte
+  // el aviso en un fallo.
+  return {
+    estado: estados.includes('enviado') ? 'enviado' : (estados[0] ?? 'sin-destinatarios'),
+    asunto,
+    html,
+    a: destinos,
   }
 }
 
@@ -143,7 +205,7 @@ async function quienEs(perfilId: string) {
 export async function avisoDeVerificacion(
   perfilId: string,
   seco = false,
-): Promise<{ estado: string; asunto: string; html: string } | null> {
+): Promise<{ estado: string; asunto: string; html: string; a: string[] } | null> {
   const p = await quienEs(perfilId)
   if (!p) return null
 
@@ -198,7 +260,7 @@ export async function avisoDeVerificacion(
 export async function avisoDePago(
   pagoId: string,
   seco = false,
-): Promise<{ estado: string; asunto: string; html: string } | null> {
+): Promise<{ estado: string; asunto: string; html: string; a: string[] } | null> {
   const admin = createAdminClient()
   // El NOMBRE del método, no su id. «pm» no le dice nada a quien abre el
   // banco a buscar la transferencia; «Pago Móvil» sí.

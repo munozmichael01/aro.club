@@ -85,7 +85,7 @@
 
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:26px">
         <sc-for list="{{ cuenta }}" as="c" hint-placeholder-count="3">
-          <div style="border-radius:22px;background:#FFFBF0;padding:clamp(18px,2.4vw,24px)">
+          <div id="{{ c.ancla }}" style="border-radius:22px;background:#FFFBF0;padding:clamp(18px,2.4vw,24px);scroll-margin-top:90px">
             <div style="font:400 clamp(19px,2.2vw,23px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.titulo }}</div>
             <div style="font:400 15px/1.65 'Inter Tight',sans-serif;color:#456352;margin-top:8px;max-width:62ch;text-wrap:pretty">{{ c.cuerpo }}</div>
           </div>
@@ -119,6 +119,28 @@ class Component extends DCLogic {
    */
   state = { abierta: -1 };
 
+  /**
+   * Llevar al ancla a mano.
+   *
+   * Esta pantalla la pinta DCLogic DESPUES de que el navegador haya mirado
+   * el `#` de la direccion, asi que cuando el navegador busca el elemento
+   * todavia no existe y se queda arriba. Abrir
+   * `/ayuda#borrar-mi-cuenta` —que es el enlace que lleva la ficha de Play—
+   * dejaba a la persona en la cabecera, buscando.
+   *
+   * Un solo intento tras el primer pintado, y sin tocar la direccion: si el
+   * ancla no existe no pasa nada, que es lo que tiene que pasar con un
+   * enlace viejo.
+   */
+  componentDidMount() {
+    const id = String(window.location.hash || '').replace('#', '');
+    if (!id) return;
+    requestAnimationFrame(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ block: 'start' });
+    });
+  }
+
   renderVals() {
     const faq = AroReglas.FRECUENTES.map((q, i) => {
       const on = this.state.abierta === i;
@@ -134,10 +156,18 @@ class Component extends DCLogic {
     // Los tres son cosas distintas y se confunden: dejar de recibir correos
     // no es irse, e irse no devuelve el dinero de una cena a la que fuiste.
     const cuenta = [
-      ['Dejar de recibir correos', 'En Mi cuenta → Ajustes de correo apagas los que quieras, uno a uno. Los acuses de tu pago, tu mesa y tu cancelacion siguen llegando: sin ellos no sabrias donde es tu cena. Tambien hay un enlace de baja al pie de cada correo, y funciona sin entrar a la cuenta.'],
-      ['Borrar la cuenta entera', 'Desde Mi cuenta, al final, en «Borrar mi cuenta», tanto en la web como en la app. Se borran tus respuestas, tus documentos de identidad y tu historial de mesas. No se borran los registros de facturacion, que la ley obliga a conservar. Si prefieres que lo hagamos nosotros, escribenos desde el correo con el que te registraste.'],
-      ['Cancelar una cena', 'Desde tu mesa, hasta 24 horas antes: recuperas el credito y lo puedes usar en otra fecha. Despues de esa hora el puesto ya esta contado para armar el grupo, asi que el credito no vuelve.']
-    ].map((c) => ({ titulo: c[0], cuerpo: c[1] }));
+      ['Dejar de recibir correos', 'En Mi cuenta → Ajustes de correo apagas los que quieras, uno a uno. Los acuses de tu pago, tu mesa y tu cancelacion siguen llegando: sin ellos no sabrias donde es tu cena. Tambien hay un enlace de baja al pie de cada correo, y funciona sin entrar a la cuenta.', 'dejar-de-recibir-correos'],
+      ['Borrar la cuenta entera', 'Desde Mi cuenta, al final, en «Borrar mi cuenta», tanto en la web como en la app. Si no puedes entrar, escríbenos a hola@aro.club desde la dirección de tu cuenta y lo hacemos nosotros: te confirmamos cuando esté. Se borran de verdad tus respuestas del cuestionario y los documentos con los que te verificamos. No se borran las facturas, porque la ley obliga a conservarlas, ni un reporte que otra persona haya hecho sobre una cena, porque protege a alguien más; los dos quedan sin tu nombre ni tu correo. Tu dirección se libera, así que puedes volver a registrarte con ella cuando quieras.', 'borrar-mi-cuenta'],
+      ['Cancelar una cena', 'Desde tu mesa, hasta 24 horas antes: recuperas el credito y lo puedes usar en otra fecha. Despues de esa hora el puesto ya esta contado para armar el grupo, asi que el credito no vuelve.', 'cancelar-una-cena']
+    // El ANCLA de cada una. Play exige una direccion publica donde se
+    // explique como pedir el borrado de la cuenta sin instalar la app, y una
+    // pagina entera no sirve: tiene que caer en la respuesta. De ahi sale
+    // `/ayuda#borrar-mi-cuenta`.
+    //
+    // Escrita a mano y no derivada del titulo: un slug calculado cambia el
+    // dia que Design reescriba el titulo, y entonces el enlace que ya esta
+    // en la ficha de Play deja de llevar a ningun sitio sin que falle nada.
+    ].map((c) => ({ titulo: c[0], cuerpo: c[1], ancla: c[2] }));
 
     return {
       faq, cuenta,

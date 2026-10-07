@@ -617,7 +617,7 @@
           </sc-for>
         </div>
         <sc-if value="{{ hayCiudad }}" hint-placeholder-val="{{ false }}">
-          <a href="#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;border:1px solid rgba(20,52,42,.24);color:#1B5138;font:600 16px/1 'Inter Tight',sans-serif;margin-top:20px;transition:all 220ms ease" style-hover="background:#1B5138;color:#FAF3E4">Avísame cuando abra ahí</a>
+          <button onClick="{{ avisarDeCiudad }}" disabled="{{ ciudadGuardada }}" style="{{ botonCiudad }}">{{ textoCiudad }}</button>
         </sc-if>
       </div>
     </div>
@@ -789,6 +789,7 @@ class Component extends DCLogic {
   state = {
     faq: -1, fase: 'correo', correo: '', error: '', ahora: Date.now(),
     paso: 0, arraigo: -1, zonas: [], planes: [], temas: [], ciudad: -1, guardandoQuiz: false, falloQuiz: '',
+    ciudadGuardando: false, ciudadGuardada: false, ciudadFallo: '',
     sesion: null, sesionSabida: false
   };
 
@@ -999,6 +1000,43 @@ class Component extends DCLogic {
     }));
   }
 
+  /**
+   * Apuntar la ciudad de quien no vive aqui.
+   *
+   * ESTO ANTES NO GUARDABA NADA. El boton era un enlace a `#registro`, y la
+   * ciudad solo llegaba a la base si se elegia ANTES de dejar el correo:
+   * `/api/lead` solo la escribe en la llamada del correo, y la segunda —la de
+   * las respuestas— sale antes por un `return`. Quien bajaba, veia la pregunta
+   * y elegia su ciudad despues, se quedaba con la polaroid marcada en pantalla
+   * y nada guardado. Y el dia que abramos esa ciudad, a esa persona no habria
+   * a quien avisar.
+   *
+   * Con correo ya dado se guarda aqui mismo. Sin correo todavia, lleva al
+   * recuadro del correo: la ciudad viaja en esa primera llamada, que es el
+   * camino que si funcionaba.
+   *
+   * Manda SOLO correo y ciudad. Sin zonas: las zonas son de Caracas, y
+   * guardarselas a quien vive en Merida es apuntarla a una mesa que no existe.
+   */
+  avisarDeCiudad = () => {
+    if (this.state.ciudadGuardando || this.state.ciudadGuardada) return;
+    if (!this.state.yaTienePuesto) { window.location.hash = 'registro'; return; }
+
+    this.setState({ ciudadGuardando: true, ciudadFallo: '' });
+    this.guardarLead({}).then((r) => {
+      // `repetido` es la respuesta BUENA aqui: significa que el correo ya
+      // estaba y que se le acaba de actualizar la ciudad.
+      const ok = r.ok && (!r.j || !r.j.error);
+      this.setState({
+        ciudadGuardando: false,
+        ciudadGuardada: ok,
+        ciudadFallo: ok ? '' : 'No pudimos guardarlo. Inténtalo otra vez.'
+      });
+    }).catch(() => {
+      this.setState({ ciudadGuardando: false, ciudadFallo: 'No pudimos guardarlo. Inténtalo otra vez.' });
+    });
+  }
+
   recordarSesion(j) {
     // Sin token no hay sesión que recordar. Guardar `{correo}` a secas dejaba
     // una sesión coja que otras pantallas leen y dan por buena.
@@ -1008,6 +1046,12 @@ class Component extends DCLogic {
         correo: (this.state.correo || '').trim(), token: j.token
       }));
     } catch (e) { /* modo privado */ }
+    // Y en el estado, no solo en disco. `yaTienePuesto` lo ponia solo
+    // `recuperarPuesto`, que corre al CARGAR: quien dejaba el correo en esta
+    // misma visita seguia contando como que no lo habia dejado, y el boton de
+    // «avisame cuando abra ahi» lo mandaba al recuadro del correo que acababa
+    // de rellenar en vez de guardarle la ciudad.
+    this.setState({ yaTienePuesto: true });
   }
 
   enviarCorreo = () => {
@@ -1306,6 +1350,18 @@ class Component extends DCLogic {
       textoChipZonas: nz ? nz + ' DE ' + MAX_ZONAS + ' MARCADAS' : 'MARCA HASTA ' + MAX_ZONAS,
       hayZonas: nz > 0,
       hayCiudad: this.state.ciudad >= 0,
+      avisarDeCiudad: this.avisarDeCiudad,
+      ciudadGuardada: this.state.ciudadGuardada ? 'true' : null,
+      textoCiudad: this.state.ciudadGuardada
+        ? 'Anotado. Te escribimos cuando abra.'
+        : (this.state.ciudadGuardando
+          ? 'Guardando…'
+          : (this.state.ciudadFallo || 'Avísame cuando abra ahí')),
+      botonCiudad: 'display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;border:1px solid '
+        + (this.state.ciudadGuardada ? 'transparent' : 'rgba(20,52,42,.24)')
+        + ';background:' + (this.state.ciudadGuardada ? 'rgba(27,81,56,.1)' : 'transparent')
+        + ';color:#1B5138;font:600 16px/1 \'Inter Tight\',sans-serif;margin-top:20px;cursor:'
+        + (this.state.ciudadGuardada ? 'default' : 'pointer') + ';transition:all 220ms ease',
       // Al llegar al tope no pasaba nada y no se decia por que: tocabas la
       // sexta y la pantalla se quedaba muda, que se lee como que no
       // funciona.
