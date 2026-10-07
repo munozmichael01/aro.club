@@ -8,6 +8,8 @@ import { trasEntrar } from '@/lib/tras-entrar'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
+import { ciudadValida } from '@/lib/ciudades'
+
 /**
  * Creación de cuenta al cerrar el cuestionario (HANDOFF-3 §5).
  *
@@ -60,6 +62,18 @@ const cuerpo = z.object({
   token: z.string().min(1).nullish(),
   /** De dónde sale el alta, para no perder la atribución. */
   origen: z.enum(['landing', 'datos', 'app']).nullish(),
+  /**
+   * Su ciudad. Solo sirve en el alta SIN lead, que es la de la app.
+   *
+   * En la web la ciudad se dijo en la landing y viaja en el lead; aquí se
+   * ignora a propósito, porque pisarla con lo que mande el cliente sería
+   * dejar que la última pantalla le cambie la ciudad a quien ya la eligió.
+   *
+   * Es el slug, nunca el nombre: `city` fue texto libre en paralelo y ya
+   * divergía en mayúsculas. Una ciudad escrita a mano no se cruza con sus
+   * zonas.
+   */
+  ciudad: z.string().regex(/^[a-z-]+$/).max(40).nullish(),
   // Ocho es el mínimo del contrato. El máximo es de bcrypt, que trunca a 72.
   clave: z.string().min(8).max(72),
 })
@@ -80,7 +94,15 @@ export async function POST(request: Request) {
     )
   }
 
-  const { correo, token, clave, origen } = parsed.data
+  const { correo, token, clave, origen, ciudad } = parsed.data
+
+  // Se comprueba ANTES de crear la cuenta de auth. Al revés dejaría un
+  // usuario sin perfil por un slug mal escrito, que es justo el que bloquea
+  // el correo después.
+  const ciudadFinal = await ciudadValida(ciudad)
+  if (!ciudadFinal) {
+    return NextResponse.json({ error: 'Esa ciudad no está en la lista.' }, { status: 400 })
+  }
 
   // Con llave se comprueba. Sin ella, se sigue: es el camino de la app, donde
   // no hay lead porque las respuestas van después.
@@ -198,6 +220,7 @@ export async function POST(request: Request) {
         usuarioId: creado.user.id,
         correo,
         origen: origen ?? 'app',
+        ciudad: ciudadFinal,
       })
     : null
 

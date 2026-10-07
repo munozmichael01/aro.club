@@ -817,6 +817,21 @@ class Component extends DCLogic {
         this.forceUpdate();
       })
       .catch(() => { /* se quedan las de arriba: nadie deja de poder contestar */ });
+
+    // Las ciudades, de la tabla `cities`. Caracas se cae de la lista: esta
+    // pregunta solo sale después de decir que NO se vive aquí, así que
+    // ofrecerla sería ofrecer lo contrario de lo que acaba de decir.
+    fetch('/api/ciudades')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin ciudades'))))
+      .then((d) => {
+        if (!d.ciudades || !d.ciudades.length) return;
+        const otras = d.ciudades.filter((c) => c.slug !== 'caracas');
+        if (!otras.length) return;
+        this.CIUDADES = otras.map((c) => [c.nombre, c.slug]);
+        this.forceUpdate();
+      })
+      .catch(() => { /* se queda el respaldo de arriba */ });
+
     this.armar();
     this.parallax();
     this.leerSesion();
@@ -934,7 +949,22 @@ class Component extends DCLogic {
       .catch(() => this.setState({ sesionSabida: true }));
   }
 
-  CIUDADES = ['valencia', 'maracaibo', 'margarita', 'barquisimeto', 'merida', 'puerto-la-cruz', 'otra'];
+  /**
+   * Las ciudades, como PARES. Una sola lista.
+   *
+   * Eran dos —los slugs aquí y los nombres abajo, en el render— emparejadas
+   * solo por el índice. Es la misma forma de fallo que el cuestionario tuvo
+   * que desmontar: tocar el orden de una archiva a la gente en la ciudad
+   * equivocada, el servidor acepta el slug porque existe, y no falla nada ni
+   * se ve en ninguna pantalla.
+   *
+   * Estas son el respaldo. Las de verdad las trae `/api/ciudades` de la tabla
+   * `cities`, y se reescriben nombre y slug A LA VEZ, igual que las zonas:
+   * así el orden que mande el servidor no puede descuadrarlos.
+   */
+  CIUDADES = [['Valencia', 'valencia'], ['Maracaibo', 'maracaibo'], ['Margarita', 'margarita'],
+              ['Barquisimeto', 'barquisimeto'], ['Mérida', 'merida'],
+              ['Puerto La Cruz', 'puerto-la-cruz'], ['Otra ciudad', 'otra']];
 
   // MISMO endpoint y MISMO payload que la v3. Lo unico que cambia es la
   // variante, que cada pagina declara por su cuenta: sin eso, el
@@ -948,7 +978,11 @@ class Component extends DCLogic {
     const cuerpo = Object.assign({
       correo: (this.state.correo || '').trim(),
       token: (guardado && guardado.token) || undefined,
-      ciudad: this.state.ciudad >= 0 ? this.CIUDADES[this.state.ciudad] : 'caracas',
+      // El slug sale del MISMO par que pintó el nombre, así que lo que se
+      // guarda y lo que se vio no pueden ser dos ciudades distintas.
+      ciudad: this.state.ciudad >= 0 && this.CIUDADES[this.state.ciudad]
+        ? this.CIUDADES[this.state.ciudad][1]
+        : 'caracas',
       variante: 'v4'
     }, extra || {});
     return fetch('/api/lead', {
@@ -1150,7 +1184,7 @@ class Component extends DCLogic {
         nombre: 'font:' + (on ? '600' : '500') + ' 15px/1.2 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A;white-space:nowrap'
       };
     });
-    const ciudades = ['Valencia', 'Maracaibo', 'Margarita', 'Barquisimeto', 'Mérida', 'Puerto La Cruz', 'Otra ciudad'].map((nombre, i) => {
+    const ciudades = this.CIUDADES.map(([nombre], i) => {
       const on = this.state.ciudad === i;
       return {
         nombre, icono: on ? '✓' : '', aro: aroDS(on),

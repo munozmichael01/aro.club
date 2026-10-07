@@ -610,5 +610,51 @@ if (relojes.length) {
   }
 }
 
+// --- la séptima copia: las ciudades --------------------------------------
+//
+// El catálogo vive en `cities` y lo sirve `/api/ciudades`. La landing lleva
+// un respaldo escrito a mano por lo mismo que lo llevan las zonas: si la
+// petición falla, nadie deja de poder contestar. Un respaldo es una copia, y
+// una copia que nadie vigila es la que diverge.
+//
+// Lo que se compara son los SLUGS, que es lo que se guarda. Los nombres son
+// copy y pueden reescribirse.
+//
+// Y de paso lo que motivó todo esto: que la lista sea de PARES. Eran dos
+// listas sueltas —slugs arriba, nombres abajo— emparejadas solo por el
+// índice, el mismo descuadre silencioso que el cuestionario tuvo que
+// desmontar: se archiva a la gente en la ciudad equivocada y el servidor lo
+// acepta, porque el slug existe.
+{
+  const fallos = []
+  const bloqueCiudades = landing.match(/CIUDADES = \[([\s\S]*?)\];/)
+
+  if (!bloqueCiudades) {
+    fallos.push('no encuentro `CIUDADES` en la landing')
+  } else {
+    const pares = [...bloqueCiudades[1].matchAll(/\['([^']+)',\s*'([^']+)'\]/g)]
+    const sueltos = [...bloqueCiudades[1].matchAll(/'([^']+)'/g)].length
+    if (pares.length * 2 !== sueltos) {
+      fallos.push('`CIUDADES` tiene textos fuera de un par: vuelve a ser dos listas por índice')
+    }
+
+    const { data: enBaseCiudades } = await admin.from('cities').select('slug').neq('slug', 'caracas')
+    const base = new Set((enBaseCiudades ?? []).map((c) => c.slug))
+    const pantalla = new Set(pares.map((m) => m[2]))
+
+    for (const sl of pantalla) if (!base.has(sl)) fallos.push(`la landing ofrece «${sl}», que no está en \`cities\``)
+    for (const sl of base) if (!pantalla.has(sl)) fallos.push(`\`cities\` tiene «${sl}» y el respaldo de la landing no`)
+  }
+
+  if (fallos.length) {
+    errores++
+    console.error('\n✗ ciudades')
+    fallos.forEach((x) => console.error('    ' + x))
+    console.error('  → el respaldo de la landing y la tabla `cities` no dicen lo mismo')
+  } else {
+    console.log('✓ ciudades (pares, y el respaldo cuadra con `cities`)')
+  }
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)

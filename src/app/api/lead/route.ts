@@ -6,6 +6,8 @@ import { firmar, verificar } from '@/lib/lead-token'
 import { leerCatalogo, validarConjunto } from '@/lib/questionnaire/catalogo'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+import { ciudadValida } from '@/lib/ciudades'
+
 /**
  * Captación de la landing, en dos tiempos (HANDOFF §2.2).
  *
@@ -136,15 +138,12 @@ export async function POST(request: Request) {
   }
 
   // --- Paso 1: correo y ciudad ----------------------------------------
-  const ciudadFinal = ciudad ?? 'caracas'
+  // La comprobación vive en `lib/ciudades` desde que la ciudad entra también
+  // por el alta de la app y por Mi perfil. Escrita aquí dentro eran cuatro
+  // reglas que podían separarse.
+  const ciudadFinal = await ciudadValida(ciudad)
 
-  const { data: ciudadValida } = await supabase
-    .from('cities')
-    .select('slug')
-    .eq('slug', ciudadFinal)
-    .maybeSingle()
-
-  if (!ciudadValida) {
+  if (!ciudadFinal) {
     return NextResponse.json({ error: 'Esa ciudad no está en la lista.' }, { status: 400 })
   }
 

@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { esRelayDeApple, trasEntrar } from '@/lib/tras-entrar'
 
+import { ciudadValida } from '@/lib/ciudades'
+
 /**
  * La vuelta de Apple y Google, para la app.
  *
@@ -34,6 +36,15 @@ const cuerpo = z.object({
    * con el de su Apple o su Google. Es opcional porque la mayoría no lo trae.
    */
   leadPrevio: z.string().trim().email().max(200).nullish(),
+  /**
+   * Su ciudad, para el alta con Apple o Google desde la app.
+   *
+   * Ni Apple ni Google la dan, así que o la manda la app —que la preguntó
+   * antes de mandar a nadie al proveedor— o el perfil nace en Caracas sin que
+   * nadie lo haya dicho. Como en `/api/cuenta`, solo cuenta cuando NO hay
+   * lead: con lead manda lo que se eligió en la landing.
+   */
+  ciudad: z.string().regex(/^[a-z-]+$/).max(40).nullish(),
 })
 
 export async function POST(request: Request) {
@@ -47,6 +58,12 @@ export async function POST(request: Request) {
   // El cuerpo es opcional entero: la llamada normal no lleva nada.
   const parsed = cuerpo.safeParse(await request.json().catch(() => ({})))
   const leadPrevio = parsed.success ? (parsed.data.leadPrevio ?? null) : null
+  // Como el cuerpo entero es opcional aquí —la app la reintenta al arrancar y
+  // puede llegar sin nada—, una ciudad ausente vale: es la de siempre.
+  const ciudadFinal = await ciudadValida(parsed.success ? parsed.data.ciudad : null)
+  if (!ciudadFinal) {
+    return NextResponse.json({ error: 'Esa ciudad no está en la lista.' }, { status: 400 })
+  }
 
   const correo = (user.email ?? '').trim().toLowerCase()
 
@@ -82,6 +99,7 @@ export async function POST(request: Request) {
       null,
     leadPrevio,
     origen: `app-${proveedor}`,
+    ciudad: ciudadFinal,
   })
 
   if (!r.ok) {

@@ -49,6 +49,18 @@ export type Entrada = {
   leadPrevio?: string | null
   /** De dónde salió esta alta, para no perder la atribución. */
   origen?: string | null
+  /**
+   * Su ciudad, ya comprobada contra `cities` por quien llama.
+   *
+   * Solo se usa cuando NO hay lead. Con lead la pone `convertir_lead`, que
+   * arrastra la que dejó en la landing, y pisarla aquí sería cambiarle la
+   * ciudad a quien ya la dijo.
+   *
+   * Sin esto, el perfil de quien se da de alta desde la app nacía en
+   * `caracas` escrito a mano, dijera lo que dijera: la app no tenía por
+   * dónde contarlo y el servidor no tenía dónde guardarlo.
+   */
+  ciudad?: string | null
 }
 
 export type Salida =
@@ -130,7 +142,7 @@ export async function trasEntrar(entrada: Entrada): Promise<Salida> {
         contact_email: correo,
         full_name: nombre,
         display_name: nombre ? nombre.split(' ')[0] : null,
-        city_slug: 'caracas',
+        city_slug: entrada.ciudad ?? 'caracas',
         status: 'pending_questionnaire',
         ...(entrada.origen ? { source: entrada.origen } : {}),
       } as never)

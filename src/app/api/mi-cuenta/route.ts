@@ -6,6 +6,8 @@ import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
 
+import { ciudadDe } from '@/lib/ciudades'
+
 /**
  * El estado de Mi cuenta, derivado del servidor.
  *
@@ -141,17 +143,32 @@ export async function GET() {
   // decía "Ya van 34 apuntados y se cierra el martes" con doce apuntados y
   // el cierre otro día: dos cifras escritas a mano en la pantalla que mas
   // veces se abre.
-  const { data: proxima } = await admin
-    .from('events')
-    .select(
-      'id, starts_at, booking_closes_at, reveal_at, city_slug, restaurants!events_restaurant_id_fkey(name, zone_slug)',
-    )
-    .eq('es_prueba', false)
-    .in('status', ['open', 'draft'])
-    .gte('starts_at', new Date().toISOString())
-    .order('starts_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
+  //
+  // DE SU CIUDAD. La agenda de abajo ya filtraba por `city_slug` y esto no,
+  // así que a quien vive en Valencia esta pantalla le enseñaba la cena de
+  // Caracas contando atrás —con su zona y sus apuntados— y debajo una agenda
+  // vacía. Las dos cosas de la misma consulta diciendo lo contrario, y la que
+  // empuja a reservar era la que estaba mal.
+  //
+  // Si su ciudad todavía no abre no hay próxima fecha que enseñar, y eso NO
+  // es un hueco: es la respuesta. Va acompañada de `ciudad.abierta` para que
+  // la pantalla pueda decir por qué en vez de no pintar nada.
+  const ciudad = await ciudadDe(perfil.city_slug)
+
+  const { data: proxima } = ciudad.abierta
+    ? await admin
+        .from('events')
+        .select(
+          'id, starts_at, booking_closes_at, reveal_at, city_slug, restaurants!events_restaurant_id_fkey(name, zone_slug)',
+        )
+        .eq('es_prueba', false)
+        .eq('city_slug', ciudad.slug)
+        .in('status', ['open', 'draft'])
+        .gte('starts_at', new Date().toISOString())
+        .order('starts_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+    : { data: null }
 
   let apuntadosProxima = 0
   let zonaProxima: string | null = null
@@ -189,7 +206,7 @@ export async function GET() {
     // Cancelada fuera: una fecha que no se hace no es una fecha.
     .neq('status', 'cancelled')
     .gte('starts_at', new Date().toISOString())
-    .eq('city_slug', perfil.city_slug ?? 'caracas')
+    .eq('city_slug', ciudad.slug)
     .order('starts_at', { ascending: true })
     .limit(12)
 
@@ -431,6 +448,20 @@ export async function GET() {
     // respuestas de diecisiete, identidad aprobada, y el botón de reservar
     // encendido. Con esto, quien pinta el botón mira lo mismo que mira
     // `/api/reservar` al decidir si deja pasar.
+    /**
+     * Dónde está, y si ahí ya operamos.
+     *
+     * `puedeReservar` sigue diciendo lo del EMBUDO —si a esta persona le
+     * falta algo— y no se toca aquí: no vivir en Caracas no es un paso que
+     * nadie pueda completar, y meterlo en el embudo sería decirle «te falta
+     * mudarte». Que no haya dónde reservar se ve en que `proximaFecha` es
+     * nula y la agenda viene vacía.
+     *
+     * Y no se BLOQUEA reservar: el producto dice que no se limitan las
+     * reservas, y quien vive en Valencia puede querer cenar un jueves que
+     * esté en Caracas. Esto deja de empujarle, no le cierra la puerta.
+     */
+    ciudad,
     paso: situacion.paso,
     donde: situacion.donde,
     puedeReservar: situacion.puedeReservar,

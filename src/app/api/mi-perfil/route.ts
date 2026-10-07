@@ -7,6 +7,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 
+import { ciudadValida } from '@/lib/ciudades'
+
 /**
  * Mi perfil: ver y editar lo que respondió.
  *
@@ -37,7 +39,7 @@ const guardar = z.object({
  * desde su entrega sin nada que la encendiera. Y el día que Apple vuelva, su
  * pantalla del correo oculto necesita exactamente esto.
  */
-const BASE = new Set(['nombre', 'trato', 'nacimiento', 'genero', 'telefono', 'contacto'])
+const BASE = new Set(['nombre', 'trato', 'nacimiento', 'genero', 'telefono', 'contacto', 'ciudad'])
 
 export async function GET() {
   const supabase = await createClient()
@@ -50,7 +52,7 @@ export async function GET() {
 
   const { data: perfil } = await admin
     .from('profiles')
-    .select('full_name, display_name, birthdate, gender, phone_e164, contact_email')
+    .select('full_name, display_name, birthdate, gender, phone_e164, contact_email, city_slug')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -200,6 +202,9 @@ export async function GET() {
       nacimiento: perfil?.birthdate ?? '',
       genero: perfil?.gender ?? null,
       telefono: perfil?.phone_e164 ?? '',
+      // Se devuelve para poder enseñarla y corregirla. Quien entró con Apple
+      // o Google nunca la dijo, así que esta es la única pantalla donde puede.
+      ciudad: perfil?.city_slug ?? '',
     },
     preguntas: (preguntas ?? []).map((q) => ({
       clave: q.key,
@@ -243,6 +248,7 @@ export async function POST(request: Request) {
       genero: 'gender',
       telefono: 'phone_e164',
       contacto: 'contact_email',
+      ciudad: 'city_slug',
     }[clave]!
 
     if (typeof valor !== 'string' || !valor.trim()) {
@@ -255,6 +261,14 @@ export async function POST(request: Request) {
     // porque ahí es un dato del banco, y esa regla vive en `reglas.js`.
     if (clave === 'contacto' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor.trim())) {
       return NextResponse.json({ error: 'Ese correo no parece válido.' }, { status: 400 })
+    }
+
+    // La ciudad es un slug de `cities`, no texto libre: aquí se escribe la
+    // misma columna que escribe el alta, y la misma comprobación. Es lo que
+    // deja a quien entró con Apple o Google —que no da ciudad ninguna—
+    // arreglar la suya después sin pasar por soporte.
+    if (clave === 'ciudad' && !(await ciudadValida(valor))) {
+      return NextResponse.json({ error: 'Esa ciudad no está en la lista.' }, { status: 400 })
     }
 
     if (clave === 'telefono' && !valido('telefonoPerfil', valor)) {
