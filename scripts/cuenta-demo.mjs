@@ -18,6 +18,7 @@
  * No toca ninguna otra cuenta.
  */
 import { createClient } from '@supabase/supabase-js'
+import { claveDe } from './claves.mjs'
 import { borrarCuentaDeOperacion } from './firmas.mjs'
 import fs from 'node:fs'
 
@@ -30,7 +31,7 @@ const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_RO
   { auth: { autoRefreshToken: false, persistSession: false } })
 
 const CORREO = 'somos.aroclub+demo@gmail.com'
-const CLAVE = 'AroDemo-2608'
+const CLAVE = claveDe('DEMO_CLAVE', { para: 'la cuenta demo' })
 
 async function buscar() {
   const { data } = await admin.auth.admin.listUsers({ perPage: 200 })

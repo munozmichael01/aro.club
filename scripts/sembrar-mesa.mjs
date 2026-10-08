@@ -45,6 +45,7 @@
  * que se creó, o no se quita nada.
  */
 import { readFileSync, existsSync, writeFileSync, unlinkSync } from 'node:fs'
+import { claveDe } from './claves.mjs'
 
 const env = Object.fromEntries(
   readFileSync('.env.local', 'utf8')
@@ -57,7 +58,7 @@ const BASE = env.NEXT_PUBLIC_SUPABASE_URL
 const KEY = env.SUPABASE_SERVICE_ROLE_KEY
 const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' }
 
-const CLAVE = 'AroPrueba2026'
+const CLAVE = claveDe('SIEMBRA_CLAVE', { para: 'las cuentas sembradas' })
 const DOMINIO = 'prueba.aro.club'
 
 /** Lo que creó este guion. Sin este fichero no se borra nada de la base. */

@@ -3,6 +3,7 @@
  * la quita. Rol 'ops' y no 'admin': puede operar y no puede tocar roles.
  */
 import { createClient } from '@supabase/supabase-js'
+import { claveDe } from './claves.mjs'
 import fs from 'node:fs'
 import { borrarCuentaDeOperacion } from './firmas.mjs'
 const env = Object.fromEntries(fs.readFileSync(new URL('../.env.local', import.meta.url).pathname,'utf8').split('\n')
@@ -11,7 +12,7 @@ const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_RO
   { auth:{ autoRefreshToken:false, persistSession:false }})
 
 const CORREO = 'operacion-test@aro.club'
-const CLAVE  = 'AroTest-Ops-2608'
+const CLAVE = claveDe('OPS_TEST_CLAVE', { obligatoria: true, para: 'la cuenta de operación de pruebas' })
 
 const { data: l } = await admin.auth.admin.listUsers({ perPage: 200 })
 const ya = l.users.find(u => u.email === CORREO)

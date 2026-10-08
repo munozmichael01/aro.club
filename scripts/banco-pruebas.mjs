@@ -9,6 +9,7 @@
  * Nunca toca cuentas de nadie: solo la suya, y la borra al terminar.
  */
 import { createClient } from '@supabase/supabase-js'
+import { claveDe } from './claves.mjs'
 import fs from 'node:fs'
 
 const env = Object.fromEntries(
@@ -19,7 +20,7 @@ const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_RO
   { auth: { autoRefreshToken: false, persistSession: false } })
 
 const CORREO = 'banco-pruebas@aro.club'
-const CLAVE = 'Prueba-8x1'
+const CLAVE = claveDe('BANCO_CLAVE', { para: 'la cuenta del banco de pruebas' })
 const RASTRO = new URL('../.banco-pruebas-fechas.json', import.meta.url).pathname
 
 async function cuentaExistente() {

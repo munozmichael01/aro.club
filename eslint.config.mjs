@@ -21,6 +21,13 @@ const eslintConfig = defineConfig([
     // React, ReactDOM y Babel, tal cual vienen de su publicacion. Son suyos,
     // no se tocan, y revisarlos aqui son 129 errores que no significan nada.
     "public/vendor/**",
+    // La carpeta de marca de Design, que trae OTRA copia de su runtime. Es la
+    // misma decisión que `public/support.js` y por el mismo motivo, pero se
+    // escapó cuando la carpeta llegó: el CI lleva en rojo desde el 6 de
+    // octubre por dos errores de `marca/support.js` —`react/no-deprecated` y
+    // `no-assign-module-variable`— que no son código nuestro y que no vamos a
+    // arreglar.
+    "marca/**",
     // GSAP, tal cual viene de su publicación, para los reels. Mismo caso que
     // los de arriba: ocho errores suyos que no vamos a arreglar nunca. Y
     // aquí importa más de lo que parece, porque el fichero no está
