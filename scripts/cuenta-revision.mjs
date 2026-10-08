@@ -28,7 +28,8 @@
  *
  *   node scripts/cuenta-revision.mjs --refrescar
  *       Solo mueve la cena hacia delante. Es lo que hay que correr el día que
- *       se manda a revisar, y otra vez si Apple la devuelve.
+ *       se manda a revisar, y otra vez si Apple la devuelve. Con
+ *       `--horas=144` la cena queda a seis días y aguanta la revisión entera.
  *
  *   node scripts/cuenta-revision.mjs --borrar
  *       Quita la cuenta, su fecha, su restaurante y sus cinco acompañantes.
@@ -59,13 +60,17 @@ const RASTRO = fileURLToPath(new URL('../.cuenta-revision.json', import.meta.url
 
 const args = process.argv.slice(2)
 const CONOCIDOS = ['--borrar', '--refrescar']
-const raros = args.filter((a) => !CONOCIDOS.includes(a))
+const raros = args.filter((a) => !CONOCIDOS.includes(a) && !/^--horas=\d+$/.test(a))
 if (raros.length) {
   console.error('No conozco: ' + raros.join(', ') + '. Los modos son: ' + CONOCIDOS.join(', ') + '.')
   process.exit(1)
 }
 
 const en = (h) => new Date(Date.now() + h * 3600_000).toISOString()
+
+// A cuántas horas queda la cena. 30 por defecto; durante una revisión larga,
+// `--horas=144` (seis días) evita que caduque a mitad sin que nadie lo note.
+const HORAS = Number(args.find((a) => a.startsWith('--horas='))?.slice(8)) || 30
 
 /**
  * Nada en silencio.
@@ -126,11 +131,11 @@ if (args.includes('--refrescar')) {
   // La cena vuelve a estar por delante, ya revelada: el revisor entra y ve su
   // mesa, su restaurante y sus cinco acompañantes sin tener que esperar nada.
   await admin.from('events').update({
-    starts_at: en(30),
+    starts_at: en(HORAS),
     reveal_at: en(-2),
     booking_closes_at: en(-24),
   }).eq('id', r.evento)
-  console.log('Refrescada: la cena vuelve a ser dentro de 30 h, ya revelada.')
+  console.log(`Refrescada: la cena vuelve a ser dentro de ${HORAS} h (${en(HORAS)}), ya revelada.`)
   console.log('Usuario: ' + CORREO + ' · la contraseña es la que ya tienes.')
   process.exit(0)
 }
