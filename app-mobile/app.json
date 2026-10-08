@@ -13,7 +13,10 @@
       "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "associatedDomains": [
+        "applinks:aro.club"
+      ]
     },
     "android": {
       "package": "club.aro.app",
@@ -26,6 +29,63 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "aro.club",
+              "path": "/cuenta"
+            },
+            {
+              "scheme": "https",
+              "host": "aro.club",
+              "path": "/perfil"
+            },
+            {
+              "scheme": "https",
+              "host": "aro.club",
+              "path": "/mesa"
+            },
+            {
+              "scheme": "https",
+              "host": "aro.club",
+              "path": "/mi-mesa"
+            },
+            {
+              "scheme": "https",
+              "host": "aro.club",
+              "path": "/pago"
+            },
+            {
+              "scheme": "https",
+              "host": "aro.club",
+              "path": "/cancelar"
+            },
+            {
+              "scheme": "https",
+              "host": "aro.club",
+              "path": "/verificacion"
+            },
+            {
+              "scheme": "https",
+              "host": "aro.club",
+              "path": "/datos"
+            },
+            {
+              "scheme": "https",
+              "host": "aro.club",
+              "path": "/cuestionario"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
       ]
     },
     "plugins": [
@@ -98,6 +158,12 @@
         "iosClientId": "357121226241-i4bartubu2r6eh3ugh79atuquobgl33e.apps.googleusercontent.com"
       }
     },
-    "owner": "somos.aroclub"
+    "owner": "somos.aroclub",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/51c36ee0-0e19-4c87-bf88-f041afc965a9"
+    }
   }
 }

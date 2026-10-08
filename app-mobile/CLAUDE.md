@@ -29,6 +29,26 @@ La única dependencia aceptada es `POST /api/auth/nativo` (ver abajo).
 - Si Apple responde, sale en «Revisión de apps» y llega por correo a
   `somos.aroclub@gmail.com`.
 
+## Para la próxima build (preparado el 07-10, sin compilar)
+
+Quedan **3 builds de iOS** este mes en el plan gratis de Expo (15). Se
+acumulan cambios y se compila una vez. Ya en el código, esperando build:
+
+- **EAS Update** (`expo-updates`, `runtimeVersion: fingerprint`, canales
+  `production` y `preview` en `eas.json`). Después de esa build, los cambios
+  de JS salen sin compilar:
+  `npx eas-cli@latest update --channel production --message "…"`. Una
+  actualización solo llega a las builds con la MISMA huella nativa: si se
+  añade una librería nativa o se toca un plugin, hace falta build.
+- **Los enlaces de los correos abren la app** (`src/enlaces.ts`,
+  `src/app/+native-intent.tsx`, `associatedDomains` e `intentFilters` en
+  `app.json`). Falta, de la web, publicar
+  `/.well-known/apple-app-site-association` y `/.well-known/assetlinks.json`
+  (con el SHA-256 de la clave de firma de Play) y que los enlaces de los
+  correos no pasen por el rastreo de clics de Resend.
+- Lo ya hecho en JS desde la 1.0 (13): el filtro de la entrega 19, las
+  ciudades y el párrafo de la agenda en la hoja de reservar.
+
 ## Dónde lo dejamos (02-10-2026) — empezar por aquí
 
 **En las tiendas:**

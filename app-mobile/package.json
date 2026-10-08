@@ -25,6 +25,7 @@
     "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
+    "expo-updates": "~57.0.25",
     "expo-web-browser": "~57.0.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -62,7 +63,8 @@
     "prueba:puerta": "tsx pruebas/puerta-contra-la-api.mjs",
     "prueba:alta-app": "tsx pruebas/alta-app-contra-la-api.mjs",
     "prueba:embudo": "tsx pruebas/embudo-contra-la-api.mjs",
-    "prueba:ciudad": "tsx pruebas/ciudad-contra-la-api.mjs"
+    "prueba:ciudad": "tsx pruebas/ciudad-contra-la-api.mjs",
+    "lint": "expo lint"
   },
   "private": true,
   "overrides": {
