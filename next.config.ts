@@ -115,7 +115,19 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return {
-      beforeFiles: PANTALLAS.map(([source, destination]) => ({ source, destination })),
+      beforeFiles: [
+        // Los dos ficheros con los que aro.club confirma que la app puede
+        // abrir sus enlaces.
+        //
+        // REESCRITURA Y NO REDIRECCION: ni Apple ni Google siguen una
+        // redireccion al buscarlos, y un 308 lo tira todo abajo. Van aqui y
+        // no en `public/` porque el de Apple no lleva extension —un fichero
+        // suelto saldria como `application/octet-stream` y Apple lo
+        // descarta— y porque Next no enruta carpetas que empiezan por punto.
+        { source: '/.well-known/apple-app-site-association', destination: '/api/enlaces-app/apple' },
+        { source: '/.well-known/assetlinks.json', destination: '/api/enlaces-app/android' },
+        ...PANTALLAS.map(([source, destination]) => ({ source, destination })),
+      ],
       afterFiles: [],
       fallback: [],
     }

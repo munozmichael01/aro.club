@@ -110,6 +110,19 @@ export function copyDe(
         ruta: '/juego',
       }
     }
+    case 'encuesta_despues':
+      // El correo del dia despues ya salia; la push no, porque este tipo no
+      // tenia caso aqui. Y es el aviso que mas caduca de todos: la ventana
+      // para valorar son 48 horas, asi que un correo que se lee el lunes
+      // llega cuando ya no se puede contestar.
+      //
+      // Sin decir con quien ceno ni donde: una notificacion se enseña sola
+      // encima de la pantalla bloqueada.
+      return {
+        titulo: '¿Qué tal estuvo?',
+        cuerpo: 'Cuéntanos de la cena y del sitio. Tarda un minuto.',
+        ruta: '/mesa',
+      }
     case 'llego_tarde': {
       const quien = t('nombre')
       const min = t('minutos')

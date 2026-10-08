@@ -656,5 +656,61 @@ if (relojes.length) {
   }
 }
 
+// --- las rutas que abren la app, en dos repositorios -------------------
+//
+// `src/lib/enlaces-app.ts` las publica en `/.well-known/`, que es lo que hace
+// que el telefono acepte abrir la app. `app-mobile/src/enlaces.ts` decide a
+// que pantalla va cada una. Son la misma lista y no se pueden juntar: una la
+// sirve el servidor y la otra se compila dentro de la app.
+//
+// Y los dos descuadres son silenciosos. Una ruta aqui y no alli: el telefono
+// abre la app y la app no sabe que enseñar. Una ruta alli y no aqui: el
+// enlace abre el navegador y nadie se entera de que debia abrir la app.
+{
+  const fallos = []
+  const leer = (ruta, patron, nombre) => {
+    let texto
+    try {
+      texto = fs.readFileSync(fileURLToPath(new URL(ruta, import.meta.url)), 'utf8')
+    } catch {
+      fallos.push(`no encuentro ${nombre}`)
+      return null
+    }
+    const bloque = texto.match(patron)
+    if (!bloque) { fallos.push(`no encuentro la lista en ${nombre}`); return null }
+    return [...bloque[1].matchAll(/'(\/[a-z-]*)'/g)].map((m) => m[1])
+  }
+
+  const web = leer('../src/lib/enlaces-app.ts',
+    /RUTAS_QUE_ABREN_LA_APP = \[([\s\S]*?)\]/, 'enlaces-app.ts')
+  // En la app son pares `'/ruta': '/pantalla'`, asi que se cogen las CLAVES:
+  // las de la izquierda de cada linea.
+  const app = (() => {
+    let texto
+    try {
+      texto = fs.readFileSync(fileURLToPath(new URL('../app-mobile/src/enlaces.ts', import.meta.url)), 'utf8')
+    } catch { return null }   // sin la app al lado, no se comprueba y no se falla
+    const bloque = texto.match(/RUTAS_DE_LA_WEB: Record<string, string> = \{([\s\S]*?)\n\}/)
+    if (!bloque) { fallos.push('no encuentro RUTAS_DE_LA_WEB en la app'); return null }
+    return [...bloque[1].matchAll(/^\s*'(\/[a-z-]*)':/gm)].map((m) => m[1])
+  })()
+
+  if (web && app) {
+    for (const r of web) if (!app.includes(r)) fallos.push(`la web publica «${r}» y la app no la reparte`)
+    for (const r of app) if (!web.includes(r)) fallos.push(`la app reparte «${r}» y la web no la publica`)
+  }
+
+  if (fallos.length) {
+    errores++
+    console.error('\n✗ rutas que abren la app')
+    fallos.forEach((x) => console.error('    ' + x))
+    console.error('  → `/.well-known/` y `app-mobile/src/enlaces.ts` no dicen lo mismo')
+  } else if (app) {
+    console.log(`✓ rutas que abren la app (${web.length}, web y app iguales)`)
+  } else {
+    console.log('✓ rutas que abren la app (sin app-mobile al lado, no se cruza)')
+  }
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)
