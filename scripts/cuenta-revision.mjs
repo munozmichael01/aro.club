@@ -169,7 +169,7 @@ writeFileSync(RASTRO, JSON.stringify(rastro, null, 2))
 // sigue. Por ahí se fue el primer intento, que reventó tres pasos después
 // con una clave foránea.
 const { error: errPerfil } = await admin.from('profiles').insert({
-  id, email: CORREO, full_name: 'Alex Revisión', display_name: 'Alex',
+  id, email: CORREO, full_name: 'Alex Revisión', display_name: 'Alex', es_prueba: true,
   birthdate: '1992-04-18', gender: 'sin-decir', phone_e164: '+584141112233',
   city_slug: 'caracas', status: 'active', locale: 'es-VE',
 })
@@ -220,15 +220,23 @@ if (respuestas.length) {
   }
 }
 
-// Créditos, para que el botón de reservar se vea como lo ve un miembro.
-// `reason` es un enum, no texto libre.
-const { error: errCred } = await admin.from('credit_ledger')
-  .insert({ profile_id: id, delta: 4, reason: 'pack_purchase' })
-if (errCred) {
-  console.error('No se pudieron dar los créditos: ' + errCred.message)
-  console.error('La cuenta quedó a medias. Corre --borrar antes de reintentar.')
-  process.exit(1)
-}
+// SIN CRÉDITOS, Y ES A PROPÓSITO.
+//
+// Antes se le daban cuatro «para que el botón de reservar se vea como lo ve
+// un miembro», y eso era justo el problema: con saldo, `/api/reservar` crea
+// la reserva YA CONFIRMADA y cobra el crédito en el mismo gesto. Con dos
+// fechas reales abiertas, el revisor de Apple podía apuntarse a una cena de
+// verdad durante la revisión y entrar al reparto con cinco desconocidos que
+// sí van a ir.
+//
+// Sin saldo, la pantalla manda a Pago en lugar de apuntar, que además es el
+// recorrido que hay que grabar para la ficha: reportar un pago es lo que la
+// revisión tiene que ver.
+//
+// El candado de verdad no es esto, es el trigger `prueba_sin_asiento`: una
+// cuenta marcada `es_prueba` no se confirma en una fecha real aunque alguien
+// le dé créditos otra vez, aunque canjee un cupón o aunque operación apruebe
+// por error un pago inventado.
 
 // Su propio restaurante y su propia fecha. Nada de esto toca lo real.
 const { data: rest, error: errRest } = await admin.from('restaurants').insert({
@@ -281,7 +289,7 @@ for (const [nombre, sector] of OTROS) {
   })
   if (!u?.user) continue
   rastro.perfiles.push(u.user.id)
-  await admin.from('profiles').insert({
+  await admin.from('profiles').insert({ es_prueba: true,
     id: u.user.id, email: correo, full_name: nombre, display_name: nombre,
     city_slug: 'caracas', gender: 'sin-decir', status: 'active', locale: 'es-VE',
   })

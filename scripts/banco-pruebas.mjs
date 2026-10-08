@@ -90,6 +90,9 @@ const id = nueva.user.id
 const { error: ep } = await admin.from('profiles').insert({
   id, full_name: 'Banco Pruebas', email: CORREO, city_slug: 'caracas',
   gender: 'sin-decir', status: 'active', locale: 'es-VE',
+  // Marcada: una cuenta del banco de pruebas no ocupa asiento en una cena
+  // real. Lo sostiene el trigger `prueba_sin_asiento`.
+  es_prueba: true,
 })
 if (ep) { console.log('✗ perfil:', ep.message); process.exit(1) }
 

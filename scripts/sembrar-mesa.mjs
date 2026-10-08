@@ -354,8 +354,11 @@ async function sembrar(fechaAjena, cuantos = CINCO.length, tanda = 0) {
 
     // Verificada y activa: sin esto no entra al reparto, que es la razón
     // por la que verificar bloquea reservar.
+    // `es_prueba` va aqui y no es decoracion: sin ella, doce cuentas
+    // sembradas pueden acabar confirmadas en una fecha REAL y entrar al
+    // reparto con gente que si va a ir. Lo sostiene `prueba_sin_asiento`.
     await rest(`profiles?id=eq.${usuario.id}`, {
-      method: 'PATCH', body: JSON.stringify({ status: 'active' }),
+      method: 'PATCH', body: JSON.stringify({ status: 'active', es_prueba: true }),
     })
     for (const kind of ['id_document', 'selfie']) {
       await rest('verifications', {
