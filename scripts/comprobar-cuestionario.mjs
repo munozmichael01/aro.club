@@ -712,5 +712,78 @@ if (relojes.length) {
   }
 }
 
+// --- lo que el panel manda y lo que la ruta espera ---------------------
+//
+// Dos acciones del panel de operacion llevaban rotas sin que nadie lo
+// supiera: cerrar un reporte mandaba `id` donde la ruta espera
+// `incidenciaId`, y despublicar una mesa mandaba `eventoId` donde espera
+// `corridaId`. Las dos devolvian 400 y las dos en silencio, porque el panel
+// no pintaba el error — y una de ellas era «Sacar del club».
+//
+// Esto no comprueba tipos ni ramas: comprueba que cada NOMBRE de campo que
+// el panel manda aparezca en el fichero de su ruta. Es un heuristico y
+// basta: los dos fallos reales eran nombres que la ruta no menciona en
+// ninguna parte.
+{
+  const fallos = []
+  const panel = fs.readFileSync(
+    fileURLToPath(new URL('../public/Aro Club - Operacion.dc.html', import.meta.url)), 'utf8')
+
+  // `this.mandar('/api/operacion/X', { a: 1, b: 2 })` con cuerpo literal.
+  // Las que pasan una variable no se pueden mirar desde aqui y se saltan.
+  const llamadas = [...panel.matchAll(/this\.mandar\(\s*'\/api\/operacion\/([a-z-]+)'\s*,\s*\{([^}]*)\}/g)]
+
+  // Y las que pasan el cuerpo por una funcion intermedia, que es justo donde
+  // estaba el fallo de los reportes: `resolverIncidencia(cuerpo)` reenvia a
+  // `/api/operacion/incidencias`, asi que mirar solo las llamadas directas lo
+  // dejaba fuera. Se saca el mapa envoltorio → ruta del propio fichero.
+  const envoltorios = new Map()
+  for (const m of panel.matchAll(
+    /^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\s*cuerpo\s*\)\s*\{[\s\S]{0,120}?this\.mandar\(\s*'\/api\/operacion\/([a-z-]+)'/gm)) {
+    envoltorios.set(m[1], m[2])
+  }
+  for (const [nombre, ruta] of envoltorios) {
+    for (const m of panel.matchAll(new RegExp(`this\\.${nombre}\\(\\s*\\{([^}]*)\\}`, 'g'))) {
+      llamadas.push([m[0], ruta, m[1]])
+    }
+  }
+
+  for (const m of llamadas) {
+    const ruta = m[1]
+    const campos = [...m[2].matchAll(/([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g)].map((c) => c[1])
+    let fuente
+    try {
+      fuente = fs.readFileSync(
+        fileURLToPath(new URL(`../src/app/api/operacion/${ruta}/route.ts`, import.meta.url)), 'utf8')
+    } catch {
+      fallos.push(`el panel llama a /api/operacion/${ruta} y esa ruta no existe`)
+      continue
+    }
+    // Solo los nombres que declara un `z.object`, no el fichero entero.
+    // Mirando el fichero, `id` pasaba siempre —aparece en `actor.id`, en un
+    // `.eq('id', …)`— y ese era justo uno de los dos fallos reales.
+    const aceptados = new Set()
+    for (const obj of fuente.matchAll(/z\.object\(\{([\s\S]*?)\}\)/g)) {
+      for (const k of obj[1].matchAll(/^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/gm)) aceptados.add(k[1])
+    }
+    if (!aceptados.size) continue   // ruta sin zod: no hay nada que cruzar
+
+    for (const campo of campos) {
+      if (!aceptados.has(campo)) {
+        fallos.push(`${ruta}: el panel manda «${campo}» y su esquema no lo declara`)
+      }
+    }
+  }
+
+  if (fallos.length) {
+    errores++
+    console.error('\n✗ lo que el panel manda')
+    fallos.forEach((x) => console.error('    ' + x))
+    console.error('  → el zod devuelve 400 y la accion no hace nada')
+  } else {
+    console.log(`✓ lo que el panel manda (${llamadas.length} llamadas, todas con campos que su ruta conoce)`)
+  }
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)

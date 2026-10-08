@@ -76,6 +76,20 @@
         </button>
       </div>
     </div>
+
+    <!-- LO QUE PASÓ CON LO QUE ACABAS DE PULSAR.
+         `fallo` y `aviso` existían desde el principio, se escribían en cada
+         acción y NO LOS PINTABA NADIE: el panel no daba respuesta de nada.
+         Por eso los reportes se «cerraban» sin cerrarse y «Deshacer» no
+         hacía nada, los dos devolviendo 400, los dos en silencio.
+         Va en la cabecera, que es pegajosa, para que se vea desde cualquier
+         pestaña y sin tener que buscarlo. -->
+    <sc-if value="{{ hayRespuesta }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ cajaRespuesta }}" role="status" aria-live="polite">
+        <span style="flex:1 1 auto">{{ textoRespuesta }}</span>
+        <button onClick="{{ cerrarRespuesta }}" aria-label="Cerrar el aviso" style="flex:0 0 auto;min-width:32px;min-height:32px;border:none;background:transparent;color:inherit;cursor:pointer;font:400 18px/1 'Inter Tight',sans-serif">×</button>
+      </div>
+    </sc-if>
   </div>
 
   <div style="max-width:1280px;margin:0 auto;padding:clamp(20px,3vw,32px) clamp(14px,3vw,26px) clamp(40px,6vw,64px)">
@@ -1824,8 +1838,12 @@ class Component extends DCLogic {
 
   despublicar(mesa) {
     const f = this.fechaElegida();
-    if (!f) return;
-    return this.mandar('/api/operacion/despublicar', { eventoId: f.id, mesa }).then((r) => {
+    // `corridaId` y no `eventoId`: el mismo descuadre que tenian los
+    // reportes. La ruta despublica una mesa DE UNA PROPUESTA, no de una
+    // fecha, y con `eventoId` el zod fallaba y «Deshacer» no hacia nada.
+    const c = this.corridaId();
+    if (!f || !c) return;
+    return this.mandar('/api/operacion/despublicar', { corridaId: c, mesa }).then((r) => {
       if (r.ok) {
         this.setState({ aviso: 'Despublicada. Vuelve a moverse y su correo se retira.' });
         this.cargarReparto(f.id);
@@ -2459,9 +2477,21 @@ class Component extends DCLogic {
         ['Lo cuenta', (r.quienReporta || 'Alguien') + ' (protegida)']
       ];
       if (r.cena) partes.push([vozRep.Unidad, diaTexto(r.cena)]);
+      // `incidenciaId` y no `id`: es como se llama en la ruta. Con `id` el
+      // zod fallaba, devolvia 400 y no se escribia nada — y como el panel ya
+      // habia pintado «Cerrado...» antes de mandar, el reporte se veia
+      // cerrado y seguia abierto. Las tres acciones, «Sacar del club»
+      // incluida, que es la que pone `status: 'banned'`.
+      //
+      // Y el «Cerrado...» va DESPUES de que el servidor diga que si. Pintarlo
+      // antes es prometer algo que todavia no ha pasado; si falla, se quita y
+      // los botones vuelven.
       const cerrar = (codigo, texto) => () => {
-        this.setState((st) => ({ resueltos: Object.assign({}, st.resueltos, { [r.id]: texto }) }));
-        this.resolverIncidencia({ id: r.id, accion: codigo });
+        this.resolverIncidencia({ incidenciaId: r.id, accion: codigo }).then((res) => {
+          if (res && res.ok) {
+            this.setState((st) => ({ resueltos: Object.assign({}, st.resueltos, { [r.id]: texto }) }));
+          }
+        });
       };
       return {
         gravedad: GRAVEDAD[r.gravedad] || String(r.gravedad || '').toUpperCase(),
@@ -2484,7 +2514,12 @@ class Component extends DCLogic {
         ].map((x) => ({ texto: x[0], pulsar: x[1], btn: x[2] }))
       };
     });
-    const sinResolver = REPORTES.length - Object.keys(St.resueltos || {}).length;
+    // Los que SIGUEN abiertos, no una resta. Restando se contaba dos veces el
+    // mismo: al cerrar uno, el servidor devuelve la lista ya sin el, y
+    // `resueltos` seguia teniendolo, asi que con un reporte abierto el
+    // contador decia 0. Filtrar vale en los dos momentos: antes de recargar
+    // —la fila esta y se tacha— y despues, cuando ya no esta.
+    const sinResolver = REPORTES.filter((r) => !(St.resueltos || {})[r.id]).length;
 
     // ── locales: de aquí sale el sitio de cada zona ─────────────────
     const NOMBRE_FAM = { cenas: 'Cenas', drinks: 'Drinks', coffee: 'Coffee', movimiento: 'Movimiento' };
@@ -3111,6 +3146,16 @@ class Component extends DCLogic {
       reportes, locales, filtrosLocales,
 
       // ── gente ─────────────────────────────────────────────────────
+      // El fallo manda sobre el aviso: si algo salió mal, es lo que hay que
+      // leer, aunque la acción anterior fuera bien.
+      hayRespuesta: !!(St.fallo || St.aviso),
+      textoRespuesta: St.fallo || St.aviso,
+      cerrarRespuesta: () => this.setState({ fallo: '', aviso: '' }),
+      cajaRespuesta: 'max-width:1280px;margin:0 auto;padding:11px clamp(14px,3vw,26px);display:flex;align-items:center;gap:12px;'
+        + "font:500 14px/1.4 'Inter Tight',sans-serif;"
+        + (St.fallo
+          ? 'background:rgba(143,69,21,.14);color:#8F4515'
+          : 'background:rgba(27,81,56,.12);color:#1B5138'),
       esAvisos: esta('avisos'),
       ...(() => {
         const A = St.avisos;
