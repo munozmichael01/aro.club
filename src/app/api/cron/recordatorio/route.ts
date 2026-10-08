@@ -21,7 +21,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-async function recordar() {
+async function recordar(seco: boolean) {
   const admin = createAdminClient()
 
   // Una ventana explícita, no «hasta el final del día».
@@ -44,7 +44,7 @@ async function recordar() {
     .lte('starts_at', hasta.toISOString())
     .in('status', ['matched', 'running'])
 
-  if (!eventos?.length) return NextResponse.json({ eventos: 0, encolados: 0 })
+  if (!eventos?.length) return NextResponse.json({ eventos: 0, encolados: 0, seco })
 
   let encolados = 0
 
@@ -85,12 +85,17 @@ async function recordar() {
       // componer, como todo lo demás: `empiezaEn` era una copia de
       // `events.starts_at` que además podía quedarse vieja si la fecha se
       // movía entre encolar y enviar.
+      if (seco) {
+        encolados++
+        continue
+      }
+
       await encolar({ perfil: s.profile_id }, 'recordatorio', {}, { eventoId: ev.id })
       encolados++
     }
   }
 
-  return NextResponse.json({ eventos: eventos.length, encolados })
+  return NextResponse.json({ eventos: eventos.length, encolados, seco })
 }
 
 /**
@@ -105,5 +110,8 @@ export async function GET(request: Request) {
     return new NextResponse(null, { status: 404 })
   }
 
-  return recordar()
+  // `?seco=1`: cuenta a cuanta gente iria y no escribe. Lo pide la regla de
+  // la casa —no hay staging, y encolar es mandar— y aqui ademas hacia falta
+  // para comprobar el texto nuevo sin escribirle a la mesa del viernes.
+  return recordar(new URL(request.url).searchParams.get('seco') === '1')
 }

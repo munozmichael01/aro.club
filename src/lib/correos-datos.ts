@@ -5,11 +5,10 @@ import { firmarBaja } from '@/lib/baja-token'
 import { firmar } from '@/lib/lead-token'
 import { enlaceDeMapa } from '@/lib/mapa'
 import { SITIO } from '@/lib/remitente'
-import { HORAS_DE_CIERRE, precioTexto, vozDe } from '@/lib/reglas'
+import { HORAS_DE_CIERRE, ZONA_POR_DEFECTO, horaDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 
-import { ZONA_POR_DEFECTO, partesDe } from '@/lib/reglas'
 
 /**
  * De una fila de la cola a los datos que pinta la plantilla.
@@ -463,11 +462,30 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     case 'recordatorio': {
       if (!fila.event_id) return { error: 'sin fecha' }
       if (!evento) return { error: 'sin fecha' }
+
+      const zona = await zonaDeLaCiudad(admin, evento.city_slug)
+      const voz = vozDe(evento.format)
+      const horaDelPlan = partesDe(evento.starts_at, zona)?.horas ?? 20
+
       return {
         a,
         datos: {
           ...base,
-          revelaA: horaTexto(evento.reveal_at),
+          // La hora de la revelación, de `reveal_at` y en la zona de la
+          // ciudad. Escrita a mano decía «12:00 p.m.» aunque la fecha
+          // revelara a otra hora, que es lo que pasa en cuanto hay una
+          // fecha que no revela a mediodía.
+          revelaA: horaDe(evento.reveal_at, zona) ?? '',
+          // Si el aviso llega DESPUÉS de la revelación, la push dice otra
+          // cosa: a las nueve de la mañana todavía no hay nada que abrir.
+          yaRevelado: evento.reveal_at && Date.now() >= new Date(evento.reveal_at).getTime() ? 'si' : '',
+          // El plan por su nombre, no «cena» siempre.
+          tituloHoy: HOY_ES[evento.format ?? ''] ?? 'Hoy es tu plan',
+          // «una mesa» o «un grupo», de `vozDe`. Una caminata no tiene mesa.
+          unaUnidad: (voz.unidad === 'grupo' ? 'un ' : 'una ') + voz.unidad,
+          // Y la franja del día, de la hora REAL: un café de las diez de la
+          // mañana no es «esta noche».
+          cuandoDelDia: horaDelPlan < 12 ? 'esta mañana' : horaDelPlan < 19 ? 'esta tarde' : 'esta noche',
         },
       }
     }
@@ -578,6 +596,27 @@ const FORMATOS: Record<string, string> = {
   dinner: 'Cena', foodie_dinner: 'Cena foodie', women_dinner: 'Cena de mujeres',
   drinks: 'Drinks', coffee: 'Coffee', walk: 'Caminata', hike: 'Senderismo',
   run: 'Correr', padel: 'Pádel', pilates: 'Pilates', cycling: 'Ciclismo',
+}
+
+/**
+ * «Hoy es tu cena», por formato.
+ *
+ * Frase entera y no una plantilla con el nombre dentro: en español el
+ * articulo y el numero cambian —«tu cena», «tus drinks»— y armarla al vuelo
+ * acaba diciendo «Hoy es tu drinks». Son once, caben escritas.
+ */
+const HOY_ES: Record<string, string> = {
+  dinner: 'Hoy es tu cena',
+  foodie_dinner: 'Hoy es tu cena',
+  women_dinner: 'Hoy es tu cena',
+  drinks: 'Hoy son tus drinks',
+  coffee: 'Hoy es tu café',
+  walk: 'Hoy es tu caminata',
+  hike: 'Hoy es tu senderismo',
+  run: 'Hoy toca correr',
+  padel: 'Hoy es tu pádel',
+  pilates: 'Hoy es tu pilates',
+  cycling: 'Hoy toca rodar',
 }
 
 function nombreDelFormato(f: string | null | undefined): string {

@@ -60,7 +60,7 @@ type Api = {
     zona?: string,
   ) => {
     dia: string; diaNumero: number; numero: number
-    mes: string; mesNumero: number; ano: number; hora: string
+    mes: string; mesNumero: number; ano: number; hora: string; horas: number
   } | null
 }
 
