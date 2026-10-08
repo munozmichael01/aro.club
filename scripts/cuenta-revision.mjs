@@ -60,7 +60,7 @@ const RASTRO = fileURLToPath(new URL('../.cuenta-revision.json', import.meta.url
 
 const args = process.argv.slice(2)
 const CONOCIDOS = ['--borrar', '--refrescar']
-const raros = args.filter((a) => !CONOCIDOS.includes(a) && !/^--horas=\d+$/.test(a))
+const raros = args.filter((a) => !CONOCIDOS.includes(a) && !/^--horas=-?\d+$/.test(a))
 if (raros.length) {
   console.error('No conozco: ' + raros.join(', ') + '. Los modos son: ' + CONOCIDOS.join(', ') + '.')
   process.exit(1)
@@ -70,6 +70,8 @@ const en = (h) => new Date(Date.now() + h * 3600_000).toISOString()
 
 // A cuántas horas queda la cena. 30 por defecto; durante una revisión larga,
 // `--horas=144` (seis días) evita que caduque a mitad sin que nadie lo note.
+// Negativo deja la cena en el pasado: `--horas=-6` enseña Mi mesa después de
+// la cena (valorar, bloquear, reportar), que es lo que Apple pide grabar.
 const HORAS = Number(args.find((a) => a.startsWith('--horas='))?.slice(8)) || 30
 
 /**
@@ -132,8 +134,8 @@ if (args.includes('--refrescar')) {
   // mesa, su restaurante y sus cinco acompañantes sin tener que esperar nada.
   await admin.from('events').update({
     starts_at: en(HORAS),
-    reveal_at: en(-2),
-    booking_closes_at: en(-24),
+    reveal_at: en(Math.min(-2, HORAS - 2)),
+    booking_closes_at: en(Math.min(-24, HORAS - 24)),
   }).eq('id', r.evento)
   console.log(`Refrescada: la cena vuelve a ser dentro de ${HORAS} h (${en(HORAS)}), ya revelada.`)
   console.log('Usuario: ' + CORREO + ' · la contraseña es la que ya tienes.')
