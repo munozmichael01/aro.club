@@ -3102,13 +3102,28 @@ class Component extends DCLogic {
           : 'Publicar ' + (listasParaPublicar === 1 ? 'la que está lista' : 'las ' + listasParaPublicar + ' que están listas')),
       inerteListas: listasParaPublicar > 0 ? null : 'true',
       botonListas: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border-radius:999px;border:none;font:600 15px/1 \'Inter Tight\',sans-serif;background:' + (listasParaPublicar ? '#14342A' : 'rgba(27,81,56,.13)') + ';color:' + (listasParaPublicar ? '#FAF3E4' : '#456352') + ';cursor:' + (listasParaPublicar ? 'pointer' : 'not-allowed'),
+      // El mismo fallo que «Publicar igualmente»: solo marcaba en local y no
+      // publicaba nada.
+      //
+      // Si las que faltan estan TODAS listas, una sola llamada sin numero de
+      // mesa: es el camino que la ruta trae hecho, encola los correos de una
+      // vez y devuelve cuantos salen. Si solo algunas estan listas, van una a
+      // una y en orden, porque esa llamada publica todas o ninguna — y porque
+      // `mandar` se salta lo que llegue mientras hay algo en vuelo, asi que
+      // lanzarlas a la vez perderia todas menos la primera.
       publicarListas: () => {
         if (!listasParaPublicar) return;
-        this.setState((st) => {
-          const p = Object.assign({}, st.publicadas);
-          clavesListas.forEach((k) => { p[k] = true; });
-          return { publicadas: p };
-        });
+        if (listasParaPublicar === (totalMesas - publicadas)) {
+          this.publicar(null, false);
+          return;
+        }
+        const quedan = clavesListas.slice();
+        const siguiente = () => {
+          const k = quedan.shift();
+          if (k == null) return Promise.resolve();
+          return this.publicar(Number(k), false).then((r) => (r && r.ok ? siguiente() : r));
+        };
+        siguiente();
       },
       // forzar es la única acción que salta un freno: pasa por modal y deja constancia
       hayModal: !!St.confirmar,
@@ -3118,11 +3133,21 @@ class Component extends DCLogic {
       textoForzarModal: mesaModal ? 'Publicar la ' + mesaModal.n + ' igualmente' : '',
       botonForzarModal: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border-radius:999px;border:none;background:#6E340F;color:#FFF8EA;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
       cerrarModal: () => this.setState({ confirmar: '' }),
-      confirmarForzar: () => this.setState((st) => ({
-        publicadas: Object.assign({}, st.publicadas, { [st.confirmar]: true }),
-        forzadas: Object.assign({}, st.forzadas, { [st.confirmar]: true }),
-        confirmar: ''
-      })),
+      // LLAMA AL SERVIDOR. Antes solo marcaba `publicadas` y `forzadas` en el
+      // estado y cerraba la ventana: la mesa no se publicaba, no se encolaba
+      // ningun correo, y encima esas dos marcas NO LAS LEE NADIE —lo publicado
+      // sale de `m.publicada`, que viene del servidor— asi que el boton no
+      // hacia absolutamente nada y la pantalla ni siquiera fingia que si.
+      //
+      // `confirmar` guarda el numero de mesa como texto; la ruta lo quiere
+      // como numero. Y no se marca nada aqui: `publicar()` recarga el reparto
+      // cuando el servidor dice que si, que es de donde sale la verdad. Si
+      // dice que no, la ventana se queda abierta y el motivo se ve arriba.
+      confirmarForzar: () => {
+        const mesa = Number(St.confirmar);
+        if (!mesa) return;
+        this.publicar(mesa, true);
+      },
       unidadVoz: vozRep.unidad,
       cajaEspera: 'border-radius:22px;padding:clamp(18px,2.4vw,24px);margin-top:clamp(24px,3vw,32px);transition:all 180ms ease;border:1px dashed ' + (St.arrastrando ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (St.arrastrando ? '#F2E9D5' : 'transparent'),
       hayEspera: espera.length > 0 || apuntados.length > 0 || !!St.arrastrando,
