@@ -43,3 +43,6 @@ yarn-error.*
 # Firebase de Android: va a EAS como variable de tipo fichero, nunca al repo (es público)
 google-services*.json
 GoogleService-Info*.plist
+
+# Grabaciones para Apple: pesan cientos de MB y salen datos personales
+Videos verificacion apple/
