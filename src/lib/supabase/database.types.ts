@@ -935,11 +935,11 @@ export type Database = {
           after_venue_id: string | null
           age_band_max: number | null
           age_band_min: number | null
-          es_prueba: boolean
           booking_closes_at: string
           city_slug: string
           created_at: string
           credit_cost: number
+          es_prueba: boolean
           format: Database["public"]["Enums"]["event_format_t"]
           id: string
           max_seats: number | null
@@ -959,11 +959,11 @@ export type Database = {
           after_venue_id?: string | null
           age_band_max?: number | null
           age_band_min?: number | null
-          es_prueba?: boolean
           booking_closes_at: string
           city_slug: string
           created_at?: string
           credit_cost?: number
+          es_prueba?: boolean
           format?: Database["public"]["Enums"]["event_format_t"]
           id?: string
           max_seats?: number | null
@@ -983,11 +983,11 @@ export type Database = {
           after_venue_id?: string | null
           age_band_max?: number | null
           age_band_min?: number | null
-          es_prueba?: boolean
           booking_closes_at?: string
           city_slug?: string
           created_at?: string
           credit_cost?: number
+          es_prueba?: boolean
           format?: Database["public"]["Enums"]["event_format_t"]
           id?: string
           max_seats?: number | null
@@ -1714,47 +1714,6 @@ export type Database = {
           },
         ]
       }
-      push_tokens: {
-        Row: {
-          baja_en: string | null
-          creado_en: string
-          id: string
-          plataforma: string
-          profile_id: string
-          token: string
-          version: string | null
-          visto_en: string
-        }
-        Insert: {
-          baja_en?: string | null
-          creado_en?: string
-          id?: string
-          plataforma: string
-          profile_id: string
-          token: string
-          version?: string | null
-          visto_en?: string
-        }
-        Update: {
-          baja_en?: string | null
-          creado_en?: string
-          id?: string
-          plataforma?: string
-          profile_id?: string
-          token?: string
-          version?: string | null
-          visto_en?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "push_tokens_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       payment_methods: {
         Row: {
           activo: boolean
@@ -2278,6 +2237,7 @@ export type Database = {
           deleted_at: string | null
           display_name: string | null
           email: string
+          es_prueba: boolean
           events_attended: number
           first_event_at: string | null
           full_name: string | null
@@ -2310,6 +2270,7 @@ export type Database = {
           deleted_at?: string | null
           display_name?: string | null
           email: string
+          es_prueba?: boolean
           events_attended?: number
           first_event_at?: string | null
           full_name?: string | null
@@ -2342,6 +2303,7 @@ export type Database = {
           deleted_at?: string | null
           display_name?: string | null
           email?: string
+          es_prueba?: boolean
           events_attended?: number
           first_event_at?: string | null
           full_name?: string | null
@@ -2414,6 +2376,68 @@ export type Database = {
             columns: ["waitlist_id"]
             isOneToOne: false
             referencedRelation: "waitlist"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_tokens: {
+        Row: {
+          baja_en: string | null
+          creado_en: string
+          id: string
+          plataforma: string
+          profile_id: string
+          token: string
+          version: string | null
+          visto_en: string
+        }
+        Insert: {
+          baja_en?: string | null
+          creado_en?: string
+          id?: string
+          plataforma: string
+          profile_id: string
+          token: string
+          version?: string | null
+          visto_en?: string
+        }
+        Update: {
+          baja_en?: string | null
+          creado_en?: string
+          id?: string
+          plataforma?: string
+          profile_id?: string
+          token?: string
+          version?: string | null
+          visto_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_tokens_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_tokens_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "push_tokens_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "push_tokens_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
             referencedColumns: ["id"]
           },
         ]

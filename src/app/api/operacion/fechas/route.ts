@@ -67,6 +67,8 @@ function horaBonita(h: string): string {
 import { HORAS_DE_CIERRE } from '@/lib/reglas'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 
+import { quienQuiereSaberDe } from '@/lib/a-quien-avisar'
+
 /** Y a mediodía se revela todo. */
 const HORA_REVELACION = 12
 
@@ -139,10 +141,21 @@ async function avisarDeLaApertura(
 
   if (!interesados.length) return 0
 
+  // El mismo filtro que `cierra_pronto`: quien dijo que ese plan no le
+  // interesa no recibe, y las cuentas de prueba tampoco.
+  const { data: evFormato } = await admin
+    .from('events')
+    .select('format')
+    .eq('id', eventoId)
+    .maybeSingle()
+
+  const quieren = await quienQuiereSaberDe(interesados, evFormato?.format)
+  if (!quieren.size) return 0
+
   const { data: perfiles } = await admin
     .from('profiles')
     .select('id, notificaciones')
-    .in('id', interesados)
+    .in('id', [...quieren])
     .is('deleted_at', null)
 
   let avisados = 0

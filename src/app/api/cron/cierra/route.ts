@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { encolar } from '@/lib/correos'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+import { quienQuiereSaberDe } from '@/lib/a-quien-avisar'
+
 /**
  * «Esta fecha se cierra mañana».
  *
@@ -46,7 +48,7 @@ async function avisar(seco: boolean) {
 
   const { data: eventos } = await admin
     .from('events')
-    .select('id, booking_closes_at')
+    .select('id, booking_closes_at, format')
     .eq('status', 'open')
     .gt('booking_closes_at', new Date(ahora).toISOString())
     .lte('booking_closes_at', new Date(ahora + ANTELACION).toISOString())
@@ -100,10 +102,16 @@ async function avisar(seco: boolean) {
     const puede = new Set((verificados ?? []).map((v) => v.id).filter((id): id is string => !!id))
     if (!puede.size) continue
 
+    // Y de esos, quien quiere saber de ESTE plan y no es una cuenta de
+    // prueba. Las dos reglas viven en `a-quien-avisar` porque son las mismas
+    // que `abrimos_zona`, que tenia el mismo hueco.
+    const quieren = await quienQuiereSaberDe([...puede], ev.format)
+    if (!quieren.size) continue
+
     const { data: perfiles } = await admin
       .from('profiles')
       .select('id, notificaciones')
-      .in('id', [...puede])
+      .in('id', [...quieren])
       .is('deleted_at', null)
 
     // Quien ya lo tiene encolado para esta fecha. El índice único ya impide el

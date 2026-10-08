@@ -9,6 +9,8 @@ import { HORAS_DE_CIERRE, precioTexto, vozDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 
+import { ZONA_POR_DEFECTO, partesDe } from '@/lib/reglas'
+
 /**
  * De una fila de la cola a los datos que pinta la plantilla.
  *
@@ -52,6 +54,51 @@ function horaTexto(iso: string | null | undefined): string {
 function horaEnLetra(iso: string | null | undefined): string {
   if (!iso) return ''
   return EN_LETRA[enCaracas(iso).getUTCHours() % 12] ?? ''
+}
+
+/**
+ * El dia de una fecha EN LA ZONA DE SU CIUDAD: «viernes 9», en minuscula.
+ *
+ * Los de arriba restan cuatro horas a mano. Funciona mientras todo sea
+ * Caracas y deja de funcionar el dia que no lo sea, que es justo lo que
+ * `cities.timezone` vino a resolver.
+ */
+function diaEnZona(iso: string | null | undefined, zona: string): string {
+  const p = partesDe(iso, zona)
+  return p ? `${p.dia} ${p.numero}` : ''
+}
+
+/** La misma, con mayuscula, para los bloques grandes. */
+function diaEnZonaAlto(iso: string | null | undefined, zona: string): string {
+  const t = diaEnZona(iso, zona)
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : ''
+}
+
+/**
+ * «hoy», «mañana», o «el viernes 9».
+ *
+ * EL CORREO DECIA EL DIA Y LLEGABA ESE DIA: «El Viernes 9 se cierra el jueves
+ * 8», leido el jueves 8. Quien lo abre tiene que restar fechas para saber si
+ * le queda tiempo, y eso es trabajo nuestro, no suyo.
+ *
+ * Se comparan DIAS DE CALENDARIO en la zona de la ciudad, no horas: a las
+ * once de la noche del jueves, el cierre del viernes a las siete de la tarde
+ * esta a veinte horas, pero es «mañana», no «hoy».
+ */
+function cuandoCierra(iso: string | null | undefined, zona: string, ahora = Date.now()): string {
+  const cierre = partesDe(iso, zona)
+  if (!cierre) return 'pronto'
+
+  const hoy = partesDe(new Date(ahora).toISOString(), zona)
+  if (!hoy) return `el ${diaEnZona(iso, zona)}`
+
+  const clave = (p: NonNullable<ReturnType<typeof partesDe>>) =>
+    Date.UTC(p.ano, p.mesNumero - 1, p.numero)
+  const dias = Math.round((clave(cierre) - clave(hoy)) / 86_400_000)
+
+  if (dias <= 0) return 'hoy'
+  if (dias === 1) return 'mañana'
+  return `el ${diaEnZona(iso, zona)}`
 }
 
 const bs = (n: number | null | undefined) =>
@@ -168,6 +215,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     booking_closes_at: string
     zone_slug: string | null
     reveal_at: string
+    city_slug?: string | null
   } | null = null
 
   if (fila.event_id) {
@@ -175,7 +223,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       .from('events')
       // `reveal_at` no lo usa ninguna plantilla: lo usa el candado de
       // `prepararCorreo` para saber si esta fecha ya se abrió.
-      .select('starts_at, format, zone_slug, reveal_at, booking_closes_at')
+      .select('starts_at, format, zone_slug, reveal_at, booking_closes_at, city_slug')
       .eq('id', fila.event_id)
       .maybeSingle()
     evento = data ?? null
@@ -465,16 +513,22 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
      */
     case 'cierra_pronto': {
       const zonas = await nombresDeZonas(admin, (p.zonas as string[]) ?? [])
-      const cierra = evento?.booking_closes_at ? diaTexto(evento.booking_closes_at) : ''
+      const zona = await zonaDeLaCiudad(admin, evento?.city_slug)
+      const cierra = cuandoCierra(evento?.booking_closes_at, zona)
       return {
         a,
         datos: {
           ...base,
           zona: zonas[0] ?? '',
-          cuando: evento?.starts_at ? diaCorto(evento.starts_at) : '',
+          // DOS FORMAS DEL MISMO DIA, y no es duplicar: `cuando` encabeza un
+          // bloque y va con mayuscula; `cuandoFrase` va en mitad del asunto
+          // —«El viernes 9 se cierra hoy»— y ahi la mayuscula sobra. Con una
+          // sola, el asunto decia «El Viernes 9».
+          cuando: diaEnZonaAlto(evento?.starts_at, zona),
+          cuandoFrase: diaEnZona(evento?.starts_at, zona),
           hora: evento?.starts_at ? horaTexto(evento.starts_at) : '',
-          cierra: cierra ? `el ${cierra}` : 'pronto',
-          CIERRA: (cierra ? `EL ${cierra}` : 'PRONTO').toUpperCase(),
+          cierra,
+          CIERRA: cierra.toUpperCase(),
         },
       }
     }
@@ -506,6 +560,19 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
 // ---------------------------------------------------------------------
 
 type Admin = ReturnType<typeof createAdminClient>
+
+/**
+ * La zona horaria de la ciudad de una fecha.
+ *
+ * Sin ciudad, la del producto. Es el mismo respaldo que usa el resto, y el
+ * motivo por el que `ZONA_POR_DEFECTO` se llama asi: la buena es la de la
+ * ciudad, esta es solo lo que queda cuando no se sabe.
+ */
+async function zonaDeLaCiudad(admin: Admin, slug: string | null | undefined): Promise<string> {
+  if (!slug) return ZONA_POR_DEFECTO
+  const { data } = await admin.from('cities').select('timezone').eq('slug', slug).maybeSingle()
+  return data?.timezone || ZONA_POR_DEFECTO
+}
 
 const FORMATOS: Record<string, string> = {
   dinner: 'Cena', foodie_dinner: 'Cena foodie', women_dinner: 'Cena de mujeres',

@@ -51,8 +51,17 @@ type Api = {
     sentados: string; juntarse: string; mia: string; TU: string
   }
   ZONA: string
-  diaDe: (iso: string | null | undefined) => string | null
-  horaDe: (iso: string | null | undefined) => string | null
+  // Con `zona`: la buena es la de la ciudad de cada fecha, y sin el parametro
+  // en el tipo no habia forma de pedirla desde el servidor sin un cast.
+  diaDe: (iso: string | null | undefined, zona?: string) => string | null
+  horaDe: (iso: string | null | undefined, zona?: string) => string | null
+  partesDe: (
+    iso: string | null | undefined,
+    zona?: string,
+  ) => {
+    dia: string; diaNumero: number; numero: number
+    mes: string; mesNumero: number; ano: number; hora: string
+  } | null
 }
 
 const api = reglas as Api
@@ -93,6 +102,7 @@ export const HORAS_DE_CIERRE: number = api.HORAS_DE_CIERRE
 export const ZONA_POR_DEFECTO: string = api.ZONA
 export const diaDe = api.diaDe
 export const horaDe = api.horaDe
+export const partesDe = api.partesDe
 export type { Campo }
 
 /**
