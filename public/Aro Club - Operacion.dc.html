@@ -947,6 +947,50 @@
       </div>
     </sc-if>
 
+    <sc-if value="{{ esAvisos }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <h1 style="{{ h1 }}">Avisos</h1>
+        <p style="{{ bajada }}">{{ bajadaAvisos }}</p>
+
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin:clamp(22px,2.8vw,30px) 0 16px">
+          <input type="search" value="{{ filtroPersona }}" onChange="{{ ponerPersona }}" placeholder="Correo de alguien" style="{{ campoFiltro }}" />
+          <select value="{{ filtroFecha }}" onChange="{{ ponerFecha }}" style="{{ campoFiltro }}">
+            <sc-for list="{{ fechasFiltro }}" as="f" hint-placeholder-count="3">
+              <option value="{{ f.id }}">{{ f.nombre }}</option>
+            </sc-for>
+          </select>
+          <button onClick="{{ buscarAvisos }}" style="{{ botonBorde }}">Buscar</button>
+        </div>
+
+        <sc-if value="{{ pidiendoAvisos }}" hint-placeholder-val="{{ false }}">
+          <div style="{{ vacioAvisos }}">Leyendo la cola…</div>
+        </sc-if>
+
+        <sc-if value="{{ sinAvisos }}" hint-placeholder-val="{{ false }}">
+          <div style="{{ vacioAvisos }}">{{ textoSinAvisos }}</div>
+        </sc-if>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ listaAvisos }}" as="a" hint-placeholder-count="6">
+            <div style="{{ a.caja }}">
+              <div style="display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline">
+                <span style="font:600 13px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ a.tipo }}</span>
+                <span style="font:400 13px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ a.quien }}</span>
+                <span style="margin-left:auto;font:400 12px/1.3 'Inter Tight',sans-serif;color:#566A5D">{{ a.cuando }}</span>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px">
+                <span style="{{ a.selloCorreo }}">{{ a.textoCorreo }}</span>
+                <span style="{{ a.selloPush }}">{{ a.textoPush }}</span>
+              </div>
+              <sc-if value="{{ a.hayDetalle }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:9px;font:400 12px/1.5 'Inter Tight',sans-serif;color:#566A5D;word-break:break-word">{{ a.detalle }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ esGente }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 300ms ease both">
         <h1 style="{{ h1 }}">Gente</h1>
@@ -1199,6 +1243,7 @@ class Component extends DCLogic {
     gente: null, zonasGente: [], embudoGente: [], totalGente: 0, verificadosGente: 0,
     paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {},
     perfilesGente: 0, leadsGente: null, pidiendoGente: false,
+    avisos: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
     // Histórico: las mesas que ya se repartieron alguna vez. Se pide aparte
     // de Gente porque responde otra pregunta —dónde se sentó quién— y porque
     // la mayoría de las sesiones no lo abren.
@@ -1302,7 +1347,7 @@ class Component extends DCLogic {
 
   clavesPestanas(esAdmin) {
     const admin = esAdmin === undefined ? this.state.esAdmin : esAdmin;
-    return ['mesas', 'verificaciones', 'pagos', 'reportes', 'fechas', 'locales']
+    return ['mesas', 'verificaciones', 'pagos', 'reportes', 'avisos', 'fechas', 'locales']
       .concat(admin ? ['equipo'] : [])
       .concat(['gente', 'historico']);
   }
@@ -1320,6 +1365,19 @@ class Component extends DCLogic {
     const i = this.clavesPestanas(esAdmin).indexOf(clave);
     if (i >= 0) this.setState({ vista: i });
     this.centrarPestana();
+    if (i >= 0) this.alEntrarEn(clave);
+  }
+
+  /**
+   * Lo que hay que pedir al abrir una pestaña, y no antes.
+   *
+   * Casi todo el panel se carga al entrar, que es lo que hace que cambiar de
+   * pestaña sea instantáneo. Los avisos no: son hasta trescientas filas que
+   * no sirven para nada más, y pedirlas siempre es pagarlas en cada visita a
+   * Reparto, que es donde se pasa el día.
+   */
+  alEntrarEn(clave) {
+    if (clave === 'avisos' && this.state.avisos === null) this.cargarAvisos();
   }
 
   // --- carga -----------------------------------------------------------
@@ -1342,6 +1400,24 @@ class Component extends DCLogic {
         return { fechas: d.fechas, horasFormato: d.horasFormato || null, fechaRep: i };
       },
       { fechas: [] });
+  }
+
+  /**
+   * La cola de avisos. Se pide SOLO al abrir su pestaña.
+   *
+   * Son hasta trescientas filas y no hacen falta para nada mas: cargarlas con
+   * el resto del panel es pagarlas en cada visita a Reparto.
+   */
+  cargarAvisos() {
+    if (this.state.pidiendoAvisos) return;
+    const q = [];
+    if (this.state.filtroPersona) q.push('persona=' + encodeURIComponent(this.state.filtroPersona));
+    if (this.state.filtroFecha) q.push('evento=' + encodeURIComponent(this.state.filtroFecha));
+    if (this.state.filtroTipo) q.push('tipo=' + encodeURIComponent(this.state.filtroTipo));
+    this.setState({ pidiendoAvisos: true });
+    return this.pedir('/api/operacion/avisos' + (q.length ? '?' + q.join('&') : ''),
+      (d) => ({ avisos: d.filas || [], pidiendoAvisos: false }),
+      { avisos: [], pidiendoAvisos: false });
   }
 
   cargarReparto(eventoId) {
@@ -2520,6 +2596,9 @@ class Component extends DCLogic {
       ['Verificaciones', String(pendientes)],
       ['Pagos', String(porConciliar)],
       ['Reportes', String(sinResolver)],
+      // Sin contador: no hay un numero que pedir mirar. Lo que se viene a ver
+      // aqui es POR QUE no salio algo, y eso no se cuenta de antemano.
+      ['Avisos', ''],
       ['Fechas', String(FECHAS_VIVAS.length)],
       ['Locales', String(locales.length)]
     ].concat(St.esAdmin ? [['Equipo', String(conAcceso)]] : [])
@@ -2533,7 +2612,7 @@ class Component extends DCLogic {
         // la pestaña en la que estás no se ve.
         clave: CLAVES[i] || String(i),
         activa: on ? '1' : null,
-        pick: () => { this.setState({ vista: i }); this.centrarPestana(); },
+        pick: () => { this.setState({ vista: i }); this.centrarPestana(); this.alEntrarEn(CLAVES[i]); },
         btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#1B5138') + ';font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease',
         contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.22)' : 'rgba(20,52,42,.09)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#33513F') + ';font-variant-numeric:tabular-nums'
       };
@@ -3032,6 +3111,70 @@ class Component extends DCLogic {
       reportes, locales, filtrosLocales,
 
       // ── gente ─────────────────────────────────────────────────────
+      esAvisos: esta('avisos'),
+      ...(() => {
+        const A = St.avisos;
+        const sello = (tono) => 'display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.02em;'
+          + (tono === 'bien' ? 'background:rgba(27,81,56,.12);color:#1B5138'
+            : tono === 'mal' ? 'background:rgba(143,69,21,.14);color:#8F4515'
+            : 'background:rgba(86,106,93,.12);color:#566A5D');
+        // Con los formateadores de ESTA pantalla, no con `AroReglas`: el panel
+        // no carga `reglas.js` —lo dice su propio comentario en los locales— y
+        // usarlo aqui tiraba la pantalla entera con «AroReglas is not defined».
+        const hora = (iso) => (iso ? diaTexto(iso) + ' · ' + horaTexto(iso) : '—');
+        return {
+          bajadaAvisos: 'Lo que se le mando a cada persona, y lo que contesto el proveedor. Solo se lee: aqui no se reenvia nada. Que un correo salga no significa que llegara, y que la push no salga tiene siempre un motivo escrito.',
+          filtroPersona: St.filtroPersona,
+          filtroFecha: St.filtroFecha,
+          ponerPersona: (e) => this.setState({ filtroPersona: e.target.value }),
+          ponerFecha: (e) => this.setState({ filtroFecha: e.target.value }),
+          buscarAvisos: () => this.cargarAvisos(),
+          pidiendoAvisos: !!St.pidiendoAvisos,
+          sinAvisos: !St.pidiendoAvisos && Array.isArray(A) && A.length === 0,
+          textoSinAvisos: (St.filtroPersona || St.filtroFecha)
+            ? 'Nada con ese filtro. Prueba con el correo entero o quita la fecha.'
+            : 'La cola esta vacia.',
+          campoFiltro: 'min-height:44px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:#FFFBF0;font:400 14px/1 \'Inter Tight\',sans-serif;color:#14342A',
+          // Con el dia escrito y no el uuid: nadie elige una fecha por su
+          // identificador, y el desplegable enseñaba doce de ellos.
+          fechasFiltro: [{ id: '', nombre: 'Cualquier fecha' }].concat(
+            (St.fechas || []).map((f) => ({
+              id: f.id,
+              nombre: f.empiezaEn ? (diaTexto(f.empiezaEn) + ' · ' + horaTexto(f.empiezaEn)) : f.id.slice(0, 8),
+            }))),
+          listaAvisos: (A || []).map((a) => {
+            // El correo y la push van por SEPARADO a proposito: la encuesta
+            // del dia despues salia por correo y no por push, y en una sola
+            // etiqueta eso se lee como que todo fue bien.
+            const correoBien = a.correoEstado === 'enviado';
+            const correoEspera = a.correoEstado === 'esperando';
+            const pushBien = a.pushEstado === 'enviada';
+              // `sin_copy` NO es un fallo: casi ningun tipo manda push, y eso
+            // esta decidido. Pintarlo en naranja serian veinte filas gritando
+            // para esconder la una que importa. Se lee, no se alarma — y asi
+            // y todo se ve, que es lo que hacia falta con la encuesta.
+            const pushNoToca = a.pushEstado === 'sin push' || a.pushEstado === 'sin_token'
+              || a.pushEstado === 'sin_copy';
+            const detalle = [
+              a.correoMotivo ? 'correo: ' + a.correoMotivo : '',
+              a.proveedorId ? 'Resend ' + a.proveedorId : '',
+              a.pushRecibo ? 'recibo: ' + JSON.stringify(a.pushRecibo) : '',
+            ].filter(Boolean).join(' · ');
+            return {
+              tipo: a.tipo,
+              quien: a.correo || a.quien,
+              cuando: hora(a.cuandoTocaba),
+              textoCorreo: 'correo: ' + (correoBien ? 'enviado' : a.correoEstado),
+              selloCorreo: sello(correoBien ? 'bien' : correoEspera ? 'gris' : 'mal'),
+              textoPush: 'push: ' + (pushBien ? 'enviada' : a.pushEstado),
+              selloPush: sello(pushBien ? 'bien' : pushNoToca ? 'gris' : 'mal'),
+              detalle, hayDetalle: !!detalle,
+              caja: 'border-radius:18px;background:#FFFBF0;padding:14px 16px',
+            };
+          }),
+          vacioAvisos: 'border-radius:18px;background:#FAF3E4;padding:22px;font:400 14px/1.5 \'Inter Tight\',sans-serif;color:#566A5D',
+        };
+      })(),
       esGente: esta('gente'),
       nGente: String(RES.total),
       palabraGente: RES.total === 1 ? 'persona' : 'personas',
