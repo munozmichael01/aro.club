@@ -191,7 +191,8 @@ export const horaEn = (iso: string | null | undefined, zona: Zona) => reglas.hor
 
 // --- Perfil -------------------------------------------------------------------
 
-const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+/** Los meses salen de `reglas.js`, los mismos que usan la web y el servidor. */
+const MESES_LARGOS = reglas.MESES
 
 /**
  * «12 de mayo de 1990»: una fecha de nacimiento («AAAA-MM-DD»). Sin hora ni
