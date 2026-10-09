@@ -4,6 +4,7 @@ import type { Correo } from '@/lib/correos'
 import { firmarBaja } from '@/lib/baja-token'
 import { firmar } from '@/lib/lead-token'
 import { enlaceDeMapa } from '@/lib/mapa'
+import { FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { HORAS_DE_CIERRE, ZONA_POR_DEFECTO, horaDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -533,11 +534,15 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       const zonas = await nombresDeZonas(admin, (p.zonas as string[]) ?? [])
       const zona = await zonaDeLaCiudad(admin, evento?.city_slug)
       const cierra = cuandoCierra(evento?.booking_closes_at, zona)
+      const yaTiene = await laQueYaTiene(admin, fila.profile_id, fila.event_id, zona)
       return {
         a,
         datos: {
           ...base,
           zona: zonas[0] ?? '',
+          // Para poder decir «ya tienes la cena del viernes 9, esta es otra».
+          // Vacio si no tiene ninguna, y entonces la frase no sale.
+          yaTiene,
           // DOS FORMAS DEL MISMO DIA, y no es duplicar: `cuando` encabeza un
           // bloque y va con mayuscula; `cuandoFrase` va en mitad del asunto
           // —«El viernes 9 se cierra hoy»— y ahi la mayuscula sobra. Con una
@@ -586,6 +591,43 @@ type Admin = ReturnType<typeof createAdminClient>
  * motivo por el que `ZONA_POR_DEFECTO` se llama asi: la buena es la de la
  * ciudad, esta es solo lo que queda cuando no se sabe.
  */
+/**
+ * La otra fecha que esta persona YA tiene, si tiene alguna.
+ *
+ * Existe por una confusion real: a quien tenia la cena del viernes le llego
+ * «El sabado 10 se cierra hoy» y lo leyo como si hablara de la suya. El aviso
+ * invita a una fecha a la que NO esta apuntada, y eso tiene que decirlo el
+ * propio correo: quien ya tiene mesa no esta leyendo con el calendario
+ * delante.
+ *
+ * La mas proxima que siga viva, y nunca la de este mismo aviso.
+ */
+async function laQueYaTiene(
+  admin: Admin,
+  perfilId: string | null,
+  exceptoEvento: string | null,
+  zona: string,
+): Promise<string> {
+  if (!perfilId) return ''
+
+  const { data } = await admin
+    .from('bookings')
+    .select('event_id, events(starts_at, format, status)')
+    .eq('profile_id', perfilId)
+    .in('status', ['pending_payment', 'confirmed', 'attended'])
+
+  const vivas = (data ?? [])
+    .filter((b) => b.event_id !== exceptoEvento)
+    .map((b) => b.events as unknown as { starts_at: string; format: string; status: string } | null)
+    .filter((e): e is { starts_at: string; format: string; status: string } =>
+      !!e && e.status !== 'cancelled' && new Date(e.starts_at).getTime() + FIN_CENA > Date.now())
+    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
+
+  const suya = vivas[0]
+  if (!suya) return ''
+  return `${LA_DEL[suya.format] ?? 'el plan'} del ${diaEnZona(suya.starts_at, zona)}`
+}
+
 async function zonaDeLaCiudad(admin: Admin, slug: string | null | undefined): Promise<string> {
   if (!slug) return ZONA_POR_DEFECTO
   const { data } = await admin.from('cities').select('timezone').eq('slug', slug).maybeSingle()
@@ -605,6 +647,26 @@ const FORMATOS: Record<string, string> = {
  * articulo y el numero cambian —«tu cena», «tus drinks»— y armarla al vuelo
  * acaba diciendo «Hoy es tu drinks». Son once, caben escritas.
  */
+/**
+ * «la cena», «los drinks»: el plan con su articulo, para nombrar OTRA fecha.
+ *
+ * Misma razon que `HOY_ES`: en español cambian el articulo y el numero, y
+ * armarlo al vuelo acaba diciendo «la drinks».
+ */
+const LA_DEL: Record<string, string> = {
+  dinner: 'la cena',
+  foodie_dinner: 'la cena',
+  women_dinner: 'la cena',
+  drinks: 'los drinks',
+  coffee: 'el café',
+  walk: 'la caminata',
+  hike: 'el senderismo',
+  run: 'la salida a correr',
+  padel: 'el pádel',
+  pilates: 'el pilates',
+  cycling: 'la rodada',
+}
+
 const HOY_ES: Record<string, string> = {
   dinner: 'Hoy es tu cena',
   foodie_dinner: 'Hoy es tu cena',

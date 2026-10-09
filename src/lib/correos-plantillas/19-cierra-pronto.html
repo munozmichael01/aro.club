@@ -3,7 +3,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
-<title>El {{ cuandoFrase }} se cierra {{ cierra }} · Aro Club</title>
+<title>Aún estás a tiempo: el {{ cuandoFrase }} se cierra {{ cierra }} · Aro Club</title>
 <style>
   @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 400; font-display: swap; src: url(https://fonts.gstatic.com/s/intertight/v7/NGSwv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjDw.woff2) format('woff2'); }
     @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 600; font-display: swap; src: url(https://fonts.gstatic.com/s/intertight/v7/NGSwv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjDw.woff2) format('woff2'); }
@@ -45,7 +45,7 @@
   </td></tr>
 
   <tr><td class="p" style="padding:16px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2C4A38;mso-line-height-rule:exactly;">
-    Hay cena{{#si zona}} en {{ zona }}{{/si}} y todavía te queda sitio{{#si trato}}, {{ trato }}{{/si}}. Se cierra {{ cierra }}: después ya no se puede apartar puesto para esta.
+    {{#si yaTiene}}Ya tienes {{ yaTiene }}. Esta es otra: el {{ cuandoFrase }}.{{/si}}{{#no yaTiene}}Hay cena{{#si zona}} en {{ zona }}{{/si}} y todavía te queda sitio{{#si trato}}, {{ trato }}{{/si}}.{{/no}} Se cierra {{ cierra }}: después ya no se puede apartar puesto para esta.
   </td></tr>
 
   <tr><td class="p" style="padding:26px 40px 0 40px;">
