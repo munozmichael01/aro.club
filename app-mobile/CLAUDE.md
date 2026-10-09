@@ -47,7 +47,9 @@ acumulan cambios y se compila una vez. Ya en el código, esperando build:
   (con el SHA-256 de la clave de firma de Play) y que los enlaces de los
   correos no pasen por el rastreo de clics de Resend.
 - Lo ya hecho en JS desde la 1.0 (13): el filtro de la entrega 19, las
-  ciudades y el párrafo de la agenda en la hoja de reservar.
+  ciudades, el párrafo de la agenda en la hoja de reservar, `diasDe` y los
+  meses de `reglas.js` (y con él el «8 de NaN» de Mis cenas), el registro de
+  push al entrar a la cuenta y la cuarta pregunta de avisos.
 
 ## Dónde lo dejamos (02-10-2026) — empezar por aquí
 
@@ -234,7 +236,12 @@ no recibe push remotas) y trabajo del backend (guardar tokens y mandar).
   - **al terminar el alta**, con el nombre de su zona: «abrimos fecha en tu
     zona» llega aunque no verifique ni reserve;
   - **al subir la verificación**;
-  - **al reservar** o reportar el pago.
+  - **al reservar** o reportar el pago;
+  - **la primera vez que entra a su cuenta en la app**, solo si nunca se le
+    preguntó (Michael, 09-10): quien hizo todo en la web no pasaba por
+    ninguno de los otros tres.
+  Y el teléfono se registra cada vez que se entra a la cuenta, no solo al
+  arrancar (09-10: tras cambiar de cuenta sin cerrar la app, `sin_token`).
 - **El juego de la mesa** (entrega 18 de Design, en `app-mobile/Juego de la
   mesa/entrega/entrega 18/`):
   - Va en Mi mesa revelada, debajo de «Con quién cenas», y solo en cenas.

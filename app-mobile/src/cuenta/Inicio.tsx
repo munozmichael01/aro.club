@@ -120,6 +120,16 @@ export function Inicio(p: {
 
   const { preguntar, hoja } = usePreguntaAvisos()
 
+  // Cuarto momento: la primera vez que entra a su cuenta en la app, si nunca
+  // se le preguntó (quien hizo todo en la web). Una vez cargado el Inicio, no
+  // encima del esqueleto.
+  const preguntada = useRef(false)
+  useEffect(() => {
+    if (!datos || preguntada.current) return
+    preguntada.current = true
+    preguntar('entrada')
+  }, [datos, preguntar])
+
   const confirmar = async (id: string) => {
     if (!datos || !vista) return
     const r = vista.reservar

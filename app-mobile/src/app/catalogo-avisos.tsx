@@ -6,7 +6,7 @@ import type { Momento } from '../avisos/maquina'
 import { color } from '../diseno'
 import { soloDesarrollo } from '../util/soloDesarrollo'
 
-/** Catálogo: la pregunta previa de las push. ?momento=alta|verificacion|reserva */
+/** Catálogo: la pregunta previa de las push. ?momento=alta|verificacion|reserva|entrada */
 function Pantalla() {
   const { momento = 'alta' } = useLocalSearchParams<{ momento?: Momento }>()
   return (

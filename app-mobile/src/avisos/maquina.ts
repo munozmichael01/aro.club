@@ -73,9 +73,13 @@ export function hayQueMandar(ultimo: { token: string; en: number } | null, token
 //                 aunque no haya verificado ni reservado;
 //   verificacion  al subir la cédula y la selfie: espera un resultado;
 //   reserva       al apartar puesto: espera su mesa.
+// Y un cuarto (Michael, 09-10-2026):
+//   entrada       la primera vez que entra a su cuenta en la app, SOLO si
+//                 nunca se le preguntó: quien hizo el alta, la verificación
+//                 y la reserva en la web no pasaba por ninguno de los tres.
 // Si el sistema ya tiene respuesta (sí o no), no se pregunta nunca más.
 
-export type Momento = 'alta' | 'verificacion' | 'reserva'
+export type Momento = 'alta' | 'verificacion' | 'reserva' | 'entrada'
 export type Permiso = { estado: 'granted' | 'denied' | 'undetermined'; puedePreguntar: boolean }
 
 export function debePreguntar(permiso: Permiso, vistos: Momento[], momento: Momento): boolean {
@@ -83,7 +87,9 @@ export function debePreguntar(permiso: Permiso, vistos: Momento[], momento: Mome
   // preguntar. iOS dice `undetermined`; Android, antes de preguntar, puede
   // decir `denied` con `canAskAgain: true`, y con solo `undetermined` la
   // hoja no salía nunca en Android (testers, 05-10-2026).
-  return permiso.estado !== 'granted' && permiso.puedePreguntar && !vistos.includes(momento)
+  if (permiso.estado === 'granted' || !permiso.puedePreguntar || vistos.includes(momento)) return false
+  // La de entrada es el respaldo: si ya salió cualquier otra, sobra.
+  return momento !== 'entrada' || vistos.length === 0
 }
 
 /** «Chacao», «Chacao y otras» o nada: el nombre de la zona para la pregunta del alta. */

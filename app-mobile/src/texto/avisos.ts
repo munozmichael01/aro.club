@@ -15,6 +15,10 @@ export const pregunta = {
     titulo: '¿Te avisamos cuando se abra tu mesa?',
     cuerpo: 'Te llega cuando se revela: el sitio, la hora y los otros cinco.',
   },
+  entrada: {
+    titulo: '¿Te avisamos de lo importante?',
+    cuerpo: 'Cuando se abra tu mesa, cuando abramos fecha en tus zonas y el día del encuentro. Nada más.',
+  },
   si: 'Sí, avísame',
   no: 'Ahora no',
 }

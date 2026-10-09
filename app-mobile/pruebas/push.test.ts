@@ -86,3 +86,13 @@ test('la push del juego abre el juego de su mesa', () => {
   assert.equal(destinoDe({ tipo: 'juego' }), '/mesa')
   assert.equal(destinoDe({ tipo: 'juego', mesaId: 'x?y=1' }), '/mesa')
 })
+
+test('la pregunta de entrada solo sale si nunca se preguntó', () => {
+  const sin = { estado: 'undetermined' as const, puedePreguntar: true }
+  assert.ok(debePreguntar(sin, [], 'entrada'))
+  assert.ok(!debePreguntar(sin, ['alta'], 'entrada'))
+  assert.ok(!debePreguntar(sin, ['entrada'], 'entrada'))
+  assert.ok(!debePreguntar({ estado: 'granted', puedePreguntar: true }, [], 'entrada'))
+  // Y no gasta las otras: quien dijo «Ahora no» al entrar, se le pregunta al reservar.
+  assert.ok(debePreguntar(sin, ['entrada'], 'reserva'))
+})
