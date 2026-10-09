@@ -225,10 +225,20 @@ export async function POST(request: Request) {
   // Un valor a medias es válido mientras se responde: el mínimo solo se
   // exige al cerrar, no en cada tecla.
   if (valor !== null) {
-    const problema = validar(pregunta, valor)
+    // SIN EXIGIR EL MINIMO, que es lo que ya decia el comentario de arriba y
+    // el codigo no hacia: quien va por la primera de las tres actividades que
+    // pide `actividades` tiene una respuesta a medias, no una invalida. El
+    // minimo se exige al cerrar, y de eso se encarga el embudo.
+    const problema = validar(pregunta, valor, { exigirMinimo: false })
     if (problema) {
       console.error('[cuestionario] respuesta inválida', problema)
-      return NextResponse.json({ error: 'Esa respuesta no cuadra.' }, { status: 400 })
+      // CON LA CLAVE DENTRO. «Esa respuesta no cuadra» a secas obligaba a
+      // buscar en los registros del servidor para saber QUE pregunta y por
+      // que, y quien lo sufre esta en la pantalla sin forma de arreglarlo.
+      return NextResponse.json(
+        { error: 'Esa respuesta no cuadra.', pregunta: clave, detalle: problema },
+        { status: 400 },
+      )
     }
   }
 

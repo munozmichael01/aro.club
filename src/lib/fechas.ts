@@ -1,3 +1,4 @@
+import { MESES } from '@/lib/reglas'
 /**
  * Fechas en castellano, en un solo sitio.
  *
@@ -44,20 +45,10 @@ function partes(iso: string): { dia: number; mes: number; ano: number } {
   return { dia, mes: mes - 1, ano }
 }
 
-const MESES = [
-  'enero',
-  'febrero',
-  'marzo',
-  'abril',
-  'mayo',
-  'junio',
-  'julio',
-  'agosto',
-  'septiembre',
-  'octubre',
-  'noviembre',
-  'diciembre',
-]
+// Los meses vienen de `reglas.js`, que los comparten web, servidor y app.
+// Estaban escritos aqui y ahora tambien hacen falta dentro de `partesDe`
+// —porque en Hermes el nombre del mes no llega del motor— asi que o vivian en
+// un sitio o eran tres copias de doce palabras esperando a divergir.
 
 /** «Agosto de 2026». */
 export function mesYAno(iso: string | null): string {

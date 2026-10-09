@@ -51,6 +51,7 @@ type Api = {
     sentados: string; juntarse: string; mia: string; TU: string
   }
   ZONA: string
+  MESES: string[]
   // Con `zona`: la buena es la de la ciudad de cada fecha, y sin el parametro
   // en el tipo no habia forma de pedirla desde el servidor sin un cast.
   diaDe: (iso: string | null | undefined, zona?: string) => string | null
@@ -103,6 +104,7 @@ export const ZONA_POR_DEFECTO: string = api.ZONA
 export const diaDe = api.diaDe
 export const horaDe = api.horaDe
 export const partesDe = api.partesDe
+export const MESES = api.MESES
 export type { Campo }
 
 /**

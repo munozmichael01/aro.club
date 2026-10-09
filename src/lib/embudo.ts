@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { leerCatalogo } from '@/lib/questionnaire/catalogo'
+import { leerCatalogo, respuestaCompleta } from '@/lib/questionnaire/catalogo'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -81,12 +81,11 @@ async function preguntasQueFaltan(respuestas: Record<string, unknown>): Promise<
 
   return catalogo.preguntas
     .filter((p) => p.obligatoria)
-    .filter((p) => {
-      const v = respuestas[p.clave]
-      if (v == null) return true
-      if (Array.isArray(v)) return v.length === 0
-      return String(v).trim() === ''
-    })
+    // «Falta» es no llegar al MINIMO, no solo no haber tocado nada. Antes
+    // bastaba con una marca: alguien con una de las tres actividades que pide
+    // `actividades` contaba como contestada y llegaba a reservar con media
+    // respuesta, que es justo lo que el reparto usa para sentarla.
+    .filter((p) => !respuestaCompleta(p, respuestas[p.clave]))
     .map((p) => p.clave)
 }
 

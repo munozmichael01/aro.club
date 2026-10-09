@@ -520,6 +520,17 @@
     ZONA: 'America/Caracas',
 
     /**
+     * Los meses, en minuscula y escritos aqui.
+     *
+     * No salen del motor: en Hermes el nombre del mes no llega, y en
+     * cualquier motor depende de que el locale este instalado. Doce palabras
+     * que no cambian nunca pesan menos que una dependencia que falla en un
+     * telefono y no en el portatil de quien lo programa.
+     */
+    MESES: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio',
+            'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
+
+    /**
      * El dia de la semana de una fecha, en la zona del producto.
      *
      * Existe porque el dia estaba ESCRITO: «vuelves a entrar el sábado»,
@@ -595,31 +606,54 @@
       if (isNaN(d.getTime())) return null
       var z = zona || api.ZONA
       try {
-        var partes = {}
-        new Intl.DateTimeFormat('es-VE', {
-          timeZone: z, weekday: 'long', day: 'numeric', month: 'long',
-          year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
-        }).formatToParts(d).forEach(function (p) { partes[p.type] = p.value })
+        // SIN `formatToParts`. En Hermes —el motor de la app en el iPhone—
+        // devuelve mal `month` y `year`, y de ahi salia el «8 de NaN» del
+        // historial de cenas: `day` y `weekday` si llegaban, asi que el fallo
+        // parecia de la pantalla y no de aqui.
+        //
+        // `format()` si funciona, y `mesNumero` ya lo usaba por su cuenta.
+        // Ahora TODO lo numerico sale de dos cadenas con formato fijo, que es
+        // lo mismo que hacia falta y ademas una llamada menos.
+        //
+        // `en-CA` con año, mes y dia da «2026-10-09» en cualquier motor: es
+        // el unico locale que la especificacion fija en ese orden.
+        var ymd = new Intl.DateTimeFormat('en-CA', {
+          timeZone: z, year: 'numeric', month: '2-digit', day: '2-digit',
+        }).format(d)
+        var hm = new Intl.DateTimeFormat('en-GB', {
+          timeZone: z, hour: '2-digit', minute: '2-digit', hour12: false,
+        }).format(d)
 
-        // Y el día de la semana como número, que es lo que usan las tablas de
+        var ano = parseInt(ymd.slice(0, 4), 10)
+        var mesNumero = parseInt(ymd.slice(5, 7), 10) - 1
+        var numero = parseInt(ymd.slice(8, 10), 10)
+        // Medianoche sale como «24:00» en algunos motores.
+        var horas = parseInt(hm.slice(0, 2), 10) % 24
+        var minutos = parseInt(hm.slice(3, 5), 10)
+
+        // Si algo no se pudo leer se devuelve null y no un objeto con NaN
+        // dentro. Un NaN no falla: viaja hasta la pantalla y se imprime.
+        if (isNaN(ano) || isNaN(mesNumero) || isNaN(numero) || isNaN(horas) || isNaN(minutos)) {
+          return null
+        }
+
+        // El dia de la semana como numero, que es lo que usan las tablas de
         // la pantalla. `en-US` para que el nombre sea estable y no dependa de
-        // acentos ni de mayúsculas.
+        // acentos ni de mayusculas.
         var ingles = new Intl.DateTimeFormat('en-US', { timeZone: z, weekday: 'short' }).format(d)
         var DIAS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
         return {
-          dia: partes.weekday || '',
+          dia: new Intl.DateTimeFormat('es-VE', { timeZone: z, weekday: 'long' }).format(d),
           diaNumero: DIAS.indexOf(ingles.slice(0, 3)),
-          numero: parseInt(partes.day, 10),
-          mes: partes.month || '',
-          mesNumero: parseInt(new Intl.DateTimeFormat('en-CA', {
-            timeZone: z, month: '2-digit',
-          }).format(d), 10) - 1,
-          ano: parseInt(partes.year, 10),
-          horas: parseInt(new Intl.DateTimeFormat('en-GB', {
-            timeZone: z, hour: '2-digit', hour12: false,
-          }).format(d), 10),
-          minutos: parseInt(partes.minute, 10),
+          numero: numero,
+          // Del numero de mes y no de una cadena del motor: es lo mismo en
+          // todas partes y no depende de que el locale este instalado.
+          mes: api.MESES[mesNumero] || '',
+          mesNumero: mesNumero,
+          ano: ano,
+          horas: horas,
+          minutos: minutos,
           hora: api.horaDe(iso, z),
         }
       } catch (e) {

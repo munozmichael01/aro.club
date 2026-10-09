@@ -120,7 +120,23 @@ function problemaDeFecha(valor: unknown): string | null {
   return null
 }
 
-export function validar(pregunta: PreguntaCat, valor: unknown): string | null {
+/**
+ * `exigirMinimo` separa dos preguntas que no son la misma.
+ *
+ * «¿Es este valor legal?» y «¿esta ya terminada esta respuesta?». El maximo,
+ * los codigos del catalogo y la exclusiva son lo primero y valen en cualquier
+ * momento. El MINIMO es lo segundo, y mientras alguien marca opciones su
+ * respuesta esta a medias por definicion.
+ *
+ * Mezclarlos costaba un 400 en mitad del cuestionario: quien llevaba una de
+ * las tres actividades que pide el minimo recibia «Esa respuesta no cuadra»
+ * por ir por la primera. Paso de verdad el 8 de octubre desde la app.
+ */
+export function validar(
+  pregunta: PreguntaCat,
+  valor: unknown,
+  { exigirMinimo = true }: { exigirMinimo?: boolean } = {},
+): string | null {
   if (pregunta.tipo === 'date') {
     const problema = problemaDeFecha(valor)
     return problema ? `${pregunta.clave}: ${problema}` : null
@@ -143,7 +159,7 @@ export function validar(pregunta: PreguntaCat, valor: unknown): string | null {
   if (pregunta.max && lista.length > pregunta.max) {
     return `${pregunta.clave}: máximo ${pregunta.max}`
   }
-  if (pregunta.min && lista.length > 0 && lista.length < pregunta.min) {
+  if (exigirMinimo && pregunta.min && lista.length > 0 && lista.length < pregunta.min) {
     return `${pregunta.clave}: mínimo ${pregunta.min}`
   }
 
@@ -157,6 +173,24 @@ export function validar(pregunta: PreguntaCat, valor: unknown): string | null {
     return `${pregunta.clave}: "${pregunta.exclusiva}" no se combina con otras`
   }
   return null
+}
+
+/**
+ * Si una respuesta llega al minimo que pide su pregunta.
+ *
+ * Es lo que decide si el cuestionario esta terminado, y vive aqui y no en el
+ * embudo para que no haya dos ideas de «completa»: el embudo solo miraba si
+ * HABIA respuesta, asi que una actividad de las tres que pide el minimo
+ * contaba como contestada y dejaba reservar.
+ */
+export function respuestaCompleta(pregunta: PreguntaCat, valor: unknown): boolean {
+  if (valor == null) return false
+  if (pregunta.tipo === 'date' || pregunta.tipo === 'text') {
+    return String(valor).trim() !== ''
+  }
+  const lista = Array.isArray(valor) ? valor : [valor]
+  if (!lista.length) return false
+  return !pregunta.min || lista.length >= pregunta.min
 }
 
 /** Valida un conjunto clave→valor. Lista vacía si todo cuadra. */
