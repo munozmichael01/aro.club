@@ -29,27 +29,26 @@ La única dependencia aceptada es `POST /api/auth/nativo` (ver abajo).
 - Si Apple responde, sale en «Revisión de apps» y llega por correo a
   `somos.aroclub@gmail.com`.
 
-## Para la próxima build (preparado el 07-10, sin compilar)
+## Build 15 (iOS) y versionCode 13 (Android), del 09-10
 
-Quedan **3 builds de iOS** este mes en el plan gratis de Expo (15). Se
-acumulan cambios y se compila una vez. Ya en el código, esperando build:
+Llevan todo lo acumulado desde la 1.0 (13): EAS Update, los enlaces de los
+correos (Associated Domains + `intentFilters`; la web ya publica los dos
+ficheros de `/.well-known/`), el filtro de la entrega 19, las ciudades, el
+párrafo de la agenda en la hoja de reservar, el «8 de NaN» (arreglado en
+`reglas.js`), el registro de push al entrar a la cuenta y la cuarta pregunta
+de avisos.
 
-- **EAS Update** (`expo-updates`, `runtimeVersion: fingerprint`, canales
-  `production` y `preview` en `eas.json`). Después de esa build, los cambios
-  de JS salen sin compilar:
-  `npx eas-cli@latest update --channel production --message "…"`. Una
-  actualización solo llega a las builds con la MISMA huella nativa: si se
-  añade una librería nativa o se toca un plugin, hace falta build.
-- **Los enlaces de los correos abren la app** (`src/enlaces.ts`,
-  `src/app/+native-intent.tsx`, `associatedDomains` e `intentFilters` en
-  `app.json`). Falta, de la web, publicar
-  `/.well-known/apple-app-site-association` y `/.well-known/assetlinks.json`
-  (con el SHA-256 de la clave de firma de Play) y que los enlaces de los
-  correos no pasen por el rastreo de clics de Resend.
-- Lo ya hecho en JS desde la 1.0 (13): el filtro de la entrega 19, las
-  ciudades, el párrafo de la agenda en la hoja de reservar, `diasDe` y los
-  meses de `reglas.js` (y con él el «8 de NaN» de Mis cenas), el registro de
-  push al entrar a la cuenta y la cuarta pregunta de avisos.
+- **Desde la build 15, los cambios de JS salen con EAS Update**, sin gastar
+  builds: `npx eas-cli@latest update --channel production --message "…"`.
+  Solo llega a builds con la MISMA huella nativa (`runtimeVersion:
+  fingerprint`): una librería nativa nueva o un plugin tocado piden build.
+- **Trampa del 09-10:** al añadir una capacidad nativa (Associated Domains),
+  la build no interactiva falla con «Provisioning profile doesn't include
+  the … entitlement». La arregla Michael UNA vez lanzando la build en su
+  Terminal sin `--non-interactive`, entrando con su Apple ID: EAS sincroniza
+  la capacidad y genera el perfil nuevo («reuse the original profile?» → n,
+  «Generate a new…?» → y).
+- Plan gratis de Expo: 15 builds de iOS al mes; el 09-10 quedaban 1 o 2.
 
 ## Dónde lo dejamos (02-10-2026) — empezar por aquí
 
@@ -231,7 +230,7 @@ no recibe push remotas) y trabajo del backend (guardar tokens y mandar).
   otra consulta, que filtre por esa columna.
 - **El permiso de las push se pide con una pregunta previa nuestra**
   (`PreguntaAvisos`). El texto de iOS no se cambia y solo sale una vez, y
-  «Ahora no» no lo gasta. Se pregunta en tres momentos, una vez cada uno,
+  «Ahora no» no lo gasta. Se pregunta en cuatro momentos, una vez cada uno,
   y nunca más cuando el sistema ya tiene su sí o su no (Michael, 02-10):
   - **al terminar el alta**, con el nombre de su zona: «abrimos fecha en tu
     zona» llega aunque no verifique ni reserve;
