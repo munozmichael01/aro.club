@@ -15,7 +15,7 @@ function cuandoAbre(min: number): string {
 
 export const tarjeta = {
   titulo: 'El juego de la mesa',
-  abierto: 'Tres rondas de preguntas para romper el hielo. Quince minutos, y se guarda el teléfono.',
+  abierto: 'Por si hace falta romper el hielo: unas preguntas en tres rondas, y después se guarda el teléfono.',
   abrir: 'Abrir el juego',
   cerrado: (hora: string) => `Se abre a las ${hora}, ${cuandoAbre(reglas.JUEGO.abreMin)}.`,
 }
@@ -35,6 +35,10 @@ export const juego = {
     eyebrow: (n: number, total: number) => `Ronda ${n} de ${total}`,
     lector: (n: number) => `¿Otra persona quiere leer? Que abra el juego en su teléfono y toque «Ronda ${n}». Verá las mismas preguntas.`,
     boton: (n: number) => `Empezar la ronda ${n}`,
+    // La última ronda es opcional (Michael, 10-10): la mesa decide si sigue.
+    aviso: 'Esta ronda es más personal. Solo si a la mesa le provoca.',
+    seguir: (n: number) => `Seguir con la ronda ${n}`,
+    terminar: 'Terminar aquí',
   },
-  final: { sub: 'Tres rondas', titulo: 'Hasta aquí el juego.', resto: 'Lo demás es suyo.', guardar: 'Ya pueden guardar el teléfono.', volver: 'Volver a Mi mesa' },
+  final: { sub: (rondas: number) => (rondas === 1 ? 'Una ronda' : rondas === 2 ? 'Dos rondas' : 'Tres rondas'), titulo: 'Hasta aquí el juego.', resto: 'Lo demás es suyo.', guardar: 'Ya pueden guardar el teléfono.', volver: 'Volver a Mi mesa' },
 }

@@ -113,15 +113,24 @@ export function Juego(p: { mesaId: string; alSalir: () => void; /** Solo el cat√
           <Texto style={estilos.eyebrow}>{T.juego.cambio.eyebrow(v.ronda.numero, total).toUpperCase()}</Texto>
           <Texto style={estilos.enorme}>{v.ronda.titulo}</Texto>
           <Texto style={estilos.bajada}>{v.ronda.bajada}</Texto>
+          {v.opcional ? <Texto style={estilos.bajada}>{T.juego.cambio.aviso}</Texto> : null}
         </View>
         <View style={{ gap: 16 }}>
           <Texto style={estilos.lector}>{T.juego.cambio.lector(v.ronda.numero)}</Texto>
-          <BotonClaro texto={T.juego.cambio.boton(v.ronda.numero)} onPress={() => ir(M.siguiente(e, p.mesaId))} />
+          <BotonClaro
+            texto={v.opcional ? T.juego.cambio.seguir(v.ronda.numero) : T.juego.cambio.boton(v.ronda.numero)}
+            onPress={() => ir(M.siguiente(e, p.mesaId))}
+          />
+          {v.opcional ? (
+            <Pressable onPress={() => ir(M.terminar(e))} accessibilityRole="button" style={({ pressed }) => [estilos.volver, pressed && { borderColor: color.crema }]}>
+              <Texto style={estilos.volverTexto}>{T.juego.cambio.terminar}</Texto>
+            </Pressable>
+          ) : null}
         </View>
       </>
     )
   } else {
-    sub = T.juego.final.sub
+    sub = T.juego.final.sub(v.jugadas)
     cuerpo = (
       <>
         <View style={[estilos.centro, { gap: 28 }]}>

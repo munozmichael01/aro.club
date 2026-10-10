@@ -54,9 +54,17 @@ export function siguiente(e: Estado, mesaId: string): Estado {
   return otra < reglas.JUEGO.rondas.length ? { paso: 'cambio', ronda: otra, indice: 0 } : { paso: 'final', ronda: e.ronda, indice: e.indice }
 }
 
+/** La última ronda es opcional: desde su pausa se puede terminar sin jugarla. */
+export const esOpcional = (e: Estado) => e.paso === 'cambio' && e.ronda === reglas.JUEGO.rondas.length - 1
+
+/** «Terminar aquí»: el final, con la ronda anterior como la última jugada. */
+export function terminar(e: Estado): Estado {
+  return esOpcional(e) ? { paso: 'final', ronda: e.ronda - 1, indice: 0 } : e
+}
+
 export function atras(e: Estado, mesaId: string): Estado {
   if (e.paso === 'reglas') return e
-  if (e.paso === 'final') return { paso: 'pregunta', ronda: e.ronda, indice: preguntas(mesaId, e.ronda).length - 1 }
+  if (e.paso === 'final') return { paso: 'pregunta', ronda: e.ronda, indice: Math.max(0, preguntas(mesaId, e.ronda).length - 1) }
   if (e.paso === 'cambio') return { paso: 'pregunta', ronda: e.ronda - 1, indice: preguntas(mesaId, e.ronda - 1).length - 1 }
   if (e.indice > 0) return { ...e, indice: e.indice - 1 }
   return e.ronda > 0 ? { paso: 'cambio', ronda: e.ronda, indice: 0 } : { paso: 'reglas', ronda: 0, indice: 0 }
@@ -72,5 +80,8 @@ export function vista(e: Estado, mesaId: string) {
     posicion: { actual: e.indice + 1, total: lista.length },
     reglas: reglas.JUEGO.reglas,
     final: reglas.JUEGO.final,
+    opcional: esOpcional(e),
+    /** Rondas jugadas, para el final («Dos rondas» si se terminó antes). */
+    jugadas: e.ronda + 1,
   }
 }

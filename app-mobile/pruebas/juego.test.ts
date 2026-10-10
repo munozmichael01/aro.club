@@ -6,6 +6,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
+import * as M from '../src/juego/maquina'
 import { atras, empezarEn, hayJuego, inicial, preguntas, siguiente, ventana, vista, type Estado } from '../src/juego/maquina'
 import { reglas } from '../src/reglas'
 
@@ -61,4 +62,19 @@ test('atrás deshace el camino, y otro teléfono puede seguir en su ronda', () =
 test('solo en las cenas', () => {
   assert.ok(hayJuego('dinner') && hayJuego('foodie_dinner'))
   assert.ok(!hayJuego('coffee') && !hayJuego('run') && !hayJuego(null))
+})
+
+test('la última ronda es opcional: desde su pausa se puede terminar', () => {
+  const mesa = '3f2a1c9e-1111-4222-8333-944455556666'
+  const ultima = reglas.JUEGO.rondas.length - 1
+  const pausa = M.empezarEn(ultima)
+  assert.ok(M.esOpcional(pausa))
+  assert.ok(!M.esOpcional(M.empezarEn(1)))
+  const fin = M.terminar(pausa)
+  assert.equal(fin.paso, 'final')
+  assert.equal(M.vista(fin, mesa).jugadas, ultima)
+  // Seguir sigue funcionando igual.
+  assert.equal(M.siguiente(pausa, mesa).paso, 'pregunta')
+  // Terminar fuera de la pausa opcional no hace nada.
+  assert.deepEqual(M.terminar(M.inicial), M.inicial)
 })
