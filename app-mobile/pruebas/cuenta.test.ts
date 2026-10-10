@@ -171,3 +171,12 @@ test('las polaroids como filtro: «Todos» aparece cuando hay más de un formato
   // Un elegido sin fechas no filtra: vuelve a «Todos».
   assert.equal(M.filtros(ag, 'coffee')[0].elegido, true)
 })
+
+test('la hora en letra no se come los minutos', () => {
+  assert.equal(F.horaEnLetra(19, 0), 'siete de la noche')
+  assert.equal(F.horaEnLetra(19, 30), 'siete y media de la noche')
+  assert.equal(F.horaEnLetra(19, 15), 'siete y cuarto de la noche')
+  assert.equal(F.horaEnLetra(18, 45), 'siete menos cuarto de la noche')
+  assert.equal(F.horaEnLetra(19, 20), '7:20 p.m.')
+  assert.equal(F.titularDeReserva('2026-10-10T23:30:00Z', 'America/Caracas'), 'Sábado 10, siete y media de la noche.')
+})
