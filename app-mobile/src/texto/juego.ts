@@ -23,7 +23,7 @@ export const tarjeta = {
 export const juego = {
   nombre: 'El juego de la mesa',
   salir: 'Salir del juego',
-  reglas: { titulo: 'Antes de empezar', sub: 'Tres rondas · 15 minutos', empezar: 'Empezar', yaEmpezaron: '¿Ya empezaron?', ronda: (n: number) => `Ronda ${n}` },
+  reglas: { titulo: 'Antes de empezar', sub: 'Tres rondas · la última, opcional', empezar: 'Empezar', yaEmpezaron: '¿Ya empezaron?', ronda: (n: number) => `Ronda ${n}` },
   pregunta: {
     cabecera: (n: number, nombre: string) => `Ronda ${n} · ${nombre}`,
     posicion: (i: number, total: number) => `${i} de ${total}`,
