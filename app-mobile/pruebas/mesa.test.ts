@@ -61,3 +61,12 @@ test('lo de después: solo lo contestado, índices de mejor a peor, y lo ya hech
   const ya = M.yaHecho({ fase: 'pasada', yaValoro: true, yaReporto: 'b', yaBloqueados: ['b', 'fuera'], companeros: [{ id: 'b', nombre: 'B', sector: null }] })
   assert.deepEqual(ya, { contado: true, reportadoA: 'b', bloqueados: ['b'] })
 })
+
+test('la única mesa del sitio no lleva número', async () => {
+  const T = await import('../src/texto/mesa')
+  assert.equal(M.conNumero({ fase: 'abierta', numeroMesa: 1, mesaUnica: true } as M.DeServidor), false)
+  assert.equal(M.conNumero({ fase: 'abierta', numeroMesa: 2 } as M.DeServidor), true)
+  assert.equal(T.abierta.llegada(true, '', 6), 'Di que vas a la mesa de Aro. Está reservada a tu nombre y el restaurante ya sabe que son seis.')
+  assert.match(T.abierta.llegada(true, '02', 6), /la 02\./)
+  assert.match(T.pasada.bajada(true, 'Madre', 'mesa', ''), /^Cenaste en Madre\. /)
+})

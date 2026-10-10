@@ -32,7 +32,7 @@ export type DeServidor = {
   contacto: string
   base: { nombre: string; trato: string; nacimiento: string; genero: string | null; telefono: string }
   preguntas: PreguntaPerfil[]
-  historial: { cuando: string; formato: string; sitio: string | null; numeroMesa: number | null; estado: string; zonaHoraria?: string | null }[]
+  historial: { cuando: string; formato: string; sitio: string | null; numeroMesa: number | null; mesaUnica?: boolean; estado: string; zonaHoraria?: string | null }[]
 }
 
 export type Tipo = 'texto' | 'fecha' | 'unica' | 'multi'
@@ -172,7 +172,7 @@ export function credenciales(d: DeServidor) {
 
 export function historial(d: DeServidor) {
   return (d.historial ?? []).map((c) => ({
-    sitio: c.sitio ? c.sitio + (c.numeroMesa != null ? T.cenas.mesa(c.numeroMesa) : '') : ({ dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' } as Record<string, string>)[c.formato] ?? 'Cena',
+    sitio: c.sitio ? c.sitio + (c.numeroMesa != null && !c.mesaUnica ? T.cenas.mesa(c.numeroMesa) : '') : ({ dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' } as Record<string, string>)[c.formato] ?? 'Cena',
     cuando: F.fechaCompleta(c.cuando, c.zonaHoraria),
     estado: T.cenas.estado[c.estado] ?? T.cenas.estado['no-llegaste'],
     fuiste: c.estado === 'fuiste',

@@ -56,12 +56,13 @@ export const abierta = {
   notaCompaneros: (esMesa: boolean) =>
     `Todos con identidad verificada. No hay fotos ni apellidos: eso lo cuenta cada quien ${esMesa ? 'en la mesa' : 'sobre la marcha'} si quiere.`,
   alLlegar: 'Al llegar',
+  /** `numero` vacío cuando es la única mesa del sitio: entonces no se nombra. */
   llegada: (esMesa: boolean, numero: string, total: number) => {
     const letras = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez']
     const son = letras[total] ?? String(total)
     return esMesa
-      ? `Di que vas a la mesa de Aro, la ${numero}. Está reservada a tu nombre y el restaurante ya sabe que son ${son}.`
-      : `Busca al grupo ${numero} de Aro en el punto de encuentro. Son ${son} y nadie lleva cartel: pregunta por Aro.`
+      ? `Di que vas a la mesa de Aro${numero ? `, la ${numero}` : ''}. Está reservada a tu nombre y el restaurante ya sabe que son ${son}.`
+      : `Busca al grupo${numero ? ` ${numero}` : ''} de Aro en el punto de encuentro. Son ${son} y nadie lleva cartel: pregunta por Aro.`
   },
   km: (n: number) => `${n} km`,
   min: (n: number) => `${n} min`,
@@ -88,7 +89,7 @@ export const pasada = {
   sello: 'ANOCHE',
   titulo: '¿Qué tal estuvo?',
   bajada: (esMesa: boolean, sitio: string, unidad: string, numero: string) =>
-    `${esMesa ? 'Cenaste en ' : 'Estuviste en '}${sitio}, ${unidad} ${numero}. Lo que nos cuentes entra en el emparejamiento de la próxima, y nadie más lo ve.`,
+    `${esMesa ? 'Cenaste en ' : 'Estuviste en '}${sitio}${numero ? `, ${unidad} ${numero}` : ''}. Lo que nos cuentes entra en el emparejamiento de la próxima, y nadie más lo ve.`,
   pensado: 'Pensado para cenas. Un café o una salida de movimiento se van a preguntar distinto más adelante.',
   laMesa: '¿Qué tal la mesa que armamos para ti?',
   /** De mejor a peor, como los botones: el servidor da la vuelta (`notaDesdeIndice`). */

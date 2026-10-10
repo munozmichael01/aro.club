@@ -285,12 +285,18 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
         <Texto variante="etiqueta" tono="cuerpoSobreVerde" style={{ letterSpacing: 2.2 }}>
           {v.TU}
         </Texto>
-        <Texto
-          style={{ fontFamily: fuente.textoNegrita, fontSize: 112, lineHeight: 136, letterSpacing: -5, color: color.crema, fontVariant: ['tabular-nums'], marginTop: 4 }}
-        >
-          {M.numero(d)}
-        </Texto>
-        <View style={{ height: 1, backgroundColor: cremaAlfa(0.22), marginVertical: 20 }} />
+        {M.conNumero(d) ? (
+          <>
+            <Texto
+              style={{ fontFamily: fuente.textoNegrita, fontSize: 112, lineHeight: 136, letterSpacing: -5, color: color.crema, fontVariant: ['tabular-nums'], marginTop: 4 }}
+            >
+              {M.numero(d)}
+            </Texto>
+            <View style={{ height: 1, backgroundColor: cremaAlfa(0.22), marginVertical: 20 }} />
+          </>
+        ) : (
+          <View style={{ height: 14 }} />
+        )}
         <Texto variante="display" tono="crema" style={{ fontSize: 34, lineHeight: 49 }}>
           {d.restaurante || '—'}
         </Texto>
@@ -395,7 +401,7 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
       <View style={[estilos.caja, { backgroundColor: 'transparent', borderWidth: 1, borderColor: tinta(0.18), marginTop: 30 }]}>
         <Texto variante="subtitulo">{T.abierta.alLlegar}</Texto>
         <Texto variante="cuerpo" style={{ marginTop: 9 }}>
-          {T.abierta.llegada(mesa, M.numero(d), otros.length + 1)}
+          {T.abierta.llegada(mesa, M.conNumero(d) ? M.numero(d) : '', otros.length + 1)}
         </Texto>
       </View>
 
@@ -457,7 +463,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
     <View>
       <SelloBorde texto={T.pasada.sello} />
       <Titular>{T.pasada.titulo}</Titular>
-      <Bajada>{T.pasada.bajada(mesa, d.restaurante || '—', voz.unidad, M.numero(d))}</Bajada>
+      <Bajada>{T.pasada.bajada(mesa, d.restaurante || '—', voz.unidad, M.conNumero(d) ? M.numero(d) : '')}</Bajada>
       <Texto variante="nota" style={{ marginTop: 8 }}>
         {T.pasada.pensado}
       </Texto>

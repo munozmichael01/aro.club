@@ -21,6 +21,8 @@ export type DeServidor = {
   zonas?: string[]
   mesaId?: string
   numeroMesa?: number | null
+  /** Es la única mesa (o grupo) de esa fecha en ese sitio: entonces no se enseña el número (Michael, 10-10). */
+  mesaUnica?: boolean
   actividad?: { ruta?: string; km?: number; minutos?: number; nivel?: string } | null
   restaurante?: string | null
   direccion?: string | null
@@ -41,6 +43,8 @@ export function fase(d: DeServidor): Fase {
 export const voz = (d: DeServidor) => reglas.vozDe(d.formato)
 export const esMesa = (d: DeServidor) => voz(d).unidad === 'mesa'
 export const numero = (d: DeServidor) => (d.numeroMesa != null ? String(d.numeroMesa).padStart(2, '0') : '—')
+/** El número solo se enseña si en ese sitio hay más de una mesa esa fecha: «01» siendo la única no dice nada. */
+export const conNumero = (d: DeServidor) => !d.mesaUnica && d.numeroMesa != null
 
 /**
  * Sin mesa no son todos el mismo caso: quien espera la revisión de su
