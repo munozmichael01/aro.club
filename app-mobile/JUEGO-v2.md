@@ -16,7 +16,7 @@ mazo en uso sigue siendo el de `JUEGO.md` (en `reglas.js`).
      de la V1, que funcionaba);
    - la ronda 3 es **opcional y avisada**, y se quitaron las más duras.
 
-Siguen igual: tres rondas (10, 11 y 10), salen 2 por ronda, una persona lee, todos
+Siguen igual: tres rondas (10, 11 y 11), salen 2 por ronda, una persona lee, todos
 responden, siempre se puede pasar.
 
 ---
@@ -42,9 +42,9 @@ Ligera. Que cualquiera responda sin pensarlo dos veces.
 5. ¿Qué canción pones cuando necesitas ánimo?
 6. ¿Cuál es tu talento más inútil?
 7. ¿Qué serie o película le recomiendas a todo el mundo?
-8. ¿Cuál es el mejor consejo que te han dado, aunque sea pequeño?
-9. ¿Qué te gustaba de chamo o chama que todavía te gusta?
-10. Si mañana tuvieras el día libre, ¿qué harías primero?
+8. ¿Qué te gustaba de chamo o chama que todavía te gusta?
+9. Si mañana tuvieras el día libre, ¿qué harías primero?
+10. ¿A qué le dices que sí con demasiada facilidad?
 
 ## Ronda 2 · Un poco más de ti
 
@@ -60,7 +60,7 @@ Personal, pero sin exponerse.
 8. ¿Qué decisión tomaste que hoy volverías a tomar?
 9. ¿En qué has cambiado de opinión en los últimos años?
 10. ¿Qué te gustaría que te salga bien este año?
-11. ¿Qué te da curiosidad probar y todavía no te has atrevido?
+11. ¿Qué te cuesta pedir?
 
 ## Ronda 3 · Si la mesa quiere ir más hondo
 
@@ -77,15 +77,20 @@ personal. Solo si a la mesa le provoca».
 8. ¿Qué momento de tu vida te gustaría volver a vivir?
 9. ¿Quién ha sido importante en tu vida sin saberlo?
 10. ¿Qué te costó mucho y hoy agradeces?
+11. ¿Qué te da miedo intentar?
 
 **Salen de la V1:** «¿Cuándo fue la última vez que te sentiste en soledad de
-verdad?», «¿Qué te cuesta pedir?», «¿Qué conversación tienes pendiente con
-alguien?», «¿Qué parte de ti estás aprendiendo a querer?», «¿A qué le dices
-que sí con demasiada facilidad?», «¿Qué te da miedo intentar?» y «¿Qué haces
+verdad?», «¿Qué conversación tienes pendiente con
+alguien?», «¿Qué parte de ti estás aprendiendo a querer?», «¿Qué haces
 cuando nadie te ve que dice mucho de ti?». Y en la revisión del 10-10: «¿Qué
 fue lo último que te hizo reír a carcajadas?», «¿Qué te llevas de la gente
 nueva que has conocido?» y «Si esta fuera la última cena con gente nueva,
-¿qué te llevarías de ella?».
+¿qué te llevarías de ella?», «¿Cuál es el mejor consejo que te han dado,
+aunque sea pequeño?» (repetía «¿Quién te enseñó algo que todavía usas?») y
+«¿Qué te da curiosidad probar y todavía no te has atrevido?» (repetía «¿Qué te
+da miedo intentar?»). Se recuperaron de la V1, una por ronda: «¿A qué le dices
+que sí con demasiada facilidad?», «¿Qué te cuesta pedir?» y «¿Qué te da miedo
+intentar?».
 
 ---
 
