@@ -1,6 +1,6 @@
 # El juego de la mesa · V2 (propuesta)
 
-Borrador del 10-10-2026, para revisar con Michael. **No está aplicado:** el
+Borrador del 10-10-2026, revisado con Michael el mismo día (ronda 1 · la 3, ronda 2 · una más, ronda 3 · tres nuevas). **No está aplicado:** el
 mazo en uso sigue siendo el de `JUEGO.md` (en `reglas.js`).
 
 **Qué cambia y por qué** (feedback de la mesa de prueba del 09-10):
@@ -16,7 +16,7 @@ mazo en uso sigue siendo el de `JUEGO.md` (en `reglas.js`).
      de la V1, que funcionaba);
    - la ronda 3 es **opcional y avisada**, y se quitaron las más duras.
 
-Siguen igual: tres rondas de 10, salen 2 por ronda, una persona lee, todos
+Siguen igual: tres rondas (10, 11 y 10), salen 2 por ronda, una persona lee, todos
 responden, siempre se puede pasar.
 
 ---
@@ -37,7 +37,7 @@ Ligera. Que cualquiera responda sin pensarlo dos veces.
 
 1. ¿Cuál es tu plan perfecto de domingo en Caracas?
 2. ¿Qué comida no dejarías de comer nunca?
-3. ¿Qué fue lo último que te hizo reír a carcajadas?
+3. ¿Playa o montaña, y por qué?
 4. Si pudieras vivir un año en cualquier ciudad, ¿cuál sería?
 5. ¿Qué canción pones cuando necesitas ánimo?
 6. ¿Cuál es tu talento más inútil?
@@ -60,6 +60,7 @@ Personal, pero sin exponerse.
 8. ¿Qué decisión tomaste que hoy volverías a tomar?
 9. ¿En qué has cambiado de opinión en los últimos años?
 10. ¿Qué te gustaría que te salga bien este año?
+11. ¿Qué te da curiosidad probar y todavía no te has atrevido?
 
 ## Ronda 3 · Si la mesa quiere ir más hondo
 
@@ -67,21 +68,24 @@ Opcional. Antes de empezarla, la pantalla lo dice: «Esta ronda es más
 personal. Solo si a la mesa le provoca».
 
 1. ¿Qué es lo más valiente que has hecho?
-2. ¿Qué te da curiosidad probar y todavía no te has atrevido?
-3. ¿Qué piensa la gente de ti que no es del todo así?
-4. ¿Qué le dirías a la persona que eras hace diez años?
-5. ¿De qué te sientes orgulloso u orgullosa y casi nunca lo cuentas?
-6. ¿Qué te gustaría que te preguntaran más seguido?
-7. ¿Qué cosa pequeña te arregló un mal día hace poco?
-8. ¿Qué te gustaría hacer antes de que se te pase el momento?
-9. ¿Qué te llevas de la gente nueva que has conocido?
-10. Si esta fuera la última cena con gente nueva, ¿qué te llevarías de ella?
+2. ¿Qué piensa la gente de ti que no es del todo así?
+3. ¿Qué le dirías a la persona que eras hace diez años?
+4. ¿De qué te sientes orgulloso u orgullosa y casi nunca lo cuentas?
+5. ¿Qué te gustaría que te preguntaran más seguido?
+6. ¿Qué cosa pequeña te arregló un mal día hace poco?
+7. ¿Qué te gustaría hacer antes de que se te pase el momento?
+8. ¿Qué momento de tu vida te gustaría volver a vivir?
+9. ¿Quién ha sido importante en tu vida sin saberlo?
+10. ¿Qué te costó mucho y hoy agradeces?
 
 **Salen de la V1:** «¿Cuándo fue la última vez que te sentiste en soledad de
 verdad?», «¿Qué te cuesta pedir?», «¿Qué conversación tienes pendiente con
 alguien?», «¿Qué parte de ti estás aprendiendo a querer?», «¿A qué le dices
 que sí con demasiada facilidad?», «¿Qué te da miedo intentar?» y «¿Qué haces
-cuando nadie te ve que dice mucho de ti?».
+cuando nadie te ve que dice mucho de ti?». Y en la revisión del 10-10: «¿Qué
+fue lo último que te hizo reír a carcajadas?», «¿Qué te llevas de la gente
+nueva que has conocido?» y «Si esta fuera la última cena con gente nueva,
+¿qué te llevarías de ella?».
 
 ---
 
