@@ -1455,7 +1455,7 @@ class Component extends DCLogic {
         // panel salta de fecha solo.
         const antes = this.fechaElegida();
         const i = antes ? Math.max(0, d.fechas.findIndex((f) => f.id === antes.id)) : 0;
-        return { fechas: d.fechas, horasFormato: d.horasFormato || null, fechaRep: i };
+        return { fechas: d.fechas, horasFormato: d.horasFormato || null, precioPorDefecto: d.precioPorDefecto, fechaRep: i };
       },
       { fechas: [] });
   }
@@ -2845,7 +2845,12 @@ class Component extends DCLogic {
     };
     const actOk = deMesa || (String(St.actividad || '').trim().length >= 4);
     const horaSel = /^([01]\d|2[0-3]):[0-5]\d$/.test(String(St.hora || '')) ? String(St.hora) : '';
-    const precioNum = parseFloat(String(St.precio === undefined ? '8' : St.precio).replace(',', '.')) || 0;
+    // El precio por defecto lo dice el servidor (`PRECIO_USD` de `reglas.js`),
+    // que es lo mismo que promete el correo de «abrimos fecha en tu zona».
+    // Estaba escrito «8» aquí y otra vez abajo, y la regla dice siete: se
+    // abrieron dos fechas prometiendo siete y cobrando ocho.
+    const precioPorDefecto = String(St.precioPorDefecto == null ? '' : St.precioPorDefecto);
+    const precioNum = parseFloat(String(St.precio === undefined ? precioPorDefecto : St.precio).replace(',', '.')) || 0;
     const cupoOk = true;
     const precioOk = precioNum > 0;
 
@@ -3983,7 +3988,7 @@ class Component extends DCLogic {
       hora: St.hora || '',
       onHora: (e) => this.setState({ hora: e.target.value }),
       notaHora: horaSel ? 'Hora de Caracas' : 'Vacía = la del formato',
-      precio: St.precio === undefined ? '8' : St.precio,
+      precio: St.precio === undefined ? precioPorDefecto : St.precio,
       onPrecio: (e) => this.setState({ precio: e.target.value.replace(/[^0-9,.]/g, '').slice(0, 6), abierta: false }),
       precioBs: precioNum > 0 ? '= ' + bs(precioNum) + ' Bs a la tasa de hoy' : 'Escribe el precio',
       notaPrecio: 'Se cobra en bolívares a la tasa del día, y la tasa se congela al reportar el pago. El consumo va aparte y no pasa por aquí.',

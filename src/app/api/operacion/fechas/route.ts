@@ -64,7 +64,7 @@ function horaBonita(h: string): string {
 /** Cuánto antes cierra: el reparto necesita el pool cerrado dos días antes. */
 // La cifra vive en `reglas.js`: la comparten el panel, el copy que la promete
 // y la app. Escrita aquí, bajarla de 48 a 24 dejaba cuatro textos mintiendo.
-import { HORAS_DE_CIERRE } from '@/lib/reglas'
+import { HORAS_DE_CIERRE, PRECIO_USD } from '@/lib/reglas'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 
 import { quienQuiereSaberDe } from '@/lib/a-quien-avisar'
@@ -251,9 +251,17 @@ const cuerpo = z.object({
     ])
     .default('dinner'),
   ciudad: z.string().min(2).max(40).default('caracas'),
-  // Ocho dólares es el arranque, no una constante: un pádel no cuesta lo que
-  // una cena, y el día que cambie el precio no puede hacer falta un deploy.
-  precioUsd: z.number().positive().max(500).default(8),
+  /**
+   * El precio de la plaza. Por fecha, porque un pádel no cuesta lo que una
+   * cena y el día que cambie no puede hacer falta un deploy.
+   *
+   * Pero el POR DEFECTO sale de `PRECIO_USD`, no de un número escrito aquí.
+   * Eran ocho en tres sitios —este, y dos veces en el panel— y siete en
+   * `reglas.js`, que es lo que dice el correo de «abrimos fecha en tu zona»:
+   * «7 USD la plaza». Dos fechas se abrieron prometiendo siete y cobrando
+   * ocho, y eso no falla en ningún sitio hasta que alguien paga.
+   */
+  precioUsd: z.number().positive().max(500).default(PRECIO_USD),
   // Cuántos por mesa. Seis en una cena, pero una caminata de seis no es lo
   // mismo que una de doce, y el reparto ya lee esta columna.
   porMesa: z.number().int().min(2).max(20).default(6),
@@ -534,6 +542,9 @@ export async function GET() {
     horasFormato: Object.fromEntries(
       Object.entries(HORA_DE).map(([k, v]) => [k, { hora: v, texto: horaBonita(v) }]),
     ),
+    // Y el precio por defecto, por lo mismo que las horas: el panel lo tenía
+    // escrito a mano, en dos sitios, y decía ocho donde la regla dice siete.
+    precioPorDefecto: PRECIO_USD,
   })
 }
 
