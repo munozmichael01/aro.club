@@ -6,7 +6,7 @@ import { firmar } from '@/lib/lead-token'
 import { enlaceDeMapa } from '@/lib/mapa'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
-import { HORAS_DE_CIERRE, ZONA_POR_DEFECTO, horaDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
+import { HORAS_DE_CIERRE, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
@@ -25,7 +25,6 @@ import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
  */
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
-const EN_LETRA = ['doce', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once']
 
 /** Caracas, cuatro horas por detrás. Todo lo que lee una persona va en su hora. */
 function enCaracas(iso: string): Date {
@@ -52,9 +51,20 @@ function horaTexto(iso: string | null | undefined): string {
   return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'a.m.' : 'p.m.'}`
 }
 
-function horaEnLetra(iso: string | null | undefined): string {
+/**
+ * «siete y media de la noche», de la regla compartida.
+ *
+ * Tiraba los minutos: miraba solo la hora, así que la cena de las 7:30
+ * llegaba al recordatorio de la mañana como «Hoy a las siete». Media hora de
+ * diferencia en el único dato por el que alguien sale de su casa.
+ *
+ * La zona por defecto, como el resto de `base`: aquí todavía se asume
+ * Caracas. Lo que se arregla es el minuto, no la zona, que es otra cosa y
+ * está donde está.
+ */
+function horaEnLetra(iso: string | null | undefined, zona = ZONA_POR_DEFECTO): string {
   if (!iso) return ''
-  return EN_LETRA[enCaracas(iso).getUTCHours() % 12] ?? ''
+  return horaEnLetraDe(iso, zona)
 }
 
 /**

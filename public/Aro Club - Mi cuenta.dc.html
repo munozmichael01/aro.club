@@ -616,21 +616,33 @@ class Component extends DCLogic {
         ? (() => {
             const p = piezas(d.reserva.empiezaEn, d.reserva.zonaHoraria);
             if (!p) return base.titulo;
-            const h = p.horas;
-            const letras = ['doce','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once'];
-            const enLetra = letras[h % 12];
-            return DIASEM[p.diaNumero] + ' ' + p.numero + ', ' + enLetra +
-              // Las siete son de la noche, no de la tarde: es como lo dice
-              // el copy original y como se dice en Caracas.
-              (h >= 19 || h < 6 ? ' de la noche.' : h >= 12 ? ' de la tarde.' : ' de la mañana.');
+            // De `reglas.js`, no escrita aquí. Esta copia tiraba los
+            // MINUTOS —miraba solo la hora— y la cena del sábado, que es a
+            // las 7:30, salía como «Sábado 10, siete de la noche». Media
+            // hora de diferencia en el único dato por el que alguien sale de
+            // su casa, en la primera pantalla que ve al entrar.
+            return DIASEM[p.diaNumero] + ' ' + p.numero + ', ' +
+              window.AroReglas.horaEnLetra(p.horas, p.minutos) + '.';
           })()
         : (d.estado === 'reservar'
             ? tituloReservar(d)
             // Mesa o grupo, según lo que tenga reservado.
             : ((esMovimiento && base.tituloMov) ? base.tituloMov : base.titulo)),
+      // El mismo fallo que el título, dos líneas más abajo: «El sábado al
+      // mediodía se abre todo» estaba escrito a mano, y a quien reservó una
+      // cena de un lunes le prometía el sábado. El día sale del `revelaEn`
+      // de SU reserva, que es el único que sabe cuándo se abre la suya.
       cuerpo: d.estado === 'reservar'
         ? cuerpoReservar(d, base.cuerpo)
-        : ((esMovimiento && base.cuerpoMov) ? base.cuerpoMov : base.cuerpo),
+        : (d.estado === 'reservada' && d.reserva && d.reserva.revelaEn
+            ? (() => {
+                const dia = window.AroReglas.diaDe(d.reserva.revelaEn, d.reserva.zonaHoraria);
+                const base2 = (esMovimiento && base.cuerpoMov) ? base.cuerpoMov : base.cuerpo;
+                return dia
+                  ? base2.replace('El sábado al mediodía', 'El ' + dia + ' al mediodía')
+                  : base2;
+              })()
+            : ((esMovimiento && base.cuerpoMov) ? base.cuerpoMov : base.cuerpo)),
       accion: d.estado === 'reservar' && !d.proximaFecha ? 'Ver la agenda' : base.accion
     });
     const oscuro = e.id === 'abierta' || e.id === 'reservada';

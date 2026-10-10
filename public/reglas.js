@@ -683,6 +683,53 @@
       }
     },
 
+    /** Las doce horas en letra, para `horaEnLetra`. */
+    HORAS_EN_LETRA: ['doce', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once'],
+
+    /**
+     * «siete y media de la noche». La hora como se dice, no como se escribe.
+     *
+     * LOS MINUTOS NO SE PUEDEN TIRAR. Esto existía en tres sitios —la app,
+     * los correos y Mi cuenta— y dos de ellos solo miraban la hora: la cena
+     * del sábado es a las 7:30 y salía «Sábado 10, siete de la noche», en la
+     * portada de la cuenta y en el recordatorio de la mañana. Media hora de
+     * diferencia en el único dato por el que alguien sale de su casa.
+     *
+     * En punto, y cuarto, y media y menos cuarto se dicen en letra, que es
+     * como se dice una hora en voz alta. CUALQUIER OTRO MINUTO vuelve a las
+     * cifras —«7:20 p.m.»— en vez de inventar «siete y veinte»: una hora
+     * rara escrita en letra se lee dos veces, y la que importa es la de
+     * llegar a tiempo.
+     *
+     * Las siete son de la NOCHE y no de la tarde: es como se dice en Caracas
+     * y como lo dice el copy de Design.
+     */
+    horaEnLetra: function (horas, minutos) {
+      var h = (((horas | 0) % 24) + 24) % 24
+      var m = minutos | 0
+      var resto = ''
+      if (m === 30) resto = ' y media'
+      else if (m === 15) resto = ' y cuarto'
+      else if (m === 45) { resto = ' menos cuarto'; h = (h + 1) % 24 }
+      else if (m !== 0) {
+        var h12 = h % 12 === 0 ? 12 : h % 12
+        return h12 + ':' + (m < 10 ? '0' + m : '' + m) + ' ' + (h < 12 ? 'a.m.' : 'p.m.')
+      }
+      var franja = h >= 19 || h < 6 ? 'de la noche' : h >= 12 ? 'de la tarde' : 'de la mañana'
+      return api.HORAS_EN_LETRA[h % 12] + resto + ' ' + franja
+    },
+
+    /**
+     * La misma, desde una fecha y la zona de SU ciudad.
+     *
+     * Es la que usan el servidor y las pantallas, que tienen un ISO y no
+     * horas sueltas. La app llama a la de arriba, porque ya tiene las partes.
+     */
+    horaEnLetraDe: function (iso, zona) {
+      var p = api.partesDe(iso, zona)
+      return p ? api.horaEnLetra(p.horas, p.minutos) : ''
+    },
+
     /**
      * Las cuatro preguntas de la puerta.
      *

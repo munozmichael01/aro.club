@@ -52,6 +52,9 @@ type Api = {
   }
   ZONA: string
   MESES: string[]
+  HORAS_EN_LETRA: string[]
+  horaEnLetra: (horas: number, minutos: number) => string
+  horaEnLetraDe: (iso: string | null | undefined, zona?: string) => string
   JUEGO: {
     porRonda: number
     abreMin: number
@@ -113,6 +116,16 @@ export const diaDe = api.diaDe
 export const horaDe = api.horaDe
 export const partesDe = api.partesDe
 export const MESES = api.MESES
+/**
+ * La hora como se dice en voz alta: «siete y media de la noche».
+ *
+ * De `reglas.js` y no escrita aquí porque estaba en TRES sitios —la app, los
+ * correos y Mi cuenta— y dos de ellos tiraban los minutos: la cena de las
+ * 7:30 salía como «siete de la noche» en la portada de la cuenta y en el
+ * recordatorio de la mañana.
+ */
+export const horaEnLetra = api.horaEnLetra
+export const horaEnLetraDe = api.horaEnLetraDe
 /**
  * El juego de la mesa: el mazo, las rondas y su ventana.
  *
