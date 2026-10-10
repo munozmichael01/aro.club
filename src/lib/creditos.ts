@@ -29,7 +29,7 @@ export async function anotarPagoDeEvento(
   // cupón. Anotar un puesto regalado como `pack_purchase` sería mentir en el
   // único sitio del producto que tiene que cuadrar, y dentro de dos meses
   // nadie sabría distinguir los seis de la cena de creadores de seis ventas.
-  origen: 'pack_purchase' | 'coupon' = 'pack_purchase',
+  origen: 'pack_purchase' | 'coupon' | 'goodwill' = 'pack_purchase',
 ): Promise<void> {
   if (!bookingId) return
 
@@ -53,7 +53,7 @@ export async function anotarPagoDeEvento(
       delta: coste,
       reason: origen,
       booking_id: bookingId,
-      note: origen === 'coupon' ? 'Cupón' : 'Pago por evento',
+      note: origen === 'coupon' ? 'Cupón' : origen === 'goodwill' ? 'Cortesía de operación' : 'Pago por evento',
     },
     {
       profile_id: perfilId,

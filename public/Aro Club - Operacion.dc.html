@@ -237,6 +237,46 @@
         </sc-if>
 
         <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;max-width:56ch;margin-top:clamp(20px,2.6vw,28px);text-wrap:pretty">Arrastra a alguien a otra {{ unidadVoz }} o a la espera y se recalculan todas las abiertas. Lo publicado queda fijo: ni suelta ni recibe.</div>
+
+        <!-- Mover a alguien a mano. Cerrado por defecto: es la unica accion
+             del panel que se salta el cierre de una fecha, asi que no se
+             tropieza con ella de camino a otra cosa. -->
+        <div style="margin-top:clamp(22px,2.8vw,30px)">
+          <button onClick="{{ tocarAsiento }}" style="{{ botonTocarAsiento }}">{{ textoTocarAsiento }}</button>
+          <sc-if value="{{ asientoAbierto }}" hint-placeholder-val="{{ false }}">
+            <div style="border-radius:22px;background:#FAF3E4;padding:clamp(18px,2.4vw,24px);margin-top:12px;max-width:62ch">
+              <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ notaAsiento }}</div>
+              <div style="display:flex;flex-direction:column;gap:13px;margin-top:16px">
+                <div>
+                  <div style="{{ etiqueta }}">QUIÉN</div>
+                  <input type="email" value="{{ asientoCorreo }}" onChange="{{ ponerAsientoCorreo }}" placeholder="su@correo.com" aria-label="Correo de quien se mueve" style="{{ campoAsiento }}" />
+                </div>
+                <div>
+                  <div style="{{ etiqueta }}">POR QUÉ</div>
+                  <input type="text" value="{{ asientoMotivo }}" onChange="{{ ponerAsientoMotivo }}" placeholder="Le cede el puesto a…" aria-label="Por qué se mueve" style="{{ campoAsiento }}" />
+                  <div style="font:400 12px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:7px">Queda en el historial de operación con tu nombre.</div>
+                </div>
+                <div>
+                  <div style="{{ etiqueta }}">DE DÓNDE SALE EL PUESTO</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    <sc-for list="{{ cargosAsiento }}" as="c" hint-placeholder-count="2">
+                      <button onClick="{{ c.pick }}" style="{{ c.btn }}">{{ c.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:18px">
+                <button onClick="{{ sentarAsiento }}" style="{{ botonSentar }}">Dar el puesto</button>
+                <button onClick="{{ quitarAsiento }}" style="{{ botonQuitarAsiento }}">Quitar el puesto</button>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:14px">
+                <span style="{{ iconoAviso }}">!</span>
+                <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">A quien sacas no le llega ningún correo: no hay plantilla que cuente esto. Te damos su dirección para que le escribas tú. Y quien entra se queda sin {{ unidadVoz }} hasta el próximo reparto.</span>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
         <div style="height:96px"></div>
       </div>
 
@@ -1258,6 +1298,10 @@ class Component extends DCLogic {
     paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {},
     perfilesGente: 0, leadsGente: null, pidiendoGente: false,
     avisos: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
+    // Mover a una persona a mano en la fecha elegida. Vive en Reparto y
+    // cerrado por defecto: es la única acción del panel que se salta el
+    // cierre de una fecha, así que no se tropieza con ella.
+    asientoAbierto: false, asientoCorreo: '', asientoMotivo: '', asientoCargo: 'credito',
     // Histórico: las mesas que ya se repartieron alguna vez. Se pide aparte
     // de Gente porque responde otra pregunta —dónde se sentó quién— y porque
     // la mayoría de las sesiones no lo abren.
@@ -1853,6 +1897,45 @@ class Component extends DCLogic {
     });
   }
 
+  /**
+   * Sentar o sacar a alguien a mano, también en una fecha cerrada.
+   *
+   * No reabre la fecha y no manda ningún correo al que sale: no hay plantilla
+   * que diga la verdad de «te sacamos de esta fecha», así que la respuesta
+   * trae su correo y se le escribe a mano. Eso se repite aquí en voz alta
+   * porque es lo que se olvida.
+   */
+  moverAsiento(accion) {
+    const f = this.fechaElegida();
+    if (!f) return;
+    const correo = (this.state.asientoCorreo || '').trim();
+    const motivo = (this.state.asientoMotivo || '').trim();
+    // Los dos frenos, antes de salir: el servidor los repite, pero decirlo
+    // aquí ahorra un viaje y señala el campo que falta.
+    if (!correo) { this.setState({ fallo: 'Dime el correo de quien se mueve.' }); return; }
+    if (motivo.length < 5) { this.setState({ fallo: 'Escribe por qué. Queda en el historial.' }); return; }
+    const cuerpo = { accion, eventoId: f.id, correo, motivo };
+    if (accion === 'sentar') cuerpo.cargo = this.state.asientoCargo || 'credito';
+    return this.mandar('/api/operacion/asiento', cuerpo).then((r) => {
+      if (!r.ok) return r;
+      const d = r.d || {};
+      this.setState({
+        asientoCorreo: '', asientoMotivo: '',
+        aviso: accion === 'sentar'
+          ? d.quien + ' tiene puesto'
+            + (d.cargo === 'cortesia' ? ' de cortesía' : ', con su crédito') + '.'
+            + (d.hayQueRepartir ? ' ' + d.aviso : ' Entra en el próximo reparto.')
+          : d.quien + ' fuera.'
+            + (d.creditoDevuelto ? ' Crédito devuelto.' : ' No se le había cobrado ninguno.')
+            + (d.correosRetirados ? ' ' + d.correosRetirados + (d.correosRetirados === 1 ? ' correo retirado' : ' correos retirados') + ' de la cola.' : '')
+            + ' ESCRÍBELE TÚ a ' + d.correo + ': no hay correo que cuente esto.'
+      });
+      this.cargarReparto(f.id);
+      this.cargarFechas();
+      return r;
+    });
+  }
+
   // Fechas: abrir, elegir sitio y cancelar.
   abrirFecha(cuerpo) {
     return this.mandar('/api/operacion/fechas', cuerpo).then((r) => {
@@ -2107,6 +2190,10 @@ class Component extends DCLogic {
       formato: f.formato,
       hora: horaTexto(f.empiezaEn),
       cierra: cuantoQueda(f.cierraEn),
+      // El estado de la fecha, que no es lo mismo que el reloj: una fecha se
+      // puede cerrar a mano con su hora de cierre todavía por delante, y el
+      // reloj seguiría diciendo «14 DÍAS».
+      estado: f.estado || '',
       // Si ya se le contó a alguien, y si todavía da tiempo de contarlo.
       avisada: !!f.avisada,
       cierraEn: f.cierraEn,
@@ -3149,6 +3236,54 @@ class Component extends DCLogic {
         this.publicar(mesa, true);
       },
       unidadVoz: vozRep.unidad,
+
+      // ── mover a alguien a mano ─────────────────────────────────────
+      //
+      // Existe porque esto se hacía contra la base: sacar una reserva,
+      // devolver el crédito, retirar los correos que ya estaban en cola y
+      // acordarse de anotarlo. Media docena de pasos donde olvidar uno no
+      // falla nada, solo deja a alguien con un correo que ya no es verdad.
+      asientoAbierto: St.asientoAbierto,
+      tocarAsiento: () => this.setState({ asientoAbierto: !St.asientoAbierto, fallo: '', aviso: '' }),
+      textoTocarAsiento: St.asientoAbierto ? 'Cerrar' : 'Mover a alguien a mano',
+      botonTocarAsiento: 'display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:transparent;'
+        + "font:600 13px/1 'Inter Tight',sans-serif;color:#14342A;cursor:pointer",
+      // Se nombra la fecha elegida: la acción se salta su cierre, y escribir
+      // mal la fecha es el error que no se ve hasta que alguien no aparece.
+      // Cerrada es por ESTADO o por reloj, las dos cosas: una fecha se cierra
+      // a mano con su hora de cierre por delante, y mirar solo el reloj decía
+      // «todavía está abierta» de una que llevaba cerrada un día.
+      notaAsiento: fr.id
+        // La hora ya trae su propio punto —«7:30 p.m.»— y añadirle otro deja
+        // «7:30 p.m..». Se le quita el suyo y se pone uno.
+        ? ('Sobre ' + fr.titulo + ' · ' + String(fr.hora).replace(/\.$/, '') + '. '
+          + ((fr.estado && fr.estado !== 'open') || fr.cierra === 'CERRADA'
+            ? 'Ya cerró, y esto no la reabre: mueve a una persona y nada más.'
+            : 'Todavía está abierta, así que quien quiera entrar puede hacerlo por la puerta normal.'))
+        : 'Elige una fecha arriba.',
+      asientoCorreo: St.asientoCorreo,
+      ponerAsientoCorreo: (e) => this.setState({ asientoCorreo: e.target.value }),
+      asientoMotivo: St.asientoMotivo,
+      ponerAsientoMotivo: (e) => this.setState({ asientoMotivo: e.target.value }),
+      campoAsiento: "display:block;width:100%;box-sizing:border-box;min-height:48px;padding:0 15px;border-radius:14px;border:1px solid rgba(20,52,42,.22);background:#FFFDF7;font:400 15px/1.4 'Inter Tight',sans-serif;color:#14342A",
+      cargosAsiento: [
+        ['credito', 'Con su crédito'],
+        ['cortesia', 'De cortesía'],
+      ].map(([clave, label]) => ({
+        label,
+        pick: () => this.setState({ asientoCargo: clave }),
+        btn: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;'
+          + "font:600 13px/1 'Inter Tight',sans-serif;cursor:pointer;"
+          + (St.asientoCargo === clave
+            ? 'border:none;background:#14342A;color:#FAF3E4'
+            : 'border:1px solid rgba(20,52,42,.22);background:transparent;color:#2C4A38'),
+      })),
+      sentarAsiento: () => this.moverAsiento('sentar'),
+      quitarAsiento: () => this.moverAsiento('quitar'),
+      botonSentar: 'display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#14342A;color:#FAF3E4;'
+        + "font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer",
+      botonQuitarAsiento: 'display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 22px;border-radius:999px;border:1px solid rgba(143,69,21,.4);background:transparent;color:#8F4515;'
+        + "font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer",
       cajaEspera: 'border-radius:22px;padding:clamp(18px,2.4vw,24px);margin-top:clamp(24px,3vw,32px);transition:all 180ms ease;border:1px dashed ' + (St.arrastrando ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (St.arrastrando ? '#F2E9D5' : 'transparent'),
       hayEspera: espera.length > 0 || apuntados.length > 0 || !!St.arrastrando,
       // La misma caja cuenta dos cosas distintas y tiene que decir cuál.

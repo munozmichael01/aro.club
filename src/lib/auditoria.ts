@@ -38,6 +38,11 @@ export type Accion =
   // La escribe un DISPARADOR de `events`, no una ruta: borrar una fecha se
   // hace con la clave de servicio y no pasa por el panel.
   | 'fecha_borrada'
+  // Mover a alguien de una fecha CERRADA: sentarlo o sacarlo. Es la unica
+  // accion del panel que se salta el cierre, asi que es la que mas falta hace
+  // que quede escrita y con motivo.
+  | 'asiento_dado'
+  | 'asiento_quitado'
   | 'mesas_publicadas'
   | 'mesas_despublicadas'
   | 'mesas_repartidas'

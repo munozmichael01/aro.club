@@ -730,8 +730,28 @@ if (relojes.length) {
     fileURLToPath(new URL('../public/Aro Club - Operacion.dc.html', import.meta.url)), 'utf8')
 
   // `this.mandar('/api/operacion/X', { a: 1, b: 2 })` con cuerpo literal.
-  // Las que pasan una variable no se pueden mirar desde aqui y se saltan.
   const llamadas = [...panel.matchAll(/this\.mandar\(\s*'\/api\/operacion\/([a-z-]+)'\s*,\s*\{([^}]*)\}/g)]
+
+  // Y las que pasan una VARIABLE, que antes se saltaban en silencio. Eran
+  // cuatro —publicar, abrir fecha, mover a alguien a mano— y justo las que
+  // arman el cuerpo en varios pasos, que es donde es mas facil escribir un
+  // nombre que la ruta no conoce. Se busca el `const X = { … }` de antes de
+  // la llamada y los `X.campo = …` que le cuelgan despues.
+  for (const m of panel.matchAll(/this\.mandar\(\s*'\/api\/operacion\/([a-z-]+)'\s*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*[,)]/g)) {
+    const [todo, ruta, nombre] = m
+    const antes = panel.slice(Math.max(0, m.index - 1400), m.index)
+    const decl = [...antes.matchAll(new RegExp(`const\\s+${nombre}\\s*=\\s*\\{([^}]*)\\}`, 'g'))].pop()
+    if (!decl) continue   // no es un cuerpo armado aqui: no hay nada que cruzar
+    // Y solo si es EL cuerpo de esta llamada. `cuerpo` es el nombre de media
+    // docena de metodos distintos: si entre la declaracion y la llamada hay
+    // otro `mandar`, esa declaracion era del metodo de arriba. Sin esto, el
+    // `cuerpo.cargo` de mover a alguien se contaba como campo de abrir fecha.
+    const entre = antes.slice(decl.index + decl[0].length)
+    if (entre.includes('this.mandar(')) continue
+    const sueltos = [...entre.matchAll(new RegExp(`${nombre}\\.([a-zA-Z_][a-zA-Z0-9_]*)\\s*=[^=]`, 'g'))]
+      .map((x) => x[1] + ':').join(' ')
+    llamadas.push([todo, ruta, decl[1] + ' ' + sueltos])
+  }
 
   // Y las que pasan el cuerpo por una funcion intermedia, que es justo donde
   // estaba el fallo de los reportes: `resolverIncidencia(cuerpo)` reenvia a
@@ -750,7 +770,15 @@ if (relojes.length) {
 
   for (const m of llamadas) {
     const ruta = m[1]
+    // Con dos puntos —`eventoId: f.id`— y ABREVIADAS, `{ accion, correo }`,
+    // que no los llevan. Sin las segundas, mover a alguien a mano mandaba
+    // tres campos y solo se miraba uno: `correo` no estaba en el esquema de
+    // su ruta y esto decia que todo cuadraba.
     const campos = [...m[2].matchAll(/([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g)].map((c) => c[1])
+    for (const trozo of m[2].split(',')) {
+      const solo = trozo.trim()
+      if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(solo)) campos.push(solo)
+    }
     let fuente
     try {
       fuente = fs.readFileSync(
@@ -762,9 +790,23 @@ if (relojes.length) {
     // Solo los nombres que declara un `z.object`, no el fichero entero.
     // Mirando el fichero, `id` pasaba siempre —aparece en `actor.id`, en un
     // `.eq('id', …)`— y ese era justo uno de los dos fallos reales.
+    //
+    // El cuerpo de cada `z.object({ … })` se recorta CONTANDO LLAVES, no con
+    // un `[\s\S]*?` hasta el primer `})`. Un mensaje propio dentro del
+    // esquema —`z.enum([…], { error: '…' })`— tiene un `})` en medio, y el
+    // recorte perezoso se paraba ahi: `cancelar-fecha` declara `motivo` tres
+    // lineas mas abajo y esto juraba que no.
     const aceptados = new Set()
-    for (const obj of fuente.matchAll(/z\.object\(\{([\s\S]*?)\}\)/g)) {
-      for (const k of obj[1].matchAll(/^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/gm)) aceptados.add(k[1])
+    for (const inicio of [...fuente.matchAll(/z\.object\(\{/g)].map((x) => x.index)) {
+      let i = inicio + 'z.object({'.length
+      let hondo = 1
+      while (i < fuente.length && hondo > 0) {
+        if (fuente[i] === '{') hondo++
+        else if (fuente[i] === '}') hondo--
+        i++
+      }
+      const dentro = fuente.slice(inicio + 'z.object({'.length, i - 1)
+      for (const k of dentro.matchAll(/^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/gm)) aceptados.add(k[1])
     }
     if (!aceptados.size) continue   // ruta sin zod: no hay nada que cruzar
 
