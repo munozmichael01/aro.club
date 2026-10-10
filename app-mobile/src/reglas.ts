@@ -50,6 +50,8 @@ type Api = {
   diasDe: (fechas: { iso: string; zona?: string | null }[]) => string
   /** «enero» … «diciembre», en minúscula. */
   MESES: string[]
+  /** «siete y media de la noche», «7:20 p.m.» con minutos sueltos. */
+  horaEnLetra: (horas: number, minutos: number) => string
   /** Las partes de una fecha en la zona que se pase (`zonaHoraria` de esa fecha); sin zona, `ZONA`. */
   partesDe: (iso: string | null | undefined, zona?: string | null) => PartesFecha | null
   /** Las cuatro preguntas de la puerta, UN sitio para web y app. Opciones como [texto, código]. */

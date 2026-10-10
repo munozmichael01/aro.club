@@ -70,7 +70,6 @@ export function fechaLarga(iso: string | null, zona?: Zona): string {
   return `${mayuscula(p.dia)} ${p.numero} de ${p.mes} · ${p.hora ?? ''}`.trim()
 }
 
-const HORAS_EN_LETRA = ['doce', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once']
 
 /**
  * «Sábado 4, ocho de la noche.»: el titular de quien tiene mesa. Las siete
@@ -82,26 +81,9 @@ export function titularDeReserva(iso: string, zona?: Zona): string {
   return `${mayuscula(p.dia)} ${p.numero}, ${horaEnLetra(p.horas, p.minutos)}.`
 }
 
-/**
- * «siete de la noche», «siete y media de la noche», «ocho menos cuarto de la
- * noche». Con otros minutos, en cifras («7:20 p.m.»): «siete y veinte» suena a
- * reloj de cocina. Antes se comía los minutos y las 7:30 decían «siete»
- * (10-10, la cena de los creadores).
- */
+/** «siete y media de la noche»: vive en `reglas.js`, la misma que usan la web y los correos. */
 export function horaEnLetra(horas: number, minutos: number): string {
-  let h = ((horas % 24) + 24) % 24
-  let resto = ''
-  if (minutos === 30) resto = ' y media'
-  else if (minutos === 15) resto = ' y cuarto'
-  else if (minutos === 45) {
-    resto = ' menos cuarto'
-    h = (h + 1) % 24
-  } else if (minutos !== 0) {
-    const h12 = h % 12 === 0 ? 12 : h % 12
-    return `${h12}:${String(minutos).padStart(2, '0')} ${h < 12 ? 'a.m.' : 'p.m.'}`
-  }
-  const franja = h >= 19 || h < 6 ? 'de la noche' : h >= 12 ? 'de la tarde' : 'de la mañana'
-  return `${HORAS_EN_LETRA[h % 12]}${resto} ${franja}`
+  return reglas.horaEnLetra(horas, minutos)
 }
 
 /** «Hay cena el sábado en Las Mercedes.», o sin fecha, que no la hay. */
