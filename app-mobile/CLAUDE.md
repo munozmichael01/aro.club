@@ -29,6 +29,34 @@ La única dependencia aceptada es `POST /api/auth/nativo` (ver abajo).
 - Si Apple responde, sale en «Revisión de apps» y llega por correo a
   `somos.aroclub@gmail.com`.
 
+## Dónde lo dejamos (10-10-2026, madrugada) · empezar por aquí
+
+**Pendiente de hablar con Michael:**
+- **Un acceso a las reglas de la mesa desde Mi mesa** (Michael, 10-10).
+  Idea a valorar: las mismas reglas del hablador (`Design/BRIEF-hablador.md`)
+  dentro de la app y la web, cerca de «Al llegar» o del juego.
+- **La V2 del mazo del juego** (`JUEGO-v2.md`, en PDF:
+  `Juego-de-la-mesa-V2.pdf`): Michael la está revisando. No está aplicada.
+- ¿Push para `cierra_pronto` («Aún estás a tiempo»)? Hoy solo es correo.
+
+**Sábado 10, cena de los creadores (Madre, 7:30 p.m.):**
+- Michael dentro y Orlando fuera (lo hizo el agente). Falta **repartir y
+  publicar antes de las 12:00** y que Daniela corrija su género en su perfil.
+- El hablador: Design entregó las versiones A y B; Michael imprime una.
+- TestFlight externo «Creadores» (enlace público
+  `https://testflight.apple.com/join/fGpn33fw`): la 15 esperaba la revisión
+  beta de Apple. Android: Internal testing con sus correos.
+
+**Apple:** la 1.0 (13) sigue en «Rechazado · 2.1» esperando que Apple lea la
+respuesta con los dos videos (enviada el 08-10). La cuenta del revisor tiene
+su cena el 14-10; si la revisión se alarga, `--refrescar --horas=144`.
+
+**Hecho el 09/10-10 y ya en los teléfonos (EAS Update sobre la 15 y la 13):**
+juego con ronda 3 opcional y 5 h de ventana, tarjeta «por si hace falta»,
+sin número de mesa si es la única del sitio (Mi mesa, Inicio, Mis cenas),
+hora en letra con minutos (`reglas.horaEnLetra`), meses y `diasDe` de
+`reglas.js`.
+
 ## Build 15 (iOS) y versionCode 13 (Android), del 09-10
 
 Llevan todo lo acumulado desde la 1.0 (13): EAS Update, los enlaces de los
