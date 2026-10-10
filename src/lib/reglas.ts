@@ -52,6 +52,14 @@ type Api = {
   }
   ZONA: string
   MESES: string[]
+  JUEGO: {
+    porRonda: number
+    abreMin: number
+    cierraMin: number
+    reglas: string[]
+    final: string
+    rondas: { clave: string; titulo: string; bajada: string; preguntas: string[] }[]
+  }
   // Con `zona`: la buena es la de la ciudad de cada fecha, y sin el parametro
   // en el tipo no habia forma de pedirla desde el servidor sin un cast.
   diaDe: (iso: string | null | undefined, zona?: string) => string | null
@@ -105,6 +113,13 @@ export const diaDe = api.diaDe
 export const horaDe = api.horaDe
 export const partesDe = api.partesDe
 export const MESES = api.MESES
+/**
+ * El juego de la mesa: el mazo, las rondas y su ventana.
+ *
+ * Aquí solo para `cierraMin`, del que sale `FIN_CENA`: el juego se cierra
+ * cuando la cena se da por terminada, y eso tiene que ser UNA cifra.
+ */
+export const JUEGO = api.JUEGO
 export type { Campo }
 
 /**

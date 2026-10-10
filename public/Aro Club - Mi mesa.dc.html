@@ -100,7 +100,12 @@
 
         <div style="border-radius:30px;background:#14342A;color:#FAF3E4;padding:clamp(24px,4vw,34px);margin-top:14px">
           <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.18em;color:#C5D8CA">{{ TU }}</div>
-          <div style="font:700 clamp(96px,30vw,150px)/0.86 'Inter Tight',sans-serif;letter-spacing:-.05em;font-variant-numeric:tabular-nums;margin:10px 0 0">{{ numeroMesa }}</div>
+          <!-- El número solo cuando distingue algo. Si es la única mesa de
+               ese sitio esa noche, el «01» manda a buscar un cartel que no
+               existe. Con dos o más es justo lo que hace falta. -->
+          <sc-if value="{{ hayNumeroMesa }}" hint-placeholder-val="{{ true }}">
+            <div style="font:700 clamp(96px,30vw,150px)/0.86 'Inter Tight',sans-serif;letter-spacing:-.05em;font-variant-numeric:tabular-nums;margin:10px 0 0">{{ numeroMesa }}</div>
+          </sc-if>
           <div style="height:1px;background:rgba(250,243,228,.22);margin:clamp(20px,3vw,26px) 0"></div>
           <div style="font:400 clamp(34px,8vw,46px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.03em">{{ restaurante }}</div>
           <div style="font:500 clamp(17px,4.4vw,20px)/1.45 'Inter Tight',sans-serif;color:#FAF3E4;margin-top:10px">{{ direccion }}</div>
@@ -413,7 +418,22 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:16px">
           <div style="border-top:1px solid rgba(250,243,228,.18);padding-top:16px;font:400 15px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ jCambioLector }}</div>
-          <button onClick="{{ jSeguirRonda }}" style="min-height:58px;border:0;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#E39C63">{{ jCambioBoton }}</button>
+
+          <!-- Las pausas de en medio: un botón y adelante. -->
+          <sc-if value="{{ jCambioNormal }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ jSeguirRonda }}" style="min-height:58px;border:0;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#E39C63">{{ jCambioBoton }}</button>
+          </sc-if>
+
+          <!-- La última es opcional: se pregunta, y terminar aquí es una
+               salida de verdad, no un «cancelar» escondido. -->
+          <sc-if value="{{ jCambioOpcional }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:11px;align-items:flex-start;border-radius:18px;background:rgba(227,156,99,.14);padding:14px 16px">
+              <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#E39C63;color:#14342A;display:flex;align-items:center;justify-content:center;font:600 13px/1 'Inter Tight',sans-serif;margin-top:1px">·</span>
+              <span style="flex:1;min-width:0;font:400 15px/1.45 'Inter Tight',sans-serif;color:#F2E9D5;text-wrap:pretty">{{ jCambioAviso }}</span>
+            </div>
+            <button onClick="{{ jSeguirRonda }}" style="min-height:58px;border:0;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#E39C63">{{ jCambioSeguir }}</button>
+            <button onClick="{{ jTerminarAqui }}" style="min-height:52px;border:1.5px solid rgba(250,243,228,.45);border-radius:999px;background:none;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="border-color:#FAF3E4">Terminar aquí</button>
+          </sc-if>
         </div>
       </sc-if>
 
@@ -666,6 +686,14 @@ class Component extends DCLogic {
     const preguntas = (dJ && dJ.mesaId) ? AroReglas.preguntasDeRonda(dJ.mesaId, rondaIdx) : [];
     const ultimaRonda = J.rondas.length - 1;
 
+    // Si la pausa que se esta viendo es la de la ultima ronda, que es la
+    // opcional. Misma regla que `esOpcional` de la app.
+    const esOpcional = !!jg && jg.paso === 'cambio' && rondaIdx === ultimaRonda;
+    // «Una ronda», «Dos rondas», «Tres rondas»: escritas, no armadas con el
+    // numero delante. Es el mismo motivo que las listas de formatos de los
+    // correos, y son tres.
+    const palabraRondas = (n) => (n === 1 ? 'Una ronda' : n === 2 ? 'Dos rondas' : n === 3 ? 'Tres rondas' : n + ' rondas');
+
     const irA = (paso, ronda, idx) => () => this.juegoIr({ paso, ronda, idx });
     const siguiente = () => {
       const i = jg.idx + 1;
@@ -681,7 +709,10 @@ class Component extends DCLogic {
 
     const jVals = {
       juegoAbierto, juegoCerrado,
-      juegoBajada: 'Tres rondas de preguntas para romper el hielo. Quince minutos, y se guarda el teléfono.',
+      // El copy aprobado el 10-10, el mismo que la app. El de antes
+      // prometia quince minutos, que es una duracion que nadie cronometra y
+      // que sonaba a compromiso.
+      juegoBajada: 'Por si hace falta romper el hielo: unas preguntas en tres rondas, y después se guarda el teléfono.',
       juegoCuando: horaAbre ? ('Se abre a las ' + horaAbre + ', ' + cuandoAbre + '.') : 'Se abre a la hora de la cena.',
       abrirJuego: () => {
         // Retoma donde lo dejó ESTE teléfono: quien vuelve a entrar en la
@@ -704,7 +735,10 @@ class Component extends DCLogic {
       jSubcabecera: !jg ? ''
         : jg.paso === 'pregunta' ? (jg.idx + 1) + ' de ' + preguntas.length
         : jg.paso === 'cambio' ? 'Ronda ' + rondaIdx + ' terminada'
-        : jg.paso === 'final' ? (J.rondas.length === 3 ? 'Tres rondas' : J.rondas.length + ' rondas')
+        // Las rondas JUGADAS, no las que trae el mazo: desde que la ultima
+        // es opcional, quien termina antes jugo dos y el final tiene que
+        // decir dos. Con `J.rondas.length` decia tres siempre.
+        : jg.paso === 'final' ? palabraRondas(rondaIdx + 1)
         : (J.rondas.length === 3 ? 'Tres rondas · 15 minutos' : J.rondas.length + ' rondas · 15 minutos'),
 
       jReglas: J.reglas.map((texto, i) => ({ n: String(i + 1), texto })),
@@ -723,8 +757,21 @@ class Component extends DCLogic {
       jCambioNombre: R.titulo,
       jCambioBajada: R.bajada,
       jCambioLector: '¿Otra persona quiere leer? Que abra el juego en su teléfono y toque «Ronda ' + (rondaIdx + 1) + '». Verá las mismas preguntas.',
+
+      // LA ULTIMA RONDA ES OPCIONAL (Michael, 10-10). La pausa de antes de
+      // la 3 pregunta en vez de empujar: es la mas personal, y una mesa que
+      // no quiere ir ahi tiene que poder parar sin sentir que deja algo a
+      // medias. Las otras pausas no cambian: siguen con su «Empezar la
+      // ronda N» y un solo boton.
+      jCambioOpcional: esOpcional,
+      jCambioNormal: !!jg && jg.paso === 'cambio' && !esOpcional,
+      jCambioAviso: 'Esta ronda es más personal. Solo si a la mesa le provoca.',
       jCambioBoton: 'Empezar la ronda ' + (rondaIdx + 1),
+      jCambioSeguir: 'Seguir con la ronda ' + (rondaIdx + 1),
       jSeguirRonda: irA('pregunta', rondaIdx, 0),
+      // «Terminar aquí»: al final, con la ronda ANTERIOR como la ultima
+      // jugada, que es lo que hace que el final diga «Dos rondas».
+      jTerminarAqui: () => this.juegoIr({ paso: 'final', ronda: Math.max(0, rondaIdx - 1), idx: 0 }),
     };
 
     const f = this.state.fase;
@@ -780,6 +827,9 @@ class Component extends DCLogic {
     // La mesa 4 se enseña como "04": es el formato del diseño, y con dos
     // cifras la tipografía tabular no baila.
     const numeroMesa = dt && dt.numeroMesa != null ? p(dt.numeroMesa) : '—';
+    // Lo dice el servidor —`mesaUnica` de /api/mi-mesa— y no se calcula aquí:
+    // esta pantalla no sabe cuántas mesas hay en ese restaurante esa noche.
+    const mesaUnica = !!(dt && dt.mesaUnica);
     const restaurante = (dt && dt.restaurante) || '—';
     const direccion = (dt && dt.direccion) || '';
     const empieza = dt && dt.empiezaEn ? new Date(dt.empiezaEn) : null;
@@ -956,6 +1006,7 @@ class Component extends DCLogic {
       cuenta, comensales, retrasos, bloqueables, motivos, reportables,
       mesaOpciones, sitioFilas, volveriaSiBtn, volveriaNoBtn, volveriaSiPick, volveriaNoPick,
       numeroMesa, restaurante, direccion, cuando,
+      hayNumeroMesa: !mesaUnica && !!(dt && dt.numeroMesa != null),
 
       // --- el vocabulario, derivado del formato ------------------------
       TU: VOZ.TU,
@@ -1016,14 +1067,15 @@ class Component extends DCLogic {
       // En una cena se llega y se da un nombre; en una caminata se busca a
       // un grupo en un sitio. No es la misma frase con otra palabra.
       textoLlegada: esMesa
-        ? 'Di que vas a la mesa de Aro, la ' + numeroMesa +
+        ? 'Di que vas a la mesa de Aro' + (mesaUnica ? '' : ', la ' + numeroMesa) +
           '. Está reservada a tu nombre y el restaurante ya sabe que son ' +
           (['cero','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez'][comensales.length + 1] ||
             (comensales.length + 1)) + '.'
-        : 'Busca al grupo ' + numeroMesa + ' de Aro en el punto de encuentro. Son ' +
+        : 'Busca al grupo' + (mesaUnica ? ' de Aro' : ' ' + numeroMesa + ' de Aro') + ' en el punto de encuentro. Son ' +
           (['cero','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez'][comensales.length + 1] ||
             (comensales.length + 1)) + ' y nadie lleva cartel: pregunta por Aro.',
-      textoAnoche: (esMesa ? 'Cenaste en ' : 'Estuviste en ') + restaurante + ', ' + VOZ.unidad + ' ' + numeroMesa +
+      textoAnoche: (esMesa ? 'Cenaste en ' : 'Estuviste en ') + restaurante +
+        (mesaUnica ? '' : ', ' + VOZ.unidad + ' ' + numeroMesa) +
         '. Lo que nos cuentes entra en el emparejamiento de la próxima, y nadie más lo ve.',
       sinContar: !this.state.contado,
       contado: this.state.contado,

@@ -867,12 +867,14 @@
        * llega a la mesa con las respuestas pensadas, que es justo lo que el
        * juego no quiere.
        *
-       * Y se cierra a las cuatro horas porque a esa altura la mesa o se
-       * disolvió o ya no lo necesita, y una pantalla que sigue ofreciendo
-       * preguntas a la una de la mañana es ruido.
+       * Y se cierra cuando la cena se da por terminada, que son CINCO horas
+       * (`FIN_CENA`, en `src/lib/ventana-mesa.ts`, que lee esta cifra). Eran
+       * cuatro, y esa hora de diferencia se veía: de la hora 4 a la 5, Mi
+       * mesa seguía diciendo «Abierto · Hoy» y el juego ya no estaba. Dos
+       * ideas de cuándo se acaba una cena son una idea y media.
        */
       abreMin: 0,
-      cierraMin: 240,
+      cierraMin: 300,
 
       /** Se enseñan antes de empezar, en este orden. */
       reglas: [

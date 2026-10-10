@@ -118,9 +118,15 @@ export function copyDe(
       // La única que no tiene correo detrás. Y la única cuya `ruta` necesita
       // el id de la mesa: la app abre el juego DE ESA mesa, que es lo que
       // hace que los seis teléfonos vean las mismas preguntas.
+      //
+      // El texto es el aprobado el 10-10, y es mas flojo a proposito: la
+      // version anterior —«¿Ya pidieron?» y «que una persona abra el juego y
+      // lea la primera pregunta»— daba una instruccion a una mesa que puede
+      // estar conversando bien y no necesitar nada. Esto lo deja donde tiene
+      // que estar: ahi lo tienen, por si hace falta.
       return {
-        titulo: '¿Ya pidieron?',
-        cuerpo: 'Que una persona abra el juego de la mesa y lea la primera pregunta.',
+        titulo: 'Por si hace falta',
+        cuerpo: 'En tu mesa tienes un juego para romper el hielo.',
         ruta: '/juego',
       }
     }

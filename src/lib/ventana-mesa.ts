@@ -1,3 +1,5 @@
+import { JUEGO } from '@/lib/reglas'
+
 /**
  * Cuándo una cena está "recién pasada".
  *
@@ -8,8 +10,16 @@
  * pantalla que ya no deja hacerlo.
  */
 
-/** La cena se da por terminada cinco horas después de empezar. */
-export const FIN_CENA = 5 * 3600 * 1000
+/**
+ * La cena se da por terminada cinco horas después de empezar.
+ *
+ * Sale de `JUEGO.cierraMin` y no de un número escrito aquí: el juego de la
+ * mesa se cierra cuando la cena se acaba, y eran dos cifras distintas —cuatro
+ * horas y cinco— en dos ficheros. De la hora 4 a la 5, Mi mesa decía
+ * «Abierto · Hoy» y el juego ya no estaba. Derivarlo es lo que hace que no
+ * puedan volver a separarse.
+ */
+export const FIN_CENA = JUEGO.cierraMin * 60 * 1000
 
 /** Y se puede valorar hasta dos días después de que empezara. */
 export const VENTANA_VALORAR = 48 * 3600 * 1000
