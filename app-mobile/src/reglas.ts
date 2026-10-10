@@ -112,6 +112,8 @@ export type JuegoDeMesa = {
   abreMin: number
   cierraMin: number
   reglas: string[]
+  /** «Tres rondas · la última, opcional»: el subtítulo de la pantalla de reglas. */
+  subtituloReglas: string
   final: string
 }
 
