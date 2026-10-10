@@ -739,7 +739,9 @@ class Component extends DCLogic {
         // es opcional, quien termina antes jugo dos y el final tiene que
         // decir dos. Con `J.rondas.length` decia tres siempre.
         : jg.paso === 'final' ? palabraRondas(rondaIdx + 1)
-        : (J.rondas.length === 3 ? 'Tres rondas · 15 minutos' : J.rondas.length + ' rondas · 15 minutos'),
+        // De `reglas.js`: la app lo decía por su cuenta y la web por la
+        // suya, y al quitar «15 minutos» solo cambió una de las dos.
+        : J.subtituloReglas,
 
       jReglas: J.reglas.map((texto, i) => ({ n: String(i + 1), texto })),
       jEmpezar: irA('pregunta', 0, 0),

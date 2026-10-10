@@ -26,7 +26,7 @@ el producto no debe empujarla a abrirlo.
 3. **Una pregunta, responden todos**, empezando por quien la leyó: quien
    pregunta también se expone. Nadie le pregunta a otro directamente.
 4. **Siempre se puede pasar**, sin explicar nada.
-5. **Tres rondas, de menos a más**, y la tercera es OPCIONAL: antes de
+5. **Tres rondas, de menos a más. La última, si la mesa quiere.** Antes de
    empezarla la pantalla pregunta, con «Seguir con la ronda 3» y «Terminar
    aquí». Al final: «Hasta aquí el juego. Lo demás es suyo».
 

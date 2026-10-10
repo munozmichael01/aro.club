@@ -923,12 +923,26 @@
       abreMin: 0,
       cierraMin: 300,
 
+      /**
+       * El subtítulo de la pantalla de reglas.
+       *
+       * Decía «Tres rondas · 15 minutos», y los quince minutos se cayeron el
+       * 10-10 de la tarjeta de Mi mesa —nadie cronometra una cena y sonaba a
+       * compromiso— pero se quedaron aquí, que es la pantalla siguiente.
+       * Ahora dice lo único que de verdad hay que saber antes de empezar: que
+       * la última ronda no es obligatoria.
+       *
+       * Vive aquí y no en cada pantalla porque es la cuarta vez que esta
+       * frase se escribe en dos sitios.
+       */
+      subtituloReglas: 'Tres rondas · la última, opcional',
+
       /** Se enseñan antes de empezar, en este orden. */
       reglas: [
         'Una persona lee en voz alta, desde su teléfono.',
         'Responden todos, empezando por quien leyó.',
         'Cualquiera puede pasar, sin explicar nada.',
-        'Tres rondas, de menos a más.',
+        'Tres rondas, de menos a más. La última, si la mesa quiere.',
       ],
 
       /** Cuando se acaba la ronda 3. */
