@@ -85,7 +85,7 @@ if (ini < 0 || fin < 0) {
 const OPC = eval('({' + html.slice(html.indexOf('{', ini) + 1, fin) + '})')
 
 // --- lo que dice el catálogo ------------------------------------------
-const { data: catalogo, error } = await admin.from('questions').select('key, options, input_type')
+const { data: catalogo, error } = await admin.from('questions').select('key, options, input_type, prompt, help_text')
 if (error) {
   console.error('No pude leer el catálogo:', error.message)
   process.exit(1)
@@ -116,6 +116,48 @@ if (!enBase.size) {
 
 let errores = 0
 let avisos = 0
+
+// --- y que la pantalla pregunte lo que dice el catálogo ----------------
+//
+// El enunciado y la AYUDA de cada pregunta están en dos sitios: en
+// `questions`, que es lo que lee la app por `/api/questions`, y escritos en
+// la pantalla, que es un `.dc.html` y no consulta nada. Las opciones ya se
+// cruzaban; estos dos no, y son los que llevan las promesas.
+//
+// Se nota en `romance`. Su ayuda decía «no se le muestra a nadie, nunca, en
+// ninguna pantalla del producto», y el día que Operación pasó a verla hubo
+// que cambiarla en tres sitios a mano. Si se hubiera quedado uno sin tocar,
+// la app y la web le habrían prometido cosas distintas a la misma persona en
+// la misma pregunta, y nada habría fallado.
+{
+  const textoDe = new Map(
+    (catalogo ?? []).map((q) => [q.key, { pregunta: q.prompt, ayuda: q.help_text }]),
+  )
+  // Una pregunta por línea en la pantalla, que es como está escrita. Las
+  // comillas escapadas dentro del texto se quedan fuera a propósito: hoy no
+  // hay ninguna, y una que aparezca saldrá como descuadre, que es mejor que
+  // una expresión regular que se las traga en silencio.
+  const campos = /\{\s*id:\s*'([a-z_]+)'[^\n]*?(?:pregunta:\s*'([^']*)')?[^\n]*?(?:ayuda:\s*'([^']*)')?[^\n]*\}/g
+  for (const m of html.matchAll(campos)) {
+    const [, clave, pregunta, ayuda] = m
+    const base = textoDe.get(clave)
+    if (!base) continue
+    for (const [campo, enPantalla, enBaseTexto] of [
+      ['el enunciado', pregunta, base.pregunta],
+      ['la ayuda', ayuda, base.ayuda],
+    ]) {
+      // Solo si la pantalla lo escribe: una pregunta sin ayuda en pantalla no
+      // es un descuadre, es una pregunta sin ayuda.
+      if (!enPantalla) continue
+      if ((enBaseTexto ?? '').trim() === enPantalla.trim()) continue
+      errores++
+      console.error(`\n✗ ${clave}: ${campo} no coincide con el catálogo`)
+      console.error(`  pantalla: ${enPantalla}`)
+      console.error(`  base    : ${enBaseTexto ?? '(vacía)'}`)
+      console.error('  → la web y la app le dicen cosas distintas a la misma persona')
+    }
+  }
+}
 
 for (const [id, pares] of Object.entries(OPC)) {
   const opciones = enBase.get(id)

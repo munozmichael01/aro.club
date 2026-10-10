@@ -161,7 +161,7 @@ const PANTALLAS = [
       { id: 'momento', tipo: 'single' },
       { id: 'rol', tipo: 'single' },
       { id: 'motivo', tipo: 'single' },
-      { id: 'romance', tipo: 'single', opcional: true, ayuda: 'Esta respuesta no se le muestra a nadie, nunca, en ninguna pantalla del producto. Solo la usa el algoritmo para no juntar expectativas opuestas.' },
+      { id: 'romance', tipo: 'single', opcional: true, ayuda: 'No la ve nadie de tu mesa ni se muestra en tu perfil. Solo la usamos para no juntar expectativas opuestas.' },
     ],
   },
   {

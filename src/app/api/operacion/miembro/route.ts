@@ -13,18 +13,19 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * rutas que escriben la misma verificación es cómo se acaba aprobando dos
  * veces con criterios distintos.
  *
- * Dos cosas que no salen de aquí aunque estén en la base:
+ * Lo que no sale de aquí aunque esté en la base: **la foto del documento
+ * pasados 90 días**. No es una carencia: se borró, y lo que queda es la
+ * marca de que ocurrió y quién la aprobó.
  *
- *  - **La respuesta de `romance`**. Se guarda porque el reparto la usa; no
- *    se enseña a nadie, tampoco a operación. Lo que sale es que respondió.
- *  - **La foto del documento pasados 90 días**. No es una carencia: se
- *    borró, y lo que queda es la marca de que ocurrió y quién la aprobó.
+ * `romance` SÍ SALE desde el 10-10. Se enseñaba como «Respondida · no se
+ * enseña nunca», que era el único dato del cuestionario que operación no
+ * podía leer, y moderar el club a veces pasa por saber qué contestó alguien
+ * a esta en concreto. Con el cambio se quitó también la frase de la propia
+ * pregunta —prometía «ninguna pantalla del producto»—: la promesa y lo que
+ * hace el producto se mueven juntas o no se mueve ninguna.
  */
 
-/** Lo que se guarda pero no se lee. La lista corta y explícita, a propósito. */
-const RESERVADAS = new Set(['romance'])
-
-/** Y lo que se enseña pero avisando de que es interno. */
+/** Lo que se enseña pero avisando de que es interno. */
 const INTERNAS = new Set(['empleador'])
 
 const edadDe = (nacimiento: string | null) => {
@@ -365,10 +366,8 @@ export async function GET(request: Request) {
       clave: q.clave,
       pantalla: q.pantalla,
       enunciado: q.enunciado,
-      reservada: RESERVADAS.has(q.clave) || INTERNAS.has(q.clave),
-      valor: RESERVADAS.has(q.clave)
-        ? (codigos.length ? 'Respondida · no se enseña nunca' : 'Sin responder')
-        : (legible || 'Sin responder'),
+      reservada: INTERNAS.has(q.clave),
+      valor: legible || 'Sin responder',
     }
   })
 
