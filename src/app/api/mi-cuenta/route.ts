@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
 
 import { ciudadDe } from '@/lib/ciudades'
+import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
 
 /**
  * El estado de Mi cuenta, derivado del servidor.
@@ -250,7 +251,7 @@ export async function GET() {
   const { data: todasSusReservas } = await admin
     .from('bookings')
     .select(
-      'id, status, cancelled_at, event_id, events(starts_at, format, reveal_at, city_slug), table_members(table_id, dinner_tables(table_number, restaurants!dinner_tables_restaurant_id_fkey(name)))',
+      'id, status, cancelled_at, event_id, events(starts_at, format, reveal_at, city_slug), table_members(table_id, dinner_tables(table_number, restaurant_id, restaurants!dinner_tables_restaurant_id_fkey(name)))',
     )
     .eq('profile_id', user.id)
     .order('created_at', { ascending: false })
@@ -376,6 +377,21 @@ export async function GET() {
   const zonaDe = (slug: string | null | undefined) =>
     zonas.get(slug ?? 'caracas') ?? zonas.get('caracas') ?? 'America/Caracas'
 
+  // Si cada mesa suya era la única de su sitio esa noche. Va aquí además de
+  // en `/api/mi-mesa` porque esta pantalla nombra las MISMAS mesas —«Madre ·
+  // mesa 03» en sus planes— y dos criterios sobre el mismo número es como se
+  // acaba enseñando el 03 en un sitio y nada en el otro.
+  const unicas = await mesasUnicas(
+    (todasSusReservas ?? [])
+      .map((b) => ({
+        eventoId: b.event_id as string,
+        sitioId:
+          ((b.table_members as unknown as { dinner_tables: { restaurant_id: string | null } | null }[])?.[0]
+            ?.dinner_tables?.restaurant_id) ?? null,
+      }))
+      .filter((x) => x.eventoId),
+  )
+
   return NextResponse.json({
     nombre: perfil.display_name || perfil.full_name || null,
     esOps: perfil.role === 'ops' || perfil.role === 'admin',
@@ -383,7 +399,11 @@ export async function GET() {
     planes: (todasSusReservas ?? []).map((b) => {
       const ev = b.events as unknown as { starts_at: string; format: string; reveal_at: string; city_slug: string } | null
       const mesa = (b.table_members as unknown as {
-        dinner_tables: { table_number: number; restaurants: { name: string } | null } | null
+        dinner_tables: {
+          table_number: number
+          restaurant_id: string | null
+          restaurants: { name: string } | null
+        } | null
       }[])?.[0]?.dinner_tables
       const revelada = ev ? Date.now() >= new Date(ev.reveal_at).getTime() : false
       return {
@@ -397,6 +417,7 @@ export async function GET() {
         // el historial no puede ser la puerta de atras a la revelacion.
         restaurante: revelada ? (mesa?.restaurants?.name ?? null) : null,
         numeroMesa: revelada ? (mesa?.table_number ?? null) : null,
+        mesaUnica: revelada && unicas.has(claveDeMesa(b.event_id, mesa?.restaurant_id ?? null)),
       }
     }),
     agenda: (fechas ?? []).map((f) => ({

@@ -734,8 +734,11 @@ class Component extends DCLogic {
         const fuiste = c.estado === 'fuiste';
         const cancelo = c.estado === 'cancelaste';
         return {
+          // El numero solo si esa noche habia mas de una mesa en ese sitio:
+          // «Madre · mesa 01» cuando solo hubo una no distingue nada. Lo
+          // dice el servidor (`mesaUnica`), que es quien las cuenta.
           sitio: c.sitio
-            ? c.sitio + (c.numeroMesa != null ? ' · mesa ' + String(c.numeroMesa).padStart(2, '0') : '')
+            ? c.sitio + (c.numeroMesa != null && !c.mesaUnica ? ' · mesa ' + String(c.numeroMesa).padStart(2, '0') : '')
             : ({ dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' }[c.formato] || 'Cena'),
           // En la hora de la ciudad de esa cena, no en la de quien mira. Con
           // `getDate()` una cena del sábado 3 a las ocho de la noche de

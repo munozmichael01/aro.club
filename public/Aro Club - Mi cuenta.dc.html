@@ -116,10 +116,14 @@
         <sc-if value="{{ hayMesa }}" hint-placeholder-val="{{ false }}">
           <div style="margin-top:clamp(22px,3vw,30px);padding-top:clamp(20px,2.6vw,26px);border-top:1px solid rgba(250,243,228,.2)">
             <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
-              <div style="flex:0 0 auto;width:78px;height:78px;border-radius:999px;background:#FAF3E4;color:#14342A;display:flex;flex-direction:column;align-items:center;justify-content:center">
-                <span style="font:500 9px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">MESA</span>
-                <span style="font:700 32px/1 'Inter Tight',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin-top:2px">{{ numeroMesa }}</span>
-              </div>
+              <!-- El círculo del número solo cuando hay más de una mesa en
+                   ese sitio. Si es la única, el «01» no distingue nada. -->
+              <sc-if value="{{ hayNumeroMesa }}" hint-placeholder-val="{{ true }}">
+                <div style="flex:0 0 auto;width:78px;height:78px;border-radius:999px;background:#FAF3E4;color:#14342A;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                  <span style="font:500 9px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">MESA</span>
+                  <span style="font:700 32px/1 'Inter Tight',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin-top:2px">{{ numeroMesa }}</span>
+                </div>
+              </sc-if>
               <div style="flex:1 1 200px;min-width:0">
                 <div style="font:400 clamp(25px,3vw,32px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#FAF3E4">{{ nombreSitio }}</div>
                 <div style="font:500 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:5px">{{ direccionSitio }}</div>
@@ -696,8 +700,10 @@ class Component extends DCLogic {
       const cuando = q
         ? DIASEM[q.diaNumero] + ' ' + q.numero + ' de ' + MESES[q.mesNumero] + ' · ' + q.hora
         : '';
+      // Sin el numero si era la unica mesa de ese sitio: el mismo criterio
+      // que Mi mesa y Mis cenas, y viene del servidor para que no haya dos.
       const titulo = p.restaurante
-        ? p.restaurante + (p.numeroMesa != null ? ' · mesa ' + String(p.numeroMesa).padStart(2, '0') : '')
+        ? p.restaurante + (p.numeroMesa != null && !p.mesaUnica ? ' · mesa ' + String(p.numeroMesa).padStart(2, '0') : '')
         // En singular: es UNA cena suya, no la categoria del calendario.
         : ({ dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' }[p.formato] || 'Cena');
       if (p.cancelada || p.estado === 'cancelled') return [titulo, cuando, 'Cancelaste', 'Cancelaste'];
@@ -1068,6 +1074,7 @@ class Component extends DCLogic {
       // estado dijera que la habia, y se pintaba la de mentira.
       hayMesa: !!e.mesa && !!M,
       numeroMesa: M ? String(M.numeroMesa == null ? '' : M.numeroMesa).padStart(2, '0') : '',
+      hayNumeroMesa: !!M && M.numeroMesa != null && !M.mesaUnica,
       nombreSitio: (M && M.restaurante) || '',
       direccionSitio: (M && M.direccion) || '',
       cuandoMesa: (function () {

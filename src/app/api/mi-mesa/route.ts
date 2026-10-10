@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
+import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
 
 /**
  * F10 · Mi mesa.
@@ -139,7 +140,7 @@ export async function GET() {
 
   const { data: miembro } = await admin
     .from('table_members')
-    .select('table_id, dinner_tables(table_number, event_id, restaurants!dinner_tables_restaurant_id_fkey(name, address, maps_url, facade_photo_path))')
+    .select('table_id, dinner_tables(table_number, event_id, restaurant_id, restaurants!dinner_tables_restaurant_id_fkey(name, address, maps_url, facade_photo_path))')
     .eq('profile_id', user.id)
     .eq('booking_id', reserva.id)
     .maybeSingle()
@@ -151,6 +152,8 @@ export async function GET() {
 
   const mesa = miembro.dinner_tables as unknown as {
     table_number: number
+    event_id: string
+    restaurant_id: string | null
     restaurants: {
       name: string
       address: string
@@ -229,6 +232,11 @@ export async function GET() {
     // siguen siendo lo unico legible que se le enseña de ellos.
     mesaId: miembro.table_id,
     numeroMesa: mesa.table_number,
+    // Y si es la única de ese sitio en esta fecha. Cuando lo es, la pantalla
+    // y los correos se callan el número: «la mesa de Aro, la 01» donde solo
+    // hay una mesa de Aro manda a buscar un cartel que no existe.
+    mesaUnica: (await mesasUnicas([{ eventoId: mesa.event_id, sitioId: mesa.restaurant_id }]))
+      .has(claveDeMesa(mesa.event_id, mesa.restaurant_id)),
     // De qué es esto: decide si la pantalla dice mesa y restaurante o grupo
     // y punto de encuentro. Once formatos y una sola palabra no se sostiene.
     formato: evento.format,

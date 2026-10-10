@@ -8,6 +8,7 @@ import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 
 import { ciudadValida } from '@/lib/ciudades'
+import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
 
 /**
  * Mi perfil: ver y editar lo que respondió.
@@ -84,7 +85,7 @@ export async function GET() {
   const { data: susCenas } = await admin
     .from('bookings')
     .select(
-      'id, status, cancelled_at, events(starts_at, format, reveal_at, city_slug), table_members(dinner_tables(table_number, restaurants!dinner_tables_restaurant_id_fkey(name)))',
+      'id, status, cancelled_at, event_id, events(starts_at, format, reveal_at, city_slug), table_members(dinner_tables(table_number, restaurant_id, restaurants!dinner_tables_restaurant_id_fkey(name)))',
     )
     .eq('profile_id', user.id)
     .order('created_at', { ascending: false })
@@ -109,9 +110,18 @@ export async function GET() {
       // es como se acaba cancelando dos veces la misma reserva.
       if (empiezaMs > ahoraMs) return null
       const mesa = (b.table_members as unknown as {
-        dinner_tables: { table_number: number; restaurants: { name: string } | null } | null
+        dinner_tables: {
+          table_number: number
+          restaurant_id: string | null
+          restaurants: { name: string } | null
+        } | null
       }[])?.[0]?.dinner_tables
       return {
+        // Los dos internos, para saber si esa mesa era la única de su sitio.
+        // Se quitan antes de responder: la pantalla no tiene nada que hacer
+        // con ellos y son ids de cosas nuestras.
+        _evento: b.event_id,
+        _sitioId: mesa?.restaurant_id ?? null,
         cuando: ev.starts_at,
         zonaHoraria: zonas.get(ev.city_slug ?? 'caracas') ?? 'America/Caracas',
         formato: ev.format,
@@ -130,6 +140,16 @@ export async function GET() {
     // reservas hechas el mismo dia para cenas de meses distintos salian en
     // el orden en que se apunto, que en un historial no significa nada.
     .sort((a, b) => new Date(b.cuando).getTime() - new Date(a.cuando).getTime())
+
+  // Si cada una era la única mesa de su sitio esa noche. De una consulta
+  // para todo el historial: con doce cenas serían doce, y es el mismo dato.
+  const unicas = await mesasUnicas(
+    historial.filter((c) => c._evento).map((c) => ({ eventoId: c._evento!, sitioId: c._sitioId })),
+  )
+  const cenasDe = historial.map(({ _evento, _sitioId, ...c }) => ({
+    ...c,
+    mesaUnica: !!_evento && unicas.has(claveDeMesa(_evento, _sitioId)),
+  }))
 
   const cenas = historial.filter((c) => c.estado === 'fuiste').length
 
@@ -220,7 +240,7 @@ export async function GET() {
       valor: dadas.get(q.key) ?? null,
     })),
     cenas,
-    historial,
+    historial: cenasDe,
   })
 }
 

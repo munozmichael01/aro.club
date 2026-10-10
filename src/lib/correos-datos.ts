@@ -9,6 +9,7 @@ import { SITIO } from '@/lib/remitente'
 import { HORAS_DE_CIERRE, ZONA_POR_DEFECTO, horaDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
+import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
 
 
 /**
@@ -135,7 +136,7 @@ export type Preparado = { a: string; datos: Valores } | { error: string }
  * no el barrio.
  */
 const ANTES_DE_LA_REVELACION_NO: readonly string[] = [
-  'sitio', 'direccion', 'mapa', 'numero', 'comoLlegar', 'gente',
+  'sitio', 'direccion', 'mapa', 'numero', 'mesaUnica', 'comoLlegar', 'gente',
 ]
 
 /**
@@ -766,7 +767,7 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
 
   const { data: fila } = await admin
     .from('table_members')
-    .select('table_id, dinner_tables!inner(table_number, event_id, restaurants(name, address, maps_url, zone_slug))')
+    .select('table_id, dinner_tables!inner(table_number, event_id, restaurant_id, restaurants(name, address, maps_url, zone_slug))')
     .eq('profile_id', perfilId)
     .eq('dinner_tables.event_id', eventoId)
     .maybeSingle()
@@ -775,6 +776,7 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
 
   const mesa = fila.dinner_tables as unknown as {
     table_number: number
+    restaurant_id: string | null
     restaurants: { name: string; address: string; maps_url: string | null; zone_slug: string | null } | null
   }
 
@@ -815,6 +817,13 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   const numero = String(mesa.table_number).padStart(2, '0')
   const direccion = mesa.restaurants?.address ?? ''
 
+  // Si es la ÚNICA mesa de ese sitio esa noche, el número sobra: «di que vas
+  // a la mesa de Aro, la 01» donde solo hay una mesa de Aro manda a buscar un
+  // cartel que no existe. Lo cuenta el mismo sitio que la web y la app, para
+  // que el correo y la pantalla no digan cosas distintas de la misma mesa.
+  const unica = (await mesasUnicas([{ eventoId, sitioId: mesa.restaurant_id }]))
+    .has(claveDeMesa(eventoId, mesa.restaurant_id))
+
   return {
     numero,
     sitio: mesa.restaurants?.name ?? '',
@@ -826,7 +835,8 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
     // mano y sin la ciudad, y en `Mi mesa` de otra forma distinta también sin
     // ella. Dos botones con el mismo nombre y dos destinos.
     mapa: enlaceDeMapa(mesa.restaurants) ?? '',
-    comoLlegar: `la mesa de Aro, la ${numero}`,
+    mesaUnica: unica,
+    comoLlegar: unica ? 'la mesa de Aro' : `la mesa de Aro, la ${numero}`,
     gente: (otros ?? []).map((o) => {
       const quien = o.profiles as unknown as { display_name: string | null; full_name: string | null } | null
       const nombre = quien?.display_name || quien?.full_name?.split(' ')[0] || '—'

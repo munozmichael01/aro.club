@@ -371,6 +371,16 @@ export async function despacharPendientes(
       huecos: number
       baja: boolean
       push?: string
+      /**
+       * El correo PINTADO, solo cuando se pidió una fila por su id.
+       *
+       * En la pasada normal no va: son hasta veinticinco correos de gente
+       * real y un ensayo no tiene por qué escupir su contenido. Pedir una
+       * fila concreta es otra cosa —es depurar ESE correo— y entonces lo que
+       * hace falta es verlo: que un bloque condicional salga o no salga no se
+       * ve contando huecos.
+       */
+      cuerpo?: string
     }[] = []
 
     // Quién se dio de baja. Se lee una vez para toda la vuelta, no una por
@@ -506,6 +516,7 @@ export async function despacharPendientes(
           kind: fila.kind,
           asunto: pintado.asunto,
           push: enElTelefono,
+          cuerpo: filaId ? pintado.html : undefined,
           huecos: (pintado.html.match(/\{\{/g) ?? []).length,
           // Si lleva la cabecera de baja. El ensayo existe para ver qué
           // saldría, y desde que hay cabeceras «qué saldría» es también esto:
