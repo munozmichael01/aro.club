@@ -552,6 +552,10 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           hora: evento?.starts_at ? horaTexto(evento.starts_at) : '',
           cierra,
           CIERRA: cierra.toUpperCase(),
+          // Para la push, que no tiene sitio para la frase entera: «Otra
+          // cena» o «Otros drinks», por formato. El correo ya lo dice con
+          // sus propias palabras.
+          otra: OTRA[evento?.format ?? ''] ?? 'Otra fecha',
         },
       }
     }
@@ -665,6 +669,27 @@ const LA_DEL: Record<string, string> = {
   padel: 'el pádel',
   pilates: 'el pilates',
   cycling: 'la rodada',
+}
+
+/**
+ * «Otra cena», «Otros drinks»: para invitar a una fecha que NO es la suya.
+ *
+ * Tercera lista del mismo tipo y por el mismo motivo que las otras dos: el
+ * articulo y el numero cambian con el formato, y «Otra drinks» es lo que sale
+ * de armarlo al vuelo.
+ */
+const OTRA: Record<string, string> = {
+  dinner: 'Otra cena',
+  foodie_dinner: 'Otra cena',
+  women_dinner: 'Otra cena',
+  drinks: 'Otros drinks',
+  coffee: 'Otro café',
+  walk: 'Otra caminata',
+  hike: 'Otro senderismo',
+  run: 'Otra salida a correr',
+  padel: 'Otro pádel',
+  pilates: 'Otro pilates',
+  cycling: 'Otra rodada',
 }
 
 const HOY_ES: Record<string, string> = {

@@ -137,6 +137,34 @@ export function copyDe(
         cuerpo: 'Cuéntanos de la cena y del sitio. Tarda un minuto.',
         ruta: '/mesa',
       }
+    case 'cierra_pronto': {
+      // ESTE AVISO INVITA A UNA FECHA A LA QUE LA PERSONA NO ESTA APUNTADA, y
+      // esa es toda la dificultad. A quien ya tenia la cena del viernes le
+      // llego «El sabado 10 se cierra hoy» y lo leyo como si hablara de la
+      // suya: entendio que su propia cena se caia. En una push es peor que en
+      // un correo, porque se lee de un vistazo y sin abrir nada.
+      //
+      // Asi que el titulo lo dice desde la primera palabra —«Otra cena»— y el
+      // cuerpo nombra la que SI tiene, con su dia, para que no haya que
+      // adivinar cual es cual. Quien no tiene ninguna no lee «otra»: para esa
+      // persona no hay otra, y la frase seria un acertijo.
+      const cuando = t('cuandoFrase')
+      const cierra = t('cierra')
+      const yaTiene = t('yaTiene')
+      return {
+        titulo: yaTiene
+          ? [t('otra', 'Otra fecha'), cuando && `el ${cuando}`].filter(Boolean).join(', ')
+          : cuando
+            ? `Queda sitio el ${cuando}`
+            : 'Queda sitio en una fecha abierta',
+        cuerpo: yaTiene
+          ? `Ya tienes ${yaTiene}. Esta es otra${cierra ? ` y se cierra ${cierra}` : ''}.`
+          : cierra
+            ? `Se cierra ${cierra}: después ya no se puede apartar puesto.`
+            : 'Todavía puedes apartar puesto.',
+        ruta: '/cuenta',
+      }
+    }
     case 'llego_tarde': {
       const quien = t('nombre')
       const min = t('minutos')

@@ -54,6 +54,10 @@ export async function GET(request: Request) {
   // misma cola daba dos resultados segun quien la pasara, y el ensayo en seco
   // —justo lo que se usa para comprobar que todo esta bien— era el que no la
   // respetaba. Dos copias de una regla es una regla y media.
-  const r = await despacharPendientes(url.searchParams.get('seco') === '1')
+  const seco = url.searchParams.get('seco') === '1'
+  // `?seco=1&fila=<id>` ensaya UNA fila por su id, tenga la hora que tenga.
+  // Es como se comprueba un aviso nuevo sin dejarlo vencido en la cola de
+  // producción, donde el cron de cada cuarto de hora lo mandaría de verdad.
+  const r = await despacharPendientes(seco, seco ? (url.searchParams.get('fila') ?? undefined) : undefined)
   return NextResponse.json(r)
 }

@@ -273,6 +273,19 @@ async function anotarFinal(
  */
 export async function despacharPendientes(
   seco = false,
+  /**
+   * Una fila CONCRETA, solo en seco.
+   *
+   * El ensayo solo veia lo que ya estaba vencido, asi que para comprobar un
+   * aviso nuevo habia que encolarlo con la hora pasada: una fila vencida en
+   * la cola de PRODUCCION, que el cron de cada cuarto de hora manda de
+   * verdad en cuanto te distraes. Con esto se encola con la hora lejos, se
+   * ensaya por su id, y se borra sin que haya estado nunca a tiro.
+   *
+   * No hace nada fuera de seco: fuera de seco, esto mandaria un correo
+   * antes de su hora.
+   */
+  filaId?: string,
 ): Promise<{
   mandados: number
   pushes: number
@@ -284,7 +297,7 @@ export async function despacharPendientes(
   try {
     // Se importan aquí dentro y no arriba porque `correos-datos` necesita el
     // tipo `Correo` de este mismo fichero: en la cabecera sería un ciclo.
-    const [{ prepararCorreo }, { componer, enviar, SITIO }, { firmarBaja }, { mandarPush, leerRecibos }] =
+    const [{ prepararCorreo }, { componer, enviar, SITIO }, { firmarBaja }, { mandarPush, leerRecibos, copyDe }] =
       await Promise.all([
         import('@/lib/correos-datos'),
         import('@/lib/remitente'),
@@ -328,13 +341,17 @@ export async function despacharPendientes(
     }
 
     const admin = createAdminClient()
-    const { data: pendientes } = await admin
+    let consulta = admin
       .from('scheduled_emails')
       .select('id, profile_id, email, kind, event_id, payload, push_at, push_motivo')
       .is('sent_at', null)
-      .lte('send_at', new Date().toISOString())
-      .order('send_at')
-      .limit(25)
+
+    // Por id solo en seco, y entonces sin mirar la hora: es el unico caso en
+    // que interesa una fila que todavia no toca.
+    if (seco && filaId) consulta = consulta.eq('id', filaId)
+    else consulta = consulta.lte('send_at', new Date().toISOString())
+
+    const { data: pendientes } = await consulta.order('send_at').limit(25)
 
     let mandados = 0
     // Las push que salieron en esta vuelta. Se cuentan aparte del correo: son
@@ -343,7 +360,18 @@ export async function despacharPendientes(
     // Lo que se ve en el ensayo: qué asunto sale y si quedó algún hueco sin
     // rellenar. Es la comprobación que importa —una plantilla con un {{ }} a
     // medias se manda igual y se lee fatal— y no enseña el contenido de nadie.
-    const enSeco: { kind: string; asunto: string; huecos: number; baja: boolean }[] = []
+    //
+    // Y QUE SE VERIA EN EL TELEFONO. El ensayo contaba el asunto del correo y
+    // de la push no decia nada, que es justo el canal donde el texto se lee
+    // de un vistazo y sin abrir: el «Es hoy» prometio durante semanas algo
+    // que a las nueve de la mañana no existia, y en seco no se veia.
+    const enSeco: {
+      kind: string
+      asunto: string
+      huecos: number
+      baja: boolean
+      push?: string
+    }[] = []
 
     // Quién se dio de baja. Se lee una vez para toda la vuelta, no una por
     // correo: son pocas filas y la cola trae hasta veinticinco.
@@ -439,10 +467,21 @@ export async function despacharPendientes(
       }
 
 
+      // Lo que se veria en la pantalla bloqueada, con los MISMOS datos que
+      // el correo. Solo para el ensayo: el envio de verdad ya lo armo arriba.
+      const enElTelefono = seco
+        ? (() => {
+            const c = copyDe(fila.kind, listo.datos as Record<string, unknown>)
+            if (!c) return '— sin push (este tipo no vibra ningún teléfono, a propósito)'
+            if (!fila.profile_id) return '— sin push (la fila no tiene perfil: va a un correo suelto)'
+            return `${c.titulo} · ${c.cuerpo}`
+          })()
+        : undefined
+
       // Los de solo push terminan aquí: no hay correo que componer.
       if (SOLO_PUSH.has(fila.kind)) {
         if (!seco) await anotarFinal(admin, fila.id, 'solo_push')
-        else enSeco.push({ kind: fila.kind, asunto: '— solo push', huecos: 0, baja: false })
+        else enSeco.push({ kind: fila.kind, asunto: '— solo push', huecos: 0, baja: false, push: enElTelefono })
         continue
       }
 
@@ -466,6 +505,7 @@ export async function despacharPendientes(
         enSeco.push({
           kind: fila.kind,
           asunto: pintado.asunto,
+          push: enElTelefono,
           huecos: (pintado.html.match(/\{\{/g) ?? []).length,
           // Si lleva la cabecera de baja. El ensayo existe para ver qué
           // saldría, y desde que hay cabeceras «qué saldría» es también esto:
