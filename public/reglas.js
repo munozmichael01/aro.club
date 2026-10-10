@@ -936,54 +936,56 @@
 
       rondas: [
         {
-          clave: 'quien-eres',
-          titulo: 'Quién eres hoy',
-          bajada: 'Fácil. Para abrir la mesa sin exigir nada.',
+          clave: 'para-arrancar',
+          titulo: 'Para arrancar',
+          bajada: 'Ligera. Que cualquiera responda sin pensarlo dos veces.',
+          preguntas: [
+            '¿Cuál es tu plan perfecto de domingo en Caracas?',
+            '¿Qué comida no dejarías de comer nunca?',
+            '¿Playa o montaña, y por qué?',
+            'Si pudieras vivir un año en cualquier ciudad, ¿cuál sería?',
+            '¿Qué canción pones cuando necesitas ánimo?',
+            '¿Cuál es tu talento más inútil?',
+            '¿Qué serie o película le recomiendas a todo el mundo?',
+            '¿Qué te gustaba de chamo o chama que todavía te gusta?',
+            'Si mañana tuvieras el día libre, ¿qué harías primero?',
+            '¿A qué le dices que sí con demasiada facilidad?',
+          ],
+        },
+        {
+          clave: 'un-poco-mas-de-ti',
+          titulo: 'Un poco más de ti',
+          bajada: 'Personal, pero sin exponerse.',
           preguntas: [
             '¿Qué te tiene con ilusión estos días, aunque sea algo pequeño?',
             '¿Qué haces que te hace perder la noción del tiempo?',
-            '¿Cuándo fue la última vez que te reíste hasta llorar, y de qué?',
-            'Si mañana tuvieras el día libre y sin compromisos, ¿qué harías desde que te levantas?',
-            '¿Qué cosa simple te arregla un mal día?',
             '¿Qué aprendiste este año que no esperabas aprender?',
-            '¿Cuál es el plan que siempre dices que vas a hacer y nunca haces?',
-            '¿Qué canción, libro o serie te tiene enganchado o enganchada ahora?',
             '¿En qué eres mejor de lo que la gente imagina?',
-            '¿Qué te gustaba de chamo o chama que todavía te gusta?',
-          ],
-        },
-        {
-          clave: 'lo-que-te-mueve',
-          titulo: 'Lo que te mueve',
-          bajada: 'Decisiones, cambios, lo que importa.',
-          preguntas: [
-            '¿Qué decisión tomaste que la gente no entendió y hoy volverías a tomar?',
-            '¿En qué has cambiado de opinión en los últimos años?',
-            '¿Qué te da miedo intentar, aunque te gustaría?',
-            '¿Quién te enseñó algo que todavía usas todos los días?',
-            '¿Qué es lo más valiente que has hecho?',
+            '¿Qué plan llevas tiempo diciendo que vas a hacer?',
+            '¿Quién te enseñó algo que todavía usas?',
             '¿Qué te hace sentir en casa, estés donde estés?',
-            '¿Qué te gustaría que te salga bien en el próximo año?',
-            '¿A qué le dices que sí con demasiada facilidad?',
-            '¿Qué haces cuando nadie te ve que dice mucho de ti?',
-            '¿De qué estás orgulloso u orgullosa y casi nunca lo cuentas?',
+            '¿Qué decisión tomaste que hoy volverías a tomar?',
+            '¿En qué has cambiado de opinión en los últimos años?',
+            '¿Qué te gustaría que te salga bien este año?',
+            '¿Qué te cuesta pedir?',
           ],
         },
         {
-          clave: 'lo-que-no-se-dice',
-          titulo: 'Lo que no se suele decir',
-          bajada: 'Más profunda. Aquí más que nunca: cualquiera puede pasar.',
+          clave: 'mas-hondo',
+          titulo: 'Si la mesa quiere ir más hondo',
+          bajada: 'Más hondo, y cualquiera puede pasar.',
           preguntas: [
-            '¿Qué piensa la gente de ti que no es verdad?',
-            '¿Cuándo fue la última vez que te sentiste en soledad de verdad?',
+            '¿Qué es lo más valiente que has hecho?',
+            '¿Qué piensa la gente de ti que no es del todo así?',
             '¿Qué le dirías a la persona que eras hace diez años?',
-            '¿Qué te gustaría que esta mesa supiera de ti y nadie te pregunta?',
-            '¿Qué te cuesta pedir?',
+            '¿De qué te sientes orgulloso u orgullosa y casi nunca lo cuentas?',
             '¿Qué te gustaría que te preguntaran más seguido?',
-            '¿Qué conversación tienes pendiente con alguien?',
-            '¿Qué parte de ti estás aprendiendo a querer?',
+            '¿Qué cosa pequeña te arregló un mal día hace poco?',
             '¿Qué te gustaría hacer antes de que se te pase el momento?',
-            'Si esta fuera la última cena que compartes con gente nueva, ¿qué te llevarías de ella?',
+            '¿Qué momento de tu vida te gustaría volver a vivir?',
+            '¿Quién ha sido importante en tu vida sin saberlo?',
+            '¿Qué te costó mucho y hoy agradeces?',
+            '¿Qué te da miedo intentar?',
           ],
         },
       ],
@@ -1007,7 +1009,7 @@
      * discrepar por cómo redondea cada motor.
      *
      * La ronda se puede pasar como índice (0, 1, 2) o como clave
-     * («lo-que-te-mueve»): las dos se resuelven a la MISMA clave antes de
+     * («un-poco-mas-de-ti»): las dos se resuelven a la MISMA clave antes de
      * sembrar, así que dan el mismo resultado.
      */
     preguntasDeRonda: function (mesaId, ronda) {

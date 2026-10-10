@@ -1,7 +1,8 @@
-# El juego de la mesa · V2 (propuesta)
+# El juego de la mesa · V2 (aplicada)
 
-Borrador del 10-10-2026, revisado con Michael el mismo día (ronda 1 · la 3, ronda 2 · una más, ronda 3 · tres nuevas). **No está aplicado:** el
-mazo en uso sigue siendo el de `JUEGO.md` (en `reglas.js`).
+Borrador del 10-10-2026, revisado con Michael el mismo día (ronda 1 · la 3, ronda 2 · una más, ronda 3 · tres nuevas). **APROBADA Y APLICADA** el
+10-10: el mazo está en `reglas.js` y `JUEGO.md` es su copia aprobada, que el
+comprobador cruza. Este fichero se queda como el porqué de cada cambio.
 
 **Qué cambia y por qué** (feedback de la mesa de prueba del 09-10):
 

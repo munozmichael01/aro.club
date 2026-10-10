@@ -529,11 +529,11 @@ if (relojes.length) {
     return [...(fin < 0 ? resto : resto.slice(0, fin)).matchAll(/^\d+\.\s+(.+)$/gm)].map((m) => m[1].trim())
   }
 
-  const cabeceras = [
-    '## Ronda 1 · Quién eres hoy',
-    '## Ronda 2 · Lo que te mueve',
-    '## Ronda 3 · Lo que no se suele decir',
-  ]
+  // Las cabeceras SALEN de los títulos del mazo, no escritas aquí. Estaban a
+  // mano, y el día que la V2 renombró las tres rondas este comprobador dijo
+  // «no encuentro su ronda» de las tres: el aviso correcto por el motivo
+  // equivocado, que la próxima vez se lee como un fallo del documento.
+  const cabeceras = juego.rondas.map((r, i) => `## Ronda ${i + 1} · ${r.titulo}`)
 
   const distintas = []
   juego.rondas.forEach((r, i) => {
@@ -554,7 +554,7 @@ if (relojes.length) {
     distintas.slice(0, 6).forEach((d) => console.error('    ' + d))
     console.error('  → la mesa leería preguntas distintas de las aprobadas')
   } else {
-    console.log(`✓ el juego (${juego.rondas.length} rondas de ${juego.rondas[0].preguntas.length}, iguales al documento)`)
+    console.log(`✓ el juego (${juego.rondas.length} rondas de ${juego.rondas.map((r) => r.preguntas.length).join(', ')}, iguales al documento)`)
   }
 
   // Determinista y bien formado: sin esto, cada teléfono vería otra cosa.
