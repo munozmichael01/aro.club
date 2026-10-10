@@ -39,7 +39,10 @@ párrafo de la agenda en la hoja de reservar, el «8 de NaN» (arreglado en
 de avisos.
 
 - **Desde la build 15, los cambios de JS salen con EAS Update**, sin gastar
-  builds: `npx eas-cli@latest update --channel production --message "…"`.
+  builds: `npx eas-cli@latest update --channel production --environment
+  production --non-interactive --message "…"` (sin `--environment` falla).
+  Se descarga al abrir la app y se aplica en el SIGUIENTE arranque. El
+  primero salió el 10-10 (juego con ronda 3 opcional).
   Solo llega a builds con la MISMA huella nativa (`runtimeVersion:
   fingerprint`): una librería nativa nueva o un plugin tocado piden build.
 - **Trampa del 09-10:** al añadir una capacidad nativa (Associated Domains),
