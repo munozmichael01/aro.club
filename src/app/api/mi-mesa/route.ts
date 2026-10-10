@@ -48,18 +48,51 @@ export async function GET() {
   // siguiente fecha antes de valorar la anterior deja de ver la anterior, y
   // valorar es la única cosa de F11 que caduca. Así que durante las 48 horas
   // siguientes a una cena, esa cena manda; después vuelve a mandar la próxima.
+  // Y ya valorada deja de mandar.
+  //
+  // «Durante 48 horas manda la cena pasada» era media regla. Quien ya contó
+  // cómo estuvo no tiene nada pendiente ahí, y la pantalla le seguía
+  // enseñando la cena del sábado hasta el lunes: con la del miércoles ya
+  // reservada, la que importa es la que viene. Lo que sostiene la regla no es
+  // que la cena sea reciente, es que PIDE una respuesta.
+  //
+  // Se mira por mesa, que es de lo que cuelga `table_feedback`, y de una vez
+  // para todas sus reservas.
+  const { data: suyasEnMesa } = await admin
+    .from('table_members')
+    .select('booking_id, table_id')
+    .eq('profile_id', user.id)
+
+  const { data: yaContadas } = await admin
+    .from('table_feedback')
+    .select('table_id')
+    .eq('profile_id', user.id)
+
+  const valoradas = new Set((yaContadas ?? []).map((f) => f.table_id))
+  const mesaDeReserva = new Map((suyasEnMesa ?? []).map((m) => [m.booking_id, m.table_id]))
+  const yaLaConto = (r: Reserva) => {
+    const mesa = mesaDeReserva.get(r.id)
+    return !!mesa && valoradas.has(mesa)
+  }
+
   const porValorar = (reservas ?? [])
-    .filter((r) => {
-      return sePuedeValorar(empiezaDe(r), ahora)
-    })
+    .filter((r) => sePuedeValorar(empiezaDe(r), ahora) && !yaLaConto(r))
     .sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
 
   const proxima = (reservas ?? [])
     .filter((r) => empiezaDe(r) + FIN_CENA > ahora)
     .sort((a, b) => empiezaDe(a) - empiezaDe(b))[0]
 
-  const reserva =
-    porValorar ?? proxima ?? (reservas ?? []).sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
+  // Y si no hay ninguna de las dos, la última que tuvo: su cena de hace un
+  // mes sigue siendo lo último que pasó, y la pantalla la cuenta.
+  //
+  // Salvo que ya la haya valorado. Entonces no queda nada que decir de ella
+  // y lo honesto es el «sin reserva» de siempre, que al menos invita a
+  // apuntarse a la próxima. Solo se mira la ÚLTIMA: si esa está contada,
+  // rebuscar hacia atrás hasta encontrar una sin contar sacaría una cena de
+  // hace tres meses a la pantalla de hoy.
+  const ultima = (reservas ?? []).sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
+  const reserva = porValorar ?? proxima ?? (ultima && !yaLaConto(ultima) ? ultima : undefined)
 
   const evento = reserva?.events as
     | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string }
