@@ -132,12 +132,14 @@ export function TarjetaEstado({ t, revelaEn, alAccion }: { t: Tarjeta; revelaEn:
       {t.mesa ? (
         <View style={estilos.mesa}>
           <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
-            <View style={estilos.mesaNumero}>
-              <Texto variante="etiquetaChica" tono="secundario" style={{ fontSize: 9 }}>
-                {T.mesa.etiqueta}
-              </Texto>
-              <Texto variante="cifra">{t.mesa.numero}</Texto>
-            </View>
+            {t.mesa.numero ? (
+              <View style={estilos.mesaNumero}>
+                <Texto variante="etiquetaChica" tono="secundario" style={{ fontSize: 9 }}>
+                  {T.mesa.etiqueta}
+                </Texto>
+                <Texto variante="cifra">{t.mesa.numero}</Texto>
+              </View>
+            ) : null}
             <View style={{ flex: 1, minWidth: 0 }}>
               <Texto variante="titulo" tono="crema">
                 {t.mesa.sitio}

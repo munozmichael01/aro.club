@@ -33,6 +33,8 @@ export type Plan = {
   pasada: boolean
   restaurante: string | null
   numeroMesa: number | null
+  /** La única mesa de esa fecha en ese sitio: sin número (Michael, 10-10). */
+  mesaUnica?: boolean
   zonaHoraria?: string | null
 }
 
@@ -60,6 +62,7 @@ export type MiCuenta = {
 export type MiMesa = {
   mesaId?: string
   numeroMesa?: number | null
+  mesaUnica?: boolean
   empiezaEn?: string | null
   zonaHoraria?: string | null
   restaurante?: string | null
@@ -128,7 +131,7 @@ export function tarjeta(d: MiCuenta, m: MiMesa | null, ahora: number): Tarjeta {
     destino: base.destino,
     mesa: conMesa
       ? {
-          numero: m.numeroMesa == null ? '' : String(m.numeroMesa).padStart(2, '0'),
+          numero: m.numeroMesa == null || m.mesaUnica ? '' : String(m.numeroMesa).padStart(2, '0'),
           sitio: m.restaurante ?? '',
           direccion: m.direccion ?? '',
           cuando: m.empiezaEn ? F.fechaCorta(m.empiezaEn, m.zonaHoraria) : '',
@@ -282,7 +285,7 @@ export function proximos(planes: Plan[]): Proximo[] {
     .map((p) => {
       const pendiente = p.estado === 'pending_payment'
       const sitio = p.restaurante
-        ? p.restaurante + (p.numeroMesa != null ? T.proximo.mesa(p.numeroMesa) : '')
+        ? p.restaurante + (p.numeroMesa != null && !p.mesaUnica ? T.proximo.mesa(p.numeroMesa) : '')
         : (T.FORMATOS[p.formato] ?? T.FORMATOS.dinner).singular
       const e = pendiente ? T.proximo.porConfirmar : T.proximo.confirmada
       return { sitio, cuando: F.fechaLarga(p.empiezaEn, p.zonaHoraria), detalle: e.detalle, estado: e.estado, pendiente }
