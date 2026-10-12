@@ -19,6 +19,16 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 const cuerpo = z.object({
   eventoId: z.string().uuid(),
+  /**
+   * Dejar que la última mesa salga corta.
+   *
+   * Por defecto NO: una mesa es de seis, y bajarlo por defecto convierte la
+   * promesa del club en «los que haya». Esto es la salida para cuando una
+   * fecha no llena y hay que decidir —hacerla con cinco o mandarlos a la
+   * espera—, y es una decisión de quien reparte, con su nombre en el
+   * historial.
+   */
+  conCorta: z.boolean().default(false),
   pesos: z
     .object({
       cohesion: z.number(),
@@ -271,7 +281,11 @@ export async function POST(request: Request) {
     )
   }
 
-  const r = repartir(personas, pool.porMesa, pesos)
+  // `conCorta` es una decisión de quien reparte, no del algoritmo: deja que
+  // la última mesa salga con menos de las que caben. Sin ella, cinco
+  // apuntados devuelven cero mesas y la pantalla se queda sin nada que
+  // decidir.
+  const r = repartir(personas, pool.porMesa, pesos, parsed.data.conCorta)
 
   // Cada mesa cae en una de las zonas que aceptan los seis, y ahí se le da
   // sitio. El aforo se respeta: si Cardenal aguanta dos mesas, la tercera
@@ -395,6 +409,11 @@ export async function POST(request: Request) {
     corrida: corrida.id,
     apuntados: personas.length,
     mesas: r.mesas.length,
+    // Que quede escrito si se repartió aceptando una mesa corta, y de qué
+    // tamaño salió cada una: dentro de dos meses, «¿por qué esa cena fue de
+    // cinco?» tiene que poder responderse.
+    conCorta: parsed.data.conCorta,
+    tamanos: r.mesas.map((m) => m.length),
     espera: r.espera.length,
     media: Number(r.media.toFixed(3)),
   })

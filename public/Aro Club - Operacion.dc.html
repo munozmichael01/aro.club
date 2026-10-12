@@ -322,6 +322,11 @@
           </span>
           <button onClick="{{ publicarListas }}" aria-disabled="{{ inerteListas }}" style="{{ botonListas }}">{{ textoListas }}</button>
           <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
+          <!-- Solo cuando hay gente esperando que no da para una mesa entera:
+               es entonces cuando hay algo que decidir. -->
+          <sc-if value="{{ hayCorta }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ repartirCorta }}" style="{{ botonCorta }}">{{ textoCorta }}</button>
+          </sc-if>
         </div>
       </div>
     </sc-if>
@@ -1916,11 +1921,19 @@ class Component extends DCLogic {
   }
 
   // Reparto.
-  repartirDeNuevo() {
+  /**
+   * Repartir. Con `conCorta`, aceptando que la última mesa salga corta.
+   *
+   * Por defecto no: una mesa es de seis. Pero con cinco apuntados el reparto
+   * devolvía CERO mesas y la pantalla se quedaba sin nada que decidir —ni
+   * publicar, ni forzar, ni espera que mover—, cuando la decisión existe y es
+   * de operación: se hace con cinco o se manda a la gente a la espera.
+   */
+  repartirDeNuevo(conCorta) {
     const f = this.fechaElegida();
     if (!f || this.state.repartiendo) return;
     this.setState({ repartiendo: true, fallo: '' });
-    return this.mandar('/api/operacion/repartir', { eventoId: f.id }).then((r) => {
+    return this.mandar('/api/operacion/repartir', { eventoId: f.id, conCorta: !!conCorta }).then((r) => {
       this.setState({ repartiendo: false });
       if (r.ok) this.cargarReparto(f.id);
       return r;
@@ -2398,6 +2411,22 @@ class Component extends DCLogic {
       const malas = (m.roturas || []);
       const pub = !!m.publicada;
       const tamOk = g.length === POR_MESA;
+      /**
+       * Corta y pasada no son el mismo problema.
+       *
+       * CORTA —cinco de seis— es una decisión: una mesa de cinco se puede
+       * hacer, y es exactamente lo que el producto ya dice cuando alguien se
+       * baja de una publicada («decide tú: se confirma así o la cambias a
+       * mano»). Lo que faltaba era poder tomar esa decisión ANTES, con una
+       * fecha que no llenó. Michael se quedó con cinco apuntados el viernes
+       * 16, el botón decía «Falta una» en gris y no había ninguna salida.
+       *
+       * PASADA —siete donde caben seis— no lo es: el sitio está reservado
+       * para seis y la séptima persona se queda de pie. Eso se arregla
+       * moviendo a alguien, no decidiendo.
+       */
+      const corta = g.length > 0 && g.length < POR_MESA;
+      const pasada = g.length > POR_MESA;
       const calc = (St.recalculando || []).indexOf(m.numero) >= 0;
       const clave = String(m.numero);
       const forzada = false;
@@ -2451,6 +2480,10 @@ class Component extends DCLogic {
          * mano, y eso es una decisión de operación, no algo que arregle el
          * sistema metiendo a quien rompe una regla.
          */
+        // Para el modal de forzar: qué se está aceptando exactamente.
+        cuantos: g.length,
+        porMesa: POR_MESA,
+        esCorta: corta,
         hayCorta: pub && g.length > 0 && g.length < POR_MESA,
         textoCorta: 'Se quedó en ' + g.length + ' de ' + POR_MESA
           + ': alguien se bajó y nadie de la espera encaja con esta ' + vozRep.unidad + '.'
@@ -2465,10 +2498,14 @@ class Component extends DCLogic {
           : 'Rompe ' + malas.length + ' reglas: ' + malas.map((x) => x.detalle).join(' · ') + '. Publicar se para aquí.',
         hayForzada: forzada && pub,
         textoForzada: '',
-        // Sin sitio no se fuerza: forzar salta una regla de afinidad, nunca
-        // la dirección. El servidor lo rechaza igual, pero ofrecer el botón
-        // sería prometer algo que no va a pasar.
-        puedeForzar: malas.length > 0 && tamOk && !pub && !calc && !!m.restaurantId,
+        // Sin sitio no se fuerza: forzar salta una regla de afinidad o un
+        // hueco, nunca la dirección. El servidor lo rechaza igual, pero
+        // ofrecer el botón sería prometer algo que no va a pasar.
+        //
+        // Y se puede forzar también una mesa CORTA, que es lo que faltaba:
+        // el servidor nunca miró el tamaño —publica cinco sin rechistar— y
+        // el único que lo impedía era este panel.
+        puedeForzar: (malas.length > 0 || corta) && !pasada && !pub && !calc && !!m.restaurantId,
         textoPublicar: pub ? 'Deshacer' : (calc ? 'Calculando…' : (!tamOk ? (Math.abs(POR_MESA - g.length) === 1 ? (g.length < POR_MESA ? 'Falta una' : 'Sobra una') : (g.length < POR_MESA ? 'Faltan ' : 'Sobran ') + Math.abs(POR_MESA - g.length)) : (malas.length ? 'No se puede publicar' : 'Publicar esta ' + vozRep.unidad))),
         botonPublicar: 'flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;font:600 14px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease;' + (pub
           ? 'background:transparent;color:#8F4515;border:1px solid rgba(143,69,21,.4);cursor:pointer'
@@ -3374,9 +3411,21 @@ class Component extends DCLogic {
       },
       // forzar es la única acción que salta un freno: pasa por modal y deja constancia
       hayModal: !!St.confirmar,
-      tituloModal: mesaModal ? 'La ' + mesaModal.titulo.toLowerCase() + ' rompe reglas duras.' : '',
+      // Dos cosas distintas se fuerzan por aquí, y el modal dice cuál: una
+      // mesa que rompe reglas de afinidad, o una que sale corta. Decirle
+      // «rompe reglas duras» a quien publica cinco de seis es mentirle sobre
+      // lo que está aceptando.
+      tituloModal: !mesaModal ? ''
+        : mesaModal.esCorta && !mesaModal.reglas.some((r) => r.chip.indexOf('143,69,21') >= 0)
+          ? 'La ' + mesaModal.titulo.toLowerCase() + ' sale con ' + mesaModal.cuantos + ' de ' + mesaModal.porMesa + '.'
+          : 'La ' + mesaModal.titulo.toLowerCase() + ' rompe reglas duras.',
       nombreModal: mesaModal ? mesaModal.titulo : '',
-      rotasModal: mesaModal ? mesaModal.reglas.filter((r) => r.chip.indexOf('143,69,21') >= 0) : [],
+      rotasModal: !mesaModal ? []
+        : mesaModal.reglas.filter((r) => r.chip.indexOf('143,69,21') >= 0)
+          .concat(mesaModal.esCorta
+            ? [{ texto: 'Son ' + mesaModal.cuantos + ' y caben ' + mesaModal.porMesa
+                + '. La cena se hace igual, y a nadie se le dice cuántos iban a ser.' }]
+            : []),
       textoForzarModal: mesaModal ? 'Publicar la ' + mesaModal.n + ' igualmente' : '',
       botonForzarModal: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border-radius:999px;border:none;background:#6E340F;color:#FFF8EA;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
       cerrarModal: () => this.setState({ confirmar: '' }),
@@ -4278,7 +4327,20 @@ class Component extends DCLogic {
       botonPrimario: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 26px;border-radius:999px;border:none;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer',
       botonBorde: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:999px;border:1px solid rgba(20,52,42,.24);background:transparent;color:#1B5138;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer',
 
-      rebarajar: () => this.repartirDeNuevo()
+      rebarajar: () => this.repartirDeNuevo(false),
+
+      /**
+       * «Hacer la mesa con los N que hay».
+       *
+       * Sale cuando en la espera queda gente que NO da para una mesa entera,
+       * que es justo cuando el reparto normal devuelve cero y no hay nada
+       * que decidir. Menos de tres no se ofrece: dos personas no son una
+       * cena, son una cita, y eso no es lo que nadie reservó.
+       */
+      hayCorta: espera.length >= 3 && espera.length < POR_MESA,
+      textoCorta: 'Hacer ' + vozRep.art + ' ' + vozRep.unidad + ' con ' + ((LETRAS && LETRAS[espera.length]) || espera.length),
+      botonCorta: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 20px;border-radius:999px;background:transparent;color:#8F4515;border:1px dashed rgba(143,69,21,.5);font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;white-space:nowrap',
+      repartirCorta: () => this.repartirDeNuevo(true)
     };
   }
 }

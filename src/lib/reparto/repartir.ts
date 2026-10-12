@@ -401,7 +401,28 @@ export type Resultado = {
  * sino una solución legal y buena en tiempo predecible. Lo que sí garantiza
  * es que ninguna mesa devuelta rompe una restricción dura.
  */
-export function repartir(pool: Persona[], porMesa = 6, pesos: Pesos = PESOS): Resultado {
+export function repartir(
+  pool: Persona[],
+  porMesa = 6,
+  pesos: Pesos = PESOS,
+  /**
+   * Dejar que la ÚLTIMA mesa salga corta.
+   *
+   * Por defecto no: una mesa es de seis, y sentar a cuatro porque no llegaron
+   * más convierte la promesa del club en «los que haya». Quien sobra va a la
+   * espera y se le dice.
+   *
+   * Pero con cinco apuntados el reparto devolvía CERO mesas y la pantalla se
+   * quedaba sin salida: ni publicar, ni forzar, ni nada que decidir. Y la
+   * decisión existe —el producto ya acepta una mesa de cinco cuando alguien
+   * se baja de una publicada—, solo que no se podía tomar antes.
+   *
+   * Así que es una decisión explícita de quien reparte, no un relajo del
+   * algoritmo: se pide por la ruta, llega hasta aquí, y la mesa corta sale
+   * marcada para que el panel la enseñe por lo que es.
+   */
+  permitirCorta = false,
+): Resultado {
   // Quien no acepta NINGUNA de las zonas abiertas no se puede sentar en
   // ningun sitio, y ordenar por "menos zonas primero" lo hacia justo lo
   // contrario: entraba el primero a sembrar mesas —cero es el minimo— y
@@ -414,7 +435,26 @@ export function repartir(pool: Persona[], porMesa = 6, pesos: Pesos = PESOS): Re
   // apuntan cuarenta salen seis mesas, y lo que hay que conseguir es sitio
   // para seis, no sentar a menos gente.
   const cuantas = Math.floor(sentables.length / porMesa)
-  if (cuantas === 0) return { mesas: [], espera: [...pool], puntuaciones: [], media: 0 }
+
+  /**
+   * Con menos de una mesa entera, o no hay nada que repartir, o hay una
+   * decisión que tomar.
+   *
+   * Dos personas no son una cena: el mínimo es tres, que es cuando una mesa
+   * deja de ser una cita y empieza a ser un grupo. Por debajo, a la espera
+   * aunque se pida la corta.
+   */
+  const MINIMO_CORTA = 3
+  if (cuantas === 0) {
+    if (!permitirCorta || sentables.length < MINIMO_CORTA) {
+      return { mesas: [], espera: [...pool], puntuaciones: [], media: 0 }
+    }
+    // Una sola mesa con los que hay. No se reordena ni se optimiza: con
+    // menos de seis no hay nada que intercambiar.
+    const unica = [...sentables]
+    const puntos = [puntuar(unica, pesos)]
+    return { mesas: [unica], espera: [...sinZona], puntuaciones: puntos, media: puntos[0] }
+  }
 
   // Semilla por edad, y el id como desempate para que sea estable: mismo
   // pool, mismo reparto. Ordenar por edad importa porque el spread de 10
@@ -528,6 +568,13 @@ export function repartir(pool: Persona[], porMesa = 6, pesos: Pesos = PESOS): Re
       }
     }
     if (!mejoro) break
+  }
+
+  // Y si se pidió la corta, los que sobran se sientan juntos en una más,
+  // siempre que lleguen al mínimo. Va DESPUÉS de los intercambios: la mesa
+  // corta se queda con lo que sobre, no se lleva a nadie de una completa.
+  if (permitirCorta && libres.length >= MINIMO_CORTA) {
+    mesas.push(libres.splice(0, libres.length))
   }
 
   const puntuaciones = mesas.map((m) => puntuar(m, pesos))

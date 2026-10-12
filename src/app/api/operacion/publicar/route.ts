@@ -504,7 +504,14 @@ export async function POST(request: Request) {
 
   await admin.from('events').update({ status: 'matched' }).eq('id', corrida.event_id)
 
-  await anotar(actor, 'mesas_publicadas', 'evento', corrida.event_id, { mesas: creadas.length })
+  // Qué se publicó y de qué tamaño. Una mesa de cinco publicada a propósito
+  // es una decisión de operación, y a los dos meses la pregunta es quién la
+  // tomó: sin esto, en el historial se lee igual que una de seis.
+  await anotar(actor, 'mesas_publicadas', 'evento', corrida.event_id, {
+    mesas: creadas.length,
+    forzada: !!parsed.data.forzar,
+    tamanos: mesas.map((m) => ({ mesa: m.numero, gente: m.integrantes.length })),
+  })
 
   return NextResponse.json({
     estado: 'publicado',
