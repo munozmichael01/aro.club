@@ -48,6 +48,11 @@ export type Accion =
   | 'mesas_repartidas'
   | 'local_creado'
   | 'local_editado'
+  // Corregir una respuesta del cuestionario de otra persona. Es lo más
+  // delicado que hace el panel sobre un perfil: el cuestionario es lo que
+  // dijo ELLA, y cambiarlo sin dejar quién y por qué convierte su respuesta
+  // en la nuestra.
+  | 'respuesta_corregida'
   | 'incidencia_resuelta'
   | 'acceso_concedido'
   | 'acceso_retirado'
@@ -64,7 +69,7 @@ export type Accion =
 
 type Entidad =
   | 'verificacion' | 'pago' | 'evento' | 'local' | 'incidencia' | 'equipo' | 'leads'
-  | 'reserva'
+  | 'reserva' | 'perfil'
 
 export async function anotar(
   /**
