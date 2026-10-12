@@ -1344,7 +1344,7 @@ class Component extends DCLogic {
     this.cargarGente();
     this.cargarHistorico();
     this.montarArrastre();
-    this.renovarFirmas();
+    this.vigilar();
   }
 
   /**
@@ -1466,6 +1466,22 @@ class Component extends DCLogic {
       .catch(() => this.setState(siFalla));
   }
 
+  /**
+   * Lo mismo, pero si falla NO toca nada.
+   *
+   * Las colas se repiden solas cada medio minuto. Con `pedir`, un corte de
+   * red de un segundo —o el wifi del local, o el móvil cambiando de antena—
+   * vacía la lista: la pantalla diría «ningún reporte abierto» y «nada por
+   * conciliar» por un fallo de red, que es la mentira más cómoda de creer.
+   * Lo de antes se queda, y a los treinta segundos se vuelve a intentar.
+   */
+  repedir(ruta, aEstado) {
+    return fetch(ruta)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d) => this.setState(aEstado(d)))
+      .catch(() => {});
+  }
+
   cargarFechas() {
     return this.pedir('/api/operacion/fechas',
       (d) => {
@@ -1503,18 +1519,21 @@ class Component extends DCLogic {
       (d) => ({ reparto: d }), { reparto: { evento: null } });
   }
 
-  cargarCola() {
+  cargarCola(deFondo) {
+    if (deFondo) return this.repedir('/api/operacion/verificaciones', (d) => ({ cola: d.cola, motivosCola: d.motivos }));
     return this.pedir('/api/operacion/verificaciones',
       (d) => ({ cola: d.cola, motivosCola: d.motivos }), { cola: [], motivosCola: [] });
   }
 
-  cargarPagos() {
+  cargarPagos(deFondo) {
+    if (deFondo) return this.repedir('/api/operacion/pagos', (d) => ({ pagosCola: d.cola, metodosPago: d.metodos, pagosResumen: d.resumen }));
     return this.pedir('/api/operacion/pagos',
       (d) => ({ pagosCola: d.cola, metodosPago: d.metodos, pagosResumen: d.resumen }),
       { pagosCola: [], metodosPago: [], pagosResumen: {} });
   }
 
-  cargarIncidencias() {
+  cargarIncidencias(deFondo) {
+    if (deFondo) return this.repedir('/api/operacion/incidencias', (d) => ({ incidencias: d.cola, accionesIncidencia: d.acciones }));
     return this.pedir('/api/operacion/incidencias',
       (d) => ({ incidencias: d.cola, accionesIncidencia: d.acciones }),
       { incidencias: [], accionesIncidencia: [] });
@@ -1527,29 +1546,79 @@ class Component extends DCLogic {
   }
 
   /**
-   * Las URLs de las fotos de la cola están firmadas cinco minutos, y con la
-   * pestaña abierta eso se pasa: quien deja el panel puesto mientras habla
-   * por teléfono vuelve a dos recuadros rotos y no sabe si es que no hay
-   * documento o que caducó la vista.
+   * Las colas se refrescan solas. Nadie tiene que recargar el navegador.
    *
-   * Así que se renuevan antes de que venzan, en vez de esperar a que se
-   * rompan. Solo mientras se está mirando esa pestaña —no tiene sentido
-   * refrescar lo que no se ve— y nunca en mitad de una decisión: recargar la
-   * cola mientras alguien elige el motivo de un rechazo le movería la fila
-   * debajo del dedo.
+   * Una verificación o un pago llegan cuando llegan, y el panel se queda
+   * con la foto del momento en que se abrió: alguien sube su cédula y el
+   * panel sigue diciendo que no hay nada hasta que se recarga a mano.
+   * Operación es una pantalla que se deja puesta todo el día.
+   *
+   * Y hay un motivo más viejo: las URLs de las fotos están firmadas CINCO
+   * MINUTOS. Con la pestaña abierta eso se pasa, y quien vuelve se encuentra
+   * dos recuadros rotos sin saber si es que no hay documento o que caducó la
+   * vista. Esto ya lo arreglaba, cada cuatro minutos, pero solo para
+   * verificaciones y con un freno roto (abajo).
+   *
+   * LO QUE SE MIRA, cada medio minuto. LO QUE NO, cada dos: eso es lo que
+   * mantiene vivos los contadores de las pestañas —«Pagos 2» mientras estás
+   * en Reparto— que es el aviso de que hay trabajo nuevo.
    */
-  renovarFirmas() {
-    const CADA = 4 * 60 * 1000;
-    this._firmas = setInterval(() => {
-      const St = this.state;
-      const mirando = this.clavesPestanas()[St.vista] === 'verificaciones';
-      const ocupada = St.trabajando || St.abriendo != null || Object.keys(St.decididas || {}).length > 0;
-      if (mirando && !ocupada) this.cargarCola();
+  vigilar() {
+    const CADA = 30 * 1000;
+    const UNA_DE_CADA = 4;   // o sea, las otras colas cada dos minutos
+    let vuelta = 0;
+
+    this._reloj = setInterval(() => {
+      vuelta++;
+      this.refrescarColas(vuelta % UNA_DE_CADA === 0);
     }, CADA);
+
+    // Y al volver a la pestaña del navegador, al momento: quien vuelve de
+    // WhatsApp quiere ver lo de ahora, no esperar medio minuto.
+    this._alVolver = () => { if (!document.hidden) this.refrescarColas(true); };
+    document.addEventListener('visibilitychange', this._alVolver);
+  }
+
+  /**
+   * Cuándo NO se refresca.
+   *
+   * - Con la pestaña del navegador escondida: nadie lo está viendo y son
+   *   peticiones a la base cada medio minuto para nada.
+   * - Con algo en vuelo o con el menú de rechazo abierto: recargar la cola
+   *   mientras alguien elige el motivo le mueve la fila debajo del dedo.
+   * - Los diez segundos siguientes a una decisión. La fila decidida
+   *   desaparece de la cola —el servidor ya no la devuelve— y con ella el
+   *   «Aprobada. Le llega el correo…» que es la única confirmación de que
+   *   salió bien. Diez segundos es lo que se tarda en leerlo.
+   *
+   * El freno de antes miraba `decididas`, que NO SE VACÍA NUNCA: a partir de
+   * la primera aprobación de la sesión se quedaba encendido para siempre y
+   * la cola dejaba de refrescarse, justo lo que esta función venía a evitar.
+   * Las firmas caducaban igual y nadie entendía por qué.
+   */
+  refrescarColas(incluirLasOtras) {
+    const St = this.state;
+    if (typeof document !== 'undefined' && document.hidden) return;
+    if (St.trabajando || St.abriendo != null) return;
+    if (Date.now() - (this._decidioEn || 0) < 10000) return;
+
+    const clave = this.clavesPestanas()[St.vista];
+    const colas = {
+      verificaciones: () => this.cargarCola(true),
+      pagos: () => this.cargarPagos(true),
+      reportes: () => this.cargarIncidencias(true),
+    };
+
+    if (colas[clave]) colas[clave]();
+    if (!incluirLasOtras) return;
+
+    // Las demás, para los contadores de las pestañas.
+    Object.keys(colas).forEach((k) => { if (k !== clave) colas[k](); });
   }
 
   componentWillUnmount() {
-    if (this._firmas) clearInterval(this._firmas);
+    if (this._reloj) clearInterval(this._reloj);
+    if (this._alVolver) document.removeEventListener('visibilitychange', this._alVolver);
   }
 
   /**
@@ -1775,6 +1844,9 @@ class Component extends DCLogic {
 
   // Verificaciones: aprobar o rechazar con motivo.
   decidirIdentidad(cuerpo) {
+    // Para que el refresco automático no se lleve la fila —y con ella el
+    // «Aprobada, le llega el correo»— antes de que dé tiempo a leerlo.
+    this._decidioEn = Date.now();
     return this.mandar('/api/operacion/verificaciones', cuerpo).then((r) => {
       if (!r.ok) return r;
       this.setState({
@@ -1791,6 +1863,9 @@ class Component extends DCLogic {
   // Pagos: confirmar o marcar que no cuadra. "No cuadra" no libera el
   // puesto, lo guarda 24 h para que corrija.
   decidirPago(cuerpo) {
+    // Para que el refresco automático no se lleve la fila —y con ella el
+    // «Aprobada, le llega el correo»— antes de que dé tiempo a leerlo.
+    this._decidioEn = Date.now();
     return this.mandar('/api/operacion/pagos', cuerpo).then((r) => {
       if (!r.ok) return r;
       this.setState({
@@ -1806,6 +1881,9 @@ class Component extends DCLogic {
 
   // Reportes.
   resolverIncidencia(cuerpo) {
+    // Para que el refresco automático no se lleve la fila —y con ella el
+    // «Aprobada, le llega el correo»— antes de que dé tiempo a leerlo.
+    this._decidioEn = Date.now();
     return this.mandar('/api/operacion/incidencias', cuerpo).then((r) => {
       if (!r.ok) return r;
       this.setState({ aviso: 'Reporte cerrado. Queda escrito quién lo cerró.' });
