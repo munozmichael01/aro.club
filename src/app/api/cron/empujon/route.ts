@@ -29,8 +29,25 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-/** Margen antes de dar por hecho que se fue. */
-const HORAS_DE_SILENCIO = 1
+/**
+ * Margen antes de dar por hecho que se fue. VEINTICUATRO HORAS.
+ *
+ * Era UNA, y medido no servía de nada: de 29 personas que recibieron el
+ * empujón de «te falta verificarte», 26 no subieron la cédula nunca. Las dos
+ * que la subieron lo hicieron a los 3 y a los 15 minutos del correo, o sea
+ * que ya estaban en mitad del trámite cuando les llegó. Frente al 7% del
+ * grupo con empujón, los que se pararon igual y no lo recibieron fueron al
+ * 5%: dos puntos, que caben en dos personas.
+ *
+ * A la hora y media de darse de alta —que era la mediana— «me quedé a
+ * medias» todavía no es verdad: la persona sigue ahí, o salió a buscar la
+ * cédula. A las veinticuatro sí lo es, y entonces el correo cuenta algo que
+ * la persona reconoce.
+ *
+ * Si a las dos semanas la cifra de Gente sigue en dos puntos, el problema no
+ * es cuándo se manda el recordatorio.
+ */
+const HORAS_DE_SILENCIO = 24
 
 /**
  * Y no a cualquier hora.

@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
   }
   graphql_public: {
     Tables: {
@@ -2247,6 +2247,7 @@ export type Database = {
           invited_by: string | null
           last_event_at: string | null
           locale: string
+          navegador_verificacion: string | null
           neighborhood: string | null
           notes_ops: string | null
           notificaciones: Json
@@ -2280,6 +2281,7 @@ export type Database = {
           invited_by?: string | null
           last_event_at?: string | null
           locale?: string
+          navegador_verificacion?: string | null
           neighborhood?: string | null
           notes_ops?: string | null
           notificaciones?: Json
@@ -2313,6 +2315,7 @@ export type Database = {
           invited_by?: string | null
           last_event_at?: string | null
           locale?: string
+          navegador_verificacion?: string | null
           neighborhood?: string | null
           notes_ops?: string | null
           notificaciones?: Json
@@ -3847,6 +3850,7 @@ export type Database = {
         | "llego_tarde"
         | "cierra_pronto"
         | "juego"
+        | "disculpa_verificacion"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -4083,6 +4087,7 @@ export const Constants = {
         "llego_tarde",
         "cierra_pronto",
         "juego",
+        "disculpa_verificacion",
       ],
       event_format_t: [
         "dinner",

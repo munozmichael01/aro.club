@@ -51,6 +51,24 @@
 
   <div style="flex:1;max-width:660px;width:100%;margin:0 auto;padding:clamp(26px,5vw,48px) clamp(16px,4vw,28px) clamp(48px,8vw,90px)">
 
+    <!-- Dentro del navegador de una app, la cámara y el selector de ficheros
+         fallan a menudo: se toca «Hacer la foto» y no pasa nada. Quien llega
+         desde un post de Instagram se queda ahí y no vuelve. -->
+    <sc-if value="{{ enApp }}" hint-placeholder-val="{{ false }}">
+      <div style="border-radius:22px;background:#FFF8EA;border:1px solid rgba(143,69,21,.34);padding:clamp(16px,2.2vw,22px);margin-bottom:clamp(22px,3vw,30px);animation:aro-open 400ms ease both">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 13px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+          <div style="flex:1;min-width:0">
+            <div style="font:600 16px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloApp }}</div>
+            <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;margin-top:6px;text-wrap:pretty">{{ cuerpoApp }}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px">
+          <button onClick="{{ copiarEnlace }}" style="{{ botonCopiar }}">{{ textoCopiar }}</button>
+        </div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ esIntro }}" hint-placeholder-val="{{ true }}">
       <div style="animation:aro-open 400ms ease both">
         <div style="{{ eyebrow }}">ÚLTIMO PASO</div>
@@ -257,7 +275,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { fase: 'intro', movil: true, toma: 0, tomas: {}, previas: {}, intentos: 0, repetirSolo: null,
+  state = { fase: 'intro', movil: true, toma: 0, tomas: {}, previas: {}, intentos: 0, repetirSolo: null, copiado: false,
             subiendo: false, fallo: '', motivo: null,
             celdas: [], ladoQr: 0, traspaso: null,
             // null = todavía no lo sabemos. No es lo mismo que cero, y la
@@ -534,7 +552,61 @@ class Component extends DCLogic {
 
     const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 26px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
 
+    /**
+     * ¿Estamos dentro del navegador de una app?
+     *
+     * Instagram, Facebook y TikTok abren los enlaces en un navegador suyo, y
+     * ahí la cámara y el selector de ficheros fallan a menudo en Android: se
+     * toca «Hacer la foto» y no pasa nada, sin error ni aviso. Quien llega
+     * desde un post se queda justo en el paso que no puede completar.
+     *
+     * `; wv)` es el WebView de Android, que es lo que montan por dentro casi
+     * todas. Se avisa también de ese, aunque no diga de qué app: el problema
+     * es el WebView, no la marca.
+     *
+     * Es un AVISO, no un candado. Si en su teléfono funciona, que siga.
+     */
+    const UA = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+    const APP = /Instagram/i.test(UA) ? 'Instagram'
+      : /FBAN|FBAV|FB_IAB/i.test(UA) ? 'Facebook'
+      : /BytedanceWebview|musical_ly|TikTok/i.test(UA) ? 'TikTok'
+      : /;\s*wv\)/i.test(UA) ? '' : null;
+
     return {
+      // Ni en «hecha» ni en «revisión»: ahí ya no hay nada que subir y el
+      // aviso sería ruido sobre una pantalla que da buenas noticias.
+      enApp: APP !== null && (f === 'intro' || f === 'captura' || f === 'rechazo'),
+      tituloApp: APP
+        ? 'Estás en el navegador de ' + APP
+        : 'Estás en el navegador de una aplicación',
+      cuerpoApp: 'Aquí la cámara y la subida de fotos fallan a menudo. Para subir tus fotos, abre aro.club en Safari o Chrome y entra con tu correo: no pierdes nada de lo que ya hiciste.',
+      textoCopiar: this.state.copiado ? 'Enlace copiado' : 'Copiar el enlace',
+      botonCopiar: btn(this.state.copiado ? 'rgba(27,81,56,.13)' : '#6E340F', this.state.copiado ? '#1B5138' : '#FFF8EA', 'none', 'min-height:48px;padding:0 20px;font-size:15px'),
+      copiarEnlace: () => {
+        // Sin la query: ahí viaja el token firmado del enlace del correo, y
+        // un enlace copiado se pega en sitios que no controlamos.
+        const url = location.origin + location.pathname;
+        const listo = () => {
+          this.setState({ copiado: true });
+          setTimeout(() => this.setState({ copiado: false }), 3000);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(listo, () => listo());
+          return;
+        }
+        // El WebView viejo que no tiene `clipboard`, que es justo el que nos
+        // trae aquí: se selecciona y se copia a la antigua.
+        try {
+          const t = document.createElement('textarea');
+          t.value = url; t.setAttribute('readonly', '');
+          t.style.position = 'fixed'; t.style.opacity = '0';
+          document.body.appendChild(t); t.select();
+          document.execCommand('copy');
+          document.body.removeChild(t);
+        } catch (e) { /* si no se puede, el aviso ya dice la dirección */ }
+        listo();
+      },
+
       esIntro: f === 'intro',
       esQr: f === 'qr',
       esCaptura: f === 'captura',

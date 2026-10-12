@@ -53,9 +53,39 @@ async function deQuien(token: string | null): Promise<string | null> {
   return user?.id ?? null
 }
 
+/**
+ * De qué FAMILIA es el navegador. Nunca el user agent entero.
+ *
+ * La cadena completa identifica un teléfono bastante bien, y para la
+ * pregunta que esto contesta —si hay que arreglar la pantalla para los
+ * navegadores de las apps— basta con saber de cuál viene.
+ *
+ * `; wv)` es el WebView de Android, que es lo que montan por dentro casi
+ * todas las apps. Ahí es donde la cámara y el selector de ficheros fallan.
+ */
+function familiaDeNavegador(ua: string | null): string {
+  const s = ua ?? ''
+  if (/Instagram/i.test(s)) return 'instagram'
+  if (/FBAN|FBAV|FB_IAB/i.test(s)) return 'facebook'
+  if (/BytedanceWebview|musical_ly|TikTok/i.test(s)) return 'tiktok'
+  if (/;\s*wv\)/i.test(s)) return 'webview'
+  return 'normal'
+}
+
 export async function GET(request: Request) {
   const user = await deQuien(new URL(request.url).searchParams.get('t'))
   if (!user) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
+
+  // Con qué navegador se ABRE esta pantalla, que es la cuenta que falta para
+  // saber por qué 26 de 29 personas no suben nunca la cédula. Se anota al
+  // abrir y no al subir: quien no consigue subirla es a quien hay que contar.
+  //
+  // Si falla, no pasa nada: es una cuenta, no parte de verificar a nadie.
+  void createAdminClient()
+    .from('profiles')
+    .update({ navegador_verificacion: familiaDeNavegador(request.headers.get('user-agent')) } as never)
+    .eq('id', user)
+    .then(undefined, () => {})
 
   const { data: filas } = await createAdminClient()
     .from('verifications')
