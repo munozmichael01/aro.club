@@ -1138,6 +1138,12 @@
             </div>
             <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;max-width:56ch;margin-bottom:18px;text-wrap:pretty">{{ leyendaGente }}</div>
 
+            <sc-if value="{{ hayPruebaGente }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-bottom:16px">
+                <button onClick="{{ tocarPruebaGente }}" style="{{ botonPruebaGente }}">{{ textoPruebaGente }}</button>
+              </div>
+            </sc-if>
+
             <!-- ¿Sirve de algo el empujón? La cifra sola no dice nada: va con
                  la de quien se paró igual y NO lo recibió. -->
             <sc-if value="{{ hayEmpujon }}" hint-placeholder-val="{{ true }}">
@@ -1326,6 +1332,7 @@ class Component extends DCLogic {
     // deciden si una fecha se puede abrir.
     gente: null, zonasGente: [], embudoGente: [], totalGente: 0, verificadosGente: 0,
     paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {}, empujon: null,
+    pruebaGente: null, verPruebaGente: false,
     perfilesGente: 0, leadsGente: null, pidiendoGente: false,
     avisos: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
     // Mover a una persona a mano en la fecha elegida. Vive en Reparto y
@@ -1661,6 +1668,10 @@ class Component extends DCLogic {
       edad: f.edad || '', familia: f.formato || '',
       zona: St.fZona || '', atajo: St.atajo || '',
       escalon: St.escalon >= 0 ? String(St.escalon) : '',
+      // Las de prueba solo si se piden. Sin esto cuentan en el total, en el
+      // embudo y en el mapa de zonas, y la pantalla que dice cuánta gente
+      // hay dice treinta y cuatro de más.
+      prueba: St.verPruebaGente ? '1' : '',
       desde: String(St.desde || 0)
     };
     const partes = Object.keys(q).filter((k) => q[k] !== '')
@@ -1669,6 +1680,7 @@ class Component extends DCLogic {
     return this.pedir('/api/operacion/gente' + (partes.length ? '?' + partes.join('&') : ''),
       (d) => ({
         gente: d.gente, zonasGente: d.zonas, embudoGente: d.embudo, empujon: d.empujon || null,
+        pruebaGente: d.prueba || null,
         totalGente: d.total, verificadosGente: d.verificados,
         paginaGente: d.pagina, resultadoGente: d.resultado,
         cuentasGente: d.cuentas, atajosGente: d.atajos,
@@ -3550,6 +3562,20 @@ class Component extends DCLogic {
         && (St.empujon.con.total < 30 || St.empujon.sin.total < 30)
         ? 'Con estos números no se puede concluir nada: la diferencia cabe en dos o tres personas.'
         : '',
+
+      // Las cuentas de prueba: fuera de todas las cifras, pero a un toque.
+      // Esconderlas del todo sería esconder la basura en vez de barrerla.
+      hayPruebaGente: !!(St.pruebaGente && St.pruebaGente.cuantas),
+      textoPruebaGente: St.verPruebaGente
+        ? 'Esconder las de prueba'
+        : 'Ver las ' + ((St.pruebaGente && St.pruebaGente.cuantas) || 0) + ' cuentas de prueba',
+      botonPruebaGente: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:'
+        + (St.verPruebaGente ? '#F2E9D5' : 'transparent') + ';font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F;cursor:pointer;white-space:nowrap',
+      tocarPruebaGente: () => {
+        const v = !St.verPruebaGente;
+        this.setState({ verPruebaGente: v, desde: 0 });
+        this.cargarGente({ verPruebaGente: v, desde: 0 });
+      },
       cifraGrande: 'font:700 clamp(52px,7vw,84px)/0.9 \'Inter Tight\',sans-serif;letter-spacing:-.045em;font-variant-numeric:tabular-nums;color:#14342A',
       bajadaGente: cargandoGente
         ? 'Leyendo la base.'

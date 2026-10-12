@@ -302,7 +302,25 @@ export async function GET(request: Request) {
     deBaja: deBaja.has(String(l.email).trim().toLowerCase()),
   }))
 
-  const todos = filasPerfiles.concat(filasLeads)
+  /**
+   * Las cuentas de prueba, fuera salvo que se pidan.
+   *
+   * Eran 34 de 188, y salían mezcladas con la gente de verdad en la lista,
+   * en el embudo, en el mapa de zonas y en el contador de la pestaña: la
+   * pantalla que dice cuánta gente hay decía treinta y cuatro de más.
+   *
+   * SE FILTRA AQUÍ Y NO EN CADA CIFRA. Todo lo que viene debajo —embudo,
+   * zonas, atajos, filtros, lista, totales— se calcula sobre `todos`, así
+   * que quitarlas en un solo sitio es la diferencia entre que no cuenten en
+   * ningún número y que no cuenten en los que alguien se acordó de tocar.
+   *
+   * Y se esconden, no se borran: el panel es el único sitio desde donde se
+   * ven, y una cuenta de prueba invisible es una que nadie limpia.
+   */
+  const verPrueba = url.searchParams.get('prueba') === '1'
+  const todas = filasPerfiles.concat(filasLeads)
+  const deprueba = todas.filter((p) => p.esPrueba).length
+  const todos = verPrueba ? todas : todas.filter((p) => !p.esPrueba)
 
   // El chip de formato del mapa. Entra como FAMILIA —«cenas»— porque es lo
   // que enseña la pantalla, y también se acepta un plan suelto. Son PLANES
@@ -535,6 +553,8 @@ export async function GET(request: Request) {
     zonas: mapa,
     embudo,
     empujon: { con: conEmpujon, sin: sinEmpujon },
+    // Cuántas de prueba hay y si se están enseñando, para el interruptor.
+    prueba: { cuantas: deprueba, viendo: verPrueba },
     // Sobre la base entera, sin filtro: es la bajada de la pestaña.
     total: todos.length,
     verificados: todos.filter((p) => p.estado === 'ok').length,
