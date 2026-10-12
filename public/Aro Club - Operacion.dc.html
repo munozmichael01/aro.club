@@ -125,11 +125,16 @@
             </button>
           </sc-for>
         </div>
-        <sc-if value="{{ hayPasadas }}" hint-placeholder-val="{{ true }}">
-          <div style="margin:-18px 0 clamp(24px,3vw,32px)">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin:-18px 0 clamp(24px,3vw,32px)">
+          <sc-if value="{{ hayPasadas }}" hint-placeholder-val="{{ true }}">
             <button onClick="{{ tocarPasadas }}" style="{{ botonPasadas }}">{{ textoPasadas }}</button>
-          </div>
-        </sc-if>
+          </sc-if>
+          <!-- Las de prueba no las ve ningún miembro y no se reparten: en la
+               pantalla donde se decide qué cena se arma, estorban. -->
+          <sc-if value="{{ hayPrueba }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ tocarPrueba }}" style="{{ botonPrueba }}">{{ textoPrueba }}</button>
+          </sc-if>
+        </div>
         <sc-if value="{{ sinFechasTipo }}" hint-placeholder-val="{{ false }}">
           <div style="border-radius:22px;border:1px dashed rgba(20,52,42,.28);padding:clamp(18px,2.4vw,24px);margin-bottom:clamp(24px,3vw,32px);max-width:56ch">
             <div style="font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloSinFechas }}</div>
@@ -1287,7 +1292,7 @@ class Component extends DCLogic {
   // ---------------------------------------------------------------------
   state = {
     vista: 0, decididas: {}, conciliadas: {}, abriendo: null, motivos: {},
-    fechaRep: 0, publicadas: {}, forzadas: {},
+    fechaRep: 0, publicadas: {}, forzadas: {}, verPrueba: false,
     sub: 'abrir', diaSel: -1, formatoSel: 0, zonasSel: {}, abierta: false,
     actividad: '', distancia: '', duracion: '', nivel: -1,
     limitado: false, tope: '', precio: undefined,
@@ -1687,7 +1692,11 @@ class Component extends DCLogic {
    */
   fechaElegida() {
     const fs = this.state.fechas || [];
-    const seVe = (f) => !!this.state.verPasadas || !f.pasada;
+    // El MISMO filtro que el carril. Si aquí no se mirara lo de prueba, los
+    // botones trabajarían sobre una fecha que la pantalla no enseña, que es
+    // el descuadre que ya costó repartir agosto.
+    const seVe = (f) => (!!this.state.verPasadas || !f.pasada)
+      && (!!this.state.verPrueba || !f.esPrueba);
     const elegida = fs[this.state.fechaRep];
     if (elegida && seVe(elegida)) return elegida;
     return fs.filter(seVe)[0] || fs[0] || null;
@@ -2240,7 +2249,22 @@ class Component extends DCLogic {
     const FECHAS_VIVAS = FECHAS_REP.filter((f) => !f.pasada);
     const FECHAS_PASADAS = FECHAS_REP.filter((f) => f.pasada);
     const verPasadas = !!St.verPasadas;
-    const seVe = (f) => verPasadas || !f.pasada;
+
+    /**
+     * Y las de prueba, fuera del carril salvo que se pidan.
+     *
+     * No las ve ningún miembro, no se reparten y no mandan correos: en la
+     * pantalla donde se decide qué cena se arma, ocupan sitio y no se puede
+     * hacer nada con ellas. La del miércoles 14 es la mesa del revisor de
+     * Apple y va a estar ahí hasta que termine la revisión.
+     *
+     * Se esconden, NO se borran, y el interruptor dice cuántas hay: una
+     * fecha de prueba que desaparece del panel es una fecha que nadie limpia
+     * cuando sobra, y el panel es el único sitio desde donde se ven.
+     */
+    const FECHAS_PRUEBA = FECHAS_REP.filter((f) => f.esPrueba);
+    const verPrueba = !!St.verPrueba;
+    const seVe = (f) => (verPasadas || !f.pasada) && (verPrueba || !f.esPrueba);
 
     // La elegida, o la primera que se ve. `FECHAS_REP[0]` era la primera de
     // TODAS, así que con las pasadas ocultas el carril enseñaba tres fechas
@@ -3177,6 +3201,13 @@ class Component extends DCLogic {
         : 'Ver las ' + FECHAS_PASADAS.length + ' que ya pasaron',
       botonPasadas: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:' + (verPasadas ? '#F2E9D5' : 'transparent') + ';font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F;cursor:pointer;white-space:nowrap',
       tocarPasadas: () => this.setState({ verPasadas: !verPasadas, fechaRep: 0, fechaVer: 0 }),
+
+      hayPrueba: FECHAS_PRUEBA.length > 0,
+      textoPrueba: verPrueba
+        ? 'Esconder las de prueba'
+        : 'Ver ' + (FECHAS_PRUEBA.length === 1 ? 'la de prueba' : 'las ' + FECHAS_PRUEBA.length + ' de prueba'),
+      botonPrueba: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:' + (verPrueba ? '#F2E9D5' : 'transparent') + ';font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F;cursor:pointer;white-space:nowrap',
+      tocarPrueba: () => this.setState({ verPrueba: !verPrueba, fechaRep: 0, fechaVer: 0 }),
       // Mientras no hemos preguntado todavía no se dice que no hay nada: en
       // el primer pintado el panel afirmaba «no hay fechas abiertas» con
       // todos los contadores a cero, y eso es una respuesta, no una espera.
