@@ -369,6 +369,60 @@ if (sinIcono.length) {
   console.log(`\u2713 favicon (${pantallas.length} pantallas)`)
 }
 
+// --- el runtime sale de nuestro dominio --------------------------------
+//
+// `support.js` pide React, ReactDOM y Babel a unpkg.com. Si no llegan, la
+// pantalla se queda EN BLANCO: sin runtime no se resuelve ni un `{{ }}`. Está
+// registrado dos veces, en un iPhone y en un Android viejo, y son los dos
+// únicos errores nuestros que dejan la página muerta del todo.
+//
+// Ya se arregló una vez, el 13-08, cambiando las URL dentro de `support.js`.
+// El 26-09 una reconstrucción del runtime las devolvió a unpkg sin que nadie
+// lo notara: ese fichero es GENERADO y lo dice en su primera línea.
+//
+// Por eso ahora el desvío vive en `vendor.js`, en `window.__resources`, que
+// es el gancho del propio runtime y sobrevive a las reconstrucciones. Lo que
+// NO sobrevive solo es que las claves sigan cuadrando: si una versión nueva
+// de React cambia la URL, la clave deja de coincidir y vuelve a unpkg en
+// silencio. Eso es lo que se vigila aquí.
+{
+  const soporte = fs.readFileSync(
+    fileURLToPath(new URL('../public/support.js', import.meta.url)), 'utf8')
+  const desvio = fs.readFileSync(
+    fileURLToPath(new URL('../public/vendor.js', import.meta.url)), 'utf8')
+
+  const pedidas = [...soporte.matchAll(/var (?:REACT|REACT_DOM|BABEL)_URL = "([^"]+)"/g)].map((m) => m[1])
+  const fallos = []
+
+  if (!pedidas.length) fallos.push('no encuentro las URL del runtime en support.js')
+
+  for (const url of pedidas) {
+    if (!url.startsWith('http')) continue   // ya es nuestra: nada que desviar
+    if (!desvio.includes(`'${url}'`)) {
+      fallos.push(`support.js pide ${url} y vendor.js no lo desvía`)
+    }
+  }
+
+  // Y que todas las pantallas lo carguen ANTES del runtime: después no sirve.
+  for (const f of pantallas) {
+    const html = fs.readFileSync(fileURLToPath(new URL(`../public/${f}`, import.meta.url)), 'utf8')
+    const iSoporte = html.indexOf('support.js')
+    if (iSoporte < 0) continue
+    const iDesvio = html.indexOf('vendor.js')
+    if (iDesvio < 0) fallos.push(`${f}: carga support.js y no vendor.js`)
+    else if (iDesvio > iSoporte) fallos.push(`${f}: carga vendor.js DESPUÉS de support.js`)
+  }
+
+  if (fallos.length) {
+    errores++
+    console.error('\n\u2717 el runtime volvería a pedirse a unpkg.com')
+    fallos.slice(0, 8).forEach((x) => console.error('    ' + x))
+    console.error('  \u2192 si unpkg no responde, esa pantalla se queda en blanco')
+  } else {
+    console.log(`\u2713 el runtime sale de aro.club (${pedidas.length} ficheros, ${pantallas.length} pantallas)`)
+  }
+}
+
 // --- las cuatro preguntas de la puerta --------------------------------
 //
 // `AroReglas.PUERTA` son las que se hacen ANTES de tener cuenta: la portada y
