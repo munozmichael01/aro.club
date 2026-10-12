@@ -47,5 +47,10 @@ if (error) { console.log('✗', error.message); process.exit(1) }
 const { error: ep } = await admin.from('profiles').insert({
   id: data.user.id, email: CORREO, full_name: 'Operación (pruebas)', display_name: 'Ops',
   city_slug: 'caracas', gender: 'sin-decir', status: 'active', role: 'ops', locale: 'es-VE',
+  // De prueba, aunque tenga rol. Sin esto recibe los avisos del equipo en un
+  // buzon que no existe —`@aro.club` no tiene correo— y cada aviso rebota al
+  // buzon de Michael. El rol dice que PUEDE hacer; `es_prueba`, si hay
+  // alguien detras.
+  es_prueba: true,
 })
 console.log(ep ? '✗ ' + ep.message : 'creada · ' + CORREO + ' / ' + CLAVE)

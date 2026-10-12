@@ -124,11 +124,24 @@ async function aQuien(): Promise<string[]> {
 
   meter(AVISOS_A)
 
+  /**
+   * Y las cuentas de PRUEBA no, aunque tengan rol.
+   *
+   * `ops-test.mjs` crea una cuenta con rol `ops` para probar el panel, y
+   * mientras existe recibe todos los avisos del equipo en
+   * `operacion-test@aro.club`, que es un buzón que no existe: cada aviso
+   * rebota y el rebote cae en el buzón de Michael. Pasó el 12-10 con una
+   * «Verificación pendiente · Mariana».
+   *
+   * El rol dice qué puede hacer una cuenta; `es_prueba` dice si hay alguien
+   * detrás. Para escribirle a una persona hace falta lo segundo.
+   */
   const { data, error } = await createAdminClient()
     .from('profiles')
     .select('email, role')
     .in('role', ['admin', 'ops'])
     .is('deleted_at', null)
+    .eq('es_prueba', false)
 
   // Si la consulta falla, el aviso sale igual al buzón del equipo. Quedarse
   // sin avisar a nadie porque no se pudo leer quién más debía enterarse es
