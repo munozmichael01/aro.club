@@ -72,6 +72,23 @@ function familiaDeNavegador(ua: string | null): string {
   return 'normal'
 }
 
+/**
+ * Y de qué aparato. `ios`, `android`, `escritorio` u `otro`.
+ *
+ * Va con la familia de navegador porque la pregunta es la misma partida en
+ * dos: el selector de ficheros y la cámara fallan sobre todo en el WebView
+ * de ANDROID, y en iOS el mismo navegador de Instagram suele abrirlos. Sin
+ * esto, «hay que arreglarlo para Instagram» puede ser en realidad «para
+ * Instagram en Android», que no es el mismo arreglo.
+ */
+function dispositivoDe(ua: string | null): string {
+  const s = ua ?? ''
+  if (/iPhone|iPad|iPod/i.test(s)) return 'ios'
+  if (/Android/i.test(s)) return 'android'
+  if (/Windows|Macintosh|X11|Linux/i.test(s)) return 'escritorio'
+  return 'otro'
+}
+
 export async function GET(request: Request) {
   const user = await deQuien(new URL(request.url).searchParams.get('t'))
   if (!user) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
@@ -83,7 +100,10 @@ export async function GET(request: Request) {
   // Si falla, no pasa nada: es una cuenta, no parte de verificar a nadie.
   void createAdminClient()
     .from('profiles')
-    .update({ navegador_verificacion: familiaDeNavegador(request.headers.get('user-agent')) } as never)
+    .update({
+      navegador_verificacion: familiaDeNavegador(request.headers.get('user-agent')),
+      dispositivo_verificacion: dispositivoDe(request.headers.get('user-agent')),
+    } as never)
     .eq('id', user)
     .then(undefined, () => {})
 

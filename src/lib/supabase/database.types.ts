@@ -2236,6 +2236,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           display_name: string | null
+          dispositivo_verificacion: string | null
           email: string
           es_prueba: boolean
           events_attended: number
@@ -2270,6 +2271,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           display_name?: string | null
+          dispositivo_verificacion?: string | null
           email: string
           es_prueba?: boolean
           events_attended?: number
@@ -2304,6 +2306,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           display_name?: string | null
+          dispositivo_verificacion?: string | null
           email?: string
           es_prueba?: boolean
           events_attended?: number
