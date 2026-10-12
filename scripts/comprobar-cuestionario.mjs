@@ -849,6 +849,11 @@ if (relojes.length) {
       }
       const dentro = fuente.slice(inicio + 'z.object({'.length, i - 1)
       for (const k of dentro.matchAll(/^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/gm)) aceptados.add(k[1])
+      // Y las ABREVIADAS, `{ vistoHasta, }`: un validador compartido que se
+      // reusa en las dos ramas de una union se escribe asi, y sin esto el
+      // comprobador decia que el panel mandaba un campo que el esquema no
+      // declara — con el esquema declarandolo tres lineas mas arriba.
+      for (const k of dentro.matchAll(/^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*,\s*$/gm)) aceptados.add(k[1])
     }
     if (!aceptados.size) continue   // ruta sin zod: no hay nada que cruzar
 

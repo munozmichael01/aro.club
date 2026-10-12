@@ -14,6 +14,27 @@ import { encolar } from '@/lib/correos'
  * permanente en el historial del navegador de quien revisa.
  */
 
+/**
+ * Hasta qué momento se miró.
+ *
+ * Es la hora de la foto más nueva que la cola tenía CUANDO SE PINTÓ. Si
+ * mientras tanto llega otra, el servidor lo ve y no deja decidir.
+ *
+ * Pasó de verdad el 12-10: a Daniel Castro se le rechazó por «selfie
+ * borrosa» CINCO SEGUNDOS después de que llegara su selfie, desde una vista
+ * que solo tenía la cédula. Nadie la vio; el rechazo se la llevó por delante
+ * igual, porque el update va por `profile_id` y pilla todas sus filas
+ * pendientes. Con Aghata Quintero iba a pasar lo mismo tres minutos después.
+ *
+ * Obligatorio a propósito. Sin él no hay forma de saber si quien decide está
+ * mirando lo que hay ahora o una foto de hace diez minutos, y una pestaña
+ * vieja es justo el caso que esto viene a cortar.
+ */
+const vistoHasta = z
+  .string()
+  .datetime({ offset: true })
+  .describe('la foto más nueva que se vio')
+
 const decision = z.discriminatedUnion('accion', [
   z.object({
     accion: z.literal('aprobar'),
@@ -30,12 +51,14 @@ const decision = z.discriminatedUnion('accion', [
     // mira cuando algo sale mal.
     nombreCoincide: z.boolean().optional(),
     edadCoincide: z.boolean().optional(),
+    vistoHasta,
   }),
   z.object({
     accion: z.literal('rechazar'),
     profileId: z.string().uuid(),
     motivo: z.string().min(1),
     nota: z.string().max(500).optional(),
+    vistoHasta,
   }),
 ])
 
@@ -73,6 +96,16 @@ export async function GET() {
     if (data?.signedUrl) firmadas.set(`${f.profile_id}:${f.kind}`, data.signedUrl)
   }
 
+  // La foto más nueva de cada persona, que es «hasta dónde se miró». Vuelve
+  // en la decisión y el servidor la compara con lo que haya entonces: si
+  // entre medias llegó otra, no se decide.
+  const ultimaFoto = new Map<string, string>()
+  for (const f of fotos ?? []) {
+    if (!f.profile_id || !f.created_at) continue
+    const previa = ultimaFoto.get(f.profile_id)
+    if (!previa || f.created_at > previa) ultimaFoto.set(f.profile_id, f.created_at)
+  }
+
   const { data: motivos } = await admin
     .from('verification_rejection_reasons')
     .select('code, label, allows_retry, message')
@@ -90,6 +123,12 @@ export async function GET() {
       rechazosPrevios: c.rechazos_previos,
       cedula: firmadas.get(`${c.profile_id}:id_document`) ?? null,
       selfie: firmadas.get(`${c.profile_id}:selfie`) ?? null,
+      // Con una sola foto no se decide: la otra puede estar subiéndose en
+      // este momento, que es como se rechazó una selfie cinco segundos
+      // después de que llegara.
+      completa:
+        !!firmadas.get(`${c.profile_id}:id_document`) && !!firmadas.get(`${c.profile_id}:selfie`),
+      vistoHasta: c.profile_id ? (ultimaFoto.get(c.profile_id) ?? null) : null,
     })),
     motivos: (motivos ?? []).map((m) => ({
       codigo: m.code,
@@ -108,12 +147,60 @@ export async function POST(request: Request) {
 
   const parsed = decision.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Petición inválida.' }, { status: 400 })
+    // Casi siempre es un panel viejo, de antes de que `vistoHasta` existiera.
+    // Decirle que recargue es más útil que «petición inválida».
+    return NextResponse.json(
+      { error: 'Recarga el panel: esta vista es de una versión anterior.', motivo: 'recarga' },
+      { status: 400 },
+    )
   }
 
   const admin = createAdminClient()
   const d = parsed.data
   const ahora = new Date().toISOString()
+
+  // --- lo que hay AHORA, que no tiene por qué ser lo que se miró ---------
+  //
+  // Las dos comprobaciones de aquí abajo nacen del mismo rechazo: el update
+  // va por `profile_id` y se lleva TODAS las filas pendientes, así que
+  // decidir con una vista incompleta o vieja resuelve fotos que nadie abrió.
+  const { data: pendientes } = await admin
+    .from('verifications')
+    .select('kind, created_at')
+    .eq('profile_id', d.profileId)
+    .eq('status', 'pending')
+
+  const tiene = new Set((pendientes ?? []).map((v) => v.kind))
+
+  // 1 · Con una sola foto no se decide. La otra puede estar subiéndose.
+  if (!tiene.has('id_document') || !tiene.has('selfie')) {
+    const falta = !tiene.has('selfie') ? 'la selfie' : 'la cédula'
+    return NextResponse.json(
+      {
+        error: pendientes?.length
+          ? `Todavía falta ${falta}. No se decide con una sola foto.`
+          : 'Esta verificación ya no está pendiente. Recarga el panel.',
+        motivo: 'incompleta',
+      },
+      { status: 409 },
+    )
+  }
+
+  // 2 · Y si llegó algo después de pintarse la cola, tampoco: lo que se
+  //     estaba mirando ya no es lo que se va a resolver.
+  const masNueva = (pendientes ?? [])
+    .map((v) => new Date(v.created_at).getTime())
+    .reduce((a, b) => Math.max(a, b), 0)
+
+  if (masNueva > new Date(d.vistoHasta).getTime()) {
+    return NextResponse.json(
+      {
+        error: 'Llegó una foto nueva después de que abrieras esto. Recarga y míralas otra vez.',
+        motivo: 'recarga',
+      },
+      { status: 409 },
+    )
+  }
 
   if (d.accion === 'aprobar') {
     // Las dos comprobaciones se guardan aunque sean `true`: si dentro de un

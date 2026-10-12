@@ -27,6 +27,9 @@
   input, button { font: inherit; color: inherit; }
   ::selection { background:#14342A; color:#FAF3E4; }
   @keyframes aro-open { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:none } }
+  /* El aro que gira mientras falta una de las dos fotos de una verificación. */
+  @keyframes aro-giro { to { transform:rotate(360deg) } }
+  @media (prefers-reduced-motion: reduce) { [style*="aro-giro"] { animation:none !important } }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
 
   /* El carril de pestañas.
@@ -392,6 +395,16 @@
                 <span style="flex:1;min-width:0">Ver su perfil completo</span>
                 <span style="flex:0 0 auto;width:26px;height:26px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:500 12px/1 'Inter Tight',sans-serif">→</span>
               </a>
+
+              <!-- Sin las dos fotos no hay botones. La que falta puede estar
+                   subiéndose en este segundo, y decidir ahora resuelve una
+                   foto que nadie ha visto. -->
+              <sc-if value="{{ c.incompleta }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:10px;align-items:center;border-radius:16px;background:rgba(20,52,42,.06);padding:12px 14px;margin-top:12px">
+                  <span style="flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:2px solid rgba(20,52,42,.2);border-top-color:#1B5138;animation:aro-giro 900ms linear infinite"></span>
+                  <span style="flex:1;min-width:0;font:500 14px/1.4 'Inter Tight',sans-serif;color:#2C4A38">{{ c.faltaFoto }}</span>
+                </div>
+              </sc-if>
 
               <sc-if value="{{ c.decidiendo }}" hint-placeholder-val="{{ true }}">
                 <div style="display:flex;gap:9px;margin-top:12px">
@@ -2991,6 +3004,12 @@ class Component extends DCLogic {
         cedula: c.cedula, selfie: c.selfie,
         hayCedula: !!c.cedula, sinCedula: !c.cedula,
         haySelfie: !!c.selfie, sinSelfie: !c.selfie,
+        // Con una sola foto no hay nada que decidir: la otra puede estar
+        // subiéndose ahora mismo. Pasó el 12-10 — se rechazó por «selfie
+        // borrosa» cinco segundos después de que llegara la selfie, desde
+        // una vista que solo tenía la cédula.
+        incompleta: !c.completa,
+        faltaFoto: !c.selfie ? 'Subiendo… falta la selfie' : 'Subiendo… falta la cédula',
         hueco: 'flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 \'Inter Tight\',sans-serif;color:#456352',
         caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (d === 'ok' ? '#1B5138' : (d === 'no' ? '#C0662F' : 'transparent')) + ';transition:all 200ms ease',
         textoAprobar: d === 'ok' ? 'Aprobada' : 'Aprobar',
@@ -3000,8 +3019,8 @@ class Component extends DCLogic {
         botonConfirmar: btnCola(mSel >= 0 ? '#6E340F' : 'rgba(20,52,42,.1)', mSel >= 0 ? '#FFF8EA' : '#456352', 'none'),
         textoConfirmar: mSel >= 0 ? 'Rechazar' : 'Elige el motivo',
 
-        decidiendo: !d && !abierta,
-        eligiendo: abierta,
+        decidiendo: !d && !abierta && !!c.completa,
+        eligiendo: abierta && !!c.completa,
         motivos: MOTIVOS.map((m, k) => {
           const on = mSel === k;
           return {
@@ -3032,7 +3051,7 @@ class Component extends DCLogic {
         // nada habia pasado era que el correo no llegaba nunca.
         aprobar: () => {
           this.setState({ abriendo: null });
-          this.decidirIdentidad({ accion: 'aprobar', profileId: c.profileId }).then((r) => {
+          this.decidirIdentidad({ accion: 'aprobar', profileId: c.profileId, vistoHasta: c.vistoHasta }).then((r) => {
             if (!r.ok) return;
             this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [c.profileId]: 'ok' }) }));
           });
@@ -3042,7 +3061,7 @@ class Component extends DCLogic {
           if (mSel < 0 || !MOTIVOS[mSel]) return;
           this.setState({ abriendo: null });
           // Igual que aprobar: primero que lo acepte el servidor.
-          this.decidirIdentidad({ accion: 'rechazar', profileId: c.profileId, motivo: MOTIVOS[mSel][3] }).then((r) => {
+          this.decidirIdentidad({ accion: 'rechazar', profileId: c.profileId, motivo: MOTIVOS[mSel][3], vistoHasta: c.vistoHasta }).then((r) => {
             if (!r.ok) return;
             this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [c.profileId]: 'no' }) }));
           });
