@@ -100,6 +100,20 @@ export type Correo =
   // medias y la de verificación llega al aprobar: entre las dos había
   // silencio justo después del único paso incómodo del embudo.
   | 'cuenta_lista'
+  /**
+   * Perdón cuando el error fue nuestro al revisar una verificación.
+   *
+   * Desmiente un «hay que repetir una foto» que no era cierto. Nació el
+   * 12-10: a Daniel Castro se le rechazó la selfie cinco segundos después de
+   * que llegara, desde una vista que no la tenía, y recibió el rechazo y el
+   * «identidad verificada» uno detrás de otro.
+   *
+   * NO es imprescindible. Quien apagó nuestros correos pidió que dejáramos
+   * de escribirle, y disculparse por encima de esa decisión es escribirle
+   * igual con una excusa mejor. Si hace falta llegar a esa persona, se le
+   * escribe a mano desde `hola@aro.club`.
+   */
+  | 'disculpa_verificacion'
   // Entrega 18: el empujon deja de viajar como 'bienvenida'. Iba con el
   // mismo tipo, y el indice unico de la bienvenida es por correo y para
   // siempre: como el alta encola la suya en el segundo cero, el empujon de

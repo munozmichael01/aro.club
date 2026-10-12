@@ -408,6 +408,55 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       }
     }
 
+    /**
+     * Perdón: aquel «repite una foto» era un error nuestro.
+     *
+     * Lleva la próxima fecha abierta porque es lo que convierte la disculpa
+     * en algo útil: quien recibió un rechazo falso dejó de esperar nada, y
+     * decirle «ya puedes apartar puesto» sin decirle para cuándo lo deja
+     * donde estaba.
+     *
+     * Y NADA de la fecha se escribe a mano. El día sale del evento y la zona
+     * de su `event_venues`: una fecha escrita en la plantilla es la que sigue
+     * diciendo «el viernes 16» tres semanas después.
+     */
+    case 'disculpa_verificacion': {
+      const { data: fechas } = await admin
+        .from('events')
+        .select('starts_at, format, city_slug, event_venues(zones(name))')
+        .eq('status', 'open')
+        .eq('es_prueba', false)
+        .gt('booking_closes_at', new Date().toISOString())
+        .order('starts_at')
+        .limit(1)
+
+      const proxima = fechas?.[0]
+      if (!proxima) {
+        // Sin fecha abierta la frase no sale, y el botón deja de prometer
+        // una que no existe.
+        return { a, datos: { ...base, hayFecha: false, textoBoton: 'Ir a mi cuenta' } }
+      }
+
+      const zona = await zonaDeLaCiudad(admin, proxima.city_slug)
+      const donde = ((proxima.event_venues ?? []) as unknown as { zones: { name: string } | null }[])
+        .map((v) => v.zones?.name)
+        .filter((x): x is string => !!x)
+
+      return {
+        a,
+        datos: {
+          ...base,
+          hayFecha: true,
+          // «cena», «drinks», «caminata»: el nombre del formato en minúscula,
+          // que es como va en mitad de una frase.
+          queHay: nombreDelFormato(proxima.format).toLowerCase(),
+          cuando: `el ${diaEnZona(proxima.starts_at, zona)}`,
+          donde: unirCon(donde, ' y '),
+          textoBoton: 'Ver la fecha',
+        },
+      }
+    }
+
     case 'verificacion_rechazada': {
       const motivo = await textoDelMotivo(admin, p.motivo as string)
       return { a, datos: { ...base, motivo } }
