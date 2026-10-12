@@ -116,6 +116,21 @@ type Fila = {
    * todos los demás números de la pantalla.
    */
   deBaja: boolean
+  /**
+   * Cuenta de prueba. La lista SÍ las enseña —esconderlas sería esconder la
+   * basura en vez de barrerla— pero no cuentan en la cifra del empujón: una
+   * cuenta de guion no sube una cédula nunca, y metidas en el grupo «sin
+   * empujón» hunden su porcentaje y hacen que el correo parezca mejor de lo
+   * que es.
+   */
+  esPrueba: boolean
+  /**
+   * Cuándo se dio de alta, con su hora.
+   *
+   * `dias` redondea a días enteros, y la cifra del empujón se mide en horas:
+   * el correo sale a la hora de haberse parado y la ventana es de 48.
+   */
+  alta: string | null
 }
 
 /** Días desde una fecha. La antigüedad se lee mejor así que con un timestamp. */
@@ -169,9 +184,10 @@ export async function GET(request: Request) {
         id: string; full_name: string | null; display_name: string | null
         birthdate: string | null; gender: string | null; rootedness: string | null
         status: string | null; events_attended: number | null; created_at: string
+        es_prueba: boolean | null
       }>((d, h) => admin
         .from('profiles')
-        .select('id, full_name, display_name, birthdate, gender, rootedness, status, events_attended, created_at')
+        .select('id, full_name, display_name, birthdate, gender, rootedness, status, events_attended, created_at, es_prueba')
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .range(d, h)),
@@ -248,6 +264,8 @@ export async function GET(request: Request) {
       cenas: p.events_attended ?? 0,
       creditos: saldoDe.get(p.id)?.balance ?? 0,
       dias: diasDesde(p.created_at),
+      alta: p.created_at ?? null,
+      esPrueba: !!p.es_prueba,
       industria: r?.industry ? (sectores.get(r.industry) ?? r.industry) : '',
       espera: esperaDe.get(p.id)?.veces ?? 0,
       // La baja de correos va por dirección y la exportación es solo de
@@ -277,6 +295,8 @@ export async function GET(request: Request) {
     cenas: 0,
     creditos: 0,
     dias: diasDesde(l.created_at),
+    alta: l.created_at ?? null,
+    esPrueba: false,
     industria: '',
     espera: 0,
     deBaja: deBaja.has(String(l.email).trim().toLowerCase()),
@@ -346,6 +366,64 @@ export async function GET(request: Request) {
     quedan = quedan.filter(e.pasa)
     return { paso: e.paso, etiqueta: e.etiqueta, cuenta: quedan.length }
   })
+
+  // --- ¿sirve de algo el empujón? ----------------------------------------
+  //
+  // El empujón de «te falta verificarte» sale a quien lleva una hora parado
+  // ahí. La pregunta que contesta esta cifra es si mueve a alguien, y para
+  // eso hace falta el OTRO lado: cuánta de la gente que se paró igual y no
+  // lo recibió acabó subiendo de todas formas.
+  //
+  // Se compara solo con quien TAMBIÉN tardó más de una hora. Medirlo contra
+  // el que subió en los primeros diez minutos haría que el empujón pareciera
+  // inútil por construcción: esa persona nunca pudo recibirlo.
+  //
+  // El reloj de los que no lo recibieron empieza donde habría empezado el
+  // correo —una hora después del alta— para que las dos ventanas de 48 horas
+  // midan lo mismo.
+  const HORA = 3600_000
+  const H48 = 48 * HORA
+
+  const { data: empujones } = await admin
+    .from('scheduled_emails')
+    .select('profile_id, payload, sent_at')
+    .eq('kind', 'empujon')
+    .not('sent_at', 'is', null)
+
+  const empujadoEn = new Map<string, number>()
+  for (const e of empujones ?? []) {
+    if (!e.profile_id || (e.payload as { falta?: string } | null)?.falta !== 'verificacion') continue
+    const t = new Date(e.sent_at as string).getTime()
+    const antes = empujadoEn.get(e.profile_id)
+    if (antes == null || t < antes) empujadoEn.set(e.profile_id, t)
+  }
+
+  const { data: subidas } = await admin
+    .from('verifications')
+    .select('profile_id, created_at')
+    .order('created_at', { ascending: true })
+
+  const subioEn = new Map<string, number>()
+  for (const v of subidas ?? []) {
+    if (!subioEn.has(v.profile_id)) subioEn.set(v.profile_id, new Date(v.created_at).getTime())
+  }
+
+  const conEmpujon = { subieron: 0, total: 0 }
+  const sinEmpujon = { subieron: 0, total: 0 }
+
+  for (const p of todos) {
+    if (p.estado === 'lead' || p.esPrueba || !p.alta) continue
+    const alta = new Date(p.alta).getTime()
+    const subio = subioEn.get(p.id)
+    // Quien subió en la primera hora nunca entró en el reparto del empujón.
+    if (subio != null && subio - alta <= HORA) continue
+
+    const empujado = empujadoEn.get(p.id)
+    const grupo = empujado != null ? conEmpujon : sinEmpujon
+    const desde = empujado ?? alta + HORA
+    grupo.total++
+    if (subio != null && subio >= desde && subio - desde <= H48) grupo.subieron++
+  }
 
   // --- los filtros de la lista -------------------------------------------
   //
@@ -456,6 +534,7 @@ export async function GET(request: Request) {
     atajos,
     zonas: mapa,
     embudo,
+    empujon: { con: conEmpujon, sin: sinEmpujon },
     // Sobre la base entera, sin filtro: es la bajada de la pestaña.
     total: todos.length,
     verificados: todos.filter((p) => p.estado === 'ok').length,

@@ -1138,6 +1138,17 @@
             </div>
             <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;max-width:56ch;margin-bottom:18px;text-wrap:pretty">{{ leyendaGente }}</div>
 
+            <!-- ¿Sirve de algo el empujón? La cifra sola no dice nada: va con
+                 la de quien se paró igual y NO lo recibió. -->
+            <sc-if value="{{ hayEmpujon }}" hint-placeholder-val="{{ true }}">
+              <div style="border-radius:20px;background:#FAF3E4;padding:16px 18px;margin-bottom:18px;max-width:56ch">
+                <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">DEL EMPUJÓN A VERIFICARSE</div>
+                <div style="font:400 clamp(21px,2.4vw,26px)/1.2 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A;margin-top:8px">{{ empujonCifra }}</div>
+                <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:6px;text-wrap:pretty">{{ empujonContraste }}</div>
+                <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#8F4515;margin-top:8px;text-wrap:pretty">{{ empujonAviso }}</div>
+              </div>
+            </sc-if>
+
             <sc-if value="{{ hayGente }}" hint-placeholder-val="{{ true }}">
               <div style="{{ cajaLista }}">
                 <sc-for list="{{ lista }}" as="p" hint-placeholder-count="8">
@@ -1314,7 +1325,7 @@ class Component extends DCLogic {
     // mapa y el embudo no se recalculan aquí —se pintan— porque son los que
     // deciden si una fecha se puede abrir.
     gente: null, zonasGente: [], embudoGente: [], totalGente: 0, verificadosGente: 0,
-    paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {},
+    paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {}, empujon: null,
     perfilesGente: 0, leadsGente: null, pidiendoGente: false,
     avisos: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
     // Mover a una persona a mano en la fecha elegida. Vive en Reparto y
@@ -1657,7 +1668,7 @@ class Component extends DCLogic {
 
     return this.pedir('/api/operacion/gente' + (partes.length ? '?' + partes.join('&') : ''),
       (d) => ({
-        gente: d.gente, zonasGente: d.zonas, embudoGente: d.embudo,
+        gente: d.gente, zonasGente: d.zonas, embudoGente: d.embudo, empujon: d.empujon || null,
         totalGente: d.total, verificadosGente: d.verificados,
         paginaGente: d.pagina, resultadoGente: d.resultado,
         cuentasGente: d.cuentas, atajosGente: d.atajos,
@@ -3268,6 +3279,9 @@ class Component extends DCLogic {
       chip: chipPago(ESTADO_PAGO[p.estado] || 'Pendiente')
     }));
 
+    // Porcentaje de un {subieron, total}, para la cifra del empujon.
+    const pctEmpujon = (x) => (x && x.total ? Math.round(100 * x.subieron / x.total) : 0);
+
     return {
       pestanas, metricas, colas, metricasPago, pagos,
       fechasRep, zonasRep, tiposRep,
@@ -3517,6 +3531,25 @@ class Component extends DCLogic {
       esGente: esta('gente'),
       nGente: String(RES.total),
       palabraGente: RES.total === 1 ? 'persona' : 'personas',
+
+      // --- ¿sirve de algo el empujón? -------------------------------
+      //
+      // Las dos cifras juntas o ninguna. «2 de 28 subieron tras el empujón»
+      // suena a que algo hace; al lado de «2 de 41 sin él» se lee lo que de
+      // verdad dice. Y cuando los números son pequeños se avisa: con dos
+      // personas de diferencia, un porcentaje es una anécdota con decimales.
+      hayEmpujon: !!(St.empujon && St.empujon.con && (St.empujon.con.total || St.empujon.sin.total)),
+      empujonCifra: St.empujon && St.empujon.con
+        ? St.empujon.con.subieron + ' de ' + St.empujon.con.total + ' subieron en las 48 h siguientes'
+        : '',
+      empujonContraste: St.empujon && St.empujon.sin
+        ? 'De quienes se pararon igual y no lo recibieron, ' + St.empujon.sin.subieron + ' de ' + St.empujon.sin.total
+          + '. Son ' + pctEmpujon(St.empujon.con) + '% contra ' + pctEmpujon(St.empujon.sin) + '%.'
+        : '',
+      empujonAviso: St.empujon && St.empujon.con
+        && (St.empujon.con.total < 30 || St.empujon.sin.total < 30)
+        ? 'Con estos números no se puede concluir nada: la diferencia cabe en dos o tres personas.'
+        : '',
       cifraGrande: 'font:700 clamp(52px,7vw,84px)/0.9 \'Inter Tight\',sans-serif;letter-spacing:-.045em;font-variant-numeric:tabular-nums;color:#14342A',
       bajadaGente: cargandoGente
         ? 'Leyendo la base.'
