@@ -24,6 +24,21 @@
  * Nada de la persona. Ni correo, ni nombre, ni lo que haya escrito en un
  * campo, ni la query de la URL —ahí viajan los tokens de los enlaces de
  * correo—. Solo la ruta, el mensaje, dónde del código y el navegador.
+ *
+ * ## Y lo que no es nuestro
+ *
+ * Llegó un aviso de «Una pantalla se rompió en /» con «Error invoking
+ * postMessage: Java object is gone» desde
+ * `iabjs://navigation_performance_logger_android`: el script que el navegador
+ * interno de Instagram inyecta en Android al salir de la página. No es código
+ * nuestro, no se puede arreglar desde aquí, y un buzón con avisos que nadie
+ * puede atender es un buzón que se deja de mirar — que es exactamente lo que
+ * este fichero vino a impedir.
+ *
+ * Esos se marcan `ajeno` y el servidor los cuenta sin avisar a nadie. Se
+ * cuentan y no se tiran porque sí dicen algo: si un día el navegador de
+ * Instagram rompe de verdad una pantalla, la cuenta estará ahí. Lo que no
+ * hacen es despertar a nadie.
  */
 (function () {
   'use strict';
@@ -39,6 +54,66 @@
   // Y el mismo error repetido dentro de la misma visita —un `onerror` dentro
   // de un `setInterval`— tampoco.
   var vistos = {};
+
+  /**
+   * Los ajenos tienen su propio tope, y es UNO.
+   *
+   * Si compartieran el de arriba, un script inyectado que falla tres veces
+   * al salir de la página se comería el cupo entero, y el error NUESTRO que
+   * viniera después no se mandaría. El ruido no puede tapar la señal.
+   */
+  var TOPE_AJENOS = 1;
+  var ajenosMandados = 0;
+
+  /**
+   * Si el fallo viene de un script que no es nuestro.
+   *
+   * La regla de verdad es el ORIGEN: si el fichero no es de esta página, no
+   * es nuestro. Eso cubre de una vez `iabjs://`, las extensiones del
+   * navegador y cualquier cosa que inyecte mañana otra app, sin tener que ir
+   * ampliando una lista cada vez que aparezca una.
+   *
+   * La lista de esquemas es el respaldo para cuando NO hay fichero —una
+   * promesa rechazada trae pila y no `filename`— y para los navegadores
+   * donde `URL` no resuelve un esquema raro.
+   */
+  var ESQUEMAS_AJENOS = /\b(?:iabjs|chrome-extension|safari-extension|safari-web-extension|moz-extension|edge-extension|ms-browser-extension|webkit-masked-url):/i;
+
+  /**
+   * Lo que cargamos a propósito de fuera, y por tanto es NUESTRO.
+   *
+   * `support.js` trae React de unpkg. Si React revienta, la pantalla se queda
+   * en blanco igual que si reventara nuestro código —casi siempre porque le
+   * dimos algo que no esperaba— y eso hay que mirarlo. Con la regla del
+   * origen a secas, ese fallo se habría quedado mudo, que es peor que el ruido
+   * que esto viene a quitar.
+   *
+   * No entra lo de medición. Analytics y Clarity son de fuera, no sostienen
+   * ninguna pantalla, y que fallen no es algo que nadie aquí pueda arreglar.
+   */
+  var DE_FUERA_PERO_NUESTROS = ['https://unpkg.com'];
+
+  function deFuera(fichero, mensaje, pila) {
+    // «Script error.» sin fichero: el error opaco que da un script de otro
+    // dominio. Nunca dice nada —ni línea, ni pila— y nunca es accionable.
+    if (!fichero && /^script error\.?$/i.test(String(mensaje || '').trim())) return true;
+
+    if (fichero) {
+      try {
+        // Con `location.href` de base, una ruta relativa sale nuestra y una
+        // absoluta conserva su esquema. Los esquemas raros dan origen
+        // «null», que ya no coincide con el nuestro.
+        var origen = new URL(fichero, location.href).origin;
+        if (origen !== location.origin && DE_FUERA_PERO_NUESTROS.indexOf(origen) < 0) return true;
+      } catch (e) {
+        // Si no se puede ni leer como URL, desde luego no es nuestra.
+        return true;
+      }
+    }
+
+    // Sin fichero, lo que queda es la pila.
+    return ESQUEMAS_AJENOS.test(String(fichero || '') + ' ' + String(pila || ''));
+  }
 
   function pantalla() {
     // Solo la ruta. `location.href` lleva la query, y ahí van los tokens
@@ -56,12 +131,17 @@
   }
 
   function mandar(datos) {
-    if (mandados >= TOPE_POR_VISITA) return;
+    if (datos.ajeno) {
+      if (ajenosMandados >= TOPE_AJENOS) return;
+    } else if (mandados >= TOPE_POR_VISITA) {
+      return;
+    }
 
     var llave = datos.mensaje + '|' + (datos.origen || '');
     if (vistos[llave]) return;
     vistos[llave] = true;
-    mandados++;
+    if (datos.ajeno) ajenosMandados++;
+    else mandados++;
 
     try {
       var cuerpo = JSON.stringify(datos);
@@ -89,6 +169,8 @@
     // `message`. No son la pantalla rota y no valen un aviso.
     if (!e || !e.message) return;
 
+    var pila = e.error && e.error.stack ? String(e.error.stack) : undefined;
+
     mandar({
       pantalla: pantalla(),
       mensaje: recortar(String(e.message), 500),
@@ -96,9 +178,10 @@
         (e.filename || '?') + ':' + (e.lineno || 0) + ':' + (e.colno || 0),
         300,
       ),
-      pila: recortar(e.error && e.error.stack ? String(e.error.stack) : undefined, 2000),
+      pila: recortar(pila, 2000),
       navegador: recortar(navigator.userAgent, 300),
       tipo: 'error',
+      ajeno: deFuera(e.filename, e.message, pila) || undefined,
     });
   });
 
@@ -107,12 +190,16 @@
     var mensaje = r && r.message ? String(r.message) : String(r);
     if (!mensaje || mensaje === 'undefined') return;
 
+    var pila = r && r.stack ? String(r.stack) : undefined;
+
     mandar({
       pantalla: pantalla(),
       mensaje: recortar(mensaje, 500),
-      pila: recortar(r && r.stack ? String(r.stack) : undefined, 2000),
+      pila: recortar(pila, 2000),
       navegador: recortar(navigator.userAgent, 300),
       tipo: 'promesa',
+      // Sin `filename`: aquí lo único que puede delatar al de fuera es la pila.
+      ajeno: deFuera(null, mensaje, pila) || undefined,
     });
   });
 })();

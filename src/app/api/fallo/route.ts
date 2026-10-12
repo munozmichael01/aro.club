@@ -49,6 +49,21 @@ const cuerpo = z.object({
   pila: z.string().trim().max(2000).optional(),
   navegador: z.string().trim().max(300).optional(),
   tipo: z.enum(['error', 'promesa']).optional(),
+  /**
+   * El fallo no es de código nuestro: lo marca `errores.js` mirando el origen
+   * del fichero.
+   *
+   * Se cuenta y NO se avisa. Llegó un «Una pantalla se rompió en /» desde
+   * `iabjs://navigation_performance_logger_android` —el script que el
+   * navegador interno de Instagram inyecta en Android al salir de la
+   * página— y eso no se puede arreglar desde aquí. Un buzón con avisos que
+   * nadie puede atender se deja de mirar, y entonces tampoco se ven los que
+   * sí importan.
+   *
+   * No se tiran, porque la cuenta sí dice algo: si un día el navegador de
+   * una app rompe de verdad una pantalla, estará en la tabla.
+   */
+  ajeno: z.boolean().optional(),
 })
 
 /** Cada cuánto, como mucho, un correo del MISMO error. */
@@ -127,8 +142,12 @@ export async function POST(request: Request) {
 
     // Los Runtime Logs de Vercel. Una línea estructurada para poder filtrar:
     // con el texto suelto no se puede buscar por pantalla.
-    console.error(
-      '[pantalla-rota] ' +
+    //
+    // Los ajenos van con su propia etiqueta y por `console.log`, no por
+    // `console.error`: no son un fallo nuestro y no tienen por qué salir en
+    // rojo entre los que sí lo son.
+    ;(d.ajeno ? console.log : console.error)(
+      (d.ajeno ? '[pantalla-ajena] ' : '[pantalla-rota] ') +
         JSON.stringify({
           pantalla: d.pantalla,
           mensaje: d.mensaje,
@@ -141,8 +160,11 @@ export async function POST(request: Request) {
     )
 
     // --- el aviso, con freno --------------------------------------------
+    //
+    // Lo ajeno nunca llega aquí: ya está contado arriba, que es todo lo que
+    // se puede hacer con un script que no es nuestro.
     const ultimo = ya?.avisado_en ? new Date(ya.avisado_en).getTime() : 0
-    const toca = Date.now() - ultimo > MINUTOS_ENTRE_AVISOS * 60_000
+    const toca = !d.ajeno && Date.now() - ultimo > MINUTOS_ENTRE_AVISOS * 60_000
 
     if (toca) {
       // Se marca ANTES de mandar. Si se marcara después, dos visitas a la vez
