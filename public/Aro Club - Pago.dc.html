@@ -225,11 +225,10 @@
                   </span>
                 </sc-if>
                 <sc-if value="{{ c.esBanco }}" hint-placeholder-val="{{ false }}">
-                  <select onChange="{{ c.onChange }}" aria-label="{{ c.etiqueta }}" style="{{ c.estiloLista }}">
-                    <sc-for list="{{ c.bancos }}" as="b" hint-placeholder-count="24">
-                      <option value="{{ b.valor }}" selected="{{ b.elegido }}">{{ b.texto }}</option>
-                    </sc-for>
-                  </select>
+                  <button onClick="{{ c.abrirBancos }}" aria-label="{{ c.etiqueta }}" aria-expanded="{{ c.bancosAbiertos }}" style="{{ c.estiloLista }}">
+                    <span style="flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.bancoElegido }}</span>
+                    <span style="{{ c.flechaBanco }}">⌄</span>
+                  </button>
                 </sc-if>
                 <sc-if value="{{ c.esFecha }}" hint-placeholder-val="{{ false }}">
                 <input type="date" max="{{ c.hoy }}" value="{{ c.valorISO }}" onChange="{{ c.onChangeFecha }}" aria-label="{{ c.etiqueta }}" style="{{ c.campo }}" />
@@ -238,6 +237,18 @@
                 <input type="text" inputmode="{{ c.modo }}" value="{{ c.valor }}" onChange="{{ c.onChange }}" placeholder="{{ c.pista }}" aria-label="{{ c.etiqueta }}" style="{{ c.campo }}" />
                 </sc-if>
               </div>
+              <!-- La lista de bancos, desplegada aquí abajo y no en el
+                   desplegable del sistema: ver más abajo por qué. -->
+              <sc-if value="{{ c.bancosAbiertos }}" hint-placeholder-val="{{ false }}">
+                <div style="border:1px solid rgba(20,52,42,.2);border-radius:18px;margin-top:8px;max-height:270px;overflow-y:auto;background:#FFFDF7;animation:aro-open 200ms ease both">
+                  <sc-for list="{{ c.bancos }}" as="b" hint-placeholder-count="24">
+                    <button onClick="{{ b.pick }}" style="{{ b.btn }}">
+                      <span style="{{ b.aro }}">{{ b.icono }}</span>
+                      <span style="flex:1;min-width:0;text-align:left">{{ b.texto }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-if>
               <sc-if value="{{ c.hayNota }}" hint-placeholder-val="{{ false }}">
                 <div style="font:400 12px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:6px">{{ c.nota }}</div>
               </sc-if>
@@ -408,6 +419,8 @@ class Component extends DCLogic {
   state = {
     // La captura: la RUTA que devuelve el servidor tras subirla, no un si/no.
     capturaRuta: '', capturaNombre: '', subiendoCaptura: false, fase: 0, metodo: 0, ev: null, rep: { doc_tipo: 'V' }, copiado: -1,
+    // Qué campo de banco tiene su lista desplegada.
+    bancoAbierto: null,
     cupon: '', cuponAbierto: false, aplicandoCupon: false, falloCupon: '',
             datos: null, enviando: false, fallo: '' };
 
@@ -635,6 +648,10 @@ class Component extends DCLogic {
     // nacio el fallo de Bizum: aqui el telefono cortaba a nueve digitos y el
     // validador exigia diez, asi que el boton no se activaba nunca.
     const R = (typeof AroReglas !== 'undefined') ? AroReglas : null;
+    // Para los manejadores de la lista de bancos, que son `function` y no
+    // flechas: dentro de ellas `this` no es el componente.
+    const self = this;
+    const St = this.state;
 
     const PISTAS = {
       tel: { '+58': '4141234567', '+34': '611223344' },
@@ -681,21 +698,54 @@ class Component extends DCLogic {
       // Entra en AAAA-MM-DD y se guarda en DD/MM/AAAA: lo que viaja al
       // servidor y lo que ve quien concilia no cambia.
       onChangeFecha: setCampo(c.campo, R ? ((v) => R.fechaDesdeISO(v)) : null),
-      // La primera es vacia a proposito. Sin ella el desplegable ensena el
-      // primer banco de la lista como si estuviera elegido mientras el campo
-      // esta vacio, que es exactamente el fallo que tenia la V del documento:
-      // parece contestado y el boton sigue bloqueado sin decir por que.
-      bancos: [{ valor: '', texto: 'Elige tu banco', elegido: !campo(c.campo) }]
-        .concat((R ? R.BANCOS : []).map(function (b) {
-          return {
-            // Se guarda el codigo: es lo que sale en el movimiento del banco.
-            valor: b.codigo,
-            texto: b.codigo + '  ' + b.nombre,
-            elegido: campo(c.campo) === b.codigo
-          };
-        })),
-      estiloLista: 'flex:1;min-width:0;min-height:56px;padding:0 12px 0 4px;border:none;background:transparent'
-        + ';color:#14342A;font:400 15px/1 \'Inter Tight\',sans-serif;outline:none;cursor:pointer',
+      /**
+       * El banco, de una LISTA PROPIA y no del desplegable del sistema.
+       *
+       * Era un `<select>`. El 12-10 alguien llegó desde un post de Instagram,
+       * rellenó teléfono, cédula y referencia, y escribió: «en el banco
+       * emisor no me permite seleccionar ningún banco». En el navegador
+       * interno de Instagram el desplegable del sistema no se abre, y ahí el
+       * reporte se acaba: sin banco no se puede enviar, y la persona ya había
+       * pagado.
+       *
+       * Una lista de botones se pinta y se toca igual en todos, que es lo que
+       * tiene que hacer el último paso antes de cobrar. El aviso de «abre
+       * esto en Safari o Chrome» también está, pero eso es decirle a alguien
+       * que se cambie de sitio; esto es que no le haga falta.
+       */
+      bancosAbiertos: St.bancoAbierto === c.campo,
+      abrirBancos: function () {
+        self.setState({ bancoAbierto: St.bancoAbierto === c.campo ? null : c.campo });
+      },
+      bancoElegido: (function () {
+        var cod = campo(c.campo);
+        var lista = R ? R.BANCOS : [];
+        for (var i = 0; i < lista.length; i++) {
+          if (lista[i].codigo === cod) return lista[i].codigo + '  ' + lista[i].nombre;
+        }
+        return 'Elige tu banco';
+      })(),
+      flechaBanco: 'flex:0 0 auto;margin-left:8px;color:#566A5D;font:400 14px/1 \'Inter Tight\',sans-serif;transition:transform 180ms ease'
+        + (St.bancoAbierto === c.campo ? ';transform:rotate(180deg)' : ''),
+      bancos: (R ? R.BANCOS : []).map(function (b) {
+        var on = campo(c.campo) === b.codigo;
+        return {
+          // Se guarda el codigo: es lo que sale en el movimiento del banco.
+          texto: b.codigo + '  ' + b.nombre,
+          icono: on ? '✓' : '',
+          pick: function () {
+            setCampo(c.campo)({ target: { value: b.codigo } });
+            self.setState({ bancoAbierto: null });
+          },
+          aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#1B5138' : 'rgba(20,52,42,.26)')
+            + ';background:' + (on ? '#1B5138' : 'transparent') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center'
+            + ';font:600 11px/1 \'Inter Tight\',sans-serif;margin-right:11px',
+          btn: 'display:flex;align-items:center;width:100%;min-height:52px;padding:0 14px;border:none;border-bottom:1px solid rgba(20,52,42,.1)'
+            + ';background:' + (on ? '#F2E9D5' : 'transparent') + ';color:#14342A;font:' + (on ? '600' : '400') + ' 15px/1.3 \'Inter Tight\',sans-serif;cursor:pointer;text-align:left'
+        };
+      }),
+      estiloLista: 'flex:1;min-width:0;display:flex;align-items:center;min-height:56px;padding:0 12px 0 4px;border:none;background:transparent'
+        + ';color:' + (campo(c.campo) ? '#14342A' : '#566A5D') + ';font:400 15px/1 \'Inter Tight\',sans-serif;outline:none;cursor:pointer',
 
       // V o E, elegido. El esquema anterior asumia V.
       //
