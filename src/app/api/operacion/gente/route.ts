@@ -101,7 +101,22 @@ type Fila = {
   // el chip «Cenas» del mapa de zonas —que se calcula aquí— y el de los
   // filtros —que se calcularía allí— podrían dejar de significar lo mismo.
   familias: string[]
-  estado: 'ok' | 'revision' | 'sin' | 'lead'
+  /**
+   * Dónde está esta persona, de verdad.
+   *
+   * `revision` significaba «le toca verificarse», no «la estamos
+   * revisando»: 60 personas salían «En revisión» y 58 de ellas no habían
+   * subido NADA. El panel decía que teníamos sesenta cédulas esperando a que
+   * alguien las mirara, con una en la cola. El número que más decide —si hay
+   * gente para abrir una fecha— era el más equivocado.
+   *
+   *   ok       verificada
+   *   revision subió algo y espera a que una persona lo mire
+   *   sin      perfil completo y no ha subido nada
+   *   perfil   le falta terminar el cuestionario
+   *   lead     solo dejó el correo
+   */
+  estado: 'ok' | 'revision' | 'sin' | 'perfil' | 'lead'
   cenas: number
   creditos: number
   dias: number
@@ -240,6 +255,17 @@ export async function GET(request: Request) {
   const esperaDe = porId(esperas)
   const estanVerificados = new Set(verificados.map((v) => v.id).filter(Boolean))
 
+  // Quién tiene algo subido esperando a que una persona lo mire. Es lo que
+  // separa «en revisión» de «le toca verificarse y no ha empezado».
+  const { data: esperando } = await admin
+    .from('verifications')
+    .select('profile_id')
+    .eq('status', 'pending')
+
+  const esperanRevision = new Set(
+    (esperando ?? []).map((v) => v.profile_id).filter(Boolean) as string[],
+  )
+
   const filasPerfiles: Fila[] = perfiles.map((p) => {
     const r = rasgoDe.get(p.id)
     // El estado que pinta la pantalla no es el `status` crudo: lo que importa
@@ -248,7 +274,13 @@ export async function GET(request: Request) {
     // 'sin', que es lo mismo que decir que hoy no puede sentarse.
     const estado: Fila['estado'] = estanVerificados.has(p.id)
       ? 'ok'
-      : (p.status === 'pending_verification' ? 'revision' : 'sin')
+      : p.status !== 'pending_verification'
+        ? 'perfil'
+        // `revision` es haber subido algo que espera a una persona. Sin eso,
+        // le toca verificarse y no lo ha hecho, que es otra cosa y se
+        // arregla de otra manera: a una se le mira la foto, a la otra se le
+        // escribe.
+        : (esperanRevision.has(p.id) ? 'revision' : 'sin')
 
     return {
       id: p.id,

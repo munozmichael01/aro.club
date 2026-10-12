@@ -284,7 +284,7 @@ export async function POST(request: Request) {
 
   const { data: motivo } = await admin
     .from('verification_rejection_reasons')
-    .select('code')
+    .select('code, afecta')
     .eq('code', d.motivo)
     .maybeSingle()
 
@@ -292,7 +292,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Ese motivo no existe.' }, { status: 400 })
   }
 
-  const { error } = await admin
+  /**
+   * SOLO LA FOTO QUE EL MOTIVO INVALIDA.
+   *
+   * Esto marcaba todas las pendientes de la persona, así que rechazar la
+   * cédula rechazaba también la selfie. Y el correo que sale dice lo
+   * contrario con todas las letras: «Tu selfie — Guardada, no hace falta
+   * repetirla».
+   *
+   * Le pasó a Andrés: se le rechazó el documento, su selfie cayó con él,
+   * volvió a subir solo la cédula —que es lo que el correo le pedía— y la
+   * cola se quedó diciendo «falta la selfie» sin que él pudiera saberlo.
+   *
+   * `ambas` sigue existiendo para los dos motivos que no son un problema de
+   * foto sino de identidad.
+   */
+  let rechazo = admin
     .from('verifications')
     .update({
       status: 'rejected',
@@ -305,12 +320,22 @@ export async function POST(request: Request) {
     .eq('profile_id', d.profileId)
     .eq('status', 'pending')
 
+  const afecta = (motivo as { afecta?: string }).afecta ?? 'ambas'
+  if (afecta === 'id_document' || afecta === 'selfie') rechazo = rechazo.eq('kind', afecta)
+
+  const { error } = await rechazo
+
   if (error) {
     console.error('[verificaciones] rechazar', error)
     return NextResponse.json({ error: 'No pudimos rechazarla.' }, { status: 500 })
   }
 
-  await anotar(actor, 'verificacion_rechazada', 'verificacion', d.profileId, { motivo: d.motivo })
+  await anotar(actor, 'verificacion_rechazada', 'verificacion', d.profileId, {
+    motivo: d.motivo,
+    // Qué foto se invalidó. Sin esto, «¿por qué le pedimos la selfie otra
+    // vez?» no tiene respuesta en el historial.
+    afecta,
+  })
 
   // El rechazo tambien se avisa. Sin esto, quien no pasa se queda en "en
   // revision" para siempre, esperando un correo que nadie iba a mandar.

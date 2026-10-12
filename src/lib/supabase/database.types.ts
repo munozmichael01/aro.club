@@ -3083,6 +3083,7 @@ export type Database = {
       }
       verification_rejection_reasons: {
         Row: {
+          afecta: string
           allows_retry: boolean
           code: string
           label: string
@@ -3090,6 +3091,7 @@ export type Database = {
           sort_order: number
         }
         Insert: {
+          afecta?: string
           allows_retry: boolean
           code: string
           label: string
@@ -3097,6 +3099,7 @@ export type Database = {
           sort_order: number
         }
         Update: {
+          afecta?: string
           allows_retry?: boolean
           code?: string
           label?: string

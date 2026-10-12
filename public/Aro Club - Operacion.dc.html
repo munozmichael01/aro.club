@@ -204,6 +204,13 @@
                     </div>
                   </sc-if>
 
+                  <sc-if value="{{ t.haySinSitio }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(27,81,56,.1);padding:11px 13px;margin-top:12px">
+                      <span style="flex:0 0 auto;width:20px;height:20px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">1</span>
+                      <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ t.textoSinSitio }}</span>
+                    </div>
+                  </sc-if>
+
                   <sc-if value="{{ t.hayRota }}" hint-placeholder-val="{{ false }}">
                     <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:12px">
                       <span style="{{ iconoAviso }}">!</span>
@@ -2408,7 +2415,21 @@ class Component extends DCLogic {
 
     const mesaDesde = (m) => {
       const g = m.integrantes || [];
-      const malas = (m.roturas || []);
+      /**
+       * «Falta elegir el sitio» NO es una regla rota.
+       *
+       * El servidor lo mete entre las roturas para que la mesa no salga, y
+       * el panel lo contaba como una más: «Rompe 3 reglas: 11 años de
+       * diferencia · dos tramos de distancia · falta elegir sitio en Los
+       * Palos Grandes». Leído así parece que la mesa está mal armada, cuando
+       * dos de esas tres se pueden aceptar y la tercera es un paso que falta.
+       *
+       * Y es la que de verdad bloquea: sin sitio no se publica ni se fuerza,
+       * porque publicar manda seis correos con una dirección dentro.
+       */
+      const todasLasRoturas = (m.roturas || []);
+      const sinSitio = todasLasRoturas.filter((r) => r.regla === 'sede');
+      const malas = todasLasRoturas.filter((r) => r.regla !== 'sede');
       const pub = !!m.publicada;
       const tamOk = g.length === POR_MESA;
       /**
@@ -2488,6 +2509,12 @@ class Component extends DCLogic {
         textoCorta: 'Se quedó en ' + g.length + ' de ' + POR_MESA
           + ': alguien se bajó y nadie de la espera encaja con esta ' + vozRep.unidad + '.'
           + ' Los que están no se mueven. Decide tú: se confirma así o la cambias a mano.',
+        // El sitio primero, porque es lo que hay que hacer ahora.
+        haySinSitio: sinSitio.length > 0 && !pub && !calc,
+        textoSinSitio: (sinSitio[0] && sinSitio[0].detalle)
+          ? sinSitio[0].detalle.charAt(0).toUpperCase() + sinSitio[0].detalle.slice(1)
+            + '. Hasta que no lo elijas no se puede publicar, ni aunque aceptes lo demás: el correo de la revelación lleva la dirección dentro.'
+          : '',
         hayRota: malas.length > 0 && !pub && !calc,
         textoRota: !tamOk
           ? (g.length < POR_MESA
@@ -2506,10 +2533,10 @@ class Component extends DCLogic {
         // el servidor nunca miró el tamaño —publica cinco sin rechistar— y
         // el único que lo impedía era este panel.
         puedeForzar: (malas.length > 0 || corta) && !pasada && !pub && !calc && !!m.restaurantId,
-        textoPublicar: pub ? 'Deshacer' : (calc ? 'Calculando…' : (!tamOk ? (Math.abs(POR_MESA - g.length) === 1 ? (g.length < POR_MESA ? 'Falta una' : 'Sobra una') : (g.length < POR_MESA ? 'Faltan ' : 'Sobran ') + Math.abs(POR_MESA - g.length)) : (malas.length ? 'No se puede publicar' : 'Publicar esta ' + vozRep.unidad))),
+        textoPublicar: pub ? 'Deshacer' : (calc ? 'Calculando…' : (sinSitio.length ? 'Falta el sitio' : (!tamOk ? (Math.abs(POR_MESA - g.length) === 1 ? (g.length < POR_MESA ? 'Falta una' : 'Sobra una') : (g.length < POR_MESA ? 'Faltan ' : 'Sobran ') + Math.abs(POR_MESA - g.length)) : (malas.length ? 'No se puede publicar' : 'Publicar esta ' + vozRep.unidad)))),
         botonPublicar: 'flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;font:600 14px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease;' + (pub
           ? 'background:transparent;color:#8F4515;border:1px solid rgba(143,69,21,.4);cursor:pointer'
-          : ((malas.length || !tamOk || calc)
+          : ((malas.length || sinSitio.length || !tamOk || calc)
             ? 'background:rgba(27,81,56,.13);color:#456352;border:none;cursor:not-allowed'
             : 'background:#1B5138;color:#FAF3E4;border:none;cursor:pointer')),
         botonForzar: 'flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;background:transparent;color:#8F4515;border:1px dashed rgba(143,69,21,.5);font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
@@ -3787,7 +3814,7 @@ class Component extends DCLogic {
         const t = [];
         if ((St.busca || '').trim()) t.push('que coinciden con «' + (St.busca || '').trim() + '»');
         if (St.fZona) t.push('que aceptan ' + nombreZona(St.fZona));
-        if (selG.estado) t.push({ ok: 'con identidad verificada', revision: 'con la verificación en revisión', sin: 'sin verificar', lead: 'que solo dejaron el correo' }[selG.estado]);
+        if (selG.estado) t.push({ ok: 'con identidad verificada', revision: 'con la verificación esperando a que alguien la mire', sin: 'que no han subido la cédula', perfil: 'que no han terminado el cuestionario', lead: 'que solo dejaron el correo' }[selG.estado]);
         if (selG.edad) t.push({ j: 'de menos de 32', m: 'de 32 a 37', v: 'de más de 37' }[selG.edad]);
         if (selG.genero) t.push({ mujer: 'mujeres', hombre: 'hombres', 'no-binario': 'no binarias', 'sin-decir': 'que no dijeron su género' }[selG.genero]);
         if (selG.arraigo) t.push({ volvio: 'que volvieron a Caracas', 'se-quedo': 'que se quedaron', mismos: 'de siempre aquí', remoto: 'que trabajan en remoto', interior: 'que llegaron de otra parte', visita: 'de paso' }[selG.arraigo]);
@@ -3896,7 +3923,11 @@ class Component extends DCLogic {
       // saber que no hay nadie es la respuesta a la pregunta.
       grupos: (function () {
         const DEFS = [
-          ['ESTADO', 'estado', [['Verificada', 'ok'], ['En revisión', 'revision'], ['Sin verificar', 'sin'], ['Sin completar', 'lead']]],
+          // «En revisión» decía «le toca verificarse»: sesenta personas ahí y
+          // cincuenta y ocho sin haber subido nada. Ahora son cosas
+          // distintas porque se arreglan de forma distinta: a una se le mira
+          // la foto, a la otra se le escribe.
+          ['ESTADO', 'estado', [['Verificada', 'ok'], ['En revisión', 'revision'], ['Sin subir', 'sin'], ['Sin terminar el perfil', 'perfil'], ['Sin completar', 'lead']]],
           ['EDAD', 'edad', [['Menos de 32', 'j'], ['32 a 37', 'm'], ['Más de 37', 'v']]],
           // Los cuatro del enum `gender_t`, no dos: filtrar por «mujer» y
           // «hombre» dejaba fuera de toda pregunta a quien contestó otra cosa.
@@ -3938,7 +3969,8 @@ class Component extends DCLogic {
         const EST = {
           ok: ['Verificada', '#1B5138', 'rgba(27,81,56,.12)'],
           revision: ['En revisión', '#8F4515', 'rgba(143,69,21,.12)'],
-          sin: ['Sin verificar', '#33513F', 'transparent'],
+          sin: ['Sin subir', '#33513F', 'transparent'],
+          perfil: ['Sin terminar el perfil', '#33513F', 'transparent'],
           lead: ['Sin completar', '#33513F', 'transparent']
         };
         const e = EST[p.estado] || EST.sin;
