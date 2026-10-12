@@ -80,20 +80,46 @@ export async function GET() {
 
   const ids = (cola ?? []).map((c) => c.profile_id).filter((id): id is string => id != null)
 
+  /**
+   * Las fotos que VALEN, que no son solo las pendientes.
+   *
+   * Esto pedía `status = 'pending'` y nada más, y por eso la cola enseñaba
+   * «Sin cédula» de gente que la tenía subida: a Daniela Esis se le había
+   * APROBADO la cédula y tenía la selfie pendiente, así que la cola la
+   * enseñaba sin documento con el que compararla, mientras su ficha la
+   * enseñaba perfectamente. La misma foto, dos pantallas, dos respuestas.
+   *
+   * Vale la ÚLTIMA de cada tipo que no esté caducada ni rechazada: es lo
+   * mismo que mira la ficha. Una persona que repite la foto deja la vieja
+   * como `expired`, y emparejar con esa es enseñar la que ya no cuenta.
+   */
   const { data: fotos } = await admin
     .from('verifications')
-    .select('profile_id, kind, storage_path, created_at')
+    .select('profile_id, kind, storage_path, created_at, status')
     .in('profile_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
-    .eq('status', 'pending')
+    .not('status', 'in', '(expired,rejected)')
+    .order('created_at', { ascending: true })
+
+  // La última de cada tipo, y solo esa. Firmar también las viejas sería una
+  // llamada a Storage por foto repetida para enseñar la que no cuenta.
+  const vigente = new Map<string, { storage_path: string | null; created_at: string }>()
+  for (const f of fotos ?? []) {
+    if (!f.profile_id) continue
+    const k = `${f.profile_id}:${f.kind}`
+    const previa = vigente.get(k)
+    if (!previa || f.created_at > previa.created_at) {
+      vigente.set(k, { storage_path: f.storage_path, created_at: f.created_at })
+    }
+  }
 
   // Una firma por foto, cinco minutos.
   const firmadas = new Map<string, string>()
-  for (const f of fotos ?? []) {
+  for (const [k, f] of vigente) {
     if (!f.storage_path) continue
     const { data } = await admin.storage
       .from('verificaciones')
       .createSignedUrl(f.storage_path, 300)
-    if (data?.signedUrl) firmadas.set(`${f.profile_id}:${f.kind}`, data.signedUrl)
+    if (data?.signedUrl) firmadas.set(k, data.signedUrl)
   }
 
   // La foto más nueva de cada persona, que es «hasta dónde se miró». Vuelve
@@ -164,20 +190,29 @@ export async function POST(request: Request) {
   // Las dos comprobaciones de aquí abajo nacen del mismo rechazo: el update
   // va por `profile_id` y se lleva TODAS las filas pendientes, así que
   // decidir con una vista incompleta o vieja resuelve fotos que nadie abrió.
-  const { data: pendientes } = await admin
+  // Las que VALEN, con el mismo criterio que la cola y que la ficha: la
+  // última de cada tipo que no esté caducada ni rechazada.
+  //
+  // Pedía solo las `pending`, y eso bloqueaba un caso real: a Daniela Esis
+  // se le había aprobado la cédula y le quedaba la selfie, así que «faltan
+  // las dos fotos» decía que le faltaba la cédula que ya estaba aprobada, y
+  // su selfie no se podía resolver desde el panel.
+  const { data: suyas } = await admin
     .from('verifications')
-    .select('kind, created_at')
+    .select('kind, created_at, status')
     .eq('profile_id', d.profileId)
-    .eq('status', 'pending')
+    .not('status', 'in', '(expired,rejected)')
+    .order('created_at', { ascending: true })
 
-  const tiene = new Set((pendientes ?? []).map((v) => v.kind))
+  const vigentes = new Map<string, string>()
+  for (const v of suyas ?? []) vigentes.set(v.kind, v.created_at)
 
   // 1 · Con una sola foto no se decide. La otra puede estar subiéndose.
-  if (!tiene.has('id_document') || !tiene.has('selfie')) {
-    const falta = !tiene.has('selfie') ? 'la selfie' : 'la cédula'
+  if (!vigentes.has('id_document') || !vigentes.has('selfie')) {
+    const falta = !vigentes.has('selfie') ? 'la selfie' : 'la cédula'
     return NextResponse.json(
       {
-        error: pendientes?.length
+        error: vigentes.size
           ? `Todavía falta ${falta}. No se decide con una sola foto.`
           : 'Esta verificación ya no está pendiente. Recarga el panel.',
         motivo: 'incompleta',
@@ -188,8 +223,8 @@ export async function POST(request: Request) {
 
   // 2 · Y si llegó algo después de pintarse la cola, tampoco: lo que se
   //     estaba mirando ya no es lo que se va a resolver.
-  const masNueva = (pendientes ?? [])
-    .map((v) => new Date(v.created_at).getTime())
+  const masNueva = [...vigentes.values()]
+    .map((t) => new Date(t).getTime())
     .reduce((a, b) => Math.max(a, b), 0)
 
   if (masNueva > new Date(d.vistoHasta).getTime()) {
