@@ -202,4 +202,58 @@
       ajeno: deFuera(null, mensaje, pila) || undefined,
     });
   });
+
+  /**
+   * Y antes de nada: desarmar los manejadores que todavía no son nada.
+   *
+   * Las pantallas son `.dc.html` servidos tal cual, así que hasta que
+   * DCLogic hidrata el campo del correo de la portada lleva escrito
+   * literalmente `onChange="{{ onCorreo }}"`.
+   *
+   * Eso no es un hueco inofensivo: **`{{ onCorreo }}` es JavaScript
+   * válido**. Son dos bloques anidados y una variable suelta dentro, así
+   * que el navegador lo ejecuta y lanza `ReferenceError: onCorreo is not
+   * defined`. Pasó esta noche con una persona de verdad en Android: tecleó
+   * su correo y pulsó el botón antes de que cargara el JS, y los tres
+   * manejadores —`onKeyDown`, `onChange` y `onClick`— reventaron, uno por
+   * segundo. Su correo no llegó a ninguna parte.
+   *
+   * La ventana es corta en una computadora y larga en un teléfono lento
+   * con datos, que es por donde entra la campaña. Y es justo el primer
+   * campo de la primera pantalla.
+   *
+   * Esto solo quita el atributo. No arregla que lo tecleado se pierda al
+   * hidratar —eso es de la pantalla, no de aquí— pero convierte un error
+   * en no pasar nada, que es lo que la persona ya creía que estaba
+   * pasando.
+   *
+   * Va en este fichero porque es el único nuestro que cargan las veintiuna
+   * pantallas y que corre ANTES que `support.js`. Un fichero nuevo serían
+   * veintiún `<head>` que tocar, que es la trampa que este repo ya conoce.
+   */
+  var SIN_RESOLVER = /^\s*\{\{[\s\S]*\}\}\s*$/;
+  var MANEJADORES = ['onclick', 'onchange', 'oninput', 'onkeydown', 'onkeyup', 'onsubmit', 'onblur', 'onfocus'];
+
+  function desarmarPlantillas() {
+    try {
+      for (var i = 0; i < MANEJADORES.length; i++) {
+        var nodos = document.querySelectorAll('[' + MANEJADORES[i] + ']');
+        for (var j = 0; j < nodos.length; j++) {
+          var v = nodos[j].getAttribute(MANEJADORES[i]);
+          if (v && SIN_RESOLVER.test(v)) nodos[j].removeAttribute(MANEJADORES[i]);
+        }
+      }
+    } catch (e) {
+      // Si esto falla, la pantalla sigue como estaba. No es parte de pintar
+      // nada.
+    }
+  }
+
+  // Dos veces: en cuanto se puede leer el documento, y al terminar de
+  // parsearlo. Lo primero coge el campo del correo, que está arriba del
+  // todo; lo segundo, lo que venga después.
+  desarmarPlantillas();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', desarmarPlantillas);
+  }
 })();
