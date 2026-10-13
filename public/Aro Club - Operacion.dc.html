@@ -3212,7 +3212,23 @@ class Component extends DCLogic {
     };
 
     const colas = COLA.map((c, i) => {
-      const d = this.state.decididas[c.profileId];
+      /**
+       * «Ya decidí esto» se recuerda por PERSONA Y POR FOTO, no por persona.
+       *
+       * `decididas` no se vacía nunca. Así que al rechazar a alguien, su
+       * tarjeta se quedaba sin botones para siempre: volvía a subir la foto
+       * un minuto después, el servidor la devolvía como un caso nuevo y
+       * limpio, y el panel seguía enseñando «Rechazada por ti» y el motivo
+       * viejo. Le pasó a Mariana Duque el 13-10: rechazada a las 10:15,
+       * volvió a subir su cédula a las 10:16, y a las 11:36 su tarjeta
+       * seguía sin botón para aprobarla.
+       *
+       * `vistoHasta` es la foto más nueva que mandó. En cuanto sube otra,
+       * cambia, y con ella la clave: la tarjeta vuelve a estar por decidir,
+       * que es lo que es.
+       */
+      const claveDec = c.profileId + '|' + (c.vistoHasta || '');
+      const d = this.state.decididas[claveDec];
       const abierta = this.state.abriendo === c.profileId;
       const mSel = this.state.motivos[c.profileId] === undefined ? -1 : this.state.motivos[c.profileId];
       const dm = d === 'no' ? mSel : -1;
@@ -3286,7 +3302,7 @@ class Component extends DCLogic {
           this.setState({ abriendo: null });
           this.decidirIdentidad({ accion: 'aprobar', profileId: c.profileId, vistoHasta: c.vistoHasta }).then((r) => {
             if (!r.ok) return;
-            this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [c.profileId]: 'ok' }) }));
+            this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [claveDec]: 'ok' }) }));
           });
         },
         rechazar: () => this.setState((st) => ({ abriendo: st.abriendo === c.profileId ? null : c.profileId })),
@@ -3296,7 +3312,7 @@ class Component extends DCLogic {
           // Igual que aprobar: primero que lo acepte el servidor.
           this.decidirIdentidad({ accion: 'rechazar', profileId: c.profileId, motivo: MOTIVOS[mSel][3], vistoHasta: c.vistoHasta }).then((r) => {
             if (!r.ok) return;
-            this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [c.profileId]: 'no' }) }));
+            this.setState((st) => ({ decididas: Object.assign({}, st.decididas, { [claveDec]: 'no' }) }));
           });
         }
       };
