@@ -231,6 +231,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     zone_slug: string | null
     reveal_at: string
     city_slug?: string | null
+    age_band_min?: number | null
   } | null = null
 
   if (fila.event_id) {
@@ -238,7 +239,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       .from('events')
       // `reveal_at` no lo usa ninguna plantilla: lo usa el candado de
       // `prepararCorreo` para saber si esta fecha ya se abrió.
-      .select('starts_at, format, zone_slug, reveal_at, booking_closes_at, city_slug')
+      .select('starts_at, format, zone_slug, reveal_at, booking_closes_at, city_slug, age_band_min')
       .eq('id', fila.event_id)
       .maybeSingle()
     evento = data ?? null
@@ -740,6 +741,74 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           // cena» o «Otros drinks», por formato. El correo ya lo dice con
           // sus propias palabras.
           otra: OTRA[evento?.format ?? ''] ?? 'Otra fecha',
+        },
+      }
+    }
+
+    /**
+     * Una cena con edad mínima, a quien la tiene.
+     *
+     * Esta fecha YA estaba abierta: lo nuevo no es que haya mesa, es para
+     * quién es. Por eso no reutiliza `abrimos_zona`, cuya plantilla dice
+     * «dijimos que te escribíamos el día que hubiera mesa en tu zona».
+     *
+     * Y por eso la nota de abajo cambia según la persona: a quien le falta
+     * verificarse, este correo no le sirve de nada si no se lo decimos. Le
+     * estamos ofreciendo apartar un puesto que todavía no puede apartar.
+     */
+    case 'cena_edad_minima': {
+      const zona = evento?.city_slug ? await zonaDeLaCiudad(admin, evento.city_slug) : ZONA_POR_DEFECTO
+      const edadMinima = evento?.age_band_min ?? 40
+
+      // Las zonas abiertas de ESA fecha, no las que marcó la persona: lo
+      // que se promete es dónde puede caer la cena.
+      const { data: sedes } = await admin
+        .from('event_venues')
+        .select('zone_slug')
+        .eq('event_id', fila.event_id ?? '')
+      const nombres = await nombresDeZonas(admin, (sedes ?? []).map((v) => v.zone_slug))
+
+      /**
+       * ¿Puede apartar puesto ya, o le falta algo?
+       *
+       * `v_verified_profiles` es la misma vista que mira `/api/pago`, así
+       * que esto no puede decir que sí a quien la ruta va a decir que no.
+       */
+      let lista = true
+      if (fila.profile_id) {
+        const { data: v } = await admin
+          .from('v_verified_profiles')
+          .select('id')
+          .eq('id', fila.profile_id)
+          .maybeSingle()
+        lista = !!v
+      }
+
+      return {
+        a,
+        datos: {
+          ...base,
+          edadMinima: String(edadMinima),
+          zonas: nombres.length ? unirCon(nombres, ' o ') : 'Caracas',
+          cuandoCorto: evento?.starts_at ? diaCorto(evento.starts_at) : '',
+          cuandoFrase: evento?.starts_at ? `Este ${diaEnZona(evento.starts_at, zona)}` : 'Esta semana',
+          diaEnMayusculas: evento?.starts_at ? diaEnZonaAlto(evento.starts_at, zona).toUpperCase() : 'ESTA SEMANA',
+          horaFrase: evento?.starts_at ? `A las ${horaEnLetraDe(evento.starts_at, zona)}` : '',
+          cierreFrase: evento?.booking_closes_at
+            ? `${cuandoCierra(evento.booking_closes_at, zona)} a las ${horaTexto(evento.booking_closes_at)}`
+            : 'pronto',
+          entradilla: `Esta vez la mesa es de ${edadMinima} para arriba. Seis desconocidos, todos de tu edad, en un restaurante que elegimos nosotros.`,
+          /**
+           * Y lo único que cambia de persona a persona.
+           *
+           * A quien ya está verificada se le cuenta lo que pasa después; a
+           * quien no, lo que le falta. Mandarle a alguien «aparta tu puesto»
+           * sin decirle que no puede todavía es ofrecerle una puerta
+           * cerrada, que es el fallo que llevamos toda la semana quitando.
+           */
+          nota: lista
+            ? 'Si no se juntan seis, te avisamos y no se cobra nada. Nunca sentamos una mesa a medias.'
+            : 'Te falta terminar de verificarte para poder apartar puesto: una foto de tu cédula y una selfie. Dos minutos, y entras.',
         },
       }
     }

@@ -1,0 +1,16 @@
+-- La cena con edad mínima: su propio correo.
+--
+-- El sábado 17 es una «Cena +40», decidida por Michael el 12-10. Avisar de
+-- ella NO puede ir como `abrimos_zona`: esa plantilla dice «dijimos que te
+-- escribíamos el día que hubiera mesa en tu zona» y «se abrió Chacao», que es
+-- otra cosa. Esta fecha ya estaba abierta; lo nuevo es para quién es.
+--
+-- Mandar un correo que dice lo que no es ya nos costó caro esta semana: el
+-- empujón de «te falta verificarte» llegaba con el asunto «Tienes puesto» y
+-- pidiéndole terminar el perfil a quien ya lo tenía terminado, y 26 de 29
+-- personas no volvieron.
+--
+-- El nombre es genérico a propósito. No es `cena_mas_40`: el día que haya una
+-- de +50 o una de 25 a 35, el tipo ya sirve y la plantilla saca el número del
+-- evento.
+alter type email_kind_t add value if not exists 'cena_edad_minima';

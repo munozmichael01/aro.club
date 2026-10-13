@@ -95,6 +95,21 @@ export function copyDe(
         cuerpo: 'Te contamos qué pasó y cuál repetir.',
         ruta: '/verificacion',
       }
+    /**
+     * La cena con edad mínima. Mismo criterio que las demás: nada se vuelve
+     * a formatear aquí, los textos llegan ya escritos de `correos-datos`.
+     */
+    case 'cena_edad_minima': {
+      const edad = t('edadMinima')
+      const cuando = t('cuandoFrase')
+      const zonas = t('zonas')
+      return {
+        titulo: edad ? `Una cena para mayores de ${edad}` : 'Una cena para tu edad',
+        cuerpo: [cuando, zonas && `en ${zonas}`].filter(Boolean).join(' ') || 'Ya puedes apartar puesto.',
+        ruta: '/cuenta',
+      }
+    }
+
     case 'abrimos_zona': {
       // El día y la hora los arma `correos-datos` con el reloj de la ciudad y
       // llegan ya escritos. Aquí no se vuelve a formatear nada: una segunda

@@ -135,6 +135,18 @@ export type Correo =
    * hace el silencio, que es para lo que existe el juego.
    */
   | 'juego'
+  /**
+   * Una cena con edad mínima, a quien la tiene.
+   *
+   * No puede ir como `abrimos_zona`: esa plantilla dice «dijimos que te
+   * escribíamos el día que hubiera mesa en tu zona» y «se abrió Chacao»,
+   * que es otra cosa. Esta fecha ya estaba abierta; lo nuevo es para quién
+   * es. Mandar un correo que dice lo que no es ya costó caro esta semana.
+   *
+   * Nombre genérico a propósito: el día que haya una de +50, el tipo sirve
+   * y la plantilla saca el número del evento.
+   */
+  | 'cena_edad_minima'
 
 /**
  * Los que NO llevan correo.
