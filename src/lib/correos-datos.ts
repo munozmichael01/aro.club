@@ -407,6 +407,31 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           paso2: 'Después: cédula y una selfie. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
           boton: 'Seguir con mis preguntas',
         },
+        /**
+         * Subió sus fotos y le rechazamos una. Hoy no recibía nada.
+         *
+         * NO repite el motivo: ese ya fue en el correo de rechazo, con el
+         * texto del catálogo, y volver a dárselo tres días después sería
+         * contarle otra vez lo que ya sabe. Este pregunta si pudo.
+         *
+         * Y dice que las demás están: desde que el rechazo sabe QUÉ foto
+         * afecta, la pantalla le pide una sola. Quien leía «repite las
+         * fotos» repetía las dos o se quedaba sin saber cuál.
+         */
+        rechazo: {
+          asuntoCorreo: 'Te falta repetir una foto',
+          cinta: 'TE FALTA UNA FOTO',
+          anticipo: 'Una de tus fotos no nos sirvió. Se repite en un minuto.',
+          titularA: 'Te falta',
+          titularB: 'repetir una',
+          titularC: 'foto',
+          entradilla: `Subiste tus fotos${coma}, y una no nos sirvió. Te escribimos entonces para decirte cuál y por qué. Si no te llegó o se te pasó, está todo esperándote donde lo dejaste.`,
+          paso1Titulo: 'Tu perfil, listo',
+          paso1: 'Ya nos contaste de qué hablas, qué comes y qué prefieres esquivar. Eso no hay que repetirlo.',
+          paso2Titulo: 'Repite esa foto',
+          paso2: 'La pantalla te dice cuál es y qué le pasó. Las otras ya están y no se tocan.',
+          boton: 'Repetir la foto',
+        },
         // Perfil completo y nada subido. El peor de los tres: está a un
         // paso de poder apartar puesto.
         verificacion: {

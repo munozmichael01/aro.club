@@ -25,7 +25,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-type Falta = 'perfil' | 'preguntas' | 'verificacion'
+type Falta = 'perfil' | 'preguntas' | 'verificacion' | 'rechazo'
 
 /**
  * Cuántas horas de silencio antes de cada ola, por estado.
@@ -55,6 +55,15 @@ const OLAS: Record<Falta, number[]> = {
   perfil: [24],
   preguntas: [24],
   verificacion: [1, 24],
+  /**
+   * El rechazo espera DOS DÍAS, y una sola vez.
+   *
+   * Al rechazar una foto sale ya un correo contándolo, con el motivo del
+   * catálogo. Este no repite aquello: pregunta si pudo. A la hora sería
+   * pisarle el correo que acaba de recibir; a los dos días es acordarse de
+   * alguien que se quedó a medio camino.
+   */
+  rechazo: [48],
 }
 
 /**
@@ -71,6 +80,29 @@ const OLAS: Record<Falta, number[]> = {
  * haya pedido.
  */
 const MAXIMO_DIAS = 14
+
+/**
+ * Y que un empujón no se sobreponga a otro.
+ *
+ * Los estados son excluyentes —nadie está parado en dos sitios a la vez—
+ * pero se encadenan: quien recibe «te falta un paso», sube la cédula y se
+ * la rechazamos pasa a `rechazo`, y sin esto recibiría dos empujones y el
+ * correo de rechazo en el mismo día.
+ *
+ * VEINTE HORAS entre dos cualesquiera. Deja pasar el par que sí queremos
+ * —la ola de 1 h y la de 24, que van a 23 h de distancia— y corta todo lo
+ * que caiga más cerca.
+ */
+const SILENCIO_ENTRE_EMPUJONES = 20
+
+/**
+ * Y un tope duro: TRES en toda la vida de una cuenta.
+ *
+ * Las horas sueltas se pueden tocar sin querer, y entonces no queda nada
+ * que impida que alguien reciba un empujón tras otro durante semanas. Esto
+ * no depende de ninguna cuenta: a la cuarta, no.
+ */
+const MAXIMO_POR_PERSONA = 3
 
 /**
  * Y no a cualquier hora.
@@ -117,8 +149,16 @@ function olaPendiente(
   ahora: number,
   hechos: Set<string>,
   antiguos: Set<string>,
+  ultimo: Map<string, number>,
+  cuantos: Map<string, number>,
 ): number | null {
   const clave = c.perfil ?? c.correo ?? ''
+
+  // Ni encima de otro ni sin fin. Los dos candados antes que nada: lo que
+  // se decida después no puede saltárselos.
+  if ((cuantos.get(clave) ?? 0) >= MAXIMO_POR_PERSONA) return null
+  const anterior = ultimo.get(clave)
+  if (anterior !== undefined && (ahora - anterior) / HORA < SILENCIO_ENTRE_EMPUJONES) return null
   // Quien recibió un empujón de este estado ANTES de que hubiera olas no
   // vuelve a recibir ninguna. Su fila no dice de qué ola era, y la duda se
   // resuelve del lado de no volver a escribirle.
@@ -136,7 +176,7 @@ function olaPendiente(
 async function empujar(seco: boolean) {
   const hora = horaEnCaracas(new Date())
   if (!seco && (hora < DESDE_CARACAS || hora >= HASTA_CARACAS)) {
-    return NextResponse.json({ fuera_de_hora: hora, perfil: 0, preguntas: 0, verificacion: 0 })
+    return NextResponse.json({ fuera_de_hora: hora, perfil: 0, preguntas: 0, verificacion: 0, rechazo: 0 })
   }
 
   const admin = createAdminClient()
@@ -150,18 +190,40 @@ async function empujar(seco: boolean) {
   // en el segundo cero—, que es exactamente todo el mundo.
   const { data: yaEmpujados } = await admin
     .from('scheduled_emails')
-    .select('email, profile_id, payload')
+    .select('email, profile_id, payload, send_at')
     .eq('kind', 'empujon')
 
   const hechos = new Set<string>()
   const antiguos = new Set<string>()
+  /** Cuándo fue el último empujón de cada persona, sea del estado que sea. */
+  const ultimo = new Map<string, number>()
+  /** Y cuántos lleva en total. */
+  const cuantos = new Map<string, number>()
   for (const r of yaEmpujados ?? []) {
     const p = (r.payload ?? {}) as { falta?: string; ola?: number }
     const clave = r.profile_id ?? r.email
     if (!clave || !p.falta) continue
     if (p.ola === undefined) antiguos.add(`${clave}|${p.falta}`)
     else hechos.add(`${clave}|${p.falta}|${p.ola}`)
+    cuantos.set(clave, (cuantos.get(clave) ?? 0) + 1)
+    const cuando = new Date(r.send_at).getTime()
+    if (!Number.isNaN(cuando)) ultimo.set(clave, Math.max(ultimo.get(clave) ?? 0, cuando))
   }
+
+  /**
+   * Qué motivos de rechazo dejan volver a intentarlo.
+   *
+   * Los dos de sospecha NO, y eso no es un detalle: a quien rechazamos por
+   * sospecha de suplantación se le dijo que nos escribiera, y mandarle un
+   * «repite la foto» tres días después sería contradecir lo que ya le
+   * dijimos y pedirle que lo intente otra vez.
+   */
+  const { data: catalogoMotivos } = await admin
+    .from('verification_rejection_reasons')
+    .select('code, allows_retry')
+  const seRepite = new Set(
+    (catalogoMotivos ?? []).filter((m) => m.allows_retry).map((m) => m.code),
+  )
 
   const candidatos: Candidato[] = []
 
@@ -202,14 +264,35 @@ async function empujar(seco: boolean) {
 
   for (const p of conCuenta ?? []) {
     if (p.status === 'pending_verification') {
-      // Si ya subió algo, está esperando revisión y no hay nada que empujar.
-      const { count } = await admin
+      const { data: suyas } = await admin
         .from('verifications')
-        .select('*', { count: 'exact', head: true })
+        .select('kind, status, rejection_reason, reviewed_at, created_at')
         .eq('profile_id', p.id)
-        .in('status', ['pending', 'approved'])
+        .neq('status', 'expired')
+        .order('created_at', { ascending: false })
 
-      if ((count ?? 0) > 0) continue
+      // Si ya subió algo, está esperando revisión y no hay nada que empujar.
+      if ((suyas ?? []).some((v) => v.status === 'pending' || v.status === 'approved')) continue
+
+      /**
+       * Y si lo subió y se lo rechazamos, el correo es OTRO.
+       *
+       * Sin esto caía en `verificacion` y recibía «no has subido nada ·
+       * ya nos contaste de qué hablas», que a quien ha subido su cédula
+       * dos veces y se la hemos rechazado dos veces no solo es falso: es
+       * ofensivo. Hoy mismo había una persona así en la lista de mañana.
+       */
+      const rechazada = (suyas ?? []).find((v) => v.status === 'rejected')
+      if (rechazada) {
+        if (!rechazada.rejection_reason || !seRepite.has(rechazada.rejection_reason)) continue
+        candidatos.push({
+          falta: 'rechazo',
+          desde: rechazada.reviewed_at ?? rechazada.created_at,
+          perfil: p.id,
+        })
+        continue
+      }
+
       candidatos.push({ falta: 'verificacion', desde: p.created_at, perfil: p.id })
       continue
     }
@@ -236,12 +319,12 @@ async function empujar(seco: boolean) {
   // `repetidos` cuenta lo que chocó con el índice. Sin él, este cron informa
   // de lo que intentó y no de lo que hizo, que es como estuvo diez días
   // diciendo que empujaba a gente sin encolar una sola fila.
-  const cuenta: Record<Falta, number> = { perfil: 0, preguntas: 0, verificacion: 0 }
+  const cuenta: Record<Falta, number> = { perfil: 0, preguntas: 0, verificacion: 0, rechazo: 0 }
   const enSeco: { falta: Falta; ola: number; quien: string; horasParado: number }[] = []
   let repetidos = 0
 
   for (const c of candidatos) {
-    const ola = olaPendiente(c, ahora, hechos, antiguos)
+    const ola = olaPendiente(c, ahora, hechos, antiguos, ultimo, cuantos)
     if (ola === null) continue
 
     if (seco) {
