@@ -999,6 +999,10 @@
                   </div>
                 </sc-if>
 
+                <sc-if value="{{ c.armado }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:12px;border-radius:14px;background:rgba(143,69,21,.1);border:1px solid rgba(143,69,21,.3);padding:11px 14px;font:500 13px/1.5 'Inter Tight',sans-serif;color:#6E340F">{{ c.avisoArmado }}</div>
+                </sc-if>
+
                 <div style="display:flex;gap:9px;margin-top:14px">
                   <button onClick="{{ c.aprobar }}" style="{{ c.botonAprobar }}">{{ c.textoAprobar }}</button>
                   <button onClick="{{ c.rechazar }}" style="{{ c.botonRechazar }}">{{ c.textoRechazar }}</button>
@@ -1330,6 +1334,18 @@ class Component extends DCLogic {
     limitado: false, tope: '', precio: undefined,
     fechaCanc: -1, cancelada: '', resueltos: {},
     arrastrando: null, tipoRep: 'todo', confirmar: '', filtroLoc: 'todos',
+    /**
+     * Qué pago está a punto de rechazarse, esperando el segundo clic.
+     *
+     * «No cuadra» era UN clic y mandaba ya. El 13-10 Michael vio un pago
+     * «devuelto» y creyó que lo había rechazado sin querer; resultó que no
+     * —la persona canceló ella—, pero la pregunta era buena: no había nada
+     * entre el dedo y un correo diciéndole a alguien que su pago no vale.
+     *
+     * Aprobar no lo necesita: equivocarse aprobando se deshace rechazando,
+     * y lo que no se puede deshacer es el correo que ya salió.
+     */
+    pagoAConfirmar: null,
     nombreEq: '', correoEq: '', rolEq: 0, retirados: {}, concedidos: [], acuseEq: '',
     busca: '', filtros: {}, fZona: '', atajo: '', escalon: -1, fmtZona: 0, desde: 0,
 
@@ -3343,19 +3359,39 @@ class Component extends DCLogic {
         selloMetodo: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;background:rgba(20,52,42,.07);font:600 11px/1 \'Inter Tight\',sans-serif;color:#2C4A38;white-space:nowrap',
         caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (d === 'ok' ? '#1B5138' : (d === 'no' ? '#C0662F' : 'transparent')),
         textoAprobar: d === 'ok' ? 'Confirmado' : 'Confirmar pago',
-        textoRechazar: 'No cuadra',
+        textoRechazar: St.pagoAConfirmar === c.id ? 'Sí, no cuadra' : 'No cuadra',
         botonAprobar: btnCola(d === 'ok' ? 'rgba(27,81,56,.13)' : '#1B5138', d === 'ok' ? '#1B5138' : '#FAF3E4', 'none'),
-        botonRechazar: btnCola('transparent', '#8F4515', '1px solid rgba(143,69,21,.4)'),
+        // Armado se pinta macizo: el segundo clic tiene que verse distinto
+        // del primero, o la confirmación no confirma nada.
+        botonRechazar: St.pagoAConfirmar === c.id
+          ? btnCola('#8F4515', '#FFF8EA', 'none')
+          : btnCola('transparent', '#8F4515', '1px solid rgba(143,69,21,.4)'),
+        armado: St.pagoAConfirmar === c.id,
+        avisoArmado: 'Le llega un correo diciendo que su pago no cuadra. Pulsa otra vez para mandarlo.',
         // Igual que en verificaciones: se pinta al confirmarlo el servidor.
         // Un panel que dice "confirmado" cuando la peticion se cayo hace que
         // el fallo solo se vea por lo que NO pasa despues.
         aprobar: () => {
+          clearTimeout(this._desarmar);
+          this.setState({ pagoAConfirmar: null });
           this.decidirPago({ accion: 'confirmar', pagoId: c.id }).then((r) => {
             if (!r.ok) return;
             this.setState((st) => ({ conciliadas: Object.assign({}, st.conciliadas, { [c.id]: 'ok' }) }));
           });
         },
         rechazar: () => {
+          // Primer clic: arma y lo dice. Segundo: manda.
+          if (this.state.pagoAConfirmar !== c.id) {
+            this.setState({ pagoAConfirmar: c.id });
+            // Y se desarma solo. Un botón que se queda armado es el mismo
+            // problema con un paso más: al volver a la pestaña, el siguiente
+            // clic vuelve a ser uno solo.
+            clearTimeout(this._desarmar);
+            this._desarmar = setTimeout(() => this.setState({ pagoAConfirmar: null }), 6000);
+            return;
+          }
+          clearTimeout(this._desarmar);
+          this.setState({ pagoAConfirmar: null });
           this.decidirPago({ accion: 'no-cuadra', pagoId: c.id, motivo: 'El monto o la referencia no cuadran con el movimiento.' }).then((r) => {
             if (!r.ok) return;
             this.setState((st) => ({ conciliadas: Object.assign({}, st.conciliadas, { [c.id]: 'no' }) }));
