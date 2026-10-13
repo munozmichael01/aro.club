@@ -157,6 +157,9 @@ export const FORMATOS: Record<string, { plural: string; singular: string }> = {
   movement: { plural: 'Movimiento', singular: 'Movimiento' },
   coffee: { plural: 'Coffee', singular: 'Coffee' },
 }
+/** «Cena +40»: una fecha con edad mínima. */
+export const conEdad = (singular: string, edad: number) => `${singular} +${edad}`
+
 export const ORDEN_FORMATOS = ['dinner', 'drinks', 'movement', 'coffee'] as const
 
 /** Lo que dice cada fecha de la agenda debajo de su barra. */

@@ -23,6 +23,8 @@ export type FechaAgenda = {
   mia: boolean
   /** La zona de la ciudad de ESTA fecha: el día y la hora se dicen en ella. */
   zonaHoraria?: string | null
+  /** Edad mínima de la fecha («Cena +40»). El servidor es quien no deja reservar a quien no la cumple. */
+  edadMinima?: number | null
 }
 
 export type Plan = {
@@ -231,7 +233,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
     g.filas.push({
       id: a.id,
       formato,
-      tipo: T.FORMATOS[formato].plural,
+      tipo: a.edadMinima ? T.conEdad(T.FORMATOS[formato].singular, a.edadMinima) : T.FORMATOS[formato].plural,
       cuando: F.fechaCorta(a.empiezaEn, a.zonaHoraria),
       hora: reglas.horaDe(a.empiezaEn, a.zonaHoraria) ?? '',
       // Las zonas ABIERTAS de esa fecha, no un sitio: el sitio se decide al

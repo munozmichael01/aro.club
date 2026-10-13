@@ -180,3 +180,12 @@ test('la hora en letra no se come los minutos', () => {
   assert.equal(F.horaEnLetra(19, 20), '7:20 p.m.')
   assert.equal(F.titularDeReserva('2026-10-10T23:30:00Z', 'America/Caracas'), 'Sábado 10, siete y media de la noche.')
 })
+
+test('una fecha con edad mínima se llama «Cena +40»', async () => {
+  const M = await import('../src/cuenta/maquina')
+  const base = { id: 'x', formato: 'dinner', empiezaEn: '2026-10-17T23:30:00Z', cierraEn: null, creditos: 1, zonas: ['Chacao'], apuntados: 0, cerrada: false, mia: false, zonaHoraria: 'America/Caracas' }
+  const [g] = M.agenda([{ ...base, edadMinima: 40 }], null, Date.parse('2026-10-13T12:00:00Z'))
+  assert.equal(g.filas[0].tipo, 'Cena +40')
+  const [h] = M.agenda([base], null, Date.parse('2026-10-13T12:00:00Z'))
+  assert.equal(h.filas[0].tipo, 'Cenas')
+})
