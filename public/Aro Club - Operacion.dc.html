@@ -372,7 +372,7 @@
     <sc-if value="{{ esVerificaciones }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 300ms ease both">
         <h1 style="{{ h1 }}">Cola de verificaciones</h1>
-        <p style="{{ bajada }}">Compara el documento con la selfie y decide. Lo que apruebes queda con tu nombre, y el documento se borra a los noventa días.</p>
+        <p style="{{ bajada }}">Compara el documento con la selfie y decide. Lo que apruebes queda con tu nombre, y el documento se borra a los {{ diasGuardaFotos }} días.</p>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start;gap:12px;margin-top:clamp(20px,2.6vw,28px)">
           <sc-for list="{{ colas }}" as="c" hint-placeholder-count="4">
@@ -3601,6 +3601,9 @@ class Component extends DCLogic {
       // mesa que rompe reglas de afinidad, o una que sale corta. Decirle
       // «rompe reglas duras» a quien publica cinco de seis es mentirle sobre
       // lo que está aceptando.
+      // Los días que guardamos las fotos. Del fichero compartido, no a mano:
+      // es el número que la pantalla de verificación le PROMETE al miembro.
+      diasGuardaFotos: (window.AroReglas ? AroReglas.DIAS_GUARDA_FOTOS : 120),
       hayFoto: !!laFoto,
       urlFoto: laFoto ? laFoto.url : '',
       nombreFoto: laFoto ? laFoto.nombre : '',

@@ -510,11 +510,11 @@ class Component extends DCLogic {
       // son las fotos, con una firma que caduca a los cinco minutos.
       hayDocumento: !V.borrado && !V.nuncaHubo,
       nuncaHubo: !!V.nuncaHubo,
-      textoSinCaptura: 'No hay capturas guardadas de esta verificación. No es la purga de los noventa días: nunca se subieron.',
+      textoSinCaptura: 'No hay capturas guardadas de esta verificación. No es la purga de los ' + (window.AroReglas ? AroReglas.DIAS_GUARDA_FOTOS : 120) + ' días: nunca se subieron.',
       hayCedula: !!V.cedula, cedula: V.cedula || '',
       haySelfie: !!V.selfie, selfie: V.selfie || '',
       sinDocumento: V.borrado,
-      textoBorrado: 'La cédula y la selfie se borraron noventa días después de aprobarla. Queda la marca de que ocurrió y quién la aprobó. Es lo que prometimos.',
+      textoBorrado: 'La cédula y la selfie se borraron ' + (window.AroReglas ? AroReglas.DIAS_GUARDA_FOTOS : 120) + ' días después de aprobarla. Queda la marca de que ocurrió y quién la aprobó. Es lo que prometimos.',
 
       hayIntentos: V.intentos > 0,
       tituloIntentos: V.intentos === 1 ? 'Un intento rechazado antes de este' : V.intentos + ' intentos rechazados antes de este',

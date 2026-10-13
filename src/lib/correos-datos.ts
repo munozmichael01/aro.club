@@ -6,7 +6,7 @@ import { firmar } from '@/lib/lead-token'
 import { enlaceDeMapa } from '@/lib/mapa'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
-import { HORAS_DE_CIERRE, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
+import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
@@ -300,6 +300,10 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     // escrita a mano en la plantilla de fecha cancelada, y bajarla de 48 a 24
     // obligaba a acertar en todos los sitios donde se promete.
     horasCierre: HORAS_DE_CIERRE,
+    // Los días que guardamos la cédula y la selfie. Misma razón que el
+    // precio y que las horas de cierre: estaba escrito a mano en la
+    // plantilla, y es una promesa.
+    diasGuarda: DIAS_GUARDA_FOTOS,
     trato,
     correo: a,
     enlaceAjustes,

@@ -308,7 +308,7 @@ class Component extends DCLogic {
         if (d.estado === 'revision') { this.setState({ fase: 'revision', faltan: d.faltan, donde: d.donde }); return; }
         if (d.estado === 'rechazada') { this.setState({ fase: 'rechazo', motivo: d.motivo }); return; }
         // Antes se le expulsaba a Mi cuenta. Pero esta pantalla le prometio
-        // que sus fotos se borran a los noventa dias, y echarle de aqui
+        // que sus fotos se borran a los 120 dias, y echarle de aqui
         // dejaba esa promesa sin ningun sitio donde comprobarse. Ahora ve su
         // estado, con la fecha exacta.
         if (d.estado === 'aprobada') {
@@ -632,10 +632,10 @@ class Component extends DCLogic {
         ? 'Tu cédula y tu selfie ya están borradas'
         : (this.state.seBorraEl
             ? 'Tu cédula y tu selfie se borran el ' + this.state.seBorraEl
-            : 'Tu cédula y tu selfie se borran a los noventa días'),
+            : 'Tu cédula y tu selfie se borran a los ' + (window.AroReglas ? AroReglas.DIAS_GUARDA_FOTOS : 120) + ' días'),
       cuerpoBorrado: this.state.yaBorradas
         ? 'Solo queda la marca de que la verificación ocurrió. No las vio ningún otro miembro.'
-        : 'A los noventa días de aprobarla. Después solo queda la marca de que la verificación ocurrió. No las ve ningún otro miembro.',
+        : 'A los ' + (window.AroReglas ? AroReglas.DIAS_GUARDA_FOTOS : 120) + ' días de aprobarla. Después solo queda la marca de que la verificación ocurrió. No las ve ningún otro miembro.',
       enMovil: movil,
 
       explicacion, qr, pasosQr, barras, mientras,

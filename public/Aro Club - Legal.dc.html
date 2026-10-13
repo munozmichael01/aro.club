@@ -239,7 +239,7 @@ class Component extends DCLogic {
     ].map((d) => ({ dato: d[0], para: d[1], plazo: d[2], plazoEstilo: plazo(d[2]) }));
 
     const privacidad = [
-      ['La cédula y la selfie se borran a los ' + (window.AroReglas ? AroReglas.DIAS_GUARDA_FOTOS : 120) + ' días', 'Una vez verificada tu identidad, el documento y la foto dejan de hacer falta. Se borran a los noventa días y solo queda una marca de que la verificación ocurrió y quién la aprobó. No se guardan en el teléfono de nadie ni en ninguna carpeta compartida.'],
+      ['La cédula y la selfie se borran a los ' + (window.AroReglas ? AroReglas.DIAS_GUARDA_FOTOS : 120) + ' días', 'Una vez verificada tu identidad, el documento y la foto dejan de hacer falta. Se borran a los ' + (window.AroReglas ? AroReglas.DIAS_GUARDA_FOTOS : 120) + ' días y solo queda una marca de que la verificación ocurrió y quién la aprobó. No se guardan en el teléfono de nadie ni en ninguna carpeta compartida.'],
       ['Quién los ve dentro de Aro', 'Solo el equipo de operación que hace la verificación, con acceso registrado y nominal. Nadie más de la empresa, y ningún otro miembro, en ningún caso.'],
       ['Con quién los compartimos fuera', 'Con el proveedor de pagos, lo mínimo para cobrar. Con el restaurante, solo el nombre de la reserva y el número de personas. Con nadie más. No vendemos datos ni los cedemos a anunciantes.'],
       ['No hay perfiles públicos ni fotos de perfil', 'La base de miembros no se puede navegar. No existe una pantalla donde alguien vea quién está en el club. Y no hay foto de perfil en ninguna parte del producto: es una decisión de diseño, no una función pendiente.'],
