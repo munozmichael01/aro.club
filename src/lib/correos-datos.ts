@@ -720,13 +720,14 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       }
       const voz = voces[caso] ?? voces.ambas
       const coma = trato ? `, ${trato}` : ''
-      const queRepetir = !sePuedeRepetir
+      // Cuando falta una foto, el mensaje del catálogo YA dice qué hacer
+      // («sube tu cédula», «hazte una de frente»). Añadirle «mándala y
+      // seguimos» detrás es decirlo dos veces.
+      const queRepetir = !sePuedeRepetir || caso === 'faltaDocumento' || caso === 'faltaSelfie'
         ? ''
         : caso === 'ambas'
           ? 'Repite las dos y seguimos.'
-          : caso === 'faltaDocumento' || caso === 'faltaSelfie'
-            ? 'Mándala y seguimos.'
-            : 'Repite solo esa foto y seguimos.'
+          : 'Repite solo esa foto y seguimos.'
 
       let notaRevisor = ''
       if (fila.profile_id) {
@@ -749,9 +750,11 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           // «No es un rechazo» solo cuando de verdad no lo es. Decírselo a
           // quien no puede volver a intentarlo es quitarle importancia a lo
           // único que el correo tenía que dejar claro.
+          // El nombre delante y punto. Metiéndolo dentro de la frase del
+          // catálogo salía «No pudimos, Kristhi, verificar tu identidad».
           entradilla: sePuedeRepetir
             ? `No es un rechazo${coma}: ${motivo} ${queRepetir}`.trim()
-            : `${motivo.replace(/^No pudimos/, `No pudimos${coma ? coma + ',' : ''}`)}`.trim(),
+            : `${trato ? trato + ', ' : ''}${trato ? motivo.charAt(0).toLowerCase() + motivo.slice(1) : motivo}`.trim(),
           notaRevisor,
         },
       }
