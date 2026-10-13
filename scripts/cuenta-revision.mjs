@@ -59,7 +59,7 @@ const DOMINIO_MESA = 'prueba.aro.club'
 const RASTRO = fileURLToPath(new URL('../.cuenta-revision.json', import.meta.url))
 
 const args = process.argv.slice(2)
-const CONOCIDOS = ['--borrar', '--refrescar']
+const CONOCIDOS = ['--borrar', '--refrescar', '--acompanantes']
 const raros = args.filter((a) => !CONOCIDOS.includes(a) && !/^--horas=-?\d+$/.test(a))
 if (raros.length) {
   console.error('No conozco: ' + raros.join(', ') + '. Los modos son: ' + CONOCIDOS.join(', ') + '.')
@@ -120,6 +120,57 @@ if (args.includes('--borrar')) {
   for (const id of r.perfiles ?? []) await admin.auth.admin.deleteUser(id).catch(() => {})
   unlinkSync(RASTRO)
   console.log('Borrado: la cuenta de revisión, su fecha, su mesa y sus cinco acompañantes.')
+  process.exit(0)
+}
+
+// ---------------------------------------------------------- acompañantes
+//
+// Vuelve a sentar a los cinco de la mesa del revisor si faltan, sin tocar su
+// cuenta ni su contraseña. Existe porque una limpieza de cuentas de prueba se
+// los llevó el 12-10 y Apple habría visto una mesa con una sola persona.
+if (args.includes('--acompanantes')) {
+  const r = leerRastro()
+  if (!r?.mesa || !r?.evento) {
+    console.error('No hay cuenta de revisión montada. Corre el guión sin argumentos primero.')
+    process.exit(1)
+  }
+  const { data: version } = await admin.from('questionnaire_versions')
+    .select('id').eq('is_active', true).single()
+  const { data: sentados } = await admin.from('table_members').select('profile_id, seat_order').eq('table_id', r.mesa)
+  let asiento = Math.max(1, ...(sentados ?? []).map((s) => s.seat_order ?? 1)) + 1
+  const OTROS = [
+    ['Daniela', 'diseno'], ['Andrés', 'tecnologia'], ['Gabriela', 'salud'],
+    ['José', 'finanzas'], ['Andreína', 'educacion'],
+  ]
+  const vivos = new Set((sentados ?? []).map((s) => s.profile_id))
+  let puestos = 0
+  for (const [nombre, sector] of OTROS) {
+    const correo = 'revision-' + nombre.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '') + '@' + DOMINIO_MESA
+    let u = await usuarioPorCorreo(correo)
+    if (u && vivos.has(u.id)) continue
+    if (!u) {
+      const { data } = await admin.auth.admin.createUser({
+        email: correo, password: 'Aro-' + randomBytes(9).toString('base64url'), email_confirm: true,
+      })
+      u = data?.user
+      if (!u) continue
+      await admin.from('profiles').insert({ es_prueba: true,
+        id: u.id, email: correo, full_name: nombre, display_name: nombre,
+        city_slug: 'caracas', gender: 'sin-decir', status: 'active', locale: 'es-VE',
+      })
+      await admin.from('answers').insert({
+        profile_id: u.id, version_id: version.id, question_key: 'sector', value: sector,
+      })
+    }
+    const { data: b } = await admin.from('bookings')
+      .insert({ profile_id: u.id, event_id: r.evento, status: 'confirmed' }).select('id').single()
+    await admin.from('table_members')
+      .insert({ table_id: r.mesa, profile_id: u.id, booking_id: b?.id, seat_order: asiento++ })
+    if (!r.perfiles.includes(u.id)) r.perfiles.push(u.id)
+    puestos++
+  }
+  writeFileSync(RASTRO, JSON.stringify(r, null, 2))
+  console.log(`Acompañantes: ${puestos} vueltos a sentar. La cuenta del revisor y su contraseña, sin tocar.`)
   process.exit(0)
 }
 
