@@ -339,6 +339,18 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
+    /**
+     * `?fecha=<id>` abre esa tarjeta y solo esa.
+     *
+     * Lo lleva el botón del correo de la cena con edad mínima. Sin esto, el
+     * correo deja a la persona en una agenda con dos sábados idénticos y le
+     * pide que adivine cuál era el suyo.
+     */
+    try {
+      var _f = new URLSearchParams(window.location.search).get('fecha');
+      if (_f) this.setState({ reservando: _f });
+    } catch (e) { /* sin query, nada que abrir */ }
+
     this._t = setInterval(() => this.setState({ ahora: Date.now() }), 1000);
 
     // La verificación la aprueba una persona, en otro sitio y en otro
@@ -893,7 +905,19 @@ class Component extends DCLogic {
     filtrados.forEach((c) => {
       const n = c[4];
       const va = n >= 6;
-      const clave = c[1] + c[2];
+      /**
+       * La clave de la tarjeta es el ID de la fecha, no «tipo + cuándo».
+       *
+       * Con dos cenas el mismo sábado a la misma hora —una normal y la de
+       * mayores de 40— «Cenas» + «Sábado 17 · 7:30 p.m.» es LA MISMA clave
+       * para las dos. Tocar una abría las dos, y la de arriba se llevaba el
+       * clic.
+       *
+       * Le pasó al primero que hizo caso del correo del +40: Luis, 41 años,
+       * recibió el aviso a las 12:00 y a las 12:08 estaba apuntado a la cena
+       * normal. Ocho minutos en convertirse en el fallo.
+       */
+      const clave = c[5];
       // Lo dice el servidor, no una marca local que se pierde al recargar.
       const mia = !!c[6];
       // Cerrada: se ve pero no se puede reservar. Antes desaparecia de la

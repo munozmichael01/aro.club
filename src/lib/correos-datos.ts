@@ -1011,6 +1011,11 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
            * sin decirle que no puede todavía es ofrecerle una puerta
            * cerrada, que es el fallo que llevamos toda la semana quitando.
            */
+          // El botón abre SU fecha, no la agenda a secas. Con dos cenas el
+          // mismo sábado, dejarla en la lista es pedirle que adivine cuál
+          // era la suya: el primero que hizo caso se apuntó a la otra en
+          // ocho minutos.
+          enlaceFecha: `${SITIO}/cuenta?fecha=${encodeURIComponent(fila.event_id ?? '')}`,
           nota: lista
             ? 'Si no se juntan seis, te avisamos y no se cobra nada. Nunca sentamos una mesa a medias.'
             : 'Te falta terminar de verificarte para poder apartar puesto: una foto de tu cédula y una selfie. Dos minutos, y entras.',
