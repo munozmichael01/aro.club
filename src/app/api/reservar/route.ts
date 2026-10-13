@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { cabeEnLaFecha, MOTIVO_EDAD, porQueNoCabe, tieneBanda } from '@/lib/edad'
+import { cabeEnLaFecha, MOTIVO_EDAD, porQueNoCabe, tieneEdadMinima } from '@/lib/edad'
 import { z } from 'zod'
 
 import { situacionDePerfil } from '@/lib/embudo'
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
    * y contesta el embudo, que es quien sabe decirle lo que le falta — y
    * nadie pasa el embudo sin nacimiento, porque es obligatoria.
    */
-  if (tieneBanda(evento)) {
+  if (tieneEdadMinima(evento)) {
     const { data: quien } = await admin
       .from('profiles')
       .select('birthdate')
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
    * exige— y por eso mismo está escrito aquí: el día que una de las dos
    * cosas cambie, esto falla cerrando y no abriendo.
    */
-  if (tieneBanda(evento)) {
+  if (tieneEdadMinima(evento)) {
     const { data: quien } = await admin
       .from('profiles')
       .select('birthdate')

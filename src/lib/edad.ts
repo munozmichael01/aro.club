@@ -44,11 +44,17 @@ export function edadEn(nacimiento: string | null | undefined, cuando: string | D
   return años >= 0 && años < 120 ? años : null
 }
 
-/** Lo que una fecha exige, si exige algo. */
-export type Banda = { age_band_min?: number | null; age_band_max?: number | null }
+/**
+ * Lo que una fecha exige, si exige algo.
+ *
+ * Es una EDAD MÍNIMA, no una banda: lo que se pone es un suelo. El máximo
+ * viaja porque la columna existe desde el esquema inicial y no cuesta nada
+ * respetarla, pero una «Cena de 25 a 35» sería otra decisión de producto.
+ */
+export type EdadMinima = { age_band_min?: number | null; age_band_max?: number | null }
 
 /** ¿Esta fecha pide una edad? */
-export function tieneBanda(evento: Banda | null | undefined): boolean {
+export function tieneEdadMinima(evento: EdadMinima | null | undefined): boolean {
   return !!(evento && (evento.age_band_min != null || evento.age_band_max != null))
 }
 
@@ -60,14 +66,14 @@ export function tieneBanda(evento: Banda | null | undefined): boolean {
  * mayores de 40. Quien no la tiene es porque no terminó el cuestionario, y
  * el embudo ya le dice lo que le falta.
  *
- * Una fecha SIN banda la cabe todo el mundo, también quien no dio su fecha:
+ * Una fecha SIN edad mínima la cabe todo el mundo, también quien no la dio:
  * esto no es una puerta nueva para el resto del club.
  */
 export function cabeEnLaFecha(
   nacimiento: string | null | undefined,
-  evento: (Banda & { starts_at: string }) | null | undefined,
+  evento: (EdadMinima & { starts_at: string }) | null | undefined,
 ): boolean {
-  if (!evento || !tieneBanda(evento)) return true
+  if (!evento || !tieneEdadMinima(evento)) return true
 
   const edad = edadEn(nacimiento, evento.starts_at)
   if (edad == null) return false
@@ -83,7 +89,7 @@ export function cabeEnLaFecha(
  * Con la salida: «mira las otras fechas abiertas» es lo único accionable que
  * se le puede ofrecer a alguien al que acabamos de cerrar una puerta.
  */
-export function porQueNoCabe(evento: Banda): string {
+export function porQueNoCabe(evento: EdadMinima): string {
   const { age_band_min: min, age_band_max: max } = evento
   const quien =
     min != null && max != null

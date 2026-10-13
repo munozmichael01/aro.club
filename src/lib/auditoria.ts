@@ -38,11 +38,11 @@ export type Accion =
   // La escribe un DISPARADOR de `events`, no una ruta: borrar una fecha se
   // hace con la clave de servicio y no pasa por el panel.
   | 'fecha_borrada'
-  // Poner o quitar la banda de edad de una fecha. Una cena que de pronto
-  // deja fuera a tres de cada cuatro miembros no puede ser un cambio sin
-  // firma: el dia que alguien pregunte por que no ve el sabado, la respuesta
-  // tiene que estar escrita en algun sitio.
-  | 'banda_de_edad'
+  // Poner o quitar la edad minima de una fecha. Una cena que de pronto deja
+  // fuera a tres de cada cuatro miembros no puede ser un cambio sin firma: el
+  // dia que alguien pregunte por que no ve el sabado, la respuesta tiene que
+  // estar escrita en algun sitio.
+  | 'edad_minima'
   // Mover a alguien de una fecha CERRADA: sentarlo o sacarlo. Es la unica
   // accion del panel que se salta el cierre, asi que es la que mas falta hace
   // que quede escrita y con motivo.

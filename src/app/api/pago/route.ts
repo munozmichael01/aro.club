@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { cabeEnLaFecha, MOTIVO_EDAD, porQueNoCabe, tieneBanda } from '@/lib/edad'
+import { cabeEnLaFecha, MOTIVO_EDAD, porQueNoCabe, tieneEdadMinima } from '@/lib/edad'
 import { z } from 'zod'
 
 import { anotarPagoDeEvento } from '@/lib/creditos'
@@ -371,7 +371,7 @@ export async function POST(request: Request) {
    *
    * Sin fecha de nacimiento tampoco: `cabeEnLaFecha` ya lo decide así.
    */
-  if (tieneBanda(evento)) {
+  if (tieneEdadMinima(evento)) {
     const { data: quien } = await admin
       .from('profiles')
       .select('birthdate')

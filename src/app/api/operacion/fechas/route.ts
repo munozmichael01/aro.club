@@ -744,13 +744,17 @@ const sitio = z.discriminatedUnion('accion', [
    * se puede uno apuntar es mandar a la gente a una puerta cerrada.
    */
   /**
-   * Cambiar para qué edades es una fecha ya abierta.
+   * Cambiar la edad mínima de una fecha ya abierta.
    *
    * Nulo para quitarla, que es la única forma de deshacer un «+40» puesto
    * por error sin borrar la fecha y perder a quien ya se apuntó.
+   *
+   * `edadMaxima` existe porque la columna existe, pero esto NO es una
+   * banda: lo que se pone es un suelo. Una «Cena 25 a 35» sería otra
+   * decisión de producto y ese día ya cabría sin tocar nada.
    */
   z.object({
-    accion: z.literal('banda-edad'),
+    accion: z.literal('edad-minima'),
     eventoId: z.string().uuid(),
     edadMinima: z.number().int().min(18).max(99).nullable(),
     edadMaxima: z.number().int().min(18).max(99).nullable(),
@@ -789,7 +793,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Esa fecha está cancelada.' }, { status: 409 })
   }
 
-  if (d.accion === 'banda-edad') {
+  if (d.accion === 'edad-minima') {
     if (d.edadMinima != null && d.edadMaxima != null && d.edadMinima > d.edadMaxima) {
       return NextResponse.json({ error: 'La edad mínima no puede ser mayor que la máxima.' }, { status: 400 })
     }
@@ -800,7 +804,7 @@ export async function PATCH(request: Request) {
       .eq('id', d.eventoId)
 
     if (error) {
-      console.error('[fechas] no se pudo poner la banda de edad', error)
+      console.error('[fechas] no se pudo poner la edad mínima', error)
       return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
     }
 
@@ -811,7 +815,7 @@ export async function PATCH(request: Request) {
      * puede ser un cambio sin firma: el día que alguien pregunte por qué no
      * ve el sábado, la respuesta tiene que estar en algún sitio.
      */
-    await anotar(actor, 'banda_de_edad', 'evento', d.eventoId, {
+    await anotar(actor, 'edad_minima', 'evento', d.eventoId, {
       edadMinima: d.edadMinima,
       edadMaxima: d.edadMaxima,
     })

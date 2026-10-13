@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { cabeEnLaFecha, tieneBanda, type Banda } from '@/lib/edad'
+import { cabeEnLaFecha, tieneEdadMinima, type EdadMinima } from '@/lib/edad'
 import { FAMILIA_DE_FORMATO, PLANES_DE_FAMILIA } from '@/lib/formatos'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -42,7 +42,7 @@ export async function quienQuiereSaberDe(
    * La fecha de la que se avisa, para su banda de edad. Opcional: sin ella
    * no se filtra por edad y el aviso sale como salía.
    */
-  evento?: (Banda & { starts_at: string }) | null,
+  evento?: (EdadMinima & { starts_at: string }) | null,
 ): Promise<Set<string>> {
   const permitidos = new Set(ids)
   if (!ids.length) return permitidos
@@ -63,11 +63,30 @@ export async function quienQuiereSaberDe(
   // Sin fecha de nacimiento tampoco, que es lo mismo que decide
   // `/api/reservar`: avisar a quien después no va a poder apuntarse es
   // precisamente lo que esto evita.
-  if (tieneBanda(evento)) {
-    const { data: edades } = await admin
+  if (tieneEdadMinima(evento)) {
+    const { data: edades, error } = await admin
       .from('profiles')
       .select('id, birthdate')
       .in('id', [...permitidos])
+
+    /**
+     * Y si la consulta FALLA, se para en seco. No se avisa a nadie y no se
+     * avisa a todos.
+     *
+     * Este es el punto delicado de todo el filtro. Un `error` deja `edades`
+     * en nulo, y entonces las dos salidas silenciosas son malas de verdad:
+     * tratarlo como «no cabe nadie» deja la fecha sin anunciar a nadie sin
+     * que falle nada visible, y saltarse el filtro le anuncia una cena de
+     * mayores de 40 a cuatrocientas personas de veinte y pico.
+     *
+     * Así que ninguna de las dos: se levanta el error. En el panel sale un
+     * 500 que se ve, y en el cron queda en los registros. Un filtro de
+     * quién recibe un correo no puede fallar en silencio hacia ningún lado.
+     */
+    if (error) {
+      console.error('[avisos] no se pudo leer la edad: no se avisa a nadie', error)
+      throw new Error('No se pudo comprobar la edad de quien recibe el aviso.')
+    }
 
     const cabe = new Set(
       (edades ?? []).filter((p) => cabeEnLaFecha(p.birthdate, evento!)).map((p) => p.id),
