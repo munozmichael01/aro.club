@@ -30,7 +30,51 @@ import { createAdminClient } from '@/lib/supabase/admin'
 /** De cien en cien: `remove` acepta una lista, no diez mil rutas. */
 const POR_TANDA = 100
 
+/**
+ * EN PAUSA, a petición de Michael el 13-10, mientras arranca el club.
+ *
+ * El motivo es de seguridad: con las primeras cenas todavía por delante y
+ * sin historial de comportamiento, poder volver a mirar quién era alguien
+ * vale más que el ahorro de no guardarlo.
+ *
+ * Y AQUÍ VIENE LO QUE HAY QUE RESOLVER ANTES DEL 7 DE NOVIEMBRE. Esto no es
+ * una opción de configuración: es una promesa escrita, en dos sitios que la
+ * persona lee justo cuando entrega su cédula.
+ *
+ *   Verificación, antes de subir la foto:
+ *     «CUÁNTO DURA · Se borra a los 90 días de aprobarse. Solo queda la
+ *      marca de que la verificación ocurrió.»
+ *
+ *   Legal → Privacidad:
+ *     «La cédula y la selfie se borran a los 90 días.»
+ *     y la tabla de datos: «Cédula y selfie · 90 días tras verificar»
+ *
+ * Dejar esto apagado y esas dos frases donde están es decir una cosa y hacer
+ * otra sobre documentos de identidad. Esa es la parte que no se puede dejar
+ * correr.
+ *
+ * La primera verificación se aprobó el 09-08, así que el primer borrado
+ * tocaría el 07-11. Hasta esa fecha no hay ninguna contradicción: no había
+ * nada que borrar. Desde esa fecha, sí.
+ *
+ * Dos salidas limpias, las dos piden tocar el texto:
+ *   - alargar el plazo y decir el nuevo («un año», «mientras tengas cuenta»)
+ *   - volver a encender esto y cumplir los 90
+ *
+ * Mientras tanto, pausado: no se borra nada por accidente y no se pierde
+ * nada. Volver a encenderlo es poner esta constante en false.
+ */
+const EN_PAUSA = true
+
 async function purgar() {
+  if (EN_PAUSA) {
+    return NextResponse.json({
+      borradas: 0,
+      enPausa: true,
+      porQue: 'Pausada el 13-10 por seguridad. Revisar el texto de Legal y Verificación antes del 07-11.',
+    })
+  }
+
   const admin = createAdminClient()
 
   const { data: viejas, error } = await admin.rpc('documentos_a_purgar')
