@@ -603,6 +603,63 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
        * nada, y entonces el bloque no sale. Inventar lo que vio una persona
        * es peor que no contarlo.
        */
+      /**
+       * QUÉ FOTO es la que hay que repetir. Todo el correo lo daba por
+       * hecho: el titular decía «no se lee tu cédula», la fila de al lado
+       * «tu selfie, guardada, no hace falta repetirla» y el consejo hablaba
+       * de poner el documento plano sobre una mesa.
+       *
+       * Así que al rechazar una SELFIE el correo decía lo contrario de la
+       * verdad dos veces: que repitiera la cédula, que no había tocado, y
+       * que la selfie —la que falla— estaba guardada.
+       *
+       * `afecta` ya vive en el catálogo desde que el rechazo sabe qué foto
+       * mira. Solo faltaba que el correo lo leyera.
+       */
+      const { data: cat } = await admin
+        .from('verification_rejection_reasons')
+        .select('afecta')
+        .eq('code', (p.motivo as string) ?? '')
+        .maybeSingle()
+      const afecta = (cat as { afecta?: string } | null)?.afecta ?? 'ambas'
+
+      const voces: Record<string, Record<string, string>> = {
+        id_document: {
+          asuntoCorreo: 'Falta una foto',
+          cinta: 'FALTA UNA FOTO',
+          anticipo: 'Hay que repetir la foto de tu documento. La selfie ya está guardada.',
+          titularA: 'No se lee', titularB: 'tu', titularC: 'cédula',
+          boton: 'Repetir la foto del documento',
+          laOtraTitulo: 'Tu selfie',
+          laOtra: 'Guardada, no hace falta repetirla',
+          consejo: 'Tres cosas ayudan: luz de día, el documento plano sobre una mesa y la cámara sin inclinar. La mayoría se aprueba a la segunda.',
+        },
+        selfie: {
+          asuntoCorreo: 'Falta una foto',
+          cinta: 'FALTA UNA FOTO',
+          anticipo: 'Hay que repetir tu selfie. El documento ya está guardado.',
+          titularA: 'No se ve bien', titularB: 'tu', titularC: 'selfie',
+          boton: 'Repetir la selfie',
+          laOtraTitulo: 'Tu documento',
+          laOtra: 'Guardado, no hace falta repetirlo',
+          consejo: 'Tres cosas ayudan: luz natural, la cara de frente y sin gorra ni lentes oscuros. La mayoría se aprueba a la segunda.',
+        },
+        ambas: {
+          asuntoCorreo: 'Faltan las dos fotos',
+          cinta: 'FALTAN LAS FOTOS',
+          anticipo: 'Hay que repetir las dos fotos.',
+          titularA: 'Hay que repetir', titularB: 'las', titularC: 'dos fotos',
+          boton: 'Repetir las fotos',
+          laOtraTitulo: 'Las dos',
+          laOtra: 'Esta vez hay que mandarlas otra vez',
+          consejo: 'Tres cosas ayudan: luz de día, el documento plano sobre una mesa y la cara de frente, sin gorra. La mayoría se aprueba a la segunda.',
+        },
+      }
+      const voz = voces[afecta] ?? voces.ambas
+      const coma = trato ? `, ${trato}` : ''
+      const queRepetir =
+        afecta === 'ambas' ? 'Repite las dos y seguimos.' : 'Repite solo esa foto y seguimos.'
+
       let notaRevisor = ''
       if (fila.profile_id) {
         const { data: v } = await admin
@@ -615,7 +672,16 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         notaRevisor = v?.[0]?.rejection_note?.trim() ?? ''
       }
 
-      return { a, datos: { ...base, motivo, notaRevisor } }
+      return {
+        a,
+        datos: {
+          ...base,
+          ...voz,
+          motivo,
+          entradilla: `No es un rechazo${coma}: ${motivo} ${queRepetir}`,
+          notaRevisor,
+        },
+      }
     }
 
     case 'restablecer_clave':

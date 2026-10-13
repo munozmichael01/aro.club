@@ -3,7 +3,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
-<title>Falta una foto · Aro Club</title>
+<title>{{ asuntoCorreo }} · Aro Club</title>
 <style>
   @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 400; font-display: swap; src: url(https://fonts.gstatic.com/s/intertight/v7/NGSwv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjDw.woff2) format('woff2'); }
     @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 600; font-display: swap; src: url(https://fonts.gstatic.com/s/intertight/v7/NGSwv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjDw.woff2) format('woff2'); }
@@ -18,7 +18,7 @@
 </style>
 </head>
 <body style="margin:0;padding:0;background:#FAF3E4;">
-<span style="display:none;font-size:1px;color:#FAF3E4;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">No se lee tu cédula. Repite solo esa foto, la selfie ya está guardada.</span>
+<span style="display:none;font-size:1px;color:#FAF3E4;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">{{ anticipo }}</span>
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#FAF3E4" style="background:#FAF3E4;">
 <tr><td align="center" bgcolor="#FAF3E4" style="padding:0;">
@@ -36,16 +36,16 @@
 
   <tr><td class="p" style="padding:30px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-      <td bgcolor="#6E340F" style="border-radius:999px;padding:10px 17px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.2px;color:#FFF8EA;mso-line-height-rule:exactly;"><strong>FALTA UNA FOTO</strong></td>
+      <td bgcolor="#6E340F" style="border-radius:999px;padding:10px 17px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.2px;color:#FFF8EA;mso-line-height-rule:exactly;"><strong>{{ cinta }}</strong></td>
     </tr></table>
   </td></tr>
 
   <tr><td class="p" style="padding:20px 40px 0 40px;font-family:'Young Serif',Georgia,'Times New Roman',serif;font-weight:700;font-size:42px;line-height:44px;color:#14342A;mso-line-height-rule:exactly;">
-    No se lee<br />tu <span style="color:#8F4515;">cédula</span>.
+    {{ titularA }}<br />{{ titularB }} <span style="color:#8F4515;">{{ titularC }}</span>.
   </td></tr>
 
   <tr><td class="p" style="padding:16px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2C4A38;mso-line-height-rule:exactly;">
-    No es un rechazo{{#si trato}}, {{ trato }}{{/si}}: {{ motivo }} Repite solo esa foto y seguimos.
+    {{ entradilla }}
   </td></tr>
 
   <tr><td class="p" style="padding:28px 40px 0 40px;">
@@ -57,14 +57,14 @@
   <tr><td class="p" style="padding:28px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
       <td bgcolor="#1B5138" style="border-radius:999px;">
-        <a href="{{{ sitioWeb }}}/verificacion" style="display:block;padding:17px 30px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:16px;line-height:16px;color:#FAF3E4;text-decoration:none;mso-line-height-rule:exactly;"><strong>Repetir la foto</strong></a>
+        <a href="{{{ sitioWeb }}}/verificacion" style="display:block;padding:17px 30px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:16px;line-height:16px;color:#FAF3E4;text-decoration:none;mso-line-height-rule:exactly;"><strong>{{ boton }}</strong></a>
       </td>
     </tr></table>
   </td></tr>
 
   <tr><td class="p" style="padding:26px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#FFFBF0;border-radius:22px;">
-      <tr><td style="padding:20px 24px 13px 24px;border-bottom:1px solid #D8CFB6;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;">Tu selfie<br /><strong style="font-size:16px;color:#14342A;">Guardada, no hace falta repetirla</strong></td></tr>
+      <tr><td style="padding:20px 24px 13px 24px;border-bottom:1px solid #D8CFB6;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;">{{ laOtraTitulo }}<br /><strong style="font-size:16px;color:#14342A;">{{ laOtra }}</strong></td></tr>
       <tr><td style="padding:13px 24px 13px 24px;border-bottom:1px solid #D8CFB6;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;">Cuánto tarda<br /><strong style="font-size:16px;color:#14342A;">Menos de 24 horas desde que la mandas</strong></td></tr>
       <tr><td style="padding:13px 24px 20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;">Tu puesto<br /><strong style="font-size:16px;color:#14342A;">No pierdes turno mientras tanto</strong></td></tr>
     </table>
@@ -72,7 +72,7 @@
 
   <tr><td class="p" style="padding:28px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border:1px solid #D8CFB6;border-radius:22px;">
-      <tr><td style="padding:20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#2C4A38;mso-line-height-rule:exactly;">Tres cosas ayudan: luz de día, el documento plano sobre una mesa y la cámara sin inclinar. La mayoría se aprueba a la segunda.</td></tr>
+      <tr><td style="padding:20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#2C4A38;mso-line-height-rule:exactly;">{{ consejo }}</td></tr>
     </table>
   </td></tr>
 
