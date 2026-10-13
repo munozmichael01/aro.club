@@ -313,7 +313,22 @@ async function empujar(seco: boolean) {
 
       if (tiene.size >= 2) continue
 
-      if (tiene.size === 1) {
+      /**
+       * El RECHAZO manda sobre «te falta una foto», y el orden importa.
+       *
+       * A quien le rechazamos la cédula le queda una sola foto viva —la
+       * selfie— así que cae en los dos sitios. Y «subiste una de las dos y
+       * nos falta tu cédula» es falso para ella: la subió, y se la
+       * rechazamos nosotros. Decírselo así sería contarle su propia
+       * historia al revés, que es justo el fallo que llevo todo el día
+       * quitando de estos correos.
+       *
+       * Su estado es `rechazo`, que ya existe y sale a las 24 h con el
+       * motivo de verdad.
+       */
+      const rechazadaPrimero = (suyas ?? []).find((v) => v.status === 'rejected')
+
+      if (tiene.size === 1 && !rechazadaPrimero) {
         const desde = vivas.map((v) => v.created_at).sort()[0]
         candidatos.push({
           falta: 'media_foto',
