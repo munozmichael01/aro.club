@@ -50,7 +50,7 @@
 
   <tr><td class="p" style="padding:28px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border:1px solid #C9C0A8;border-radius:22px;">
-      <tr><td style="padding:20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#2C4A38;mso-line-height-rule:exactly;"><strong style="color:#14342A;">Lo que vio quien revisó:</strong><br />«El número está borroso en la esquina inferior. Lo demás se ve bien.»</td></tr>
+      {{#si notaRevisor}}<tr><td style="padding:20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#2C4A38;mso-line-height-rule:exactly;"><strong style="color:#14342A;">Lo que vio quien revisó:</strong><br />«{{ notaRevisor }}»</td></tr>{{/si}}
     </table>
   </td></tr>
 

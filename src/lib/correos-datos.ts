@@ -584,7 +584,38 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
 
     case 'verificacion_rechazada': {
       const motivo = await textoDelMotivo(admin, p.motivo as string)
-      return { a, datos: { ...base, motivo } }
+
+      /**
+       * «Lo que vio quien revisó», solo si alguien lo escribió de verdad.
+       *
+       * La plantilla llevaba la frase del maquetado METIDA A MANO: «el
+       * número está borroso en la esquina inferior, lo demás se ve bien».
+       * Eso salía a TODO el que recibía un rechazo, dijera lo que dijera su
+       * motivo, y el correo se contradecía solo: arriba «aceptamos cédula
+       * venezolana o pasaporte vigente» y debajo «el número está borroso».
+       *
+       * Le llegó así a seis personas. Una de ellas nos escribió el 13-10
+       * diciendo que no podía subir su cédula, que es lo que pasa cuando te
+       * damos dos explicaciones distintas de lo mismo.
+       *
+       * `rejection_note` existe y el panel sabe escribirla; hasta hoy nadie
+       * la ha escrito nunca (0 de 6). Así que lo normal es que no haya
+       * nada, y entonces el bloque no sale. Inventar lo que vio una persona
+       * es peor que no contarlo.
+       */
+      let notaRevisor = ''
+      if (fila.profile_id) {
+        const { data: v } = await admin
+          .from('verifications')
+          .select('rejection_note')
+          .eq('profile_id', fila.profile_id)
+          .eq('status', 'rejected')
+          .order('created_at', { ascending: false })
+          .limit(1)
+        notaRevisor = v?.[0]?.rejection_note?.trim() ?? ''
+      }
+
+      return { a, datos: { ...base, motivo, notaRevisor } }
     }
 
     case 'restablecer_clave':
