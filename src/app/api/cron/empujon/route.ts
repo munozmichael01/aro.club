@@ -25,7 +25,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
-type Falta = 'perfil' | 'preguntas' | 'verificacion' | 'rechazo'
+type Falta = 'perfil' | 'preguntas' | 'verificacion' | 'rechazo' | 'media_foto'
 
 /**
  * Cuántas horas de silencio antes de cada ola, por estado.
@@ -74,6 +74,25 @@ const OLAS: Record<Falta, number[]> = {
    * uno detrás sería repetirle lo que acaba de leer.
    */
   rechazo: [24],
+  /**
+   * Subió UNA de las dos fotos y se quedó ahí. A las tres horas.
+   *
+   * Es el agujero más silencioso que tenía el embudo: esa persona no sale
+   * en la cola de revisión —la cola exige las dos fotos, a propósito, para
+   * no decidir sobre una que todavía se está subiendo— y tampoco recibía
+   * este empujón, porque la condición era «¿subió algo?» y ella sí había
+   * subido algo.
+   *
+   * Nadie la veía y nadie le escribía. El 13-10 había dos así, de catorce y
+   * once horas.
+   *
+   * Tres horas y no veinticuatro: subir la segunda foto es lo que estaba
+   * haciendo cuando se fue, y a las tres horas ya no va a volver sola. Pero
+   * tampoco a la hora: la mediana entre una foto y la otra es de 49
+   * segundos, así que a la hora la mayoría ya terminó y escribirles sería
+   * ruido.
+   */
+  media_foto: [3],
 }
 
 /**
@@ -141,6 +160,8 @@ type Candidato = {
   falta: Falta
   /** Desde cuándo está parado. En ISO. */
   desde: string
+  /** Para `media_foto`: cuál de las dos le falta. */
+  detalle?: string
   /** Para `encolar` y para la clave de repetición. */
   perfil?: string
   correo?: string
@@ -186,7 +207,7 @@ function olaPendiente(
 async function empujar(seco: boolean) {
   const hora = horaEnCaracas(new Date())
   if (!seco && (hora < DESDE_CARACAS || hora >= HASTA_CARACAS)) {
-    return NextResponse.json({ fuera_de_hora: hora, perfil: 0, preguntas: 0, verificacion: 0, rechazo: 0 })
+    return NextResponse.json({ fuera_de_hora: hora, perfil: 0, preguntas: 0, verificacion: 0, rechazo: 0, media_foto: 0 })
   }
 
   const admin = createAdminClient()
@@ -281,8 +302,28 @@ async function empujar(seco: boolean) {
         .neq('status', 'expired')
         .order('created_at', { ascending: false })
 
-      // Si ya subió algo, está esperando revisión y no hay nada que empujar.
-      if ((suyas ?? []).some((v) => v.status === 'pending' || v.status === 'approved')) continue
+      /**
+       * ¿Tiene las DOS, o solo una?
+       *
+       * Con las dos, está esperando a que alguien la mire y no hay nada que
+       * empujar. Con una, está a medias y nadie se lo ha dicho.
+       */
+      const vivas = (suyas ?? []).filter((v) => v.status === 'pending' || v.status === 'approved')
+      const tiene = new Set(vivas.map((v) => v.kind))
+
+      if (tiene.size >= 2) continue
+
+      if (tiene.size === 1) {
+        const desde = vivas.map((v) => v.created_at).sort()[0]
+        candidatos.push({
+          falta: 'media_foto',
+          desde,
+          perfil: p.id,
+          // Cuál le falta, para que el correo lo diga y no lo adivine.
+          detalle: tiene.has('id_document') ? 'selfie' : 'cedula',
+        })
+        continue
+      }
 
       /**
        * Y si lo subió y se lo rechazamos, el correo es OTRO.
@@ -329,7 +370,7 @@ async function empujar(seco: boolean) {
   // `repetidos` cuenta lo que chocó con el índice. Sin él, este cron informa
   // de lo que intentó y no de lo que hizo, que es como estuvo diez días
   // diciendo que empujaba a gente sin encolar una sola fila.
-  const cuenta: Record<Falta, number> = { perfil: 0, preguntas: 0, verificacion: 0, rechazo: 0 }
+  const cuenta: Record<Falta, number> = { perfil: 0, preguntas: 0, verificacion: 0, rechazo: 0, media_foto: 0 }
   const enSeco: { falta: Falta; ola: number; quien: string; horasParado: number }[] = []
   let repetidos = 0
 
@@ -352,7 +393,7 @@ async function empujar(seco: boolean) {
     const r = await encolar(
       destino,
       'empujon',
-      { falta: c.falta, ola, ...(c.ciudad ? { ciudad: c.ciudad } : {}) },
+      { falta: c.falta, ola, ...(c.ciudad ? { ciudad: c.ciudad } : {}), ...(c.detalle ? { cual: c.detalle } : {}) },
       /**
        * A la cola, no en el acto.
        *

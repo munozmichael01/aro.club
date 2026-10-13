@@ -437,6 +437,25 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           paso2: 'La pantalla te dice cuál es y qué le pasó. Las otras ya están y no se tocan.',
           boton: 'Repetir la foto',
         },
+        /**
+         * Subió una de las dos fotos y se quedó ahí.
+         *
+         * `cual` dice cuál le falta. Sin él esto diría «te falta una foto» a
+         * secas, que obliga a la persona a abrir la pantalla para averiguar
+         * cuál de las dos: trabajo nuestro hecho por ella.
+         */
+        media_foto: {
+          asuntoCorreo: 'Te falta una foto',
+          cinta: 'FALTA UNA FOTO',
+          anticipo: 'Subiste una de las dos. Con la otra quedas lista.',
+          titularA: 'Te falta', titularB: 'una', titularC: 'foto',
+          entradilla: '',
+          paso1Titulo: 'Tu perfil, listo',
+          paso1: 'Ya nos contaste de qué hablas, qué comes y qué prefieres esquivar. Eso no hay que repetirlo.',
+          paso2Titulo: 'Verifica tu identidad',
+          paso2: 'Lo que falta: una sola foto. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
+          boton: 'Mandar la que falta',
+        },
         // Perfil completo y nada subido. El peor de los tres: está a un
         // paso de poder apartar puesto.
         verificacion: {
@@ -457,7 +476,20 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         },
       }
 
-      const voz = voces[fila.kind === 'bienvenida' ? 'bienvenida' : falta] ?? voces.perfil
+      const voz = { ...(voces[fila.kind === 'bienvenida' ? 'bienvenida' : falta] ?? voces.perfil) }
+
+      // «Te falta la selfie» o «te falta la foto de tu cédula», con el
+      // nombre delante. La entradilla de `media_foto` se arma aquí porque
+      // depende de cuál sea, y el resto de la tarjeta no.
+      if (falta === 'media_foto') {
+        const cual = (p.cual as string) === 'cedula' ? 'la foto de tu cédula' : 'tu selfie'
+        voz.titularC = (p.cual as string) === 'cedula' ? 'cédula' : 'selfie'
+        voz.titularA = 'Te falta'
+        voz.titularB = (p.cual as string) === 'cedula' ? 'la' : 'tu'
+        voz.entradilla = `Subiste una de las dos${coma}, y nos falta ${cual}. Es lo único que queda para que puedas apartar puesto, y se hace en un minuto.`
+        voz.boton = (p.cual as string) === 'cedula' ? 'Subir mi cédula' : 'Hacerme la selfie'
+        voz.anticipo = `Subiste una de las dos. Nos falta ${cual}.`
+      }
 
       return {
         a,
