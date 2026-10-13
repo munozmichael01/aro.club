@@ -890,6 +890,27 @@
     HORAS_DE_CIERRE: 24,
 
     /**
+     * Cuántos días guardamos la cédula y la selfie después de verificar.
+     *
+     * CIENTO VEINTE desde el 13-10. Estaba en 90 y lo sube Michael mientras
+     * arranca el club: sin historial de comportamiento todavía, poder volver
+     * a mirar quién era alguien vale más que el ahorro de no guardarlo.
+     *
+     * Vive aquí porque el número estaba escrito a mano en SEIS sitios: la
+     * función de la base que decide qué purgar, la pantalla de verificación
+     * —que promete la fecha de borrado—, la ficha del miembro en Operación,
+     * Mi cuenta, el legal y el propio cron. Es exactamente la forma del
+     * fallo que ya costó caro con el precio: se baja en cinco y el que se
+     * escapa deja una pantalla prometiendo una cosa y el borrado haciendo
+     * otra. Sobre documentos de identidad, eso no es un descuadre de copy.
+     *
+     * La base tiene el suyo en `documentos_a_purgar()` y no puede leer este
+     * fichero: si se cambia aquí, hace falta una migración. El comprobador
+     * vigila que los dos digan lo mismo.
+     */
+    DIAS_GUARDA_FOTOS: 120,
+
+    /**
      * El juego de la mesa.
      *
      * El mazo aprobado vive en `app-mobile/JUEGO.md` y se copia aquí a

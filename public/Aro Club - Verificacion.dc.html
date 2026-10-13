@@ -487,7 +487,7 @@ class Component extends DCLogic {
       ['PARA QUÉ', 'Confirmar que eres quien dices y que eres mayor de edad. Es lo único que hace que cinco desconocidos se sienten contigo.'],
       ['QUIÉN LO VE', 'Una persona del equipo de operación. Ni los otros cinco, ni el restaurante, ni el resto del equipo.'],
       ['DÓNDE SE GUARDA', 'Cifrado, en nuestros servidores. No se guarda en el teléfono de nadie ni en carpetas compartidas.'],
-      ['CUÁNTO DURA', 'Se borra a los 90 días de aprobarse. Solo queda la marca de que la verificación ocurrió.']
+      ['CUÁNTO DURA', 'Se borra a los ' + (window.AroReglas ? AroReglas.DIAS_GUARDA_FOTOS : 120) + ' días de aprobarse. Solo queda la marca de que la verificación ocurrió.']
     ].map((e) => ({ clave: e[0], valor: e[1] }));
 
     // El codigo de verdad, con la llave dentro. Antes era un patron

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { diaCompleto, diaYMes, mesYAno } from '@/lib/fechas'
 import { leerCatalogo } from '@/lib/questionnaire/catalogo'
 import { exigirOps } from '@/lib/ops'
+import { DIAS_GUARDA_FOTOS } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -14,7 +15,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * veces con criterios distintos.
  *
  * Lo que no sale de aquí aunque esté en la base: **la foto del documento
- * pasados 90 días**. No es una carencia: se borró, y lo que queda es la
+ * pasados `DIAS_GUARDA_FOTOS` días**. No es una carencia: se borró, y lo que queda es la
  * marca de que ocurrió y quién la aprobó.
  *
  * `romance` SÍ SALE desde el 10-10. Se enseñaba como «Respondida · no se
@@ -185,14 +186,14 @@ export async function GET(request: Request) {
   }
 
   // Sin captura hay dos casos distintos y decir el que no es sería mentir
-  // sobre lo que prometimos en el legal: la purga de los 90 días solo ha
-  // pasado si la aprobación es de hace más de 90 días.
-  const NOVENTA = 90 * 24 * 3600 * 1000
+  // sobre lo que prometimos en el legal: la purga solo ha pasado si la
+  // aprobación es de hace más de `DIAS_GUARDA_FOTOS`.
+  const GUARDA = DIAS_GUARDA_FOTOS * 24 * 3600 * 1000
   const revisadaHace = decisiva?.reviewed_at
     ? Date.now() - new Date(decisiva.reviewed_at).getTime()
     : 0
   const sinCaptura = !fotos.cedula && !fotos.selfie
-  const borrado = estado === 'verificada' && sinCaptura && revisadaHace > NOVENTA
+  const borrado = estado === 'verificada' && sinCaptura && revisadaHace > GUARDA
   const nuncaHubo = sinCaptura && !borrado
 
   const coincide = decisiva?.name_matches == null

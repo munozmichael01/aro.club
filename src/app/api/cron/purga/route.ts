@@ -31,50 +31,31 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const POR_TANDA = 100
 
 /**
- * EN PAUSA, a petición de Michael el 13-10, mientras arranca el club.
+ * CIENTO VEINTE DÍAS, no noventa, desde el 13-10.
  *
- * El motivo es de seguridad: con las primeras cenas todavía por delante y
- * sin historial de comportamiento, poder volver a mirar quién era alguien
- * vale más que el ahorro de no guardarlo.
+ * Lo sube Michael mientras arranca el club: sin historial de comportamiento
+ * todavía, poder volver a mirar quién era alguien vale más que el ahorro de
+ * no guardarlo.
  *
- * Y AQUÍ VIENE LO QUE HAY QUE RESOLVER ANTES DEL 7 DE NOVIEMBRE. Esto no es
- * una opción de configuración: es una promesa escrita, en dos sitios que la
- * persona lee justo cuando entrega su cédula.
+ * El plazo NO está escrito aquí. Vive en `AroReglas.DIAS_GUARDA_FOTOS`, que
+ * leen el servidor y las tres pantallas que lo prometen, y en
+ * `documentos_a_purgar()`, que es la única que no puede leer ese fichero.
+ * Estaba a mano en seis sitios y esa es la forma del fallo que ya costó caro
+ * con el precio: se cambia en cinco y el que se escapa deja una pantalla
+ * prometiendo una cosa y el borrado haciendo otra. Sobre documentos de
+ * identidad eso no es un descuadre de copy.
  *
- *   Verificación, antes de subir la foto:
- *     «CUÁNTO DURA · Se borra a los 90 días de aprobarse. Solo queda la
- *      marca de que la verificación ocurrió.»
+ * Las tres frases cambiaron en el mismo despliegue:
  *
- *   Legal → Privacidad:
- *     «La cédula y la selfie se borran a los 90 días.»
- *     y la tabla de datos: «Cédula y selfie · 90 días tras verificar»
+ *   Verificación: «Se borra a los 120 días de aprobarse.»
+ *   Legal:        «La cédula y la selfie se borran a los 120 días.»
+ *   Mi cuenta:    «…y se borra a los 120 días.»
  *
- * Dejar esto apagado y esas dos frases donde están es decir una cosa y hacer
- * otra sobre documentos de identidad. Esa es la parte que no se puede dejar
- * correr.
- *
- * La primera verificación se aprobó el 09-08, así que el primer borrado
- * tocaría el 07-11. Hasta esa fecha no hay ninguna contradicción: no había
- * nada que borrar. Desde esa fecha, sí.
- *
- * Dos salidas limpias, las dos piden tocar el texto:
- *   - alargar el plazo y decir el nuevo («un año», «mientras tengas cuenta»)
- *   - volver a encender esto y cumplir los 90
- *
- * Mientras tanto, pausado: no se borra nada por accidente y no se pierde
- * nada. Volver a encenderlo es poner esta constante en false.
+ * Nada se ha borrado nunca: la primera verificación se aprobó el 09-08, así
+ * que el primer borrado tocaba el 07-11 y con esto pasa al 07-12.
  */
-const EN_PAUSA = true
 
 async function purgar() {
-  if (EN_PAUSA) {
-    return NextResponse.json({
-      borradas: 0,
-      enPausa: true,
-      porQue: 'Pausada el 13-10 por seguridad. Revisar el texto de Legal y Verificación antes del 07-11.',
-    })
-  }
-
   const admin = createAdminClient()
 
   const { data: viejas, error } = await admin.rpc('documentos_a_purgar')

@@ -41,6 +41,7 @@ type Api = {
   aE164: (valor: unknown) => string
   PRECIO_USD: number
   HORAS_DE_CIERRE: number
+  DIAS_GUARDA_FOTOS: number
   precioTexto: () => string
   COCINAS: string[][]
   REGLAS: Record<Campo, { etiqueta: string; ayuda?: string }>
@@ -96,6 +97,9 @@ export const vozDe = api.vozDe
  * `/api/operacion/fechas` y repetida en texto en cuatro sitios más.
  */
 export const HORAS_DE_CIERRE: number = api.HORAS_DE_CIERRE
+
+/** Cuántos días guardamos la cédula y la selfie. Ciento veinte. */
+export const DIAS_GUARDA_FOTOS: number = api.DIAS_GUARDA_FOTOS
 /**
  * El dia y la hora de una fecha, en la zona del producto.
  *

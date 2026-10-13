@@ -928,5 +928,42 @@ if (relojes.length) {
   }
 }
 
+// --- los días que guardamos las fotos, en los dos sitios ----------------
+//
+// `AroReglas.DIAS_GUARDA_FOTOS` lo leen el servidor y las tres pantallas que
+// PROMETEN la fecha de borrado. `documentos_a_purgar()` es la única que no
+// puede leer ese fichero y lleva su copia en SQL.
+//
+// Si se separan, la pantalla dice una fecha y el borrado hace otra, sobre
+// documentos de identidad. No falla nada, no da error, y se descubre el día
+// que alguien pide su cédula. Es el mismo fallo que el precio escrito a mano
+// en siete sitios, con más consecuencias.
+{
+  const reglas = fs.readFileSync(new URL('../public/reglas.js', import.meta.url), 'utf8')
+  const enReglas = Number((reglas.match(/DIAS_GUARDA_FOTOS:\s*(\d+)/) ?? [])[1])
+
+  const migraciones = fs.readdirSync(new URL('../supabase/migrations/', import.meta.url)).sort()
+  let enSql = null
+  for (const f of migraciones) {
+    const sql = fs.readFileSync(new URL('../supabase/migrations/' + f, import.meta.url), 'utf8')
+    if (!/create or replace function documentos_a_purgar/.test(sql)) continue
+    const m = sql.match(/interval '(\d+) days'/)
+    if (m) enSql = Number(m[1])
+  }
+
+  if (!enReglas || !enSql) {
+    errores++
+    console.error('\n✗ los días de guarda de las fotos')
+    console.error(`    reglas.js: ${enReglas || 'no lo encuentro'} · documentos_a_purgar(): ${enSql || 'no lo encuentro'}`)
+  } else if (enReglas !== enSql) {
+    errores++
+    console.error('\n✗ los días de guarda de las fotos NO cuadran')
+    console.error(`    reglas.js dice ${enReglas} y la base borra a los ${enSql}`)
+    console.error('    → la pantalla promete una fecha y el borrado hace otra')
+  } else {
+    console.log(`✓ los días de guarda de las fotos (${enReglas}, iguales en reglas.js y en la base)`)
+  }
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)

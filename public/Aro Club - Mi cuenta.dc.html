@@ -466,7 +466,7 @@ class Component extends DCLogic {
         verif: 'sin', respuestas: 'Completas', creditos: '4 de 4',
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
         titulo: 'Verifica tu identidad para poder reservar.',
-        cuerpo: 'Cédula y una selfie. Lo revisa una persona, no se le muestra a nadie más, y se borra a los 90 días. Es lo que hace que los otros cinco confíen.',
+        cuerpo: 'Cédula y una selfie. Lo revisa una persona, no se le muestra a nadie más, y se borra a los ' + (window.AroReglas ? AroReglas.DIAS_GUARDA_FOTOS : 120) + ' días. Es lo que hace que los otros cinco confíen.',
         accion: 'Verificar mi identidad', enlace: '/verificacion'
       },
       {

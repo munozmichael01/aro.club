@@ -4,6 +4,7 @@ import { encolar } from '@/lib/correos'
 import { diaCompleto } from '@/lib/fechas'
 import { cerrarTraspasos, perfilDeTraspaso } from '@/lib/traspaso'
 import { situacionDePerfil } from '@/lib/embudo'
+import { DIAS_GUARDA_FOTOS } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -160,8 +161,8 @@ export async function GET(request: Request) {
 
   // Cuándo la revisó una persona, y cuándo se borran las fotos. La pantalla
   // de «ya verificada» promete una fecha concreta de borrado, así que sale
-  // de la MISMA regla que purga de verdad —reviewed_at + 90 días, la de
-  // purgar_documentos_verificacion()— y no de una cuenta escrita aparte.
+  // de la MISMA regla que purga de verdad —`reviewed_at` + `DIAS_GUARDA_FOTOS`,
+  // la de `documentos_a_purgar()`— y no de una cuenta escrita aparte.
   // Dos cuentas del mismo plazo acaban diciendo días distintos.
   const revisadaEl =
     estado === 'aprobada'
@@ -174,7 +175,7 @@ export async function GET(request: Request) {
 
   const seBorraEl =
     revisadaEl && !yaBorradas
-      ? new Date(new Date(revisadaEl).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString()
+      ? new Date(new Date(revisadaEl).getTime() + DIAS_GUARDA_FOTOS * 24 * 60 * 60 * 1000).toISOString()
       : null
 
   // Qué le queda del cuestionario.
