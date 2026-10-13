@@ -138,7 +138,7 @@ async function aQuien(): Promise<string[]> {
    */
   const { data, error } = await createAdminClient()
     .from('profiles')
-    .select('email, role')
+    .select('email, role, notificaciones')
     .in('role', ['admin', 'ops'])
     .is('deleted_at', null)
     .eq('es_prueba', false)
@@ -147,7 +147,24 @@ async function aQuien(): Promise<string[]> {
   // sin avisar a nadie porque no se pudo leer quién más debía enterarse es
   // perder lo importante por lo accesorio.
   if (error) console.error('[avisos] no se pudo leer el equipo', error)
-  for (const p of data ?? []) meter(p.email)
+
+  /**
+   * Y quien los haya apagado, no.
+   *
+   * Encendido por defecto, como el resto de avisos: solo se salta a quien lo
+   * apagó a propósito desde el panel. Un interruptor que hay que encender
+   * para enterarse de que alguien espera verificación es un interruptor que
+   * nadie enciende.
+   *
+   * `AVISOS_A` se mete arriba y NO se puede apagar desde el panel: es el
+   * buzón del equipo, no el de una persona. Así, apaguen todos el suyo,
+   * sigue habiendo alguien a quien le llega.
+   */
+  for (const p of data ?? []) {
+    const suyos = (p.notificaciones ?? {}) as Record<string, boolean>
+    if (suyos.avisos_equipo === false) continue
+    meter(p.email)
+  }
 
   return lista
 }

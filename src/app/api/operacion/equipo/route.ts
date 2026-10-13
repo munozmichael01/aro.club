@@ -45,7 +45,7 @@ export async function GET() {
 
   const { data } = await createAdminClient()
     .from('profiles')
-    .select('id, email, full_name, display_name, role, status, created_at')
+    .select('id, email, full_name, display_name, role, status, created_at, notificaciones')
     .in('role', ['ops', 'admin'])
     .is('deleted_at', null)
     .order('created_at')
@@ -57,7 +57,14 @@ export async function GET() {
       nombre: p.full_name || p.display_name || null,
       rol: p.role,
       desde: p.created_at,
+      // Si recibe los avisos del equipo. Encendido por defecto: solo se
+      // apaga a propósito.
+      avisos: ((p.notificaciones ?? {}) as Record<string, boolean>).avisos_equipo !== false,
     })),
+    // El buzón del equipo, que no es de nadie y no se puede apagar desde
+    // aquí. Se enseña para que se vea que apagando todos los demás sigue
+    // llegando a alguien.
+    buzon: process.env.CORREO_AVISOS || 'somos.aroclub@gmail.com',
   })
 }
 
@@ -174,6 +181,68 @@ export async function POST(request: Request) {
     aviso:
       'Todavía no hay remitente de correo: entrégale este enlace tú. Caduca, ' +
       'y con él elige su propia contraseña.',
+  })
+}
+
+/**
+ * Encender o apagar los avisos del equipo de una persona.
+ *
+ * Michael los recibía en su correo personal y los quiere solo en el buzón
+ * del equipo. Hasta hoy la única forma era quitarle el rol, que es otra
+ * cosa: dejaría de poder entrar al panel.
+ *
+ * El rol dice qué puede hacer; esto, si además quiere que le escribamos.
+ */
+const avisos = z.object({
+  id: z.string().uuid(),
+  encendidos: z.boolean(),
+})
+
+export async function PATCH(request: Request) {
+  const actor = await exigirAdmin()
+  if (!actor) return new NextResponse(null, { status: 404 })
+
+  const parsed = avisos.safeParse(await request.json().catch(() => null))
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Petición inválida.' }, { status: 400 })
+  }
+
+  const d = parsed.data
+  const admin = createAdminClient()
+
+  const { data: persona } = await admin
+    .from('profiles')
+    .select('id, email, full_name, display_name, role, notificaciones, deleted_at')
+    .eq('id', d.id)
+    .maybeSingle()
+
+  if (!persona || persona.deleted_at || !['admin', 'ops'].includes(persona.role ?? '')) {
+    return NextResponse.json({ error: 'Esa persona no está en el equipo.' }, { status: 404 })
+  }
+
+  // Se mezcla con lo que ya hubiera: `notificaciones` lleva también las
+  // preferencias de miembro —«fechas nuevas en tu zona»— y escribir el
+  // objeto entero las borraría.
+  const antes = (persona.notificaciones ?? {}) as Record<string, boolean>
+  const { error } = await admin
+    .from('profiles')
+    .update({ notificaciones: { ...antes, avisos_equipo: d.encendidos } } as never)
+    .eq('id', d.id)
+
+  if (error) {
+    console.error('[equipo] no se pudo cambiar los avisos', error)
+    return NextResponse.json({ error: 'No pudimos cambiarlo.' }, { status: 500 })
+  }
+
+  await anotar(actor, d.encendidos ? 'acceso_concedido' : 'acceso_retirado', 'equipo', d.id, {
+    que: 'avisos del equipo',
+    quien: persona.display_name || persona.full_name || persona.email,
+    encendidos: d.encendidos,
+  })
+
+  return NextResponse.json({
+    estado: d.encendidos ? 'encendidos' : 'apagados',
+    quien: persona.display_name || persona.full_name || persona.email,
   })
 }
 

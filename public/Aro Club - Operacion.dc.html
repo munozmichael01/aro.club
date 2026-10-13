@@ -610,6 +610,9 @@
                 </span>
               </span>
               <span style="flex:0 0 110px"><span style="{{ p.chip }}">{{ p.rol }}</span></span>
+              <span style="flex:0 0 150px;display:flex;justify-content:flex-end">
+                <button onClick="{{ p.tocarAvisos }}" aria-pressed="{{ p.avisosOn }}" style="{{ p.botonAvisos }}">{{ p.textoAvisos }}</button>
+              </span>
               <span style="flex:0 0 130px;display:flex;justify-content:flex-end">
                 <button onClick="{{ p.quitar }}" aria-disabled="{{ p.inerte }}" style="{{ p.botonQuitar }}">{{ p.textoQuitar }}</button>
               </span>
@@ -1338,7 +1341,7 @@ class Component extends DCLogic {
     pagosCola: null, metodosPago: [], pagosResumen: null,
     incidencias: null, accionesIncidencia: [],
     locales: null, zonasCatalogo: [], resumenLocales: null,
-    equipo: null, esAdmin: false,
+    equipo: null, esAdmin: false, avisosEq: {},
     // Gente: la lista, el mapa de zonas y el embudo salen del MISMO GET. El
     // mapa y el embudo no se recalculan aquí —se pintan— porque son los que
     // deciden si una fecha se puede abrir.
@@ -2138,6 +2141,30 @@ class Component extends DCLogic {
     });
   }
 
+  /**
+   * Encender o apagar los avisos del equipo de una persona.
+   *
+   * Se pinta YA y se corrige con lo que diga el servidor: el interruptor
+   * tiene que responder al tocarlo. Si el servidor dice que no, se vuelve.
+   */
+  cambiarAvisos(id, encendidos) {
+    this.setState((st) => ({ avisosEq: Object.assign({}, st.avisosEq, { [id]: encendidos }) }));
+    return this.mandar('/api/operacion/equipo', { id, encendidos }, 'PATCH').then((r) => {
+      if (r.ok) {
+        this.setState({ aviso: r.d.quien + (encendidos ? ': le avisamos otra vez.' : ': deja de recibir los avisos del equipo.') });
+        this.cargarEquipo();
+        return r;
+      }
+      // No se pudo: se deshace lo pintado para no mentir sobre el estado.
+      this.setState((st) => {
+        const copia = Object.assign({}, st.avisosEq);
+        delete copia[id];
+        return { avisosEq: copia };
+      });
+      return r;
+    });
+  }
+
   quitarAcceso(id) {
     return this.mandar('/api/operacion/equipo', { id }, 'DELETE').then((r) => {
       if (r.ok) { this.setState({ aviso: 'Acceso retirado. Baja a miembro, no se borra.' }); this.cargarEquipo(); }
@@ -2877,7 +2904,7 @@ class Component extends DCLogic {
     // Era la única ruta de operación sin pantalla, y la que peor consecuencia
     // tenía: dar acceso pasaba por pedirle a un compañero que se registrara
     // como miembro y editarle la fila a mano en la base.
-    const EQUIPO = (St.equipo || []).map((p) => [p.nombre || p.correo, p.correo, p.rol, p.id]);
+    const EQUIPO = (St.equipo || []).map((p) => [p.nombre || p.correo, p.correo, p.rol, p.id, p.avisos !== false]);
     const conAcceso = EQUIPO.length;
     const eqCorreoOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(St.correoEq || '').trim());
     const eqOk = String(St.nombreEq || '').trim().length >= 3 && eqCorreoOk;
@@ -4026,6 +4053,27 @@ class Component extends DCLogic {
           nombre: p[0], correo: p[1], inicial: p[0].charAt(0), avatar: avatar(i),
           rol: fuera ? 'Miembro' : (p[2] === 'admin' ? 'Admin' : 'Ops'),
           chip: 'display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;white-space:nowrap;background:' + (fuera ? 'transparent' : (p[2] === 'admin' ? 'rgba(143,69,21,.13)' : 'rgba(27,81,56,.11)')) + ';border:1px solid ' + (fuera ? 'rgba(20,52,42,.2)' : 'transparent') + ';color:' + (fuera ? '#33513F' : (p[2] === 'admin' ? '#8F4515' : '#1B5138')),
+          /**
+           * Los avisos del equipo, encendidos o apagados.
+           *
+           * El rol dice qué puede hacer alguien; esto, si además quiere que
+           * le escribamos. Hasta hoy la única forma de dejar de recibirlos
+           * era quitarse el rol, que es otra cosa: dejas de poder entrar.
+           *
+           * Se pinta lo que acaba de pulsarse y se corrige con lo que diga
+           * el servidor al recargar, como el resto del panel.
+           */
+          avisosOn: (St.avisosEq || {})[p[3]] != null ? (St.avisosEq || {})[p[3]] : p[4],
+          textoAvisos: ((St.avisosEq || {})[p[3]] != null ? (St.avisosEq || {})[p[3]] : p[4])
+            ? 'Le avisamos' : 'No le avisamos',
+          botonAvisos: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:999px;font:600 13px/1 \'Inter Tight\',sans-serif;white-space:nowrap;cursor:pointer;border:1px solid '
+            + (((St.avisosEq || {})[p[3]] != null ? (St.avisosEq || {})[p[3]] : p[4]) ? 'transparent' : 'rgba(20,52,42,.22)')
+            + ';background:' + (((St.avisosEq || {})[p[3]] != null ? (St.avisosEq || {})[p[3]] : p[4]) ? 'rgba(27,81,56,.11)' : 'transparent')
+            + ';color:' + (((St.avisosEq || {})[p[3]] != null ? (St.avisosEq || {})[p[3]] : p[4]) ? '#1B5138' : '#33513F'),
+          tocarAvisos: () => {
+            const ahora = (St.avisosEq || {})[p[3]] != null ? (St.avisosEq || {})[p[3]] : p[4];
+            this.cambiarAvisos(p[3], !ahora);
+          },
           inerte: (fuera || soloAdmin) ? 'true' : null,
           textoQuitar: fuera ? 'Retirado' : (soloAdmin ? 'Único admin' : 'Quitar acceso'),
           botonQuitar: 'display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 15px;border-radius:999px;font:600 13px/1 \'Inter Tight\',sans-serif;white-space:nowrap;' + ((fuera || soloAdmin)
