@@ -511,7 +511,15 @@ class Component extends DCLogic {
       // login y ahi se corta el hilo: entra, y acaba en la pantalla de
       // siempre en vez de en lo que venia a ver. Son seis destinos distintos
       // en los correos y cuatro pantallas rebotaban igual.
-      window.location.href = '/entrar?volver=' + encodeURIComponent(location.pathname + location.search + location.hash); });
+      // Y DICIENDO quien es, si el correo venia en la URL. El enlace del
+      // empujon lo trae: sin eso, quien no tiene sesion —el navegador de
+      // Instagram no la guarda— aterriza aqui y la pantalla le pregunta
+      // quien es a alguien que acaba de pulsar un boton en nuestro correo.
+      var volverA = location.pathname + location.search + location.hash;
+      var correoURL = (new URLSearchParams(location.search).get('correo') || '').trim();
+      var aEntrar = new URLSearchParams({ volver: volverA });
+      if (correoURL) aEntrar.set('correo', correoURL);
+      window.location.href = '/entrar?' + aEntrar.toString(); });
   }
   componentWillUnmount() {
     clearInterval(this._t);

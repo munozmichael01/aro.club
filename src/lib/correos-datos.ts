@@ -313,16 +313,127 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
   switch (fila.kind) {
     // --- el embudo ------------------------------------------------------
     case 'bienvenida':
-    // Mismo cuerpo: la plantilla decide entre «te falta el perfil» y «te
-    // falta verificarte» con `payload.falta`, que ya viene en `base`.
+    // Mismo cuerpo, palabras distintas: la plantilla pinta `titular`,
+    // `entradilla`, los dos pasos y el botón, y los decide `payload.falta`.
+    //
+    // ESTO FALTABA, y es la explicación del empujón que no funcionaba. El
+    // comentario de aquí decía que la plantilla elegía entre «te falta el
+    // perfil» y «te falta verificarte» con `payload.falta`, y la plantilla
+    // no miraba `falta` en ningún sitio: no existía la rama. Así que a las
+    // 29 personas que solo les faltaba la cédula les llegó, con el asunto
+    // «Tienes puesto», un correo que empezaba «ya te guardamos el puesto»,
+    // seguía «termina tu perfil · diez preguntas más» y terminaba en un
+    // botón que decía «Completar mi perfil» y llevaba a /verificacion.
+    //
+    // Es decir: una segunda bienvenida que le pedía a alguien algo que ya
+    // había hecho. 26 de 29 no subieron nunca la cédula, y de ahí se
+    // concluyó que el problema era CUÁNDO se mandaba. No se midió el
+    // momento: se midió un correo equivocado.
     case 'empujon': {
       // Las zonas que dijo que acepta, para no prometerle mesa en un sitio
       // al que no puede ir.
       const zonas = await nombresDeZonas(admin, (p.zonas as string[]) ?? [], fila.profile_id)
+      const coma = trato ? `, ${trato}` : ''
+      const falta = (p.falta as string) ?? 'perfil'
+
+      /**
+       * El botón. NO puede ser `/cuestionario` a secas.
+       *
+       * Quien NO tiene cuenta —dejó su correo y se fue— necesita el token
+       * firmado: es el mecanismo que ya existe para seguir el alta desde
+       * otro dispositivo, y este es su caso exacto. Los DOS parámetros, y
+       * no solo el token: la pantalla exige correo y token juntos, porque
+       * la firma se verifica contra la dirección.
+       *
+       * Y quien SÍ tiene cuenta va a su paso siguiente de verdad, CON su
+       * correo en la URL. Sin él, el enlace es un callejón: la pantalla ve
+       * que no hay sesión, manda a /entrar y allí le pregunta quién es a
+       * alguien que viene de nuestro propio correo. Es literalmente lo que
+       * nos escribió una persona el 12-10 — «solo faltaba la foto y se
+       * salió, y no sé cómo entrar de nuevo»—: la mitad de quien abre
+       * verificación desde el navegador de Instagram no tiene sesión que
+       * volver a encontrar, porque ese navegador no la guarda.
+       */
+      const destino = falta === 'preguntas' ? '/cuestionario' : '/verificacion'
+      const enlaceSeguir = fila.profile_id
+        ? `${SITIO}${destino}?correo=${encodeURIComponent(a)}`
+        : `${SITIO}/cuestionario?t=${encodeURIComponent(firmar(a))}&correo=${encodeURIComponent(a)}`
+
+      // Cada estado, sus palabras. `bienvenida` es la de Design, intacta.
+      const voces: Record<string, Record<string, string>> = {
+        bienvenida: {
+          asuntoCorreo: 'Tienes puesto',
+          cinta: 'TIENES PUESTO',
+          anticipo: 'Guardamos tu puesto. Te escribimos en cuanto abramos mesa en tu zona.',
+          titularA: 'Ya te guardamos',
+          titularB: 'el',
+          titularC: 'puesto',
+          entradilla: `Gracias por contarnos quién eres${coma}. Con esas cuatro respuestas ya podemos empezar a pensar en tu mesa.`,
+          paso1Titulo: 'Termina tu perfil',
+          paso1: 'Diez preguntas más: de qué hablas, qué comes, qué prefieres esquivar. Es lo que hace que tu mesa no sea al azar.',
+          paso2Titulo: 'Verifica tu identidad',
+          paso2: 'Cédula y una selfie. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
+          boton: 'Completar mi perfil',
+        },
+        // Dejó su correo y no llegó a tener cuenta.
+        perfil: {
+          asuntoCorreo: 'Tu puesto sigue ahí',
+          cinta: 'TU PUESTO SIGUE AHÍ',
+          anticipo: 'No lo hemos dado a nadie. Cuando quieras, sigues donde lo dejaste.',
+          titularA: 'Tu puesto',
+          titularB: 'sigue',
+          titularC: 'ahí',
+          entradilla: `Te quedaste a medias${coma}, y no hemos dado tu puesto a nadie. Cuando quieras, sigues justo donde lo dejaste.`,
+          paso1Titulo: 'Termina tu perfil',
+          paso1: 'Diez preguntas más: de qué hablas, qué comes, qué prefieres esquivar. Es lo que hace que tu mesa no sea al azar.',
+          paso2Titulo: 'Verifica tu identidad',
+          paso2: 'Cédula y una selfie. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
+          boton: 'Seguir donde lo dejé',
+        },
+        // Tiene cuenta y dejó el cuestionario a medias. Hasta hoy no
+        // recibía NADA: el empujón cubría el escalón de antes y el de
+        // después, y no este.
+        preguntas: {
+          asuntoCorreo: 'Te faltan unas preguntas',
+          cinta: 'TE FALTAN PREGUNTAS',
+          anticipo: 'Tu cuenta ya está hecha. Solo quedan las preguntas que dejaste a medias.',
+          titularA: 'Te faltan',
+          titularB: 'unas',
+          titularC: 'preguntas',
+          entradilla: `Tu cuenta ya está hecha${coma}. Lo único que falta para poder pensar en tu mesa son las preguntas que dejaste a medias.`,
+          paso1Titulo: 'Termina tu perfil',
+          paso1: 'Esto es lo que falta: de qué hablas, qué comes, qué prefieres esquivar. Es lo que hace que tu mesa no sea al azar.',
+          paso2Titulo: 'Verifica tu identidad',
+          paso2: 'Después: cédula y una selfie. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
+          boton: 'Seguir con mis preguntas',
+        },
+        // Perfil completo y nada subido. El peor de los tres: está a un
+        // paso de poder apartar puesto.
+        verificacion: {
+          asuntoCorreo: 'Te falta un paso',
+          cinta: 'TE FALTA UN PASO',
+          anticipo: 'Tu perfil está completo. Solo queda verificar quién eres.',
+          titularA: 'Te falta',
+          titularB: 'un',
+          titularC: 'paso',
+          // Dos minutos no es una forma de hablar: es la mediana medida
+          // entre terminar el perfil y subir la cédula, y el p90 son diez.
+          entradilla: `Tu perfil está completo${coma}. Lo único que falta para que puedas apartar puesto es verificar quién eres: una foto de tu cédula y una selfie. Dos minutos.`,
+          paso1Titulo: 'Tu perfil, listo',
+          paso1: 'Ya nos contaste de qué hablas, qué comes y qué prefieres esquivar. Eso no hay que repetirlo.',
+          paso2Titulo: 'Verifica tu identidad',
+          paso2: 'Esto es lo que falta: cédula y una selfie. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
+          boton: 'Verificar mi identidad',
+        },
+      }
+
+      const voz = voces[fila.kind === 'bienvenida' ? 'bienvenida' : falta] ?? voces.perfil
+
       return {
         a,
         datos: {
           ...base,
+          ...voz,
           zonaPrincipal: zonas[0] ?? 'tu zona',
           zonas: zonas.length ? unirCon(zonas, ' o ') : 'tu zona',
           // El pie de la tarjeta. En minúscula, como lo diseñó Design, pero
@@ -336,24 +447,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           pieDeZona: [diaTexto(evento?.starts_at), zonas[0]?.toLowerCase()]
             .filter(Boolean)
             .join(' · ') || 'tu zona',
-          // El botón. NO puede ser `/cuestionario` a secas.
-          //
-          // Este correo lo recibe quien dejó su correo y se quedó a medias: no
-          // tiene cuenta, así que al pulsar no continuaría nada, empezaría de
-          // cero. El token firmado es justo el mecanismo que ya existe para
-          // seguir el alta desde otro dispositivo, y este es su caso exacto.
-          //
-          // Los DOS parámetros, y no solo el token: la pantalla exige correo y
-          // token juntos —la firma se verifica contra la dirección, así que sin
-          // ella no se puede comprobar nada—. Mandando solo `t` no guardaba
-          // sesión y preguntaba «quién eres» a alguien que venía de nuestro propio
-          // correo. Nunca funcionó fuera del navegador donde te apuntaste.
-          //
-          // Y para quien SÍ tiene cuenta —el empujón de «te falta verificar»—
-          // el botón lleva a verificación, que es su siguiente paso de verdad.
-          enlaceSeguir: fila.profile_id
-            ? `${SITIO}/verificacion`
-            : `${SITIO}/cuestionario?t=${encodeURIComponent(firmar(a))}&correo=${encodeURIComponent(a)}`,
+          enlaceSeguir,
         },
       }
     }

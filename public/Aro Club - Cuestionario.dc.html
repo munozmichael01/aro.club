@@ -176,7 +176,7 @@
         <h1 style="font:400 clamp(32px,6.4vw,54px)/1 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance">{{ tituloSinSesion }}</h1>
         <p style="font:400 clamp(16px,1.6vw,19px)/1.55 'Inter Tight',sans-serif;color:#456352;max-width:44ch;margin:16px 0 0;text-wrap:pretty">{{ cuerpoSinSesion }}</p>
         <div style="display:flex;flex-wrap:wrap;gap:11px;margin-top:clamp(26px,3.4vw,34px)">
-          <a href="/entrar" style="display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif">Entrar</a>
+          <a href="{{ enlaceEntrar }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 28px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif">Entrar</a>
           <sc-if value="{{ haySalidaNueva }}" hint-placeholder-val="{{ false }}">
             <a href="/datos" style="display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 24px;border-radius:999px;border:1px solid rgba(20,52,42,.22);color:#1B5138;font:500 16px/1 'Inter Tight',sans-serif">Todavía no tengo cuenta</a>
           </sc-if>
@@ -1236,6 +1236,23 @@ class Component extends DCLogic {
       // A `/datos` solo se manda a quien no ha empezado: quien ya tiene
       // respuestas guardadas tiene cuenta o lead, y lo suyo es entrar.
       haySalidaNueva: !this.state.algoGuardado,
+
+      /**
+       * Y el botón de Entrar, diciendo A DÓNDE y QUIÉN.
+       *
+       * Era `/entrar` a secas, y eso cortaba el hilo dos veces: se entraba y
+       * se acababa en la pantalla de siempre en vez de en el cuestionario, y
+       * había que escribir el correo a mano aunque viniéramos de un enlace
+       * nuestro que ya lo llevaba.
+       *
+       * El correo en la URL no abre ninguna sesión: rellena una casilla.
+       */
+      enlaceEntrar: (function () {
+        var q = new URLSearchParams({ volver: '/cuestionario' });
+        var c = (new URLSearchParams(location.search).get('correo') || '').trim();
+        if (c) q.set('correo', c);
+        return '/entrar?' + q.toString();
+      })(),
 
       hayAviso: !!this.state.falloGuardar,
       textoAviso: this.state.falloGuardar,

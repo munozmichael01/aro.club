@@ -8,46 +8,69 @@ import { createAdminClient } from '@/lib/supabase/admin'
  *
  * Antes salía a los cinco segundos de dejar el correo, mientras la persona
  * estaba en la pantalla siguiente haciendo justo lo que el correo le pedía.
- * Y su contenido no es una bienvenida: es una lista de lo que falta con un
- * botón. Un empujón para volver, enviado a alguien que no se ha ido.
- *
  * Ahora el disparador no es en qué fase estás, sino **si te paraste**. Quien
- * lo hace todo de una sentada no recibe nada, y no le falta: lo siguiente que
- * ocurre de verdad es la revisión de su identidad, que tiene su propio
- * correo.
+ * lo hace todo de una sentada no recibe nada.
  *
- * Dos silencios, el mismo correo con la lista en distinto estado:
+ * TRES silencios, el mismo correo con palabras distintas:
  *
- *   - dejó su dirección y no terminó el perfil
- *   - terminó el perfil y no ha subido nada para verificarse. Este es el peor
- *     de los dos: se queda a un paso de poder reservar y hoy no recibe nada
- *     nunca, porque no hay verificación que aprobar ni cuestionario que
- *     recordarle.
+ *   - dejó su dirección y no llegó a tener cuenta        → `perfil`
+ *   - tiene cuenta y dejó el cuestionario a medias       → `preguntas`
+ *   - terminó el perfil y no ha subido nada para verificarse → `verificacion`
  *
- * Uno por persona. Insistir es lo que convierte un recordatorio en spam.
+ * `preguntas` es nuevo y era un hueco de verdad: el empujón cubría el
+ * escalón de antes y el de después, y a quien se paraba justo en el medio no
+ * le llegaba nada nunca. Eran diez personas reales, varias paradas desde
+ * hacía más de una semana.
  */
 
 export const dynamic = 'force-dynamic'
 
+type Falta = 'perfil' | 'preguntas' | 'verificacion'
+
 /**
- * Margen antes de dar por hecho que se fue. VEINTICUATRO HORAS.
+ * Cuántas horas de silencio antes de cada ola, por estado.
  *
- * Era UNA, y medido no servía de nada: de 29 personas que recibieron el
- * empujón de «te falta verificarte», 26 no subieron la cédula nunca. Las dos
- * que la subieron lo hicieron a los 3 y a los 15 minutos del correo, o sea
- * que ya estaban en mitad del trámite cuando les llegó. Frente al 7% del
- * grupo con empujón, los que se pararon igual y no lo recibieron fueron al
- * 5%: dos puntos, que caben en dos personas.
+ * **La de verificación son DOS**, y la primera vuelve a la hora.
  *
- * A la hora y media de darse de alta —que era la mediana— «me quedé a
- * medias» todavía no es verdad: la persona sigue ahí, o salió a buscar la
- * cédula. A las veinticuatro sí lo es, y entonces el correo cuenta algo que
- * la persona reconoce.
+ * Estuvo en una hora, se midió, y el resultado fue que de 29 personas que
+ * recibieron el empujón de «te falta verificarte» 26 no subieron la cédula
+ * nunca. De ahí salió moverlo a veinticuatro.
  *
- * Si a las dos semanas la cifra de Gente sigue en dos puntos, el problema no
- * es cuándo se manda el recordatorio.
+ * Esa conclusión estaba mal, y la culpa era de este fichero solo a medias:
+ * **aquel correo decía lo que no era**. La plantilla nunca tuvo la rama que
+ * su propio comentario prometía, así que a quien solo le faltaba la cédula
+ * le llegaba, con el asunto «Tienes puesto», una segunda bienvenida que le
+ * pedía terminar un perfil que ya estaba terminado. No se midió el momento:
+ * se midió un correo equivocado. Mover la hora no podía arreglar eso.
+ *
+ * Y lo que sí sabemos del momento apunta al revés: entre terminar el perfil
+ * y subir la cédula la mediana es de DOS MINUTOS y el p90 de diez. Esto se
+ * gana o se pierde en la primera media hora, no al día siguiente.
+ *
+ * Así que la primera ola vuelve a la hora —con el correo ya corregido— y la
+ * segunda se queda a las veinticuatro para quien no volvió con la primera.
+ * Dos y se acabó: insistir es lo que convierte un recordatorio en spam.
  */
-const HORAS_DE_SILENCIO = 24
+const OLAS: Record<Falta, number[]> = {
+  perfil: [24],
+  preguntas: [24],
+  verificacion: [1, 24],
+}
+
+/**
+ * Y un tope por arriba: catorce días.
+ *
+ * El empujón es «te acabas de parar», y ese correo deja de ser verdad en
+ * algún momento. A quien se apuntó hace seis semanas y no volvió no se le
+ * escribe «sigues donde lo dejaste»: eso es una campaña de reactivación,
+ * que es otro correo, otra decisión y otra persona quien la toma.
+ *
+ * Sin este tope, el día que se toca una ola o se añade un estado, la
+ * primera pasada escribe de golpe a todo el que lleve meses parado. Hoy
+ * eso serían unas sesenta personas en un solo minuto, sin que nadie lo
+ * haya pedido.
+ */
+const MAXIMO_DIAS = 14
 
 /**
  * Y no a cualquier hora.
@@ -70,95 +93,189 @@ function horaEnCaracas(d: Date): number {
   return (d.getUTCHours() + 24 - 4) % 24
 }
 
-async function empujar() {
+const HORA = 3600_000
+
+type Candidato = {
+  falta: Falta
+  /** Desde cuándo está parado. En ISO. */
+  desde: string
+  /** Para `encolar` y para la clave de repetición. */
+  perfil?: string
+  correo?: string
+  ciudad?: string
+}
+
+/**
+ * Qué ola le toca, si le toca alguna.
+ *
+ * La MAYOR de las que ya vencieron, y solo si esa no se mandó. Así quien
+ * cruza las veinticuatro horas recibe la segunda y no la primera con
+ * retraso, y quien ya pasó las dos no recibe nada.
+ */
+function olaPendiente(
+  c: Candidato,
+  ahora: number,
+  hechos: Set<string>,
+  antiguos: Set<string>,
+): number | null {
+  const clave = c.perfil ?? c.correo ?? ''
+  // Quien recibió un empujón de este estado ANTES de que hubiera olas no
+  // vuelve a recibir ninguna. Su fila no dice de qué ola era, y la duda se
+  // resuelve del lado de no volver a escribirle.
+  if (antiguos.has(`${clave}|${c.falta}`)) return null
+
+  const edad = (ahora - new Date(c.desde).getTime()) / HORA
+  if (edad > MAXIMO_DIAS * 24) return null
+
+  const vencidas = OLAS[c.falta].filter((h) => edad >= h)
+  const ola = vencidas[vencidas.length - 1]
+  if (ola === undefined) return null
+  return hechos.has(`${clave}|${c.falta}|${ola}`) ? null : ola
+}
+
+async function empujar(seco: boolean) {
   const hora = horaEnCaracas(new Date())
-  if (hora < DESDE_CARACAS || hora >= HASTA_CARACAS) {
-    return NextResponse.json({ fuera_de_hora: hora, perfil: 0, verificacion: 0 })
+  if (!seco && (hora < DESDE_CARACAS || hora >= HASTA_CARACAS)) {
+    return NextResponse.json({ fuera_de_hora: hora, perfil: 0, preguntas: 0, verificacion: 0 })
   }
 
   const admin = createAdminClient()
-  const corte = new Date(Date.now() - HORAS_DE_SILENCIO * 3600_000).toISOString()
+  const ahora = Date.now()
+  const masViejo = new Date(ahora - MAXIMO_DIAS * 24 * HORA).toISOString()
 
   // A quién se le empujó ya. Se pregunta una vez, no una por persona.
   //
   // Por `empujon`, no por `bienvenida`. Preguntando por la bienvenida esto
   // descartaba a TODO el que se hubiera dado de alta —el alta encola la suya
-  // en el segundo cero—, que es exactamente todo el mundo. La consulta se
-  // respondía sola: nadie pasaba de aquí.
-  //
-  // Y por estado, no por persona a secas: quien recibió «te falta el perfil»,
-  // lo terminó y ahora se ha parado en la verificación tiene que poder recibir
-  // el segundo. Lo que no se repite es el mismo empujón.
+  // en el segundo cero—, que es exactamente todo el mundo.
   const { data: yaEmpujados } = await admin
     .from('scheduled_emails')
     .select('email, profile_id, payload')
     .eq('kind', 'empujon')
 
-  const falta = (r: { payload: unknown }) =>
-    (r.payload as { falta?: string } | null)?.falta ?? ''
-  const correosHechos = new Set(
-    (yaEmpujados ?? []).filter((r) => r.email).map((r) => `${r.email}|${falta(r)}`),
-  )
-  const perfilesHechos = new Set(
-    (yaEmpujados ?? []).filter((r) => r.profile_id).map((r) => `${r.profile_id}|${falta(r)}`),
-  )
+  const hechos = new Set<string>()
+  const antiguos = new Set<string>()
+  for (const r of yaEmpujados ?? []) {
+    const p = (r.payload ?? {}) as { falta?: string; ola?: number }
+    const clave = r.profile_id ?? r.email
+    if (!clave || !p.falta) continue
+    if (p.ola === undefined) antiguos.add(`${clave}|${p.falta}`)
+    else hechos.add(`${clave}|${p.falta}|${p.ola}`)
+  }
 
-  // --- 1. dejó su correo y no terminó el perfil -------------------------
+  const candidatos: Candidato[] = []
+
+  // --- 1. dejó su correo y no llegó a tener cuenta ----------------------
   const { data: aMedias } = await admin
     .from('waitlist')
     .select('email, city_slug, created_at')
     .is('converted_profile_id', null)
-    .lt('created_at', corte)
+    .gt('created_at', masViejo)
 
+  for (const l of aMedias ?? []) {
+    if (!l.email) continue
+    candidatos.push({
+      falta: 'perfil',
+      desde: l.created_at,
+      correo: l.email,
+      ciudad: l.city_slug ?? 'caracas',
+    })
+  }
+
+  // --- 2 y 3. los que tienen cuenta ------------------------------------
+  //
+  // `es_prueba` fuera, y aquí y no en `encolar`: la cuenta del revisor de
+  // Apple está marcada de prueba y TIENE que recibir sus correos para que
+  // la revisión funcione. El candado va en lo que no es imprescindible, que
+  // es esto, no en la puerta por donde salen también los acuses.
+  //
+  // Sin este filtro la primera pasada le habría escrito a los catorce
+  // robots de Google Play, que están parados en el cuestionario desde hace
+  // días con cuentas de Gmail de verdad.
+  const { data: conCuenta } = await admin
+    .from('profiles')
+    .select('id, status, created_at')
+    .in('status', ['pending_questionnaire', 'pending_verification'])
+    .eq('es_prueba', false)
+    .is('deleted_at', null)
+    .gt('created_at', masViejo)
+
+  for (const p of conCuenta ?? []) {
+    if (p.status === 'pending_verification') {
+      // Si ya subió algo, está esperando revisión y no hay nada que empujar.
+      const { count } = await admin
+        .from('verifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('profile_id', p.id)
+        .in('status', ['pending', 'approved'])
+
+      if ((count ?? 0) > 0) continue
+      candidatos.push({ falta: 'verificacion', desde: p.created_at, perfil: p.id })
+      continue
+    }
+
+    // `pending_questionnaire`: tiene cuenta y le faltan preguntas.
+    //
+    // El reloj NO es el del alta, es el de la última respuesta que guardó.
+    // Quien ayer contestó cinco y hoy tres está avanzando, y escribirle «te
+    // quedaste a medias» a alguien que estuvo aquí esta mañana es decirle
+    // que no nos enteramos de lo que hace.
+    const { data: ultima } = await admin
+      .from('answers')
+      .select('answered_at')
+      .eq('profile_id', p.id)
+      .order('answered_at', { ascending: false })
+      .limit(1)
+
+    const desde = ultima?.[0]?.answered_at ?? p.created_at
+    candidatos.push({ falta: 'preguntas', desde, perfil: p.id })
+  }
+
+  // --- a encolar -------------------------------------------------------
+  //
   // `repetidos` cuenta lo que chocó con el índice. Sin él, este cron informa
   // de lo que intentó y no de lo que hizo, que es como estuvo diez días
   // diciendo que empujaba a gente sin encolar una sola fila.
+  const cuenta: Record<Falta, number> = { perfil: 0, preguntas: 0, verificacion: 0 }
+  const enSeco: { falta: Falta; ola: number; quien: string; horasParado: number }[] = []
   let repetidos = 0
-  let perfil = 0
-  for (const l of aMedias ?? []) {
-    if (!l.email || correosHechos.has(`${l.email}|perfil`)) continue
-    const r = await encolar({ correo: l.email }, 'empujon', {
-      falta: 'perfil',
-      ciudad: l.city_slug ?? 'caracas',
+
+  for (const c of candidatos) {
+    const ola = olaPendiente(c, ahora, hechos, antiguos)
+    if (ola === null) continue
+
+    if (seco) {
+      enSeco.push({
+        falta: c.falta,
+        ola,
+        quien: c.perfil ?? c.correo ?? '?',
+        horasParado: Math.round((ahora - new Date(c.desde).getTime()) / HORA),
+      })
+      cuenta[c.falta]++
+      continue
+    }
+
+    const destino = c.perfil ? { perfil: c.perfil } : { correo: c.correo as string }
+    const r = await encolar(destino, 'empujon', {
+      falta: c.falta,
+      ola,
+      ...(c.ciudad ? { ciudad: c.ciudad } : {}),
     })
-    if (r === 'encolado') perfil++
+    if (r === 'encolado') cuenta[c.falta]++
     else repetidos++
   }
 
-  // --- 2. terminó el perfil y no se ha verificado -----------------------
-  //
-  // `pending_verification` lo pone `convertir_lead` cuando el perfil llegó
-  // completo, así que ese estado ES la condición: no hace falta recontar
-  // respuestas aquí y arriesgarse a contarlas distinto que Mi cuenta.
-  const { data: sinVerificar } = await admin
-    .from('profiles')
-    .select('id, created_at')
-    .eq('status', 'pending_verification')
-    .is('deleted_at', null)
-    .lt('created_at', corte)
-
-  let verificacion = 0
-  for (const p of sinVerificar ?? []) {
-    if (perfilesHechos.has(`${p.id}|verificacion`)) continue
-
-    // Si ya subió algo, está esperando revisión y no hay nada que empujar.
-    const { count } = await admin
-      .from('verifications')
-      .select('*', { count: 'exact', head: true })
-      .eq('profile_id', p.id)
-      .in('status', ['pending', 'approved'])
-
-    if ((count ?? 0) > 0) continue
-
-    const r = await encolar({ perfil: p.id }, 'empujon', { falta: 'verificacion' })
-    if (r === 'encolado') verificacion++
-    else repetidos++
-  }
-
-  return NextResponse.json({ perfil, verificacion, repetidos })
+  return NextResponse.json({ ...cuenta, repetidos, ...(seco ? { seco: true, enSeco } : {}) })
 }
 
-/** Mismo candado que los otros dos crones. */
+/**
+ * Mismo candado que los otros dos crones, y la misma pasada en seco.
+ *
+ * `?seco=1` calcula a quién le tocaría y no escribe nada. Es la regla de la
+ * casa para cualquier cron que encole, y aquí hacía falta más que en
+ * ninguno: este fichero es el único que le escribe a gente que no ha hecho
+ * nada para recibir un correo.
+ */
 export async function GET(request: Request) {
   const secreto = process.env.CRON_SECRET
   const cabecera = request.headers.get('authorization')
@@ -167,5 +284,5 @@ export async function GET(request: Request) {
     return new NextResponse(null, { status: 404 })
   }
 
-  return empujar()
+  return empujar(new URL(request.url).searchParams.get('seco') === '1')
 }

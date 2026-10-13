@@ -196,8 +196,32 @@ class Component extends DCLogic {
 
     // Y por parámetro, que es como vuelve el callback de Google: `#` se
     // pierde en una redirección de servidor, `?fase=` no.
-    const qf = new URLSearchParams(window.location.search).get('fase');
-    if (['otroCorreo', 'relay'].indexOf(qf) >= 0) this.setState({ fase: qf });
+    const q = new URLSearchParams(window.location.search);
+    const qf = q.get('fase');
+    if (['inicio', 'correo', 'recuperar', 'otroCorreo', 'relay'].indexOf(qf) >= 0) this.setState({ fase: qf });
+
+    /**
+     * Y el correo, si viene en la URL: escrito ya en su casilla.
+     *
+     * Esto es lo que le faltaba a quien llega desde uno de nuestros correos.
+     * Una persona nos escribió el 12-10: «solo faltaba la foto y se salió, y
+     * no sé cómo entrar de nuevo». Había entrado desde el navegador de
+     * Instagram, que no guarda la sesión: al volver no tenía sesión que
+     * recuperar, y esta pantalla le preguntaba quién era sin más pistas.
+     *
+     * Con su dirección delante y la casilla de contraseña abierta, la
+     * pantalla reconoce a quien viene de nuestro correo en vez de recibirlo
+     * como a un desconocido. Si no se acuerda de la clave, «No la recuerdo»
+     * está justo debajo y le manda el enlace a ESA dirección.
+     *
+     * No abre ninguna sesión por sí sola: el correo en la URL no prueba nada
+     * y sigue haciendo falta la contraseña. Es un campo rellenado, no una
+     * llave.
+     */
+    const correoURL = (q.get('correo') || '').trim();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoURL) && !qf && !h) {
+      this.setState({ correo: correoURL, fase: 'correo' });
+    }
   }
 
   componentWillUnmount() { clearTimeout(this._t); }
