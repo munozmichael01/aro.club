@@ -231,17 +231,62 @@ export async function POST(request: Request) {
       })
       .eq('id', pago.id)
 
-    if (pago.booking_id) {
+    /**
+     * ¿Y si canceló mientras esperaba que miráramos su pago?
+     *
+     * Desde el 13-10 el crédito ya no vuelve al cancelar si el pago estaba
+     * en revisión: espera a esta decisión. Así que aquí hay dos caminos.
+     */
+    const { data: reservaDelPago } = pago.booking_id
+      ? await admin.from('bookings').select('status').eq('id', pago.booking_id).maybeSingle()
+      : { data: null }
+    const canceloMientrasTanto = !!reservaDelPago && reservaDelPago.status !== 'confirmed'
+
+    if (pago.booking_id && !canceloMientrasTanto) {
       await admin
         .from('bookings')
         .update({ status: 'confirmed', confirmed_at: ahora, hold_until: null })
         .eq('id', pago.booking_id)
     }
 
-    // Y el libro de créditos, que hasta ahora no se escribía al pagar por
-    // evento: la compra y el cargo, neto cero. Sin esto, una devolución
-    // posterior era un crédito que aparecía de la nada.
-    if (pago.profile_id) await anotarPagoDeEvento(pago.profile_id, pago.booking_id)
+    if (pago.profile_id && !canceloMientrasTanto) {
+      // Y el libro de créditos, que hasta ahora no se escribía al pagar por
+      // evento: la compra y el cargo, neto cero. Sin esto, una devolución
+      // posterior era un crédito que aparecía de la nada.
+      await anotarPagoDeEvento(pago.profile_id, pago.booking_id)
+    }
+
+    if (pago.profile_id && canceloMientrasTanto) {
+      /**
+       * Canceló y su dinero sí era bueno: le queda un crédito.
+       *
+       * Solo la compra, sin el cargo: la silla que pagó no se gastó en
+       * ninguna cena, así que el saldo sube uno de verdad. Y la reserva NO
+       * se reconfirma —se fue a propósito— ni se le devuelve el puesto.
+       *
+       * Idempotente por `booking_id`: confirmar dos veces no puede regalar
+       * dos créditos.
+       */
+      const { data: yaAbonado } = await admin
+        .from('credit_ledger')
+        .select('id')
+        .eq('booking_id', pago.booking_id ?? '')
+        .eq('reason', 'refund')
+        .limit(1)
+        .maybeSingle()
+
+      if (!yaAbonado) {
+        await admin.from('credit_ledger').insert({
+          profile_id: pago.profile_id,
+          delta: 1,
+          reason: 'refund',
+          booking_id: pago.booking_id,
+          note: 'Pago confirmado después de cancelar: el crédito que estaba esperando',
+        })
+      }
+
+      await admin.from('payments').update({ status: 'refunded' }).eq('id', pago.id)
+    }
 
     // CON su evento. Iba con `{}`, y sin evento no hay fecha: la plantilla
     // dice «Tu reserva del {{ cuando }} pasa de pendiente a confirmada» y al

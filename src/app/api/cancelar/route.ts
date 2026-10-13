@@ -204,7 +204,42 @@ export async function POST(request: Request) {
     })
   }
 
-  if (conMargen) {
+  /**
+   * PRIMERO SE VERIFICA EL PAGO, Y LUEGO VUELVE EL CRÉDITO.
+   *
+   * Hasta hoy el crédito volvía al cancelar, pasara lo que pasara con el
+   * dinero. El 13-10 alguien reservó el sábado, reportó su pago, canceló a
+   * los dos minutos y reservó el viernes con el crédito que le volvió: tiene
+   * un puesto confirmado sobre una transferencia que nadie llegó a mirar.
+   *
+   * Un crédito es dinero que VIMOS. Mientras el pago está en revisión no
+   * hemos visto nada, así que no hay nada que devolver todavía.
+   *
+   * Cancelar sigue soltando el puesto al momento: eso no se toca, porque es
+   * lo que deja la silla libre para otro. Lo que espera es el crédito.
+   *
+   * Tres casos:
+   *
+   *   pago confirmado   → el dinero es nuestro: el crédito vuelve ya.
+   *   sin pago          → la pagó con un crédito que ya estaba verificado,
+   *                       así que vuelve ya. No castigamos dos veces.
+   *   pago en revisión  → el crédito ESPERA. Cuando operación confirme ese
+   *                       pago, se lo abona; si no cuadra, nunca existió.
+   */
+  const { data: pagoDeLaReserva } = await admin
+    .from('payments')
+    .select('id, status')
+    .eq('booking_id', reserva.id)
+    .in('status', ['awaiting_proof', 'under_review', 'confirmed'])
+    .order('reportado_en', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const enRevision =
+    pagoDeLaReserva?.status === 'under_review' || pagoDeLaReserva?.status === 'awaiting_proof'
+  const creditoVuelveYa = conMargen && !enRevision
+
+  if (creditoVuelveYa) {
     // El crédito vuelve al libro mayor. No se "suma un crédito": se anota
     // una devolución, que es lo que permite auditar el saldo después.
     await admin.from('credit_ledger').insert({
@@ -218,24 +253,30 @@ export async function POST(request: Request) {
 
   // Y el pago, si lo había: se marca devuelto para que operación lo vea y
   // haga la transferencia de vuelta. El dinero no se mueve solo.
+  //
+  // El que está EN REVISIÓN no se toca: sigue en la cola para que alguien
+  // diga si el dinero llegó. De esa respuesta depende el crédito.
   if (conMargen) {
     await admin
       .from('payments')
       .update({ status: 'refunded' })
       .eq('booking_id', reserva.id)
-      .in('status', ['under_review', 'confirmed'])
+      .eq('status', 'confirmed')
   }
 
   await encolar(
     { perfil: user.id },
     'cancelacion',
-    { conMargen, creditoDevuelto: conMargen },
+    { conMargen, creditoDevuelto: creditoVuelveYa, creditoEnEspera: conMargen && enRevision },
     { eventoId: reserva.event_id },
   )
 
   return NextResponse.json({
     estado: 'cancelada',
-    creditoDevuelto: conMargen,
+    creditoDevuelto: creditoVuelveYa,
+    // Para que la pantalla pueda decir la verdad en vez de prometer un
+    // crédito que todavía no existe.
+    creditoEnEspera: conMargen && enRevision,
     horasQueFaltaban: Math.max(0, Math.round(faltan)),
   })
 }
