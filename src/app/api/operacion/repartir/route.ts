@@ -232,6 +232,57 @@ export async function POST(request: Request) {
 
   const rasgoDe = new Map((rasgosCerrados ?? []).map((r) => [r.profile_id, r]))
 
+  /**
+   * Qué come cada uno, y su cara.
+   *
+   * Las dos cosas son PARA MIRAR, no para repartir: el algoritmo no usa
+   * ninguna. Están aquí porque la decisión que se toma con esta pantalla
+   * delante no termina en «esta mesa cuadra», sigue en «y a qué restaurante
+   * la mando». Hasta ahora eso había que ir a buscarlo perfil por perfil.
+   *
+   * `cuisines` vive en `profile_traits` y NO está en `v_matching_pool`, que
+   * es la vista que alimenta el reparto. No la añado ahí a propósito: meter
+   * una columna en la vista del matcher insinúa que el matcher la usa.
+   */
+  const idsDeLaFecha = [
+    ...new Set([
+      ...idsCerrados,
+      ...pool.personas.map((p) => p.profileId),
+    ]),
+  ]
+
+  const { data: comidas } = idsDeLaFecha.length
+    ? await admin.from('profile_traits').select('profile_id, cuisines').in('profile_id', idsDeLaFecha)
+    : { data: [] }
+  const comidaDe = new Map(
+    (comidas ?? []).map((c) => [c.profile_id, (c.cuisines ?? []) as string[]]),
+  )
+
+  /**
+   * La selfie, firmada por cinco minutos, como en la cola de verificación.
+   *
+   * Solo la aprobada: una pendiente o rechazada no es la cara de un miembro,
+   * es un trámite a medias. Y nunca la cédula: para saber con quién se
+   * sienta alguien basta su cara, y el documento tiene su propia pantalla
+   * con su propio motivo para abrirse.
+   */
+  const { data: selfies } = idsDeLaFecha.length
+    ? await admin
+        .from('verifications')
+        .select('profile_id, storage_path')
+        .eq('kind', 'selfie')
+        .eq('status', 'approved')
+        .not('storage_path', 'is', null)
+        .in('profile_id', idsDeLaFecha)
+    : { data: [] }
+
+  const fotoDe = new Map<string, string>()
+  for (const f of selfies ?? []) {
+    if (!f.storage_path || !f.profile_id) continue
+    const { data } = await admin.storage.from('verificaciones').createSignedUrl(f.storage_path, 300)
+    if (data?.signedUrl) fotoDe.set(f.profile_id, data.signedUrl)
+  }
+
   const cerradas = (yaSentados ?? []).map((t) => {
     const miembros = (t.table_members ?? []) as unknown as {
       profile_id: string
@@ -260,6 +311,8 @@ export async function POST(request: Request) {
           genero: r?.gender ?? null,
           empresa: r?.employer ?? null,
           sector: r?.industry ?? null,
+          comidas: comidaDe.get(m.profile_id) ?? [],
+          foto: fotoDe.get(m.profile_id) ?? null,
         }
       }),
     }
@@ -343,6 +396,13 @@ export async function POST(request: Request) {
       genero: p.genero,
       empresa: p.empresaTexto || p.empresa,
       sector: p.sector,
+      // Qué come. No entra en el reparto —el algoritmo no la mira— pero
+      // decide el restaurante, que es lo que operación hace justo después
+      // de mirar esta pantalla.
+      comidas: comidaDe.get(p.profileId) ?? [],
+      // Su selfie de verificación, firmada y por cinco minutos. Es la única
+      // foto que tenemos de un miembro: no hay foto de perfil.
+      foto: fotoDe.get(p.profileId) ?? null,
     })),
     }
   })

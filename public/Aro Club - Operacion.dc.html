@@ -183,13 +183,24 @@
                   <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(20,52,42,.12)">
                     <sc-for list="{{ t.gente }}" as="g" hint-placeholder-count="6">
                       <div onPointerDown="{{ g.tomar }}" style="{{ g.fila }}">
-                        <span style="{{ g.avatar }}">{{ g.inicial }}</span>
+                        <button onClick="{{ g.verFoto }}" aria-label="Ver la foto de {{ g.nombre }}" style="{{ g.avatar }}">{{ g.inicial }}</button>
                         <span style="flex:1;min-width:0;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ g.nombre }}</span>
                         <span style="font:400 12px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ g.dato }}</span>
                         <a href="{{ g.perfil }}" aria-label="Ver el perfil de {{ g.nombre }}" style="{{ g.enlace }}"><span style="{{ g.circulo }}">→</span></a>
                       </div>
                     </sc-for>
                   </div>
+
+                  <sc-if value="{{ t.hayComidas }}" hint-placeholder-val="{{ true }}">
+                    <div style="margin-top:12px">
+                      <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:8px">COINCIDEN EN</div>
+                      <div style="display:flex;flex-wrap:wrap;gap:6px">
+                        <sc-for list="{{ t.comidas }}" as="c" hint-placeholder-count="3">
+                          <span style="{{ c.chip }}">{{ c.texto }}</span>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-if>
 
                   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:13px">
                     <sc-for list="{{ t.reglas }}" as="r" hint-placeholder-count="7">
@@ -295,6 +306,26 @@
 
         <div style="height:96px"></div>
       </div>
+
+      <!-- La cara de quien se sienta en esta mesa, sin salir de aquí.
+           Es la selfie de verificación: no hay foto de perfil en el
+           producto, y es la única que tenemos. La firma dura cinco minutos.
+           Se cierra tocando fuera, la X o Escape. -->
+      <sc-if value="{{ hayFoto }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ cerrarFoto }}" style="position:fixed;inset:0;z-index:70;background:rgba(10,26,20,.72);display:flex;align-items:center;justify-content:center;padding:20px">
+          <div style="max-width:420px;width:100%;border-radius:26px;background:#FAF3E4;overflow:hidden;box-shadow:0 24px 60px rgba(10,26,20,.4)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px 12px">
+              <div>
+                <div style="font:400 22px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ nombreFoto }}</div>
+                <div style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#566A5D;margin-top:3px">{{ datoFoto }}</div>
+              </div>
+              <button onClick="{{ cerrarFoto }}" aria-label="Cerrar" style="flex:0 0 auto;width:38px;height:38px;border-radius:999px;border:none;background:rgba(20,52,42,.08);color:#14342A;font:500 18px/1 'Inter Tight',sans-serif;cursor:pointer">×</button>
+            </div>
+            <img src="{{{ urlFoto }}}" alt="Selfie de verificación de {{ nombreFoto }}" style="display:block;width:100%;height:auto;background:#E8DEC6" />
+            <div style="padding:12px 18px 16px;font:400 12px/1.5 'Inter Tight',sans-serif;color:#566A5D">Su selfie de verificación. El enlace caduca en cinco minutos.</div>
+          </div>
+        </div>
+      </sc-if>
 
       <sc-if value="{{ hayModal }}" hint-placeholder-val="{{ false }}">
         <div style="position:fixed;inset:0;z-index:60;background:rgba(20,52,42,.44);display:flex;align-items:center;justify-content:center;padding:clamp(16px,4vw,40px)">
@@ -1334,6 +1365,8 @@ class Component extends DCLogic {
     limitado: false, tope: '', precio: undefined,
     fechaCanc: -1, cancelada: '', resueltos: {},
     arrastrando: null, tipoRep: 'todo', confirmar: '', filtroLoc: 'todos',
+    /** La foto que se está mirando en la vista de repartir, o null. */
+    foto: null,
     /**
      * Qué pago está a punto de rechazarse, esperando el segundo clic.
      *
@@ -2516,6 +2549,41 @@ class Component extends DCLogic {
         caja: 'border-radius:24px;padding:clamp(16px,2vw,20px);transition:all 180ms ease;background:' + (recibe ? '#F2E9D5' : '#FAF3E4') + ';border:1px ' + (recibe ? 'dashed #8F4515' : 'solid ' + (pub ? '#1B5138' : (calc ? '#8F4515' : (malas.length ? '#C0662F' : 'rgba(20,52,42,.14)')))),
         numero: 'flex:0 0 auto;width:42px;height:42px;border-radius:999px;background:' + (pub ? '#1B5138' : '#14342A') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:700 15px/1 \'Inter Tight\',sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums',
         sello: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;white-space:nowrap;background:' + (pub ? 'rgba(27,81,56,.13)' : (malas.length ? 'rgba(143,69,21,.13)' : 'rgba(20,52,42,.07)')) + ';color:' + (pub ? '#1B5138' : (malas.length ? '#8F4515' : '#2C4A38')),
+        /**
+         * En qué comida coinciden, y cuántos.
+         *
+         * Es lo que operación hace justo después de mirar esta pantalla:
+         * elegir restaurante. Hasta ahora había que abrir los seis perfiles
+         * uno a uno para saberlo.
+         *
+         * Solo lo que comparten DOS o más: una comida que gusta a una sola
+         * persona no es una coincidencia, es un dato suelto, y seis datos
+         * sueltos no ayudan a elegir nada. Ordenadas de más a menos, y la
+         * que más se repite va marcada.
+         *
+         * Las etiquetas salen de `AroReglas.COCINAS`, que es el mismo
+         * catálogo que usa el cuestionario y la ficha del local. Escribirlas
+         * aquí sería la cuarta copia.
+         */
+        comidas: (function () {
+          const COC = (window.AroReglas && window.AroReglas.COCINAS) || [];
+          const nombre = {};
+          COC.forEach((c) => { nombre[c[1]] = c[0]; });
+          const cuenta = {};
+          g.forEach((p) => (p.comidas || []).forEach((c) => { cuenta[c] = (cuenta[c] || 0) + 1; }));
+          const juntas = Object.keys(cuenta).filter((c) => cuenta[c] >= 2)
+            .sort((a, b) => cuenta[b] - cuenta[a] || (nombre[a] || a).localeCompare(nombre[b] || b));
+          const tope = juntas.length ? cuenta[juntas[0]] : 0;
+          return juntas.map((c) => ({
+            texto: (nombre[c] || c) + ' · ' + cuenta[c],
+            chip: 'display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border-radius:999px;font:' + (cuenta[c] === tope ? '600' : '500') + ' 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:' + (cuenta[c] === tope ? 'rgba(27,81,56,.14)' : 'rgba(20,52,42,.06)') + ';color:' + (cuenta[c] === tope ? '#1B5138' : '#2C4A38'),
+          }));
+        })(),
+        hayComidas: (function () {
+          const cuenta = {};
+          g.forEach((p) => (p.comidas || []).forEach((c) => { cuenta[c] = (cuenta[c] || 0) + 1; }));
+          return Object.keys(cuenta).some((c) => cuenta[c] >= 2);
+        })(),
         gente: g.map((p, i) => ({
           nombre: p.nombre,
           dato: [p.genero === 'mujer' ? 'M' : (p.genero === 'hombre' ? 'H' : '—'), p.edad || '—', p.empresa || p.sector || '—'].join(' · '),
@@ -2524,6 +2592,17 @@ class Component extends DCLogic {
           enlace: 'flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:-9px -9px -9px 0;border-radius:999px',
           circulo: 'width:26px;height:26px;border-radius:999px;background:rgba(20,52,42,.07);color:#1B5138;display:flex;align-items:center;justify-content:center;font:500 12px/1 \'Inter Tight\',sans-serif',
           perfil: '/miembro?id=' + p.profileId,
+          /**
+           * La inicial abre su cara, aquí mismo.
+           *
+           * Es la selfie de verificación: no hay foto de perfil en este
+           * producto, y es la única cara que tenemos. La firma dura cinco
+           * minutos y la pone el servidor.
+           *
+           * Sin foto no hace nada, y el círculo se queda como estaba: un
+           * botón que al pulsarlo no pasa nada es peor que un adorno.
+           */
+          verFoto: () => { if (p.foto) this.setState({ foto: { url: p.foto, nombre: p.nombre, dato: [p.genero === 'mujer' ? 'Mujer' : (p.genero === 'hombre' ? 'Hombre' : ''), p.edad ? p.edad + ' años' : ''].filter(Boolean).join(' · ') } }); },
           fila: 'display:flex;align-items:center;gap:10px;padding:8px 6px;margin:0 -6px;border-radius:12px;border-bottom:1px solid rgba(20,52,42,.09);cursor:' + (pub ? 'default' : 'grab') + ';touch-action:' + (pub ? 'auto' : 'none') + ';background:' + (St.arrastrando === p.profileId ? 'rgba(143,69,21,.1)' : 'transparent'),
           tomar: (e) => { if (!pub) this.tomar(e, p.profileId, m.numero); }
         })),
@@ -2631,6 +2710,7 @@ class Component extends DCLogic {
     zonasRep.forEach((z) => z.mesas.forEach((m) => { if (m.lista) clavesListas.push(m.clave); }));
     const listasParaPublicar = clavesListas.length;
 
+    const laFoto = St.foto;
     const mesaModal = St.confirmar
       ? zonasRep.reduce((a, z) => a.concat(z.mesas), []).filter((m) => m.clave === St.confirmar)[0]
       : null;
@@ -3521,6 +3601,12 @@ class Component extends DCLogic {
       // mesa que rompe reglas de afinidad, o una que sale corta. Decirle
       // «rompe reglas duras» a quien publica cinco de seis es mentirle sobre
       // lo que está aceptando.
+      hayFoto: !!laFoto,
+      urlFoto: laFoto ? laFoto.url : '',
+      nombreFoto: laFoto ? laFoto.nombre : '',
+      datoFoto: laFoto ? laFoto.dato : '',
+      cerrarFoto: () => this.setState({ foto: null }),
+
       tituloModal: !mesaModal ? ''
         : mesaModal.esCorta && !mesaModal.reglas.some((r) => r.chip.indexOf('143,69,21') >= 0)
           ? 'La ' + mesaModal.titulo.toLowerCase() + ' sale con ' + mesaModal.cuantos + ' de ' + mesaModal.porMesa + '.'
