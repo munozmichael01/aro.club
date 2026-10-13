@@ -618,10 +618,33 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
        */
       const { data: cat } = await admin
         .from('verification_rejection_reasons')
-        .select('afecta')
+        .select('afecta, allows_retry')
         .eq('code', (p.motivo as string) ?? '')
         .maybeSingle()
       const afecta = (cat as { afecta?: string } | null)?.afecta ?? 'ambas'
+      const sePuedeRepetir = (cat as { allows_retry?: boolean } | null)?.allows_retry !== false
+
+      /**
+       * El caso no es solo QUÉ foto: es también qué le pasó.
+       *
+       * `afecta` dice cuál, y con eso solo no basta. «Falta la cédula» y «la
+       * foto salió movida» afectan las dos al documento, y un correo que
+       * dice «no se LEE tu cédula» a quien no la ha mandado está hablando
+       * de una foto que no existe.
+       *
+       * Y los dos motivos de sospecha no dejan repetir: ahí el correo no
+       * puede terminar en «repite y seguimos» con un botón a verificación,
+       * porque la pantalla no se lo va a permitir y porque ya le dijimos que
+       * nos escriba. Prometer un camino cerrado es peor que no decir nada.
+       */
+      const codigo = (p.motivo as string) ?? ''
+      const caso = !sePuedeRepetir
+        ? 'sinReintento'
+        : codigo === 'falta-cedula'
+          ? 'faltaDocumento'
+          : codigo === 'falta-selfie'
+            ? 'faltaSelfie'
+            : afecta
 
       const voces: Record<string, Record<string, string>> = {
         id_document: {
@@ -654,11 +677,56 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           laOtra: 'Esta vez hay que mandarlas otra vez',
           consejo: 'Tres cosas ayudan: luz de día, el documento plano sobre una mesa y la cara de frente, sin gorra. La mayoría se aprueba a la segunda.',
         },
+        // No es que esté mal: es que no llegó.
+        faltaDocumento: {
+          asuntoCorreo: 'Nos falta tu documento',
+          cinta: 'FALTA UNA FOTO',
+          anticipo: 'Nos llegó tu selfie, pero no la foto de tu documento.',
+          titularA: 'Nos falta', titularB: 'tu', titularC: 'cédula',
+          boton: 'Subir mi documento',
+          laOtraTitulo: 'Tu selfie',
+          laOtra: 'Guardada, no hace falta repetirla',
+          consejo: 'Vale la cédula venezolana o un pasaporte vigente. Con luz de día, plano sobre una mesa y sin recortar los bordes.',
+        },
+        faltaSelfie: {
+          asuntoCorreo: 'Nos falta tu selfie',
+          cinta: 'FALTA UNA FOTO',
+          anticipo: 'Nos llegó tu documento, pero no tu selfie.',
+          titularA: 'Nos falta', titularB: 'tu', titularC: 'selfie',
+          boton: 'Hacerme la selfie',
+          laOtraTitulo: 'Tu documento',
+          laOtra: 'Guardado, no hace falta repetirlo',
+          consejo: 'De frente, con luz natural y sin gorra ni lentes oscuros. Es para comprobar que eres tú, nada más.',
+        },
+        /**
+         * Sospecha. Aquí no se ofrece repetir NADA.
+         *
+         * La pantalla no se lo permite —`allows_retry` es false— y el correo
+         * que recibió ya le dijo que nos escriba. Un botón «repetir las
+         * fotos» lo mandaría a una puerta cerrada, y los dos motivos de
+         * sospecha comparten mensaje a propósito: uno específico le
+         * enseñaría a quien suplanta qué corregir.
+         */
+        sinReintento: {
+          asuntoCorreo: 'Sobre tu verificación',
+          cinta: 'TU VERIFICACIÓN',
+          anticipo: 'No pudimos verificar tu identidad. Escríbenos y lo revisamos contigo.',
+          titularA: 'Hablemos de', titularB: 'tu', titularC: 'verificación',
+          boton: 'Escribirnos',
+          laOtraTitulo: 'Tus fotos',
+          laOtra: 'Siguen guardadas mientras lo revisamos',
+          consejo: 'Contéstanos a este correo y lo miramos contigo. No hace falta que subas nada más por ahora.',
+        },
       }
-      const voz = voces[afecta] ?? voces.ambas
+      const voz = voces[caso] ?? voces.ambas
       const coma = trato ? `, ${trato}` : ''
-      const queRepetir =
-        afecta === 'ambas' ? 'Repite las dos y seguimos.' : 'Repite solo esa foto y seguimos.'
+      const queRepetir = !sePuedeRepetir
+        ? ''
+        : caso === 'ambas'
+          ? 'Repite las dos y seguimos.'
+          : caso === 'faltaDocumento' || caso === 'faltaSelfie'
+            ? 'Mándala y seguimos.'
+            : 'Repite solo esa foto y seguimos.'
 
       let notaRevisor = ''
       if (fila.profile_id) {
@@ -678,7 +746,12 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           ...base,
           ...voz,
           motivo,
-          entradilla: `No es un rechazo${coma}: ${motivo} ${queRepetir}`,
+          // «No es un rechazo» solo cuando de verdad no lo es. Decírselo a
+          // quien no puede volver a intentarlo es quitarle importancia a lo
+          // único que el correo tenía que dejar claro.
+          entradilla: sePuedeRepetir
+            ? `No es un rechazo${coma}: ${motivo} ${queRepetir}`.trim()
+            : `${motivo.replace(/^No pudimos/, `No pudimos${coma ? coma + ',' : ''}`)}`.trim(),
           notaRevisor,
         },
       }
