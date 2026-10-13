@@ -339,11 +339,26 @@ async function empujar(seco: boolean) {
     }
 
     const destino = c.perfil ? { perfil: c.perfil } : { correo: c.correo as string }
-    const r = await encolar(destino, 'empujon', {
-      falta: c.falta,
-      ola,
-      ...(c.ciudad ? { ciudad: c.ciudad } : {}),
-    })
+    const r = await encolar(
+      destino,
+      'empujon',
+      { falta: c.falta, ola, ...(c.ciudad ? { ciudad: c.ciudad } : {}) },
+      /**
+       * A la cola, no en el acto.
+       *
+       * `encolar` manda al momento cuando no se le da hora, y eso está bien
+       * para lo que contesta a algo que la persona acaba de hacer: quien
+       * sube su cédula y no recibe nada en quince minutos piensa que no
+       * funcionó. El empujón es lo contrario: nadie lo está esperando.
+       *
+       * Y con sesenta destinatarios cada envío en línea es una pasada
+       * entera de la cola DENTRO de este cron. Sesenta pasadas seguidas es
+       * quedarse sin tiempo de función a mitad de la lista. Noventa
+       * segundos lo deja para la pasada de la cola, que es de quien es ese
+       * trabajo y que ya movió casi quinientos correos en un día.
+       */
+      { cuando: new Date(Date.now() + 90_000) },
+    )
     if (r === 'encolado') cuenta[c.falta]++
     else repetidos++
   }
