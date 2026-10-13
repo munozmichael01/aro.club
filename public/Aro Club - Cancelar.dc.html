@@ -128,7 +128,17 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { fase: 0, tarde: false, motivo: -1, datos: null, cancelando: false, fallo: '' };
+  /**
+   * `esperando` es el tercer estado del crédito, y sin él la pantalla mentía.
+   *
+   * Desde el 13-10 el crédito no vuelve si el pago seguía en revisión: espera
+   * a que operación lo confirme. Esta pantalla solo sabía de dos estados
+   * —vuelve o se pierde— así que a quien cancelaba A TIEMPO con el pago sin
+   * revisar le decía «Tu crédito: se pierde». Decirle a alguien que perdió su
+   * dinero cuando lo que pasa es que todavía no lo hemos mirado es lo peor
+   * que puede decir esta pantalla.
+   */
+  state = { fase: 0, tarde: false, esperando: false, motivo: -1, datos: null, cancelando: false, fallo: '' };
 
   componentDidMount() {
     // Si hay margen o no lo decide el servidor contra la hora de la cena.
@@ -150,7 +160,7 @@ class Component extends DCLogic {
       .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
       .then(({ ok, x }) => {
         if (!ok) { this.setState({ cancelando: false, fallo: x.error || 'No pudimos cancelar.' }); return; }
-        this.setState({ cancelando: false, fase: 2, tarde: !x.creditoDevuelto });
+        this.setState({ cancelando: false, fase: 2, tarde: !x.creditoDevuelto && !x.creditoEnEspera, esperando: !!x.creditoEnEspera });
       })
       .catch(() => this.setState({ cancelando: false, fallo: 'No pudimos cancelar.' }));
   }
@@ -159,6 +169,7 @@ class Component extends DCLogic {
     const d = this.state.datos;
     const f = this.state.fase;
     const tarde = this.state.tarde;
+    const esperando = this.state.esperando;
     const fases = ['CON MARGEN', 'MENOS DE 24 H', 'CANCELADO'];
 
     const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
@@ -207,10 +218,12 @@ class Component extends DCLogic {
       bajada: 'font:400 17px/1.55 \'Inter Tight\',sans-serif;color:#2C4A38;max-width:46ch;margin:14px 0 0;text-wrap:pretty',
       bajadaTexto: tarde
         ? 'Faltan menos de 24 horas y la mesa ya está armada con tu nombre.'
+        : esperando
+        ? 'Cancelas con margen. Tu crédito vuelve en cuanto confirmemos tu pago.'
         : 'Todavía estás a tiempo de recuperar el crédito completo.',
 
-      etiquetaCredito: tarde ? 'Tu crédito' : 'Tu crédito',
-      valorCredito: tarde ? 'Se pierde' : 'Vuelve entero',
+      etiquetaCredito: 'Tu crédito',
+      valorCredito: tarde ? 'Se pierde' : esperando ? 'Vuelve al confirmar tu pago' : 'Vuelve entero',
       estiloCredito: 'font:600 16px/1.4 \'Inter Tight\',sans-serif;color:' + (tarde ? '#6E340F' : '#1B5138'),
 
       cajaAviso: 'display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:' + (tarde ? 'rgba(143,69,21,.1)' : 'rgba(27,81,56,.09)') + ';padding:14px 16px;margin-top:14px',
@@ -218,6 +231,8 @@ class Component extends DCLogic {
       glifoAviso: tarde ? '!' : '✓',
       textoAviso: tarde
         ? 'Con menos de 24 horas el crédito no se devuelve: el restaurante ya tiene la reserva y los otros cinco cuentan con seis. Aun así, cancelar es mejor que no aparecer: un puesto vacío se nota en una mesa de seis.'
+        : esperando
+        ? 'Tu puesto queda libre ya. El crédito está esperando a que alguien compruebe tu transferencia, y en cuanto lo haga te lo abonamos entero. No tienes que hacer nada.'
         : 'Cancelas con margen, así que el crédito vuelve entero a tu cuenta y no pasa nada. Nadie de la mesa se entera.',
 
       botonCancelar: btn(tarde ? '#6E340F' : '#14342A', '#FFF8EA', 'none'),
