@@ -93,6 +93,24 @@
    */
   var DE_FUERA_PERO_NUESTROS = ['https://unpkg.com'];
 
+  /**
+   * El navegador de Instagram en iOS, que NO se delata por el origen.
+   *
+   * En Android ese navegador carga su medidor como `iabjs://…` y la regla
+   * del origen lo caza. En iPhone lo INYECTA DENTRO del documento, así que
+   * sus errores llegan con origen `https://aro.club/:1:1325` y la regla del
+   * origen dice que son nuestros. Resultado: a las 3:10 de la madrugada del
+   * 13-10 salió un correo por un `window.webkit.messageHandlers` que no es
+   * nuestro y que no podemos arreglar.
+   *
+   * Lo que sí lo delata son sus nombres. `sendDataToNative`,
+   * `sendPageHideMessage` y compañía son el puente de la app con lo nativo,
+   * y `window.webkit.messageHandlers` es ese puente en iOS. No existe nada
+   * con esos nombres en este repo, comprobado, y no puede existir: no
+   * tenemos puente nativo en la web.
+   */
+  var PUENTES_DE_APP = /\b(?:sendDataToNative|sendPageHideMessage|sendBeforeUnloadMessage|sendJsBlockingTimeMessage|webkit\.messageHandlers|ReactNativeWebView)\b/;
+
   function deFuera(fichero, mensaje, pila) {
     // «Script error.» sin fichero: el error opaco que da un script de otro
     // dominio. Nunca dice nada —ni línea, ni pila— y nunca es accionable.
@@ -111,8 +129,10 @@
       }
     }
 
-    // Sin fichero, lo que queda es la pila.
-    return ESQUEMAS_AJENOS.test(String(fichero || '') + ' ' + String(pila || ''));
+    // Sin fichero, lo que queda es el texto: el esquema raro, o el nombre
+    // del puente de una app.
+    var texto = String(fichero || '') + ' ' + String(pila || '') + ' ' + String(mensaje || '');
+    return ESQUEMAS_AJENOS.test(texto) || PUENTES_DE_APP.test(texto);
   }
 
   function pantalla() {

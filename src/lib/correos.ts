@@ -377,7 +377,52 @@ export async function despacharPendientes(
     if (seco && filaId) consulta = consulta.eq('id', filaId)
     else consulta = consulta.lte('send_at', new Date().toISOString())
 
-    const { data: pendientes } = await consulta.order('send_at').limit(25)
+    /**
+     * Veinticinco por pasada, y los ACUSES primero.
+     *
+     * El 13-10 salieron 117 empujones de golpe a las 8:02. La cola es de 25
+     * por vuelta y va por `send_at`, así que los tres correos que llegaron
+     * detrás —un «tu cuenta está lista» y dos bienvenidas— se quedaron
+     * esperando a que drenara: 16, 15 y 14 minutos.
+     *
+     * Y ese es exactamente el fallo que `encolar` vino a arreglar, escrito
+     * dos pantallas más arriba: «un acuse que contesta a algo que la persona
+     * acaba de hacer no puede tardar un cuarto de hora, no se lee como una
+     * cola, se lee como que no funcionó». Quien acaba de subir su cédula y
+     * no recibe nada en quince minutos piensa que no funcionó.
+     *
+     * Así que la pasada se parte en dos: primero lo que contesta a alguien,
+     * y con lo que sobre, el bulto. Un empujón esperando un cuarto de hora
+     * no se lo nota nadie; una bienvenida, sí.
+     *
+     * Ordenar por `send_at` dentro de cada grupo se mantiene: dentro de lo
+     * que contesta, lo más viejo primero.
+     */
+    const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima'] as const
+    const TOPE = 25
+
+    const { data: acuses } = await consulta
+      .not('kind', 'in', `(${DE_BULTO.join(',')})`)
+      .order('send_at')
+      .limit(TOPE)
+
+    let pendientes = acuses ?? []
+
+    if (pendientes.length < TOPE) {
+      // `consulta` ya se consumió arriba, así que el bulto se pide aparte
+      // con los mismos filtros.
+      let delBulto = admin
+        .from('scheduled_emails')
+        .select('id, profile_id, email, kind, event_id, payload, push_at, push_motivo')
+        .is('sent_at', null)
+        .in('kind', DE_BULTO)
+
+      if (seco && filaId) delBulto = delBulto.eq('id', filaId)
+      else delBulto = delBulto.lte('send_at', new Date().toISOString())
+
+      const { data: resto } = await delBulto.order('send_at').limit(TOPE - pendientes.length)
+      pendientes = [...pendientes, ...(resto ?? [])]
+    }
 
     let mandados = 0
     // Las push que salieron en esta vuelta. Se cuentan aparte del correo: son
