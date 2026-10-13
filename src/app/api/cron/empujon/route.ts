@@ -56,14 +56,24 @@ const OLAS: Record<Falta, number[]> = {
   preguntas: [24],
   verificacion: [1, 24],
   /**
-   * El rechazo espera DOS DÍAS, y una sola vez.
+   * El rechazo espera UN DÍA, y una sola vez.
    *
-   * Al rechazar una foto sale ya un correo contándolo, con el motivo del
-   * catálogo. Este no repite aquello: pregunta si pudo. A la hora sería
-   * pisarle el correo que acaba de recibir; a los dos días es acordarse de
-   * alguien que se quedó a medio camino.
+   * Estuvo en dos, y no había con qué defenderlo: han existido CINCO
+   * rechazos en toda la historia del club, de cuatro personas, los cuatro
+   * esta noche, y ninguna ha vuelto todavía. Cero datos. Los dos días
+   * salieron de un razonamiento —«no le pises el correo de rechazo que
+   * acaba de recibir»— y ese razonamiento ya lo cubre el silencio de veinte
+   * horas, que es independiente de esta cuenta.
+   *
+   * Lo único medido que se le parece dice lo contrario: entre terminar el
+   * perfil y subir la cédula la mediana son dos minutos. Quien va a repetir
+   * una foto no tarda día y medio en decidirse, y a los dos días el correo
+   * llega cuando la persona ya cerró el asunto.
+   *
+   * A la hora no, eso sí: al rechazar sale ya un correo con el motivo, y
+   * uno detrás sería repetirle lo que acaba de leer.
    */
-  rechazo: [48],
+  rechazo: [24],
 }
 
 /**
