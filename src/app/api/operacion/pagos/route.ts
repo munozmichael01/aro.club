@@ -240,7 +240,22 @@ export async function POST(request: Request) {
     const { data: reservaDelPago } = pago.booking_id
       ? await admin.from('bookings').select('status').eq('id', pago.booking_id).maybeSingle()
       : { data: null }
-    const canceloMientrasTanto = !!reservaDelPago && reservaDelPago.status !== 'confirmed'
+    /**
+     * CANCELADA de verdad, no «cualquier cosa que no sea confirmada».
+     *
+     * Escribí `status !== 'confirmed'` y eso es todo lo contrario de lo que
+     * quería decir: una reserva que ESPERA el pago está en
+     * `pending_payment`, que es justamente el caso normal al llegar aquí.
+     * Así que cada confirmación corriente entraba por la rama de «canceló
+     * mientras tanto»: le abonaba un crédito que no le toca, marcaba su pago
+     * como devuelto y NO confirmaba su reserva, mientras el correo le decía
+     * que su puesto estaba apartado.
+     *
+     * Le pasó a dos personas en los cuatro minutos que estuvo vivo.
+     */
+    const CANCELADAS = ['cancelled_by_user', 'cancelled_by_ops']
+    const canceloMientrasTanto =
+      !!reservaDelPago && CANCELADAS.includes(String(reservaDelPago.status))
 
     if (pago.booking_id && !canceloMientrasTanto) {
       await admin
