@@ -929,8 +929,12 @@ class Component extends DCLogic {
        */
       const eMin = c[8];
       const eMax = c[9];
+      // «+40», y nada más. `c[1]` es el nombre de la FAMILIA —«Cenas», en
+      // plural— así que pegarle la palabra delante daba «CENAS +40». El
+      // tipo ya está escrito justo al lado; la etiqueta solo tiene que
+      // decir lo que esa fecha tiene de distinto.
       const etiquetaEdad = eMin != null && eMax != null
-        ? eMin + ' a ' + eMax
+        ? eMin + '-' + eMax
         : eMin != null
         ? '+' + eMin
         : eMax != null
@@ -940,9 +944,19 @@ class Component extends DCLogic {
       g.eventos.push({
         hayEdad: !!etiquetaEdad,
         etiquetaEdad,
-        // El mismo naranja de la cinta de los correos y de los acentos de
-        // esta pantalla. Sin emoji: es un dato, no una decoración.
-        estiloEdad: 'display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;border:1px solid rgba(143,69,21,.35);background:rgba(143,69,21,.07);font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.02em;color:#8F4515;white-space:nowrap',
+        /**
+         * MACIZA, no un contorno suave.
+         *
+         * Nació como una etiqueta discreta y eso era leerla mal: esto no es
+         * un detalle de la fecha, es la razón por la que esa persona debería
+         * elegir ESTA y no la de al lado. Con dos sábados 17 seguidos en la
+         * misma pantalla —misma hora, mismas zonas— un contorno fino no
+         * distingue nada.
+         *
+         * El naranja relleno con crema encima es el mismo tratamiento que la
+         * cinta de los correos de Design. Sin emoji: es un dato.
+         */
+        estiloEdad: 'display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:#8F4515;font:700 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;color:#FAF3E4;white-space:nowrap;text-transform:uppercase',
         tipo: c[1], cuando: c[2], zona: c[3], glifo: cerrada ? '·' : (mia ? '✓' : m[0]),
         enlace: '/',
         estado: cerrada
