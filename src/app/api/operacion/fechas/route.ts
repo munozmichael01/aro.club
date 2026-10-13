@@ -145,11 +145,11 @@ async function avisarDeLaApertura(
   // interesa no recibe, y las cuentas de prueba tampoco.
   const { data: evFormato } = await admin
     .from('events')
-    .select('format')
+    .select('format, starts_at, age_band_min, age_band_max')
     .eq('id', eventoId)
     .maybeSingle()
 
-  const quieren = await quienQuiereSaberDe(interesados, evFormato?.format)
+  const quieren = await quienQuiereSaberDe(interesados, evFormato?.format, evFormato)
   if (!quieren.size) return 0
 
   const { data: perfiles } = await admin
@@ -278,6 +278,19 @@ const cuerpo = z.object({
     })
     .nullable()
     .optional(),
+  /**
+   * Para qué edades es, si es para algunas.
+   *
+   * Va en `events.age_band_min` / `age_band_max`, que estaban en el esquema
+   * inicial sin usar: la banda de edad estaba prevista desde el principio y
+   * se quedó sin cablear. Una `edad_minima` nueva al lado habría sido un
+   * segundo sitio diciendo lo mismo.
+   *
+   * Las dos opcionales y las dos nulables: una «Cena +40» pone solo el
+   * mínimo, y el día que haya una de 25 a 35 ya cabe sin otra migración.
+   */
+  edadMinima: z.number().int().min(18).max(99).nullable().optional(),
+  edadMaxima: z.number().int().min(18).max(99).nullable().optional(),
   // Dónde puede caer. El local es OPCIONAL aquí a propósito.
   //
   // Elegirlo al abrir es elegirlo a ciegas: la decisión buena depende de
@@ -324,7 +337,7 @@ export async function GET() {
 
   const { data: eventos } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug, es_prueba')
+    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug, es_prueba, age_band_min, age_band_max')
     .in('status', ['draft', 'open', 'locked', 'matched'])
     .order('starts_at', { ascending: true })
 
@@ -429,6 +442,10 @@ export async function GET() {
       estado: e.status,
       porMesa: e.seats_per_table ?? 6,
       precioUsd: e.price_usd != null ? Number(e.price_usd) : null,
+      // Para qué edades es, si es para algunas. La columna ya existía en el
+      // esquema inicial, sin cablear: `age_band_min` / `age_band_max`.
+      edadMinima: e.age_band_min ?? null,
+      edadMaxima: e.age_band_max ?? null,
       actividad: e.activity ?? null,
       apuntados: suPool.length,
       publicadas: susMesas.length,
@@ -625,6 +642,8 @@ export async function POST(request: Request) {
       price_usd: d.precioUsd,
       seats_per_table: d.porMesa,
       activity: d.actividad ?? null,
+      age_band_min: d.edadMinima ?? null,
+      age_band_max: d.edadMaxima ?? null,
       status: 'open',
     } as never)
     .select('id')
@@ -724,6 +743,18 @@ const sitio = z.discriminatedUnion('accion', [
    * y vale mientras la fecha no haya cerrado: avisar de algo a lo que ya no
    * se puede uno apuntar es mandar a la gente a una puerta cerrada.
    */
+  /**
+   * Cambiar para qué edades es una fecha ya abierta.
+   *
+   * Nulo para quitarla, que es la única forma de deshacer un «+40» puesto
+   * por error sin borrar la fecha y perder a quien ya se apuntó.
+   */
+  z.object({
+    accion: z.literal('banda-edad'),
+    eventoId: z.string().uuid(),
+    edadMinima: z.number().int().min(18).max(99).nullable(),
+    edadMaxima: z.number().int().min(18).max(99).nullable(),
+  }),
   z.object({
     accion: z.literal('avisar'),
     eventoId: z.string().uuid(),
@@ -756,6 +787,36 @@ export async function PATCH(request: Request) {
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
   if (evento.status === 'cancelled') {
     return NextResponse.json({ error: 'Esa fecha está cancelada.' }, { status: 409 })
+  }
+
+  if (d.accion === 'banda-edad') {
+    if (d.edadMinima != null && d.edadMaxima != null && d.edadMinima > d.edadMaxima) {
+      return NextResponse.json({ error: 'La edad mínima no puede ser mayor que la máxima.' }, { status: 400 })
+    }
+
+    const { error } = await admin
+      .from('events')
+      .update({ age_band_min: d.edadMinima, age_band_max: d.edadMaxima } as never)
+      .eq('id', d.eventoId)
+
+    if (error) {
+      console.error('[fechas] no se pudo poner la banda de edad', error)
+      return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+    }
+
+    /**
+     * Y se deja escrito quién la puso.
+     *
+     * Una fecha que de pronto deja fuera a tres de cada cuatro miembros no
+     * puede ser un cambio sin firma: el día que alguien pregunte por qué no
+     * ve el sábado, la respuesta tiene que estar en algún sitio.
+     */
+    await anotar(actor, 'banda_de_edad', 'evento', d.eventoId, {
+      edadMinima: d.edadMinima,
+      edadMaxima: d.edadMaxima,
+    })
+
+    return NextResponse.json({ ok: true, edadMinima: d.edadMinima, edadMaxima: d.edadMaxima })
   }
 
   if (d.accion === 'avisar') {

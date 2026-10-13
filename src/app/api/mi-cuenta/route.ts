@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { cabeEnLaFecha } from '@/lib/edad'
+
 import { situacionDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
@@ -194,7 +196,7 @@ export async function GET() {
   // gente.
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status')
+    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max')
     // Las de prueba no son de nadie más que de quien las creó.
     .eq('es_prueba', false)
     // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
@@ -211,7 +213,32 @@ export async function GET() {
     .order('starts_at', { ascending: true })
     .limit(12)
 
-  const idsFechas = (fechas ?? []).map((f) => f.id)
+  const { data: misReservas } = await admin
+    .from('bookings')
+    .select('event_id')
+    .eq('profile_id', user.id)
+    .in('status', ['confirmed', 'attended'])
+
+  const mias = new Set((misReservas ?? []).map((b) => b.event_id))
+
+  /**
+   * Y las que piden una edad, solo a quien la tiene.
+   *
+   * El candado de verdad está en `/api/reservar` y en `/api/pago` —esto es
+   * una lista, no una puerta— pero enseñarle una cena de mayores de 40 a
+   * quien tiene 25 es ofrecerle algo que al pulsar le vamos a negar. La
+   * forma honesta de cerrar una puerta es no pintarla.
+   *
+   * Las SUYAS no se esconden nunca, caiga quien caiga: si alguien ya está
+   * apuntado a una fecha, hacerla desaparecer de su agenda es la peor forma
+   * de contarle que algo cambió. Es la misma razón por la que las fechas
+   * cerradas se siguen viendo.
+   */
+  const fechasVisibles = (fechas ?? []).filter(
+    (f) => cabeEnLaFecha(perfil.birthdate, f) || mias.has(f.id),
+  )
+
+  const idsFechas = fechasVisibles.map((f) => f.id)
 
   const { data: apuntadosPorFecha } = await admin
     .from('bookings')
@@ -223,14 +250,6 @@ export async function GET() {
   for (const b of apuntadosPorFecha ?? []) {
     cuentaPorFecha.set(b.event_id, (cuentaPorFecha.get(b.event_id) ?? 0) + 1)
   }
-
-  const { data: misReservas } = await admin
-    .from('bookings')
-    .select('event_id')
-    .eq('profile_id', user.id)
-    .in('status', ['confirmed', 'attended'])
-
-  const mias = new Set((misReservas ?? []).map((b) => b.event_id))
 
   // Las zonas de cada fecha, para decir dónde es sin prometer un sitio.
   const { data: sedesFechas } = await admin
@@ -369,7 +388,7 @@ export async function GET() {
     perfil.city_slug,
     proxima?.city_slug,
     evento?.city_slug,
-    ...(fechas ?? []).map((f) => f.city_slug),
+    ...fechasVisibles.map((f) => f.city_slug),
     ...(todasSusReservas ?? []).map(
       (b) => (b.events as unknown as { city_slug?: string } | null)?.city_slug,
     ),
@@ -420,7 +439,7 @@ export async function GET() {
         mesaUnica: revelada && unicas.has(claveDeMesa(b.event_id, mesa?.restaurant_id ?? null)),
       }
     }),
-    agenda: (fechas ?? []).map((f) => ({
+    agenda: fechasVisibles.map((f) => ({
       id: f.id,
       formato: f.format,
       empiezaEn: f.starts_at,
@@ -445,6 +464,10 @@ export async function GET() {
       // Si ya está apuntada, la tarjeta lo dice en vez de ofrecerle
       // reservar otra vez.
       mia: mias.has(f.id),
+      // Para qué edades es, si es para algunas. La app ya lo lee y pinta
+      // «Cena +40». Aditivo: quien no lo lea sigue igual.
+      edadMinima: f.age_band_min ?? null,
+      edadMaxima: f.age_band_max ?? null,
     })),
     proximaFecha: proxima
       ? {

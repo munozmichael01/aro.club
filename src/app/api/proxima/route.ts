@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 
+import { cabeEnLaFecha } from '@/lib/edad'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 
 /**
@@ -16,18 +18,60 @@ import { zonaDeCiudad } from '@/lib/zona-ciudad'
  * Solo lo que ya es público —cuándo empieza y cuándo cierra—. Ni el
  * restaurante ni cuánta gente va: eso se sabe después de reservar, y esta
  * ruta la puede leer cualquiera.
+ *
+ * Y DINÁMICA desde que hay bandas de edad. Era una respuesta igual para todo
+ * el mundo y se podía cachear; ahora una fecha de mayores de 40 se le enseña
+ * a quien los tiene y no al resto, así que depende de la sesión.
  */
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
-  const { data } = await createAdminClient()
+  const admin = createAdminClient()
+
+  /**
+   * Quién pregunta, SI hay alguien. Esta ruta es pública: la portada la
+   * necesita sin sesión y eso no cambia.
+   */
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { data: nacimiento } = user
+    ? await admin.from('profiles').select('birthdate').eq('id', user.id).maybeSingle()
+    : { data: null }
+
+  /**
+   * Varias, no una, y se elige la primera que esta persona pueda reservar.
+   *
+   * Pidiendo `limit(1)` y descartándola después, una fecha de mayores de 40
+   * dejaba la portada sin cuenta atrás para todo el que no los tuviera —y
+   * hay otra fecha abierta detrás que sí puede reservar—. Decir «no hay
+   * fecha» teniéndola es la misma mentira que esta ruta vino a arreglar.
+   *
+   * Cinco: con dos o tres fechas abiertas a la vez, sobra.
+   */
+  const { data: abiertas } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, reveal_at, format, city_slug')
+    .select('id, starts_at, booking_closes_at, reveal_at, format, city_slug, age_band_min, age_band_max')
     .eq('status', 'open')
     // Y nunca una de prueba, aunque alguien la deje en `open` por error.
     .eq('es_prueba', false)
     .gt('booking_closes_at', new Date().toISOString())
     .order('starts_at', { ascending: true })
-    .limit(1)
-    .maybeSingle()
+    .limit(5)
+
+  /**
+   * Sin sesión, ninguna fecha con banda.
+   *
+   * No sabemos quién mira, y anunciar en la portada como «la próxima» una
+   * cena a la que la mayoría no puede ir es prometer algo que la pantalla
+   * de reservar va a negar. Quien tenga la edad la verá en cuanto entre.
+   */
+  const data =
+    (abiertas ?? []).find((e) =>
+      user ? cabeEnLaFecha(nacimiento?.birthdate, e) : !e.age_band_min && !e.age_band_max,
+    ) ?? null
 
   // En qué hora habla esta fecha. Viaja con ella y no en la raíz: una
   // persona puede tener una cena en Caracas y otra en otra ciudad.
@@ -49,5 +93,9 @@ export async function GET() {
     revelaEn: data?.reveal_at ?? null,
     zonaHoraria,
     formato: data?.format ?? null,
+    // Para qué edades es, si es para algunas. La app lo pinta como «Cena
+    // +40»; quien no lo lea sigue igual.
+    edadMinima: data?.age_band_min ?? null,
+    edadMaxima: data?.age_band_max ?? null,
   })
 }

@@ -48,7 +48,7 @@ async function avisar(seco: boolean) {
 
   const { data: eventos } = await admin
     .from('events')
-    .select('id, booking_closes_at, format')
+    .select('id, booking_closes_at, format, starts_at, age_band_min, age_band_max')
     .eq('status', 'open')
     .gt('booking_closes_at', new Date(ahora).toISOString())
     .lte('booking_closes_at', new Date(ahora + ANTELACION).toISOString())
@@ -105,7 +105,7 @@ async function avisar(seco: boolean) {
     // Y de esos, quien quiere saber de ESTE plan y no es una cuenta de
     // prueba. Las dos reglas viven en `a-quien-avisar` porque son las mismas
     // que `abrimos_zona`, que tenia el mismo hueco.
-    const quieren = await quienQuiereSaberDe([...puede], ev.format)
+    const quieren = await quienQuiereSaberDe([...puede], ev.format, ev)
     if (!quieren.size) continue
 
     const { data: perfiles } = await admin

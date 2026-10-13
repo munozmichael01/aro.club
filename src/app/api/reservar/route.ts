@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+
+import { cabeEnLaFecha, MOTIVO_EDAD, porQueNoCabe, tieneBanda } from '@/lib/edad'
 import { z } from 'zod'
 
 import { situacionDePerfil } from '@/lib/embudo'
@@ -41,7 +43,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, credit_cost, status')
+    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -122,7 +124,7 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, booking_closes_at, credit_cost, status')
+    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -135,6 +137,34 @@ export async function POST(request: Request) {
       { error: 'Esa fecha ya cerró.', motivo: 'fecha-cerrada' },
       { status: 409 },
     )
+  }
+
+  /**
+   * La edad, ANTES que el embudo y que las zonas.
+   *
+   * Es la misma regla que puso el nacimiento en la primera pregunta del
+   * cuestionario: no se deja a nadie invertir esfuerzo antes de la puerta
+   * que puede rechazarlo. A alguien de 25 no se le dice «termina tus
+   * diecisiete preguntas y verifica tu identidad» para contarle después que
+   * esta cena no era para él.
+   *
+   * Solo decide cuando sabemos la fecha de nacimiento. Si no la hay, sigue
+   * y contesta el embudo, que es quien sabe decirle lo que le falta — y
+   * nadie pasa el embudo sin nacimiento, porque es obligatoria.
+   */
+  if (tieneBanda(evento)) {
+    const { data: quien } = await admin
+      .from('profiles')
+      .select('birthdate')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (quien?.birthdate && !cabeEnLaFecha(quien.birthdate, evento)) {
+      return NextResponse.json(
+        { error: porQueNoCabe(evento), motivo: MOTIVO_EDAD },
+        { status: 409 },
+      )
+    }
   }
 
   // Antes que las zonas, a propósito.
@@ -180,6 +210,29 @@ export async function POST(request: Request) {
     )
   }
 
+
+  /**
+   * Y el cinturón, pasado el embudo: en una fecha con banda, sin fecha de
+   * nacimiento no se entra.
+   *
+   * Hoy no puede ocurrir —el nacimiento es obligatorio y `puedeReservar` lo
+   * exige— y por eso mismo está escrito aquí: el día que una de las dos
+   * cosas cambie, esto falla cerrando y no abriendo.
+   */
+  if (tieneBanda(evento)) {
+    const { data: quien } = await admin
+      .from('profiles')
+      .select('birthdate')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (!cabeEnLaFecha(quien?.birthdate, evento)) {
+      return NextResponse.json(
+        { error: porQueNoCabe(evento), motivo: MOTIVO_EDAD },
+        { status: 409 },
+      )
+    }
+  }
 
   // Y el cierre A MANO, que hasta ahora no lo miraba nadie. Esta ruta solo
   // comprobaba el reloj, así que una fecha cerrada desde el panel seguía

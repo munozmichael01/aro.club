@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+
+import { cabeEnLaFecha, MOTIVO_EDAD, porQueNoCabe, tieneBanda } from '@/lib/edad'
 import { z } from 'zod'
 
 import { anotarPagoDeEvento } from '@/lib/creditos'
@@ -78,7 +80,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, price_usd, booking_closes_at, zone_slug, reveal_at, city_slug')
+    .select('id, starts_at, price_usd, booking_closes_at, zone_slug, reveal_at, city_slug, age_band_min, age_band_max')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -345,7 +347,7 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, price_usd, booking_closes_at')
+    .select('id, starts_at, price_usd, booking_closes_at, age_band_min, age_band_max')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -357,6 +359,31 @@ export async function POST(request: Request) {
       { error: 'Esa fecha ya cerró.', motivo: 'fecha-cerrada' },
       { status: 409 },
     )
+  }
+
+  /**
+   * Y la edad, por el mismo motivo que la verificación está aquí abajo.
+   *
+   * `/api/reservar` ya la mira, y repetirla aquí no es duplicar: reportar el
+   * pago es lo que aparta el puesto. Dejar la banda de edad solo en
+   * reservar sería exactamente el agujero que se encontró con la
+   * verificación — una puerta con candado y la de al lado sin él.
+   *
+   * Sin fecha de nacimiento tampoco: `cabeEnLaFecha` ya lo decide así.
+   */
+  if (tieneBanda(evento)) {
+    const { data: quien } = await admin
+      .from('profiles')
+      .select('birthdate')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (!cabeEnLaFecha(quien?.birthdate, evento)) {
+      return NextResponse.json(
+        { error: porQueNoCabe(evento), motivo: MOTIVO_EDAD },
+        { status: 409 },
+      )
+    }
   }
 
   // Verificada, o no hay puesto.

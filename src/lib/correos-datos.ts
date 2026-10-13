@@ -7,6 +7,7 @@ import { enlaceDeMapa } from '@/lib/mapa'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { HORAS_DE_CIERRE, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
+import { cabeEnLaFecha } from '@/lib/edad'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
@@ -202,11 +203,13 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
   // escribir a quien se dio de baja es justo lo que pidió que no pasara.
   let a = fila.email ?? ''
   let trato = ''
+  /** Su fecha de nacimiento, para no ofrecerle fechas que no puede reservar. */
+  let nacimiento: string | null = null
 
   if (fila.profile_id) {
     const { data: perfil } = await admin
       .from('profiles')
-      .select('email, contact_email, display_name, full_name, deleted_at')
+      .select('email, contact_email, display_name, full_name, deleted_at, birthdate')
       .eq('id', fila.profile_id)
       .maybeSingle()
 
@@ -215,6 +218,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
 
     a = perfil.contact_email || perfil.email || a
     trato = perfil.display_name || perfil.full_name?.split(' ')[0] || ''
+    nacimiento = perfil.birthdate ?? null
   }
 
   if (!a) return { error: 'sin dirección a la que escribir' }
@@ -481,7 +485,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     // —que viene con el evento— y la siguiente, que es lo único accionable
     // que se le puede ofrecer.
     case 'sin_mesa': {
-      const proximas = await proximasFechas(admin)
+      const proximas = await proximasFechas(admin, nacimiento)
       return {
         a,
         datos: {
@@ -519,8 +523,9 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
 
     case 'verificacion': {
       // Las dos próximas fechas abiertas, que es la razón del correo: ya
-      // puede reservar, y esto es lo que hay.
-      const proximas = await proximasFechas(admin)
+      // puede reservar, y esto es lo que hay. Las SUYAS: una cena de
+      // mayores de 40 no se le ofrece a quien no los tiene.
+      const proximas = await proximasFechas(admin, nacimiento)
       return {
         a,
         datos: { ...base, proxima1: proximas[0] ?? 'Te avisamos en cuanto abramos una', proxima2: proximas[1] ?? '' },
@@ -913,16 +918,27 @@ async function nombresDeZonas(admin: Admin, slugs: string[], perfilId?: string |
   return lista.map((s) => (data ?? []).find((z) => z.slug === s)?.name ?? s).filter(Boolean)
 }
 
-async function proximasFechas(admin: Admin): Promise<string[]> {
+/**
+ * Las dos próximas que ESTA PERSONA puede reservar.
+ *
+ * Lo pide el correo de «ya estás verificada» y el de «te quedaste sin
+ * mesa»: los dos terminan ofreciendo lo que hay. Ofrecerle a alguien de 25
+ * una cena de mayores de 40 es mandarlo a una puerta que le vamos a cerrar,
+ * y en el peor momento, porque es el correo que celebra que ya puede entrar.
+ *
+ * `nacimiento` opcional: sin él solo se ofrecen las fechas sin banda, que es
+ * la misma decisión que toma la portada cuando no sabe quién mira.
+ */
+async function proximasFechas(admin: Admin, nacimiento?: string | null): Promise<string[]> {
   const { data } = await admin
     .from('events')
-    .select('starts_at, format, event_venues(zones(name))')
+    .select('starts_at, format, age_band_min, age_band_max, event_venues(zones(name))')
     .eq('status', 'open')
     .gt('booking_closes_at', new Date().toISOString())
     .order('starts_at')
-    .limit(2)
+    .limit(6)
 
-  return (data ?? []).map((e) => {
+  return (data ?? []).filter((e) => cabeEnLaFecha(nacimiento, e)).slice(0, 2).map((e) => {
     const zonas = ((e.event_venues ?? []) as unknown as { zones: { name: string } | null }[])
       .map((v) => v.zones?.name)
       .filter(Boolean)
