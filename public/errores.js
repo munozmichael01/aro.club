@@ -202,4 +202,97 @@
       ajeno: deFuera(null, mensaje, pila) || undefined,
     });
   });
+
+  /**
+   * El campo no acepta nada hasta que la pantalla está viva.
+   *
+   * EL FALLO. Las pantallas son `.dc.html` servidos tal cual, así que hasta
+   * que DCLogic hidrata, el campo del correo de la portada lleva escrito
+   * literalmente `onChange="{{ onCorreo }}"`.
+   *
+   * Eso no es un hueco inofensivo: **`{{ onCorreo }}` es JavaScript
+   * válido**. Son dos bloques anidados con una variable suelta dentro, así
+   * que el navegador lo compila como manejador y al dispararse lanza
+   * `ReferenceError: onCorreo is not defined`. Y aunque no lanzara nada, lo
+   * tecleado se perdería igual: al hidratar, React pinta `value` desde su
+   * estado, que está vacío.
+   *
+   * Pasó el 12-10 a las 22:29 con una persona en Android Chrome: tecleó su
+   * correo y pulsó el botón antes de que cargara el JS, y los tres
+   * manejadores reventaron, uno por segundo. Su correo no llegó a ninguna
+   * parte. La ventana es imperceptible en una computadora y larga en un
+   * teléfono lento con datos, que es por donde entra la campaña, y es el
+   * primer campo de la primera pantalla.
+   *
+   * LO QUE NO FUNCIONA, probado y revertido en producción: quitar esos
+   * atributos. DCLogic los LEE del DOM para enlazar los manejadores, así
+   * que quitarlos antes de que compile deja el formulario muerto del todo.
+   * Cuatro minutos de portada sin poder dejar el correo.
+   *
+   * Lo que sí: no tocar nada y hacer que no se pueda escribir todavía. Un
+   * campo que tarda un segundo en responder se lee como que está cargando;
+   * uno que se traga lo escrito, no.
+   *
+   * La señal de «ya está viva» es que no quede ningún manejador con `{{`
+   * sin resolver: cuando React pinta, esos atributos desaparecen. Una
+   * pantalla que no tenga ninguno nace viva, que es lo correcto.
+   */
+  var MANEJADORES = ['onclick', 'onchange', 'oninput', 'onkeydown', 'onkeyup', 'onsubmit'];
+  var SIN_RESOLVER = /\{\{/;
+
+  /** Cuánto se espera como mucho. Pasado esto se suelta, pase lo que pase. */
+  var ESPERA_MAXIMA = 8000;
+
+  function quedanSinResolver() {
+    for (var i = 0; i < MANEJADORES.length; i++) {
+      var nodos = document.querySelectorAll('[' + MANEJADORES[i] + ']');
+      for (var j = 0; j < nodos.length; j++) {
+        if (SIN_RESOLVER.test(nodos[j].getAttribute(MANEJADORES[i]) || '')) return true;
+      }
+    }
+    return false;
+  }
+
+  function soltar() {
+    try {
+      document.documentElement.classList.add('dc-viva');
+    } catch (e) {
+      /* da igual: lo único que pasa es que el candado se queda puesto */
+    }
+  }
+
+  try {
+    // El candado, antes de que se pinte nada. Solo los controles: los
+    // enlaces siguen funcionando, que es lo que uno hace mientras espera.
+    //
+    // Sin opacidad ni spinner: es un parpadeo en una computadora y un
+    // segundo en un teléfono, y meterle un estado de carga a las veintiuna
+    // pantallas de Design a las once de la noche es cambiar mucho más de lo
+    // que este fallo pide.
+    var estilo = document.createElement('style');
+    estilo.setAttribute('data-aro', 'candado-hidratacion');
+    estilo.textContent =
+      'html:not(.dc-viva) input,html:not(.dc-viva) textarea,' +
+      'html:not(.dc-viva) select,html:not(.dc-viva) button{pointer-events:none}';
+    (document.head || document.documentElement).appendChild(estilo);
+
+    var reloj = setInterval(function () {
+      if (!quedanSinResolver()) {
+        clearInterval(reloj);
+        soltar();
+      }
+    }, 60);
+
+    // Y el tope. Si DCLogic no llegó a arrancar, dejar la pantalla
+    // congelada para siempre es peor que devolverla a como estaba: al menos
+    // los campos nativos vuelven a funcionar.
+    setTimeout(function () {
+      clearInterval(reloj);
+      soltar();
+    }, ESPERA_MAXIMA);
+  } catch (e) {
+    // Si esto falla por lo que sea, la pantalla se queda exactamente como
+    // estaba antes de existir este bloque.
+    soltar();
+  }
 })();
