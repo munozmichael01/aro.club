@@ -123,14 +123,23 @@ export async function GET(request: Request) {
   // El motivo interno NUNCA sale de aquí: se manda el mensaje del catálogo.
   // Los dos motivos de sospecha comparten mensaje a propósito, y uno
   // específico le enseñaría a quien suplanta qué corregir.
-  let motivo: { mensaje: string; permiteReintento: boolean } | null = null
+  let motivo: { mensaje: string; permiteReintento: boolean; afecta: string } | null = null
   if (rechazada?.rejection_reason) {
     const { data } = await createAdminClient()
       .from('verification_rejection_reasons')
-      .select('message, allows_retry')
+      .select('message, allows_retry, afecta')
       .eq('code', rechazada.rejection_reason)
       .maybeSingle()
-    if (data) motivo = { mensaje: data.message, permiteReintento: data.allows_retry }
+    // `afecta` dice QUÉ foto hay que repetir. Sin esto la pantalla decía
+    // «Repetir las fotos», en plural, cuando casi siempre es una sola: quien
+    // leía eso repetía las dos, o se quedaba sin saber cuál.
+    if (data) {
+      motivo = {
+        mensaje: data.message,
+        permiteReintento: data.allows_retry,
+        afecta: (data as { afecta?: string }).afecta ?? 'ambas',
+      }
+    }
   }
 
   // "En revisión" exige LAS DOS. Con `||` bastaba la cédula: quien subía

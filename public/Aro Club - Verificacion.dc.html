@@ -261,7 +261,7 @@
 
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
           <sc-if value="{{ puedeReintentar }}" hint-placeholder-val="{{ true }}">
-            <button onClick="{{ repetirCedula }}" style="{{ botonPrimario }}">Repetir las fotos</button>
+            <button onClick="{{ repetirCedula }}" style="{{ botonPrimario }}">{{ textoRepetir }}</button>
           </sc-if>
           <a href="/cuenta" style="{{ botonFantasma }}">Volver</a>
         </div>
@@ -716,8 +716,24 @@ class Component extends DCLogic {
       // motivos de sospecha comparten mensaje justo para evitar eso.
       mensajeRechazo: (this.state.motivo && this.state.motivo.mensaje) || '',
       puedeReintentar: !!(this.state.motivo && this.state.motivo.permiteReintento),
+      /**
+       * Decir QUÉ foto hay que repetir, no «las fotos».
+       *
+       * Casi siempre es una sola —el motivo lo dice en su propio texto: «no
+       * se lee tu documento», «la selfie salió oscura»— y pedir las dos hace
+       * repetir una que estaba bien. Desde hoy el rechazo solo marca la que
+       * falla, así que la pantalla puede ser igual de concreta.
+       */
+      textoRepetir: (function (a) {
+        return a === 'id_document' ? 'Repetir la foto del documento'
+          : a === 'selfie' ? 'Repetir la selfie'
+          : 'Repetir las fotos';
+      })(this.state.motivo && this.state.motivo.afecta),
       tituloRechazo: (this.state.motivo && this.state.motivo.permiteReintento)
-        ? 'HAY QUE REPETIR LAS FOTOS' : 'NO PUDIMOS VERIFICARTE',
+        ? ((this.state.motivo.afecta === 'selfie') ? 'HAY QUE REPETIR LA SELFIE'
+          : (this.state.motivo.afecta === 'id_document') ? 'HAY QUE REPETIR EL DOCUMENTO'
+          : 'HAY QUE REPETIR LAS FOTOS')
+        : 'NO PUDIMOS VERIFICARTE',
       encabezadoRechazo: (this.state.motivo && this.state.motivo.permiteReintento)
         ? 'Hay que repetirlo.' : 'Esto lo vemos contigo.',
       pieRechazo: (this.state.motivo && this.state.motivo.permiteReintento)
@@ -727,7 +743,14 @@ class Component extends DCLogic {
       // Estaba dos veces en este mismo objeto y ganaba la segunda, asi que
       // al repetir la cedula se quedaba en pantalla el error de la vez
       // anterior. Una sola, y limpia el fallo.
-      repetirCedula: () => this.setState({ fase: 'captura', toma: 0, tomas: {}, repetirSolo: 0, fallo: '' }),
+      // Y empieza por la foto que toca. `toma` 0 es el documento y 1 la
+      // selfie: con `selfie-borrosa` esto mandaba a repetir el documento,
+      // que estaba bien.
+      repetirCedula: () => {
+        const a = this.state.motivo && this.state.motivo.afecta;
+        const cual = a === 'selfie' ? 1 : 0;
+        this.setState({ fase: 'captura', toma: cual, tomas: {}, repetirSolo: a === 'ambas' ? null : cual, fallo: '' });
+      },
 
       // El lado lo dice el codigo, no el maquetado: si la URL crece, el QR
       // pasa de 29 a 33 modulos y una rejilla de 21 lo dibujaria torcido.
