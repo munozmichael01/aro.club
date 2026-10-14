@@ -197,6 +197,25 @@
                     </sc-if>
                   </div>
 
+                  <!-- DÓNDE CENA ESTA MESA.
+                       El panel sabía cambiarlo desde hace semanas —la función
+                       estaba escrita y la ruta también— y no había un solo
+                       botón que lo llamara. El sitio solo se veía como texto
+                       al lado de la hora. -->
+                  <sc-if value="{{ t.haySitios }}" hint-placeholder-val="{{ true }}">
+                    <div style="margin-bottom:13px">
+                      <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:8px">{{ t.tituloSitios }}</div>
+                      <div style="display:flex;flex-wrap:wrap;gap:6px">
+                        <sc-for list="{{ t.sitios }}" as="s" hint-placeholder-count="2">
+                          <button onClick="{{ s.elegir }}" aria-label="{{ s.ayuda }}" style="{{ s.chip }}">{{ s.texto }}</button>
+                        </sc-for>
+                      </div>
+                      <sc-if value="{{ t.sitioFijo }}" hint-placeholder-val="{{ false }}">
+                        <div style="font:400 12px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-top:7px;text-wrap:pretty">{{ t.textoSitioFijo }}</div>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+
                   <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(20,52,42,.12)">
                     <sc-for list="{{ t.gente }}" as="g" hint-placeholder-count="6">
                       <div onPointerDown="{{ g.tomar }}" style="{{ g.fila }}">
@@ -947,6 +966,22 @@
                           <span style="display:block;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A;margin-top:7px">{{ z.zona }}</span>
                           <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ z.sitio }}</span>
                           <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ z.nota }}</span>
+                          <!-- Con qué llenarla. Antes aquí solo se leía «Sin
+                               local asignado» y no había nada que pulsar. -->
+                          <sc-if value="{{ z.hayLocales }}" hint-placeholder-val="{{ true }}">
+                            <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-top:12px">{{ z.tituloLocales }}</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+                              <sc-for list="{{ z.locales }}" as="l" hint-placeholder-count="2">
+                                <button onClick="{{ l.poner }}" aria-label="{{ l.ayuda }}" title="{{ l.ayuda }}" style="{{ l.chip }}">{{ l.texto }}</button>
+                              </sc-for>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ z.sinCandidatos }}" hint-placeholder-val="{{ false }}">
+                            <div style="font:400 12px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-top:10px;text-wrap:pretty">{{ z.textoSinCandidatos }}</div>
+                          </sc-if>
+                          <sc-if value="{{ z.haySitioPuesto }}" hint-placeholder-val="{{ false }}">
+                            <button onClick="{{ z.quitarSitio }}" style="margin-top:8px;min-height:30px;padding:0 11px;border-radius:999px;border:1px solid rgba(143,69,21,.4);background:transparent;color:#8F4515;font:500 12px/1 'Inter Tight',sans-serif;cursor:pointer">Quitar el local</button>
+                          </sc-if>
                         </div>
                       </sc-for>
                     </div>
@@ -2487,6 +2522,51 @@ class Component extends DCLogic {
     const ESPERA_SRV = CORRIDA ? (CORRIDA.espera || []) : [];
     const SEDES = REP ? (REP.sedes || []) : [];
 
+    /**
+     * Dónde cena cada mesa, y cómo cambiarlo.
+     *
+     * Esto no existía en la pantalla. `cambiarSede()` llevaba semanas escrita
+     * en este fichero y `/api/operacion/propuesta` aceptaba la acción desde
+     * el primer día: lo que faltaba era el botón. El sitio solo se veía como
+     * texto al lado de la hora, así que la única forma de ponerlo era
+     * repartir otra vez y esperar a que el algoritmo eligiera.
+     *
+     * Solo los sitios que esa mesa PUEDE aceptar: el servidor exige que la
+     * zona esté entre las que aceptan los seis, así que ofrecer los demás
+     * sería ofrecer un 409. Una mesa vacía todavía no tiene zonas: ahí valen
+     * todos.
+     *
+     * Y una mesa publicada se puede cambiar hasta la revelación, que es
+     * cuando se le cuenta la dirección a la gente. Después, el chip se
+     * enseña igual pero no se pulsa, y debajo dice por qué: esconderlo
+     * dejaría la pregunta «¿y por qué no puedo?» sin respuesta.
+     */
+    const REVELA = REP && REP.evento ? REP.evento.revelaEn : null;
+    const YA_REVELADA = !REVELA || new Date(REVELA).getTime() <= Date.now();
+
+    const sitiosDe = (m, pub) => {
+      const posibles = m.zonasPosibles || [];
+      const suyos = SEDES.filter((v) => !v.restaurantId ? false
+        : (!posibles.length || posibles.indexOf(v.zona) >= 0));
+      const fijo = pub && YA_REVELADA;
+      return {
+        haySitios: suyos.length > 0,
+        sitioFijo: fijo && suyos.length > 1,
+        textoSitioFijo: 'Ya son las doce: esta mesa tiene la dirección en su correo. Para cambiarla hay que publicarla otra vez, y a cada uno le sale un aviso.',
+        tituloSitios: suyos.length === 1 ? 'DÓNDE' : 'DÓNDE · ELIGE',
+        sitios: suyos.map((v) => {
+          const on = v.restaurantId === m.restaurantId;
+          return {
+            texto: v.nombre || v.zonaNombre,
+            ayuda: on ? 'Esta mesa cena en ' + (v.nombre || v.zonaNombre)
+              : 'Mover la mesa ' + String(m.numero).padStart(2, '0') + ' a ' + (v.nombre || v.zonaNombre),
+            elegir: (on || fijo) ? (() => {}) : (() => this.cambiarSede(m.numero, v.restaurantId)),
+            chip: 'display:inline-flex;align-items:center;min-height:34px;padding:0 13px;border-radius:999px;font:' + (on ? '600' : '500') + ' 12px/1 \'Inter Tight\',sans-serif;white-space:nowrap;transition:all 180ms ease;background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : (fijo ? '#8A9A90' : '#2C4A38')) + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.22)') + ';cursor:' + ((on || fijo) ? 'default' : 'pointer')
+          };
+        })
+      };
+    };
+
     const FECHAS = St.fechas || [];
 
     // Cada fecha del riel, tal como la devuelve la ruta.
@@ -2534,7 +2614,10 @@ class Component extends DCLogic {
       noCaben: f.noCaben || 0,
       noCabenGente: f.noCabenGente || [],
       zonasSinLocal: f.zonasSinLocal || [],
-      zonas: (f.zonas || []).map((z) => [z.zonaNombre, z.restaurante, z.zona, z.apuntados, z.sedeId, z.restauranteId, z.aguanta])
+      // El octavo es la lista de locales que se pueden poner en esa zona,
+      // con su problema dicho si lo tienen. Sin ella no había con qué
+      // construir el selector, y por eso `ponerSitio()` no la llamaba nadie.
+      zonas: (f.zonas || []).map((z) => [z.zonaNombre, z.restaurante, z.zona, z.apuntados, z.sedeId, z.restauranteId, z.aguanta, z.locales || []])
     }));
 
     /**
@@ -2678,6 +2761,7 @@ class Component extends DCLogic {
       return {
         clave, lista: !pub && !calc && tamOk && malas.length === 0,
         n: String(m.numero).padStart(2, '0'),
+        ...sitiosDe(m, pub),
         titulo: vozRep.Unidad + ' ' + String(m.numero).padStart(2, '0'),
         hora: fr.hora + ' · ' + (m.restaurante || 'sitio sin elegir'),
         estado: pub ? 'PUBLICADA' : (calc ? 'CALCULANDO' : (malas.length ? 'NO PUEDE SALIR' : 'LISTA')),
@@ -4640,7 +4724,12 @@ class Component extends DCLogic {
           pick: () => this.setState({ fechaVer: i })
         };
       }).filter((_, i) => seVe(FECHAS_REP[i])),
-      ...(function () {
+      // Flecha y no `function`: dentro de una `function` este bloque pierde
+      // `this`, y los botones de elegir local —que llaman a `ponerSitio`—
+      // reventaban con «Cannot read properties of undefined». Lo demás de
+      // aquí dentro no tocaba el componente, así que nadie se había dado
+      // cuenta.
+      ...(() => {
         const i = St.fechaVer == null ? 0 : St.fechaVer;
         const f = FECHAS_REP[i];
         const cruda = FECHAS[i];
@@ -4658,6 +4747,10 @@ class Component extends DCLogic {
         const cierra = cuantoQueda(cruda.cierraEn);
         const sinLocal = f.zonasSinLocal || [];
         const noCaben = f.noCabenGente || [];
+        // Los sitios que esta fecha YA tiene puestos, en cualquier zona.
+        // Ofrecer uno de ellos otra vez es ofrecer un 409: la ruta responde
+        // «Ese sitio ya está en esta fecha».
+        const yaEnLaFecha = new Set(f.zonas.map((z) => z[5]).filter(Boolean));
         return {
           // Los dos avisos, arriba del todo y con nombre. Abajo hay una lista
           // de apuntados y unas cifras por zona; si esto fuera un pie, la
@@ -4730,6 +4823,60 @@ class Component extends DCLogic {
             sitio: z[1] || 'Sin local asignado',
             sinSitio: !z[1],
             n: String(z[3]),
+            /**
+             * PONER EL LOCAL. Esto no existía en ninguna pantalla.
+             *
+             * El panel avisaba de que una zona estaba abierta sin local —«se
+             * puede apuntar gente y no hay dónde sentarla»— y no daba
+             * ninguna forma de ponerlo. La ruta aceptaba la acción y este
+             * fichero tenía `ponerSitio()` escrita desde hace semanas:
+             * faltaba el botón, así que la única salida era tocar la base a
+             * mano.
+             *
+             * PONER Y AÑADIR NO SON LO MISMO, y la ruta hace las dos:
+             * rellena la zona si está vacía, y si ya tiene sitio AÑADE otro
+             * —que es a propósito, porque una zona admite varios y así es
+             * como se resuelve el aforo: si hacen falta tres mesas en Las
+             * Mercedes y un sitio da para dos, se añade otro sitio—. Por eso
+             * el texto cambia según el caso: un chip que dice «poner» y
+             * acaba creando una segunda sede es una pantalla que miente.
+             *
+             * No se ofrece lo que ya está en esta fecha: la ruta lo rechaza
+             * con un 409 —«Ese sitio ya está en esta fecha»— y un botón que
+             * solo sabe dar error no es un botón.
+             *
+             * Y los que no sirven salen igual, tachados y con el motivo: una
+             * lista a la que le faltan sitios sin decir por qué es la que
+             * hace dudar de la pantalla. El motivo lo calcula el servidor
+             * con las mismas reglas con las que después acepta o rechaza.
+             */
+            tituloLocales: z[5] ? 'AÑADIR OTRO SITIO' : 'PONER LOCAL',
+            /**
+             * Y si no hay NINGUNO, decir por qué.
+             *
+             * Sin esto la zona se queda otra vez sin salida: «Sin local
+             * asignado» y debajo nada, que es exactamente el callejón del
+             * que viene todo esto. Una zona sin locales en el catálogo no se
+             * arregla desde aquí, se arregla dando de alta el sitio.
+             */
+            sinCandidatos: !z[5] && (z[7] || []).length === 0,
+            textoSinCandidatos: 'No hay ningún local de ' + z[0] + ' en el catálogo. Date de alta uno en Locales y vuelve aquí.',
+            hayLocales: (z[7] || []).filter((l) => !yaEnLaFecha.has(l.id) || l.id === z[5]).length > 0,
+            locales: (z[7] || []).filter((l) => !yaEnLaFecha.has(l.id) || l.id === z[5]).map((l) => {
+              const on = l.id === z[5];
+              const no = !!l.problema;
+              return {
+                texto: l.nombre + (l.comision != null ? ' · ' + l.comision + '%' : ''),
+                ayuda: no ? l.problema
+                  : (on ? l.nombre + ' es el local de esta zona'
+                    : (z[5] ? 'Añadir ' + l.nombre + ' como segundo sitio de ' + z[0]
+                      : 'Poner ' + l.nombre + ' en ' + z[0])),
+                poner: (on || no) ? (() => {}) : (() => this.ponerSitio(cruda.id, z[2], l.id)),
+                chip: 'display:inline-flex;align-items:center;min-height:34px;padding:0 13px;border-radius:999px;font:' + (on ? '600' : '500') + ' 12px/1 \'Inter Tight\',sans-serif;white-space:nowrap;transition:all 180ms ease;background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : (no ? '#8A9A90' : '#2C4A38')) + ';border:1px solid ' + (on ? '#14342A' : (no ? 'rgba(20,52,42,.12)' : 'rgba(20,52,42,.22)')) + ';cursor:' + ((on || no) ? 'default' : 'pointer') + (no ? ';text-decoration:line-through' : '')
+              };
+            }),
+            quitarSitio: z[4] && z[5] ? (() => this.quitarSitio(cruda.id, z[4])) : null,
+            haySitioPuesto: !!z[5],
             nota: z[3] >= (f.porMesa || 6)
               ? 'Da para ' + Math.floor(z[3] / (f.porMesa || 6)) + ' ' + voz
               : 'Faltan ' + ((f.porMesa || 6) - z[3]) + ' para una',

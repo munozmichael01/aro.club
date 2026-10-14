@@ -59,7 +59,7 @@ export async function GET(request: Request) {
 
   const consulta = admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, seats_per_table, status, format, restaurants!events_restaurant_id_fkey(name)')
+    .select('id, starts_at, booking_closes_at, reveal_at, seats_per_table, status, format, restaurants!events_restaurant_id_fkey(name)')
 
   const { data: evento } = pedido
     ? await consulta.eq('id', pedido).maybeSingle()
@@ -243,6 +243,10 @@ export async function GET(request: Request) {
       id: evento.id,
       empiezaEn: evento.starts_at,
       cierraEn: evento.booking_closes_at,
+      // Cuándo se cuenta el sitio. El panel lo necesita para saber si una
+      // mesa publicada todavía admite cambio de local: antes de esta hora
+      // nadie tiene la dirección.
+      revelaEn: evento.reveal_at,
       estado: evento.status,
       // El formato manda el vocabulario: una caminata tiene grupos y punto de
       // encuentro, no mesas y restaurante. La pantalla no puede deducirlo.

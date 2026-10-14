@@ -189,6 +189,18 @@ function diaDeLaSemana(dia: string): number {
  * y al elegirlo después —que es el caso normal—. Con la comprobación escrita
  * solo en el alta, añadir un sitio más tarde se saltaba las cuatro.
  */
+/**
+ * El día de la semana de un INSTANTE, en Caracas.
+ *
+ * El de arriba toma una fecha de calendario —«2026-10-16»— y este el
+ * `starts_at` completo, que lleva hora. No se puede usar `getUTCDay()` a
+ * secas: una cena del viernes a las 7:30 p.m. de Caracas es sábado en UTC, y
+ * un sitio que no abre los sábados parecería cerrado justo el día que abre.
+ */
+function diaEnCaracasDe(iso: string): number {
+  return new Date(new Date(iso).getTime() - 4 * 3600_000).getUTCDay()
+}
+
 async function revisarSitio(
   admin: ReturnType<typeof createAdminClient>,
   restauranteId: string,
@@ -363,6 +375,25 @@ export async function GET() {
     .select('id, event_id, zone_slug, restaurant_id, max_tables, restaurants(name, max_tables, commission_pct), zones(name)')
     .in('event_id', ids.length ? ids : vacio)
 
+  /**
+   * Y QUÉ LOCALES SE PUEDEN PONER EN CADA ZONA.
+   *
+   * Sin esto el panel avisaba de que una zona estaba abierta sin local —ese
+   * aviso lleva semanas escrito— y no ofrecía ninguna forma de ponerlo. La
+   * ruta aceptaba `poner` desde el primer día y el panel tenía la función
+   * `ponerSitio()` escrita: lo único que faltaba era la lista con la que
+   * elegir, así que no había botón que la llamara.
+   *
+   * Vienen con su problema dicho, si lo tienen, y no filtrados: «Cardenal no
+   * abre los viernes» explica por qué no está, y una lista a la que le
+   * faltan sitios sin decir por qué es la que hace dudar de la pantalla.
+   * Son las MISMAS reglas que `revisarSitio` aplica al guardar.
+   */
+  const { data: locales } = await admin
+    .from('restaurants')
+    .select('id, name, zone_slug, open_days, is_active, formats, max_tables, commission_pct')
+    .order('name')
+
   // Quién está apuntado y a qué zonas dijo que sí. Del pool, no de bookings a
   // secas: quien no está verificado no se sienta, y contarlo aquí haría creer
   // que una zona da para una mesa que luego no sale.
@@ -477,6 +508,24 @@ export async function GET() {
           // Los apuntados que aceptan ESTA zona. Alguien que acepta tres cuenta
           // en las tres: puede acabar sentado en cualquiera de ellas.
           apuntados: suPool.filter((p) => ((p.zones ?? []) as string[]).includes(v.zone_slug ?? '')).length,
+          // Con qué se puede llenar, y por qué no con el resto.
+          locales: (locales ?? [])
+            .filter((l) => !l.zone_slug || l.zone_slug === v.zone_slug)
+            .map((l) => ({
+              id: l.id,
+              nombre: l.name,
+              aguanta: l.max_tables ?? null,
+              comision: l.commission_pct != null ? Number(l.commission_pct) : null,
+              // El mismo criterio que al guardar, para que la pantalla no
+              // ofrezca lo que la ruta va a rechazar.
+              problema: !l.is_active
+                ? `${l.name} está dado de baja.`
+                : (l.open_days ?? []).length && !(l.open_days ?? []).includes(diaEnCaracasDe(e.starts_at))
+                  ? `${l.name} no abre ese día.`
+                  : (l.formats ?? []).length && !(l.formats ?? []).includes(e.format)
+                    ? `${l.name} no sirve para este formato.`
+                    : null,
+            })),
         }
       }),
     }
