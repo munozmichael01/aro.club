@@ -139,6 +139,39 @@ const nextConfig: NextConfig = {
       fallback: [],
     }
   },
+  /**
+   * React y Babel se cachean un año. El resto no.
+   *
+   * Todo lo de `public/` sale con `max-age=0, must-revalidate`, que es el
+   * valor por defecto de Next y es el correcto para lo que cambia: `support.js`
+   * y `reglas.js` se tocan casi a diario y una copia vieja en el navegador de
+   * alguien es una pantalla que miente.
+   *
+   * Pero `/vendor/` son tres ficheros de terceros que NO cambian nunca:
+   * React 18.3 minificado pesa 10 KB, React DOM 129 KB y Babel otro tanto. Sin
+   * caché, CADA visita se los vuelve a pedir —más de 250 KB— por una red móvil
+   * venezolana, y cada una de esas peticiones es otra oportunidad de que una
+   * falle. Cuando falla, la pantalla no hidrata y lo que queda es un formulario
+   * que no responde.
+   *
+   * Ya pasó: un iPhone reportó «failed to load /vendor/react.production.min.js»
+   * en la portada el 14-10. Una sola vez, pero es la portada y es el fichero
+   * sin el cual no hay nada.
+   *
+   * Si algún día hay que subir de versión, el fichero cambia de nombre: eso es
+   * lo que hace seguro el año. Cambiar el contenido dejando el nombre sí
+   * dejaría a medio mundo con el viejo, así que no se hace.
+   */
+  async headers() {
+    return [
+      {
+        source: '/vendor/:fichero*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+    ]
+  },
 }
 
 export default nextConfig
