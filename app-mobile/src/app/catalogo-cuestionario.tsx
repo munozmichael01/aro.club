@@ -22,7 +22,7 @@ const CATALOGO: CatalogoCompleto = {
     { ...base, clave: 'romance', enunciado: 'Aro no es una app de citas, pero a veces pasa. ¿Cómo lo ves?', tipo: 'single', obligatoria: false, opciones: op(['no', 'No busco eso'], ['abierto', 'Si pasa, pasa']), pantalla: 2 },
     { ...base, clave: 'temas', enunciado: '¿De qué podrías hablar dos horas seguidas?', tipo: 'multi', min: 2, max: 4, opciones: op(['cocina', 'Cocina'], ['viajes', 'Viajes'], ['cine', 'Cine'], ['musica', 'Música'], ['libros', 'Libros']), pantalla: 3 },
     { ...base, clave: 'evitar', enunciado: '¿Hay algún tema que prefieras que no salga?', tipo: 'multi', obligatoria: false, exclusiva: 'ninguno', opciones: op(['politica', 'Política'], ['religion', 'Religión'], ['ninguno', 'Ninguno']), pantalla: 3 },
-    { ...base, clave: 'gasto', enunciado: '¿Cuánto piensas gastar en la cena?', tipo: 'single', opciones: op(['20', 'Hasta 20 USD'], ['35', 'Hasta 35 USD']), pantalla: 4 },
+    { ...base, clave: 'gasto', enunciado: '¿Cuánto piensas gastar en la cena?', tipo: 'single', opciones: op(['20', 'Hasta 20 ref'], ['35', 'Hasta 35 ref']), pantalla: 4 },
     { ...base, clave: 'zonas', enunciado: '¿En qué zonas puedes asistir sin problema?', tipo: 'multi', min: 1, opciones: op(['mercedes', 'Las Mercedes'], ['chacao', 'Chacao'], ['rosal', 'El Rosal']), pantalla: 5 },
     { ...base, clave: 'idiomas', enunciado: '¿En qué idiomas conversas cómodo?', tipo: 'multi', min: 1, opciones: op(['es', 'Español'], ['en', 'Inglés']), pantalla: 5 },
   ],
