@@ -65,6 +65,31 @@ export function diaCompleto(iso: string | null): string {
 }
 
 /**
+ * «4 de enero de 1993» de una fecha SIN hora, que no es lo mismo.
+ *
+ * `diaCompleto` pasa el instante por la zona del producto, y eso es lo
+ * correcto para una cena: un sábado a las ocho de la noche de Caracas es
+ * domingo en UTC. Pero un NACIMIENTO no es un instante. `1992-02-06` es el
+ * seis de febrero en todas partes, y `new Date()` lo coloca a medianoche
+ * UTC: convertido a Caracas —cuatro horas atrás— sale el cinco.
+ *
+ * O sea que pasar un nacimiento por `diaCompleto` lo retrasa un día
+ * SIEMPRE. Y el sitio donde esto se enseña es la ficha de operación, al
+ * lado de la cédula que alguien está comparando: el único dato de esa
+ * pantalla cuyo trabajo es cuadrar con otro, descuadrado por un formateo.
+ *
+ * Así que no se convierte nada: se parte la cadena. Una fecha sin hora no
+ * tiene zona a la que convertirla.
+ */
+export function diaSuelto(fecha: string | null): string {
+  if (!fecha) return '—'
+  const m = fecha.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!m) return fecha
+  const [, ano, mes, dia] = m
+  return `${Number(dia)} de ${MESES[Number(mes) - 1]} de ${ano}`
+}
+
+/**
  * «12 de agosto», sin año.
  *
  * Para lo que cae cerca: el año sobra y estorba cuando hablamos de algo que

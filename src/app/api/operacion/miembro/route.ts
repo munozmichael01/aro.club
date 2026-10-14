@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { diaCompleto, diaYMes, mesYAno } from '@/lib/fechas'
+import { diaCompleto, diaSuelto, diaYMes, mesYAno } from '@/lib/fechas'
 import { leerCatalogo } from '@/lib/questionnaire/catalogo'
 import { exigirOps } from '@/lib/ops'
 import { DIAS_GUARDA_FOTOS } from '@/lib/reglas'
@@ -358,10 +358,24 @@ export async function GET(request: Request) {
     const bruto = dadas.get(q.clave)
     const codigos = bruto == null ? [] : Array.isArray(bruto) ? (bruto as string[]) : [String(bruto)]
     const etiqueta = new Map(q.opciones.map((o) => [o.valor, o.label]))
-    // Se resuelve por código, nunca por posición. Si un código dejó de
-    // existir en el catálogo se enseña tal cual, que es la señal de que hay
-    // una respuesta vieja que alguien tiene que mirar.
-    const legible = codigos.map((c) => etiqueta.get(c) ?? c).join(', ')
+    /**
+     * Se resuelve por código, nunca por posición. Si un código dejó de
+     * existir en el catálogo se enseña tal cual, que es la señal de que hay
+     * una respuesta vieja que alguien tiene que mirar.
+     *
+     * Y una fecha se escribe como una fecha. `nacimiento` no tiene opciones
+     * —es lo que la persona escribió— así que caía por el «tal cual» y la
+     * ficha enseñaba `1992-02-06`. Quien revisa una cédula está comparando
+     * ESE dato con el del documento, y leer un año al revés es justo el
+     * error que la comparación viene a evitar.
+     *
+     * Por la FORMA y no por la clave: lo que parece una fecha se escribe
+     * como una fecha, venga de la pregunta que venga.
+     *
+     * Con `diaSuelto` y NO con `diaCompleto`, que convierte a la zona del
+     * producto y dejaría todos los nacimientos un día antes.
+     */
+    const legible = codigos.map((c) => etiqueta.get(c) ?? diaSuelto(c)).join(', ')
 
     return {
       clave: q.clave,
