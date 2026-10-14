@@ -215,6 +215,9 @@
                       </sc-if>
                     </div>
                   </sc-if>
+                  <sc-if value="{{ t.sinCandidatos }}" hint-placeholder-val="{{ false }}">
+                    <div style="font:400 12px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-bottom:13px;text-wrap:pretty">{{ t.textoSinCandidatos }}</div>
+                  </sc-if>
 
                   <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(20,52,42,.12)">
                     <sc-for list="{{ t.gente }}" as="g" hint-placeholder-count="6">
@@ -2574,8 +2577,23 @@ class Component extends DCLogic {
       const porPoner = suyos.length ? [] : CANDIDATOS
         .filter((l) => zonasAbiertas.indexOf(l.zona) >= 0 && deLaMesa(l.zona));
 
+      /**
+       * Y si no hay ni sitios puestos ni candidatos, decir por qué.
+       *
+       * Es el caso de Los Palos Grandes hoy: zona abierta, veinte apuntados,
+       * dos mesas, y cero locales de esa zona en el catálogo. Sin esta
+       * línea la tarjeta no enseña nada y vuelve a ser el callejón de
+       * siempre: el problema a la vista y ninguna salida.
+       */
+      const zonaSuya = m.zona || (posibles.length === 1 ? posibles[0] : null);
+      const nombreSuyo = zonaSuya
+        ? ((SEDES.filter((v) => v.zona === zonaSuya)[0] || {}).zonaNombre || zonaSuya)
+        : null;
+
       return {
         haySitios: suyos.length > 0 || porPoner.length > 0,
+        sinCandidatos: !suyos.length && !porPoner.length && !!nombreSuyo,
+        textoSinCandidatos: 'No hay ningún local de ' + nombreSuyo + ' en el catálogo. Date de alta uno en Locales y aparece aquí.',
         sitioFijo: fijo && suyos.length > 1,
         textoSitioFijo: 'Ya son las doce: esta mesa tiene la dirección en su correo. Para cambiarla hay que publicarla otra vez, y a cada uno le sale un aviso.',
         tituloSitios: suyos.length ? (suyos.length === 1 ? 'DÓNDE' : 'DÓNDE · ELIGE') : 'SIN LOCAL · PONER UNO',
