@@ -1068,13 +1068,23 @@ if (relojes.length) {
   const enReglas = Number((reglas.match(/Los (\d+) ref cubren/) ?? [])[1])
   const enEsquema = Number((portada.match(/Los (\d+) ref cubren/) ?? [])[1])
 
-  if (enReglas !== precio || enEsquema !== precio) {
+  /**
+   * Y el `"price"` de la oferta del schema.org, que se me escapó.
+   *
+   * La regla miraba la FRASE y no el campo. El 13-10 el precio subió a diez,
+   * la frase cambió en los dos sitios, y `"price": "7"` se quedó: Google
+   * seguía anunciando siete. Un número en un campo no se lee al revisar el
+   * copy, que es justo por lo que hay que vigilarlo.
+   */
+  const enOferta = Number((portada.match(/"price":\s*"(\d+)"/) ?? [])[1])
+
+  if (enReglas !== precio || enEsquema !== precio || enOferta !== precio) {
     errores++
     console.error('\n✗ «Los N ref cubren…» no cuadra con PRECIO_USD')
-    console.error(`    PRECIO_USD: ${precio} · frecuentes: ${enReglas} · JSON-LD: ${enEsquema}`)
+    console.error(`    PRECIO_USD: ${precio} · frecuentes: ${enReglas} · JSON-LD: ${enEsquema} · oferta: ${enOferta}`)
     console.error('    → la portada promete un precio y el cobro hace otro')
   } else {
-    console.log(`✓ «Los ${precio} ref cubren…» igual en reglas.js, en el JSON-LD y en PRECIO_USD`)
+    console.log(`✓ el precio (${precio} ref) igual en reglas.js, en la frase del JSON-LD y en su campo "price"`)
   }
 }
 
