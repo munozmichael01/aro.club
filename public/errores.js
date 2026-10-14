@@ -246,10 +246,83 @@
     });
   });
 
+  /**
+   * SI REACT NO CARGA, SE REINTENTA. La pantalla no se queda muerta.
+   *
+   * `support.js` pide React y React DOM con un `<script>` y un solo intento:
+   * `onerror` rechaza la promesa, el `catch` la vuelve a lanzar y ahí se
+   * acaba. `init()` no llega a correr, no hay `__dcBoot`, y lo que queda es
+   * la plantilla sin hidratar: un formulario que no responde.
+   *
+   * Pasó el 14-10 en un iPhone, en la portada. Una red móvil que se cae
+   * medio segundo deja a esa persona con una página muerta, y la única
+   * salida que tiene es recargar — si se le ocurre.
+   *
+   * No se puede arreglar donde está: `support.js` lo genera `dc-runtime`,
+   * que se compila aparte y no vive en este repositorio. Así que se arregla
+   * desde fuera, que además es menos invasivo: no se toca el camino bueno,
+   * solo se recoge el fallo.
+   *
+   * Cómo: se vuelven a pedir los dos ficheros, y cuando están se vuelve a
+   * ejecutar `support.js`. Su `loadReactUmd()` sale en la primera línea si
+   * `window.React` y `window.ReactDOM` ya existen, así que la segunda vuelta
+   * va directa a `init()` y la pantalla hidrata.
+   *
+   * No hay riesgo de arrancar dos veces: esto solo corre cuando el primer
+   * intento NO llegó a `init`, que es justo lo que dice el fallo.
+   */
+  var REINTENTOS = 2;
+  var reintentando = false;
+
+  function reintentarReact() {
+    if (reintentando) return;
+    if (window.React && window.ReactDOM) return;
+    reintentando = true;
+
+    var pendientes = ['/vendor/react.production.min.js', '/vendor/react-dom.production.min.js'];
+    var vuelta = 0;
+
+    function cargar(src) {
+      return new Promise(function (ok, mal) {
+        var s = document.createElement('script');
+        s.src = src;
+        s.async = false;
+        s.onload = function () { ok(); };
+        s.onerror = function () { mal(new Error(src)); };
+        document.head.appendChild(s);
+      });
+    }
+
+    function intentar() {
+      vuelta++;
+      Promise.all(pendientes.map(cargar)).then(function () {
+        // React está. Se vuelve a ejecutar el runtime, que ahora sí arranca.
+        var s = document.createElement('script');
+        s.src = '/support.js';
+        s.async = false;
+        document.head.appendChild(s);
+      }).catch(function () {
+        // Con espera entre vueltas: si la red se cayó, pedirlo otra vez en
+        // el mismo instante se cae igual.
+        if (vuelta <= REINTENTOS) setTimeout(intentar, vuelta * 1200);
+        else reintentando = false;
+      });
+    }
+
+    intentar();
+  }
+
   window.addEventListener('unhandledrejection', function (e) {
     var r = e ? e.reason : null;
     var mensaje = r && r.message ? String(r.message) : String(r);
     if (!mensaje || mensaje === 'undefined') return;
+
+    // Antes de contarlo: si lo que falló es React, se intenta arreglar. El
+    // aviso sale igual —queremos saber cuántas veces pasa— pero la persona
+    // no se queda con una pantalla muerta mientras tanto.
+    if (mensaje.indexOf('failed to load') === 0 && mensaje.indexOf('/vendor/') > 0) {
+      reintentarReact();
+    }
 
     var pila = r && r.stack ? String(r.stack) : undefined;
 
