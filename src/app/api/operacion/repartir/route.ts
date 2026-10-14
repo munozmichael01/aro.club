@@ -73,7 +73,7 @@ export async function GET(request: Request) {
 
   const { data: pool } = await admin
     .from('v_matching_pool')
-    .select('profile_id, zones')
+    .select('profile_id, zones, age, gender, industry, employer_key, budget_tier')
     .eq('event_id', evento.id)
 
   // Quiénes son, no cuántos.
@@ -134,20 +134,31 @@ export async function GET(request: Request) {
    * Lo que hace falta para pintar la corrida guardada: comidas, gasto y si
    * tiene cara. Son tres consultas y solo cuando hay corrida.
    */
-  const idsGuardados = corrida
-    ? [
-        ...new Set(
-          ((corrida.proposal ?? []) as unknown as { integrantes: { profileId: string }[] }[])
-            .flatMap((m) => (m.integrantes ?? []).map((p) => p.profileId))
-            .filter(Boolean),
+  /**
+   * De quién hay que saber la edad, la empresa, lo que come y lo que gasta.
+   *
+   * Los de las mesas propuestas, los de la espera y —cuando todavía no se ha
+   * repartido— los apuntados. Las tres listas se miran para lo mismo, así
+   * que las tres llevan la misma ficha. Que a una le faltara era lo que
+   * convertía la decisión en dos decisiones distintas.
+   */
+  const idsGuardados = [
+    ...new Set(
+      [
+        ...((corrida?.proposal ?? []) as unknown as { integrantes: { profileId: string }[] }[])
+          .flatMap((m) => (m.integrantes ?? []).map((p) => p.profileId)),
+        ...((corrida?.unmatched ?? []) as unknown as { profileId: string }[]).map(
+          (p) => p.profileId,
         ),
-      ]
-    : []
+        ...(pool ?? []).map((x) => x.profile_id as string),
+      ].filter(Boolean),
+    ),
+  ]
 
   const { data: rasgosGuardados } = idsGuardados.length
     ? await admin
         .from('profile_traits')
-        .select('profile_id, cuisines, budget_tier')
+        .select('profile_id, cuisines, budget_tier, age, gender, industry, employer')
         .in('profile_id', idsGuardados)
     : { data: [] }
 
@@ -156,6 +167,14 @@ export async function GET(request: Request) {
   )
   const gastoGuardado = new Map(
     (rasgosGuardados ?? []).map((r) => [r.profile_id, r.budget_tier as number | null]),
+  )
+  // La espera guardada no lleva edad ni empresa: solo nombre. Se completan
+  // aquí, que es donde ya estamos leyendo los rasgos.
+  const rasgoGuardado = new Map(
+    (rasgosGuardados ?? []).map((r) => [
+      r.profile_id,
+      { edad: r.age, genero: r.gender, sector: r.industry, empresa: r.employer },
+    ]),
   )
 
   const { data: carasGuardadas } = idsGuardados.length
@@ -197,6 +216,17 @@ export async function GET(request: Request) {
       profileId: x.profile_id,
       nombre: nombreDe.get(x.profile_id as string) ?? 'Sin nombre',
       zonas: (x.zones ?? []) as string[],
+      // La misma ficha que en una mesa: esta lista es la de antes de
+      // repartir, y se mira exactamente para lo mismo.
+      edad: x.age,
+      genero: x.gender,
+      sector: x.industry,
+      empresa: x.employer_key,
+      tramoGasto: x.budget_tier,
+      comidas: comidaGuardada.get(x.profile_id as string) ?? [],
+      foto: caraGuardada.has(x.profile_id as string)
+        ? `/api/operacion/cara?perfil=${x.profile_id}`
+        : null,
     })),
     // Apuntados que NO entran al reparto: sin verificar o sin rasgos. Es la
     // diferencia entre quien se apuntó y quien puede sentarse.
@@ -235,7 +265,15 @@ export async function GET(request: Request) {
                 : null,
             })),
           })),
-          espera: corrida.unmatched,
+          // Lo mismo que la propuesta: lo que la espera ES se guardó, y lo
+          // que se VE se resuelve al leer.
+          espera: ((corrida.unmatched ?? []) as unknown as { profileId: string }[]).map((p) => ({
+            ...p,
+            ...(rasgoGuardado.get(p.profileId) ?? {}),
+            comidas: comidaGuardada.get(p.profileId) ?? [],
+            tramoGasto: gastoGuardado.get(p.profileId) ?? null,
+            foto: caraGuardada.has(p.profileId) ? `/api/operacion/cara?perfil=${p.profileId}` : null,
+          })),
           media: corrida.avg_score,
         }
       : null,
@@ -513,7 +551,27 @@ export async function POST(request: Request) {
       min_score: r.puntuaciones.length ? Number(Math.min(...r.puntuaciones).toFixed(3)) : null,
       runtime_ms: Date.now() - arranque,
       is_published: false,
-      unmatched: r.espera.map((p) => ({ profileId: p.profileId, nombre: p.nombre })) as never,
+      /**
+       * La espera, con la MISMA ficha que quien está sentado.
+       *
+       * Iba con nombre y nada más, y eso convertía la decisión en dos
+       * decisiones distintas: a los de la mesa se les mira la edad, la
+       * empresa, lo que comen y lo que gastan, y al que sobra se le mira el
+       * nombre. Pero es justo de quien hay que decidir si entra, y con qué
+       * mesa pega.
+       */
+      unmatched: r.espera.map((p) => ({
+        profileId: p.profileId,
+        bookingId: p.bookingId,
+        nombre: p.nombre,
+        edad: p.edad,
+        genero: p.genero,
+        empresa: p.empresaTexto || p.empresa,
+        sector: p.sector,
+        tramoGasto: p.tramoGasto,
+        comidas: comidaDe.get(p.profileId) ?? [],
+        foto: caraDe(p.profileId),
+      })) as never,
       created_by: actor,
       proposal: propuesta as never,
     })
