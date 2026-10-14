@@ -42,6 +42,7 @@ type Api = {
   PRECIO_USD: number
   HORAS_DE_CIERRE: number
   DIAS_GUARDA_FOTOS: number
+  MAX_TEXTO: number
   precioTexto: () => string
   COCINAS: string[][]
   REGLAS: Record<Campo, { etiqueta: string; ayuda?: string }>
@@ -100,6 +101,9 @@ export const HORAS_DE_CIERRE: number = api.HORAS_DE_CIERRE
 
 /** Cuántos días guardamos la cédula y la selfie. Ciento veinte. */
 export const DIAS_GUARDA_FOTOS: number = api.DIAS_GUARDA_FOTOS
+
+/** Lo más largo que admite una respuesta escrita a mano. */
+export const MAX_TEXTO: number = api.MAX_TEXTO
 /**
  * El dia y la hora de una fecha, en la zona del producto.
  *

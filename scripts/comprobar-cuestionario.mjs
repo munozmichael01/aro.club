@@ -996,6 +996,39 @@ if (relojes.length) {
   }
 }
 
+// --- el largo máximo de un texto, igual en los tres ---------------------
+//
+// Hoy solo afecta a «¿Dónde trabajas?», y ya costó caro: el validador lo
+// tenía escrito a mano, la app tenía el suyo y la web no tenía ninguno, así
+// que el campo dejaba escribir sin límite y el servidor lo rechazaba
+// DESPUÉS. Como el empleador se reenvía al pulsar «Terminar», el aviso salía
+// en la última pantalla sin decir qué respuesta era: diez personas el 14-10
+// entre las 10:38 y las 10:42.
+//
+// La app todavía lleva su propia constante (lee `reglas.js` por Metro, pero
+// este número aún no). Mientras sean dos, que no puedan diferir.
+{
+  const reglas = fs.readFileSync(new URL('../public/reglas.js', import.meta.url), 'utf8')
+  const enReglas = Number((reglas.match(/MAX_TEXTO:\s*(\d+)/) ?? [])[1])
+
+  const pantalla = new URL('../app-mobile/src/cuestionario/Cuestionario.tsx', import.meta.url)
+  const enApp = fs.existsSync(pantalla)
+    ? Number((fs.readFileSync(pantalla, 'utf8').match(/const MAX_TEXTO = (\d+)/) ?? [])[1])
+    : null
+
+  if (!enReglas) {
+    errores++
+    console.error('\n✗ el largo máximo de un texto: no lo encuentro en reglas.js')
+  } else if (enApp && enApp !== enReglas) {
+    errores++
+    console.error('\n✗ el largo máximo de un texto NO cuadra')
+    console.error(`    reglas.js dice ${enReglas} y la app ${enApp}`)
+    console.error('    → una de las dos deja escribir lo que la otra rechaza')
+  } else {
+    console.log(`✓ el largo máximo de un texto (${enReglas}${enApp ? ', igual en la app' : ''})`)
+  }
+}
+
 // --- las heredables, iguales en el servidor y en `convertir_lead` ------
 //
 // Las preguntas con COLUMNA PROPIA se guardan dos veces a propósito: en su

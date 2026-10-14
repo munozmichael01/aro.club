@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { MAX_TEXTO } from '@/lib/reglas'
 
 /**
  * El catálogo del cuestionario, leído de la versión activa.
@@ -144,7 +145,10 @@ export function validar(
 
   if (pregunta.tipo === 'text') {
     if (typeof valor !== 'string') return `${pregunta.clave}: se esperaba texto`
-    if (valor.length > 120) return `${pregunta.clave}: texto demasiado largo`
+    // Del mismo sitio del que lo lee el campo de la pantalla y el de la app.
+    // Escrito aquí a mano, el servidor rechazaba lo que la web dejaba
+    // escribir, y el aviso salía al pulsar «Terminar».
+    if (valor.length > MAX_TEXTO) return `${pregunta.clave}: texto demasiado largo`
     return null
   }
 

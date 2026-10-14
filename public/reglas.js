@@ -940,6 +940,27 @@
     DIAS_GUARDA_FOTOS: 120,
 
     /**
+     * Lo más largo que admite una respuesta escrita a mano. Hoy solo hay
+     * una: «¿Dónde trabajas?».
+     *
+     * Vive aquí porque el número estaba en DOS sitios que no se hablaban: el
+     * validador del servidor y la app, que lleva su propio `MAX_TEXTO`. La
+     * web no lo tenía en ninguno, y por eso el campo dejaba escribir sin
+     * límite y el servidor lo rechazaba después.
+     *
+     * Lo que eso provocó, el 14-10 entre las 10:38 y las 10:42: DIEZ
+     * rechazos, todos de `empleador`. Y en el peor sitio posible — el
+     * empleador se reenvía al pulsar «Terminar», así que el «esa respuesta
+     * no cuadra» aparecía en la última pantalla, después de diecisiete
+     * preguntas, sin decir cuál era la respuesta mala. La persona no tenía
+     * forma de saber qué arreglar.
+     *
+     * Un límite que la pantalla no enseña no es un límite: es una trampa al
+     * final del recorrido.
+     */
+    MAX_TEXTO: 120,
+
+    /**
      * El juego de la mesa.
      *
      * El mazo aprobado vive en `app-mobile/JUEGO.md` y se copia aquí a

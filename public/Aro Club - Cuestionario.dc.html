@@ -122,7 +122,10 @@
 
               <sc-if value="{{ q.esTexto }}" hint-placeholder-val="{{ false }}">
                 <div style="margin-top:16px;max-width:460px">
-                  <input type="text" value="{{ q.valorTexto }}" onChange="{{ q.onTexto }}" placeholder="Empieza a escribir" aria-label="{{ q.pregunta }}" style="width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:400 16px/1 'Inter Tight',sans-serif;outline:none" />
+                  <!-- `maxlength` del mismo numero que valida el servidor:
+                       sin el, la pantalla dejaba escribir de mas y el aviso
+                       llegaba al pulsar «Terminar». -->
+                  <input type="text" value="{{ q.valorTexto }}" onChange="{{ q.onTexto }}" placeholder="Empieza a escribir" aria-label="{{ q.pregunta }}" maxlength="{{ q.maxTexto }}" style="width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:400 16px/1 'Inter Tight',sans-serif;outline:none" />
                   <sc-if value="{{ q.haySugerencias }}" hint-placeholder-val="{{ false }}">
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:11px">
                       <sc-for list="{{ q.sugerencias }}" as="s" hint-placeholder-count="3">
@@ -800,7 +803,20 @@ class Component extends DCLogic {
       .then(({ ok, estado, d }) => {
         if (estado === 401 || estado === 403) { this.setState({ guardando: false, sinSesion: true }); return false; }
         if (!ok) {
-          this.setState({ guardando: false, falloGuardar: d.error || 'No pudimos guardar esa respuesta.' });
+          /**
+           * Y DE QUE PREGUNTA es, que es lo que faltaba.
+           *
+           * El empleador se reenvia al pulsar «Terminar», asi que su error
+           * aparecia en la ULTIMA pantalla —despues de diecisiete
+           * preguntas— diciendo «esa respuesta no cuadra» sin decir cual.
+           * Diez personas lo vieron el 14-10 en cinco minutos, y ninguna
+           * tenia forma de saber que arreglar: la respuesta mala estaba dos
+           * pantallas atras.
+           *
+           * La ruta ya devuelve `pregunta` con la clave. Vale para
+           * cualquiera, no solo para esta: el aviso nombra la suya.
+           */
+          this.setState({ guardando: false, falloGuardar: this.falloDe(d) });
           return false;
         }
         this.setState({ guardando: false, falloGuardar: '', faltan: d.faltan || [], algoGuardado: true });
@@ -810,6 +826,32 @@ class Component extends DCLogic {
         this.setState({ guardando: false, falloGuardar: 'No pudimos guardar esa respuesta. Revisa tu conexión.' });
         return false;
       });
+  }
+
+  /**
+   * El aviso de un guardado que no cuadra, con el nombre de su pregunta.
+   *
+   * `corto` y no el enunciado entero: «Lo que escribiste en "dónde
+   * trabajas"» se lee de un vistazo, y es el mismo nombre con el que la
+   * pantalla final lista lo que falta, asi que la persona ya lo ha visto.
+   */
+  falloDe(d) {
+    const base = d.error || 'No pudimos guardar esa respuesta.';
+    if (!d.pregunta) return base;
+    const q = this._porClave ? this._porClave[d.pregunta] : null;
+    if (!q) return base;
+    /**
+     * Sin «vuelve atrás»: el mismo aviso sale en los dos sitios.
+     *
+     * Este error aparece donde se escribe —y entonces no hay nada atrás— y
+     * también al pulsar «Terminar», porque el empleador se reenvía ahí.
+     * Nombrar la pregunta ya dice dónde está; una instrucción de navegación
+     * que solo acierta la mitad de las veces estorba.
+     */
+    const largo = /demasiado largo/.test(d.detalle || '');
+    return largo
+      ? 'Lo que escribiste en «' + q.corto + '» es demasiado largo: déjalo en menos de ' + AroReglas.MAX_TEXTO + ' caracteres.'
+      : base + ' Es la de «' + q.corto + '».';
   }
 
   aCodigo(id, v) {
@@ -835,7 +877,20 @@ class Component extends DCLogic {
    * faltar una entrada entera en OPC si alguien anade una pregunta nueva y se
    * olvida. Eso se ve: la pregunta saldria sin opciones.
    */
+  /**
+   * Un indice de clave a pregunta, para poder nombrarla en un aviso.
+   *
+   * Se llena en el mismo recorrido que ya comprueba los codigos: las
+   * pantallas se arman en cada pintado y no habia forma de preguntar «quien
+   * es `empleador`» desde `enviar`, que es donde llega el error.
+   */
   revisarCodigos(pantallas) {
+    this._porClave = {};
+    pantallas.forEach((p) => (p.preguntas || []).forEach((q) => { this._porClave[q.id] = q; }));
+    return this.revisarCodigosDeVerdad(pantallas);
+  }
+
+  revisarCodigosDeVerdad(pantallas) {
     if (this._revisado) return;
     this._revisado = true;
     pantallas.forEach((p) => (p.preguntas || []).forEach((q) => {
@@ -1117,6 +1172,7 @@ class Component extends DCLogic {
           ? q.fuente.filter((e) => e.toLowerCase().indexOf(t.toLowerCase()) >= 0).slice(0, 4)
           : [];
         base.valorTexto = t;
+        base.maxTexto = String(AroReglas.MAX_TEXTO);
         base.onTexto = (e) => this.setEmpleador(e.target.value);
         base.sugerencias = sug.map((label) => ({ label, pick: () => this.setEmpleador(label) }));
         base.haySugerencias = sug.length > 0 && sug.indexOf(t) < 0;
