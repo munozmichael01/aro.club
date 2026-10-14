@@ -412,6 +412,22 @@
         <h1 style="{{ h1 }}">Cola de verificaciones</h1>
         <p style="{{ bajada }}">Compara el documento con la selfie y decide. Lo que apruebes queda con tu nombre, y el documento se borra a los {{ diasGuardaFotos }} días.</p>
 
+        <!-- Los tres grupos. No es el estado de la foto: es a quién le toca
+             mover. En «Pendientes» nos toca a nosotros, y los otros dos
+             esperan a la otra persona. -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:clamp(16px,2vw,20px)">
+          <sc-for list="{{ gruposCola }}" as="g" hint-placeholder-count="3">
+            <button onClick="{{ g.pick }}" style="{{ g.btn }}">
+              <span style="{{ g.txt }}">{{ g.nombre }}</span>
+              <span style="{{ g.cifra }}">{{ g.n }}</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ grupoVacio }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:24px;background:#FAF3E4;padding:clamp(20px,2.6vw,28px);margin-top:clamp(20px,2.6vw,28px);font:400 15px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ textoGrupoVacio }}</div>
+        </sc-if>
+
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start;gap:12px;margin-top:clamp(20px,2.6vw,28px)">
           <sc-for list="{{ colas }}" as="c" hint-placeholder-count="4">
             <div style="{{ c.caja }}">
@@ -486,10 +502,34 @@
               <!-- Sin las dos fotos no hay botones. La que falta puede estar
                    subiéndose en este segundo, y decidir ahora resuelve una
                    foto que nadie ha visto. -->
-              <sc-if value="{{ c.incompleta }}" hint-placeholder-val="{{ false }}">
+              <sc-if value="{{ c.subiendo }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;gap:10px;align-items:center;border-radius:16px;background:rgba(20,52,42,.06);padding:12px 14px;margin-top:12px">
                   <span style="flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:2px solid rgba(20,52,42,.2);border-top-color:#1B5138;animation:aro-giro 900ms linear infinite"></span>
                   <span style="flex:1;min-width:0;font:500 14px/1.4 'Inter Tight',sans-serif;color:#2C4A38">{{ c.faltaFoto }}</span>
+                </div>
+              </sc-if>
+
+              <!-- Y cuando lleva horas con una sola, el giro es mentira: no
+                   se está subiendo nada. Lo que hay es alguien que se quedó
+                   a medias, y eso se dice con el tiempo que lleva. -->
+              <sc-if value="{{ c.parada }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:11px;align-items:flex-start;border-radius:16px;background:rgba(20,52,42,.06);padding:12px 14px;margin-top:12px">
+                  <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;border:1px solid rgba(20,52,42,.25);color:#33513F;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">·</span>
+                  <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ c.faltaFoto }}</span>
+                </div>
+              </sc-if>
+
+              <!-- Lo que rechazamos, cuándo y si puede volver a intentarlo.
+                   Estas cinco tarjetas decían «Subiendo… falta la cédula»
+                   teniendo la cédula ahí: se la habíamos rechazado nosotros
+                   y lo que faltaba era que la persona volviera. -->
+              <sc-if value="{{ c.hayRechazo }}" hint-placeholder-val="{{ false }}">
+                <div style="border-radius:16px;background:rgba(143,69,21,.09);padding:12px 14px;margin-top:12px">
+                  <div style="display:flex;gap:11px;align-items:flex-start">
+                    <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">·</span>
+                    <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ c.textoRechazo }}</span>
+                  </div>
+                  <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:{{ c.colorReintento }};margin-top:8px;padding-left:33px;text-wrap:pretty">{{ c.textoReintento }}</div>
                 </div>
               </sc-if>
 
@@ -1435,7 +1475,16 @@ class Component extends DCLogic {
     fechas: null,        // GET /api/operacion/fechas
     reparto: null,       // GET /api/operacion/repartir?eventoId=
     cola: null,          // GET /api/operacion/verificaciones
-    motivosCola: [],
+    motivosCola: [], colaConteo: null,
+    /**
+     * Qué grupo de la cola se está mirando.
+     *
+     * Arranca en `pendiente` porque es el único de los tres en el que nos
+     * toca mover algo. Los otros dos esperan a la otra persona, y mezclados
+     * tapaban lo que hay que hacer: ocho tarjetas esperándola a ella y una
+     * esperándonos a nosotros, todas con la misma pinta.
+     */
+    colaGrupo: 'pendiente',
     pagosCola: null, metodosPago: [], pagosResumen: null,
     incidencias: null, accionesIncidencia: [],
     locales: null, zonasCatalogo: [], resumenLocales: null,
@@ -1651,9 +1700,10 @@ class Component extends DCLogic {
   }
 
   cargarCola(deFondo) {
-    if (deFondo) return this.repedir('/api/operacion/verificaciones', (d) => ({ cola: d.cola, motivosCola: d.motivos }));
-    return this.pedir('/api/operacion/verificaciones',
-      (d) => ({ cola: d.cola, motivosCola: d.motivos }), { cola: [], motivosCola: [] });
+    const leer = (d) => ({ cola: d.cola, motivosCola: d.motivos, colaConteo: d.conteo || null });
+    if (deFondo) return this.repedir('/api/operacion/verificaciones', leer);
+    return this.pedir('/api/operacion/verificaciones', leer,
+      { cola: [], motivosCola: [], colaConteo: null });
   }
 
   cargarPagos(deFondo) {
@@ -2354,7 +2404,16 @@ class Component extends DCLogic {
     const LETRAS = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
     const letra = (n) => LETRAS[n] || String(n);
     const St = this.state;
-    const pendientes = (St.cola || []).length;
+    /**
+     * El número de la pestaña cuenta SOLO lo que nos toca decidir.
+     *
+     * Era la cola entera, y la cola entera incluye a quien espera por ella:
+     * decía ocho cuando había una sola por mirar. Un contador que pide
+     * atención para algo que no se puede hacer deja de leerse.
+     */
+    const pendientes = St.colaConteo
+      ? St.colaConteo.pendiente
+      : (St.cola || []).filter((c) => c.estado === 'pendiente').length;
     // De la tabla de tasas que llena el cron del BCV, no escrita a mano: con
     // una constante, cada importe en bolívares de esta pantalla estaría mal
     // al día siguiente.
@@ -3429,8 +3488,46 @@ class Component extends DCLogic {
     // con su código estable y con qué ve la persona. Escribirlos en la
     // pantalla haría que el correo dijera una cosa y la base guardara otra.
     const btnCola = (fondo, color, borde) => 'flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease';
-    const COLA = St.cola || [];
     const MOTIVOS = (St.motivosCola || []).map((m) => [m.label, m.mensaje || m.label, m.permiteReintento !== false, m.codigo]);
+    const labelMotivo = (cod) => (MOTIVOS.filter((m) => m[3] === cod)[0] || [cod])[0];
+    const reintentaMotivo = (cod) => (MOTIVOS.filter((m) => m[3] === cod)[0] || [null, null, true])[2];
+
+    // En minúscula, para ir dentro de una frase: «subió la cédula hace dos
+    // días». `haceCuanto` abre frase y empieza por mayúscula.
+    const desdeHace = (iso) => {
+      const t = haceCuanto(iso);
+      return t === 'Ayer' ? 'ayer' : t.replace(/^Hace /, 'hace ');
+    };
+
+    const GRUPO = St.colaGrupo || 'pendiente';
+    const CUENTA = St.colaConteo || {
+      pendiente: (St.cola || []).filter((c) => c.estado === 'pendiente').length,
+      incompleta: (St.cola || []).filter((c) => c.estado === 'incompleta').length,
+      rechazada: (St.cola || []).filter((c) => c.estado === 'rechazada').length
+    };
+    const gruposCola = [
+      ['Pendientes', 'pendiente', CUENTA.pendiente],
+      ['Incompletos', 'incompleta', CUENTA.incompleta],
+      ['Rechazados', 'rechazada', CUENTA.rechazada]
+    ].map((g) => {
+      const on = GRUPO === g[1];
+      return {
+        nombre: g[0], n: String(g[2]),
+        pick: () => this.setState({ colaGrupo: g[1], abriendo: null }),
+        btn: 'display:inline-flex;align-items:center;gap:9px;min-height:48px;padding:0 15px;border-radius:999px;background:' + (on ? '#14342A' : 'transparent') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.2)') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#2C4A38') + ';white-space:nowrap',
+        cifra: 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.18)' : 'rgba(20,52,42,.08)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;color:' + (on ? '#FAF3E4' : '#33513F')
+      };
+    });
+
+    // Solo el grupo que se está mirando. Una tarjeta que no es de este
+    // grupo no se pinta: es justo lo que ensuciaba lo pendiente.
+    const COLA = (St.cola || []).filter((c) => (c.estado || 'pendiente') === GRUPO);
+    const textoGrupoVacio = GRUPO === 'pendiente'
+      ? 'Nada por decidir. Cuando alguien suba las dos fotos, aparece aquí.'
+      : (GRUPO === 'incompleta'
+        ? 'Nadie se quedó a medias. Aquí sale quien subió una sola foto y no mandó la otra: no hay nada que decidir, el empujón de «te falta una foto» ya sale solo.'
+        : 'Nadie con un rechazo sin resolver. Aquí sale a quien le rechazamos una foto y todavía no ha vuelto a subirla.');
 
     const edadDe = (iso) => {
       if (!iso) return null;
@@ -3468,11 +3565,19 @@ class Component extends DCLogic {
         inicial: (c.trato || c.nombre || '—').charAt(0),
         avatar: avatar(i),
         perfil: '/miembro?id=' + c.profileId,
-        espera: d === 'ok' ? 'Aprobada por ti' : (d === 'no' ? 'Rechazada por ti' : haceCuanto(c.esperaDesde)),
+        // Para un rechazo el reloj no es «lleva esperando»: es lo que lleva
+        // sin volver, y eso se cuenta desde que lo rechazamos.
+        espera: d === 'ok' ? 'Aprobada por ti'
+          : (d === 'no' ? 'Rechazada por ti'
+            : (c.estado === 'rechazada' && c.rechazo && c.rechazo.el
+              ? 'Rechazada ' + desdeHace(c.rechazo.el)
+              : haceCuanto(c.esperaDesde))),
         datos: [c.nombre, edad != null ? edad + ' años' : null].filter(Boolean).map((texto) => ({ texto })),
         // El aviso que cambia la decisión: si ya la rechazamos antes, esta
         // no es la primera vez que sube la foto.
-        hayAviso: (c.rechazosPrevios || 0) > 0 && !d,
+        // Y solo en lo pendiente: en la pestaña de rechazados, «ya se le
+        // rechazó una vez» lo dice ya el bloque de abajo con el motivo.
+        hayAviso: (c.rechazosPrevios || 0) > 0 && !d && c.estado === 'pendiente',
         aviso: c.rechazosPrevios === 1
           ? 'Ya se le rechazó una vez. Si vuelve a fallar, escríbele en vez de rechazar otra vez.'
           : 'Van ' + c.rechazosPrevios + ' rechazos. Escríbele en vez de rechazar otra vez.',
@@ -3488,7 +3593,46 @@ class Component extends DCLogic {
         // borrosa» cinco segundos después de que llegara la selfie, desde
         // una vista que solo tenía la cédula.
         incompleta: !c.completa,
-        faltaFoto: !c.selfie ? 'Subiendo… falta la selfie' : 'Subiendo… falta la cédula',
+        /**
+         * «Subiendo…» solo si de verdad puede estar subiéndose.
+         *
+         * El giro decía «Subiendo… falta la selfie» en tarjetas de gente que
+         * llevaba DÍAS con una sola foto. Nada se estaba subiendo: alguien
+         * se quedó a medias y la pantalla lo pintaba como si fuera cosa de
+         * segundos. Un cuarto de hora es de sobra para una foto.
+         */
+        subiendo: c.estado === 'incompleta' && Date.now() - new Date(c.esperaDesde || 0).getTime() < 15 * 60000,
+        parada: c.estado === 'incompleta' && Date.now() - new Date(c.esperaDesde || 0).getTime() >= 15 * 60000,
+        faltaFoto: c.estado === 'incompleta' && Date.now() - new Date(c.esperaDesde || 0).getTime() >= 15 * 60000
+          ? (c.falta === 'selfie'
+            ? 'Falta la selfie. Subió la cédula ' + desdeHace(c.esperaDesde) + ' y no volvió.'
+            : 'Falta la cédula. Subió la selfie ' + desdeHace(c.esperaDesde) + ' y no volvió.')
+          : (c.falta === 'selfie' ? 'Subiendo… falta la selfie' : 'Subiendo… falta la cédula'),
+
+        // Lo que le rechazamos, dicho con el motivo del catálogo y no con
+        // una frase escrita aquí: el correo que le llegó sale del mismo
+        // sitio, así que las dos cosas no pueden separarse.
+        hayRechazo: c.estado === 'rechazada' && !!c.rechazo,
+        // El motivo va entrecomillado y tal cual, no cosido a la frase con
+        // dos puntos: «Le rechazamos la cédula: falta la foto del
+        // documento» se lee como que se contradice, cuando lo que dice el
+        // catálogo es que lo que subió no era el documento.
+        textoRechazo: c.rechazo
+          ? 'Le rechazamos ' + (c.rechazo.lasDos ? 'las dos fotos' : (c.rechazo.afecta === 'selfie' ? 'la selfie' : 'la cédula'))
+            + ' ' + desdeHace(c.rechazo.el) + '. Motivo: «' + labelMotivo(c.rechazo.motivo) + '». '
+            + (c.rechazo.lasDos ? 'No ha vuelto a subir ninguna.' : 'No la ha vuelto a subir.')
+          : '',
+        // Si no puede reintentar, esperar no sirve de nada: el camino es
+        // escribirle. Decirlo aquí es lo que evita que la tarjeta se quede
+        // en esta lista para siempre.
+        textoReintento: c.rechazo && reintentaMotivo(c.rechazo.motivo)
+          ? (c.rechazo.lasDos
+            ? 'Puede volver a subirlas cuando quiera. En cuanto lo haga, vuelve a Pendientes.'
+            : 'Puede volver a subirla cuando quiera. En cuanto lo haga, vuelve a Pendientes.')
+          : (c.rechazo && c.rechazo.lasDos
+            ? 'Este motivo no admite reintento: no puede subirlas otra vez. Hay que escribirle.'
+            : 'Este motivo no admite reintento: no puede subirla otra vez. Hay que escribirle.'),
+        colorReintento: c.rechazo && reintentaMotivo(c.rechazo.motivo) ? '#33513F' : '#8F4515',
         hueco: 'flex:1;border-radius:14px;background:#E8DFC6;aspect-ratio:3/2;display:flex;align-items:center;justify-content:center;font:400 12px/1.4 \'Inter Tight\',sans-serif;color:#456352',
         caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,20px);border:1px solid ' + (d === 'ok' ? '#1B5138' : (d === 'no' ? '#C0662F' : 'transparent')) + ';transition:all 200ms ease',
         textoAprobar: d === 'ok' ? 'Aprobada' : 'Aprobar',
@@ -3498,8 +3642,12 @@ class Component extends DCLogic {
         botonConfirmar: btnCola(mSel >= 0 ? '#6E340F' : 'rgba(20,52,42,.1)', mSel >= 0 ? '#FFF8EA' : '#456352', 'none'),
         textoConfirmar: mSel >= 0 ? 'Rechazar' : 'Elige el motivo',
 
-        decidiendo: !d && !abierta && !!c.completa,
-        eligiendo: abierta && !!c.completa,
+        // Decidir solo donde hay algo que decidir. Con un rechazo vivo el
+        // servidor devuelve 409 de todas formas —no se resuelve a nadie con
+        // una sola foto válida— así que ofrecer el botón era ofrecer un
+        // error.
+        decidiendo: !d && !abierta && !!c.completa && c.estado === 'pendiente',
+        eligiendo: abierta && !!c.completa && c.estado === 'pendiente',
         motivos: MOTIVOS.map((m, k) => {
           const on = mSel === k;
           return {
@@ -3671,6 +3819,7 @@ class Component extends DCLogic {
 
     return {
       pestanas, metricas, colas, metricasPago, pagos,
+      gruposCola, grupoVacio: colas.length === 0, textoGrupoVacio,
       fechasRep, zonasRep, tiposRep,
       // Se enseña solo si hay algo que enseñar: un botón que no cambia nada
       // es ruido.

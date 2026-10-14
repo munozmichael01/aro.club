@@ -78,7 +78,34 @@ export async function GET() {
     return NextResponse.json({ error: 'No pudimos leer la cola.' }, { status: 500 })
   }
 
-  const ids = (cola ?? []).map((c) => c.profile_id).filter((id): id is string => id != null)
+  /**
+   * Y LOS RECHAZADOS, que la vista no devuelve.
+   *
+   * `v_cola_verificacion` pide `status = 'pending'`, así que a quien se le
+   * rechazaron las dos fotos desaparece del panel entero. Euridice se le
+   * rechazaron las dos el 12-10 y desde entonces no sale en ninguna
+   * pantalla: ni en lo pendiente, ni en una lista de rechazados, en ningún
+   * sitio. La única forma de saber que existe era preguntárselo a la base.
+   *
+   * Una fila `rejected` que no esté `expired` significa UNA cosa y solo una:
+   * se rechazó y la persona no ha vuelto a subir esa foto. Lo marca
+   * `/api/verificacion` al subir —caduca la anterior antes de insertar la
+   * nueva, que es lo que exige el índice único de una viva por tipo—, así
+   * que no hay que comparar fechas para saber si un rechazo sigue en pie.
+   */
+  const { data: rechazadas } = await admin
+    .from('verifications')
+    .select('profile_id')
+    .eq('status', 'rejected')
+
+  const ids = [
+    ...new Set(
+      [
+        ...(cola ?? []).map((c) => c.profile_id),
+        ...(rechazadas ?? []).map((r) => r.profile_id),
+      ].filter((id): id is string => id != null),
+    ),
+  ]
 
   /**
    * Las fotos que VALEN, que no son solo las pendientes.
@@ -89,27 +116,39 @@ export async function GET() {
    * enseñaba sin documento con el que compararla, mientras su ficha la
    * enseñaba perfectamente. La misma foto, dos pantallas, dos respuestas.
    *
-   * Vale la ÚLTIMA de cada tipo que no esté caducada ni rechazada: es lo
-   * mismo que mira la ficha. Una persona que repite la foto deja la vieja
-   * como `expired`, y emparejar con esa es enseñar la que ya no cuenta.
+   * Y tampoco quita las rechazadas, que es lo que dejaba la cola mintiendo
+   * de la otra forma: cinco tarjetas decían «Subiendo… falta la cédula»
+   * cuando la cédula estaba ahí, la habíamos rechazado nosotros y lo que
+   * pasaba era que la persona no había vuelto. La foto que se rechazó es
+   * justo la que hay que poder mirar para saber si el motivo fue el bueno.
+   *
+   * Vale la ÚLTIMA de cada tipo que no esté caducada. Con el índice único
+   * hay una sola viva por tipo; quedarse con la más nueva es por si alguna
+   * vez hay dos.
    */
   const { data: fotos } = await admin
     .from('verifications')
-    .select('profile_id, kind, storage_path, created_at, status')
+    .select('profile_id, kind, storage_path, created_at, status, reviewed_at, rejection_reason')
     .in('profile_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
-    .not('status', 'in', '(expired,rejected)')
+    .neq('status', 'expired')
     .order('created_at', { ascending: true })
+
+  type Foto = {
+    storage_path: string | null
+    created_at: string
+    status: string
+    reviewed_at: string | null
+    rejection_reason: string | null
+  }
 
   // La última de cada tipo, y solo esa. Firmar también las viejas sería una
   // llamada a Storage por foto repetida para enseñar la que no cuenta.
-  const vigente = new Map<string, { storage_path: string | null; created_at: string }>()
+  const vigente = new Map<string, Foto>()
   for (const f of fotos ?? []) {
     if (!f.profile_id) continue
     const k = `${f.profile_id}:${f.kind}`
     const previa = vigente.get(k)
-    if (!previa || f.created_at > previa.created_at) {
-      vigente.set(k, { storage_path: f.storage_path, created_at: f.created_at })
-    }
+    if (!previa || f.created_at > previa.created_at) vigente.set(k, f)
   }
 
   // Una firma por foto, cinco minutos.
@@ -137,25 +176,103 @@ export async function GET() {
     .select('code, label, allows_retry, message')
     .order('sort_order')
 
+  // Quién es cada uno de los que la vista no trae. Hoy es uno; el día que
+  // alguien pida mirar los rechazados viejos, serán más.
+  const enLaVista = new Set((cola ?? []).map((c) => c.profile_id))
+  const sueltos = ids.filter((id) => !enLaVista.has(id))
+
+  const { data: fichas } = sueltos.length
+    ? await admin
+        .from('profiles')
+        .select('id, full_name, display_name, birthdate, status')
+        .in('id', sueltos)
+    : { data: [] }
+
+  /**
+   * TRES GRUPOS, y el que manda es el rechazo.
+   *
+   * Lo que separa a los tres no es en qué estado está la foto: es a quién le
+   * toca mover. Mezclados en una sola lista, hoy hay una tarjeta por decidir
+   * y ocho esperando a otra persona, y la que importa es la que no se ve.
+   *
+   * - `pendiente`  · están las dos fotos y nadie las ha mirado. NOS toca.
+   * - `rechazada`  · la rechazamos y no ha vuelto. LE toca, por algo nuestro.
+   * - `incompleta` · subió una sola y nunca mandó la otra. LE toca, y no
+   *                  hemos tocado nada.
+   *
+   * El rechazo va primero a propósito: quien tiene la cédula rechazada
+   * tiene la selfie pendiente, así que por fotos parece «le falta una». No
+   * le falta: se la quitamos nosotros. Es el mismo orden que arregló el cron
+   * de empujones, que les mandaba «te falta una foto» a cinco personas a
+   * las que habíamos rechazado la otra.
+   */
+  const filas = ids
+    .map((id) => {
+      const doc = vigente.get(`${id}:id_document`)
+      const self = vigente.get(`${id}:selfie`)
+      const deLaVista = (cola ?? []).find((c) => c.profile_id === id)
+      const ficha = (fichas ?? []).find((f) => f.id === id)
+
+      const rechazo = [doc, self].find((f) => f?.status === 'rejected') ?? null
+      const aprobadas = [doc, self].filter((f) => f?.status === 'approved').length
+
+      // Las dos aprobadas: ya no es cola de nada. No debería llegar aquí
+      // —la vista no la trae y no tiene rechazos— pero si llega, fuera.
+      if (!rechazo && aprobadas === 2) return null
+
+      const estado = rechazo ? 'rechazada' : doc && self ? 'pendiente' : 'incompleta'
+
+      return {
+        profileId: id,
+        nombre: deLaVista?.full_name ?? ficha?.full_name ?? null,
+        trato: deLaVista?.display_name ?? ficha?.display_name ?? null,
+        // La fecha declarada, para contrastarla con la del documento. Es
+        // justo lo que operación tiene que comparar.
+        nacimiento: deLaVista?.birthdate ?? ficha?.birthdate ?? null,
+        esperaDesde: deLaVista?.espera_desde ?? doc?.created_at ?? self?.created_at ?? null,
+        rechazosPrevios: deLaVista?.rechazos_previos ?? null,
+        cedula: firmadas.get(`${id}:id_document`) ?? null,
+        selfie: firmadas.get(`${id}:selfie`) ?? null,
+        // Con una sola foto no se decide: la otra puede estar subiéndose en
+        // este momento, que es como se rechazó una selfie cinco segundos
+        // después de que llegara.
+        completa: !!doc && !!self,
+        estado,
+        // Qué rechazamos, cuándo y de qué foto. El panel saca el texto del
+        // catálogo de motivos, no de aquí: el código es lo estable.
+        rechazo: rechazo
+          ? {
+              motivo: rechazo.rejection_reason,
+              el: rechazo.reviewed_at,
+              afecta: doc?.status === 'rejected' ? 'id_document' : 'selfie',
+              // Si también rechazamos la otra no queda nada que mirar, y eso
+              // cambia lo que se le puede pedir.
+              lasDos: doc?.status === 'rejected' && self?.status === 'rejected',
+            }
+          : null,
+        // Qué foto falta, si falta. Dicho desde lo que hay, no desde lo que
+        // suponemos: `incompleta` sin rechazo es que nunca llegó.
+        falta: doc && self ? null : !self ? 'selfie' : 'id_document',
+        vistoHasta: ultimaFoto.get(id) ?? null,
+      }
+    })
+    .filter((f): f is NonNullable<typeof f> => f != null)
+    // Quien lleva más esperando, primero. Para un rechazo eso es desde que
+    // lo rechazamos: es el reloj de lo que lleva sin volver.
+    .sort((a, b) => {
+      const reloj = (f: typeof a) => f.rechazo?.el ?? f.esperaDesde ?? ''
+      return reloj(a) < reloj(b) ? -1 : reloj(a) > reloj(b) ? 1 : 0
+    })
+
   return NextResponse.json({
-    cola: (cola ?? []).map((c) => ({
-      profileId: c.profile_id,
-      nombre: c.full_name,
-      trato: c.display_name,
-      // La fecha declarada, para contrastarla con la del documento. Es
-      // justo lo que operación tiene que comparar.
-      nacimiento: c.birthdate,
-      esperaDesde: c.espera_desde,
-      rechazosPrevios: c.rechazos_previos,
-      cedula: firmadas.get(`${c.profile_id}:id_document`) ?? null,
-      selfie: firmadas.get(`${c.profile_id}:selfie`) ?? null,
-      // Con una sola foto no se decide: la otra puede estar subiéndose en
-      // este momento, que es como se rechazó una selfie cinco segundos
-      // después de que llegara.
-      completa:
-        !!firmadas.get(`${c.profile_id}:id_document`) && !!firmadas.get(`${c.profile_id}:selfie`),
-      vistoHasta: c.profile_id ? (ultimaFoto.get(c.profile_id) ?? null) : null,
-    })),
+    cola: filas,
+    // Cuántos hay en cada grupo. Lo cuenta el servidor y no la pantalla
+    // para que el número de la pestaña y el de la lista no puedan diferir.
+    conteo: {
+      pendiente: filas.filter((f) => f.estado === 'pendiente').length,
+      incompleta: filas.filter((f) => f.estado === 'incompleta').length,
+      rechazada: filas.filter((f) => f.estado === 'rechazada').length,
+    },
     motivos: (motivos ?? []).map((m) => ({
       codigo: m.code,
       label: m.label,
