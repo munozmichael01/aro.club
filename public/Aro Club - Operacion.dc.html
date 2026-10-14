@@ -2543,29 +2543,83 @@ class Component extends DCLogic {
      */
     const REVELA = REP && REP.evento ? REP.evento.revelaEn : null;
     const YA_REVELADA = !REVELA || new Date(REVELA).getTime() <= Date.now();
+    const CANDIDATOS = REP ? (REP.locales || []) : [];
+    const EVENTO_ID = REP && REP.evento ? REP.evento.id : null;
 
     const sitiosDe = (m, pub) => {
       const posibles = m.zonasPosibles || [];
-      const suyos = SEDES.filter((v) => !v.restaurantId ? false
-        : (!posibles.length || posibles.indexOf(v.zona) >= 0));
+      const deLaMesa = (zona) => !posibles.length || posibles.indexOf(zona) >= 0;
+      // Los sitios que la fecha YA tiene y esta mesa puede aceptar.
+      const suyos = SEDES.filter((v) => !!v.restaurantId && deLaMesa(v.zona));
       const fijo = pub && YA_REVELADA;
+
+      /**
+       * Y SI LA FECHA NO TIENE NINGUNO, los que se pueden poner.
+       *
+       * Este es el caso de verdad: hoy las tres fechas tienen las dos zonas
+       * abiertas y cero locales, así que la mesa no ofrecía nada y la
+       * pantalla mandaba a Fechas a ponerlo y volver. Dos pestañas para una
+       * decisión que se toma mirando quién está sentado.
+       *
+       * Son las zonas que esta mesa acepta, y de esas solo las que la fecha
+       * tiene abiertas: poner un local de una zona que no está abierta en la
+       * fecha no es elegir sitio, es abrir otra zona, y eso se decide en
+       * otro sitio y con otra cabeza.
+       *
+       * Al pulsarlo se pone en la FECHA, no en la mesa: así es como funciona
+       * —una zona tiene su local y las mesas de esa zona van ahí— y en
+       * cuanto está puesto, el reparto lo asigna solo.
+       */
+      const zonasAbiertas = SEDES.map((v) => v.zona).filter((z, i, a) => a.indexOf(z) === i);
+      const porPoner = suyos.length ? [] : CANDIDATOS
+        .filter((l) => zonasAbiertas.indexOf(l.zona) >= 0 && deLaMesa(l.zona));
+
       return {
-        haySitios: suyos.length > 0,
+        haySitios: suyos.length > 0 || porPoner.length > 0,
         sitioFijo: fijo && suyos.length > 1,
         textoSitioFijo: 'Ya son las doce: esta mesa tiene la dirección en su correo. Para cambiarla hay que publicarla otra vez, y a cada uno le sale un aviso.',
-        tituloSitios: suyos.length === 1 ? 'DÓNDE' : 'DÓNDE · ELIGE',
-        sitios: suyos.map((v) => {
-          const on = v.restaurantId === m.restaurantId;
-          return {
-            texto: v.nombre || v.zonaNombre,
-            ayuda: on ? 'Esta mesa cena en ' + (v.nombre || v.zonaNombre)
-              : 'Mover la mesa ' + String(m.numero).padStart(2, '0') + ' a ' + (v.nombre || v.zonaNombre),
-            elegir: (on || fijo) ? (() => {}) : (() => this.cambiarSede(m.numero, v.restaurantId)),
-            chip: 'display:inline-flex;align-items:center;min-height:34px;padding:0 13px;border-radius:999px;font:' + (on ? '600' : '500') + ' 12px/1 \'Inter Tight\',sans-serif;white-space:nowrap;transition:all 180ms ease;background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : (fijo ? '#8A9A90' : '#2C4A38')) + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.22)') + ';cursor:' + ((on || fijo) ? 'default' : 'pointer')
-          };
-        })
+        tituloSitios: suyos.length ? (suyos.length === 1 ? 'DÓNDE' : 'DÓNDE · ELIGE') : 'SIN LOCAL · PONER UNO',
+        sitios: suyos.length
+          ? suyos.map((v) => {
+              const on = v.restaurantId === m.restaurantId;
+              return {
+                texto: v.nombre || v.zonaNombre,
+                ayuda: on ? 'Esta mesa cena en ' + (v.nombre || v.zonaNombre)
+                  : 'Mover la mesa ' + String(m.numero).padStart(2, '0') + ' a ' + (v.nombre || v.zonaNombre),
+                elegir: (on || fijo) ? (() => {}) : (() => this.cambiarSede(m.numero, v.restaurantId)),
+                chip: chipSitio(on, fijo, false)
+              };
+            })
+          : porPoner.map((l) => {
+              const no = !!l.problema;
+              return {
+                texto: l.nombre + (l.comision != null ? ' · ' + l.comision + '%' : ''),
+                ayuda: no ? l.problema : 'Poner ' + l.nombre + ' como local de esta fecha',
+                /**
+                 * DOS PASOS, UN CLIC.
+                 *
+                 * Poner el local en la FECHA no se lo pone a la MESA: la
+                 * propuesta guardada es una foto, y el sitio de cada mesa lo
+                 * escribe el reparto cuando corre. Así que el primer clic
+                 * dejaba el local puesto en la zona y la tarjeta seguía
+                 * diciendo «sitio sin elegir» y «NO PUEDE SALIR». Lo probé y
+                 * es exactamente lo que pasó.
+                 *
+                 * Quien pulsa aquí no está configurando una zona: está
+                 * diciendo «esta mesa cena aquí». Lo primero es el requisito
+                 * de lo segundo, y encadenarlos es lo que convierte el clic
+                 * en lo que la persona quería.
+                 */
+                elegir: no ? (() => {}) : (() => this.ponerSitio(EVENTO_ID, l.zona, l.id)
+                  .then((r) => (r && r.ok) ? this.cambiarSede(m.numero, l.id) : r)),
+                chip: chipSitio(false, false, no)
+              };
+            })
       };
     };
+
+    const chipSitio = (on, fijo, no) =>
+      'display:inline-flex;align-items:center;min-height:34px;padding:0 13px;border-radius:999px;font:' + (on ? '600' : '500') + ' 12px/1 \'Inter Tight\',sans-serif;white-space:nowrap;transition:all 180ms ease;background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : ((fijo || no) ? '#8A9A90' : '#2C4A38')) + ';border:1px solid ' + (on ? '#14342A' : (no ? 'rgba(20,52,42,.12)' : 'rgba(20,52,42,.22)')) + ';cursor:' + ((on || fijo || no) ? 'default' : 'pointer') + (no ? ';text-decoration:line-through' : '');
 
     const FECHAS = St.fechas || [];
 

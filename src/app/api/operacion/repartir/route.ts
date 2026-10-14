@@ -131,6 +131,32 @@ export async function GET(request: Request) {
     .eq('event_id', evento.id)
 
   /**
+   * Y LOS LOCALES QUE TODAVÍA NO ESTÁN PUESTOS, por zona.
+   *
+   * Sin esto, elegir el local desde la mesa solo funcionaba si la fecha YA
+   * tenía uno: `sedes` son las sedes de la fecha, y mientras ninguna tiene
+   * restaurante la lista está vacía y la mesa no ofrece nada.
+   *
+   * Que es exactamente el caso de hoy —las tres fechas con las dos zonas
+   * abiertas y cero locales— así que la pantalla mandaba a Fechas a poner
+   * uno y volver. Dos pestañas para una decisión que se toma mirando la
+   * mesa.
+   *
+   * Con su problema dicho si lo tienen, y las mismas reglas que aplica
+   * `/api/operacion/fechas` al guardar: ofrecer lo que la otra ruta va a
+   * rechazar es ofrecer un error.
+   */
+  const { data: candidatos } = await admin
+    .from('restaurants')
+    .select('id, name, zone_slug, open_days, is_active, formats, commission_pct')
+    .order('name')
+
+  // El día de la semana EN CARACAS. Una cena del viernes a las 7:30 p.m. es
+  // sábado en UTC, y un sitio que no abre sábados parecería cerrado el día
+  // que abre.
+  const diaCaracas = new Date(new Date(evento.starts_at).getTime() - 4 * 3600_000).getUTCDay()
+
+  /**
    * Lo que hace falta para pintar la corrida guardada: comidas, gasto y si
    * tiene cara. Son tres consultas y solo cuando hay corrida.
    */
@@ -238,6 +264,21 @@ export async function GET(request: Request) {
       zonaNombre: (v.zones as unknown as { name: string } | null)?.name ?? v.zone_slug,
       restaurantId: v.restaurant_id,
       nombre: (v.restaurants as unknown as { name: string } | null)?.name ?? null,
+    })),
+    // Con qué se puede llenar una zona que todavía no tiene local, para
+    // poder hacerlo desde la mesa y no desde otra pestaña.
+    locales: (candidatos ?? []).map((l) => ({
+      id: l.id,
+      nombre: l.name,
+      zona: l.zone_slug,
+      comision: l.commission_pct != null ? Number(l.commission_pct) : null,
+      problema: !l.is_active
+        ? `${l.name} está dado de baja.`
+        : (l.open_days ?? []).length && !(l.open_days ?? []).includes(diaCaracas)
+          ? `${l.name} no abre ese día.`
+          : (l.formats ?? []).length && !(l.formats ?? []).includes(evento.format)
+            ? `${l.name} no sirve para este formato.`
+            : null,
     })),
     evento: {
       id: evento.id,
