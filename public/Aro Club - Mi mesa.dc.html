@@ -1087,14 +1087,14 @@ class Component extends DCLogic {
             (comensales.length + 1)) + ' y nadie lleva cartel: pregunta por Aro.',
       textoAnoche: (esMesa ? 'Cenaste en ' : 'Estuviste en ') + restaurante +
         (mesaUnica ? '' : ', ' + VOZ.unidad + ' ' + numeroMesa) +
-        '. Lo que nos cuentes entra en el emparejamiento de la próxima, y nadie más lo ve.',
+        '. Lo que nos cuentes entra en cómo armamos tu próxima mesa, y nadie más lo ve.',
       sinContar: !this.state.contado,
       contado: this.state.contado,
       resumenValoracion: this.state.bloqueados.length
         ? 'Entra en tu próxima mesa. ' + (this.state.bloqueados.length === 1
             ? 'La persona que marcaste no volverá'
             : 'Las personas que marcaste no volverán') + ' a coincidir contigo.'
-        : 'Entra en el emparejamiento de tu próxima mesa.',
+        : 'Entra en cómo armamos tu próxima mesa.',
       // Ya no exige una respuesta concreta: los cuatro bloques son
       // opcionales. Lo unico que no vale es mandarla entera en blanco.
       textoEnviar: this.state.enviando ? 'Enviando…' : 'Enviar',

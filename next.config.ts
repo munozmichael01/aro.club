@@ -79,10 +79,17 @@ const PANTALLAS: Array<[string, string]> = [
   // Vive aquí y NO se enlaza desde ningún sitio: la v4 es la pública. No hay
   // reparto de tráfico ni cookie de variante —eso se define cuando se decida
   // arrancar el test—; lo único montado es que cada página dice de cuál viene
-  // el lead. La v3 sigue servida y entera, pero ya no la enlaza nadie: se
-  // entra a mano por /v3. No se borra porque es la que ha visto todo el
-  // tráfico hasta hoy y los leads existentes están atribuidos a ella.
-  ['/v3', '/Aro Club - Landing v3.dc.html'],
+  // el lead.
+  //
+  // LA V3 SE BORRÓ el 13-10. Llevaba meses sin que la enlazara nadie, y el
+  // día que el precio subió a diez seguía prometiendo «7 USD por encuentro»
+  // en un pack de cuatro por 28 que no existe como producto: una página
+  // alcanzable por URL diciendo un precio que ya no es. Michael: «si esto no
+  // lo necesitamos hoy, no debe existir».
+  //
+  // La atribución no se pierde: vive en `waitlist.source` y
+  // `profiles.source`, que son texto. Los leads que entraron por ella
+  // siguen diciendo de dónde vienen aunque la página ya no esté.
 ]
 
 /**

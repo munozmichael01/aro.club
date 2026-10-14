@@ -298,7 +298,7 @@
       <sc-if value="{{ sinMios }}" hint-placeholder-val="{{ true }}">
         <div style="border-radius:24px;border:1px dashed rgba(20,52,42,.26);padding:clamp(22px,3vw,30px);max-width:56ch">
           <div style="font:400 clamp(20px,2.3vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Todavía no te has apuntado a nada.</div>
-          <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;text-wrap:pretty">Cuando te apuntes a una fecha aparece aquí, y después de ir podrás contarnos qué tal fue. Eso entra en el emparejamiento de la siguiente.</div>
+          <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;text-wrap:pretty">Cuando te apuntes a una fecha aparece aquí, y después de ir podrás contarnos qué tal fue. Eso entra en cómo armamos tu siguiente mesa.</div>
           <a href="#agenda" style="display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;margin-top:18px">Ver lo que viene</a>
         </div>
       </sc-if>
@@ -1027,7 +1027,7 @@ class Component extends DCLogic {
         horas,
         cargo: 'Tu puesto en esta fecha',
         precio: precioFecha + ' en bolívares',
-        nota: 'Cubre el emparejamiento, la verificación del grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
+        nota: 'Cubre armar tu mesa, la verificación de identidad del grupo y el restaurante reservado a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
         // Lo que de verdad falta, en el orden del embudo.
         //
         // Esto solo miraba `d.verif`, o sea solo la identidad. Con el
@@ -1220,7 +1220,7 @@ class Component extends DCLogic {
       tituloValorar: (d && d.porValorar)
         ? (d.porValorar.sitio ? 'Tu mesa en ' + d.porValorar.sitio + '.' : 'Tu última mesa.')
         : '',
-      cuerpoValorar: 'Dos preguntas. Lo que digas entra en el emparejamiento de la próxima, y nadie más lo ve.',
+      cuerpoValorar: 'Dos preguntas. Lo que digas entra en cómo armamos tu próxima mesa, y nadie más lo ve.',
       // "Mi mesa" solo si de verdad la hay: sin reserva esa pantalla te
       // devuelve aqui, y una pestaña que rebota a donde ya estabas no es
       // navegacion.
