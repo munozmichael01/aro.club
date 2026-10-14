@@ -69,7 +69,7 @@
 
       <div style="border-radius:22px;border:1px solid rgba(143,69,21,.3);padding:clamp(17px,2.2vw,22px);margin-top:14px">
         <div style="font:400 clamp(19px,2.2vw,23px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#8F4515">Si algo pasa en una mesa</div>
-        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;margin-top:8px;max-width:60ch;text-wrap:pretty">Lo reportas desde tu mesa y lo lee una persona el mismo día. Puedes bloquear a alguien para que nunca vuelva a coincidir contigo, y no se le avisa. Quien acumula reportes sale del club. Si hay un delito de por medio, colaboramos con las autoridades y te acompañamos en la denuncia; no hacemos de juez ni de policía.</div>
+        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;margin-top:8px;max-width:60ch;text-wrap:pretty"><strong style="font-weight:600;color:#2C4A38">Tolerancia cero: no se permite contenido ofensivo, acoso ni abuso de ningún tipo, ni en la mesa ni en la app. Quien lo haga sale del club.</strong> Lo reportas desde tu mesa y lo lee una persona el mismo día. Puedes bloquear a alguien para que nunca vuelva a coincidir contigo, y no se le avisa. Quien acumula reportes sale del club. Si hay un delito de por medio, colaboramos con las autoridades y te acompañamos en la denuncia; no hacemos de juez ni de policía.</div>
       </div>
     </div>
 
@@ -200,7 +200,10 @@ class Component extends DCLogic {
     const reglas = [
       ['Vas tú, y vas solo', 'La plaza es personal e intransferible. No puedes llevar acompañante ni cederla: todo el grupo tiene que ser desconocido entre sí, porque una pareja que ya se conoce convierte al resto en público.'],
       ['Eres quien dices ser', 'La verificación no es un trámite. Suplantar a otra persona, usar documentos ajenos o dar datos falsos es salida inmediata y definitiva.'],
-      ['Avisas si no vas', 'Cancelar con más de 24 horas devuelve tu crédito. Con menos, se pierde. No aparecer sin avisar dos veces te deja fuera de las reservas durante un mes: en una mesa de seis, un puesto vacío se nota.'],
+      // La causa ajena —lluvia, apagón, una vía cerrada— NO devuelve el
+      // crédito, y eso tenía que decirse en los dos sitios o se contradicen:
+      // esta regla corta y el término largo de más abajo.
+      ['Avisas si no vas', 'Cancelar con más de 24 horas devuelve tu crédito. Con menos, se pierde, también cuando la causa es ajena a ti o a nosotros. No aparecer sin avisar dos veces te deja fuera de las reservas durante un mes: en una mesa de seis, un puesto vacío se nota.'],
       ['Nadie vende nada en la mesa', 'Puedes hablar de tu trabajo. No puedes usar la cena para vender, reclutar, levantar capital ni repartir tarjetas. Si eso es lo que buscas, este no es el sitio.'],
       ['Lo que se dice en la mesa se queda en la mesa', 'No publiques nombres, capturas ni datos de las otras personas. Fotos del grupo solo si todos dicen que sí, en el momento y en voz alta.'],
       ['Respeto, y el «no» se acepta a la primera', 'Cero acoso, cero comentarios sobre el cuerpo, cero insistencia después de un no. Si alguien no quiere dar su contacto al final de la noche, ahí se acabó la conversación.']
@@ -211,7 +214,7 @@ class Component extends DCLogic {
       ['Quién puede usarlo', 'Mayores de 18 años con documento de identidad venezolano o pasaporte vigente. Una cuenta por persona. Nos reservamos el derecho de no admitir a alguien sin dar explicaciones, y de devolverle lo que haya pagado sin usar.'],
       ['Qué incluye lo que pagas', 'Armar tu mesa, la verificación de identidad del grupo, la reserva a tu nombre y el acompañamiento de operación esa noche. No incluye tu consumo: la comida y la bebida las pagas en el sitio, como en cualquier salida.'],
       ['Precios y pagos', 'Los precios se muestran en ref como referencia y se cobran en bolívares a la tasa oficial del EURO que publica el Banco Central de Venezuela el día del pago. Un crédito es un puesto en una cena, no una cantidad de dinero guardada: si la tasa cambia, tu crédito sigue valiendo una cena entera y no tienes que poner la diferencia. No caduca. No hay cobros automáticos ni suscripción: pagas cuando reservas.'],
-      ['Cancelaciones y devoluciones', 'Cancelas con más de 24 horas y recuperas el crédito íntegro. Con menos de 24 horas, el crédito se pierde, porque la mesa ya está reservada y el grupo ya está armado. Si cancelamos nosotros, te devolvemos el crédito y te damos otro de cortesía.'],
+      ['Cancelaciones y devoluciones', 'Cancelas con más de 24 horas y recuperas el crédito íntegro. No aparecer, o cancelar con menos de 24 horas, hace perder el crédito, también cuando la causa es ajena a ti o a nosotros (lluvia, apagones, cierres de vías u otras situaciones de fuerza mayor): la mesa ya está reservada y el grupo ya está armado. Si somos nosotros quienes cancelamos una fecha por una de esas causas, te devolvemos el crédito, sin el de cortesía. Si cancelamos nosotros por una causa nuestra, te devolvemos el crédito y te damos otro de cortesía.'],
       // El aviso NO puede prometer más antelación que el cierre: hasta que la
       // fecha no cierra no se sabe si hay gente para armar la mesa. Decía 48
       // horas cuando el cierre era 48; con el cierre en 24, prometerlas era
