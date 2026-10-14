@@ -130,6 +130,46 @@ export async function GET(request: Request) {
     .select('zone_slug, restaurant_id, restaurants(name), zones(name)')
     .eq('event_id', evento.id)
 
+  /**
+   * Lo que hace falta para pintar la corrida guardada: comidas, gasto y si
+   * tiene cara. Son tres consultas y solo cuando hay corrida.
+   */
+  const idsGuardados = corrida
+    ? [
+        ...new Set(
+          ((corrida.proposal ?? []) as unknown as { integrantes: { profileId: string }[] }[])
+            .flatMap((m) => (m.integrantes ?? []).map((p) => p.profileId))
+            .filter(Boolean),
+        ),
+      ]
+    : []
+
+  const { data: rasgosGuardados } = idsGuardados.length
+    ? await admin
+        .from('profile_traits')
+        .select('profile_id, cuisines, budget_tier')
+        .in('profile_id', idsGuardados)
+    : { data: [] }
+
+  const comidaGuardada = new Map(
+    (rasgosGuardados ?? []).map((r) => [r.profile_id, (r.cuisines ?? []) as string[]]),
+  )
+  const gastoGuardado = new Map(
+    (rasgosGuardados ?? []).map((r) => [r.profile_id, r.budget_tier as number | null]),
+  )
+
+  const { data: carasGuardadas } = idsGuardados.length
+    ? await admin
+        .from('verifications')
+        .select('profile_id')
+        .eq('kind', 'selfie')
+        .eq('status', 'approved')
+        .not('storage_path', 'is', null)
+        .in('profile_id', idsGuardados)
+    : { data: [] }
+
+  const caraGuardada = new Set((carasGuardadas ?? []).map((v) => v.profile_id))
+
   return NextResponse.json({
     sedes: (sedesRaw ?? []).map((v) => ({
       zona: v.zone_slug,
@@ -165,13 +205,34 @@ export async function GET(request: Request) {
       ? {
           id: corrida.id,
           publicada: corrida.is_published,
+          /**
+           * La propuesta GUARDADA, con lo de mirar puesto al día.
+           *
+           * `matching_runs.proposal` se escribió el día que alguien pulsó
+           * repartir, y el panel lee eso. Así que todo lo que se añada
+           * después para MIRAR —la cara, en qué comida coinciden, cuánto
+           * espera gastar cada uno— no aparece hasta que se vuelve a
+           * repartir, y volver a repartir mueve a seis personas de sitio.
+           * Michael lo vio hoy: las fotos salían y el presupuesto decía «—»,
+           * porque su corrida era de entre los dos despliegues.
+           *
+           * `sector` ya se traducía aquí por lo mismo. Esto extiende la idea
+           * a los tres campos nuevos: lo que la mesa ES se queda como se
+           * guardó —quién se sienta con quién, eso no se toca sin repartir—
+           * y lo que la mesa SE VE se resuelve al leer.
+           */
           propuesta: ((corrida.proposal ?? []) as unknown as {
-            integrantes: { sector: string | null }[]
+            integrantes: { profileId: string; sector: string | null }[]
           }[]).map((m) => ({
             ...m,
             integrantes: (m.integrantes ?? []).map((p) => ({
               ...p,
               sector: p.sector ? (etiquetaDe.get(p.sector) ?? p.sector) : null,
+              comidas: comidaGuardada.get(p.profileId) ?? [],
+              tramoGasto: gastoGuardado.get(p.profileId) ?? null,
+              foto: caraGuardada.has(p.profileId)
+                ? `/api/operacion/cara?perfil=${p.profileId}`
+                : null,
             })),
           })),
           espera: corrida.unmatched,
@@ -259,29 +320,29 @@ export async function POST(request: Request) {
   )
 
   /**
-   * La selfie, firmada por cinco minutos, como en la cola de verificación.
+   * Quién TIENE cara que enseñar. La foto en sí no viaja.
    *
-   * Solo la aprobada: una pendiente o rechazada no es la cara de un miembro,
-   * es un trámite a medias. Y nunca la cédula: para saber con quién se
-   * sienta alguien basta su cara, y el documento tiene su propia pantalla
-   * con su propio motivo para abrirse.
+   * Antes aquí se firmaba una URL por persona, cinco minutos cada una. En la
+   * cola de verificación eso vale porque se decide en el momento; en
+   * repartir el panel se queda abierto mientras se piensa, y a los cinco
+   * minutos las seis fotos de la mesa se rompían con un `InvalidJWT`.
+   *
+   * Ahora solo se mira si existe, y el panel pide `/api/operacion/cara`, que
+   * comprueba el rol y firma por sesenta segundos en cada petición. De paso
+   * desaparecen veinte llamadas a Storage por cada carga del reparto.
    */
   const { data: selfies } = idsDeLaFecha.length
     ? await admin
         .from('verifications')
-        .select('profile_id, storage_path')
+        .select('profile_id')
         .eq('kind', 'selfie')
         .eq('status', 'approved')
         .not('storage_path', 'is', null)
         .in('profile_id', idsDeLaFecha)
     : { data: [] }
 
-  const fotoDe = new Map<string, string>()
-  for (const f of selfies ?? []) {
-    if (!f.storage_path || !f.profile_id) continue
-    const { data } = await admin.storage.from('verificaciones').createSignedUrl(f.storage_path, 300)
-    if (data?.signedUrl) fotoDe.set(f.profile_id, data.signedUrl)
-  }
+  const conCara = new Set((selfies ?? []).map((f) => f.profile_id))
+  const caraDe = (id: string) => (conCara.has(id) ? `/api/operacion/cara?perfil=${id}` : null)
 
   const cerradas = (yaSentados ?? []).map((t) => {
     const miembros = (t.table_members ?? []) as unknown as {
@@ -313,7 +374,7 @@ export async function POST(request: Request) {
           sector: r?.industry ?? null,
           tramoGasto: r?.budget_tier ?? null,
           comidas: comidaDe.get(m.profile_id) ?? [],
-          foto: fotoDe.get(m.profile_id) ?? null,
+          foto: caraDe(m.profile_id),
         }
       }),
     }
@@ -406,7 +467,7 @@ export async function POST(request: Request) {
       comidas: comidaDe.get(p.profileId) ?? [],
       // Su selfie de verificación, firmada y por cinco minutos. Es la única
       // foto que tenemos de un miembro: no hay foto de perfil.
-      foto: fotoDe.get(p.profileId) ?? null,
+      foto: caraDe(p.profileId),
     })),
     }
   })
