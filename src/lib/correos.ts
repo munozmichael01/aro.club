@@ -83,6 +83,24 @@ export type Correo =
   | 'mesa_cambiada'
   | 'restablecer_clave'
   /**
+   * UN CORREO ESCRITO A MANO, de operación a una persona.
+   *
+   * No existía ninguno, y hacía falta a diario: escribirle a quien subió un
+   * documento que no lo era, a quien se dio de alta con el correo mal escrito,
+   * a quien descuadra una mesa y encaja mejor en otra fecha. Todos los tipos
+   * tienen plantilla fija, así que la única salida era que Michael lo mandara
+   * desde su buzón y el club no se enterara.
+   *
+   * El texto viaja en el payload y el asunto también. Es el ÚNICO tipo cuyo
+   * contenido no está escrito en este repositorio, y por eso es también el
+   * único que no puede salir solo: nace de una persona que lo escribe.
+   *
+   * No es imprescindible a propósito. Quien apagó nuestros correos pidió que
+   * dejáramos de escribirle, y «es que este lo escribí yo» no es una excepción
+   * que él aceptara: para eso está el teléfono.
+   */
+  | 'mensaje'
+  /**
    * «Esta fecha se cierra mañana», a quien puede llegar y no se apuntó.
    *
    * No es imprescindible: es un empujón, y quien apagó «fechas nuevas en tus

@@ -905,6 +905,35 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       return { a, datos: { ...base, ...pago, motivo: (p.motivo as string) ?? '' } }
     }
 
+    /**
+     * El correo escrito a mano. Lo único que sale del payload es el texto.
+     *
+     * En párrafos y no en una cadena con saltos: la plantilla los pinta uno a
+     * uno con `{{ . }}`, que ESCAPA. Pasar HTML desde el payload sería abrir
+     * una puerta para meter marcado en un correo desde una fila de la base, y
+     * no hace falta ninguna para escribir tres frases.
+     *
+     * Sin texto no se manda. Un correo en blanco con nuestro logo es peor que
+     * ningún correo: la persona cree que algo se rompió.
+     */
+    case 'mensaje': {
+      const texto = typeof p.texto === 'string' ? p.texto.trim() : ''
+      if (!texto) return { error: 'sin texto' }
+      const parrafos = texto.split(/\n{1,}/).map((l) => l.trim()).filter(Boolean)
+      const asunto = typeof p.asunto === 'string' && p.asunto.trim() ? p.asunto.trim() : 'Te escribimos'
+      return {
+        a,
+        datos: {
+          ...base,
+          asunto,
+          parrafos,
+          // Lo que se lee en la bandeja antes de abrir. La primera frase del
+          // propio mensaje, que es exactamente de lo que va.
+          adelanto: parrafos[0].slice(0, 140),
+        },
+      }
+    }
+
     // El cupón no lleva importes a propósito: no hay ninguno. Lleva lo mismo
     // que el resto —qué fecha, dónde y cuándo se revela— y nada de banco.
     case 'puesto_con_cupon':

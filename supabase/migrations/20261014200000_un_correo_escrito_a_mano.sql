@@ -1,0 +1,25 @@
+-- =====================================================================
+-- `mensaje`: un correo escrito a mano, de operación a una persona.
+--
+-- No existía ninguno. Los veintiún tipos tienen plantilla fija y su contenido
+-- vive en este repositorio, lo cual es correcto para todo lo que el producto
+-- manda solo. Pero operación necesita escribir a UNA persona casi a diario y
+-- no tenía por dónde:
+--
+--   · a quien subió una foto suya en el hueco del documento,
+--   · a quien se dio de alta con el correo mal escrito y no recibe nada,
+--   · a quien descuadra una mesa y encaja mejor en otra fecha.
+--
+-- Hasta hoy la única salida era que Michael lo mandara desde su buzón, con lo
+-- que el club no se enteraba: ni queda en `scheduled_emails`, ni se sabe si
+-- llegó, ni aparece en el historial de esa persona.
+--
+-- El texto y el asunto viajan en el payload. Es el único tipo cuyo contenido
+-- no está escrito en el repositorio, y por eso es también el único que no
+-- puede salir solo: nace de una persona que lo escribe.
+--
+-- NO es imprescindible, a propósito. Quien apagó nuestros correos pidió que
+-- dejáramos de escribirle, y «este lo escribí yo» no es una excepción que esa
+-- persona aceptara. Para eso está el teléfono.
+-- =====================================================================
+alter type email_kind_t add value if not exists 'mensaje';
