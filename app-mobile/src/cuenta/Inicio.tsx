@@ -6,7 +6,6 @@ import { useFocusEffect } from 'expo-router'
 
 import { usePreguntaAvisos } from '../avisos/PreguntaAvisos'
 import { Aviso, Boton, Texto, color, medida } from '../diseno'
-import { reglas } from '../reglas'
 import * as F from '../texto/fechas'
 import * as T from '../texto/cuenta'
 import * as M from './maquina'
@@ -184,8 +183,7 @@ export function Inicio(p: {
             filtros={vista.filtros}
             grupos={vista.grupos}
             abierta={abierta}
-            textoReservar={vista.reservar.texto}
-            precio={T.agenda.precio(reglas.precioTexto())}
+            textoReservar={(precio) => M.botonReservar(datos, reservando, precio).texto}
             fallo={falloReserva}
             alFiltro={(f) => {
               // «Todos» deja la lista entera; tocar otra vez la elegida no desmarca (entrega 19).

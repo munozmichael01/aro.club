@@ -249,10 +249,9 @@ const MARCAS: Record<string, { tinta: string; fondo: string }> = {
 function FilaFecha(p: {
   f: FilaAgenda
   abierta: boolean
-  textoReservar: string
+  textoReservar: (precio: string) => string
   alAbrir: () => void
   alConfirmar: () => void
-  precio: string
   fallo: string
 }) {
   const { f, abierta } = p
@@ -330,14 +329,14 @@ function FilaFecha(p: {
               {T.agenda.cargo}
             </Texto>
             <Texto variante="cuerpoChico" tono="verde" style={{ fontFamily: fuente.textoSemi }}>
-              {p.precio}
+              {T.agenda.precio(f.precio)}
             </Texto>
           </View>
           <Texto variante="nota" style={{ marginBottom: 16 }}>
             {T.agenda.nota}
           </Texto>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 11, alignItems: 'center' }}>
-            <Boton texto={p.textoReservar} onPress={p.alConfirmar} />
+            <Boton texto={p.textoReservar(f.precio)} onPress={p.alConfirmar} />
             <Boton tipo="fantasma" texto={T.agenda.cancelar} onPress={p.alAbrir} />
           </View>
           {/* El «no» del servidor, JUNTO al botón: debajo de la agenda (como la web) quedaba fuera de la pantalla. */}
@@ -356,8 +355,7 @@ export function Agenda(p: {
   filtros: Filtro[]
   grupos: { semana: string; filas: FilaAgenda[] }[]
   abierta: string | null
-  textoReservar: string
-  precio: string
+  textoReservar: (precio: string) => string
   fallo: string
   alFiltro: (formato: string) => void
   alAbrir: (id: string) => void
@@ -410,7 +408,6 @@ export function Agenda(p: {
                 f={f}
                 abierta={p.abierta === f.id}
                 textoReservar={p.textoReservar}
-                precio={p.precio}
                 fallo={p.abierta === f.id ? p.fallo : ''}
                 alAbrir={() => p.alAbrir(f.id)}
                 alConfirmar={() => p.alConfirmar(f.id)}

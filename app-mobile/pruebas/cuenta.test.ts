@@ -189,3 +189,10 @@ test('una fecha con edad mínima se llama «Cena +40»', async () => {
   const [h] = M.agenda([base], null, Date.parse('2026-10-13T12:00:00Z'))
   assert.equal(h.filas[0].tipo, 'Cenas')
 })
+
+test('el precio de cada fecha sale del evento, en ref', async () => {
+  const M = await import('../src/cuenta/maquina')
+  assert.equal(M.precioDe({ precioUsd: 10 }), '10 ref')
+  assert.equal(M.precioDe({ precioUsd: 12.5 }), '12,50 ref')
+  assert.match(M.precioDe({}), / ref$/)
+})

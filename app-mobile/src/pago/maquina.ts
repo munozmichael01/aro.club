@@ -58,7 +58,7 @@ export function metodoInicial(d: DeServidor): number {
   return Math.max(0, d.metodos.findIndex((m) => m.activo))
 }
 
-/** «5.999,04 Bs», «7,00 USD»: como se escribe en Venezuela. */
+/** «5.999,04 Bs», «10,00 ref»: como se escribe en Venezuela. */
 export function dinero(n: number | null | undefined, moneda: string): string {
   if (n == null) return '—'
   const [ent, dec] = n.toFixed(2).split('.')
@@ -169,8 +169,8 @@ export function comprobante(d: DeServidor, m: Metodo, fase: Fase) {
     [T.comprobante.zona, e.zona || T.comprobante.zonaAlAbrirse, false],
     [T.comprobante.metodo, m.nombre, false],
     // La tasa que se CONGELÓ al reportar, no la de ahora.
-    [T.comprobante.tasa, d.tasa ? T.comprobante.porUsd(dinero(d.tasa, 'Bs')) : '—', false],
-    [fase === 'pendiente' ? T.comprobante.reportaste : T.comprobante.pagado, `${montoDe(d, m)} · ${dinero(d.montoUsd, 'USD')}`, true],
+    [T.comprobante.tasa, d.tasa ? T.comprobante.porRef(dinero(d.tasa, 'Bs')) : '—', false],
+    [fase === 'pendiente' ? T.comprobante.reportaste : T.comprobante.pagado, `${montoDe(d, m)} · ${dinero(d.montoUsd, 'ref')}`, true],
   ]
     .filter((c) => c[1] !== '—')
     .map(([campo, valor, fuerte]) => ({ campo: campo as string, valor: valor as string, fuerte: fuerte as boolean }))

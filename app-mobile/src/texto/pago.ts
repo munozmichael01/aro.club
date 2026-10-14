@@ -17,7 +17,7 @@ export const elegir = {
   tasaBcv: 'Tasa BCV',
   tasaDeHoy: 'Tasa BCV de hoy',
   tasaDel: (dia: number, mes: string) => `Tasa BCV del ${dia} de ${mes}`,
-  unUsd: (bs: string) => `1 USD = ${bs}`,
+  unRef: (bs: string) => `1 ref = ${bs}`,
   sinTasa: 'Sin tasa de hoy',
   total: 'Total a pagar',
   consumo: 'Esto no incluye tu consumo. La comida y la bebida las pagas en el restaurante, como en cualquier salida.',
@@ -193,7 +193,7 @@ export const comprobante = {
   zonaAlAbrirse: 'Se sabe al abrirse',
   metodo: 'Método',
   tasa: 'Tasa aplicada',
-  porUsd: (bs: string) => `${bs} por USD`,
+  porRef: (bs: string) => `${bs} por ref`,
   reportaste: 'Reportaste',
   pagado: 'Pagado',
 }

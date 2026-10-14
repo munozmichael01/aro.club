@@ -169,11 +169,11 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
         <View style={[estilos.caja, { marginTop: 26 }]}>
           <Linea izquierda={<Texto variante="subtitulo" style={{ fontSize: 22 }}>{cab.nombre}</Texto>} derecha={<Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia }}>{cab.detalle}</Texto>} />
           <Separador />
-          <Linea izquierda={<Texto variante="cuerpo">{T.elegir.unPuesto}</Texto>} derecha={<Cifra>{M.dinero(d.montoUsd, 'USD')}</Cifra>} />
+          <Linea izquierda={<Texto variante="cuerpo">{T.elegir.unPuesto}</Texto>} derecha={<Cifra>{M.dinero(d.montoUsd, 'ref')}</Cifra>} />
           <View style={{ height: 9 }} />
           <Linea
             izquierda={<Texto variante="cuerpo">{M.etiquetaTasa(d, ahora())}</Texto>}
-            derecha={<Texto variante="cuerpo" style={{ fontFamily: fuente.textoMedia, fontVariant: ['tabular-nums'] }}>{d.tasa ? T.elegir.unUsd(M.dinero(d.tasa, 'Bs')) : T.elegir.sinTasa}</Texto>}
+            derecha={<Texto variante="cuerpo" style={{ fontFamily: fuente.textoMedia, fontVariant: ['tabular-nums'] }}>{d.tasa ? T.elegir.unRef(M.dinero(d.tasa, 'Bs')) : T.elegir.sinTasa}</Texto>}
           />
           <Separador />
           <Linea

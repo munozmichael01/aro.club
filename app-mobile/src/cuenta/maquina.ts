@@ -25,6 +25,15 @@ export type FechaAgenda = {
   zonaHoraria?: string | null
   /** Edad mínima de la fecha («Cena +40»). El servidor es quien no deja reservar a quien no la cumple. */
   edadMinima?: number | null
+  /** El precio del puesto en ESTA fecha, en ref (el campo se llama Usd por historia). Fechas distintas, precios distintos. */
+  precioUsd?: number | null
+}
+
+/** «10 ref», «12,50 ref»: el precio de una fecha. Sin precio en la fecha, el del club (`reglas.precioTexto`). */
+export function precioDe(a: { precioUsd?: number | null }): string {
+  if (a.precioUsd == null) return reglas.precioTexto()
+  const n = Number(a.precioUsd)
+  return Number.isInteger(n) ? `${n} ref` : `${n.toFixed(2).replace('.', ',')} ref`
 }
 
 export type Plan = {
@@ -215,6 +224,8 @@ export type FilaAgenda = {
   llenado: number
   /** Ya hay al menos una mesa: la barra y el estado van en verde. */
   va: boolean
+  /** «10 ref»: el precio de esta fecha. */
+  precio: string
 }
 
 export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: number): { semana: string; filas: FilaAgenda[] }[] {
@@ -244,6 +255,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       cerrada,
       llenado: Math.min(1, a.apuntados / T.MESA),
       va: a.apuntados >= T.MESA,
+      precio: precioDe(a),
     })
   }
   return grupos
@@ -252,7 +264,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
 /** Qué hace «Reservar» según quién lo pulsa. El candado de verdad está en el servidor. */
 export type Reserva = { accion: 'nada' | 'completar' | 'verificar' | 'pagar' | 'reservar'; texto: string; destino?: string }
 
-export function botonReservar(d: MiCuenta, reservando: boolean): Reserva {
+export function botonReservar(d: MiCuenta, reservando: boolean, precio: string = reglas.precioTexto()): Reserva {
   if (reservando) return { accion: 'nada', texto: T.agenda.apuntandote }
   // Sin las preguntas o los datos no se reserva (decidido el 01-10-2026): el
   // reparto no puede sentar a quien no conoce. Qué falta lo dice el servidor
@@ -269,7 +281,7 @@ export function botonReservar(d: MiCuenta, reservando: boolean): Reserva {
   const conCredito = d.creditos > 0
   // Sin créditos hay que pagar, y eso es otra pantalla: reportar un pago es
   // salir al banco y volver, no pulsar un botón.
-  return { accion: conCredito ? 'reservar' : 'pagar', texto: T.agenda.reservar(conCredito, reglas.precioTexto()) }
+  return { accion: conCredito ? 'reservar' : 'pagar', texto: T.agenda.reservar(conCredito, precio) }
 }
 
 // --- Lo próximo y los atajos -------------------------------------------------
