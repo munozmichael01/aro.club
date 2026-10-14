@@ -73,7 +73,7 @@ export async function GET(request: Request) {
 
   const { data: pool } = await admin
     .from('v_matching_pool')
-    .select('profile_id, zones, age, gender, industry, employer_key, budget_tier')
+    .select('profile_id, zones, age, gender, industry, employer_key, budget_tier, dietary')
     .eq('event_id', evento.id)
 
   // Quiénes son, no cuántos.
@@ -158,10 +158,13 @@ export async function GET(request: Request) {
   const { data: rasgosGuardados } = idsGuardados.length
     ? await admin
         .from('profile_traits')
-        .select('profile_id, cuisines, budget_tier, age, gender, industry, employer')
+        .select('profile_id, cuisines, budget_tier, age, gender, industry, employer, dietary')
         .in('profile_id', idsGuardados)
     : { data: [] }
 
+  const dietaGuardada = new Map(
+    (rasgosGuardados ?? []).map((r) => [r.profile_id, (r.dietary ?? []) as string[]]),
+  )
   const comidaGuardada = new Map(
     (rasgosGuardados ?? []).map((r) => [r.profile_id, (r.cuisines ?? []) as string[]]),
   )
@@ -173,7 +176,7 @@ export async function GET(request: Request) {
   const rasgoGuardado = new Map(
     (rasgosGuardados ?? []).map((r) => [
       r.profile_id,
-      { edad: r.age, genero: r.gender, sector: r.industry, empresa: r.employer },
+      { edad: r.age, genero: r.gender, sector: r.industry, empresa: r.employer, dietas: (r.dietary ?? []) as string[] },
     ]),
   )
 
@@ -263,6 +266,7 @@ export async function GET(request: Request) {
       sector: x.industry,
       empresa: x.employer_key,
       tramoGasto: x.budget_tier,
+      dietas: (x.dietary ?? []) as string[],
       comidas: comidaGuardada.get(x.profile_id as string) ?? [],
       foto: caraGuardada.has(x.profile_id as string)
         ? `/api/operacion/cara?perfil=${x.profile_id}`
@@ -299,6 +303,7 @@ export async function GET(request: Request) {
               ...p,
               sector: p.sector ? (etiquetaDe.get(p.sector) ?? p.sector) : null,
               comidas: comidaGuardada.get(p.profileId) ?? [],
+              dietas: dietaGuardada.get(p.profileId) ?? [],
               tramoGasto: gastoGuardado.get(p.profileId) ?? null,
               foto: caraGuardada.has(p.profileId)
                 ? `/api/operacion/cara?perfil=${p.profileId}`
@@ -330,6 +335,7 @@ export async function GET(request: Request) {
             ...p,
             ...(rasgoGuardado.get(p.profileId) ?? {}),
             comidas: comidaGuardada.get(p.profileId) ?? [],
+            dietas: dietaGuardada.get(p.profileId) ?? [],
             tramoGasto: gastoGuardado.get(p.profileId) ?? null,
             foto: caraGuardada.has(p.profileId) ? `/api/operacion/cara?perfil=${p.profileId}` : null,
           })),
@@ -385,7 +391,7 @@ export async function POST(request: Request) {
   )
   const { data: rasgosCerrados } = await admin
     .from('profile_traits')
-    .select('profile_id, age, gender, industry, employer, budget_tier')
+    .select('profile_id, age, gender, industry, employer, budget_tier, dietary')
     .in('profile_id', idsCerrados.length ? idsCerrados : ['00000000-0000-0000-0000-000000000000'])
 
   const rasgoDe = new Map((rasgosCerrados ?? []).map((r) => [r.profile_id, r]))
@@ -470,6 +476,7 @@ export async function POST(request: Request) {
           empresa: r?.employer ?? null,
           sector: r?.industry ?? null,
           tramoGasto: r?.budget_tier ?? null,
+          dietas: (r?.dietary ?? []) as string[],
           comidas: comidaDe.get(m.profile_id) ?? [],
           foto: caraDe(m.profile_id),
         }
@@ -628,6 +635,7 @@ export async function POST(request: Request) {
         empresa: p.empresaTexto || p.empresa,
         sector: p.sector,
         tramoGasto: p.tramoGasto,
+        dietas: p.dietas ?? [],
         comidas: comidaDe.get(p.profileId) ?? [],
         foto: caraDe(p.profileId),
       })) as never,
