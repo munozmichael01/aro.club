@@ -996,6 +996,70 @@ if (relojes.length) {
   }
 }
 
+// --- las heredables, iguales en el servidor y en `convertir_lead` ------
+//
+// Las preguntas con COLUMNA PROPIA se guardan dos veces a propósito: en su
+// columna, que es el dato operativo, y en `answers`, que es el registro de
+// qué contestó. `convertir_lead` es quien lleva las segundas al crear la
+// cuenta, y lleva la lista escrita a mano dentro del cuerpo de la función.
+//
+// Esa lista se ha quedado corta TRES veces, siempre igual: alguien reescribe
+// la función entera por otro motivo —añadirle una columna, arreglar un
+// cast— copiando el cuerpo de una migración anterior, y se trae la lista
+// vieja. La última vez fue el 28 de septiembre, dos veces el mismo día, y
+// deshizo el arreglo del 21 de agosto sin que fallara nada: 373 cuentas
+// entraron sin `nacimiento` ni `genero` en `answers` y lo único que lo decía
+// era la ficha de operación, con un «Sin responder» sobre la fecha de
+// nacimiento de casi todo el mundo.
+//
+// Un comentario no lo evitó, porque el comentario se copia con el cuerpo.
+// Esto sí: se compara la lista de la ÚLTIMA migración que define la función
+// con `HEREDABLES`, y no se puede hacer push con las dos distintas.
+{
+  const ruta = new URL('../src/app/api/cuestionario/route.ts', import.meta.url)
+  const enServidor = (fs.readFileSync(ruta, 'utf8')
+    .match(/const HEREDABLES = \[([^\]]*)\]/) ?? [])[1]
+  const servidor = enServidor ? [...enServidor.matchAll(/'([^']+)'/g)].map((m) => m[1]) : []
+
+  // La última que la define, que es la que está viva en la base.
+  const migraciones = fs.readdirSync(new URL('../supabase/migrations/', import.meta.url)).sort()
+  let enSql = null
+  let cual = null
+  for (const f of migraciones) {
+    const sql = fs.readFileSync(new URL('../supabase/migrations/' + f, import.meta.url), 'utf8')
+    if (!/create or replace function convertir_lead/.test(sql)) continue
+    // El bloque de heredables: el `values` cuyos pares son clave → to_jsonb.
+    const bloque = sql.match(/\(values\s*((?:\s*\('[^']+',\s*to_jsonb\(v_lead\.[^)]+\)\),?)+)\s*\)\s*as t\(clave, valor\)/)
+    if (bloque) {
+      enSql = [...bloque[1].matchAll(/\('([^']+)',/g)].map((m) => m[1])
+      cual = f
+    }
+  }
+
+  if (!servidor.length || !enSql) {
+    errores++
+    console.error('\n✗ las heredables de `convertir_lead`')
+    console.error(`    route.ts: ${servidor.length ? servidor.join(', ') : 'no encuentro HEREDABLES'}`)
+    console.error(`    migración: ${enSql ? enSql.join(', ') : 'no encuentro el bloque de heredables'}`)
+  } else {
+    const faltan = servidor.filter((k) => !enSql.includes(k))
+    const sobran = enSql.filter((k) => !servidor.includes(k))
+    if (faltan.length || sobran.length) {
+      errores++
+      console.error('\n✗ las heredables NO cuadran entre el servidor y `convertir_lead`')
+      console.error(`    HEREDABLES (route.ts): ${servidor.join(', ')}`)
+      console.error(`    ${cual}: ${enSql.join(', ')}`)
+      if (faltan.length) {
+        console.error(`    → ${faltan.join(', ')} no llega nunca a \`answers\` al crear la cuenta`)
+        console.error('    → el dato queda solo en su columna y la ficha dirá «Sin responder»')
+      }
+      if (sobran.length) console.error(`    → ${sobran.join(', ')} está en la función y ya no es heredable`)
+    } else {
+      console.log(`✓ las heredables (${servidor.length}, iguales en route.ts y en \`convertir_lead\`)`)
+    }
+  }
+}
+
 // --- el precio, escrito en un solo sitio -------------------------------
 //
 // `PRECIO_USD` es el precio del club y el valor por defecto de una fecha
