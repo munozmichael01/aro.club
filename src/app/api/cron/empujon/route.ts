@@ -75,24 +75,27 @@ const OLAS: Record<Falta, number[]> = {
    */
   rechazo: [24],
   /**
-   * Subió UNA de las dos fotos y se quedó ahí. A las tres horas.
+   * Subió UNA de las dos fotos y se quedó ahí. A LA HORA.
    *
-   * Es el agujero más silencioso que tenía el embudo: esa persona no sale
-   * en la cola de revisión —la cola exige las dos fotos, a propósito, para
-   * no decidir sobre una que todavía se está subiendo— y tampoco recibía
-   * este empujón, porque la condición era «¿subió algo?» y ella sí había
-   * subido algo.
+   * Era el agujero más silencioso del embudo: esa persona no sale en la cola
+   * de revisión —la cola exige las dos fotos, a propósito, para no decidir
+   * sobre una que todavía se está subiendo— y tampoco recibía el empujón de
+   * verificación, porque la condición era «¿subió algo?» y ella sí había
+   * subido algo. Nadie la veía y nadie le escribía.
    *
-   * Nadie la veía y nadie le escribía. El 13-10 había dos así, de catorce y
-   * once horas.
+   * Lo puse en TRES horas por prudencia y estaba mal. Con 250 personas que
+   * subieron las dos, el hueco entre una foto y la otra es:
    *
-   * Tres horas y no veinticuatro: subir la segunda foto es lo que estaba
-   * haciendo cuando se fue, y a las tres horas ya no va a volver sola. Pero
-   * tampoco a la hora: la mediana entre una foto y la otra es de 49
-   * segundos, así que a la hora la mayoría ya terminó y escribirles sería
-   * ruido.
+   *   mediana 0,9 min · p90 2,9 · p95 3,9 · p99 38
+   *   el 96% ha terminado a los 5 minutos · el 99% a la media hora
+   *
+   * A la hora solo quedan DOS de 250 en mitad del trámite. A las tres horas
+   * quedan las mismas dos. O sea: las tres horas no ahorraban una sola
+   * molestia y le costaban dos horas de silencio a quien sí se quedó fuera.
+   *
+   * Menos de una hora no se puede: el cron pasa cada hora en punto.
    */
-  media_foto: [3],
+  media_foto: [1],
 }
 
 /**
