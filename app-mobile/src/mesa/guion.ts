@@ -1,42 +1,54 @@
 /**
- * El guion de la noche: los momentos de una cena, con la hora real de ESA
- * mesa (Michael, 14-10). Sustituye al anfitrión que no podemos pagar: lo ve
- * toda la mesa, y quien lo lleva (`anfitrion` del servidor) lo tiene destacado.
+ * El guion de la mesa: los momentos de una cena, con la hora real de ESA mesa
+ * (Michael, 14-10). Sustituye al anfitrión que no podemos pagar: lo ve toda la
+ * mesa, y la propia mesa elige a «la voz de Aro», que lo va leyendo. No hay
+ * anfitrión elegido por el servidor (se descartó el 14-10: demasiado lío).
  *
  * Genérico a propósito: nada de horas fijas ni de bares. Las horas salen de
  * `empiezaEn` y de `cierraMesaEn` (lo que el restaurante nos deja la mesa);
- * si el servidor no lo manda, la mesa dura `DURACION_POR_DEFECTO`.
+ * si el servidor no lo manda, la mesa dura `DURACION_POR_DEFECTO`. Otro
+ * formato (brunch, café) reutiliza esto con sus propios momentos.
  */
 
 const MIN = 60_000
 
-/** Si el restaurante no nos dijo cuánto nos deja la mesa: dos horas y media. */
-export const DURACION_POR_DEFECTO = 150
+/** Si el restaurante no nos dijo cuánto nos deja la mesa: dos horas. */
+export const DURACION_POR_DEFECTO = 120
 
-export type Momento = 'llegada' | 'pedir' | 'juego' | 'ultima' | 'cierre'
+export type Momento = 'llegada' | 'voz' | 'pedir' | 'vuelta' | 'hielo' | 'tema' | 'cuenta' | 'despedida'
 export type Paso = { momento: Momento; en: string }
 
-/** Los cinco momentos, con su hora. Sin `empiezaEn` válido, no hay guion. */
+/** Los momentos del juego: se quitan si la mesa no tiene juego. */
+export const DEL_JUEGO: Momento[] = ['hielo', 'tema']
+
+/** Los momentos, con su hora. Sin `empiezaEn` válido, no hay guion. */
 export function pasos(empiezaEn: string | null | undefined, cierraMesaEn?: string | null): Paso[] {
   const t = empiezaEn ? Date.parse(empiezaEn) : NaN
   if (!Number.isFinite(t)) return []
   const c = cierraMesaEn ? Date.parse(cierraMesaEn) : NaN
-  const fin = Number.isFinite(c) && c > t + 60 * MIN ? c : t + DURACION_POR_DEFECTO * MIN
+  const fin = Number.isFinite(c) && c >= t + 90 * MIN ? c : t + DURACION_POR_DEFECTO * MIN
   const iso = (ms: number) => new Date(ms).toISOString()
   return [
     { momento: 'llegada', en: iso(t) },
+    // A los 15 minutos se pide, falte quien falte (con los creadores, el 10-10, se esperó con hambre).
+    { momento: 'voz', en: iso(t + 15 * MIN) },
     { momento: 'pedir', en: iso(t + 15 * MIN) },
-    { momento: 'juego', en: iso(t + 30 * MIN) },
-    { momento: 'ultima', en: iso(fin - 30 * MIN) },
-    { momento: 'cierre', en: iso(fin) },
+    { momento: 'vuelta', en: iso(t + 20 * MIN) },
+    // El juego en dos tiempos: la ronda ligera mientras llega la comida, y el rescate cuando baja la conversación.
+    { momento: 'hielo', en: iso(t + 35 * MIN) },
+    { momento: 'tema', en: iso(t + 60 * MIN) },
+    { momento: 'cuenta', en: iso(fin - 30 * MIN) },
+    { momento: 'despedida', en: iso(fin) },
   ]
 }
 
-/** El paso en curso: el último que ya empezó. Antes de la cena, ninguno (-1). */
-export function enCurso(ps: Paso[], ahora: number): number {
-  let i = -1
-  ps.forEach((p, k) => {
-    if (Date.parse(p.en) <= ahora) i = k
-  })
-  return i
+/**
+ * La hora del momento en curso: la del último que ya empezó. Va por hora y no
+ * por índice porque dos momentos pueden compartirla (la voz y pedir). Antes de
+ * la cena, null.
+ */
+export function enCurso(ps: Paso[], ahora: number): string | null {
+  let en: string | null = null
+  for (const p of ps) if (Date.parse(p.en) <= ahora) en = p.en
+  return en
 }

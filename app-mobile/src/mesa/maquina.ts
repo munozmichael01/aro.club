@@ -25,10 +25,8 @@ export type DeServidor = {
   mesaUnica?: boolean
   /** Hasta cuándo nos deja la mesa el restaurante. Sin él, el guion usa su duración por defecto. */
   cierraMesaEn?: string | null
-  /** Quién lleva el ritmo de la mesa esta noche (14-10). Lo elige el servidor. */
-  anfitrion?: { id: string; nombre: string } | null
-  /** Si la persona que mira es la anfitriona. */
-  soyAnfitrion?: boolean
+  /** Hasta tres sitios para seguir que operación eligió para ese local (14-10). */
+  paraSeguir?: SitioParaSeguir[] | null
   actividad?: { ruta?: string; km?: number; minutos?: number; nivel?: string } | null
   restaurante?: string | null
   direccion?: string | null
@@ -80,7 +78,9 @@ export function actividad(d: DeServidor): { titulo: string; nota: string } | nul
  * Android, el enlace de Google. La web decide por el navegador; aquí se sabe
  * de verdad en qué teléfono se está.
  */
-export function mapa(d: DeServidor, so: string): string | null {
+export type SitioParaSeguir = { nombre: string; minutosAPie?: number | null; mapa?: string | null; mapaApple?: string | null }
+
+export function mapa<D extends { mapa?: string | null; mapaApple?: string | null }>(d: D, so: string): string | null {
   if (so === 'ios' && d.mapaApple) return d.mapaApple
   return d.mapa || d.mapaApple || null
 }

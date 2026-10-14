@@ -147,26 +147,29 @@ export const sinRespuesta = {
 }
 
 /**
- * El guion de la noche y el anfitrión (14-10-2026). Casilla C: solo del
- * celular hasta que Design entregue (`Design/BRIEF-anfitrion.md`).
- * Genérico: momentos, no horas fijas ni bares.
+ * El guion de la mesa (copy aprobado por Michael el 14-10-2026). Provisional
+ * con los componentes del sistema hasta que Design entregue
+ * (`Design/BRIEF-anfitrion.md`). Genérico: momentos, no horas fijas ni bares,
+ * y nada de «noche»: no siempre es de noche.
  */
 export const guion = {
-  titulo: 'La noche, paso a paso',
-  bajada: 'Para que nadie se sienta perdido. Es una guía, no un horario.',
+  titulo: 'Paso a paso',
+  bajada: 'Una guía, no un horario. Cada mesa va a su ritmo.',
   momentos: {
-    llegada: { nombre: 'Al llegar', texto: 'Una vuelta rápida: tu nombre y qué haces cuando no trabajas.' },
-    pedir: { nombre: 'Pidan', texto: 'Cuando estén todos, pidan con calma.' },
-    juego: { nombre: 'Si se hace un silencio', texto: 'El juego de la mesa: una persona lee y responden todos.' },
-    ultima: { nombre: 'Última ronda', texto: 'Si hay ganas de seguir, busquen un sitio cerca.' },
-    cierre: { nombre: 'Se cierra la mesa', texto: 'Si alguien te cayó bien, díselo. Mañana te preguntamos qué tal.' },
-  } as Record<string, { nombre: string; texto: string }>,
+    llegada: { nombre: 'Mientras llegan', texto: (limite: string) => `Pidan algo de tomar si quieren. Esperamos a todos hasta ${/^1:/.test(limite) ? 'la' : 'las'} ${limite}${limite.endsWith('.') ? '' : '.'}` },
+    voz: { nombre: 'La voz de Aro', texto: () => 'Antes de pedir, elijan a alguien que vaya leyendo en voz alta cada momento de esta lista. Si nadie se ofrece, le toca a quien llegó de último.' },
+    pedir: { nombre: 'A pedir', texto: () => 'Falte quien falte, pidan la comida. Quien llegue después se suma sin problema.' },
+    vuelta: { nombre: 'Una vuelta rápida', texto: () => 'Tu nombre y qué haces cuando no trabajas.' },
+    hielo: { nombre: 'Para romper el hielo', texto: () => 'Mientras llega la comida, la primera ronda del juego.' },
+    tema: { nombre: 'Si se acaba el tema', texto: () => 'Sigan con el juego donde lo dejaron. Se puede pasar.' },
+    cuenta: { nombre: 'Lo último y la cuenta', texto: () => 'Pidan lo último que les provoque y luego la cuenta, cada quien lo suyo. Puede haber otra reserva esperando la mesa.' },
+    despedida: { nombre: 'Despedida', texto: () => 'Si hay ganas de seguir, busquen un sitio cerca. Si alguien te cayó bien, díselo.' },
+  } as Record<string, { nombre: string; texto: (limite: string) => string }>,
   ahora: 'AHORA',
-}
-
-export const anfitrion = {
-  sello: 'ESTA NOCHE',
-  tuTitulo: 'Llevas tú el ritmo de la mesa',
-  tuTexto: 'Nada de discursos: solo marcar los momentos de abajo cuando toque. Si no te provoca, no pasa nada, el guion también lo tienen los demás.',
-  otro: (nombre: string) => `Esta noche lleva el ritmo ${nombre}.`,
+  /** Los sitios para seguir que operación eligió para ese local (14-10). */
+  seguir: {
+    titulo: 'Si quieren seguir',
+    aPie: (min: number) => `${min} min a pie`,
+    comoLlegar: 'Cómo llegar',
+  },
 }

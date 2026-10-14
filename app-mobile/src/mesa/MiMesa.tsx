@@ -404,9 +404,9 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
             cierraMesaEn={d.cierraMesaEn}
             zonaHoraria={d.zonaHoraria}
             conJuego={!!d.mesaId}
-            soyAnfitrion={!!d.soyAnfitrion}
-            anfitrion={d.anfitrion && !d.soyAnfitrion ? d.anfitrion.nombre : null}
+            paraSeguir={d.paraSeguir}
             ahora={ahora}
+            ir={ir}
           />
         ) : null}
       </View>
