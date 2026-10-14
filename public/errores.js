@@ -109,7 +109,7 @@
    * con esos nombres en este repo, comprobado, y no puede existir: no
    * tenemos puente nativo en la web.
    */
-  var PUENTES_DE_APP = /\b(?:sendDataToNative|sendPageHideMessage|sendBeforeUnloadMessage|sendJsBlockingTimeMessage|webkit\.messageHandlers|ReactNativeWebView)\b/;
+  var PUENTES_DE_APP = /\b(?:sendDataToNative|sendPageHideMessage|sendBeforeUnloadMessage|sendJsBlockingTimeMessage|dispatchToBridge|sendPostMessage|logLoginFormFocused|webkit\.messageHandlers|ReactNativeWebView)\b/;
 
   function deFuera(fichero, mensaje, pila) {
     // «Script error.» sin fichero: el error opaco que da un script de otro
@@ -129,10 +129,51 @@
       }
     }
 
-    // Sin fichero, lo que queda es el texto: el esquema raro, o el nombre
-    // del puente de una app.
     var texto = String(fichero || '') + ' ' + String(pila || '') + ' ' + String(mensaje || '');
-    return ESQUEMAS_AJENOS.test(texto) || PUENTES_DE_APP.test(texto);
+    if (ESQUEMAS_AJENOS.test(texto) || PUENTES_DE_APP.test(texto)) return true;
+
+    /**
+     * Y la regla que deja de ser una lista de nombres.
+     *
+     * Perseguir los nombres del puente de Instagram es un juego que no se
+     * gana: filtré `sendDataToNative` y `sendPageHideMessage`, y a las horas
+     * llegó otro con `dispatchToBridge`, `sendPostMessage` y
+     * `logLoginFormFocused`. Son suyos y los cambian cuando quieren.
+     *
+     * Lo que NO cambia es dónde viven. Instagram en iPhone inyecta su
+     * medidor minificado dentro del documento, así que todos sus marcos
+     * caen en `aro.club/:1:algo` —línea 1, columna en los miles—. Nuestras
+     * pantallas son `.dc.html` servidos tal cual, con saltos de línea: su
+     * código empieza por el `<!doctype html>` de la línea 1 y cualquier
+     * error nuestro reporta cientos de líneas más abajo. El `onCorreo` que
+     * sí era nuestro salió en `/:655:323`.
+     *
+     * Así que: si NINGÚN marco de la pila es nuestro de verdad —ni un
+     * fichero con nombre, ni una línea que no sea la 1— no hay nada que
+     * podamos arreglar ahí dentro.
+     *
+     * Conservador a propósito: basta UN marco nuestro para que el error
+     * siga avisando. Un fallo nuestro disparado desde su código se sigue
+     * contando como nuestro, que es lo correcto.
+     */
+    var marcos = String(pila || '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+    if (marcos.length) {
+      var hayNuestro = false;
+      for (var i = 0; i < marcos.length; i++) {
+        var m = marcos[i];
+        if (m.indexOf('[native code]') >= 0) continue;
+        // Un fichero con nombre es nuestro: support.js, reglas.js, /vendor/…
+        if (/\.(js|mjs|ts|tsx)(:|\?|$)/.test(m)) { hayNuestro = true; break; }
+        // Y el documento, solo si la línea NO es la 1.
+        var enDoc = m.match(/:(\d+):(\d+)\)?$/);
+        if (enDoc && Number(enDoc[1]) > 1) { hayNuestro = true; break; }
+        // Un marco sin posición tampoco delata a nadie: no decide.
+        if (!enDoc) hayNuestro = true;
+      }
+      if (!hayNuestro) return true;
+    }
+
+    return false;
   }
 
   function pantalla() {
