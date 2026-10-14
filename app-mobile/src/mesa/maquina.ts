@@ -23,6 +23,12 @@ export type DeServidor = {
   numeroMesa?: number | null
   /** Es la única mesa (o grupo) de esa fecha en ese sitio: entonces no se enseña el número (Michael, 10-10). */
   mesaUnica?: boolean
+  /** Hasta cuándo nos deja la mesa el restaurante. Sin él, el guion usa su duración por defecto. */
+  cierraMesaEn?: string | null
+  /** Quién lleva el ritmo de la mesa esta noche (14-10). Lo elige el servidor. */
+  anfitrion?: { id: string; nombre: string } | null
+  /** Si la persona que mira es la anfitriona. */
+  soyAnfitrion?: boolean
   actividad?: { ruta?: string; km?: number; minutos?: number; nivel?: string } | null
   restaurante?: string | null
   direccion?: string | null

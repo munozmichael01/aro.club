@@ -10,7 +10,7 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Mi mesa con un servidor SIMULADO, para ver cada fase en el navegador:
- * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|cerrada|abierta|movimiento|pasada|valorada|fallo
+ * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|cerrada|abierta|anfitrion|con-anfitrion|movimiento|pasada|valorada|fallo
  * Catálogo de desarrollo: no se enlaza desde ningún sitio. La forma imita la
  * real (pruebas/mesa-contra-la-api.mjs); las fechas se cuentan desde ahora.
  */
@@ -37,6 +37,9 @@ const ESTADOS: Record<string, DeServidor> = {
   movimiento: { ...ABIERTA, formato: 'walk', restaurante: 'Entrada de Sabas Nieves', direccion: 'Av. Boyacá, Altamira', actividad: { ruta: 'Sabas Nieves → La Silla', km: 7, minutos: 150, nivel: 'medio' } },
   // El juego de la mesa: cerrado (la cena es en 5 h) y abierto (empezó hace 10 min).
   'juego-abierto': { ...ABIERTA, empiezaEn: en(-1 / 6) },
+  // El anfitrión (14-10): la persona elegida, y el resto viendo quién es. Empezó hace 35 min.
+  anfitrion: { ...ABIERTA, empiezaEn: en(-35 / 60), soyAnfitrion: true, anfitrion: { id: 'yo', nombre: 'Tú' } },
+  'con-anfitrion': { ...ABIERTA, empiezaEn: en(-35 / 60), cierraMesaEn: en(2), anfitrion: { id: CINCO[1].id, nombre: CINCO[1].nombre } },
   pasada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10) },
   valorada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10), yaValoro: true, yaBloqueados: [CINCO[2].id], yaReporto: CINCO[2].id },
 }

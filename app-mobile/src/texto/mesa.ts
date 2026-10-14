@@ -145,3 +145,28 @@ export const sinRespuesta = {
   cargar: 'No pudimos cargar tu mesa. Revisa tu conexión e inténtalo otra vez.',
   reintentar: 'Reintentar',
 }
+
+/**
+ * El guion de la noche y el anfitrión (14-10-2026). Casilla C: solo del
+ * celular hasta que Design entregue (`Design/BRIEF-anfitrion.md`).
+ * Genérico: momentos, no horas fijas ni bares.
+ */
+export const guion = {
+  titulo: 'La noche, paso a paso',
+  bajada: 'Para que nadie se sienta perdido. Es una guía, no un horario.',
+  momentos: {
+    llegada: { nombre: 'Al llegar', texto: 'Una vuelta rápida: tu nombre y qué haces cuando no trabajas.' },
+    pedir: { nombre: 'Pidan', texto: 'Cuando estén todos, pidan con calma.' },
+    juego: { nombre: 'Si se hace un silencio', texto: 'El juego de la mesa: una persona lee y responden todos.' },
+    ultima: { nombre: 'Última ronda', texto: 'Si hay ganas de seguir, busquen un sitio cerca.' },
+    cierre: { nombre: 'Se cierra la mesa', texto: 'Si alguien te cayó bien, díselo. Mañana te preguntamos qué tal.' },
+  } as Record<string, { nombre: string; texto: string }>,
+  ahora: 'AHORA',
+}
+
+export const anfitrion = {
+  sello: 'ESTA NOCHE',
+  tuTitulo: 'Llevas tú el ritmo de la mesa',
+  tuTexto: 'Nada de discursos: solo marcar los momentos de abajo cuando toque. Si no te provoca, no pasa nada, el guion también lo tienen los demás.',
+  otro: (nombre: string) => `Esta noche lleva el ritmo ${nombre}.`,
+}

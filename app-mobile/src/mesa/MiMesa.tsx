@@ -12,6 +12,7 @@ import * as T from '../texto/mesa'
 import * as M from './maquina'
 import * as J from '../juego/maquina'
 import { TarjetaJuego } from '../juego/TarjetaJuego'
+import { GuionNoche } from './GuionNoche'
 import { reglas } from '../reglas'
 import type { crearServicioMesa } from './servicio'
 
@@ -394,6 +395,18 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
             ventana={ventanaJuego}
             horaAbre={F.horaEn(abreJuego, d.zonaHoraria ?? null)}
             alAbrir={() => ir(`/juego?mesa=${d.mesaId}`)}
+          />
+        ) : null}
+        {/* Los momentos son de una cena (pedir, el juego): café y movimiento tendrán los suyos. */}
+        {J.hayJuego(d.formato) ? (
+          <GuionNoche
+            empiezaEn={d.empiezaEn}
+            cierraMesaEn={d.cierraMesaEn}
+            zonaHoraria={d.zonaHoraria}
+            conJuego={!!d.mesaId}
+            soyAnfitrion={!!d.soyAnfitrion}
+            anfitrion={d.anfitrion && !d.soyAnfitrion ? d.anfitrion.nombre : null}
+            ahora={ahora}
           />
         ) : null}
       </View>
