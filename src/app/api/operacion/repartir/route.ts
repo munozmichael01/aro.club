@@ -189,6 +189,36 @@ export async function GET(request: Request) {
 
   const caraGuardada = new Set((carasGuardadas ?? []).map((v) => v.profile_id))
 
+  /**
+   * Quién salió de la propuesta guardada sin que la propuesta se enterara.
+   *
+   * Entre repartir y publicar pasan horas, y en esas horas la gente cancela,
+   * se cambia de fecha o la mueve operación. El 13-10 se repartió el sábado
+   * normal y media hora después Luis se fue a la cena de mayores de 40: su
+   * nombre se quedó en la propuesta vieja, así que salía en las dos.
+   */
+  const enLaPropuesta = corrida
+    ? [
+        ...new Set(
+          ((corrida.proposal ?? []) as unknown as { integrantes: { profileId: string }[] }[])
+            .flatMap((m) => (m.integrantes ?? []).map((p) => p.profileId))
+            .filter(Boolean),
+        ),
+      ]
+    : []
+
+  const { data: siguenApuntados } = enLaPropuesta.length
+    ? await admin
+        .from('bookings')
+        .select('profile_id')
+        .eq('event_id', evento.id)
+        .eq('status', 'confirmed')
+        .in('profile_id', enLaPropuesta)
+    : { data: [] }
+
+  const vivos = new Set((siguenApuntados ?? []).map((b) => b.profile_id))
+  const seGuardaronYNoEstan = enLaPropuesta.filter((id) => !vivos.has(id)).length
+
   // Cuánta gente se ha apuntado DESPUÉS de la corrida que se está viendo.
   const { count: reservasNuevas } = corrida
     ? await admin
@@ -292,6 +322,10 @@ export async function GET(request: Request) {
            */
           creadaEn: corrida.created_at,
           nuevosDesde: (reservasNuevas ?? 0),
+          // Y quién de la propuesta YA NO está apuntado a esta fecha.
+          // Publicar los sentaría en una cena que no es la suya: el servidor
+          // ya se niega, pero verlo antes de pulsar ahorra el viaje.
+          yaNoEstan: seGuardaronYNoEstan,
           espera: ((corrida.unmatched ?? []) as unknown as { profileId: string }[]).map((p) => ({
             ...p,
             ...(rasgoGuardado.get(p.profileId) ?? {}),

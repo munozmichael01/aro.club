@@ -127,6 +127,64 @@ export async function POST(request: Request) {
     )
   }
 
+  /**
+   * Y antes de sentar a nadie: ¿siguen TODOS apuntados a esta fecha?
+   *
+   * La propuesta es una foto del momento en que alguien pulsó repartir. Entre
+   * esa foto y el botón de publicar pueden pasar horas, y en esas horas la
+   * gente cancela, se cambia de fecha o la mueve operación.
+   *
+   * Pasó el 13-10: se repartió el sábado normal a las 20:31, a las 20:5x
+   * movimos a Luis a la cena de mayores de 40, y su nombre se quedó en la
+   * propuesta guardada del sábado normal. Publicarla lo habría sentado en
+   * una cena a la que ya no estaba apuntado, y le habría mandado un «ya
+   * sabes con quién cenas» de la mesa equivocada mientras está en la otra.
+   *
+   * Esto no se arregla recalculando solo: repartir mueve a todo el mundo de
+   * sitio y es una decisión. Lo que sí se puede es negarse a sentar a quien
+   * ya no está, y decir quién es.
+   */
+  const aSentar = mesas.flatMap((m) => m.integrantes.map((p) => p.profileId))
+  const { data: vigentes } = aSentar.length
+    ? await admin
+        .from('bookings')
+        .select('profile_id')
+        .eq('event_id', corrida.event_id)
+        .eq('status', 'confirmed')
+        .in('profile_id', aSentar)
+    : { data: [] }
+
+  const siguen = new Set((vigentes ?? []).map((b) => b.profile_id))
+  const yaNoEstan = mesas
+    .flatMap((m) => m.integrantes.map((p) => ({ mesa: m.numero, ...p })))
+    .filter((p) => !siguen.has(p.profileId))
+
+  const nombreDe = new Map(
+    (
+      (
+        await admin
+          .from('profiles')
+          .select('id, display_name, full_name')
+          .in('id', yaNoEstan.length ? yaNoEstan.map((p) => p.profileId) : ['00000000-0000-0000-0000-000000000000'])
+      ).data ?? []
+    ).map((p) => [p.id, p.display_name || p.full_name?.split(' ')[0] || 'Alguien']),
+  )
+
+  if (yaNoEstan.length) {
+    return NextResponse.json(
+      {
+        error:
+          yaNoEstan.length === 1
+            ? `${nombreDe.get(yaNoEstan[0].profileId)} ya no está apuntada a esta fecha. Vuelve a repartir antes de publicar.`
+            : `${yaNoEstan.length} personas de esta propuesta ya no están apuntadas a esta fecha. Vuelve a repartir antes de publicar.`,
+        motivo: 'ya-no-estan',
+        // Con nombre y mesa: quien publica tiene que poder ver quién.
+        quienes: yaNoEstan.map((p) => ({ nombre: nombreDe.get(p.profileId), mesa: p.mesa })),
+      },
+      { status: 409 },
+    )
+  }
+
   // Ya no se deshace el evento entero antes de publicar. Con publicación
   // por mesa, borrar todo tiraría justo las mesas que ya se cerraron y sus
   // encuentros: lo contrario de lo que se busca. Una mesa publicada solo se

@@ -3830,12 +3830,29 @@ class Component extends DCLogic {
           .then((r) => { if (r.ok) this.cargarReparto(this.fechaElegida() && this.fechaElegida().id); });
       },
 
-      hayVieja: !!(CORRIDA && CORRIDA.nuevosDesde > 0),
-      textoVieja: CORRIDA && CORRIDA.nuevosDesde > 0
-        ? 'Esta propuesta se calculó ' + haceCuanto(CORRIDA.creadaEn) + ' y no ha visto a ' +
-          (CORRIDA.nuevosDesde === 1 ? 'la última persona que se apuntó' : 'las últimas ' + CORRIDA.nuevosDesde + ' personas que se apuntaron') +
-          '. Vuelve a repartir para meterlas, o publica las mesas que ya están: lo publicado no se mueve.'
-        : '',
+      hayVieja: !!(CORRIDA && (CORRIDA.nuevosDesde > 0 || CORRIDA.yaNoEstan > 0)),
+      textoVieja: (function () {
+        if (!CORRIDA) return '';
+        const partes = [];
+        if (CORRIDA.nuevosDesde > 0) {
+          partes.push('no ha visto a ' + (CORRIDA.nuevosDesde === 1
+            ? 'la última persona que se apuntó'
+            : 'las últimas ' + CORRIDA.nuevosDesde + ' personas que se apuntaron'));
+        }
+        // Lo de «ya no están» es más grave que lo de «no ha visto»: publicar
+        // sentaría a alguien en una cena que no es la suya. El servidor se
+        // niega, pero decirlo aquí ahorra el viaje.
+        if (CORRIDA.yaNoEstan > 0) {
+          partes.push('tiene ' + (CORRIDA.yaNoEstan === 1
+            ? 'a una persona que YA NO está apuntada a esta fecha'
+            : 'a ' + CORRIDA.yaNoEstan + ' personas que YA NO están apuntadas a esta fecha'));
+        }
+        if (!partes.length) return '';
+        return 'Esta propuesta se calculó ' + haceCuanto(CORRIDA.creadaEn) + ' y ' + partes.join(', y ') +
+          '. ' + (CORRIDA.yaNoEstan > 0
+            ? 'Hay que volver a repartir: publicarla así no se puede.'
+            : 'Vuelve a repartir para meterlas, o publica las mesas que ya están: lo publicado no se mueve.');
+      })(),
 
       tituloEspera: sinRepartir
         ? (apuntados.length === 1 ? 'Una persona apuntada' : apuntados.length + ' apuntados')
