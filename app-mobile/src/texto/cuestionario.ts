@@ -127,4 +127,10 @@ export const sinRespuesta = {
   reintentar: 'Reintentar',
   /** La web enseña los códigos crudos («sector, empleador»); aquí, sus nombres. */
   faltanTodavia: (nombres: string[]) => `Todavía faltan respuestas: ${nombres.join(', ')}.`,
+  /**
+   * El servidor rechaza un texto de más de 120 caracteres, y se reenvía al
+   * terminar: el «Esa respuesta no cuadra» salía en la ÚLTIMA pantalla, lejos
+   * del campo (14-10-2026).
+   */
+  empleadorLargo: 'Lo que escribiste en «¿Dónde trabajas?» es demasiado largo. Vuelve atrás y deja solo el nombre de la empresa.',
 }

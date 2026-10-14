@@ -51,6 +51,9 @@ import {
 } from './maquina'
 import type { crearServicioCuestionario } from './servicio'
 
+/** El tope del servidor para un texto (`validar`, 120). Sin él se escribía de más y fallaba al terminar (14-10). */
+const MAX_TEXTO = 120
+
 type Servicio = ReturnType<typeof crearServicioCuestionario>
 
 function Flecha({ c = color.cuerpo }: { c?: string }) {
@@ -356,7 +359,7 @@ export function Cuestionario(p: {
 
                   {q.tipo === 'texto' ? (
                     <View>
-                      <Campo value={e.empleador} onChangeText={escribirEmpleador} placeholder={T.empleadorEjemplo} accessibilityLabel={q.enunciado} />
+                      <Campo value={e.empleador} onChangeText={escribirEmpleador} placeholder={T.empleadorEjemplo} accessibilityLabel={q.enunciado} maxLength={MAX_TEXTO} />
                       {(() => {
                         const t = e.empleador.trim().toLowerCase()
                         const sug = t.length >= 2 ? q.sugerencias.filter((s) => s.toLowerCase().includes(t)).slice(0, 4) : []

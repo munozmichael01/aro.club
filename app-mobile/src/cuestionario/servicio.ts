@@ -21,6 +21,8 @@ async function intentar<T>(f: () => Promise<Response>, sinRed: string): Promise<
       /* no era JSON */
     }
     if (r.ok && j) return { ok: true, datos: j as T }
+    // Un texto demasiado largo dice CUÁL, para que se pueda arreglar (14-10).
+    if (j?.pregunta === 'empleador' && /largo/.test(String(j?.detalle ?? ''))) return { ok: false, error: sinRespuesta.empleadorLargo, status: r.status }
     return { ok: false, error: j?.error || sinRed, status: r.status }
   } catch {
     return { ok: false, error: sinRed }
