@@ -176,7 +176,38 @@ for (const [id, pares] of Object.entries(OPC)) {
   const base = opciones.map((o) => o.value)
 
   const sobran = pantalla.filter((c) => !base.includes(c))
-  const faltan = base.filter((c) => !pantalla.includes(c))
+
+  /**
+   * Códigos que la base ACEPTA a propósito y la pantalla ya no ofrece.
+   *
+   * No es lo mismo que el fallo que este comprobador vino a cazar. Aquel era
+   * al revés: la pantalla ofrecía `extranjero`, que la base había retirado, y
+   * esas respuestas se perdían al guardar.
+   *
+   * Esto es el orden correcto. Se retira una opción para que nadie nueva la
+   * elija, y la base la sigue aceptando porque quien ya la eligió tiene que
+   * poder volver a guardar su cuestionario: `validar()` rechaza cualquier
+   * código fuera de catálogo, así que borrarlo de la base le rompería el
+   * guardado a esas personas con un error que no es culpa suya.
+   *
+   * Cada entrada lleva su motivo. Si algún día se quiere de verdad fuera,
+   * primero hay que mover a quien lo tenga.
+   */
+  const RETIRADOS = {
+    // 13-10, Michael: elegimos el restaurante con el número más bajo de la
+    // mesa, y con veinte dólares la lista de sitios donde seis desconocidos
+    // cenan bien se queda en casi nada. Tres personas ya lo eligieron.
+    gasto: ['hasta-20'],
+  }
+
+  const faltan = base
+    .filter((c) => !pantalla.includes(c))
+    .filter((c) => !(RETIRADOS[id] ?? []).includes(c))
+
+  const retirados = base.filter((c) => (RETIRADOS[id] ?? []).includes(c))
+  if (retirados.length) {
+    console.log(`  · ${id}: retirados a propósito, la base los sigue aceptando: ${retirados.join(', ')}`)
+  }
 
   if (sobran.length || faltan.length) {
     errores++

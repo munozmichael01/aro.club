@@ -447,8 +447,27 @@ class Component extends DCLogic {
       ["La comida, vengo por la experiencia gastronómica", "comida"],
       ["Las dos cosas por igual", "ambas"],
     ],
+    /**
+     * «Hasta 20 USD» se RETIRA DE LA PANTALLA el 13-10, y no del catálogo.
+     *
+     * La pregunta avisa de que elegimos el restaurante con el número más
+     * bajo de la mesa. Con veinte dólares la lista de sitios donde seis
+     * desconocidos cenan bien en Chacao se queda en casi nada, y basta una
+     * persona para arrastrar la mesa entera. Michael lo quita de las
+     * opciones.
+     *
+     * Y SE QUEDA EN EL CATÁLOGO DE LA BASE a propósito. Tres personas ya lo
+     * eligieron, y `validar()` rechaza cualquier código que no esté en el
+     * catálogo: quitarlo de ahí haría que a esas tres les fallara el guardado
+     * la próxima vez que tocaran su cuestionario, con un «código fuera de
+     * catálogo» que no es culpa suya. Lo que ya está contestado sigue
+     * valiendo; lo que deja de poder elegirse es lo nuevo.
+     *
+     * Es la otra cara de lo que pasó con `extranjero`: allí la pantalla
+     * ofrecía un código que la base había retirado. Aquí la base acepta uno
+     * que la pantalla ya no ofrece, que es el orden correcto.
+     */
     gasto: [
-      ["Hasta 20 USD", "hasta-20"],
       ["20 a 35 USD", "20-35"],
       ["35 a 50 USD", "35-50"],
       ["Más de 50 USD", "mas-50"],
