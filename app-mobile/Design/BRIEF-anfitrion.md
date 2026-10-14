@@ -46,9 +46,41 @@ Ejemplo para una cena de 7:30 a 9:30:
 | 9:30 | Despedida | Si hay ganas de seguir, busquen un sitio cerca. Si alguien te cayó bien, díselo. |
 
 Lo que pedimos:
-- Dónde va en Mi mesa y cómo convive con la tarjeta del juego (los dos
-  momentos del juego podrían llevar a ella) y con la tarjeta «Al llegar».
 - Los tres estados: antes de la cena (nada resaltado), en curso, terminada.
+- **El orden de Mi mesa lo decides tú** (ver abajo).
+
+### El orden de Mi mesa: lo decide Design
+
+El paso a paso entra en una pantalla que ya tiene bloques, y el orden de
+**todos** ellos es decisión de Design, no solo dónde va el nuevo. Puedes
+mover, agrupar o fusionar lo que haga falta (sin quitar nada).
+
+Así está hoy, con la mesa revelada:
+
+1. «ABIERTO» y la tarjeta de la mesa (número, restaurante, dirección, hora,
+   «Reserva a tu nombre»).
+2. «Cómo llegar» y «Voy tarde».
+3. «Con quién cenas»: las cinco personas y la nota de verificados.
+4. «El juego de la mesa», con «Abrir el juego».
+5. «Paso a paso» (nuevo, colocado ahí de forma provisional).
+6. «Al llegar»: «Di que vas a la mesa de Aro, la 04. Está reservada a tu
+   nombre…».
+7. «Cancelar mi puesto».
+
+Lo que nos chirría, para que lo resuelvas como mejor te parezca:
+- **«Al llegar» está al final**, después de la despedida, y es lo primero
+  que se necesita en la puerta del restaurante.
+- **El paso a paso nombra el juego dos veces** (romper el hielo y si se acaba
+  el tema), y la tarjeta del juego queda lejos o antes de tiempo.
+
+Una propuesta nuestra, solo como punto de partida: tarjeta de la mesa →
+Cómo llegar / Voy tarde → Al llegar → Con quién cenas → Paso a paso → El
+juego → Cancelar.
+
+**Una idea más, también a tu criterio:** cada local tiene en el panel una
+foto de su entrada, y hoy no se le enseña a nadie. Podría ir en Mi mesa (y
+en el correo de la mesa) con algo como «Busca esta entrada». Si encaja, dinos
+dónde.
 
 ## Pieza 2 · Los sitios para seguir
 
