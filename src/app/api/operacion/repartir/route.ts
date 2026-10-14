@@ -227,7 +227,7 @@ export async function POST(request: Request) {
   )
   const { data: rasgosCerrados } = await admin
     .from('profile_traits')
-    .select('profile_id, age, gender, industry, employer')
+    .select('profile_id, age, gender, industry, employer, budget_tier')
     .in('profile_id', idsCerrados.length ? idsCerrados : ['00000000-0000-0000-0000-000000000000'])
 
   const rasgoDe = new Map((rasgosCerrados ?? []).map((r) => [r.profile_id, r]))
@@ -311,6 +311,7 @@ export async function POST(request: Request) {
           genero: r?.gender ?? null,
           empresa: r?.employer ?? null,
           sector: r?.industry ?? null,
+          tramoGasto: r?.budget_tier ?? null,
           comidas: comidaDe.get(m.profile_id) ?? [],
           foto: fotoDe.get(m.profile_id) ?? null,
         }
@@ -396,6 +397,9 @@ export async function POST(request: Request) {
       genero: p.genero,
       empresa: p.empresaTexto || p.empresa,
       sector: p.sector,
+      // Cuánto espera gastar, 1 a 4. Lo pide el panel para elegir
+      // restaurante: es la otra mitad de la decisión, con la comida.
+      tramoGasto: p.tramoGasto,
       // Qué come. No entra en el reparto —el algoritmo no la mira— pero
       // decide el restaurante, que es lo que operación hace justo después
       // de mirar esta pantalla.
