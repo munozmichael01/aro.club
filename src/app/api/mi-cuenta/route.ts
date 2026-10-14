@@ -196,7 +196,7 @@ export async function GET() {
   // gente.
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max')
+    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd')
     // Las de prueba no son de nadie más que de quien las creó.
     .eq('es_prueba', false)
     // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
@@ -445,6 +445,11 @@ export async function GET() {
       empiezaEn: f.starts_at,
       cierraEn: f.booking_closes_at,
       creditos: f.credit_cost ?? 1,
+      // Lo que cuesta ESTA fecha. El botón de reservar lo escribía desde
+      // `PRECIO_USD`, la constante, y eso aguanta mientras todas valen lo
+      // mismo: el día que sube, las fechas ya abiertas siguen cobrando lo
+      // suyo y el botón prometería otra cosa.
+      precioUsd: f.price_usd != null ? Number(f.price_usd) : null,
       zonas: zonasPorFecha.get(f.id) ?? [],
       apuntados: cuentaPorFecha.get(f.id) ?? 0,
       // Cerrada: se ve, se cuenta, y no se puede apuntar nadie. No decimos

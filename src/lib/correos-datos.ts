@@ -232,6 +232,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     reveal_at: string
     city_slug?: string | null
     age_band_min?: number | null
+    price_usd?: number | string | null
   } | null = null
 
   if (fila.event_id) {
@@ -239,7 +240,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       .from('events')
       // `reveal_at` no lo usa ninguna plantilla: lo usa el candado de
       // `prepararCorreo` para saber si esta fecha ya se abrió.
-      .select('starts_at, format, zone_slug, reveal_at, booking_closes_at, city_slug, age_band_min')
+      .select('starts_at, format, zone_slug, reveal_at, booking_closes_at, city_slug, age_band_min, price_usd')
       .eq('id', fila.event_id)
       .maybeSingle()
     evento = data ?? null
@@ -295,7 +296,18 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     // mano en «abrimos tu zona» y en cuatro sitios de la landing: bajarlo
     // obligaba a acertar en los siete, y el que se escape deja un correo
     // diciendo un precio y el cobro haciendo otro.
-    precio: precioTexto(),
+    /**
+     * El precio DE ESTA FECHA, no el del club.
+     *
+     * Era `precioTexto()` a secas, o sea la constante. Mientras valía lo
+     * mismo para todo no se notaba; el día que subió a diez, el correo de
+     * «abrimos mesa en tu zona» de una fecha abierta a siete habría dicho
+     * diez y el cobro habría hecho siete.
+     *
+     * Es el mismo fallo que ya se pagó al revés, y lo arregla la misma
+     * regla: si el correo cuelga de un evento, el número sale del evento.
+     */
+    precio: evento?.price_usd != null ? `${Number(evento.price_usd)} USD` : precioTexto(),
     // Las horas con que se cierra una fecha. Misma razón que el precio: estaba
     // escrita a mano en la plantilla de fecha cancelada, y bajarla de 48 a 24
     // obligaba a acertar en todos los sitios donde se promete.

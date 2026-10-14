@@ -431,7 +431,22 @@
       ['Hamburguesas', 'hamburguesas'],
     ],
 
-    PRECIO_USD: 7,
+    /**
+     * Lo que cuesta la plaza. DIEZ desde el 13-10, antes siete.
+     *
+     * Y esto es SOLO el valor por defecto de una fecha nueva. Lo que se
+     * cobra de verdad sale de `events.price_usd`, que se congela al abrir
+     * la fecha: las tres abiertas con siete siguen cobrando siete, y la
+     * gente que ya pagó no se entera de nada.
+     *
+     * Esa separación es la que hay que respetar al escribir el precio en
+     * cualquier sitio. Si el texto cuelga de UNA fecha concreta, el número
+     * tiene que salir de esa fecha; si habla del club en general —la
+     * portada, las preguntas frecuentes— sale de aquí. Mezclarlo ya costó
+     * caro una vez: dos fechas se abrieron prometiendo siete y cobrando
+     * ocho, y eso no falla en ningún sitio hasta que alguien paga.
+     */
+    PRECIO_USD: 10,
     precioTexto: function () {
       return this.PRECIO_USD + ' USD'
     },
@@ -1111,7 +1126,7 @@
      * él no existe). El comprobador cruza las dos.
      */
     FRECUENTES: [
-      ['¿Qué incluye lo que pago?', 'Los 7 USD cubren el emparejamiento, la verificación de todo el grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio, como en cualquier salida: entre 20 y 35 USD según dónde sea. Nos dices tu tramo antes y elegimos el restaurante con el número más bajo de la mesa.'],
+      ['¿Qué incluye lo que pago?', 'Los 10 USD cubren el emparejamiento, la verificación de todo el grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio, como en cualquier salida: entre 20 y 35 USD según dónde sea. Nos dices tu tramo antes y elegimos el restaurante con el número más bajo de la mesa.'],
       ['¿Y si no me cae bien nadie?', 'Pasa, y no es un fracaso. Son dos horas, a las nueve estás libre y no le debes nada a nadie. Nos lo cuentas después y eso entra en el emparejamiento de la próxima: qué no funcionó y con quién no volver a sentarte.'],
       ['¿Puedo ir con un amigo?', 'No. Todo el grupo son desconocidos entre sí, incluidos ustedes dos. Con una pareja conocida en la mesa el resto se convierte en público, y eso rompe la noche para los demás.'],
       ['¿Cómo sé que las otras personas son reales?', 'Porque pasaron por lo mismo que tú: documento de identidad, una foto y una revisión humana que compara las dos. En la pantalla de tu mesa aparece explícito que todo el grupo tiene identidad verificada y edad confirmada.'],

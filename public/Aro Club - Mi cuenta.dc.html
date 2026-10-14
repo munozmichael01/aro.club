@@ -892,7 +892,17 @@ class Component extends DCLogic {
          * una regla que decide quién puede sentarse.
          */
         a.edadMinima ?? null,
-        a.edadMaxima ?? null
+        a.edadMaxima ?? null,
+        /**
+         * Lo que cuesta ESTA fecha. AL FINAL, no en medio.
+         *
+         * Metido entre `cerrada` y `edadMinima` corría una posición a los
+         * dos de la edad, y esta tupla se lee por índice: `c[8]` dejaba de
+         * ser el mínimo de edad y pasaba a ser el precio sin que fallara
+         * nada. Es el mismo fallo que el cuestionario ya pagó guardando
+         * respuestas por posición.
+         */
+        a.precioUsd ?? null
       ];
     });
     // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato
@@ -953,6 +963,19 @@ class Component extends DCLogic {
        */
       const eMin = c[8];
       const eMax = c[9];
+      /**
+       * Lo que cuesta ESTA fecha, con la constante solo de respaldo.
+       *
+       * La tarjeta escribía `AroReglas.precioTexto()`, o sea el precio del
+       * club. Mientras todas las fechas valían lo mismo daba igual; el
+       * 13-10 subió a diez y las tres abiertas siguen cobrando siete, así
+       * que el botón habría dicho «Reservar mi puesto · 10 USD» sobre una
+       * fecha que cobra 7.
+       *
+       * Lo que se cobra sale de `events.price_usd` y se congela al abrir la
+       * fecha. Aquí se escribe lo mismo que se va a cobrar.
+       */
+      const precioFecha = c[10] != null ? c[10] + ' USD' : AroReglas.precioTexto();
       // «+40», y nada más. `c[1]` es el nombre de la FAMILIA —«Cenas», en
       // plural— así que pegarle la palabra delante daba «CENAS +40». El
       // tipo ya está escrito justo al lado; la etiqueta solo tiene que
@@ -1003,7 +1026,7 @@ class Component extends DCLogic {
         abierta,
         horas,
         cargo: 'Tu puesto en esta fecha',
-        precio: AroReglas.precioTexto() + ' en bolívares',
+        precio: precioFecha + ' en bolívares',
         nota: 'Cubre el emparejamiento, la verificación del grupo y la mesa reservada a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
         // Lo que de verdad falta, en el orden del embudo.
         //
@@ -1034,7 +1057,7 @@ class Component extends DCLogic {
                       ? 'Te avisamos al aprobarla'
                       : (d && d.verif !== 'ok'
                           ? 'Verifica tu identidad primero'
-                          : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : AroReglas.precioTexto()))))),
+                          : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : precioFecha))))),
         botonConfirmar: 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
         abrir: cerrada ? (() => {}) : (() => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0 }))),
         // Reservar de verdad. Antes solo se marcaba en la pantalla: al

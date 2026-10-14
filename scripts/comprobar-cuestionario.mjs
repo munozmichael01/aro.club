@@ -996,5 +996,87 @@ if (relojes.length) {
   }
 }
 
+// --- el precio, escrito en un solo sitio -------------------------------
+//
+// `PRECIO_USD` es el precio del club y el valor por defecto de una fecha
+// nueva. Lo que se COBRA sale de `events.price_usd`, congelado al abrir.
+//
+// El fallo que esto vigila ya ocurrió: el precio estaba a mano en la
+// plantilla del correo y en cuatro sitios de la landing, se bajó de ocho a
+// siete en unos y no en otros, y dos fechas se abrieron prometiendo siete y
+// cobrando ocho. No falla en ningún sitio hasta que alguien paga.
+//
+// Así que nadie vuelve a escribir la cifra. Si aparece «10 USD» literal en
+// una pantalla o en una plantilla, es una copia que mañana dirá otra cosa.
+{
+  const reglas = fs.readFileSync(new URL('../public/reglas.js', import.meta.url), 'utf8')
+  const precio = Number((reglas.match(/PRECIO_USD:\s*(\d+)/) ?? [])[1])
+
+  const sitios = [
+    ...fs.readdirSync(new URL('../public/', import.meta.url))
+      .filter((f) => f.endsWith('.dc.html'))
+      .map((f) => ['public/' + f, new URL('../public/' + f, import.meta.url)]),
+    ...fs.readdirSync(new URL('../src/lib/correos-plantillas/', import.meta.url))
+      .filter((f) => f.endsWith('.html'))
+      .map((f) => ['correos-plantillas/' + f, new URL('../src/lib/correos-plantillas/' + f, import.meta.url)]),
+  ]
+
+  const aMano = []
+  for (const [nombre, url] of sitios) {
+    const texto = fs.readFileSync(url, 'utf8')
+    // Sin comentarios —ahí la cifra se escribe para explicar— y sin el
+    // JSON-LD, que es HTML estático fuera de `<x-dc>`: un rastreador no
+    // ejecuta JavaScript, así que esa cifra TIENE que ir literal. A cambio,
+    // la regla de las preguntas frecuentes la cruza contra la pantalla, y
+    // la de aquí abajo contra la constante.
+    const limpio = texto
+      .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g, '')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '')
+    const re = new RegExp('(?<![\\d.,])' + precio + '\\s*(USD|usd|d[óo]lares)', 'g')
+    const encontrado = limpio.match(re)
+    if (encontrado) aMano.push(`${nombre}: ${[...new Set(encontrado)].join(', ')}`)
+  }
+
+  if (!precio) {
+    errores++
+    console.error('\n✗ el precio: no encuentro PRECIO_USD en reglas.js')
+  } else if (aMano.length) {
+    errores++
+    console.error(`\n✗ el precio (${precio} USD) está escrito a mano`)
+    aMano.forEach((x) => console.error('    ' + x))
+    console.error('    → sale de `AroReglas.precioTexto()`, o del evento si cuelga de una fecha')
+  } else {
+    console.log(`✓ el precio (${precio} USD) no está escrito a mano en ninguna pantalla ni plantilla`)
+  }
+}
+
+// --- y la frase que lleva el precio dentro -------------------------------
+//
+// «Los N USD cubren el emparejamiento…» vive en `AroReglas.FRECUENTES` y,
+// copiada, en el JSON-LD de la portada, que es estático porque un rastreador
+// no ejecuta JavaScript. Dos copias de un número que cambia.
+//
+// La de las preguntas frecuentes ya cruza pantalla contra esquema. Esto
+// cruza las dos contra la constante, que es lo que faltaba: si el precio
+// sube y esta frase no, la portada promete lo que no se cobra.
+{
+  const reglas = fs.readFileSync(new URL('../public/reglas.js', import.meta.url), 'utf8')
+  const precio = Number((reglas.match(/PRECIO_USD:\s*(\d+)/) ?? [])[1])
+  const portada = fs.readFileSync(new URL('../public/Aro Club - Landing v4.dc.html', import.meta.url), 'utf8')
+
+  const enReglas = Number((reglas.match(/Los (\d+) USD cubren/) ?? [])[1])
+  const enEsquema = Number((portada.match(/Los (\d+) USD cubren/) ?? [])[1])
+
+  if (enReglas !== precio || enEsquema !== precio) {
+    errores++
+    console.error('\n✗ «Los N USD cubren…» no cuadra con PRECIO_USD')
+    console.error(`    PRECIO_USD: ${precio} · frecuentes: ${enReglas} · JSON-LD: ${enEsquema}`)
+    console.error('    → la portada promete un precio y el cobro hace otro')
+  } else {
+    console.log(`✓ «Los ${precio} USD cubren…» igual en reglas.js, en el JSON-LD y en PRECIO_USD`)
+  }
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)
