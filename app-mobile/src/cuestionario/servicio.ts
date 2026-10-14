@@ -1,6 +1,7 @@
 import type { crearApi } from '../sesion/api'
 import type { Lead } from '../sesion/lead'
 import type { PreguntaCatalogo, Zona } from '../entrada/preguntas'
+import { reglas } from '../reglas'
 import { sinRespuesta } from '../texto/cuestionario'
 import type { DeServidor } from './maquina'
 
@@ -10,6 +11,9 @@ import type { DeServidor } from './maquina'
  */
 type Api = ReturnType<typeof crearApi>
 export type Resultado<T> = { ok: true; datos: T } | { ok: false; error: string; status?: number }
+
+/** El nombre corto de cada pregunta escrita, como el `corto` de la web. */
+const CORTOS: Record<string, string> = { empleador: 'dónde trabajas' }
 
 async function intentar<T>(f: () => Promise<Response>, sinRed: string): Promise<Resultado<T>> {
   try {
@@ -22,7 +26,9 @@ async function intentar<T>(f: () => Promise<Response>, sinRed: string): Promise<
     }
     if (r.ok && j) return { ok: true, datos: j as T }
     // Un texto demasiado largo dice CUÁL, para que se pueda arreglar (14-10).
-    if (j?.pregunta === 'empleador' && /largo/.test(String(j?.detalle ?? ''))) return { ok: false, error: sinRespuesta.empleadorLargo, status: r.status }
+    if (j?.pregunta && /demasiado largo/.test(String(j?.detalle ?? ''))) {
+      return { ok: false, error: sinRespuesta.demasiadoLargo(CORTOS[j.pregunta] ?? j.pregunta, reglas.MAX_TEXTO), status: r.status }
+    }
     return { ok: false, error: j?.error || sinRed, status: r.status }
   } catch {
     return { ok: false, error: sinRed }

@@ -33,6 +33,8 @@ type Api = {
   /** «AAAA-MM-DD» → «DD/MM/AAAA», o '' si no cuadra. */
   fechaDesdeISO: (v: string) => string
   PRECIO_USD: number
+  /** Lo más largo que admite una respuesta escrita (hoy, «¿Dónde trabajas?»). */
+  MAX_TEXTO: number
   /** Cuántas horas antes de empezar cierra una fecha (24 desde el 01-10-2026). Web, servidor y app leen esta. */
   HORAS_DE_CIERRE: number
   /** El juego de la mesa (mazo aprobado por Michael, JUEGO.md). */
