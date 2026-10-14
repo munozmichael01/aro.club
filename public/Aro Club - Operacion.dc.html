@@ -322,6 +322,9 @@
                     </sc-if>
                     <span style="flex:1 1 auto;min-width:0;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ e.nombre }}</span>
                     <span style="flex:0 0 auto;font:400 12px/1.3 'Inter Tight',sans-serif;color:#566A5D;text-align:right">{{ e.dato }}</span>
+                    <sc-if value="{{ e.esNueva }}" hint-placeholder-val="{{ false }}">
+                      <span style="{{ e.selloNueva }}">Nueva</span>
+                    </sc-if>
                     <sc-if value="{{ e.hayDietas }}" hint-placeholder-val="{{ false }}">
                       <span style="{{ e.estiloDietas }}">{{ e.dietas }}</span>
                     </sc-if>
@@ -3124,6 +3127,16 @@ class Component extends DCLogic {
       hayFoto: !!p.foto,
       sinFoto: !p.foto,
       foto: p.foto || '',
+      /**
+       * «Nueva»: se apuntó DESPUÉS de repartir.
+       *
+       * No es lo mismo que el resto de la espera. A los demás el reparto los
+       * miró y no cupieron; a estos no los ha mirado nadie todavía, así que
+       * puede que sí quepan. Sin la marca, las dos cosas se leen igual y la
+       * conclusión es la contraria.
+       */
+      esNueva: !!p.llegoDespues,
+      selloNueva: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:rgba(27,81,56,.13);color:#1B5138',
       dietas: dietaCorta(p.dietas).join(' · '),
       hayDietas: dietaCorta(p.dietas).length > 0,
       estiloDietas: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:' + ((p.dietas || []).indexOf('alergias') >= 0 ? 'rgba(143,69,21,.16)' : 'rgba(20,52,42,.07)') + ';color:' + ((p.dietas || []).indexOf('alergias') >= 0 ? '#8F4515' : '#2C4A38'),
@@ -4200,10 +4213,27 @@ class Component extends DCLogic {
             : 'a ' + CORRIDA.yaNoEstan + ' personas que YA NO están apuntadas a esta fecha'));
         }
         if (!partes.length) return '';
+        /**
+         * Gente nueva YA NO es motivo para volver a repartir.
+         *
+         * Lo era porque no aparecía por ningún lado: ni en una mesa ni en la
+         * espera, así que la única forma de verla era recalcular — y
+         * recalcular mueve a todo el mundo de sitio, que es una decisión
+         * grande para meter a uno.
+         *
+         * Ahora cae en la espera sola, marcada. Desde ahí se sienta a mano
+         * con «Sentar», sin tocar a nadie más. Repartir otra vez sigue
+         * estando, pero deja de ser lo único.
+         *
+         * Que alguien se haya ido sí obliga: el servidor se niega a publicar
+         * una propuesta con gente que ya no está.
+         */
         return 'Esta propuesta se calculó ' + haceCuanto(CORRIDA.creadaEn) + ' y ' + partes.join(', y ') +
           '. ' + (CORRIDA.yaNoEstan > 0
             ? 'Hay que volver a repartir: publicarla así no se puede.'
-            : 'Vuelve a repartir para meterlas, o publica las mesas que ya están: lo publicado no se mueve.');
+            : (CORRIDA.nuevosDesde === 1
+              ? 'Está abajo en la espera, marcada. Siéntala a mano con «Sentar» y no se mueve nadie más, o vuelve a repartir si prefieres rehacerlas.'
+              : 'Están abajo en la espera, marcadas. Siéntalas a mano con «Sentar» y no se mueve nadie más, o vuelve a repartir si prefieres rehacerlas.'));
       })(),
 
       tituloEspera: sinRepartir
@@ -4212,7 +4242,20 @@ class Component extends DCLogic {
       notaEspera: sinRepartir
         ? ('Todavía sin repartir: nadie tiene ' + vozRep.unidad + ' aún. Dale a «Volver a repartir» para armarlas.'
           + (fueraDelPool ? ' Hay ' + fueraDelPool + ' más apuntado' + (fueraDelPool === 1 ? '' : 's') + ' que no entra' + (fueraDelPool === 1 ? '' : 'n') + ' al reparto: sin verificar o sin cuestionario.' : ''))
-        : 'No dan para ' + vozRep.art + ' ' + vozRep.unidad + ' de seis. Se les avisa hoy y su crédito no se toca.',
+        : (function () {
+            // `esNueva`, que es como se llama ya construida. `llegoDespues` es
+            // el nombre que trae del servidor y aquí ya no existe.
+            const tarde = espera.filter((p) => p.esNueva).length;
+            const base = 'No dan para ' + vozRep.art + ' ' + vozRep.unidad + ' de seis. Se les avisa hoy y su crédito no se toca.';
+            // Y los que llegaron después no es que no dieran: es que el
+            // reparto no los vio. Decir lo mismo de los dos grupos haría
+            // creer que ya se miraron y no cupieron.
+            return tarde
+              ? base + ' ' + (tarde === 1 ? 'Una se apuntó' : tarde + ' se apuntaron')
+                + ' después de repartir: ' + (tarde === 1 ? 'esa no se miró' : 'esas no se miraron')
+                + ' todavía, y ' + (tarde === 1 ? 'puede' : 'pueden') + ' caber.'
+              : base;
+          })(),
       cola, hayCola: porConciliar > 0, sinCola: porConciliar === 0,
       esMesas: esta('mesas'), esVerificaciones: esta('verificaciones'), esPagos: esta('pagos'),
       esReportes: esta('reportes'), esFechas: esta('fechas'), esLocales: esta('locales'),

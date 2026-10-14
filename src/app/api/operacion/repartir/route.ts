@@ -376,14 +376,71 @@ export async function GET(request: Request) {
           // Publicar los sentaría en una cena que no es la suya: el servidor
           // ya se niega, pero verlo antes de pulsar ahorra el viaje.
           yaNoEstan: seGuardaronYNoEstan,
-          espera: ((corrida.unmatched ?? []) as unknown as { profileId: string }[]).map((p) => ({
-            ...p,
-            ...(rasgoGuardado.get(p.profileId) ?? {}),
-            comidas: comidaGuardada.get(p.profileId) ?? [],
-            dietas: dietaGuardada.get(p.profileId) ?? [],
-            tramoGasto: gastoGuardado.get(p.profileId) ?? null,
-            foto: caraGuardada.has(p.profileId) ? `/api/operacion/cara?perfil=${p.profileId}` : null,
-          })),
+          /**
+           * LA ESPERA, MÁS QUIEN LLEGÓ DESPUÉS.
+           *
+           * `unmatched` es la foto de quién se quedó fuera CUANDO se
+           * repartió. Quien reserva más tarde no está en ninguna mesa ni en
+           * esa lista, así que no aparecía por ningún lado: lo único que lo
+           * delataba era el «N nuevos desde entonces» de arriba, y la única
+           * salida que ofrecía la pantalla era volver a repartir — que mueve
+           * a todo el mundo de sitio.
+           *
+           * Michael, hoy: «¿por qué me haces volver a repartir cuando
+           * reserva alguien más en vez de ponerlo en espera?». Tiene razón y
+           * no hacía falta recalcular nada: quien no está sentado ESTÁ en
+           * espera, por definición. Nadie lo sentó.
+           *
+           * Así que la espera se resuelve al leer, como ya se resuelven las
+           * comidas y el presupuesto: lo guardado, más los que el reparto no
+           * llegó a ver. Marcados, porque no es lo mismo «lo miramos y no
+           * cupo» que «llegó después»: al segundo quizá sí le toca mesa, y
+           * eso es lo que hace decidir si merece la pena repartir otra vez.
+           */
+          espera: (() => {
+            const guardada = ((corrida.unmatched ?? []) as unknown as { profileId: string }[]).map(
+              (p) => ({
+                ...p,
+                ...(rasgoGuardado.get(p.profileId) ?? {}),
+                comidas: comidaGuardada.get(p.profileId) ?? [],
+                dietas: dietaGuardada.get(p.profileId) ?? [],
+                tramoGasto: gastoGuardado.get(p.profileId) ?? null,
+                foto: caraGuardada.has(p.profileId)
+                  ? `/api/operacion/cara?perfil=${p.profileId}`
+                  : null,
+                llegoDespues: false,
+              }),
+            )
+
+            // Quién ya está colocado en algún sitio de esta corrida.
+            const colocados = new Set<string>([
+              ...((corrida.proposal ?? []) as unknown as {
+                integrantes: { profileId: string }[]
+              }[]).flatMap((m) => (m.integrantes ?? []).map((i) => i.profileId)),
+              ...guardada.map((p) => p.profileId),
+            ])
+
+            const tarde = (pool ?? [])
+              .filter((x) => x.profile_id && !colocados.has(x.profile_id))
+              .map((x) => ({
+                profileId: x.profile_id as string,
+                nombre: nombreDe.get(x.profile_id as string) ?? 'Sin nombre',
+                zonas: (x.zones ?? []) as string[],
+                edad: x.age,
+                genero: x.gender,
+                sector: x.industry,
+                empresa: x.employer_key,
+                tramoGasto: x.budget_tier,
+                dietas: (x.dietary ?? []) as string[],
+                comidas: comidaGuardada.get(x.profile_id as string) ?? [],
+                foto: caraGuardada.has(x.profile_id as string)
+                  ? `/api/operacion/cara?perfil=${x.profile_id}`
+                  : null,
+                llegoDespues: true,
+              }))
+
+            return [...guardada, ...tarde]
+          })(),
           media: corrida.avg_score,
         }
       : null,
