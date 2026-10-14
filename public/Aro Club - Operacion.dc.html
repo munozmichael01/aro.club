@@ -3591,7 +3591,12 @@ class Component extends DCLogic {
       { id: 'nosotros', nombre: 'La cancelamos nosotros', credito: 'DEVUELVE 2 CRÉDITOS', creditos: 2,
         cuando: 'El sitio se cayó, o no podemos sostenerla. La culpa es nuestra, y eso cambia lo que se devuelve.',
         cons: [['✓', '#1B5138', 'Su crédito más uno de cortesía', 'Dos por persona. Lo promete el legal cuando cancelamos nosotros, no cuando no se llena.'],
-          ['→', '#14342A', 'Sale el correo de fecha cancelada', 'Con el motivo real. Si el sitio se cayó, se dice que el sitio se cayó.']] }
+          ['→', '#14342A', 'Sale el correo de fecha cancelada', 'Con el motivo real. Si el sitio se cayó, se dice que el sitio se cayó.']] },
+      // El tercero, de los términos del 14-10. En Caracas no es un caso raro.
+      { id: 'fuerza-mayor', nombre: 'Por una causa ajena', credito: 'DEVUELVE 1 CRÉDITO', creditos: 1,
+        cuando: 'Lluvia, un apagón, una vía cerrada. No es culpa de nadie, y el legal dice que el crédito vuelve pero la cortesía no.',
+        cons: [['✓', '#1B5138', 'Cada apuntado recupera su crédito', 'Entero y sin caducidad. Sin el de cortesía: la causa no es nuestra.'],
+          ['→', '#14342A', 'Sale el correo de fecha cancelada', 'Con la causa dentro. Si fue el apagón, se dice que fue el apagón.']] }
     ];
     const vias = VIAS.map((vi) => {
       const hecha = St.cancelada === vi.id;
@@ -3612,9 +3617,17 @@ class Component extends DCLogic {
         boton: 'display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:54px;margin-top:18px;padding:0 22px;border-radius:999px;border:none;background:' + (activa ? '#6E340F' : 'rgba(27,81,56,.13)') + ';color:' + (activa ? '#FFF8EA' : '#456352') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (activa ? 'pointer' : 'not-allowed'),
         pulsar: () => {
           if (!activa || !laQueSeCancela) return;
-          const caso = vi.id === 'nosotros' ? 'nuestra' : 'no-se-lleno';
-          const motivo = String(St.motivoCancelar || '').trim() ||
-            (caso === 'nuestra' ? 'La cancelamos nosotros.' : 'No llegamos al mínimo para armar una mesa.');
+          const caso = vi.id === 'nosotros' ? 'nuestra' : (vi.id === 'fuerza-mayor' ? 'fuerza-mayor' : 'no-se-lleno');
+          // El motivo por defecto, si no se escribe uno. Para la fuerza mayor
+          // es deliberadamente vago —no sabemos si fue la lluvia o un
+          // apagón— y por eso es el caso donde más conviene escribirlo: el
+          // correo lo lleva dentro.
+          const PORDEFECTO = {
+            'nuestra': 'La cancelamos nosotros.',
+            'fuerza-mayor': 'Una causa ajena a ti y a nosotros nos obliga a cancelarla.',
+            'no-se-lleno': 'No llegamos al mínimo para armar una mesa.'
+          };
+          const motivo = String(St.motivoCancelar || '').trim() || PORDEFECTO[caso];
           this.cancelarFecha(laQueSeCancela[2], caso, motivo);
         }
       };

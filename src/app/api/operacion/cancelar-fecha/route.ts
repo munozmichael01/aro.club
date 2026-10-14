@@ -38,9 +38,19 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 const cuerpo = z.object({
   eventoId: z.string().uuid(),
-  // Cuál de los dos casos del legal. Decide si hay cortesía, así que no
-  // puede deducirse de un texto libre.
-  caso: z.enum(['no-se-lleno', 'nuestra'], { error: 'Di de qué tipo es la cancelación.' }),
+  /**
+   * Cuál de los TRES casos del legal. Decide si hay cortesía, así que no
+   * puede deducirse de un texto libre.
+   *
+   * `fuerza-mayor` entró el 14-10 con el cambio de términos: lluvia,
+   * apagones, cierres de vías. El crédito vuelve y la cortesía NO, porque no
+   * es culpa nuestra. Sin este caso había que elegir entre regalar una
+   * cortesía que el legal ya no promete o mandar un correo diciendo «no
+   * llegamos al mínimo», que en Caracas con un apagón es mentira.
+   */
+  caso: z.enum(['no-se-lleno', 'nuestra', 'fuerza-mayor'], {
+    error: 'Di de qué tipo es la cancelación.',
+  }),
   // Y el porqué, en palabras. Va en el correo y en el registro: «la
   // cancelamos» sin motivo es lo que hace que alguien no vuelva.
   motivo: z
@@ -65,6 +75,9 @@ export async function POST(request: Request) {
   const { eventoId, caso, motivo } = parsed.data
   // Solo cuando la culpa es nuestra. Si no se lleno la mesa, el legal
   // promete el credito intacto y nada mas.
+  // La cortesía es SOLO cuando la culpa es nuestra. Ni cuando no se llena ni
+  // cuando el motivo es ajeno a los dos: el legal promete el crédito en los
+  // tres casos y el de cortesía solo en uno.
   const conCortesia = caso === 'nuestra'
   const admin = createAdminClient()
 
