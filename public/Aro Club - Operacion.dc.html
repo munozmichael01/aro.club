@@ -168,6 +168,10 @@
           </div>
         </sc-if>
 
+        <sc-if value="{{ haySitioParaMesa }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ nuevaMesa }}" style="{{ botonNuevaMesa }}">{{ textoNuevaMesa }}</button>
+        </sc-if>
+
         <sc-for list="{{ zonasRep }}" as="z" hint-placeholder-count="2">
           <div style="margin-top:clamp(26px,3.4vw,38px)">
             <div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:baseline;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid rgba(20,52,42,.16)">
@@ -188,6 +192,9 @@
                       <span style="display:block;font:500 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ t.hora }}</span>
                     </span>
                     <span style="{{ t.sello }}">{{ t.estado }}</span>
+                    <sc-if value="{{ t.sePuedeQuitar }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ t.quitarMesa }}" aria-label="Quitar esta mesa vacía" style="flex:0 0 auto;width:34px;height:34px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#8F4515;font:500 16px/1 'Inter Tight',sans-serif;cursor:pointer">×</button>
+                    </sc-if>
                   </div>
 
                   <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(20,52,42,.12)">
@@ -2611,6 +2618,15 @@ class Component extends DCLogic {
          * catálogo que usa el cuestionario y la ficha del local. Escribirlas
          * aquí sería la cuarta copia.
          */
+        // Vacía y sin publicar: se puede quitar. Con gente, se vacía
+        // moviéndola, que es lo que de verdad pasa.
+        sePuedeQuitar: !pub && g.length === 0,
+        quitarMesa: () => {
+          const c = this.corridaId();
+          if (!c) return;
+          this.mandar('/api/operacion/propuesta', { accion: 'quitar-mesa', corridaId: c, mesa: m.numero })
+            .then((r) => { if (r.ok) this.cargarReparto(this.fechaElegida() && this.fechaElegida().id); });
+        },
         comidas: (function () {
           const COC = (window.AroReglas && window.AroReglas.COCINAS) || [];
           const nombre = {};
@@ -3795,6 +3811,25 @@ class Component extends DCLogic {
        * sitio y eso es una decisión, no un refresco. Lo que faltaba era
        * decirlo, porque la cifra de apuntados sí es de ahora mismo.
        */
+      /**
+       * Añadir una mesa vacía.
+       *
+       * El reparto propone las mesas que salen de la gente que hay; esto es
+       * para lo que hace una persona después. Michael: «siempre se me quedan
+       * dos o tres fuera, y tenerlos dentro de una mesa, aunque no se pueda
+       * cerrar, es mejor». Una mesa de dos no se publica —el servidor no
+       * deja— pero se mira, y mirar es el trabajo.
+       */
+      haySitioParaMesa: !!CORRIDA,
+      textoNuevaMesa: 'Añadir una mesa vacía',
+      botonNuevaMesa: 'display:inline-flex;align-items:center;min-height:42px;padding:0 18px;border-radius:999px;border:1px dashed rgba(20,52,42,.32);background:transparent;color:#33513F;font:500 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;margin-bottom:clamp(14px,1.8vw,18px)',
+      nuevaMesa: () => {
+        const c = this.corridaId();
+        if (!c) return;
+        this.mandar('/api/operacion/propuesta', { accion: 'nueva-mesa', corridaId: c })
+          .then((r) => { if (r.ok) this.cargarReparto(this.fechaElegida() && this.fechaElegida().id); });
+      },
+
       hayVieja: !!(CORRIDA && CORRIDA.nuevosDesde > 0),
       textoVieja: CORRIDA && CORRIDA.nuevosDesde > 0
         ? 'Esta propuesta se calculó ' + haceCuanto(CORRIDA.creadaEn) + ' y no ha visto a ' +

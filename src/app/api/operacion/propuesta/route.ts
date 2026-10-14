@@ -26,6 +26,28 @@ const accion = z.discriminatedUnion('accion', [
     mesa: z.number().int().positive(),
     restaurantId: z.string().uuid(),
   }),
+  /**
+   * Una mesa vacía, a mano.
+   *
+   * Michael, 13-10: «para mover gente entre mesas necesito poder crear una
+   * mesa vacía; siempre se me quedan dos o tres fuera y tenerlos dentro de
+   * una mesa, aunque no se pueda cerrar, es mejor».
+   *
+   * El reparto propone las mesas que salen de la gente que hay; esto es
+   * para la parte que hace una persona después, moviendo. Una mesa de dos
+   * no se puede publicar —el servidor lo impide— pero sí se puede mirar, y
+   * mirar es el trabajo.
+   */
+  z.object({
+    accion: z.literal('nueva-mesa'),
+    corridaId: z.string().uuid(),
+  }),
+  /** Y quitarla, SOLO si está vacía: una con gente se vacía moviéndola. */
+  z.object({
+    accion: z.literal('quitar-mesa'),
+    corridaId: z.string().uuid(),
+    mesa: z.number().int().positive(),
+  }),
   z.object({
     accion: z.literal('mover'),
     corridaId: z.string().uuid(),
@@ -116,7 +138,36 @@ export async function POST(request: Request) {
   // otra. Para cambiarla hay que despublicarla a propósito.
   const cerrada = (m?: Mesa | null) => m?.publicada === true
 
-  if (d.accion === 'sede') {
+  if (d.accion === 'nueva-mesa') {
+    // El siguiente número libre, contando también las publicadas: dos mesas
+    // con el mismo número en la misma noche es una mesa que nadie encuentra.
+    const numero = mesas.reduce((n, m) => Math.max(n, m.numero), 0) + 1
+    mesas.push({
+      numero,
+      zona: null,
+      zonasPosibles: [],
+      restaurantId: null,
+      restaurante: null,
+      puntuacion: 0,
+      desglose: {},
+      resumen: null,
+      roturas: [],
+      integrantes: [],
+    })
+  } else if (d.accion === 'quitar-mesa') {
+    const i = mesas.findIndex((m) => m.numero === d.mesa)
+    if (i < 0) return NextResponse.json({ error: 'Esa mesa no existe.' }, { status: 404 })
+    if (cerrada(mesas[i])) {
+      return NextResponse.json({ error: 'Esa mesa ya está publicada.' }, { status: 409 })
+    }
+    if (mesas[i].integrantes.length) {
+      return NextResponse.json(
+        { error: 'Esa mesa tiene gente. Muévela antes de quitarla.' },
+        { status: 409 },
+      )
+    }
+    mesas.splice(i, 1)
+  } else if (d.accion === 'sede') {
     const mesa = mesas.find((m) => m.numero === d.mesa)
     if (!mesa) return NextResponse.json({ error: 'Esa mesa no existe.' }, { status: 404 })
     if (cerrada(mesa)) {
@@ -185,6 +236,21 @@ export async function POST(request: Request) {
     // Las publicadas se dejan como están: recalcularlas no cambiaría nada y
     // su gente ya no está en el pool, así que saldrían vacías.
     if (m.publicada) continue
+
+    // Una mesa vacía no se puntúa: no hay nada que puntuar, y las reglas
+    // sobre cero personas dirían que todas se cumplen, que es mentira. Se
+    // deja en blanco y el panel la enseña como lo que es, un sitio donde
+    // dejar gente mientras se mueve.
+    if (!m.integrantes.length) {
+      m.puntuacion = 0
+      m.desglose = {}
+      m.resumen = null
+      m.zonasPosibles = []
+      m.roturas = []
+      m.reglas = []
+      continue
+    }
+
     const gente = m.integrantes.map((i) => porId.get(i.profileId)).filter((p) => p != null)
     m.puntuacion = Number(puntuar(gente, pesos).toFixed(3))
     m.desglose = desglose(gente)
