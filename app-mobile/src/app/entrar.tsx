@@ -120,6 +120,7 @@ export default function Pantalla() {
       correoInicial={correoInicial}
       avisoInicial={yaTiene ? TP.yaExiste : undefined}
       alEmpezar={() => router.replace('/puerta')}
+      alNormas={() => router.push('/normas')}
     />
   )
 }

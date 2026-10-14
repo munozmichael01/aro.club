@@ -16,6 +16,7 @@ export default function Pantalla() {
       alCuestionario={() => router.push('/cuestionario')}
       alCuenta={() => router.replace('/cuenta')}
       alVerificar={() => router.replace('/verificacion')}
+      alNormas={() => router.push('/normas')}
       alEntrar={() => router.push('/entrar')}
     />
   )

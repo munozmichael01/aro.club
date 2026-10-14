@@ -233,6 +233,8 @@ export const atajos = {
 export const pie = [
   { texto: 'Preguntas', ruta: '/#faq' },
   { texto: 'Reglas de la mesa', ruta: '/reglas' },
+  /** «app:» se abre dentro de la app, no en la web (Apple 1.2, 14-10). */
+  { texto: 'Seguridad y normas', ruta: 'app:/normas' },
   { texto: 'Privacidad', ruta: '/privacidad' },
 ]
 

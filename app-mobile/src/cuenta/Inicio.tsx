@@ -240,7 +240,7 @@ export function Inicio(p: {
         }
       >
         {cuerpo}
-        <Pie alPulsar={(ruta) => p.ir(`web:${ruta}`)} />
+        <Pie alPulsar={(ruta) => p.ir(ruta.startsWith('app:') ? ruta.slice(4) : `web:${ruta}`)} />
       </ScrollView>
       {hoja}
     </View>

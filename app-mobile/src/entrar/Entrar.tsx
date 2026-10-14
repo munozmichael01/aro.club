@@ -8,6 +8,7 @@ import Svg, { Path } from 'react-native-svg'
 import { AroCarga, Boton, Campo, CampoClave, EnlacePie, Marca, Opcion, Texto, color, cremaAlfa, fuente, medida, radio } from '../diseno'
 import { reglas } from '../reglas'
 import * as T from '../texto/entrar'
+import { aceptas as A } from '../texto/normas'
 
 type Fase = 'inicio' | 'correo' | 'recuperar' | 'entrando' | 'otroCorreo' | 'relay'
 
@@ -86,6 +87,8 @@ export function Entrar(p: {
   recuperar: (correo: string) => Promise<boolean>
   alDentro: () => void
   alEmpezar: () => void
+  /** Seguridad y normas (Apple 1.2): enlace, no puerta. */
+  alNormas?: () => void
   /** Entrar con Apple o Google y terminar la entrada en el servidor. */
   conProveedor: (p: 'apple' | 'google') => Promise<TrasProveedor>
   /** ¿Se enseña el botón de este proveedor? */
@@ -354,6 +357,17 @@ export function Entrar(p: {
           {p.hayProveedor('apple') ? <Proveedor texto={T.inicio.apple} logo={<LogoApple />} onPress={() => conProveedor('apple')} /> : null}
           {p.hayProveedor('google') ? <Proveedor texto={T.inicio.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} /> : null}
         </View>
+        <Texto variante="nota" tono="sobreVerdeSecundario" style={{ marginTop: 13 }}>
+          {A.antes}
+          <Texto variante="nota" tono="sobreVerdeSecundario" style={estilos.enlace} onPress={p.alNormas}>
+            {A.normas}
+          </Texto>
+          {A.medio}
+          <Texto variante="nota" tono="sobreVerdeSecundario" style={estilos.enlace} onPress={() => openBrowserAsync(`${SITIO}/terminos`)}>
+            {A.terminos}
+          </Texto>
+          {A.despues}
+        </Texto>
         {aviso ? (
           <Texto variante="cuerpoChico" tono="avisoSobreVerde" accessibilityLiveRegion="polite" style={{ marginTop: 13 }}>
             {aviso}

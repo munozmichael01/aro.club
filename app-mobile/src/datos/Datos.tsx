@@ -94,6 +94,8 @@ export function Datos(p: {
   alCuestionario: () => void
   alCuenta: () => void
   alVerificar: () => void
+  /** Seguridad y normas (Apple 1.2): enlace, no puerta. */
+  alNormas?: () => void
   alEntrar: () => void
 }) {
   const insets = useSafeAreaInsets()
@@ -278,6 +280,10 @@ export function Datos(p: {
             {/* Google y Apple: cuando exista /api/auth/nativo (PROPUESTA §g). */}
             <Texto variante="nota" style={{ marginTop: 9 }}>
               {T.cuenta.legal.antes}
+              <Texto variante="nota" tono="verde" style={estilos.enlace} onPress={p.alNormas}>
+                {T.cuenta.legal.normas}
+              </Texto>
+              {T.cuenta.legal.trasNormas}
               <Texto variante="nota" tono="verde" style={estilos.enlace} onPress={() => openBrowserAsync(`${SITIO}/terminos`)}>
                 {T.cuenta.legal.terminos}
               </Texto>

@@ -149,7 +149,10 @@ export const cuenta = {
   pistaCorta: 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Apple o Google.',
   o: 'O',
   legal: {
-    antes: 'Al crear tu cuenta aceptas los ',
+    antes: 'Al crear tu cuenta aceptas las ',
+    normas: 'normas de seguridad',
+    /** Tolerancia cero (Apple 1.2, 14-10). */
+    trasNormas: ', con tolerancia cero a cualquier abuso, los ',
     terminos: 'Términos',
     medio: ' y la ',
     privacidad: 'Privacidad',
