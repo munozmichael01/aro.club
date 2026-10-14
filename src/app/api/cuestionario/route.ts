@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { respuestasDePerfil, situacionDeLead, situacionDePerfil } from '@/lib/embudo'
 import { verificar } from '@/lib/lead-token'
 import { leerCatalogo, validar } from '@/lib/questionnaire/catalogo'
+import { MAX_TEXTO } from '@/lib/reglas'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -207,7 +208,8 @@ export async function POST(request: Request) {
   // `fin` sigue aceptándose para no romper a una pantalla vieja en vuelo,
   // pero NO se usa: quien decide que el cuestionario está completo es el
   // servidor mirando lo guardado.
-  const { correo, token, clave, valor, pantalla } = parsed.data
+  const { correo, token, clave, pantalla } = parsed.data
+  let { valor } = parsed.data
 
   const quien = await quienContesta(correo ?? null, token ?? null)
   if (!quien) return NextResponse.json({ error: 'Sesión no válida.' }, { status: 403 })
@@ -220,6 +222,36 @@ export async function POST(request: Request) {
   const pregunta = catalogo.porClave.get(clave)
   if (!pregunta) {
     return NextResponse.json({ error: `Pregunta desconocida: ${clave}` }, { status: 400 })
+  }
+
+  /**
+   * UN TEXTO LARGO SE RECORTA, NO SE RECHAZA.
+   *
+   * Era un 400 con «Esa respuesta no cuadra», y el único texto que hay hoy
+   * es «¿Dónde trabajas?». Entre el 12 y el 14 de octubre se rechazaron así
+   * decenas de respuestas, y el aviso no decía ni qué pregunta era: el
+   * empleador se reenvía al pulsar «Terminar», así que salía en la última
+   * pantalla, lejos del campo que había que arreglar.
+   *
+   * Ya hay un `maxlength` en la web y otro en la app, pero eso solo arregla
+   * a quien tenga la versión nueva. Esto lo arregla para TODOS sin depender
+   * de ninguna pantalla: una pestaña abierta desde ayer, una app sin
+   * actualizar, cualquier cosa que mande de más.
+   *
+   * Y recortar no pierde nada que importe: el empleador existe para no
+   * sentar a dos personas de la misma empresa, y ciento veinte caracteres
+   * son de sobra para reconocer una. El nombre más largo que hay guardado
+   * tiene ciento quince. Negarse a guardar por eso es perder la respuesta
+   * entera para proteger un límite que nadie va a notar.
+   *
+   * Se deja escrito en los registros: si algún día pasara a menudo, el
+   * límite estaría mal puesto y eso hay que poder verlo.
+   */
+  if (pregunta.tipo === 'text' && typeof valor === 'string' && valor.length > MAX_TEXTO) {
+    console.warn(
+      `[cuestionario] ${clave}: ${valor.length} caracteres, recortados a ${MAX_TEXTO}`,
+    )
+    valor = valor.slice(0, MAX_TEXTO)
   }
 
   // Un valor a medias es válido mientras se responde: el mínimo solo se
