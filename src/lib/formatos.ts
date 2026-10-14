@@ -49,7 +49,10 @@ export const PLANES_DE_FAMILIA: Record<string, string[]> = {
   cenas: ['cena', 'cena-gastronomica'],
   drinks: ['drinks'],
   movimiento: ['correr', 'senderismo', 'padel', 'pilates', 'ciclismo'],
-  coffee: ['cafe'],
+  // Café y brunch son el mismo formato del club —`coffee`— y dos planes
+  // distintos para la persona. Quien marcó uno de los dos quiere saber de
+  // una fecha de coffee.
+  coffee: ['cafe', 'brunch'],
 }
 
 /** Las cuatro, en el orden en que se enseñan. */
