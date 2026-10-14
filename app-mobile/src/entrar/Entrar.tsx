@@ -8,7 +8,8 @@ import Svg, { Path } from 'react-native-svg'
 import { AroCarga, Boton, Campo, CampoClave, EnlacePie, Marca, Opcion, Texto, color, cremaAlfa, fuente, medida, radio } from '../diseno'
 import { reglas } from '../reglas'
 import * as T from '../texto/entrar'
-import { aceptas as A } from '../texto/normas'
+import { Acepto } from '../normas/Acepto'
+import { acepto as A } from '../texto/normas'
 
 type Fase = 'inicio' | 'correo' | 'recuperar' | 'entrando' | 'otroCorreo' | 'relay'
 
@@ -67,12 +68,14 @@ function SelloAviso({ texto }: { texto: string }) {
 }
 
 /** El botón de proveedor: crema, con su logo (los colores de Google son los de su marca). */
-export function Proveedor({ texto, logo, onPress }: { texto: string; logo: ReactNode; onPress: () => void }) {
+export function Proveedor({ texto, logo, onPress, disabled }: { texto: string; logo: ReactNode; onPress: () => void; disabled?: boolean }) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
-      style={({ pressed }) => [estilos.proveedor, { backgroundColor: pressed ? color.terracotaSobreVerde : color.crema }]}
+      accessibilityState={{ disabled: !!disabled }}
+      style={({ pressed }) => [estilos.proveedor, { backgroundColor: pressed ? color.terracotaSobreVerde : color.crema }, disabled && { opacity: 0.45 }]}
     >
       {logo}
       <Texto variante="rotulo" tono="tinta">
@@ -113,6 +116,8 @@ export function Entrar(p: {
   const [elegido, setElegido] = useState(0)
   const [contacto, setContacto] = useState('')
   const [guardando, setGuardando] = useState(false)
+  // La casilla de las normas: sin ella no se entra (Apple 1.2, 14-10).
+  const [acepto, setAcepto] = useState(false)
 
   const conProveedor = async (prov: 'apple' | 'google') => {
     setAviso('')
@@ -139,7 +144,8 @@ export function Entrar(p: {
     p.alDentro()
   }
 
-  const listo = reglas.valido('correo', correo.trim()) && clave.length > 0
+  const datosListos = reglas.valido('correo', correo.trim()) && clave.length > 0
+  const listo = datosListos && acepto
 
   const entrar = async () => {
     if (!listo) return
@@ -313,7 +319,8 @@ export function Entrar(p: {
             onAlternar={() => setVer((x) => !x)}
             textos={T.correo}
           />
-          <Boton tipo="sobreVerde" texto={listo ? T.correo.entrar : T.correo.falta} ancho onPress={entrar} apagado={!listo} />
+          <Acepto fondo="verde" marcada={acepto} alCambiar={setAcepto} alNormas={p.alNormas} />
+          <Boton tipo="sobreVerde" texto={listo ? T.correo.entrar : datosListos ? A.falta : T.correo.falta} ancho onPress={entrar} apagado={!listo} />
         </View>
         {error ? (
           <Texto variante="cuerpoChico" tono="avisoSobreVerde" accessibilityLiveRegion="polite" style={{ marginTop: 13 }}>
@@ -343,8 +350,9 @@ export function Entrar(p: {
         <Texto variante="cuerpoGrande" tono="cuerpoSobreVerde" style={{ marginTop: 14 }}>
           {T.inicio.bajada}
         </Texto>
-        <View style={{ marginTop: 28 }}>
-          <Boton tipo="secundarioSobreVerde" texto={T.inicio.conCorreo} ancho onPress={() => setFase('correo')} />
+        <Acepto fondo="verde" marcada={acepto} alCambiar={setAcepto} alNormas={p.alNormas} />
+        <View style={{ marginTop: 20 }}>
+          <Boton tipo="secundarioSobreVerde" texto={T.inicio.conCorreo} ancho disabled={!acepto} onPress={() => setFase('correo')} />
         </View>
         <View style={estilos.separador}>
           <View style={estilos.linea} />
@@ -354,20 +362,9 @@ export function Entrar(p: {
           <View style={estilos.linea} />
         </View>
         <View style={{ gap: 10 }}>
-          {p.hayProveedor('apple') ? <Proveedor texto={T.inicio.apple} logo={<LogoApple />} onPress={() => conProveedor('apple')} /> : null}
-          {p.hayProveedor('google') ? <Proveedor texto={T.inicio.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} /> : null}
+          {p.hayProveedor('apple') ? <Proveedor texto={T.inicio.apple} logo={<LogoApple />} onPress={() => conProveedor('apple')} disabled={!acepto} /> : null}
+          {p.hayProveedor('google') ? <Proveedor texto={T.inicio.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} disabled={!acepto} /> : null}
         </View>
-        <Texto variante="nota" tono="sobreVerdeSecundario" style={{ marginTop: 13 }}>
-          {A.antes}
-          <Texto variante="nota" tono="sobreVerdeSecundario" style={estilos.enlace} onPress={p.alNormas}>
-            {A.normas}
-          </Texto>
-          {A.medio}
-          <Texto variante="nota" tono="sobreVerdeSecundario" style={estilos.enlace} onPress={() => openBrowserAsync(`${SITIO}/terminos`)}>
-            {A.terminos}
-          </Texto>
-          {A.despues}
-        </Texto>
         {aviso ? (
           <Texto variante="cuerpoChico" tono="avisoSobreVerde" accessibilityLiveRegion="polite" style={{ marginTop: 13 }}>
             {aviso}

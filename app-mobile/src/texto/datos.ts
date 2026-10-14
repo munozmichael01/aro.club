@@ -149,12 +149,8 @@ export const cuenta = {
   pistaCorta: 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Apple o Google.',
   o: 'O',
   legal: {
-    antes: 'Al crear tu cuenta aceptas las ',
-    normas: 'normas de seguridad',
-    /** Tolerancia cero (Apple 1.2, 14-10). */
-    trasNormas: ', con tolerancia cero a cualquier abuso, los ',
-    terminos: 'Términos',
-    medio: ' y la ',
+    /** Los términos y las normas se aceptan con la casilla de encima (Apple 1.2, 14-10). */
+    antes: 'Lee la ',
     privacidad: 'Privacidad',
     despues: '. Te pediremos la cédula y una selfie para verificar que eres quien dices; ahí se explica qué hacemos con ellas y cuándo se borran.',
   },

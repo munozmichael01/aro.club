@@ -51,6 +51,8 @@ import {
   pasosVisibles,
 } from './maquina'
 import type { crearServicioDatos } from './servicio'
+import { Acepto } from '../normas/Acepto'
+import { acepto as A } from '../texto/normas'
 
 type Servicio = ReturnType<typeof crearServicioDatos>
 const SITIO = (Constants.expoConfig?.extra as { sitio: string }).sitio
@@ -105,6 +107,8 @@ export function Datos(p: {
   const [lead, setLead] = useState<Lead | null>(null)
   const [generos, setGeneros] = useState<{ valor: string; label: string }[]>([])
   const [guardando, setGuardando] = useState(false)
+  // La casilla de las normas: sin ella no se crea la cuenta (Apple 1.2, 14-10).
+  const [acepto, setAcepto] = useState(false)
   const [fallo, setFallo] = useState('')
   const [yaRegistrado, setYaRegistrado] = useState(false)
   const [errorCuenta, setErrorCuenta] = useState('')
@@ -172,6 +176,7 @@ export function Datos(p: {
 
   const clave = estadoClave(e)
   const crearCuenta = async () => {
+    if (!acepto) return
     if (!clave.lista || !lead || guardando) return
     setGuardando(true)
     setErrorCuenta('')
@@ -274,20 +279,13 @@ export function Datos(p: {
                 {T.cuenta.dispares}
               </Texto>
             ) : null}
-            <Boton texto={guardando ? T.cuenta.creando : clave.boton} ancho disabled={!clave.lista || guardando} onPress={crearCuenta} />
+            <Acepto fondo="crema" marcada={acepto} alCambiar={setAcepto} alNormas={p.alNormas} />
+            <Boton texto={guardando ? T.cuenta.creando : clave.lista && !acepto ? A.falta : clave.boton} ancho disabled={!clave.lista || !acepto || guardando} onPress={crearCuenta} />
             <Texto variante="nota">{clave.pista}</Texto>
             {errorCuenta ? <Aviso>{errorCuenta}</Aviso> : null}
             {/* Google y Apple: cuando exista /api/auth/nativo (PROPUESTA §g). */}
             <Texto variante="nota" style={{ marginTop: 9 }}>
               {T.cuenta.legal.antes}
-              <Texto variante="nota" tono="verde" style={estilos.enlace} onPress={p.alNormas}>
-                {T.cuenta.legal.normas}
-              </Texto>
-              {T.cuenta.legal.trasNormas}
-              <Texto variante="nota" tono="verde" style={estilos.enlace} onPress={() => openBrowserAsync(`${SITIO}/terminos`)}>
-                {T.cuenta.legal.terminos}
-              </Texto>
-              {T.cuenta.legal.medio}
               <Texto variante="nota" tono="verde" style={estilos.enlace} onPress={() => openBrowserAsync(`${SITIO}/privacidad`)}>
                 {T.cuenta.legal.privacidad}
               </Texto>

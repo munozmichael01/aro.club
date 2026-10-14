@@ -16,11 +16,15 @@ export const normas = {
   enlace: 'Seguridad y normas',
 }
 
-/** La línea bajo los botones de Entrar y de crear cuenta. */
-export const aceptas = {
-  antes: 'Al continuar aceptas las ',
+/**
+ * La casilla de Entrar y de crear cuenta: hay que marcarla para continuar
+ * (Michael, 14-10: Apple pide que se ACEPTE, no basta con informar).
+ */
+export const acepto = {
+  antes: 'Acepto las ',
   normas: 'normas de seguridad',
   medio: ' y los ',
   terminos: 'Términos',
   despues: ', con tolerancia cero a cualquier abuso.',
+  falta: 'Acepta las normas para continuar',
 }
