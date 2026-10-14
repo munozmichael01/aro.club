@@ -138,6 +138,36 @@ export async function POST(request: Request) {
   // otra. Para cambiarla hay que despublicarla a propósito.
   const cerrada = (m?: Mesa | null) => m?.publicada === true
 
+  /**
+   * SALVO EL SITIO, Y SOLO ANTES DE LA REVELACIÓN.
+   *
+   * El candado de arriba dice «esa gente ya sabe con quién cena y dónde», y
+   * lo primero es verdad desde que se publica. Lo segundo no: el sitio no se
+   * cuenta hasta `reveal_at`, mediodía del día de la cena. Entre publicar y
+   * esa hora, nadie conoce la dirección, así que cambiarla no contradice
+   * nada que le hayamos dicho a nadie.
+   *
+   * Y no hace falta reencolar: `mesa_asignada` compone la dirección AL
+   * ENVIARLO, leyendo `table_members`, no del payload. Quien tenga su correo
+   * todavía en cola recibirá el sitio nuevo sin que haya que tocarlo.
+   *
+   * Después de la revelación sigue cerrado aquí: ahí ya hay gente con una
+   * dirección en la mano, y ese camino pasa por volver a publicar, que es
+   * quien sabe mandar el `mesa_cambiada` a los que se mueven.
+   *
+   * Lo pidió Michael el 14-10: «¿podría editar el sitio luego sin tener que
+   * reabrir la mesa?», y al preguntar, «me refería antes de revelar».
+   */
+  const { data: evento } = await admin
+    .from('events')
+    .select('reveal_at')
+    .eq('id', corrida.event_id)
+    .maybeSingle()
+
+  // Sin `reveal_at` se trata como revelada: no se abre una puerta por un
+  // dato que falta.
+  const yaRevelada = !evento?.reveal_at || new Date(evento.reveal_at) <= new Date()
+
   if (d.accion === 'nueva-mesa') {
     // El siguiente número libre, contando también las publicadas: dos mesas
     // con el mismo número en la misma noche es una mesa que nadie encuentra.
@@ -170,8 +200,15 @@ export async function POST(request: Request) {
   } else if (d.accion === 'sede') {
     const mesa = mesas.find((m) => m.numero === d.mesa)
     if (!mesa) return NextResponse.json({ error: 'Esa mesa no existe.' }, { status: 404 })
-    if (cerrada(mesa)) {
-      return NextResponse.json({ error: 'Esa mesa ya está publicada.' }, { status: 409 })
+    if (cerrada(mesa) && yaRevelada) {
+      return NextResponse.json(
+        {
+          error:
+            'Esa mesa ya está publicada y la gente ya tiene la dirección. Cámbiala y vuelve a publicar: a quien le cambie el sitio le sale un aviso.',
+          motivo: 'ya-revelada',
+        },
+        { status: 409 },
+      )
     }
 
     const sede = pool.sedes.find((v) => v.restaurantId === d.restaurantId)
@@ -196,6 +233,40 @@ export async function POST(request: Request) {
     mesa.restaurantId = sede.restaurantId
     mesa.restaurante = sede.nombre
     mesa.roturas = mesa.roturas.filter((r) => r.regla !== 'sede')
+
+    /**
+     * Y si la mesa YA ESTÁ PUBLICADA, también en la mesa de verdad.
+     *
+     * Cambiarlo solo en la propuesta no serviría de nada, y además mentiría:
+     * `publicar` se niega a republicar una mesa ya publicada, así que el
+     * panel enseñaría el sitio nuevo y `dinner_tables` seguiría con el
+     * viejo. Dos verdades sobre dónde cena esa gente, y la que manda —la de
+     * la base— sería la que no se ve.
+     *
+     * Se toca SOLO el sitio. Ni la gente, ni los encuentros, ni el número:
+     * nada de eso cambia porque se cambie el restaurante, y el candado de
+     * arriba sigue tapando todo lo demás.
+     *
+     * Nada que avisar: estamos antes de `reveal_at` —si no, no se llega
+     * aquí— así que nadie tiene todavía la dirección, y el correo de la mesa
+     * la compone al enviarlo leyendo `table_members`. El que esté en cola
+     * saldrá con el sitio nuevo sin tocarlo.
+     */
+    if (cerrada(mesa)) {
+      const { error } = await admin
+        .from('dinner_tables')
+        .update({ restaurant_id: sede.restaurantId })
+        .eq('event_id', corrida.event_id)
+        .eq('table_number', mesa.numero)
+
+      if (error) {
+        console.error('[propuesta] no se pudo cambiar el sitio de la mesa publicada', error)
+        return NextResponse.json(
+          { error: 'No pudimos cambiar el sitio de esa mesa.' },
+          { status: 500 },
+        )
+      }
+    }
   } else {
     const persona = porId.get(d.profileId)
     if (!persona) return NextResponse.json({ error: 'Esa persona no está.' }, { status: 404 })
