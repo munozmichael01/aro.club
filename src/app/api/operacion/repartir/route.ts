@@ -189,6 +189,16 @@ export async function GET(request: Request) {
 
   const caraGuardada = new Set((carasGuardadas ?? []).map((v) => v.profile_id))
 
+  // Cuánta gente se ha apuntado DESPUÉS de la corrida que se está viendo.
+  const { count: reservasNuevas } = corrida
+    ? await admin
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', evento.id)
+        .eq('status', 'confirmed')
+        .gt('created_at', corrida.created_at)
+    : { count: 0 }
+
   return NextResponse.json({
     sedes: (sedesRaw ?? []).map((v) => ({
       zona: v.zone_slug,
@@ -267,6 +277,21 @@ export async function GET(request: Request) {
           })),
           // Lo mismo que la propuesta: lo que la espera ES se guardó, y lo
           // que se VE se resuelve al leer.
+          /**
+           * CUÁNDO se calculó, y a cuánta gente no ha visto.
+           *
+           * El panel enseñaba «12 apuntados» —la cifra de ahora mismo— al
+           * lado de una propuesta de anoche con siete, sin nada que
+           * explicara la diferencia. Michael lo leyó como que faltaba gente
+           * en las mesas, y era que la propuesta no había visto a los cinco
+           * que se apuntaron después.
+           *
+           * No se recalcula sola a propósito: repartir mueve a todo el mundo
+           * de sitio y eso es una decisión, no un refresco. Lo que faltaba
+           * era decirlo.
+           */
+          creadaEn: corrida.created_at,
+          nuevosDesde: (reservasNuevas ?? 0),
           espera: ((corrida.unmatched ?? []) as unknown as { profileId: string }[]).map((p) => ({
             ...p,
             ...(rasgoGuardado.get(p.profileId) ?? {}),

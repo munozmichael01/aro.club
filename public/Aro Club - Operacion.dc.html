@@ -158,6 +158,16 @@
           </sc-for>
         </div>
 
+        <!-- Cuándo se calculó la propuesta y a cuánta gente no ha visto.
+             El panel enseñaba los apuntados de AHORA al lado de una
+             propuesta de anoche, sin nada que explicara la diferencia. -->
+        <sc-if value="{{ hayVieja }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:11px;align-items:flex-start;border-radius:18px;background:rgba(143,69,21,.1);border:1px solid rgba(143,69,21,.28);padding:13px 16px;margin-bottom:clamp(14px,1.8vw,18px)">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+            <span style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F">{{ textoVieja }}</span>
+          </div>
+        </sc-if>
+
         <sc-for list="{{ zonasRep }}" as="z" hint-placeholder-count="2">
           <div style="margin-top:clamp(26px,3.4vw,38px)">
             <div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:baseline;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid rgba(20,52,42,.16)">
@@ -3778,6 +3788,20 @@ class Component extends DCLogic {
       hayEspera: espera.length > 0 || apuntados.length > 0 || !!St.arrastrando,
       // La misma caja cuenta dos cosas distintas y tiene que decir cuál.
       espera: sinRepartir ? apuntados : espera,
+      /**
+       * «Esta propuesta no ha visto a los últimos N.»
+       *
+       * No se recalcula sola a propósito: repartir mueve a todo el mundo de
+       * sitio y eso es una decisión, no un refresco. Lo que faltaba era
+       * decirlo, porque la cifra de apuntados sí es de ahora mismo.
+       */
+      hayVieja: !!(CORRIDA && CORRIDA.nuevosDesde > 0),
+      textoVieja: CORRIDA && CORRIDA.nuevosDesde > 0
+        ? 'Esta propuesta se calculó ' + haceCuanto(CORRIDA.creadaEn) + ' y no ha visto a ' +
+          (CORRIDA.nuevosDesde === 1 ? 'la última persona que se apuntó' : 'las últimas ' + CORRIDA.nuevosDesde + ' personas que se apuntaron') +
+          '. Vuelve a repartir para meterlas, o publica las mesas que ya están: lo publicado no se mueve.'
+        : '',
+
       tituloEspera: sinRepartir
         ? (apuntados.length === 1 ? 'Una persona apuntada' : apuntados.length + ' apuntados')
         : espera.length + ' en espera',
