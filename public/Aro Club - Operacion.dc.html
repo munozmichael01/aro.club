@@ -770,7 +770,7 @@
                   <div style="display:flex;flex-wrap:wrap;gap:9px;align-items:center">
                     <span style="{{ envCampo }}">
                       <input type="text" inputmode="decimal" value="{{ precio }}" onChange="{{ onPrecio }}" placeholder="8" aria-label="Precio por plaza en dólares" style="{{ campoNum }}" />
-                      <span style="{{ sufijo }}">USD por plaza</span>
+                      <span style="{{ sufijo }}">ref por plaza</span>
                     </span>
                     <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F;white-space:nowrap">{{ precioBs }}</span>
                   </div>
@@ -3119,7 +3119,7 @@ class Component extends DCLogic {
         falta: 'Falta ' + (l.falta || []).join(', ') + '.',
         faltaEstilo: 'display:block;font:500 12px/1.45 \'Inter Tight\',sans-serif;color:#8F4515;margin-top:3px',
         aforo: (l.aforo || 0) + ((l.aforo || 0) === 1 ? ' mesa' : ' mesas'),
-        porCabeza: l.gastoDeclarado ? l.gastoDeclarado + ' USD' : '—',
+        porCabeza: l.gastoDeclarado ? l.gastoDeclarado + ' ref' : '—',
         familias: (l.familias || []).map((x) => ({
           texto: NOMBRE_FAM[x] || x,
           chip: 'display:inline-flex;align-items:center;min-height:26px;padding:0 9px;border-radius:999px;background:rgba(20,52,42,.07);font:500 11px/1 \'Inter Tight\',sans-serif;color:#2C4A38;white-space:nowrap'
@@ -3343,7 +3343,7 @@ class Component extends DCLogic {
       ['Se cierra', cierre ? fmt(cierre) + ' a las ' + fSel[1] : '48 h antes', !!cierre],
       ['Se revela', revela ? fmt(revela) + ' a las 12:00' + (mananero ? ' · el día antes' : '') : 'a las 12:00', !!revela],
       ['Cupo', 'Abierto · quien no entre queda en espera', true],
-      ['Precio', precioOk ? precioNum.toFixed(2).replace('.', ',') + ' USD por plaza' : 'Falta el precio', precioOk],
+      ['Precio', precioOk ? precioNum.toFixed(2).replace('.', ',') + ' ref por plaza' : 'Falta el precio', precioOk],
       ['Zonas', idxZonas.length ? idxZonas.map((i) => ZONAS_OP[i][0]).join(', ') : 'Ninguna', idxZonas.length > 0],
       ['Sitios', idxZonas.length
         ? (conLocal === idxZonas.length ? 'Los ' + idxZonas.length + ' elegidos' : conLocal + ' de ' + idxZonas.length + ' · el resto se elige antes de publicar')
@@ -3583,7 +3583,7 @@ class Component extends DCLogic {
       // se enseñan las que haya, no una lista fija.
       const suyos = c.datos && typeof c.datos === 'object' ? c.datos : {};
       const reporte = Object.keys(suyos).slice(0, 4).map((k) => par(k.charAt(0).toUpperCase() + k.slice(1), String(suyos[k])));
-      reporte.push(par('Monto', c.moneda === 'VES' ? dinero(c.montoLocal, 'VES') : dinero(c.montoUsd, c.moneda || 'USD')));
+      reporte.push(par('Monto', c.moneda === 'VES' ? dinero(c.montoLocal, 'VES') : dinero(c.montoUsd, c.moneda || 'ref')));
       return {
         nombre: c.nombre, metodo: NOMBRE_METODO[c.metodo] || c.metodo, inicial: (c.nombre || '—').charAt(0),
         espera: d === 'ok' ? 'Confirmado por ti' : (d === 'no' ? 'Marcado: no cuadra' : haceCuanto(c.reportadoEn)),
@@ -3594,8 +3594,8 @@ class Component extends DCLogic {
         // único— que es lo que se busca en la app. La captura es la prueba.
         banco: [
           par('Método', NOMBRE_METODO[c.metodo] || c.metodo),
-          par('Esperado', c.moneda === 'VES' ? dinero(c.montoLocal, 'VES') : dinero(c.montoUsd, c.moneda || 'USD')),
-          par('En dólares', dinero(c.montoUsd, 'USD')),
+          par('Esperado', c.moneda === 'VES' ? dinero(c.montoLocal, 'VES') : dinero(c.montoUsd, c.moneda || 'ref')),
+          par('En ref', dinero(c.montoUsd, 'ref')),
           par('Tasa', c.tasa ? Number(c.tasa).toLocaleString('es-VE', { maximumFractionDigits: 2 }) : '—')
         ],
         captura: c.captura,
@@ -3649,7 +3649,9 @@ class Component extends DCLogic {
     const R = St.pagosResumen || {};
     const metricasPago = [
       ['COBRADO HOY', dinero(R.cobradoLocal, 'VES'), (R.puestos || 0) + ' puestos', null],
-      ['EN DÓLARES', dinero(R.cobradoUsd, 'USD'), 'A la tasa del BCV de ' + (R.tasaFecha || 'hoy'), null],
+      // «EN REF»: desde el 13-10 se cobra a la tasa del EURO del BCV, así
+      // que esa cifra ya no son dólares.
+      ['EN REF', dinero(R.cobradoUsd, 'ref'), 'A la tasa del euro del BCV de ' + (R.tasaFecha || 'hoy'), null],
       ['PENDIENTES', String(R.pendientes || 0), 'Transferencias sin conciliar', (R.pendientes ? '#8F4515' : null)],
       ['DEVUELTO', dinero(R.devueltoLocal, 'VES'), 'Cancelaciones con margen', null]
     ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifra(m[3]) }));

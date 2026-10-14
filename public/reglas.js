@@ -447,8 +447,22 @@
      * ocho, y eso no falla en ningún sitio hasta que alguien paga.
      */
     PRECIO_USD: 10,
+    /**
+     * Cómo se dice el precio. En REF, no en USD, desde el 13-10.
+     *
+     * En Venezuela el precio se dice en «ref» —referencia— y cada
+     * establecimiento decide con qué tasa del BCV cobra. Aro cobra a tasa
+     * EURO. Decir «10 USD» y cobrar al cambio del euro sería decir una cosa
+     * y hacer otra: la gente que lee «USD» hace la cuenta con el dólar y le
+     * sale otro número del que va a pagar.
+     *
+     * La constante sigue llamándose `PRECIO_USD` por dentro, y ahí sí hay
+     * una deuda: el nombre dice dólares y el número ya no es de dólares.
+     * Cambiarlo toca `price_usd` y `amount_usd` en la base, que es otra
+     * tarde. Lo que NO podía quedarse así es lo que lee la gente.
+     */
     precioTexto: function () {
-      return this.PRECIO_USD + ' USD'
+      return this.PRECIO_USD + ' ref'
     },
 
     aE164: function (valor) {
@@ -1126,7 +1140,7 @@
      * él no existe). El comprobador cruza las dos.
      */
     FRECUENTES: [
-      ['¿Qué incluye lo que pago?', 'Los 10 USD cubren armar tu mesa —quiénes se sientan contigo y por qué—, la verificación de identidad de todo el grupo y el restaurante reservado a tu nombre. Tu consumo lo pagas en el sitio, como en cualquier salida: desde 20 USD según dónde sea. Nos dices tu tramo antes y elegimos el restaurante con el número más bajo de la mesa.'],
+      ['¿Qué incluye lo que pago?', 'Los 10 ref cubren armar tu mesa —quiénes se sientan contigo y por qué—, la verificación de identidad de todo el grupo y el restaurante reservado a tu nombre. Tu consumo lo pagas en el sitio, como en cualquier salida: desde 20 ref según dónde sea. Nos dices tu tramo antes y elegimos el restaurante con el número más bajo de la mesa.'],
       ['¿Y si no me cae bien nadie?', 'Pasa, y no es un fracaso. Son dos horas, a las nueve estás libre y no le debes nada a nadie. Nos lo cuentas después y eso entra en cómo armamos tu próxima mesa: qué no funcionó y con quién no volver a sentarte.'],
       ['¿Puedo ir con un amigo?', 'No. Todo el grupo son desconocidos entre sí, incluidos ustedes dos. Con una pareja conocida en la mesa el resto se convierte en público, y eso rompe la noche para los demás.'],
       ['¿Cómo sé que las otras personas son reales?', 'Porque pasaron por lo mismo que tú: documento de identidad, una foto y una revisión humana que compara las dos. En la pantalla de tu mesa aparece explícito que todo el grupo tiene identidad verificada y edad confirmada.'],

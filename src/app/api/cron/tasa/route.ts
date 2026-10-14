@@ -40,7 +40,21 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * inventada es peor.
  */
 
-const FUENTE = 'https://ve.dolarapi.com/v1/dolares/oficial'
+/**
+ * EL EURO, no el dólar, desde el 13-10.
+ *
+ * En Venezuela el precio se dice en «ref» y cada sitio decide con qué tasa
+ * del BCV cobra. Aro cobra a tasa euro, que es la que publica el BCV igual
+ * que la del dólar y por la misma vía.
+ *
+ * La fuente da las dos con la misma forma y la misma `fechaActualizacion`,
+ * así que el cambio es la URL. Lo que NO cambia es que una tasa vieja o
+ * inventada es dinero: si esto deja de responder, no se escribe nada.
+ */
+const FUENTE = 'https://ve.dolarapi.com/v1/euros/oficial'
+
+/** Con qué tasa del BCV se calcula. Queda escrito en cada fila. */
+const MONEDA = 'EUR'
 
 /** La fecha de hoy en Caracas, que es la que manda para el cobro. */
 function hoyCaracas() {
@@ -73,12 +87,12 @@ async function actualizar() {
 
   const { data: ultima } = await admin
     .from('fx_rates')
-    .select('rate_date, usd_to_ves')
+    .select('rate_date, ves_por_ref')
     .order('rate_date', { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  const anterior = ultima ? Number(ultima.usd_to_ves) : null
+  const anterior = ultima ? Number(ultima.ves_por_ref) : null
   // Un salto de más del 30% en un día es raro y puede ser la fuente rota.
   // Se escribe igual —la tasa venezolana ha dado saltos de verdad— pero se
   // avisa, porque si es un error lo vamos a cobrar.
@@ -93,7 +107,7 @@ async function actualizar() {
 
   const { error } = await admin
     .from('fx_rates')
-    .upsert({ rate_date: fecha, usd_to_ves: valor, source: 'bcv' }, { onConflict: 'rate_date' })
+    .upsert({ rate_date: fecha, ves_por_ref: valor, moneda: MONEDA, source: 'bcv' }, { onConflict: 'rate_date' })
 
   if (error) {
     console.error('[tasa] no se guardó', error)

@@ -51,7 +51,7 @@ const cuerpo = z.object({
 async function tasaDelDia(admin: ReturnType<typeof createAdminClient>) {
   const { data } = await admin
     .from('fx_rates')
-    .select('rate_date, usd_to_ves')
+    .select('rate_date, ves_por_ref')
     .order('rate_date', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -171,7 +171,7 @@ export async function GET(request: Request) {
       zona: nombreZona,
     },
     montoUsd: usd,
-    tasa: tasa ? Number(tasa.usd_to_ves) : null,
+    tasa: tasa ? Number(tasa.ves_por_ref) : null,
     // De qué DÍA es la tasa. La pantalla decía «Tasa BCV de hoy» sobre la
     // fila que hubiera, que un lunes por la mañana —o cualquier día en que el
     // cron del BCV no haya pasado— es la del día anterior. El importe estaba
@@ -180,7 +180,7 @@ export async function GET(request: Request) {
     tasaDe: tasa?.rate_date ?? null,
     // El monto exacto con los céntimos ya dentro: es el que tiene que
     // transferir, y el que operación busca en el banco.
-    montoLocal: tasa ? Number((usd * Number(tasa.usd_to_ves)).toFixed(2)) : null,
+    montoLocal: tasa ? Number((usd * Number(tasa.ves_por_ref)).toFixed(2)) : null,
     metodos: (metodos ?? []).map((m) => ({
       id: m.id,
       nombre: m.nombre,
@@ -214,7 +214,7 @@ export async function GET(request: Request) {
               m.datos_cuenta as Record<string, unknown> | null,
               m.moneda === 'VES'
                 ? tasa
-                  ? Number((usd * Number(tasa.usd_to_ves)).toFixed(2))
+                  ? Number((usd * Number(tasa.ves_por_ref)).toFixed(2))
                   : null
                 : usd,
               m.moneda === 'VES' ? 'Bs' : m.moneda,
@@ -433,17 +433,17 @@ export async function POST(request: Request) {
   //
   // Asi que se acepta la suya, comprobando que sea una que publicamos de
   // verdad: si no, no es "la que vio", es una inventada.
-  let tasaAplicada = tasa ? Number(tasa.usd_to_ves) : null
+  let tasaAplicada = tasa ? Number(tasa.ves_por_ref) : null
 
   if (m.moneda === 'VES' && parsed.data.tasaVista) {
     const { data: publicadas } = await admin
       .from('fx_rates')
-      .select('usd_to_ves')
+      .select('ves_por_ref')
       .order('rate_date', { ascending: false })
       .limit(3)
 
     const vale = (publicadas ?? []).some(
-      (r) => Math.abs(Number(r.usd_to_ves) - parsed.data.tasaVista!) < 0.0001,
+      (r) => Math.abs(Number(r.ves_por_ref) - parsed.data.tasaVista!) < 0.0001,
     )
 
     if (vale) {

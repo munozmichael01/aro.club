@@ -319,8 +319,8 @@ export async function avisoDePago(
 
   const importe =
     pago.moneda === 'VES' && pago.amount_local
-      ? `${pago.amount_local} Bs · ${pago.amount_usd} USD`
-      : `${pago.amount_usd} USD`
+      ? `${pago.amount_local} Bs · ${pago.amount_usd} ref`
+      : `${pago.amount_usd} ref`
 
   return mandarAviso(
     {

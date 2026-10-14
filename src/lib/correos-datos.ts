@@ -117,7 +117,7 @@ const bs = (n: number | null | undefined) =>
   n == null ? '—' : `${Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs`
 
 const usd = (n: number | null | undefined) =>
-  n == null ? '—' : `${Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+  n == null ? '—' : `${Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ref`
 
 export type FilaDeCola = {
   id: string
@@ -307,7 +307,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
      * Es el mismo fallo que ya se pagó al revés, y lo arregla la misma
      * regla: si el correo cuelga de un evento, el número sale del evento.
      */
-    precio: evento?.price_usd != null ? `${Number(evento.price_usd)} USD` : precioTexto(),
+    precio: evento?.price_usd != null ? `${Number(evento.price_usd)} ref` : precioTexto(),
     // Las horas con que se cierra una fecha. Misma razón que el precio: estaba
     // escrita a mano en la plantilla de fecha cancelada, y bajarla de 48 a 24
     // obligaba a acertar en todos los sitios donde se promete.

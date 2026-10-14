@@ -77,7 +77,7 @@ export async function GET() {
   const confirmados = (delDia ?? []).filter((p) => p.status === 'confirmed')
   const { data: tasaHoy } = await admin
     .from('fx_rates')
-    .select('rate_date, usd_to_ves')
+    .select('rate_date, ves_por_ref')
     .order('rate_date', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -139,7 +139,7 @@ export async function GET() {
   return NextResponse.json({
     resumen: {
       historico,
-      tasa: tasaHoy ? Number(tasaHoy.usd_to_ves) : null,
+      tasa: tasaHoy ? Number(tasaHoy.ves_por_ref) : null,
       tasaFecha: tasaHoy?.rate_date ?? null,
       cobradoLocal: confirmados.reduce((t, p) => t + Number(p.amount_local ?? 0), 0),
       cobradoUsd: confirmados.reduce((t, p) => t + Number(p.amount_usd ?? 0), 0),

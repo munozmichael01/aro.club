@@ -975,7 +975,7 @@ class Component extends DCLogic {
        * Lo que se cobra sale de `events.price_usd` y se congela al abrir la
        * fecha. Aquí se escribe lo mismo que se va a cobrar.
        */
-      const precioFecha = c[10] != null ? c[10] + ' USD' : AroReglas.precioTexto();
+      const precioFecha = c[10] != null ? c[10] + ' ref' : AroReglas.precioTexto();
       // «+40», y nada más. `c[1]` es el nombre de la FAMILIA —«Cenas», en
       // plural— así que pegarle la palabra delante daba «CENAS +40». El
       // tipo ya está escrito justo al lado; la etiqueta solo tiene que

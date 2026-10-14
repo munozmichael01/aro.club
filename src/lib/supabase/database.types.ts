@@ -1150,24 +1150,27 @@ export type Database = {
       fx_rates: {
         Row: {
           created_at: string
+          moneda: string
           rate_date: string
           set_by: string | null
           source: string
-          usd_to_ves: number
+          ves_por_ref: number
         }
         Insert: {
           created_at?: string
+          moneda?: string
           rate_date: string
           set_by?: string | null
           source?: string
-          usd_to_ves: number
+          ves_por_ref: number
         }
         Update: {
           created_at?: string
+          moneda?: string
           rate_date?: string
           set_by?: string | null
           source?: string
-          usd_to_ves?: number
+          ves_por_ref?: number
         }
         Relationships: [
           {

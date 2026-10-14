@@ -818,8 +818,8 @@ class Component extends DCLogic {
       ['Método', mSel.nombre, false],
       // La tasa que se CONGELO al reportar, no la de ahora: entre reportar
       // y confirmar pasan horas y la tasa se mueve.
-      ['Tasa aplicada', D.tasa ? dinero(D.tasa, 'Bs') + ' por USD' : '—', false],
-      [f === 4 ? 'Reportaste' : 'Pagado', mSel.moneda + ' · ' + dinero(D.montoUsd, 'USD'), true]
+      ['Tasa aplicada', D.tasa ? dinero(D.tasa, 'Bs') + ' por ref' : '—', false],
+      [f === 4 ? 'Reportaste' : 'Pagado', mSel.moneda + ' · ' + dinero(D.montoUsd, 'ref'), true]
     ].filter((c) => c[1] !== '—').map((c) => ({
       campo: c[0], valor: c[1],
       valorEstilo: 'flex:2 1 170px;font:' + (c[2] ? '600' : '500') + ' 15px/1.4 \'Inter Tight\',sans-serif;color:#14342A;font-variant-numeric:tabular-nums'
@@ -879,7 +879,7 @@ class Component extends DCLogic {
       totalTexto: mSel.moneda,
       // Las dos salian escritas en el marcado: «8,00 USD» y «1 USD = 62,40
       // Bs». La segunda mentia por un factor de doce.
-      precioTexto: D.montoUsd != null ? dinero(D.montoUsd, 'USD') : '—',
+      precioTexto: D.montoUsd != null ? dinero(D.montoUsd, 'ref') : '—',
       // «de hoy» solo si la fila es de hoy. El cron del BCV puede no haber
       // pasado —fin de semana, festivo, un fallo— y entonces la tasa buena es
       // la del ultimo dia publicado: se dice cual, en vez de llamarla de hoy.
@@ -894,7 +894,10 @@ class Component extends DCLogic {
         const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
         return 'Tasa BCV del ' + parseInt(d, 10) + ' de ' + MESES[parseInt(m, 10) - 1];
       }).call(this),
-      tasaTexto: D.tasa ? '1 USD = ' + dinero(D.tasa, 'Bs') : 'Sin tasa de hoy',
+      // «1 ref = X Bs». Ese es el cambio con el que se cobra, y sale de la
+      // tasa del EURO del BCV: decir USD aquí haría que quien hace la cuenta
+      // con el dólar llegue a otro número del que va a pagar.
+      tasaTexto: D.tasa ? '1 ref = ' + dinero(D.tasa, 'Bs') : 'Sin tasa de hoy',
       totalEstilo: 'font:700 clamp(24px,3vw,30px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;color:#14342A;font-variant-numeric:tabular-nums',
 
       h1: 'font:400 clamp(30px,6.4vw,46px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:15ch;text-wrap:balance',

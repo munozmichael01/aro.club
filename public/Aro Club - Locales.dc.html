@@ -472,7 +472,7 @@ class Component extends DCLogic {
       nombre: l.nombre, zona: l.zonaNombre, inactivo: !l.activo,
       ruidoTexto: l.ruidoTexto,
       aforo: l.aforo + (l.aforo === 1 ? ' mesa' : ' mesas'),
-      porCabeza: l.gastoDeclarado ? l.gastoDeclarado + ' USD' : '—',
+      porCabeza: l.gastoDeclarado ? l.gastoDeclarado + ' ref' : '—',
       formatos: l.familias.map((c) => ({ nombre: nombreFamilia(c), chip: chipFormato(false) })),
       abrir: () => this.setState({ vista: 'ficha', abierto: l.id, error: '' }),
       fila: 'display:flex;gap:14px;align-items:center;width:100%;text-align:left;padding:14px clamp(16px,2vw,20px);border:none;border-bottom:1px solid rgba(20,52,42,.09);background:transparent;cursor:pointer;min-height:64px;transition:background 160ms ease'
@@ -510,7 +510,7 @@ class Component extends DCLogic {
       ['direccion', 'Dirección', a.direccion, 'Calle Madrid con avenida Principal'],
       ['contacto', 'A quién llamamos', a.contacto, 'Nombre de la persona'],
       ['telefono', 'Su teléfono', a.telefono, '+58 412 555 0134'],
-      ['menu', 'Menú cerrado (USD por persona)', a.menu, 'Vacío si no tiene'],
+      ['menu', 'Menú cerrado (ref por persona)', a.menu, 'Vacío si no tiene'],
       ['comision', 'Nuestra comisión (%)', a.comision, '15'],
       // Estos cuatro los aceptaba la ruta desde el principio y la ficha no
       // los ofrecia, asi que solo se podian poner por base. El aforo ademas
@@ -527,7 +527,7 @@ class Component extends DCLogic {
       ['nombre', 'Cómo se llama', a.nombre, 'Cardenal'],
       // Lo DECLARADO al abrir el local. Lo real sale de lo que reportan las
       // que cenaron, en `venue_feedback`, y no se mezclan.
-      ['gasto', 'Gasto medio por persona (USD, declarado)', a.gastoDeclarado, '28'],
+      ['gasto', 'Gasto medio por persona (ref, declarado)', a.gastoDeclarado, '28'],
       ['ultimaEntrada', 'Última hora a la que sientan (24 h)', a.ultimaEntrada, '22:30'],
       ['notas', 'Notas de seguridad', a.notas, 'Lo que haya que saber al llegar de noche']
     ].map((c) => {
@@ -792,10 +792,10 @@ class Component extends DCLogic {
       ].map((d) => ({ campo: d[0], valor: d[1] })),
       notaOperativa: a.ruidoNota + (soloSitio ? ' Es el único sitio activo en ' + a.zonaNombre + ': ahí no hay alternativa que ofrecer.' : ''),
       dinero: [
-        ['Menú cerrado', a.menu ? a.menu + ' USD por persona' : 'No tiene'],
+        ['Menú cerrado', a.menu ? a.menu + ' ref por persona' : 'No tiene'],
         // DECLARADO, no real: no capturamos lo que gasta cada mesa, y
         // llamarlo "real" seria decir que sale de un dato que no existe.
-        ['Gasto medio declarado', a.gastoDeclarado ? a.gastoDeclarado + ' USD por persona' : 'Sin dato'],
+        ['Gasto medio declarado', a.gastoDeclarado ? a.gastoDeclarado + ' ref por persona' : 'Sin dato'],
         ['Nuestra comisión', a.comision ? a.comision + ' %' : '—']
       ].map((d) => ({ campo: d[0], valor: d[1] })),
       contacto: a.contacto || 'Sin contacto asignado',

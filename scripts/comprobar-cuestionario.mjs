@@ -1033,7 +1033,7 @@ if (relojes.length) {
       .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g, '')
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/^\s*\/\/.*$/gm, '')
-    const re = new RegExp('(?<![\\d.,])' + precio + '\\s*(USD|usd|d[óo]lares)', 'g')
+    const re = new RegExp('(?<![\\d.,])' + precio + '\\s*(ref|USD|usd|d[óo]lares)', 'g')
     const encontrado = limpio.match(re)
     if (encontrado) aMano.push(`${nombre}: ${[...new Set(encontrado)].join(', ')}`)
   }
@@ -1043,11 +1043,11 @@ if (relojes.length) {
     console.error('\n✗ el precio: no encuentro PRECIO_USD en reglas.js')
   } else if (aMano.length) {
     errores++
-    console.error(`\n✗ el precio (${precio} USD) está escrito a mano`)
+    console.error(`\n✗ el precio (${precio} ref) está escrito a mano`)
     aMano.forEach((x) => console.error('    ' + x))
     console.error('    → sale de `AroReglas.precioTexto()`, o del evento si cuelga de una fecha')
   } else {
-    console.log(`✓ el precio (${precio} USD) no está escrito a mano en ninguna pantalla ni plantilla`)
+    console.log(`✓ el precio (${precio} ref) no está escrito a mano en ninguna pantalla ni plantilla`)
   }
 }
 
@@ -1065,16 +1065,16 @@ if (relojes.length) {
   const precio = Number((reglas.match(/PRECIO_USD:\s*(\d+)/) ?? [])[1])
   const portada = fs.readFileSync(new URL('../public/Aro Club - Landing v4.dc.html', import.meta.url), 'utf8')
 
-  const enReglas = Number((reglas.match(/Los (\d+) USD cubren/) ?? [])[1])
-  const enEsquema = Number((portada.match(/Los (\d+) USD cubren/) ?? [])[1])
+  const enReglas = Number((reglas.match(/Los (\d+) ref cubren/) ?? [])[1])
+  const enEsquema = Number((portada.match(/Los (\d+) ref cubren/) ?? [])[1])
 
   if (enReglas !== precio || enEsquema !== precio) {
     errores++
-    console.error('\n✗ «Los N USD cubren…» no cuadra con PRECIO_USD')
+    console.error('\n✗ «Los N ref cubren…» no cuadra con PRECIO_USD')
     console.error(`    PRECIO_USD: ${precio} · frecuentes: ${enReglas} · JSON-LD: ${enEsquema}`)
     console.error('    → la portada promete un precio y el cobro hace otro')
   } else {
-    console.log(`✓ «Los ${precio} USD cubren…» igual en reglas.js, en el JSON-LD y en PRECIO_USD`)
+    console.log(`✓ «Los ${precio} ref cubren…» igual en reglas.js, en el JSON-LD y en PRECIO_USD`)
   }
 }
 
