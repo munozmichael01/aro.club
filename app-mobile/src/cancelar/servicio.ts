@@ -29,7 +29,7 @@ export function crearServicioCancelar(api: Api) {
     leer: (reserva?: string | null) =>
       intentar<DeServidor>(() => api.pedir('/cancelar' + (reserva ? `?reserva=${encodeURIComponent(reserva)}` : '')), T.sinRespuesta.cargar),
     cancelar: (reservaId: string, motivo: string | null) =>
-      intentar<{ estado: string; creditoDevuelto: boolean; horasQueFaltaban: number }>(
+      intentar<{ estado: string; creditoDevuelto: boolean; creditoEnEspera?: boolean; horasQueFaltaban: number }>(
         () =>
           api.pedir('/cancelar', {
             method: 'POST',

@@ -31,3 +31,15 @@ export function queCena(d: DeServidor) {
     dia: dia?.dia ?? null,
   }
 }
+
+/**
+ * Qué pasó con el crédito al cancelar. Tres casos, no dos (13-10): con el pago
+ * todavía en revisión, el crédito espera a que operación lo confirme. Decir
+ * «cancelaste tarde» a quien canceló a tiempo es decirle que perdió su dinero.
+ */
+export type Credito = 'devuelto' | 'esperando' | 'perdido'
+export function credito(r: { creditoDevuelto: boolean; creditoEnEspera?: boolean }): Credito {
+  if (r.creditoDevuelto) return 'devuelto'
+  if (r.creditoEnEspera) return 'esperando'
+  return 'perdido'
+}

@@ -24,7 +24,7 @@ export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (
   const [fallo, setFallo] = useState('')
   const [motivo, setMotivo] = useState(-1)
   const [cancelando, setCancelando] = useState(false)
-  const [hecho, setHecho] = useState<{ tarde: boolean; creditos: number | null } | null>(null)
+  const [hecho, setHecho] = useState<{ credito: M.Credito; creditos: number | null } | null>(null)
 
   const cargar = useCallback(async () => {
     const r = await servicio.leer(reserva)
@@ -53,7 +53,7 @@ export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (
     }
     const creditos = await servicio.creditos()
     setCancelando(false)
-    setHecho({ tarde: !r.datos.creditoDevuelto, creditos })
+    setHecho({ credito: M.credito(r.datos), creditos })
   }
 
   let cuerpo: ReactNode
@@ -70,7 +70,7 @@ export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (
           {T.hecho.titulo(c.dia)}
         </Texto>
         <Texto variante="cuerpoGrande" style={{ marginTop: 14 }}>
-          {T.hecho.resumen(hecho.tarde)}
+          {T.hecho.resumen(hecho.credito)}
         </Texto>
         {hecho.creditos != null ? (
           <View style={[estilos.caja, { marginTop: 26 }]}>

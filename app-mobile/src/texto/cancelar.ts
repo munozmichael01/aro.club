@@ -28,10 +28,12 @@ export const preguntar = {
 export const hecho = {
   sello: 'PUESTO CANCELADO',
   titulo: (dia: string | null) => (dia ? `Listo, no cuentan contigo el ${dia}.` : 'Listo, ya no cuentan contigo.'),
-  resumen: (tarde: boolean) =>
-    tarde
+  resumen: (credito: 'devuelto' | 'esperando' | 'perdido') =>
+    credito === 'perdido'
       ? 'Avisaste con menos de 24 horas, así que ese crédito se pierde. Gracias por decirlo igual: preferimos una mesa de cinco a un puesto vacío.'
-      : 'Tu crédito volvió entero. Puedes apuntarte a otra fecha cuando quieras.',
+      : credito === 'esperando'
+        ? 'Tu puesto queda libre ya. El crédito está esperando a que alguien compruebe tu transferencia, y en cuanto lo haga te lo abonamos entero. No tienes que hacer nada.'
+        : 'Tu crédito volvió entero. Puedes apuntarte a otra fecha cuando quieras.',
   tusCreditos: 'TUS CRÉDITOS',
   disponibles: 'disponibles',
   noCaducan: 'No caducan. Los usas cuando quieras, en cualquier plan.',

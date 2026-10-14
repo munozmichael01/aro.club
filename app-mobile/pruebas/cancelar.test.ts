@@ -14,3 +14,12 @@ test('qué cena se cancela, dicho en Caracas', () => {
   assert.equal(M.queCena({ ...base, restaurante: 'Casa' }).detalle, '8:00 p.m. · Casa', 'revelada: el sitio')
   assert.deepEqual(M.queCena({ ...base, empiezaEn: null }), { titulo: 'Cena', detalle: 'Las Mercedes', dia: null })
 })
+
+test('cancelar con el pago en revisión no dice que el crédito se pierde', async () => {
+  const T = await import('../src/texto/cancelar')
+  assert.equal(M.credito({ creditoDevuelto: true }), 'devuelto')
+  assert.equal(M.credito({ creditoDevuelto: false, creditoEnEspera: true }), 'esperando')
+  assert.equal(M.credito({ creditoDevuelto: false }), 'perdido')
+  assert.match(T.hecho.resumen('esperando'), /abonamos entero/)
+  assert.doesNotMatch(T.hecho.resumen('esperando'), /se pierde/)
+})
