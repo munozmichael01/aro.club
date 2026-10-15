@@ -69,6 +69,20 @@ export function casillaDeDia(iso: string, zona: string): string | null {
  *     A Michael le llegaban varios avisos a la vez, que eran los de sus
  *     propias cuentas de prueba llegando a su buzón.
  *
+ * 6 · QUIEN VIVE EN OTRA CIUDAD. Dos personas escribieron el 15-10: «no
+ *     vivo en Caracas, no me confundan con que vivo ahí» y «estoy en
+ *     Valencia, no Caracas». Las dos habían marcado zonas de Caracas porque
+ *     el cuestionario no ofrece otras, y con eso entraban en el reparto de
+ *     cada cena de Caracas.
+ *
+ *     Hoy son seis —tres en Valencia, uno en Maracaibo, dos en «otra»— y no
+ *     recibieron ninguna invitación por casualidad: los salvó el filtro de
+ *     los días. Una zona marcada no dice dónde vive nadie cuando la lista
+ *     solo tiene zonas de una ciudad.
+ *
+ *     Sin ciudad se recibe: quien no la tiene es de la ciudad del club, que
+ *     es lo que el producto dio por hecho hasta que hubo una segunda.
+ *
  * 5 · QUIEN CABE EN UNA FECHA CON EDAD QUE COMPITE CON ESTA. Si el mismo día
  *     y en la misma zona hay una cena abierta y una cena +40, a quien tiene
  *     45 años se le habla de la +40 y de ninguna otra. Michael, 15-10: «nos
@@ -124,6 +138,21 @@ export async function quienQuiereSaberDe(
     .eq('es_prueba', true)
 
   for (const p of deprueba ?? []) permitidos.delete(p.id)
+
+  // --- y quien vive en otra ciudad --------------------------------------
+  //
+  // La ciudad de la fecha, no la del club: el día que haya dos abiertas, la
+  // de Valencia no se anuncia en Caracas ni al revés.
+  if (evento?.city_slug) {
+    const { data: deOtraCiudad } = await admin
+      .from('profiles')
+      .select('id')
+      .in('id', [...permitidos])
+      .not('city_slug', 'is', null)
+      .neq('city_slug', evento.city_slug)
+
+    for (const p of deOtraCiudad ?? []) permitidos.delete(p.id)
+  }
 
   // --- y quien no tiene la edad de esta fecha ---------------------------
   //
