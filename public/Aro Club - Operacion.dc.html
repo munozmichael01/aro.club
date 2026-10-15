@@ -2550,6 +2550,9 @@ class Component extends DCLogic {
     const REVELA = REP && REP.evento ? REP.evento.revelaEn : null;
     const YA_REVELADA = !REVELA || new Date(REVELA).getTime() <= Date.now();
     const CANDIDATOS = REP ? (REP.locales || []) : [];
+    // Cuánta gente entra al reparto. `z.apuntados` cuenta sobre esto, así
+    // que el «21 de los 23» tiene que salir de la misma lista.
+    const EN_EL_POOL = REP && REP.pool ? REP.pool.length : 0;
     const EVENTO_ID = REP && REP.evento ? REP.evento.id : null;
 
     const sitiosDe = (m, pub) => {
@@ -3087,12 +3090,32 @@ class Component extends DCLogic {
       const z = porSlug[slug];
       const mesas = (porZonaMesas[slug] || []).map(mesaDesde);
       const Sitio = vozRep.sitio.charAt(0).toUpperCase() + vozRep.sitio.slice(1);
+      const sentados = mesas.reduce((n, m) => n + (m.gente || []).length, 0);
+      /**
+       * EL CONTADOR DICE LO QUE SE VE, y lo otro se explica aparte.
+       *
+       * Decía «21 apuntados · 2 mesas» encima de doce personas, y los
+       * apuntados de todas las zonas sumaban 39 para 23 personas. Michael lo
+       * leyó como que faltaba gente, y es exactamente lo que parece.
+       *
+       * Los dos números son correctos y miden cosas distintas: «21» es
+       * cuántos ACEPTAN esta zona —y quien acepta dos cuenta en las dos— y
+       * «12» es cuántos están sentados aquí. Poner el primero donde se
+       * esperan los segundos convierte un dato útil en un descuadre
+       * aparente.
+       *
+       * Así que arriba va lo que se puede contar con el dedo, y lo otro se
+       * dice con sus palabras debajo.
+       */
       return {
         zona: z.nombre,
-        sitio: z.sitios.length > 1
+        sitio: (z.sitios.length > 1
           ? Sitio + 's: ' + enLista(z.sitios)
-          : Sitio + ': ' + (z.sitios[0] || 'sin elegir'),
-        contador: z.apuntados + ' apuntados · ' + mesas.length + ' ' + (mesas.length === 1 ? vozRep.unidad : vozRep.unidades),
+          : Sitio + ': ' + (z.sitios[0] || 'sin elegir'))
+          + ' · ' + z.apuntados + ' de los ' + EN_EL_POOL + ' aceptan esta zona'
+          + (ordenSlugs.length > 1 ? ', y quien acepta varias cuenta en todas' : ''),
+        contador: mesas.length + ' ' + (mesas.length === 1 ? vozRep.unidad : vozRep.unidades)
+          + ' · ' + sentados + (sentados === 1 ? ' sentado' : ' sentados'),
         mesas
       };
     });
