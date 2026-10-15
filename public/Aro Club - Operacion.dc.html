@@ -269,6 +269,14 @@
                     </sc-for>
                   </div>
 
+                  <sc-if value="{{ t.hayGasto }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-top:12px;padding-top:12px;border-top:1px solid rgba(20,52,42,.1)">
+                      <span style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">PRESUPUESTO</span>
+                      <span style="font:600 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ t.gastoMedio }}</span>
+                      <span style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ t.gastoNota }}</span>
+                    </div>
+                  </sc-if>
+
                   <sc-if value="{{ t.hayComidas }}" hint-placeholder-val="{{ true }}">
                     <div style="margin-top:12px">
                       <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:8px">COINCIDEN EN</div>
@@ -2992,6 +3000,39 @@ class Component extends DCLogic {
           this.mandar('/api/operacion/propuesta', { accion: 'quitar-mesa', corridaId: c, mesa: m.numero })
             .then((r) => { if (r.ok) this.cargarReparto(this.fechaElegida() && this.fechaElegida().id); });
         },
+        /**
+         * EL PRESUPUESTO DE LA MESA: la media, y el más bajo al lado.
+         *
+         * Lo pidió Michael: «en la mesa quiero ver el presupuesto medio». La
+         * media dice en qué rango se mueve el grupo —si es una mesa de 20 o
+         * una de 50— y es lo que se mira para elegir entre dos restaurantes.
+         *
+         * Pero el que DECIDE es el más bajo, y por eso va al lado. No es un
+         * añadido mío: es lo que el club promete por escrito en las preguntas
+         * frecuentes —«elegimos el restaurante con el número más bajo de la
+         * mesa»—. Una media de 35-50 con alguien de «hasta 20» dentro llevaría
+         * a reservar un sitio donde esa persona no puede pedir, y la media
+         * sola no lo deja ver.
+         *
+         * Solo se dice «el más bajo» cuando de verdad es más bajo que la
+         * media: repetir el mismo número dos veces no informa de nada.
+         */
+        hayGasto: g.some((p) => p.tramoGasto),
+        gastoMedio: (function () {
+          const tramos = g.map((p) => p.tramoGasto).filter(Boolean);
+          if (!tramos.length) return '—';
+          const media = tramos.reduce((t, n) => t + n, 0) / tramos.length;
+          return GASTO[Math.round(media)] || '—';
+        })(),
+        gastoNota: (function () {
+          const tramos = g.map((p) => p.tramoGasto).filter(Boolean);
+          if (!tramos.length) return '';
+          const media = Math.round(tramos.reduce((t, n) => t + n, 0) / tramos.length);
+          const bajo = Math.min.apply(null, tramos);
+          const faltan = g.length - tramos.length;
+          const cola = faltan ? ' · ' + faltan + (faltan === 1 ? ' sin decirlo' : ' sin decirlo') : '';
+          return (bajo < media ? 'de media · el más bajo, ' + GASTO[bajo] : 'de media') + cola;
+        })(),
         comidas: (function () {
           const COC = (window.AroReglas && window.AroReglas.COCINAS) || [];
           const nombre = {};
