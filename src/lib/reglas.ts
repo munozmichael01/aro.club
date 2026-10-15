@@ -84,6 +84,8 @@ type Api = {
   ) => {
     dia: string; diaNumero: number; numero: number
     mes: string; mesNumero: number; ano: number; hora: string; horas: number
+    /** Los minutos de la hora local. Los devuelve `reglas.js` y faltaban aquí. */
+    minutos: number
   } | null
 }
 
