@@ -42,7 +42,22 @@ async function recordar(seco: boolean) {
     .select('id, starts_at')
     .gte('starts_at', ahora.toISOString())
     .lte('starts_at', hasta.toISOString())
-    .in('status', ['matched', 'running'])
+    /**
+     * Cualquiera menos una cancelada, y no `matched` a secas.
+     *
+     * Filtraba por `['matched','running']`, y eso ataba el recordatorio a que
+     * alguien hubiera publicado DESPUÉS del cierre: era `publicar` quien ponía
+     * `matched`. Desde que publicar no cierra la fecha —no debe, porque eso
+     * dejaba a la gente sin poder reservar días antes de tiempo— una fecha con
+     * todas sus mesas publicadas temprano se habría quedado en `open` y sus
+     * comensales sin recordatorio la mañana de la cena.
+     *
+     * A quién se le recuerda no lo dice el estado: lo dice estar sentado en
+     * una mesa. Eso se mira tres líneas más abajo y es la única condición que
+     * importa. Lo único que el estado tiene que decir aquí es que la cena se
+     * hace, y para eso basta con que no esté cancelada.
+     */
+    .neq('status', 'cancelled')
 
   if (!eventos?.length) return NextResponse.json({ eventos: 0, encolados: 0, seco })
 

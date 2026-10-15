@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   if (!corrida) return NextResponse.json({ error: 'Esa corrida no existe.' }, { status: 404 })
   const { data: evento } = await admin
     .from('events')
-    .select('id, reveal_at, starts_at, format')
+    .select('id, reveal_at, starts_at, format, booking_closes_at')
     .eq('id', corrida.event_id)
     .maybeSingle()
 
@@ -560,7 +560,33 @@ export async function POST(request: Request) {
     })
     .eq('id', corrida.id)
 
-  await admin.from('events').update({ status: 'matched' }).eq('id', corrida.event_id)
+  /**
+   * PUBLICAR UNA MESA NO CIERRA LA FECHA.
+   *
+   * Esto ponía `matched` siempre, y `matched` no es «hay mesas hechas»: es
+   * «ya no entra nadie». Seis sitios leen el estado para eso —la cuenta
+   * atrás de la portada, la agenda de Mi cuenta, el `cerrada` de la tarjeta,
+   * `/api/reservar`, `/api/cupon` y el cron del cierre— así que publicar una
+   * sola mesa cerraba la fecha entera para todo el mundo.
+   *
+   * Pasó anoche: el viernes 16 se cerró a las 10:08 p.m. y el sábado 17 a las
+   * 10:36, con el cierre de verdad a día y medio y dos días y medio vista, y
+   * con mesas todavía sin publicar. Quien entrara a reservar leía «esa fecha
+   * ya cerró».
+   *
+   * Y choca de frente con la regla del producto: no se limitan las reservas.
+   * Quien llega tarde se apunta igual y cae en la espera — que es justo lo
+   * que se arregló ayer para que apareciera sola en el panel.
+   *
+   * Así que el estado solo cambia si el plazo YA venció. Si no, la fecha
+   * sigue abierta y se cierra por su hora, que es de quien es esa decisión.
+   * Lo contrario —arreglarlo en los seis sitios que leen `open`— es seis
+   * oportunidades de olvidar uno.
+   */
+  const yaCerro = new Date(evento.booking_closes_at).getTime() <= Date.now()
+  if (yaCerro) {
+    await admin.from('events').update({ status: 'matched' }).eq('id', corrida.event_id)
+  }
 
   // Qué se publicó y de qué tamaño. Una mesa de cinco publicada a propósito
   // es una decisión de operación, y a los dos meses la pregunta es quién la
