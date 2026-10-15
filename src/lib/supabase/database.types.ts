@@ -3875,6 +3875,7 @@ export type Database = {
         | "pilates"
         | "cycling"
         | "brunch"
+        | "women_brunch"
       event_status_t:
         | "draft"
         | "open"
@@ -4116,6 +4117,7 @@ export const Constants = {
         "pilates",
         "cycling",
         "brunch",
+        "women_brunch",
       ],
       event_status_t: [
         "draft",

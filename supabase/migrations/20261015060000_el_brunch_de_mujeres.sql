@@ -1,0 +1,16 @@
+-- Un brunch de mujeres, al lado de la cena de mujeres.
+--
+-- Michael, 15-10, al revisar el reparto de familias. `women_dinner` está en
+-- el esquema inicial desde agosto; esto es lo mismo en la familia del brunch,
+-- que nació ayer.
+--
+-- Aditivo y nada más: añadir un valor a `event_format_t` no quita ninguno. No
+-- deshace ninguna decisión anterior —`women_brunch` no ha existido nunca en
+-- este esquema, comprobado en el historial— y no toca ninguna fila.
+--
+-- DICHO POR DELANTE, y es la mitad que falta: hoy `women_dinner` es solo un
+-- nombre. Nada mira el género en ningún sitio: ni el aviso de apertura, ni
+-- `/api/reservar`, ni el reparto. Una cena de mujeres se le anuncia a todo el
+-- mundo y cualquiera puede apartar puesto. Esto añade el formato, que es lo
+-- que se pidió; la puerta es una decisión de producto y va aparte.
+alter type event_format_t add value if not exists 'women_brunch';

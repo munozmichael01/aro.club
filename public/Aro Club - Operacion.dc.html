@@ -2575,6 +2575,7 @@ class Component extends DCLogic {
       ['Cena', '7:30 p.m.', 'dinner', 19], ['Cena foodie', '7:30 p.m.', 'foodie_dinner', 19],
       ['Cena de mujeres', '7:30 p.m.', 'women_dinner', 19], ['Drinks', '8:00 p.m.', 'drinks', 20],
       ['Coffee', '10:00 a.m.', 'coffee', 10], ['Brunch', '11:00 a.m.', 'brunch', 11],
+      ['Brunch de mujeres', '11:00 a.m.', 'women_brunch', 11],
       ['Caminata', '9:00 a.m.', 'walk', 9],
       ['Senderismo', '7:00 a.m.', 'hike', 7], ['Correr', '6:00 a.m.', 'run', 6],
       ['Pádel', '8:00 a.m.', 'padel', 8], ['Pilates', '8:00 a.m.', 'pilates', 8],
@@ -2588,7 +2589,7 @@ class Component extends DCLogic {
     // sirve: es el campo local.formatos[] del catálogo.
     const FAMILIA = {
       'Cena': 'cenas', 'Cena foodie': 'cenas', 'Cena de mujeres': 'cenas',
-      'Drinks': 'drinks', 'Coffee': 'coffee', 'Brunch': 'brunch',
+      'Drinks': 'drinks', 'Coffee': 'coffee', 'Brunch': 'brunch', 'Brunch de mujeres': 'brunch',
       'Caminata': 'movimiento', 'Senderismo': 'movimiento', 'Correr': 'movimiento',
       'Pádel': 'movimiento', 'Pilates': 'movimiento', 'Ciclismo': 'movimiento'
     };
@@ -2779,7 +2780,7 @@ class Component extends DCLogic {
     // Cada fecha del riel, tal como la devuelve la ruta.
     const FAM_DE_FORMATO = {
       dinner: 'cenas', foodie_dinner: 'cenas', women_dinner: 'cenas',
-      drinks: 'drinks', coffee: 'coffee', brunch: 'brunch',
+      drinks: 'drinks', coffee: 'coffee', brunch: 'brunch', women_brunch: 'brunch',
       walk: 'movimiento', hike: 'movimiento', run: 'movimiento',
       padel: 'movimiento', pilates: 'movimiento', cycling: 'movimiento'
     };

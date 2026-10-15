@@ -275,7 +275,7 @@ const cuerpo = z.object({
   avisar: z.boolean().default(true),
   formato: z
     .enum([
-      'dinner', 'foodie_dinner', 'women_dinner', 'coffee', 'brunch', 'drinks',
+      'dinner', 'foodie_dinner', 'women_dinner', 'coffee', 'brunch', 'women_brunch', 'drinks',
       'walk', 'hike', 'run', 'padel', 'pilates', 'cycling',
     ])
     .default('dinner'),

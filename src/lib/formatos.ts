@@ -48,7 +48,7 @@ export const HORA_DE: Record<string, string> = {
   // El brunch del domingo, a las once (Michael, 14-10). No es la hora del
   // café: un café es a media mañana y un brunch se come, así que empieza
   // cuando la gente ya desayunó o no desayunó a propósito.
-  brunch: '11:00',
+  brunch: '11:00', women_brunch: '11:00',
   walk: '09:00', hike: '07:00', run: '06:00',
   padel: '08:00', pilates: '08:00', cycling: '06:00',
 }
@@ -72,7 +72,9 @@ export const FORMATOS_DE_FAMILIA: Record<string, string[]> = {
   drinks: ['drinks'],
   movimiento: ['walk', 'hike', 'run', 'padel', 'pilates', 'cycling'],
   coffee: ['coffee'],
-  brunch: ['brunch'],
+  // El brunch de mujeres es un brunch: mismo local, misma hora, misma gente
+  // que lo quiere. Lo que cambia —quién se puede sentar— no es la familia.
+  brunch: ['brunch', 'women_brunch'],
 }
 
 /**

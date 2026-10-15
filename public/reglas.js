@@ -1155,7 +1155,7 @@
      */
     NOMBRES_DE_FORMATO: {
       dinner: 'Cena', foodie_dinner: 'Cena foodie', women_dinner: 'Cena de mujeres',
-      drinks: 'Drinks', coffee: 'Coffee', brunch: 'Brunch',
+      drinks: 'Drinks', coffee: 'Coffee', brunch: 'Brunch', women_brunch: 'Brunch de mujeres',
       walk: 'Caminata', hike: 'Senderismo', run: 'Correr',
       padel: 'Pádel', pilates: 'Pilates', cycling: 'Ciclismo',
     },
