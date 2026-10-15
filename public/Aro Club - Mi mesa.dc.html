@@ -240,42 +240,79 @@
           </sc-if>
         </div>
 
-        <!-- El juego de la mesa -->
+        <!-- El juego de la mesa, con sus tres caras (entrega 21) -->
         <div style="border-radius:22px;background:#14342A;color:#FAF3E4;overflow:hidden;margin-top:12px">
-          <button onClick="{{ tJuego }}" aria-expanded="{{ oJuegoAria }}" style="display:flex;width:100%;box-sizing:border-box;align-items:center;gap:12px;padding:16px 18px;min-height:44px;background:transparent;border:0;text-align:left;cursor:pointer">
-            <span style="flex:1;min-width:0">
-              <span style="display:block;font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#FAF3E4">El juego de la mesa</span>
-              <span style="display:block;font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">{{ resumenJuego }}</span>
-            </span>
-            <span style="{{ sJuego }}">{{ fJuego }}</span>
-          </button>
-          <sc-if value="{{ oJuego }}" hint-placeholder-val="{{ false }}">
-            <div style="padding:0 18px 18px;display:flex;flex-direction:column">
-              <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;padding-bottom:6px">{{ bajadaJuego }}</div>
+
+          <!-- 1a · antes de la hora de la cena. Ni se despliega ni se toca:
+               se ve entero, apagado, con la hora a la que abre. -->
+          <sc-if value="{{ juegoNoAbreAun }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:16px 18px 0">
+              <div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#FAF3E4">El juego de la mesa</div>
+              <div style="font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">{{ resumenJuegoCerrado }}</div>
+            </div>
+            <div style="padding:0 18px;opacity:.45">
               <sc-for list="{{ rondas }}" as="r" hint-placeholder-count="3">
-                <div style="display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:start;gap:8px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)">
+                <div style="display:grid;grid-template-columns:30px minmax(0,1fr);align-items:start;gap:8px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)">
                   <div style="font:400 20px/1.1 'Young Serif',Georgia,serif;color:#E39C63">{{ r.n }}</div>
                   <div style="display:flex;flex-direction:column;gap:4px">
                     <div style="font:400 18px/1.15 'Young Serif',Georgia,serif">{{ r.titulo }}</div>
                     <div style="font:600 10px/1.3 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">{{ r.cuando }}</div>
                     <div style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#C5D8CA">{{ r.bajada }}</div>
                   </div>
-                  <button onClick="{{ r.ir }}" aria-disabled="{{ r.inerte }}" style="{{ r.estiloEstado }}">{{ r.estado }}</button>
                 </div>
               </sc-for>
-              <sc-if value="{{ juegoYaAbre }}" hint-placeholder-val="{{ true }}">
-                <button onClick="{{ seguirJuego }}" style="margin-top:8px;display:flex;align-items:center;justify-content:center;min-height:48px;border:0;border-radius:999px;background:#E39C63;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">{{ ctaJuego }}</button>
-              </sc-if>
-              <!-- Antes de la hora de la cena no se puede tocar (Michael,
-                   15-10): quien llega pronto se leería las preguntas y
-                   llegaría a la mesa con las respuestas pensadas. -->
-              <sc-if value="{{ juegoNoAbreAun }}" hint-placeholder-val="{{ false }}">
-                <div style="margin-top:8px;display:flex;align-items:center;justify-content:center;text-align:center;min-height:48px;border-radius:16px;background:rgba(227,156,99,.16);color:#E39C63;font:600 14px/1.35 'Inter Tight',sans-serif;padding:10px 14px">{{ juegoCuando }}</div>
-              </sc-if>
-              <sc-if value="{{ hayAvanceJuego }}" hint-placeholder-val="{{ false }}">
-                <button onClick="{{ reiniciarJuego }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;margin-top:4px;background:transparent;border:0;color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">Empezar de nuevo</button>
-              </sc-if>
             </div>
+            <div style="margin:14px 18px 18px;display:flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:10px 14px;border:1px solid rgba(250,243,228,.3);border-radius:999px;text-align:center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E39C63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><rect x="4.5" y="10.5" width="15" height="10" rx="2"></rect><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path></svg>
+              <span style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#E39C63">{{ juegoCuando }}</span>
+            </div>
+          </sc-if>
+
+          <!-- 1b y 1c · jugado. No queda botón: lo que hay es la frase del
+               final y un enlace por si quieren repetirlo. -->
+          <sc-if value="{{ juegoJugado }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:16px 18px">
+              <div style="flex:1;min-width:0">
+                <div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#FAF3E4">El juego de la mesa</div>
+                <div style="font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">{{ resumenJugado }}</div>
+              </div>
+              <span style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(156,187,166,.5);color:#9CBBA6;font:600 11px/1 'Inter Tight',sans-serif">Hecho</span>
+            </div>
+            <div style="padding:6px 18px 18px;display:flex;flex-direction:column;gap:14px;border-top:1px solid rgba(250,243,228,.15)">
+              <div style="font:400 26px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#FAF3E4;margin-top:8px">Hasta aquí el juego. <span style="color:#E39C63">Lo demás es suyo.</span></div>
+              <button onClick="{{ volverAJugar }}" style="align-self:flex-start;background:transparent;border:0;padding:6px 0;min-height:44px;color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">Volver a jugar</button>
+            </div>
+          </sc-if>
+
+          <!-- Y la normal, que es la de jugar -->
+          <sc-if value="{{ juegoNormal }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ tJuego }}" aria-expanded="{{ oJuegoAria }}" style="display:flex;width:100%;box-sizing:border-box;align-items:center;gap:12px;padding:16px 18px;min-height:44px;background:transparent;border:0;text-align:left;cursor:pointer">
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#FAF3E4">El juego de la mesa</span>
+                <span style="display:block;font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">{{ resumenJuego }}</span>
+              </span>
+              <span style="{{ sJuego }}">{{ fJuego }}</span>
+            </button>
+            <sc-if value="{{ oJuego }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 18px 18px;display:flex;flex-direction:column">
+                <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;padding-bottom:6px">{{ bajadaJuego }}</div>
+                <sc-for list="{{ rondas }}" as="r" hint-placeholder-count="3">
+                  <div style="display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:start;gap:8px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)">
+                    <div style="font:400 20px/1.1 'Young Serif',Georgia,serif;color:#E39C63">{{ r.n }}</div>
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                      <div style="font:400 18px/1.15 'Young Serif',Georgia,serif">{{ r.titulo }}</div>
+                      <div style="font:600 10px/1.3 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">{{ r.cuando }}</div>
+                      <div style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#C5D8CA">{{ r.bajada }}</div>
+                    </div>
+                    <button onClick="{{ r.ir }}" style="{{ r.estiloEstado }}">{{ r.estado }}</button>
+                  </div>
+                </sc-for>
+                <button onClick="{{ seguirJuego }}" style="margin-top:8px;display:flex;align-items:center;justify-content:center;min-height:48px;border:0;border-radius:999px;background:#E39C63;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">{{ ctaJuego }}</button>
+                <sc-if value="{{ hayAvanceJuego }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ reiniciarJuego }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;margin-top:4px;background:transparent;border:0;color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">Empezar de nuevo</button>
+                </sc-if>
+              </div>
+            </sc-if>
           </sc-if>
         </div>
 
@@ -823,16 +860,30 @@ class Component extends DCLogic {
 
   juegoIr(j) {
     const d = this.state.datos;
-    // El final NO se guarda como punto de retorno.
-    //
-    // Se guarda para «retomar la última ronda vista», y el final no es una
-    // ronda: es el final. Guardándolo, quien terminaba el juego y volvía a
-    // abrirlo caía otra vez en «Hasta aquí el juego» y no había forma de
-    // jugar de nuevo en ese teléfono. Se anota el principio en su lugar.
-    if (d && d.mesaId) {
-      this.juegoGuardar(d.mesaId, j.paso === 'final' ? { paso: 'reglas', ronda: 0, idx: 0 } : j);
+    /**
+     * El final SÍ se guarda, desde la entrega 21.
+     *
+     * Antes se anotaba el principio en su lugar, porque si no, quien
+     * terminaba el juego y volvía a abrirlo caía otra vez en «Hasta aquí el
+     * juego» sin forma de jugar de nuevo. Ahora la tarjeta tiene su propia
+     * cara para eso —«Jugado · 3 de 3 rondas», con «Volver a jugar»—, así
+     * que guardar el final es lo que la hace aparecer.
+     *
+     * Y las rondas hechas se arrastran: `j` dice dónde se está, no qué se ha
+     * jugado ya.
+     */
+    const antes = this.state.juego;
+    const paso = Object.assign({}, j, { hechas: j.hechas || (antes && antes.hechas) || [] });
+    if (d && d.mesaId) this.juegoGuardar(d.mesaId, paso);
+    this.setState({ juego: paso });
+  }
+
+  /** Olvida el avance de esta mesa en este teléfono: «volver a jugar». */
+  juegoOlvidar(mesaId) {
+    if (mesaId) {
+      try { window.localStorage.removeItem('aro.juego.' + mesaId); } catch (e) {}
     }
-    this.setState({ juego: j });
+    this.setState({ juego: null });
   }
 
   juegoSalir() {
@@ -905,7 +956,8 @@ class Component extends DCLogic {
     // vuelve a adelantar, la frase se mueve con el número.
     const minAbre = Math.abs(J.abreMin);
     const cuandoAbre = J.abreMin === 0
-      ? 'cuando empieza la cena'
+      // «a la hora de la cena», como la app (entrega 21).
+      ? 'a la hora de la cena'
       : (J.abreMin < 0
           ? (minAbre === 30 ? 'media hora antes de la cena' : minAbre + ' minutos antes de la cena')
           : (minAbre === 30 ? 'media hora después de empezar' : minAbre + ' minutos después de empezar'));
@@ -931,8 +983,12 @@ class Component extends DCLogic {
     const siguiente = () => {
       const i = jg.idx + 1;
       if (i < preguntas.length) return this.juegoIr({ paso: 'pregunta', ronda: rondaIdx, idx: i });
-      if (rondaIdx < ultimaRonda) return this.juegoIr({ paso: 'cambio', ronda: rondaIdx + 1, idx: 0 });
-      return this.juegoIr({ paso: 'final', ronda: rondaIdx, idx: 0 });
+      // Se acabaron las preguntas de esta ronda: queda hecha. Es lo que
+      // cuenta «Jugado · 2 de 3 rondas» cuando se termina por la mitad.
+      const hechas = (jg.hechas || []).slice();
+      hechas[rondaIdx] = true;
+      if (rondaIdx < ultimaRonda) return this.juegoIr({ paso: 'cambio', ronda: rondaIdx + 1, idx: 0, hechas });
+      return this.juegoIr({ paso: 'final', ronda: rondaIdx, idx: 0, hechas });
     };
     const atras = () => {
       if (jg.idx > 0) return this.juegoIr({ paso: 'pregunta', ronda: rondaIdx, idx: jg.idx - 1 });
@@ -1116,6 +1172,16 @@ class Component extends DCLogic {
     const guardado = (dt && dt.mesaId) ? this.juegoGuardado(dt.mesaId) : null;
     const hayAvance = !!guardado && !(guardado.paso === 'reglas' && guardado.ronda === 0 && guardado.idx === 0);
     const rondaGuardada = guardado ? guardado.ronda : 0;
+    /**
+     * Jugado entero, o terminado en «Terminar aquí» (entrega 21).
+     *
+     * Antes el final NO se guardaba —se anotaba el principio— para que quien
+     * terminara pudiera volver a jugar. Ahora la tarjeta tiene su propia cara
+     * para eso, con «Volver a jugar», así que guardar el final es lo que hace
+     * que esa cara exista.
+     */
+    const juegoJugado = !!guardado && guardado.paso === 'final';
+    const rondasJugadas = Math.max(1, ((guardado && guardado.hechas) || []).filter(Boolean).length);
 
     const sitiosParaSeguir = ((dt && dt.paraSeguir) || []).map((s) => ({
       nombre: s.nombre,
@@ -1168,8 +1234,8 @@ class Component extends DCLogic {
       // Hecha la que quedó atrás, «n de 2» la que se está jugando, «Ir» las
       // demás. Sale del único punto que se guarda —dónde quedó— y no de una
       // lista de rondas terminadas: el juego no se juega dos veces.
-      const hecha = hayAvance && i < rondaGuardada;
-      const enCurso = hayAvance && i === rondaGuardada;
+      const hecha = !!((guardado && guardado.hechas) || [])[i];
+      const enCurso = hayAvance && !hecha && i === rondaGuardada;
       const estado = hecha ? 'Hecha'
         : enCurso ? ((guardado.idx + 1) + ' de ' + J.porRonda)
         : 'Ir';
@@ -1405,8 +1471,19 @@ class Component extends DCLogic {
       // 06-10, confirmado el 15-10): quien llega pronto se leería las
       // preguntas y llegaría con las respuestas pensadas. Antes de esa hora
       // las rondas se ven y no se tocan.
-      juegoYaAbre: juegoAbierto,
+      // Las tres caras de la tarjeta: cerrada por hora, jugada, o la de
+      // jugar. Se excluyen entre ellas y en ese orden.
       juegoNoAbreAun: juegoCerrado,
+      juegoJugado: juegoAbierto && juegoJugado,
+      juegoNormal: juegoAbierto && !juegoJugado,
+      // Cerrada, la línea de debajo del título dice por qué no se puede
+      // tocar; jugada, cuántas rondas se jugaron.
+      resumenJuegoCerrado: J.rondas.length + ' rondas · se abre a la hora de la cena',
+      resumenJugado: 'Jugado · ' + rondasJugadas + ' de ' + J.rondas.length + ' rondas',
+      volverAJugar: () => {
+        this.juegoOlvidar(dt && dt.mesaId);
+        this.setState({ abierta: 'juego' });
+      },
       ctaJuego: hayAvance
         ? 'Seguir · ronda ' + (rondaGuardada + 1) + ', pregunta ' + (guardado.idx + 1)
         : 'Empezar la ronda 1',

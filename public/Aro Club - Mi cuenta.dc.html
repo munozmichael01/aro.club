@@ -196,7 +196,15 @@
             <sc-for list="{{ g.eventos }}" as="ev" hint-placeholder-count="3">
               <div style="{{ ev.envoltorio }}">
               <button onClick="{{ ev.abrir }}" style="{{ ev.caja }}">
-                <span style="{{ ev.icono }}">{{ ev.glifo }}</span>
+                <span style="{{ ev.icono }}">
+                  <sc-if value="{{ ev.esBrunch }}" hint-placeholder-val="{{ false }}">
+                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" style="display:block">
+                      <path d="M3.4 10.6a4.6 4.6 0 0 1 9.2 0z" fill="{{ ev.tintaIcono }}"></path>
+                      <path d="M2 13h12" stroke="{{ ev.tintaIcono }}" stroke-width="1.5" stroke-linecap="round"></path>
+                    </svg>
+                  </sc-if>
+                  <sc-if value="{{ ev.hayGlifo }}" hint-placeholder-val="{{ true }}">{{ ev.glifo }}</sc-if>
+                </span>
                 <span style="flex:1;min-width:0">
                   <span style="display:flex;flex-wrap:wrap;gap:4px 9px;align-items:baseline">
                     <span style="font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ ev.tipo }}</span>
@@ -770,10 +778,11 @@ class Component extends DCLogic {
     });
 
     // agenda: lo que motiva reservar es ver cuánto le falta a cada mesa, no un contador de vanidad
-    const tipos = ['Todo', 'Cenas', 'Drinks', 'Movimiento', 'Coffee'];
+    const tipos = ['Todo', 'Cenas', 'Drinks', 'Movimiento', 'Coffee', 'Brunch'];
     // la polaroid ES el filtro: el elemento con más fuerza de la marca hace de navegación
-    const fotos = { Cenas: 'fotos/cenas.jpg', Drinks: 'fotos/drinks.jpg', Movimiento: 'fotos/movimiento.jpg', Coffee: 'fotos/coffee.jpg' };
-    const rot = { Todos: '-1.2deg', Cenas: '1.4deg', Drinks: '-1.6deg', Movimiento: '1.2deg', Coffee: '-1.4deg' };
+    const fotos = { Cenas: 'fotos/cenas.jpg', Drinks: 'fotos/drinks.jpg', Movimiento: 'fotos/movimiento.jpg', Coffee: 'fotos/coffee.jpg', Brunch: 'fotos/brunch.jpg' };
+    // El giro del brunch, 1.6deg, lo da la entrega 21 de Design.
+    const rot = { Todos: '-1.2deg', Cenas: '1.4deg', Drinks: '-1.6deg', Movimiento: '1.2deg', Coffee: '-1.4deg', Brunch: '1.6deg' };
 
     // Cuales tienen fecha abierta de verdad, y CUALES SON SUS FECHAS. Se
     // derivan de la agenda que manda el servidor, no se escriben a mano: el
@@ -852,8 +861,15 @@ class Component extends DCLogic {
       Cenas: ['◗', '#8F4515', 'rgba(192,102,47,.14)'],
       Drinks: ['◇', '#1B5138', 'rgba(27,81,56,.12)'],
       Movimiento: ['◢', '#2D6A4F', 'rgba(45,106,79,.14)'],
-      Coffee: ['◉', '#566A5D', 'rgba(86,106,93,.14)']
+      Coffee: ['◉', '#566A5D', 'rgba(86,106,93,.14)'],
+      // El brunch trae icono de verdad, no glifo (entrega 21): la cúpula y
+      // la bandeja. Los otros cuatro siguen con el suyo hasta que Design los
+      // dibuje, y por eso la fila sabe pintar las dos cosas.
+      Brunch: ['', '#8F4515', 'rgba(227,156,99,.24)']
     };
+    // Sin marca no se pinta una fila a medias: un formato nuevo hereda la de
+    // cenas hasta que tenga la suya, que es mejor que `m[1]` sobre `undefined`.
+    const marcaDe = (nombre) => marcas[nombre] || marcas.Cenas;
     // El apuntado es a una FECHA, no a una mesa. Las mesas se arman al cerrar,
     // repartiendo a todo el que se apuntó. Por eso el contador es de gente en la fecha
     // y el umbral es el mínimo para que esa fecha salga adelante.
@@ -936,7 +952,7 @@ class Component extends DCLogic {
       // siguiente. No pone «agotada»: aqui no hay cupo.
       const cerrada = !!c[7];
       const abierta = this.state.reservando === clave;
-      const m = marcas[c[1]];
+      const m = marcaDe(c[1]);
       // La hora REAL de la fecha, una sola. Habia dos opciones por formato
       // —"7:00 p.m." y "8:30 p.m."— pero un evento tiene una hora y nadie
       // elige turno: era un selector que no cambiaba nada. Si algun dia hay
@@ -1005,6 +1021,11 @@ class Component extends DCLogic {
          */
         estiloEdad: 'display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:#8F4515;font:700 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;color:#FAF3E4;white-space:nowrap;text-transform:uppercase',
         tipo: c[1], cuando: c[2], zona: c[3], glifo: cerrada ? '·' : (mia ? '✓' : m[0]),
+        // El brunch pinta su icono y los demás su glifo. Cuando la fecha está
+        // cerrada o ya es tuya mandan el punto y el visto, que dicen más.
+        esBrunch: !cerrada && !mia && c[1] === 'Brunch',
+        hayGlifo: cerrada || mia || c[1] !== 'Brunch',
+        tintaIcono: m[1],
         enlace: '/',
         estado: cerrada
           ? (mia ? 'Ya tienes puesto · cerrada' : 'Cerrada · ' + n + (n === 1 ? ' apuntado' : ' apuntados'))
