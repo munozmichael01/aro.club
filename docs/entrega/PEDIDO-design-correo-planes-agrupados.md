@@ -1,8 +1,16 @@
-# A Design · Correo nuevo · «Abrimos varios planes» (uno con N fechas dentro)
+# A Design · Correo nuevo · Los avisos del día, en uno solo
 
-Hace falta **una sola pieza**: el correo de «abrimos mesa en tu zona» cuando lo
-que se abrió no es una fecha, sino dos o tres. Hoy sale uno por fecha, y es el
-motivo de la pieza.
+Hace falta **una sola pieza**: el correo que lleva **todos los avisos que le
+tocan a una persona ese día**, cuando es más de uno. Hoy sale un correo por
+cada aviso, y ese es el motivo de la pieza.
+
+Avisos son dos cosas, y las dos pueden caer el mismo día:
+
+- **se abrió** una fecha en una zona suya;
+- **se cierra mañana** una fecha suya a la que todavía no se apuntó.
+
+El resto de los correos —el pago, la verificación, la mesa— no entran aquí:
+contestan a algo que la persona acaba de hacer y siguen saliendo solos.
 
 **Por qué.** El 10-10 se abrieron dos fechas y salieron sesenta correos para
 treinta personas; una recibió ocho avisos de apertura en total. No es un fallo
@@ -16,6 +24,9 @@ le toca más de un plan en la misma tanda, recibe este correo en vez de dos.
 Lo que el club promete por escrito en sus preguntas frecuentes es exactamente
 esto: «Marca tus zonas y te escribimos el día que se abre la primera. No antes:
 no queremos escribirte para nada».
+
+**La regla nueva, entera:** un aviso al día por persona, y si ese día le tocan
+tres, van los tres en este correo.
 
 ---
 
@@ -42,17 +53,29 @@ ser el titular de 72 px y pasa a ser una lista de dos o tres filas, cada una
 con día + hora + zona + qué plan es, y el titular pasa a ser la cuenta («Se
 abrieron tres fechas en tus zonas»). Pero esa jerarquía es tuya.
 
+### Las filas son de dos clases, y no dicen lo mismo
+
+Esto es lo segundo que hay que resolver: en el mismo correo pueden ir una fila
+de «se abrió» y otra de «se cierra mañana», y **no pueden leerse igual**. La
+primera es una invitación y la segunda es un plazo. Si se ven iguales, o la
+invitación mete prisa que no tiene, o el plazo pasa desapercibido.
+
+No hace falta un bloque aparte para cada clase si encuentras una forma mejor:
+lo que pido es la distinción, no la estructura.
+
 ### Los datos de cada fila
 
 Todos existen y van en el correo sin pedir nada más:
 
 | | ejemplo |
 |---|---|
+| clase | se abrió · se cierra mañana |
 | plan | Brunch · Cena · Drinks · Caminata |
 | día | domingo 25 de octubre |
 | hora | 11:00 a.m. |
 | zona o zonas | Chacao · Chacao y Los Palos Grandes |
 | precio | 10 ref la plaza |
+| cuándo cierra (solo en las de plazo) | mañana a las 7:30 p.m. |
 
 El precio es **por fecha**, no del club: hoy conviven fechas a distinto precio.
 Si en la versión agrupada no cabe por fila, dilo y lo dejamos solo en el
@@ -71,7 +94,9 @@ la decisión y el correo no es el sitio para decidir: el sitio es la agenda.
 
 ## Lo que NO hay que resolver
 
-- **El correo de una sola fecha.** Sigue siendo el de hoy, tal cual.
+- **El correo de un solo aviso.** Siguen siendo los de hoy, tal cual: el de
+  «abrimos tu zona» y el de «se cierra pronto». Esta pieza es solo para cuando
+  hay más de uno.
 - **Qué fechas ve cada persona.** Eso lo decide el servidor: su zona, el plan
   que marcó, el día que marcó y su banda de edad.
 - **El asunto.** Lo escribo yo y lo valida Michael.
