@@ -533,7 +533,7 @@ class Component extends DCLogic {
         accion: 'Cómo llegar', enlace: '/mesa', secundaria: 'Volver al principio'
       }
     ];
-    const FORMATOS = { dinner: 'Cenas', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' };
+    const FORMATOS = { dinner: 'Cenas', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee', brunch: 'Brunch' };
     const DIASEM = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
     /**
@@ -741,7 +741,7 @@ class Component extends DCLogic {
       const titulo = p.restaurante
         ? p.restaurante + (p.numeroMesa != null && !p.mesaUnica ? ' · mesa ' + String(p.numeroMesa).padStart(2, '0') : '')
         // En singular: es UNA cena suya, no la categoria del calendario.
-        : ({ dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' }[p.formato] || 'Cena');
+        : ({ dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee', brunch: 'Brunch' }[p.formato] || 'Cena');
       if (p.cancelada || p.estado === 'cancelled') return [titulo, cuando, 'Cancelaste', 'Cancelaste'];
       if (p.estado === 'attended') return [titulo, cuando, 'Fuiste', 'Fuiste'];
       if (p.pasada) return [titulo, cuando, 'Ya pasó', 'Pasada'];

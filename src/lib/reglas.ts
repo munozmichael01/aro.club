@@ -51,7 +51,14 @@ type Api = {
     art: string; Art: string; esta: string; tu: string; La: string; el: string
     sitio: string; Sitio: string; sitioCorto: string
     sentados: string; juntarse: string; mia: string; TU: string
+    /** «CON QUIÉN CENAS» solo si de verdad se cena; si no, «CON QUIÉN VAS». */
+    conQuien: string
+    /** «Cenaste en» / «Estuviste en», para la mesa de después. */
+    estuviste: string
+    /** Con quién es el plan, mientras la mesa está cerrada. */
+    vasCon: string
   }
+  NOMBRES_DE_FORMATO: Record<string, string>
   ZONA: string
   MESES: string[]
   HORAS_EN_LETRA: string[]
@@ -89,6 +96,9 @@ export const aE164 = api.aE164
 export const REGLAS = api.REGLAS
 /** Mesa o grupo, según el formato. La tabla vive en public/reglas.js. */
 export const vozDe = api.vozDe
+
+/** Cómo se llama cada formato. Misma tabla para los correos, el panel y la app. */
+export const NOMBRES_DE_FORMATO = api.NOMBRES_DE_FORMATO
 
 /**
  * Horas de antelación con que se cierra el apuntarse a una fecha.

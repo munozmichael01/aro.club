@@ -34,6 +34,7 @@ export const FORMATOS_DE_FAMILIA: Record<string, string[]> = {
   drinks: ['drinks'],
   movimiento: ['walk', 'hike', 'run', 'padel', 'pilates', 'cycling'],
   coffee: ['coffee'],
+  brunch: ['brunch'],
 }
 
 /**
@@ -49,10 +50,19 @@ export const PLANES_DE_FAMILIA: Record<string, string[]> = {
   cenas: ['cena', 'cena-gastronomica'],
   drinks: ['drinks'],
   movimiento: ['correr', 'senderismo', 'padel', 'pilates', 'ciclismo'],
-  // Café y brunch son el mismo formato del club —`coffee`— y dos planes
-  // distintos para la persona. Quien marcó uno de los dos quiere saber de
-  // una fecha de coffee.
-  coffee: ['cafe', 'brunch'],
+  /**
+   * Café y brunch, cada uno con lo suyo.
+   *
+   * Estuvieron juntos un día, y era un error a medias: la pregunta se partió
+   * ayer —un café no es un brunch— y esto los siguió tratando como el mismo
+   * plan, así que abrir un brunch le habría escrito a quien solo quiere café.
+   *
+   * Los conjuntos ya se están separando solos: de 472 respuestas, 3 marcaron
+   * solo café y 11 solo brunch, y son los catorce que han contestado desde
+   * que la pregunta los distingue.
+   */
+  coffee: ['cafe'],
+  brunch: ['brunch'],
 }
 
 /** Las cuatro, en el orden en que se enseñan. */

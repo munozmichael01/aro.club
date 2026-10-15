@@ -44,6 +44,10 @@ const HORA_DE: Record<string, string> = {
   // la manda el sitio, y media hora importa.
   dinner: '19:30', foodie_dinner: '19:30', women_dinner: '19:30',
   drinks: '20:00', coffee: '10:00',
+  // El brunch del domingo, a las once (Michael, 14-10). No es la hora del
+  // café: un café es a media mañana y un brunch se come, así que empieza
+  // cuando la gente ya desayunó o no desayunó a propósito.
+  brunch: '11:00',
   walk: '09:00', hike: '07:00', run: '06:00',
   padel: '08:00', pilates: '08:00', cycling: '06:00',
 }
@@ -158,11 +162,53 @@ async function avisarDeLaApertura(
     .in('id', [...quieren])
     .is('deleted_at', null)
 
+  /**
+   * UNO POR PERSONA Y DÍA, aunque se abran tres fechas.
+   *
+   * El índice de `abrimos_zona` es «uno por persona y FECHA», así que abrir
+   * dos fechas el mismo día son dos correos a la misma persona. El 10-10
+   * fueron sesenta correos para treinta personas, y una llegó a recibir ocho
+   * avisos de apertura en total.
+   *
+   * No escala: aceptan Chacao 398 personas, Altamira 352, Los Palos Grandes
+   * 350 y Las Mercedes 313 — son casi las mismas. Dos fechas en zonas
+   * distintas son ochocientos correos a cuatrocientas personas, y la segunda
+   * copia no les dice nada que la primera no dijera: el botón lleva a la
+   * agenda, donde están todas.
+   *
+   * Y es lo que el club promete por escrito en las preguntas frecuentes: «te
+   * escribimos el día que se abre la primera. No antes: no queremos
+   * escribirte para nada». La primera, no cada una.
+   *
+   * Ventana móvil de veinte horas y no «día natural»: abrir una a las once de
+   * la noche y otra a la una serían dos días distintos y dos horas de
+   * diferencia. Es el mismo silencio que ya usa el cron de empujones.
+   *
+   * Lo que recuerda entre una fecha y otra es esta consulta, no nada que
+   * quede en memoria: `encolar` escribe la fila con `send_at` de ahora, así
+   * que la apertura siguiente —otra llamada, otro proceso— la ve aquí.
+   */
+  const VENTANA_HORAS = 20
+  const desde = new Date(Date.now() - VENTANA_HORAS * 3600_000).toISOString()
+
+  const { data: avisadosYa } = await admin
+    .from('scheduled_emails')
+    .select('profile_id')
+    .eq('kind', 'abrimos_zona')
+    .gte('send_at', desde)
+    .in('profile_id', [...quieren])
+
+  const recientes = new Set((avisadosYa ?? []).map((a) => a.profile_id))
+
   let avisados = 0
+  let callados = 0
   for (const p of perfiles ?? []) {
     // Encendido por defecto: solo se salta a quien lo apagó a propósito.
     const avisos = (p.notificaciones ?? {}) as Record<string, boolean>
     if (avisos.apertura_zona === false) continue
+
+    // Ya se le escribió hace nada por otra fecha. La verá en su agenda.
+    if (recientes.has(p.id)) { callados++; continue }
 
     if (seco) {
       avisados++
@@ -171,6 +217,10 @@ async function avisarDeLaApertura(
 
     const r = await encolar({ perfil: p.id }, 'abrimos_zona', { zonas: slugs, dia }, { eventoId })
     if (r === 'encolado') avisados++
+  }
+
+  if (callados) {
+    console.warn(`[fechas] ${callados} ya tenían aviso de apertura en las últimas ${VENTANA_HORAS}h`)
   }
 
   return avisados
@@ -258,7 +308,7 @@ const cuerpo = z.object({
   avisar: z.boolean().default(true),
   formato: z
     .enum([
-      'dinner', 'foodie_dinner', 'women_dinner', 'coffee', 'drinks',
+      'dinner', 'foodie_dinner', 'women_dinner', 'coffee', 'brunch', 'drinks',
       'walk', 'hike', 'run', 'padel', 'pilates', 'cycling',
     ])
     .default('dinner'),
@@ -611,6 +661,11 @@ export async function GET() {
     // Y el precio por defecto, por lo mismo que las horas: el panel lo tenía
     // escrito a mano, en dos sitios, y decía ocho donde la regla dice siete.
     precioPorDefecto: PRECIO_USD,
+    // Y las horas con que se cierra, por tercera vez lo mismo: el panel las
+    // tenía escritas —48— y la regla dice 24 desde el 01-10, así que la
+    // pantalla prometía el cierre un día antes del que escribe esta ruta.
+    // No las puede leer de `reglas.js` porque esa pantalla no lo carga.
+    horasCierre: HORAS_DE_CIERRE,
   })
 }
 

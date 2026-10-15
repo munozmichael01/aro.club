@@ -4,6 +4,7 @@ import { componer } from '@/lib/remitente'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { enlaceDeMapa } from '@/lib/mapa'
+import { vozDe } from '@/lib/reglas'
 
 /**
  * El correo de la mesa, con los datos de UN local, para enseñárselo a él.
@@ -87,7 +88,9 @@ export async function GET(request: Request) {
     Unidad: 'Mesa',
     art: 'la',
     TU: 'TU MESA',
-    conQuien: 'CON QUIÉN CENAS',
+    // De la voz, como el correo de verdad: la muestra es de una cena, así
+    // que dice «CON QUIÉN CENAS», pero la frase no se escribe aquí.
+    conQuien: vozDe('dinner').conQuien,
     alGrupo: ' la mesa',
     // Sin enlace de ajustes: esto no se manda a nadie, así que no hay baja
     // que ofrecer. Vacío deja el pie sin un enlace muerto.

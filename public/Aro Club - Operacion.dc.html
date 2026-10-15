@@ -1809,7 +1809,7 @@ class Component extends DCLogic {
         // panel salta de fecha solo.
         const antes = this.fechaElegida();
         const i = antes ? Math.max(0, d.fechas.findIndex((f) => f.id === antes.id)) : 0;
-        return { fechas: d.fechas, horasFormato: d.horasFormato || null, precioPorDefecto: d.precioPorDefecto, fechaRep: i };
+        return { fechas: d.fechas, horasFormato: d.horasFormato || null, precioPorDefecto: d.precioPorDefecto, horasCierre: d.horasCierre, fechaRep: i };
       },
       { fechas: [] });
   }
@@ -1964,7 +1964,7 @@ class Component extends DCLogic {
     const St = Object.assign({}, this.state, cambios || {});
     const f = St.filtros || {};
     const q = {
-      formato: ['', 'cenas', 'drinks', 'movimiento', 'coffee'][St.fmtZona || 0] || '',
+      formato: ['', 'cenas', 'drinks', 'movimiento', 'coffee', 'brunch'][St.fmtZona || 0] || '',
       q: (St.busca || '').trim(),
       estado: f.estado || '', genero: f.genero || '', arraigo: f.arraigo || '',
       edad: f.edad || '', familia: f.formato || '',
@@ -2574,7 +2574,8 @@ class Component extends DCLogic {
     const FORMATOS = [
       ['Cena', '7:30 p.m.', 'dinner', 19], ['Cena foodie', '7:30 p.m.', 'foodie_dinner', 19],
       ['Cena de mujeres', '7:30 p.m.', 'women_dinner', 19], ['Drinks', '8:00 p.m.', 'drinks', 20],
-      ['Coffee', '10:00 a.m.', 'coffee', 10], ['Caminata', '9:00 a.m.', 'walk', 9],
+      ['Coffee', '10:00 a.m.', 'coffee', 10], ['Brunch', '11:00 a.m.', 'brunch', 11],
+      ['Caminata', '9:00 a.m.', 'walk', 9],
       ['Senderismo', '7:00 a.m.', 'hike', 7], ['Correr', '6:00 a.m.', 'run', 6],
       ['Pádel', '8:00 a.m.', 'padel', 8], ['Pilates', '8:00 a.m.', 'pilates', 8],
       ['Ciclismo', '6:00 a.m.', 'cycling', 6]
@@ -2587,7 +2588,7 @@ class Component extends DCLogic {
     // sirve: es el campo local.formatos[] del catálogo.
     const FAMILIA = {
       'Cena': 'cenas', 'Cena foodie': 'cenas', 'Cena de mujeres': 'cenas',
-      'Drinks': 'drinks', 'Coffee': 'coffee',
+      'Drinks': 'drinks', 'Coffee': 'coffee', 'Brunch': 'brunch',
       'Caminata': 'movimiento', 'Senderismo': 'movimiento', 'Correr': 'movimiento',
       'Pádel': 'movimiento', 'Pilates': 'movimiento', 'Ciclismo': 'movimiento'
     };
@@ -2778,7 +2779,7 @@ class Component extends DCLogic {
     // Cada fecha del riel, tal como la devuelve la ruta.
     const FAM_DE_FORMATO = {
       dinner: 'cenas', foodie_dinner: 'cenas', women_dinner: 'cenas',
-      drinks: 'drinks', coffee: 'coffee',
+      drinks: 'drinks', coffee: 'coffee', brunch: 'brunch',
       walk: 'movimiento', hike: 'movimiento', run: 'movimiento',
       padel: 'movimiento', pilates: 'movimiento', cycling: 'movimiento'
     };
@@ -3393,9 +3394,9 @@ class Component extends DCLogic {
       tomar: (e) => this.tomar(e, p.profileId, null)
     }));
 
-    const NOMBRE_FILTRO = { cenas: 'Cenas', drinks: 'Drinks', coffee: 'Coffee', movimiento: 'Movimiento' };
+    const NOMBRE_FILTRO = { cenas: 'Cenas', drinks: 'Drinks', coffee: 'Coffee', brunch: 'Brunch', movimiento: 'Movimiento' };
     const tipoRep = St.tipoRep || 'todo';
-    const tiposRep = ['todo', 'cenas', 'drinks', 'coffee', 'movimiento'].map((t) => {
+    const tiposRep = ['todo', 'cenas', 'drinks', 'coffee', 'brunch', 'movimiento'].map((t) => {
       const on = tipoRep === t;
       // De lo que se ve, no de todo lo que existe: con las pasadas ocultas,
       // «Cenas 8» sobre tres fechas visibles es una cuenta de otra lista.
@@ -3548,7 +3549,7 @@ class Component extends DCLogic {
     const sinResolver = REPORTES.filter((r) => !(St.resueltos || {})[r.id]).length;
 
     // ── locales: de aquí sale el sitio de cada zona ─────────────────
-    const NOMBRE_FAM = { cenas: 'Cenas', drinks: 'Drinks', coffee: 'Coffee', movimiento: 'Movimiento' };
+    const NOMBRE_FAM = { cenas: 'Cenas', drinks: 'Drinks', coffee: 'Coffee', brunch: 'Brunch', movimiento: 'Movimiento' };
     const filtroLoc = St.filtroLoc || 'todos';
 
     // ── locales: de aquí sale el sitio de cada zona ─────────────────
@@ -3591,7 +3592,7 @@ class Component extends DCLogic {
       };
     });
     const locales = todosLocales.filter((l) => filtroLoc === 'todos' || l.fams.indexOf(filtroLoc) >= 0);
-    const filtrosLocales = ['todos', 'cenas', 'drinks', 'movimiento', 'coffee'].map((t) => {
+    const filtrosLocales = ['todos', 'cenas', 'drinks', 'movimiento', 'coffee', 'brunch'].map((t) => {
       const on = filtroLoc === t;
       const n = t === 'todos' ? todosLocales.length : todosLocales.filter((l) => l.fams.indexOf(t) >= 0).length;
       return {
@@ -3683,12 +3684,22 @@ class Component extends DCLogic {
     const DIAS_SEM = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
     const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
     const hoy = new Date();
+    // Domingo y lunes no se abrían NUNCA, y esa es una regla de las cenas:
+    // son los dos días en que no se sale a cenar. Un brunch es justo lo
+    // contrario —es de domingo— y con la regla puesta para todos, el del
+    // domingo 25 no se podía abrir: el día no estaba en la lista y no había
+    // dónde escribirlo.
+    //
+    // Así que la decide el formato. Los de mañana ven todos los días, y diez
+    // en vez de seis, porque si no la lista se acaba antes de llegar al fin
+    // de semana siguiente.
+    const deManana = fSel[3] < 12;
     const candidatos = [];
     for (let k = 3; k < 17; k++) {
       const d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + k);
-      if (d.getDay() === 0 || d.getDay() === 1) continue;
+      if (!deManana && (d.getDay() === 0 || d.getDay() === 1)) continue;
       candidatos.push(d);
-      if (candidatos.length >= 6) break;
+      if (candidatos.length >= (deManana ? 10 : 6)) break;
     }
     const fmt = (d) => DIAS_SEM[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()];
     const dias = candidatos.map((d, i) => {
@@ -3719,7 +3730,13 @@ class Component extends DCLogic {
             const vale = sitio && defs.filter((l) => l[0] === sitio && l[1].indexOf(nf) >= 0).length > 0;
             n[k] = vale ? sitio : null;
           });
-          return { formatoSel: i, zonasSel: n, abierta: false };
+          // Y el día, que es una POSICIÓN en una lista que ahora depende del
+          // formato: pasar de cena a brunch deja la misma posición apuntando
+          // a otro día, en silencio. Se suelta solo cuando la lista cambia de
+          // forma, para no borrar el día al pasar de cena a cena foodie.
+          const antes = (FORMATOS[st.formatoSel] || FORMATOS[0])[3] < 12;
+          const cambiaLaLista = (FORMATOS[i][3] < 12) !== antes;
+          return { formatoSel: i, zonasSel: n, abierta: false, diaSel: cambiaLaLista ? -1 : st.diaSel };
         })
       };
     });
@@ -3771,7 +3788,12 @@ class Component extends DCLogic {
     // cuánta gente se apunte, y el miembro no lo ve hasta la revelación. Se
     // elige después, en la pestaña de reparto, y publicar es lo que lo exige.
     const conLocal = idxZonas.filter((i) => !!zSel[i]).length;
-    const cierre = dSel ? new Date(dSel.getTime() - 48 * 3600000) : null;
+    // Las horas de cierre las dice el servidor, que es quien las aplica.
+    // Estaban escritas aquí —48— y la regla dice 24 desde el 01-10: el panel
+    // prometía el cierre un día antes del que escribe la ruta. Y no se leen
+    // de `reglas.js` porque esta pantalla no lo carga.
+    const HORAS_CIERRE = St.horasCierre;
+    const cierre = (dSel && HORAS_CIERRE) ? new Date(dSel.getTime() - HORAS_CIERRE * 3600000) : null;
     // «todo se abre a las 12:00» se diseñó para cenas: un formato de mañana
     // se revelaría después de haber pasado, así que se adelanta la víspera.
     const mananero = /a\.m\./.test(fSel[1]) && parseInt(fSel[1], 10) < 12;
@@ -3803,7 +3825,7 @@ class Component extends DCLogic {
     const resumen = [
       ['Día', dSel ? fmt(dSel) : 'Sin elegir', !!dSel],
       ['Hora', dSel ? fSel[1] + ' · la pone el formato' : fSel[1], false],
-      ['Se cierra', cierre ? fmt(cierre) + ' a las ' + fSel[1] : '48 h antes', !!cierre],
+      ['Se cierra', cierre ? fmt(cierre) + ' a las ' + fSel[1] : (HORAS_CIERRE ? HORAS_CIERRE + ' h antes' : '—'), !!cierre],
       ['Se revela', revela ? fmt(revela) + ' a las 12:00' + (mananero ? ' · el día antes' : '') : 'a las 12:00', !!revela],
       ['Cupo', 'Abierto · quien no entre queda en espera', true],
       ['Precio', precioOk ? precioNum.toFixed(2).replace('.', ',') + ' ref por plaza' : 'Falta el precio', precioOk],
@@ -4880,7 +4902,7 @@ class Component extends DCLogic {
         if (selG.edad) t.push({ j: 'de menos de 32', m: 'de 32 a 37', v: 'de más de 37' }[selG.edad]);
         if (selG.genero) t.push({ mujer: 'mujeres', hombre: 'hombres', 'no-binario': 'no binarias', 'sin-decir': 'que no dijeron su género' }[selG.genero]);
         if (selG.arraigo) t.push({ volvio: 'que volvieron a Caracas', 'se-quedo': 'que se quedaron', mismos: 'de siempre aquí', remoto: 'que trabajan en remoto', interior: 'que llegaron de otra parte', visita: 'de paso' }[selG.arraigo]);
-        if (selG.formato) t.push('interesadas en ' + ({ cenas: 'cenas', drinks: 'drinks', movimiento: 'movimiento', coffee: 'coffee' })[selG.formato]);
+        if (selG.formato) t.push('interesadas en ' + ({ cenas: 'cenas', drinks: 'drinks', movimiento: 'movimiento', coffee: 'coffee', brunch: 'brunch' })[selG.formato]);
         if (St.atajo === 'cred') t.push('con créditos sin usar y ninguna cena');
         if (St.atajo === 'espera') t.push('que se apuntaron y nunca entraron en una mesa');
         if (St.atajo === 'dormidos') t.push('que no vuelven desde hace más de dos meses');
@@ -4955,7 +4977,7 @@ class Component extends DCLogic {
         };
       }),
       notaMapa: 'La cifra es gente verificada: quien no lo está no entra al reparto, así que no puede contar para prometer una mesa. Cuando hay más apuntados que verificados, la tarjeta lo dice.'
-        + ((St.fmtZona || 0) ? ' Ahora mismo solo cuenta a quien marcó ' + ['', 'cenas', 'drinks', 'movimiento', 'coffee'][St.fmtZona] + ' en el cuestionario, y del correo apuntado no sabemos qué formato quiere.' : ''),
+        + ((St.fmtZona || 0) ? ' Ahora mismo solo cuenta a quien marcó ' + ['', 'cenas', 'drinks', 'movimiento', 'coffee', 'brunch'][St.fmtZona] + ' en el cuestionario, y del correo apuntado no sabemos qué formato quiere.' : ''),
 
       busca: St.busca || '',
       hayBusca: !!(St.busca || '').trim(),
@@ -4997,7 +5019,7 @@ class Component extends DCLogic {
           // Los seis de `rootedness_t`. `extranjero` no está: la entrega 7 lo
           // fusionó dentro de `interior` a propósito.
           ['ARRAIGO', 'arraigo', [['Volvió', 'volvio'], ['Se quedó', 'se-quedo'], ['Los mismos', 'mismos'], ['Remoto', 'remoto'], ['Llegó', 'interior'], ['De paso', 'visita']]],
-          ['FORMATO', 'formato', [['Cenas', 'cenas'], ['Drinks', 'drinks'], ['Movimiento', 'movimiento'], ['Coffee', 'coffee']]]
+          ['FORMATO', 'formato', [['Cenas', 'cenas'], ['Drinks', 'drinks'], ['Movimiento', 'movimiento'], ['Coffee', 'coffee'], ['Brunch', 'brunch']]]
         ];
         return DEFS.map((d) => ({
           titulo: d[0],

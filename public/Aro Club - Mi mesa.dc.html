@@ -86,7 +86,7 @@
           </div>
         </div>
 
-        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:20px;max-width:46ch;text-wrap:pretty">Cenas con cinco personas. Te avisamos por correo en cuanto se abra.</div>
+        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:20px;max-width:46ch;text-wrap:pretty">{{ vasCon }} Te avisamos por correo en cuanto se abra.</div>
 
         <sc-if value="{{ sePuedeCancelar }}" hint-placeholder-val="{{ true }}">
           <a href="/cancelar" style="{{ enlaceCancelar }}">Cancelar mi puesto</a>
@@ -829,8 +829,14 @@ class Component extends DCLogic {
     const VOZ = (window.AroReglas && window.AroReglas.vozDe)
       ? window.AroReglas.vozDe(dt && dt.formato)
       : { unidad: 'mesa', unidades: 'mesas', Unidad: 'Mesa', art: 'una', el: 'la',
-          sitio: 'restaurante', sentados: 'sentados', mia: 'Mi mesa', TU: 'TU MESA' };
+          sitio: 'restaurante', sentados: 'sentados', mia: 'Mi mesa', TU: 'TU MESA',
+          conQuien: 'CON QUIÉN VAS', estuviste: 'Estuviste en',
+          vasCon: 'Vas con cinco personas.' };
     const esMesa = VOZ.unidad === 'mesa';
+    // Y cómo se llama el plan. La mesa cerrada decía «Cena · viernes 16»
+    // siempre: con la palabra dentro de la frase, un brunch se anunciaba
+    // como cena mientras el resto de la pantalla ya decía lo suyo.
+    const NOMBRE_PLAN = ((window.AroReglas && window.AroReglas.NOMBRES_DE_FORMATO) || {})[(dt && dt.formato) || 'dinner'] || 'Cena';
     // Qué se hace, cuando el sitio no lo dice: la ruta y el nivel de una
     // caminata no caben en una dirección.
     const act = (dt && dt.actividad) || null;
@@ -1021,7 +1027,12 @@ class Component extends DCLogic {
 
       // --- el vocabulario, derivado del formato ------------------------
       TU: VOZ.TU,
-      conQuien: esMesa ? 'CON QUIÉN CENAS' : 'CON QUIÉN VAS',
+      // La mesa cerrada decía «Cenas con cinco personas» también para una
+      // caminata del domingo. Es la misma frase de siempre cuando se cena.
+      vasCon: VOZ.vasCon,
+      // De la voz, no de «¿hay mesa?»: un café y un brunch tienen mesa y no
+      // son una cena.
+      conQuien: VOZ.conQuien,
       // Una caminata no está «reservada a tu nombre»: no hay reserva que
       // hacer. Lo que hay es dónde y a qué hora se ve la gente.
       selloReserva: esMesa ? 'Reserva a tu nombre' : 'Punto de encuentro',
@@ -1085,7 +1096,7 @@ class Component extends DCLogic {
         : 'Busca al grupo' + (mesaUnica ? ' de Aro' : ' ' + numeroMesa + ' de Aro') + ' en el punto de encuentro. Son ' +
           (['cero','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez'][comensales.length + 1] ||
             (comensales.length + 1)) + ' y nadie lleva cartel: pregunta por Aro.',
-      textoAnoche: (esMesa ? 'Cenaste en ' : 'Estuviste en ') + restaurante +
+      textoAnoche: VOZ.estuviste + ' ' + restaurante +
         (mesaUnica ? '' : ', ' + VOZ.unidad + ' ' + numeroMesa) +
         '. Lo que nos cuentes entra en cómo armamos tu próxima mesa, y nadie más lo ve.',
       sinContar: !this.state.contado,
@@ -1149,7 +1160,7 @@ class Component extends DCLogic {
       tituloEspera: empieza
         ? 'Tienes puesto el ' + DIAS[empieza.getDay()] + '.'
         : 'Tienes puesto.',
-      textoCena: empieza ? 'Cena · ' + DIAS[empieza.getDay()] + ' ' + empieza.getDate() : 'Cena',
+      textoCena: empieza ? NOMBRE_PLAN + ' · ' + DIAS[empieza.getDay()] + ' ' + empieza.getDate() : NOMBRE_PLAN,
       // Las zonas que ella acepto, no la del restaurante: "Chacao o Las
       // Mercedes" es una respuesta a medias, pero es la verdad, y es el
       // precio de poder llenar mesas con poca gente.

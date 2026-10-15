@@ -435,7 +435,7 @@ class Component extends DCLogic {
 
     // Las familias son las cuatro de la pantalla; la base guarda el formato
     // del evento y la API traduce. Aqui solo se nombran.
-    const FAMILIAS = [['cenas', 'Cenas'], ['drinks', 'Drinks'], ['movimiento', 'Movimiento'], ['coffee', 'Coffee']];
+    const FAMILIAS = [['cenas', 'Cenas'], ['drinks', 'Drinks'], ['movimiento', 'Movimiento'], ['coffee', 'Coffee'], ['brunch', 'Brunch']];
     const nombreFamilia = (c) => (FAMILIAS.find((f) => f[0] === c) || [c, c])[1];
     // 1-3, como en la base. El numero no sale a pantalla: solo su etiqueta.
     const RUIDO = [
@@ -593,7 +593,7 @@ class Component extends DCLogic {
       etiqueta: '¿Para qué sirve el sitio?', valor: '', pista: '',
       hayPista: true, ayuda: 'Al menos uno. Una fecha solo se le ofrece si admite ese formato.',
       esTexto: false, esOpciones: true, campo: campoEstilo,
-      opciones: [['cenas','Cenas'],['drinks','Drinks'],['movimiento','Movimiento'],['coffee','Coffee']].map((o) => {
+      opciones: [['cenas','Cenas'],['drinks','Drinks'],['movimiento','Movimiento'],['coffee','Coffee'],['brunch','Brunch']].map((o) => {
         const puestas = a.familias || [];
         const sel = puestas.indexOf(o[0]) >= 0;
         return {

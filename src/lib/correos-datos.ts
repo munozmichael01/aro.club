@@ -6,7 +6,7 @@ import { firmar } from '@/lib/lead-token'
 import { enlaceDeMapa } from '@/lib/mapa'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
-import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
+import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
@@ -327,7 +327,9 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     Unidad: voz.Unidad,
     art: voz.art,
     TU: voz.TU,
-    conQuien: voz.unidad === 'mesa' ? 'CON QUIÉN CENAS' : 'CON QUIÉN VAS',
+    // De la voz, no de «¿hay mesa?»: un café y un brunch tienen mesa y no
+    // son una cena, y esto les decía «CON QUIÉN CENAS» a las once.
+    conQuien: voz.conQuien,
     alGrupo: voz.unidad === 'mesa' ? ' la mesa' : 'l grupo',
   }
 
@@ -1146,11 +1148,6 @@ async function zonaDeLaCiudad(admin: Admin, slug: string | null | undefined): Pr
   return data?.timezone || ZONA_POR_DEFECTO
 }
 
-const FORMATOS: Record<string, string> = {
-  dinner: 'Cena', foodie_dinner: 'Cena foodie', women_dinner: 'Cena de mujeres',
-  drinks: 'Drinks', coffee: 'Coffee', walk: 'Caminata', hike: 'Senderismo',
-  run: 'Correr', padel: 'Pádel', pilates: 'Pilates', cycling: 'Ciclismo',
-}
 
 /**
  * «Hoy es tu cena», por formato.
@@ -1171,6 +1168,7 @@ const LA_DEL: Record<string, string> = {
   women_dinner: 'la cena',
   drinks: 'los drinks',
   coffee: 'el café',
+  brunch: 'el brunch',
   walk: 'la caminata',
   hike: 'el senderismo',
   run: 'la salida a correr',
@@ -1192,6 +1190,7 @@ const OTRA: Record<string, string> = {
   women_dinner: 'Otra cena',
   drinks: 'Otros drinks',
   coffee: 'Otro café',
+  brunch: 'Otro brunch',
   walk: 'Otra caminata',
   hike: 'Otro senderismo',
   run: 'Otra salida a correr',
@@ -1206,6 +1205,7 @@ const HOY_ES: Record<string, string> = {
   women_dinner: 'Hoy es tu cena',
   drinks: 'Hoy son tus drinks',
   coffee: 'Hoy es tu café',
+  brunch: 'Hoy es tu brunch',
   walk: 'Hoy es tu caminata',
   hike: 'Hoy es tu senderismo',
   run: 'Hoy toca correr',
@@ -1215,7 +1215,7 @@ const HOY_ES: Record<string, string> = {
 }
 
 function nombreDelFormato(f: string | null | undefined): string {
-  return FORMATOS[f ?? ''] ?? 'Cena'
+  return NOMBRES_DE_FORMATO[f ?? ''] ?? 'Cena'
 }
 
 function unirCon(xs: string[], y: string): string {

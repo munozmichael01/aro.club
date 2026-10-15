@@ -1,0 +1,22 @@
+-- =====================================================================
+-- El brunch deja de ser un café.
+--
+-- Ayer se partió «Café o desayuno de networking» en dos planes, Café y
+-- Brunch, porque no son lo mismo: un café es media hora a las diez de la
+-- mañana y un brunch es una mesa de domingo. Esa mitad se hizo.
+--
+-- La otra no: los dos siguieron apuntando a la MISMA familia, así que para
+-- avisar eran el mismo plan. Abrir un brunch le habría escrito a quien solo
+-- quiere café, y al revés. Partir una pregunta y no partir lo que se hace con
+-- ella es quedarse con el trabajo y sin el resultado.
+--
+-- Ya se nota en los datos: de 472 respuestas, 252 marcaron café y 260 brunch,
+-- pero 3 marcaron SOLO café y 11 SOLO brunch — los catorce que han contestado
+-- desde que existen por separado. Son pocos porque la pregunta es de ayer, y
+-- van a ser todos.
+--
+-- Así que `brunch` entra como formato de evento, con su hora (11:00) y su
+-- familia. Lo que NO cambia: el reparto, el precio, la verificación y el
+-- vocabulario de mesa — un brunch se sienta, no se camina.
+-- =====================================================================
+alter type event_format_t add value if not exists 'brunch';

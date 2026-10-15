@@ -1185,5 +1185,92 @@ if (relojes.length) {
   }
 }
 
+// --- un formato de evento vive en siete listas -------------------------
+//
+// Añadir `brunch` al enum de la base no basta: el panel lo tiene que ofrecer,
+// el servidor le tiene que poner hora, los locales lo tienen que poder servir
+// y los correos lo tienen que saber nombrar. Siete sitios, y ninguno falla al
+// faltar:
+//
+//   · sin familia, no hay local que lo sirva y nadie sale en los filtros;
+//   · sin hora, la fecha se abre a la hora de una cena;
+//   · sin fila en el panel, no se puede abrir;
+//   · sin nombre en `reglas.js`, Mi mesa y el panel de correos lo llaman
+//     «Cena», que es lo que hacía la mesa cerrada con el brunch;
+//   · sin su frase en los correos, el recordatorio dice «Hoy es tu plan» y
+//     la invitación a otra fecha, «el plan», que es lo que escribe quien no
+//     sabe de qué habla.
+//
+// El enum de la base es el que manda, y se lee de los tipos generados, que
+// es la copia que ya está en el repo.
+{
+  const tipos = fs.readFileSync(new URL('../src/lib/supabase/database.types.ts', import.meta.url), 'utf8')
+  const bloque = tipos.slice(tipos.indexOf('event_format_t: ['))
+  const enLaBase = [...bloque.slice(0, bloque.indexOf(']')).matchAll(/"([a-z_]+)"/g)].map((m) => m[1])
+
+  const formatos = fs.readFileSync(new URL('../src/lib/formatos.ts', import.meta.url), 'utf8')
+  const iniFF = formatos.indexOf('export const FORMATOS_DE_FAMILIA')
+  const abreFF = formatos.indexOf('{', iniFF)
+  // eslint-disable-next-line no-eval
+  const PORFAMILIA = eval('(' + formatos.slice(abreFF, formatos.indexOf('\n}', abreFF) + 2) + ')')
+
+  const panel = fs.readFileSync(new URL('../public/Aro Club - Operacion.dc.html', import.meta.url), 'utf8')
+  const tabla = panel.slice(panel.indexOf('const FORMATOS = ['))
+  const enElPanel = [...tabla.slice(0, tabla.indexOf('];')).matchAll(/'([a-z_]+)',\s*\d+\]/g)].map((m) => m[1])
+
+  const fechas = fs.readFileSync(new URL('../src/app/api/operacion/fechas/route.ts', import.meta.url), 'utf8')
+  const horas = fechas.slice(fechas.indexOf('const HORA_DE'))
+  const conHora = [...horas.slice(0, horas.indexOf('\n}')).matchAll(/([a-z_]+):\s*'\d\d:\d\d'/g)].map((m) => m[1])
+
+  const reglasJs = fs.readFileSync(new URL('../public/reglas.js', import.meta.url), 'utf8')
+  const nombres = reglasJs.slice(reglasJs.indexOf('NOMBRES_DE_FORMATO: {'))
+  const conNombre = [...nombres.slice(0, nombres.indexOf('},')).matchAll(/([a-z_]+):\s*'/g)].map((m) => m[1])
+
+  const correos = fs.readFileSync(new URL('../src/lib/correos-datos.ts', import.meta.url), 'utf8')
+  const mapa = (nombre) => {
+    const ini = correos.indexOf(`const ${nombre}: Record<string, string> = {`)
+    if (ini < 0) return null
+    const trozo = correos.slice(correos.indexOf('{', ini))
+    return [...trozo.slice(0, trozo.indexOf('\n}')).matchAll(/([a-z_]+):\s*'/g)].map((m) => m[1])
+  }
+
+  const listas = [
+    ['familia (src/lib/formatos.ts)', Object.values(PORFAMILIA).flat(), 'no habrá local que lo sirva ni filtro que lo encuentre'],
+    ['hora (/api/operacion/fechas)', conHora, 'la fecha se abriría a la hora de una cena'],
+    ['fila del panel (Operación)', enElPanel, 'no se puede abrir una fecha con ese formato'],
+    ['nombre (reglas.js)', conNombre, 'la mesa cerrada y el panel de correos lo llamarían «Cena»'],
+    ['«Hoy es tu…» (correos-datos)', mapa('HOY_ES'), 'el recordatorio diría «Hoy es tu plan»'],
+    ['«la cena del…» (correos-datos)', mapa('LA_DEL'), 'nombrar otra fecha diría «el plan»'],
+    ['«Otra cena» (correos-datos)', mapa('OTRA'), 'la invitación a otra fecha diría «Otro plan»'],
+  ]
+
+  let fallos = 0
+  for (const [donde, lista, consecuencia] of listas) {
+    if (!lista) {
+      errores++
+      fallos++
+      console.error(`\n✗ no encuentro la lista de ${donde}`)
+      continue
+    }
+    const faltan = enLaBase.filter((f) => !lista.includes(f))
+    const sobran = lista.filter((f) => !enLaBase.includes(f))
+    if (!faltan.length && !sobran.length) continue
+    errores++
+    fallos++
+    console.error(`\n✗ formatos de evento → ${donde}`)
+    if (faltan.length) {
+      console.error(`  el enum de la base tiene y esa lista no: ${faltan.join(', ')}`)
+      console.error(`  → ${consecuencia}`)
+    }
+    if (sobran.length) {
+      console.error(`  esa lista tiene y el enum de la base no: ${sobran.join(', ')}`)
+      console.error('  → se puede elegir algo que la columna rechaza')
+    }
+  }
+  if (!fallos) {
+    console.log(`✓ los ${enLaBase.length} formatos de evento, en sus siete listas`)
+  }
+}
+
 console.log(`\n${errores} descuadres de código · ${avisos} avisos de texto`)
 process.exit(errores ? 1 : 0)

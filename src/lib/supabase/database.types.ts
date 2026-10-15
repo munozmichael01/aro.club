@@ -3861,6 +3861,7 @@ export type Database = {
         | "juego"
         | "disculpa_verificacion"
         | "cena_edad_minima"
+        | "mensaje"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -3873,6 +3874,7 @@ export type Database = {
         | "padel"
         | "pilates"
         | "cycling"
+        | "brunch"
       event_status_t:
         | "draft"
         | "open"
@@ -4099,6 +4101,7 @@ export const Constants = {
         "juego",
         "disculpa_verificacion",
         "cena_edad_minima",
+        "mensaje",
       ],
       event_format_t: [
         "dinner",
@@ -4112,6 +4115,7 @@ export const Constants = {
         "padel",
         "pilates",
         "cycling",
+        "brunch",
       ],
       event_status_t: [
         "draft",

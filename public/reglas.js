@@ -885,6 +885,8 @@
       art: 'una', Art: 'Una', esta: 'esta', tu: 'tu', La: 'La', el: 'la',
       sitio: 'restaurante', Sitio: 'Restaurante', sitioCorto: 'el sitio',
       sentados: 'sentados', juntarse: 'sentarse', mia: 'Mi mesa', TU: 'TU MESA',
+      conQuien: 'CON QUIÉN VAS', estuviste: 'Estuviste en',
+      vasCon: 'Vas con cinco personas.',
     },
 
     VOZ_GRUPO: {
@@ -892,6 +894,8 @@
       art: 'un', Art: 'Un', esta: 'este', tu: 'tu', La: 'El', el: 'el',
       sitio: 'punto de encuentro', Sitio: 'Punto de encuentro', sitioCorto: 'el punto',
       sentados: 'repartidos', juntarse: 'juntarse', mia: 'Mi grupo', TU: 'TU GRUPO',
+      conQuien: 'CON QUIÉN VAS', estuviste: 'Estuviste en',
+      vasCon: 'Vas con cinco personas.',
     },
 
     /**
@@ -1135,15 +1139,52 @@
       return mazo.slice(0, api.JUEGO.porRonda)
     },
 
+    /**
+     * Cómo se llama cada formato, para enseñarlo.
+     *
+     * Estaba escrito cuatro veces: en los correos, en el panel, en tres
+     * pantallas del miembro y en la app. Mi mesa tenía «Cena · viernes 16»
+     * con la palabra dentro de la frase, así que el brunch del domingo salía
+     * llamándose cena mientras el resto de la pantalla ya decía lo correcto.
+     *
+     * Aquí porque lo leen los tres: navegador, servidor y app.
+     */
+    NOMBRES_DE_FORMATO: {
+      dinner: 'Cena', foodie_dinner: 'Cena foodie', women_dinner: 'Cena de mujeres',
+      drinks: 'Drinks', coffee: 'Coffee', brunch: 'Brunch',
+      walk: 'Caminata', hike: 'Senderismo', run: 'Correr',
+      padel: 'Pádel', pilates: 'Pilates', cycling: 'Ciclismo',
+    },
+
     /** Los formatos que salen a la calle: ahí no hay mesa. */
     DE_MOVIMIENTO: ['walk', 'hike', 'run', 'padel', 'pilates', 'cycling'],
+
+    /**
+     * Los que son una cena. Son los únicos que pueden decir «cenas».
+     *
+     * La voz se partía en dos —mesa o grupo— y el verbo salía de ahí: si hay
+     * mesa, se cena. Pero un café a las diez de la mañana tiene mesa, y un
+     * brunch del domingo a las once también, así que el correo de la
+     * revelación les decía «CON QUIÉN CENAS» y Mi mesa, después, «Cenaste
+     * en». Los drinks de las ocho llevan el mismo error desde que existen.
+     *
+     * Son tres y no una familia porque esto no es «dónde se sienta la
+     * gente», es qué comida es. La lista dice quién SÍ cena; lo que no esté
+     * aquí usa la frase neutra. Así un formato nuevo —un almuerzo, una
+     * merienda— entra diciendo algo verdadero sin que nadie se acuerde de
+     * esta tabla.
+     */
+    DE_CENA: ['dinner', 'foodie_dinner', 'women_dinner'],
 
     /**
      * La voz de un formato. Sin formato —o con uno que no conocemos— se
      * habla de mesa, que es lo que era el producto entero hasta ahora.
      */
     vozDe: function (formato) {
-      return api.DE_MOVIMIENTO.indexOf(String(formato || '')) >= 0 ? api.VOZ_GRUPO : api.VOZ_MESA
+      var f = String(formato || '')
+      if (api.DE_MOVIMIENTO.indexOf(f) >= 0) return api.VOZ_GRUPO
+      if (api.DE_CENA.indexOf(f) >= 0) return vozDeCena()
+      return api.VOZ_MESA
     },
 
     /**
@@ -1182,6 +1223,26 @@
       }
       return null
     },
+  }
+
+  /**
+   * La voz de una cena: la de la mesa, con los verbos de cenar.
+   *
+   * Copia en vez de una cuarta tabla escrita a mano: de las dieciocho
+   * palabras de `VOZ_MESA` una cena solo cambia dos, y una tabla entera para
+   * eso son dieciséis sitios donde divergir. Se arma una vez y se guarda.
+   */
+  var cena = null
+  function vozDeCena() {
+    if (cena) return cena
+    cena = {}
+    for (var k in api.VOZ_MESA) {
+      if (Object.prototype.hasOwnProperty.call(api.VOZ_MESA, k)) cena[k] = api.VOZ_MESA[k]
+    }
+    cena.conQuien = 'CON QUIÉN CENAS'
+    cena.estuviste = 'Cenaste en'
+    cena.vasCon = 'Cenas con cinco personas.'
+    return cena
   }
 
   raiz.AroReglas = api

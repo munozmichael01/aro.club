@@ -35,7 +35,7 @@ const alta = z.object({
   nombre: z.string().min(1).max(120),
   zona: z.string().min(1),
   direccion: z.string().max(300).optional(),
-  familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee'])).min(1),
+  familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch'])).min(1),
   aforo: z.number().int().min(1).max(20),
   ruido: z.number().int().min(1).max(3),
   // Qué se come. Los mismos códigos que la pregunta «comidas» del
@@ -172,7 +172,7 @@ const cambio = z.discriminatedUnion('accion', [
   z.object({
     accion: z.literal('familias'),
     id: z.string().uuid(),
-    familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee'])).min(1),
+    familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch'])).min(1),
   }),
 ])
 

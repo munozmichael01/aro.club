@@ -191,7 +191,7 @@ class Component extends DCLogic {
     const D = this.state.datos;
     const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
     const MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-    const NOMBRE = { dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' };
+    const NOMBRE = { dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee', brunch: 'Brunch' };
     const cuando = D && D.empiezaEn ? new Date(D.empiezaEn) : null;
     const hhmm = (f) => {
       let h = f.getHours(); const m = f.getMinutes();
