@@ -47,12 +47,27 @@ export function proximaTanda(zona: string, ahora: Date = new Date()): Date {
 
   for (const hora of TANDAS) {
     if (minutos < hora * 60 - MARGEN_HORAS * 60) {
-      return new Date(ahora.getTime() + (hora * 60 - minutos) * 60_000)
+      return enPunto(ahora, (hora * 60 - minutos) * 60_000)
     }
   }
 
   // Pasado el margen de la última: mañana, en la primera.
-  return new Date(ahora.getTime() + ((24 + TANDAS[0]) * 60 - minutos) * 60_000)
+  return enPunto(ahora, ((24 + TANDAS[0]) * 60 - minutos) * 60_000)
+}
+
+/**
+ * La tanda, en punto.
+ *
+ * Sin esto, dos fechas abiertas con un minuto de diferencia caen en
+ * `12:00:58` y `12:03:10`: la misma tanda para cualquiera que lo lea, y dos
+ * instantes distintos para el código que tiene que decidir si dos avisos
+ * viajan en el mismo sobre. Los segundos se tiran, que además es lo que se
+ * promete: a las doce.
+ */
+function enPunto(ahora: Date, dentroDe: number): Date {
+  const t = new Date(ahora.getTime() + dentroDe)
+  t.setUTCSeconds(0, 0)
+  return t
 }
 
 /** El día de calendario de un instante, en la zona de la ciudad: «2026-10-15». */
@@ -62,10 +77,13 @@ export function diaDe(instante: Date, zona: string): string {
   return `${p.ano}-${String(p.mesNumero).padStart(2, '0')}-${String(p.numero).padStart(2, '0')}`
 }
 
+/** Si dos avisos caen en la misma tanda, o sea en el mismo sobre. */
+export const mismaTanda = (a: Date, b: Date): boolean => a.getTime() === b.getTime()
+
 /** La primera tanda del día siguiente al de `instante`. */
 export function tandaDeManana(instante: Date, zona: string): Date {
   const p = partesDe(instante.toISOString(), zona)
   if (!p) return new Date(instante.getTime() + 24 * 60 * 60_000)
   const minutos = p.horas * 60 + p.minutos
-  return new Date(instante.getTime() + ((24 + TANDAS[0]) * 60 - minutos) * 60_000)
+  return enPunto(instante, ((24 + TANDAS[0]) * 60 - minutos) * 60_000)
 }

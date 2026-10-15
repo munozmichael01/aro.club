@@ -486,6 +486,34 @@ export async function despacharPendientes(
       grupos.set(clave, [...(grupos.get(clave) ?? []), fila])
     }
 
+    /**
+     * Y los hermanos que se quedaron fuera del tope de veinticinco.
+     *
+     * La vuelta coge 25 filas por `send_at`, y a las doce habrá trescientas
+     * con la misma hora: las dos de una misma persona pueden caer en vueltas
+     * distintas y entonces el sobre único se parte en dos, que es justo lo
+     * que esto venía a evitar. Se traen aquí, y al cerrarse con su grupo ya
+     * no vuelven a salir.
+     */
+    if (grupos.size && !(seco && filaId)) {
+      const deLaVuelta = [...grupos.values()].flat()
+      const { data: hermanos } = await admin
+        .from('scheduled_emails')
+        .select('id, profile_id, email, kind, event_id, payload, push_at, push_motivo')
+        .is('sent_at', null)
+        .lte('send_at', new Date().toISOString())
+        .in('profile_id', [...new Set(deLaVuelta.map((f) => f.profile_id as string))])
+        .in('kind', [...new Set(deLaVuelta.map((f) => f.kind))])
+
+      for (const h of (hermanos ?? []) as Fila[]) {
+        if (!h.profile_id || !h.event_id) continue
+        const clave = `${h.profile_id}|${h.kind}`
+        const ya = grupos.get(clave)
+        if (!ya || ya.some((f) => f.id === h.id)) continue
+        grupos.set(clave, [...ya, h])
+      }
+    }
+
     for (const [, filas] of grupos) {
       if (filas.length === 1) {
         sueltas.push(filas[0])

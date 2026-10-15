@@ -39,7 +39,7 @@ import { HORAS_DE_CIERRE, PRECIO_USD } from '@/lib/reglas'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 
 import { quienQuiereSaberDe } from '@/lib/a-quien-avisar'
-import { diaDe, proximaTanda, tandaDeManana } from '@/lib/tandas'
+import { diaDe, mismaTanda, proximaTanda, tandaDeManana } from '@/lib/tandas'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 
 /** Y a mediodía se revela todo. */
@@ -169,10 +169,21 @@ async function avisarDeLaApertura(
     .gte('send_at', desde)
     .in('profile_id', [...quieren])
 
-  // Los que ya tienen un aviso ESE día, sea mandado o esperando su tanda.
+  /**
+   * Los que ya tienen un aviso ESE día en OTRA tanda.
+   *
+   * En la misma no estorba: los dos salen en el mismo sobre, que es
+   * justamente lo que se quiere. Contarlos como ocupados era empujar a
+   * mañana a quien iba a recibir las dos fechas juntas hoy —49 personas la
+   * primera vez que se usó— y convertir un correo con dos planes en dos
+   * correos de uno.
+   */
   const ocupados = new Set(
     (yaTienen ?? [])
-      .filter((r) => diaDe(new Date(r.send_at), zona) === diaDeLaTanda)
+      .filter((r) => {
+        const suya = new Date(r.send_at)
+        return diaDe(suya, zona) === diaDeLaTanda && !mismaTanda(suya, tanda)
+      })
       .map((r) => r.profile_id),
   )
 
