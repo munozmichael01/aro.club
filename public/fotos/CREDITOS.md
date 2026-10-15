@@ -28,6 +28,7 @@ Si el token cambia, la del correo hay que volver a generarla. La de la web no.
 | Fichero | Origen |
 |---|---|
 | `mesa-de-seis.jpg` | La aportó Michael (`docs/Dinner_with_friends.jpg`) |
+| `brunch.jpg` | Entrega 21 de Design. Pexels, licencia libre, de Viktoria Alipatova. **Provisional** hasta tener fotos propias de brunch. Viene ya etalonada, no al natural. |
 | las demás | vinieron con las entregas de Design |
 
 De la original solo se corrigió la saturación: venía en 164 y las demás están

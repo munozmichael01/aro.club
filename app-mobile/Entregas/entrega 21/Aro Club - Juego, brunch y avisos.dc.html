@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&amp;family=Inter+Tight:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+<style>body{margin:0;background:#F2E9D5;color:#14342A}a{color:#8F4515}a:hover{color:#14342A}</style>
+</helmet>
+
+<section style="padding:64px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:980px">
+    <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">PARA CODE · TRES PEDIDOS</div>
+    <div style="font:400 44px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em">El juego antes y después, el brunch y los avisos del día</div>
+  </div>
+
+  <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-top:12px">1 · LA TARJETA DEL JUEGO EN MI MESA · APP Y WEB</div>
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+    <div id="1a" style="display:flex;flex-direction:column;gap:14px;width:360px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#1B5138;color:#FAF3E4;padding:6px 9px;border-radius:999px">1a</span><span style="font:600 15px/1.2 'Inter Tight',sans-serif">Antes de la hora de la cena</span></div>
+      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty;min-height:84px">Se ve qué hay, pero no se puede abrir. Las rondas a media luz y sin «Ir». En el sitio del botón, el candado y la hora. Nada pulsable: así nadie lee las preguntas antes de sentarse.</div>
+      <div style="border-radius:22px;background:#14342A;color:#FAF3E4;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;min-height:44px">
+          <div style="flex:1;min-width:0"><div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em">El juego de la mesa</div><div style="font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">3 rondas · se abre a la hora de la cena</div></div>
+        </div>
+        <div style="padding:0 18px 18px;display:flex;flex-direction:column">
+          <div style="opacity:.45;display:flex;flex-direction:column">
+            <sc-for list="{{ rondas }}" as="r" hint-placeholder-count="3">
+              <div style="display:grid;grid-template-columns:30px minmax(0,1fr);align-items:start;gap:8px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)">
+                <div style="font:400 20px/1.1 'Young Serif',Georgia,serif;color:#E39C63">{{ r.n }}</div>
+                <div style="display:flex;flex-direction:column;gap:4px"><div style="font:400 18px/1.15 'Young Serif',Georgia,serif">{{ r.t }}</div><div style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#C5D8CA">{{ r.d }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:12px;min-height:48px;border-radius:999px;border:1px solid rgba(250,243,228,.25);padding:0 18px">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex:none"><path d="M6.5 10.5h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2zM8 10.5V7.5a4 4 0 0 1 8 0v3" stroke="#E39C63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            <div style="font:500 14px/1.3 'Inter Tight',sans-serif;color:#FAF3E4">Se abre a las 7:30 p.m., a la hora de la cena.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="1b" style="display:flex;flex-direction:column;gap:14px;width:360px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#1B5138;color:#FAF3E4;padding:6px 9px;border-radius:999px">1b</span><span style="font:600 15px/1.2 'Inter Tight',sans-serif">Jugado entero</span></div>
+      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty;min-height:84px">La tarjeta se cierra sola y repite la última frase del juego. Sin botón principal: lo de ahora es la mesa, no el teléfono. Volver a jugar queda como enlace pequeño, para quien quiera.</div>
+      <div style="border-radius:22px;background:#14342A;color:#FAF3E4;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;min-height:44px">
+          <div style="flex:1;min-width:0"><div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em">El juego de la mesa</div><div style="font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">Jugado · 3 de 3 rondas</div></div>
+          <span style="flex:none;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;color:#9CBBA6;border:1px solid rgba(156,187,166,.5);font:600 11px/1 'Inter Tight',sans-serif">Hecho</span>
+        </div>
+        <div style="padding:6px 18px 18px;display:flex;flex-direction:column;gap:14px;border-top:1px solid rgba(250,243,228,.15)">
+          <div style="padding-top:12px;font:400 26px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Hasta aquí el juego. <span style="color:#E39C63">Lo demás es suyo.</span></div>
+          <div style="display:flex;align-items:center;min-height:44px;color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px">Volver a jugar</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="1c" style="display:flex;flex-direction:column;gap:14px;width:360px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#1B5138;color:#FAF3E4;padding:6px 9px;border-radius:999px">1c</span><span style="font:600 15px/1.2 'Inter Tight',sans-serif">Terminado antes · «Terminar aquí»</span></div>
+      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty;min-height:84px">Igual que 1b, pero dice cuántas rondas se jugaron. La que quedó sin jugar sigue disponible desde «Volver a jugar», que abre las rondas con su «Ir» como en 4c y 4d de la entrega 20.</div>
+      <div style="border-radius:22px;background:#14342A;color:#FAF3E4;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;min-height:44px">
+          <div style="flex:1;min-width:0"><div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em">El juego de la mesa</div><div style="font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">Jugado · 2 de 3 rondas</div></div>
+          <span style="flex:none;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;color:#9CBBA6;border:1px solid rgba(156,187,166,.5);font:600 11px/1 'Inter Tight',sans-serif">Hecho</span>
+        </div>
+        <div style="padding:6px 18px 18px;display:flex;flex-direction:column;gap:14px;border-top:1px solid rgba(250,243,228,.15)">
+          <div style="padding-top:12px;font:400 26px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Hasta aquí el juego. <span style="color:#E39C63">Lo demás es suyo.</span></div>
+          <div style="display:flex;align-items:center;min-height:44px;color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px">Volver a jugar</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-top:40px">2 · BRUNCH · QUINTA FAMILIA</div>
+  <div style="display:flex;flex-wrap:wrap;gap:56px;align-items:flex-start">
+
+    <div id="2a" style="display:flex;flex-direction:column;gap:14px;width:420px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#1B5138;color:#FAF3E4;padding:6px 9px;border-radius:999px">2a</span><span style="font:600 15px/1.2 'Inter Tight',sans-serif">Polaroid del filtro · tamaño real</span></div>
+      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Mesa vista desde arriba, de mañana: café, huevos, manos. Mismo etalonado que el café. Giro 1.6deg, que alterna con el −1.4deg del café. La apagada, en blanco y negro como las otras cuatro.</div>
+      <div style="display:flex;gap:12px;padding:20px 16px;background:#FAF3E4;border-radius:18px">
+        <sc-for list="{{ polas }}" as="p" hint-placeholder-count="3">
+          <div style="{{ p.marco }}">
+            <div style="aspect-ratio:1;overflow:hidden;border-radius:6px;background:#DCD3BC"><img src="{{ p.foto }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" /></div>
+            <div style="{{ p.nombreEstilo }}">{{ p.nombre }}</div>
+            <div style="font:500 11px/14px 'Inter Tight',sans-serif;text-align:center;padding:3px 0 9px;color:#566A5D">{{ p.detalle }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div id="2b" style="display:flex;flex-direction:column;gap:14px;width:380px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#1B5138;color:#FAF3E4;padding:6px 9px;border-radius:999px">2b</span><span style="font:600 15px/1.2 'Inter Tight',sans-serif">Icono y color</span></div>
+      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">El sol saliendo sobre la línea: medio disco apoyado en el horizonte. Es de la misma familia geométrica que los otros cuatro (◗ ◇ ◢ ◉) y no se confunde con el medio plato de las cenas, que va de pie.</div>
+      <div style="display:flex;gap:18px;align-items:flex-end;padding:20px;background:#FAF3E4;border-radius:18px">
+        <sc-for list="{{ iconos }}" as="i" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+            <span style="{{ i.chip }}"><svg width="15" height="15" viewBox="0 0 16 16"><path d="{{ i.d }}" fill="{{ i.fill }}" stroke="{{ i.stroke }}" stroke-width="{{ i.sw }}" stroke-linejoin="round" stroke-linecap="round"></path><path d="{{ i.d2 }}" fill="{{ i.fill2 }}" stroke="{{ i.stroke2 }}" stroke-width="{{ i.sw2 }}" stroke-linecap="round"></path></svg></span>
+            <span style="font:500 11px/1 'Inter Tight',sans-serif;color:#566A5D">{{ i.n }}</span>
+          </div>
+        </sc-for>
+        <div style="margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:8px">
+          <svg width="64" height="64" viewBox="0 0 16 16"><path d="M3.4 10.6a4.6 4.6 0 0 1 9.2 0z" fill="#8F4515"></path><path d="M2 13h12" stroke="#8F4515" stroke-width="1.5" stroke-linecap="round"></path></svg>
+          <span style="font:500 11px/1 'Inter Tight',sans-serif;color:#566A5D">a 64 px</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding:18px 20px;background:#FFFBF0;border-radius:18px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F">
+        <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:8px;background:#8F4515;flex:none"></span><span><strong style="color:#14342A">tinta #8F4515</strong> · quemado del sistema. 6,3 : 1 sobre crema.</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:8px;background:rgba(227,156,99,.24);flex:none"></span><span><strong style="color:#14342A">fondo rgba(227,156,99,.24)</strong> · melocotón al 24 %.</span></div>
+        <div style="text-wrap:pretty">Es el único que lleva melocotón de fondo: las cenas usan naranja al 14 %, así que en la agenda se distinguen por el fondo aunque las dos tintas sean cálidas. Y es la mañana, que es lo que el brunch es.</div>
+      </div>
+    </div>
+
+    <div id="2c" style="display:flex;flex-direction:column;gap:14px;width:360px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#1B5138;color:#FAF3E4;padding:6px 9px;border-radius:999px">2c</span><span style="font:600 15px/1.2 'Inter Tight',sans-serif">En la fila de la agenda</span></div>
+      <div style="display:flex;flex-direction:column;background:#FFFBF0;border-radius:18px;padding:6px 18px">
+        <sc-for list="{{ filas }}" as="f" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #E6DDC6">
+            <span style="{{ f.chip }}"><svg width="15" height="15" viewBox="0 0 16 16"><path d="{{ f.d }}" fill="{{ f.fill }}" stroke="{{ f.stroke }}" stroke-width="{{ f.sw }}" stroke-linecap="round"></path><path d="{{ f.d2 }}" fill="none" stroke="{{ f.stroke2 }}" stroke-width="1.5" stroke-linecap="round"></path></svg></span>
+            <div style="flex:1;min-width:0"><div style="font:400 17px/1.2 'Young Serif',Georgia,serif">{{ f.dia }}</div><div style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#566A5D">{{ f.meta }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-top:40px">3 · CORREO 23 · LOS AVISOS DEL DÍA</div>
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+    <div id="3a" style="display:flex;flex-direction:column;gap:14px;width:600px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#1B5138;color:#FAF3E4;padding:6px 9px;border-radius:999px">3a</span><span style="font:600 15px/1.2 'Inter Tight',sans-serif">Dos que se abrieron y una que cierra mañana</span></div>
+      <iframe src="correo/ejemplo-mezcla.html" style="width:600px;height:1180px;border:0;border-radius:14px;background:#FAF3E4"></iframe>
+    </div>
+    <div id="3b" style="display:flex;flex-direction:column;gap:14px;width:600px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#1B5138;color:#FAF3E4;padding:6px 9px;border-radius:999px">3b</span><span style="font:600 15px/1.2 'Inter Tight',sans-serif">Cinco aperturas · se cortan en tres</span></div>
+      <iframe src="correo/ejemplo-cuatro-o-mas.html" style="width:600px;height:1180px;border:0;border-radius:14px;background:#FAF3E4"></iframe>
+    </div>
+    <div id="3c" style="display:flex;flex-direction:column;gap:12px;width:380px;font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#1B5138;color:#FAF3E4;padding:6px 9px;border-radius:999px">3c</span><span style="font:600 15px/1.2 'Inter Tight',sans-serif;color:#14342A">Las reglas</span></div>
+      <div><strong style="color:#14342A">Qué pierde tamaño.</strong> El día deja de ser el bloque verde de 72 px y pasa a ser la línea grande de cada fila, en Young Serif a 24. El titular pasa a ser la cuenta.</div>
+      <div><strong style="color:#14342A">La distinción.</strong> Dos tarjetas: las que se abrieron en crema, con «SE ABRIÓ» en verde; las de plazo en melocotón claro, con «SE CIERRA MAÑANA» en quemado y una línea más con la hora de cierre. Si solo hay de una clase, solo sale esa tarjeta.</div>
+      <div><strong style="color:#14342A">Orden.</strong> Primero las que se abrieron, porque son la noticia. El plazo va debajo y se distingue por color, no por posición.</div>
+      <div><strong style="color:#14342A">Cuatro o más.</strong> Las de apertura se cortan en tres y debajo va «Y dos más en la agenda.» (masAbiertas). Las de plazo salen todas: un plazo escondido es un plazo perdido, y casi nunca pasan de dos.</div>
+      <div><strong style="color:#14342A">Precio.</strong> Cabe por fila, al final de la línea de datos. Va dentro de un bloque «si precio»: si un día valen todas lo mismo, se puede dejar en una sola fila sin tocar la plantilla.</div>
+      <div><strong style="color:#14342A">Titular.</strong> Dos variables: titular y titularAcento, la segunda en quemado. Ejemplos: «Tres planes / en tus zonas.» si hay mezcla; «Se abrieron / cinco fechas.» si son solo aperturas; «Dos fechas / cierran mañana.» si son solo plazos.</div>
+      <div><strong style="color:#14342A">Archivo.</strong> correo/23-avisos-del-dia.html, con la misma sintaxis que las otras veintidós: si, no y cada.</div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const marco = (rot, sel) => `width:112px;flex:none;box-sizing:border-box;background:#FFFFFF;padding:7px 7px 0;border-radius:4px;border:2px solid ${sel ? '#8F4515' : 'transparent'};box-shadow:0 6px 14px rgba(20,52,42,.14);transform:rotate(${sel ? 0 : rot}deg)`;
+    const nom = (c) => `font:400 16px/23px 'Young Serif',Georgia,serif;text-align:center;padding-top:8px;color:${c}`;
+    const cenas = { d: 'M5 2.5a5.5 5.5 0 0 1 0 11z', fill: '#C0662F', stroke: 'none', sw: 0 };
+    const chip = (bg) => `width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;background:${bg}`;
+    const ic = [
+      { n: 'Cenas', chip: chip('rgba(192,102,47,.14)'), d: 'M5 2.5a5.5 5.5 0 0 1 0 11z', fill: '#C0662F', stroke: 'none', sw: 0 },
+      { n: 'Drinks', chip: chip('rgba(27,81,56,.12)'), d: 'M8 2.2 13.8 8 8 13.8 2.2 8z', fill: 'none', stroke: '#1B5138', sw: 1.5 },
+      { n: 'Movim.', chip: chip('rgba(45,106,79,.14)'), d: 'M13.5 2.5v11h-11z', fill: '#2D6A4F', stroke: 'none', sw: 0 },
+      { n: 'Coffee', chip: chip('rgba(86,106,93,.14)'), d: 'M8 2.4a5.6 5.6 0 1 1 0 11.2a5.6 5.6 0 1 1 0-11.2z', fill: 'none', stroke: '#566A5D', sw: 1.4, d2: 'M8 5a3 3 0 1 1 0 6a3 3 0 1 1 0-6z', fill2: '#566A5D' },
+      { n: 'Brunch', chip: chip('rgba(227,156,99,.24)'), d: 'M3.4 10.6a4.6 4.6 0 0 1 9.2 0z', fill: '#8F4515', stroke: 'none', sw: 0, d2: 'M2 13h12', stroke2: '#8F4515', sw2: 1.5 }
+    ].map((x) => ({ d2: '', fill2: 'none', stroke2: 'none', sw2: 0, ...x }));
+    return {
+      rondas: [
+        { n: '1', t: 'Para arrancar', d: 'Ligera. Luego, a comer.' },
+        { n: '2', t: 'Un poco más de ti', d: 'Si la mesa va bien sola, no hace falta.' },
+        { n: '3', t: 'Si la mesa quiere ir más hondo', d: 'Más personal. Cualquiera puede pasar.' }
+      ],
+      polas: [
+        { marco: marco(-1.4, false), foto: 'ref/filtro-coffee.jpg', nombre: 'Coffee', nombreEstilo: nom('#14342A'), detalle: 'Sábado' },
+        { marco: marco(1.6, false), foto: 'brunch/filtro-brunch.jpg', nombre: 'Brunch', nombreEstilo: nom('#14342A'), detalle: 'Domingo' },
+        { marco: marco(1.6, false), foto: 'brunch/filtro-brunch-apagada.jpg', nombre: 'Brunch', nombreEstilo: nom('#566A5D'), detalle: 'Próximamente' }
+      ],
+      iconos: ic,
+      filas: [
+        { chip: chip('rgba(227,156,99,.24)'), d: 'M3.4 10.6a4.6 4.6 0 0 1 9.2 0z', fill: '#8F4515', stroke: 'none', sw: 0, d2: 'M2 13h12', stroke2: '#8F4515', dia: 'Domingo 25 · 11:00 a.m.', meta: 'Brunch · Chacao · 10 ref' },
+        { chip: chip('rgba(192,102,47,.14)'), d: 'M5 2.5a5.5 5.5 0 0 1 0 11z', fill: '#C0662F', stroke: 'none', sw: 0, d2: '', stroke2: 'none', dia: 'Jueves 29 · 7:30 p.m.', meta: 'Cena · Altamira · 8 ref' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
