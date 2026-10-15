@@ -37,3 +37,13 @@ test('sin hora no hay guion; dos momentos a la misma hora están en curso a la v
   assert.equal(enCurso(p, Date.parse(EMPIEZA) - 60_000), null)
   assert.equal(enCurso(p, Date.parse(EMPIEZA) + 16 * 60_000), '2026-10-16T23:45:00.000Z')
 })
+
+test('el momento de la cena: antes, en curso y terminada desde la despedida', async () => {
+  const { momentoDeCena, sinSufijo } = await import('../src/mesa/guion')
+  const p = pasos(EMPIEZA)
+  assert.equal(momentoDeCena(p, Date.parse(EMPIEZA) - 1), 'antes')
+  assert.equal(momentoDeCena(p, Date.parse(EMPIEZA)), 'curso')
+  assert.equal(momentoDeCena(p, Date.parse(hora(p, 'despedida'))), 'terminada')
+  assert.equal(sinSufijo('7:30 p.m.'), '7:30')
+  assert.equal(sinSufijo('12:05 a.m.'), '12:05')
+})

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&amp;family=Inter+Tight:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+<style>body{margin:0;background:#E9E1CE;color:#14342A}a{color:#1B5138}a:hover{color:#8F4515}</style>
+</helmet>
+
+<section style="padding:56px;display:flex;flex-direction:column;gap:36px;font-family:'Inter Tight',sans-serif">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:980px">
+    <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">MI MESA · APP Y WEB · VIERNES 16 Y SÁBADO 17</div>
+    <div style="font:400 44px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em">Mi mesa · paso a paso, sitios y juego</div>
+    <div style="font:400 17px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Versión final para Code. Mi mesa, de arriba abajo: tarjeta de la mesa con la foto de la entrada → Con quién cenas → Paso a paso → El juego de la mesa → Cancelar. Las tres tarjetas se despliegan; el estado decide cuál se abre. Debajo, las pantallas del juego. Todo se puede tocar. En web, la misma columna centrada a 440 px.</div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+    <sc-for list="{{ pantallas4 }}" as="p" hint-placeholder-count="3">
+      <div id="{{ p.id }}" style="display:flex;flex-direction:column;gap:14px;width:390px">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#C0662F;color:#FAF3E4;padding:6px 9px;border-radius:999px">{{ p.id }}</span><span style="font:400 20px/1.1 'Young Serif',Georgia,serif">{{ p.label }}</span></div>
+        <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;min-height:42px;text-wrap:pretty">{{ p.nota }}</div>
+        <div style="width:390px;background:#FAF3E4;border-radius:44px;border:10px solid #14342A;box-sizing:border-box;overflow:hidden;padding:56px 18px 34px;display:flex;flex-direction:column;gap:12px">
+
+          <div style="border-radius:24px;background:#14342A;color:#FAF3E4;padding:18px 18px 16px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="display:inline-flex;align-items:center;min-height:26px;padding:0 11px;border-radius:999px;background:#E39C63;color:#14342A;font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em">{{ p.sello }}</span>
+              <span style="font:500 13px/1 'Inter Tight',sans-serif;color:#C5D8CA">Viernes 16 · 7:30 p.m.</span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:16px;margin-top:14px">
+              <div style="flex:0 0 auto"><div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#9CBBA6">MESA</div><div style="font:700 48px/1 'Inter Tight',sans-serif;letter-spacing:-.05em;margin-top:4px">04</div></div>
+              <div style="flex:1;min-width:0;padding-bottom:3px"><div style="font:400 24px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.02em">Cardenal</div><div style="font:400 14px/1.4 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:4px">Calle Madrid, Las Mercedes</div></div>
+            </div>
+            <div style="margin-top:14px;border-radius:16px;overflow:hidden;background:#1B5138">
+              <div style="height:180px;background:url('./fachada-ejemplo.jpg') center 40%/cover"></div>
+              <div style="padding:11px 13px;display:flex;flex-direction:column;gap:4px"><div style="font:600 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">AL LLEGAR · BUSCA ESTA ENTRADA</div><div style="font:400 14px/1.4 'Inter Tight',sans-serif;color:#FAF3E4">Di que vas a la mesa de Aro, la 04.</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+              <div style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 14px/1 'Inter Tight',sans-serif">Cómo llegar</div>
+              <div style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;border:1.5px solid rgba(250,243,228,.5);color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif">Voy tarde</div>
+            </div>
+          </div>
+
+          <div style="border-radius:22px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);overflow:hidden">
+            <div onClick="{{ p.tGente }}" style="display:flex;align-items:center;gap:12px;padding:16px 18px;min-height:44px;cursor:pointer">
+              <div style="flex:1;min-width:0"><div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em">Con quién cenas</div><div style="font:400 13px/1.35 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">5 personas · todas verificadas</div></div>
+              <span style="{{ p.sGente }}">{{ p.fGente }}</span>
+            </div>
+            <sc-if value="{{ p.oGente }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:0 18px 12px">
+                <sc-for list="{{ gente }}" as="g" hint-placeholder-count="5">
+                  <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(20,52,42,.1)">
+                    <span style="flex:0 0 auto;width:36px;height:36px;border-radius:999px;background:#C5D8CA;display:flex;align-items:center;justify-content:center;font:400 16px/1 'Young Serif',Georgia,serif">{{ g.ini }}</span>
+                    <span style="flex:1;font:400 18px/1.15 'Young Serif',Georgia,serif">{{ g.nombre }}</span>
+                    <span style="font:400 13px/1 'Inter Tight',sans-serif;color:#33513F">{{ g.sector }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="border-radius:22px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);overflow:hidden">
+            <div onClick="{{ p.tPaso }}" style="display:flex;align-items:center;gap:12px;padding:16px 18px;min-height:44px;cursor:pointer">
+              <div style="flex:1;min-width:0"><div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em">Paso a paso</div><div style="font:400 13px/1.35 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ p.resumenPaso }}</div></div>
+              <span style="{{ p.sPaso }}">{{ p.fPaso }}</span>
+            </div>
+            <sc-if value="{{ p.oPaso }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 18px 10px">
+                <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#33513F;padding-bottom:6px">Una guía, no un horario. Cada mesa va a su ritmo.</div>
+                <sc-for list="{{ p.momentos }}" as="m" hint-placeholder-count="8">
+                  <div style="{{ m.fila }}">
+                    <div style="{{ m.hora }}">{{ m.h }}</div>
+                    <div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+                      <sc-if value="{{ m.ahora }}" hint-placeholder-val="{{ false }}"><span style="align-self:flex-start;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;background:#E39C63;color:#14342A;font:700 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em">AHORA</span></sc-if>
+                      <div style="{{ m.titulo }}">{{ m.t }}</div>
+                      <div style="{{ m.texto }}">{{ m.d }}</div>
+                      <sc-if value="{{ m.conJuego }}" hint-placeholder-val="{{ false }}"><div onClick="{{ p.abrirJuego }}" style="{{ m.boton }};cursor:pointer">{{ m.botonTexto }}</div></sc-if>
+                      <sc-if value="{{ m.conSitios }}" hint-placeholder-val="{{ false }}">
+                        <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+                          <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">SI QUIEREN SEGUIR</div>
+                          <sc-for list="{{ p.sitios }}" as="s" hint-placeholder-count="3">
+                            <div style="display:flex;align-items:center;gap:10px;background:#FAF3E4;border:1px solid rgba(20,52,42,.12);border-radius:14px;padding:10px 10px 10px 12px">
+                              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><div style="font:400 17px/1.15 'Young Serif',Georgia,serif">{{ s.nombre }}</div><div style="{{ s.distEstilo }}">{{ s.dist }}</div></div>
+                              <div style="{{ s.boton }}">{{ s.botonTexto }}</div>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="border-radius:22px;background:#14342A;color:#FAF3E4;overflow:hidden">
+            <div onClick="{{ p.tJuego }}" style="display:flex;align-items:center;gap:12px;padding:16px 18px;min-height:44px;cursor:pointer">
+              <div style="flex:1;min-width:0"><div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em">El juego de la mesa</div><div style="font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">3 rondas · la primera va con la comida</div></div>
+              <span style="{{ p.sJuego }}">{{ p.fJuego }}</span>
+            </div>
+            <sc-if value="{{ p.oJuego }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 18px 18px;display:flex;flex-direction:column">
+                <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;padding-bottom:6px">Una persona lee en voz alta, todos responden. Siempre se puede pasar.</div>
+                <sc-for list="{{ p.rondas }}" as="r" hint-placeholder-count="3">
+                  <div style="display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:start;gap:8px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)">
+                    <div style="font:400 20px/1.1 'Young Serif',Georgia,serif;color:#E39C63">{{ r.n }}</div>
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                      <div style="font:400 18px/1.15 'Young Serif',Georgia,serif">{{ r.t }}</div>
+                      <div style="font:600 10px/1.3 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">{{ r.cuando }}</div>
+                      <div style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#C5D8CA">{{ r.d }}</div>
+                    </div>
+                    <div style="{{ r.estadoEstilo }}">{{ r.estado }}</div>
+                  </div>
+                </sc-for>
+                <div style="margin-top:8px;display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:999px;background:#E39C63;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif">{{ p.ctaJuego }}</div>
+                <div style="{{ p.reiniciarEstilo }}">Empezar de nuevo</div>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="margin-top:12px;display:flex;align-items:center;justify-content:center;min-height:48px;font:600 15px/1 'Inter Tight',sans-serif;color:#8F4515;text-decoration:underline;text-underline-offset:4px">Cancelar mi puesto</div>
+        </div>
+      </div>
+    </sc-for>
+
+    <div id="4e" style="display:flex;flex-direction:column;gap:14px;width:390px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#1B5138;color:#FAF3E4;padding:6px 9px;border-radius:999px">4e</span><span style="font:400 20px/1.1 'Young Serif',Georgia,serif">Juego · fin de la ronda 1</span></div>
+      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;min-height:42px;text-wrap:pretty">El juego devuelve a la mesa. Volver es lo normal; seguir es opcional y queda en segundo plano.</div>
+      <div style="width:390px;height:844px;background:#14342A;color:#FAF3E4;border-radius:44px;border:10px solid #14342A;box-sizing:border-box;overflow:hidden;padding:64px 26px 40px;display:flex;flex-direction:column">
+        <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#9CBBA6">RONDA 1 DE 3 · TERMINADA</div>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:18px">
+          <div style="font:400 44px/1.04 'Young Serif',Georgia,serif;letter-spacing:-.03em">Ahora, a comer.</div>
+          <div style="font:400 18px/1.5 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">Guarden el teléfono y sigan con el paso a paso. La ronda 2 queda aquí para cuando se acabe el tema, o cuando quieran.</div>
+        </div>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px"><div style="border-top:1px solid rgba(250,243,228,.18);padding-top:14px;font:400 15px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">¿Otra persona quiere leer? Que abra el juego en su teléfono y toque «Ronda 2». Verá las mismas preguntas.</div>
+          <div style="display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:999px;background:#E39C63;color:#14342A;font:600 16px/1 'Inter Tight',sans-serif">Volver al paso a paso</div>
+          <div style="display:flex;align-items:center;justify-content:center;min-height:48px;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px">Seguir con la ronda 2</div>
+        </div>
+      </div>
+    </div>
+    <div id="4g" style="display:flex;flex-direction:column;gap:14px;width:390px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#C0662F;color:#FAF3E4;padding:6px 9px;border-radius:999px">4g</span><span style="font:400 20px/1.1 'Young Serif',Georgia,serif">Juego · reglas</span></div>
+      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;min-height:42px;text-wrap:pretty">Lo primero al empezar. Abajo, el atajo para quien toma el relevo como lector en otro teléfono.</div>
+      <div style="width:390px;height:844px;background:#14342A;color:#FAF3E4;border-radius:44px;border:10px solid #14342A;box-sizing:border-box;overflow:hidden;padding:58px 24px 34px;display:flex;flex-direction:column;position:relative"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:5px"><div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#9CBBA6">EL JUEGO DE LA MESA</div><div style="font:500 14px/1.2 'Inter Tight',sans-serif;color:#E4EDE6">Antes de empezar</div></div>
+          <div style="flex:0 0 auto;width:44px;height:44px;border-radius:999px;border:1.5px solid rgba(250,243,228,.35);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
+        </div>
+        <div style="margin-top:28px;font:400 36px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.025em">Cómo se juega</div>
+        <div style="margin-top:18px"><div style="display:grid;grid-template-columns:30px minmax(0,1fr);gap:6px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)"><div style="font:400 20px/1.2 'Young Serif',Georgia,serif;color:#E39C63">1</div><div style="font:400 18px/1.4 'Inter Tight',sans-serif">Una persona lee en voz alta, desde su teléfono.</div></div><div style="display:grid;grid-template-columns:30px minmax(0,1fr);gap:6px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)"><div style="font:400 20px/1.2 'Young Serif',Georgia,serif;color:#E39C63">2</div><div style="font:400 18px/1.4 'Inter Tight',sans-serif">Responden todos, empezando por quien leyó.</div></div><div style="display:grid;grid-template-columns:30px minmax(0,1fr);gap:6px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)"><div style="font:400 20px/1.2 'Young Serif',Georgia,serif;color:#E39C63">3</div><div style="font:400 18px/1.4 'Inter Tight',sans-serif">Cualquiera puede pasar, sin explicar nada.</div></div><div style="display:grid;grid-template-columns:30px minmax(0,1fr);gap:6px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)"><div style="font:400 20px/1.2 'Young Serif',Georgia,serif;color:#E39C63">4</div><div style="font:400 18px/1.4 'Inter Tight',sans-serif">Tres rondas, de menos a más.</div></div></div>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;justify-content:center;min-height:56px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif">Empezar la ronda 1</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:10px;font:400 14px/1 'Inter Tight',sans-serif;color:#C5D8CA">¿Ya empezaron? <span style="display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:999px;border:1px solid rgba(250,243,228,.35);color:#FAF3E4;font-weight:600">Ronda 2</span><span style="display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:999px;border:1px solid rgba(250,243,228,.35);color:#FAF3E4;font-weight:600">Ronda 3</span></div></div></div>
+    </div>
+    <div id="4h" style="display:flex;flex-direction:column;gap:14px;width:390px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#C0662F;color:#FAF3E4;padding:6px 9px;border-radius:999px">4h</span><span style="font:400 20px/1.1 'Young Serif',Georgia,serif">Juego · pregunta</span></div>
+      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;min-height:42px;text-wrap:pretty">La pregunta sola en el centro, en Young Serif. Arriba, la ronda y «1 de 2», solo como información. Para saltar de ronda se usa la tarjeta del juego en Mi mesa. Atrás y Siguiente al alcance del pulgar. La X vuelve a Mi mesa y guarda dónde quedó.</div>
+      <div style="width:390px;height:844px;background:#14342A;color:#FAF3E4;border-radius:44px;border:10px solid #14342A;box-sizing:border-box;overflow:hidden;padding:58px 24px 34px;display:flex;flex-direction:column;position:relative"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:5px"><div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#9CBBA6">EL JUEGO DE LA MESA</div><div style="font:500 14px/1.2 'Inter Tight',sans-serif;color:#E4EDE6">Ronda 1 · Para arrancar</div></div>
+          <div style="flex:0 0 auto;width:44px;height:44px;border-radius:999px;border:1.5px solid rgba(250,243,228,.35);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
+        </div>
+        <div style="margin-top:22px;display:flex;gap:6px"><span style="flex:1;height:4px;border-radius:9px;background:#E39C63"></span><span style="flex:1;height:4px;border-radius:9px;background:rgba(250,243,228,.2)"></span></div>
+        <div style="margin-top:8px;font:600 12px/1 'Inter Tight',sans-serif;color:#9CBBA6">1 de 2</div>
+        <div style="flex:1;display:flex;align-items:center"><div style="font:400 42px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.025em;text-wrap:balance">¿Cuál es tu plan perfecto de domingo en Caracas?</div></div>
+        <div style="font:400 15px/1.4 'Inter Tight',sans-serif;color:#C5D8CA;margin-bottom:16px">Empieza quien leyó. Se puede pasar.</div>
+        <div style="display:flex;gap:12px"><div style="flex:0 0 auto;width:56px;height:56px;border-radius:999px;border:1.5px solid rgba(250,243,228,.45);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></div><div style="flex:1"><div style="display:flex;align-items:center;justify-content:center;min-height:56px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif">Siguiente</div></div></div></div>
+    </div>
+    <div id="4j" style="display:flex;flex-direction:column;gap:14px;width:390px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#C0662F;color:#FAF3E4;padding:6px 9px;border-radius:999px">4j</span><span style="font:400 20px/1.1 'Young Serif',Georgia,serif">Juego · antes de la ronda 3</span></div>
+      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;min-height:42px;text-wrap:pretty">La tercera se pregunta, no se impone. Aquí también se cambia de lector.</div>
+      <div style="width:390px;height:844px;background:#14342A;color:#FAF3E4;border-radius:44px;border:10px solid #14342A;box-sizing:border-box;overflow:hidden;padding:58px 24px 34px;display:flex;flex-direction:column;position:relative"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:5px"><div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#9CBBA6">EL JUEGO DE LA MESA</div><div style="font:500 14px/1.2 'Inter Tight',sans-serif;color:#E4EDE6">Ronda 2 terminada</div></div>
+          <div style="flex:0 0 auto;width:44px;height:44px;border-radius:999px;border:1.5px solid rgba(250,243,228,.35);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
+        </div>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:14px"><div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#E39C63">RONDA 3 DE 3</div><div style="font:400 40px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.025em">Si la mesa quiere ir más hondo</div><div style="font:400 18px/1.45 'Inter Tight',sans-serif;color:#E4EDE6">Esta ronda es más personal. Solo si a la mesa le provoca.</div></div>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:14px"><div style="border-top:1px solid rgba(250,243,228,.18);padding-top:14px;font:400 15px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">¿Otra persona quiere leer? Que abra el juego en su teléfono y toque «Ronda 3». Verá las mismas preguntas.</div><div style="display:flex;align-items:center;justify-content:center;min-height:56px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif">Seguir con la ronda 3</div><div style="display:flex;align-items:center;justify-content:center;min-height:48px;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px">Terminar aquí</div></div></div>
+    </div>
+    <div id="4k" style="display:flex;flex-direction:column;gap:14px;width:390px">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:700 12px/1 'Inter Tight',sans-serif;background:#C0662F;color:#FAF3E4;padding:6px 9px;border-radius:999px">4k</span><span style="font:400 20px/1.1 'Young Serif',Georgia,serif">Juego · final</span></div>
+      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;min-height:42px;text-wrap:pretty">Tras la ronda 3 o «Terminar aquí». La única salida es volver a Mi mesa.</div>
+      <div style="width:390px;height:844px;background:#14342A;color:#FAF3E4;border-radius:44px;border:10px solid #14342A;box-sizing:border-box;overflow:hidden;padding:58px 24px 34px;display:flex;flex-direction:column;position:relative"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:5px"><div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#9CBBA6">EL JUEGO DE LA MESA</div><div style="font:500 14px/1.2 'Inter Tight',sans-serif;color:#E4EDE6">Tres rondas</div></div>
+          <div style="flex:0 0 auto;width:44px;height:44px;border-radius:999px;border:1.5px solid rgba(250,243,228,.35);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:26px"><svg width="84" height="84" viewBox="0 0 240 240"><circle cx="120" cy="120" r="86" fill="none" stroke="#FAF3E4" stroke-width="24"></circle><circle cx="206" cy="120" r="25" fill="#E39C63"></circle><circle cx="163" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="34" cy="120" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="45.5" r="25" fill="#FAF3E4"></circle><circle cx="163" cy="45.5" r="25" fill="#FAF3E4"></circle></svg><div style="font:400 48px/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em">Hasta aquí el juego. <span style="color:#E39C63">Lo demás es suyo.</span></div><div style="font:400 19px/1.4 'Inter Tight',sans-serif;color:#E4EDE6">Ya pueden guardar el teléfono.</div></div>
+        <div style="display:flex;align-items:center;justify-content:center;min-height:56px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif">Volver a Mi mesa</div></div>
+    </div>
+  </div>
+  
+
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:980px;font:400 15px/1.55 'Inter Tight',sans-serif;color:#33513F">
+    <div style="font:400 26px/1.1 'Young Serif',Georgia,serif;color:#14342A">Reglas para Code</div>
+    <div><span style="font-weight:600;color:#14342A">Tarjetas que se despliegan.</span> Con quién cenas, Paso a paso y El juego. Cerradas, cada cabecera dice lo que tiene dentro («5 personas · todas verificadas», «Ahora: Para romper el hielo», «3 rondas · la primera va con la comida»). Al entrar: antes de la cena, abierta Con quién; en curso y terminada, abierto Paso a paso. Nunca las tres abiertas de entrada. Lo que la persona abra o cierre se respeta mientras siga en la pantalla.</div>
+    <div><span style="font-weight:600;color:#14342A">Foto de la entrada.</span> Es la foto que operación guarda en la ficha del local. Va grande dentro de la tarjeta de la mesa (180 px de alto), con «Al llegar · Busca esta entrada». Si el local no tiene foto, queda solo el texto.</div>
+    <div><span style="font-weight:600;color:#14342A">Horas del paso a paso.</span> Salen de la hora de la cena y de hasta cuándo deja la mesa el restaurante (dos horas si no se sabe). Dos momentos pueden compartir hora. Antes de la cena nada va resaltado; en curso, el momento actual lleva «AHORA» y fondo, y los pasados bajan a #566A5D, legibles; terminada, todo pasado salvo la despedida. Es una guía, no una orden.</div>
+    <div><span style="font-weight:600;color:#14342A">Enlaces al juego.</span> «Abrir el juego · ronda 1» en «Para romper el hielo» y «Seguir el juego · rondas 2 y 3» en «Si se acaba el tema». Lleno si el momento es AHORA, con borde en los demás. Al tocarlos se despliega la tarjeta del juego.</div>
+    <div><span style="font-weight:600;color:#14342A">Tarjeta del juego.</span> Disponible en cualquier momento una vez abierta la mesa. Cada ronda muestra su estado: «Ir», «Hecha» o «n de 2» (el número sale de porRonda en reglas.js). Se puede ir a cualquier ronda, adelante o atrás. El botón principal retoma donde quedó («Seguir · ronda 2, pregunta 2»); «Empezar de nuevo» solo aparece cuando ya hay avance. El avance se guarda por mesa en ese teléfono: lo lleva una sola persona, no se sincroniza.</div>
+    <div><span style="font-weight:600;color:#14342A">Dentro del juego.</span> Reglas (4g) → preguntas en orden con Atrás y Siguiente (4h) → fin de la ronda 1, que devuelve al paso a paso (4e) → pausa antes de la ronda 3 con «Terminar aquí» (4j) → final (4k). El nombre de la ronda arriba es solo información; para saltar de ronda se usa la tarjeta en Mi mesa. La X vuelve a Mi mesa sin confirmar y guarda dónde quedó. Pantalla encendida mientras el juego esté abierto.</div>
+    <div><span style="font-weight:600;color:#14342A">Sitios para seguir.</span> Hasta tres, en lista sin foto. Sin distancia, no se muestra la línea; sin mapa, no se muestra el botón; sin ningún sitio, solo la frase de la despedida.</div>
+    <div><span style="font-weight:600;color:#14342A">Copy pendiente de Michael.</span> «Ahora, a comer.» (4e) y las bajadas de las rondas en la tarjeta del juego. El resto sale del brief y de JUEGO.md.</div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { abiertas: {} };
+  conTarjetas(p, def) {
+    const ab = this.state.abiertas[p.id] || def;
+    const set = (k, v) => this.setState((s) => ({ abiertas: { ...s.abiertas, [p.id]: { ...(s.abiertas[p.id] || def), [k]: v } } }));
+    const chev = (o, osc) => 'flex:0 0 auto;width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:600 18px/1 \'Inter Tight\',sans-serif;' + (osc ? 'background:rgba(250,243,228,.12);color:#E39C63' : 'background:#F2E9D5;color:#14342A');
+    const r = { ...p, abrirJuego: () => set('juego', true), irPaso: () => this.setState((s) => ({ abiertas: { ...s.abiertas, [p.id]: { gente: false, paso: true, juego: false } } })) };
+    [['gente', 'Gente', false], ['paso', 'Paso', false], ['juego', 'Juego', true]].forEach(([k, K, osc]) => {
+      r['o' + K] = !!ab[k]; r['f' + K] = ab[k] ? '−' : '+'; r['s' + K] = chev(ab[k], osc); r['t' + K] = () => set(k, !ab[k]);
+    });
+    r.momentos = p.momentos.map((m) => m.conJuego ? { ...m, botonTexto: m.t === 'Para romper el hielo' ? 'Abrir el juego · ronda 1' : 'Seguir el juego · rondas 2 y 3' } : m);
+    return r;
+  }
+  renderVals() {
+    const MO = [
+      ['7:30', 'Mientras llegan', 'Pidan algo de tomar si quieren. Esperamos a todos hasta las 7:45.'],
+      ['7:45', 'La voz de Aro', 'Antes de pedir, elijan a alguien que vaya leyendo en voz alta cada momento de esta lista. Si nadie se ofrece, le toca a quien llegó de último.'],
+      ['7:45', 'A pedir', 'Falte quien falte, pidan la comida. Quien llegue después se suma sin problema.'],
+      ['7:50', 'Una vuelta rápida', 'Tu nombre y qué haces cuando no trabajas.'],
+      ['8:05', 'Para romper el hielo', 'Mientras llega la comida, la primera ronda del juego.', 'Abrir el juego'],
+      ['8:30', 'Si se acaba el tema', 'Sigan con el juego donde lo dejaron. Se puede pasar.', 'Seguir el juego'],
+      ['9:00', 'Lo último y la cuenta', 'Pidan lo último que les provoque y luego la cuenta, cada quien lo suyo. Puede haber otra reserva esperando la mesa.'],
+      ['9:30', 'Despedida', 'Si hay ganas de seguir, busquen un sitio cerca. Si alguien te cayó bien, díselo.']
+    ];
+    const momentos = (actual, conSitios) => MO.map((m, i) => {
+      const pasado = actual >= 0 && i < actual, ahora = i === actual;
+      const tinta = pasado ? '#566A5D' : '#14342A';
+      return {
+        h: m[0], t: m[1], d: m[2], ahora, conJuego: !!m[3], botonTexto: m[3] || '',
+        conSitios: i === 7 && conSitios,
+        fila: 'display:grid;grid-template-columns:54px minmax(0,1fr);gap:8px;padding:14px 12px;margin:0 -12px;border-radius:16px;border-top:' + (ahora ? '0' : '1px solid rgba(20,52,42,.1)') + ';background:' + (ahora ? '#F2E9D5' : 'transparent'),
+        hora: 'font:600 15px/1.3 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;color:' + (ahora ? '#8F4515' : pasado ? '#566A5D' : '#33513F'),
+        titulo: 'font:400 ' + (ahora ? 22 : 19) + 'px/1.15 \'Young Serif\',Georgia,serif;letter-spacing:-.015em;color:' + tinta,
+        texto: 'font:400 15px/1.45 \'Inter Tight\',sans-serif;text-wrap:pretty;color:' + (pasado ? '#566A5D' : '#33513F'),
+        boton: 'align-self:flex-start;margin-top:8px;display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;font:600 14px/1 \'Inter Tight\',sans-serif;' + (ahora ? 'background:#14342A;color:#FAF3E4' : 'border:1.5px solid ' + (pasado ? 'rgba(20,52,42,.25);color:#566A5D' : '#1B5138;color:#1B5138'))
+      };
+    });
+    const sitio = (nombre, dist, mapa) => ({
+      nombre, dist: dist || '', distEstilo: dist ? 'font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F' : 'display:none',
+      botonTexto: 'Cómo llegar',
+      boton: mapa ? 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;border:1.5px solid #1B5138;color:#1B5138;font:600 13px/1 \'Inter Tight\',sans-serif' : 'display:none'
+    });
+    const tres = [sitio('Bar Caracas', '4 min a pie', true), sitio('La Terraza de Juan', '7 min a pie', true), sitio('Café Tostao', '', false)];
+    return {
+      gente: [['Andrés', 'Tecnología'], ['Gabriela', 'Salud'], ['José Manuel', 'Finanzas'], ['Andreína', 'Educación'], ['Valentina', 'Arquitectura']].map((g) => ({ ini: g[0][0], nombre: g[0], sector: g[1] })),
+      pantallas4: (() => {
+        const base = [
+          { n: '1', t: 'Para arrancar', cuando: 'MIENTRAS LLEGA LA COMIDA · 8:05 P.M.', d: 'Ligera. Luego, a comer.' },
+          { n: '2', t: 'Un poco más de ti', cuando: 'SI SE ACABA EL TEMA', d: 'Si la mesa va bien sola, no hace falta.' },
+          { n: '3', t: 'Si la mesa quiere ir más hondo', cuando: 'SOLO SI A LA MESA LE PROVOCA', d: 'Más personal. Cualquiera puede pasar.' }
+        ];
+        const pill = (tipo) => 'flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;box-sizing:border-box;padding:0 12px;border-radius:999px;cursor:pointer;white-space:nowrap;font:600 11px/1 \'Inter Tight\',sans-serif;' + (tipo === 'ahora' ? 'background:#E39C63;color:#14342A' : tipo === 'hecha' ? 'color:#9CBBA6;border:1px solid rgba(156,187,166,.5)' : 'color:#FAF3E4;border:1px solid rgba(250,243,228,.35)');
+        const rondas = (est) => base.map((r, i) => ({ ...r, estado: est[i][0], estadoEstilo: pill(est[i][1]) }));
+        const nuevo = rondas([['Ir', 'ir'], ['Ir', 'ir'], ['Ir', 'ir']]);
+        const avanzado = rondas([['Hecha', 'hecha'], ['2 de 2', 'ahora'], ['Ir', 'ir']]);
+        const oc = 'display:none';
+        const re = 'display:flex;align-items:center;justify-content:center;min-height:44px;margin-top:4px;color:#C5D8CA;font:600 14px/1 \'Inter Tight\',sans-serif;text-decoration:underline;text-underline-offset:4px';
+        return [
+          this.conTarjetas({ id: '4a', label: 'Antes de la cena', sello: 'ABIERTO', nota: 'Antes de la cena se abre Con quién. Lo demás, cerrado con su resumen.', momentos: momentos(-1, true), sitios: tres, resumenPaso: '8 momentos · de 7:30 a 9:30 p.m.', rondas: nuevo, ctaJuego: 'Empezar la ronda 1', reiniciarEstilo: oc }, { gente: true }),
+          this.conTarjetas({ id: '4b', label: 'En curso · 8:12 p.m.', sello: 'EN CURSO', nota: 'Durante la cena se abre Paso a paso. El enlace del momento AHORA despliega el juego.', momentos: momentos(4, true), sitios: tres, resumenPaso: 'Ahora: Para romper el hielo', rondas: nuevo, ctaJuego: 'Empezar la ronda 1', reiniciarEstilo: oc }, { paso: true }),
+          this.conTarjetas({ id: '4c', label: 'Juego sin empezar', sello: 'EN CURSO', nota: 'Disponible en cualquier momento. Cada ronda tiene «Ir» por si quieren saltar: el orden es una sugerencia.', momentos: momentos(4, true), sitios: tres, resumenPaso: 'Ahora: Para romper el hielo', rondas: nuevo, ctaJuego: 'Empezar la ronda 1', reiniciarEstilo: oc }, { juego: true }),
+          this.conTarjetas({ id: '4d', label: 'Juego a medias · 8:40 p.m.', sello: 'EN CURSO', nota: 'Si salen del juego, retoma donde quedó: ronda 2, pregunta 2. Las rondas hechas se marcan; se puede volver a ellas. «Empezar de nuevo» queda en segundo plano.', momentos: momentos(5, true), sitios: tres, resumenPaso: 'Ahora: Si se acaba el tema', rondas: avanzado, ctaJuego: 'Seguir · ronda 2, pregunta 2', reiniciarEstilo: re }, { juego: true }),
+          this.conTarjetas({ id: '4f', label: 'Terminada · con sitios', sello: 'TERMINADA', nota: 'Al terminar, Paso a paso abierto en la despedida, con los sitios para seguir.', momentos: momentos(7, true), sitios: tres, resumenPaso: 'Ahora: Despedida · 3 sitios para seguir', rondas: avanzado, ctaJuego: 'Seguir · ronda 2, pregunta 2', reiniciarEstilo: re }, { paso: true })
+        ];
+      })(),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,203 +1,275 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useKeepAwake } from 'expo-keep-awake'
 import { StatusBar } from 'expo-status-bar'
-import { useEffect, useState, type ReactNode } from 'react'
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Pressable, ScrollView, StyleSheet, View, type TextStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { IconoAtras, IconoCruz, Marca, Texto, color, cremaAlfa, fuente } from '../diseno'
+import { IconoAtras, IconoCruz, Marca, Texto, fuente } from '../diseno'
 import { reglas } from '../reglas'
 import * as T from '../texto/juego'
+import * as G from './guardado'
 import * as M from './maquina'
 
 /**
- * El juego de la mesa (entrega 18, 1d–1g): reglas, pregunta, cambio de ronda
- * y final, todo sobre verde profundo (crema sobre #14342A da 12:1, se lee en
- * penumbra). La pantalla no se apaga mientras está abierto: el teléfono pasa
+ * El juego de la mesa, calcado de la entrega 20 (4g reglas, 4h pregunta, 4e
+ * fin de la ronda 1, 4j antes de la ronda 3, 4k final), todo sobre verde
+ * profundo. La pantalla no se apaga mientras está abierto: el teléfono pasa
  * minutos sin tocarse mientras todos responden.
  *
- * Cada teléfono recuerda la última ronda vista: al volver a abrir a mitad de
- * juego, retoma ahí. Si lo terminó, vuelve a empezar desde las reglas.
+ * Cada paso se guarda por mesa en este teléfono (`guardado.ts`). La X vuelve
+ * a Mi mesa sin confirmar y guarda dónde quedó.
  */
-const CLAVE = (mesa: string) => `aro.juego.${mesa}`
-
-export function Juego(p: { mesaId: string; alSalir: () => void; /** Solo el catálogo: abre en este paso. */ desde?: M.Estado }) {
+export function Juego(p: {
+  mesaId: string
+  /** Cómo se entra desde Mi mesa: «empezar», «seguir» o «ronda-N». */
+  ir?: string
+  alSalir: () => void
+  /** Solo el catálogo: abre en este estado, sin leer ni guardar. */
+  desde?: M.Guardado
+}) {
   useKeepAwake()
   const insets = useSafeAreaInsets()
-  const [e, setE] = useState<M.Estado | null>(null)
+  const [g, setG] = useState<M.Guardado | null>(null)
+  const scroll = useRef<ScrollView>(null)
 
   useEffect(() => {
-    if (p.desde) return setE(p.desde)
-    AsyncStorage.getItem(CLAVE(p.mesaId))
-      .catch(() => null)
-      .then((v) => setE(M.empezarEn(Number(v) || 0)))
-  }, [p.mesaId, p.desde])
+    if (p.desde) return setG(p.desde)
+    let vivo = true
+    G.cargar(p.mesaId).then((leido) => {
+      if (!vivo) return
+      const g2 = M.entrar(leido, p.ir)
+      setG(g2)
+      G.guardar(p.mesaId, g2)
+    })
+    return () => {
+      vivo = false
+    }
+  }, [p.mesaId, p.ir, p.desde])
 
-  const ir = (s: M.Estado) => {
-    setE(s)
-    if (s.paso === 'pregunta') AsyncStorage.setItem(CLAVE(p.mesaId), String(s.ronda)).catch(() => {})
-    // Terminado, se olvida: al reabrirlo empieza en las reglas (con sus atajos
-    // a cada ronda). Recordar la ronda 3 dejaba atrapado en su pausa, que no
-    // tiene «atrás» (Michael, 07-10-2026). Retomar sirve solo a mitad de juego.
-    if (s.paso === 'final') AsyncStorage.removeItem(CLAVE(p.mesaId)).catch(() => {})
+  const a = (nuevo: M.Guardado) => {
+    setG(nuevo)
+    if (!p.desde) G.guardar(p.mesaId, nuevo)
+    scroll.current?.scrollTo({ y: 0, animated: false })
   }
 
-  if (!e) return <View style={{ flex: 1, backgroundColor: color.verdeProfundo }} />
-  const v = M.vista(e, p.mesaId)
-  const total = v.ronda.total
+  if (!g) return <View style={{ flex: 1, backgroundColor: C.fondo }} />
+  const { e } = g
+  const total = M.RONDAS()
+  const ronda = reglas.JUEGO.rondas[e.ronda]
 
-  let cabecera = T.juego.nombre
-  let sub = T.juego.reglas.sub
+  let cabecera: string | null = null
   let cuerpo: ReactNode = null
 
   if (e.paso === 'reglas') {
+    cabecera = T.juego.reglas.sub
     cuerpo = (
       <>
-        <View style={estilos.centro}>
-          <Texto style={estilos.grande}>{T.juego.reglas.titulo}</Texto>
-          <View style={{ gap: 18, marginTop: 28 }}>
-            {v.reglas.map((r, i) => (
-              <View key={i} style={{ flexDirection: 'row', gap: 14 }}>
-                <Texto style={estilos.numero}>{i + 1}</Texto>
-                <Texto style={[estilos.regla, { flex: 1 }]}>{r}</Texto>
-              </View>
-            ))}
-          </View>
+        <Texto style={[s.serif(36, 1.05, -0.025), { marginTop: 28 }]} accessibilityRole="header">
+          {T.juego.reglas.titulo}
+        </Texto>
+        <View style={{ marginTop: 18 }}>
+          {reglas.JUEGO.reglas.map((r, i) => (
+            <View key={i} style={s.filaRegla}>
+              <Texto style={[s.serif(20, 1.2), { color: C.acento, width: 30 }]}>{i + 1}</Texto>
+              <Texto style={[s.texto(18, 1.4), { flex: 1, color: C.crema }]}>{r}</Texto>
+            </View>
+          ))}
         </View>
-        <View style={{ gap: 14 }}>
-          <BotonClaro texto={T.juego.reglas.empezar} onPress={() => ir(M.siguiente(e, p.mesaId))} />
-          <View style={estilos.relevo}>
-            <Texto style={estilos.relevoTexto}>{T.juego.reglas.yaEmpezaron}</Texto>
+        <View style={{ marginTop: 'auto', paddingTop: 24, gap: 10 }}>
+          <BotonCrema texto={T.juego.reglas.empezar} onPress={() => a(M.siguiente(g, p.mesaId))} />
+          <View style={s.relevo}>
+            <Texto style={[s.texto(14, 1.21), { color: C.cuerpo }]}>{T.juego.reglas.yaEmpezaron}</Texto>
             {reglas.JUEGO.rondas.slice(1).map((_, i) => (
-              <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {i > 0 ? <Texto style={estilos.relevoTexto}>·</Texto> : null}
-                <Pressable onPress={() => ir(M.empezarEn(i + 1))} accessibilityRole="button" style={estilos.enlace}>
-                  <Texto style={estilos.enlaceTexto}>{T.juego.reglas.ronda(i + 2)}</Texto>
-                </Pressable>
-              </View>
+              <Pressable key={i} onPress={() => a(M.irARonda(g, i + 1))} accessibilityRole="button" style={({ pressed }) => [s.pildora, pressed && { backgroundColor: 'rgba(250,243,228,.12)' }]}>
+                <Texto style={[s.semi(14), { color: C.crema }]}>{T.juego.reglas.ronda(i + 2)}</Texto>
+              </Pressable>
             ))}
           </View>
         </View>
       </>
     )
   } else if (e.paso === 'pregunta') {
-    cabecera = T.juego.pregunta.cabecera(v.ronda.numero, v.ronda.titulo)
-    sub = T.juego.pregunta.posicion(v.posicion.actual, v.posicion.total)
+    const lista = M.preguntas(p.mesaId, e.ronda)
+    cabecera = T.juego.pregunta.sub(e.ronda + 1, ronda?.titulo ?? '')
     cuerpo = (
       <>
-        <View style={{ flexDirection: 'row', gap: 6, marginTop: 22 }}>
-          {Array.from({ length: v.posicion.total }, (_, k) => (
-            <View key={k} style={[estilos.segmento, { backgroundColor: k < v.posicion.actual ? color.crema : cremaAlfa(0.22) }]} />
+        <View style={{ marginTop: 22, flexDirection: 'row', gap: 6 }}>
+          {lista.map((_, k) => (
+            <View key={k} style={[s.segmento, { backgroundColor: k <= e.indice ? C.acento : 'rgba(250,243,228,.2)' }]} />
           ))}
         </View>
-        <View style={[estilos.centro, { justifyContent: 'center' }]}>
-          <Texto style={estilos.pregunta} accessibilityRole="header">
-            {v.pregunta}
+        <Texto style={[s.semi(12), { marginTop: 8, color: C.secundario }]}>{T.juego.pregunta.posicion(e.indice + 1, lista.length)}</Texto>
+        <View style={{ flex: 1, justifyContent: 'center', paddingVertical: 24 }}>
+          <Texto style={s.serif(42, 1.08, -0.025)} accessibilityRole="header">
+            {lista[e.indice] ?? ''}
           </Texto>
         </View>
+        <Texto style={[s.texto(15, 1.4), { color: C.cuerpo, marginBottom: 16 }]}>{T.juego.pregunta.pista}</Texto>
         <View style={{ flexDirection: 'row', gap: 12 }}>
-          <Pressable onPress={() => ir(M.atras(e, p.mesaId))} accessibilityRole="button" accessibilityLabel={T.juego.pregunta.anterior} style={({ pressed }) => [estilos.atras, pressed && { borderColor: color.crema }]}>
-            <IconoAtras color={color.crema} />
+          <Pressable
+            onPress={() => a(M.atras(g, p.mesaId))}
+            accessibilityRole="button"
+            accessibilityLabel={T.juego.pregunta.anterior}
+            style={({ pressed }) => [s.atras, pressed && { borderColor: C.crema }]}
+          >
+            <IconoAtras tam={22} color={C.crema} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <BotonClaro texto={T.juego.pregunta.siguiente} onPress={() => ir(M.siguiente(e, p.mesaId))} />
+            <BotonCrema texto={T.juego.pregunta.siguiente} onPress={() => a(M.siguiente(g, p.mesaId))} />
           </View>
         </View>
       </>
     )
-  } else if (e.paso === 'cambio') {
-    sub = T.juego.cambio.sub(e.ronda)
+  } else if (e.paso === 'finRonda1') {
+    // 4e: sin cabecera ni X. Volver a la mesa es lo normal.
     cuerpo = (
       <>
-        <View style={[estilos.centro, { gap: 20 }]}>
-          <Texto style={estilos.eyebrow}>{T.juego.cambio.eyebrow(v.ronda.numero, total).toUpperCase()}</Texto>
-          <Texto style={estilos.enorme}>{v.ronda.titulo}</Texto>
-          <Texto style={estilos.bajada}>{v.ronda.bajada}</Texto>
-          {v.opcional ? <Texto style={estilos.bajada}>{T.juego.cambio.aviso}</Texto> : null}
+        <Texto style={[s.etiqueta, { color: C.secundario, marginTop: 6 }]}>{T.juego.finRonda1.sello(total).toUpperCase()}</Texto>
+        <View style={{ marginVertical: 'auto', paddingVertical: 28, gap: 18 }}>
+          <Texto style={s.serif(44, 1.04, -0.03)} accessibilityRole="header">
+            {T.juego.finRonda1.titulo}
+          </Texto>
+          <Texto style={[s.texto(18, 1.5), { color: C.cuerpo }]}>{T.juego.finRonda1.texto}</Texto>
         </View>
-        <View style={{ gap: 16 }}>
-          <Texto style={estilos.lector}>{T.juego.cambio.lector(v.ronda.numero)}</Texto>
-          <BotonClaro
-            texto={v.opcional ? T.juego.cambio.seguir(v.ronda.numero) : T.juego.cambio.boton(v.ronda.numero)}
-            onPress={() => ir(M.siguiente(e, p.mesaId))}
+        <View style={{ gap: 10 }}>
+          <Texto style={s.lector}>{T.juego.lector(2)}</Texto>
+          <BotonAcento
+            texto={T.juego.finRonda1.volver}
+            onPress={() => {
+              G.pedirPasoAPaso()
+              p.alSalir()
+            }}
           />
-          {v.opcional ? (
-            <Pressable onPress={() => ir(M.terminar(e))} accessibilityRole="button" style={({ pressed }) => [estilos.volver, pressed && { borderColor: color.crema }]}>
-              <Texto style={estilos.volverTexto}>{T.juego.cambio.terminar}</Texto>
-            </Pressable>
-          ) : null}
+          <Enlace texto={T.juego.finRonda1.seguir} onPress={() => a(M.seguirCon(g, 1))} />
+        </View>
+      </>
+    )
+  } else if (e.paso === 'pausa') {
+    cabecera = T.juego.pausa.sub(e.ronda)
+    cuerpo = (
+      <>
+        <View style={{ marginTop: 'auto', paddingTop: 28, gap: 14 }}>
+          <Texto style={[s.etiqueta, { color: C.acento }]}>{T.juego.pausa.eyebrow(e.ronda + 1, total).toUpperCase()}</Texto>
+          <Texto style={s.serif(40, 1.05, -0.025)} accessibilityRole="header">
+            {ronda?.titulo ?? ''}
+          </Texto>
+          <Texto style={[s.texto(18, 1.45), { color: C.cuerpoClaro }]}>{T.juego.pausa.aviso}</Texto>
+        </View>
+        <View style={{ marginTop: 'auto', paddingTop: 28, gap: 14 }}>
+          <Texto style={s.lector}>{T.juego.lector(e.ronda + 1)}</Texto>
+          <BotonCrema texto={T.juego.pausa.seguir(e.ronda + 1)} onPress={() => a(M.seguirCon(g, e.ronda))} />
+          <Enlace texto={T.juego.pausa.terminar} onPress={() => a(M.terminar(g))} />
         </View>
       </>
     )
   } else {
-    sub = T.juego.final.sub(v.jugadas)
+    cabecera = T.juego.final.sub(M.jugadas(g))
     cuerpo = (
       <>
-        <View style={[estilos.centro, { gap: 28 }]}>
-          <Marca tam={88} crema />
-          <Texto style={estilos.enorme}>
-            {T.juego.final.titulo} <Texto style={[estilos.enorme, { color: color.terracotaSobreVerde }]}>{T.juego.final.resto}</Texto>
+        <View style={{ flex: 1, justifyContent: 'center', gap: 26, paddingVertical: 28 }}>
+          <Marca tam={84} crema />
+          <Texto style={s.serif(48, 1.02, -0.035)} accessibilityRole="header">
+            {T.juego.final.titulo} <Texto style={[s.serif(48, 1.02, -0.035), { color: C.acento }]}>{T.juego.final.resto}</Texto>
           </Texto>
-          <Texto style={estilos.bajada}>{T.juego.final.guardar}</Texto>
+          <Texto style={[s.texto(19, 1.4), { color: C.cuerpoClaro }]}>{T.juego.final.guardar}</Texto>
         </View>
-        <Pressable onPress={p.alSalir} accessibilityRole="button" style={({ pressed }) => [estilos.volver, pressed && { borderColor: color.crema }]}>
-          <Texto style={estilos.volverTexto}>{T.juego.final.volver}</Texto>
-        </Pressable>
+        <BotonCrema texto={T.juego.final.volver} onPress={p.alSalir} />
       </>
     )
   }
 
+  const conCabecera = e.paso !== 'finRonda1'
   return (
-    <View style={{ flex: 1, backgroundColor: color.verdeProfundo }}>
+    <View style={{ flex: 1, backgroundColor: C.fondo }}>
       <StatusBar style="light" />
-      <ScrollView contentContainerStyle={[estilos.pagina, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 30 }]} bounces={false}>
-        <View style={estilos.cabecera}>
-          <View style={{ flex: 1, gap: 6 }}>
-            <Texto style={estilos.cab}>{cabecera.toUpperCase()}</Texto>
-            <Texto style={estilos.sub}>{sub.toUpperCase()}</Texto>
+      <ScrollView
+        ref={scroll}
+        bounces={false}
+        contentContainerStyle={[
+          s.pagina,
+          e.paso === 'finRonda1'
+            ? { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24, paddingHorizontal: 26 }
+            : { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 24 },
+        ]}
+      >
+        {conCabecera ? (
+          <View style={s.cabecera}>
+            <View style={{ flex: 1, gap: 5 }}>
+              <Texto style={[s.etiqueta, { color: C.secundario }]}>{T.juego.nombre.toUpperCase()}</Texto>
+              {cabecera ? <Texto style={[s.media(14), { color: C.cuerpoClaro }]}>{cabecera}</Texto> : null}
+            </View>
+            <Pressable
+              onPress={p.alSalir}
+              accessibilityRole="button"
+              accessibilityLabel={T.juego.salir}
+              style={({ pressed }) => [s.cerrar, pressed && { backgroundColor: 'rgba(250,243,228,.12)' }]}
+            >
+              <IconoCruz tam={18} color={C.crema} />
+            </Pressable>
           </View>
-          <Pressable onPress={p.alSalir} accessibilityRole="button" accessibilityLabel={T.juego.salir} style={({ pressed }) => [estilos.cerrar, pressed && { backgroundColor: cremaAlfa(0.18) }]}>
-            <IconoCruz tam={18} color={color.crema} />
-          </Pressable>
-        </View>
+        ) : null}
         {cuerpo}
       </ScrollView>
     </View>
   )
 }
 
-function BotonClaro({ texto, onPress }: { texto: string; onPress: () => void }) {
+function BotonCrema({ texto, onPress }: { texto: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [estilos.claro, pressed && { backgroundColor: color.terracotaSobreVerde }]}>
-      <Texto style={estilos.claroTexto}>{texto}</Texto>
+    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [s.boton, { minHeight: 56, backgroundColor: pressed ? C.acento : C.crema }]}>
+      <Texto style={[s.semi(17), { color: C.fondo }]}>{texto}</Texto>
     </Pressable>
   )
 }
 
-// Interlineados: el suelo medido en los TTF (Young Serif 1,42; Inter Tight 1,21), nunca por debajo.
-const estilos = StyleSheet.create({
-  pagina: { flexGrow: 1, paddingHorizontal: 24, maxWidth: 430, width: '100%', alignSelf: 'center' },
-  cabecera: { flexDirection: 'row', alignItems: 'center', minHeight: 44 },
-  cab: { fontFamily: fuente.textoNegrita, fontSize: 12, lineHeight: 15, letterSpacing: 1.7, color: color.terracotaSobreVerde },
-  sub: { fontFamily: fuente.textoSemi, fontSize: 13, lineHeight: 16, letterSpacing: 1.6, color: color.cuerpoSobreVerde },
-  cerrar: { width: 44, height: 44, borderRadius: 22, backgroundColor: cremaAlfa(0.1), alignItems: 'center', justifyContent: 'center' },
-  centro: { flex: 1, justifyContent: 'center', paddingVertical: 28 },
-  grande: { fontFamily: fuente.titular, fontSize: 44, lineHeight: 63, letterSpacing: -1.3, color: color.crema },
-  enorme: { fontFamily: fuente.titular, fontSize: 50, lineHeight: 71, letterSpacing: -1.75, color: color.crema },
-  numero: { fontFamily: fuente.titular, fontSize: 20, lineHeight: 29, width: 18, color: color.terracotaSobreVerde },
-  regla: { fontFamily: fuente.texto, fontSize: 20, lineHeight: 27, color: color.crema },
-  pregunta: { fontFamily: fuente.titular, fontSize: 42, lineHeight: 60, letterSpacing: -1.05, color: color.crema },
-  segmento: { flex: 1, height: 4, borderRadius: 999 },
-  eyebrow: { fontFamily: fuente.textoNegrita, fontSize: 13, lineHeight: 16, letterSpacing: 1.8, color: color.terracotaSobreVerde },
-  bajada: { fontFamily: fuente.texto, fontSize: 20, lineHeight: 28, color: '#E4EDE6' },
-  lector: { borderTopWidth: 1, borderTopColor: cremaAlfa(0.18), paddingTop: 16, fontFamily: fuente.texto, fontSize: 15, lineHeight: 22, color: color.cuerpoSobreVerde },
-  relevo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  relevoTexto: { fontFamily: fuente.textoMedia, fontSize: 15, lineHeight: 19, color: color.cuerpoSobreVerde },
-  enlace: { minHeight: 44, paddingHorizontal: 8, justifyContent: 'center' },
-  enlaceTexto: { fontFamily: fuente.textoSemi, fontSize: 15, lineHeight: 19, color: color.crema, textDecorationLine: 'underline' },
-  claro: { minHeight: 58, borderRadius: 999, backgroundColor: color.crema, alignItems: 'center', justifyContent: 'center' },
-  claroTexto: { fontFamily: fuente.textoSemi, fontSize: 17, lineHeight: 21, color: color.verdeProfundo },
-  atras: { width: 58, height: 58, borderRadius: 29, borderWidth: 1.5, borderColor: cremaAlfa(0.45), alignItems: 'center', justifyContent: 'center' },
-  volver: { minHeight: 52, borderRadius: 999, borderWidth: 1.5, borderColor: cremaAlfa(0.45), alignItems: 'center', justifyContent: 'center' },
-  volverTexto: { fontFamily: fuente.textoSemi, fontSize: 16, lineHeight: 20, color: color.crema },
-})
+function BotonAcento({ texto, onPress }: { texto: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [s.boton, { minHeight: 54, backgroundColor: C.acento, opacity: pressed ? 0.85 : 1 }]}>
+      <Texto style={[s.semi(16), { color: C.fondo }]}>{texto}</Texto>
+    </Pressable>
+  )
+}
+
+function Enlace({ texto, onPress }: { texto: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" style={{ minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
+      <Texto style={[s.semi(15), { color: C.crema, textDecorationLine: 'underline' }]}>{texto}</Texto>
+    </Pressable>
+  )
+}
+
+/** Los tonos de la maqueta, tal cual (entrega 20). */
+const C = {
+  fondo: '#14342A',
+  crema: '#FAF3E4',
+  acento: '#E39C63',
+  secundario: '#9CBBA6',
+  cuerpo: '#C5D8CA',
+  cuerpoClaro: '#E4EDE6',
+}
+
+/**
+ * Interlineados: los de la maqueta, salvo donde caen por debajo del suelo
+ * medido en los TTF (Young Serif 1,42; Inter Tight 1,21). Por debajo, React
+ * Native recorta tildes y ascendentes; ahí manda el suelo.
+ */
+const lh = (tam: number, alto: number, suelo: number) => Math.round(tam * Math.max(alto, suelo))
+const s = {
+  ...StyleSheet.create({
+    pagina: { flexGrow: 1, paddingHorizontal: 24, maxWidth: 440, width: '100%', alignSelf: 'center' },
+    cabecera: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+    cerrar: { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, borderColor: 'rgba(250,243,228,.35)', alignItems: 'center', justifyContent: 'center' },
+    etiqueta: { fontFamily: fuente.textoSemi, fontSize: 11, lineHeight: 14, letterSpacing: 1.76 },
+    filaRegla: { flexDirection: 'row', gap: 6, paddingVertical: 12, borderTopWidth: 1, borderTopColor: 'rgba(250,243,228,.15)' },
+    relevo: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 10 },
+    pildora: { minHeight: 44, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(250,243,228,.35)', justifyContent: 'center' },
+    segmento: { flex: 1, height: 4, borderRadius: 9 },
+    atras: { width: 56, height: 56, borderRadius: 28, borderWidth: 1.5, borderColor: 'rgba(250,243,228,.45)', alignItems: 'center', justifyContent: 'center' },
+    boton: { borderRadius: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 18 },
+    lector: { borderTopWidth: 1, borderTopColor: 'rgba(250,243,228,.18)', paddingTop: 14, fontFamily: fuente.texto, fontSize: 15, lineHeight: 22, color: '#C5D8CA' },
+  }),
+  serif: (tam: number, alto: number, tracking = 0): TextStyle => ({ fontFamily: fuente.titular, fontSize: tam, lineHeight: lh(tam, alto, 1.42), letterSpacing: tam * tracking, color: '#FAF3E4' }),
+  texto: (tam: number, alto: number): TextStyle => ({ fontFamily: fuente.texto, fontSize: tam, lineHeight: lh(tam, alto, 1.21) }),
+  media: (tam: number): TextStyle => ({ fontFamily: fuente.textoMedia, fontSize: tam, lineHeight: lh(tam, 1.2, 1.21) }),
+  semi: (tam: number): TextStyle => ({ fontFamily: fuente.textoSemi, fontSize: tam, lineHeight: lh(tam, 1, 1.21) }),
+}

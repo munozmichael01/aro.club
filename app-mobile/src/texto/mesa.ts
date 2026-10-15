@@ -173,3 +173,31 @@ export const guion = {
     comoLlegar: 'Cómo llegar',
   },
 }
+
+/**
+ * Mi mesa de una cena, calcada de la entrega 20 (Design, 15-10-2026): la
+ * tarjeta de la mesa con la foto de la entrada y tres tarjetas que se
+ * despliegan.
+ */
+export const cena = {
+  sello: { antes: 'ABIERTO', curso: 'EN CURSO', terminada: 'TERMINADA' } as Record<'antes' | 'curso' | 'terminada', string>,
+  mesa: 'MESA',
+  alLlegarFoto: 'AL LLEGAR · BUSCA ESTA ENTRADA',
+  alLlegar: 'AL LLEGAR',
+  diLaMesa: (numero: string) => (numero ? `Di que vas a la mesa de Aro, la ${numero}.` : 'Di que vas a la mesa de Aro.'),
+  fotoEntrada: (sitio: string) => `La entrada de ${sitio}`,
+  conQuien: {
+    titulo: 'Con quién cenas',
+    resumen: (n: number) => (n === 1 ? '1 persona · verificada' : `${n} personas · todas verificadas`),
+  },
+  paso: {
+    titulo: 'Paso a paso',
+    resumenAntes: (n: number, desde: string, hasta: string) => `${n} momentos · de ${desde} a ${hasta}`,
+    resumenAhora: (momento: string) => `Ahora: ${momento}`,
+    resumenSitios: (momento: string, n: number) => `Ahora: ${momento} · ${n} ${n === 1 ? 'sitio' : 'sitios'} para seguir`,
+    juegoHielo: 'Abrir el juego · ronda 1',
+    juegoTema: 'Seguir el juego · rondas 2 y 3',
+  },
+  abrir: (titulo: string) => `Abrir ${titulo}`,
+  cerrar: (titulo: string) => `Cerrar ${titulo}`,
+}

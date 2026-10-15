@@ -52,3 +52,19 @@ export function enCurso(ps: Paso[], ahora: number): string | null {
   for (const p of ps) if (Date.parse(p.en) <= ahora) en = p.en
   return en
 }
+
+export type MomentoCena = 'antes' | 'curso' | 'terminada'
+
+/**
+ * En qué punto está la cena (entrega 20): antes de la hora, en curso, o
+ * terminada desde la despedida. Decide el sello de la tarjeta y qué tarjeta
+ * se abre al entrar.
+ */
+export function momentoDeCena(ps: Paso[], ahora: number): MomentoCena {
+  if (!ps.length || ahora < Date.parse(ps[0].en)) return 'antes'
+  const fin = ps[ps.length - 1]
+  return ahora >= Date.parse(fin.en) ? 'terminada' : 'curso'
+}
+
+/** «7:30 p.m.» → «7:30»: en la columna de horas del paso a paso no cabe el sufijo. */
+export const sinSufijo = (hora: string) => hora.replace(/\s*[ap]\.\s?m\.$/i, '').trim()

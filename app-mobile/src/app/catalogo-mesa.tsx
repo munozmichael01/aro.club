@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Asset } from 'expo-asset'
 import { router, useLocalSearchParams } from 'expo-router'
 
 import { sabado } from '../util/sabados'
@@ -10,10 +11,12 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Mi mesa con un servidor SIMULADO, para ver cada fase en el navegador:
- * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|cerrada|abierta|guion|movimiento|pasada|valorada|fallo
+ * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|cerrada|abierta|antes|en-curso|sin-foto|terminada|unica|guion|movimiento|pasada|valorada|fallo
  * Catálogo de desarrollo: no se enlaza desde ningún sitio. La forma imita la
  * real (pruebas/mesa-contra-la-api.mjs); las fechas se cuentan desde ahora.
  */
+/** La foto de ejemplo de la entrega 20, solo para el catálogo. */
+const FACHADA = Asset.fromModule(require('../../assets/catalogo/fachada-ejemplo.jpg')).uri
 const en = (h: number) => new Date(Date.now() + h * 3600_000).toISOString()
 const CINCO = [
   { id: '11111111-1111-1111-1111-111111111111', nombre: 'Luis', sector: 'Salud' },
@@ -21,6 +24,11 @@ const CINCO = [
   { id: '33333333-3333-3333-3333-333333333333', nombre: 'José Manuel', sector: 'Finanzas' },
   { id: '44444444-4444-4444-4444-444444444444', nombre: 'Gabriela', sector: null },
   { id: '55555555-5555-5555-5555-555555555555', nombre: 'Andrés', sector: 'Tecnología' },
+]
+const SITIOS = [
+  { nombre: 'Bar Caracas', minutosAPie: 4, mapa: 'https://www.google.com/maps/search/?api=1&query=Las+Mercedes' },
+  { nombre: 'La Terraza de Juan', minutosAPie: 7, mapa: 'https://www.google.com/maps/search/?api=1&query=Las+Mercedes' },
+  { nombre: 'Café Tostao', minutosAPie: null, mapa: null },
 ]
 const ABIERTA: DeServidor = {
   fase: 'abierta', mesaId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', numeroMesa: 4, formato: 'dinner', zonaHoraria: 'America/Caracas',
@@ -37,15 +45,16 @@ const ESTADOS: Record<string, DeServidor> = {
   movimiento: { ...ABIERTA, formato: 'walk', restaurante: 'Entrada de Sabas Nieves', direccion: 'Av. Boyacá, Altamira', actividad: { ruta: 'Sabas Nieves → La Silla', km: 7, minutos: 150, nivel: 'medio' } },
   // El juego de la mesa: cerrado (la cena es en 5 h) y abierto (empezó hace 10 min).
   'juego-abierto': { ...ABIERTA, empiezaEn: en(-1 / 6) },
-  // El guion de la mesa (14-10): empezó hace 50 min, con tres sitios para seguir.
+  // Entrega 20: la cena antes, en curso, con el juego a medias y terminada.
   guion: {
-    ...ABIERTA, empiezaEn: en(-50 / 60),
-    paraSeguir: [
-      { nombre: 'La Cervecería', minutosAPie: 4, mapa: 'https://www.google.com/maps/search/?api=1&query=Las+Mercedes' },
-      { nombre: 'Bar Caracas', minutosAPie: 7, mapa: 'https://www.google.com/maps/search/?api=1&query=Las+Mercedes' },
-      { nombre: 'Café de la esquina', minutosAPie: null, mapa: null },
-    ],
+    ...ABIERTA, empiezaEn: en(-50 / 60), fotoEntrada: FACHADA,
+    paraSeguir: SITIOS,
   },
+  antes: { ...ABIERTA, fotoEntrada: FACHADA, paraSeguir: SITIOS },
+  'en-curso': { ...ABIERTA, empiezaEn: en(-37 / 60), fotoEntrada: FACHADA, paraSeguir: SITIOS },
+  'sin-foto': { ...ABIERTA, empiezaEn: en(-37 / 60), paraSeguir: [] },
+  terminada: { ...ABIERTA, empiezaEn: en(-125 / 60), fotoEntrada: FACHADA, paraSeguir: SITIOS },
+  unica: { ...ABIERTA, mesaUnica: true, fotoEntrada: FACHADA },
   pasada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10) },
   valorada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10), yaValoro: true, yaBloqueados: [CINCO[2].id], yaReporto: CINCO[2].id },
 }
@@ -77,7 +86,8 @@ function Pantalla() {
     <MiMesa
       key={estado}
       servicio={servicio}
-      ir={(d) => console.log('[catálogo] ir a', d)}
+      // El juego se abre de verdad (entrega 20); lo demás solo se anota.
+      ir={(d) => (d.startsWith('/juego') ? router.push(d.replace('/juego', '/catalogo-juego') as never) : console.log('[catálogo] ir a', d))}
       alEntrar={() => router.push('/entrar')}
       alSalir={async () => router.push('/')}
     />

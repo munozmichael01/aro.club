@@ -11,8 +11,7 @@ import * as F from '../texto/fechas'
 import * as T from '../texto/mesa'
 import * as M from './maquina'
 import * as J from '../juego/maquina'
-import { TarjetaJuego } from '../juego/TarjetaJuego'
-import { GuionNoche } from './GuionNoche'
+import { MesaCena } from './MesaCena'
 import { reglas } from '../reglas'
 import type { crearServicioMesa } from './servicio'
 
@@ -259,8 +258,6 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
     const t = setInterval(() => setAhora(Date.now()), 30_000)
     return () => clearInterval(t)
   }, [])
-  const ventanaJuego = J.ventana(d.empiezaEn, ahora)
-  const abreJuego = d.empiezaEn ? new Date(Date.parse(d.empiezaEn) + reglas.JUEGO.abreMin * 60_000).toISOString() : null
 
   const avisar = async () => {
     if (avisando) return
@@ -272,6 +269,45 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
     if (!r.ok || !r.datos.avisado) return setFalloTarde(r.ok ? T.tarde.noPudimos : r.error)
     setTardeAbierto(false)
     setAvisado(r.datos.minutos ?? minutos)
+  }
+
+  const panelTarde = (
+    <>
+      {tardeAbierto ? (
+        <View style={[estilos.caja, { backgroundColor: color.cremaFria, marginTop: 14 }]}>
+          <Texto variante="subtitulo">{T.tarde.titulo}</Texto>
+          <Texto variante="cuerpoChico" style={{ marginTop: 7 }}>
+            {T.tarde.nota(mesa)}
+          </Texto>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+            {T.tarde.opciones.map((o, i) => (
+              <Opcion key={o.minutos} texto={o.texto} marcada={retraso === i} onPress={() => setRetraso(i)} />
+            ))}
+          </View>
+          {falloTarde ? (
+            <View style={{ marginTop: 14 }}>
+              <Aviso tono="ojo">{falloTarde}</Aviso>
+            </View>
+          ) : null}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 11, alignItems: 'center', marginTop: 18 }}>
+            <Boton texto={T.tarde.avisar(mesa, avisando)} onPress={avisar} apagado={avisando} />
+            <Boton tipo="fantasma" texto={T.tarde.cancelar} onPress={() => setTardeAbierto(false)} />
+          </View>
+        </View>
+      ) : null}
+
+      {avisado != null ? (
+        <View style={{ marginTop: 14 }}>
+          <Acuse titulo={T.tarde.avisado(avisado)} cuerpo={T.tarde.calma} />
+        </View>
+      ) : null}
+
+    </>
+  )
+
+  // Una cena: la entrega 20 (paso a paso, juego, foto de la entrada). Lo demás, como estaba.
+  if (J.hayJuego(d.formato)) {
+    return <MesaCena d={d} ahora={ahora} ir={ir} alTarde={() => setTardeAbierto((x) => !x)} tarde={panelTarde} />
   }
 
   return (
@@ -337,34 +373,7 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
         <Boton tipo="secundario" texto={T.abierta.vozTarde} onPress={() => setTardeAbierto((x) => !x)} />
       </View>
 
-      {tardeAbierto ? (
-        <View style={[estilos.caja, { backgroundColor: color.cremaFria, marginTop: 14 }]}>
-          <Texto variante="subtitulo">{T.tarde.titulo}</Texto>
-          <Texto variante="cuerpoChico" style={{ marginTop: 7 }}>
-            {T.tarde.nota(mesa)}
-          </Texto>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
-            {T.tarde.opciones.map((o, i) => (
-              <Opcion key={o.minutos} texto={o.texto} marcada={retraso === i} onPress={() => setRetraso(i)} />
-            ))}
-          </View>
-          {falloTarde ? (
-            <View style={{ marginTop: 14 }}>
-              <Aviso tono="ojo">{falloTarde}</Aviso>
-            </View>
-          ) : null}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 11, alignItems: 'center', marginTop: 18 }}>
-            <Boton texto={T.tarde.avisar(mesa, avisando)} onPress={avisar} apagado={avisando} />
-            <Boton tipo="fantasma" texto={T.tarde.cancelar} onPress={() => setTardeAbierto(false)} />
-          </View>
-        </View>
-      ) : null}
-
-      {avisado != null ? (
-        <View style={{ marginTop: 14 }}>
-          <Acuse titulo={T.tarde.avisado(avisado)} cuerpo={T.tarde.calma} />
-        </View>
-      ) : null}
+      {panelTarde}
 
       <View style={{ marginTop: 34 }}>
         <Texto variante="etiqueta" tono="cuerpo" style={{ letterSpacing: 1.9, marginBottom: 16 }}>
@@ -390,25 +399,6 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
         <Texto variante="cuerpoChico" style={{ marginTop: 16 }}>
           {T.abierta.notaCompaneros(mesa)}
         </Texto>
-        {d.mesaId && J.hayJuego(d.formato) ? (
-          <TarjetaJuego
-            ventana={ventanaJuego}
-            horaAbre={F.horaEn(abreJuego, d.zonaHoraria ?? null)}
-            alAbrir={() => ir(`/juego?mesa=${d.mesaId}`)}
-          />
-        ) : null}
-        {/* Los momentos son de una cena (pedir, el juego): café y movimiento tendrán los suyos. */}
-        {J.hayJuego(d.formato) ? (
-          <GuionNoche
-            empiezaEn={d.empiezaEn}
-            cierraMesaEn={d.cierraMesaEn}
-            zonaHoraria={d.zonaHoraria}
-            conJuego={!!d.mesaId}
-            paraSeguir={d.paraSeguir}
-            ahora={ahora}
-            ir={ir}
-          />
-        ) : null}
       </View>
 
       <View style={[estilos.caja, { backgroundColor: 'transparent', borderWidth: 1, borderColor: tinta(0.18), marginTop: 30 }]}>

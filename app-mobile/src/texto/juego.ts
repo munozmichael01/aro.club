@@ -1,40 +1,55 @@
 /**
- * El juego de la mesa (entrega 18 de Design, «Aro Club - Juego de la mesa»).
- * El copy del juego es definitivo. Las preguntas, los nombres y bajadas de
- * las rondas y las cuatro reglas NO van aquí: salen de `AroReglas.JUEGO`, que
- * comparte la web.
+ * El juego de la mesa (entrega 20 de Design, 15-10-2026; antes la 18). Las
+ * preguntas, los nombres de las rondas y las cuatro reglas NO van aquí: salen
+ * de `AroReglas.JUEGO`, que comparte la web.
  */
-import { reglas } from '../reglas'
 
-/** «media hora antes de la cena», o «cuando empieza la cena» si `abreMin` es 0. */
-function cuandoAbre(min: number): string {
-  if (min === 0) return 'cuando empieza la cena'
-  if (min === -30) return 'media hora antes de la cena'
-  return min < 0 ? `${-min} minutos antes de la cena` : `${min} minutos después de empezar`
-}
-
+/** La tarjeta del juego en Mi mesa. */
 export const tarjeta = {
   titulo: 'El juego de la mesa',
-  abierto: 'Por si hace falta romper el hielo: unas preguntas en tres rondas, y después se guarda el teléfono.',
-  abrir: 'Abrir el juego',
-  cerrado: (hora: string) => `Se abre a las ${hora}, ${cuandoAbre(reglas.JUEGO.abreMin)}.`,
+  resumen: '3 rondas · la primera va con la comida',
+  intro: 'Una persona lee en voz alta, todos responden. Siempre se puede pasar.',
+  /**
+   * La línea «cuándo» y la bajada de cada ronda en la tarjeta. PROVISIONALES:
+   * Michael tiene pendiente aprobar las bajadas (HANDOFF de la entrega 20).
+   */
+  rondas: [
+    { cuando: (hora: string) => (hora ? `Mientras llega la comida · ${hora}` : 'Mientras llega la comida'), bajada: 'Ligera. Luego, a comer.' },
+    { cuando: () => 'Si se acaba el tema', bajada: 'Si la mesa va bien sola, no hace falta.' },
+    { cuando: () => 'Solo si a la mesa le provoca', bajada: 'Más personal. Cualquiera puede pasar.' },
+  ],
+  ir: 'Ir',
+  hecha: 'Hecha',
+  deTotal: (n: number, de: number) => `${n} de ${de}`,
+  empezar: 'Empezar la ronda 1',
+  seguir: (ronda: number, pregunta: number) => `Seguir · ronda ${ronda}, pregunta ${pregunta}`,
+  reiniciar: 'Empezar de nuevo',
+  irA: (n: number) => `Ir a la ronda ${n}`,
 }
 
 export const juego = {
   nombre: 'El juego de la mesa',
   salir: 'Salir del juego',
-  reglas: { titulo: 'Antes de empezar', sub: reglas.JUEGO.subtituloReglas, empezar: 'Empezar', yaEmpezaron: '¿Ya empezaron?', ronda: (n: number) => `Ronda ${n}` },
+  reglas: { sub: 'Antes de empezar', titulo: 'Cómo se juega', empezar: 'Empezar la ronda 1', yaEmpezaron: '¿Ya empezaron?', ronda: (n: number) => `Ronda ${n}` },
   pregunta: {
-    cabecera: (n: number, nombre: string) => `Ronda ${n} · ${nombre}`,
+    sub: (n: number, nombre: string) => `Ronda ${n} · ${nombre}`,
     posicion: (i: number, total: number) => `${i} de ${total}`,
+    pista: 'Empieza quien leyó. Se puede pasar.',
     anterior: 'Pregunta anterior',
     siguiente: 'Siguiente',
   },
-  cambio: {
+  lector: (n: number) => `¿Otra persona quiere leer? Que abra el juego en su teléfono y toque «Ronda ${n}». Verá las mismas preguntas.`,
+  /** Fin de la ronda 1. «Ahora, a comer.» está PENDIENTE de Michael (HANDOFF de la entrega 20). */
+  finRonda1: {
+    sello: (total: number) => `Ronda 1 de ${total} · terminada`,
+    titulo: 'Ahora, a comer.',
+    texto: 'Guarden el teléfono y sigan con el paso a paso. La ronda 2 queda aquí para cuando se acabe el tema, o cuando quieran.',
+    volver: 'Volver al paso a paso',
+    seguir: 'Seguir con la ronda 2',
+  },
+  pausa: {
     sub: (terminada: number) => `Ronda ${terminada} terminada`,
     eyebrow: (n: number, total: number) => `Ronda ${n} de ${total}`,
-    lector: (n: number) => `¿Otra persona quiere leer? Que abra el juego en su teléfono y toque «Ronda ${n}». Verá las mismas preguntas.`,
-    boton: (n: number) => `Empezar la ronda ${n}`,
     // La última ronda es opcional (Michael, 10-10): la mesa decide si sigue.
     aviso: 'Esta ronda es más personal. Solo si a la mesa le provoca.',
     seguir: (n: number) => `Seguir con la ronda ${n}`,

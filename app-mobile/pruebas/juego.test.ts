@@ -1,13 +1,13 @@
 /**
- * El juego de la mesa: la ventana, el recorrido y que todos los teléfonos ven
- * lo mismo. Los números (preguntas por ronda, ventana) se leen de reglas.js:
- * se ajustan allí y la prueba los sigue.
+ * El juego de la mesa (entrega 20): la ventana, el recorrido nuevo, el avance
+ * guardado por mesa y que todos los teléfonos ven lo mismo. Los números
+ * (preguntas por ronda, ventana) se leen de reglas.js: se ajustan allí y la
+ * prueba los sigue.
  */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import * as M from '../src/juego/maquina'
-import { atras, empezarEn, hayJuego, inicial, preguntas, siguiente, ventana, vista, type Estado } from '../src/juego/maquina'
 import { reglas } from '../src/reglas'
 
 const J = reglas.JUEGO
@@ -17,64 +17,99 @@ const CENA = '2026-10-10T23:00:00.000Z'
 const t = (min: number) => Date.parse(CENA) + min * 60_000
 
 test('la ventana sale de reglas.js (abreMin, cierraMin)', () => {
-  assert.equal(ventana(CENA, t(J.abreMin - 1)), 'antes')
-  assert.equal(ventana(CENA, t(J.abreMin)), 'abierto')
-  assert.equal(ventana(CENA, t(J.cierraMin)), 'abierto')
-  assert.equal(ventana(CENA, t(J.cierraMin + 1)), 'cerrado')
-  assert.equal(ventana(null, t(0)), 'cerrado')
+  assert.equal(M.ventana(CENA, t(J.abreMin - 1)), 'antes')
+  assert.equal(M.ventana(CENA, t(J.abreMin)), 'abierto')
+  assert.equal(M.ventana(CENA, t(J.cierraMin)), 'abierto')
+  assert.equal(M.ventana(CENA, t(J.cierraMin + 1)), 'cerrado')
+  assert.equal(M.ventana(null, t(0)), 'cerrado')
 })
 
 test('las mismas preguntas en todos los teléfonos de la mesa, y distintas entre rondas', () => {
-  const r1 = preguntas(MESA, 1)
+  const r1 = M.preguntas(MESA, 1)
   assert.equal(r1.length, N)
-  assert.deepEqual(preguntas(MESA, 1), r1)
+  assert.deepEqual(M.preguntas(MESA, 1), r1)
   assert.deepEqual(reglas.preguntasDeRonda(MESA, J.rondas[1].clave), r1)
-  const todas = J.rondas.flatMap((_, r) => preguntas(MESA, r))
+  const todas = J.rondas.flatMap((_, r) => M.preguntas(MESA, r))
   assert.equal(new Set(todas).size, N * J.rondas.length)
 })
 
-test('el recorrido: reglas, N preguntas por ronda con su cambio, y el final', () => {
-  let e: Estado = inicial
-  const pasos: string[] = []
-  for (let i = 0; i < 50 && e.paso !== 'final'; i++) {
-    e = siguiente(e, MESA)
-    pasos.push(e.paso === 'pregunta' ? `p${e.ronda}.${e.indice}` : e.paso)
+test('el recorrido: reglas → ronda 1 → «Ahora, a comer» → ronda 2 → pausa → ronda 3 → final', () => {
+  let g = M.guardadoVacio()
+  const pasos: string[] = [g.e.paso]
+  const avanza = () => {
+    g = M.siguiente(g, MESA)
+    pasos.push(g.e.paso)
   }
-  const esperado = J.rondas.flatMap((_, r) => [...(r ? ['cambio'] : []), ...Array.from({ length: N }, (_, i) => `p${r}.${i}`)])
-  assert.deepEqual(pasos, [...esperado, 'final'])
-  assert.equal(vista(e, MESA).final, J.final)
+  avanza() // primera pregunta
+  for (let i = 1; i < N; i++) avanza()
+  avanza() // fin de la ronda 1
+  assert.equal(g.e.paso, 'finRonda1')
+  assert.deepEqual(g.hechas, [true, false, false])
+  assert.deepEqual(M.puntero(g), { ronda: 1, indice: 0 })
+  g = M.seguirCon(g, 1)
+  for (let i = 1; i < N; i++) avanza()
+  avanza() // pausa antes de la 3
+  assert.equal(g.e.paso, 'pausa')
+  assert.equal(g.e.ronda, 2)
+  g = M.seguirCon(g, 2)
+  for (let i = 1; i < N; i++) avanza()
+  avanza()
+  assert.equal(g.e.paso, 'final')
+  assert.deepEqual(g.hechas, [true, true, true])
+  assert.equal(M.jugadas(g), 3)
+  assert.equal(M.puntero(g), null)
 })
 
-test('atrás deshace el camino, y otro teléfono puede seguir en su ronda', () => {
-  const ult = J.rondas.length - 1
-  assert.deepEqual(atras({ paso: 'final', ronda: ult, indice: N - 1 }, MESA), { paso: 'pregunta', ronda: ult, indice: N - 1 })
-  assert.deepEqual(atras({ paso: 'pregunta', ronda: 1, indice: 0 }, MESA), { paso: 'cambio', ronda: 1, indice: 0 })
-  assert.deepEqual(atras({ paso: 'cambio', ronda: 1, indice: 0 }, MESA), { paso: 'pregunta', ronda: 0, indice: N - 1 })
-  assert.deepEqual(atras({ paso: 'pregunta', ronda: 0, indice: 0 }, MESA), inicial)
-  // Otro teléfono que toca «Ronda 2»: la pausa de la ronda 2 y, al seguir, la misma primera pregunta.
-  const otro = empezarEn(1)
-  assert.deepEqual(otro, { paso: 'cambio', ronda: 1, indice: 0 })
-  assert.equal(vista(siguiente(otro, MESA), MESA).pregunta, preguntas(MESA, 1)[0])
-  assert.equal(vista(otro, MESA).ronda.titulo, J.rondas[1].titulo)
-  assert.deepEqual(empezarEn(0), inicial)
+test('«Terminar aquí» en la pausa: el final con dos rondas', () => {
+  const g = M.terminar({ e: { paso: 'pausa', ronda: 2, indice: 0 }, hechas: [true, true, false], empezado: true })
+  assert.equal(g.e.paso, 'final')
+  assert.equal(M.jugadas(g), 2)
 })
 
-test('solo en las cenas', () => {
-  assert.ok(hayJuego('dinner') && hayJuego('foodie_dinner'))
-  assert.ok(!hayJuego('coffee') && !hayJuego('run') && !hayJuego(null))
+test('la tarjeta: Ir, n de 2 y Hecha; y «Seguir» retoma donde quedó', () => {
+  let g = M.guardadoVacio()
+  assert.deepEqual(M.estadoRonda(g, 0, MESA), { tipo: 'ir' })
+  assert.equal(M.puntero(g), null)
+  g = M.irARonda(g, 1)
+  g = M.siguiente(g, MESA)
+  assert.deepEqual(M.estadoRonda(g, 1, MESA), { tipo: 'ahora', n: 2, de: N })
+  assert.deepEqual(M.puntero(g), { ronda: 1, indice: 1 })
+  // Salir y volver con «Seguir»: la misma pregunta.
+  const vuelta = M.entrar(g, 'seguir')
+  assert.deepEqual(vuelta.e, { paso: 'pregunta', ronda: 1, indice: 1 })
+  // Ir a la ronda que estaba a medias retoma; a otra, empieza por la primera.
+  assert.deepEqual(M.irARonda(g, 1).e, { paso: 'pregunta', ronda: 1, indice: 1 })
+  assert.deepEqual(M.irARonda(g, 2).e, { paso: 'pregunta', ronda: 2, indice: 0 })
 })
 
-test('la última ronda es opcional: desde su pausa se puede terminar', () => {
-  const mesa = '3f2a1c9e-1111-4222-8333-944455556666'
-  const ultima = reglas.JUEGO.rondas.length - 1
-  const pausa = M.empezarEn(ultima)
-  assert.ok(M.esOpcional(pausa))
-  assert.ok(!M.esOpcional(M.empezarEn(1)))
-  const fin = M.terminar(pausa)
-  assert.equal(fin.paso, 'final')
-  assert.equal(M.vista(fin, mesa).jugadas, ultima)
-  // Seguir sigue funcionando igual.
-  assert.equal(M.siguiente(pausa, mesa).paso, 'pregunta')
-  // Terminar fuera de la pausa opcional no hace nada.
-  assert.deepEqual(M.terminar(M.inicial), M.inicial)
+test('saltar a la ronda 2 sin jugar la 1 lleva a la pausa al acabarla; con la 3 hecha, al final', () => {
+  let g = M.irARonda(M.guardadoVacio(), 1)
+  for (let i = 0; i < N; i++) g = M.siguiente(g, MESA)
+  assert.equal(g.e.paso, 'pausa')
+  let h = M.irARonda({ ...M.guardadoVacio(), hechas: [false, false, true], empezado: true }, 1)
+  for (let i = 0; i < N; i++) h = M.siguiente(h, MESA)
+  assert.equal(h.e.paso, 'final')
+})
+
+test('atrás: de la primera pregunta de la ronda 1 a las reglas; de otra ronda, a la anterior', () => {
+  const r1 = M.atras(M.irARonda(M.guardadoVacio(), 0), MESA)
+  assert.equal(r1.e.paso, 'reglas')
+  const r2 = M.atras(M.irARonda(M.guardadoVacio(), 1), MESA)
+  assert.deepEqual(r2.e, { paso: 'pregunta', ronda: 0, indice: N - 1 })
+})
+
+test('lo guardado roto o de la versión anterior empieza de cero', () => {
+  assert.deepEqual(M.leer(null), M.guardadoVacio())
+  assert.deepEqual(M.leer('2'), M.guardadoVacio())
+  assert.deepEqual(M.leer('{roto'), M.guardadoVacio())
+  const g = M.leer(JSON.stringify({ e: { paso: 'pregunta', ronda: 9, indice: 1 }, hechas: [true], empezado: true }))
+  assert.equal(g.e.ronda, J.rondas.length - 1)
+  assert.deepEqual(g.hechas, [true, false, false])
+})
+
+test('solo las cenas tienen juego', () => {
+  assert.ok(M.hayJuego('dinner'))
+  assert.ok(M.hayJuego('women_dinner'))
+  assert.ok(!M.hayJuego('walk'))
+  assert.ok(!M.hayJuego(null))
 })

@@ -25,6 +25,8 @@ export type DeServidor = {
   mesaUnica?: boolean
   /** Hasta cuándo nos deja la mesa el restaurante. Sin él, el guion usa su duración por defecto. */
   cierraMesaEn?: string | null
+  /** La foto de la entrada del local, ~1200 px (entrega 20). Sin ella, solo el texto de «Al llegar». */
+  fotoEntrada?: string | null
   /** Hasta tres sitios para seguir que operación eligió para ese local (14-10). */
   paraSeguir?: SitioParaSeguir[] | null
   actividad?: { ruta?: string; km?: number; minutos?: number; nivel?: string } | null
