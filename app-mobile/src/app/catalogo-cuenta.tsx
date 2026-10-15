@@ -29,6 +29,8 @@ function deCaptura(d: MiCuenta, varios = false): MiCuenta {
       { id: 'c', formato: 'dinner', empiezaEn: sabado(2), cierraEn: menos(sabado(2), 24), creditos: 1, zonas: ['La Castellana'], apuntados: 2, cerrada: false, mia: false },
       // ?varios=1: también drinks, para ver el filtro con «Todos» (entrega 19, 2a).
       ...(varios ? [{ id: 'd', formato: 'drinks', empiezaEn: menos(sabado(0), 47), cierraEn: menos(sabado(0), 71), creditos: 1, zonas: ['Altamira'], apuntados: 5, cerrada: false, mia: false }] : []),
+      // El brunch (entrega 21): polaroid, icono y color propios.
+      ...(varios ? [{ id: 'b', formato: 'brunch', empiezaEn: menos(sabado(0), -40), cierraEn: menos(sabado(0), 0), creditos: 1, zonas: ['Chacao'], apuntados: 3, cerrada: false, mia: false }] : []),
     ],
     proximaFecha: { empiezaEn: s0, cierraEn: menos(s0, 24), revelaEn: menos(s0, 7.5), zona: 'Chacao', apuntados: 9, zonaHoraria: 'America/Caracas' },
   }

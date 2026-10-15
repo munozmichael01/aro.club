@@ -156,17 +156,13 @@ export const FORMATOS: Record<string, { plural: string; singular: string }> = {
   drinks: { plural: 'Drinks', singular: 'Drinks' },
   movement: { plural: 'Movimiento', singular: 'Movimiento' },
   coffee: { plural: 'Coffee', singular: 'Coffee' },
-  /**
-   * Quinta familia (15-10, primera fecha el domingo 25). Sin polaroid de filtro
-   * todavía: sale en «Todos». Icono, color y foto, provisionales los del café
-   * hasta que Design defina los suyos.
-   */
+  /** Quinta familia (15-10, primera fecha el domingo 25; entrega 21 de Design). */
   brunch: { plural: 'Brunch', singular: 'Brunch' },
 }
 /** «Cena +40»: una fecha con edad mínima. */
 export const conEdad = (singular: string, edad: number) => `${singular} +${edad}`
 
-export const ORDEN_FORMATOS = ['dinner', 'drinks', 'movement', 'coffee'] as const
+export const ORDEN_FORMATOS = ['dinner', 'drinks', 'movement', 'coffee', 'brunch'] as const
 
 /** Lo que dice cada fecha de la agenda debajo de su barra. */
 export function estadoDeFecha(n: number, mia: boolean, cerrada: boolean): string {

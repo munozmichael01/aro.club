@@ -46,8 +46,17 @@ export function IconoCoffee({ tam = 15, color }: P) {
   )
 }
 
-/** `brunch`: provisional el del café, hasta que Design entregue el suyo. */
-export const ICONO_FORMATO = { dinner: IconoCenas, drinks: IconoDrinks, movement: IconoMovimiento, coffee: IconoCoffee, brunch: IconoCoffee } as const
+/** Brunch: el sol saliendo sobre la línea, medio disco apoyado en el horizonte (entrega 21). */
+export function IconoBrunch({ tam = 15, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 16 16">
+      <Path d="M3.4 10.6a4.6 4.6 0 0 1 9.2 0z" fill={color} />
+      <Path d="M2 13h12" stroke={color} strokeWidth={1.5} strokeLinecap="round" />
+    </Svg>
+  )
+}
+
+export const ICONO_FORMATO = { dinner: IconoCenas, drinks: IconoDrinks, movement: IconoMovimiento, coffee: IconoCoffee, brunch: IconoBrunch } as const
 
 export function IconoCheck({ tam = 14, color }: P) {
   return (

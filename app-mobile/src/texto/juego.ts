@@ -25,8 +25,13 @@ export const tarjeta = {
   seguir: (ronda: number, pregunta: number) => `Seguir · ronda ${ronda}, pregunta ${pregunta}`,
   reiniciar: 'Empezar de nuevo',
   irA: (n: number) => `Ir a la ronda ${n}`,
-  /** Antes de la hora de la cena (Michael, 06-10 y otra vez el 15-10): nadie llega con las respuestas pensadas. */
-  seAbre: (hora: string) => (hora ? `Se abre a las ${hora}, a la hora de la cena` : 'Se abre a la hora de la cena'),
+  /** 1a (entrega 21): antes de la hora de la cena. Nadie llega con las respuestas pensadas (Michael, 06-10 y 15-10). */
+  resumenCerrado: '3 rondas · se abre a la hora de la cena',
+  seAbre: (hora: string) => (hora ? `Se abre a las ${hora}, a la hora de la cena.` : 'Se abre a la hora de la cena.'),
+  /** 1b y 1c: jugado entero o con «Terminar aquí». */
+  jugado: (n: number, total: number) => `Jugado · ${n} de ${total} rondas`,
+  hecho: 'Hecho',
+  volverAJugar: 'Volver a jugar',
 }
 
 export const juego = {

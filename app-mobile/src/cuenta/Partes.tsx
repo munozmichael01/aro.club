@@ -189,8 +189,10 @@ const FOTOS: Record<string, { on: number; off: number }> = {
   drinks: { on: require('../../assets/fotos/filtro-drinks.jpg'), off: require('../../assets/fotos/filtro-drinks-apagada.jpg') },
   movement: { on: require('../../assets/fotos/filtro-movimiento.jpg'), off: require('../../assets/fotos/filtro-movimiento-apagada.jpg') },
   coffee: { on: require('../../assets/fotos/filtro-coffee.jpg'), off: require('../../assets/fotos/filtro-coffee-apagada.jpg') },
+  // Entrega 21. Foto de Pexels, provisional hasta tener fotos propias de brunch.
+  brunch: { on: require('../../assets/fotos/filtro-brunch.jpg'), off: require('../../assets/fotos/filtro-brunch-apagada.jpg') },
 }
-const GIRO: Record<string, string> = { todos: '-1.2deg', dinner: '1.4deg', drinks: '-1.6deg', movement: '1.2deg', coffee: '-1.4deg' }
+const GIRO: Record<string, string> = { todos: '-1.2deg', dinner: '1.4deg', drinks: '-1.6deg', movement: '1.2deg', coffee: '-1.4deg', brunch: '1.6deg' }
 
 /** Las medidas de la entrega 19: polaroids de 112 de ancho, 12 de separación. */
 const ANCHO_POLAROID = 112
@@ -222,7 +224,8 @@ function Polaroid({ f, alPulsar }: { f: Filtro; alPulsar: () => void }) {
       <View style={estilos.polaroidFoto}>
         {f.mosaico ? (
           <View style={estilos.mosaico}>
-            {T.ORDEN_FORMATOS.map((x) => (
+            {/* El mosaico de «Todos» es de 2 × 2: las cuatro primeras familias (el brunch no cabe). */}
+            {T.ORDEN_FORMATOS.slice(0, 4).map((x) => (
               <Image key={x} source={FOTOS[x].on} style={estilos.mosaicoFoto} resizeMode="cover" />
             ))}
           </View>
@@ -244,8 +247,8 @@ const MARCAS: Record<string, { tinta: string; fondo: string }> = {
   drinks: { tinta: color.verde, fondo: verdeAlfa(0.12) },
   movement: { tinta: '#2D6A4F', fondo: 'rgba(45,106,79,.14)' },
   coffee: { tinta: color.secundario, fondo: 'rgba(86,106,93,.14)' },
-  /** Provisional, el del café, hasta que Design defina el del brunch. */
-  brunch: { tinta: color.secundario, fondo: 'rgba(86,106,93,.14)' },
+  /** Entrega 21: quemado sobre melocotón al 24 %, el único con melocotón de fondo. */
+  brunch: { tinta: color.terracota, fondo: 'rgba(227,156,99,.24)' },
 }
 
 function FilaFecha(p: {

@@ -2,7 +2,7 @@ import { useFocusEffect } from 'expo-router'
 import { useCallback, useState, type ReactNode } from 'react'
 import { Image, Platform, Pressable, StyleSheet, View, type TextStyle } from 'react-native'
 
-import { Texto, fuente } from '../diseno'
+import { IconoCandado, Texto, fuente } from '../diseno'
 import * as G from '../juego/guardado'
 import * as J from '../juego/maquina'
 import { reglas } from '../reglas'
@@ -69,6 +69,13 @@ export function MesaCena(p: {
       : ultimoAhora?.momento === 'despedida' && sitios.length
         ? T.cena.paso.resumenSitios(T.guion.momentos.despedida.nombre, sitios.length)
         : T.cena.paso.resumenAhora(T.guion.momentos[ultimoAhora?.momento ?? 'llegada'].nombre)
+
+  const cerradoHasta = J.ventana(d.empiezaEn, ahora) === 'antes' ? F.horaEn(d.empiezaEn, zona) : null
+  const reiniciar = async () => {
+    if (!d.mesaId) return
+    await G.borrar(d.mesaId)
+    setGuardado(J.guardadoVacio())
+  }
 
   return (
     <View style={{ gap: 12 }}>
@@ -161,20 +168,29 @@ export function MesaCena(p: {
       ) : null}
 
       {d.mesaId ? (
-        <Desplegable oscura titulo={TJ.tarjeta.titulo} resumen={TJ.tarjeta.resumen} abierta={abiertas.juego} alTocar={() => poner('juego', !abiertas.juego)}>
-          <TarjetaJuego
-            guardado={guardado}
-            mesaId={d.mesaId}
-            horaHielo={F.horaEn(pasos.find((x) => x.momento === 'hielo')?.en, zona)}
-            cerradoHasta={J.ventana(d.empiezaEn, ahora) === 'antes' ? F.horaEn(d.empiezaEn, zona) || ' ' : null}
-            jugar={jugar}
-            reiniciar={async () => {
-              if (!d.mesaId) return
-              await G.borrar(d.mesaId)
-              setGuardado(J.guardadoVacio())
+        cerradoHasta != null ? (
+          // 1a (entrega 21): a la hora de la cena, ni un minuto antes.
+          <JuegoCerrado hora={cerradoHasta} />
+        ) : J.terminado(guardado) ? (
+          // 1b y 1c: jugado entero, o terminado con «Terminar aquí».
+          <JuegoJugado
+            jugadas={J.jugadas(guardado)}
+            volver={async () => {
+              await reiniciar()
+              poner('juego', true)
             }}
           />
-        </Desplegable>
+        ) : (
+          <Desplegable oscura titulo={TJ.tarjeta.titulo} resumen={TJ.tarjeta.resumen} abierta={abiertas.juego} alTocar={() => poner('juego', !abiertas.juego)}>
+            <TarjetaJuego
+              guardado={guardado}
+              mesaId={d.mesaId}
+              horaHielo={F.horaEn(pasos.find((x) => x.momento === 'hielo')?.en, zona)}
+              jugar={jugar}
+              reiniciar={reiniciar}
+            />
+          </Desplegable>
+        )
       ) : null}
 
       <Pressable onPress={() => ir('/cancelar')} accessibilityRole="link" style={e.cancelar}>
@@ -271,16 +287,12 @@ function TarjetaJuego(p: {
   guardado: J.Guardado
   mesaId: string
   horaHielo: string
-  /** Antes de la hora de la cena: la hora a la que se abre. Null si ya está abierto. */
-  cerradoHasta: string | null
   jugar: (como: string) => void
   reiniciar: () => void
 }) {
   const g = p.guardado
-  const cerrado = p.cerradoHasta != null
   const punt = J.puntero(g)
   const hayAvance = g.empezado
-  const fin = J.terminado(g)
   return (
     <View style={{ paddingHorizontal: 18, paddingBottom: 18 }}>
       <Texto style={[texto(14, 1.45), { color: C.cuerpoVerde, paddingBottom: 6 }]}>{TJ.tarjeta.intro}</Texto>
@@ -298,7 +310,6 @@ function TarjetaJuego(p: {
             </View>
             <Pressable
               onPress={() => p.jugar(`ronda-${i}`)}
-              disabled={cerrado}
               accessibilityRole="button"
               accessibilityLabel={`${TJ.tarjeta.irA(i + 1)} · ${texto2}`}
               style={[
@@ -308,7 +319,6 @@ function TarjetaJuego(p: {
                   : est.tipo === 'hecha'
                     ? { borderWidth: 1, borderColor: 'rgba(156,187,166,.5)' }
                     : { borderWidth: 1, borderColor: 'rgba(250,243,228,.35)' },
-                cerrado && { opacity: 0.4 },
               ]}
             >
               <Texto style={[semi(11), { color: est.tipo === 'ahora' ? C.tinta : est.tipo === 'hecha' ? C.secundarioVerde : C.crema }]}>{texto2}</Texto>
@@ -316,17 +326,7 @@ function TarjetaJuego(p: {
           </View>
         )
       })}
-      {cerrado ? (
-        // Fuera de la maqueta: Design lo daba por abierto siempre; Michael mantiene la hora de la cena.
-        <View style={[e.cta, { backgroundColor: 'rgba(227,156,99,.18)' }]} accessibilityRole="text">
-          <Texto style={[semi(15), { color: C.acento }]}>{TJ.tarjeta.seAbre(p.cerradoHasta!.trim())}</Texto>
-        </View>
-      ) : fin ? (
-        // Terminado: la maqueta no dibuja este caso; el único paso con sentido es volver a empezar.
-        <Pressable onPress={p.reiniciar} accessibilityRole="button" style={({ pressed }) => [e.cta, pressed && { opacity: 0.85 }]}>
-          <Texto style={[semi(15), { color: C.tinta }]}>{TJ.tarjeta.reiniciar}</Texto>
-        </Pressable>
-      ) : (
+      {(
         <>
           <Pressable onPress={() => p.jugar(hayAvance ? 'seguir' : 'empezar')} accessibilityRole="button" style={({ pressed }) => [e.cta, pressed && { opacity: 0.85 }]}>
             <Texto style={[semi(15), { color: C.tinta }]}>{hayAvance && punt ? TJ.tarjeta.seguir(punt.ronda + 1, punt.indice + 1) : TJ.tarjeta.empezar}</Texto>
@@ -338,6 +338,62 @@ function TarjetaJuego(p: {
           ) : null}
         </>
       )}
+    </View>
+  )
+}
+
+/** 1a · Antes de la hora de la cena: se ve qué hay, pero nada se puede abrir. */
+function JuegoCerrado({ hora }: { hora: string }) {
+  return (
+    <View style={[e.tarjeta, { backgroundColor: C.tinta, borderWidth: 0 }]}>
+      <View style={e.cabeza}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Texto style={[serif(21, 1.1, -0.015), { color: C.crema }]}>{TJ.tarjeta.titulo}</Texto>
+          <Texto style={[texto(13, 1.35), { color: C.cuerpoVerde, marginTop: 3 }]}>{TJ.tarjeta.resumenCerrado}</Texto>
+        </View>
+      </View>
+      <View style={{ paddingHorizontal: 18, paddingBottom: 18 }}>
+        <View style={{ opacity: 0.45 }}>
+          {reglas.JUEGO.rondas.map((r, i) => (
+            <View key={r.clave} style={e.ronda}>
+              <Texto style={[serif(20, 1.1), { color: C.acento, width: 30 }]}>{i + 1}</Texto>
+              <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+                <Texto style={[serif(18, 1.15), { color: C.crema }]}>{r.titulo}</Texto>
+                <Texto style={[texto(13, 1.4), { color: C.cuerpoVerde }]}>{TJ.tarjeta.rondas[i]?.bajada ?? ''}</Texto>
+              </View>
+            </View>
+          ))}
+        </View>
+        <View style={e.candado} accessibilityRole="text">
+          <IconoCandado tam={20} color={C.acento} />
+          <Texto style={[texto(14, 1.3), { fontFamily: fuente.textoMedia, color: C.crema, flex: 1 }]}>{TJ.tarjeta.seAbre(hora)}</Texto>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+/** 1b y 1c · Jugado: la tarjeta repite la última frase del juego. Sin botón principal. */
+function JuegoJugado({ jugadas, volver }: { jugadas: number; volver: () => void }) {
+  return (
+    <View style={[e.tarjeta, { backgroundColor: C.tinta, borderWidth: 0 }]}>
+      <View style={e.cabeza}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Texto style={[serif(21, 1.1, -0.015), { color: C.crema }]}>{TJ.tarjeta.titulo}</Texto>
+          <Texto style={[texto(13, 1.35), { color: C.cuerpoVerde, marginTop: 3 }]}>{TJ.tarjeta.jugado(jugadas, J.RONDAS())}</Texto>
+        </View>
+        <View style={e.hecho}>
+          <Texto style={[semi(11), { color: C.secundarioVerde }]}>{TJ.tarjeta.hecho}</Texto>
+        </View>
+      </View>
+      <View style={e.jugado}>
+        <Texto style={[serif(26, 1.1, -0.02), { color: C.crema, paddingTop: 12 }]}>
+          {TJ.juego.final.titulo} <Texto style={[serif(26, 1.1, -0.02), { color: C.acento }]}>{TJ.juego.final.resto}</Texto>
+        </Texto>
+        <Pressable onPress={volver} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }}>
+          <Texto style={[semi(14), { color: C.cuerpoVerde, textDecorationLine: 'underline' }]}>{TJ.tarjeta.volverAJugar}</Texto>
+        </Pressable>
+      </View>
     </View>
   )
 }
@@ -391,5 +447,8 @@ const e = StyleSheet.create({
   cta: { marginTop: 8, minHeight: 48, borderRadius: 999, backgroundColor: C.acento, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   reiniciar: { minHeight: 44, marginTop: 4, alignItems: 'center', justifyContent: 'center' },
   nota: { color: C.cuerpo, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(20,52,42,.1)' },
+  candado: { marginTop: 8, minHeight: 48, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(250,243,228,.25)', paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  hecho: { minHeight: 30, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(156,187,166,.5)', justifyContent: 'center' },
+  jugado: { paddingTop: 6, paddingHorizontal: 18, paddingBottom: 18, gap: 14, borderTopWidth: 1, borderTopColor: 'rgba(250,243,228,.15)' },
   cancelar: { marginTop: 12, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
 })
