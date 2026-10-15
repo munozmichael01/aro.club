@@ -59,6 +59,8 @@ type Api = {
     vasCon: string
   }
   NOMBRES_DE_FORMATO: Record<string, string>
+  /** Las opciones son pares [texto, código], y el código manda. */
+  PUERTA: Record<string, { clave: string; pregunta: string; opciones: (string | null)[][] }>
   ZONA: string
   MESES: string[]
   HORAS_EN_LETRA: string[]
@@ -99,6 +101,9 @@ export const vozDe = api.vozDe
 
 /** Cómo se llama cada formato. Misma tabla para los correos, el panel y la app. */
 export const NOMBRES_DE_FORMATO = api.NOMBRES_DE_FORMATO
+
+/** Las cuatro preguntas de antes de tener cuenta, con sus códigos. */
+export const PUERTA = api.PUERTA
 
 /**
  * Horas de antelación con que se cierra el apuntarse a una fecha.

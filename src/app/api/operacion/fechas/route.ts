@@ -116,7 +116,7 @@ async function avisarDeLaApertura(
   // interesa no recibe, y las cuentas de prueba tampoco.
   const { data: evFormato } = await admin
     .from('events')
-    .select('format, starts_at, age_band_min, age_band_max')
+    .select('format, starts_at, city_slug, age_band_min, age_band_max')
     .eq('id', eventoId)
     .maybeSingle()
 

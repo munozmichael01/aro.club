@@ -48,7 +48,7 @@ async function avisar(seco: boolean) {
 
   const { data: eventos } = await admin
     .from('events')
-    .select('id, booking_closes_at, format, starts_at, age_band_min, age_band_max')
+    .select('id, booking_closes_at, format, starts_at, city_slug, age_band_min, age_band_max')
     .eq('status', 'open')
     .gt('booking_closes_at', new Date(ahora).toISOString())
     .lte('booking_closes_at', new Date(ahora + ANTELACION).toISOString())

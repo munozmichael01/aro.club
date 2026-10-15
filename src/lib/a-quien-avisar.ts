@@ -2,7 +2,51 @@ import 'server-only'
 
 import { cabeEnLaFecha, tieneEdadMinima, type EdadMinima } from '@/lib/edad'
 import { FAMILIA_DE_FORMATO, PLANES_DE_FAMILIA } from '@/lib/formatos'
+import { PUERTA, partesDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { zonaDeCiudad } from '@/lib/zona-ciudad'
+
+/**
+ * En qué casilla de «¿Qué días te sirven mejor?» cae una fecha.
+ *
+ * La pregunta no ofrece días sueltos: ofrece **día y momento** —«Jueves
+ * noche», «Sábado mañana», «Domingo mañana»—, que es justo lo que distingue
+ * un brunch del domingo de una cena del sábado. Por eso el brunch se puede
+ * cruzar con lo que la gente contestó sin inventar nada.
+ *
+ * Devuelve `null` cuando la fecha no cae en ninguna casilla —un martes, un
+ * domingo de noche, un sábado a las cuatro de la tarde—, y entonces NO se
+ * filtra por día: nadie pudo declarar ese hueco, así que tratarlo como un
+ * «no» dejaría la fecha sin anunciar a nadie.
+ *
+ * La hora y el día son los de la ciudad de la fecha, nunca los del servidor:
+ * un sábado a las 7:30 p.m. de Caracas es domingo en UTC.
+ */
+export function casillaDeDia(iso: string, zona: string): string | null {
+  const p = partesDe(iso, zona)
+  if (!p) return null
+
+  // Mañana y noche, como las nombra la pregunta. Lo de en medio no existe en
+  // el catálogo, así que no se clasifica.
+  const momento = p.horas < 12 ? 'am' : p.horas >= 18 ? 'pm' : null
+  if (!momento) return null
+
+  const casilla = (
+    p.diaNumero === 4 && momento === 'pm' ? 'jue'
+    : p.diaNumero === 5 && momento === 'pm' ? 'vie'
+    : p.diaNumero === 6 && momento === 'am' ? 'sab-am'
+    : p.diaNumero === 6 && momento === 'pm' ? 'sab'
+    : p.diaNumero === 0 && momento === 'am' ? 'dom-am'
+    : null
+  )
+
+  // Y que el código siga existiendo en la pregunta. Si alguien reordena o
+  // renombra las opciones, esto deja de filtrar en vez de filtrar mal: el
+  // catálogo manda, como en todo lo que se guarda por código.
+  if (!casilla) return null
+  const codigos = (PUERTA.dias?.opciones ?? []).map(([, c]) => c)
+  return codigos.includes(casilla) ? casilla : null
+}
 
 /**
  * Quién quiere saber de una fecha, de los que ya pueden llegar a ella.
@@ -25,6 +69,16 @@ import { createAdminClient } from '@/lib/supabase/admin'
  *     A Michael le llegaban varios avisos a la vez, que eran los de sus
  *     propias cuentas de prueba llegando a su buzón.
  *
+ * 4 · QUIEN DIJO QUE ESE DÍA NO. «Jueves noche» y «Domingo mañana» son dos
+ *     de las cinco casillas que ofrece la puerta, y quien marcó solo fin de
+ *     semana no puede ir a una cena del jueves. Escribirle de una fecha a la
+ *     que no puede llegar es la misma falta de respeto que escribirle de un
+ *     plan que no quiere, y aquí es la mitad de la lista: de los 376 que
+ *     aceptan Chacao y quieren cenas, 182 pueden un jueves.
+ *
+ *     Mismo trato que los planes: quien no contestó sí recibe, y una fecha
+ *     que no cae en ninguna casilla —un martes— no filtra a nadie.
+ *
  * 3 · QUIEN NO TIENE LA EDAD DE ESA FECHA. Una cena de mayores de 40 no se
  *     anuncia a quien tiene 25: el aviso le ofrece apuntarse a algo que
  *     `/api/reservar` le va a negar, y la forma honesta de cerrar una puerta
@@ -42,7 +96,7 @@ export async function quienQuiereSaberDe(
    * La fecha de la que se avisa, para su banda de edad. Opcional: sin ella
    * no se filtra por edad y el aviso sale como salía.
    */
-  evento?: (EdadMinima & { starts_at: string }) | null,
+  evento?: (EdadMinima & { starts_at: string; city_slug?: string | null }) | null,
 ): Promise<Set<string>> {
   const permitidos = new Set(ids)
   if (!ids.length) return permitidos
@@ -116,6 +170,24 @@ export async function quienQuiereSaberDe(
     if (suyos.length && !suyos.some((plan) => planes.includes(plan))) {
       permitidos.delete(r.profile_id)
     }
+  }
+
+  // --- y quien dijo que ese día no --------------------------------------
+  if (!evento?.starts_at || !permitidos.size) return permitidos
+
+  const casilla = casillaDeDia(evento.starts_at, await zonaDeCiudad(evento.city_slug))
+  if (!casilla) return permitidos
+
+  const { data: suDia } = await admin
+    .from('answers')
+    .select('profile_id, value')
+    .eq('question_key', 'dias')
+    .in('profile_id', [...permitidos])
+
+  for (const r of suDia ?? []) {
+    if (!r.profile_id) continue
+    const suyos = Array.isArray(r.value) ? (r.value as string[]) : []
+    if (suyos.length && !suyos.includes(casilla)) permitidos.delete(r.profile_id)
   }
 
   return permitidos
