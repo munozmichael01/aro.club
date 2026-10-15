@@ -41,17 +41,32 @@ export const dynamic = 'force-dynamic'
 /** Treinta horas: un cron diario coge cada fecha una vez, con margen. */
 const ANTELACION = 30 * 3600_000
 
-async function avisar(seco: boolean) {
+async function avisar(seco: boolean, soloEste?: string | null) {
   const admin = createAdminClient()
 
   const ahora = Date.now()
 
-  const { data: eventos } = await admin
+  const consulta = admin
     .from('events')
     .select('id, booking_closes_at, format, starts_at, city_slug, age_band_min, age_band_max')
     .eq('status', 'open')
     .gt('booking_closes_at', new Date(ahora).toISOString())
-    .lte('booking_closes_at', new Date(ahora + ANTELACION).toISOString())
+
+  /**
+   * `?evento=` mira UNA fecha, y solo en seco.
+   *
+   * La pasada en seco dice a cuánta gente se le escribiría, que es lo que hay
+   * que saber antes de escribirle a medio club. Pero cuenta todas las fechas
+   * que cierran dentro del plazo juntas, y dos fechas del mismo día son dos
+   * correos a casi la misma gente: el total no dice cuántos recibirían dos.
+   *
+   * Con un id se ve una sola, y se ve ANTES de que entre en el plazo. Solo en
+   * seco: en caliente serviría para mandar un correo a destiempo.
+   */
+  if (soloEste && seco) consulta.eq('id', soloEste)
+  else consulta.lte('booking_closes_at', new Date(ahora + ANTELACION).toISOString())
+
+  const { data: eventos } = await consulta
 
   if (!eventos?.length) return NextResponse.json({ eventos: 0, encolados: 0, seco })
 
@@ -163,7 +178,8 @@ export async function GET(request: Request) {
 
   // `?seco=1` calcula y NO escribe. Ver la nota de arriba: sin esto, probar
   // este cron es mandar correos.
-  const seco = new URL(request.url).searchParams.get('seco') === '1'
+  const params = new URL(request.url).searchParams
+  const seco = params.get('seco') === '1'
 
-  return avisar(seco)
+  return avisar(seco, params.get('evento'))
 }
