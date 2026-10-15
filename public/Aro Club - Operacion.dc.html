@@ -248,7 +248,10 @@
                         <sc-if value="{{ g.sinFoto }}" hint-placeholder-val="{{ false }}">
                           <span style="{{ g.avatar }}">{{ g.inicial }}</span>
                         </sc-if>
-                        <span style="flex:1;min-width:0;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ g.nombre }}</span>
+                        <span style="{{ g.estiloNombre }}">{{ g.nombre }}</span>
+                        <sc-if value="{{ g.yaNoEsta }}" hint-placeholder-val="{{ false }}">
+                          <span style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;background:rgba(143,69,21,.16);color:#8F4515;font:600 11px/1 'Inter Tight',sans-serif;white-space:nowrap">Ya no está</span>
+                        </sc-if>
                         <span style="font:400 12px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ g.dato }}</span>
                         <sc-if value="{{ g.hayDietas }}" hint-placeholder-val="{{ false }}">
                           <span style="{{ g.estiloDietas }}">{{ g.dietas }}</span>
@@ -3118,6 +3121,19 @@ class Component extends DCLogic {
           // urgencias y no en una mala cena.
           estiloDietas: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:' + ((p.dietas || []).indexOf('alergias') >= 0 ? 'rgba(143,69,21,.16)' : 'rgba(20,52,42,.07)') + ';color:' + ((p.dietas || []).indexOf('alergias') >= 0 ? '#8F4515' : '#2C4A38'),
           inicial: (p.nombre || '—').charAt(0),
+          /**
+           * Quien ya no está apuntado a esta fecha, tachado y dicho.
+           *
+           * El contador de arriba avisaba —«2 ya no están»— y la mesa los
+           * seguía pintando igual que a los demás: Michael movió a dos a otra
+           * fecha y los siguió viendo sentados. La propuesta es una foto del
+           * momento en que se repartió y no se recalcula sola —repartir mueve
+           * a todo el mundo—, así que lo que hay que hacer es que la foto
+           * diga qué parte de ella ya no es verdad.
+           */
+          yaNoEsta: !!p.yaNoEsta,
+          estiloNombre: 'flex:1;min-width:0;font:500 14px/1.3 \'Inter Tight\',sans-serif;color:'
+            + (p.yaNoEsta ? '#8F4515;text-decoration:line-through;text-decoration-thickness:1px' : '#14342A'),
           avatar: avatarRep(i + m.numero),
           enlace: 'flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:-9px -9px -9px 0;border-radius:999px',
           circulo: 'width:26px;height:26px;border-radius:999px;background:rgba(20,52,42,.07);color:#1B5138;display:flex;align-items:center;justify-content:center;font:500 12px/1 \'Inter Tight\',sans-serif',

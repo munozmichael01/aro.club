@@ -383,6 +383,15 @@ export async function GET(request: Request) {
             ...m,
             integrantes: (m.integrantes ?? []).map((p) => ({
               ...p,
+              /**
+               * Si ESTA persona ya no está apuntada a la fecha.
+               *
+               * El contador de arriba decía «2 ya no están» y la mesa los
+               * seguía pintando como comensales: Michael movió a dos a otra
+               * fecha y los seguía viendo sentados. La cifra es un aviso; lo
+               * que hace falta es verlo en la cara de quién.
+               */
+              yaNoEsta: !vivos.has(p.profileId),
               // Para distinguir a dos que se llamen igual en la misma mesa.
               // La pantalla solo lo enseña cuando el nombre se repite.
               apellido: apellidoDe.get(p.profileId) ?? '',
