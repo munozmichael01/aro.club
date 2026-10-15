@@ -47,3 +47,10 @@ test('el momento de la cena: antes, en curso y terminada desde la despedida', as
   assert.equal(sinSufijo('7:30 p.m.'), '7:30')
   assert.equal(sinSufijo('12:05 a.m.'), '12:05')
 })
+
+test('un cierre de más de tres horas (la última entrada de un local de brunch) se ignora', () => {
+  const p = pasos(EMPIEZA, '2026-10-17T10:00:00Z') // diez horas y media después
+  assert.equal(Date.parse(hora(p, 'despedida')) - Date.parse(EMPIEZA), DURACION_POR_DEFECTO * 60_000)
+  const real = pasos(EMPIEZA, '2026-10-17T02:00:00Z') // 2 h 30: la mesa real del viernes
+  assert.equal(hora(real, 'despedida'), '2026-10-17T02:00:00.000Z')
+})

@@ -15,6 +15,9 @@ const MIN = 60_000
 /** Si el restaurante no nos dijo cuánto nos deja la mesa: dos horas. */
 export const DURACION_POR_DEFECTO = 120
 
+/** Más de tres horas no es lo que dura una mesa: es la hora de cierre del local. */
+export const MAX_MESA = 180
+
 export type Momento = 'llegada' | 'voz' | 'pedir' | 'vuelta' | 'hielo' | 'tema' | 'cuenta' | 'despedida'
 export type Paso = { momento: Momento; en: string }
 
@@ -26,7 +29,10 @@ export function pasos(empiezaEn: string | null | undefined, cierraMesaEn?: strin
   const t = empiezaEn ? Date.parse(empiezaEn) : NaN
   if (!Number.isFinite(t)) return []
   const c = cierraMesaEn ? Date.parse(cierraMesaEn) : NaN
-  const fin = Number.isFinite(c) && c >= t + 90 * MIN ? c : t + DURACION_POR_DEFECTO * MIN
+  // `cierraMesaEn` sale de `restaurants.last_seating` (la última hora a la que el
+  // sitio sienta gente, 15-10): para una cena es la mesa real, pero para un
+  // brunch de las once daría once horas. Fuera de 1 h 30 – 3 h, no es una mesa.
+  const fin = Number.isFinite(c) && c >= t + 90 * MIN && c <= t + MAX_MESA * MIN ? c : t + DURACION_POR_DEFECTO * MIN
   const iso = (ms: number) => new Date(ms).toISOString()
   return [
     { momento: 'llegada', en: iso(t) },
