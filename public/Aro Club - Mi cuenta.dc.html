@@ -813,10 +813,23 @@ class Component extends DCLogic {
     const filtra = cuantos > 1;
     const sel = filtra ? (this.state.filtro || 0) : 0;
 
-    // De `tipos`, no de una segunda lista escrita aquí. Eran dos, y por eso
-    // el brunch entró en el filtro de la agenda y no en las polaroids: la de
-    // arriba lo tenía y esta no.
-    const nombres = (filtra ? ['Todos'] : []).concat(tipos.slice(1));
+    /**
+     * De `tipos`, no de una segunda lista escrita aquí. Eran dos, y por eso
+     * el brunch entró en el filtro de la agenda y no en las polaroids: la de
+     * arriba lo tenía y esta no.
+     *
+     * Y primero los que TIENEN fecha abierta. El orden era el de la lista, y
+     * el brunch —que es el formato nuevo— caía el último, detrás de tres
+     * «Próximamente» que no llevan a ninguna parte: hay que deslizar el
+     * carril entero para llegar a lo único que se puede reservar. Dentro de
+     * cada grupo se conserva el orden de siempre, que es el de la marca.
+     */
+    const conFechaPrimero = tipos.slice(1).slice().sort((a, b) => {
+      const ha = conFecha[a] ? 0 : 1;
+      const hb = conFecha[b] ? 0 : 1;
+      return ha - hb || tipos.indexOf(a) - tipos.indexOf(b);
+    });
+    const nombres = (filtra ? ['Todos'] : []).concat(conFechaPrimero);
 
     const filtros = nombres.map((nombre) => {
       const esTodos = nombre === 'Todos';
