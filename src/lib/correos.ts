@@ -107,6 +107,20 @@ export type Correo =
    * zonas» tampoco quiere este. Usa esa misma preferencia a propósito.
    */
   | 'cierra_pronto'
+  /**
+   * Los avisos del día de una persona, juntos (entrega 21).
+   *
+   * El de una sola fecha sigue siendo el suyo —`abrimos_zona` para la
+   * apertura, `cierra_pronto` para el plazo—. Este es el de cuando le tocan
+   * varios el mismo día: el 10-10 se abrieron dos fechas y salieron sesenta
+   * correos para treinta personas, porque las zonas se solapan casi del
+   * todo. El segundo correo no decía nada que el primero no dijera.
+   *
+   * Lleva dentro los ids de las fechas, no sus datos: entre que se encola y
+   * que sale puede cambiar el precio, la zona o el sitio, y lo que se manda
+   * tiene que ser lo que hay cuando sale.
+   */
+  | 'avisos_del_dia'
   // El aviso de retraso. El boton existia desde su entrega y no mandaba nada:
   // `avisar` solo cambiaba la pantalla, asi que la persona leia «avisamos que
   // llegas 20 minutos tarde» y a la mesa no le llegaba nada.
@@ -442,6 +456,55 @@ export async function despacharPendientes(
       pendientes = [...pendientes, ...(resto ?? [])]
     }
 
+    /**
+     * Los que le tocan a la misma persona en la misma vuelta, en UN correo.
+     *
+     * Dos fechas abiertas el mismo día son dos filas de `abrimos_zona` para
+     * casi la misma gente, y dos fechas que cierran mañana, dos de
+     * `cierra_pronto`. Mandarlas por separado es lo que hizo que alguien
+     * recibiera ocho avisos de apertura.
+     *
+     * Se juntan al DESPACHAR y no al encolar, y eso es a propósito: la fila
+     * por fecha sigue siendo el registro de a quién se le contó qué —y lo que
+     * impide contárselo dos veces—. Lo que cambia es cuántos sobres salen.
+     *
+     * Las dos clases NO se mezclan entre ellas (Michael, 15-10): una
+     * apertura es una invitación y un cierre es un plazo. Se agrupa cada una
+     * con las suyas.
+     */
+    const JUNTABLES = new Set(['abrimos_zona', 'cierra_pronto'])
+    type Fila = (typeof pendientes)[number] & { tambienCerrar?: string[] }
+
+    const grupos = new Map<string, Fila[]>()
+    const sueltas: Fila[] = []
+    for (const fila of pendientes as Fila[]) {
+      if (!fila.profile_id || !JUNTABLES.has(fila.kind) || !fila.event_id) {
+        sueltas.push(fila)
+        continue
+      }
+      const clave = `${fila.profile_id}|${fila.kind}`
+      grupos.set(clave, [...(grupos.get(clave) ?? []), fila])
+    }
+
+    for (const [, filas] of grupos) {
+      if (filas.length === 1) {
+        sueltas.push(filas[0])
+        continue
+      }
+      const ids = filas.map((f) => f.event_id).filter((x): x is string => !!x)
+      sueltas.push({
+        ...filas[0],
+        kind: 'avisos_del_dia',
+        // Sin `event_id`: este correo no cuelga de una fecha, cuelga de un día.
+        event_id: null,
+        payload: filas[0].kind === 'abrimos_zona' ? { aperturas: ids } : { cierres: ids },
+        // Y las demás filas se cierran con la primera: están contadas dentro.
+        tambienCerrar: filas.slice(1).map((f) => f.id),
+      })
+    }
+
+    pendientes = sueltas
+
     let mandados = 0
     // Las push que salieron en esta vuelta. Se cuentan aparte del correo: son
     // dos canales y uno puede salir sin el otro.
@@ -636,6 +699,10 @@ export async function despacharPendientes(
       }
 
       await anotarFinal(admin, fila.id, 'enviado', null, 'id' in r ? r.id : null)
+      // Las que viajaron dentro de ese mismo sobre.
+      for (const otra of (fila as Fila).tambienCerrar ?? []) {
+        await anotarFinal(admin, otra, 'enviado', null, 'id' in r ? r.id : null)
+      }
       if (r.estado === 'enviado') mandados++
     }
 

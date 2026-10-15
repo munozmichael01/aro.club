@@ -53,27 +53,62 @@ function valorDe(datos: Valores, clave: string): unknown {
 export function pintar(plantilla: string, datos: Valores): string {
   let salida = plantilla
 
-  // Los bloques primero, y de dentro afuera: un `{{#cada}}` puede llevar un
-  // `{{#si}}` dentro, y si se sustituyera antes quedaría texto suelto.
-  const bloque = /\{\{#(si|no|cada)\s+([\w.]+)\}\}([\s\S]*?)\{\{\/\1\}\}/
-
-  // Con tope: una plantilla mal cerrada no puede colgar el proceso que manda
-  // los correos. Si se pasa, sale lo que haya y se ve en el log.
+  /**
+   * Los bloques primero, contando los que se abren dentro.
+   *
+   * Esto era una expresión regular con `[\s\S]*?`, y lo no-codicioso cerraba
+   * el bloque en el PRIMER `{{/si}}` que encontrara. Con un `{{#si}}` dentro
+   * de otro —que es lo que trae la plantilla 23, «y dos fechas más» dentro
+   * de «hay aperturas»— el de fuera se cerraba en el de dentro y la mitad
+   * del correo desaparecía. No fallaba: salía un correo más corto.
+   *
+   * Con tope: una plantilla mal cerrada no puede colgar el proceso que manda
+   * los correos. Si se pasa, sale lo que haya y se ve en el log.
+   */
+  const abre = /\{\{#(si|no|cada)\s+([\w.]+)\}\}/
   let vueltas = 0
-  while (bloque.test(salida) && vueltas++ < 100) {
-    salida = salida.replace(bloque, (_, tipo: string, clave: string, cuerpo: string) => {
-      const v = valorDe(datos, clave)
-      if (tipo === 'si') return hay(v) ? cuerpo : ''
-      if (tipo === 'no') return hay(v) ? '' : cuerpo
-      if (!Array.isArray(v)) return ''
-      return v
+  for (;;) {
+    const m = abre.exec(salida)
+    if (!m || vueltas++ >= 100) break
+
+    const tipo = m[1]
+    const clave = m[2]
+    const desde = m.index + m[0].length
+
+    // Hasta su cierre, saltándose los que se abren por el camino.
+    const marcas = new RegExp('\\{\\{(#' + tipo + '\\s+[\\w.]+|/' + tipo + ')\\}\\}', 'g')
+    marcas.lastIndex = desde
+    let nivel = 1
+    let hasta = -1
+    let fin = -1
+    for (;;) {
+      const t = marcas.exec(salida)
+      if (!t) break
+      if (t[1].charAt(0) === '#') nivel++
+      else if (--nivel === 0) { hasta = t.index; fin = t.index + t[0].length; break }
+    }
+
+    if (hasta < 0) {
+      console.error('[plantillas] bloque sin cerrar:', tipo, clave)
+      break
+    }
+
+    const cuerpo = salida.slice(desde, hasta)
+    const v = valorDe(datos, clave)
+    let pintado = ''
+    if (tipo === 'si') pintado = hay(v) ? cuerpo : ''
+    else if (tipo === 'no') pintado = hay(v) ? '' : cuerpo
+    else if (Array.isArray(v)) {
+      pintado = v
         .map((item) =>
           pintar(cuerpo, typeof item === 'object' && item != null
             ? { ...datos, ...(item as Valores), '.': item }
             : { ...datos, '.': item }),
         )
         .join('')
-    })
+    }
+
+    salida = salida.slice(0, m.index) + pintado + salida.slice(fin)
   }
 
   if (vueltas >= 100) console.error('[plantillas] demasiadas vueltas: ¿un bloque sin cerrar?')

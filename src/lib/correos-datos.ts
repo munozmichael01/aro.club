@@ -954,6 +954,93 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       }
     }
 
+    /**
+     * Los avisos del día, juntos (entrega 21).
+     *
+     * El payload lleva IDS, no datos: entre que se encola —a las once de la
+     * mañana— y que sale —a las doce— puede cambiar el precio, la zona o el
+     * sitio, y lo que se manda tiene que ser lo que hay cuando sale.
+     *
+     * Si para cuando toca no queda ninguna fecha que contar, no se manda: una
+     * fecha cancelada entre medias no es motivo para escribirle a nadie.
+     */
+    case 'avisos_del_dia': {
+      const ids = (clave: string): string[] => {
+        const v = (p as Record<string, unknown>)[clave]
+        return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+      }
+
+      const deLasFechas = async (lista: string[], conCierre: boolean) => {
+        if (!lista.length) return []
+        const { data: evs } = await admin
+          .from('events')
+          .select('id, format, starts_at, booking_closes_at, price_usd, city_slug, status')
+          .in('id', lista)
+          .eq('status', 'open')
+          .order('starts_at')
+
+        const salida = []
+        for (const ev of evs ?? []) {
+          const zonaDeEv = await zonaDeLaCiudad(admin, ev.city_slug)
+          const { data: sedes } = await admin
+            .from('event_venues')
+            .select('zone_slug')
+            .eq('event_id', ev.id)
+          const slugs = [...new Set((sedes ?? []).map((v) => v.zone_slug).filter((z): z is string => !!z))]
+          const nombres = await nombresDeZonas(admin, slugs)
+          salida.push({
+            dia: diaEnZonaAlto(ev.starts_at, zonaDeEv),
+            plan: NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan',
+            hora: horaDe(ev.starts_at, zonaDeEv) ?? '',
+            zonas: unirCon(nombres, ' y '),
+            precio: ev.price_usd != null ? `${Number(ev.price_usd)} ref` : '',
+            // Con la hora: «hasta mañana» sin hora deja a alguien pensando
+            // que tiene el día entero cuando le quedan dos horas.
+            ...(conCierre
+              ? { cierra: `${cuandoCierra(ev.booking_closes_at, zonaDeEv)} a las ${horaDe(ev.booking_closes_at, zonaDeEv) ?? ''}`.trim() }
+              : {}),
+          })
+        }
+        return salida
+      }
+
+      const abiertas = await deLasFechas(ids('aperturas'), false)
+      const cierran = await deLasFechas(ids('cierres'), true)
+      if (!abiertas.length && !cierran.length) return { error: 'ya no queda ninguna fecha que contar' }
+
+      // Como mucho tres aperturas; el resto se cuenta. Los plazos salen
+      // todos: cada uno tiene su hora límite y no se puede resumir.
+      const PRIMERAS = 3
+      const sobran = Math.max(0, abiertas.length - PRIMERAS)
+
+      /**
+       * El titular, según lo que haya. Tres frases y no una plantilla con el
+       * número dentro: «Se abrieron 1 fechas» es lo que sale de armarla al
+       * vuelo, y el acento va en la segunda mitad.
+       */
+      const n = abiertas.length + cierran.length
+      const titular = abiertas.length && cierran.length
+        ? { titular: `${alta(enLetra(n))} ${n === 1 ? 'plan' : 'planes'}`, acento: 'en tus zonas.' }
+        : cierran.length
+          ? { titular: `${alta(enLetra(cierran.length))} ${cierran.length === 1 ? 'fecha' : 'fechas'}`, acento: cierran.length === 1 ? 'cierra mañana.' : 'cierran mañana.' }
+          : { titular: abiertas.length === 1 ? 'Se abrió' : 'Se abrieron', acento: `${enLetra(abiertas.length)} ${abiertas.length === 1 ? 'fecha' : 'fechas'}.` }
+
+      return {
+        a,
+        datos: {
+          ...base,
+          titular: titular.titular,
+          titularAcento: titular.acento,
+          resumen: `${titular.titular} ${titular.acento}`,
+          hayAbiertas: abiertas.length ? 'si' : '',
+          abiertas: abiertas.slice(0, PRIMERAS),
+          masAbiertas: sobran ? enLetra(sobran) : '',
+          hayCierran: cierran.length ? 'si' : '',
+          cierran,
+        },
+      }
+    }
+
     // El cupón no lleva importes a propósito: no hay ninguno. Lleva lo mismo
     // que el resto —qué fecha, dónde y cuándo se revela— y nada de banco.
     case 'puesto_con_cupon':
@@ -1238,6 +1325,18 @@ const HOY_ES: Record<string, string> = {
 function nombreDelFormato(f: string | null | undefined): string {
   return NOMBRES_DE_FORMATO[f ?? ''] ?? 'Cena'
 }
+
+/**
+ * El número en letra, hasta el diez.
+ *
+ * «Se abrieron 5 fechas» en un titular de Young Serif a cuarenta y cuatro
+ * píxeles se lee como una factura. Por encima de diez vuelve la cifra, que
+ * tampoco va a pasar: son las fechas que se abren en un día.
+ */
+const EN_LETRA = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez']
+const enLetra = (n: number): string => EN_LETRA[n] ?? String(n)
+/** «dos» → «Dos», para empezar una frase. */
+const alta = (t: string): string => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t)
 
 function unirCon(xs: string[], y: string): string {
   if (xs.length <= 1) return xs[0] ?? ''

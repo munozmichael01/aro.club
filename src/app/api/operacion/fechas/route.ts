@@ -39,6 +39,8 @@ import { HORAS_DE_CIERRE, PRECIO_USD } from '@/lib/reglas'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 
 import { quienQuiereSaberDe } from '@/lib/a-quien-avisar'
+import { diaDe, proximaTanda, tandaDeManana } from '@/lib/tandas'
+import { zonaDeCiudad } from '@/lib/zona-ciudad'
 
 /** Y a mediodía se revela todo. */
 const HORA_REVELACION = 12
@@ -116,7 +118,7 @@ async function avisarDeLaApertura(
   // interesa no recibe, y las cuentas de prueba tampoco.
   const { data: evFormato } = await admin
     .from('events')
-    .select('id, format, starts_at, city_slug, age_band_min, age_band_max')
+    .select('id, format, starts_at, booking_closes_at, city_slug, age_band_min, age_band_max')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -130,42 +132,49 @@ async function avisarDeLaApertura(
     .is('deleted_at', null)
 
   /**
-   * UNO POR PERSONA Y DÍA, aunque se abran tres fechas.
+   * UNO POR PERSONA Y DÍA, y no en el momento de abrir: en la tanda.
    *
-   * El índice de `abrimos_zona` es «uno por persona y FECHA», así que abrir
-   * dos fechas el mismo día son dos correos a la misma persona. El 10-10
-   * fueron sesenta correos para treinta personas, y una llegó a recibir ocho
-   * avisos de apertura en total.
+   * El aviso salía en el mismo minuto en que se abría la fecha. El 10-10 se
+   * abrieron dos y salieron sesenta correos para treinta personas; una
+   * recibió ocho en total. No escala: aceptan Chacao 398 personas, Altamira
+   * 352 y Los Palos Grandes 350 —son casi las mismas—, así que dos fechas en
+   * zonas distintas son ochocientos correos a cuatrocientas personas y el
+   * segundo no dice nada que el primero no dijera.
    *
-   * No escala: aceptan Chacao 398 personas, Altamira 352, Los Palos Grandes
-   * 350 y Las Mercedes 313 — son casi las mismas. Dos fechas en zonas
-   * distintas son ochocientos correos a cuatrocientas personas, y la segunda
-   * copia no les dice nada que la primera no dijera: el botón lleva a la
-   * agenda, donde están todas.
+   * La regla, de Michael (15-10): un aviso de apertura al día por persona,
+   * acumulando los que hagan falta. Las dos tandas y su margen viven en
+   * `tandas.ts`; aquí solo se decide EN CUÁL cae cada persona:
    *
-   * Y es lo que el club promete por escrito en las preguntas frecuentes: «te
-   * escribimos el día que se abre la primera. No antes: no queremos
-   * escribirte para nada». La primera, no cada una.
+   *   · la próxima tanda, si ese día todavía no le toca ningún aviso;
+   *   · la primera de mañana, si ya tiene uno ese día;
+   *   · AHORA, si la tanda cayera después de que la fecha cierre: un aviso
+   *     que llega con la reserva cerrada no es un aviso, es un reproche.
    *
-   * Ventana móvil de veinte horas y no «día natural»: abrir una a las once de
-   * la noche y otra a la una serían dos días distintos y dos horas de
-   * diferencia. Es el mismo silencio que ya usa el cron de empujones.
-   *
-   * Lo que recuerda entre una fecha y otra es esta consulta, no nada que
-   * quede en memoria: `encolar` escribe la fila con `send_at` de ahora, así
-   * que la apertura siguiente —otra llamada, otro proceso— la ve aquí.
+   * Lo que recuerda entre una fecha y otra son las propias filas de la cola,
+   * no nada en memoria: la apertura siguiente —otra llamada, otro proceso—
+   * las ve aquí.
    */
-  const VENTANA_HORAS = 20
-  const desde = new Date(Date.now() - VENTANA_HORAS * 3600_000).toISOString()
+  const zona = await zonaDeCiudad(evFormato?.city_slug)
+  const tanda = proximaTanda(zona)
+  const cierra = evFormato?.booking_closes_at ? Date.parse(evFormato.booking_closes_at) : NaN
+  const tardeParaLaTanda = Number.isFinite(cierra) && tanda.getTime() >= cierra
 
-  const { data: avisadosYa } = await admin
+  const diaDeLaTanda = diaDe(tanda, zona)
+  const desde = new Date(tanda.getTime() - 36 * 3600_000).toISOString()
+
+  const { data: yaTienen } = await admin
     .from('scheduled_emails')
-    .select('profile_id')
-    .eq('kind', 'abrimos_zona')
+    .select('profile_id, send_at')
+    .in('kind', ['abrimos_zona', 'avisos_del_dia'])
     .gte('send_at', desde)
     .in('profile_id', [...quieren])
 
-  const recientes = new Set((avisadosYa ?? []).map((a) => a.profile_id))
+  // Los que ya tienen un aviso ESE día, sea mandado o esperando su tanda.
+  const ocupados = new Set(
+    (yaTienen ?? [])
+      .filter((r) => diaDe(new Date(r.send_at), zona) === diaDeLaTanda)
+      .map((r) => r.profile_id),
+  )
 
   let avisados = 0
   let callados = 0
@@ -174,20 +183,28 @@ async function avisarDeLaApertura(
     const avisos = (p.notificaciones ?? {}) as Record<string, boolean>
     if (avisos.apertura_zona === false) continue
 
-    // Ya se le escribió hace nada por otra fecha. La verá en su agenda.
-    if (recientes.has(p.id)) { callados++; continue }
+    const cuando = tardeParaLaTanda
+      ? undefined
+      : ocupados.has(p.id)
+        ? tandaDeManana(tanda, zona)
+        : tanda
+
+    if (cuando && Number.isFinite(cierra) && cuando.getTime() >= cierra) {
+      // Ni la de mañana llega: que salga ahora o no saldrá.
+      callados++
+    }
 
     if (seco) {
       avisados++
       continue
     }
 
-    const r = await encolar({ perfil: p.id }, 'abrimos_zona', { zonas: slugs, dia }, { eventoId })
+    const r = await encolar({ perfil: p.id }, 'abrimos_zona', { zonas: slugs, dia }, { eventoId, cuando })
     if (r === 'encolado') avisados++
   }
 
   if (callados) {
-    console.warn(`[fechas] ${callados} ya tenían aviso de apertura en las últimas ${VENTANA_HORAS}h`)
+    console.warn(`[fechas] ${callados} avisos salen al momento: su tanda caía después del cierre`)
   }
 
   return avisados

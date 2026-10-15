@@ -1,0 +1,13 @@
+-- Un correo que junta los avisos del día de una persona.
+--
+-- Entrega 21 de Design. Hasta ahora cada aviso salía solo: el 10-10 se
+-- abrieron dos fechas y salieron sesenta correos para treinta personas, una
+-- de ellas ocho en total. Las zonas se solapan casi del todo —Chacao 398,
+-- Altamira 352, Los Palos Grandes 350—, así que dos fechas el mismo día son
+-- dos correos a casi la misma gente, y el segundo no dice nada que el
+-- primero no dijera.
+--
+-- Aditivo: añadir un valor a `email_kind_t` no quita ninguno y no toca
+-- ninguna fila. El correo de una sola fecha sigue siendo el suyo —`11` para
+-- la apertura y `19` para el cierre—; este es el de cuando hay varias.
+alter type email_kind_t add value if not exists 'avisos_del_dia';

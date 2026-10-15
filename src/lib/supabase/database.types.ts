@@ -3862,6 +3862,7 @@ export type Database = {
         | "disculpa_verificacion"
         | "cena_edad_minima"
         | "mensaje"
+        | "avisos_del_dia"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -4103,6 +4104,7 @@ export const Constants = {
         "disculpa_verificacion",
         "cena_edad_minima",
         "mensaje",
+        "avisos_del_dia",
       ],
       event_format_t: [
         "dinner",
