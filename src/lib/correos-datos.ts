@@ -988,8 +988,14 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
             .eq('event_id', ev.id)
           const slugs = [...new Set((sedes ?? []).map((v) => v.zone_slug).filter((z): z is string => !!z))]
           const nombres = await nombresDeZonas(admin, slugs)
+          // Con el mes, como en la maqueta: en un correo que puede llevar
+          // una fecha de este domingo y otra del jueves que viene, «Domingo
+          // 25» a secas obliga a mirar el calendario.
+          const cuandoEs = partesDe(ev.starts_at, zonaDeEv)
           salida.push({
-            dia: diaEnZonaAlto(ev.starts_at, zonaDeEv),
+            dia: cuandoEs
+              ? `${alta(cuandoEs.dia)} ${cuandoEs.numero} de ${cuandoEs.mes}`
+              : diaEnZonaAlto(ev.starts_at, zonaDeEv),
             plan: NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan',
             hora: horaDe(ev.starts_at, zonaDeEv) ?? '',
             zonas: unirCon(nombres, ' y '),
