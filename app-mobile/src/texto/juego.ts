@@ -25,6 +25,8 @@ export const tarjeta = {
   seguir: (ronda: number, pregunta: number) => `Seguir · ronda ${ronda}, pregunta ${pregunta}`,
   reiniciar: 'Empezar de nuevo',
   irA: (n: number) => `Ir a la ronda ${n}`,
+  /** Antes de la hora de la cena (Michael, 06-10 y otra vez el 15-10): nadie llega con las respuestas pensadas. */
+  seAbre: (hora: string) => (hora ? `Se abre a las ${hora}, a la hora de la cena` : 'Se abre a la hora de la cena'),
 }
 
 export const juego = {

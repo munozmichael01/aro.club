@@ -1012,12 +1012,16 @@
        */
       subtituloReglas: 'Tres rondas · la última, opcional',
 
-      /** Se enseñan antes de empezar, en este orden. */
+      /**
+       * Se enseñan antes de empezar, en este orden. La cuarta es la de la
+       * entrega 20 de Design (Michael, 15-10): que la última es opcional ya
+       * lo dice la pausa antes de la ronda 3, con «Terminar aquí».
+       */
       reglas: [
         'Una persona lee en voz alta, desde su teléfono.',
         'Responden todos, empezando por quien leyó.',
         'Cualquiera puede pasar, sin explicar nada.',
-        'Tres rondas, de menos a más. La última, si la mesa quiere.',
+        'Tres rondas, de menos a más.',
       ],
 
       /** Cuando se acaba la ronda 3. */

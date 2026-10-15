@@ -93,6 +93,8 @@ export function MesaCena(p: {
               <Texto style={[texto(13, 1), { color: C.cuerpo }]}>{c.sector}</Texto>
             </View>
           ))}
+          {/* La nota de antes de la entrega 20: Michael la quiso de vuelta (15-10). */}
+          <Texto style={[texto(13, 1.4), e.nota]}>{T.abierta.notaCompaneros(true)}</Texto>
         </View>
       </Desplegable>
 
@@ -164,6 +166,7 @@ export function MesaCena(p: {
             guardado={guardado}
             mesaId={d.mesaId}
             horaHielo={F.horaEn(pasos.find((x) => x.momento === 'hielo')?.en, zona)}
+            cerradoHasta={J.ventana(d.empiezaEn, ahora) === 'antes' ? F.horaEn(d.empiezaEn, zona) || ' ' : null}
             jugar={jugar}
             reiniciar={async () => {
               if (!d.mesaId) return
@@ -264,8 +267,17 @@ function Desplegable(p: { titulo: string; resumen: string; abierta: boolean; alT
 
 // --- El juego en Mi mesa --------------------------------------------------------
 
-function TarjetaJuego(p: { guardado: J.Guardado; mesaId: string; horaHielo: string; jugar: (como: string) => void; reiniciar: () => void }) {
+function TarjetaJuego(p: {
+  guardado: J.Guardado
+  mesaId: string
+  horaHielo: string
+  /** Antes de la hora de la cena: la hora a la que se abre. Null si ya está abierto. */
+  cerradoHasta: string | null
+  jugar: (como: string) => void
+  reiniciar: () => void
+}) {
   const g = p.guardado
+  const cerrado = p.cerradoHasta != null
   const punt = J.puntero(g)
   const hayAvance = g.empezado
   const fin = J.terminado(g)
@@ -286,6 +298,7 @@ function TarjetaJuego(p: { guardado: J.Guardado; mesaId: string; horaHielo: stri
             </View>
             <Pressable
               onPress={() => p.jugar(`ronda-${i}`)}
+              disabled={cerrado}
               accessibilityRole="button"
               accessibilityLabel={`${TJ.tarjeta.irA(i + 1)} · ${texto2}`}
               style={[
@@ -295,6 +308,7 @@ function TarjetaJuego(p: { guardado: J.Guardado; mesaId: string; horaHielo: stri
                   : est.tipo === 'hecha'
                     ? { borderWidth: 1, borderColor: 'rgba(156,187,166,.5)' }
                     : { borderWidth: 1, borderColor: 'rgba(250,243,228,.35)' },
+                cerrado && { opacity: 0.4 },
               ]}
             >
               <Texto style={[semi(11), { color: est.tipo === 'ahora' ? C.tinta : est.tipo === 'hecha' ? C.secundarioVerde : C.crema }]}>{texto2}</Texto>
@@ -302,7 +316,12 @@ function TarjetaJuego(p: { guardado: J.Guardado; mesaId: string; horaHielo: stri
           </View>
         )
       })}
-      {fin ? (
+      {cerrado ? (
+        // Fuera de la maqueta: Design lo daba por abierto siempre; Michael mantiene la hora de la cena.
+        <View style={[e.cta, { backgroundColor: 'rgba(227,156,99,.18)' }]} accessibilityRole="text">
+          <Texto style={[semi(15), { color: C.acento }]}>{TJ.tarjeta.seAbre(p.cerradoHasta!.trim())}</Texto>
+        </View>
+      ) : fin ? (
         // Terminado: la maqueta no dibuja este caso; el único paso con sentido es volver a empezar.
         <Pressable onPress={p.reiniciar} accessibilityRole="button" style={({ pressed }) => [e.cta, pressed && { opacity: 0.85 }]}>
           <Texto style={[semi(15), { color: C.tinta }]}>{TJ.tarjeta.reiniciar}</Texto>
@@ -371,5 +390,6 @@ const e = StyleSheet.create({
   estado: { minHeight: 44, minWidth: 44, paddingHorizontal: 12, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   cta: { marginTop: 8, minHeight: 48, borderRadius: 999, backgroundColor: C.acento, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   reiniciar: { minHeight: 44, marginTop: 4, alignItems: 'center', justifyContent: 'center' },
+  nota: { color: C.cuerpo, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(20,52,42,.1)' },
   cancelar: { marginTop: 12, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
 })
