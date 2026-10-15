@@ -193,9 +193,31 @@ export async function construirPool(
     intereses: p.interests ?? [],
     temas: p.conversation_topics ?? [],
     idiomas: p.languages ?? ['es'],
-    // Solo las que aceptó Y abrimos: quien acepta una zona que no se abre
-    // esta noche es, para este reparto, alguien que no la acepta.
-    zonas: (p.zones ?? []).filter((z: string) => zonasAbiertas.has(z)),
+    /**
+     * TODAS LAS ZONAS QUE ESTA FECHA ABRIÓ.
+     *
+     * Era «las que aceptó Y abrimos», y eso convertía las zonas declaradas en
+     * un candado por mesa. Pero la zona es de la FECHA, no de la persona: la
+     * pantalla de reservar enseña «Chacao o Los Palos Grandes» antes de
+     * apuntarse, con esas palabras, así que quien se apunta acepta las dos.
+     * Si ya las había declarado, mejor; si no, se las da el apuntarse.
+     *
+     * Lo que provocaba, el viernes 16: la mesa 02 quedaba clavada en Los
+     * Palos Grandes por dos de sus seis —Abel y Mónica, que no habían marcado
+     * Chacao— y la 03 por otros dos. Doce personas atrapadas en una zona SIN
+     * LOCAL mientras Chacao tenía tres, y el panel diciendo «falta el sitio»
+     * sin salida. Y la mesa 04 salía «sin zona en común» con cinco personas
+     * que podían cenar juntas perfectamente.
+     *
+     * Michael lo dijo dos veces antes de que yo lo entendiera: el cupo y la
+     * zona son decisiones nuestras de logística, no filtros sobre la gente.
+     * El local se consigue; a la gente no se la deja sin mesa por un barrio.
+     *
+     * No se pierde nada de lo declarado: `zonasAbiertas` ya limita a lo que
+     * de verdad hay esta noche, y fuera de este reparto las zonas de cada uno
+     * siguen siendo suyas —deciden a qué fechas se le avisa—.
+     */
+    zonas: [...zonasAbiertas],
     dietas: p.dietary ?? [],
     vetados: vetos.get(p.profile_id as string) ?? new Set<string>(),
     conocidos: yaSeConocen.get(p.profile_id as string) ?? new Set<string>(),

@@ -2556,10 +2556,23 @@ class Component extends DCLogic {
     const EVENTO_ID = REP && REP.evento ? REP.evento.id : null;
 
     const sitiosDe = (m, pub) => {
-      const posibles = m.zonasPosibles || [];
-      const deLaMesa = (zona) => !posibles.length || posibles.indexOf(zona) >= 0;
-      // Los sitios que la fecha YA tiene y esta mesa puede aceptar.
-      const suyos = SEDES.filter((v) => !!v.restaurantId && deLaMesa(v.zona));
+      /**
+       * CUALQUIER SITIO DE LA FECHA, no solo los de la zona que le tocó.
+       *
+       * `zonasPosibles` es lo que la corrida guardó: la intersección de las
+       * zonas declaradas de esos seis. Filtrando por ahí, la mesa 02 del
+       * viernes solo ofrecía Los Palos Grandes —que no tiene ni un local— y
+       * no había forma de mandarla a Chacao, que tiene tres, sin volver a
+       * repartir y mover a los veintitrés.
+       *
+       * Pero la zona es de la FECHA: la pantalla de reservar dice «Chacao o
+       * Los Palos Grandes» antes de apuntarse, así que los seis aceptaron
+       * las dos. El servidor ya lo calcula así desde el pool, y esta lista
+       * tiene que ofrecer lo mismo o se queda pidiendo permiso a una foto
+       * vieja.
+       */
+      // Los sitios que la fecha ya tiene puestos. Todos, sin filtrar por zona.
+      const suyos = SEDES.filter((v) => !!v.restaurantId);
       const fijo = pub && YA_REVELADA;
 
       /**
@@ -2581,7 +2594,7 @@ class Component extends DCLogic {
        */
       const zonasAbiertas = SEDES.map((v) => v.zona).filter((z, i, a) => a.indexOf(z) === i);
       const porPoner = suyos.length ? [] : CANDIDATOS
-        .filter((l) => zonasAbiertas.indexOf(l.zona) >= 0 && deLaMesa(l.zona));
+        .filter((l) => zonasAbiertas.indexOf(l.zona) >= 0);
 
       /**
        * Y si no hay ni sitios puestos ni candidatos, decir por qué.
@@ -2591,7 +2604,8 @@ class Component extends DCLogic {
        * línea la tarjeta no enseña nada y vuelve a ser el callejón de
        * siempre: el problema a la vista y ninguna salida.
        */
-      const zonaSuya = m.zona || (posibles.length === 1 ? posibles[0] : null);
+      const suyasPosibles = m.zonasPosibles || [];
+      const zonaSuya = m.zona || (suyasPosibles.length === 1 ? suyasPosibles[0] : null);
       const nombreSuyo = zonaSuya
         ? ((SEDES.filter((v) => v.zona === zonaSuya)[0] || {}).zonaNombre || zonaSuya)
         : null;

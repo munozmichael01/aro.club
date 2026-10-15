@@ -254,23 +254,37 @@ export async function POST(request: Request) {
 
   const abiertas = new Set((sedes ?? []).map((v) => v.zone_slug))
 
-  // Las suyas, salvo que se pasen otras a propósito.
-  const { data: rasgos } = await admin
-    .from('profile_traits')
-    .select('zones')
-    .eq('profile_id', user.id)
-    .maybeSingle()
-
-  const suyas = zonas ?? rasgos?.zones ?? []
-  const validas = suyas.filter((z: string) => abiertas.has(z))
+  /**
+   * APUNTARSE A ESTA FECHA ES ACEPTAR SUS ZONAS.
+   *
+   * Antes: se cruzaban sus zonas declaradas con las abiertas y, si no
+   * coincidía ninguna, se le negaba la reserva con «esta fecha no abre
+   * ninguna de tus zonas».
+   *
+   * Pero la zona es de la FECHA, no de la persona. La pantalla de reservar
+   * enseña «Chacao o Los Palos Grandes» con esas palabras ANTES de que nadie
+   * pulse nada, así que quien pulsa está diciendo que le vale cualquiera de
+   * las dos. Si ya las tenía declaradas, mejor; si no, se las da el apuntarse.
+   *
+   * Lo que costaba la regla vieja: el viernes 16, doce personas quedaron
+   * repartidas en dos mesas de Los Palos Grandes —zona sin un solo local— y
+   * no se podían mandar a Chacao, que tenía tres, porque cuatro de ellas no
+   * habían marcado Chacao en el cuestionario. Gente sin mesa por un barrio
+   * que ni siquiera eligieron para esta cena.
+   *
+   * Si pasa unas zonas a propósito —el parámetro existe— mandan esas, y solo
+   * las que de verdad abrimos. Sin ellas, valen todas las de la fecha.
+   */
+  const validas = zonas
+    ? zonas.filter((z: string) => abiertas.has(z))
+    : [...abiertas]
 
   if (!validas.length) {
-    // No es un error suyo: es que esta fecha no abre ninguna de las zonas a
-    // las que dijo que puede ir. Se dice cual es el caso, no "revisa tus
-    // datos".
+    // Solo puede pasar si pidió unas zonas concretas y ninguna está abierta,
+    // o si la fecha no tiene ninguna: ahí sí no hay dónde sentarla.
     return NextResponse.json(
       {
-        error: 'Esta fecha no abre ninguna de tus zonas. Te avisamos cuando haya una que te sirva.',
+        error: 'Esta fecha no abre ninguna de esas zonas. Te avisamos cuando haya una que te sirva.',
         motivo: 'sin-zona',
       },
       { status: 409 },
