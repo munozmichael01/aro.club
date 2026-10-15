@@ -813,7 +813,10 @@ class Component extends DCLogic {
     const filtra = cuantos > 1;
     const sel = filtra ? (this.state.filtro || 0) : 0;
 
-    const nombres = (filtra ? ['Todos'] : []).concat(['Cenas', 'Drinks', 'Movimiento', 'Coffee']);
+    // De `tipos`, no de una segunda lista escrita aquí. Eran dos, y por eso
+    // el brunch entró en el filtro de la agenda y no en las polaroids: la de
+    // arriba lo tenía y esta no.
+    const nombres = (filtra ? ['Todos'] : []).concat(tipos.slice(1));
 
     const filtros = nombres.map((nombre) => {
       const esTodos = nombre === 'Todos';
