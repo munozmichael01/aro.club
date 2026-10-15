@@ -172,7 +172,7 @@ export function credenciales(d: DeServidor) {
 
 export function historial(d: DeServidor) {
   return (d.historial ?? []).map((c) => ({
-    sitio: c.sitio ? c.sitio + (c.numeroMesa != null && !c.mesaUnica ? T.cenas.mesa(c.numeroMesa) : '') : ({ dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee' } as Record<string, string>)[c.formato] ?? 'Cena',
+    sitio: c.sitio ? c.sitio + (c.numeroMesa != null && !c.mesaUnica ? T.cenas.mesa(c.numeroMesa) : '') : ({ dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee', brunch: 'Brunch' } as Record<string, string>)[c.formato] ?? 'Cena',
     cuando: F.fechaCompleta(c.cuando, c.zonaHoraria),
     estado: T.cenas.estado[c.estado] ?? T.cenas.estado['no-llegaste'],
     fuiste: c.estado === 'fuiste',

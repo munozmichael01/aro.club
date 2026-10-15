@@ -156,6 +156,12 @@ export const FORMATOS: Record<string, { plural: string; singular: string }> = {
   drinks: { plural: 'Drinks', singular: 'Drinks' },
   movement: { plural: 'Movimiento', singular: 'Movimiento' },
   coffee: { plural: 'Coffee', singular: 'Coffee' },
+  /**
+   * Quinta familia (15-10, primera fecha el domingo 25). Sin polaroid de filtro
+   * todavía: sale en «Todos». Icono, color y foto, provisionales los del café
+   * hasta que Design defina los suyos.
+   */
+  brunch: { plural: 'Brunch', singular: 'Brunch' },
 }
 /** «Cena +40»: una fecha con edad mínima. */
 export const conEdad = (singular: string, edad: number) => `${singular} +${edad}`

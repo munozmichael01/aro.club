@@ -40,7 +40,8 @@ export const vacia = {
 export const cerrada = {
   bajada: (cuando: string) => `${Mayus(cuando)} se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.`,
   paraQue: 'para que se abra',
-  nota: 'Cenas con cinco personas. Te avisamos por correo en cuanto se abra.',
+  /** `vasCon` sale de `vozDe` (reglas.js): «Cenas con…» solo si de verdad se cena. */
+  nota: (vasCon: string) => `${vasCon} Te avisamos por correo en cuanto se abra.`,
 }
 
 export const cancelar = 'Cancelar mi puesto'
@@ -51,7 +52,6 @@ export const abierta = {
   selloReserva: (esMesa: boolean) => (esMesa ? 'Reserva a tu nombre' : 'Punto de encuentro'),
   comoLlegar: 'Cómo llegar',
   vozTarde: 'Voy tarde',
-  conQuien: (esMesa: boolean) => (esMesa ? 'CON QUIÉN CENAS' : 'CON QUIÉN VAS'),
   sinSector: 'Sin sector',
   notaCompaneros: (esMesa: boolean) =>
     `Todos con identidad verificada. No hay fotos ni apellidos: eso lo cuenta cada quien ${esMesa ? 'en la mesa' : 'sobre la marcha'} si quiere.`,
@@ -88,8 +88,9 @@ export const tarde = {
 export const pasada = {
   sello: 'ANOCHE',
   titulo: '¿Qué tal estuvo?',
-  bajada: (esMesa: boolean, sitio: string, unidad: string, numero: string) =>
-    `${esMesa ? 'Cenaste en ' : 'Estuviste en '}${sitio}${numero ? `, ${unidad} ${numero}` : ''}. Lo que nos cuentes entra en el emparejamiento de la próxima, y nadie más lo ve.`,
+  /** `estuviste` sale de `vozDe` (reglas.js): «Cenaste en» / «Estuviste en». */
+  bajada: (estuviste: string, sitio: string, unidad: string, numero: string) =>
+    `${estuviste} ${sitio}${numero ? `, ${unidad} ${numero}` : ''}. Lo que nos cuentes entra en el emparejamiento de la próxima, y nadie más lo ve.`,
   pensado: 'Pensado para cenas. Un café o una salida de movimiento se van a preguntar distinto más adelante.',
   laMesa: '¿Qué tal la mesa que armamos para ti?',
   /** De mejor a peor, como los botones: el servidor da la vuelta (`notaDesdeIndice`). */

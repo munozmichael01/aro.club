@@ -244,6 +244,8 @@ const MARCAS: Record<string, { tinta: string; fondo: string }> = {
   drinks: { tinta: color.verde, fondo: verdeAlfa(0.12) },
   movement: { tinta: '#2D6A4F', fondo: 'rgba(45,106,79,.14)' },
   coffee: { tinta: color.secundario, fondo: 'rgba(86,106,93,.14)' },
+  /** Provisional, el del café, hasta que Design defina el del brunch. */
+  brunch: { tinta: color.secundario, fondo: 'rgba(86,106,93,.14)' },
 }
 
 function FilaFecha(p: {

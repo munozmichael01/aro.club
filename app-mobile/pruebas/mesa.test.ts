@@ -68,5 +68,10 @@ test('la única mesa del sitio no lleva número', async () => {
   assert.equal(M.conNumero({ fase: 'abierta', numeroMesa: 2 } as M.DeServidor), true)
   assert.equal(T.abierta.llegada(true, '', 6), 'Di que vas a la mesa de Aro. Está reservada a tu nombre y el restaurante ya sabe que son seis.')
   assert.match(T.abierta.llegada(true, '02', 6), /la 02\./)
-  assert.match(T.pasada.bajada(true, 'Madre', 'mesa', ''), /^Cenaste en Madre\. /)
+  assert.match(T.pasada.bajada(M.voz({ fase: 'pasada', formato: 'dinner' } as M.DeServidor).estuviste, 'Madre', 'mesa', ''), /^Cenaste en Madre\. /)
+  // Un drinks tiene mesa pero no es una cena (reglas.js, DE_CENA).
+  const drinks = M.voz({ fase: 'pasada', formato: 'drinks' } as M.DeServidor)
+  assert.match(T.pasada.bajada(drinks.estuviste, 'Madre', 'mesa', ''), /^Estuviste en Madre\. /)
+  assert.equal(drinks.conQuien, 'CON QUIÉN VAS')
+  assert.equal(T.cerrada.nota(drinks.vasCon), 'Vas con cinco personas. Te avisamos por correo en cuanto se abra.')
 })

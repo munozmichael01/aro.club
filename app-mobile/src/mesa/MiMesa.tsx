@@ -230,7 +230,7 @@ function Cerrada({ d, ir, alAbrirse }: { d: M.DeServidor; ir: (d: string) => voi
         </View>
       </View>
       <Texto variante="cuerpo" style={{ marginTop: 20 }}>
-        {T.cerrada.nota}
+        {T.cerrada.nota(M.voz(d).vasCon)}
       </Texto>
       <EnlaceCancelar ir={ir} />
     </View>
@@ -377,7 +377,7 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
 
       <View style={{ marginTop: 34 }}>
         <Texto variante="etiqueta" tono="cuerpo" style={{ letterSpacing: 1.9, marginBottom: 16 }}>
-          {T.abierta.conQuien(mesa)}
+          {M.voz(d).conQuien}
         </Texto>
         {otros.map((c, i) => (
           <View key={c.id} style={estilos.otro}>
@@ -466,7 +466,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
     <View>
       <SelloBorde texto={T.pasada.sello} />
       <Titular>{T.pasada.titulo}</Titular>
-      <Bajada>{T.pasada.bajada(mesa, d.restaurante || '—', voz.unidad, M.conNumero(d) ? M.numero(d) : '')}</Bajada>
+      <Bajada>{T.pasada.bajada(voz.estuviste, d.restaurante || '—', voz.unidad, M.conNumero(d) ? M.numero(d) : '')}</Bajada>
       <Texto variante="nota" style={{ marginTop: 8 }}>
         {T.pasada.pensado}
       </Texto>

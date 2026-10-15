@@ -46,7 +46,8 @@ export function IconoCoffee({ tam = 15, color }: P) {
   )
 }
 
-export const ICONO_FORMATO = { dinner: IconoCenas, drinks: IconoDrinks, movement: IconoMovimiento, coffee: IconoCoffee } as const
+/** `brunch`: provisional el del café, hasta que Design entregue el suyo. */
+export const ICONO_FORMATO = { dinner: IconoCenas, drinks: IconoDrinks, movement: IconoMovimiento, coffee: IconoCoffee, brunch: IconoCoffee } as const
 
 export function IconoCheck({ tam = 14, color }: P) {
   return (
