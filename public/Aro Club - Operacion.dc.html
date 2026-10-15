@@ -2644,6 +2644,22 @@ class Component extends DCLogic {
 
     const FECHAS = St.fechas || [];
 
+    /**
+     * Las ZONAS de una fecha, sin repetir.
+     *
+     * `f.zonas` son las filas de `event_venues`, o sea una por SITIO. Una
+     * zona con tres locales aparecía tres veces: «3 zonas · Los Palos
+     * Grandes, Chacao, Chacao». No es que haya tres zonas, es que Chacao
+     * tiene tres sitios — que es justo lo que se hace cuando una zona
+     * necesita más aforo del que da un restaurante.
+     */
+    const zonasUnicas = (zs) => {
+      const vistas = {};
+      const fuera = [];
+      (zs || []).forEach((z) => { if (!vistas[z[2]]) { vistas[z[2]] = true; fuera.push(z); } });
+      return fuera;
+    };
+
     // Cada fecha del riel, tal como la devuelve la ruta.
     const FAM_DE_FORMATO = {
       dinner: 'cenas', foodie_dinner: 'cenas', women_dinner: 'cenas',
@@ -3033,17 +3049,50 @@ class Component extends DCLogic {
       (porZonaMesas[k] = porZonaMesas[k] || []).push(m);
     });
 
-    const zonasDeLaFecha = fr.zonas.length
+    /**
+     * UNA SECCIÓN POR ZONA, no por sede.
+     *
+     * `fr.zonas` son las filas de `event_venues`, o sea una por SITIO. Y las
+     * mesas se agrupan por ZONA. Mientras cada zona tenía un sitio las dos
+     * cosas coincidían; en cuanto Michael puso tres locales en Chacao el
+     * viernes, salieron tres secciones «Chacao» y cada una pintó las MISMAS
+     * mesas. En pantalla eso se lee como una mesa repetida con la misma gente
+     * dentro, que es lo peor que puede parecer un reparto.
+     *
+     * Me lo dijo y le contesté que no había nadie repetido, mirando los ids
+     * de la base en vez de mirar su pantalla. Los ids estaban bien; la
+     * pantalla no.
+     *
+     * Así que se agrupa por `slug` y los sitios de esa zona se juntan en una
+     * línea. Son varios a propósito —así se resuelve el aforo— y la sección
+     * tiene que poder decir «aquí caben estos tres» sin triplicarse.
+     */
+    const porSlug = {};
+    const ordenSlugs = [];
+    (fr.zonas.length
       ? fr.zonas
-      : Object.keys(porZonaMesas).map((z) => [z, null, z, 0, null, null, null]);
+      : Object.keys(porZonaMesas).map((z) => [z, null, z, 0, null, null, null])
+    ).forEach((z) => {
+      const slug = z[2];
+      if (!porSlug[slug]) { porSlug[slug] = { nombre: z[0], slug, apuntados: z[3], sitios: [] }; ordenSlugs.push(slug); }
+      if (z[1]) porSlug[slug].sitios.push(z[1]);
+      // Los apuntados de la zona son los mismos en todas sus filas: se queda
+      // el mayor por si alguna llegara a cero.
+      porSlug[slug].apuntados = Math.max(porSlug[slug].apuntados || 0, z[3] || 0);
+    });
 
-    const zonasRep = zonasDeLaFecha.map((z) => {
-      const [nombreZona, sitio, slug, apuntadosZona] = z;
+    const enLista = (xs) => xs.length <= 1 ? (xs[0] || '') : xs.slice(0, -1).join(', ') + ' y ' + xs[xs.length - 1];
+
+    const zonasRep = ordenSlugs.map((slug) => {
+      const z = porSlug[slug];
       const mesas = (porZonaMesas[slug] || []).map(mesaDesde);
+      const Sitio = vozRep.sitio.charAt(0).toUpperCase() + vozRep.sitio.slice(1);
       return {
-        zona: nombreZona,
-        sitio: vozRep.sitio.charAt(0).toUpperCase() + vozRep.sitio.slice(1) + ': ' + (sitio || 'sin elegir'),
-        contador: apuntadosZona + ' apuntados · ' + mesas.length + ' ' + (mesas.length === 1 ? vozRep.unidad : vozRep.unidades),
+        zona: z.nombre,
+        sitio: z.sitios.length > 1
+          ? Sitio + 's: ' + enLista(z.sitios)
+          : Sitio + ': ' + (z.sitios[0] || 'sin elegir'),
+        contador: z.apuntados + ' apuntados · ' + mesas.length + ' ' + (mesas.length === 1 ? vozRep.unidad : vozRep.unidades),
         mesas
       };
     });
@@ -3236,14 +3285,15 @@ class Component extends DCLogic {
     const fechasRep = visibles.map((x) => {
       const f = x[0], i = x[1];
       const on = (St.fechaRep || 0) === i;
-      const nz = f.zonas.length;
+      const suyas = zonasUnicas(f.zonas);
+      const nz = suyas.length;
       return {
         titulo: f.titulo, icono: on ? '✓' : '',
         // `f.apuntados` y NO la suma de las zonas: quien acepta dos cuenta en
         // las dos, y esta línea decía «3 apuntados» donde hay 2. Es el mismo
         // «8 donde hay 7» que se arregló en las métricas de arriba el 19 de
         // agosto; en el riel seguía vivo.
-        detalle: f.apuntados + (f.apuntados === 1 ? ' apuntado · ' : ' apuntados · ') + nz + (nz === 1 ? ' zona' : ' zonas') + ' · ' + f.zonas.map((z) => z[0]).join(', '),
+        detalle: f.apuntados + (f.apuntados === 1 ? ' apuntado · ' : ' apuntados · ') + nz + (nz === 1 ? ' zona' : ' zonas') + ' · ' + suyas.map((z) => z[0]).join(', '),
         aro: aroDS(on),
         btn: 'flex:0 0 auto;scroll-snap-align:start;display:flex;align-items:center;gap:12px;width:clamp(268px,72vw,330px);min-height:64px;padding:12px 16px;border-radius:22px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
         txt: 'display:block;font:' + (on ? '600' : '500') + ' 15px/1.25 \'Inter Tight\',sans-serif;color:#14342A',
@@ -3606,7 +3656,7 @@ class Component extends DCLogic {
     // servidor cancela otra: son correos a gente real diciéndole que su
     // cena no sale.
     const ABIERTAS = FECHAS_REP.map((f) => {
-      const zonas = f.zonas.map((z) => z[0]).join(' y ') || 'sin zonas';
+      const zonas = zonasUnicas(f.zonas).map((z) => z[0]).join(' y ') || 'sin zonas';
       const voz = f.fam !== 'movimiento' ? 'mesas' : 'grupos';
       return [
         f.titulo + ' · ' + zonas,
@@ -4859,7 +4909,7 @@ class Component extends DCLogic {
         return {
           titulo: f.titulo,
           detalle: f.apuntados + (f.apuntados === 1 ? ' apuntado · ' : ' apuntados · ')
-            + (f.zonas.length === 1 ? '1 zona' : f.zonas.length + ' zonas'),
+            + (zonasUnicas(f.zonas).length === 1 ? '1 zona' : zonasUnicas(f.zonas).length + ' zonas'),
           hayAviso: !!avisoDeFecha(f),
           aviso: avisoDeFecha(f),
           avisoEstilo: 'display:block;font:500 12px/1.4 \'Inter Tight\',sans-serif;color:#8F4515;margin-top:3px',
@@ -4953,7 +5003,7 @@ class Component extends DCLogic {
           botonAvisar: 'display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
           avisar: () => this.avisarFecha(cruda.id),
           verMetricas: [
-            ['APUNTADOS', String(f.apuntados), f.zonas.length === 1 ? 'En 1 zona' : 'En ' + f.zonas.length + ' zonas', null],
+            ['APUNTADOS', String(f.apuntados), zonasUnicas(f.zonas).length === 1 ? 'En 1 zona' : 'En ' + zonasUnicas(f.zonas).length + ' zonas', null],
             ['CIERRA EN', cierra, cierra === 'CERRADA' ? 'No entra nadie más' : 'Después ya no se apunta nadie', cierra === 'CERRADA' ? '#8F4515' : null],
             [voz.toUpperCase() + ' PUBLICADAS', String(cruda.publicadas || 0),
               (cruda.publicadas || 0) === 0 ? 'Todavía sin repartir' : 'Ya fijas', null],
