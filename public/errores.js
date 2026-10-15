@@ -273,10 +273,27 @@
    */
   var REINTENTOS = 2;
   var reintentando = false;
+  /**
+   * Quién espera a saber cómo acabó.
+   *
+   * El aviso de un fichero que se cayó no se manda hasta que se sabe si el
+   * reintento lo levantó: «una pantalla se rompió» por cada tropiezo de red
+   * en un teléfono es un buzón que se deja de mirar. Como los dos ficheros
+   * pueden fallar a la vez y el segundo encuentra el reintento ya en marcha,
+   * se apuntan los dos a la misma respuesta.
+   */
+  var esperando = [];
 
-  function reintentarReact() {
+  function seSupo(ok) {
+    var cola = esperando;
+    esperando = [];
+    for (var i = 0; i < cola.length; i++) cola[i](ok);
+  }
+
+  function reintentarReact(alSaber) {
+    if (alSaber) esperando.push(alSaber);
+    if (window.React && window.ReactDOM) return seSupo(true);
     if (reintentando) return;
-    if (window.React && window.ReactDOM) return;
     reintentando = true;
 
     var pendientes = ['/vendor/react.production.min.js', '/vendor/react-dom.production.min.js'];
@@ -301,11 +318,12 @@
         s.src = '/support.js';
         s.async = false;
         document.head.appendChild(s);
+        seSupo(true);
       }).catch(function () {
         // Con espera entre vueltas: si la red se cayó, pedirlo otra vez en
         // el mismo instante se cae igual.
         if (vuelta <= REINTENTOS) setTimeout(intentar, vuelta * 1200);
-        else reintentando = false;
+        else { reintentando = false; seSupo(false); }
       });
     }
 
@@ -317,16 +335,9 @@
     var mensaje = r && r.message ? String(r.message) : String(r);
     if (!mensaje || mensaje === 'undefined') return;
 
-    // Antes de contarlo: si lo que falló es React, se intenta arreglar. El
-    // aviso sale igual —queremos saber cuántas veces pasa— pero la persona
-    // no se queda con una pantalla muerta mientras tanto.
-    if (mensaje.indexOf('failed to load') === 0 && mensaje.indexOf('/vendor/') > 0) {
-      reintentarReact();
-    }
-
     var pila = r && r.stack ? String(r.stack) : undefined;
 
-    mandar({
+    var aviso = {
       pantalla: pantalla(),
       mensaje: recortar(mensaje, 500),
       pila: recortar(pila, 2000),
@@ -334,7 +345,26 @@
       tipo: 'promesa',
       // Sin `filename`: aquí lo único que puede delatar al de fuera es la pila.
       ajeno: deFuera(null, mensaje, pila) || undefined,
-    });
+    };
+
+    /**
+     * Si lo que falló es React, primero se arregla y DESPUÉS se cuenta.
+     *
+     * El aviso sale igual —queremos saber cuántas veces pasa— pero diciendo
+     * si la persona se quedó con una pantalla muerta o si el reintento la
+     * levantó. Antes salía siempre como «una pantalla se rompió», y el
+     * 15-10 eso fue un correo de madrugada por un tropiezo de red en un
+     * Android que ya se había recuperado solo.
+     */
+    if (mensaje.indexOf('failed to load') === 0 && mensaje.indexOf('/vendor/') > 0) {
+      reintentarReact(function (ok) {
+        aviso.recuperado = !!ok;
+        mandar(aviso);
+      });
+      return;
+    }
+
+    mandar(aviso);
   });
 
   /**

@@ -64,6 +64,21 @@ const cuerpo = z.object({
    * una app rompe de verdad una pantalla, estará en la tabla.
    */
   ajeno: z.boolean().optional(),
+  /**
+   * El fallo se arregló solo: `errores.js` volvió a pedir el fichero y la
+   * pantalla arrancó.
+   *
+   * Mismo trato que `ajeno`: se cuenta y NO se avisa. Un «Una pantalla se
+   * rompió» por cada tropiezo de red en un teléfono es un buzón que se deja
+   * de mirar, y entonces tampoco se ven los que sí importan. El 15-10 llegó
+   * uno por `react-dom` desde un Android: el reintento ya lo había
+   * levantado y el correo decía que la pantalla estaba rota.
+   *
+   * La cuenta sí vale: si un despliegue deja el fichero inalcanzable, el
+   * reintento falla, `recuperado` llega en falso y el aviso sale. Y si
+   * empieza a pasar cien veces al día aunque se recupere, está en la tabla.
+   */
+  recuperado: z.boolean().optional(),
 })
 
 /** Cada cuánto, como mucho, un correo del MISMO error. */
@@ -147,13 +162,14 @@ export async function POST(request: Request) {
     // `console.error`: no son un fallo nuestro y no tienen por qué salir en
     // rojo entre los que sí lo son.
     ;(d.ajeno ? console.log : console.error)(
-      (d.ajeno ? '[pantalla-ajena] ' : '[pantalla-rota] ') +
+      (d.ajeno ? '[pantalla-ajena] ' : d.recuperado ? '[pantalla-recuperada] ' : '[pantalla-rota] ') +
         JSON.stringify({
           pantalla: d.pantalla,
           mensaje: d.mensaje,
           origen: d.origen,
           navegador: d.navegador,
           tipo: d.tipo ?? 'error',
+          recuperado: d.recuperado ?? false,
           veces,
           huella,
         }),
@@ -162,9 +178,10 @@ export async function POST(request: Request) {
     // --- el aviso, con freno --------------------------------------------
     //
     // Lo ajeno nunca llega aquí: ya está contado arriba, que es todo lo que
-    // se puede hacer con un script que no es nuestro.
+    // se puede hacer con un script que no es nuestro. Lo recuperado tampoco:
+    // no hay nada que atender en un tropiezo que ya se levantó.
     const ultimo = ya?.avisado_en ? new Date(ya.avisado_en).getTime() : 0
-    const toca = !d.ajeno && Date.now() - ultimo > MINUTOS_ENTRE_AVISOS * 60_000
+    const toca = !d.ajeno && !d.recuperado && Date.now() - ultimo > MINUTOS_ENTRE_AVISOS * 60_000
 
     if (toca) {
       // Se marca ANTES de mandar. Si se marcara después, dos visitas a la vez
