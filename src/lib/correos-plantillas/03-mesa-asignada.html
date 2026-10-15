@@ -62,6 +62,14 @@
       <tr><td style="padding:12px 32px 0 32px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#14342A;mso-line-height-rule:exactly;">
         <strong>{{ direccion }}</strong><br />{{ zona }}, {{ ciudad }}
       </td></tr>
+      <!-- La entrada del local (entrega 20). Si no tiene foto, estas dos
+           filas no salen: `fotoEntrada` llega vacio y el `{{#si}}` las quita.
+           Es la unica imagen del correo ademas del aro, y va con `alt` porque
+           la mitad de los clientes no cargan imagenes hasta que se les pide. -->
+      {{#si fotoEntrada}}
+      <tr><td style="padding:20px 32px 0 32px;"><img src="{{{ fotoEntrada }}}" width="100%" alt="La entrada de {{ sitio }}" style="display:block;width:100%;height:auto;max-height:260px;object-fit:cover;border-radius:16px;border:0;" /></td></tr>
+      <tr><td style="padding:10px 32px 0 32px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:16px;letter-spacing:2.2px;color:#8F4515;mso-line-height-rule:exactly;"><strong>AL LLEGAR · BUSCA ESTA ENTRADA</strong></td></tr>
+      {{/si}}
       <tr><td style="padding:18px 32px 0 32px;">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
           <td style="border:1px solid #C9C0A8;border-radius:999px;padding:9px 15px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:14px;color:#2C4A38;mso-line-height-rule:exactly;">{{ cuando }} · {{ hora }}</td>

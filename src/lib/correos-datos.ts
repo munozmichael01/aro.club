@@ -6,6 +6,7 @@ import { firmar } from '@/lib/lead-token'
 import { enlaceDeMapa } from '@/lib/mapa'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
+import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -875,6 +876,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       const zona = await zonaDeLaCiudad(admin, evento.city_slug)
       const voz = vozDe(evento.format)
       const horaDelPlan = partesDe(evento.starts_at, zona)?.horas ?? 20
+      const yaAbierta = !!evento.reveal_at && Date.now() >= new Date(evento.reveal_at).getTime()
 
       return {
         a,
@@ -887,7 +889,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           revelaA: horaDe(evento.reveal_at, zona) ?? '',
           // Si el aviso llega DESPUÉS de la revelación, la push dice otra
           // cosa: a las nueve de la mañana todavía no hay nada que abrir.
-          yaRevelado: evento.reveal_at && Date.now() >= new Date(evento.reveal_at).getTime() ? 'si' : '',
+          yaRevelado: yaAbierta ? 'si' : '',
           // El plan por su nombre, no «cena» siempre.
           tituloHoy: HOY_ES[evento.format ?? ''] ?? 'Hoy es tu plan',
           // «una mesa» o «un grupo», de `vozDe`. Una caminata no tiene mesa.
@@ -895,6 +897,22 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           // Y la franja del día, de la hora REAL: un café de las diez de la
           // mañana no es «esta noche».
           cuandoDelDia: horaDelPlan < 12 ? 'esta mañana' : horaDelPlan < 19 ? 'esta tarde' : 'esta noche',
+          /**
+           * La entrada del local, solo si la mesa YA está abierta.
+           *
+           * Este correo sale a las nueve de la mañana y una cena revela a
+           * mediodía: ahí va vacío y la plantilla se salta las dos filas.
+           * Enseñar la fachada tres horas antes sería revelar el sitio por
+           * la puerta de atrás, y el propio cuerpo del correo dice «todavía
+           * no sabes dónde». En un plan de mañana —que revela la víspera— sí
+           * sale, que es para lo que la pidió Design.
+           */
+          ...(yaAbierta
+            ? await (async () => {
+                const suya = await laMesaDe(admin, fila.event_id!, fila.profile_id)
+                return { fotoEntrada: suya?.fotoEntrada ?? '', sitio: suya?.sitio ?? '' }
+              })()
+            : { fotoEntrada: '', sitio: '' }),
         },
       }
     }
@@ -1288,7 +1306,7 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
 
   const { data: fila } = await admin
     .from('table_members')
-    .select('table_id, dinner_tables!inner(table_number, event_id, restaurant_id, restaurants(name, address, maps_url, zone_slug))')
+    .select('table_id, dinner_tables!inner(table_number, event_id, restaurant_id, restaurants(id, name, address, maps_url, zone_slug, facade_photo_path))')
     .eq('profile_id', perfilId)
     .eq('dinner_tables.event_id', eventoId)
     .maybeSingle()
@@ -1298,7 +1316,14 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   const mesa = fila.dinner_tables as unknown as {
     table_number: number
     restaurant_id: string | null
-    restaurants: { name: string; address: string; maps_url: string | null; zone_slug: string | null } | null
+    restaurants: {
+      id: string
+      name: string
+      address: string
+      maps_url: string | null
+      zone_slug: string | null
+      facade_photo_path: string | null
+    } | null
   }
 
   const { data: otros } = await admin
@@ -1356,6 +1381,17 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
     // mano y sin la ciudad, y en `Mi mesa` de otra forma distinta también sin
     // ella. Dos botones con el mismo nombre y dos destinos.
     mapa: enlaceDeMapa(mesa.restaurants) ?? '',
+    /**
+     * La entrada del local (entrega 20), bajo la dirección.
+     *
+     * Vacío cuando ese sitio no tiene foto, y entonces la plantilla se salta
+     * las dos filas: de los nueve locales la tienen cuatro, así que el correo
+     * sin foto no es el caso raro.
+     *
+     * La misma dirección que la app y la web, de `urlDeFotoDeLocal`: una
+     * firmada de Supabase caducaría, y un correo se abre tres días después.
+     */
+    fotoEntrada: urlDeFotoDeLocal(mesa.restaurants?.id, mesa.restaurants?.facade_photo_path) ?? '',
     mesaUnica: unica,
     comoLlegar: unica ? 'la mesa de Aro' : `la mesa de Aro, la ${numero}`,
     gente: (otros ?? []).map((o) => {

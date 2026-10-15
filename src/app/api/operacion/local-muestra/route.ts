@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { enlaceDeMapa } from '@/lib/mapa'
 import { vozDe } from '@/lib/reglas'
 import { HORA_DE, horaBonita, partesHora } from '@/lib/formatos'
+import { urlDeFotoDeLocal } from '@/lib/foto-local'
 
 /**
  * El correo de la mesa, con los datos de UN local, para enseñárselo a él.
@@ -66,7 +67,7 @@ export async function GET(request: Request) {
 
   const { data: local } = await admin
     .from('restaurants')
-    .select('id, name, address, maps_url, zone_slug, zones(name)')
+    .select('id, name, address, maps_url, zone_slug, facade_photo_path, zones(name)')
     .eq('id', id)
     .maybeSingle()
 
@@ -97,6 +98,9 @@ export async function GET(request: Request) {
     direccion: local.address ?? '',
     zona: (local.zones as unknown as { name: string } | null)?.name ?? local.zone_slug ?? '',
     mapa: enlaceDeMapa(local) ?? '',
+    // Y su propia foto de la entrada, que es media razón para enseñarle esto:
+    // lo que ve el comensal al llegar es su fachada.
+    fotoEntrada: urlDeFotoDeLocal(local.id, local.facade_photo_path) ?? '',
 
     // --- y la mesa de ejemplo -------------------------------------------
     numero: '03',
