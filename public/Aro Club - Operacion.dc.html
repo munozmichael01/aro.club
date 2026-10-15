@@ -33,6 +33,15 @@
   @media (prefers-reduced-motion: reduce) { [style*="aro-giro"] { animation:none !important } }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
 
+  /* Cuántas mesas por fila.
+   *
+   * El número lo elige quien reparte y va en el `style` de la rejilla, pero
+   * SOLO manda en pantalla ancha: por debajo de 900px tres columnas son tres
+   * tarjetas ilegibles, y la decisión de la persona no puede ganarle a eso.
+   * `!important` porque un estilo en línea gana a la hoja si no. */
+  @media (max-width: 900px) { .aro-rejilla { grid-template-columns: 1fr !important } }
+  @media (max-width: 900px) { .aro-columnas { display: none !important } }
+
   /* El carril de pestañas.
 
      Son nueve y en el móvil ocupaban 939 px dentro de 375: como ningún
@@ -168,9 +177,20 @@
           </div>
         </sc-if>
 
-        <sc-if value="{{ haySitioParaMesa }}" hint-placeholder-val="{{ true }}">
-          <button onClick="{{ nuevaMesa }}" style="{{ botonNuevaMesa }}">{{ textoNuevaMesa }}</button>
-        </sc-if>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+          <sc-if value="{{ haySitioParaMesa }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ nuevaMesa }}" style="{{ botonNuevaMesa }}">{{ textoNuevaMesa }}</button>
+          </sc-if>
+
+          <!-- Cuántas mesas por fila. Solo en pantalla ancha: en el móvil
+               siempre va a una y el selector sobraría. -->
+          <span class="aro-columnas" style="display:flex;gap:6px;align-items:center;margin-left:auto">
+            <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#566A5D">POR FILA</span>
+            <sc-for list="{{ columnasMesas }}" as="c" hint-placeholder-count="3">
+              <button onClick="{{ c.pick }}" aria-label="{{ c.ayuda }}" style="{{ c.btn }}">{{ c.n }}</button>
+            </sc-for>
+          </span>
+        </div>
 
         <sc-for list="{{ zonasRep }}" as="z" hint-placeholder-count="2">
           <div style="margin-top:clamp(26px,3.4vw,38px)">
@@ -182,7 +202,7 @@
               <span style="font:500 13px/1.4 'Inter Tight',sans-serif;color:#33513F;white-space:nowrap">{{ z.contador }}</span>
             </div>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px;margin-top:14px">
+            <div class="aro-rejilla" style="{{ rejillaMesas }}">
               <sc-for list="{{ z.mesas }}" as="t" hint-placeholder-count="3">
                 <div data-mesa="{{ t.n }}" style="{{ t.caja }}">
                   <div style="display:flex;align-items:center;gap:12px;margin-bottom:13px">
@@ -1526,6 +1546,25 @@ class Component extends DCLogic {
      * esperándonos a nosotros, todas con la misma pinta.
      */
     colaGrupo: 'pendiente',
+
+    /**
+     * Cuántas mesas por fila en el reparto.
+     *
+     * Lo pidió Michael: según lo que esté mirando le sirve una columna ancha
+     * o tres estrechas. Se recuerda entre visitas porque es una preferencia
+     * de cómo mirar, no una decisión sobre la fecha: volver a elegirla cada
+     * vez que se recarga sería pedirle lo mismo diez veces al día.
+     *
+     * En `localStorage`, con su try: en una ventana privada lanza, y que la
+     * pantalla no arranque por una preferencia de rejilla sería absurdo.
+     * Tres por defecto, que es lo que daba antes en pantalla ancha.
+     */
+    columnas: (function () {
+      try {
+        const n = Number(window.localStorage.getItem('aro-columnas-mesas'));
+        return n === 1 || n === 2 || n === 3 ? n : 3;
+      } catch (e) { return 3; }
+    })(),
     pagosCola: null, metodosPago: [], pagosResumen: null,
     incidencias: null, accionesIncidencia: [],
     locales: null, zonasCatalogo: [], resumenLocales: null,
@@ -4105,6 +4144,26 @@ class Component extends DCLogic {
 
     return {
       pestanas, metricas, colas, metricasPago, pagos,
+      /**
+       * La rejilla y su selector.
+       *
+       * `minmax(0,1fr)` y no `1fr` a secas: con `1fr` una tarjeta cuyo
+       * contenido no quepa —un nombre de restaurante largo, por ejemplo—
+       * ensancha su columna y descuadra la fila entera.
+       */
+      rejillaMesas: 'display:grid;grid-template-columns:repeat(' + St.columnas + ',minmax(0,1fr));gap:12px;margin-top:14px',
+      columnasMesas: [1, 2, 3].map((n) => {
+        const on = St.columnas === n;
+        return {
+          n: String(n),
+          ayuda: n === 1 ? 'Una mesa por fila' : n + ' mesas por fila',
+          pick: () => {
+            try { window.localStorage.setItem('aro-columnas-mesas', String(n)); } catch (e) {}
+            this.setState({ columnas: n });
+          },
+          btn: 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease;background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#2C4A38') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.22)')
+        };
+      }),
       gruposCola, grupoVacio: colas.length === 0, textoGrupoVacio,
       fechasRep, zonasRep, tiposRep,
       // Se enseña solo si hay algo que enseñar: un botón que no cambia nada
