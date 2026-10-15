@@ -80,7 +80,12 @@ const MODOS = ['borrar', 'verificada', 'purgada', 'cenas', 'mesa', 'revelada', '
 const argumentos = process.argv.slice(2)
 const iLocal = argumentos.indexOf('--local')
 const QUE_LOCAL = iLocal >= 0 ? argumentos[iLocal + 1] : null
-const resto = argumentos.filter((x, i) => x !== '--local' && i !== iLocal + 1)
+// `iLocal >= 0` antes de nada: sin `--local`, `indexOf` da -1 y «-1 + 1» es
+// CERO, así que esto se comía el primer argumento. `borrar` dejaba de ser
+// `borrar`, caía al camino de crear y el guion anunciaba una cuenta nueva
+// donde se le pidió quitar una. Lo rompí al añadir la opción y lo vi al
+// probarlo: el mismo fallo silencioso que esta cabecera ya contaba de antes.
+const resto = argumentos.filter((x, i) => x !== '--local' && !(iLocal >= 0 && i === iLocal + 1))
 const desconocidos = resto.filter((x) => !MODOS.includes(x))
 if (desconocidos.length) {
   console.error('No conozco ' + desconocidos.join(' ni ') + '.')
