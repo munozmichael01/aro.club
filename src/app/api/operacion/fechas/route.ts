@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 import { anotar } from '@/lib/auditoria'
 import { encolar } from '@/lib/correos'
-import { FAMILIA_DE_FORMATO, MOVIMIENTO } from '@/lib/formatos'
+import { FAMILIA_DE_FORMATO, HORA_DE, MOVIMIENTO, horaBonita, partesHora } from '@/lib/formatos'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -31,39 +31,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 /** Caracas, cuatro horas por detrás de UTC y sin horario de verano. */
 const CARACAS = 4
-
-/**
- * A qué hora empieza cada formato, hora de Caracas.
- *
- * Los once del enum, no los cuatro que enseña la interfaz: «Movimiento» es
- * una familia —caminar, correr, pádel— y cada uno tiene su hora. Si el
- * formato no está aquí, la cena es la hora por defecto.
- */
-const HORA_DE: Record<string, string> = {
-  // Las cenas, a las 7:30 (Michael, 06-10). Con minutos: la hora de una cena
-  // la manda el sitio, y media hora importa.
-  dinner: '19:30', foodie_dinner: '19:30', women_dinner: '19:30',
-  drinks: '20:00', coffee: '10:00',
-  // El brunch del domingo, a las once (Michael, 14-10). No es la hora del
-  // café: un café es a media mañana y un brunch se come, así que empieza
-  // cuando la gente ya desayunó o no desayunó a propósito.
-  brunch: '11:00',
-  walk: '09:00', hike: '07:00', run: '06:00',
-  padel: '08:00', pilates: '08:00', cycling: '06:00',
-}
-
-/** «19:30» → [19, 30]. Sin minutos, cero. */
-function partesHora(h: string): [number, number] {
-  const [a, b] = String(h).split(':')
-  return [Number(a) || 0, Number(b) || 0]
-}
-
-/** «7:30 p.m.», para que el panel no escriba las horas a mano. */
-function horaBonita(h: string): string {
-  const [hh, mm] = partesHora(h)
-  const doce = hh % 12 || 12
-  return `${doce}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a.m.' : 'p.m.'}`
-}
 
 /** Cuánto antes cierra: el reparto necesita el pool cerrado dos días antes. */
 // La cifra vive en `reglas.js`: la comparten el panel, el copy que la promete

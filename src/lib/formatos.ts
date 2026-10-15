@@ -28,6 +28,44 @@
  * fecha?»— se hace aquí, no en la pantalla.
  */
 
+/**
+ * A qué hora empieza cada formato, hora de Caracas.
+ *
+ * Vivía en `/api/operacion/fechas`, que es quien la aplica, y ahora la
+ * necesita también la muestra que se le enseña a un local: con la hora en la
+ * ruta, enseñarle su correo a una cafetería pedía una segunda copia de esta
+ * tabla, que es como empiezan todas.
+ *
+ * Los doce del enum, no los cinco que enseña la interfaz: «Movimiento» es
+ * una familia —caminar, correr, pádel— y cada uno tiene su hora. Si el
+ * formato no está aquí, la cena es la hora por defecto.
+ */
+export const HORA_DE: Record<string, string> = {
+  // Las cenas, a las 7:30 (Michael, 06-10). Con minutos: la hora de una cena
+  // la manda el sitio, y media hora importa.
+  dinner: '19:30', foodie_dinner: '19:30', women_dinner: '19:30',
+  drinks: '20:00', coffee: '10:00',
+  // El brunch del domingo, a las once (Michael, 14-10). No es la hora del
+  // café: un café es a media mañana y un brunch se come, así que empieza
+  // cuando la gente ya desayunó o no desayunó a propósito.
+  brunch: '11:00',
+  walk: '09:00', hike: '07:00', run: '06:00',
+  padel: '08:00', pilates: '08:00', cycling: '06:00',
+}
+
+/** «19:30» → [19, 30]. Sin minutos, cero. */
+export function partesHora(h: string): [number, number] {
+  const [a, b] = String(h).split(':')
+  return [Number(a) || 0, Number(b) || 0]
+}
+
+/** «7:30 p.m.», para que ninguna pantalla escriba las horas a mano. */
+export function horaBonita(h: string): string {
+  const [hh, mm] = partesHora(h)
+  const doce = hh % 12 || 12
+  return `${doce}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'a.m.' : 'p.m.'}`
+}
+
 /** Familia → formatos de evento. Sitios y fechas. */
 export const FORMATOS_DE_FAMILIA: Record<string, string[]> = {
   cenas: ['dinner', 'foodie_dinner', 'women_dinner'],

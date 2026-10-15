@@ -1218,8 +1218,7 @@ if (relojes.length) {
   const tabla = panel.slice(panel.indexOf('const FORMATOS = ['))
   const enElPanel = [...tabla.slice(0, tabla.indexOf('];')).matchAll(/'([a-z_]+)',\s*\d+\]/g)].map((m) => m[1])
 
-  const fechas = fs.readFileSync(new URL('../src/app/api/operacion/fechas/route.ts', import.meta.url), 'utf8')
-  const horas = fechas.slice(fechas.indexOf('const HORA_DE'))
+  const horas = formatos.slice(formatos.indexOf('export const HORA_DE'))
   const conHora = [...horas.slice(0, horas.indexOf('\n}')).matchAll(/([a-z_]+):\s*'\d\d:\d\d'/g)].map((m) => m[1])
 
   const reglasJs = fs.readFileSync(new URL('../public/reglas.js', import.meta.url), 'utf8')
@@ -1236,7 +1235,7 @@ if (relojes.length) {
 
   const listas = [
     ['familia (src/lib/formatos.ts)', Object.values(PORFAMILIA).flat(), 'no habrá local que lo sirva ni filtro que lo encuentre'],
-    ['hora (/api/operacion/fechas)', conHora, 'la fecha se abriría a la hora de una cena'],
+    ['hora (src/lib/formatos.ts)', conHora, 'la fecha se abriría a la hora de una cena'],
     ['fila del panel (Operación)', enElPanel, 'no se puede abrir una fecha con ese formato'],
     ['nombre (reglas.js)', conNombre, 'la mesa cerrada y el panel de correos lo llamarían «Cena»'],
     ['«Hoy es tu…» (correos-datos)', mapa('HOY_ES'), 'el recordatorio diría «Hoy es tu plan»'],

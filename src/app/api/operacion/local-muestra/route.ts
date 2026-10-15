@@ -5,6 +5,7 @@ import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { enlaceDeMapa } from '@/lib/mapa'
 import { vozDe } from '@/lib/reglas'
+import { HORA_DE, horaBonita, partesHora } from '@/lib/formatos'
 
 /**
  * El correo de la mesa, con los datos de UN local, para enseñárselo a él.
@@ -39,8 +40,27 @@ export async function GET(request: Request) {
   const actor = await exigirOps()
   if (!actor) return new NextResponse(null, { status: 404 })
 
-  const id = new URL(request.url).searchParams.get('id')
+  const params = new URL(request.url).searchParams
+  const id = params.get('id')
   if (!id) return NextResponse.json({ error: 'Falta el local.' }, { status: 400 })
+
+  /**
+   * De qué plan es la muestra. Sin decir nada, una cena.
+   *
+   * Una cafetería no quiere ver el correo de una cena: quiere ver el suyo, a
+   * su hora y con sus palabras —«CON QUIÉN VAS» a las once de la mañana, no
+   * «CON QUIÉN CENAS»—. Y el día cambia con él: un brunch se enseña en
+   * domingo y una cena en sábado, porque enseñarle a nadie un brunch del
+   * martes es enseñarle algo que no vamos a hacer.
+   */
+  const formato = params.get('formato') ?? 'dinner'
+  if (!HORA_DE[formato]) {
+    return NextResponse.json(
+      { error: `No conozco el formato «${formato}».`, formatos: Object.keys(HORA_DE) },
+      { status: 400 },
+    )
+  }
+  const voz = vozDe(formato)
 
   const admin = createAdminClient()
 
@@ -53,14 +73,17 @@ export async function GET(request: Request) {
   if (!local) return NextResponse.json({ error: 'Ese local no existe.' }, { status: 404 })
 
   /**
-   * Un sábado a las 7:30, que es la cena normal.
+   * El próximo fin de semana: sábado si es de noche, domingo si es de mañana.
    *
    * La fecha se inventa a propósito y no se coge una real: enseñarle a un
-   * restaurante el correo de una cena concreta le dice cuánta gente va ese
+   * restaurante el correo de una fecha concreta le dice cuánta gente va ese
    * día, y eso no es suyo.
    */
-  const sabado = new Date()
-  sabado.setUTCDate(sabado.getUTCDate() + ((6 - sabado.getUTCDay() + 7) % 7 || 7))
+  const hora = HORA_DE[formato]
+  const deManana = partesHora(hora)[0] < 12
+  const diaQueToca = deManana ? 0 : 6
+  const dia = new Date()
+  dia.setUTCDate(dia.getUTCDate() + ((diaQueToca - dia.getUTCDay() + 7) % 7 || 7))
 
   const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
   const MESES = [
@@ -78,20 +101,21 @@ export async function GET(request: Request) {
     // --- y la mesa de ejemplo -------------------------------------------
     numero: '03',
     mesaUnica: false,
-    comoLlegar: 'la mesa de Aro, la 03',
+    comoLlegar: `${voz.el} ${voz.unidad} de Aro, ${voz.el} 03`,
     gente: COMENSALES.map((c) => ({ ...c, inicial: c.nombre.charAt(0) })),
     trato: 'Daniel',
     ciudad: 'Caracas',
-    cuando: `${DIAS[sabado.getUTCDay()]} ${sabado.getUTCDate()} de ${MESES[sabado.getUTCMonth()]}`,
-    hora: '7:30 p.m.',
-    unidad: 'mesa',
-    Unidad: 'Mesa',
-    art: 'la',
-    TU: 'TU MESA',
-    // De la voz, como el correo de verdad: la muestra es de una cena, así
-    // que dice «CON QUIÉN CENAS», pero la frase no se escribe aquí.
-    conQuien: vozDe('dinner').conQuien,
-    alGrupo: ' la mesa',
+    cuando: `${DIAS[dia.getUTCDay()]} ${dia.getUTCDate()} de ${MESES[dia.getUTCMonth()]}`,
+    hora: horaBonita(hora),
+    // Todo el vocabulario de la voz, como en el correo de verdad: una cena
+    // dice «CON QUIÉN CENAS» y un brunch «CON QUIÉN VAS», y ninguna de las
+    // dos frases se escribe aquí.
+    unidad: voz.unidad,
+    Unidad: voz.Unidad,
+    art: voz.el,
+    TU: voz.TU,
+    conQuien: voz.conQuien,
+    alGrupo: voz.unidad === 'mesa' ? ' la mesa' : 'l grupo',
     // Sin enlace de ajustes: esto no se manda a nadie, así que no hay baja
     // que ofrecer. Vacío deja el pie sin un enlace muerto.
     enlaceAjustes: '',
