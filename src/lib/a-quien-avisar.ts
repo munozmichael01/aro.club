@@ -2,7 +2,7 @@ import 'server-only'
 
 import { cabeEnLaFecha, tieneEdadMinima, type EdadMinima } from '@/lib/edad'
 import { FAMILIA_DE_FORMATO, PLANES_DE_FAMILIA } from '@/lib/formatos'
-import { PUERTA, partesDe } from '@/lib/reglas'
+import { PUERTA, diaDe, partesDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 
@@ -69,6 +69,19 @@ export function casillaDeDia(iso: string, zona: string): string | null {
  *     A Michael le llegaban varios avisos a la vez, que eran los de sus
  *     propias cuentas de prueba llegando a su buzón.
  *
+ * 5 · QUIEN CABE EN UNA FECHA CON EDAD QUE COMPITE CON ESTA. Si el mismo día
+ *     y en la misma zona hay una cena abierta y una cena +40, a quien tiene
+ *     45 años se le habla de la +40 y de ninguna otra. Michael, 15-10: «nos
+ *     interesa que se apunten a ese, nos enfocamos en ese».
+ *
+ *     No es un filtro de ruido, es de reparto: esas doce plazas solo las
+ *     pueden llenar ellos, y el resto del club llena las otras. A quien le
+ *     mandas las dos, elige la de siempre.
+ *
+ *     Compite = abierta, sin cerrar todavía, el MISMO día de la ciudad y con
+ *     alguna zona en común. Sin zona común no compite: son dos planes que
+ *     esa persona ni siquiera puede comparar.
+ *
  * 4 · QUIEN DIJO QUE ESE DÍA NO. «Jueves noche» y «Domingo mañana» son dos
  *     de las cinco casillas que ofrece la puerta, y quien marcó solo fin de
  *     semana no puede ir a una cena del jueves. Escribirle de una fecha a la
@@ -96,7 +109,7 @@ export async function quienQuiereSaberDe(
    * La fecha de la que se avisa, para su banda de edad. Opcional: sin ella
    * no se filtra por edad y el aviso sale como salía.
    */
-  evento?: (EdadMinima & { starts_at: string; city_slug?: string | null }) | null,
+  evento?: (EdadMinima & { id?: string; starts_at: string; city_slug?: string | null }) | null,
 ): Promise<Set<string>> {
   const permitidos = new Set(ids)
   if (!ids.length) return permitidos
@@ -175,7 +188,8 @@ export async function quienQuiereSaberDe(
   // --- y quien dijo que ese día no --------------------------------------
   if (!evento?.starts_at || !permitidos.size) return permitidos
 
-  const casilla = casillaDeDia(evento.starts_at, await zonaDeCiudad(evento.city_slug))
+  const zonaHoraria = await zonaDeCiudad(evento.city_slug)
+  const casilla = casillaDeDia(evento.starts_at, zonaHoraria)
   if (!casilla) return permitidos
 
   const { data: suDia } = await admin
@@ -188,6 +202,77 @@ export async function quienQuiereSaberDe(
     if (!r.profile_id) continue
     const suyos = Array.isArray(r.value) ? (r.value as string[]) : []
     if (suyos.length && !suyos.includes(casilla)) permitidos.delete(r.profile_id)
+  }
+
+  return quitarALosDeLaOtra(permitidos, evento, zonaHoraria)
+}
+
+/**
+ * Quita a quien cabe en una fecha con edad que compite con esta.
+ *
+ * Solo se aplica a las fechas SIN edad: la que la tiene ya se queda con los
+ * suyos por el filtro de arriba, y así las dos listas no se pisan. El que
+ * tiene 45 años recibe el correo de la +40 y nada más; el resto del club
+ * recibe el de la otra.
+ */
+async function quitarALosDeLaOtra(
+  permitidos: Set<string>,
+  evento: EdadMinima & { id?: string; starts_at: string; city_slug?: string | null },
+  zonaHoraria: string,
+): Promise<Set<string>> {
+  if (tieneEdadMinima(evento) || !evento.id || !permitidos.size) return permitidos
+
+  const admin = createAdminClient()
+
+  const { data: mias } = await admin
+    .from('event_venues')
+    .select('zone_slug')
+    .eq('event_id', evento.id)
+
+  const zonas = new Set((mias ?? []).map((v) => v.zone_slug).filter(Boolean))
+  if (!zonas.size) return permitidos
+
+  // El mismo día, en la hora de la ciudad. Un sábado a las 7:30 p.m. de
+  // Caracas es domingo en UTC: comparar los `starts_at` en crudo juntaría la
+  // cena del sábado con un brunch del domingo y separaría dos del sábado.
+  const diaMio = diaDe(evento.starts_at, zonaHoraria)
+
+  const { data: otras } = await admin
+    .from('events')
+    .select('id, starts_at, age_band_min, age_band_max')
+    .eq('status', 'open')
+    .gt('booking_closes_at', new Date().toISOString())
+    .not('id', 'eq', evento.id)
+
+  const compiten = []
+  for (const o of otras ?? []) {
+    if (!tieneEdadMinima(o)) continue
+    if (diaDe(o.starts_at, zonaHoraria) !== diaMio) continue
+    const { data: suyas } = await admin
+      .from('event_venues')
+      .select('zone_slug')
+      .eq('event_id', o.id)
+    if ((suyas ?? []).some((v) => v.zone_slug && zonas.has(v.zone_slug))) compiten.push(o)
+  }
+
+  if (!compiten.length) return permitidos
+
+  const { data: edades, error } = await admin
+    .from('profiles')
+    .select('id, birthdate')
+    .in('id', [...permitidos])
+
+  // Mismo criterio que el filtro de edad de arriba: si no se puede leer la
+  // edad no se adivina hacia ningún lado. Aquí fallar en silencio mandaría
+  // el correo de la cena normal a la gente de la +40, que es justo lo que
+  // esto evita.
+  if (error) {
+    console.error('[avisos] no se pudo leer la edad para la fecha que compite', error)
+    throw new Error('No se pudo comprobar quién cabe en la otra fecha.')
+  }
+
+  for (const p of edades ?? []) {
+    if (compiten.some((o) => cabeEnLaFecha(p.birthdate, o))) permitidos.delete(p.id)
   }
 
   return permitidos
