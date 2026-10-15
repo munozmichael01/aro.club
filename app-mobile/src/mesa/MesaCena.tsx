@@ -36,7 +36,8 @@ export function MesaCena(p: {
 }) {
   const { d, ahora, ir } = p
   const zona = d.zonaHoraria ?? null
-  const pasos = Gu.pasos(d.empiezaEn, d.cierraMesaEn)
+  // La reserva dura siempre dos horas desde el inicio (Michael, 15-10): no se lee ningún cierre del servidor.
+  const pasos = Gu.pasos(d.empiezaEn)
   const momento = Gu.momentoDeCena(pasos, ahora)
   const [abiertas, setAbiertas] = useState<Record<Clave, boolean>>(() =>
     momento === 'antes' ? { gente: true, paso: false, juego: false } : { gente: false, paso: true, juego: false },
