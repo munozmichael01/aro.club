@@ -1,56 +1,46 @@
-/** El guion de la mesa: horas de cada momento y el momento en curso. */
+/** El guion de la mesa (reglas.js desde el 15-10): horas, textos y el momento en curso. */
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { DURACION_POR_DEFECTO, enCurso, pasos } from '../src/mesa/guion'
+import { DURACION_POR_DEFECTO, enCurso, momentoDeCena, pasos, sinSufijo } from '../src/mesa/guion'
 
 const EMPIEZA = '2026-10-16T23:30:00Z' // 7:30 p.m. en Caracas
+const ZONA = 'America/Caracas'
 const hora = (p: ReturnType<typeof pasos>, m: string) => p.find((x) => x.momento === m)!.en
 
 test('los momentos, en orden y con la hora de esa mesa (la tabla aprobada el 14-10)', () => {
-  const p = pasos(EMPIEZA)
+  const p = pasos(EMPIEZA, ZONA)
   assert.deepEqual(p.map((x) => x.momento), ['llegada', 'voz', 'pedir', 'vuelta', 'hielo', 'tema', 'cuenta', 'despedida'])
-  assert.equal(hora(p, 'voz'), '2026-10-16T23:45:00.000Z') // 7:45
-  assert.equal(hora(p, 'pedir'), '2026-10-16T23:45:00.000Z') // 7:45
-  assert.equal(hora(p, 'vuelta'), '2026-10-16T23:50:00.000Z') // 7:50
-  assert.equal(hora(p, 'hielo'), '2026-10-17T00:05:00.000Z') // 8:05
-  assert.equal(hora(p, 'tema'), '2026-10-17T00:30:00.000Z') // 8:30
-  assert.equal(hora(p, 'cuenta'), '2026-10-17T01:00:00.000Z') // 9:00
-  assert.equal(hora(p, 'despedida'), '2026-10-17T01:30:00.000Z') // 9:30
+  assert.deepEqual(p.map((x) => sinSufijo(x.hora)), ['7:30', '7:45', '7:45', '7:50', '8:05', '8:30', '9:00', '9:30'])
   assert.equal(DURACION_POR_DEFECTO, 120)
 })
 
-test('si el restaurante nos da hasta una hora, la cuenta y la despedida la siguen', () => {
-  const p = pasos(EMPIEZA, '2026-10-17T02:00:00Z') // 10:00 p.m.
-  assert.equal(hora(p, 'despedida'), '2026-10-17T02:00:00.000Z')
-  assert.equal(hora(p, 'cuenta'), '2026-10-17T01:30:00.000Z')
+test('la mesa dura dos horas, siempre: la despedida a +120 y la cuenta a +90', () => {
+  const p = pasos(EMPIEZA, ZONA)
+  assert.equal(Date.parse(hora(p, 'despedida')) - Date.parse(EMPIEZA), 120 * 60_000)
+  assert.equal(Date.parse(hora(p, 'cuenta')) - Date.parse(EMPIEZA), 90 * 60_000)
 })
 
-test('un cierre de menos de hora y media se ignora: la cuenta no puede ir antes del rescate', () => {
-  const p = pasos(EMPIEZA, '2026-10-17T00:30:00Z')
-  assert.equal(Date.parse(hora(p, 'despedida')) - Date.parse(EMPIEZA), DURACION_POR_DEFECTO * 60_000)
+test('los textos salen de reglas.js con el límite puesto, y los dos del juego con su botón', () => {
+  const p = pasos(EMPIEZA, ZONA)
+  assert.equal(p[0].texto, 'Pidan algo de tomar si quieren. Esperamos a todos hasta las 7:45.')
+  assert.equal(p.find((x) => x.momento === 'hielo')!.botonJuego, 'Abrir el juego · ronda 1')
+  assert.equal(p.find((x) => x.momento === 'tema')!.botonJuego, 'Seguir el juego · rondas 2 y 3')
+  assert.equal(p.find((x) => x.momento === 'pedir')!.botonJuego, '')
 })
 
 test('sin hora no hay guion; dos momentos a la misma hora están en curso a la vez', () => {
   assert.deepEqual(pasos(null), [])
-  const p = pasos(EMPIEZA)
+  const p = pasos(EMPIEZA, ZONA)
   assert.equal(enCurso(p, Date.parse(EMPIEZA) - 60_000), null)
   assert.equal(enCurso(p, Date.parse(EMPIEZA) + 16 * 60_000), '2026-10-16T23:45:00.000Z')
 })
 
-test('el momento de la cena: antes, en curso y terminada desde la despedida', async () => {
-  const { momentoDeCena, sinSufijo } = await import('../src/mesa/guion')
-  const p = pasos(EMPIEZA)
+test('el momento de la cena: antes, en curso y terminada desde la despedida', () => {
+  const p = pasos(EMPIEZA, ZONA)
   assert.equal(momentoDeCena(p, Date.parse(EMPIEZA) - 1), 'antes')
   assert.equal(momentoDeCena(p, Date.parse(EMPIEZA)), 'curso')
   assert.equal(momentoDeCena(p, Date.parse(hora(p, 'despedida'))), 'terminada')
   assert.equal(sinSufijo('7:30 p.m.'), '7:30')
   assert.equal(sinSufijo('12:05 a.m.'), '12:05')
-})
-
-test('un cierre de más de tres horas (la última entrada de un local de brunch) se ignora', () => {
-  const p = pasos(EMPIEZA, '2026-10-17T10:00:00Z') // diez horas y media después
-  assert.equal(Date.parse(hora(p, 'despedida')) - Date.parse(EMPIEZA), DURACION_POR_DEFECTO * 60_000)
-  const real = pasos(EMPIEZA, '2026-10-17T02:00:00Z') // 2 h 30: la mesa real del viernes
-  assert.equal(hora(real, 'despedida'), '2026-10-17T02:00:00.000Z')
 })

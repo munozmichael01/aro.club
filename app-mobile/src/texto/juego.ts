@@ -3,21 +3,20 @@
  * preguntas, los nombres de las rondas y las cuatro reglas NO van aquí: salen
  * de `AroReglas.JUEGO`, que comparte la web.
  */
+import { reglas } from '../reglas'
 
 /** La tarjeta del juego en Mi mesa. */
 export const tarjeta = {
   titulo: 'El juego de la mesa',
   resumen: '3 rondas · la primera va con la comida',
   intro: 'Una persona lee en voz alta, todos responden. Siempre se puede pasar.',
-  /**
-   * La línea «cuándo» y la bajada de cada ronda en la tarjeta. PROVISIONALES:
-   * Michael tiene pendiente aprobar las bajadas (HANDOFF de la entrega 20).
-   */
-  rondas: [
-    { cuando: (hora: string) => (hora ? `Mientras llega la comida · ${hora}` : 'Mientras llega la comida'), bajada: 'Ligera. Luego, a comer.' },
-    { cuando: () => 'Si se acaba el tema', bajada: 'Si la mesa va bien sola, no hace falta.' },
-    { cuando: () => 'Solo si a la mesa le provoca', bajada: 'Más personal. Cualquiera puede pasar.' },
-  ],
+  /** La línea «cuándo» de cada ronda (de `reglas.js`); la primera lleva la hora de «Para romper el hielo». */
+  cuando: (ronda: number, hora: string) => {
+    const c = reglas.JUEGO.rondas[ronda]?.cuando ?? ''
+    return ronda === 0 && hora ? `${c} · ${hora}` : c
+  },
+  /** La bajada corta de la tarjeta (`enLaTarjeta`, PENDIENTE de Michael según Design). */
+  bajada: (ronda: number) => reglas.JUEGO.rondas[ronda]?.enLaTarjeta ?? '',
   ir: 'Ir',
   hecha: 'Hecha',
   deTotal: (n: number, de: number) => `${n} de ${de}`,

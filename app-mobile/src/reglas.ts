@@ -65,7 +65,26 @@ type Api = {
   /** Qué regla aplica a un campo de un método de pago (`null`: solo que no esté vacío). */
   campoDe: (definicion: CampoDePago) => Campo | null
   vozDe: (formato: string | null | undefined) => { unidad: 'mesa' | 'grupo'; mia: string } & Record<string, string>
+  /** El guion de la mesa (paso a paso), compartido con la web desde el 15-10. */
+  GUION: {
+    titulo: string
+    bajada: string
+    ahora: string
+    duracionDeLaMesa: number
+    momentos: { clave: string; desde: 'inicio' | 'cierre'; min: number; nombre: string; texto: string }[]
+    delJuego: Record<string, string>
+    seguir: { titulo: string; aPie: string; comoLlegar: string }
+  }
+  /** Los momentos de esta mesa con su hora puesta, en la zona de la ciudad. `[]` sin hora de inicio. */
+  pasosDeLaMesa: (empiezaEn: string | null | undefined, zona?: string | null) => PasoDeLaMesa[]
+  momentoDeLaMesa: (pasos: PasoDeLaMesa[], ahora: number) => 'antes' | 'curso' | 'terminada'
+  /** El índice del primero de los momentos en curso, o -1. */
+  enCursoDeLaMesa: (pasos: PasoDeLaMesa[], ahora: number) => number
+  /** «7:30 p.m.» → «7:30». */
+  horaCorta: (hora: string | null | undefined) => string
 }
+
+export type PasoDeLaMesa = { clave: string; en: string; hora: string; nombre: string; texto: string; botonJuego: string }
 
 /** Un campo de un método de pago, tal como lo define `payment_methods.campos`. */
 export type CampoDePago = {
@@ -106,7 +125,7 @@ export type PreguntaPuerta = {
   opciones: [string, string][]
 }
 
-export type RondaDeJuego = { clave: string; titulo: string; bajada: string; preguntas: string[] }
+export type RondaDeJuego = { clave: string; titulo: string; bajada: string; preguntas: string[]; /** La bajada corta de la tarjeta de Mi mesa. */ enLaTarjeta?: string; /** «MIENTRAS LLEGA LA COMIDA». */ cuando?: string }
 export type JuegoDeMesa = {
   rondas: RondaDeJuego[]
   porRonda: number

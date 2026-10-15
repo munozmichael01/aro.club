@@ -37,7 +37,7 @@ export function MesaCena(p: {
   const { d, ahora, ir } = p
   const zona = d.zonaHoraria ?? null
   // La reserva dura siempre dos horas desde el inicio (Michael, 15-10): no se lee ningún cierre del servidor.
-  const pasos = Gu.pasos(d.empiezaEn)
+  const pasos = Gu.pasos(d.empiezaEn, zona)
   const momento = Gu.momentoDeCena(pasos, ahora)
   const [abiertas, setAbiertas] = useState<Record<Clave, boolean>>(() =>
     momento === 'antes' ? { gente: true, paso: false, juego: false } : { gente: false, paso: true, juego: false },
@@ -68,8 +68,8 @@ export function MesaCena(p: {
     : momento === 'antes'
       ? T.cena.paso.resumenAntes(pasos.length, Gu.sinSufijo(F.horaEn(pasos[0].en, zona)), F.horaEn(pasos[pasos.length - 1].en, zona))
       : ultimoAhora?.momento === 'despedida' && sitios.length
-        ? T.cena.paso.resumenSitios(T.guion.momentos.despedida.nombre, sitios.length)
-        : T.cena.paso.resumenAhora(T.guion.momentos[ultimoAhora?.momento ?? 'llegada'].nombre)
+        ? T.cena.paso.resumenSitios(ultimoAhora.nombre, sitios.length)
+        : T.cena.paso.resumenAhora(ultimoAhora?.nombre ?? pasos[0].nombre)
 
   const cerradoHasta = J.ventana(d.empiezaEn, ahora) === 'antes' ? F.horaEn(d.empiezaEn, zona) : null
   const reiniciar = async () => {
@@ -113,20 +113,18 @@ export function MesaCena(p: {
             {pasos.map((x) => {
               const ahoraEs = enCursoPaso !== null && x.en === enCursoPaso
               const pasado = enCursoPaso !== null && Date.parse(x.en) < Date.parse(enCursoPaso)
-              const m = T.guion.momentos[x.momento]
-              const limite = Gu.sinSufijo(F.horaEn(pasos.find((y) => y.momento === 'pedir')?.en, zona))
-              const enlace = x.momento === 'hielo' ? T.cena.paso.juegoHielo : x.momento === 'tema' ? T.cena.paso.juegoTema : null
+              const enlace = x.botonJuego || null
               return (
                 <View key={x.momento} style={[e.fila, ahoraEs ? e.filaAhora : null]}>
-                  <Texto style={[e.hora, { color: ahoraEs ? C.terracota : pasado ? C.pasado : C.cuerpo }]}>{Gu.sinSufijo(F.horaEn(x.en, zona))}</Texto>
+                  <Texto style={[e.hora, { color: ahoraEs ? C.terracota : pasado ? C.pasado : C.cuerpo }]}>{Gu.sinSufijo(x.hora)}</Texto>
                   <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
                     {ahoraEs ? (
                       <View style={e.ahora}>
                         <Texto style={e.ahoraTexto}>{T.guion.ahora}</Texto>
                       </View>
                     ) : null}
-                    <Texto style={[serif(ahoraEs ? 22 : 19, 1.15, -0.015), { color: pasado ? C.pasado : C.tinta }]}>{m.nombre}</Texto>
-                    <Texto style={[texto(15, 1.45), { color: pasado ? C.pasado : C.cuerpo }]}>{m.texto(limite)}</Texto>
+                    <Texto style={[serif(ahoraEs ? 22 : 19, 1.15, -0.015), { color: pasado ? C.pasado : C.tinta }]}>{x.nombre}</Texto>
+                    <Texto style={[texto(15, 1.45), { color: pasado ? C.pasado : C.cuerpo }]}>{x.texto}</Texto>
                     {enlace && d.mesaId ? (
                       <Pressable
                         onPress={() => poner('juego', true)}
@@ -299,15 +297,14 @@ function TarjetaJuego(p: {
       <Texto style={[texto(14, 1.45), { color: C.cuerpoVerde, paddingBottom: 6 }]}>{TJ.tarjeta.intro}</Texto>
       {reglas.JUEGO.rondas.map((r, i) => {
         const est = J.estadoRonda(g, i, p.mesaId)
-        const extra = TJ.tarjeta.rondas[i]
         const texto2 = est.tipo === 'hecha' ? TJ.tarjeta.hecha : est.tipo === 'ahora' ? TJ.tarjeta.deTotal(est.n!, est.de!) : TJ.tarjeta.ir
         return (
           <View key={r.clave} style={e.ronda}>
             <Texto style={[serif(20, 1.1), { color: C.acento, width: 30 }]}>{i + 1}</Texto>
             <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
               <Texto style={[serif(18, 1.15), { color: C.crema }]}>{r.titulo}</Texto>
-              {extra ? <Texto style={[e.etiqueta, { fontSize: 10, color: C.acento }]}>{extra.cuando(p.horaHielo).toUpperCase()}</Texto> : null}
-              {extra ? <Texto style={[texto(13, 1.4), { color: C.cuerpoVerde }]}>{extra.bajada}</Texto> : null}
+              <Texto style={[e.etiqueta, { fontSize: 10, color: C.acento }]}>{TJ.tarjeta.cuando(i, p.horaHielo).toUpperCase()}</Texto>
+              <Texto style={[texto(13, 1.4), { color: C.cuerpoVerde }]}>{TJ.tarjeta.bajada(i)}</Texto>
             </View>
             <Pressable
               onPress={() => p.jugar(`ronda-${i}`)}
@@ -360,7 +357,7 @@ function JuegoCerrado({ hora }: { hora: string }) {
               <Texto style={[serif(20, 1.1), { color: C.acento, width: 30 }]}>{i + 1}</Texto>
               <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
                 <Texto style={[serif(18, 1.15), { color: C.crema }]}>{r.titulo}</Texto>
-                <Texto style={[texto(13, 1.4), { color: C.cuerpoVerde }]}>{TJ.tarjeta.rondas[i]?.bajada ?? ''}</Texto>
+                <Texto style={[texto(13, 1.4), { color: C.cuerpoVerde }]}>{TJ.tarjeta.bajada(i)}</Texto>
               </View>
             </View>
           ))}

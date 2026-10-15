@@ -1,3 +1,4 @@
+import { reglas } from '../reglas'
 /**
  * El texto de Mi mesa, copiado de `Mi mesa.dc.html` (casilla B de
  * TEXTO-tres-superficies). Mesa o grupo según el formato (`reglas.vozDe`).
@@ -154,24 +155,14 @@ export const sinRespuesta = {
  * y nada de «noche»: no siempre es de noche.
  */
 export const guion = {
-  titulo: 'Paso a paso',
-  bajada: 'Una guía, no un horario. Cada mesa va a su ritmo.',
-  momentos: {
-    llegada: { nombre: 'Mientras llegan', texto: (limite: string) => `Pidan algo de tomar si quieren. Esperamos a todos hasta ${/^1:/.test(limite) ? 'la' : 'las'} ${limite}${limite.endsWith('.') ? '' : '.'}` },
-    voz: { nombre: 'La voz de Aro', texto: () => 'Antes de pedir, elijan a alguien que vaya leyendo en voz alta cada momento de esta lista. Si nadie se ofrece, le toca a quien llegó de último.' },
-    pedir: { nombre: 'A pedir', texto: () => 'Falte quien falte, pidan la comida. Quien llegue después se suma sin problema.' },
-    vuelta: { nombre: 'Una vuelta rápida', texto: () => 'Tu nombre y qué haces cuando no trabajas.' },
-    hielo: { nombre: 'Para romper el hielo', texto: () => 'Mientras llega la comida, la primera ronda del juego.' },
-    tema: { nombre: 'Si se acaba el tema', texto: () => 'Sigan con el juego donde lo dejaron. Se puede pasar.' },
-    cuenta: { nombre: 'Lo último y la cuenta', texto: () => 'Pidan lo último que les provoque y luego la cuenta, cada quien lo suyo. Puede haber otra reserva esperando la mesa.' },
-    despedida: { nombre: 'Despedida', texto: () => 'Si hay ganas de seguir, busquen un sitio cerca. Si alguien te cayó bien, díselo.' },
-  } as Record<string, { nombre: string; texto: (limite: string) => string }>,
-  ahora: 'AHORA',
+  titulo: reglas.GUION.titulo,
+  bajada: reglas.GUION.bajada,
+  ahora: reglas.GUION.ahora,
   /** Los sitios para seguir que operación eligió para ese local (14-10). */
   seguir: {
-    titulo: 'Si quieren seguir',
-    aPie: (min: number) => `${min} min a pie`,
-    comoLlegar: 'Cómo llegar',
+    titulo: reglas.GUION.seguir.titulo,
+    aPie: (min: number) => reglas.GUION.seguir.aPie.replace('{n}', String(min)),
+    comoLlegar: reglas.GUION.seguir.comoLlegar,
   },
 }
 
@@ -196,8 +187,6 @@ export const cena = {
     resumenAntes: (n: number, desde: string, hasta: string) => `${n} momentos · de ${desde} a ${hasta}`,
     resumenAhora: (momento: string) => `Ahora: ${momento}`,
     resumenSitios: (momento: string, n: number) => `Ahora: ${momento} · ${n} ${n === 1 ? 'sitio' : 'sitios'} para seguir`,
-    juegoHielo: 'Abrir el juego · ronda 1',
-    juegoTema: 'Seguir el juego · rondas 2 y 3',
   },
   abrir: (titulo: string) => `Abrir ${titulo}`,
   cerrar: (titulo: string) => `Cerrar ${titulo}`,
