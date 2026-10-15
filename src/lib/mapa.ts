@@ -70,8 +70,18 @@ export function enlaceDeMapa(sitio: Sitio | null | undefined): string | null {
  * qué teléfono se está leyendo. En un correo no se puede.
  */
 export function enlaceApple(sitio: Sitio | null | undefined): string | null {
-  const lat = Number(sitio?.lat)
-  const lng = Number(sitio?.lng)
+  /**
+   * Sin coordenadas, NULL. Y `null` no es cero.
+   *
+   * `Number(null)` es 0 y 0 es finito, así que un sitio sin coordenadas
+   * pasaba el filtro y salía `maps://?q=Alto&ll=0,0`: Apple Maps abriendo en
+   * medio del golfo de Guinea. Se vio con los sitios para seguir, que es
+   * donde más fácil es que falten, pero valía para cualquier local que no
+   * venga de una búsqueda de Google.
+   */
+  if (sitio?.lat == null || sitio?.lng == null) return null
+  const lat = Number(sitio.lat)
+  const lng = Number(sitio.lng)
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
 
   const etiqueta = sitio?.name?.trim()

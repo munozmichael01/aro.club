@@ -174,6 +174,26 @@ const cambio = z.discriminatedUnion('accion', [
     id: z.string().uuid(),
     familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch'])).min(1),
   }),
+  /**
+   * Los sitios para seguir de ESE local (entrega 20).
+   *
+   * Hasta tres, en el orden en que llegan: el primero es el que operación
+   * recomendaría. Se manda la lista entera y se reemplaza, que es como se
+   * piensa —«estos tres»— y no «quita este, añade aquel».
+   */
+  z.object({
+    accion: z.literal('para-seguir'),
+    id: z.string().uuid(),
+    sitios: z
+      .array(
+        z.object({
+          id: z.string().uuid(),
+          // Sin minutos la línea no se enseña, así que null es una respuesta.
+          minutos: z.number().int().min(1).max(60).nullable().optional(),
+        }),
+      )
+      .max(3),
+  }),
 ])
 
 /**
@@ -287,6 +307,23 @@ export async function GET() {
     (notasDeSitio ?? []).map((n) => [n.restaurant_id as string, n]),
   )
 
+  /**
+   * Los sitios para seguir de cada local (entrega 20).
+   *
+   * De una vez para todos y no uno por ficha: son pocas filas y la pestaña
+   * pinta los nueve locales a la vez.
+   */
+  const { data: seguires } = await admin
+    .from('restaurant_after_venues')
+    .select('restaurant_id, after_id, minutos_a_pie, orden')
+    .order('orden')
+
+  const paraSeguirDe = new Map<string, { id: string; minutos: number | null }[]>()
+  for (const s of seguires ?? []) {
+    const ya = paraSeguirDe.get(s.restaurant_id) ?? []
+    paraSeguirDe.set(s.restaurant_id, [...ya, { id: s.after_id, minutos: s.minutos_a_pie }])
+  }
+
   const lista = (locales ?? []).map((l) => {
     const h = porSitio.get(l.id) ?? cero()
     const familias = [...new Set(((l.formats ?? []) as string[]).map(familiaDe).filter(Boolean))] as string[]
@@ -296,6 +333,8 @@ export async function GET() {
       nombre: l.name,
       zona: l.zone_slug,
       zonaNombre: nombreZona.get(l.zone_slug ?? '') ?? l.zone_slug,
+      // Los sitios para seguir que tiene elegidos, en su orden.
+      paraSeguir: paraSeguirDe.get(l.id) ?? [],
       ciudad: (zonas ?? []).find((z) => z.slug === l.zone_slug)?.city_slug ?? null,
       direccion: l.address,
       mapa: l.maps_url,
@@ -695,6 +734,52 @@ export async function PATCH(request: Request) {
       console.error('[locales] no se guardaron los formatos', error)
       return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
     }
+    return NextResponse.json({ ok: true })
+  }
+
+  if (d.accion === 'para-seguir') {
+    // Ninguno puede ser el propio local ni repetirse: el `check` de la base
+    // lo impide, pero el mensaje de ahí no es para leerlo en el panel.
+    const ids = [...new Set(d.sitios.map((s) => s.id))].filter((x) => x !== d.id)
+    if (ids.length !== d.sitios.length) {
+      return NextResponse.json({ error: 'Un sitio no puede seguirse a sí mismo ni repetirse.' }, { status: 400 })
+    }
+
+    // Y que existan y sean sitios «para seguir». Operación los marca con
+    // `is_after_venue` en su propia ficha: sin esa comprobación, el selector
+    // de uno podría apuntar a cualquier restaurante del catálogo.
+    if (ids.length) {
+      const { data: validos } = await admin
+        .from('restaurants')
+        .select('id')
+        .in('id', ids)
+        .eq('is_after_venue', true)
+
+      if ((validos ?? []).length !== ids.length) {
+        return NextResponse.json(
+          { error: 'Alguno de esos sitios no está marcado como «para seguir».' },
+          { status: 400 },
+        )
+      }
+    }
+
+    await admin.from('restaurant_after_venues').delete().eq('restaurant_id', d.id)
+
+    if (d.sitios.length) {
+      const { error } = await admin.from('restaurant_after_venues').insert(
+        d.sitios.map((s, i) => ({
+          restaurant_id: d.id,
+          after_id: s.id,
+          minutos_a_pie: s.minutos ?? null,
+          orden: i,
+        })),
+      )
+      if (error) {
+        console.error('[locales] no se guardaron los sitios para seguir', error)
+        return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+      }
+    }
+
     return NextResponse.json({ ok: true })
   }
 

@@ -199,6 +199,38 @@ export async function GET() {
     } | null
   }
 
+  /**
+   * Los sitios para seguir del local (entrega 20).
+   *
+   * Hasta tres, los que operación eligió en la ficha de ESE restaurante. Van
+   * con el enlace ya montado —el de Google y el de Apple, como el del propio
+   * sitio— porque es la pantalla la que sabe en qué teléfono se lee.
+   *
+   * `[]` cuando no hay ninguno, y entonces la despedida se queda con su
+   * frase: «si hay ganas de seguir, busquen un sitio cerca».
+   */
+  const { data: seguires } = await admin
+    .from('restaurant_after_venues')
+    .select('after_id, minutos_a_pie, orden, restaurants!restaurant_after_venues_after_id_fkey(name, address, maps_url, lat, lng)')
+    .eq('restaurant_id', mesa.restaurant_id ?? '')
+    .order('orden')
+
+  const paraSeguir = (seguires ?? []).map((s) => {
+    const sitio = s.restaurants as unknown as {
+      name: string
+      address: string | null
+      maps_url: string | null
+      lat: number | null
+      lng: number | null
+    } | null
+    return {
+      nombre: sitio?.name ?? '',
+      minutosAPie: s.minutos_a_pie,
+      mapa: enlaceDeMapa(sitio),
+      mapaApple: enlaceApple(sitio),
+    }
+  })
+
   const { data: companeros } = await admin
     .from('table_members')
     .select('profile_id, seat_order, profiles(display_name, full_name)')
@@ -298,6 +330,8 @@ export async function GET() {
      * tienen cuatro, así que la pantalla sin foto no es el caso raro.
      */
     fotoEntrada: urlDeFotoDeLocal(mesa.restaurants?.id, mesa.restaurants?.facade_photo_path),
+    // Hasta tres sitios para seguir, los que operación eligió para ESE local.
+    paraSeguir,
     /**
      * `cierraMesaEn` se quitó el 15-10, el mismo día que se puso.
      *

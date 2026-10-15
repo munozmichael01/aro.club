@@ -2540,6 +2540,45 @@ export type Database = {
           },
         ]
       }
+      restaurant_after_venues: {
+        Row: {
+          after_id: string
+          created_at: string
+          minutos_a_pie: number | null
+          orden: number
+          restaurant_id: string
+        }
+        Insert: {
+          after_id: string
+          created_at?: string
+          minutos_a_pie?: number | null
+          orden?: number
+          restaurant_id: string
+        }
+        Update: {
+          after_id?: string
+          created_at?: string
+          minutos_a_pie?: number | null
+          orden?: number
+          restaurant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_after_venues_after_id_fkey"
+            columns: ["after_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "restaurant_after_venues_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurants: {
         Row: {
           address: string

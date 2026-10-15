@@ -512,6 +512,19 @@ class Component extends DCLogic {
       if (!a) return;
       this.enviar('PATCH', { accion: 'editar', id: a.id, campo: campo, valor: valor }).catch(() => {});
     };
+    /**
+     * Los sitios que pueden ser «para seguir»: los marcados como segundo
+     * acto en su propia ficha, menos el que se está mirando.
+     *
+     * De la lista que ya tiene la pantalla, no de otra consulta: son los
+     * mismos nueve locales.
+     */
+    const candidatosSeguir = LOCALES
+      .filter((l) => l.segundoActo && (!a || l.id !== a.id))
+      .map((l) => ({ id: l.id, nombre: l.nombre }));
+    const nombreDeLocal = {};
+    LOCALES.forEach((l) => { nombreDeLocal[l.id] = l.nombre; });
+
     const campoEstilo = 'width:100%;min-height:50px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:400 15px/1 \'Inter Tight\',sans-serif;outline:none';
     const editables = !a ? [] : [
       ['direccion', 'Dirección', a.direccion, 'Calle Madrid con avenida Principal'],
@@ -715,7 +728,59 @@ class Component extends DCLogic {
           btn: 'display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 16px 0 12px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';cursor:pointer;transition:all 180ms ease'
         };
       })
-    }]);
+    }]).concat(!a ? [] : [{
+      /**
+       * Los sitios para seguir (entrega 20).
+       *
+       * Hasta tres, y solo entre los que están marcados como «segundo acto»
+       * en su propia ficha: la lista no es «todos los restaurantes», es la de
+       * los sitios a los que mandaríamos a una mesa a las diez de la noche.
+       *
+       * Misma forma que las cocinas —se manda la lista entera— porque es como
+       * se piensa: «estos tres», no «quita este y pon aquel». Los minutos a
+       * pie se ponen después, en la fila de cada uno.
+       */
+      etiqueta: 'Si quieren seguir', valor: '', pista: '',
+      hayPista: true,
+      ayuda: candidatosSeguir.length
+        ? 'Hasta tres sitios cerca, para la despedida. Salen de los que están marcados como segundo acto.'
+        : 'Ningún sitio está marcado como «segundo acto» todavía: márcalos en su propia ficha y aparecerán aquí.',
+      esTexto: false, esOpciones: true, campo: campoEstilo,
+      opciones: candidatosSeguir.map((c) => {
+        const puestos = (a.paraSeguir || []);
+        const i = puestos.findIndex((x) => x.id === c.id);
+        const sel = i >= 0;
+        const lleno = puestos.length >= 3 && !sel;
+        return {
+          label: c.nombre + (sel && puestos[i].minutos ? ' · ' + puestos[i].minutos + ' min' : ''),
+          icono: sel ? '\u2713' : '',
+          aro: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (sel ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease',
+          txt: 'font:' + (sel ? '600' : '400') + " 14px/1.2 'Inter Tight',sans-serif;" + 'letter-spacing:-.01em;color:' + (lleno ? '#566A5D' : '#14342A') + ';white-space:nowrap',
+          pick: () => {
+            if (lleno) return;
+            const nuevos = sel
+              ? puestos.filter((x) => x.id !== c.id)
+              : puestos.concat([{ id: c.id, minutos: null }]);
+            this.enviar('PATCH', { accion: 'para-seguir', id: a.id, sitios: nuevos.map((x) => ({ id: x.id, minutos: x.minutos })) }).catch(() => {});
+          },
+          btn: 'display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0 16px 0 12px;border-radius:999px;border:1px solid ' + (sel ? '#8F4515' : 'rgba(20,52,42,.2)') + ';background:' + (sel ? '#FFFBF0' : 'transparent') + ';cursor:' + (lleno ? 'default' : 'pointer') + ';opacity:' + (lleno ? '.5' : '1') + ';transition:all 180ms ease'
+        };
+      })
+    }]).concat(!a || !(a.paraSeguir || []).length ? [] : (a.paraSeguir || []).map((s) => ({
+      // Y los minutos a pie de cada uno, que es lo único que no sale del
+      // catálogo. Sin minutos la línea no se enseña en Mi mesa, así que
+      // vacío es una respuesta y no un campo a medias.
+      etiqueta: 'Minutos a pie · ' + (nombreDeLocal[s.id] || 'ese sitio'),
+      valor: s.minutos == null ? '' : String(s.minutos),
+      pista: '', hayPista: false, ayuda: '',
+      esTexto: true, esOpciones: false, campo: campoEstilo,
+      onInput: (e) => {
+        const v = String(e.target.value || '').replace(/\D/g, '').slice(0, 2);
+        const nuevos = (a.paraSeguir || []).map((x) => (x.id === s.id ? { id: x.id, minutos: v ? Number(v) : null } : { id: x.id, minutos: x.minutos }));
+        this.enviar('PATCH', { accion: 'para-seguir', id: a.id, sitios: nuevos }).catch(() => {});
+      },
+      opciones: []
+    })));
 
     const ficha = !a ? {
       nombre: '', direccion: '', estado: '', selloEstado: '', formatos: [],
