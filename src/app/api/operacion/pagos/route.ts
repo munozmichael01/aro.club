@@ -93,6 +93,44 @@ export async function GET() {
     .eq('status', 'refunded')
     .gte('created_at', hoy + 'T00:00:00Z')
 
+  /**
+   * LO COBRADO, DÍA A DÍA.
+   *
+   * El panel enseñaba lo de hoy y una lista de filas, y la pregunta que de
+   * verdad se hace mirando pagos —«¿cómo venimos?»— no se podía contestar sin
+   * sumar a mano.
+   *
+   * Se agrupa aquí y no en SQL por el día de CARACAS. Un pago de las nueve de
+   * la noche es `created_at` del día siguiente en UTC, así que `date_trunc`
+   * lo pondría en la casilla de mañana: con el grueso de las reservas entre
+   * las ocho y la medianoche, eso corre casi media jornada de sitio.
+   *
+   * En memoria porque son sesenta y cinco filas. El día que sean miles, esto
+   * pasa a una vista con la zona dentro; mientras tanto, una consulta y una
+   * vuelta.
+   */
+  const { data: todosLosPagos } = await admin
+    .from('payments')
+    .select('created_at, amount_local, amount_usd, status')
+    .eq('status', 'confirmed')
+    .order('created_at')
+
+  const diaCaracas = (iso: string) =>
+    new Date(new Date(iso).getTime() - 4 * 3600_000).toISOString().slice(0, 10)
+
+  const porDia = new Map<string, { bolivares: number; puestos: number }>()
+  for (const p of todosLosPagos ?? []) {
+    const d = diaCaracas(p.created_at)
+    const y = porDia.get(d) ?? { bolivares: 0, puestos: 0 }
+    y.bolivares += Number(p.amount_local ?? 0)
+    y.puestos += 1
+    porDia.set(d, y)
+  }
+
+  const serie = [...porDia.entries()]
+    .map(([dia, v]) => ({ dia, ...v }))
+    .sort((a, b) => (a.dia < b.dia ? -1 : 1))
+
   // Lo ya decidido: quién pagó, con qué y cómo quedó.
   //
   // La cola de arriba es lo que falta por conciliar; esto es lo que ya pasó,
@@ -137,6 +175,13 @@ export async function GET() {
   })
 
   return NextResponse.json({
+    // Lo cobrado por día y el total de siempre, para la gráfica.
+    serie,
+    todo: {
+      bolivares: (todosLosPagos ?? []).reduce((t, p) => t + Number(p.amount_local ?? 0), 0),
+      puestos: (todosLosPagos ?? []).length,
+      desde: serie[0]?.dia ?? null,
+    },
     resumen: {
       historico,
       tasa: tasaHoy ? Number(tasaHoy.ves_por_ref) : null,

@@ -1117,6 +1117,53 @@
           </sc-for>
         </div>
 
+        <!-- Cuánto ha entrado, día a día. La pregunta que se hace mirando
+             pagos no es solo «qué falta por conciliar» sino «cómo venimos», y
+             hasta ahora había que sumar a mano. -->
+        <div style="border-radius:24px;background:#FAF3E4;padding:clamp(18px,2.4vw,24px);margin:clamp(24px,3vw,32px) 0">
+          <div style="display:flex;flex-wrap:wrap;gap:12px 16px;align-items:baseline;justify-content:space-between">
+            <span style="flex:1 1 auto;min-width:0">
+              <span style="display:block;font:400 clamp(21px,2.4vw,26px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A">Lo que ha entrado</span>
+              <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:5px">{{ grafico.nota }}</span>
+            </span>
+            <span style="display:flex;gap:6px">
+              <sc-for list="{{ grafico.rangos }}" as="r" hint-placeholder-count="3">
+                <button onClick="{{ r.pick }}" style="{{ r.btn }}">{{ r.nombre }}</button>
+              </sc-for>
+            </span>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:18px 28px;margin-top:16px">
+            <span>
+              <span style="display:block;font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">{{ grafico.etiquetaRango }}</span>
+              <span style="display:block;font:700 clamp(24px,3vw,32px)/1 'Inter Tight',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#14342A;margin-top:7px">{{ grafico.totalRango }}</span>
+              <span style="display:block;font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:4px">{{ grafico.puestosRango }}</span>
+            </span>
+            <span>
+              <span style="display:block;font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">DESDE SIEMPRE</span>
+              <span style="display:block;font:700 clamp(24px,3vw,32px)/1 'Inter Tight',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#1B5138;margin-top:7px">{{ grafico.totalTodo }}</span>
+              <span style="display:block;font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:4px">{{ grafico.puestosTodo }}</span>
+            </span>
+          </div>
+
+          <sc-if value="{{ grafico.hayBarras }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:flex-end;gap:3px;height:132px;margin-top:20px">
+              <sc-for list="{{ grafico.barras }}" as="b" hint-placeholder-count="14">
+                <span style="{{ b.columna }}" title="{{ b.ayuda }}" aria-label="{{ b.ayuda }}">
+                  <span style="{{ b.barra }}"></span>
+                </span>
+              </sc-for>
+            </div>
+            <div style="display:flex;justify-content:space-between;font:400 12px/1.4 'Inter Tight',sans-serif;color:#566A5D;margin-top:7px">
+              <span>{{ grafico.primerDia }}</span>
+              <span>{{ grafico.ultimoDia }}</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ grafico.sinBarras }}" hint-placeholder-val="{{ false }}">
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:16px">Todavía no ha entrado nada en este rango.</div>
+          </sc-if>
+        </div>
+
         <div style="font:400 clamp(22px,2.6vw,28px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:clamp(24px,3vw,32px) 0 6px">Por conciliar</div>
         <p style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#2C4A38;max-width:60ch;margin:0 0 18px;text-wrap:pretty">Cada reporte junto al movimiento del banco. El puesto ya está apartado: lo que decides aquí es si el dinero entró.</p>
 
@@ -1566,6 +1613,10 @@ class Component extends DCLogic {
       } catch (e) { return 3; }
     })(),
     pagosCola: null, metodosPago: [], pagosResumen: null,
+    pagosSerie: [], pagosTodo: null,
+    // Qué tramo de la gráfica de pagos se mira. Semana por defecto: es la
+    // pregunta de todos los días; el mes se pide cuando se quiere la forma.
+    rangoPagos: 'semana',
     incidencias: null, accionesIncidencia: [],
     locales: null, zonasCatalogo: [], resumenLocales: null,
     equipo: null, esAdmin: false, avisosEq: {},
@@ -1787,9 +1838,9 @@ class Component extends DCLogic {
   }
 
   cargarPagos(deFondo) {
-    if (deFondo) return this.repedir('/api/operacion/pagos', (d) => ({ pagosCola: d.cola, metodosPago: d.metodos, pagosResumen: d.resumen }));
+    if (deFondo) return this.repedir('/api/operacion/pagos', (d) => ({ pagosCola: d.cola, metodosPago: d.metodos, pagosResumen: d.resumen, pagosSerie: d.serie || [], pagosTodo: d.todo || null }));
     return this.pedir('/api/operacion/pagos',
-      (d) => ({ pagosCola: d.cola, metodosPago: d.metodos, pagosResumen: d.resumen }),
+      (d) => ({ pagosCola: d.cola, metodosPago: d.metodos, pagosResumen: d.resumen, pagosSerie: d.serie || [], pagosTodo: d.todo || null }),
       { pagosCola: [], metodosPago: [], pagosResumen: {} });
   }
 
@@ -4119,6 +4170,88 @@ class Component extends DCLogic {
       };
     });
 
+    /**
+     * La gráfica de lo cobrado, día a día.
+     *
+     * El servidor manda SOLO los días con pagos; aquí se rellena el rango
+     * entero para que los huecos se vean. Un lunes sin nada es un dato: si
+     * se saltara, cuatro días sueltos parecerían cuatro días seguidos.
+     *
+     * Los días se cuentan en Caracas, como los agrupa el servidor: con el
+     * grueso de las reservas entre las ocho y la medianoche, usar UTC correría
+     * media jornada de casilla.
+     */
+    const SERIE = St.pagosSerie || [];
+    const TODO = St.pagosTodo || { bolivares: 0, puestos: 0, desde: null };
+    const RANGOS = { semana: 7, mes: 30, todo: 0 };
+    const rangoPagos = RANGOS[St.rangoPagos] === undefined ? 'semana' : St.rangoPagos;
+
+    const grafico = (function () {
+      const porDia = {};
+      SERIE.forEach((d) => { porDia[d.dia] = d; });
+
+      // El día de hoy en Caracas, con la misma cuenta que el servidor.
+      const hoyCaracas = new Date(Date.now() - 4 * 3600000).toISOString().slice(0, 10);
+      const dias = [];
+      if (rangoPagos === 'todo') {
+        // Desde el primer pago hasta hoy, sin huecos.
+        const desde = SERIE.length ? SERIE[0].dia : hoyCaracas;
+        for (let d = new Date(desde + 'T12:00:00Z'); d.toISOString().slice(0, 10) <= hoyCaracas; d.setUTCDate(d.getUTCDate() + 1)) {
+          dias.push(d.toISOString().slice(0, 10));
+        }
+      } else {
+        const cuantos = RANGOS[rangoPagos];
+        for (let i = cuantos - 1; i >= 0; i--) {
+          const d = new Date(hoyCaracas + 'T12:00:00Z');
+          d.setUTCDate(d.getUTCDate() - i);
+          dias.push(d.toISOString().slice(0, 10));
+        }
+      }
+
+      const filas = dias.map((dia) => ({ dia, bolivares: (porDia[dia] || {}).bolivares || 0, puestos: (porDia[dia] || {}).puestos || 0 }));
+      const techo = filas.reduce((m, f) => Math.max(m, f.bolivares), 0);
+      const sumaBs = filas.reduce((t, f) => t + f.bolivares, 0);
+      const sumaPuestos = filas.reduce((t, f) => t + f.puestos, 0);
+
+      const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      const comoDia = (iso) => {
+        const p = iso.split('-');
+        return Number(p[2]) + ' ' + MESES_CORTOS[Number(p[1]) - 1];
+      };
+
+      return {
+        nota: 'Solo lo confirmado, por el día de Caracas en que entró.',
+        etiquetaRango: rangoPagos === 'semana' ? 'ÚLTIMOS 7 DÍAS' : (rangoPagos === 'mes' ? 'ÚLTIMOS 30 DÍAS' : 'TODO'),
+        totalRango: dinero(sumaBs, 'VES'),
+        puestosRango: sumaPuestos + (sumaPuestos === 1 ? ' puesto' : ' puestos'),
+        totalTodo: dinero(TODO.bolivares, 'VES'),
+        puestosTodo: TODO.puestos + (TODO.puestos === 1 ? ' puesto' : ' puestos')
+          + (TODO.desde ? ' · desde el ' + comoDia(TODO.desde) : ''),
+        rangos: [['Semana', 'semana'], ['Mes', 'mes'], ['Todo', 'todo']].map((r) => {
+          const on = rangoPagos === r[1];
+          return {
+            nombre: r[0],
+            pick: () => this.setState({ rangoPagos: r[1] }),
+            btn: 'display:inline-flex;align-items:center;min-height:34px;padding:0 13px;border-radius:999px;font:' + (on ? '600' : '500') + ' 12px/1 \'Inter Tight\',sans-serif;white-space:nowrap;cursor:pointer;transition:all 180ms ease;background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#2C4A38') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.22)')
+          };
+        }),
+        hayBarras: techo > 0,
+        sinBarras: techo === 0,
+        primerDia: filas.length ? comoDia(filas[0].dia) : '',
+        ultimoDia: filas.length ? comoDia(filas[filas.length - 1].dia) : '',
+        barras: filas.map((f) => {
+          // Un mínimo de 2px para el día que tuvo algo pero poco: una barra
+          // de medio píxel se lee como un día vacío, que es lo contrario.
+          const alto = techo ? Math.max(f.bolivares ? 2 : 0, Math.round((f.bolivares / techo) * 112)) : 0;
+          return {
+            ayuda: comoDia(f.dia) + ': ' + dinero(f.bolivares, 'VES') + ' · ' + f.puestos + (f.puestos === 1 ? ' puesto' : ' puestos'),
+            columna: 'flex:1 1 0;min-width:0;height:112px;display:flex;align-items:flex-end',
+            barra: 'display:block;width:100%;border-radius:4px 4px 2px 2px;background:' + (f.bolivares ? '#1B5138' : 'rgba(20,52,42,.10)') + ';height:' + (f.bolivares ? alto : 3) + 'px'
+          };
+        })
+      };
+    }).call(this);
+
     const R = St.pagosResumen || {};
     const metricasPago = [
       ['COBRADO HOY', dinero(R.cobradoLocal, 'VES'), (R.puestos || 0) + ' puestos', null],
@@ -4143,7 +4276,7 @@ class Component extends DCLogic {
     const pctEmpujon = (x) => (x && x.total ? Math.round(100 * x.subieron / x.total) : 0);
 
     return {
-      pestanas, metricas, colas, metricasPago, pagos,
+      pestanas, metricas, colas, metricasPago, pagos, grafico,
       /**
        * La rejilla y su selector.
        *
