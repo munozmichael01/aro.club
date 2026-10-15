@@ -88,6 +88,28 @@ export async function GET(request: Request) {
     .select('id, display_name, full_name')
     .in('id', (pool ?? []).map((x) => x.profile_id).filter((x): x is string => !!x))
 
+  /**
+   * Y el apellido, para cuando dos se llaman igual.
+   *
+   * La propuesta guarda el nombre de trato, y en la misma mesa pueden caer
+   * dos Daniel —Carlos Daniel Gonzalez y Daniel De Alba, el viernes 16—. En
+   * la pantalla se lee «Daniel, Daniel» y parece la misma persona repetida.
+   * Michael lo leyó así y con razón: una mesa con alguien dos veces sería un
+   * fallo grave, y pasar un susto por un homónimo cuesta tanto como el fallo.
+   *
+   * Solo la primera palabra que no sea el nombre: «Daniel De» no, «Daniel D.»
+   * sí. Es lo justo para distinguir sin enseñar el apellido entero, que en
+   * esta pantalla no hace falta para decidir.
+   */
+  const apellidoDe = new Map(
+    (nombres ?? []).map((n) => {
+      const trato = (n.display_name || '').trim()
+      const partes = (n.full_name || '').trim().split(/\s+/).filter(Boolean)
+      const siguiente = partes.find((x) => x.toLowerCase() !== trato.toLowerCase())
+      return [n.id, siguiente ? siguiente.charAt(0).toUpperCase() + '.' : '']
+    }),
+  )
+
   const nombreDe = new Map(
     (nombres ?? []).map((n) => [n.id, n.display_name || n.full_name || 'Sin nombre']),
   )
@@ -248,15 +270,30 @@ export async function GET(request: Request) {
   const vivos = new Set((siguenApuntados ?? []).map((b) => b.profile_id))
   const seGuardaronYNoEstan = enLaPropuesta.filter((id) => !vivos.has(id)).length
 
-  // Cuánta gente se ha apuntado DESPUÉS de la corrida que se está viendo.
-  const { count: reservasNuevas } = corrida
-    ? await admin
-        .from('bookings')
-        .select('*', { count: 'exact', head: true })
-        .eq('event_id', evento.id)
-        .eq('status', 'confirmed')
-        .gt('created_at', corrida.created_at)
-    : { count: 0 }
+  /**
+   * Cuánta gente no ha visto esta corrida. Y se cuenta DEL POOL, no de las
+   * reservas.
+   *
+   * Contaba reservas confirmadas posteriores a la corrida, y la espera
+   * enseña quien está en el pool del reparto y no está colocado. No son lo
+   * mismo: alguien que reserva sin estar verificado es una reserva y no
+   * entra al pool, así que el aviso decía «está abajo en la espera,
+   * marcada» y abajo no había nadie. El aviso prometía algo que la lista no
+   * podía cumplir.
+   *
+   * Contando lo mismo que se enseña, los dos no pueden discrepar. Quien
+   * reservó y no entra al reparto ya se cuenta aparte, en `fueraDelPool`,
+   * que es su sitio: no le falta mesa, le falta verificarse.
+   */
+  const colocadosEnLaCorrida = new Set<string>([
+    ...((corrida?.proposal ?? []) as unknown as { integrantes: { profileId: string }[] }[])
+      .flatMap((m) => (m.integrantes ?? []).map((i) => i.profileId)),
+    ...((corrida?.unmatched ?? []) as unknown as { profileId: string }[]).map((p) => p.profileId),
+  ])
+
+  const reservasNuevas = corrida
+    ? (pool ?? []).filter((x) => x.profile_id && !colocadosEnLaCorrida.has(x.profile_id)).length
+    : 0
 
   return NextResponse.json({
     sedes: (sedesRaw ?? []).map((v) => ({
@@ -346,6 +383,9 @@ export async function GET(request: Request) {
             ...m,
             integrantes: (m.integrantes ?? []).map((p) => ({
               ...p,
+              // Para distinguir a dos que se llamen igual en la misma mesa.
+              // La pantalla solo lo enseña cuando el nombre se repite.
+              apellido: apellidoDe.get(p.profileId) ?? '',
               sector: p.sector ? (etiquetaDe.get(p.sector) ?? p.sector) : null,
               comidas: comidaGuardada.get(p.profileId) ?? [],
               dietas: dietaGuardada.get(p.profileId) ?? [],

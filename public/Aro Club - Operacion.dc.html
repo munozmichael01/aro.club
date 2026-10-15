@@ -2889,7 +2889,24 @@ class Component extends DCLogic {
           return Object.keys(cuenta).some((c) => cuenta[c] >= 2);
         })(),
         gente: g.map((p, i) => ({
-          nombre: p.nombre,
+          /**
+           * Con la inicial del apellido SOLO si otro de la mesa se llama
+           * igual.
+           *
+           * El viernes 16 cayeron en la mesa 01 Carlos Daniel Gonzalez y
+           * Daniel De Alba, y la pantalla ponía «Daniel» dos veces seguidas.
+           * Michael lo leyó como la misma persona repetida, que sería un
+           * fallo grave — y pasar ese susto cuesta casi tanto como el fallo.
+           *
+           * Solo cuando se repite: añadir el apellido a todo el mundo
+           * ensucia una lista que se lee de un vistazo, y el nombre de trato
+           * es el que usamos con ellos.
+           */
+          nombre: p.nombre + (
+            g.filter((o) => o.nombre === p.nombre).length > 1 && p.apellido
+              ? ' ' + p.apellido
+              : ''
+          ),
           /**
            * Y cuánto espera gastar.
            *
