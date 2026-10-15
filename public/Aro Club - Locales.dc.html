@@ -127,6 +127,13 @@
             </div>
             <p style="{{ bajada }}">{{ ficha.direccion }}</p>
 
+            <!-- Para enseñarle al sitio cómo se le ve. No es una maqueta: es
+                 el correo que reciben los seis, con sus datos dentro. -->
+            <a href="{{ ficha.verCorreo }}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:9px;min-height:44px;margin-top:14px;padding:0 17px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:transparent;font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:none">
+              Ver el correo que recibe la mesa
+              <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:500 12px/1 'Inter Tight',sans-serif">→</span>
+            </a>
+
             <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:16px">
               <sc-for list="{{ ficha.formatos }}" as="fo" hint-placeholder-count="2">
                 <span style="{{ fo.chipGrande }}">{{ fo.nombre }}</span>
@@ -716,7 +723,7 @@ class Component extends DCLogic {
       desde: '', marcoFoto: '', foto: '', pieFoto: '', historico: [], lectura: '',
       hayFoto: false, sinFoto: true, fotoUrl: '', fotoImagen: '', textoSinFoto: '',
       botonFoto: '', textoFoto: 'Subir la foto', subirFoto: () => {},
-      hayFalloFoto: false, falloFoto: '',
+      hayFalloFoto: false, falloFoto: '', verCorreo: '',
       tituloBaja: '', cuerpoBaja: '', textoBaja: '', botonBaja: '', hayFalta: false, falta: '',
       editables: [],
       estadoSitio: '', consultaSitio: '', onConsultaSitio: () => {}, buscarSitio: () => {},
@@ -783,6 +790,15 @@ class Component extends DCLogic {
         || 'Google Maps no conoce ese sitio con ese nombre. Prueba con el nombre exacto del rótulo, o pega el enlace a mano si lo tienes.',
 
       selloEstado: 'display:inline-flex;align-items:center;min-height:32px;padding:0 13px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;background:' + (a.activo ? 'rgba(27,81,56,.12)' : 'rgba(143,69,21,.12)') + ';color:' + (a.activo ? '#1B5138' : '#8F4515'),
+      /**
+       * Cómo se ve este sitio cuando se revela una mesa suya.
+       *
+       * Para enseñárselo a ellos. Abre el correo de verdad —la misma
+       * plantilla que reciben los seis comensales— con su nombre, su
+       * dirección y su zona, y una mesa de ejemplo. Desde el navegador sale
+       * la captura o el «guardar como PDF».
+       */
+      verCorreo: '/api/operacion/local-muestra?id=' + a.id,
       formatos: a.familias.map((c) => ({ nombre: nombreFamilia(c), chipGrande: chipFormato(true) })),
       operativo: [
         ['Zona', a.zonaNombre],
