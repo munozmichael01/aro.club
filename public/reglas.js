@@ -977,6 +977,175 @@
      * mal wifi. Lo único que hace falta para que seis teléfonos vean lo mismo
      * es el id de la mesa, que todos ya tienen, y `preguntasDeRonda`.
      */
+    /**
+     * «7:30 p.m.» → «7:30».
+     *
+     * En la columna de horas del paso a paso no cabe el sufijo, y repetir
+     * «p.m.» ocho veces seguidas no añade nada: la cena entera pasa en la
+     * misma franja. Vive aquí porque la columna es igual en la app.
+     */
+    horaCorta: function (hora) {
+      return String(hora == null ? '' : hora).replace(/\s*[ap]\.\s?m\.$/i, '').trim()
+    },
+
+    /**
+     * El guion de la mesa: los momentos de una cena, con su hora real.
+     *
+     * Sustituye al anfitrión que no podemos pagar. Lo ve toda la mesa y la
+     * propia mesa elige a «la voz de Aro», que lo va leyendo; no hay anfitrión
+     * elegido por el servidor (se descartó el 14-10: demasiado lío).
+     *
+     * Vive aquí porque lo pintan la app y la web, y es texto que Michael
+     * aprobó una vez. Lo escribió el agente de la app y lo pidió compartido
+     * —«súbelos a reglas.js y la app los lee de ahí»—: dos copias de ocho
+     * párrafos son dos guiones distintos en cuanto alguien corrija una coma.
+     *
+     * Genérico a propósito: ni horas fijas ni bares. Las horas salen de
+     * cuándo empieza y de hasta cuándo nos deja la mesa el restaurante, así
+     * que un brunch reutiliza esto con las suyas.
+     */
+    GUION: {
+      titulo: 'Paso a paso',
+      bajada: 'Una guía, no un horario. Cada mesa va a su ritmo.',
+      ahora: 'AHORA',
+
+      /**
+       * Lo que dura una mesa: DOS HORAS, siempre (Michael, 15-10).
+       *
+       * Se intentó sacarlo de `restaurants.last_seating`, y es otra cosa: esa
+       * columna es lo más tarde que puede EMPEZAR una cena, no hasta cuándo
+       * nos dejan la mesa. Con ella, un sitio que sienta hasta las diez daba
+       * una mesa de dos horas y media para una cena de las 7:30 y de once
+       * horas para un brunch de las once.
+       *
+       * La reserva es de dos horas y el guion cabe en ellas. El día que un
+       * restaurante nos deje otra cosa, será un dato suyo que diga eso.
+       */
+      duracionDeLaMesa: 120,
+
+      /**
+       * Los momentos, en orden.
+       *
+       * `desde` dice contra qué se mide: `inicio` es la hora de la cena y
+       * `cierre` es cuándo nos quitan la mesa. Los dos últimos se cuentan
+       * desde el final a propósito: «la cuenta» no es media hora después de
+       * empezar, es media hora antes de que haya que irse.
+       */
+      momentos: [
+        { clave: 'llegada', desde: 'inicio', min: 0, nombre: 'Mientras llegan',
+          texto: 'Pidan algo de tomar si quieren. Esperamos a todos hasta {limite}.' },
+        // A los quince minutos se pide, falte quien falte: con los creadores,
+        // el 10-10, se esperó con hambre.
+        { clave: 'voz', desde: 'inicio', min: 15, nombre: 'La voz de Aro',
+          texto: 'Antes de pedir, elijan a alguien que vaya leyendo en voz alta cada momento de esta lista. Si nadie se ofrece, le toca a quien llegó de último.' },
+        { clave: 'pedir', desde: 'inicio', min: 15, nombre: 'A pedir',
+          texto: 'Falte quien falte, pidan la comida. Quien llegue después se suma sin problema.' },
+        { clave: 'vuelta', desde: 'inicio', min: 20, nombre: 'Una vuelta rápida',
+          texto: 'Tu nombre y qué haces cuando no trabajas.' },
+        // El juego en dos tiempos: la ronda ligera mientras llega la comida, y
+        // el rescate cuando baja la conversación.
+        { clave: 'hielo', desde: 'inicio', min: 35, nombre: 'Para romper el hielo',
+          texto: 'Mientras llega la comida, la primera ronda del juego.' },
+        { clave: 'tema', desde: 'inicio', min: 60, nombre: 'Si se acaba el tema',
+          texto: 'Sigan con el juego donde lo dejaron. Se puede pasar.' },
+        { clave: 'cuenta', desde: 'cierre', min: -30, nombre: 'Lo último y la cuenta',
+          texto: 'Pidan lo último que les provoque y luego la cuenta, cada quien lo suyo. Puede haber otra reserva esperando la mesa.' },
+        { clave: 'despedida', desde: 'cierre', min: 0, nombre: 'Despedida',
+          texto: 'Si hay ganas de seguir, busquen un sitio cerca. Si alguien te cayó bien, díselo.' },
+      ],
+
+      /** Los dos que enlazan con el juego, con el texto de su botón. */
+      delJuego: {
+        hielo: 'Abrir el juego · ronda 1',
+        tema: 'Seguir el juego · rondas 2 y 3',
+      },
+
+      /** Los sitios para seguir, que elige operación en la ficha del local. */
+      seguir: {
+        titulo: 'SI QUIEREN SEGUIR',
+        aPie: '{n} min a pie',
+        comoLlegar: 'Cómo llegar',
+      },
+    },
+
+    /**
+     * Los momentos de ESTA mesa, con su hora puesta.
+     *
+     * Devuelve `[]` sin hora de inicio: sin eso no hay guion que pintar, y es
+     * mejor que una lista de horas inventadas.
+     *
+     * `zona` es la de la ciudad de esa fecha, como en todo lo demás: el guion
+     * de una cena de Caracas no se cuenta con el reloj de quien mire.
+     *
+     * La mesa dura dos horas, siempre. Lo que un restaurante nos deje no es
+     * un dato que tengamos: ver `duracionDeLaMesa`.
+     */
+    pasosDeLaMesa: function (empiezaEn, zona) {
+      var t = empiezaEn ? Date.parse(empiezaEn) : NaN
+      if (!isFinite(t)) return []
+
+      var MIN = 60000
+      var G = api.GUION
+      var fin = t + G.duracionDeLaMesa * MIN
+
+      var cuando = function (m) {
+        return (m.desde === 'cierre' ? fin : t) + m.min * MIN
+      }
+
+      // El límite de «esperamos a todos hasta…» es la hora en que se pide, no
+      // un número escrito aparte: si mañana se adelanta, la frase se mueve
+      // con ella.
+      var pedir = null
+      for (var i = 0; i < G.momentos.length; i++) {
+        if (G.momentos[i].clave === 'pedir') pedir = cuando(G.momentos[i])
+      }
+      // Sin el «p.m.»: la frase ya está dentro de una cena, el sufijo repetido
+      // no añade nada y además choca con el punto final —«hasta las 7:45 p.m..»—.
+      var limite = pedir == null ? '' : api.horaCorta(api.horaDe(new Date(pedir).toISOString(), zona))
+      // «la una» y no «las una». Es la única hora del reloj con artículo en
+      // singular, y cae justo en la franja de un brunch.
+      var conArticulo = /^1:/.test(limite) ? 'la ' + limite : 'las ' + limite
+
+      return G.momentos.map(function (m) {
+        var en = cuando(m)
+        return {
+          clave: m.clave,
+          en: new Date(en).toISOString(),
+          hora: api.horaDe(new Date(en).toISOString(), zona) || '',
+          nombre: m.nombre,
+          texto: m.texto.replace('{limite}', conArticulo),
+          botonJuego: G.delJuego[m.clave] || '',
+        }
+      })
+    },
+
+    /**
+     * En qué punto está la mesa: antes de empezar, en curso, o terminada
+     * desde la despedida. Decide el sello de la tarjeta y cuál se abre.
+     */
+    momentoDeLaMesa: function (pasos, ahora) {
+      if (!pasos || !pasos.length) return 'antes'
+      if (ahora < Date.parse(pasos[0].en)) return 'antes'
+      return ahora >= Date.parse(pasos[pasos.length - 1].en) ? 'terminada' : 'curso'
+    },
+
+    /**
+     * Cuál es el momento en curso: el último que ya empezó.
+     *
+     * Por HORA y no por posición, porque dos momentos pueden compartirla —la
+     * voz y pedir son los dos a y cuarto— y entonces «el actual» son los dos.
+     * Devuelve el índice del primero de ellos, o -1 antes de empezar.
+     */
+    enCursoDeLaMesa: function (pasos, ahora) {
+      var en = null
+      for (var i = 0; i < (pasos || []).length; i++) {
+        if (Date.parse(pasos[i].en) <= ahora) en = pasos[i].en
+      }
+      if (en == null) return -1
+      for (var j = 0; j < pasos.length; j++) if (pasos[j].en === en) return j
+      return -1
+    },
+
     JUEGO: {
       /** Cuántas salen de cada mazo de diez. */
       porRonda: 2,
@@ -1032,6 +1201,17 @@
           clave: 'para-arrancar',
           titulo: 'Para arrancar',
           bajada: 'Ligera. Que cualquiera responda sin pensarlo dos veces.',
+          /**
+           * Lo que dice la ronda EN LA TARJETA de Mi mesa, que es otro sitio
+           * y otra longitud: ahí van las tres seguidas y una frase de línea y
+           * media las hace ilegibles. Entrega 20.
+           *
+           * Las tres `enLaTarjeta` están PENDIENTES DE MICHAEL (Design, 15-10).
+           * Mientras tanto se pintan estas, que son las que ya enseña la app.
+           */
+          enLaTarjeta: 'Ligera. Luego, a comer.',
+          /** Cuándo toca. La hora de la primera sale del guion, no de aquí. */
+          cuando: 'MIENTRAS LLEGA LA COMIDA',
           preguntas: [
             '¿Cuál es tu plan perfecto de domingo en Caracas?',
             '¿Qué comida no dejarías de comer nunca?',
@@ -1049,6 +1229,8 @@
           clave: 'un-poco-mas-de-ti',
           titulo: 'Un poco más de ti',
           bajada: 'Personal, pero sin exponerse.',
+          enLaTarjeta: 'Si la mesa va bien sola, no hace falta.',
+          cuando: 'SI SE ACABA EL TEMA',
           preguntas: [
             '¿Qué te tiene con ilusión estos días, aunque sea algo pequeño?',
             '¿Qué haces que te hace perder la noción del tiempo?',
@@ -1067,6 +1249,8 @@
           clave: 'mas-hondo',
           titulo: 'Si la mesa quiere ir más hondo',
           bajada: 'Más hondo, y cualquiera puede pasar.',
+          enLaTarjeta: 'Más personal. Cualquiera puede pasar.',
+          cuando: 'SOLO SI A LA MESA LE PROVOCA',
           preguntas: [
             '¿Qué es lo más valiente que has hecho?',
             '¿Qué piensa la gente de ti que no es del todo así?',

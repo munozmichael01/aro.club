@@ -2,40 +2,6 @@ import { NextResponse } from 'next/server'
 
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
-import { partesDe } from '@/lib/reglas'
-
-/**
- * Cuándo deja de ser nuestra la mesa, como instante.
- *
- * Se calcula como la DISTANCIA entre la hora de inicio y la del cierre, y no
- * armando una fecha nueva con la zona horaria: para armarla haría falta
- * convertir «el día de la cena a las 22:00 en Caracas» a UTC, que es la
- * operación que este repo ya ha hecho mal dos veces. Con la distancia, el
- * instante de salida hereda el de `starts_at`, que es correcto por
- * construcción.
- *
- * Si el cierre es anterior a la hora de inicio, es del día siguiente: un
- * sitio que cierra a la una de la mañana no cierra antes de abrir.
- */
-function cierreDeLaMesa(
-  empieza: string,
-  zona: string,
-  ultimaMesa: string | null | undefined,
-): string | null {
-  if (!ultimaMesa) return null
-
-  const p = partesDe(empieza, zona)
-  if (!p) return null
-
-  const [h, m] = String(ultimaMesa).split(':').map(Number)
-  if (!Number.isFinite(h)) return null
-
-  const minutosInicio = p.horas * 60 + p.minutos
-  let minutos = h * 60 + (Number.isFinite(m) ? m : 0) - minutosInicio
-  if (minutos <= 0) minutos += 24 * 60
-
-  return new Date(new Date(empieza).getTime() + minutos * 60_000).toISOString()
-}
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
@@ -208,7 +174,7 @@ export async function GET() {
 
   const { data: miembro } = await admin
     .from('table_members')
-    .select('table_id, dinner_tables(table_number, event_id, restaurant_id, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, facade_photo_path, last_seating))')
+    .select('table_id, dinner_tables(table_number, event_id, restaurant_id, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, facade_photo_path))')
     .eq('profile_id', user.id)
     .eq('booking_id', reserva.id)
     .maybeSingle()
@@ -228,7 +194,6 @@ export async function GET() {
       address: string
       maps_url: string | null
       facade_photo_path: string | null
-      last_seating: string | null
       lat: number | null
       lng: number | null
     } | null
@@ -334,24 +299,15 @@ export async function GET() {
      */
     fotoEntrada: urlDeFotoDeLocal(mesa.restaurants?.id, mesa.restaurants?.facade_photo_path),
     /**
-     * Hasta qué hora nos deja la mesa el restaurante, para el paso a paso.
+     * `cierraMesaEn` se quitó el 15-10, el mismo día que se puso.
      *
-     * No hace falta columna nueva: sale de `restaurants.last_seating`, que ya
-     * se pide en el alta del local y que tienen Masala, Madre y Litoral.
-     *
-     * DICHO POR DELANTE: `last_seating` es la última hora a la que el sitio
-     * SIENTA gente, que no es exactamente «hasta cuándo nos deja la mesa».
-     * Para una cena de las 7:30 con cierre a las 10 da dos horas y media, que
-     * es la mesa real; para un brunch de las once daría once horas, que no
-     * significa nada. Mientras lo único que hay sean cenas, es el dato bueno;
-     * el día que no lo sea, hace falta una columna que diga eso y no otra
-     * cosa.
-     *
-     * Va como INSTANTE y no como hora suelta, que es lo que pidió la app. Una
-     * hora suelta obliga a juntarla con el día y con la zona de la ciudad en
-     * cada superficie, y eso es exactamente lo que ya costó caro tres veces.
+     * Se sacaba de `restaurants.last_seating` y esa columna es otra cosa: es
+     * lo más tarde que puede EMPEZAR una cena, no hasta cuándo nos dejan la
+     * mesa (Michael, 15-10). La reserva es siempre de dos horas, y eso lo
+     * sabe el guion —`AroReglas.GUION.duracionDeLaMesa`—, así que no hay nada
+     * que mandar: un campo con ese nombre y ese contenido era una respuesta
+     * equivocada a una pregunta que no tenemos.
      */
-    cierraMesaEn: cierreDeLaMesa(evento.starts_at, zonaHoraria, mesa.restaurants?.last_seating),
     // Solo nombre de pila y sector. Sin apellidos, sin fotos, sin contacto.
     companeros: (companeros ?? []).map((c) => {
       const p = c.profiles as unknown as { display_name: string | null; full_name: string | null } | null

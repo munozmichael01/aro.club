@@ -94,7 +94,198 @@
       </div>
     </sc-if>
 
-    <sc-if value="{{ esAbierta }}" hint-placeholder-val="{{ true }}">
+    <!-- La mesa abierta de una CENA, calcada de la entrega 20 (Design,
+         15-10). Las demás —una caminata, un café— siguen con el bloque
+         genérico de abajo: lo que esta pantalla cuenta es una cena, con su
+         paso a paso y su juego, y una caminata no tiene nada de eso. -->
+    <sc-if value="{{ esCenaAbierta }}" hint-placeholder-val="{{ true }}">
+      <div id="cena" style="max-width:440px;margin:0 auto;animation:aro-open 460ms ease both">
+
+        <div style="border-radius:24px;background:#14342A;color:#FAF3E4;padding:18px 18px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <span style="{{ selloCena }}">{{ selloTexto }}</span>
+            <span style="font:500 13px/1 'Inter Tight',sans-serif;color:#C5D8CA">{{ cuandoCorto }}</span>
+          </div>
+
+          <div style="display:flex;align-items:flex-end;gap:16px;margin-top:14px">
+            <sc-if value="{{ hayNumeroMesa }}" hint-placeholder-val="{{ true }}">
+              <div style="flex:0 0 auto">
+                <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#9CBBA6">MESA</div>
+                <div style="font:700 48px/1 'Inter Tight',sans-serif;letter-spacing:-.05em;font-variant-numeric:tabular-nums;margin-top:4px">{{ numeroMesa }}</div>
+              </div>
+            </sc-if>
+            <div style="flex:1;min-width:0;padding-bottom:3px">
+              <div style="font:400 24px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.02em">{{ restaurante }}</div>
+              <div style="font:400 14px/1.4 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:4px">{{ direccion }}</div>
+            </div>
+          </div>
+
+          <!-- La entrada del local. Sin foto queda solo el texto, que es el
+               caso de cinco de los nueve sitios. -->
+          <div style="margin-top:14px;border-radius:16px;overflow:hidden;background:#1B5138">
+            <sc-if value="{{ hayFoto }}" hint-placeholder-val="{{ true }}">
+              <img src="{{ fotoEntrada }}" alt="{{ altFoto }}" style="display:block;width:100%;height:180px;object-fit:cover;object-position:center 40%;border:0" />
+            </sc-if>
+            <div style="padding:11px 13px;display:flex;flex-direction:column;gap:4px">
+              <div style="font:600 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">{{ tituloAlLlegar }}</div>
+              <div style="font:400 14px/1.4 'Inter Tight',sans-serif;color:#FAF3E4">{{ diLaMesa }}</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+            <a href="{{ mapa }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:none">Cómo llegar</a>
+            <button onClick="{{ abrirTarde }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;border:1.5px solid rgba(250,243,228,.5);background:transparent;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;cursor:pointer">Voy tarde</button>
+          </div>
+        </div>
+
+        <!-- «Voy tarde», con el mismo panel de siempre: lo que cambia es
+             dónde se abre, no lo que hace. -->
+        <sc-if value="{{ tardeAbierto }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:22px;background:#F2E9D5;padding:20px;margin-top:12px;animation:aro-open 260ms ease both">
+            <div style="font:400 21px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">¿Cuánto te falta?</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:7px;text-wrap:pretty">{{ notaTarde }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
+              <sc-for list="{{ retrasos }}" as="r" hint-placeholder-count="3">
+                <button onClick="{{ r.pick }}" style="{{ r.btn }}">
+                  <span style="{{ r.aro }}">{{ r.icono }}</span>
+                  <span style="{{ r.txt }}">{{ r.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <sc-if value="{{ hayFalloTarde }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="border-radius:16px;background:rgba(110,52,15,.1);padding:14px 16px;margin-top:14px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#14342A">{{ falloTarde }}</div>
+            </sc-if>
+            <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:center;margin-top:18px">
+              <button onClick="{{ avisar }}" aria-disabled="{{ avisando }}" style="{{ botonPrimario }}">{{ textoAvisar }}</button>
+              <button onClick="{{ abrirTarde }}" style="{{ botonFantasma }}">Cancelar</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ avisado }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:12px;align-items:flex-start;border-radius:22px;background:rgba(27,81,56,.1);padding:17px;margin-top:12px;animation:aro-open 260ms ease both">
+            <span style="flex:0 0 auto;width:24px;height:24px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ textoAvisado }}</span>
+              <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px">Ya lo saben. Ve con calma.</span>
+            </span>
+          </div>
+        </sc-if>
+
+        <!-- Con quién cenas -->
+        <div style="border-radius:22px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);overflow:hidden;margin-top:12px">
+          <button onClick="{{ tGente }}" aria-expanded="{{ oGenteAria }}" style="display:flex;width:100%;box-sizing:border-box;align-items:center;gap:12px;padding:16px 18px;min-height:44px;background:transparent;border:0;text-align:left;cursor:pointer">
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#14342A">{{ tituloGente }}</span>
+              <span style="display:block;font:400 13px/1.35 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ resumenGente }}</span>
+            </span>
+            <span style="{{ sGente }}">{{ fGente }}</span>
+          </button>
+          <sc-if value="{{ oGente }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:0 18px 12px">
+              <sc-for list="{{ comensales }}" as="c" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(20,52,42,.1)">
+                  <span style="flex:0 0 auto;width:36px;height:36px;border-radius:999px;background:#C5D8CA;display:flex;align-items:center;justify-content:center;font:400 16px/1 'Young Serif',Georgia,serif;color:#14342A">{{ c.inicial }}</span>
+                  <span style="flex:1;min-width:0;font:400 18px/1.15 'Young Serif',Georgia,serif;color:#14342A">{{ c.nombre }}</span>
+                  <span style="font:400 13px/1 'Inter Tight',sans-serif;color:#33513F">{{ c.sector }}</span>
+                </div>
+              </sc-for>
+              <div style="border-top:1px solid rgba(20,52,42,.1);margin-top:10px;padding-top:10px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ notaCompaneros }}</div>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- Paso a paso -->
+        <div style="border-radius:22px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);overflow:hidden;margin-top:12px">
+          <button onClick="{{ tPaso }}" aria-expanded="{{ oPasoAria }}" style="display:flex;width:100%;box-sizing:border-box;align-items:center;gap:12px;padding:16px 18px;min-height:44px;background:transparent;border:0;text-align:left;cursor:pointer">
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#14342A">{{ tituloPaso }}</span>
+              <span style="display:block;font:400 13px/1.35 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ resumenPaso }}</span>
+            </span>
+            <span style="{{ sPaso }}">{{ fPaso }}</span>
+          </button>
+          <sc-if value="{{ oPaso }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 18px 10px">
+              <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#33513F;padding-bottom:6px">{{ bajadaPaso }}</div>
+              <sc-for list="{{ momentos }}" as="m" hint-placeholder-count="8">
+                <div style="{{ m.fila }}">
+                  <div style="{{ m.estiloHora }}">{{ m.hora }}</div>
+                  <div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+                    <sc-if value="{{ m.ahora }}" hint-placeholder-val="{{ false }}">
+                      <span style="align-self:flex-start;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;background:#E39C63;color:#14342A;font:700 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em">{{ textoAhora }}</span>
+                    </sc-if>
+                    <div style="{{ m.estiloTitulo }}">{{ m.nombre }}</div>
+                    <div style="{{ m.estiloTexto }}">{{ m.texto }}</div>
+                    <sc-if value="{{ m.conJuego }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ m.irAlJuego }}" style="{{ m.estiloBoton }}">{{ m.botonJuego }}</button>
+                    </sc-if>
+                    <sc-if value="{{ m.conSitios }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+                        <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">{{ tituloSeguir }}</div>
+                        <sc-for list="{{ sitios }}" as="s" hint-placeholder-count="3">
+                          <div style="display:flex;align-items:center;gap:10px;background:#FAF3E4;border:1px solid rgba(20,52,42,.12);border-radius:14px;padding:10px 10px 10px 12px">
+                            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                              <div style="font:400 17px/1.15 'Young Serif',Georgia,serif;color:#14342A">{{ s.nombre }}</div>
+                              <div style="{{ s.estiloDistancia }}">{{ s.distancia }}</div>
+                            </div>
+                            <a href="{{ s.mapa }}" target="_blank" rel="noopener" style="{{ s.estiloBoton }}">{{ s.textoBoton }}</a>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- El juego de la mesa -->
+        <div style="border-radius:22px;background:#14342A;color:#FAF3E4;overflow:hidden;margin-top:12px">
+          <button onClick="{{ tJuego }}" aria-expanded="{{ oJuegoAria }}" style="display:flex;width:100%;box-sizing:border-box;align-items:center;gap:12px;padding:16px 18px;min-height:44px;background:transparent;border:0;text-align:left;cursor:pointer">
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#FAF3E4">El juego de la mesa</span>
+              <span style="display:block;font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">{{ resumenJuego }}</span>
+            </span>
+            <span style="{{ sJuego }}">{{ fJuego }}</span>
+          </button>
+          <sc-if value="{{ oJuego }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 18px 18px;display:flex;flex-direction:column">
+              <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;padding-bottom:6px">{{ bajadaJuego }}</div>
+              <sc-for list="{{ rondas }}" as="r" hint-placeholder-count="3">
+                <div style="display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:start;gap:8px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)">
+                  <div style="font:400 20px/1.1 'Young Serif',Georgia,serif;color:#E39C63">{{ r.n }}</div>
+                  <div style="display:flex;flex-direction:column;gap:4px">
+                    <div style="font:400 18px/1.15 'Young Serif',Georgia,serif">{{ r.titulo }}</div>
+                    <div style="font:600 10px/1.3 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">{{ r.cuando }}</div>
+                    <div style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#C5D8CA">{{ r.bajada }}</div>
+                  </div>
+                  <button onClick="{{ r.ir }}" aria-disabled="{{ r.inerte }}" style="{{ r.estiloEstado }}">{{ r.estado }}</button>
+                </div>
+              </sc-for>
+              <sc-if value="{{ juegoYaAbre }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ seguirJuego }}" style="margin-top:8px;display:flex;align-items:center;justify-content:center;min-height:48px;border:0;border-radius:999px;background:#E39C63;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">{{ ctaJuego }}</button>
+              </sc-if>
+              <!-- Antes de la hora de la cena no se puede tocar (Michael,
+                   15-10): quien llega pronto se leería las preguntas y
+                   llegaría a la mesa con las respuestas pensadas. -->
+              <sc-if value="{{ juegoNoAbreAun }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:8px;display:flex;align-items:center;justify-content:center;text-align:center;min-height:48px;border-radius:16px;background:rgba(227,156,99,.16);color:#E39C63;font:600 14px/1.35 'Inter Tight',sans-serif;padding:10px 14px">{{ juegoCuando }}</div>
+              </sc-if>
+              <sc-if value="{{ hayAvanceJuego }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ reiniciarJuego }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;margin-top:4px;background:transparent;border:0;color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">Empezar de nuevo</button>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ sePuedeCancelar }}" hint-placeholder-val="{{ true }}">
+          <a href="/cancelar" style="{{ enlaceCancelar }}">Cancelar mi puesto</a>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ esAbiertaGenerica }}" hint-placeholder-val="{{ false }}">
       <div id="abierta" style="animation:aro-open 460ms ease both">
 
         <div style="{{ selloAbierto }}">ABIERTO</div>
@@ -413,12 +604,24 @@
 
       <sc-if value="{{ jEsCambio }}" hint-placeholder-val="{{ false }}">
         <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:20px;padding:34px 0">
-          <div style="font:700 13px/1 'Inter Tight',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#E39C63">{{ jCambioEyebrow }}</div>
+          <!-- Sin el renglón cuando la cabecera ya lo dice: en la pausa de
+               después de la primera ronda, «Ronda 1 terminada» arriba y
+               «Ronda 1 de 3 · terminada» aquí es lo mismo dos veces. -->
+          <sc-if value="{{ hayEyebrowCambio }}" hint-placeholder-val="{{ true }}">
+            <div style="font:700 13px/1 'Inter Tight',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#E39C63">{{ jCambioEyebrow }}</div>
+          </sc-if>
           <div style="font:400 clamp(36px,10vw,50px)/1 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#FAF3E4;text-wrap:balance">{{ jCambioNombre }}</div>
           <div style="font:400 clamp(17px,4.5vw,20px)/1.4 'Inter Tight',sans-serif;color:#E4EDE6;text-wrap:pretty">{{ jCambioBajada }}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:16px">
           <div style="border-top:1px solid rgba(250,243,228,.18);padding-top:16px;font:400 15px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ jCambioLector }}</div>
+
+          <!-- Después de la primera ronda se vuelve a la mesa: el botón
+               lleno devuelve al paso a paso y seguir queda debajo. -->
+          <sc-if value="{{ jCambioTrasPrimera }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ jVolverAlPaso }}" style="min-height:58px;border:0;border-radius:999px;background:#E39C63;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#FAF3E4">Volver al paso a paso</button>
+            <button onClick="{{ jSeguirRonda }}" style="min-height:52px;border:0;background:none;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">{{ jCambioSeguirDespues }}</button>
+          </sc-if>
 
           <!-- Las pausas de en medio: un botón y adelante. -->
           <sc-if value="{{ jCambioNormal }}" hint-placeholder-val="{{ true }}">
@@ -469,13 +672,28 @@ class Component extends DCLogic {
     reporte: false, motivo: -1, quien: -1, reportado: false,
     datos: null, errorF11: '', enviando: false,
     // El juego: `null` = cerrado. Dentro, el paso y dónde va.
-    juego: null
+    juego: null,
+    /**
+     * Cuál de las tres tarjetas de la mesa abierta está desplegada.
+     *
+     * `null` es «la que toca según la hora»; en cuanto la persona toca una,
+     * manda ella —`''` son las tres cerradas— y se respeta mientras siga en
+     * la pantalla. No se guarda: al volver a entrar manda otra vez la hora,
+     * que es lo que pide la entrega 20.
+     */
+    abierta: null
   };
 
   componentDidMount() {
     // el reloj solo corre en el estado que lo muestra
     this._t = setInterval(() => {
+      // La cuenta atrás de la mesa cerrada necesita el segundo. La mesa
+      // abierta solo necesita saber en qué momento del guion va, y eso
+      // cambia cada quince minutos: repintarla cada segundo durante toda la
+      // cena sería gastar batería para mover nada.
+      this._tic = (this._tic || 0) + 1;
       if (this.state.fase === 0) this.setState({ ahora: Date.now() });
+      else if (this.state.fase === 1 && this._tic % 30 === 0) this.setState({ ahora: Date.now() });
     }, 1000);
 
     // La fase la decide el servidor comparando con reveal_at, no la pantalla.
@@ -672,8 +890,10 @@ class Component extends DCLogic {
     const dJ = this.state.datos;
     const vent = this.juegoVentana();
     const ahora = this.state.ahora || Date.now();
-    // Solo para cenas por ahora: café y movimiento tendrán su versión.
-    const esCena = !!dJ && (dJ.formato === 'dinner' || dJ.formato === 'foodie_dinner' || dJ.formato === 'women_dinner');
+    // Solo para cenas por ahora: café y movimiento tendrán su versión. La
+    // lista de cuáles son vive en `reglas.js` —la misma que decide si el
+    // correo dice «CON QUIÉN CENAS»—, y aquí estaba escrita a mano.
+    const esCena = !!dJ && AroReglas.DE_CENA.indexOf(dJ.formato || '') >= 0;
     const hayJuego = !!vent && esCena && this.state.fase === 1;
     const juegoAbierto = hayJuego && ahora >= vent.abre && ahora < vent.cierra;
     const juegoCerrado = hayJuego && ahora < vent.abre;
@@ -698,6 +918,10 @@ class Component extends DCLogic {
     // Si la pausa que se esta viendo es la de la ultima ronda, que es la
     // opcional. Misma regla que `esOpcional` de la app.
     const esOpcional = !!jg && jg.paso === 'cambio' && rondaIdx === ultimaRonda;
+    // Y la de después de la primera, que es la de volver a comer. Si algún
+    // día el juego tuviera dos rondas, la primera pausa sería también la
+    // última: manda `esOpcional`, que es la que ofrece salir.
+    const trasPrimera = !!jg && jg.paso === 'cambio' && rondaIdx === 1 && !esOpcional;
     // «Una ronda», «Dos rondas», «Tres rondas»: escritas, no armadas con el
     // numero delante. Es el mismo motivo que las listas de formatos de los
     // correos, y son tres.
@@ -764,9 +988,28 @@ class Component extends DCLogic {
       jAtras: () => atras(),
       jSiguiente: () => siguiente(),
 
+      /**
+       * La pausa de después de la PRIMERA ronda no es una pausa: es volver a
+       * la mesa (entrega 20, pantalla 4e).
+       *
+       * Las de en medio dicen «ahora viene la ronda 2» y siguen. Esta dice
+       * «ahora, a comer», porque la primera ronda se juega mientras llega la
+       * comida: lo normal es cerrar el teléfono, y seguir es lo opcional. Por
+       * eso el botón lleno devuelve al paso a paso y seguir queda debajo.
+       *
+       * «Ahora, a comer.» está PENDIENTE DE MICHAEL (Design, 15-10).
+       */
+      jCambioTrasPrimera: trasPrimera,
+      hayEyebrowCambio: !trasPrimera,
       jCambioEyebrow: 'Ronda ' + (rondaIdx + 1) + ' de ' + J.rondas.length,
-      jCambioNombre: R.titulo,
-      jCambioBajada: R.bajada,
+      jCambioNombre: trasPrimera ? 'Ahora, a comer.' : R.titulo,
+      jCambioBajada: trasPrimera
+        ? 'Guarden el teléfono y sigan con el paso a paso. La ronda 2 queda aquí para cuando se acabe el tema, o cuando quieran.'
+        : R.bajada,
+      jVolverAlPaso: () => {
+        this.juegoSalir();
+        this.setState({ abierta: 'paso' });
+      },
       jCambioLector: '¿Otra persona quiere leer? Que abra el juego en su teléfono y toque «Ronda ' + (rondaIdx + 1) + '». Verá las mismas preguntas.',
 
       // LA ULTIMA RONDA ES OPCIONAL (Michael, 10-10). La pausa de antes de
@@ -775,9 +1018,10 @@ class Component extends DCLogic {
       // medias. Las otras pausas no cambian: siguen con su «Empezar la
       // ronda N» y un solo boton.
       jCambioOpcional: esOpcional,
-      jCambioNormal: !!jg && jg.paso === 'cambio' && !esOpcional,
+      jCambioNormal: !!jg && jg.paso === 'cambio' && !esOpcional && !trasPrimera,
       jCambioAviso: 'Esta ronda es más personal. Solo si a la mesa le provoca.',
       jCambioBoton: 'Empezar la ronda ' + (rondaIdx + 1),
+      jCambioSeguirDespues: 'Seguir con la ronda ' + (rondaIdx + 1),
       jCambioSeguir: 'Seguir con la ronda ' + (rondaIdx + 1),
       jSeguirRonda: irA('pregunta', rondaIdx, 0),
       // «Terminar aquí»: al final, con la ronda ANTERIOR como la ultima
@@ -840,6 +1084,114 @@ class Component extends DCLogic {
     // Qué se hace, cuando el sitio no lo dice: la ruta y el nivel de una
     // caminata no caben en una dirección.
     const act = (dt && dt.actividad) || null;
+    // ── la mesa abierta de una cena (entrega 20) ──────────────────────
+    //
+    // El guion, las rondas y sus textos salen de `reglas.js`: los pinta esta
+    // pantalla y los pinta la app, y dos copias de ocho párrafos son dos
+    // guiones distintos en cuanto alguien corrija una coma.
+    const pasos = dt ? AroReglas.pasosDeLaMesa(dt.empiezaEn, dt.zonaHoraria) : [];
+    const momentoCena = AroReglas.momentoDeLaMesa(pasos, ahora);
+    const idxAhora = AroReglas.enCursoDeLaMesa(pasos, ahora);
+    const G = AroReglas.GUION;
+
+    /**
+     * Cuál de las tres tarjetas está abierta.
+     *
+     * `null` es «la que toca»: antes de la cena, con quién; en curso y
+     * terminada, el paso a paso. En cuanto la persona toca una, manda ella y
+     * se respeta mientras siga en la pantalla, que es lo que pide la entrega.
+     * Nunca dos abiertas: en una columna de 440 px, dos listas abiertas
+     * esconden la tercera.
+     */
+    const abiertaPorDefecto = momentoCena === 'antes' ? 'gente' : 'paso';
+    const cualAbierta = this.state.abierta === null ? abiertaPorDefecto : this.state.abierta;
+    const alternar = (cual) => () => this.setState((s) => ({
+      abierta: (s.abierta === null ? abiertaPorDefecto : s.abierta) === cual ? '' : cual
+    }));
+    const chevron = (on, oscura) => 'flex:0 0 auto;width:32px;height:32px;border-radius:999px;display:flex;'
+      + 'align-items:center;justify-content:center;font:600 18px/1 \'Inter Tight\',sans-serif;'
+      + (oscura ? 'background:rgba(250,243,228,.12);color:#E39C63' : 'background:#F2E9D5;color:#14342A');
+
+    // El avance del juego de ESTE teléfono, para los sellos de las rondas.
+    const guardado = (dt && dt.mesaId) ? this.juegoGuardado(dt.mesaId) : null;
+    const hayAvance = !!guardado && !(guardado.paso === 'reglas' && guardado.ronda === 0 && guardado.idx === 0);
+    const rondaGuardada = guardado ? guardado.ronda : 0;
+
+    const sitiosParaSeguir = ((dt && dt.paraSeguir) || []).map((s) => ({
+      nombre: s.nombre,
+      distancia: s.minutosAPie != null ? G.seguir.aPie.replace('{n}', s.minutosAPie) : '',
+      estiloDistancia: s.minutosAPie != null
+        ? 'font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F'
+        : 'display:none',
+      mapa: s.mapa || '',
+      textoBoton: G.seguir.comoLlegar,
+      estiloBoton: s.mapa
+        ? 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;border:1.5px solid #1B5138;color:#1B5138;font:600 13px/1 \'Inter Tight\',sans-serif;text-decoration:none'
+        : 'display:none'
+    }));
+
+    const momentos = pasos.map((m, i) => {
+      const pasado = idxAhora >= 0 && i < idxAhora;
+      const esAhora = i === idxAhora;
+      const tinta = pasado ? '#566A5D' : '#14342A';
+      return {
+        hora: AroReglas.horaCorta(m.hora), nombre: m.nombre, texto: m.texto,
+        ahora: esAhora,
+        conJuego: !!m.botonJuego, botonJuego: m.botonJuego,
+        // Al tocarlo se despliega la tarjeta del juego, no se abre el juego:
+        // lo que hace falta ahí es elegir ronda, y eso está en la tarjeta.
+        irAlJuego: () => this.setState({ abierta: 'juego' }),
+        conSitios: m.clave === 'despedida' && sitiosParaSeguir.length > 0,
+        fila: 'display:grid;grid-template-columns:54px minmax(0,1fr);gap:8px;padding:14px 12px;margin:0 -12px;'
+          + 'border-radius:16px;border-top:' + (esAhora ? '0' : '1px solid rgba(20,52,42,.1)')
+          + ';background:' + (esAhora ? '#F2E9D5' : 'transparent'),
+        estiloHora: 'font:600 15px/1.3 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;color:'
+          + (esAhora ? '#8F4515' : pasado ? '#566A5D' : '#33513F'),
+        estiloTitulo: 'font:400 ' + (esAhora ? 22 : 19) + 'px/1.15 \'Young Serif\',Georgia,serif;letter-spacing:-.015em;color:' + tinta,
+        estiloTexto: 'font:400 15px/1.45 \'Inter Tight\',sans-serif;text-wrap:pretty;color:' + (pasado ? '#566A5D' : '#33513F'),
+        estiloBoton: 'align-self:flex-start;margin-top:8px;display:inline-flex;align-items:center;min-height:44px;'
+          + 'padding:0 18px;border-radius:999px;font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;'
+          + (esAhora
+              ? 'background:#14342A;color:#FAF3E4;border:0'
+              : 'background:transparent;border:1.5px solid ' + (pasado ? 'rgba(20,52,42,.25);color:#566A5D' : '#1B5138;color:#1B5138'))
+      };
+    });
+
+    const pastillaRonda = (tipo) => 'flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;'
+      + 'min-height:44px;min-width:44px;box-sizing:border-box;padding:0 12px;border-radius:999px;cursor:pointer;'
+      + 'white-space:nowrap;font:600 11px/1 \'Inter Tight\',sans-serif;'
+      + (tipo === 'ahora' ? 'background:#E39C63;color:#14342A;border:0'
+        : tipo === 'hecha' ? 'background:transparent;color:#9CBBA6;border:1px solid rgba(156,187,166,.5)'
+        : 'background:transparent;color:#FAF3E4;border:1px solid rgba(250,243,228,.35)');
+
+    const rondasTarjeta = J.rondas.map((r, i) => {
+      // Hecha la que quedó atrás, «n de 2» la que se está jugando, «Ir» las
+      // demás. Sale del único punto que se guarda —dónde quedó— y no de una
+      // lista de rondas terminadas: el juego no se juega dos veces.
+      const hecha = hayAvance && i < rondaGuardada;
+      const enCurso = hayAvance && i === rondaGuardada;
+      const estado = hecha ? 'Hecha'
+        : enCurso ? ((guardado.idx + 1) + ' de ' + J.porRonda)
+        : 'Ir';
+      return {
+        n: String(i + 1), titulo: r.titulo, bajada: r.enLaTarjeta || r.bajada,
+        // La hora de la primera sale del guion, no escrita aquí: si el
+        // restaurante nos deja la mesa hasta otra hora, se mueve con ella.
+        cuando: i === 0 && pasos.length
+          ? r.cuando + ' · ' + (pasos.find((p) => p.clave === 'hielo') || {}).hora.toUpperCase()
+          : r.cuando,
+        estado,
+        // Antes de la hora de la cena se ven y no se tocan: el juego se abre
+        // con la cena, ni un minuto antes.
+        estiloEstado: pastillaRonda(hecha ? 'hecha' : enCurso ? 'ahora' : 'ir')
+          + (juegoAbierto ? '' : ';opacity:.5;cursor:default'),
+        inerte: juegoAbierto ? null : 'true',
+        ir: juegoAbierto
+          ? () => { this.juegoDespierto(true); this.juegoIr({ paso: 'pregunta', ronda: i, idx: 0 }); }
+          : () => {}
+      };
+    });
+
 
     // La mesa 4 se enseña como "04": es el formato del diseño, y con dos
     // cifras la tipografía tabular no baila.
@@ -979,6 +1331,95 @@ class Component extends DCLogic {
       // veía medio segundo de "00:00:00" y una cena sin fecha: números que
       // no son de nadie, y el primer golpe de vista es justo el que cuenta.
       esCerrada: !!dt && f === 0, esAbierta: !!dt && f === 1, esPasada: !!dt && f === 2,
+      // --- la mesa abierta de una cena (entrega 20) ----------------------
+      //
+      // Una cena tiene paso a paso, juego y sitios para seguir; una caminata
+      // no tiene nada de eso. Por eso son dos bloques y no uno con diez
+      // condiciones dentro: el genérico de abajo es el que había, y sigue
+      // sirviendo a los demás formatos sin tocarlo.
+      esCenaAbierta: !!dt && f === 1 && esCena,
+      esAbiertaGenerica: !!dt && f === 1 && !esCena,
+
+      selloTexto: momentoCena === 'antes' ? 'ABIERTO' : momentoCena === 'curso' ? 'EN CURSO' : 'TERMINADA',
+      selloCena: 'display:inline-flex;align-items:center;min-height:26px;padding:0 11px;border-radius:999px;'
+        + 'font:600 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;'
+        + (momentoCena === 'terminada' ? 'background:rgba(250,243,228,.18);color:#FAF3E4' : 'background:#E39C63;color:#14342A'),
+      // «Viernes 16 · 7:30 p.m.», en la hora de la ciudad de esa fecha.
+      cuandoCorto: (() => {
+        const p = dt && AroReglas.partesDe(dt.empiezaEn, dt.zonaHoraria);
+        if (!p) return '';
+        return p.dia.charAt(0).toUpperCase() + p.dia.slice(1) + ' ' + p.numero + ' · ' + p.hora;
+      })(),
+
+      hayFoto: !!(dt && dt.fotoEntrada),
+      fotoEntrada: (dt && dt.fotoEntrada) || '',
+      altFoto: 'La entrada de ' + ((dt && dt.restaurante) || ''),
+      tituloAlLlegar: (dt && dt.fotoEntrada) ? 'AL LLEGAR · BUSCA ESTA ENTRADA' : 'AL LLEGAR',
+      diLaMesa: mesaUnica ? 'Di que vas a la mesa de Aro.' : 'Di que vas a la mesa de Aro, la ' + numeroMesa + '.',
+
+      // --- las tres tarjetas que se despliegan ---------------------------
+      oGente: cualAbierta === 'gente', oGenteAria: cualAbierta === 'gente' ? 'true' : 'false',
+      fGente: cualAbierta === 'gente' ? '−' : '+', sGente: chevron(cualAbierta === 'gente', false),
+      tGente: alternar('gente'),
+      // El titular de la tarjeta, en minúsculas y en Young Serif: `conQuien`
+      // es la versión en versales del bloque viejo y de los correos.
+      tituloGente: 'Con quién cenas',
+      resumenGente: comensales.length === 1
+        ? '1 persona · verificada'
+        : comensales.length
+          ? comensales.length + ' personas · todas verificadas'
+          // No pasa en una mesa de verdad —son seis— pero «0 personas ·
+          // todas verificadas» es lo que se vería si alguna vez pasara.
+          : 'Todavía no hay nadie más',
+
+      oPaso: cualAbierta === 'paso', oPasoAria: cualAbierta === 'paso' ? 'true' : 'false',
+      fPaso: cualAbierta === 'paso' ? '−' : '+', sPaso: chevron(cualAbierta === 'paso', false),
+      tPaso: alternar('paso'),
+      tituloPaso: G.titulo, bajadaPaso: G.bajada, textoAhora: G.ahora,
+      tituloSeguir: G.seguir.titulo,
+      momentos, sitios: sitiosParaSeguir,
+      // Cerrada, la cabecera dice lo que hay dentro. Antes de la cena, de
+      // cuándo a cuándo; durante, en qué momento va; al final, los sitios.
+      resumenPaso: (() => {
+        if (!pasos.length) return '';
+        if (momentoCena === 'antes') {
+          return pasos.length + ' momentos · de ' + AroReglas.horaCorta(pasos[0].hora) + ' a ' + pasos[pasos.length - 1].hora;
+        }
+        const actual = pasos[idxAhora] || pasos[pasos.length - 1];
+        if (momentoCena === 'terminada' && sitiosParaSeguir.length) {
+          return 'Ahora: ' + actual.nombre + ' · ' + sitiosParaSeguir.length
+            + (sitiosParaSeguir.length === 1 ? ' sitio para seguir' : ' sitios para seguir');
+        }
+        return 'Ahora: ' + actual.nombre;
+      })(),
+
+      oJuego: cualAbierta === 'juego', oJuegoAria: cualAbierta === 'juego' ? 'true' : 'false',
+      fJuego: cualAbierta === 'juego' ? '−' : '+', sJuego: chevron(cualAbierta === 'juego', true),
+      tJuego: alternar('juego'),
+      resumenJuego: J.rondas.length === 3
+        ? '3 rondas · la primera va con la comida'
+        : J.rondas.length + ' rondas',
+      bajadaJuego: 'Una persona lee en voz alta, todos responden. Siempre se puede pasar.',
+      rondas: rondasTarjeta,
+      // El juego se abre A LA HORA DE LA CENA, ni un minuto antes (Michael,
+      // 06-10, confirmado el 15-10): quien llega pronto se leería las
+      // preguntas y llegaría con las respuestas pensadas. Antes de esa hora
+      // las rondas se ven y no se tocan.
+      juegoYaAbre: juegoAbierto,
+      juegoNoAbreAun: juegoCerrado,
+      ctaJuego: hayAvance
+        ? 'Seguir · ronda ' + (rondaGuardada + 1) + ', pregunta ' + (guardado.idx + 1)
+        : 'Empezar la ronda 1',
+      seguirJuego: () => {
+        this.juegoDespierto(true);
+        this.setState({ juego: guardado || { paso: 'reglas', ronda: 0, idx: 0 } });
+      },
+      hayAvanceJuego: hayAvance,
+      reiniciarJuego: () => {
+        this.juegoDespierto(true);
+        this.juegoIr({ paso: 'reglas', ronda: 0, idx: 0 });
+      },
+
       // Cancelar existia solo en Inicio. Quien entra por el correo cae aqui,
       // y desde aqui no habia forma de soltar el puesto: habia que adivinar
       // que estaba en otra pantalla. El criterio es el mismo que alli —solo
