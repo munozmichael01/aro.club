@@ -66,7 +66,21 @@ async function limpiar() {
  * Y ahora un modo que no existe FALLA. Silencioso es como esto pasó.
  */
 const MODOS = ['borrar', 'verificada', 'purgada', 'cenas', 'mesa', 'revelada', 'lista']
-const resto = process.argv.slice(2)
+
+/**
+ * `--local <nombre o id>`: en qué sitio se sienta la mesa.
+ *
+ * Existe para enseñarle a un restaurante cómo se le ve. El correo se puede
+ * pintar desde la ficha del local, pero la app y Mi mesa no: ahí hay que
+ * entrar con una cuenta de verdad, y hasta ahora esta mesa caía en el primer
+ * restaurante que devolviera la base — casi siempre el de pruebas del juego.
+ *
+ * Sin la opción se comporta igual que antes.
+ */
+const argumentos = process.argv.slice(2)
+const iLocal = argumentos.indexOf('--local')
+const QUE_LOCAL = iLocal >= 0 ? argumentos[iLocal + 1] : null
+const resto = argumentos.filter((x, i) => x !== '--local' && i !== iLocal + 1)
 const desconocidos = resto.filter((x) => !MODOS.includes(x))
 if (desconocidos.length) {
   console.error('No conozco ' + desconocidos.join(' ni ') + '.')
@@ -167,12 +181,50 @@ if (resto.includes('cenas')) {
 // "Mi mesa", que sin reserva no se enseña.
 if (resto.includes('mesa') || resto.includes('revelada')) {
   const yaRevelada = resto.includes('revelada')
-  const { data: rest } = await admin.from('restaurants').select('id').limit(1)
-  const restId = rest?.[0]?.id ?? null
+  /**
+   * El sitio. El que se pida con `--local`, y si no el primero que haya.
+   *
+   * Por nombre o por id, porque quien lo usa está mirando la ficha del local
+   * en el panel y lo que tiene a mano es el nombre.
+   */
+  let restId = null
+  if (QUE_LOCAL) {
+    const porId = /^[0-9a-f-]{36}$/i.test(QUE_LOCAL)
+    const { data } = porId
+      ? await admin.from('restaurants').select('id, name').eq('id', QUE_LOCAL).maybeSingle()
+      : await admin.from('restaurants').select('id, name').ilike('name', '%' + QUE_LOCAL + '%').limit(1).maybeSingle()
+    if (!data) {
+      console.error('No encuentro ningun local que sea «' + QUE_LOCAL + '».')
+      process.exit(1)
+    }
+    restId = data.id
+    console.log('  sitio: ' + data.name)
+  } else {
+    const { data: rest } = await admin.from('restaurants').select('id').limit(1)
+    restId = rest?.[0]?.id ?? null
+  }
   const en = (h) => new Date(Date.now() + h * 3600_000).toISOString()
+
+  /**
+   * Y si está revelada, a las 7:30 de la noche, no «dentro de seis horas».
+   *
+   * Esto ponía la cena seis horas por delante, así que corriéndolo de noche
+   * salía «Jueves · 2:41 a.m.». Da igual para probar un estado, y no da
+   * igual para enseñarle la pantalla a un restaurante: nadie cena a las tres
+   * de la mañana y lo primero que se lee es la hora.
+   *
+   * Hoy si todavía no son las 7:30, y si no mañana. 23:30 UTC son las 7:30
+   * p.m. de Caracas.
+   */
+  const laCena = () => {
+    const d = new Date()
+    d.setUTCHours(23, 30, 0, 0)
+    if (d.getTime() < Date.now()) d.setUTCDate(d.getUTCDate() + 1)
+    return d.toISOString()
+  }
   const { data: ev, error: ee } = await admin.from('events').insert({
     format: 'dinner',
-    starts_at: yaRevelada ? en(6) : en(48),
+    starts_at: yaRevelada ? laCena() : en(48),
     booking_closes_at: yaRevelada ? en(-48) : en(2),
     reveal_at: yaRevelada ? en(-1) : en(24),
     // `locked` y NUNCA `open`: /api/proxima —la cuenta atras de la portada—
