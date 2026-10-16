@@ -63,6 +63,25 @@ export function copyDe(
         cuerpo: 'Tu mesa está abierta: el sitio, la hora y los otros cinco.',
         ruta: '/mesa',
       }
+
+    /**
+     * Y la otra mitad de la revelación, que no la tenía.
+     *
+     * A las doce vibran todos los teléfonos con «ya sabes con quién cenas»
+     * menos el de quien se quedó en espera, que solo recibe un correo. A esa
+     * hora, y después de haber pagado, ese silencio se parece demasiado a que
+     * se nos olvidó. Decisión de Michael, 16-10.
+     *
+     * Sin rodeos en el título —lo que hay que saber es que esta vez no— y el
+     * cuerpo con lo único que la arregla: el crédito volvió y sirve para la
+     * siguiente. Lleva a `/mesa`, que es donde la pantalla lo cuenta entero.
+     */
+    case 'sin_mesa':
+      return {
+        titulo: 'Esta vez no entraste',
+        cuerpo: 'No salió una mesa en la que encajaras. Tu crédito volvió entero.',
+        ruta: '/mesa',
+      }
     case 'recordatorio': {
       // SALE A LAS NUEVE DE LA MAÑANA, antes de la revelación, y decía «abre
       // tu mesa para ver dónde es y cómo llegar»: a esa hora no hay nada que

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { anotar } from '@/lib/auditoria'
 import { PESOS, repartir, roturas, evaluacion, desglose, resumen, zonasDe } from '@/lib/reparto/repartir'
 import { exigirOps } from '@/lib/ops'
+import { renumerar, yaSeRevelo } from '@/lib/reparto/numeros'
 import { construirPool } from '@/lib/reparto/pool'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -512,7 +513,8 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id')
+    // `reveal_at` para saber si todavía se pueden tocar los números de mesa.
+    .select('id, reveal_at')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -730,6 +732,25 @@ export async function POST(request: Request) {
   // Las cerradas van primero: el panel enseña la foto completa de la fecha,
   // no solo lo que queda por decidir.
   const propuesta = [...cerradas, ...nuevas]
+
+  /**
+   * Y numeradas de 1 a N, que es donde nacía el descuadre.
+   *
+   * Las nuevas se numeraban a partir del número más alto de las publicadas
+   * —`desdeNumero`—, así que una fecha con las mesas 1, 4 y 5 publicadas
+   * paría la 6 y la 7 en vez de la 2 y la 3. El viernes 16 acabó con 1, 4,
+   * 5, 6 y 7. Repartir es justo el momento en que se puede arreglar: todavía
+   * no se ha revelado nada.
+   *
+   * Si falla, se para: una propuesta con los números a medio cambiar es peor
+   * que una con huecos.
+   */
+  if (!yaSeRevelo(evento.reveal_at)) {
+    const falloNumeros = await renumerar(admin, eventoId, propuesta)
+    if (falloNumeros) {
+      return NextResponse.json({ error: falloNumeros }, { status: 500 })
+    }
+  }
 
   // Una mesa sin sitio no se puede publicar. Pero «sin sitio» son dos cosas
   // distintas y la salida es distinta en cada una: si no hay ninguno elegido,
