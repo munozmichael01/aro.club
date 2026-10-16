@@ -2928,18 +2928,21 @@ export type Database = {
           booking_id: string
           profile_id: string
           seat_order: number | null
+          sentado_en: string
           table_id: string
         }
         Insert: {
           booking_id: string
           profile_id: string
           seat_order?: number | null
+          sentado_en?: string
           table_id: string
         }
         Update: {
           booking_id?: string
           profile_id?: string
           seat_order?: number | null
+          sentado_en?: string
           table_id?: string
         }
         Relationships: [

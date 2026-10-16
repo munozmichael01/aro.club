@@ -187,7 +187,7 @@
                 <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(20,52,42,.1)">
                   <span style="flex:0 0 auto;width:36px;height:36px;border-radius:999px;background:#C5D8CA;display:flex;align-items:center;justify-content:center;font:400 16px/1 'Young Serif',Georgia,serif;color:#14342A">{{ c.inicial }}</span>
                   <span style="flex:1;min-width:0;font:400 18px/1.15 'Young Serif',Georgia,serif;color:#14342A">{{ c.nombre }}</span>
-                  <span style="font:400 13px/1 'Inter Tight',sans-serif;color:#33513F">{{ c.sector }}</span>
+                  <span style="font:400 13px/1 'Inter Tight',sans-serif;color:#33513F">{{ c.sectorYNota }}</span>
                 </div>
               </sc-for>
               <div style="border-top:1px solid rgba(20,52,42,.1);margin-top:10px;padding-top:10px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ notaCompaneros }}</div>
@@ -402,6 +402,9 @@
                 <span style="flex:1;min-width:0">
                   <span style="display:block;font:400 clamp(21px,2.4vw,25px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.nombre }}</span>
                   <span style="display:block;font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ c.sector }}</span>
+                  <sc-if value="{{ c.seUnio }}" hint-placeholder-val="{{ false }}">
+                    <span style="{{ c.estiloUnio }}">{{ c.notaUnio }}</span>
+                  </sc-if>
                 </span>
               </div>
             </sc-for>
@@ -1153,6 +1156,19 @@ class Component extends DCLogic {
       nombre: c.nombre || '—',
       inicial: (c.nombre || '—').trim().charAt(0).toUpperCase(),
       sector: c.sector || 'Sin sector',
+      /**
+       * Quien entró después de la revelación, marcado.
+       *
+       * El correo de las doce dice cuántos son y con quién, y esa foto se
+       * queda fija en la bandeja. Si después se suma alguien —el 16-10 pasó
+       * en dos mesas—, quien abre esta pantalla cuenta una cara de más y no
+       * sabe qué pensar. Lo dice el servidor (`seUnioDespues`), que es quien
+       * tiene la hora del asiento y la de la revelación.
+       */
+      seUnio: !!c.seUnioDespues,
+      notaUnio: 'se sumó después',
+      estiloUnio: 'display:block;font:500 13px/1.4 \'Inter Tight\',sans-serif;color:#8F4515;margin-top:2px',
+      sectorYNota: (c.sector || 'Sin sector') + (c.seUnioDespues ? ' · se sumó después' : ''),
       avatar: 'flex:0 0 auto;width:44px;height:44px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 17px/1 \'Inter Tight\',sans-serif'
     }));
 

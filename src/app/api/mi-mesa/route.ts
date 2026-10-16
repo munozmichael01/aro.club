@@ -252,10 +252,33 @@ export async function GET() {
 
   const { data: companeros } = await admin
     .from('table_members')
-    .select('profile_id, seat_order, profiles(display_name, full_name)')
+    .select('profile_id, seat_order, sentado_en, profiles(display_name, full_name)')
     .eq('table_id', miembro.table_id)
     .neq('profile_id', user.id)
     .order('seat_order')
+
+  /**
+   * Cuándo se sentó el PRIMERO de la mesa.
+   *
+   * «Se sumó después» no puede medirse solo contra la revelación: si
+   * operación reparte y publica tarde —pasa—, la mesa entera se sienta
+   * después de las doce y entonces TODOS saldrían marcados, que es ruido y
+   * encima falso: nadie llegó tarde a esa mesa, llegó tarde la mesa.
+   *
+   * Tarde es haber entrado bastante después que el resto. Un cuarto de hora
+   * de margen sobre el primer asiento absorbe lo que tarda una publicación
+   * y no tapa lo que esto viene a contar: los dos casos del 16-10 entraron
+   * tres horas después.
+   */
+  const { data: primeros } = await admin
+    .from('table_members')
+    .select('sentado_en')
+    .eq('table_id', miembro.table_id)
+    .order('sentado_en')
+    .limit(1)
+
+  const primerAsiento = primeros?.[0]?.sentado_en ?? null
+  const MARGEN_PUBLICACION = 15 * 60_000
 
   const { data: traits } = await admin
     .from('profile_traits')
@@ -365,7 +388,30 @@ export async function GET() {
     companeros: (companeros ?? []).map((c) => {
       const p = c.profiles as unknown as { display_name: string | null; full_name: string | null } | null
       const nombre = p?.display_name || p?.full_name?.split(' ')[0] || null
-      return { id: c.profile_id, nombre, sector: sectorDe.get(c.profile_id) ?? null }
+      return {
+        id: c.profile_id,
+        nombre,
+        sector: sectorDe.get(c.profile_id) ?? null,
+        /**
+         * Si entró DESPUÉS de que se contara la mesa.
+         *
+         * El correo de la revelación dice cuántos son y lista los nombres, y
+         * esa foto se queda fija en la bandeja de entrada. Si después se
+         * suma alguien —hoy pasó dos veces—, quien abre la pantalla cuenta
+         * una cara de más y no sabe si se equivocó al leer, si falta alguien
+         * o qué. Con la marca lo entiende en medio segundo y sin que le
+         * tengamos que escribir otro correo.
+         *
+         * Se compara contra `reveal_at` y no contra el reparto: la
+         * revelación es el momento en que la mesa se le CONTÓ a la gente,
+         * que es lo que esta marca explica.
+         */
+        seUnioDespues:
+          !!evento.reveal_at && !!c.sentado_en && !!primerAsiento
+          && new Date(c.sentado_en as string) > new Date(evento.reveal_at)
+          && new Date(c.sentado_en as string).getTime()
+            > new Date(primerAsiento).getTime() + MARGEN_PUBLICACION,
+      }
     }),
     // Todas verificaron: es el retorno de lo que costó verificarse.
     todosVerificados: true,
