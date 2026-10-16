@@ -41,6 +41,16 @@ export const dynamic = 'force-dynamic'
 /** Treinta horas: un cron diario coge cada fecha una vez, con margen. */
 const ANTELACION = 30 * 3600_000
 
+/**
+ * A qué hora sale: 10:00 de Caracas (14:00 UTC), en `vercel.json`.
+ *
+ * Estaba a las 11:00, o sea UNA HORA antes de la revelación del mediodía.
+ * Quien cenaba esa noche recibía «el sábado se cierra hoy» y sesenta minutos
+ * después «ya sabes con quién cenas»: el primero se lee a la sombra del
+ * segundo, y el que invita a apuntarse es justo el que necesita atención.
+ * Michael, 16-10: «una hora antes me parece poco, lo ponemos a las 10».
+ */
+
 async function avisar(seco: boolean, soloEste?: string | null) {
   const admin = createAdminClient()
 

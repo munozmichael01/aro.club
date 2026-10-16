@@ -131,6 +131,16 @@
     Todos con identidad verificada. Al llegar, di que vas a {{ comoLlegar }}.
   </td></tr>
 
+  <!-- Solo si la mesa salió corta. Va pegada a los nombres, que es donde se
+       cuenta: leer cuatro donde se esperan cinco y no encontrar explicación
+       es lo que hace pensar que falta alguien por llegar. En melocotón y en
+       una línea, sin caja: es una aclaración, no un aviso. -->
+  {{#si mesaCorta}}
+  <tr><td class="p" style="padding:10px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#E39C63;mso-line-height-rule:exactly;">
+    {{ mesaCorta }}
+  </td></tr>
+  {{/si}}
+
   <tr><td class="p" style="padding:28px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border:1px solid #6E340F;border-radius:22px;">
       <tr><td style="padding:20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#C5D8CA;mso-line-height-rule:exactly;">

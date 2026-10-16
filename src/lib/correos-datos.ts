@@ -1471,6 +1471,18 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   const numero = String(mesa.table_number).padStart(2, '0')
   const direccion = mesa.restaurants?.address ?? ''
 
+  // De cuántos es una mesa en ESTA fecha. De la fecha y no de una constante:
+  // `seats_per_table` se puede cambiar al abrirla, y el día que haya una de
+  // cuatro a propósito esto no puede llamarla corta.
+  const { data: deLaFecha } = await admin
+    .from('events')
+    .select('seats_per_table')
+    .eq('id', eventoId)
+    .maybeSingle()
+
+  const porMesa = deLaFecha?.seats_per_table ?? 6
+  const enLaMesa = (otros ?? []).length + 1
+
   // Si es la ÚNICA mesa de ese sitio esa noche, el número sobra: «di que vas
   // a la mesa de Aro, la 01» donde solo hay una mesa de Aro manda a buscar un
   // cartel que no existe. Lo cuenta el mismo sitio que la web y la app, para
@@ -1522,6 +1534,26 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
      * obliga a contar los nombres para ver cuál de las dos es la verdad.
      */
     otros: `${EN_LETRA[(otros ?? []).length] ?? (otros ?? []).length} personas`,
+    /**
+     * Y si la mesa salió corta, se dice. Con el porqué.
+     *
+     * Una mesa es de seis —`events.seats_per_table`— y a veces sale de cinco:
+     * alguien cancela dentro de las 24 horas y no queda en espera nadie que
+     * encaje, y se publica así a propósito, porque rehacerla movería a cinco
+     * personas que ya saben con quién cenan.
+     *
+     * Hasta hoy el correo no lo mencionaba: salían cuatro nombres donde se
+     * esperan cinco y quien contaba no sabía si faltaba alguien por aparecer,
+     * si se nos había olvidado uno o si la mesa era así. La frase es de
+     * Michael (16-10) y dice las dos cosas, cuántos son y por qué: «Son
+     * cinco: alguien canceló y no llegamos a sentar a nadie más».
+     *
+     * Vacía cuando la mesa está completa, y entonces la plantilla se salta la
+     * fila entera. Lo normal es que esté completa.
+     */
+    mesaCorta: enLaMesa > 0 && enLaMesa < porMesa
+      ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: alguien canceló y no llegamos a sentar a nadie más.`
+      : '',
   }
 }
 
