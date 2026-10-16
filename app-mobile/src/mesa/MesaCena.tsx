@@ -230,7 +230,8 @@ function TarjetaMesa(p: { d: M.DeServidor; momento: Gu.MomentoCena; mapa: string
         {d.fotoEntrada ? (
           <Image
             source={{ uri: d.fotoEntrada }}
-            style={{ height: 180, width: '100%' }}
+            // La foto llega ya encuadrada a 16:9 desde el panel (1600 × 900): se enseña entera, como en la web y los correos.
+            style={{ width: '100%', aspectRatio: 16 / 9 }}
             resizeMode="cover"
             accessibilityLabel={T.cena.fotoEntrada(d.restaurante || '')}
           />
