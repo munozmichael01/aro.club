@@ -54,6 +54,8 @@ export const abierta = {
   comoLlegar: 'Cómo llegar',
   vozTarde: 'Voy tarde',
   sinSector: 'Sin sector',
+  /** Quien se sentó después de la revelación (16-10), igual que la web. */
+  seUnio: 'se sumó después',
   notaCompaneros: (esMesa: boolean) =>
     `Todos con identidad verificada. No hay fotos ni apellidos: eso lo cuenta cada quien ${esMesa ? 'en la mesa' : 'sobre la marcha'} si quiere.`,
   alLlegar: 'Al llegar',

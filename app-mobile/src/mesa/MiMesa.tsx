@@ -393,6 +393,11 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
               <Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia, marginTop: 3 }}>
                 {c.sector}
               </Texto>
+              {c.seUnio ? (
+                <Texto variante="cuerpoChico" tono="terracota" style={{ fontFamily: fuente.textoMedia, marginTop: 2 }}>
+                  {T.abierta.seUnio}
+                </Texto>
+              ) : null}
             </View>
           </View>
         ))}

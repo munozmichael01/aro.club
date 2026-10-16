@@ -8,7 +8,13 @@ import { reglas } from '../reglas'
 import * as F from '../texto/fechas'
 import * as T from '../texto/mesa'
 
-export type Companero = { id: string; nombre: string | null; sector: string | null }
+export type Companero = {
+  id: string
+  nombre: string | null
+  sector: string | null
+  /** Se sentó después de la revelación (16-10): sin esto, quien mira cuenta una cara de más y no sabe por qué. */
+  seUnioDespues?: boolean
+}
 
 export type DeServidor = {
   fase: 'sin-reserva' | 'cerrada' | 'sin-mesa' | 'abierta' | 'pasada' | string
@@ -80,14 +86,26 @@ export function actividad(d: DeServidor): { titulo: string; nota: string } | nul
  * Android, el enlace de Google. La web decide por el navegador; aquí se sabe
  * de verdad en qué teléfono se está.
  */
-export type SitioParaSeguir = { nombre: string; minutosAPie?: number | null; mapa?: string | null; mapaApple?: string | null }
+export type SitioParaSeguir = {
+  nombre: string
+  /** Los calcula el servidor con las coordenadas de los dos sitios (16-10). */
+  minutosAPie?: number | null
+  /** «Barato», «Precio medio», «Caro», «Muy caro», o vacío: ya resuelto por el servidor. */
+  precio?: string | null
+  mapa?: string | null
+  mapaApple?: string | null
+}
+
+/** «3 min a pie · Barato»: con lo que haya, como la web. Vacío si no hay nada. */
+export const detalleSitio = (s: SitioParaSeguir, aPie: (n: number) => string) =>
+  [s.minutosAPie != null ? aPie(s.minutosAPie) : '', s.precio || ''].filter(Boolean).join(' · ')
 
 export function mapa<D extends { mapa?: string | null; mapaApple?: string | null }>(d: D, so: string): string | null {
   if (so === 'ios' && d.mapaApple) return d.mapaApple
   return d.mapa || d.mapaApple || null
 }
 
-export type Otro = { id: string; nombre: string; inicial: string; sector: string }
+export type Otro = { id: string; nombre: string; inicial: string; sector: string; seUnio: boolean }
 
 export function otros(d: DeServidor): Otro[] {
   return (d.companeros ?? []).map((c) => ({
@@ -95,6 +113,7 @@ export function otros(d: DeServidor): Otro[] {
     nombre: c.nombre || '—',
     inicial: (c.nombre || '—').trim().charAt(0).toUpperCase(),
     sector: c.sector || T.abierta.sinSector,
+    seUnio: !!c.seUnioDespues,
   }))
 }
 

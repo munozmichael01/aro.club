@@ -98,7 +98,8 @@ export function MesaCena(p: {
               <Texto style={[serif(18, 1.15), { flex: 1 }]} numberOfLines={1}>
                 {c.nombre}
               </Texto>
-              <Texto style={[texto(13, 1), { color: C.cuerpo }]}>{c.sector}</Texto>
+              {/* Como la web: «Salud · se sumó después». */}
+              <Texto style={[texto(13, 1), { color: C.cuerpo }]}>{c.seUnio ? `${c.sector} · ${T.abierta.seUnio}` : c.sector}</Texto>
             </View>
           ))}
           {/* La nota de antes de la entrega 20: Michael la quiso de vuelta (15-10). */}
@@ -146,7 +147,7 @@ export function MesaCena(p: {
                             <View key={s.nombre} style={e.sitio}>
                               <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
                                 <Texto style={serif(17, 1.15)}>{s.nombre}</Texto>
-                                {s.minutosAPie ? <Texto style={[media(13), { color: C.cuerpo }]}>{T.guion.seguir.aPie(s.minutosAPie)}</Texto> : null}
+                                {M.detalleSitio(s, T.guion.seguir.aPie) ? <Texto style={[media(13), { color: C.cuerpo }]}>{M.detalleSitio(s, T.guion.seguir.aPie)}</Texto> : null}
                               </View>
                               {m2 ? (
                                 <Pressable onPress={() => ir('externo:' + m2)} accessibilityRole="link" style={e.botonSitio}>
