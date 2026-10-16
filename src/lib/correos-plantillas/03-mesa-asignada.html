@@ -65,9 +65,16 @@
       <!-- La entrada del local (entrega 20). Si no tiene foto, estas dos
            filas no salen: `fotoEntrada` llega vacio y el `{{#si}}` las quita.
            Es la unica imagen del correo ademas del aro, y va con `alt` porque
-           la mitad de los clientes no cargan imagenes hasta que se les pide. -->
+           la mitad de los clientes no cargan imagenes hasta que se les pide.
+
+           302 px de alto = 16:9 sobre los 536 que mide la caja (600 menos
+           los 32 de cada lado). Desde el 16-10 la foto se sube YA recortada a
+           16:9 desde el panel, asi que con esta altura el correo la enseña
+           entera: el encuadre que se eligio es el que se ve. Con 260 px
+           recortaba otro tanto por arriba y por abajo, y quien la encuadro
+           no se enteraba. -->
       {{#si fotoEntrada}}
-      <tr><td style="padding:20px 32px 0 32px;"><img src="{{{ fotoEntrada }}}" width="100%" alt="La entrada de {{ sitio }}" style="display:block;width:100%;height:auto;max-height:260px;object-fit:cover;border-radius:16px;border:0;" /></td></tr>
+      <tr><td style="padding:20px 32px 0 32px;"><img src="{{{ fotoEntrada }}}" width="100%" alt="La entrada de {{ sitio }}" style="display:block;width:100%;height:auto;max-height:302px;object-fit:cover;border-radius:16px;border:0;" /></td></tr>
       <tr><td style="padding:10px 32px 0 32px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:16px;letter-spacing:2.2px;color:#8F4515;mso-line-height-rule:exactly;"><strong>AL LLEGAR · BUSCA ESTA ENTRADA</strong></td></tr>
       {{/si}}
       <tr><td style="padding:18px 32px 0 32px;">

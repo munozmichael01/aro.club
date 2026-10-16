@@ -104,6 +104,58 @@ type Mesa = {
   integrantes: Integrante[]
 }
 
+/**
+ * Las mesas, de 1 a N y sin huecos.
+ *
+ * Quitar la 3 de cuatro mesas dejaba 1, 2 y 4, y la siguiente que se añadía
+ * era la 5: el número de mesa es lo que se dice en voz alta al llegar —«la
+ * mesa de Aro, la cuatro»— y una noche con mesas 1, 2 y 4 es una pregunta en
+ * la puerta del restaurante. Michael, 16-10: «siempre renombra las mesas de
+ * menor a mayor, no puede quedar 1 y 4».
+ *
+ * Compacta hacia abajo y en orden ascendente, así que el número nuevo nunca
+ * choca con uno que todavía exista: cuando le toca a la 4, el 3 ya quedó
+ * libre.
+ *
+ * Y toca `dinner_tables` si la mesa ya está publicada, porque ahí vive el
+ * número de verdad: el correo de la mesa lo lee al enviarlo. Primero la base
+ * y después la propuesta — si la base falla, la propuesta no se queda
+ * diciendo un número que `dinner_tables` no tiene.
+ *
+ * NUNCA después de la revelación: a partir de ahí el número está en una
+ * pantalla, en un correo y en la cabeza de seis personas. Quien llama a esto
+ * comprueba `yaRevelada` antes.
+ */
+async function renumerar(
+  admin: ReturnType<typeof createAdminClient>,
+  eventId: string,
+  mesas: Mesa[],
+): Promise<string | null> {
+  const plan = [...mesas]
+    .sort((a, b) => a.numero - b.numero)
+    .map((mesa, i) => ({ mesa, de: mesa.numero, a: i + 1 }))
+    .filter((c) => c.de !== c.a)
+
+  if (!plan.length) return null
+
+  for (const c of plan) {
+    if (c.mesa.publicada !== true) continue
+    const { error } = await admin
+      .from('dinner_tables')
+      .update({ table_number: c.a })
+      .eq('event_id', eventId)
+      .eq('table_number', c.de)
+
+    if (error) {
+      console.error('[propuesta] no se pudo renumerar la mesa publicada', c, error)
+      return 'No pudimos renumerar las mesas.'
+    }
+  }
+
+  for (const c of plan) c.mesa.numero = c.a
+  return null
+}
+
 export async function POST(request: Request) {
   const actor = await exigirOps()
   if (!actor) return new NextResponse(null, { status: 404 })
@@ -296,6 +348,18 @@ export async function POST(request: Request) {
     } else {
       espera.push(comoIntegrante(persona))
     }
+  }
+
+  /**
+   * Y antes de nada, los números: de 1 a N, sin huecos.
+   *
+   * Va aquí y no dentro de cada acción porque es una propiedad de la
+   * propuesta entera, no de la acción que se acaba de hacer: cualquier
+   * cambio que deje un hueco lo cierra, venga de donde venga.
+   */
+  if (!yaRevelada) {
+    const falloNumeros = await renumerar(admin, corrida.event_id, mesas)
+    if (falloNumeros) return NextResponse.json({ error: falloNumeros }, { status: 500 })
   }
 
   // Se recalcula TODO, no solo lo tocado: mover a alguien cambia la mesa de
