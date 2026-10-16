@@ -623,10 +623,14 @@
       </sc-if>
 
       <sc-if value="{{ jEsPregunta }}" hint-placeholder-val="{{ false }}">
+        <!-- Melocotón las vistas, incluida la de ahora. Estaban en crema y
+             eso es el color de un botón, no el de un progreso: en la
+             maqueta (entrega 20, la barra de 4h) es #E39C63. Lo cazó el
+             agente de la app comparando las dos pantallas. -->
         <div style="display:flex;gap:6px;margin-top:22px">
           <sc-for list="{{ jProgreso }}" as="d" hint-placeholder-count="2">
-            <sc-if value="{{ d.hecha }}" hint-placeholder-val="{{ false }}"><div style="flex:1;height:4px;border-radius:999px;background:#FAF3E4"></div></sc-if>
-            <sc-if value="{{ d.pendiente }}" hint-placeholder-val="{{ true }}"><div style="flex:1;height:4px;border-radius:999px;background:rgba(250,243,228,.22)"></div></sc-if>
+            <sc-if value="{{ d.hecha }}" hint-placeholder-val="{{ false }}"><div style="flex:1;height:4px;border-radius:999px;background:#E39C63"></div></sc-if>
+            <sc-if value="{{ d.pendiente }}" hint-placeholder-val="{{ true }}"><div style="flex:1;height:4px;border-radius:999px;background:rgba(250,243,228,.2)"></div></sc-if>
           </sc-for>
         </div>
         <div style="margin-top:8px;font:600 12px/1 'Inter Tight',sans-serif;color:#9CBBA6">{{ jContador }}</div>
