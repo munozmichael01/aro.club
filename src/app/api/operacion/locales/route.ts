@@ -35,6 +35,17 @@ const alta = z.object({
   nombre: z.string().min(1).max(120),
   zona: z.string().min(1),
   direccion: z.string().max(300).optional(),
+  /**
+   * A quién llamamos y en qué número. Van aquí desde el 16-10.
+   *
+   * Estaban solo en la ficha, y son dos de las cinco cosas que `loQueFalta`
+   * exige para poder ofrecer el local. O sea que el alta pedía siete datos y
+   * dejaba fuera justo dos de los que hacen falta: el local nacía incompleto
+   * por diseño y había que volver a entrar a terminarlo. Michael: «no
+   * entiendo por qué me carga primero una parte y el resto después».
+   */
+  contacto: z.string().trim().max(120).optional(),
+  telefono: z.string().trim().max(32).optional(),
   familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch'])).min(1),
   aforo: z.number().int().min(1).max(20),
   ruido: z.number().int().min(1).max(3),
@@ -82,7 +93,13 @@ const alta = z.object({
     .trim()
     .url()
     .max(500)
-    .refine((u) => /^https:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps)/i.test(u), {
+    /**
+     * Y `maps.google.com/?cid=…` TAMBIÉN vale, que es la forma en que lo
+     * devuelve Places (`googleMapsUri`). Sin esto, elegir un sitio del
+     * buscador rellenaba el campo con un enlace que esta misma ruta
+     * rechazaba: la pantalla no dejaba guardar y no se entendía por qué.
+     */
+    .refine((u) => /^https:\/\/((maps\.app\.)?goo\.gl\/maps|maps\.app\.goo\.gl|maps\.google\.[a-z.]+|(www\.)?google\.[a-z.]+\/maps)/i.test(u), {
       message: 'El enlace tiene que ser de Google Maps.',
     }),
 })
@@ -603,6 +620,8 @@ export async function POST(request: Request) {
       name: d.nombre.trim(),
       zone_slug: d.zona,
       address: d.direccion?.trim() || '',
+      ...(d.contacto ? { contact_name: d.contacto } : {}),
+      ...(d.telefono ? { contact_phone: d.telefono } : {}),
       max_tables: d.aforo,
       noise_level: d.ruido,
       ...(d.cocinas?.length ? { cuisines: [...new Set(d.cocinas)] } : {}),
@@ -614,8 +633,9 @@ export async function POST(request: Request) {
       // Si no se dicen, abre todos los días: es el default de la columna y es
       // lo que hacía hasta ahora. Decir «ninguno» sería peor que no saberlo.
       ...(d.dias?.length ? { open_days: [...new Set(d.dias)].sort() } : {}),
-      // Entra SIN activar, siempre. El alta pide cinco cosas y el resto se
-      // rellena luego; hasta que esté completo no se ofrece a ninguna fecha.
+      // Entra SIN activar, siempre. Ahora el alta puede pedirlo todo —con la
+      // foto, que sube después porque necesita este id—, pero activarlo es
+      // una decisión aparte y la toma quien mira la ficha.
       is_active: false,
     } as never)
     .select('id')

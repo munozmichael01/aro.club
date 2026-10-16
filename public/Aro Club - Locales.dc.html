@@ -299,6 +299,39 @@
         <p style="{{ bajada }}">Lo mínimo para poder ofrecerlo. Lo demás se rellena luego desde su ficha.</p>
 
         <div style="display:flex;flex-direction:column;gap:20px;margin-top:clamp(22px,3vw,30px)">
+
+          <!-- Buscarlo en Google ANTES de escribir nada: trae el nombre, la
+               dirección, el enlace del mapa y las coordenadas de una vez.
+               Lo de abajo queda para corregir o para un sitio que Google no
+               tenga. -->
+          <div style="border-radius:26px;background:#FAF3E4;padding:clamp(16px,2vw,20px)">
+            <label style="{{ etiquetaCampo }}" for="loc-busca">Búscalo en Google</label>
+            <div style="display:flex;flex-wrap:wrap;gap:9px">
+              <input id="loc-busca" type="text" value="{{ consultaAlta }}" onChange="{{ onConsultaAlta }}" onKeyDown="{{ onTeclaAlta }}" placeholder="Cardenal, Las Mercedes" style="{{ campoBusca }}" />
+              <button onClick="{{ buscarAlta }}" style="{{ botonBuscarAlta }}">{{ textoBuscarAlta }}</button>
+            </div>
+            <div style="{{ ayudaCampo }}">Escribe el nombre y la zona. De lo que elijas salen la dirección, el enlace del mapa y las coordenadas, que es lo que usa «Cómo llegar».</div>
+            <sc-if value="{{ hayCandidatosAlta }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+                <sc-for list="{{ candidatosAlta }}" as="c" hint-placeholder-count="3">
+                  <button onClick="{{ c.pick }}" style="{{ c.btn }}">
+                    <span style="display:block;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ c.nombre }}</span>
+                    <span style="display:block;font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ c.direccion }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ hayFalloAlta }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="border-radius:18px;background:rgba(110,52,15,.1);padding:12px 14px;margin-top:12px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#14342A">{{ falloAlta }}</div>
+            </sc-if>
+            <sc-if value="{{ haySitioAlta }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:10px;align-items:flex-start;border-radius:18px;background:rgba(27,81,56,.1);padding:12px 14px;margin-top:12px">
+                <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#1B5138;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">✓</span>
+                <span style="flex:1;min-width:0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#14342A;text-wrap:pretty">{{ sitioAlta }}</span>
+              </div>
+            </sc-if>
+          </div>
+
           <div>
             <label style="{{ etiquetaCampo }}" for="loc-nombre">Nombre</label>
             <input id="loc-nombre" type="text" value="{{ nombre }}" onChange="{{ onNombre }}" placeholder="Cardenal" style="{{ campo }}" />
@@ -369,6 +402,32 @@
             </div>
           </div>
 
+          <div>
+            <label style="{{ etiquetaCampo }}" for="loc-contacto">A quién llamamos</label>
+            <input id="loc-contacto" type="text" value="{{ contacto }}" onChange="{{ onContacto }}" placeholder="Nombre de la persona" style="{{ campo }}" />
+          </div>
+
+          <div>
+            <label style="{{ etiquetaCampo }}" for="loc-tel">Su teléfono</label>
+            <input id="loc-tel" type="tel" inputmode="tel" value="{{ telefono }}" onChange="{{ onTelefono }}" placeholder="+58 412 555 0134" style="{{ campo }}" />
+            <div style="{{ ayudaCampo }}">Es a quien se llama el día de la mesa. Sin contacto no se puede ofrecer el local.</div>
+          </div>
+
+          <div>
+            <div style="{{ etiquetaCampo }}">La foto de la entrada</div>
+            <sc-if value="{{ hayFotoAlta }}" hint-placeholder-val="{{ false }}">
+              <div style="width:min(420px,100%);background:#FFFBF0;padding:10px 10px 0;border-radius:14px;box-shadow:0 14px 34px -18px rgba(20,52,42,.4);margin-bottom:12px">
+                <img src="{{ fotoAltaUrl }}" alt="La entrada, encuadrada" style="display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px" />
+                <div style="font:400 13px/1.4 'Young Serif',Georgia,serif;color:#456352;text-align:center;padding:10px 10px 12px">así se va a ver</div>
+              </div>
+            </sc-if>
+            <label style="{{ botonFotoAlta }}">
+              {{ textoFotoAlta }}
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ elegirFotoAlta }}" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" />
+            </label>
+            <div style="{{ ayudaCampo }}">Sirve para reconocer la puerta de noche, no para enseñar el sitio. La encuadras tú al elegirla.</div>
+          </div>
+
           <sc-if value="{{ hayError }}" hint-placeholder-val="{{ false }}">
             <div role="alert" style="display:flex;gap:12px;align-items:flex-start;border-radius:20px;background:rgba(143,69,21,.1);padding:15px 17px">
               <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
@@ -380,11 +439,33 @@
             <button onClick="{{ guardar }}" aria-disabled="{{ inerte }}" style="{{ botonGuardar }}">{{ textoGuardar }}</button>
             <button onClick="{{ volver }}" style="{{ botonFantasma }}">Cancelar</button>
           </div>
-          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;max-width:52ch;text-wrap:pretty">Entra sin activar. Los precios, el contacto y la foto de la entrada se rellenan desde su ficha, y hasta que esté completo no se ofrece para ninguna fecha.</div>
+          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;max-width:52ch;text-wrap:pretty">Entra sin activar: activarlo es una decisión aparte, desde su ficha. Lo comercial —el menú cerrado, la comisión, el gasto medio— también se rellena ahí.</div>
         </div>
       </div>
     </sc-if>
   </div>
+
+  <!-- El encuadre de la foto. Encima de todo y con el marco 16:9 a la
+       vista: lo que se ve aquí es exactamente lo que se sube. -->
+  <sc-if value="{{ hayRecorte }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:90;background:rgba(20,52,42,.86);display:flex;align-items:center;justify-content:center;padding:clamp(14px,4vw,32px)">
+      <div style="width:min(620px,100%);background:#FFFBF0;border-radius:28px;padding:clamp(18px,2.4vw,24px)">
+        <div style="font:400 clamp(21px,2.4vw,26px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Encuadra la entrada</div>
+        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin:8px 0 14px;max-width:52ch;text-wrap:pretty">Arrastra para moverla y acerca con la rueda o el botón. Lo que quede dentro del marco es lo que se ve en el correo y en Mi mesa.</div>
+        <canvas id="aro-recorte" style="display:block;width:100%;border-radius:14px;background:#E8DFC6;cursor:grab;touch-action:none"></canvas>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px">
+          <button onClick="{{ alejarRecorte }}" aria-label="Alejar" style="{{ botonZoom }}">−</button>
+          <button onClick="{{ acercarRecorte }}" aria-label="Acercar" style="{{ botonZoom }}">+</button>
+          <span style="flex:1;min-width:120px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ notaZoom }}</span>
+          <button onClick="{{ cancelarRecorte }}" style="{{ botonFantasma }}">Cancelar</button>
+          <button onClick="{{ usarRecorte }}" style="{{ botonPrimarioChico }}">Usar esta</button>
+        </div>
+        <sc-if value="{{ hayRecorteFallo }}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="border-radius:18px;background:rgba(110,52,15,.1);padding:12px 14px;margin-top:12px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#14342A">{{ recorteFallo }}</div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
 </div>
 
 </x-dc>
@@ -394,13 +475,246 @@ class Component extends DCLogic {
     vista: 'lista', abierto: null, filtro: 0,
     datos: null, error: '', trabajando: false, borrador: {},
     nombre: '', direccion: '', mapa: '', zona: -1, formatos: [], aforo: -1, ruido: -1,
-    subiendoFoto: false, falloFoto: ''
+    contacto: '', telefono: '',
+    subiendoFoto: false, falloFoto: '',
+    // El buscador de sitio del alta: lo que se teclea, lo que devuelve
+    // Google y cuál se eligió.
+    consultaAlta: '', buscandoAlta: false, candidatosAlta: null, falloAlta: '',
+    // El encuadre de la foto. `destino` dice a dónde va al aceptarla: a la
+    // ficha —se sube ya— o al alta, donde espera a que exista el local.
+    recorte: null, recorteFallo: '',
+    // La foto ya encuadrada que espera al «Guardar» del alta.
+    fotoAltaUrl: ''
   };
 
   componentDidMount() {
     const h = (window.location.hash || '').replace('#', '');
     if (h === 'alta') this.setState({ vista: 'alta' });
     this.leer();
+  }
+
+  /**
+   * El encuadre de la foto de la entrada.
+   *
+   * Antes se subía el fichero tal cual y lo recortaba el navegador de quien
+   * la mirara: `object-fit:cover` sobre una tira ancha. O sea que el encuadre
+   * lo decidía un `object-position: center 40%` escrito a ojo, y la puerta
+   * —que es lo único que esa foto tiene que enseñar— se quedaba fuera según
+   * cómo viniera la foto. Michael lo pidió el 16-10: poder moverla y
+   * recortarla al subirla.
+   *
+   * Se recorta a 16:9 y se sube ya recortada, así que las tres superficies
+   * —la ficha, Mi mesa y el correo— enseñan LO MISMO, que es lo que se vio
+   * aquí al elegirlo. 1600 × 900 porque `/api/local/foto` la reduce a 1200 de
+   * ancho: subir más es pagar subida para tirarla.
+   */
+  ANCHO_RECORTE = 1600;
+  ALTO_RECORTE = 900;
+
+  abrirRecorte(archivo, destino) {
+    if (!archivo) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(archivo.type)) {
+      this.setState({ falloFoto: 'Tiene que ser JPG, PNG o WebP.' });
+      return;
+    }
+    const lector = new FileReader();
+    lector.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        this._imagen = img;
+        this._lienzoListo = false;
+        // Se empieza en el encuadre que cubre justo: la foto entera dentro
+        // del marco por su lado corto, centrada. Desde ahí solo se acerca.
+        this.setState({
+          recorte: { escala: 1, x: 0, y: 0, ancho: img.naturalWidth, alto: img.naturalHeight, destino },
+          recorteFallo: '', falloFoto: ''
+        });
+      };
+      img.onerror = () => this.setState({ falloFoto: 'No pudimos leer esa imagen.' });
+      img.src = lector.result;
+    };
+    lector.onerror = () => this.setState({ falloFoto: 'No pudimos leer esa imagen.' });
+    lector.readAsDataURL(archivo);
+  }
+
+  componentDidUpdate() {
+    if (!this.state.recorte || !this._imagen) { this._lienzoListo = false; return; }
+    const lienzo = document.getElementById('aro-recorte');
+    if (!lienzo) return;
+
+    if (!this._lienzoListo) {
+      this._lienzoListo = true;
+      /**
+       * Arrastrar con el ratón o con el dedo, y acercar con la rueda.
+       *
+       * Los eventos se enganchan a mano y no por `onMouseDown`: estas
+       * pantallas se sirven tal cual y el runtime solo pasa los manejadores
+       * que conoce. Con `setPointerCapture` el arrastre no se pierde al
+       * salirse del lienzo, que es lo que pasa justo cuando estás ajustando
+       * el borde.
+       */
+      let arrastrando = false; let desdeX = 0; let desdeY = 0;
+      lienzo.addEventListener('pointerdown', (e) => {
+        arrastrando = true; desdeX = e.clientX; desdeY = e.clientY;
+        try { lienzo.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+      lienzo.addEventListener('pointermove', (e) => {
+        if (!arrastrando) return;
+        const dx = e.clientX - desdeX; const dy = e.clientY - desdeY;
+        desdeX = e.clientX; desdeY = e.clientY;
+        this.moverRecorte(dx, dy);
+      });
+      const soltar = () => { arrastrando = false; };
+      lienzo.addEventListener('pointerup', soltar);
+      lienzo.addEventListener('pointercancel', soltar);
+      lienzo.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        this.acercarRecorte(e.deltaY < 0 ? 1.06 : 1 / 1.06);
+      }, { passive: false });
+    }
+
+    this.pintarRecorte();
+  }
+
+  /** Lo que mide el marco por dentro, en píxeles del lienzo. */
+  medidasRecorte(lienzo) {
+    const r = this.state.recorte;
+    const img = this._imagen;
+    // La escala mínima es la que CUBRE el marco: por debajo saldrían
+    // franjas vacías, y una foto con franjas no se puede usar.
+    const cubre = Math.max(lienzo.width / img.naturalWidth, lienzo.height / img.naturalHeight);
+    const escala = cubre * r.escala;
+    const ancho = img.naturalWidth * escala;
+    const alto = img.naturalHeight * escala;
+    // Y no se puede arrastrar más allá del borde: el hueco que queda es lo
+    // que sobra de la foto por cada lado.
+    const topeX = Math.max(0, (ancho - lienzo.width) / 2);
+    const topeY = Math.max(0, (alto - lienzo.height) / 2);
+    const x = Math.max(-topeX, Math.min(topeX, r.x));
+    const y = Math.max(-topeY, Math.min(topeY, r.y));
+    return { escala, ancho, alto, x, y };
+  }
+
+  moverRecorte(dx, dy) {
+    this.setState((st) => st.recorte
+      ? { recorte: Object.assign({}, st.recorte, { x: st.recorte.x + dx, y: st.recorte.y + dy }) }
+      : {});
+  }
+
+  acercarRecorte(factor) {
+    this.setState((st) => st.recorte
+      ? { recorte: Object.assign({}, st.recorte, { escala: Math.max(1, Math.min(5, st.recorte.escala * factor)) }) }
+      : {});
+  }
+
+  pintarRecorte() {
+    const lienzo = document.getElementById('aro-recorte');
+    const img = this._imagen;
+    if (!lienzo || !img) return;
+    // El lienzo se pinta a la resolución de la pantalla: en un retina, sin
+    // esto, la foto que se está encuadrando se ve peor que la de verdad.
+    const dpr = window.devicePixelRatio || 1;
+    const anchoCss = lienzo.clientWidth || 560;
+    const altoCss = Math.round(anchoCss * this.ALTO_RECORTE / this.ANCHO_RECORTE);
+    if (lienzo.width !== Math.round(anchoCss * dpr) || lienzo.height !== Math.round(altoCss * dpr)) {
+      lienzo.width = Math.round(anchoCss * dpr);
+      lienzo.height = Math.round(altoCss * dpr);
+      lienzo.style.height = altoCss + 'px';
+    }
+    const m = this.medidasRecorte(lienzo);
+    const ctx = lienzo.getContext('2d');
+    ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+    ctx.drawImage(img, (lienzo.width - m.ancho) / 2 + m.x, (lienzo.height - m.alto) / 2 + m.y, m.ancho, m.alto);
+  }
+
+  /** El recorte, ya en su tamaño final, como fichero. */
+  sacarRecorte() {
+    const lienzo = document.getElementById('aro-recorte');
+    const img = this._imagen;
+    if (!lienzo || !img) return Promise.resolve(null);
+    const m = this.medidasRecorte(lienzo);
+    const factor = this.ANCHO_RECORTE / lienzo.width;
+    const fuera = document.createElement('canvas');
+    fuera.width = this.ANCHO_RECORTE;
+    fuera.height = this.ALTO_RECORTE;
+    const ctx = fuera.getContext('2d');
+    ctx.drawImage(
+      img,
+      ((lienzo.width - m.ancho) / 2 + m.x) * factor,
+      ((lienzo.height - m.alto) / 2 + m.y) * factor,
+      m.ancho * factor,
+      m.alto * factor
+    );
+    return new Promise((listo) => fuera.toBlob((b) => listo(b), 'image/jpeg', 0.85));
+  }
+
+  usarRecorte() {
+    const destino = this.state.recorte && this.state.recorte.destino;
+    this.sacarRecorte().then((blob) => {
+      if (!blob) { this.setState({ recorteFallo: 'No pudimos recortarla. Inténtalo otra vez.' }); return; }
+      if (destino === 'alta') {
+        // En el alta todavía no hay local al que subirla: se guarda
+        // encuadrada y viaja con el «Guardar», que es cuando ya hay id.
+        if (this._fotoAltaUrl) URL.revokeObjectURL(this._fotoAltaUrl);
+        this._fotoAlta = blob;
+        this._fotoAltaUrl = URL.createObjectURL(blob);
+        this.setState({ recorte: null, fotoAltaUrl: this._fotoAltaUrl });
+        return;
+      }
+      const a = this.abierta();
+      if (!a) { this.setState({ recorte: null }); return; }
+      this.setState({ recorte: null, subiendoFoto: true, falloFoto: '' });
+      this.subirFotoDe(a.id, blob).then((fallo) => {
+        this.setState({ subiendoFoto: false, falloFoto: fallo || '' });
+        if (!fallo) this.leer();
+      });
+    });
+  }
+
+  /**
+   * Buscar el sitio en Google desde el alta.
+   *
+   * Misma acción que usa la ficha (`buscar`), que a su vez pega con
+   * `lib/places`: se busca por NOMBRE y no por dirección, porque «Calle
+   * Madrid CON avenida Principal» no la geocodifica nadie y así es como se
+   * escriben las direcciones en Caracas.
+   */
+  buscarParaElAlta() {
+    const q = (this.state.consultaAlta || '').trim();
+    if (!q || this.state.buscandoAlta) return;
+    this.setState({ buscandoAlta: true, falloAlta: '', candidatosAlta: null });
+    fetch('/api/operacion/locales', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accion: 'buscar', consulta: q })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) { this.setState({ buscandoAlta: false, falloAlta: (d && d.error) || 'No pudimos buscarlo.' }); return; }
+        const sitios = (d && d.sitios) || [];
+        this.setState({
+          buscandoAlta: false,
+          candidatosAlta: sitios,
+          falloAlta: sitios.length ? '' : 'Google no devuelve nada con eso. Prueba con el nombre y la zona.'
+        });
+      })
+      .catch(() => this.setState({ buscandoAlta: false, falloAlta: 'No pudimos buscarlo. Revisa tu conexión.' }));
+  }
+
+  /** El local abierto en la ficha, del último dato que mandó el servidor. */
+  abierta() {
+    const d = this.state.datos;
+    return ((d && d.locales) || []).filter((l) => l.id === this.state.abierto)[0] || null;
+  }
+
+  /** Subir la foto ya encuadrada. La usan la ficha y el alta. */
+  subirFotoDe(id, blob) {
+    const cuerpo = new FormData();
+    cuerpo.append('id', id);
+    cuerpo.append('archivo', new File([blob], 'entrada.jpg', { type: 'image/jpeg' }));
+    return fetch('/api/operacion/locales', { method: 'PUT', body: cuerpo })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => (ok ? null : ((d && d.error) || 'No pudimos subirla.')))
+      .catch(() => 'No pudimos subirla. Revisa tu conexión.');
   }
 
   leer() {
@@ -894,23 +1208,14 @@ class Component extends DCLogic {
       textoFoto: this.state.subiendoFoto ? 'Subiendo…' : (a.foto ? 'Cambiar la foto' : 'Subir la foto'),
       hayFalloFoto: !!this.state.falloFoto,
       falloFoto: this.state.falloFoto || '',
+      // Ya no sube el fichero tal cual: abre el encuadre. Lo que se sube es
+      // el recorte, y la subida la hace `usarRecorte`. Se vacía el `input`
+      // para que elegir OTRA VEZ la misma foto vuelva a abrirlo.
       subirFoto: (e) => {
         const archivo = e.target.files && e.target.files[0];
         if (!archivo || this.state.subiendoFoto) return;
-        this.setState({ subiendoFoto: true, falloFoto: '' });
-        const cuerpo = new FormData();
-        cuerpo.append('id', a.id);
-        cuerpo.append('archivo', archivo);
-        fetch('/api/operacion/locales', { method: 'PUT', body: cuerpo })
-          .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
-          .then(({ ok, d }) => {
-            if (!ok) { this.setState({ subiendoFoto: false, falloFoto: (d && d.error) || 'No pudimos subirla.' }); return; }
-            this.setState({ subiendoFoto: false, falloFoto: '' });
-            // Se relee la ficha entera: con la foto puesta puede haber dejado
-            // de faltar lo ultimo, y entonces el local ya se puede activar.
-            this.leer();
-          })
-          .catch(() => this.setState({ subiendoFoto: false, falloFoto: 'No pudimos subirla. Revisa tu conexión.' }));
+        this.abrirRecorte(archivo, 'ficha');
+        e.target.value = '';
       },
       historico: [
         [a.historico.mesas ? String(a.historico.mesas) : '—', 'mesas que mandamos'],
@@ -1005,7 +1310,9 @@ class Component extends DCLogic {
      * pintarlo.
      */
     const mapaTxt = String(this.state.mapa || '').trim();
-    const mapaOk = /^https:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps|(www\.)?google\.[a-z.]+\/maps)/i.test(mapaTxt);
+    // La MISMA lista que acepta la ruta, `maps.google.com/?cid=` incluido:
+    // es como devuelve el enlace el buscador de aquí arriba.
+    const mapaOk = /^https:\/\/((maps\.app\.)?goo\.gl\/maps|maps\.app\.goo\.gl|maps\.google\.[a-z.]+|(www\.)?google\.[a-z.]+\/maps)/i.test(mapaTxt);
 
     const listo = this.state.nombre.trim() && this.state.zona >= 0 && this.state.formatos.length > 0 && this.state.aforo > 0 && this.state.ruido > 0 && mapaOk;
 
@@ -1028,11 +1335,78 @@ class Component extends DCLogic {
       hayZonaSinSitio: sinCena.length > 0,
       avisoZonas: 'No hay sitio de cenas en ' + nombradas.join(', ') + (restantes > 0 ? ' ni en otras ' + restantes : '') + '. Una mesa que solo acepte esas zonas no se puede sentar.',
 
+      // ── el encuadre de la foto ──
+      hayRecorte: !!this.state.recorte,
+      acercarRecorte: () => this.acercarRecorte(1.2),
+      alejarRecorte: () => this.acercarRecorte(1 / 1.2),
+      cancelarRecorte: () => this.setState({ recorte: null, recorteFallo: '' }),
+      usarRecorte: () => this.usarRecorte(),
+      hayRecorteFallo: !!this.state.recorteFallo,
+      recorteFallo: this.state.recorteFallo,
+      botonZoom: 'display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:999px;border:1px solid rgba(20,52,42,.24);background:transparent;color:#14342A;font:600 20px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      notaZoom: this.state.recorte && this.state.recorte.escala > 1.02
+        ? 'Acercada ' + (Math.round(this.state.recorte.escala * 10) / 10) + '×'
+        : 'La foto entera, centrada.',
+
       volver: () => this.setState({ vista: 'lista', error: '' }),
       irAlta: () => this.setState({ vista: 'alta', error: '' }),
       alternarActivo: () => {
         if (!a) return;
         this.enviar('PATCH', { accion: 'activar', id: a.id, activo: !a.activo }).catch(() => {});
+      },
+
+      // ── buscar el sitio en Google, desde el alta ──
+      //
+      // La búsqueda ya existía, pero solo DENTRO de la ficha, o sea después
+      // de haber dado de alta el local. Y el alta exigía el enlace del mapa,
+      // así que para crear un local había que ir a Google Maps, buscarlo,
+      // copiar el enlace y volver; la búsqueda buena esperaba al otro lado.
+      // Michael, 16-10: «me haces buscarlo en Google Maps y luego me ofreces
+      // un campo para buscar que no llego a utilizar».
+      consultaAlta: this.state.consultaAlta,
+      onConsultaAlta: (e) => this.setState({ consultaAlta: e.target.value, falloAlta: '' }),
+      onTeclaAlta: (e) => { if (e.key === 'Enter') this.buscarParaElAlta(); },
+      buscarAlta: () => this.buscarParaElAlta(),
+      textoBuscarAlta: this.state.buscandoAlta ? 'Buscando…' : 'Buscar',
+      botonBuscarAlta: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:56px;padding:0 22px;border-radius:999px;border:none;background:#14342A;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      campoBusca: 'flex:1 1 260px;min-width:0;min-height:56px;padding:0 20px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:400 16px/1 \'Inter Tight\',sans-serif;outline:none',
+      hayCandidatosAlta: !!(this.state.candidatosAlta && this.state.candidatosAlta.length),
+      candidatosAlta: (this.state.candidatosAlta || []).map((c) => ({
+        nombre: c.nombre, direccion: c.direccion,
+        btn: 'width:100%;text-align:left;padding:13px 16px;border-radius:20px;border:1px solid rgba(20,52,42,.18);background:#FFFBF0;cursor:pointer',
+        // El sitio elegido rellena los tres campos de abajo Y se queda
+        // guardado: al crear el local se fija con su `place_id`, que es lo
+        // que trae las coordenadas buenas.
+        pick: () => {
+          this._sitioAlta = c;
+          this.setState({
+            nombre: this.state.nombre.trim() || c.nombre,
+            direccion: c.direccion || this.state.direccion,
+            mapa: c.mapa || this.state.mapa,
+            candidatosAlta: null, consultaAlta: '', error: ''
+          });
+        }
+      })),
+      hayFalloAlta: !!this.state.falloAlta,
+      falloAlta: this.state.falloAlta,
+      haySitioAlta: !!this._sitioAlta,
+      sitioAlta: this._sitioAlta
+        ? 'Google dice: ' + this._sitioAlta.nombre + ' · ' + this._sitioAlta.direccion
+        : '',
+
+      contacto: this.state.contacto,
+      telefono: this.state.telefono,
+      onContacto: (e) => this.setState({ contacto: e.target.value, error: '' }),
+      onTelefono: (e) => this.setState({ telefono: e.target.value, error: '' }),
+
+      hayFotoAlta: !!this.state.fotoAltaUrl,
+      fotoAltaUrl: this.state.fotoAltaUrl,
+      textoFotoAlta: this.state.fotoAltaUrl ? 'Cambiar la foto' : 'Elegir la foto',
+      botonFotoAlta: 'position:relative;display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      elegirFotoAlta: (e) => {
+        const archivo = e.target.files && e.target.files[0];
+        if (archivo) this.abrirRecorte(archivo, 'alta');
+        e.target.value = '';
       },
 
       nombre: this.state.nombre,
@@ -1062,18 +1436,64 @@ class Component extends DCLogic {
           this.setState({ error: 'Falta ' + falta + '. Sin eso no se puede ofrecer a ninguna mesa.' });
           return;
         }
+        /**
+         * Crear, y terminar de montarlo en la misma pasada.
+         *
+         * Tres llamadas y un solo botón: el alta crea el local, `fijar-sitio`
+         * le pone las coordenadas y el enlace bueno —preguntándole otra vez a
+         * Google por el `place_id`, que es lo que ya hacía la ficha— y la
+         * foto se sube cuando por fin hay id al que colgarla. Antes esto eran
+         * tres visitas a dos pantallas distintas.
+         *
+         * Si falla alguno de los dos últimos, el local YA EXISTE: se dice y
+         * se deja abierto en su ficha, que es donde se termina a mano. Lo que
+         * no se hace es borrarlo y perder lo que sí entró.
+         */
+        const sitio = this._sitioAlta;
+        const foto = this._fotoAlta;
         this.enviar('POST', {
           nombre: this.state.nombre,
           zona: ZONAS[this.state.zona].slug,
           direccion: this.state.direccion,
+          contacto: this.state.contacto,
+          telefono: this.state.telefono,
           mapa: mapaTxt,
           familias: this.state.formatos,
           aforo: this.state.aforo,
           ruido: this.state.ruido
         })
-          .then(() => this.setState({
-            vista: 'lista', nombre: '', direccion: '', mapa: '', zona: -1, formatos: [], aforo: -1, ruido: -1, error: ''
-          }))
+          .then((j) => {
+            const id = j && j.id;
+            if (!id) return null;
+            const pasos = [];
+            if (sitio && sitio.placeId) {
+              pasos.push(fetch('/api/operacion/locales', {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accion: 'fijar-sitio', id: id, placeId: sitio.placeId })
+              }).then((r) => (r.ok ? null : 'no pudimos fijar el sitio en el mapa')));
+            }
+            if (foto) pasos.push(this.subirFotoDe(id, foto).then((f) => (f ? 'no pudimos subir la foto' : null)));
+            return Promise.all(pasos).then((fallos) => ({ id, fallos: fallos.filter(Boolean) }));
+          })
+          .then((r) => {
+            if (this._fotoAltaUrl) URL.revokeObjectURL(this._fotoAltaUrl);
+            this._fotoAlta = null; this._fotoAltaUrl = ''; this._sitioAlta = null;
+            const limpio = {
+              nombre: '', direccion: '', mapa: '', zona: -1, formatos: [], aforo: -1, ruido: -1,
+              contacto: '', telefono: '', fotoAltaUrl: '', consultaAlta: '', candidatosAlta: null, falloAlta: ''
+            };
+            // Con todo bien, a la lista. Con algo a medias, a su ficha y
+            // diciendo qué quedó pendiente: el local existe igual.
+            if (r && r.fallos && r.fallos.length) {
+              this.setState(Object.assign({}, limpio, {
+                vista: 'ficha', abierto: r.id,
+                error: 'El local se creó, pero ' + r.fallos.join(' y ') + '. Termínalo aquí.'
+              }));
+              return;
+            }
+            this.setState(Object.assign({}, limpio, { vista: 'lista', error: '' }));
+            this.leer();
+          })
           .catch(() => {});
       }
     };
