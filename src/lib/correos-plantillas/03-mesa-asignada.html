@@ -148,19 +148,27 @@
        importa esta noche —el consumo va aparte— va en negrita y solo.
        Pedido por Michael el 16-10.
 
+       Sobre crema y no sobre el verde del cuerpo (Michael, 16-10): en gris
+       sobre verde se leía como parte del pie y se saltaba. El crema es el
+       MISMO de la tarjeta de arriba —#FAF3E4—, así que destaca sin inventar
+       un color nuevo, y el bloque sigue estando al final y en cuerpo
+       pequeño. El `bgcolor` va además en cada celda porque Outlook ignora el
+       `background` de la tabla, y sin él sería texto oscuro sobre verde.
+
        `{{ precio }}` y no la cifra escrita aquí: es el precio DE ESTA FECHA y
        sale de la base, como en los otros cuatro correos que lo nombran. El
        comprobador caza la cifra hasta dentro de un comentario, y hace bien:
        una copia escrita a mano es una copia aunque esté apagada. -->
   <tr><td class="p" style="padding:30px 40px 0 40px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td height="1" bgcolor="#3C5A48" style="height:1px;line-height:1px;font-size:0;">&nbsp;</td></tr></table>
-    <p style="margin:18px 0 0 0;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.4px;color:#9CBBA6;mso-line-height-rule:exactly;">RECUERDA</p>
-    <p style="margin:12px 0 0 0;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#9CBBA6;mso-line-height-rule:exactly;">
-      Los {{ precio }} de tu plaza cubren armar la mesa <span style="color:#C0662F;">·</span> la verificación de identidad de los seis <span style="color:#C0662F;">·</span> el sitio y la reserva a tu nombre.
-    </p>
-    <p style="margin:10px 0 0 0;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#C5D8CA;mso-line-height-rule:exactly;">
-      <strong style="color:#FAF3E4;">Tu consumo va aparte:</strong> lo pagas en el restaurante, como en cualquier salida.
-    </p>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#FAF3E4;border-radius:22px;">
+      <tr><td bgcolor="#FAF3E4" style="padding:20px 24px 9px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.4px;color:#8F4515;mso-line-height-rule:exactly;"><strong>RECUERDA</strong></td></tr>
+      <tr><td bgcolor="#FAF3E4" style="padding:0 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#33513F;mso-line-height-rule:exactly;">
+        Los {{ precio }} de tu plaza cubren armar la mesa <span style="color:#C0662F;">·</span> la verificación de identidad de los seis <span style="color:#C0662F;">·</span> el sitio y la reserva a tu nombre.
+      </td></tr>
+      <tr><td bgcolor="#FAF3E4" style="padding:10px 24px 20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#2C4A38;mso-line-height-rule:exactly;">
+        <strong style="color:#14342A;">Tu consumo va aparte:</strong> lo pagas en el restaurante, como en cualquier salida.
+      </td></tr>
+    </table>
   </td></tr>
 
   <tr><td class="p" style="padding:34px 40px 40px 40px;">
