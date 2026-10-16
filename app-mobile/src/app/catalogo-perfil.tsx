@@ -27,7 +27,11 @@ let avisos: Aviso[] = [
 function Pantalla() {
   const espera = () => new Promise((ok) => setTimeout(ok, 500))
   const servicio = useMemo((): ReturnType<typeof crearServicioPerfil> => ({
-    perfil: async () => ({ ok: true, datos: REAL }),
+    perfil: async () => ({ ok: true, datos: { ...REAL, base: { ...REAL.base, ciudad: 'valencia' } } }),
+    ciudades: async () => ({
+      ok: true,
+      datos: { ciudades: [{ slug: 'caracas', nombre: 'Caracas', abierta: true }, { slug: 'valencia', nombre: 'Valencia', abierta: false }, { slug: 'otra', nombre: 'Otra ciudad', abierta: false }] },
+    }),
     guardar: async () => (await espera(), { ok: false, error: 'Simulado: en el catálogo no se guarda nada.' }),
     avisos: async () => ({ ok: true, datos: { avisos, whatsappDesde: null } }),
     aviso: async (clave, valor) => {

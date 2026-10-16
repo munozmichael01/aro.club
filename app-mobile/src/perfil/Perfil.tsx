@@ -70,7 +70,13 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
       setWhatsappDesde(r.datos.whatsappDesde)
     }
   }, [servicio])
-  const todo = useCallback(() => Promise.all([leerPerfil(), leerExcl(), leerAvisos()]), [leerPerfil, leerExcl, leerAvisos])
+  // Las ciudades para «Tu ciudad»: sin la lista (sin red), la fila no sale.
+  const [ciudades, setCiudades] = useState<M.Ciudad[]>([])
+  const leerCiudades = useCallback(async () => {
+    const r = await servicio.ciudades()
+    if (r.ok) setCiudades(r.datos.ciudades ?? [])
+  }, [servicio])
+  const todo = useCallback(() => Promise.all([leerPerfil(), leerExcl(), leerAvisos(), leerCiudades()]), [leerPerfil, leerExcl, leerAvisos, leerCiudades])
 
   // Al entrar y al volver a la pestaña (una exclusión puesta en Mi mesa aparece aquí).
   useFocusEffect(
@@ -79,7 +85,7 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
     }, [todo]),
   )
 
-  const campos = d ? M.campos(d) : []
+  const campos = d ? M.campos(d, ciudades) : []
   const vals = d ? M.valores(d) : {}
 
   const abrir = (c: M.Campo) => {

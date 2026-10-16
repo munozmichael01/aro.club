@@ -9,8 +9,7 @@ import { Cabecera, FaseQuiz, FaseSinPreguntas, Progreso } from '../entrada/Fases
 import { inicial, reducir, type Estado } from '../entrada/maquina'
 import { zonaParaPregunta } from '../avisos/maquina'
 import { usePreguntaAvisos } from '../avisos/PreguntaAvisos'
-import { OtraCiudad } from './OtraCiudad'
-import type { Pregunta } from '../entrada/preguntas'
+import { preguntaCiudad, type Pregunta } from '../entrada/preguntas'
 import { reglas } from '../reglas'
 import { cuenta as TC } from '../texto/datos'
 import { inicio as TE } from '../texto/entrar'
@@ -57,8 +56,7 @@ export function Puerta(p: {
   const [fase, setFase] = useState<Fase>('quiz')
   const [e, despachar] = useReducer(reducir, undefined, () => ({ ...inicial(), fase: 'quiz' }) as Estado)
   const [nac, setNac] = useState(M.vacio().nacimiento)
-  // Fuera de Caracas: su ciudad y la lista de `/api/ciudades`.
-  const [ciudad, setCiudad] = useState<string | undefined>(undefined)
+  // La lista de `/api/ciudades`. La ciudad elegida es la respuesta de la primera pregunta (`e.respuestas.ciudad`).
   const [ciudades, setCiudades] = useState<M.Ciudad[]>([])
   const [destinoFuera, setDestinoFuera] = useState('/cuenta')
   const [correo, setCorreo] = useState('')
@@ -74,24 +72,29 @@ export function Puerta(p: {
     setPreguntas(undefined)
     const [q, s, b, cs] = await Promise.all([p.preguntas(), p.haySesion(), AsyncStorage.getItem(M.CLAVE_BORRADOR).catch(() => null), servicio.ciudades()])
     setConSesion(s)
-    // Sin la lista (sin red), el enlace no sale: mejor que una lista vieja.
-    if (cs.ok) setCiudades(cs.datos.ciudades ?? [])
+    // La ciudad va primero (`reglas.pasosDePuerta`). Sin la lista (sin red) no
+    // sale: mejor que una lista vieja, y quien no la contesta cuenta en Caracas.
+    const lista = cs.ok ? cs.datos.ciudades ?? [] : []
+    setCiudades(lista)
+    const pc = preguntaCiudad(reglas.PUERTA, lista)
+    const todas = q && pc ? [pc, ...q] : q
     // El borrador, una sola vez: lo que se respondió antes de cerrar la app.
     if (b && !recuperado.current) {
       recuperado.current = true
       try {
         const x = JSON.parse(b) as M.Borrador
-        for (const [clave, valores] of Object.entries(x.respuestas ?? {})) {
-          const pq = q?.find((y) => y.clave === clave)
+        // Un borrador de antes del 15-10 guardaba la ciudad aparte.
+        const resp = { ...(x.ciudad && !x.respuestas?.ciudad ? { ciudad: [x.ciudad] } : {}), ...(x.respuestas ?? {}) }
+        for (const [clave, valores] of Object.entries(resp)) {
+          const pq = todas?.find((y) => y.clave === clave)
           if (pq) for (const v of valores) despachar({ tipo: 'marcar', pregunta: pq, valor: v })
         }
         if (x.nacimiento) setNac(x.nacimiento)
-        if (x.ciudad) setCiudad(x.ciudad)
       } catch {
         /* borrador ilegible: se empieza de cero */
       }
     }
-    setPreguntas(q)
+    setPreguntas(todas)
   }, [p])
 
   useEffect(() => {
@@ -102,7 +105,10 @@ export function Puerta(p: {
   // El nombre de su zona para la pregunta de los avisos, de las opciones que ya tiene la pantalla.
   const pZonas = preguntas?.find((q) => q.clave === 'zonas')
   const misZonas = (e.respuestas.zonas as string[] | undefined) ?? []
-  const borradorFuera = M.esFuera({ respuestas: {}, nacimiento: nac, ciudad })
+  const ciudad = (e.respuestas.ciudad as string[] | undefined)?.[0]
+  const borradorFuera = M.esFuera({ respuestas: {}, nacimiento: nac, ciudad }, ciudades)
+  // En una ciudad cerrada la puerta termina en la ciudad: los pasos que cuentan.
+  const totalPasos = preguntas ? (borradorFuera ? 1 : preguntas.length) : 0
   const nombreCiudad = M.nombreDeCiudad(ciudades, ciudad)
   // Fuera de Caracas, la pregunta de los avisos nombra su ciudad: «¿Te avisamos cuando abramos fecha en Valencia?».
   const zona = borradorFuera
@@ -121,13 +127,13 @@ export function Puerta(p: {
   const guardarYSeguir = async () => {
     setFase('guardando')
     setAviso('')
-    const r = await servicio.guardar(M.envios(borrador, hoy), T.guardando.fallo)
+    const r = await servicio.guardar(M.envios(borrador, hoy, ciudades), T.guardando.fallo)
     if (!r.ok) {
       setAviso(r.error)
       return setFase('fallo')
     }
-    // Su ciudad, si no es Caracas. Solo la ciudad: nada de zonas de una ciudad cerrada.
-    if (M.esFuera(borrador) && ciudad) {
+    // Su ciudad, la que sea: desde el 14-10 una fecha solo se avisa a quien está en su ciudad.
+    if (ciudad) {
       const c = await servicio.ponerCiudad(ciudad, T.fuera.noGuardada)
       if (!c.ok) {
         setAviso(c.error)
@@ -142,7 +148,7 @@ export function Puerta(p: {
     await preguntar('alta')
     const destino = M.destinoDeEstado(est.ok ? est.datos.estado : null)
     // Fuera de Caracas, antes de seguir: «Anotado. Eres de los primeros de…», como en la landing.
-    if (M.esFuera(borrador)) {
+    if (M.esFuera(borrador, ciudades)) {
       setDestinoFuera(destino)
       return setFase('fuera')
     }
@@ -192,26 +198,24 @@ export function Puerta(p: {
       <FaseQuiz
         estado={e}
         pregunta={preguntas[e.paso]}
-        total={preguntas.length}
+        total={totalPasos}
         guardando={false}
         pasosDespues={1}
         pie={
-          preguntas[e.paso]?.clave === 'zonas' ? (
-            <OtraCiudad
-              ciudades={M.otrasCiudades(ciudades)}
-              alSeguir={(slug) => {
-                setCiudad(slug)
-                setFase('nacimiento')
-              }}
-            />
+          // Una ciudad cerrada: la frase de `reglas.js`, igual que la web, y la puerta termina aquí.
+          preguntas[e.paso]?.clave === 'ciudad' && ciudad && borradorFuera ? (
+            <View style={estilos.cerrada} accessibilityLiveRegion="polite">
+              <Texto variante="subtitulo" tono="crema">
+                {reglas.CIUDAD_CERRADA(ciudades.find((c) => c.slug === ciudad)?.nombre, ciudad).titulo}
+              </Texto>
+              <Texto variante="cuerpoChico" tono="sobreVerdeSecundario" style={{ marginTop: 6 }}>
+                {reglas.CIUDAD_CERRADA(ciudades.find((c) => c.slug === ciudad)?.nombre, ciudad).bajada}
+              </Texto>
+            </View>
           ) : null
         }
-        onMarcar={(valor) => {
-          // Quien marca una zona de Caracas vive en Caracas.
-          if (preguntas[e.paso]?.clave === 'zonas') setCiudad(undefined)
-          despachar({ tipo: 'marcar', pregunta: preguntas[e.paso], valor })
-        }}
-        onSiguiente={() => (e.paso >= preguntas.length - 1 ? setFase('nacimiento') : despachar({ tipo: 'siguiente', total: preguntas.length }))}
+        onMarcar={(valor) => despachar({ tipo: 'marcar', pregunta: preguntas[e.paso], valor })}
+        onSiguiente={() => (e.paso >= totalPasos - 1 ? setFase('nacimiento') : despachar({ tipo: 'siguiente', total: preguntas.length }))}
         onAtras={() => despachar({ tipo: 'atras' })}
       />
     ) : (
@@ -222,7 +226,7 @@ export function Puerta(p: {
     const nota = est === 'menor' ? T.nacimiento.menor : est === 'rara' ? T.nacimiento.rara : null
     cuerpo = (
       <View>
-        {preguntas ? <Progreso paso={preguntas.length} total={preguntas.length + 1} /> : null}
+        {preguntas ? <Progreso paso={totalPasos} total={totalPasos + 1} /> : null}
         <Texto variante="display" tono="crema" accessibilityRole="header" style={{ marginBottom: 12 }}>
           {T.titulos.nacimiento}
         </Texto>
@@ -395,6 +399,8 @@ export function Puerta(p: {
 }
 
 const estilos = StyleSheet.create({
+  /** La tarjeta de «Valencia todavía no.», como la de la web. */
+  cerrada: { marginTop: 18, borderRadius: 18, borderWidth: 1, borderColor: cremaAlfa(0.24), paddingVertical: 16, paddingHorizontal: 20 },
   pagina: { paddingHorizontal: 16, maxWidth: 640, width: '100%', alignSelf: 'center' },
   acciones: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginTop: 28 },
   separador: { flexDirection: 'row', alignItems: 'center', gap: 14, marginVertical: 22 },

@@ -30,7 +30,7 @@ export type DeServidor = {
   creditos: number
   correo: string
   contacto: string
-  base: { nombre: string; trato: string; nacimiento: string; genero: string | null; telefono: string }
+  base: { nombre: string; trato: string; nacimiento: string; genero: string | null; telefono: string; /** El slug de `cities` (15-10). */ ciudad?: string }
   preguntas: PreguntaPerfil[]
   historial: { cuando: string; formato: string; sitio: string | null; numeroMesa: number | null; mesaUnica?: boolean; estado: string; zonaHoraria?: string | null }[]
 }
@@ -75,9 +75,36 @@ function campoBase(clave: (typeof BASE_CLAVES)[number]): Campo {
 
 const tipoDe = (t: string): Tipo => (t === 'multi' ? 'multi' : t === 'text' ? 'texto' : t === 'date' ? 'fecha' : 'unica')
 
+export type Ciudad = { slug: string; nombre: string; abierta: boolean }
+
+/**
+ * «Tu ciudad» (15-10, como la web): decide qué mesas se le ofrecen, porque
+ * una fecha solo se avisa a quien está en su ciudad. Si la suya aún no abre,
+ * la ayuda lo dice con la frase de `reglas.js`. Sin la lista, no hay fila.
+ */
+function campoCiudad(ciudades: Ciudad[], suya: string | undefined): Campo | null {
+  if (!ciudades.length) return null
+  const c = ciudades.find((x) => x.slug === suya)
+  const cerrada = c ? !c.abierta : false
+  const aviso = cerrada && suya ? ` ${reglas.CIUDAD_CERRADA(c?.nombre, suya).titulo} ${reglas.CIUDAD_CERRADA(c?.nombre, suya).bajada}` : ''
+  return {
+    clave: 'ciudad',
+    seccion: 0,
+    etiqueta: T.BASE.ciudad.etiqueta,
+    ayuda: T.BASE.ciudad.ayuda + aviso,
+    tipo: 'unica',
+    opciones: ciudades.map((x) => [x.nombre, x.slug]),
+    min: null,
+    max: null,
+    exclusiva: null,
+  }
+}
+
 /** Los campos, en su sección. Una pregunta del catálogo con la clave de un dato base (nacimiento, género) se queda en el base. */
-export function campos(d: DeServidor): Campo[] {
+export function campos(d: DeServidor, ciudades: Ciudad[] = []): Campo[] {
   const lista = BASE_CLAVES.map(campoBase)
+  const ciudad = campoCiudad(ciudades, d.base.ciudad)
+  if (ciudad) lista.push(ciudad)
   for (const q of d.preguntas ?? []) {
     if ((BASE_CLAVES as readonly string[]).includes(q.clave)) continue
     lista.push({
@@ -102,6 +129,7 @@ export function valores(d: DeServidor): Record<string, Valor> {
     nacimiento: d.base.nacimiento || '',
     telefono: d.base.telefono || '',
     genero: d.base.genero,
+    ciudad: d.base.ciudad || null,
   }
   for (const q of d.preguntas ?? []) if (!(q.clave in v)) v[q.clave] = q.valor
   return v

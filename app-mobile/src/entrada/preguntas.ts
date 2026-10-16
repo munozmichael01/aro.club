@@ -40,6 +40,26 @@ export type Pregunta = {
 export type Zona = { slug: string; nombre: string }
 
 /**
+ * La pregunta de la ciudad (15-10), la primera de la puerta. Sus opciones son
+ * las de `/api/ciudades`, como las zonas. `null` sin ciudades (sin red): la
+ * puerta sigue sin ella, y quien no la contesta se cuenta en Caracas.
+ */
+export function preguntaCiudad(puerta: Record<string, PreguntaPuerta>, ciudades: { slug: string; nombre: string }[]): Pregunta | null {
+  const p = puerta.ciudad
+  if (!p || !ciudades.length) return null
+  return {
+    clave: 'ciudad',
+    etiqueta: p.etiqueta,
+    enunciado: p.pregunta,
+    ayuda: p.ayuda ?? null,
+    unica: true,
+    opciones: ciudades.map((c) => ({ valor: c.slug, label: c.nombre })),
+    min: 1,
+    max: 1,
+  }
+}
+
+/**
  * De `PUERTA` y las zonas activas a las preguntas, en el orden de
  * `ORDEN_PUERTA`. `null` si falta alguna, trae un tipo que la app no sabe
  * pintar o se queda sin opciones: mejor no enseñar la pregunta que enseñar

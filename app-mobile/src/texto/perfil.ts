@@ -45,6 +45,8 @@ export const BASE = {
     ] as [string, string][],
   },
   telefono: { etiqueta: 'Teléfono', ayuda: 'Solo lo usamos el día del encuentro, por WhatsApp. No lo ve nadie de tu mesa.' },
+  /** La misma fila que la web (15-10). */
+  ciudad: { etiqueta: 'Tu ciudad', ayuda: 'Es la que decide qué mesas te ofrecemos.' },
 }
 
 /** Las secciones, en el orden del cuestionario: la 0 son los datos base; la 1-5, sus pantallas. */

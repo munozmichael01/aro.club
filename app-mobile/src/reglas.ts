@@ -59,6 +59,10 @@ type Api = {
   /** Las cuatro preguntas de la puerta, UN sitio para web y app. Opciones como [texto, código]. */
   PUERTA: Record<string, PreguntaPuerta>
   ORDEN_PUERTA: string[]
+  /** La puerta entera: la ciudad y, si está abierta, las cuatro (15-10). `abierta` indefinido: aún no lo dijo. */
+  pasosDePuerta: (abierta?: boolean) => string[]
+  /** Lo que se le dice a quien vive donde todavía no abrimos. */
+  CIUDAD_CERRADA: (nombre: string | null | undefined, slug: string) => { titulo: string; bajada: string }
   /** Mesa o grupo según el formato: «Mi mesa» / «Mi grupo», y el resto del vocabulario. */
   /** Los bancos de Venezuela, por código: se guarda el código, que es lo que sale en el movimiento. */
   BANCOS: { codigo: string; nombre: string }[]

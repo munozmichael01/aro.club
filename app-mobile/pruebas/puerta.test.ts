@@ -36,13 +36,21 @@ test('después, a donde diga el embudo', () => {
   assert.equal(M.destinoDeEstado(null), '/cuenta')
 })
 
-test('fuera de Caracas: solo la ciudad, ni zonas ni lo demás de la puerta', () => {
+test('en una ciudad cerrada la puerta termina en la ciudad: no se manda nada de la puerta', async () => {
   const b = { ...M.vacio(), respuestas: { arraigo: ['volvio'], zonas: ['chacao'], dias: ['sabado-noche'], temas: ['viajes'] }, ciudad: 'valencia' }
-  assert.ok(M.esFuera(b))
-  assert.deepEqual(M.envios(b, new Date('2026-10-07T12:00:00Z')).map((e) => e.clave), ['arraigo'])
-  assert.ok(!M.esFuera({ ...b, ciudad: 'caracas' }))
   const cs = [{ slug: 'caracas', nombre: 'Caracas', abierta: true }, { slug: 'valencia', nombre: 'Valencia', abierta: false }, { slug: 'otra', nombre: 'Otra ciudad', abierta: false }]
-  assert.deepEqual(M.otrasCiudades(cs).map((c) => c.slug), ['valencia', 'otra'])
+  assert.ok(M.esFuera(b, cs))
+  assert.deepEqual(M.envios(b, new Date('2026-10-07T12:00:00Z'), cs).map((e) => e.clave), [])
+  assert.ok(!M.esFuera({ ...b, ciudad: 'caracas' }, cs))
+  // Lo que decide es si está abierta, no el nombre: el día que abra Valencia, sigue la puerta.
+  assert.ok(!M.esFuera(b, cs.map((c) => (c.slug === 'valencia' ? { ...c, abierta: true } : c))))
+  // La pregunta de la ciudad, con las de /api/ciudades, y la frase de reglas.js.
+  const { preguntaCiudad } = await import('../src/entrada/preguntas')
+  const { reglas } = await import('../src/reglas')
+  assert.deepEqual(preguntaCiudad(reglas.PUERTA, cs)?.opciones.map((o) => o.valor), ['caracas', 'valencia', 'otra'])
+  assert.equal(preguntaCiudad(reglas.PUERTA, []), null)
+  assert.deepEqual(reglas.pasosDePuerta(false), ['ciudad'])
+  assert.equal(reglas.CIUDAD_CERRADA('Valencia', 'valencia').titulo, 'Valencia todavía no.')
   assert.equal(M.nombreDeCiudad(cs, 'valencia'), 'Valencia')
   assert.equal(M.nombreDeCiudad(cs, 'otra'), 'tu ciudad')
 })

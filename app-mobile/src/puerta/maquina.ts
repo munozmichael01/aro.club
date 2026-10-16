@@ -22,11 +22,16 @@ export type Borrador = {
 
 export type Ciudad = { slug: string; nombre: string; abierta: boolean }
 
-/** Vive en una ciudad que todavía no abre: se salta lo que solo sirve en Caracas. */
-export const esFuera = (b: Borrador) => !!b.ciudad && b.ciudad !== 'caracas'
-
-/** Las que se ofrecen en «¿No vives en Caracas?»: todas menos Caracas, en el orden de la tabla. */
-export const otrasCiudades = (cs: Ciudad[]) => cs.filter((c) => c.slug !== 'caracas')
+/**
+ * Vive en una ciudad que todavía no abre: la puerta termina en la ciudad y se
+ * salta lo demás (`reglas.pasosDePuerta`). Con la lista de `/api/ciudades` se
+ * mira su `abierta`; sin ella, solo Caracas cuenta como abierta.
+ */
+export function esFuera(b: Borrador, ciudades?: Ciudad[]): boolean {
+  if (!b.ciudad) return false
+  const c = ciudades?.find((x) => x.slug === b.ciudad)
+  return c ? !c.abierta : b.ciudad !== 'caracas'
+}
 
 /** «Valencia», o «tu ciudad» para «Otra ciudad». */
 export const nombreDeCiudad = (cs: Ciudad[], slug: string | undefined) =>
@@ -58,12 +63,15 @@ export function estadoFecha(b: Borrador, hoy: Date): EstadoFecha {
  * una sola (va suelto), las otras tres son listas; y el nacimiento, que el
  * servidor además copia a `profiles.birthdate`.
  */
-export function envios(b: Borrador, hoy: Date): { clave: string; valor: string | string[] }[] {
+export function envios(b: Borrador, hoy: Date, ciudades?: Ciudad[]): { clave: string; valor: string | string[] }[] {
   const r = b.respuestas
   const lista: { clave: string; valor: string | string[] }[] = []
-  if (r.arraigo?.[0]) lista.push({ clave: 'arraigo', valor: r.arraigo[0] })
-  // Fuera de Caracas: ni zonas ni lo demás de la puerta, que es de Caracas.
-  if (!esFuera(b)) for (const k of ['zonas', 'dias', 'temas']) if (r[k]?.length) lista.push({ clave: k, valor: r[k] })
+  // En una ciudad cerrada la puerta termina en la ciudad (`reglas.pasosDePuerta`):
+  // ni arraigo, ni zonas, ni lo demás, aunque quedara algo de un borrador.
+  if (!esFuera(b, ciudades)) {
+    if (r.arraigo?.[0]) lista.push({ clave: 'arraigo', valor: r.arraigo[0] })
+    for (const k of ['zonas', 'dias', 'temas']) if (r[k]?.length) lista.push({ clave: k, valor: r[k] })
+  }
   const n = nacimientoISO(b, hoy)
   if (n) lista.push({ clave: 'nacimiento', valor: n })
   return lista

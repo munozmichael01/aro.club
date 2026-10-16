@@ -38,6 +38,8 @@ export type Exclusion = { id: string; nombre: string; porQue: string; sePuedeQui
 export function crearServicioPerfil(api: Api) {
   return {
     perfil: () => intentar<DeServidor>(() => api.pedir('/mi-perfil'), T.sinRespuesta.cargar),
+    /** Las ciudades de la tabla `cities`, para la fila «Tu ciudad» (15-10). */
+    ciudades: () => intentar<{ ciudades: { slug: string; nombre: string; abierta: boolean }[] }>(() => api.pedir('/ciudades'), ''),
     guardar: (clave: string, valor: Valor) => intentar<{ ok?: boolean }>(() => api.pedir('/mi-perfil', con('POST', { clave, valor })), T.campo.noGuardado),
     avisos: () => intentar<{ avisos: Aviso[]; whatsappDesde: string | null }>(() => api.pedir('/mis-avisos'), T.avisos.noGuardado),
     aviso: (clave: string, valor: boolean) => intentar<{ estado: string }>(() => api.pedir('/mis-avisos', con('POST', { [clave]: valor })), T.avisos.noGuardado),
