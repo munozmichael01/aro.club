@@ -553,7 +553,10 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     // hace horas que pasó.
     case 'encuesta_despues': {
       const mesa = fila.event_id ? await laMesaDe(admin, fila.event_id, fila.profile_id) : null
-      return { a, datos: { ...base, sitio: mesa?.sitio ?? '' } }
+      // Con cuántos cenó de verdad: decía «cinco personas» siempre, y una
+      // mesa puede salir de cinco. Sin mesa que leer, una frase que vale
+      // para cualquier número antes que un número inventado.
+      return { a, datos: { ...base, sitio: mesa?.sitio ?? '', otros: mesa?.otros ?? 'el resto de la mesa' } }
     }
 
     /**
@@ -1504,6 +1507,21 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
       const nombre = quien?.display_name || quien?.full_name?.split(' ')[0] || '—'
       return { nombre, inicial: nombre.charAt(0), sector: sector.get(o.profile_id) ?? '' }
     }),
+    /**
+     * Cuántos son los OTROS, en letra. Casi siempre cinco. Casi.
+     *
+     * Una mesa puede salir de cinco: alguien cancela dentro de las 24 horas y
+     * no queda nadie en espera que encaje, y la mesa se publica así a
+     * propósito —rehacerla movería a cinco personas que ya leyeron con quién
+     * cenan—. Esta misma noche hay dos.
+     *
+     * El correo listaba a los cuatro que había y la línea de vista previa
+     * seguía diciendo «con cinco personas», que es lo primero que se lee en
+     * la bandeja, antes de abrir. Y la encuesta del día siguiente lo repetía.
+     * Contarlo mal en la frase y bien en la lista es peor que no contarlo:
+     * obliga a contar los nombres para ver cuál de las dos es la verdad.
+     */
+    otros: `${EN_LETRA[(otros ?? []).length] ?? (otros ?? []).length} personas`,
   }
 }
 

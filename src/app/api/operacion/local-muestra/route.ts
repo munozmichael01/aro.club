@@ -107,6 +107,9 @@ export async function GET(request: Request) {
     mesaUnica: false,
     comoLlegar: `${voz.el} ${voz.unidad} de Aro, ${voz.el} 03`,
     gente: COMENSALES.map((c) => ({ ...c, inicial: c.nombre.charAt(0) })),
+    // Cuántos son, en letra, como en el correo de verdad: la línea de vista
+    // previa lo dice y una mesa puede salir de cinco.
+    otros: `${['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco'][COMENSALES.length] ?? COMENSALES.length} personas`,
     trato: 'Daniel',
     ciudad: 'Caracas',
     cuando: `${DIAS[dia.getUTCDay()]} ${dia.getUTCDate()} de ${MESES[dia.getUTCMonth()]}`,
