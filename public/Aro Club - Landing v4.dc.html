@@ -677,14 +677,16 @@
 
       <sc-if value="{{ esQuiz }}" hint-placeholder-val="{{ false }}">
         <div style="max-width:780px">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(24px,3vw,36px)">
-            <div style="display:flex;gap:6px">
-              <sc-for list="{{ progreso }}" as="p" hint-placeholder-count="4">
-                <span style="{{ p.punto }}"></span>
-              </sc-for>
+          <sc-if value="{{ hayProgreso }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(24px,3vw,36px)">
+              <div style="display:flex;gap:6px">
+                <sc-for list="{{ progreso }}" as="p" hint-placeholder-count="5">
+                  <span style="{{ p.punto }}"></span>
+                </sc-for>
+              </div>
+              <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#9CBBA6">{{ textoProgreso }}</span>
             </div>
-            <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#9CBBA6">{{ textoProgreso }}</span>
-          </div>
+          </sc-if>
 
           <div style="animation:aro-open 420ms ease both">
             <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#E39C63;margin-bottom:16px">{{ quizEtiqueta }}</div>
@@ -699,6 +701,13 @@
                 </button>
               </sc-for>
             </div>
+
+            <sc-if value="{{ hayQuizNota }}" hint-placeholder-val="{{ false }}">
+              <div style="{{ notaCaja }}">
+                <span style="{{ notaTitulo }}">{{ quizNotaTitulo }}</span>
+                <span style="{{ notaCuerpo }}">{{ quizNotaBajada }}</span>
+              </div>
+            </sc-if>
 
             <sc-if value="{{ hayFalloQuiz }}" hint-placeholder-val="{{ false }}">
               <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(227,156,99,.16);padding:13px 15px;margin-top:22px;max-width:44ch">
@@ -719,7 +728,7 @@
 
       <sc-if value="{{ esFinal }}" hint-placeholder-val="{{ false }}">
         <div style="max-width:680px;animation:aro-open 520ms ease both">
-          <div style="display:inline-flex;align-items:center;gap:9px;font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#14342A;background:#FAF3E4;border-radius:999px;padding:12px 18px;margin-bottom:24px">TIENES PUESTO</div>
+          <div style="display:inline-flex;align-items:center;gap:9px;font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#14342A;background:#FAF3E4;border-radius:999px;padding:12px 18px;margin-bottom:24px">{{ textoChipFinal }}</div>
           <h2 style="font:400 clamp(36px,6vw,80px)/0.98 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0 0 18px;max-width:15ch;text-wrap:balance">{{ tituloFinal }}</h2>
           <p style="font:400 clamp(16px,1.4vw,20px)/1.55 'Inter Tight',sans-serif;color:#C5D8CA;margin:0 0 28px;max-width:46ch;text-wrap:pretty">{{ resumenFinal }}</p>
           <sc-if value="{{ hayPendientes }}" hint-placeholder-val="{{ true }}">
@@ -789,7 +798,7 @@
 class Component extends DCLogic {
   state = {
     faq: -1, fase: 'correo', correo: '', error: '', ahora: Date.now(),
-    paso: 0, arraigo: -1, zonas: [], planes: [], temas: [], ciudad: -1, guardandoQuiz: false, falloQuiz: '',
+    paso: 0, arraigo: -1, zonas: [], planes: [], temas: [], ciudadSlug: '', guardandoQuiz: false, falloQuiz: '',
     ciudadGuardando: false, ciudadGuardada: false, ciudadFallo: '',
     sesion: null, sesionSabida: false
   };
@@ -820,16 +829,20 @@ class Component extends DCLogic {
       })
       .catch(() => { /* se quedan las de arriba: nadie deja de poder contestar */ });
 
-    // Las ciudades, de la tabla `cities`. Caracas se cae de la lista: esta
-    // pregunta solo sale después de decir que NO se vive aquí, así que
-    // ofrecerla sería ofrecer lo contrario de lo que acaba de decir.
+    // Las ciudades, de la tabla `cities`. TODAS, Caracas incluida: desde el
+    // 15-10 la primera pregunta de la puerta es en cuál estás, y ahí
+    // Caracas tiene que poder elegirse. El recuadro de abajo —«¿No vives en
+    // Caracas?»— es el que la quita, porque ahí sí sobra.
+    //
+    // `abierta` viaja con cada una y en el mismo paso que el nombre: es lo
+    // que decide si después se piden las zonas o si la puerta termina ahí.
     fetch('/api/ciudades')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin ciudades'))))
       .then((d) => {
         if (!d.ciudades || !d.ciudades.length) return;
-        const otras = d.ciudades.filter((c) => c.slug !== 'caracas');
-        if (!otras.length) return;
-        this.CIUDADES = otras.map((c) => [c.nombre, c.slug]);
+        this.CIUDADES = d.ciudades.map((c) => [c.nombre, c.slug]);
+        this.ABIERTAS = {};
+        d.ciudades.forEach((c) => { this.ABIERTAS[c.slug] = !!c.abierta; });
         this.forceUpdate();
       })
       .catch(() => { /* se queda el respaldo de arriba */ });
@@ -938,7 +951,14 @@ class Component extends DCLogic {
     return hh + ' h ' + mm + ' min';
   }
 
-  esFuera() { return this.state.ciudad >= 0 && this.state.zonas.length === 0; }
+  /**
+   * Quien no entra por ahora: eligió una ciudad que no está abierta.
+   *
+   * Era «eligió ciudad y no marcó ninguna zona de Caracas», que es lo que
+   * se podía deducir cuando la ciudad se preguntaba DEBAJO de las zonas y
+   * de pasada. Ahora se pregunta, así que no hay nada que deducir.
+   */
+  esFuera() { return this.ciudadCerrada(); }
 
   // La v4 no miraba si hay sesion: un miembro que aterrizara aqui veia
   // "Entrar" y "Empezar" y no tenia vuelta a su cuenta. Desde dentro eso no
@@ -964,9 +984,32 @@ class Component extends DCLogic {
    * `cities`, y se reescriben nombre y slug A LA VEZ, igual que las zonas:
    * así el orden que mande el servidor no puede descuadrarlos.
    */
-  CIUDADES = [['Valencia', 'valencia'], ['Maracaibo', 'maracaibo'], ['Margarita', 'margarita'],
+  CIUDADES = [['Caracas', 'caracas'],
+              ['Valencia', 'valencia'], ['Maracaibo', 'maracaibo'], ['Margarita', 'margarita'],
               ['Barquisimeto', 'barquisimeto'], ['Mérida', 'merida'],
               ['Puerto La Cruz', 'puerto-la-cruz'], ['Otra ciudad', 'otra']];
+
+  /**
+   * Cuáles están abiertas. Hoy una.
+   *
+   * Es lo que decide si la puerta sigue o termina en la primera pregunta,
+   * así que sale de `cities.is_open` y no de una lista escrita aquí: el día
+   * que se abra la segunda, se abre en el panel y esta pantalla ya lo sabe.
+   * El respaldo dice la verdad de hoy, que es la única que no puede fallar
+   * si el servidor no contesta.
+   */
+  ABIERTAS = { caracas: true };
+
+  /** Si lo que eligió es una ciudad donde todavía no abrimos. */
+  ciudadCerrada() {
+    return !!this.state.ciudadSlug && this.ABIERTAS[this.state.ciudadSlug] !== true;
+  }
+
+  /** El nombre de la que eligió, para la frase. */
+  nombreDeSuCiudad() {
+    const par = this.CIUDADES.filter((c) => c[1] === this.state.ciudadSlug)[0];
+    return par ? par[0] : 'tu ciudad';
+  }
 
   // MISMO endpoint y MISMO payload que la v3. Lo unico que cambia es la
   // variante, que cada pagina declara por su cuenta: sin eso, el
@@ -980,11 +1023,11 @@ class Component extends DCLogic {
     const cuerpo = Object.assign({
       correo: (this.state.correo || '').trim(),
       token: (guardado && guardado.token) || undefined,
-      // El slug sale del MISMO par que pintó el nombre, así que lo que se
-      // guarda y lo que se vio no pueden ser dos ciudades distintas.
-      ciudad: this.state.ciudad >= 0 && this.CIUDADES[this.state.ciudad]
-        ? this.CIUDADES[this.state.ciudad][1]
-        : 'caracas',
+      // El slug es lo que guarda el estado, no un índice: el par que pintó
+      // el nombre es el que lo dejó ahí, así que lo que se guarda y lo que
+      // se vio no pueden ser dos ciudades distintas. Con un índice sí
+      // podían, y es la forma de fallo que este fichero ya conoce.
+      ciudad: this.state.ciudadSlug || 'caracas',
       variante: 'v4'
     }, extra || {});
     return fetch('/api/lead', {
@@ -1229,11 +1272,16 @@ class Component extends DCLogic {
         nombre: 'font:' + (on ? '600' : '500') + ' 15px/1.2 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A;white-space:nowrap'
       };
     });
-    const ciudades = this.CIUDADES.map(([nombre], i) => {
-      const on = this.state.ciudad === i;
+    // El recuadro de «¿No vives en Caracas?»: aquí Caracas sobra, porque
+    // esta pregunta sale justo después de decir que no se vive aquí. La
+    // marca es la MISMA que la de la puerta —el mismo `ciudadSlug`—, así
+    // que quien la elige aquí ya la encuentra elegida en la primera
+    // pregunta del registro y no se le pregunta dos veces.
+    const ciudades = this.CIUDADES.filter((c) => c[1] !== 'caracas').map(([nombre, slug]) => {
+      const on = this.state.ciudadSlug === slug;
       return {
         nombre, icono: on ? '✓' : '', aro: aroDS(on),
-        pick: () => this.setState({ ciudad: on ? -1 : i }),
+        pick: () => this.setState({ ciudadSlug: on ? '' : slug }),
         btn: pastilla(on, false),
         txt: 'font:' + (on ? '600' : '500') + ' 15px/1.2 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A;white-space:nowrap'
       };
@@ -1267,19 +1315,35 @@ class Component extends DCLogic {
     //
     // Las zonas son el único caso en caliente: se abren desde el panel, así
     // que las trae `/api/zonas` y se pegan aquí con su código.
-    const preguntas = AroReglas.ORDEN_PUERTA.map((clave) => {
+    //
+    // Y los PASOS tampoco: `pasosDePuerta` pone la ciudad delante y, si la
+    // que eligió no está abierta, devuelve esa sola. Con la ciudad cerrada
+    // no hay zonas que ofrecer —son de una ciudad que no es la suya— ni
+    // mesa que armar, así que la puerta termina en la primera pregunta.
+    const pasos = AroReglas.pasosDePuerta(!this.ciudadCerrada());
+    const preguntas = pasos.map((clave) => {
       const d = PUERTA[clave];
       return {
         etiqueta: d.etiqueta, pregunta: d.pregunta, ayuda: d.ayuda,
         tipo: d.tipo, clave: clave, min: d.min, max: d.max,
-        pares: clave === 'zonas' ? this.ZONAS : d.opciones
+        pares: clave === 'zonas' ? this.ZONAS : (clave === 'ciudad' ? this.CIUDADES : d.opciones)
       };
     });
-    const q = preguntas[Math.min(this.state.paso, 3)];
+    // Acotado a los pasos que hay: quien iba por los temas y vuelve atrás a
+    // cambiar su ciudad por una cerrada se queda en un paso que ya no
+    // existe, y eso es una pantalla en blanco.
+    const paso = Math.min(this.state.paso, pasos.length - 1);
+    const q = preguntas[paso];
     const esUnica = q.tipo === 'unica';
+    const esCiudad = q.clave === 'ciudad';
     // El estado de los días se llama `planes` desde la primera entrega.
     const enEstado = q.clave === 'dias' ? 'planes' : q.clave;
-    const sel = esUnica ? this.state.arraigo : this.state[enEstado];
+    // La ciudad se guarda por slug, así que su «cuál está marcada» se
+    // deriva aquí y no se almacena: un índice guardado es lo que se
+    // descuadra cuando el servidor manda la lista en otro orden.
+    const sel = esCiudad
+      ? q.pares.map((par) => par[1]).indexOf(this.state.ciudadSlug)
+      : (esUnica ? this.state.arraigo : this.state[enEstado]);
 
     const quizOpciones = q.pares.map((par, i) => {
       const label = par[0];
@@ -1287,7 +1351,9 @@ class Component extends DCLogic {
       const tope = !esUnica && q.max && sel.length >= q.max && !on;
       return {
         label, icono: on ? '✓' : '',
-        pick: esUnica ? () => this.setState({ arraigo: i }) : () => this.alterna(enEstado, i, q.max),
+        pick: esCiudad
+          ? () => this.setState({ ciudadSlug: par[1] })
+          : (esUnica ? () => this.setState({ arraigo: i }) : () => this.alterna(enEstado, i, q.max)),
         btn: esUnica
           ? 'display:flex;align-items:center;gap:14px;width:100%;padding:16px 20px;border-radius:999px;background:' + (on ? '#FAF3E4' : 'rgba(250,243,228,.06)') + ';border:1px solid ' + (on ? '#FAF3E4' : 'rgba(250,243,228,.22)') + ';cursor:pointer;text-align:left;min-height:58px;transition:all 200ms ease'
           : 'display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 20px 0 16px;border-radius:999px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#FAF3E4' : 'rgba(250,243,228,.24)') + ';cursor:pointer;transition:all 200ms ease;opacity:' + (tope ? '.45' : '1'),
@@ -1297,14 +1363,18 @@ class Component extends DCLogic {
     });
 
     const completa = esUnica ? sel >= 0 : (sel.length >= (q.min || 1));
-    const ultimo = this.state.paso >= 3;
-    const progreso = [0, 1, 2, 3].map((i) => ({
-      punto: 'width:' + (i === this.state.paso ? '26px' : '8px') + ';height:8px;border-radius:999px;background:' + (i <= this.state.paso ? '#E39C63' : 'rgba(250,243,228,.24)') + ';transition:all 260ms ease'
+    const ultimo = paso >= pasos.length - 1;
+    const progreso = pasos.map((_, i) => ({
+      punto: 'width:' + (i === paso ? '26px' : '8px') + ';height:8px;border-radius:999px;background:' + (i <= paso ? '#E39C63' : 'rgba(250,243,228,.24)') + ';transition:all 260ms ease'
     }));
+    // Lo que se le dice a quien eligió una ciudad cerrada, en la pregunta
+    // misma: ahí es donde acaba de elegirla, y leerlo después de pulsar
+    // «Terminar» sería enterarse una pantalla tarde.
+    const cerrada = AroReglas.CIUDAD_CERRADA(this.nombreDeSuCiudad(), this.state.ciudadSlug);
 
     const f = this.state.fase;
     const fuera = this.esFuera();
-    const nombreCiudad = this.state.ciudad >= 0 ? ciudades[this.state.ciudad].nombre : 'tu ciudad';
+    const nombreCiudad = this.nombreDeSuCiudad();
 
     return {
       precioTexto, precioCifra,
@@ -1350,7 +1420,7 @@ class Component extends DCLogic {
       chipZonas: 'display:inline-flex;align-items:center;gap:9px;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid ' + (nz ? '#8F4515' : 'rgba(27,81,56,.22)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;color:' + (nz ? '#8F4515' : '#1B5138') + ';white-space:nowrap',
       textoChipZonas: nz ? nz + ' DE ' + MAX_ZONAS + ' MARCADAS' : 'MARCA HASTA ' + MAX_ZONAS,
       hayZonas: nz > 0,
-      hayCiudad: this.state.ciudad >= 0,
+      hayCiudad: !!this.state.ciudadSlug,
       avisarDeCiudad: this.avisarDeCiudad,
       ciudadGuardada: this.state.ciudadGuardada ? 'true' : null,
       textoCiudad: this.state.ciudadGuardada
@@ -1388,7 +1458,11 @@ class Component extends DCLogic {
       enviarCorreo: this.enviarCorreo,
 
       progreso,
-      textoProgreso: 'PREGUNTA ' + (this.state.paso + 1) + ' DE 4',
+      // Con la ciudad cerrada la puerta es UNA pregunta, y «PREGUNTA 1 DE
+      // 1» con un solo punto no informa de nada: lo que hay que leer ahí es
+      // la nota de abajo.
+      hayProgreso: pasos.length > 1,
+      textoProgreso: 'PREGUNTA ' + (paso + 1) + ' DE ' + pasos.length,
       quizEtiqueta: q.etiqueta,
       quizPregunta: q.pregunta,
       quizAyuda: q.ayuda,
@@ -1400,10 +1474,42 @@ class Component extends DCLogic {
         : (completa ? (ultimo ? 'Terminar' : 'Siguiente') : 'Elige para seguir'),
       hayFalloQuiz: !!this.state.falloQuiz,
       falloQuiz: this.state.falloQuiz,
-      puedeAtras: this.state.paso > 0,
+      hayQuizNota: esCiudad && fuera,
+      quizNotaTitulo: cerrada.titulo,
+      quizNotaBajada: cerrada.bajada,
+      notaCaja: 'border-radius:20px;border:1px solid rgba(250,243,228,.26);padding:15px 17px;margin-top:22px;max-width:46ch',
+      notaTitulo: 'display:block;font:400 clamp(19px,1.9vw,23px)/1.2 \'Young Serif\',Georgia,serif;letter-spacing:-.02em;color:#FAF3E4',
+      notaCuerpo: 'display:block;font:400 14px/1.55 \'Inter Tight\',sans-serif;color:#9CBBA6;margin-top:7px;text-wrap:pretty',
+      puedeAtras: paso > 0,
       siguiente: () => {
         if (!completa || this.state.guardandoQuiz) return;
         if (ultimo) {
+          /**
+           * Ciudad cerrada: se guarda la ciudad y la puerta termina.
+           *
+           * Sin zonas, sin días y sin temas, que es lo que se acordó: son
+           * respuestas de Caracas y guardárselas a quien vive en Maracaibo
+           * es apuntarla a una mesa que no existe. Y la ciudad SÍ se
+           * guarda, porque es a quien hay que escribir el día que abramos;
+           * va en la llamada del correo, que es la que la escribe.
+           */
+          if (this.esFuera()) {
+            this.setState({ guardandoQuiz: true, falloQuiz: '' });
+            this.guardarLead({}).then(({ ok, j }) => {
+              if (!ok) {
+                this.setState({
+                  guardandoQuiz: false,
+                  falloQuiz: (j && j.error) || 'No pudimos guardar tu ciudad. Inténtalo otra vez.'
+                });
+                return;
+              }
+              this.setState({ guardandoQuiz: false, falloQuiz: '', fase: 'final' });
+            }).catch(() => this.setState({
+              guardandoQuiz: false,
+              falloQuiz: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
+            }));
+            return;
+          }
           // El código sale del MISMO par del que salió el texto que la
           // persona tocó. Antes había aquí una segunda lista, `COD`, a
           // doscientas líneas de los textos y unida a ellos solo por el
@@ -1446,14 +1552,17 @@ class Component extends DCLogic {
           }));
           return;
         }
-        this.setState((s) => ({ paso: s.paso + 1 }));
+        this.setState({ paso: paso + 1 });
       },
-      atras: () => this.setState((s) => ({ paso: Math.max(0, s.paso - 1) })),
+      atras: () => this.setState({ paso: Math.max(0, paso - 1) }),
 
-      tituloFinal: fuera ? 'Anotado. Eres de los primeros de ' + nombreCiudad + '.' : 'Ya podemos empezar a armar tu mesa.',
+      // «TIENES PUESTO» no se le puede decir a quien vive donde no hay
+      // mesa: es la única cosa que no tiene. Anotado sí lo está.
+      textoChipFinal: fuera ? 'ANOTADO' : 'TIENES PUESTO',
+      tituloFinal: fuera ? cerrada.titulo : 'Ya podemos empezar a armar tu mesa.',
       hayPendientes: !fuera,
       resumenFinal: fuera
-        ? 'Guardamos ' + this.state.correo + '. Abrimos ciudad cuando hay suficiente gente que pueda llegar a la misma mesa el mismo día, así que no te damos fecha: te escribimos en cuanto ' + nombreCiudad + ' llegue a ese número.'
+        ? cerrada.bajada + ' Guardamos ' + this.state.correo + ' y que estás en ' + nombreCiudad + '. Abrimos ciudad cuando hay suficiente gente que pueda llegar a la misma mesa el mismo día, así que no te damos fecha.'
         : 'Guardamos ' + this.state.correo + ' y lo que nos dijiste. ' +
           ((this.state.proxima && this.state.proxima.hay)
             ? 'Hay fecha abierta: termina tu perfil y puedes reservar.'

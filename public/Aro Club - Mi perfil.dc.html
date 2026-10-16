@@ -307,6 +307,31 @@ class Component extends DCLogic {
       if (correoURL) aEntrar.set('correo', correoURL);
       window.location.href = '/entrar?' + aEntrar.toString(); });
 
+    /**
+     * Las ciudades, para poder corregir la tuya.
+     *
+     * El servidor ya devolvia la ciudad y ya sabia guardarla —lo dice su
+     * propio comentario: «esta es la unica pantalla donde puede»— y la
+     * pantalla no la enseñaba. El 15-10 escribieron dos miembros, uno desde
+     * Maracaibo y otro desde Valencia, porque no tenian donde decirlo: su
+     * perfil decia Caracas y por eso les llegaban cenas de Caracas.
+     *
+     * Sin respaldo escrito aqui, a proposito. Una segunda lista de ciudades
+     * en esta pantalla seria la copia que diverge, y de eso este repo ya
+     * lleva siete. Si la peticion falla, la fila no sale: no enseñar el
+     * campo es mejor que ofrecer una lista que la base no reconozca.
+     */
+    fetch('/api/ciudades')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin ciudades'))))
+      .then((d) => {
+        if (!d.ciudades || !d.ciudades.length) return;
+        this.CIUDADES = d.ciudades.map((c) => [c.nombre, c.slug]);
+        this.ABIERTAS = {};
+        d.ciudades.forEach((c) => { this.ABIERTAS[c.slug] = !!c.abierta; });
+        this.forceUpdate();
+      })
+      .catch(() => { /* sin ciudades no se enseña la fila */ });
+
     this.leerExclusiones();
     this.leerAvisos();
 
@@ -389,7 +414,9 @@ class Component extends DCLogic {
   // y los usa el reparto directamente, asi que se describen aqui. Sus
   // opciones si son fijas porque son las del enum de la base.
   BASE() {
-    return {
+    // `Object.assign` y no un spread: es como arma objetos el resto de las
+    // pantallas, y estos ficheros se sirven tal cual, sin traducción.
+    return Object.assign({
       trato: { s: 0, etiqueta: 'Cómo te llamamos en la mesa', tipo: 'texto', visible: true, ayuda: 'Es lo único que ven los otros cinco, junto con tu sector.' },
       nombre: { s: 0, etiqueta: 'Tu nombre completo', tipo: 'texto', ayuda: 'Como aparece en tu cédula. Solo lo ve nuestro equipo al verificarte.' },
       nacimiento: { s: 0, etiqueta: 'Fecha de nacimiento', tipo: 'fecha', ayuda: 'Nadie ve tu edad. La usamos para que en tu mesa no haya más de diez años de diferencia.' },
@@ -397,6 +424,36 @@ class Component extends DCLogic {
                 codigos: ['mujer', 'hombre', 'no-binario', 'sin-decir'],
                 opciones: ['Mujer', 'Hombre', 'No binario', 'Prefiero no decirlo'] },
       telefono: { s: 0, etiqueta: 'Teléfono', tipo: 'texto', ayuda: 'Solo lo usamos el día del encuentro, por WhatsApp. No lo ve nadie de tu mesa.' }
+    }, this.filaDeCiudad());
+  }
+
+  /**
+   * Tu ciudad, si sabemos cuáles hay.
+   *
+   * Decide a qué mesas se te invita: desde el 14-10 una fecha solo se avisa
+   * a quien está en su ciudad, así que un perfil que dice Caracas por
+   * defecto es un perfil que recibe cenas a las que no puede ir —y, peor,
+   * que no recibe las suyas el día que abramos—.
+   *
+   * Los nombres y los códigos salen del MISMO par, en el mismo `map`: son
+   * dos listas en la pantalla porque el resto de los campos lo son, pero
+   * nunca se escriben por separado.
+   */
+  filaDeCiudad() {
+    if (!this.CIUDADES || !this.CIUDADES.length) return {};
+    const suya = ((this.state.datos || {}).base || {}).ciudad || '';
+    const cerrada = !!suya && this.ABIERTAS && this.ABIERTAS[suya] !== true;
+    const nombre = (this.CIUDADES.filter((c) => c[1] === suya)[0] || [])[0];
+    const aviso = cerrada && typeof AroReglas !== 'undefined'
+      ? ' ' + AroReglas.CIUDAD_CERRADA(nombre, suya).titulo + ' ' + AroReglas.CIUDAD_CERRADA(nombre, suya).bajada
+      : '';
+    return {
+      ciudad: {
+        s: 0, etiqueta: 'Tu ciudad', tipo: 'unica',
+        ayuda: 'Es la que decide qué mesas te ofrecemos.' + aviso,
+        codigos: this.CIUDADES.map((c) => c[1]),
+        opciones: this.CIUDADES.map((c) => c[0])
+      }
     };
   }
 
@@ -460,7 +517,10 @@ class Component extends DCLogic {
     const v = {
       nombre: d.base.nombre, trato: d.base.trato,
       nacimiento: d.base.nacimiento, telefono: d.base.telefono,
-      genero: ['mujer', 'hombre', 'no-binario', 'sin-decir'].indexOf(d.base.genero)
+      genero: ['mujer', 'hombre', 'no-binario', 'sin-decir'].indexOf(d.base.genero),
+      // El índice se deriva de la misma lista que pinta los nombres, y solo
+      // existe dentro de esta pantalla: al servidor va el slug.
+      ciudad: (this.CIUDADES || []).map((c) => c[1]).indexOf(d.base.ciudad || '')
     };
     (d.preguntas || []).forEach((q) => {
       const cods = (q.opciones || []).map((o) => o.value);

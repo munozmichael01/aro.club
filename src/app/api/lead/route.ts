@@ -124,6 +124,28 @@ export async function POST(request: Request) {
     if (dias !== undefined) cambios.days = dias
     if (temas !== undefined) cambios.conversation_topics = temas
 
+    /**
+     * Y la ciudad, que hasta hoy esta rama tiraba.
+     *
+     * Solo la escribía el paso 1, y eso valía cuando la ciudad se elegía
+     * ANTES del correo. Desde el 15-10 es la primera pregunta de la puerta,
+     * o sea DESPUÉS: la única llamada que la trae es esta, y tirarla aquí
+     * dejaría a todo el mundo archivado en Caracas —el valor por defecto—
+     * por mucho que hubiera dicho Valencia una pregunta antes. Es el dato
+     * con el que se decide a quién se le avisa de una fecha.
+     *
+     * `undefined` es «no lo dice» y no se toca: la app manda las respuestas
+     * sin ciudad, y escribir el defecto encima sería mover a alguien de
+     * ciudad por haber contestado a los temas de conversación.
+     */
+    if (ciudad !== undefined) {
+      const suCiudad = await ciudadValida(ciudad)
+      if (!suCiudad) {
+        return NextResponse.json({ error: 'Esa ciudad no está en la lista.' }, { status: 400 })
+      }
+      cambios.city_slug = suCiudad
+    }
+
     const { error } = await supabase
       .from('waitlist')
       .update(cambios as never)

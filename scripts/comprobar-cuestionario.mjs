@@ -747,6 +747,11 @@ if (relojes.length) {
 // Lo que se compara son los SLUGS, que es lo que se guarda. Los nombres son
 // copy y pueden reescribirse.
 //
+// TODAS, Caracas incluida, desde el 15-10: la primera pregunta de la puerta
+// es en qué ciudad estás, y ahí Caracas tiene que poder elegirse. Antes la
+// lista era «las otras» —solo salía después de decir que NO vives aquí— y
+// esta comprobación la descontaba.
+//
 // Y de paso lo que motivó todo esto: que la lista sea de PARES. Eran dos
 // listas sueltas —slugs arriba, nombres abajo— emparejadas solo por el
 // índice, el mismo descuadre silencioso que el cuestionario tuvo que
@@ -765,12 +770,24 @@ if (relojes.length) {
       fallos.push('`CIUDADES` tiene textos fuera de un par: vuelve a ser dos listas por índice')
     }
 
-    const { data: enBaseCiudades } = await admin.from('cities').select('slug').neq('slug', 'caracas')
+    const { data: enBaseCiudades } = await admin.from('cities').select('slug')
     const base = new Set((enBaseCiudades ?? []).map((c) => c.slug))
     const pantalla = new Set(pares.map((m) => m[2]))
 
     for (const sl of pantalla) if (!base.has(sl)) fallos.push(`la landing ofrece «${sl}», que no está en \`cities\``)
     for (const sl of base) if (!pantalla.has(sl)) fallos.push(`\`cities\` tiene «${sl}» y el respaldo de la landing no`)
+
+    // Y que la ciudad siga siendo la PRIMERA pregunta de la puerta, y sin
+    // opciones escritas a mano. Las dos cosas son la decisión del 15-10: se
+    // pregunta antes de las zonas —porque es la que puede cerrar la puerta—
+    // y el catálogo es `cities`. Una lista de ciudades escrita en
+    // `reglas.js` sería la octava copia de esto.
+    if (reglas.pasosDePuerta(true)[0] !== 'ciudad') {
+      fallos.push('la ciudad ya no es la primera de `pasosDePuerta`: se pregunta antes de las zonas')
+    }
+    if ((reglas.PUERTA.ciudad?.opciones ?? []).length) {
+      fallos.push('`PUERTA.ciudad` trae opciones escritas a mano: las ciudades las sirve `/api/ciudades`')
+    }
   }
 
   if (fallos.length) {

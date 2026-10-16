@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { ciudades } from '@/lib/ciudades'
 import { encolar } from '@/lib/correos'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -261,6 +262,21 @@ async function empujar(seco: boolean) {
 
   const candidatos: Candidato[] = []
 
+  /**
+   * Las ciudades abiertas, para no empujar a quien no podemos sentar.
+   *
+   * A quien dice en la puerta que está en Valencia se le promete una cosa
+   * —«te escribimos el día que abramos»— y este cron le mandaba la
+   * contraria dos días después: «termina tu perfil y reserva», sobre una
+   * ciudad donde no hay ni fechas ni zonas. Dos correos nuestros
+   * contradiciéndose es peor que no escribir ninguno.
+   *
+   * Su perfil sigue pudiendo completarse —el botón está en el final de la
+   * puerta y nadie se lo quita—; lo que no hacemos es perseguirlo por algo
+   * que todavía no le sirve.
+   */
+  const abiertas = new Set((await ciudades()).filter((c) => c.abierta).map((c) => c.slug))
+
   // --- 1. dejó su correo y no llegó a tener cuenta ----------------------
   const { data: aMedias } = await admin
     .from('waitlist')
@@ -270,6 +286,7 @@ async function empujar(seco: boolean) {
 
   for (const l of aMedias ?? []) {
     if (!l.email) continue
+    if (!abiertas.has(l.city_slug ?? 'caracas')) continue
     candidatos.push({
       falta: 'perfil',
       desde: l.created_at,

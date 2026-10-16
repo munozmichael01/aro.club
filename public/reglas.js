@@ -760,7 +760,7 @@
     },
 
     /**
-     * Las cuatro preguntas de la puerta.
+     * Las preguntas de la puerta: la ciudad y las cuatro de siempre.
      *
      * Son las que se hacen antes de tener cuenta —en la portada y en la
      * entrada de la app— y viven aquí por la misma razón que el resto de
@@ -774,16 +774,46 @@
      * otra, sin error, sin validación fallida y sin verse en ninguna
      * pantalla. Aquí no se puede: el código viaja pegado a su texto.
      *
-     * `zonas` va sin opciones a propósito. Las zonas se abren y se cierran
-     * desde el panel, así que las trae `/api/zonas` en caliente; escritas a
-     * mano se quedaron en diez cuando la base tenía trece, y quien vivía en
-     * las otras tres no podía decirlo.
+     * `zonas` y `ciudad` van sin opciones a propósito. Las zonas se abren y
+     * se cierran desde el panel, así que las trae `/api/zonas` en caliente;
+     * escritas a mano se quedaron en diez cuando la base tenía trece, y
+     * quien vivía en las otras tres no podía decirlo. Las ciudades son la
+     * tabla `cities`, y las sirve `/api/ciudades`.
      *
      * Los códigos son los del catálogo (`questions`), que es lo que manda al
      * guardar. `comprobar-cuestionario.mjs` lo verifica contra la base: un
      * código que no exista ahí no llega a producción.
      */
     PUERTA: {
+      /**
+       * La ciudad, y va PRIMERO.
+       *
+       * No estaba. La portada preguntaba las zonas de Caracas a todo el
+       * mundo y ofrecía la ciudad DEBAJO, como salida —«¿No vives en
+       * Caracas?»—, así que quien entra por el registro no la veía nunca.
+       * El 15-10 escribieron dos miembros: uno desde Maracaibo y otro desde
+       * Valencia, los dos con zonas de Caracas marcadas, porque era lo
+       * único que se les preguntó. Sus mesas se decidían con un dato que no
+       * es el suyo.
+       *
+       * Primero porque es la puerta que puede cerrar: con la ciudad cerrada
+       * no hay zonas que ofrecer —las zonas son de una ciudad— ni mesa que
+       * armar, y preguntar cuatro cosas más es cobrarle trabajo a quien no
+       * podemos sentar todavía. Es la misma regla del nacimiento y los 18:
+       * nada de esfuerzo antes de la puerta que puede rechazarlo.
+       *
+       * Sin opciones, igual que las zonas: el catálogo es la tabla `cities`
+       * —con su orden y su `is_open`— y lo sirve `/api/ciudades`. Escrita a
+       * mano aquí serían dos listas, y la lista de ciudades ya tuvo esa
+       * forma de fallo en la portada: slugs en una constante y nombres en
+       * otra, emparejados solo por el índice.
+       */
+      ciudad: {
+        clave: 'ciudad', etiqueta: 'CIUDAD', tipo: 'unica',
+        pregunta: '¿En qué ciudad estás?',
+        ayuda: 'Abrimos ciudad cuando hay suficiente gente que pueda llegar a la misma mesa el mismo día.',
+        opciones: [],
+      },
       arraigo: {
         clave: 'arraigo', etiqueta: 'ARRAIGO', tipo: 'unica',
         pregunta: '¿Cuál de estas eres tú?',
@@ -864,8 +894,53 @@
       },
     },
 
-    /** El orden en que se hacen. */
+    /**
+     * Las cuatro de después de la ciudad, en su orden.
+     *
+     * Se queda con las cuatro —y no con las cinco— porque es lo que leen
+     * hoy la portada y la entrada de la app para pintar «PREGUNTA n DE 4»,
+     * y porque la app descarta la puerta entera si una pregunta llega sin
+     * opciones (`preguntasDeEntrada`, §e.1): meter aquí la ciudad, que las
+     * trae de `/api/ciudades`, dejaría la app sin alta hasta que la pidiera.
+     * La puerta completa es `pasosDePuerta()`.
+     */
     ORDEN_PUERTA: ['arraigo', 'zonas', 'dias', 'temas'],
+
+    /**
+     * La puerta entera: la ciudad y, si está abierta, las cuatro.
+     *
+     * Una sola función para las dos superficies, porque lo que se decide
+     * aquí es de producto y no de pantalla: en una ciudad cerrada la puerta
+     * TERMINA en la propia pregunta. No se piden zonas —son de una ciudad
+     * que no es la suya—, ni días, ni temas: no hay mesa que armar con eso
+     * todavía, y lo que se le promete es que le escribimos.
+     *
+     * `abierta` indefinido es «todavía no lo ha dicho»: la puerta se enseña
+     * entera, que es lo que vale mientras no haya respuesta.
+     */
+    pasosDePuerta: function (abierta) {
+      return abierta === false ? ['ciudad'] : ['ciudad'].concat(api.ORDEN_PUERTA)
+    },
+
+    /**
+     * Lo que se le dice a quien vive donde todavía no abrimos.
+     *
+     * Dos frases de Michael (15-10), y van aquí para que la portada, la app
+     * y Mi perfil digan las tres lo mismo. Sin fecha a propósito: una
+     * ciudad abre cuando hay gente suficiente, no en una semana concreta, y
+     * prometer un plazo que no controlamos es peor que no prometer ninguno.
+     */
+    CIUDAD_CERRADA: function (nombre, slug) {
+      // «Otra ciudad todavía no» no se puede leer: no es el nombre de
+      // ningún sitio. Quien marca esa casilla no nos ha dicho dónde está,
+      // así que la frase no puede nombrarlo.
+      return {
+        titulo: slug === 'otra'
+          ? 'Todavía no estamos ahí.'
+          : (nombre || 'Tu ciudad') + ' todavía no.',
+        bajada: 'Te escribimos el día que abramos.',
+      }
+    },
 
     /**
      * Cómo se llama esto según el formato: mesa o grupo.
