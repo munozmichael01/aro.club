@@ -1557,29 +1557,45 @@ class Component extends DCLogic {
       // distinto en cada una, y meterlas en un mismo texto seria decirle a
       // alguien que espere cuando lo que hace falta es que reserve.
       esVacia: !!dt && f === -1,
-      selloVacia: revisando ? 'EN REVISIÓN' : (sinMesaAun ? 'PUESTO APARTADO' : 'TODAVÍA NO'),
+      /**
+       * `sin-mesa` es DESPUÉS de la revelación y sin mesa, no antes.
+       *
+       * Lo decía al revés: «Tu puesto está apartado · falta armar los grupos
+       * · el sábado a mediodía se abre todo». Esa es la espera de antes de
+       * la revelación, y esa fase es `cerrada`, que tiene su propia
+       * pantalla. Aquí solo llega quien se quedó en espera cuando ya se
+       * repartió, o sea quien acaba de recibir «esta vez no te tocó mesa» y
+       * su crédito de vuelta: la pantalla le prometía a mediodía algo que ya
+       * había pasado y que no iba a llegar. Dos verdades, y la de la
+       * pantalla era la falsa.
+       */
+      selloVacia: revisando ? 'EN REVISIÓN' : (sinMesaAun ? 'ESTA VEZ NO' : 'TODAVÍA NO'),
       tituloVacia: revisando
         ? 'Estamos revisando tu cédula.'
-        : (sinMesaAun ? 'Tu puesto está apartado.' : 'Aún no tienes mesa.'),
+        : (sinMesaAun ? 'Esta vez no entraste.' : 'Aún no tienes mesa.'),
       bajadaVacia: revisando
         ? 'Lo mira una persona, no un programa. Suele estar en menos de 24 horas y te avisamos por correo en cuanto esté.'
         : (sinMesaAun
-          ? 'Ya estás dentro de esta fecha. Falta armar los grupos, y eso se hace el mismo sábado.'
+          ? 'No salió una mesa en la que encajaras: los grupos se arman por zona, por días y por edad, y esta vez no cuadró.'
           : 'Cuando apartes puesto en una fecha, aquí aparece tu mesa: el sitio, la hora y quiénes son los otros cinco.'),
       notaVacia: revisando
         ? 'Mientras tanto no tienes que hacer nada. En cuanto te verifiquemos podrás apartar puesto en la próxima fecha.'
         : (sinMesaAun
-          ? 'El sábado a mediodía se abre todo: el sitio, la dirección, tu número de mesa y los otros cinco.'
+          ? 'Tu crédito volvió entero a tu cuenta y no caduca: la próxima fecha la pagas con él.'
           : 'Cada semana se abre una fecha. Son seis personas, y el sitio lo elegimos nosotros.'),
       // Quien esta en revision no tiene boton: no hay nada que pueda pulsar
       // todavia, y un boton que lleva a una puerta cerrada es peor que nada.
-      hayAccionVacia: !revisando && !sinMesaAun,
+      //
+      // Quien se quedó en espera SÍ lo tiene, y es el único sitio donde se
+      // le puede decir qué hacer ahora: apuntarse a la siguiente con el
+      // crédito que le acaba de volver.
+      hayAccionVacia: !revisando,
       // Apuntarse vive en la agenda de Mi cuenta, no en una pantalla propia:
       // «Aro Club - Reservar.dc.html» no existe y este botón llevaba a un 404
       // desde que se escribió. Se vio al recablear los enlaces —era el único
       // que no tenía ruta limpia a la que ir, porque no tenía pantalla.
       enlaceVacia: '/cuenta#agenda',
-      textoAccionVacia: 'Ver la próxima fecha',
+      textoAccionVacia: sinMesaAun ? 'Apuntarme a la próxima' : 'Ver la próxima fecha',
       botonVacia: btn('#14342A', '#FAF3E4', 'none', 'margin-top:18px;text-decoration:none'),
 
       cuenta, comensales, retrasos, bloqueables, motivos, reportables,
