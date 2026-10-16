@@ -694,19 +694,51 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient()
 
-  // Dos fechas del mismo formato el mismo día parten el pool en dos y ninguna
-  // llena. Si de verdad hacen falta dos, se abren en días distintos.
-  const { data: yaHay } = await admin
+  /**
+   * Dos fechas del mismo formato el mismo día parten el pool en dos y
+   * ninguna llena. Esa sigue siendo la regla... salvo cuando una de las dos
+   * es para otras edades.
+   *
+   * Entonces no hay pool que partir: son dos públicos distintos. Una cena
+   * +40 y la normal del mismo jueves no se quitan gente —quien tiene 28 solo
+   * puede ir a una, y a quien tiene 45 los avisos ya le hablan solo de la
+   * suya (`quitarALosDeLaOtra`)—. Sin esta puerta, segmentar por edad
+   * obligaba a mover una de las dos a otro día, que es cambiar el plan de la
+   * gente para satisfacer una comprobación.
+   *
+   * Lo que se sigue rechazando es lo de siempre: dos fechas iguales, las dos
+   * para todo el mundo, el mismo día.
+   *
+   * Y se leen TODAS, no `maybeSingle()`: con dos filas aquel devolvía un
+   * error y `yaHay` nulo, o sea que a partir de la segunda fecha del día
+   * dejaba pasar todas las demás. La comprobación se caía justo cuando
+   * empezaba a hacer falta.
+   */
+  const { data: mismasDelDia } = await admin
     .from('events')
-    .select('id')
+    .select('id, age_band_min, age_band_max')
     .eq('city_slug', d.ciudad)
     .eq('format', d.formato)
+    .neq('status', 'cancelled')
     .gte('starts_at', enUTC(d.dia, 0).toISOString())
     .lt('starts_at', enUTC(d.dia, 24).toISOString())
-    .maybeSingle()
 
-  if (yaHay) {
-    return NextResponse.json({ error: 'Ya hay una fecha de ese tipo ese día.' }, { status: 409 })
+  const nuevaSegmenta = d.edadMinima != null || d.edadMaxima != null
+
+  const choca = (mismasDelDia ?? []).some(
+    (e) => !nuevaSegmenta && e.age_band_min == null && e.age_band_max == null,
+  )
+
+  if (choca) {
+    return NextResponse.json(
+      {
+        error:
+          'Ya hay una fecha de ese tipo ese día, y las dos serían para todo el mundo:'
+          + ' partirían el pool en dos y no llenaría ninguna. Si la nueva es para otras'
+          + ' edades, ponle su banda y ábrela.',
+      },
+      { status: 409 },
+    )
   }
 
   // --- que los sitios elegidos puedan de verdad ------------------------
