@@ -4,7 +4,7 @@ import { componer } from '@/lib/remitente'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { enlaceDeMapa } from '@/lib/mapa'
-import { vozDe } from '@/lib/reglas'
+import { precioTexto, vozDe } from '@/lib/reglas'
 import { HORA_DE, horaBonita, partesHora } from '@/lib/formatos'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 
@@ -120,6 +120,10 @@ export async function GET(request: Request) {
     TU: voz.TU,
     conQuien: voz.conQuien,
     alGrupo: voz.unidad === 'mesa' ? ' la mesa' : 'l grupo',
+    // El precio, porque el correo lo nombra desde el 16-10 en la nota del
+    // final. Es el del club y no el de una fecha: esta muestra no cuelga de
+    // ninguna. Sin esto, el local vería «Los  de tu plaza cubren…».
+    precio: precioTexto(),
     // Sin enlace de ajustes: esto no se manda a nadie, así que no hay baja
     // que ofrecer. Vacío deja el pie sin un enlace muerto.
     enlaceAjustes: '',
