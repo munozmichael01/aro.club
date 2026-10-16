@@ -1221,8 +1221,20 @@ class Component extends DCLogic {
 
     const sitiosParaSeguir = ((dt && dt.paraSeguir) || []).map((s) => ({
       nombre: s.nombre,
-      distancia: s.minutosAPie != null ? G.seguir.aPie.replace('{n}', s.minutosAPie) : '',
-      estiloDistancia: s.minutosAPie != null
+      /**
+       * «3 min a pie · Barato».
+       *
+       * Los minutos los calcula el servidor con las coordenadas de los dos
+       * sitios —el bar es el mismo y la cena cambia de restaurante— y el
+       * precio sale del tramo del bar. Cada uno puede faltar por su cuenta:
+       * un sitio sin coordenadas no dice minutos y uno sin tramo no dice
+       * precio, y la línea se arma con lo que haya.
+       */
+      distancia: [
+        s.minutosAPie != null ? G.seguir.aPie.replace('{n}', s.minutosAPie) : '',
+        s.precio || ''
+      ].filter(Boolean).join(' · '),
+      estiloDistancia: (s.minutosAPie != null || s.precio)
         ? 'font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F'
         : 'display:none',
       mapa: s.mapa || '',

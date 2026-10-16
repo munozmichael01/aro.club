@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { minutosAPie } from '@/lib/distancia'
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -174,7 +175,7 @@ export async function GET() {
 
   const { data: miembro } = await admin
     .from('table_members')
-    .select('table_id, dinner_tables(table_number, event_id, restaurant_id, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, facade_photo_path))')
+    .select('table_id, dinner_tables(table_number, event_id, restaurant_id, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, facade_photo_path, lat, lng))')
     .eq('profile_id', user.id)
     .eq('booking_id', reserva.id)
     .maybeSingle()
@@ -211,9 +212,18 @@ export async function GET() {
    */
   const { data: seguires } = await admin
     .from('restaurant_after_venues')
-    .select('after_id, minutos_a_pie, orden, restaurants!restaurant_after_venues_after_id_fkey(name, address, maps_url, lat, lng)')
+    .select('after_id, minutos_a_pie, orden, restaurants!restaurant_after_venues_after_id_fkey(name, address, maps_url, lat, lng, budget_tier)')
     .eq('restaurant_id', mesa.restaurant_id ?? '')
     .order('orden')
+
+  /**
+   * Lo caro que es, en una palabra, del `budget_tier` del propio sitio.
+   *
+   * A las diez de la noche la pregunta no es solo «¿queda cerca?», también
+   * «¿cuánto me va a costar seguir» (Michael, 16-10). Sin tramo no sale
+   * nada: inventarlo es peor que callarlo.
+   */
+  const LO_CARO: Record<number, string> = { 1: 'Barato', 2: 'Precio medio', 3: 'Caro', 4: 'Muy caro' }
 
   const paraSeguir = (seguires ?? []).map((s) => {
     const sitio = s.restaurants as unknown as {
@@ -222,10 +232,19 @@ export async function GET() {
       maps_url: string | null
       lat: number | null
       lng: number | null
+      budget_tier: number | null
     } | null
     return {
       nombre: sitio?.name ?? '',
-      minutosAPie: s.minutos_a_pie,
+      /**
+       * Lo tecleado a mano manda; si no hay, se calcula con las coordenadas
+       * de los dos sitios. El bar es el mismo y la cena cambia de
+       * restaurante cada semana, así que el número no puede vivir escrito
+       * en la relación: sería uno por cada par, y uno más por cada
+       * restaurante nuevo.
+       */
+      minutosAPie: s.minutos_a_pie ?? minutosAPie(mesa.restaurants, sitio),
+      precio: sitio?.budget_tier != null ? (LO_CARO[sitio.budget_tier] ?? '') : '',
       mapa: enlaceDeMapa(sitio),
       mapaApple: enlaceApple(sitio),
     }
