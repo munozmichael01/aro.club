@@ -278,13 +278,34 @@ export async function GET(request: Request) {
   const { data: siguenApuntados } = enLaPropuesta.length
     ? await admin
         .from('bookings')
-        .select('profile_id')
+        .select('profile_id, permiso_grabacion')
         .eq('event_id', evento.id)
         .eq('status', 'confirmed')
         .in('profile_id', enLaPropuesta)
     : { data: [] }
 
   const vivos = new Set((siguenApuntados ?? []).map((b) => b.profile_id))
+
+  /**
+   * Los permisos de contenido, al leer y no al repartir.
+   *
+   * La propuesta guardada es de cuando alguien pulsó repartir, y el permiso
+   * lo contesta cada quien después, desde Mi mesa. Si esto se leyera de la
+   * propuesta, el panel diría que nadie ha contestado hasta el siguiente
+   * reparto, y volver a repartir mueve a seis personas de sitio.
+   *
+   * La marca de la mesa, igual: se pone después de publicarla.
+   */
+  const permisoDe = new Map(
+    (siguenApuntados ?? []).map((b) => [b.profile_id, b.permiso_grabacion ?? null]),
+  )
+
+  const { data: mesasVivas } = await admin
+    .from('dinner_tables')
+    .select('id, table_number, grabacion')
+    .eq('event_id', evento.id)
+
+  const mesaPorNumero = new Map((mesasVivas ?? []).map((m) => [m.table_number, m]))
   const seGuardaronYNoEstan = enLaPropuesta.filter((id) => !vivos.has(id)).length
 
   /**
@@ -398,8 +419,15 @@ export async function GET(request: Request) {
             integrantes: { profileId: string; sector: string | null }[]
           }[]).map((m) => ({
             ...m,
+            // La fila de verdad de esta mesa, si ya está publicada: su id
+            // —para poder marcarla— y si está marcada para grabar.
+            mesaId: mesaPorNumero.get((m as unknown as { numero: number }).numero)?.id ?? null,
+            grabacion: !!mesaPorNumero.get((m as unknown as { numero: number }).numero)?.grabacion,
             integrantes: (m.integrantes ?? []).map((p) => ({
               ...p,
+              // Qué contestó al «¿te podemos grabar?». `null` es que no ha
+              // contestado, que no es un no.
+              permisoGrabacion: permisoDe.get(p.profileId) ?? null,
               /**
                * Si ESTA persona ya no está apuntada a la fecha.
                *
