@@ -186,7 +186,11 @@ export async function POST(request: Request) {
     .delete()
     .eq('event_id', reserva.event_id)
     .eq('profile_id', user.id)
-    .in('kind', ['mesa_asignada', 'mesa_cambiada', 'recordatorio'] as never[])
+    // `juego` tambien, y faltaba. Es la push de las 7:50 que abre el juego
+    // de la mesa, y le llegaba a quien habia cancelado por la tarde: una
+    // notificacion invitando a jugar en una cena a la que no va. Pasó hoy
+    // con tres personas que cancelaron despues de la revelacion.
+    .in('kind', ['mesa_asignada', 'mesa_cambiada', 'recordatorio', 'juego'] as never[])
     .is('sent_at', null)
 
   // Si no encaja nadie, `rellenarHueco` devuelve null y la mesa se queda en
