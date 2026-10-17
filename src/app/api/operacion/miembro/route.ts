@@ -258,6 +258,32 @@ export async function GET(request: Request) {
   }))
   const bloqueosSuyos = conQuien.filter((e) => e.mia)
 
+  /**
+   * Y CON QUIÉN. Michael, 17-10: «veo que Maco bloqueó ayer a 2 personas,
+   * pero necesito ver a qué personas se bloquean. Es uso interno».
+   *
+   * La cifra sola no sirve para nada operativo: el bloqueo es de una pareja,
+   * así que lo que hay que poder mirar es a quién no se le puede volver a
+   * sentar al lado. Sale de aquí y no de ninguna pantalla: nunca viaja al
+   * producto, y el bloqueado no se entera jamás.
+   */
+  const otros = [...new Set(conQuien.map((e) => e.otro))]
+  const { data: perfilesBloqueo } = await admin
+    .from('profiles')
+    .select('id, full_name, display_name')
+    .in('id', otros.length ? otros : ['00000000-0000-0000-0000-000000000000'])
+
+  const nombreDe = new Map(
+    (perfilesBloqueo ?? []).map((p) => [p.id, p.full_name || p.display_name || 'Sin nombre']),
+  )
+
+  /** «Fulano», «Fulano y Mengana», «Fulano, Mengana y Zutana». */
+  const listar = (ids: string[]) => {
+    const nombres = ids.map((x) => nombreDe.get(x) ?? 'Sin nombre')
+    if (nombres.length <= 1) return nombres[0] ?? ''
+    return nombres.slice(0, -1).join(', ') + ' y ' + nombres[nombres.length - 1]
+  }
+
   const { data: zonas } = await admin.from('zones').select('slug, name')
   const nombreZona = new Map((zonas ?? []).map((z) => [z.slug, z.name]))
 
@@ -267,10 +293,12 @@ export async function GET(request: Request) {
   // «Bloqueó a una persona de esa mesa» se deriva cruzando sus bloqueos con
   // quién se sentó con ella cada vez.
   const suyos = new Set(bloqueosSuyos.map((e) => e.otro))
-  const bloqueosPorMesa = new Map<string, number>()
+  const bloqueosPorMesa = new Map<string, string[]>()
   for (const c of comensales ?? []) {
     if (!suyos.has(c.profile_id)) continue
-    bloqueosPorMesa.set(c.table_id, (bloqueosPorMesa.get(c.table_id) ?? 0) + 1)
+    const ya = bloqueosPorMesa.get(c.table_id) ?? []
+    ya.push(c.profile_id)
+    bloqueosPorMesa.set(c.table_id, ya)
   }
 
   // `confirmed` no es «fue»: es «tiene puesto». Contarlo como cena inflaba
@@ -296,7 +324,7 @@ export async function GET(request: Request) {
       const dia = partes ? partes.dia.charAt(0).toUpperCase() + partes.dia.slice(1) : ''
 
       const val = mesa ? valorDe.get(mesa.table_id) : null
-      const cuantos = mesa ? (bloqueosPorMesa.get(mesa.table_id) ?? 0) : 0
+      const bloqueados = mesa ? (bloqueosPorMesa.get(mesa.table_id) ?? []) : []
 
       // La nota se arma con lo que ella dijo. Si no valoró, se dice que no
       // valoró: rellenar el hueco con una frase amable sería inventarse una
@@ -325,11 +353,9 @@ export async function GET(request: Request) {
                     : val.conversation_rating === 1
                       ? 'Dijo que la mesa fue mala. '
                       : '') +
-              (cuantos === 0
+              (bloqueados.length === 0
                 ? 'No bloqueó a nadie.'
-                : cuantos === 1
-                  ? 'Bloqueó a una persona de esa mesa.'
-                  : `Bloqueó a ${cuantos} personas de esa mesa.`)
+                : `Bloqueó a ${listar(bloqueados)}.`)
 
       return {
         // Una fecha apuntada todavia no tiene restaurante, y decir "Sin
@@ -428,7 +454,9 @@ export async function GET(request: Request) {
       : {
           tono: 'bloqueo',
           titulo: nSuyos === 1 ? 'Bloqueó a una persona' : `Bloqueó a ${nSuyos} personas`,
-          cuerpo: 'No vuelve a coincidir con ellas y ellas no lo saben.',
+          cuerpo: listar(bloqueosSuyos.map((e) => e.otro))
+            + '. No vuelve a coincidir con ' + (nSuyos === 1 ? 'ella' : 'ellas')
+            + ' y no lo ' + (nSuyos === 1 ? 'sabe' : 'saben') + '.',
           interno: true,
         },
     recibidos === 0
@@ -438,7 +466,8 @@ export async function GET(request: Request) {
           // Se marca como aviso a partir de dos, que ya es un patrón.
           tono: recibidos >= 2 ? 'aviso' : 'bloqueo',
           titulo: recibidos === 1 ? 'Una persona la bloqueó' : `${recibidos} personas la bloquearon`,
-          cuerpo: 'Ella no lo sabe y no se le dice nunca.',
+          cuerpo: listar(conQuien.filter((e) => !e.mia).map((e) => e.otro))
+            + '. Ella no lo sabe y no se le dice nunca.',
           interno: true,
         },
   ]
