@@ -5,6 +5,7 @@ import { anotar } from '@/lib/auditoria'
 import { anotarPagoDeEvento } from '@/lib/creditos'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { encolar } from '@/lib/correos'
 
 /**
  * Sentar o sacar a alguien de una fecha, también si ya cerró.
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, status, credit_cost, es_prueba')
+    .select('id, starts_at, status, credit_cost, es_prueba, format')
     .eq('id', d.eventoId)
     .maybeSingle()
 
@@ -210,6 +211,35 @@ export async function POST(request: Request) {
       .is('sent_at', null)
       .select('id')
 
+    /**
+     * Y SE LE AVISA. Esto es lo que faltaba.
+     *
+     * Hasta hoy, a quien operación le quitaba el puesto no le llegaba nada:
+     * se le devolvía el crédito, se le retiraban los correos pendientes, y
+     * la respuesta decía «escríbele tú». Michael, el 16-10: «esto lo vimos
+     * ayer y te dije que había que enviar un email cuando quedara fuera».
+     *
+     * Va el mismo `sin_mesa` que ya existe —«esta vez no entraste», con la
+     * línea del crédito— y no una plantilla nueva: para quien lo recibe es
+     * exactamente lo mismo, se ha quedado fuera de una cena a la que se
+     * había apuntado. El motivo que escribió operación NO viaja: es para el
+     * registro, no para la persona.
+     *
+     * Sale YA y no a la hora de la revelación. Si esperara, seguiría
+     * creyendo que tiene puesto hasta el último momento, que es justo lo que
+     * pasó con José Félix.
+     *
+     * Y va después de devolver el crédito a propósito: el correo dice que el
+     * crédito está de vuelta, así que primero tiene que ser verdad.
+     */
+    let avisada = false
+    try {
+      const r = await encolar({ perfil: profileId }, 'sin_mesa', { formato: evento?.format }, { eventoId: d.eventoId })
+      avisada = r !== 'repetido'
+    } catch (e) {
+      console.error('[asiento] no se pudo avisar de que se queda fuera', e)
+    }
+
     await anotar(actor, 'asiento_quitado', 'reserva', reserva!.id, {
       evento: d.eventoId,
       perfil: profileId,
@@ -217,18 +247,19 @@ export async function POST(request: Request) {
       motivo: d.motivo,
       creditoDevuelto: devuelto,
       correosRetirados: retirados?.length ?? 0,
-      // Queda escrito que el producto NO le avisó.
-      avisadaPorElProducto: false,
+      avisadaPorElProducto: avisada,
     })
 
     return NextResponse.json({
       estado: 'quitada',
       quien,
-      // Para escribirle a mano, que es lo que toca.
       correo: persona.email,
       creditoDevuelto: devuelto,
       correosRetirados: retirados?.length ?? 0,
-      aviso: 'No se le mandó ningún correo: no hay plantilla para esto. Escríbele tú.',
+      avisada,
+      aviso: avisada
+        ? 'Le salió el «esta vez no entraste», con su crédito de vuelta.'
+        : 'No se le pudo avisar: escríbele tú.',
     })
   }
 
