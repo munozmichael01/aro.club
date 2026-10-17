@@ -195,6 +195,16 @@
           </sc-if>
         </div>
 
+        <!-- Lo que contestó de la grabación, y cómo cambiarlo. En la cena va
+             aquí, fuera de la lista plegable: dentro solo se vería al
+             desplegar, y esto tiene que poder cambiarse sin buscarlo. -->
+        <sc-if value="{{ hayGrabacion }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;border-radius:22px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:14px 18px;margin-top:12px">
+            <span style="flex:1 1 220px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ textoGrabacion }}</span>
+            <button onClick="{{ cambiarGrabacion }}" style="flex:0 0 auto;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:transparent;color:#14342A;font:500 13px/1 'Inter Tight',sans-serif;cursor:pointer">Cambiarlo</button>
+          </div>
+        </sc-if>
+
         <!-- Paso a paso -->
         <div style="border-radius:22px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);overflow:hidden;margin-top:12px">
           <button onClick="{{ tPaso }}" aria-expanded="{{ oPasoAria }}" style="display:flex;width:100%;box-sizing:border-box;align-items:center;gap:12px;padding:16px 18px;min-height:44px;background:transparent;border:0;text-align:left;cursor:pointer">
