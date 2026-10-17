@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { encolar } from '@/lib/correos'
+import { mandarAviso } from '@/lib/avisos-equipo'
 
 /**
  * Cancelar un puesto.
@@ -136,7 +137,7 @@ export async function POST(request: Request) {
     .from('bookings')
     // `table_members` para saber de qué mesa se baja: hay que rellenar ESE
     // hueco, no cualquiera.
-    .select('id, status, event_id, profile_id, events(starts_at), table_members(table_id)')
+    .select('id, status, event_id, profile_id, events(starts_at, reveal_at), table_members(table_id), profiles(display_name, full_name)')
     .eq('id', parsed.data.reservaId)
     .maybeSingle()
 
@@ -152,7 +153,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Esa reserva ya está cancelada.' }, { status: 409 })
   }
 
-  const evento = reserva.events as unknown as { starts_at: string } | null
+  const evento = reserva.events as unknown as { starts_at: string; reveal_at: string | null } | null
+  // Si ya se le conto la mesa a la gente: lo que decide si esta cancelacion
+  // es rutina o algo que operacion tiene que mirar.
+  const revelado = !!evento?.reveal_at && Date.now() >= new Date(evento.reveal_at).getTime()
+  const perfilSuyo = reserva.profiles as unknown as { display_name: string | null; full_name: string | null } | null
+  const quien = perfilSuyo?.display_name || perfilSuyo?.full_name || 'Alguien'
   const faltan = evento ? (new Date(evento.starts_at).getTime() - Date.now()) / 3600_000 : 0
   const conMargen = faltan >= HORAS_DE_MARGEN
   const ahora = new Date().toISOString()
@@ -197,6 +203,55 @@ export async function POST(request: Request) {
   // cinco a propósito: confirmarla así o cambiarla a mano es una decisión, y
   // el panel la enseña corta para que se tome.
   const relleno = suMesa ? await rellenarHueco(reserva.event_id, suMesa.table_id) : null
+
+  /**
+   * Y si la mesa ya estaba contada, operación se entera.
+   *
+   * El 17-10 cancelaron tres personas en la hora siguiente a la revelación y
+   * no lo supimos por el producto: lo supimos porque una de ellas escribió
+   * por Instagram preguntando por su crédito, y porque Michael miró el panel.
+   * Una mesa que baja de seis a cinco después de contársela a la gente es
+   * justo lo que hay que mirar: hay que decidir si se mueve a alguien, si se
+   * avisa al restaurante, o si se deja.
+   *
+   * Solo DESPUÉS de revelar. Antes, una cancelación es rutina: el reparto
+   * todavía no le ha dicho nada a nadie y el hueco se rellena solo.
+   *
+   * Y nunca tumba la cancelación: quien canceló ya canceló, y que nuestro
+   * aviso falle no puede devolverle un error.
+   */
+  if (suMesa && revelado) {
+    try {
+      const { count } = await admin
+        .from('table_members')
+        .select('profile_id', { count: 'exact', head: true })
+        .eq('table_id', suMesa.table_id)
+
+      const { data: mesa } = await admin
+        .from('dinner_tables')
+        .select('table_number, restaurants(name)')
+        .eq('id', suMesa.table_id)
+        .maybeSingle()
+
+      const sitio = (mesa?.restaurants as unknown as { name: string } | null)?.name ?? 'sin local'
+      const quedan = count ?? 0
+
+      await mandarAviso({
+        asunto: `Una mesa se queda en ${quedan} · ${sitio}`,
+        titulo: `${quien} canceló después de la revelación`,
+        parrafos: [
+          `La <strong>mesa ${mesa?.table_number ?? '?'}</strong> de ${sitio} se queda en <strong>${quedan}</strong>.` +
+            (relleno ? ' Ya entró alguien de la espera en su sitio.' : ' No había nadie en espera que encajara.'),
+          'Decide si mueves a alguien, si se lo dices al restaurante, o si se queda así. En Mi mesa ya lo ven los que siguen.',
+        ],
+        filas: [],
+        pestana: 'mesas',
+        deRevision: false,
+      })
+    } catch (e) {
+      console.error('[cancelar] no se pudo avisar de la mesa corta', e)
+    }
+  }
   if (suMesa) {
     // Actor `null`: esto no lo hace operación, pasa solo al cancelar alguien.
     // Con el id del miembro, además, su perfil ya no se puede borrar — la
