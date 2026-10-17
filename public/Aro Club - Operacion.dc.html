@@ -1513,18 +1513,27 @@
                   <span style="font:400 clamp(19px,2vw,23px)/1.2 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ m.numero }}</span>
                   <span style="{{ m.selloEstilo }}">{{ m.sello }}</span>
                   <span style="flex:1 1 auto"></span>
-                  <sc-if value="{{ m.hayNps }}" hint-placeholder-val="{{ false }}">
-                    <span style="font:600 13px/1 'Inter Tight',sans-serif;color:#1B5138;font-variant-numeric:tabular-nums">{{ m.nps }}</span>
+                  <sc-if value="{{ m.hayNota }}" hint-placeholder-val="{{ false }}">
+                    <span style="font:600 13px/1 'Inter Tight',sans-serif;color:#1B5138;font-variant-numeric:tabular-nums">{{ m.nota }}</span>
                   </sc-if>
                 </div>
                 <div style="font:500 14px/1.45 'Inter Tight',sans-serif;color:#2C4A38;margin-top:6px">{{ m.cuando }}</div>
                 <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ m.donde }}</div>
-                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+                <!-- Una fila por persona, y la asistencia con las dos
+                     opciones escritas. Antes era un glifo que ciclaba
+                     · → ✓ → × : para saber en qué estado estaba había que
+                     acordarse de la leyenda del pie, y para marcar «no vino»
+                     había que pulsar dos veces pasando por «vino». -->
+                <div style="margin-top:14px">
                   <sc-for list="{{ m.comensales }}" as="c" hint-placeholder-count="6">
-                    <span style="display:inline-flex;align-items:center;gap:0">
-                      <a href="{{ c.enlace }}" style="{{ c.chip }}">{{ c.nombre }}{{ c.marca }}</a>
-                      <button onClick="{{ c.marcar }}" aria-label="{{ c.etiquetaVino }}" title="{{ c.etiquetaVino }}" style="{{ c.botonVino }}">{{ c.glifoVino }}</button>
-                    </span>
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:9px 0;border-top:1px solid rgba(20,52,42,.1)">
+                      <a href="{{ c.enlace }}" style="{{ c.nombreEstilo }}">{{ c.nombre }}</a>
+                      <span style="flex:1 1 auto"></span>
+                      <span style="display:inline-flex;flex:0 0 auto">
+                        <button onClick="{{ c.ponerVino }}" aria-pressed="{{ c.pulsadoSi }}" style="{{ c.botonSi }}">Vino</button>
+                        <button onClick="{{ c.ponerNoVino }}" aria-pressed="{{ c.pulsadoNo }}" style="{{ c.botonNo }}">No vino</button>
+                      </span>
+                    </div>
                   </sc-for>
                 </div>
                 <sc-if value="{{ m.sinComensales }}" hint-placeholder-val="{{ false }}">
@@ -1534,15 +1543,40 @@
                   <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;padding-top:12px;border-top:1px solid rgba(20,52,42,.12);text-wrap:pretty">{{ m.notas }}</div>
                 </sc-if>
 
-                <!-- Lo que escribieron en la encuesta. Hasta hoy se guardaba
-                     y no lo leía ninguna pantalla: del final de la noche
-                     solo salía un número. -->
-                <sc-if value="{{ m.hayComentarios }}" hint-placeholder-val="{{ false }}">
-                  <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(20,52,42,.12)">
-                    <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:8px">LO QUE ESCRIBIERON</div>
+                <!-- La encuesta del día después. Hasta hoy la tarjeta sacaba
+                     un «NPS» de una columna que nadie escribe, así que no
+                     sacaba nada: las notas, el «volvería a Aro» y el texto
+                     libre se guardaban y no los leía ninguna pantalla. -->
+                <sc-if value="{{ m.hayEncuesta }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(20,52,42,.12)">
+                    <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:10px">LA ENCUESTA · {{ m.cuantasValoraron }}</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px">
+                      <sc-for list="{{ m.medias }}" as="n" hint-placeholder-count="6">
+                        <span style="display:inline-flex;align-items:baseline;gap:7px;min-height:32px;padding:0 12px;border-radius:999px;background:#FFFBF0;border:1px solid rgba(20,52,42,.14)">
+                          <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#566A5D">{{ n.que }}</span>
+                          <span style="font:600 14px/1 'Inter Tight',sans-serif;color:#1B5138;font-variant-numeric:tabular-nums">{{ n.cuanto }}</span>
+                        </span>
+                      </sc-for>
+                    </div>
+
                     <sc-for list="{{ m.comentarios }}" as="t" hint-placeholder-count="2">
-                      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;padding:8px 0 8px 12px;border-left:2px solid rgba(143,69,21,.35);margin-bottom:6px;text-wrap:pretty">{{ t.texto }}</div>
+                      <div style="margin-top:12px;padding:2px 0 2px 12px;border-left:2px solid rgba(143,69,21,.35)">
+                        <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ t.texto }}</div>
+                        <div style="font:500 12px/1 'Inter Tight',sans-serif;color:#8F4515;margin-top:5px">{{ t.quien }}</div>
+                      </div>
                     </sc-for>
+
+                    <button onClick="{{ m.verRespuestas }}" style="{{ m.botonVer }}">{{ m.textoVerRespuestas }}</button>
+                    <sc-if value="{{ m.respuestasAbiertas }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:10px">
+                        <sc-for list="{{ m.respuestas }}" as="r" hint-placeholder-count="3">
+                          <div style="display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:9px 0;border-top:1px solid rgba(20,52,42,.1)">
+                            <a href="{{ r.enlace }}" style="font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A;text-decoration:none;border-bottom:1px solid rgba(20,52,42,.28)">{{ r.nombre }}</a>
+                            <span style="flex:1 1 auto;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ r.notas }}</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
                   </div>
                 </sc-if>
               </div>
@@ -1682,6 +1716,8 @@ class Component extends DCLogic {
     // de Gente porque responde otra pregunta —dónde se sentó quién— y porque
     // la mayoría de las sesiones no lo abren.
     historico: null, resumenHistorico: null, totalHistorico: 0, todasHistorico: 0,
+    // Qué mesas tienen las respuestas de la encuesta abiertas.
+    respuestasAbiertas: {},
     qHistorico: '', paginaHistorico: 1, paginasHistorico: 1, pidiendoHistorico: false,
     // --- y el estado de trabajar con ellas ------------------------------
     trabajando: false, fallo: '', aviso: '',
@@ -2204,11 +2240,39 @@ class Component extends DCLogic {
       });
   }
 
-  marcarAsistencia(reservaId, vinoAhora) {
+  /**
+   * Marcar quién vino. `vino` es true, false o null, tal cual lo que acepta
+   * la ruta: ya no cicla.
+   *
+   * Recarga el histórico en vez de tocar la lista a mano: el servidor es
+   * quien decide si una reserva cancelada admite la marca, y pintar aquí lo
+   * que creemos que pasó dejaría la pantalla diciendo una cosa y la base otra.
+   */
+  marcarAsistencia(reservaId, vino) {
     if (!reservaId) return;
-    const siguiente = vinoAhora === 'pendiente' ? true : vinoAhora === 'si' ? false : null;
-    this.mandar('/api/operacion/asistencia', { reservaId: reservaId, vino: siguiente })
+    this.mandar('/api/operacion/asistencia', { reservaId: reservaId, vino: vino })
       .then((r) => { if (r.ok) this.cargarHistorico(); });
+  }
+
+  /** Abrir o cerrar las respuestas de una mesa. */
+  verRespuestasDe(mesaId) {
+    const abiertas = Object.assign({}, this.state.respuestasAbiertas || {});
+    if (abiertas[mesaId]) delete abiertas[mesaId];
+    else abiertas[mesaId] = true;
+    this.setState({ respuestasAbiertas: abiertas });
+  }
+
+  /** Un número de la encuesta, con coma y sin decimal de más. */
+  num(v) {
+    return v == null ? '—' : String(v).replace('.', ',');
+  }
+
+  /** Una de las dos mitades del interruptor de asistencia. */
+  botonVino(activo, color) {
+    return 'flex:0 0 auto;min-height:36px;padding:0 14px;cursor:pointer;'
+      + 'font:500 13px/1 \'Inter Tight\',sans-serif;border:1px solid '
+      + (activo ? color + ';background:' + color + ';color:#FFF8EA'
+        : 'rgba(20,52,42,.18);background:#FFFBF0;color:#2C4A38');
   }
 
   mandar(ruta, cuerpo, metodo) {
@@ -4945,12 +5009,24 @@ class Component extends DCLogic {
           + r.comensales + (r.comensales === 1 ? ' asiento' : ' asientos') + ' y '
           + r.personas + (r.personas === 1 ? ' persona distinta' : ' personas distintas')
           + (r.restaurantes ? ' en ' + r.restaurantes + (r.restaurantes === 1 ? ' restaurante.' : ' restaurantes.') : '.')
-          + (r.valoradas ? ' NPS medio ' + String(r.nps).replace('.', ',') + ' sobre ' + r.valoradas + (r.valoradas === 1 ? ' mesa valorada.' : ' mesas valoradas.') : ' Ninguna valorada todavía.');
+          + (r.valoradas ? ' Las mesas valoradas dan ' + this.num(r.nota) + ' de 4, sobre ' + r.valoradas + (r.valoradas === 1 ? ' mesa.' : ' mesas.') : ' Ninguna valorada todavía.');
       })(),
       cajaHistorico: 'display:flex;flex-direction:column;gap:12px;transition:opacity 160ms ease;opacity:' + (St.pidiendoHistorico ? '.45' : '1'),
       hayHistorico: (St.historico || []).length > 0,
       sinHistorico: !!St.historico && St.historico.length === 0,
       mesasHistorico: (St.historico || []).map((m) => {
+        const e = m.encuesta || { valoraron: 0, respuestas: [], mesa: null };
+        const abierta = (St.respuestasAbiertas || {})[m.id];
+        // Solo las preguntas que alguien contestó: un «—» por cada bloque en
+        // blanco llena la tarjeta de huecos y no dice nada.
+        const medias = [];
+        [['LA MESA', e.mesa], ['AMBIENTE', e.ambiente], ['SERVICIO', e.servicio],
+          ['SE CONVERSABA', e.conversar], ['COMIDA', e.comida]].forEach((par) => {
+          if (par[1] != null) medias.push({ que: par[0], cuanto: this.num(par[1]) });
+        });
+        if (e.volverianSi + e.volverianNo > 0) {
+          medias.push({ que: 'VOLVERÍAN', cuanto: e.volverianSi + ' de ' + (e.volverianSi + e.volverianNo) });
+        }
         const f = new Date(m.fecha);
         const cuando = f.toLocaleDateString('es-VE',
           { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -4965,42 +5041,63 @@ class Component extends DCLogic {
           donde: m.restaurante + ' · ' + m.zona + ' · ' + m.formato,
           sello: sello[0],
           selloEstilo: 'display:inline-flex;align-items:center;min-height:26px;padding:0 11px;border-radius:999px;font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;white-space:nowrap;border:1px solid ' + sello[1] + ';color:' + sello[1],
-          // El NPS solo se enseña si alguien valoró. Un «0» donde no hay
-          // respuestas se lee como una mesa que salió fatal.
-          hayNps: m.nps != null,
-          nps: m.nps == null ? '' : 'NPS ' + String(m.nps).replace('.', ',') + ' · ' + m.valoraron + (m.valoraron === 1 ? ' respuesta' : ' respuestas'),
+// La nota de la mesa solo se enseña si alguien valoró. Un «0» donde
+          // no hay respuestas se lee como una mesa que salió fatal.
+          hayNota: e.mesa != null,
+          nota: e.mesa == null ? '' : 'La mesa ' + this.num(e.mesa) + ' de 4',
           hayNotas: !!m.notas,
           notas: m.notas,
-          // Sin firma: la encuesta promete «lo lee el equipo, no la mesa», y
-          // para decidir si un sitio sirve no hace falta saber quién lo dijo.
-          hayComentarios: !!(m.comentarios && m.comentarios.length),
-          comentarios: (m.comentarios || []).map((texto) => ({ texto: '«' + texto + '»' })),
+
+          // La encuesta, con nombre. Michael, 17-10: «quiero ver las
+          // respuestas de las personas, incluyendo el comentario, no es
+          // anónimo para nosotros». La pantalla de la encuesta promete «lo
+          // lee el equipo, no la mesa», que es exactamente esto: lo ve
+          // operación y no lo ven los otros cinco.
+          hayEncuesta: e.valoraron > 0,
+          cuantasValoraron: e.valoraron + ' de ' + m.comensales.length + ' contestaron',
+          medias: medias,
+          comentarios: e.respuestas.filter((r) => !!r.comentario).map((r) => ({
+            texto: '«' + r.comentario + '»',
+            quien: r.nombre
+          })),
+          respuestasAbiertas: !!abierta,
+          textoVerRespuestas: abierta ? 'Ocultar quién dijo qué' : 'Ver quién dijo qué (' + e.valoraron + ')',
+          botonVer: 'display:inline-flex;align-items:center;min-height:38px;margin-top:12px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#1B5138;font:500 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+          verRespuestas: () => this.verRespuestasDe(m.id),
+          respuestas: e.respuestas.map((r) => ({
+            nombre: r.nombre,
+            enlace: '/miembro?id=' + r.id + '&desde=historico',
+            notas: r.notas
+          })),
+
           comensales: m.comensales.map((c) => ({
             nombre: c.nombre,
-            enlace: '/operacion/miembro?id=' + c.id,
+            // La ficha vive en /miembro, no en /operacion/miembro: esa ruta
+            // no existe en next.config.ts y cada nombre del histórico daba un
+            // 404. Lo mismo pasaba en la lista de avisos.
+            enlace: '/miembro?id=' + c.id + '&desde=historico',
             // Solo se marca lo que se sale de lo normal. Poner «vino» junto
             // a los cinco que vinieron es ruido; el que falta es la
             // información, y es la que hace falta al mirar una mesa vieja.
-            marca: c.vino === 'no' ? ' · no vino' : '',
-            // El interruptor de asistencia. Quien vino lo marca operacion, y
-            // hasta hoy no lo marcaba nadie: `attended` no se escribia en
-            // ningun sitio de todo el codigo, y el Historico, la ficha del
-            // miembro y `events_attended` leian una columna que nunca cambiaba.
+            // Dos botones con su nombre escrito, y el que está puesto se ve
+            // relleno. Antes era un glifo que ciclaba · → ✓ → × : no se sabía
+            // en qué estado estaba sin leer la leyenda del pie, y marcar «no
+            // vino» obligaba a pasar por «vino» primero, que es escribir en
+            // la base una cosa que no pasó.
             //
-            // Tres estados y no dos: «todavia no se sabe» es de verdad —el
-            // sábado a las nueve nadie ha venido aun— y un interruptor de dos
-            // posiciones obliga a mentir en uno de los dos sentidos.
-            etiquetaVino: c.vino === 'si' ? 'Vino. Pulsa para marcar que no vino'
-              : c.vino === 'no' ? 'No vino. Pulsa para dejarlo sin marcar'
-              : 'Sin marcar. Pulsa para marcar que vino',
-            glifoVino: c.vino === 'si' ? '✓' : c.vino === 'no' ? '×' : '·',
-            marcar: () => this.marcarAsistencia(c.reservaId, c.vino),
-            botonVino: 'flex:0 0 auto;margin-left:-1px;min-width:34px;min-height:38px;border-radius:0 999px 999px 0;cursor:pointer;background:'
-              + (c.vino === 'si' ? '#1B5138' : c.vino === 'no' ? '#8F4515' : '#FFFBF0')
-              + ';border:1px solid ' + (c.vino === 'si' ? '#1B5138' : c.vino === 'no' ? '#8F4515' : 'rgba(20,52,42,.16)')
-              + ';color:' + (c.vino === 'si' || c.vino === 'no' ? '#FFF8EA' : '#566A5D')
-              + ';font:600 13px/1 \'Inter Tight\',sans-serif',
-            chip: 'display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 14px;border-radius:999px;text-decoration:none;background:#FFFBF0;border:1px solid ' + (c.vino === 'no' ? 'rgba(143,69,21,.45)' : 'rgba(20,52,42,.16)') + ';color:' + (c.vino === 'no' ? '#8F4515' : '#14342A') + ';font:500 14px/1 \'Inter Tight\',sans-serif'
+            // Siguen siendo tres estados: «todavía no se sabe» es de verdad
+            // —el sábado a las nueve nadie ha venido aún—. Se vuelve a él
+            // pulsando la opción que ya está puesta, en vez de con un tercer
+            // botón que casi nunca hace falta.
+            pulsadoSi: c.vino === 'si' ? 'true' : 'false',
+            pulsadoNo: c.vino === 'no' ? 'true' : 'false',
+            nombreEstilo: 'font:500 15px/1.3 \'Inter Tight\',sans-serif;text-decoration:none;color:'
+              + (c.vino === 'no' ? '#8F4515' : '#14342A')
+              + ';border-bottom:1px solid ' + (c.vino === 'no' ? 'rgba(143,69,21,.4)' : 'rgba(20,52,42,.28)'),
+            botonSi: this.botonVino(c.vino === 'si', '#1B5138') + ';border-radius:999px 0 0 999px',
+            botonNo: this.botonVino(c.vino === 'no', '#8F4515') + ';border-radius:0 999px 999px 0;margin-left:-1px',
+            ponerVino: () => this.marcarAsistencia(c.reservaId, c.vino === 'si' ? null : true),
+            ponerNoVino: () => this.marcarAsistencia(c.reservaId, c.vino === 'no' ? null : false)
           })),
           sinComensales: m.comensales.length === 0,
           caja: 'border-radius:24px;background:#FAF3E4;padding:clamp(16px,2vw,22px)'
@@ -5048,7 +5145,7 @@ class Component extends DCLogic {
       // Ya no es de lectura: el interruptor de al lado de cada nombre escribe.
       // Dejar la frase vieja seria decirle a operacion que no puede tocar lo
       // unico que solo puede tocar ella.
-      notaPieHistorico: 'El botón de al lado de cada nombre marca quién vino: sin marcar · , vino ✓ , no vino ×. Lo marca operación, nunca la persona que cenó, porque de ahí salen las cenas contadas y el veto de tres meses. La ficha de cada persona se abre pinchando su nombre.',
+      notaPieHistorico: 'Vino y No vino los marca operación, nunca la persona que cenó, porque de ahí salen las cenas contadas y el veto de tres meses. Pulsar la opción que ya está puesta la quita y la deja sin marcar. Las notas de la encuesta van de 1 a 4 y 4 es lo mejor. La ficha de cada persona se abre pinchando su nombre.',
 
       notaPieGente: 'Desde aquí no sale ningún correo: esta pestaña sirve para saber, no para disparar.'
         + (St.esAdmin ? ' La exportación de leads queda anotada con quién la sacó.' : '')
@@ -5581,7 +5678,7 @@ class Component extends DCLogic {
               if (zs.length <= 3) return zs.join(', ');
               return zs.slice(0, 3).join(', ') + ' y ' + (zs.length - 3) + ' zonas más';
             })(),
-            enlace: '/operacion/miembro?id=' + g.id,
+            enlace: '/miembro?id=' + g.id + '&desde=historico',
             inicial: (g.nombre || '?').charAt(0),
             avatar: avatarRep(k),
             fila: 'display:flex;gap:11px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(20,52,42,.09);text-decoration:none'

@@ -280,6 +280,25 @@ for (const nombre of pantallas) {
   const cruzadas = sinCerrar(html)
   if (cruzadas.length) di(`el HTML no cierra:\n      → ${cruzadas.slice(0, 4).join('\n      → ')}`)
 
+  // --- 2 bis · que el guion de la pantalla PARSEE ---------------------
+  //
+  // Una comilla sin escapar dentro de un estilo —`font: 'Inter Tight'` en
+  // medio de una cadena ya entrecomillada— no rompe nada al mirar el diff y
+  // deja la pantalla ENTERA en blanco: el navegador no ejecuta un script que
+  // no parsea, y lo único que sale es «Unexpected identifier» en la consola,
+  // que en el panel nadie mira. Me pasó escribiendo esta misma entrega.
+  //
+  // `new Function` solo PARSEA, no ejecuta: no hay DOM, no hay red y no hay
+  // nada que pueda tener efecto.
+  const guion = html.match(/<script type="text\/x-dc"[^>]*>([\s\S]*?)<\/script>/)
+  if (guion) {
+    try {
+      new Function('DCLogic', guion[1])
+    } catch (e) {
+      di(`el guion no parsea: ${e.message} — la pantalla entera se queda en blanco`)
+    }
+  }
+
   // --- 3 · y que cierre también AL REPETIR ----------------------------
   //
   // Un `sc-for` cuyo contenido abre y cierra a caballo se lee perfecto y

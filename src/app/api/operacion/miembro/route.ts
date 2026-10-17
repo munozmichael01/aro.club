@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 
+import { resumenDeRespuesta } from '@/lib/encuesta'
 import { diaCompleto, diaSuelto, diaYMes, mesYAno } from '@/lib/fechas'
 import { leerCatalogo } from '@/lib/questionnaire/catalogo'
 import { exigirOps } from '@/lib/ops'
-import { DIAS_GUARDA_FOTOS } from '@/lib/reglas'
+import { DIAS_GUARDA_FOTOS, ZONA_POR_DEFECTO, partesDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -235,9 +236,12 @@ export async function GET(request: Request) {
     .neq('profile_id', id)
     .order('seat_order')
 
+  // Toda la encuesta de esa persona, no dos columnas. Michael, 17-10: «estas
+  // respuestas de cada persona a esa cena debería ser accesible desde el
+  // histórico del perfil de la persona también».
   const { data: valoraciones } = await admin
     .from('table_feedback')
-    .select('table_id, would_repeat, conversation_rating')
+    .select('table_id, would_repeat, conversation_rating, sitio_ambiente, sitio_servicio, sitio_conversar, sitio_comida, comment')
     .eq('profile_id', id)
 
   // Los bloqueos viven en `exclusions` y solo ahí. `created_by` distingue
@@ -285,8 +289,11 @@ export async function GET(request: Request) {
     .map((r) => {
       const ev = r.events as unknown as { starts_at: string; zone_slug: string | null }
       const mesa = mesaDe.get(r.id)
-      const d = new Date(ev.starts_at)
-      const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+      // El día, en la zona de la ciudad. Con `getDay()` —la hora de Vercel,
+      // que es UTC— una cena del sábado a las ocho de la noche de Caracas es
+      // domingo, y el historial de quien cenó el sábado decía «Domingo».
+      const partes = partesDe(ev.starts_at, ZONA_POR_DEFECTO)
+      const dia = partes ? partes.dia.charAt(0).toUpperCase() + partes.dia.slice(1) : ''
 
       const val = mesa ? valorDe.get(mesa.table_id) : null
       const cuantos = mesa ? (bloqueosPorMesa.get(mesa.table_id) ?? 0) : 0
@@ -305,11 +312,19 @@ export async function GET(request: Request) {
           ? 'No llegó a tener mesa.'
           : !val
             ? 'No valoró esa mesa.'
-            : (val.conversation_rating === 5
-                ? 'Volvería sin dudarlo. '
+            // La escala es 1..4 y más es mejor —4 Excelente, 1 Mala, está en
+            // src/lib/encuesta.ts—. Esto comparaba con 5 y con 3, de cuando la
+            // columna era 1..5: un «Excelente» (4) caía en el último caso y la
+            // ficha decía «No volvería» de quien dijo que fue excelente.
+            : (val.conversation_rating === 4
+                ? 'Dijo que la mesa fue excelente. '
                 : val.conversation_rating === 3
-                  ? 'Estuvo bien. '
-                  : 'No volvería. ') +
+                  ? 'Dijo que la mesa estuvo bien. '
+                  : val.conversation_rating === 2
+                    ? 'Dijo que la mesa fue regular. '
+                    : val.conversation_rating === 1
+                      ? 'Dijo que la mesa fue mala. '
+                      : '') +
               (cuantos === 0
                 ? 'No bloqueó a nadie.'
                 : cuantos === 1
@@ -321,7 +336,7 @@ export async function GET(request: Request) {
         // restaurante" se lee como un fallo nuestro cuando es lo normal.
         sitio: mesa?.dinner_tables?.restaurants?.name
           ?? (cual === 'Apuntada' ? 'Todavía sin mesa' : 'Sin mesa'),
-        cuando: `${DIAS[d.getDay()]} ${diaYMes(ev.starts_at)}` +
+        cuando: `${dia} ${diaYMes(ev.starts_at)}` +
           (ev.zone_slug ? ` · ${nombreZona.get(ev.zone_slug) ?? ev.zone_slug}` : ''),
         estado: cual,
         gente: mesa
@@ -333,6 +348,11 @@ export async function GET(request: Request) {
               })
           : [],
         nota,
+        // Lo que contestó ella de esa cena. La línea la arma el servidor en
+        // src/lib/encuesta.ts, la misma que usa el Histórico de mesas.
+        respuesta: val
+          ? { notas: resumenDeRespuesta(val), comentario: val.comment?.trim() || null }
+          : null,
       }
     })
     .filter((h): h is NonNullable<typeof h> => h !== null)

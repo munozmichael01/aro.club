@@ -194,6 +194,17 @@
               <sc-if value="{{ h.hayNota }}" hint-placeholder-val="{{ false }}">
                 <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:11px;max-width:64ch;text-wrap:pretty">{{ h.nota }}</div>
               </sc-if>
+              <!-- Lo que contestó ella de esa cena. Operación lo ve con
+                   nombre; los otros cinco de la mesa, nunca. -->
+              <sc-if value="{{ h.hayRespuesta }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:11px;padding:2px 0 2px 12px;border-left:2px solid rgba(143,69,21,.35)">
+                  <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:6px">LO QUE CONTESTÓ</div>
+                  <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ h.respuestaNotas }}</div>
+                  <sc-if value="{{ h.hayComentario }}" hint-placeholder-val="{{ false }}">
+                    <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:7px;max-width:64ch;text-wrap:pretty">{{ h.comentario }}</div>
+                  </sc-if>
+                </div>
+              </sc-if>
             </div>
           </sc-for>
         </div>
@@ -290,7 +301,7 @@ class Component extends DCLogic {
     const q = new URLSearchParams(window.location.search);
     const id = q.get('id');
     const pedido = q.get('desde');
-    const desde = ['cola', 'gente'].indexOf(pedido) >= 0 ? pedido : 'mesa';
+    const desde = ['cola', 'gente', 'historico'].indexOf(pedido) >= 0 ? pedido : 'mesa';
     this.setState({ desde: desde });
 
     if (!id) { this.setState({ error: 'Esta ficha se abre desde una mesa o desde la cola.' }); return; }
@@ -316,6 +327,7 @@ class Component extends DCLogic {
     const VUELTA = {
       cola: ['#verificaciones', 'Cola de verificaciones'],
       gente: ['#gente', 'Gente'],
+      historico: ['#historico', 'Historial de mesas'],
       mesa: ['#mesas', 'Reparto de la fecha']
     };
     const vuelta = VUELTA[this.state.desde] || VUELTA.mesa;
@@ -444,7 +456,11 @@ class Component extends DCLogic {
       sitio: h.sitio, cuando: h.cuando, estado: h.estado, chip: chipsHist[h.estado],
       hayMesa: (h.gente || []).length > 0,
       gente: (h.gente || []).map((n, i) => ({ nombre: n, inicial: (n || '—').charAt(0), avatar: avatar(i, 22) })),
-      hayNota: !!h.nota, nota: h.nota
+      hayNota: !!h.nota, nota: h.nota,
+      hayRespuesta: !!h.respuesta,
+      respuestaNotas: h.respuesta ? h.respuesta.notas : '',
+      hayComentario: !!(h.respuesta && h.respuesta.comentario),
+      comentario: h.respuesta && h.respuesta.comentario ? '«' + h.respuesta.comentario + '»' : ''
     }));
 
     const fue = historial.filter((h) => h.estado === 'Fue').length;

@@ -52,3 +52,42 @@ export function notasDelSitio(
   }
   return salida
 }
+
+/** Lo que contestó una persona, tal cual vive en `table_feedback`. */
+export type RespuestaCruda = {
+  conversation_rating?: number | null
+  sitio_ambiente?: number | null
+  sitio_servicio?: number | null
+  sitio_conversar?: number | null
+  sitio_comida?: number | null
+  would_repeat?: boolean | null
+}
+
+/**
+ * Lo que contestó una persona, en una línea, para operación.
+ *
+ * Michael, 17-10: «quiero ver las respuestas de las personas, incluyendo el
+ * comentario, no es anónimo para nosotros». Esa línea hace falta en dos
+ * pantallas —el Histórico de mesas y la ficha de cada miembro— y vive aquí
+ * por lo de siempre: dos sitios armando la misma frase acaban diciendo cosas
+ * distintas, y aquí además está escrito que la escala va al derecho.
+ *
+ * Solo lo contestado. Los bloques son opcionales por separado y un «—» por
+ * cada hueco convierte la línea en ruido.
+ */
+export function resumenDeRespuesta(r: RespuestaCruda): string {
+  const partes: string[] = []
+  const pares: [string, number | null | undefined][] = [
+    ['La mesa', r.conversation_rating],
+    ['Ambiente', r.sitio_ambiente],
+    ['Servicio', r.sitio_servicio],
+    ['Se conversaba', r.sitio_conversar],
+    ['Comida', r.sitio_comida],
+  ]
+  for (const [que, cuanto] of pares) {
+    if (cuanto != null) partes.push(`${que} ${cuanto}`)
+  }
+  if (r.would_repeat === true) partes.push('Volvería a Aro')
+  if (r.would_repeat === false) partes.push('No volvería a Aro')
+  return partes.length ? partes.join(' · ') : 'Solo escribió, sin notas.'
+}

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { resumenDeRespuesta } from '@/lib/encuesta'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -90,6 +91,81 @@ function plano(s: string): string {
   return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
 }
 
+type ValoracionCruda = {
+  table_id: string
+  profile_id: string
+  conversation_rating: number | null
+  sitio_ambiente: number | null
+  sitio_servicio: number | null
+  sitio_conversar: number | null
+  sitio_comida: number | null
+  would_repeat: boolean | null
+  comment: string | null
+  created_at: string
+}
+
+/**
+ * Una respuesta de la encuesta, CON NOMBRE.
+ *
+ * Michael, 17-10: «quiero ver las respuestas de las personas, incluyendo el
+ * comentario, no es anónimo para nosotros». Y es coherente con lo que promete
+ * la pantalla: «lo lee el equipo, no la mesa». Lo que nunca sale de aquí es
+ * hacia los demás comensales.
+ *
+ * Sin nombre no se puede hacer nada con una queja: ni preguntarle, ni mirar
+ * si quien dice que la mesa estuvo mal es quien no apareció, ni cruzar su
+ * comentario con su ficha.
+ */
+type Respuesta = {
+  id: string
+  nombre: string
+  /** La mesa, 1..4 y más es mejor. La vuelta la da `notaDesdeIndice`. */
+  mesa: number | null
+  ambiente: number | null
+  servicio: number | null
+  conversar: number | null
+  comida: number | null
+  /** Si volvería a Aro Club. No a esa mesa: esa mesa no se repite. */
+  volveria: boolean | null
+  comentario: string | null
+  /**
+   * Todo lo anterior en una línea, armado en `src/lib/encuesta.ts`.
+   *
+   * La arma el servidor y no cada pantalla: hace falta igual en la ficha del
+   * miembro, y dos sitios escribiendo la misma frase es como este repo ha
+   * divergido ya varias veces. Ahí está además escrito que la escala va al
+   * derecho, 4 es lo mejor.
+   */
+  notas: string
+  cuando: string
+}
+
+/** La encuesta de una mesa: la media de cada pregunta y quién dijo qué. */
+type Encuesta = {
+  valoraron: number
+  mesa: number | null
+  ambiente: number | null
+  servicio: number | null
+  conversar: number | null
+  comida: number | null
+  volverianSi: number
+  volverianNo: number
+  respuestas: Respuesta[]
+}
+
+/**
+ * Media de lo contestado, con un decimal.
+ *
+ * Lo que nadie contestó no entra: saltarse un bloque es lo normal y un hueco
+ * no es un cero. Promediar los nulos como ceros hunde la nota de un sitio
+ * impecable porque tres personas solo valoraron la conversación.
+ */
+function media(valores: (number | null)[]): number | null {
+  const hay = valores.filter((v): v is number => typeof v === 'number')
+  if (!hay.length) return null
+  return Number((hay.reduce((a, b) => a + b, 0) / hay.length).toFixed(1))
+}
+
 /** Lo que la pantalla pinta de cada comensal. */
 type Comensal = {
   id: string
@@ -115,22 +191,15 @@ type Mesa = {
   score: number | null
   notas: string
   comensales: Comensal[]
-  /** Media de NPS de quienes valoraron, y cuántos fueron. */
-  nps: number | null
-  valoraron: number
   /**
-   * Lo que escribieron, sin firma.
+   * La encuesta del día después: la media de cada pregunta y quién dijo qué.
    *
    * Michael, 17-10: «¿esto dónde lo vamos a ver? en operaciones no veo nada
-   * de esto». Y tenía razón: de la encuesta solo salía el NPS medio, un
-   * número. Las notas de la mesa y del sitio y el texto libre se guardaban y
-   * no los leía ninguna pantalla.
-   *
-   * Sin nombre a propósito. La encuesta promete «lo lee el equipo, no la
-   * mesa», y para decidir si un sitio sirve o si una mesa salió bien no hace
-   * falta saber quién lo dijo. Quién valoró ya se ve en su ficha.
+   * de esto». De la encuesta salía un «NPS» de una columna que nadie escribe,
+   * así que no salía nada. Las notas de la mesa y del sitio, el «volvería a
+   * Aro» y el texto libre se guardaban y no los leía ninguna pantalla.
    */
-  comentarios: string[]
+  encuesta: Encuesta
   porCelebrar: boolean
 }
 
@@ -172,8 +241,10 @@ export async function GET(request: Request) {
         (d, h) => admin.from('profiles').select('id, full_name, display_name, email').range(d, h)),
       todasLasFilas<{ id: string; status: string }>(
         (d, h) => admin.from('bookings').select('id, status').range(d, h)),
-      todasLasFilas<{ table_id: string; nps: number | null; comment: string | null }>(
-        (d, h) => admin.from('table_feedback').select('table_id, nps, comment').range(d, h)),
+      todasLasFilas<ValoracionCruda>(
+        (d, h) => admin.from('table_feedback')
+          .select('table_id, profile_id, conversation_rating, sitio_ambiente, sitio_servicio, sitio_conversar, sitio_comida, would_repeat, comment, created_at')
+          .range(d, h)),
     ])
   } catch (e) {
     console.error('[historico] no se pudo leer', e)
@@ -193,19 +264,30 @@ export async function GET(request: Request) {
     else miembrosPorMesa.set(m.table_id, [m])
   }
 
-  const npsPorMesa = new Map<string, number[]>()
-  const comentariosPorMesa = new Map<string, string[]>()
+  // Las respuestas de la encuesta, por mesa y con el nombre de quien contestó.
+  //
+  // Antes esto leía `nps`, una columna que NADIE escribe: la encuesta de la
+  // entrega 16 guarda `conversation_rating`, las cuatro del sitio,
+  // `would_repeat` y `comment`. El panel enseñaba «NPS» y por eso no enseñaba
+  // nunca nada: la media de una columna vacía es nula siempre.
+  const respuestasPorMesa = new Map<string, Respuesta[]>()
   for (const v of valoraciones) {
-    const texto = v.comment?.trim()
-    if (texto) {
-      const dichos = comentariosPorMesa.get(v.table_id)
-      if (dichos) dichos.push(texto)
-      else comentariosPorMesa.set(v.table_id, [texto])
-    }
-    if (v.nps == null) continue
-    const lista = npsPorMesa.get(v.table_id)
-    if (lista) lista.push(v.nps)
-    else npsPorMesa.set(v.table_id, [v.nps])
+    const p = perfilPorId.get(v.profile_id)
+    const lista = respuestasPorMesa.get(v.table_id) ?? []
+    lista.push({
+      id: v.profile_id,
+      nombre: p?.full_name || p?.display_name || 'Sin nombre',
+      mesa: v.conversation_rating,
+      ambiente: v.sitio_ambiente,
+      servicio: v.sitio_servicio,
+      conversar: v.sitio_conversar,
+      comida: v.sitio_comida,
+      volveria: v.would_repeat,
+      comentario: v.comment?.trim() || null,
+      notas: resumenDeRespuesta(v),
+      cuando: v.created_at,
+    })
+    respuestasPorMesa.set(v.table_id, lista)
   }
 
   const ahora = Date.now()
@@ -232,7 +314,19 @@ export async function GET(request: Request) {
         } as Comensal
       })
 
-    const notas = npsPorMesa.get(t.id) ?? []
+    const dichas = respuestasPorMesa.get(t.id) ?? []
+    const encuesta: Encuesta = {
+      valoraron: dichas.length,
+      mesa: media(dichas.map((r) => r.mesa)),
+      ambiente: media(dichas.map((r) => r.ambiente)),
+      servicio: media(dichas.map((r) => r.servicio)),
+      conversar: media(dichas.map((r) => r.conversar)),
+      comida: media(dichas.map((r) => r.comida)),
+      volverianSi: dichas.filter((r) => r.volveria === true).length,
+      volverianNo: dichas.filter((r) => r.volveria === false).length,
+      // Por orden de respuesta, que es el único que significa algo aquí.
+      respuestas: dichas.slice().sort((a, b) => a.cuando.localeCompare(b.cuando)),
+    }
 
     return {
       id: t.id,
@@ -246,9 +340,7 @@ export async function GET(request: Request) {
       score: t.score == null ? null : Number(t.score),
       notas: t.notes_ops ?? '',
       comensales,
-      nps: notas.length ? Number((notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(1)) : null,
-      comentarios: comentariosPorMesa.get(t.id) ?? [],
-      valoraron: notas.length,
+      encuesta,
       porCelebrar: new Date(ev?.starts_at ?? t.created_at).getTime() > ahora,
     }
   })
@@ -286,12 +378,12 @@ export async function GET(request: Request) {
   const personas = new Set<string>()
   const sitios = new Set<string>()
   let comensales = 0
-  const npsTodos: number[] = []
+  const notasMesa: number[] = []
   for (const m of filtradas) {
     comensales += m.comensales.length
     m.comensales.forEach((c) => personas.add(c.id))
     if (m.restauranteId) sitios.add(m.restauranteId)
-    if (m.nps != null) npsTodos.push(m.nps)
+    if (m.encuesta.mesa != null) notasMesa.push(m.encuesta.mesa)
   }
 
   const pagina = Math.max(1, Number(url.searchParams.get('pagina') ?? 1) || 1)
@@ -315,8 +407,10 @@ export async function GET(request: Request) {
       comensales,
       personas: personas.size,
       restaurantes: sitios.size,
-      nps: npsTodos.length ? Number((npsTodos.reduce((a, b) => a + b, 0) / npsTodos.length).toFixed(1)) : null,
-      valoradas: npsTodos.length,
+      // La nota de la mesa, de 1 a 4. No es un NPS y llamarlo NPS hacía que
+      // se leyera sobre 10: un 3,5 parecía malo siendo casi lo mejor.
+      nota: media(notasMesa),
+      valoradas: notasMesa.length,
     },
   })
 }
