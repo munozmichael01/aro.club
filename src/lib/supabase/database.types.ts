@@ -214,6 +214,7 @@ export type Database = {
           held_until: string | null
           hold_until: string | null
           id: string
+          permiso_grabacion: boolean | null
           profile_id: string
           status: Database["public"]["Enums"]["booking_status_t"]
         }
@@ -228,6 +229,7 @@ export type Database = {
           held_until?: string | null
           hold_until?: string | null
           id?: string
+          permiso_grabacion?: boolean | null
           profile_id: string
           status?: Database["public"]["Enums"]["booking_status_t"]
         }
@@ -242,6 +244,7 @@ export type Database = {
           held_until?: string | null
           hold_until?: string | null
           id?: string
+          permiso_grabacion?: boolean | null
           profile_id?: string
           status?: Database["public"]["Enums"]["booking_status_t"]
         }
@@ -689,6 +692,7 @@ export type Database = {
         Row: {
           created_at: string
           event_id: string
+          grabacion: boolean
           id: string
           notes_ops: string | null
           restaurant_id: string | null
@@ -700,6 +704,7 @@ export type Database = {
         Insert: {
           created_at?: string
           event_id: string
+          grabacion?: boolean
           id?: string
           notes_ops?: string | null
           restaurant_id?: string | null
@@ -711,6 +716,7 @@ export type Database = {
         Update: {
           created_at?: string
           event_id?: string
+          grabacion?: boolean
           id?: string
           notes_ops?: string | null
           restaurant_id?: string | null
@@ -941,6 +947,7 @@ export type Database = {
           credit_cost: number
           es_prueba: boolean
           format: Database["public"]["Enums"]["event_format_t"]
+          grabacion: boolean
           id: string
           max_seats: number | null
           min_tables: number
@@ -965,6 +972,7 @@ export type Database = {
           credit_cost?: number
           es_prueba?: boolean
           format?: Database["public"]["Enums"]["event_format_t"]
+          grabacion?: boolean
           id?: string
           max_seats?: number | null
           min_tables?: number
@@ -989,6 +997,7 @@ export type Database = {
           credit_cost?: number
           es_prueba?: boolean
           format?: Database["public"]["Enums"]["event_format_t"]
+          grabacion?: boolean
           id?: string
           max_seats?: number | null
           min_tables?: number

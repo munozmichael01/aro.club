@@ -1414,7 +1414,7 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
 
   const { data: fila } = await admin
     .from('table_members')
-    .select('table_id, dinner_tables!inner(table_number, event_id, restaurant_id, restaurants(id, name, address, maps_url, place_id, lat, lng, zone_slug, facade_photo_path))')
+    .select('table_id, dinner_tables!inner(table_number, event_id, restaurant_id, grabacion, events!inner(grabacion), restaurants(id, name, address, maps_url, place_id, lat, lng, zone_slug, facade_photo_path))')
     .eq('profile_id', perfilId)
     .eq('dinner_tables.event_id', eventoId)
     .maybeSingle()
@@ -1424,6 +1424,8 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   const mesa = fila.dinner_tables as unknown as {
     table_number: number
     restaurant_id: string | null
+    grabacion: boolean
+    events: { grabacion: boolean } | null
     restaurants: {
       id: string
       name: string
@@ -1554,6 +1556,15 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
     mesaCorta: enLaMesa > 0 && enLaMesa < porMesa
       ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: alguien canceló y no llegamos a sentar a nadie más.`
       : '',
+    /**
+     * Si esa noche grabamos en ESTA mesa.
+     *
+     * La marca la pone operación al armar la mesa, y la fecha entera puede
+     * encenderla también. La plantilla se salta el bloque cuando está vacío:
+     * un aviso de grabación en una mesa donde no hay cámara es ruido, y la
+     * vez que sí haya cámara ya nadie lo lee.
+     */
+    grabamos: mesa.grabacion || mesa.events?.grabacion ? 'si' : '',
   }
 }
 

@@ -410,6 +410,16 @@
             </sc-for>
           </div>
           <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:16px;max-width:48ch;text-wrap:pretty">{{ notaCompaneros }}</div>
+
+          <!-- Lo que contestó de la grabación, y cómo cambiarlo. Solo sale
+               si ya contestó: el aviso promete «puedes cambiarlo cuando
+               quieras» y sin esto esa frase sería mentira. -->
+          <sc-if value="{{ hayGrabacion }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid rgba(20,52,42,.12)">
+              <span style="flex:1 1 220px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ textoGrabacion }}</span>
+              <button onClick="{{ cambiarGrabacion }}" style="flex:0 0 auto;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:transparent;color:#14342A;font:500 13px/1 'Inter Tight',sans-serif;cursor:pointer">Cambiarlo</button>
+            </div>
+          </sc-if>
         </div>
 
         <!-- El juego de la mesa (entrega 18). Va aquí, al final y debajo de
@@ -595,6 +605,33 @@
 </div>
 
 
+<!-- «¿Te podemos grabar?», encima de la mesa.
+     Sale sola unos segundos después de abrir la mesa, solo si esa noche
+     grabamos y solo si todavía no ha contestado. Dos salidas claras y una
+     cruz: cerrar sin elegir no es un sí ni un no, se queda sin contestar y
+     vuelve a preguntarse la próxima vez que entre. -->
+<sc-if value="{{ preguntaGrabacion }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:95;background:rgba(20,52,42,.72);display:flex;align-items:flex-end;justify-content:center;padding:16px;overflow:auto">
+    <div style="width:100%;max-width:430px;background:#FFFBF0;border-radius:28px;padding:24px 22px max(24px,env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(20,52,42,.35)">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">HOY, EN LA ZONA</div>
+          <div style="margin-top:10px;font:400 clamp(26px,6.5vw,30px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">¿Te podemos grabar?</div>
+        </div>
+        <button onClick="{{ cerrarGrabacion }}" aria-label="Ahora no" style="flex:0 0 auto;width:40px;height:40px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2C4A38" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </div>
+      <div style="margin-top:12px;font:400 16px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">Esta noche estamos grabando contenido por la zona. Si dices que no, no te grabamos y no pasa nada: la cena es igual.</div>
+      <div style="margin-top:18px;display:flex;flex-direction:column;gap:9px">
+        <button onClick="{{ sePuedeGrabar }}" style="{{ botonGrabaSi }}">{{ textoGrabaSi }}</button>
+        <button onClick="{{ noMeGrabes }}" style="{{ botonGrabaNo }}">{{ textoGrabaNo }}</button>
+      </div>
+      <div style="margin-top:12px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">Puedes cambiarlo cuando quieras, también en la cena.</div>
+    </div>
+  </div>
+</sc-if>
+
 <!-- El juego, a pantalla completa por encima de Mi mesa (entrega 18).
      Centrado a 430 px sobre #14342A, como pide la entrega para la web. -->
 <sc-if value="{{ enJuego }}" hint-placeholder-val="{{ false }}">
@@ -714,6 +751,15 @@
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
   state = { saliendo: false,
+    /**
+     * «¿Te podemos grabar?».
+     *
+     * `preguntaGrabacion` es si la pregunta está delante ahora mismo, y
+     * `permisoGrabacion` lo que ya contestó —`null` es que no ha
+     * contestado, y no es un no—. Sale sola unos segundos después de abrir
+     * la mesa: el momento de abrirla es para la mesa, no para un permiso.
+     */
+    preguntaGrabacion: false, permisoGrabacion: null, guardandoGrabacion: false,
     fase: 0, ahora: Date.now(), tarde: false, retraso: 1, avisado: false,
     avisando: false, falloTarde: '', minutosAvisados: 0,
     // Entrega 16 · cuatro bloques, todos opcionales por separado.
@@ -772,8 +818,16 @@ class Component extends DCLogic {
         // Lo que ya envio se recupera: si no, al recargar le pediriamos otra
         // vez que valore una mesa que ya valoro, y el boton escribiria encima.
         const ids = (d.companeros || []).map((c) => c.id);
+        // La pregunta de la grabación, si esa noche se graba y no ha
+        // contestado. Con retraso a propósito: si sale encima de la
+        // revelación, tapa justo lo que la persona vino a ver, y se
+        // contesta sin leerla.
+        if (d.grabamos && d.permisoGrabacion === null && i === 1) {
+          this._tGraba = setTimeout(() => this.setState({ preguntaGrabacion: true }), 6000);
+        }
         this.setState({
           datos: d, fase: i,
+          permisoGrabacion: d.permisoGrabacion === undefined ? null : d.permisoGrabacion,
           contado: !!d.yaValoro,
           reportado: !!d.yaReporto,
           quien: d.yaReporto ? ids.indexOf(d.yaReporto) : -1,
@@ -955,6 +1009,35 @@ class Component extends DCLogic {
       .catch(() => this.setState({ enviando: false, errorF11: 'No pudimos registrarlo. Vuelve a intentarlo.' }));
   }
 
+  /**
+   * Contestar «¿te podemos grabar?».
+   *
+   * Se cierra al momento y se guarda detrás: la respuesta es de la persona y
+   * no hay nada que esperar a que el servidor confirme para que ella siga
+   * con su mesa. Si falla, se deja la pregunta abierta y se vuelve a
+   * preguntar: lo que no puede pasar es que crea que dijo que no y nosotros
+   * no lo tengamos.
+   */
+  responderGrabacion(permite) {
+    const d = this.state.datos;
+    if (!d || !d.eventoId || this.state.guardandoGrabacion) return;
+    this.setState({ guardandoGrabacion: true });
+    fetch('/api/grabacion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventoId: d.eventoId, permite: permite })
+    })
+      .then((r) => r.ok)
+      .catch(() => false)
+      .then((ok) => {
+        this.setState({
+          guardandoGrabacion: false,
+          preguntaGrabacion: !ok,
+          permisoGrabacion: ok ? permite : this.state.permisoGrabacion
+        });
+      });
+  }
+
   renderVals() {
     // ── el juego de la mesa ─────────────────────────────────────────
     const J = AroReglas.JUEGO;
@@ -1030,6 +1113,28 @@ class Component extends DCLogic {
         this.juegoDespierto(true);
         this.setState({ juego: guardado || { paso: 'reglas', ronda: 0, idx: 0 } });
       },
+
+      // --- «¿Te podemos grabar?» ----------------------------------------
+      preguntaGrabacion: !!this.state.preguntaGrabacion,
+      textoGrabaSi: this.state.guardandoGrabacion ? 'Guardando…' : 'Sí, pueden',
+      textoGrabaNo: this.state.guardandoGrabacion ? 'Guardando…' : 'No, gracias',
+      botonGrabaSi: 'min-height:54px;border:0;border-radius:999px;background:#14342A;color:#FAF3E4;'
+        + 'font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (this.state.guardandoGrabacion ? 'wait' : 'pointer'),
+      botonGrabaNo: 'min-height:54px;border:1px solid rgba(20,52,42,.25);border-radius:999px;background:transparent;'
+        + 'color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (this.state.guardandoGrabacion ? 'wait' : 'pointer'),
+      sePuedeGrabar: () => this.responderGrabacion(true),
+      noMeGrabes: () => this.responderGrabacion(false),
+      // Cerrar sin elegir no guarda nada: se queda sin contestar, que no es
+      // ni un sí ni un no, y se vuelve a preguntar la próxima vez que entre.
+      cerrarGrabacion: () => this.setState({ preguntaGrabacion: false }),
+
+      // Y la línea para cambiarlo, que solo sale si ya contestó: sin ella el
+      // «puedes cambiarlo cuando quieras» del propio aviso sería mentira.
+      hayGrabacion: !!(dJ && dJ.grabamos && this.state.permisoGrabacion !== null),
+      textoGrabacion: this.state.permisoGrabacion === true
+        ? 'Dijiste que sí te podemos grabar.'
+        : 'Dijiste que prefieres no salir en cámara.',
+      cambiarGrabacion: () => this.setState({ preguntaGrabacion: true }),
 
       enJuego: !!jg,
       jSalir: () => this.juegoSalir(),

@@ -606,7 +606,7 @@ export async function POST(request: Request) {
   const { data: yaSentados } = await admin
     .from('dinner_tables')
     .select(
-      'id, table_number, restaurant_id, score, restaurants!dinner_tables_restaurant_id_fkey(name, zone_slug), table_members(profile_id, booking_id, profiles(display_name, full_name))',
+      'id, table_number, restaurant_id, score, grabacion, restaurants!dinner_tables_restaurant_id_fkey(name, zone_slug), table_members(profile_id, booking_id, bookings(permiso_grabacion), profiles(display_name, full_name))',
     )
     .eq('event_id', eventoId)
     .order('table_number')
@@ -679,12 +679,16 @@ export async function POST(request: Request) {
     const miembros = (t.table_members ?? []) as unknown as {
       profile_id: string
       booking_id: string
+      bookings: { permiso_grabacion: boolean | null } | null
       profiles: { display_name: string | null; full_name: string | null } | null
     }[]
     const rest = t.restaurants as unknown as { name: string; zone_slug: string | null } | null
     return {
       numero: t.table_number,
       publicada: true,
+      // La mesa, para poder marcarla; y si está marcada para grabar.
+      mesaId: t.id,
+      grabacion: !!t.grabacion,
       zona: rest?.zone_slug ?? null,
       zonasPosibles: rest?.zone_slug ? [rest.zone_slug] : [],
       restaurantId: t.restaurant_id,
@@ -698,6 +702,9 @@ export async function POST(request: Request) {
         return {
           profileId: m.profile_id,
           bookingId: m.booking_id,
+          // Qué contestó al «¿te podemos grabar?». `null` es que no ha
+          // contestado, que no es un no: quien graba ve los tres estados.
+          permisoGrabacion: m.bookings?.permiso_grabacion ?? null,
           nombre: m.profiles?.display_name || m.profiles?.full_name?.split(' ')[0] || '—',
           edad: r?.age ?? null,
           genero: r?.gender ?? null,

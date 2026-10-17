@@ -32,7 +32,7 @@ export async function GET() {
 
   const { data: reservas } = await admin
     .from('bookings')
-    .select('id, event_id, events(starts_at, reveal_at, status, format, activity, city_slug)')
+    .select('id, event_id, permiso_grabacion, events(starts_at, reveal_at, status, format, activity, city_slug, grabacion)')
     .eq('profile_id', user.id)
     .in('status', ['confirmed', 'attended'])
 
@@ -97,7 +97,7 @@ export async function GET() {
   const reserva = porValorar ?? proxima ?? (ultima && !yaLaConto(ultima) ? ultima : undefined)
 
   const evento = reserva?.events as
-    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string }
+    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string; grabacion: boolean }
     | null
     | undefined
 
@@ -175,7 +175,7 @@ export async function GET() {
 
   const { data: miembro } = await admin
     .from('table_members')
-    .select('table_id, dinner_tables(table_number, event_id, restaurant_id, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, place_id, facade_photo_path, lat, lng))')
+    .select('table_id, dinner_tables(table_number, event_id, restaurant_id, grabacion, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, place_id, facade_photo_path, lat, lng))')
     .eq('profile_id', user.id)
     .eq('booking_id', reserva.id)
     .maybeSingle()
@@ -189,6 +189,7 @@ export async function GET() {
     table_number: number
     event_id: string
     restaurant_id: string | null
+    grabacion: boolean
     restaurants: {
       id: string
       name: string
@@ -350,6 +351,25 @@ export async function GET() {
     // y punto de encuentro. Once formatos y una sola palabra no se sostiene.
     formato: evento.format,
     zonaHoraria,
+    /**
+     * Si esa noche grabamos por la zona, y qué contestó esta persona.
+     *
+     * `null` en `permisoGrabacion` es «todavía no ha contestado», que no es
+     * un no: la pantalla pregunta una vez y lo guarda; quien no entre no
+     * queda como negativa ni como permiso.
+     *
+     * Va con la mesa y no en una ruta aparte porque se pinta en la misma
+     * pantalla y a la vez: una segunda llamada para un booleano es una
+     * segunda forma de llegar tarde.
+     */
+    // La fecha, para poder contestar contra ella. Es un uuid opaco y ya
+    // viaja en otras pantallas; sin él la respuesta no sabría de qué cena es.
+    eventoId: mesa.event_id,
+    // Cualquiera de las dos lo enciende: la fecha entera o esta mesa. No se
+    // graba una noche, se graba una mesa, y preguntarle el permiso a las
+    // otras cuatro gasta la atención que hace falta donde sí vamos a grabar.
+    grabamos: !!(evento.grabacion || mesa.grabacion),
+    permisoGrabacion: reserva.permiso_grabacion ?? null,
     // Y qué se hace, cuando el sitio no lo dice: la ruta, los kilómetros y
     // el nivel de una caminata no caben en una dirección.
     actividad: evento.activity ?? null,

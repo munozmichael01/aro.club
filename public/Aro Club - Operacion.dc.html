@@ -325,6 +325,18 @@
                     </div>
                   </sc-if>
 
+                  <!-- Permisos de contenido. Se marca la mesa donde vamos a
+                       grabar: eso enciende la nota del correo de la
+                       revelación y la pregunta en Mi mesa, y solo ahí. -->
+                  <sc-if value="{{ t.sePuedeMarcar }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:13px;padding-top:12px;border-top:1px solid rgba(20,52,42,.12)">
+                      <button onClick="{{ t.marcarGraba }}" aria-pressed="{{ t.grabaPulsado }}" style="{{ t.botonGraba }}">{{ t.textoGraba }}</button>
+                      <sc-if value="{{ t.hayPermisos }}" hint-placeholder-val="{{ false }}">
+                        <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:9px;text-wrap:pretty">{{ t.textoPermisos }}</div>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+
                   <div style="display:flex;gap:9px;margin-top:13px">
                     <button onClick="{{ t.publicar }}" style="{{ t.botonPublicar }}">{{ t.textoPublicar }}</button>
                     <sc-if value="{{ t.puedeForzar }}" hint-placeholder-val="{{ false }}">
@@ -2259,6 +2271,19 @@ class Component extends DCLogic {
       .then((r) => { if (r.ok) this.cargarHistorico(); });
   }
 
+  /**
+   * Marcar una mesa (o una fecha) como que ahí grabamos.
+   *
+   * Recarga el reparto: lo que decide es el servidor, y pintar aquí lo que
+   * creemos deja el panel diciendo una cosa y el correo otra.
+   */
+  marcarGrabacion(mesaId, graba) {
+    if (!mesaId) return;
+    const f = this.fechaElegida();
+    this.mandar("/api/operacion/grabacion", { mesaId: mesaId, graba: graba })
+      .then((r) => { if (r.ok && f) this.cargarReparto(f.id); });
+  }
+
   /** Abrir o cerrar las respuestas de una mesa. */
   verRespuestasDe(mesaId) {
     const abiertas = Object.assign({}, this.state.respuestasAbiertas || {});
@@ -3335,6 +3360,38 @@ class Component extends DCLogic {
           : 'Rompe ' + malas.length + ' reglas: ' + malas.map((x) => x.detalle).join(' · ') + '. Publicar se para aquí.',
         hayForzada: forzada && pub,
         textoForzada: '',
+
+        // --- permisos de contenido ------------------------------------
+        //
+        // Solo en las publicadas: una propuesta todavía no es una fila de
+        // `dinner_tables`, así que no hay dónde guardar la marca. Y marcar
+        // antes de publicar tampoco serviría: lo que la enciende —el correo
+        // y la pregunta— sale de la mesa ya armada.
+        sePuedeMarcar: !!m.mesaId,
+        grabaPulsado: m.grabacion ? 'true' : 'false',
+        textoGraba: m.grabacion ? 'Grabamos en esta mesa' : 'Marcar para grabar',
+        botonGraba: 'display:inline-flex;align-items:center;min-height:42px;padding:0 15px;border-radius:999px;cursor:pointer;'
+          + 'font:500 13px/1 \'Inter Tight\',sans-serif;border:1px solid '
+          + (m.grabacion ? '#8F4515;background:#8F4515;color:#FFF8EA' : 'rgba(20,52,42,.2);background:transparent;color:#2C4A38'),
+        marcarGraba: () => this.marcarGrabacion(m.mesaId, !m.grabacion),
+
+        // Y lo que ha contestado la mesa, que es lo que necesita quien va a
+        // grabar. Los que dicen que no van por su nombre: es lo único que
+        // sirve delante de una cámara.
+        hayPermisos: !!m.grabacion,
+        textoPermisos: (() => {
+          const gente = m.integrantes || [];
+          const no = gente.filter((x) => x.permisoGrabacion === false);
+          const si = gente.filter((x) => x.permisoGrabacion === true).length;
+          const falta = gente.length - si - no.length;
+          const partes = [];
+          if (si) partes.push(si + (si === 1 ? ' dijo que sí' : ' dijeron que sí'));
+          if (falta) partes.push(falta + (falta === 1 ? ' sin contestar' : ' sin contestar'));
+          const cola = no.length
+            ? ' No quieren salir: ' + no.map((x) => x.nombre || 'Sin nombre').join(', ') + '.'
+            : ' Nadie ha dicho que no.';
+          return (partes.length ? partes.join(' · ') + '.' : 'Nadie ha contestado todavía.') + cola;
+        })(),
         // Sin sitio no se fuerza: forzar salta una regla de afinidad o un
         // hueco, nunca la dirección. El servidor lo rechaza igual, pero
         // ofrecer el botón sería prometer algo que no va a pasar.
