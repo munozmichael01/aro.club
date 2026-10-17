@@ -1209,6 +1209,19 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           cuandoCorto: evento?.starts_at ? diaCorto(evento.starts_at) : '',
           cuandoFrase: evento?.starts_at ? `El primero es el ${diaTexto(evento.starts_at)}.` : '',
           horaFrase: evento?.starts_at ? `A las ${horaEnLetra(evento.starts_at)}` : '',
+          /**
+           * DE QUÉ PLAN es. Faltaba, y costó un brunch entero.
+           *
+           * El 15-10 abrimos el primer brunch y le escribimos a 112
+           * personas: el correo decía «ya hay mesa en tu zona», «el primero
+           * es el domingo 25» y la hora. La palabra brunch no aparecía por
+           * ningún lado. Quien se apuntó por las cenas leyó otra cena más a
+           * una hora rara. Cero apuntados.
+           *
+           * Con trece formatos, el plan no se puede dar por supuesto.
+           */
+          plan: NOMBRES_DE_FORMATO[evento?.format ?? ''] ?? '',
+          PLAN: (NOMBRES_DE_FORMATO[evento?.format ?? ''] ?? 'mesa').toUpperCase(),
         },
       }
     }

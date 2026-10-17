@@ -39,17 +39,54 @@ export async function mesasUnicas(
   const eventos = [...new Set(pares.map((p) => p.eventoId).filter(Boolean))]
   if (!eventos.length) return unicas
 
-  const { data } = await createAdminClient()
-    .from('dinner_tables')
-    .select('event_id, restaurant_id')
-    .in('event_id', eventos)
+  const admin = createAdminClient()
 
+  /**
+   * La cuenta es por SITIO Y NOCHE, no por fecha.
+   *
+   * El 17-10 hubo dos cenas la misma noche en Vittoria: la normal y la de
+   * mayores de 40. Cada una es una fila de `events`, así que cada una se
+   * creía la única mesa de Aro de ese restaurante, y a las doce personas les
+   * dijimos lo mismo: «di que vas a la mesa de Aro». Doce personas pidiendo
+   * la misma mesa.
+   *
+   * Quien llega al restaurante no sabe de `events`: ve un sitio y una hora.
+   * Así que lo que decide si el número sobra es cuántas mesas de Aro hay esa
+   * noche en ese sitio, vengan de la fecha que vengan.
+   */
+  const { data: suyos } = await admin
+    .from('events')
+    .select('id, starts_at, city_slug')
+    .in('id', eventos)
+
+  const noches = [...new Set((suyos ?? []).map((e) => e.starts_at))]
+  if (!noches.length) return unicas
+
+  const { data } = await admin
+    .from('dinner_tables')
+    .select('event_id, restaurant_id, events!inner(starts_at)')
+    .in('events.starts_at', noches)
+
+  type Fila = { event_id: string; restaurant_id: string | null; events: { starts_at: string } | null }
+  const nocheDe = new Map((suyos ?? []).map((e) => [e.id, e.starts_at]))
+
+  // Cuántas mesas hay en cada (noche, sitio).
   const cuantas = new Map<string, number>()
-  for (const t of data ?? []) {
-    const k = claveDeMesa(t.event_id, t.restaurant_id)
+  for (const t of (data ?? []) as unknown as Fila[]) {
+    const noche = t.events?.starts_at
+    if (!noche) continue
+    const k = `${noche}|${t.restaurant_id ?? ''}`
     cuantas.set(k, (cuantas.get(k) ?? 0) + 1)
   }
 
-  for (const [k, n] of cuantas) if (n === 1) unicas.add(k)
+  // Y se devuelve con la clave que usa quien pregunta, que es por fecha.
+  for (const p of pares) {
+    const noche = nocheDe.get(p.eventoId)
+    if (!noche) continue
+    if ((cuantas.get(`${noche}|${p.sitioId ?? ''}`) ?? 0) === 1) {
+      unicas.add(claveDeMesa(p.eventoId, p.sitioId))
+    }
+  }
+
   return unicas
 }

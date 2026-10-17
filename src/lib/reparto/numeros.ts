@@ -35,9 +35,46 @@ export async function renumerar(
   eventoId: string,
   mesas: ConNumero[],
 ): Promise<string | null> {
+  /**
+   * Los números son de la NOCHE, no de la fecha.
+   *
+   * El 17-10 hubo dos cenas la misma noche —la normal y la de mayores de
+   * 40— y las dos numeraban desde el 1. En Vittoria acabaron dos mesas 01
+   * a la misma hora, y a las doce personas les dijimos «la mesa de Aro».
+   *
+   * Quien llega al restaurante no sabe que son dos fechas: ve un sitio, una
+   * hora y un número. Así que el número tiene que ser único esa noche.
+   *
+   * Las de las otras fechas NO se tocan: pueden estar publicadas y su
+   * número ya está en el correo de alguien. Se esquivan.
+   */
+  const { data: suya } = await admin
+    .from('events')
+    .select('starts_at')
+    .eq('id', eventoId)
+    .maybeSingle()
+
+  const ocupados = new Set<number>()
+  if (suya?.starts_at) {
+    const { data: vecinas } = await admin
+      .from('dinner_tables')
+      .select('table_number, event_id, events!inner(starts_at)')
+      .eq('events.starts_at', suya.starts_at)
+      .neq('event_id', eventoId)
+
+    for (const v of vecinas ?? []) ocupados.add(v.table_number)
+  }
+
+  // El siguiente número libre de la noche, en orden.
+  let siguiente = 0
+  const libre = () => {
+    do { siguiente += 1 } while (ocupados.has(siguiente))
+    return siguiente
+  }
+
   const plan = [...mesas]
     .sort((a, b) => a.numero - b.numero)
-    .map((mesa, i) => ({ mesa, de: mesa.numero, a: i + 1 }))
+    .map((mesa) => ({ mesa, de: mesa.numero, a: libre() }))
     .filter((c) => c.de !== c.a)
 
   if (!plan.length) return null
