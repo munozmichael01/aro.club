@@ -57,9 +57,21 @@ export type Aviso = {
   titulo: string
   filas: [string, string][]
   /** A qué pantalla de Operación lleva. */
-  pestana: 'verificaciones' | 'pagos'
+  pestana: 'verificaciones' | 'pagos' | 'mesas'
   /** Si viene de la cuenta del revisor de Apple. */
   deRevision: boolean
+  /**
+   * Párrafos ya escritos, para el aviso que no es una ficha.
+   *
+   * Los de verificación y pago son «campo: valor» y por eso van en `filas`.
+   * El de antes de revelar no: es una lista de frases con nombres dentro
+   * —«mesa 2, armada y sin publicar: Sophia, Samuel…»— y partirla en campos
+   * la haría ilegible justo cuando hay prisa.
+   *
+   * Llevan HTML a propósito, así que los arma quien los escribe y nunca
+   * texto de nadie de fuera.
+   */
+  parrafos?: string[]
 }
 
 /** El HTML, aparte del envío: así la pasada en seco enseña lo mismo que sale. */
@@ -82,10 +94,21 @@ export function componerAviso(a: Aviso): { asunto: string; html: string } {
 
   const enlace = `${SITIO}/operacion#${a.pestana}`
 
+  // Los párrafos van sin escapar: los escribe el servidor con sus negritas,
+  // nunca vienen de fuera. Las `filas` sí se escapan, porque ahí van nombres
+  // y correos que escribió alguien.
+  const parrafos = (a.parrafos ?? [])
+    .map(
+      (p) =>
+        `<p style="margin:0 0 14px;padding:12px 14px;background:#FFF1E4;border:1px solid #E7C9AC;border-radius:12px">${p}</p>`,
+    )
+    .join('')
+
   const html =
     `<div style="font:400 15px/1.6 -apple-system,sans-serif;color:#14342A;max-width:640px">` +
     marca +
     `<p style="margin:0 0 16px"><strong>${escapar(a.titulo)}</strong></p>` +
+    parrafos +
     `<table cellpadding="0" cellspacing="0">${filas}</table>` +
     `<p style="margin:20px 0 0"><a href="${enlace}" style="display:inline-block;padding:11px 20px;border-radius:999px;background:#14342A;color:#FAF3E4;text-decoration:none;font:600 14px/1 -apple-system,sans-serif">Abrir en Operación</a></p>` +
     `</div>`

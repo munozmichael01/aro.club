@@ -25,6 +25,10 @@
       "schedule": "0 14 * * *"
     },
     {
+      "path": "/api/cron/antes-de-revelar",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/cron/cierra",
       "schedule": "0 14 * * *"
     }

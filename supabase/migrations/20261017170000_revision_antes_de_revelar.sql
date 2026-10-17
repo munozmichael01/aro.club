@@ -1,0 +1,25 @@
+-- =====================================================================
+-- El aviso a operacion, diez minutos antes de revelar.
+--
+-- Hoy, 17-10, cinco personas pagaron, tuvieron su mesa armada, y esa mesa
+-- no se publico nunca porque rompia tres reglas y el panel la frena. A las
+-- doce salio la revelacion para las otras cuatro mesas y a ellas no les
+-- llego nada: ni mesa, ni «esta vez no», ni el credito de vuelta. Lo
+-- descubrimos porque una de ellas escribio por Instagram.
+--
+-- El fallo no es que el panel frene una mesa que rompe reglas —hace bien,
+-- forzar es una decision— sino que NADIE se entera de que esta frenada. El
+-- panel lo enseña, pero hay que estar mirandolo.
+--
+-- Asi que diez minutos antes de cada revelacion, un correo a operacion con
+-- lo que se va a quedar fuera. Diez minutos porque es lo que da tiempo a
+-- forzar una mesa o a mover a alguien antes de que salgan treinta correos
+-- diciendole a la gente con quien cena; mas margen y el reparto todavia
+-- puede cambiar, menos y no da tiempo a hacer nada.
+--
+-- `email_kind_t` y no una tabla de alertas: la cola ya sabe mandar, ya
+-- guarda si llego y ya tiene el indice de «uno por persona y fecha», que es
+-- justo lo que hace falta para que esto no se repita cada cinco minutos.
+-- =====================================================================
+
+alter type email_kind_t add value if not exists 'revision_previa';
