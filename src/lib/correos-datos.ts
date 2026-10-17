@@ -1604,9 +1604,11 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
       ? ''
       : cancelaronDeEstaMesa
         ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: alguien canceló y no llegamos a sentar a nadie más.`
-        // Sin cancelación, la mesa salió así: se dice cuántos son y ya. La
-        // frase de antes le achacaba a alguien una cancelación inventada.
-        : `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}, y esta vez no llegamos a seis.`,
+        // Sin cancelación la mesa salió así, y eso también hay que
+        // justificarlo: la promesa es de seis, y quien cuenta cinco merece
+        // saber por qué. Lo que no vale es achacarle a alguien una
+        // cancelación que no ocurrió.
+        : `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: no encontramos a nadie más que encajara en esta mesa.`,
     /**
      * Si esa noche grabamos en ESTA mesa.
      *
