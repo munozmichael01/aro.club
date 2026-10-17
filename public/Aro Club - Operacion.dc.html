@@ -210,6 +210,12 @@
                     <span style="flex:1;min-width:0">
                       <span style="display:block;font:400 clamp(19px,2vw,22px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ t.titulo }}</span>
                       <span style="display:block;font:500 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ t.hora }}</span>
+                      <!-- La banda de edad va en la MESA, no en la fecha: esa
+                           noche no hay dos cenas, hay una con cuatro mesas y
+                           una de ellas es de mayores de 40. -->
+                      <sc-if value="{{ t.hayBanda }}" hint-placeholder-val="{{ false }}">
+                        <span style="display:inline-flex;align-items:center;min-height:24px;margin-top:5px;padding:0 10px;border-radius:999px;background:rgba(143,69,21,.1);font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.04em;color:#8F4515">{{ t.banda }}</span>
+                      </sc-if>
                     </span>
                     <span style="{{ t.sello }}">{{ t.estado }}</span>
                     <sc-if value="{{ t.sePuedeQuitar }}" hint-placeholder-val="{{ false }}">
@@ -1923,10 +1929,95 @@ class Component extends DCLogic {
       { avisos: [], pidiendoAvisos: false });
   }
 
+  /**
+   * El reparto de un DÍA, no de una fecha.
+   *
+   * Michael, 17-10: «ponme todas las mesas del mismo día en la misma
+   * pantalla, si es +40 márcalo en la mesa, no en la fecha».
+   *
+   * Y tiene razón en lo de fondo: el jueves no hay dos cenas, hay una noche
+   * con cuatro mesas, y que una sea de mayores de 40 es una propiedad de esa
+   * mesa. Tratarlas como dos fechas obliga a mirar dos pantallas para saber
+   * cuánta gente cena esa noche, y es como hoy conté cuatro mesas donde
+   * había cinco.
+   *
+   * Por dentro siguen siendo fechas distintas —cada una con su corrida, su
+   * aviso y su banda de edad— así que cada mesa se trae de dónde viene:
+   * `corridaId` para publicarla y `banda` para marcarla. Lo que se junta es
+   * la pantalla, no los datos.
+   */
   cargarReparto(eventoId) {
     if (!eventoId) return Promise.resolve();
+
+    const mismasDelDia = (id) => {
+      const todas = this.state.fechas || [];
+      const suya = todas.filter((f) => f.id === id)[0];
+      if (!suya) return [id];
+      const dia = String(suya.empiezaEn || '').slice(0, 10);
+      return todas
+        .filter((f) => String(f.empiezaEn || '').slice(0, 10) === dia && !!f.esPrueba === !!suya.esPrueba)
+        .map((f) => f.id);
+    };
+
+    const ids = mismasDelDia(eventoId);
+    const otras = ids.filter((id) => id !== eventoId);
+
     return this.pedir('/api/operacion/repartir?eventoId=' + eventoId,
-      (d) => ({ reparto: d }), { reparto: { evento: null } });
+      (d) => ({ reparto: this.conLasDelDia(d, eventoId) }), { reparto: { evento: null } })
+      .then(() => {
+        if (!otras.length) return;
+        // Las demás del día, una a una y sin bloquear: la fecha elegida ya
+        // está pintada y estas se van sumando.
+        return Promise.all(otras.map((id) =>
+          fetch('/api/operacion/repartir?eventoId=' + id)
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null)))
+          .then((ds) => {
+            const base = this.state.reparto;
+            if (!base) return;
+            let juntas = base;
+            for (const d of ds) if (d) juntas = this.conLasDelDia(juntas, eventoId, d);
+            this.setState({ reparto: juntas });
+          });
+      });
+  }
+
+  /**
+   * Junta las mesas de otra fecha del mismo día en la propuesta que se pinta.
+   *
+   * Cada mesa se queda con su origen. Sin `corridaId` por mesa, publicar la
+   * mesa 1 del jueves publicaría la del grupo equivocado: los dos grupos
+   * numeran sus mesas desde el 1.
+   */
+  conLasDelDia(base, eventoId, otra) {
+    const fechas = this.state.fechas || [];
+    const datos = otra || base;
+    const suEvento = (datos.evento && datos.evento.id) || eventoId;
+    const ficha = fechas.filter((f) => f.id === suEvento)[0] || {};
+    const marca = (m) => Object.assign({}, m, {
+      corridaId: (datos.corrida && datos.corrida.id) || null,
+      eventoId: suEvento,
+      deOtraFecha: suEvento !== eventoId,
+      banda: (ficha.edadMinima != null || ficha.edadMaxima != null)
+        ? (ficha.edadMinima != null && ficha.edadMaxima != null
+          ? ficha.edadMinima + ' a ' + ficha.edadMaxima
+          : (ficha.edadMinima != null ? '+' + ficha.edadMinima : 'hasta ' + ficha.edadMaxima))
+        : null,
+    });
+
+    const suyas = ((datos.corrida && datos.corrida.propuesta) || []).map(marca);
+    if (!otra) {
+      if (!base.corrida) return base;
+      return Object.assign({}, base, {
+        corrida: Object.assign({}, base.corrida, { propuesta: suyas }),
+      });
+    }
+
+    const antes = (base.corrida && base.corrida.propuesta) || [];
+    // Las de la fecha elegida primero, y detrás las del resto del día.
+    return Object.assign({}, base, {
+      corrida: Object.assign({}, base.corrida || {}, { propuesta: antes.concat(suyas) }),
+    });
   }
 
   cargarCola(deFondo) {
@@ -2449,8 +2540,13 @@ class Component extends DCLogic {
       });
   }
 
-  publicar(mesa, forzar) {
-    const c = this.corridaId();
+  /**
+   * `corrida` llega desde la mesa: en un día con dos fechas, las dos numeran
+   * sus mesas desde el 1, y publicar «la mesa 1» sin decir de cuál sería
+   * publicar la del grupo equivocado.
+   */
+  publicar(mesa, forzar, corrida) {
+    const c = corrida || this.corridaId();
     if (!c) return;
     const cuerpo = { corridaId: c };
     if (mesa) cuerpo.mesa = mesa;
@@ -2494,14 +2590,14 @@ class Component extends DCLogic {
     });
   }
 
-  despublicar(mesa) {
+  despublicar(mesa, corrida) {
     const f = this.fechaElegida();
     // `corridaId` y no `eventoId`: el mismo descuadre que tenian los
     // reportes. La ruta despublica una mesa DE UNA PROPUESTA, no de una
     // fecha, y con `eventoId` el zod fallaba y «Deshacer» no hacia nada.
     const c = this.corridaId();
     if (!f || !c) return;
-    return this.mandar('/api/operacion/despublicar', { corridaId: c, mesa }).then((r) => {
+    return this.mandar('/api/operacion/despublicar', { corridaId: corrida || c, mesa }).then((r) => {
       if (r.ok) {
         this.setState({ aviso: 'Despublicada. Vuelve a moverse y su correo se retira.' });
         this.cargarReparto(f.id);
@@ -3132,7 +3228,7 @@ class Component extends DCLogic {
       const corta = g.length > 0 && g.length < POR_MESA;
       const pasada = g.length > POR_MESA;
       const calc = (St.recalculando || []).indexOf(m.numero) >= 0;
-      const clave = String(m.numero);
+      const clave = String(m.numero) + '|' + (m.corridaId || '');
       const forzada = false;
       totalMesas++;
       sentados += g.length;
@@ -3408,11 +3504,15 @@ class Component extends DCLogic {
             : 'background:#1B5138;color:#FAF3E4;border:none;cursor:pointer')),
         botonForzar: 'flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;background:transparent;color:#8F4515;border:1px dashed rgba(143,69,21,.5);font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
         publicar: () => {
-          if (pub) { this.despublicar(m.numero); return; }
+          if (pub) { this.despublicar(m.numero, m.corridaId); return; }
           if (malas.length || !tamOk || calc) return;
-          this.publicar(m.numero, false);
+          this.publicar(m.numero, false, m.corridaId);
         },
-        forzar: () => this.setState({ confirmar: clave })
+        forzar: () => this.setState({ confirmar: clave }),
+
+        // Y de qué grupo es esta mesa, cuando el día tiene más de uno.
+        hayBanda: !!m.banda,
+        banda: m.banda ? m.banda + ' años' : '',
       };
     };
 
@@ -4710,15 +4810,19 @@ class Component extends DCLogic {
       // lanzarlas a la vez perderia todas menos la primera.
       publicarListas: () => {
         if (!listasParaPublicar) return;
-        if (listasParaPublicar === (totalMesas - publicadas)) {
-          this.publicar(null, false);
+        const corridas = {};
+        clavesListas.forEach((k) => { corridas[String(k).split('|')[1] || ''] = 1; });
+        if (listasParaPublicar === (totalMesas - publicadas) && Object.keys(corridas).length === 1) {
+          this.publicar(null, false, Object.keys(corridas)[0] || null);
           return;
         }
         const quedan = clavesListas.slice();
         const siguiente = () => {
           const k = quedan.shift();
           if (k == null) return Promise.resolve();
-          return this.publicar(Number(k), false).then((r) => (r && r.ok ? siguiente() : r));
+          const partes = String(k).split('|');
+          return this.publicar(Number(partes[0]), false, partes[1] || null)
+            .then((r) => (r && r.ok ? siguiente() : r));
         };
         siguiente();
       },
@@ -4756,9 +4860,10 @@ class Component extends DCLogic {
       // cuando el servidor dice que si, que es de donde sale la verdad. Si
       // dice que no, la ventana se queda abierta y el motivo se ve arriba.
       confirmarForzar: () => {
-        const mesa = Number(St.confirmar);
+        const partes = String(St.confirmar || '').split('|');
+        const mesa = Number(partes[0]);
         if (!mesa) return;
-        this.publicar(mesa, true);
+        this.publicar(mesa, true, partes[1] || null);
       },
       unidadVoz: vozRep.unidad,
 
