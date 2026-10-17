@@ -22,6 +22,16 @@ export type Sede = {
   restaurantId: string
   nombre: string | null
   maxMesas: number
+  /**
+   * Qué se come ahí y cuánto cuesta, para poder elegir sitio por la mesa.
+   *
+   * Michael, 17-10: «el sitio se elige por lo que come la mesa». Hasta hoy
+   * se elegía por zona y aforo, y los dos datos estaban guardados sin que
+   * nadie los leyera: de los locales activos, seis tienen cocinas puestas y
+   * ocho tienen tramo.
+   */
+  cocinas: string[]
+  tramo: number | null
 }
 
 export type Pool = {
@@ -52,7 +62,7 @@ export async function construirPool(
 
   const { data: sedesRaw } = await admin
     .from('event_venues')
-    .select('zone_slug, restaurant_id, max_tables, restaurants(name, max_tables, is_active, formats, noise_level, address, contact_name, contact_phone), zones(name)')
+    .select('zone_slug, restaurant_id, max_tables, restaurants(name, max_tables, is_active, formats, noise_level, address, contact_name, contact_phone, cuisines, budget_tier), zones(name)')
     .eq('event_id', eventoId)
 
   type Local = {
@@ -64,6 +74,8 @@ export async function construirPool(
     address: string | null
     contact_name: string | null
     contact_phone: string | null
+    cuisines: string[] | null
+    budget_tier: number | null
   }
 
   const formato = evento?.format ?? 'dinner'
@@ -99,6 +111,8 @@ export async function construirPool(
       zonaNombre: (v.zones as unknown as { name: string } | null)?.name ?? v.zone_slug,
       restaurantId: v.restaurant_id as string,
       nombre: (v.restaurants as unknown as Local | null)?.name ?? null,
+      cocinas: ((v.restaurants as unknown as Local | null)?.cuisines ?? []) as string[],
+      tramo: (v.restaurants as unknown as Local | null)?.budget_tier ?? null,
       maxMesas:
         v.max_tables ?? (v.restaurants as unknown as Local | null)?.max_tables ?? 4,
     }))

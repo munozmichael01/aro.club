@@ -841,7 +841,7 @@ export async function POST(request: Request) {
    * El sitio de una mesa: el primero que quepa, que nadie haya vetado y, a
    * igualdad, el que menos reciente les quede.
    */
-  const sedeDe = (zona: string, mesa?: { profileId: string }[]) => {
+  const sedeDe = (zona: string, mesa?: { profileId: string; tramoGasto?: number | null }[]) => {
     const gente = mesa ?? []
     const candidatas = sedes
       .filter((v) => v.zona === zona)
@@ -858,10 +858,52 @@ export async function POST(request: Request) {
         return !!cuando && ahoraSitios - cuando < DIAS_SIN_REPETIR * 86400_000
       }).length
 
-    // Estable: entre dos con los mismos repetidores, el orden de siempre.
+    /**
+     * Cuánta gente de esta mesa come lo que ahí se cocina.
+     *
+     * Michael, 17-10: «el sitio se elige por lo que come la mesa». Hasta hoy
+     * se elegía por zona y aforo, teniendo los dos datos guardados: la
+     * cocina del local y la comida favorita de cada persona. Así es como un
+     * hombre que come parrilla y venezolano acabó en un indio.
+     */
+    const comen = (v: { restaurantId: string; cocinas: string[] }) =>
+      !v.cocinas.length
+        ? 0
+        : gente.filter((p) => (comidaDe.get(p.profileId) ?? []).some((c) => v.cocinas.includes(c))).length
+
+    /**
+     * Y lo lejos que le queda el bolsillo a la mesa.
+     *
+     * El tramo de la mesa es el más BAJO de los suyos, no la media: en una
+     * cena que se paga aparte, quien marcó «hasta 20» es quien decide si la
+     * cuenta duele, y los demás pueden gastar menos sin que les pase nada.
+     */
+    const tramoDeLaMesa = (() => {
+      const suyos = gente.map((p) => p.tramoGasto).filter((x): x is number => x != null)
+      return suyos.length ? Math.min(...suyos) : null
+    })()
+
+    const lejosDelBolsillo = (v: { tramo: number | null }) =>
+      v.tramo == null || tramoDeLaMesa == null ? 0 : Math.max(0, v.tramo - tramoDeLaMesa)
+
+    /**
+     * El orden, con todo junto y por este orden de importancia:
+     *
+     *  1. No repetir sitio a nadie de la mesa. Volver al mismo restaurante
+     *     en seis semanas es lo que más se nota.
+     *  2. Que coman lo que ahí se cocina.
+     *  3. Que el sitio no se salga del bolsillo del más ajustado.
+     *
+     * Y a igualdad de todo, el orden de siempre: el mismo pool tiene que
+     * dar el mismo reparto.
+     */
     const elegida = candidatas
-      .map((v, i) => ({ v, i, repiten: reciente(v) }))
-      .sort((a, b) => a.repiten - b.repiten || a.i - b.i)[0].v
+      .map((v, i) => ({
+        v,
+        i,
+        nota: reciente(v) * 3 - comen(v) + lejosDelBolsillo(v) * 2,
+      }))
+      .sort((a, b) => a.nota - b.nota || a.i - b.i)[0].v
 
     ocupacion.set(elegida.restaurantId, (ocupacion.get(elegida.restaurantId) ?? 0) + 1)
     return { restaurantId: elegida.restaurantId, nombre: elegida.nombre }
