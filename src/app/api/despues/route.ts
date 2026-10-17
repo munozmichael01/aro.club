@@ -63,6 +63,26 @@ const accion = z.discriminatedUnion('accion', [
      * lo mismo, y en la base se ven distintos.
      */
     comentario: z.string().trim().max(600).nullable().optional(),
+    /**
+     * Cuánto gastó, por persona y sin contar la plaza de Aro.
+     *
+     * Michael, 17-10: «la encuesta no pregunta cuánto gastaste, y sin eso
+     * el tramo de los locales se queda en lo que escribimos a ojo». De aquí
+     * sale el gasto REAL de un sitio, frente al que declaramos al darlo de
+     * alta, que hoy es lo único que hay y no cuadra entre locales.
+     *
+     * Opcional de verdad: es una pregunta sobre el dinero de alguien.
+     */
+    gasto: z.number().min(0).max(1000).nullable().optional(),
+    /**
+     * Y si no quiere que la volvamos a mandar a ese sitio.
+     *
+     * Lo pidió Leonor anoche, en el texto libre: «así como permite excluir
+     * personas de próximas cenas, que también permita excluir restaurantes».
+     * Es una preferencia suya, no una queja del local: no baja su nota y no
+     * se le dice al restaurante.
+     */
+    noRepetirSitio: z.boolean().optional(),
   }),
   z.object({
     accion: z.literal('bloquear'),
@@ -130,6 +150,8 @@ export async function POST(request: Request) {
 
     if (typeof d.volveriaAAro === 'boolean') fila.would_repeat = d.volveriaAAro
     if (d.comentario !== undefined) fila.comment = d.comentario || null
+    if (d.gasto !== undefined) fila.gasto_usd = d.gasto
+    if (d.noRepetirSitio !== undefined) fila.sitio_no_repetir = d.noRepetirSitio
 
     const { error } = await admin.from('table_feedback').upsert(
       fila as never,

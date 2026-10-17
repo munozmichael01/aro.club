@@ -520,6 +520,25 @@
               <button onClick="{{ volveriaNoPick }}" style="{{ volveriaNoBtn }}">No, no volvería</button>
             </div>
 
+            <!-- Cuánto gastó y si repetiría el sitio. Las dos son del SITIO,
+                 así que van con las del sitio y antes del texto libre.
+
+                 El gasto es opcional de verdad: se pregunta diciendo para
+                 qué sirve, porque es una pregunta sobre el dinero de
+                 alguien. Y lo de no repetir lo pidió Leonor en el texto
+                 libre de anoche, que es exactamente para lo que estaba. -->
+            <div style="font:400 15px/1.4 'Young Serif',Georgia,serif;color:#14342A;margin:clamp(26px,3.4vw,32px) 0 6px">¿Cuánto gastaste?</div>
+            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:10px">{{ notaGasto }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ tramosGasto }}" as="t" hint-placeholder-count="4">
+                <button onClick="{{ t.pick }}" style="{{ t.btn }}">{{ t.texto }}</button>
+              </sc-for>
+            </div>
+
+            <div style="margin-top:14px">
+              <button onClick="{{ noRepetirPick }}" style="{{ noRepetirBtn }}">{{ noRepetirTexto }}</button>
+            </div>
+
             <!-- El texto libre (Michael, 17-10). Va después de las escalas y
                  antes de la pregunta incómoda: cuando alguien ya marcó
                  cuatro cosas tiene la noche fresca, y lo que escriba aquí es
@@ -798,6 +817,8 @@ class Component extends DCLogic {
     // Los indices van de mejor a peor porque asi estan los botones. El
     // servidor los da la vuelta en notaDesdeIndice, y solo ahi.
     mesaVal: -1, sitio: {}, volveria: -1, comentario: '',
+    // Lo que gastó —índice del tramo— y si prefiere no volver a ese sitio.
+    gasto: -1, noRepetirSitio: false,
     bloqueados: [], contado: false,
     reporte: false, motivo: -1, quien: -1, reportado: false,
     datos: null, errorF11: '', enviando: false,
@@ -1019,6 +1040,10 @@ class Component extends DCLogic {
     this.enviar({
       accion: 'valorar',
       comentario: (this.state.comentario || '').trim() || null,
+      // El punto medio del tramo que marcó: preguntar la cifra exacta es
+      // pedirle que abra la cuenta, y para comparar locales sobra.
+      gasto: this.state.gasto >= 0 ? this.TRAMOS_GASTO[this.state.gasto][1] : null,
+      noRepetirSitio: !!this.state.noRepetirSitio,
       mesa: this.state.mesaVal >= 0 ? this.state.mesaVal : null,
       sitio: sitio,
       volveriaAAro: this.state.volveria >= 0 ? this.state.volveria === 1 : null
@@ -1082,6 +1107,20 @@ class Component extends DCLogic {
     const a = (d && d.ajustes) || {};
     return [d && d.mesaId, a.sonCuantos, a.seSumoAlguien ? 1 : 0, a.alguienCancelo ? 1 : 0, a.teMovimos ? 1 : 0].join(':');
   }
+
+  /**
+   * Los tramos de gasto, con su punto medio.
+   *
+   * Se pregunta por tramos y no por una cifra: pedir el número exacto es
+   * pedirle a alguien que abra la cuenta del restaurante, y para comparar
+   * locales entre sí el tramo basta. El punto medio es lo que se guarda.
+   */
+  TRAMOS_GASTO = [
+    ['Menos de 15', 10],
+    ['15 a 25', 20],
+    ['25 a 40', 32],
+    ['Más de 40', 50],
+  ];
 
   renderVals() {
     // ── el juego de la mesa ─────────────────────────────────────────
@@ -1845,6 +1884,18 @@ class Component extends DCLogic {
       // eso lo único que puede contar algo que no habíamos pensado
       // preguntar: que el sitio tenía la música alta, que faltó alguien,
       // que la mesa estaba al lado de la cocina.
+      notaGasto: 'Sin contar los ' + AroReglas.precioTexto() + ' de tu plaza. Opcional, y sirve para elegir mejor el sitio la próxima vez.',
+      tramosGasto: this.TRAMOS_GASTO.map((tr, i) => ({
+        texto: tr[0],
+        pick: () => this.setState({ gasto: this.state.gasto === i ? -1 : i }),
+        btn: 'min-height:44px;padding:0 16px;border-radius:999px;cursor:pointer;font:500 14px/1 \'Inter Tight\',sans-serif;border:1px solid '
+          + (this.state.gasto === i ? '#14342A;background:#14342A;color:#FAF3E4' : 'rgba(20,52,42,.22);background:transparent;color:#14342A'),
+      })),
+      noRepetirTexto: this.state.noRepetirSitio ? 'No me mandes más a este sitio ✓' : 'No me mandes más a este sitio',
+      noRepetirPick: () => this.setState({ noRepetirSitio: !this.state.noRepetirSitio }),
+      noRepetirBtn: 'min-height:44px;padding:0 16px;border-radius:999px;cursor:pointer;font:500 14px/1 \'Inter Tight\',sans-serif;border:1px solid '
+        + (this.state.noRepetirSitio ? '#8F4515;background:#8F4515;color:#FFF8EA' : 'rgba(20,52,42,.22);background:transparent;color:#14342A'),
+
       comentario: this.state.comentario,
       onComentario: (e) => this.setState({ comentario: e.target.value.slice(0, 600) }),
       notaComentario: 'Lo lee el equipo, no la mesa. Opcional, como todo lo demás.',

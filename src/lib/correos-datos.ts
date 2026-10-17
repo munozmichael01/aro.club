@@ -1621,7 +1621,10 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
         // justificarlo: la promesa es de seis, y quien cuenta cinco merece
         // saber por qué. Lo que no vale es achacarle a alguien una
         // cancelación que no ocurrió.
-        : `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: no encontramos a nadie más que encajara en esta mesa.`,
+        // Y la frase mira a lo nuestro, no a la persona: «no encontramos a
+        // nadie que encajara contigo» se lee como que el raro eres tú, y eso
+        // lo lee alguien que va a cenar con desconocidos en dos horas.
+        : `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: esta vez no nos cuadró el sexto puesto.`,
     /**
      * Si esa noche grabamos en ESTA mesa.
      *

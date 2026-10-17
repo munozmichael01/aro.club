@@ -778,16 +778,83 @@ export async function POST(request: Request) {
   for (const m of cerradas) {
     if (m.restaurantId) ocupacion.set(m.restaurantId, (ocupacion.get(m.restaurantId) ?? 0) + 1)
   }
-  const sedeDe = (zona: string) => {
-    const candidatas = sedes.filter((v) => v.zona === zona)
-    for (const v of candidatas) {
-      const usadas = ocupacion.get(v.restaurantId) ?? 0
-      if (usadas < v.maxMesas) {
-        ocupacion.set(v.restaurantId, usadas + 1)
-        return { restaurantId: v.restaurantId, nombre: v.nombre }
-      }
-    }
-    return null
+  /**
+   * Dónde han estado ya, y a dónde no quieren volver.
+   *
+   * Michael, 17-10: «que no se nos escape el hecho de no repetir y
+   * excluidos. En el feedback me piden lo mismo para los locales: no
+   * repetir en un tiempo y excluir locales si no les gusta». Lo segundo lo
+   * pidió Leonor en la encuesta de anoche con esas palabras.
+   *
+   * Son dos cosas distintas y se tratan distinto:
+   *
+   *  - **Excluido** es una decisión suya y no se discute: no se le manda a
+   *    ese sitio, aunque sea el único libre.
+   *  - **Repetido** es una preferencia nuestra: con seis locales en Chacao
+   *    y una cena por semana, prohibir repetir en tres meses dejaría las
+   *    mesas sin sitio. Así que pesa, no prohíbe: entre dos locales que
+   *    caben, gana el que menos gente de esa mesa haya pisado hace poco.
+   */
+  const DIAS_SIN_REPETIR = 42
+
+  const { data: pisados } = await admin
+    .from('table_members')
+    .select('profile_id, dinner_tables!inner(restaurant_id, events!inner(starts_at))')
+    .in('profile_id', pool.personas.map((p) => p.profileId))
+
+  type Pisada = { profile_id: string; dinner_tables: { restaurant_id: string | null; events: { starts_at: string } | null } | null }
+  const cuandoFue = new Map<string, number>()
+  for (const x of (pisados ?? []) as unknown as Pisada[]) {
+    const sitio = x.dinner_tables?.restaurant_id
+    const cuando = x.dinner_tables?.events?.starts_at
+    if (!sitio || !cuando) continue
+    const k = `${x.profile_id}|${sitio}`
+    const antes = cuandoFue.get(k) ?? 0
+    cuandoFue.set(k, Math.max(antes, new Date(cuando).getTime()))
+  }
+
+  const { data: vetadosDeSitio } = await admin
+    .from('table_feedback')
+    .select('profile_id, sitio_no_repetir, dinner_tables!inner(restaurant_id)')
+    .eq('sitio_no_repetir', true)
+    .in('profile_id', pool.personas.map((p) => p.profileId))
+
+  type Veto = { profile_id: string; dinner_tables: { restaurant_id: string | null } | null }
+  const sitioVetado = new Set<string>()
+  for (const x of (vetadosDeSitio ?? []) as unknown as Veto[]) {
+    if (x.dinner_tables?.restaurant_id) sitioVetado.add(`${x.profile_id}|${x.dinner_tables.restaurant_id}`)
+  }
+
+  const ahoraSitios = Date.now()
+
+  /**
+   * El sitio de una mesa: el primero que quepa, que nadie haya vetado y, a
+   * igualdad, el que menos reciente les quede.
+   */
+  const sedeDe = (zona: string, mesa?: { profileId: string }[]) => {
+    const gente = mesa ?? []
+    const candidatas = sedes
+      .filter((v) => v.zona === zona)
+      .filter((v) => (ocupacion.get(v.restaurantId) ?? 0) < v.maxMesas)
+      // Lo vetado no entra, ni aunque sea lo único que queda: es la misma
+      // regla que con las personas.
+      .filter((v) => !gente.some((p) => sitioVetado.has(`${p.profileId}|${v.restaurantId}`)))
+
+    if (!candidatas.length) return null
+
+    const reciente = (v: { restaurantId: string }) =>
+      gente.filter((p) => {
+        const cuando = cuandoFue.get(`${p.profileId}|${v.restaurantId}`)
+        return !!cuando && ahoraSitios - cuando < DIAS_SIN_REPETIR * 86400_000
+      }).length
+
+    // Estable: entre dos con los mismos repetidores, el orden de siempre.
+    const elegida = candidatas
+      .map((v, i) => ({ v, i, repiten: reciente(v) }))
+      .sort((a, b) => a.repiten - b.repiten || a.i - b.i)[0].v
+
+    ocupacion.set(elegida.restaurantId, (ocupacion.get(elegida.restaurantId) ?? 0) + 1)
+    return { restaurantId: elegida.restaurantId, nombre: elegida.nombre }
   }
 
   const nombreDeZona = new Map(pool.zonas.map((z) => [z.slug, z.nombre]))
@@ -799,7 +866,7 @@ export async function POST(request: Request) {
     // alfabético. Elegir "la que tenga más sitio" haría que el mismo pool
     // diera repartos distintos según en qué orden se procesaran las mesas.
     const zona = zonasPosibles[0] ?? null
-    const sede = zona ? sedeDe(zona) : null
+    const sede = zona ? sedeDe(zona, mesa) : null
     return {
     numero: desdeNumero + i + 1,
     publicada: false,

@@ -2855,6 +2855,7 @@ export type Database = {
           connections_made: number | null
           conversation_rating: number | null
           created_at: string
+          gasto_usd: number | null
           id: string
           nps: number | null
           profile_id: string
@@ -2862,6 +2863,7 @@ export type Database = {
           sitio_ambiente: number | null
           sitio_comida: number | null
           sitio_conversar: number | null
+          sitio_no_repetir: boolean
           sitio_servicio: number | null
           table_id: string
           would_repeat: boolean | null
@@ -2872,6 +2874,7 @@ export type Database = {
           connections_made?: number | null
           conversation_rating?: number | null
           created_at?: string
+          gasto_usd?: number | null
           id?: string
           nps?: number | null
           profile_id: string
@@ -2879,6 +2882,7 @@ export type Database = {
           sitio_ambiente?: number | null
           sitio_comida?: number | null
           sitio_conversar?: number | null
+          sitio_no_repetir?: boolean
           sitio_servicio?: number | null
           table_id: string
           would_repeat?: boolean | null
@@ -2889,6 +2893,7 @@ export type Database = {
           connections_made?: number | null
           conversation_rating?: number | null
           created_at?: string
+          gasto_usd?: number | null
           id?: string
           nps?: number | null
           profile_id?: string
@@ -2896,6 +2901,7 @@ export type Database = {
           sitio_ambiente?: number | null
           sitio_comida?: number | null
           sitio_conversar?: number | null
+          sitio_no_repetir?: boolean
           sitio_servicio?: number | null
           table_id?: string
           would_repeat?: boolean | null
@@ -3608,6 +3614,24 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "zones"
             referencedColumns: ["slug"]
+          },
+        ]
+      }
+      v_gasto_de_local: {
+        Row: {
+          gasto_max: number | null
+          gasto_medio: number | null
+          gasto_min: number | null
+          respuestas: number | null
+          restaurant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dinner_tables_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
           },
         ]
       }
