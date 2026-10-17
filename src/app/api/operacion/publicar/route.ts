@@ -25,6 +25,16 @@ const cuerpo = z.object({
   // Una sola mesa. Sin esto, todas las que falten. Cerrar de una en una es
   // lo que permite ir fijando grupos y seguir moviendo el resto.
   mesa: z.number().int().positive().optional(),
+  /**
+   * Por qué cambió, para quien ya sabía su mesa.
+   *
+   * Lo escribe operación al publicar y sale tal cual en el correo de cambio
+   * de mesa. Sin esto, a alguien que ya leyó con quién cenaba le llega un
+   * «cambió tu mesa» sin un motivo, y lo que se lee es que nos equivocamos.
+   *
+   * Es opcional: si no se escribe, el correo va como iba.
+   */
+  motivo: z.string().trim().min(5).max(200).optional(),
 })
 
 type Rotura = { regla: string; detalle: string }
@@ -365,7 +375,7 @@ export async function POST(request: Request) {
         kind: 'mesa_cambiada',
         event_id: corrida.event_id,
         send_at: new Date().toISOString(),
-        payload: { antesMesa: antes.mesa, antesSitio: antes.sitio },
+        payload: { antesMesa: antes.mesa, antesSitio: antes.sitio, porque: parsed.data.motivo ?? null },
       })
     }
   }

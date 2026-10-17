@@ -49,6 +49,16 @@
     {{#si trato}}{{ trato }}, hubo{{/si}} un cambio en {{ art }} {{ unidad }} de {{ cuando }} y esto es lo que vale ahora. <strong style="color:#FAF3E4;">Lo que te dijimos antes ya no.</strong>
   </td></tr>
 
+  <!-- Y por qué. Lo escribe operación al publicar y sale tal cual.
+       Sin motivo, a quien ya leyó con quién cenaba le llega un «cambió tu
+       mesa» a secas, y lo que se lee es que nos equivocamos. Vacío se salta
+       la fila entera: un hueco donde iba una explicación es peor que nada. -->
+  {{#si porque}}
+  <tr><td class="p" style="padding:14px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#9CBBA6;mso-line-height-rule:exactly;">
+    {{ porque }}
+  </td></tr>
+  {{/si}}
+
   <!-- la mesa, en negativo sobre crema -->
   <tr><td class="p" style="padding:30px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#FAF3E4;border-radius:26px;">

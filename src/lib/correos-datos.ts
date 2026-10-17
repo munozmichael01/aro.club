@@ -854,7 +854,18 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
 
       return {
         a,
-        datos: { ...base, ...mesa, antesMesa, antesSitio, cambiaMesa, cambiaSitio },
+        datos: {
+          ...base,
+          ...mesa,
+          antesMesa,
+          antesSitio,
+          cambiaMesa,
+          cambiaSitio,
+          // El porqué que escribió operación al publicar. Vacío se salta la
+          // fila entera: un hueco donde iba una explicación es peor que no
+          // dar ninguna.
+          porque: typeof p.porque === 'string' ? p.porque.trim() : '',
+        },
       }
     }
 
