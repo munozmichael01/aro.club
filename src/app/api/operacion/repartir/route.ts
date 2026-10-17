@@ -302,7 +302,7 @@ export async function GET(request: Request) {
 
   const { data: mesasVivas } = await admin
     .from('dinner_tables')
-    .select('id, table_number, grabacion')
+    .select('id, table_number, grabacion, avisado_local_at, avisado_local_num')
     .eq('event_id', evento.id)
 
   const mesaPorNumero = new Map((mesasVivas ?? []).map((m) => [m.table_number, m]))
@@ -423,6 +423,16 @@ export async function GET(request: Request) {
             // —para poder marcarla— y si está marcada para grabar.
             mesaId: mesaPorNumero.get((m as unknown as { numero: number }).numero)?.id ?? null,
             grabacion: !!mesaPorNumero.get((m as unknown as { numero: number }).numero)?.grabacion,
+            /**
+             * Lo que le dijimos al local, si se dijo. La tarjeta compara con
+             * los que hay ahora: esa diferencia es lo único que justifica
+             * volver a llamar.
+             */
+            avisoLocal: (() => {
+              const viva = mesaPorNumero.get((m as unknown as { numero: number }).numero)
+              if (!viva?.avisado_local_at) return null
+              return { cuando: viva.avisado_local_at, cuantos: viva.avisado_local_num ?? 0 }
+            })(),
             integrantes: (m.integrantes ?? []).map((p) => ({
               ...p,
               // Qué contestó al «¿te podemos grabar?». `null` es que no ha

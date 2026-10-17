@@ -690,6 +690,8 @@ export type Database = {
       }
       dinner_tables: {
         Row: {
+          avisado_local_at: string | null
+          avisado_local_num: number | null
           created_at: string
           event_id: string
           grabacion: boolean
@@ -702,6 +704,8 @@ export type Database = {
           table_number: number
         }
         Insert: {
+          avisado_local_at?: string | null
+          avisado_local_num?: number | null
           created_at?: string
           event_id: string
           grabacion?: boolean
@@ -714,6 +718,8 @@ export type Database = {
           table_number: number
         }
         Update: {
+          avisado_local_at?: string | null
+          avisado_local_num?: number | null
           created_at?: string
           event_id?: string
           grabacion?: boolean

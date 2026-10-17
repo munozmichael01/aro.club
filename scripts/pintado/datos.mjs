@@ -45,6 +45,18 @@ const MESA_ABIERTA = {
   yaBloqueados: [],
 }
 
+/**
+ * OJO con lo que esta pasada NO cubre.
+ *
+ * Operación no tiene datos simulados, así que de ella solo se mira el estado
+ * vacío: sin fechas no hay tarjetas de mesa, y la mitad de su código no llega
+ * a ejecutarse. El 17-10 metí un `AroReglas.horaDe` en una tarjeta de mesa
+ * —el panel no carga `reglas.js`— y esta pasada dijo que todo bien, porque
+ * sin mesas esa línea no se ejecuta. Lo cacé abriendo el panel con datos.
+ *
+ * Mientras Operación no tenga su propio juego de datos: el panel se abre a
+ * mano antes de subirlo, como Mi mesa.
+ */
 export const PANTALLAS = {
   'Aro Club - Mi mesa.dc.html': [
     { caso: 'abierta', rutas: { '/api/mi-mesa': MESA_ABIERTA } },
@@ -80,8 +92,10 @@ export const PANTALLAS = {
     caso: 'con reserva',
     rutas: {
       '/api/mi-cuenta': {
-        nombre: 'Ana', estado: 'verified', creditos: 1, zonaHoraria: 'America/Caracas',
-        proximas: [], fechas: [], historial: [], falta: null, verificacion: { estado: 'approved' },
+        nombre: 'Ana', esOps: false, porValorar: null, planes: [], agenda: [], proximaFecha: null,
+        estado: 'verified', ciudad: 'caracas', paso: null, donde: [], puedeReservar: true,
+        verif: { estado: 'approved' }, motivoRechazo: null,
+        respuestas: { faltan: 0, total: 17 }, creditos: 1, reserva: null,
       },
       '/api/mi-mesa': MESA_ABIERTA,
       '/api/mis-exclusiones': { exclusiones: [] },
@@ -91,8 +105,15 @@ export const PANTALLAS = {
   'Aro Club - Mi perfil.dc.html': [{
     caso: 'perfil',
     rutas: {
-      '/api/mi-perfil': { nombre: 'Ana', trato: 'Ana', correo: 'ana@aro.club', respuestas: [], bloques: [] },
-      '/api/mi-cuenta': { nombre: 'Ana', estado: 'verified', creditos: 0, proximas: [], fechas: [], historial: [] },
+      '/api/mi-perfil': {
+        base: { nombre: 'Ana', trato: 'Ana', nacimiento: '1995-04-12', genero: 'mujer', telefono: '+584141234567', ciudad: 'caracas' },
+        correo: 'ana@aro.club',
+        respuestas: [],
+        bloques: [],
+        cenas: [],
+        credenciales: { correo: 'ana@aro.club', tieneClave: true, google: false, apple: false },
+      },
+      '/api/mi-cuenta': { nombre: 'Ana', esOps: false, planes: [], agenda: [], estado: 'verified', creditos: 0, respuestas: { faltan: 0, total: 17 }, verif: { estado: 'approved' }, donde: [], puedeReservar: true },
       '/api/ciudades': { ciudades: [{ slug: 'caracas', nombre: 'Caracas', abierta: true }] },
     },
   }],

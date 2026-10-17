@@ -343,6 +343,16 @@
                     </div>
                   </sc-if>
 
+                  <!-- Lo que le dijimos al restaurante. No avisa a nadie:
+                       deja escrito lo que se dijo por telefono, para que la
+                       tarjeta pueda cantar si ya no es verdad. -->
+                  <sc-if value="{{ t.sePuedeAvisarLocal }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:13px;padding-top:12px;border-top:1px solid rgba(20,52,42,.12);display:flex;flex-wrap:wrap;gap:9px;align-items:center">
+                      <button onClick="{{ t.avisarLocal }}" style="{{ t.botonAvisoLocal }}">{{ t.textoAvisoLocal }}</button>
+                      <span style="flex:1 1 180px;min-width:0;font:400 13px/1.45 'Inter Tight',sans-serif;color:{{ t.colorAvisoLocal }}">{{ t.notaAvisoLocal }}</span>
+                    </div>
+                  </sc-if>
+
                   <div style="display:flex;gap:9px;margin-top:13px">
                     <button onClick="{{ t.publicar }}" style="{{ t.botonPublicar }}">{{ t.textoPublicar }}</button>
                     <sc-if value="{{ t.puedeForzar }}" hint-placeholder-val="{{ false }}">
@@ -2375,6 +2385,19 @@ class Component extends DCLogic {
       .then((r) => { if (r.ok && f) this.cargarReparto(f.id); });
   }
 
+  /**
+   * Dejar escrito que ya se le dijo al local cuántos van.
+   *
+   * El número lo cuenta el servidor: lo que queda registrado tiene que ser
+   * lo que de verdad hay sentado, no lo que la pantalla tuviera pintado.
+   */
+  avisarAlLocal(mesaId) {
+    if (!mesaId) return;
+    const f = this.fechaElegida();
+    this.mandar('/api/operacion/aviso-local', { mesaId: mesaId })
+      .then((r) => { if (r.ok && f) this.cargarReparto(f.id); });
+  }
+
   /** Abrir o cerrar las respuestas de una mesa. */
   verRespuestasDe(mesaId) {
     const abiertas = Object.assign({}, this.state.respuestasAbiertas || {});
@@ -3456,6 +3479,28 @@ class Component extends DCLogic {
           : 'Rompe ' + malas.length + ' reglas: ' + malas.map((x) => x.detalle).join(' · ') + '. Publicar se para aquí.',
         hayForzada: forzada && pub,
         textoForzada: '',
+
+        /**
+         * Lo que sabe el restaurante, y si sigue siendo verdad.
+         *
+         * Solo en las publicadas: antes de publicar no hay a quien avisar,
+         * y la cuenta cambiaria de todas formas.
+         */
+        sePuedeAvisarLocal: !!m.mesaId && !!m.restaurantId,
+        textoAvisoLocal: m.avisoLocal ? 'Volver a avisar' : 'Ya se lo dije al local',
+        botonAvisoLocal: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;cursor:pointer;'
+          + 'font:500 13px/1 \'Inter Tight\',sans-serif;border:1px solid rgba(20,52,42,.2);background:transparent;color:#2C4A38',
+        notaAvisoLocal: (() => {
+          if (!m.avisoLocal) return 'Nadie le ha dicho cuántos van.';
+          // Con el formateador de ESTA pantalla: el panel no carga reglas.js,
+          // y usarlo aqui dejaba la pantalla entera en un «AroReglas is not
+          // defined». Lo cace al abrirla, no leyendo el diff.
+          const hora = horaTexto(m.avisoLocal.cuando);
+          if (m.avisoLocal.cuantos === g.length) return 'Le dijiste ' + g.length + ' a las ' + hora + ' · sigue igual';
+          return 'Le dijiste ' + m.avisoLocal.cuantos + ' a las ' + hora + ' · ahora son ' + g.length;
+        })(),
+        colorAvisoLocal: (m.avisoLocal && m.avisoLocal.cuantos !== g.length) ? '#8F4515' : '#33513F',
+        avisarLocal: () => this.avisarAlLocal(m.mesaId),
 
         // --- permisos de contenido ------------------------------------
         //

@@ -107,10 +107,21 @@ for (const nombre of pantallas) {
       .waitForFunction(() => !/\{\{/.test(document.body.innerText), null, { timeout: 6000 })
       .catch(() => {})
 
-    const { texto, crudas } = await pagina.evaluate(() => {
+    const { texto, crudas, reventada } = await pagina.evaluate(() => {
       const t = document.body.innerText || ''
-      return { texto: t.trim().length, crudas: (t.match(/\{\{[^}]{0,40}\}\}/g) || []).slice(0, 3) }
+      return {
+        texto: t.trim().length,
+        crudas: (t.match(/\{\{[^}]{0,40}\}\}/g) || []).slice(0, 3),
+        // El runtime caza el fallo y pinta el mensaje en la pagina, asi que
+        // la pantalla no se queda en blanco ni deja llaves: se queda en una
+        // linea de error que pasaba por buena. Me paso con «AroReglas is not
+        // defined» en el panel, usando en Operacion algo que esa pantalla no
+        // carga.
+        reventada: (t.match(/renderVals\(\):[^\n]{0,80}|is not defined|is not a function/) || [])[0] || null,
+      }
     })
+
+    if (reventada) problemas.push(`${quien}: la pantalla pinta un error en vez de su contenido → ${reventada}`)
 
     // Lo que hay en pantalla cuando falla, para no tener que adivinarlo.
     if (process.env.PINTADO_VERBOSO) {
