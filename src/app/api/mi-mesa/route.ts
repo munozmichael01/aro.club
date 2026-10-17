@@ -32,7 +32,7 @@ export async function GET() {
 
   const { data: reservas } = await admin
     .from('bookings')
-    .select('id, event_id, permiso_grabacion, events(starts_at, reveal_at, status, format, activity, city_slug, grabacion)')
+    .select('id, event_id, permiso_grabacion, events(starts_at, reveal_at, status, format, activity, city_slug, grabacion, seats_per_table)')
     .eq('profile_id', user.id)
     .in('status', ['confirmed', 'attended'])
 
@@ -97,7 +97,7 @@ export async function GET() {
   const reserva = porValorar ?? proxima ?? (ultima && !yaLaConto(ultima) ? ultima : undefined)
 
   const evento = reserva?.events as
-    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string; grabacion: boolean }
+    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string; grabacion: boolean; seats_per_table: number | null }
     | null
     | undefined
 
@@ -462,6 +462,35 @@ export async function GET() {
             > new Date(primerAsiento).getTime() + MARGEN_PUBLICACION,
       }
     }),
+    /**
+     * Lo que cambió en esta mesa DESPUÉS de contársela a la gente.
+     *
+     * Michael, 17-10: «a la gente que no cambiamos de sitio podríamos no
+     * mandarle email sino mostrarle los cambios en Mi mesa con un aviso de
+     * que hubo ajustes». Y es lo correcto: a quien se queda donde estaba, un
+     * correo de «cambios de última hora» le mete ruido para contarle algo
+     * que ya se ve entrando.
+     *
+     * Hoy pasaron las dos cosas en la misma noche: tres personas cancelaron
+     * en la hora siguiente a la revelación —una mesa se quedó en tres— y
+     * hubo que mover gente de sitio para que nadie cenara de a tres.
+     *
+     * Dos hechos, no una opinión: cuántos son y si se sumó alguien después.
+     * La pantalla los junta en una frase.
+     */
+    ajustes: {
+      // Cuántos se sientan de verdad, contándose a sí misma.
+      sonCuantos: (companeros ?? []).length + 1,
+      // Y cuántos caben, que es lo que hace que «cinco» signifique algo.
+      caben: evento.seats_per_table ?? 6,
+      seSumoAlguien: (companeros ?? []).some(
+        (c) =>
+          !!evento.reveal_at && !!c.sentado_en && !!primerAsiento
+          && new Date(c.sentado_en as string) > new Date(evento.reveal_at)
+          && new Date(c.sentado_en as string).getTime()
+            > new Date(primerAsiento).getTime() + MARGEN_PUBLICACION,
+      ),
+    },
     // Todas verificaron: es el retorno de lo que costó verificarse.
     todosVerificados: true,
     // Lo que ya hizo. Los tres caminos son independientes, asi que se

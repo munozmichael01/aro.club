@@ -101,6 +101,20 @@
     <sc-if value="{{ esCenaAbierta }}" hint-placeholder-val="{{ true }}">
       <div id="cena" style="max-width:440px;margin:0 auto;animation:aro-open 460ms ease both">
 
+        <!-- Lo que cambió después de contarte la mesa.
+             A quien no se mueve de sitio no se le manda un correo de
+             «cambios de última hora»: lo ve al entrar, que es donde está
+             mirando, y sin un correo más en un día que ya trajo dos. -->
+        <sc-if value="{{ hayAjustes }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:#FFF1E4;border:1px solid #E7C9AC;padding:14px 16px;margin-bottom:12px">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#8F4515;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 13px/1 'Inter Tight',sans-serif;margin-top:1px">·</span>
+            <span style="flex:1;min-width:0">
+              <span style="display:block;font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloAjustes }}</span>
+              <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-wrap:pretty">{{ textoAjustes }}</span>
+            </span>
+          </div>
+        </sc-if>
+
         <div style="border-radius:24px;background:#14342A;color:#FAF3E4;padding:18px 18px 16px">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
             <span style="{{ selloCena }}">{{ selloTexto }}</span>
@@ -1123,6 +1137,31 @@ class Component extends DCLogic {
         this.juegoDespierto(true);
         this.setState({ juego: guardado || { paso: 'reglas', ronda: 0, idx: 0 } });
       },
+
+      /**
+       * Lo que cambió después de contarte la mesa.
+       *
+       * Dos hechos del servidor —cuántos son y si se sumó alguien— y aquí
+       * la frase. Sin drama y sin disculpa larga: lo que la gente necesita
+       * es entender en dos segundos por qué la mesa no es la de esta
+       * mañana, no una explicación de nuestros problemas.
+       */
+      hayAjustes: !!(dJ && dJ.ajustes && (dJ.ajustes.seSumoAlguien
+        || (dJ.ajustes.sonCuantos && dJ.ajustes.caben && dJ.ajustes.sonCuantos < dJ.ajustes.caben))),
+      tituloAjustes: 'Hubo ajustes de última hora',
+      textoAjustes: (() => {
+        const a = (dJ && dJ.ajustes) || {};
+        const corta = a.sonCuantos && a.caben && a.sonCuantos < a.caben;
+        const EN_LETRA = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho'];
+        const cuantos = EN_LETRA[a.sonCuantos] || a.sonCuantos;
+        if (corta && a.seSumoAlguien) {
+          return 'Alguien canceló hoy y movimos a otra persona a tu mesa, que va marcada abajo. Son ' + cuantos + '.';
+        }
+        if (a.seSumoAlguien) {
+          return 'Se suma alguien que no estaba esta mañana, y va marcado abajo. Lo demás no cambia.';
+        }
+        return 'Alguien canceló después de decirte con quién cenabas. Son ' + cuantos + ', y el sitio y la hora no cambian.';
+      })(),
 
       // --- «¿Te podemos grabar?» ----------------------------------------
       preguntaGrabacion: !!this.state.preguntaGrabacion,
