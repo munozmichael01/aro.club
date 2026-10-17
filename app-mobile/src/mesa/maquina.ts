@@ -100,8 +100,15 @@ export type SitioParaSeguir = {
 export const detalleSitio = (s: SitioParaSeguir, aPie: (n: number) => string) =>
   [s.minutosAPie != null ? aPie(s.minutosAPie) : '', s.precio || ''].filter(Boolean).join(' · ')
 
-export function mapa<D extends { mapa?: string | null; mapaApple?: string | null }>(d: D, so: string): string | null {
-  if (so === 'ios' && d.mapaApple) return d.mapaApple
+/**
+ * «Cómo llegar» abre Google Maps, también en iPhone (Michael, 17-10). `mapa`
+ * viene en la forma universal (`google.com/maps/search/?api=1&query=…&query_place_id=…`),
+ * que abre la app de Google Maps si está y si no, la web. `mapaApple` sigue
+ * llegando por si algún día se ofrece como segunda opción, pero no manda:
+ * solo se usa si no hay `mapa`. `so` se queda en la firma por si esa segunda
+ * opción llega.
+ */
+export function mapa<D extends { mapa?: string | null; mapaApple?: string | null }>(d: D, _so?: string): string | null {
   return d.mapa || d.mapaApple || null
 }
 

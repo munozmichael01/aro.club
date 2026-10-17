@@ -45,9 +45,11 @@ test('mesa o grupo según el formato; la actividad solo en movimiento', () => {
 
 test('cómo llegar: Apple Maps en iOS, Google en Android', () => {
   const d = { fase: 'abierta', mapa: 'https://google', mapaApple: 'https://apple' }
-  assert.equal(M.mapa(d, 'ios'), 'https://apple')
+  // Google Maps manda en los dos (17-10); Apple solo si no hay otro.
+  assert.equal(M.mapa(d, 'ios'), 'https://google')
   assert.equal(M.mapa(d, 'android'), 'https://google')
   assert.equal(M.mapa({ fase: 'abierta', mapa: 'https://google' }, 'ios'), 'https://google')
+  assert.equal(M.mapa({ fase: 'abierta', mapaApple: 'https://apple' }, 'ios'), 'https://apple')
 })
 
 test('lo de después: solo lo contestado, índices de mejor a peor, y lo ya hecho se recupera', () => {

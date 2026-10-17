@@ -317,8 +317,11 @@ no recibe push remotas) y trabajo del backend (guardar tokens y mandar).
   y `fija` para las personas de Mi mesa), `Ficha` (las escalas), `Interruptor`
   (propio: el `Switch` del sistema pinta otro color en cada plataforma),
   `Boton tipo="grave"` (enviar un reporte, darse de baja: la terracota #6E340F).
-- **Cómo llegar** abre Apple Maps en iOS y el enlace de Google en Android
-  (`mesa/maquina.mapa`): aquí se sabe el teléfono, la web lo adivina.
+- **Cómo llegar** abre Google Maps en los dos sistemas (Michael, 17-10):
+  `mapa` es la URL universal de Google (`api=1&query=…&query_place_id=…`), que
+  abre su app si está instalada. `mapaApple` solo si no hay `mapa`. Forzar el
+  paquete de Google Maps en Android pediría un módulo nativo (build): no hace
+  falta mientras Google Maps sea quien abre los enlaces de google.com/maps.
 - **Las fechas de nacimiento no pasan por `Date`** (`fechaDeNacimiento`):
   medianoche UTC es el día anterior en Caracas.
 - **Fuentes embebidas** (plugin `expo-font`) y además `useFonts` para web y
