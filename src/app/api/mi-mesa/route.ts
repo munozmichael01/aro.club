@@ -181,8 +181,37 @@ export async function GET() {
     .maybeSingle()
 
   if (!miembro) {
-    // Apuntada y revelada pero sin mesa: no se inventa nada.
-    return NextResponse.json({ fase: 'sin-mesa', formato: evento.format, empiezaEn: evento.starts_at, zonaHoraria })
+    /**
+     * Apuntada y revelada pero sin mesa. Y hay que MIRAR si el crédito
+     * volvió, no darlo por hecho.
+     *
+     * La pantalla decía «tu crédito volvió entero a tu cuenta» siempre, sin
+     * comprobar nada, porque se escribió pensando en el único camino que
+     * existía: quien se queda en espera al publicar, y ahí el abono va
+     * pegado al aviso.
+     *
+     * El 17-10 apareció el otro camino. Cinco personas tenían su mesa
+     * armada y esa mesa no se publicó —rompía tres reglas y el panel la
+     * frena—, así que no hubo aviso, no hubo abono, y la pantalla les
+     * siguió diciendo que su dinero estaba de vuelta. Una de ellas escribió
+     * para preguntar por qué no lo veía, y tenía razón.
+     *
+     * Se mira el abono de ESTA reserva. Si no está, se dice que no está.
+     */
+    const { data: abono } = await admin
+      .from('credit_ledger')
+      .select('id')
+      .eq('booking_id', reserva.id)
+      .eq('reason', 'refund')
+      .maybeSingle()
+
+    return NextResponse.json({
+      fase: 'sin-mesa',
+      formato: evento.format,
+      empiezaEn: evento.starts_at,
+      zonaHoraria,
+      creditoDevuelto: !!abono,
+    })
   }
 
   const mesa = miembro.dinner_tables as unknown as {

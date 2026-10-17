@@ -1733,7 +1733,12 @@ class Component extends DCLogic {
       notaVacia: revisando
         ? 'Mientras tanto no tienes que hacer nada. En cuanto te verifiquemos podrás apartar puesto en la próxima fecha.'
         : (sinMesaAun
-          ? 'Tu crédito volvió entero a tu cuenta y no caduca: la próxima fecha la pagas con él.'
+          // Lo dice el servidor mirando el abono, no la pantalla dándolo por
+          // hecho: el 17-10 cinco personas leyeron aquí que su crédito había
+          // vuelto y no había vuelto.
+          ? ((dJ && dJ.creditoDevuelto === false)
+            ? 'Tu crédito sigue descontado. Lo estamos arreglando hoy mismo: si no lo ves de vuelta esta tarde, escríbenos.'
+            : 'Tu crédito volvió entero a tu cuenta y no caduca: la próxima fecha la pagas con él.')
           : 'Cada semana se abre una fecha. Son seis personas, y el sitio lo elegimos nosotros.'),
       // Quien esta en revision no tiene boton: no hay nada que pueda pulsar
       // todavia, y un boton que lleva a una puerta cerrada es peor que nada.
