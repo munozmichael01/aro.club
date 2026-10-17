@@ -479,6 +479,43 @@ export async function GET() {
      * La pantalla los junta en una frase.
      */
     ajustes: {
+      /**
+       * Si alguien se cayó de ESTA mesa después de la revelación.
+       *
+       * No vale mirar solo si la mesa es corta: una de cinco puede haber
+       * salido así desde el principio —se publican cortas a propósito— y
+       * decirle a esa gente «alguien canceló» sería inventarse un hecho.
+       *
+       * Tampoco vale mirar las cancelaciones de la fecha: cancela alguien
+       * de otra mesa y esta se enteraría de algo que no le pasó.
+       *
+       * La forma de saberlo después de que la fila de `table_members` ya no
+       * existe es el correo que se le mandó: `mesa_asignada` guarda en su
+       * payload en qué mesa estaba. Eso es exactamente «a quién le dijimos
+       * que se sentaba aquí».
+       */
+      alguienCancelo: await (async () => {
+        if (!evento.reveal_at) return false
+        const { data: caidos } = await admin
+          .from('bookings')
+          .select('profile_id, cancelled_at')
+          .eq('event_id', mesa.event_id)
+          .not('cancelled_at', 'is', null)
+          .gt('cancelled_at', evento.reveal_at)
+
+        if (!caidos?.length) return false
+
+        const { data: loSuyo } = await admin
+          .from('scheduled_emails')
+          .select('payload')
+          .eq('event_id', mesa.event_id)
+          .eq('kind', 'mesa_asignada')
+          .in('profile_id', caidos.map((c) => c.profile_id))
+
+        return (loSuyo ?? []).some(
+          (f) => String(((f.payload ?? {}) as { mesa?: unknown }).mesa ?? '') === String(mesa.table_number),
+        )
+      })(),
       // Cuántos se sientan de verdad, contándose a sí misma.
       sonCuantos: (companeros ?? []).length + 1,
       // Y cuántos caben, que es lo que hace que «cinco» signifique algo.

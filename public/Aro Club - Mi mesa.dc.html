@@ -1146,15 +1146,18 @@ class Component extends DCLogic {
        * es entender en dos segundos por qué la mesa no es la de esta
        * mañana, no una explicación de nuestros problemas.
        */
-      hayAjustes: !!(dJ && dJ.ajustes && (dJ.ajustes.seSumoAlguien
-        || (dJ.ajustes.sonCuantos && dJ.ajustes.caben && dJ.ajustes.sonCuantos < dJ.ajustes.caben))),
+      // Solo si pasó algo DESPUÉS de contarte la mesa: alguien se sumó, o
+      // alguien de tu mesa canceló. Una mesa que salió corta desde el
+      // principio no es un ajuste, es como se publicó, y su correo ya lo
+      // decía.
+      hayAjustes: !!(dJ && dJ.ajustes && (dJ.ajustes.seSumoAlguien || dJ.ajustes.alguienCancelo)),
       tituloAjustes: 'Hubo ajustes de última hora',
       textoAjustes: (() => {
         const a = (dJ && dJ.ajustes) || {};
         const corta = a.sonCuantos && a.caben && a.sonCuantos < a.caben;
         const EN_LETRA = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho'];
         const cuantos = EN_LETRA[a.sonCuantos] || a.sonCuantos;
-        if (corta && a.seSumoAlguien) {
+        if (a.alguienCancelo && a.seSumoAlguien) {
           return 'Alguien canceló hoy y movimos a otra persona a tu mesa, que va marcada abajo. Son ' + cuantos + '.';
         }
         if (a.seSumoAlguien) {
