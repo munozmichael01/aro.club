@@ -1678,15 +1678,22 @@ class Component extends DCLogic {
        * navegador es Safari. Quien tenga Chrome en el iPhone casi seguro
        * tiene también Google Maps.
        */
-      mapa: (function () {
-        const url = (dt && dt.mapa) || '';
-        const apple = (dt && dt.mapaApple) || '';
-        if (!apple) return url;
-        const ua = navigator.userAgent || '';
-        const esIOS = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-        const esSafari = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|Chrome/.test(ua);
-        return esIOS && esSafari ? apple : url;
-      })(),
+      /**
+       * Google Maps SIEMPRE, también en iPhone.
+       *
+       * Esto elegía Apple Maps en un iPhone con Safari, por una razón buena
+       * —ahí la app nativa está segura y Google Maps no— y una decisión de
+       * Michael la cambia (17-10): «quiero Google Maps sobre el mapa default
+       * del teléfono». El sitio nuestro vive en Google, con su ficha, sus
+       * reseñas y su foto; en el mapa del sistema es un pin.
+       *
+       * Y el enlace ya no es el de antes: el servidor manda la forma
+       * universal con coordenadas y `query_place_id`, que abre la app de
+       * Google Maps si está instalada y el navegador si no. `mapaApple`
+       * sigue viniendo en la respuesta por si algún día se quiere ofrecer
+       * como segunda opción, pero no se usa.
+       */
+      mapa: (dt && dt.mapa) || '',
       hayMapa: !!(dt && (dt.mapa || dt.mapaApple)),
       // Estas dos frases llevaban dentro "Cardenal" y "la 04" escritos a
       // mano. Se arman con lo que devuelve la mesa o no se dicen.

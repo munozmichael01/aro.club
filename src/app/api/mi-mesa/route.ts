@@ -175,7 +175,7 @@ export async function GET() {
 
   const { data: miembro } = await admin
     .from('table_members')
-    .select('table_id, dinner_tables(table_number, event_id, restaurant_id, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, facade_photo_path, lat, lng))')
+    .select('table_id, dinner_tables(table_number, event_id, restaurant_id, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, place_id, facade_photo_path, lat, lng))')
     .eq('profile_id', user.id)
     .eq('booking_id', reserva.id)
     .maybeSingle()
@@ -212,7 +212,7 @@ export async function GET() {
    */
   const { data: seguires } = await admin
     .from('restaurant_after_venues')
-    .select('after_id, minutos_a_pie, orden, restaurants!restaurant_after_venues_after_id_fkey(name, address, maps_url, lat, lng, budget_tier)')
+    .select('after_id, minutos_a_pie, orden, restaurants!restaurant_after_venues_after_id_fkey(name, address, maps_url, place_id, lat, lng, budget_tier)')
     .eq('restaurant_id', mesa.restaurant_id ?? '')
     .order('orden')
 

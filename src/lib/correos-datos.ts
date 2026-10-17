@@ -1414,7 +1414,7 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
 
   const { data: fila } = await admin
     .from('table_members')
-    .select('table_id, dinner_tables!inner(table_number, event_id, restaurant_id, restaurants(id, name, address, maps_url, zone_slug, facade_photo_path))')
+    .select('table_id, dinner_tables!inner(table_number, event_id, restaurant_id, restaurants(id, name, address, maps_url, place_id, lat, lng, zone_slug, facade_photo_path))')
     .eq('profile_id', perfilId)
     .eq('dinner_tables.event_id', eventoId)
     .maybeSingle()

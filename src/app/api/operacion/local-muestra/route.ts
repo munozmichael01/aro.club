@@ -67,7 +67,7 @@ export async function GET(request: Request) {
 
   const { data: local } = await admin
     .from('restaurants')
-    .select('id, name, address, maps_url, zone_slug, facade_photo_path, zones(name)')
+    .select('id, name, address, maps_url, place_id, lat, lng, zone_slug, facade_photo_path, zones(name)')
     .eq('id', id)
     .maybeSingle()
 

@@ -34,6 +34,7 @@ type Sitio = {
   name?: string | null
   address?: string | null
   maps_url?: string | null
+  place_id?: string | null
   lat?: number | string | null
   lng?: number | string | null
 }
@@ -44,6 +45,30 @@ const CIUDAD = 'Caracas, Venezuela'
 export function enlaceDeMapa(sitio: Sitio | null | undefined): string | null {
   if (!sitio) return null
 
+  /**
+   * Primero, la forma universal CON coordenadas. Y es por abrir la app.
+   *
+   * Michael, 17-10: «la app me abre maps de Android y no Google Maps, quiero
+   * Google Maps sobre el mapa default del teléfono». El enlace que daba
+   * Places —`maps.google.com/?cid=…`— lleva a la ficha buena, pero es un
+   * dominio que el teléfono puede resolver como quiera: abre el navegador, o
+   * el mapa que tenga por defecto, o pregunta.
+   *
+   * `google.com/maps/search/?api=1` es la forma que Google documenta para
+   * esto: con la app instalada la abre, y sin ella cae al navegador. Con
+   * `query_place_id` además aterriza en la FICHA del sitio y no en un pin:
+   * mismo destino que el enlace viejo, pero en la app.
+   */
+  const lat = Number(sitio.lat)
+  const lng = Number(sitio.lng)
+  if (sitio.lat != null && sitio.lng != null && Number.isFinite(lat) && Number.isFinite(lng)) {
+    const id = sitio.place_id?.trim()
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+      + (id ? `&query_place_id=${encodeURIComponent(id)}` : '')
+  }
+
+  // Sin coordenadas, la ficha que guardamos. Lleva al sitio exacto aunque
+  // decida el teléfono con qué abrirla.
   const ficha = sitio.maps_url?.trim()
   if (ficha) return ficha
 
