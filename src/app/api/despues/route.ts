@@ -97,6 +97,21 @@ const accion = z.discriminatedUnion('accion', [
   }),
 ])
 
+/**
+ * Cuántos sitios puede tener vetados a la vez una persona.
+ *
+ * Michael, 17-10: «ojo, lo ponemos muy fácil porque la gente es muy quejona,
+ * ¿cuánto tiene sentido que lo marque?». Y la cuenta le da la razón: en
+ * Chacao hay seis locales de cena, en Las Mercedes dos y en El Rosal uno.
+ * Quien vete tres en Chacao casi no cabe en ninguna mesa, y quien vete el
+ * único de su zona se queda fuera de su propia zona sin saberlo.
+ *
+ * Dos es suficiente para «ese sitio no» y no vacía ninguna zona salvo las de
+ * un solo local. Al tercero se le dice cuál tiene que soltar: es su lista y
+ * la decide ella, pero no puede crecer sin límite.
+ */
+const TOPE_SITIOS_VETADOS = 2
+
 /** La exclusión se guarda ordenada: el CHECK exige profile_a < profile_b. */
 const par = (a: string, b: string) => (a < b ? [a, b] : [b, a])
 
@@ -151,6 +166,55 @@ export async function POST(request: Request) {
     if (typeof d.volveriaAAro === 'boolean') fila.would_repeat = d.volveriaAAro
     if (d.comentario !== undefined) fila.comment = d.comentario || null
     if (d.gasto !== undefined) fila.gasto_usd = d.gasto
+
+    if (d.noRepetirSitio === true) {
+      /**
+       * El tope, comprobado aquí y no en la pantalla.
+       *
+       * La pantalla ya no enseña el botón si le gustó el sitio, pero el tope
+       * es una regla del producto: si vive solo en el navegador, basta con
+       * mandar la petición a mano para saltárselo, y lo que se salta es la
+       * posibilidad de sentar a esa persona en algún sitio.
+       */
+      const { data: suMesa } = await admin
+        .from('dinner_tables')
+        .select('restaurant_id')
+        .eq('id', d.mesaId)
+        .maybeSingle()
+
+      const { data: yaVetados } = await admin
+        .from('table_feedback')
+        .select('dinner_tables!inner(restaurant_id)')
+        .eq('profile_id', user.id)
+        .eq('sitio_no_repetir', true)
+
+      type ConSitio = { dinner_tables: { restaurant_id: string | null } | null }
+      const sitios = new Set(
+        ((yaVetados ?? []) as unknown as ConSitio[])
+          .map((x) => x.dinner_tables?.restaurant_id)
+          .filter((x): x is string => !!x),
+      )
+      // El de esta mesa no cuenta dos veces si ya estaba marcado.
+      if (suMesa?.restaurant_id) sitios.delete(suMesa.restaurant_id)
+
+      if (sitios.size >= TOPE_SITIOS_VETADOS) {
+        const { data: nombres } = await admin
+          .from('restaurants')
+          .select('name')
+          .in('id', [...sitios])
+
+        return NextResponse.json(
+          {
+            error:
+              `Ya tienes ${sitios.size} sitios marcados: ${(nombres ?? []).map((n) => n.name).join(' y ')}. ` +
+              'Quita uno en tu perfil y vuelve a marcar este.',
+            motivo: 'tope-sitios',
+          },
+          { status: 409 },
+        )
+      }
+    }
+
     if (d.noRepetirSitio !== undefined) fila.sitio_no_repetir = d.noRepetirSitio
 
     const { error } = await admin.from('table_feedback').upsert(

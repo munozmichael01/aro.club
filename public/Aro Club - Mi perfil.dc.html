@@ -173,6 +173,34 @@
       </sc-if>
     </div>
 
+    <!-- Y a qué sitios no quiere volver. Va debajo del de personas porque
+         es la misma idea: una preferencia suya, que se puede mirar y
+         deshacer. Lo pidió Leonor en la encuesta del 17-10. -->
+    <div id="sitios" style="margin-top:clamp(30px,4vw,44px)">
+      <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:14px">
+        <span style="font:400 clamp(22px,2.6vw,28px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A">Sitios a los que no vuelves</span>
+        <span style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#566A5D">{{ notaSitios }}</span>
+      </div>
+
+      <sc-if value="{{ sinSitios }}" hint-placeholder-val="{{ true }}">
+        <div style="border-radius:24px;background:#FFFBF0;padding:clamp(18px,2.4vw,22px);font:400 15px/1.55 'Inter Tight',sans-serif;color:#456352;text-wrap:pretty">Ninguno. Puedes marcarlo al contestar la encuesta de después de una cena.</div>
+      </sc-if>
+
+      <sc-if value="{{ haySitios }}" hint-placeholder-val="{{ false }}">
+        <div style="border-radius:24px;background:#FFFBF0;overflow:hidden">
+          <sc-for list="{{ sitios }}" as="s" hint-placeholder-count="2">
+            <div style="{{ s.contenedor }}">
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ s.nombre }}</span>
+                <span style="display:block;font:400 14px/1.45 'Inter Tight',sans-serif;color:#566A5D;margin-top:3px">{{ s.desde }}</span>
+              </span>
+              <button onClick="{{ s.quitar }}" style="{{ s.botonQuitar }}">{{ s.textoQuitar }}</button>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
     <div id="cenas" style="margin-top:clamp(30px,4vw,44px)">
       <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:14px">
         <span style="font:400 clamp(22px,2.6vw,28px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A">Mis cenas</span>
@@ -281,7 +309,8 @@
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
   state = { saliendo: false, abierta: null, borrador: null, datos: null, guardando: false, fallo: '',
-            exclusiones: null, quitando: null, baja: false, palabraBaja: '' };
+            exclusiones: null, quitando: null, baja: false, palabraBaja: '',
+            sitios: null, quitandoSitio: null };
 
   componentDidMount() {
     // Las opciones salen del catalogo, no de una copia aqui. La copia ya
@@ -374,10 +403,30 @@ class Component extends DCLogic {
   }
 
   leerExclusiones() {
+    fetch('/api/mis-sitios')
+      .then((r) => (r.ok ? r.json() : { sitios: [] }))
+      .then((d) => this.setState({ sitios: d.sitios || [], quitandoSitio: null }))
+      .catch(() => this.setState({ sitios: [] }));
+
     fetch('/api/mis-exclusiones')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((d) => this.setState({ exclusiones: d.exclusiones, quitando: null }))
       .catch(() => this.setState({ exclusiones: [], quitando: null }));
+  }
+
+  /** Quitar un sitio de la lista. Se relee: lo que se ve es lo guardado. */
+  quitarSitio(id) {
+    if (this.state.quitandoSitio) return;
+    this.setState({ quitandoSitio: id, fallo: '' });
+    fetch('/api/mis-sitios', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ restauranteId: id, quitar: true })
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no'))))
+      .then(() => fetch('/api/mis-sitios'))
+      .then((r) => (r.ok ? r.json() : { sitios: [] }))
+      .then((d) => this.setState({ sitios: d.sitios || [], quitandoSitio: null }))
+      .catch(() => this.setState({ quitandoSitio: null, fallo: 'No pudimos quitarlo.' }));
   }
 
   quitarExclusion(id) {
@@ -727,6 +776,20 @@ class Component extends DCLogic {
     }));
 
     const listaExcl = this.state.exclusiones || [];
+    const listaSitios = this.state.sitios || [];
+    const sitios = listaSitios.map((s, i) => {
+      const yendo = this.state.quitandoSitio === s.id;
+      const d = s.desde ? new Date(s.desde) : null;
+      return {
+        nombre: s.nombre,
+        desde: d ? 'Lo marcaste el ' + AroReglas.partesDe(s.desde, AroReglas.ZONA).numero + ' de ' + AroReglas.partesDe(s.desde, AroReglas.ZONA).mes : '',
+        contenedor: 'display:flex;gap:14px;align-items:center;min-height:66px;padding:14px clamp(16px,2.4vw,22px)' + (i < listaSitios.length - 1 ? ';border-bottom:1px solid rgba(20,52,42,.1)' : ''),
+        textoQuitar: yendo ? 'Quitando…' : 'Quitar',
+        botonQuitar: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#1B5138;font:500 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+        quitar: () => this.quitarSitio(s.id)
+      };
+    });
+
     const exclusiones = listaExcl.map((x, i) => {
       const quitando = this.state.quitando === x.id;
       return {
@@ -751,6 +814,12 @@ class Component extends DCLogic {
 
     return {
       secciones, credenciales, exclusiones,
+      sitios,
+      haySitios: listaSitios.length > 0,
+      sinSitios: !!this.state.sitios && listaSitios.length === 0,
+      // El tope, dicho donde se ve la lista: enterarse de que caben dos al
+      // intentar marcar el tercero es enterarse tarde.
+      notaSitios: 'Caben dos. No se lo decimos al restaurante.',
       textoBaja: 'Se borran tus respuestas, tu cédula y tu selfie, y dejas de entrar a cualquier reparto. Se conservan tus pagos, porque la ley nos obliga a guardar la facturación, y quedan sin tu nombre. No se puede deshacer.',
       bajaCerrada: !enBaja,
       bajaAbierta: enBaja,

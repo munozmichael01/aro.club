@@ -535,9 +535,12 @@
               </sc-for>
             </div>
 
-            <div style="margin-top:14px">
-              <button onClick="{{ noRepetirPick }}" style="{{ noRepetirBtn }}">{{ noRepetirTexto }}</button>
-            </div>
+            <sc-if value="{{ puedeVetarSitio }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:14px">
+                <button onClick="{{ noRepetirPick }}" style="{{ noRepetirBtn }}">{{ noRepetirTexto }}</button>
+                <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:7px;text-wrap:pretty">{{ notaNoRepetir }}</div>
+              </div>
+            </sc-if>
 
             <!-- El texto libre (Michael, 17-10). Va después de las escalas y
                  antes de la pregunta incómoda: cuando alguien ya marcó
@@ -1891,6 +1894,17 @@ class Component extends DCLogic {
         btn: 'min-height:44px;padding:0 16px;border-radius:999px;cursor:pointer;font:500 14px/1 \'Inter Tight\',sans-serif;border:1px solid '
           + (this.state.gasto === i ? '#14342A;background:#14342A;color:#FAF3E4' : 'rgba(20,52,42,.22);background:transparent;color:#14342A'),
       })),
+      /**
+       * El botón solo sale si le puso mala nota al sitio.
+       *
+       * Michael: «lo ponemos muy fácil porque la gente es muy quejona».
+       * Vetar un sitio que te pareció bien no es una preferencia, es un clic
+       * de más. Los índices van de mejor a peor —0 Excelente, 3 Mala— así
+       * que «mala nota» es un 2 o un 3 en cualquiera de las cuatro.
+       */
+      puedeVetarSitio: ['ambiente', 'servicio', 'conversar', 'comida']
+        .some((k) => (this.state.sitio || {})[k] >= 2),
+      notaNoRepetir: 'Es tuyo y lo puedes quitar en tu perfil. Caben dos sitios a la vez.',
       noRepetirTexto: this.state.noRepetirSitio ? 'No me mandes más a este sitio ✓' : 'No me mandes más a este sitio',
       noRepetirPick: () => this.setState({ noRepetirSitio: !this.state.noRepetirSitio }),
       noRepetirBtn: 'min-height:44px;padding:0 16px;border-radius:999px;cursor:pointer;font:500 14px/1 \'Inter Tight\',sans-serif;border:1px solid '
