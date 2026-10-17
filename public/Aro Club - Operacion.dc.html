@@ -3126,6 +3126,9 @@ class Component extends DCLogic {
 
     const FECHAS_REP = FECHAS.map((f) => ({
       id: f.id,
+      // Hace falta para agrupar por dia: las mesas de abajo son las de toda
+      // la noche, asi que las cifras de arriba tambien.
+      empiezaEn: f.empiezaEn,
       titulo: (NOMBRE_FORMATO[f.formato] || f.formato) + ' · ' + diaTexto(f.empiezaEn),
       formato: f.formato,
       hora: horaTexto(f.empiezaEn),
@@ -3241,7 +3244,21 @@ class Component extends DCLogic {
     let sentados = 0, sobran = ESPERA_SRV.length, rotas = 0, publicadas = 0, totalMesas = 0, desiguales = 0;
 
     const mesaDesde = (m) => {
-      const g = m.integrantes || [];
+      /**
+       * Los que de verdad se sientan.
+       *
+       * La propuesta es una foto del momento en que se repartió, y en una
+       * mesa ya publicada la gente puede haberse caído después: la fila de
+       * `table_members` desaparece al cancelar, pero la foto la sigue
+       * teniendo. Michael lo vio en el teléfono —«30 sentados, todas de 6»
+       * con Eylin ya cancelada y una mesa en cinco— y es la misma confusión
+       * que le hizo contar cuatro mesas donde había cinco.
+       *
+       * Quien ya no está se SIGUE pintando, con su chip: hay que ver a quién
+       * le falta sitio. Lo que no cuenta es en las cifras.
+       */
+      const todos = m.integrantes || [];
+      const g = todos.filter((p) => !p.yaNoEsta);
       /**
        * «Falta elegir el sitio» NO es una regla rota.
        *
@@ -3378,7 +3395,9 @@ class Component extends DCLogic {
           g.forEach((p) => (p.comidas || []).forEach((c) => { cuenta[c] = (cuenta[c] || 0) + 1; }));
           return Object.keys(cuenta).some((c) => cuenta[c] >= 2);
         })(),
-        gente: g.map((p, i) => ({
+        // La LISTA sí lleva a todos, incluido quien ya no está: su chip es
+        // lo que explica por qué la mesa va con cinco.
+        gente: todos.map((p, i) => ({
           /**
            * Con la inicial del apellido SOLO si otro de la mesa se llama
            * igual.
@@ -3704,11 +3723,27 @@ class Component extends DCLogic {
     // apuntados sentados en ninguna parte. Es la misma trampa que ya se
     // arregló en las cifras: distinguir «no hay» de «no se sabe», y ahora
     // también de «no se ha hecho».
+    const apuntadosDelDia = (() => {
+      const dia = String((fr && fr.empiezaEn) || '').slice(0, 10);
+      if (!dia) return apuntadosRep;
+      const suyas = (St.fechas || []).filter((f) => String(f.empiezaEn || '').slice(0, 10) === dia);
+      if (!suyas.length) return apuntadosRep;
+      return suyas.reduce((n, f) => n + (f.apuntados || 0), 0);
+    })();
+
     const repartoListo = repartoPedido && !!CORRIDA;
     const oNada = (n) => (repartoListo ? String(n) : '—');
     const sinSaber = repartoPedido ? 'Todavía sin repartir' : 'Leyendo el reparto';
     const metricas = [
-      ['APUNTADOS', String(apuntadosRep), 'En ' + fr.zonas.length + (fr.zonas.length === 1 ? ' zona' : ' zonas'), null],
+      /**
+       * Los apuntados del DÍA, no los de una fecha.
+       *
+       * Las mesas de abajo ya son las de toda la noche, así que una cifra
+       * que solo cuenta una de las fechas enseña 23 apuntados encima de 29
+       * sentados. Es el mismo error que me hizo contar cuatro mesas donde
+       * había cinco.
+       */
+      ['APUNTADOS', String(apuntadosDelDia), 'En ' + fr.zonas.length + (fr.zonas.length === 1 ? ' zona' : ' zonas'), null],
       [vozRep.Unidades.toUpperCase(), oNada(totalMesas), (repartoListo ? sentados + ' ' + vozRep.sent + (desiguales ? ', ' + desiguales + ' sin seis' : ', ' + (totalMesas === 1 ? 'de ' + POR_MESA : 'todas de ' + POR_MESA)) : sinSaber), desiguales ? '#8F4515' : null],
       ['PUBLICADAS', repartoListo ? publicadas + ' de ' + totalMesas : '—', (!repartoListo ? sinSaber : (publicadas === totalMesas ? 'Todas fijas' : 'El resto sigue moviéndose')), publicadas === totalMesas ? '#1B5138' : null],
       ['NO PUEDEN SALIR', oNada(rotas), (!repartoListo ? sinSaber : (rotas ? 'Rompen alguna de las siete reglas' : 'Ninguna rompe reglas')), rotas ? '#8F4515' : null]
@@ -5049,9 +5084,20 @@ class Component extends DCLogic {
          * Que alguien se haya ido sí obliga: el servidor se niega a publicar
          * una propuesta con gente que ya no está.
          */
+        /**
+         * Y después de revelar, «hay que volver a repartir» es un consejo
+         * peligroso: repartir mueve a todo el mundo de sitio, y a esa gente
+         * ya le dijimos con quién cena. Lo que de verdad pasa es que esa
+         * mesa va con uno menos, y eso no se arregla, se cuenta.
+         */
+        const yaDicho = !!(REP && REP.evento && REP.evento.revelaEn
+          && new Date(REP.evento.revelaEn).getTime() <= Date.now());
+
         return 'Esta propuesta se calculó ' + haceCuanto(CORRIDA.creadaEn) + ' y ' + partes.join(', y ') +
           '. ' + (CORRIDA.yaNoEstan > 0
-            ? 'Hay que volver a repartir: publicarla así no se puede.'
+            ? (yaDicho
+              ? 'Ya se reveló, así que no se vuelve a repartir: esa mesa va con uno menos y la gente lo ve en Mi mesa. Aquí sale tachado quién es.'
+              : 'Hay que volver a repartir: publicarla así no se puede.')
             : (CORRIDA.nuevosDesde === 1
               ? 'Está abajo en la espera, marcada. Siéntala a mano con «Sentar» y no se mueve nadie más, o vuelve a repartir si prefieres rehacerlas.'
               : 'Están abajo en la espera, marcadas. Siéntalas a mano con «Sentar» y no se mueve nadie más, o vuelve a repartir si prefieres rehacerlas.'));
