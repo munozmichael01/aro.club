@@ -1118,6 +1118,12 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           // cena» o «Otros drinks», por formato. El correo ya lo dice con
           // sus propias palabras.
           otra: OTRA[evento?.format ?? ''] ?? 'Otra fecha',
+          // Y de qué plan es, como en el de apertura: con trece formatos,
+          // «el domingo 25 se cierra mañana» no dice si es un brunch o una
+          // cena a una hora rara.
+          plan: NOMBRES_DE_FORMATO[evento?.format ?? ''] ?? '',
+          // En mitad de la frase va en minúscula: «hay brunch en Chacao».
+          planMin: (NOMBRES_DE_FORMATO[evento?.format ?? ''] ?? 'fecha').toLowerCase(),
         },
       }
     }

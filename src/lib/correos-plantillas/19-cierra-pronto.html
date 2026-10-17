@@ -3,7 +3,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
-<title>Aún estás a tiempo: el {{ cuandoFrase }} se cierra {{ cierra }} · Aro Club</title>
+<title>{{ plan }} del {{ cuandoFrase }}: se cierra {{ cierra }} · Aro Club</title>
 <style>
   @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 400; font-display: swap; src: url(https://fonts.gstatic.com/s/intertight/v7/NGSwv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjDw.woff2) format('woff2'); }
     @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 600; font-display: swap; src: url(https://fonts.gstatic.com/s/intertight/v7/NGSwv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjDw.woff2) format('woff2'); }
@@ -45,12 +45,12 @@
   </td></tr>
 
   <tr><td class="p" style="padding:16px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2C4A38;mso-line-height-rule:exactly;">
-    {{#si yaTiene}}Ya tienes {{ yaTiene }}. Esta es otra: el {{ cuandoFrase }}.{{/si}}{{#no yaTiene}}Hay cena{{#si zona}} en {{ zona }}{{/si}} y todavía te queda sitio{{#si trato}}, {{ trato }}{{/si}}.{{/no}} Se cierra {{ cierra }}: después ya no se puede apartar puesto para esta.
+    {{#si yaTiene}}Ya tienes {{ yaTiene }}. Esta es otra: el {{ cuandoFrase }}.{{/si}}{{#no yaTiene}}Hay {{ planMin }}{{#si zona}} en {{ zona }}{{/si}} y todavía te queda sitio{{#si trato}}, {{ trato }}{{/si}}.{{/no}} Se cierra {{ cierra }}: después ya no se puede apartar puesto para esta.
   </td></tr>
 
   <tr><td class="p" style="padding:26px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#FFFBF0;border-radius:22px;">
-      <tr><td style="padding:20px 24px 13px 24px;border-bottom:1px solid #D8CFB6;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;">Cuándo<br /><strong style="font-size:16px;color:#14342A;">{{ cuando }}{{#si hora}} · {{ hora }}{{/si}}</strong></td></tr>
+      <tr><td style="padding:20px 24px 13px 24px;border-bottom:1px solid #D8CFB6;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;">Cuándo<br /><strong style="font-size:16px;color:#14342A;">{{ cuando }}{{#si hora}} · {{ hora }}{{/si}}{{#si plan}} · {{ plan }}{{/si}}</strong></td></tr>
       <tr><td style="padding:13px 24px 20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;">Hasta cuándo puedes apuntarte<br /><strong style="font-size:16px;color:#14342A;">{{ cierra }}</strong></td></tr>
     </table>
   </td></tr>
