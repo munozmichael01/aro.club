@@ -37,13 +37,24 @@ nuevo en una respuesta, nunca uno que cambie de forma.
 ## Antes de cada push
 
 ```bash
-npx tsc --noEmit && node scripts/comprobar-cuestionario.mjs
+npx tsc --noEmit && node scripts/comprobar-cuestionario.mjs && node scripts/comprobar-pintado.mjs
 ```
 
 El primero porque el CI lo exige y el dev server no caza errores de tipos. El
 segundo porque compara las opciones del cuestionario con el catálogo de la
 base, y ese descuadre no falla nada visible: la respuesta se pierde al guardar
 y la persona sigue adelante creyendo que quedó.
+
+El tercero porque los otros dos leen las pantallas y no las abren. El 17-10
+subi un bloque que cierra bien, parsea y **deja Mi mesa en blanco**: media
+hora en produccion con la pantalla vacia para todo el mundo, y el
+comprobador decia 0 problemas. `comprobar-pintado` abre cada `.dc.html` en
+un Chrome sin ventana, con datos simulados, y falla si quedan `{{ }}` sin
+pintar o si la pantalla no pinta nada. Mi mesa va cuatro veces, una por
+estado.
+
+Y hasta que ese comprobador cubra todos los estados: **nada de Mi mesa sube
+sin haberla abierto antes en el navegador**.
 
 **No** correr `npm run build` con el dev server vivo: corrompe `.next` y
 produce un 500 fantasma.
