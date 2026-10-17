@@ -1558,6 +1558,11 @@
                         </span>
                       </sc-for>
                     </div>
+                    <!-- La leyenda, al lado de los números y no solo en el
+                         pie: las medias van en cifra porque un 3,5 no tiene
+                         palabra, y sin esto hay que acordarse de que el 4 es
+                         Excelente. -->
+                    <div style="font:400 12px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:8px">{{ m.escala }}</div>
 
                     <sc-for list="{{ m.comentarios }}" as="t" hint-placeholder-count="2">
                       <div style="margin-top:12px;padding:2px 0 2px 12px;border-left:2px solid rgba(143,69,21,.35)">
@@ -5056,6 +5061,7 @@ class Component extends DCLogic {
           hayEncuesta: e.valoraron > 0,
           cuantasValoraron: e.valoraron + ' de ' + m.comensales.length + ' contestaron',
           medias: medias,
+          escala: 'Medias sobre 4: 4 Excelente, 3 Bien, 2 Regular, 1 Mala.',
           comentarios: e.respuestas.filter((r) => !!r.comentario).map((r) => ({
             texto: '«' + r.comentario + '»',
             quien: r.nombre

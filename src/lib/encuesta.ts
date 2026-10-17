@@ -64,6 +64,24 @@ export type RespuestaCruda = {
 }
 
 /**
+ * La nota, como se dice.
+ *
+ * Michael, 17-10, mirando una ficha: «recuérdame cómo es la puntuación,
+ * porque 4 y excelente no sé si es lo mismo». Lo son, y esa duda es el
+ * fallo: operación no tiene por qué traducir. La pantalla pregunta con
+ * palabras, así que la respuesta de una persona se devuelve con palabras.
+ *
+ * Las medias sí van en número, porque un 3,5 no tiene palabra, y por eso van
+ * siempre con su «de 4» al lado.
+ *
+ * Las cuatro del sitio dicen «Mal» donde la de la mesa dice «Mala»: es como
+ * están escritos los botones en la pantalla, y la ficha tiene que sonar a lo
+ * que la persona pulsó.
+ */
+const PALABRA = ['', 'Mala', 'Regular', 'Bien', 'Excelente']
+const PALABRA_SITIO = ['', 'Mal', 'Regular', 'Bien', 'Excelente']
+
+/**
  * Lo que contestó una persona, en una línea, para operación.
  *
  * Michael, 17-10: «quiero ver las respuestas de las personas, incluyendo el
@@ -77,15 +95,15 @@ export type RespuestaCruda = {
  */
 export function resumenDeRespuesta(r: RespuestaCruda): string {
   const partes: string[] = []
-  const pares: [string, number | null | undefined][] = [
-    ['La mesa', r.conversation_rating],
-    ['Ambiente', r.sitio_ambiente],
-    ['Servicio', r.sitio_servicio],
-    ['Se conversaba', r.sitio_conversar],
-    ['Comida', r.sitio_comida],
+  const pares: [string, number | null | undefined, string[]][] = [
+    ['La mesa', r.conversation_rating, PALABRA],
+    ['Ambiente', r.sitio_ambiente, PALABRA_SITIO],
+    ['Servicio', r.sitio_servicio, PALABRA_SITIO],
+    ['Se conversaba', r.sitio_conversar, PALABRA_SITIO],
+    ['Comida', r.sitio_comida, PALABRA_SITIO],
   ]
-  for (const [que, cuanto] of pares) {
-    if (cuanto != null) partes.push(`${que} ${cuanto}`)
+  for (const [que, cuanto, palabras] of pares) {
+    if (cuanto != null) partes.push(`${que} ${palabras[cuanto] || cuanto}`)
   }
   if (r.would_repeat === true) partes.push('Volvería a Aro')
   if (r.would_repeat === false) partes.push('No volvería a Aro')
