@@ -101,19 +101,19 @@
     <sc-if value="{{ esCenaAbierta }}" hint-placeholder-val="{{ true }}">
       <div id="cena" style="max-width:440px;margin:0 auto;animation:aro-open 460ms ease both">
 
+        <sc-if value="{{ hayAjustes }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:20px;background:#FFF1E4;border:1px solid #E7C9AC;padding:14px 16px;margin-bottom:12px">
+            <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloAjustes }}</div>
+            <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px">{{ textoAjustes }}</div>
+          </div>
+        </sc-if>
+
+
         <!-- Lo que cambió después de contarte la mesa.
              A quien no se mueve de sitio no se le manda un correo de
              «cambios de última hora»: lo ve al entrar, que es donde está
              mirando, y sin un correo más en un día que ya trajo dos. -->
-        <sc-if value="{{ hayAjustes }}" hint-placeholder-val="{{ false }}">
-          <div style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:#FFF1E4;border:1px solid #E7C9AC;padding:14px 16px;margin-bottom:12px">
-            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#8F4515;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 13px/1 'Inter Tight',sans-serif;margin-top:1px">·</span>
-            <span style="flex:1;min-width:0">
-              <span style="display:block;font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloAjustes }}</span>
-              <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-wrap:pretty">{{ textoAjustes }}</span>
-            </span>
-          </div>
-        </sc-if>
+        
 
         <div style="border-radius:24px;background:#14342A;color:#FAF3E4;padding:18px 18px 16px">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
