@@ -175,7 +175,7 @@ export async function GET() {
 
   const { data: miembro } = await admin
     .from('table_members')
-    .select('table_id, dinner_tables(table_number, event_id, restaurant_id, grabacion, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, place_id, facade_photo_path, lat, lng))')
+    .select('table_id, sentado_en, dinner_tables(table_number, event_id, restaurant_id, grabacion, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, place_id, facade_photo_path, lat, lng))')
     .eq('profile_id', user.id)
     .eq('booking_id', reserva.id)
     .maybeSingle()
@@ -520,6 +520,22 @@ export async function GET() {
       sonCuantos: (companeros ?? []).length + 1,
       // Y cuántos caben, que es lo que hace que «cinco» signifique algo.
       caben: evento.seats_per_table ?? 6,
+      /**
+       * Y si la movida fue ELLA.
+       *
+       * Michael: «este aviso es para el que no cambió de mesa, ¿y el que fue
+       * cambiado de lugar?». Tenía razón: a quien movimos le salía «se suma
+       * alguien», que es la frase de los que se quedaron.
+       *
+       * Se sabe igual que lo de los demás, pero mirando su propia fila: si
+       * se sentó aquí después de la revelación, es que la movimos. Su correo
+       * ya se lo dijo; esto es lo que ve al entrar.
+       */
+      teMovimos:
+        !!evento.reveal_at && !!miembro.sentado_en && !!primerAsiento
+        && new Date(miembro.sentado_en as string) > new Date(evento.reveal_at)
+        && new Date(miembro.sentado_en as string).getTime()
+          > new Date(primerAsiento).getTime() + MARGEN_PUBLICACION,
       seSumoAlguien: (companeros ?? []).some(
         (c) =>
           !!evento.reveal_at && !!c.sentado_en && !!primerAsiento

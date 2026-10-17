@@ -105,6 +105,7 @@
           <div style="border-radius:20px;background:#FFF1E4;border:1px solid #E7C9AC;padding:14px 16px;margin-bottom:12px">
             <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloAjustes }}</div>
             <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px">{{ textoAjustes }}</div>
+            <button onClick="{{ cerrarAjustes }}" style="margin-top:10px;min-height:38px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:transparent;color:#14342A;font:500 13px/1 'Inter Tight',sans-serif;cursor:pointer">Entendido</button>
           </div>
         </sc-if>
 
@@ -784,6 +785,9 @@ class Component extends DCLogic {
      * la mesa: el momento de abrirla es para la mesa, no para un permiso.
      */
     preguntaGrabacion: false, permisoGrabacion: null, guardandoGrabacion: false,
+    // Si ya cerró el aviso de ajustes. Arranca mirando lo guardado en este
+    // teléfono, y se recalcula al llegar los datos.
+    ajustesCerrados: false,
     fase: 0, ahora: Date.now(), tarde: false, retraso: 1, avisado: false,
     avisando: false, falloTarde: '', minutosAvisados: 0,
     // Entrega 16 · cuatro bloques, todos opcionales por separado.
@@ -849,8 +853,15 @@ class Component extends DCLogic {
         if (d.grabamos && d.permisoGrabacion === null && i === 1) {
           this._tGraba = setTimeout(() => this.setState({ preguntaGrabacion: true }), 6000);
         }
+        let cerrado = false;
+        try {
+          const a = d.ajustes || {};
+          const clave = [d.mesaId, a.sonCuantos, a.seSumoAlguien ? 1 : 0, a.alguienCancelo ? 1 : 0, a.teMovimos ? 1 : 0].join(':');
+          cerrado = window.localStorage.getItem('aro-ajustes-vistos') === clave;
+        } catch (e) {}
         this.setState({
           datos: d, fase: i,
+          ajustesCerrados: cerrado,
           permisoGrabacion: d.permisoGrabacion === undefined ? null : d.permisoGrabacion,
           contado: !!d.yaValoro,
           reportado: !!d.yaReporto,
@@ -1062,6 +1073,16 @@ class Component extends DCLogic {
       });
   }
 
+  /**
+   * Qué aviso de ajustes es este. Si cambia, el cerrado de antes no sirve:
+   * se cerró otro aviso.
+   */
+  claveDeAjustes() {
+    const d = this.state.datos;
+    const a = (d && d.ajustes) || {};
+    return [d && d.mesaId, a.sonCuantos, a.seSumoAlguien ? 1 : 0, a.alguienCancelo ? 1 : 0, a.teMovimos ? 1 : 0].join(':');
+  }
+
   renderVals() {
     // ── el juego de la mesa ─────────────────────────────────────────
     const J = AroReglas.JUEGO;
@@ -1150,13 +1171,34 @@ class Component extends DCLogic {
       // alguien de tu mesa canceló. Una mesa que salió corta desde el
       // principio no es un ajuste, es como se publicó, y su correo ya lo
       // decía.
-      hayAjustes: !!(dJ && dJ.ajustes && (dJ.ajustes.seSumoAlguien || dJ.ajustes.alguienCancelo)),
+      hayAjustes: !!(dJ && dJ.ajustes
+        && (dJ.ajustes.seSumoAlguien || dJ.ajustes.alguienCancelo || dJ.ajustes.teMovimos)
+        && !this.state.ajustesCerrados),
+      /**
+       * Y se puede cerrar. Michael: «al aviso tienes que poner un cerrar, un
+       * ok, algo, si no queda ahí fijo innecesariamente».
+       *
+       * Se recuerda por mesa Y por lo que decía: si después de cerrarlo
+       * cambia otra cosa —cancela otro, movemos a alguien más— vuelve a
+       * salir, porque ya no es el aviso que se leyó. En `localStorage` con
+       * su try: es una comodidad de este teléfono, no un dato.
+       */
+      cerrarAjustes: () => {
+        try { window.localStorage.setItem('aro-ajustes-vistos', this.claveDeAjustes()); } catch (e) {}
+        this.setState({ ajustesCerrados: true });
+      },
       tituloAjustes: 'Hubo ajustes de última hora',
       textoAjustes: (() => {
         const a = (dJ && dJ.ajustes) || {};
         const corta = a.sonCuantos && a.caben && a.sonCuantos < a.caben;
         const EN_LETRA = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho'];
         const cuantos = EN_LETRA[a.sonCuantos] || a.sonCuantos;
+        // A quien movimos se le habla de SU cambio, no del de los demás:
+        // ya recibió el correo y lo que necesita al entrar es confirmar que
+        // esta pantalla dice lo mismo.
+        if (a.teMovimos) {
+          return 'Te cambiamos de mesa esta tarde y te lo escribimos por correo. Esto es lo que vale: el sitio y la gente de abajo.';
+        }
         if (a.alguienCancelo && a.seSumoAlguien) {
           return 'Alguien canceló hoy y movimos a otra persona a tu mesa, que va marcada abajo. Son ' + cuantos + '.';
         }

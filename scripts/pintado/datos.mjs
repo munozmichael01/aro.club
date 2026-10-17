@@ -62,6 +62,10 @@ export const PANTALLAS = {
       rutas: { '/api/mi-mesa': { ...MESA_ABIERTA, fase: 'pasada', empiezaEn: en(-8) } },
     },
     {
+      caso: 'me movieron',
+      rutas: { '/api/mi-mesa': { ...MESA_ABIERTA, ajustes: { sonCuantos: 6, caben: 6, seSumoAlguien: false, alguienCancelo: false, teMovimos: true } } },
+    },
+    {
       caso: 'sin mesa',
       rutas: {
         '/api/mi-mesa': {

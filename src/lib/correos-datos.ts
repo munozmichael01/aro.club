@@ -1489,9 +1489,45 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   // cuatro a propósito esto no puede llamarla corta.
   const { data: deLaFecha } = await admin
     .from('events')
-    .select('seats_per_table')
+    .select('seats_per_table, reveal_at')
     .eq('id', eventoId)
     .maybeSingle()
+
+  /**
+   * ¿Y canceló alguien DE ESTA MESA después de contárnosla?
+   *
+   * Michael, 17-10: «el correo de 5 sigue diciendo que es de 5 porque
+   * alguien canceló, ¿no? eso no cambia». Pues sí cambiaba: la frase salía
+   * siempre que la mesa fuera corta, y una mesa se publica corta a propósito
+   * cuando no queda nadie en espera que encaje. A esa gente le estábamos
+   * contando una cancelación que no existió.
+   *
+   * Se sabe por el correo que se le mandó a quien canceló: su fila de
+   * `table_members` ya no existe, pero `mesa_asignada` guarda en el payload
+   * en qué mesa estaba. Es la misma comprobación que hace Mi mesa.
+   */
+  const cancelaronDeEstaMesa = await (async () => {
+    if (!deLaFecha?.reveal_at) return false
+    const { data: caidos } = await admin
+      .from('bookings')
+      .select('profile_id')
+      .eq('event_id', eventoId)
+      .not('cancelled_at', 'is', null)
+      .gt('cancelled_at', deLaFecha.reveal_at)
+
+    if (!caidos?.length) return false
+
+    const { data: loSuyo } = await admin
+      .from('scheduled_emails')
+      .select('payload')
+      .eq('event_id', eventoId)
+      .eq('kind', 'mesa_asignada')
+      .in('profile_id', caidos.map((c) => c.profile_id))
+
+    return (loSuyo ?? []).some(
+      (f) => String(((f.payload ?? {}) as { mesa?: unknown }).mesa ?? '') === String(mesa.table_number),
+    )
+  })()
 
   const porMesa = deLaFecha?.seats_per_table ?? 6
   const enLaMesa = (otros ?? []).length + 1
@@ -1564,9 +1600,13 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
      * Vacía cuando la mesa está completa, y entonces la plantilla se salta la
      * fila entera. Lo normal es que esté completa.
      */
-    mesaCorta: enLaMesa > 0 && enLaMesa < porMesa
-      ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: alguien canceló y no llegamos a sentar a nadie más.`
-      : '',
+    mesaCorta: !(enLaMesa > 0 && enLaMesa < porMesa)
+      ? ''
+      : cancelaronDeEstaMesa
+        ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: alguien canceló y no llegamos a sentar a nadie más.`
+        // Sin cancelación, la mesa salió así: se dice cuántos son y ya. La
+        // frase de antes le achacaba a alguien una cancelación inventada.
+        : `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}, y esta vez no llegamos a seis.`,
     /**
      * Si esa noche grabamos en ESTA mesa.
      *
