@@ -118,6 +118,19 @@ type Mesa = {
   /** Media de NPS de quienes valoraron, y cuántos fueron. */
   nps: number | null
   valoraron: number
+  /**
+   * Lo que escribieron, sin firma.
+   *
+   * Michael, 17-10: «¿esto dónde lo vamos a ver? en operaciones no veo nada
+   * de esto». Y tenía razón: de la encuesta solo salía el NPS medio, un
+   * número. Las notas de la mesa y del sitio y el texto libre se guardaban y
+   * no los leía ninguna pantalla.
+   *
+   * Sin nombre a propósito. La encuesta promete «lo lee el equipo, no la
+   * mesa», y para decidir si un sitio sirve o si una mesa salió bien no hace
+   * falta saber quién lo dijo. Quién valoró ya se ve en su ficha.
+   */
+  comentarios: string[]
   porCelebrar: boolean
 }
 
@@ -159,8 +172,8 @@ export async function GET(request: Request) {
         (d, h) => admin.from('profiles').select('id, full_name, display_name, email').range(d, h)),
       todasLasFilas<{ id: string; status: string }>(
         (d, h) => admin.from('bookings').select('id, status').range(d, h)),
-      todasLasFilas<{ table_id: string; nps: number | null }>(
-        (d, h) => admin.from('table_feedback').select('table_id, nps').range(d, h)),
+      todasLasFilas<{ table_id: string; nps: number | null; comment: string | null }>(
+        (d, h) => admin.from('table_feedback').select('table_id, nps, comment').range(d, h)),
     ])
   } catch (e) {
     console.error('[historico] no se pudo leer', e)
@@ -181,7 +194,14 @@ export async function GET(request: Request) {
   }
 
   const npsPorMesa = new Map<string, number[]>()
+  const comentariosPorMesa = new Map<string, string[]>()
   for (const v of valoraciones) {
+    const texto = v.comment?.trim()
+    if (texto) {
+      const dichos = comentariosPorMesa.get(v.table_id)
+      if (dichos) dichos.push(texto)
+      else comentariosPorMesa.set(v.table_id, [texto])
+    }
     if (v.nps == null) continue
     const lista = npsPorMesa.get(v.table_id)
     if (lista) lista.push(v.nps)
@@ -227,6 +247,7 @@ export async function GET(request: Request) {
       notas: t.notes_ops ?? '',
       comensales,
       nps: notas.length ? Number((notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(1)) : null,
+      comentarios: comentariosPorMesa.get(t.id) ?? [],
       valoraron: notas.length,
       porCelebrar: new Date(ev?.starts_at ?? t.created_at).getTime() > ahora,
     }

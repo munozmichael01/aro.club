@@ -48,6 +48,21 @@ const accion = z.discriminatedUnion('accion', [
       .optional(),
     // «¿Volverías a Aro Club?». No a esa mesa: esa mesa no se repite nunca.
     volveriaAAro: z.boolean().nullable().optional(),
+    /**
+     * El texto libre (Michael, 17-10): «¿algo que quieras destacar o nos
+     * quieras contar?».
+     *
+     * La columna `comment` existe en `table_feedback` desde el principio y
+     * no la escribía nadie. Es lo único de la encuesta que no es una escala
+     * y por eso lo único que puede traer lo que no sabíamos preguntar: que
+     * la música estaba alta, que faltó alguien, que la mesa daba a la
+     * cocina.
+     *
+     * 600 caracteres, los mismos que acepta la pantalla. Vacío se guarda
+     * como nulo y no como cadena vacía: «no escribió» y «escribió nada» son
+     * lo mismo, y en la base se ven distintos.
+     */
+    comentario: z.string().trim().max(600).nullable().optional(),
   }),
   z.object({
     accion: z.literal('bloquear'),
@@ -114,6 +129,7 @@ export async function POST(request: Request) {
     }
 
     if (typeof d.volveriaAAro === 'boolean') fila.would_repeat = d.volveriaAAro
+    if (d.comentario !== undefined) fila.comment = d.comentario || null
 
     const { error } = await admin.from('table_feedback').upsert(
       fila as never,

@@ -454,6 +454,9 @@
           </span>
           <button onClick="{{ publicarListas }}" aria-disabled="{{ inerteListas }}" style="{{ botonListas }}">{{ textoListas }}</button>
           <button onClick="{{ rebarajar }}" style="{{ botonBorde }}">Volver a repartir</button>
+          <sc-if value="{{ sePuedeDeshacer }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ deshacer }}" style="{{ botonBorde }}">Deshacer</button>
+          </sc-if>
           <!-- Solo cuando hay gente esperando que no da para una mesa entera:
                es entonces cuando hay algo que decidir. -->
           <sc-if value="{{ hayCorta }}" hint-placeholder-val="{{ false }}">
@@ -1530,6 +1533,18 @@
                 <sc-if value="{{ m.hayNotas }}" hint-placeholder-val="{{ false }}">
                   <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;padding-top:12px;border-top:1px solid rgba(20,52,42,.12);text-wrap:pretty">{{ m.notas }}</div>
                 </sc-if>
+
+                <!-- Lo que escribieron en la encuesta. Hasta hoy se guardaba
+                     y no lo leía ninguna pantalla: del final de la noche
+                     solo salía un número. -->
+                <sc-if value="{{ m.hayComentarios }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(20,52,42,.12)">
+                    <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:8px">LO QUE ESCRIBIERON</div>
+                    <sc-for list="{{ m.comentarios }}" as="t" hint-placeholder-count="2">
+                      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;padding:8px 0 8px 12px;border-left:2px solid rgba(143,69,21,.35);margin-bottom:6px;text-wrap:pretty">{{ t.texto }}</div>
+                    </sc-for>
+                  </div>
+                </sc-if>
               </div>
             </sc-for>
           </div>
@@ -2281,6 +2296,29 @@ class Component extends DCLogic {
     return this.mandar('/api/operacion/repartir', { eventoId: f.id, conCorta: !!conCorta }).then((r) => {
       this.setState({ repartiendo: false });
       if (r.ok) this.cargarReparto(f.id);
+      return r;
+    });
+  }
+
+  /**
+   * Deshacer el último reparto: vuelve a la propuesta anterior.
+   *
+   * Se pregunta antes porque es lo contrario de lo que suele hacer un
+   * «deshacer»: no devuelve la pantalla a como estaba hace un segundo, tira
+   * el reparto que estás viendo. Y se dice lo que NO hace —tocar lo
+   * publicado— porque es la duda que tendría cualquiera al pulsarlo.
+   */
+  deshacerReparto() {
+    const f = this.fechaElegida();
+    if (!f || this.state.repartiendo) return;
+    if (!window.confirm('Se tira el reparto que estás viendo y vuelve el anterior. Lo que ya esté publicado no se toca. ¿Sigo?')) return;
+    this.setState({ repartiendo: true, fallo: '' });
+    return this.mandar('/api/operacion/repartir', { eventoId: f.id, deshacer: true }).then((r) => {
+      this.setState({ repartiendo: false });
+      if (r.ok) {
+        this.setState({ aviso: r.d && r.d.hayAnterior ? 'Vuelta a la propuesta anterior.' : 'Deshecho. Esta fecha se queda sin reparto.' });
+        this.cargarReparto(f.id);
+      }
       return r;
     });
   }
@@ -4933,6 +4971,10 @@ class Component extends DCLogic {
           nps: m.nps == null ? '' : 'NPS ' + String(m.nps).replace('.', ',') + ' · ' + m.valoraron + (m.valoraron === 1 ? ' respuesta' : ' respuestas'),
           hayNotas: !!m.notas,
           notas: m.notas,
+          // Sin firma: la encuesta promete «lo lee el equipo, no la mesa», y
+          // para decidir si un sitio sirve no hace falta saber quién lo dijo.
+          hayComentarios: !!(m.comentarios && m.comentarios.length),
+          comentarios: (m.comentarios || []).map((texto) => ({ texto: '«' + texto + '»' })),
           comensales: m.comensales.map((c) => ({
             nombre: c.nombre,
             enlace: '/operacion/miembro?id=' + c.id,
@@ -5672,6 +5714,10 @@ class Component extends DCLogic {
       botonBorde: 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:999px;border:1px solid rgba(20,52,42,.24);background:transparent;color:#1B5138;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer',
 
       rebarajar: () => this.repartirDeNuevo(false),
+      deshacer: () => this.deshacerReparto(),
+      // Solo con una propuesta sin publicar: una publicada se despublica,
+      // no se deshace, y el servidor lo rechaza igual.
+      sePuedeDeshacer: !!(this.state.reparto && this.state.reparto.corrida && !this.state.reparto.corrida.publicada),
 
       /**
        * «Hacer la mesa con los N que hay».

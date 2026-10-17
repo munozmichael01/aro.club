@@ -21,6 +21,20 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const cuerpo = z.object({
   eventoId: z.string().uuid(),
   /**
+   * Deshacer el último reparto en vez de hacer uno nuevo.
+   *
+   * Michael, 17-10. Repartir mueve a todo el mundo de sitio y no tenía
+   * vuelta atrás: la propuesta anterior seguía guardada —cada corrida es
+   * una fila nueva— pero el panel lee siempre la última, así que no había
+   * forma de volver. Esto la marca descartada y la de antes vuelve a ser la
+   * buena.
+   *
+   * Lo ya PUBLICADO no se toca: eso vive en `dinner_tables` y hay gente que
+   * ya sabe con quién cena. Por eso una corrida publicada no se puede
+   * deshacer, y el servidor lo dice en vez de hacer algo a medias.
+   */
+  deshacer: z.boolean().default(false),
+  /**
    * Dejar que la última mesa salga corta.
    *
    * Por defecto NO: una mesa es de seis, y bajarlo por defecto convierte la
@@ -142,6 +156,8 @@ export async function GET(request: Request) {
     .from('matching_runs')
     .select('id, proposal, unmatched, avg_score, is_published, created_at')
     .eq('event_id', evento.id)
+    // Las deshechas no cuentan: la buena es la última que sigue en pie.
+    .is('descartada_at', null)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -510,6 +526,65 @@ export async function POST(request: Request) {
   const pesos = parsed.data.pesos ?? PESOS
   const admin = createAdminClient()
   const arranque = Date.now()
+
+  // --- deshacer, que no reparte nada ------------------------------------
+  if (parsed.data.deshacer) {
+    const { data: ultima } = await admin
+      .from('matching_runs')
+      .select('id, is_published, created_at')
+      .eq('event_id', eventoId)
+      .is('descartada_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (!ultima) {
+      return NextResponse.json({ error: 'Esa fecha no tiene ningún reparto que deshacer.' }, { status: 404 })
+    }
+
+    if (ultima.is_published) {
+      return NextResponse.json(
+        {
+          error:
+            'Ese reparto ya está publicado: hay gente que sabe con quién cena.'
+            + ' Para cambiarlo hay que despublicar la mesa, no deshacer.',
+          motivo: 'ya-publicada',
+        },
+        { status: 409 },
+      )
+    }
+
+    const { error } = await admin
+      .from('matching_runs')
+      .update({ descartada_at: new Date().toISOString() } as never)
+      .eq('id', ultima.id)
+
+    if (error) {
+      console.error('[repartir] no se pudo deshacer', error)
+      return NextResponse.json({ error: 'No pudimos deshacerlo.' }, { status: 500 })
+    }
+
+    const { data: anterior } = await admin
+      .from('matching_runs')
+      .select('id, created_at')
+      .eq('event_id', eventoId)
+      .is('descartada_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    await anotar(actor, 'mesas_repartidas', 'evento', eventoId, {
+      deshecha: ultima.id,
+      vuelveA: anterior?.id ?? null,
+    })
+
+    return NextResponse.json({
+      estado: 'deshecho',
+      // Para que el panel pueda decir a qué se volvió, o que no quedó nada.
+      hayAnterior: !!anterior,
+      corridaId: anterior?.id ?? null,
+    })
+  }
 
   const { data: evento } = await admin
     .from('events')

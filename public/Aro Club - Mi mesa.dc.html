@@ -485,6 +485,14 @@
               <button onClick="{{ volveriaNoPick }}" style="{{ volveriaNoBtn }}">No, no volvería</button>
             </div>
 
+            <!-- El texto libre (Michael, 17-10). Va después de las escalas y
+                 antes de la pregunta incómoda: cuando alguien ya marcó
+                 cuatro cosas tiene la noche fresca, y lo que escriba aquí es
+                 lo único que no sabíamos que había que preguntar. -->
+            <div style="font:400 15px/1.4 'Young Serif',Georgia,serif;color:#14342A;margin:clamp(26px,3.4vw,32px) 0 6px">¿Algo que quieras destacar o contarnos?</div>
+            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:10px">{{ notaComentario }}</div>
+            <textarea value="{{ comentario }}" onChange="{{ onComentario }}" rows="4" maxlength="600" placeholder="Lo que quieras" aria-label="Algo que quieras destacar o contarnos" style="{{ campoComentario }}"></textarea>
+
             <div style="font:400 15px/1.4 'Young Serif',Georgia,serif;color:#14342A;margin:clamp(26px,3.4vw,32px) 0 6px">¿Alguien con quien preferirías no volver a coincidir?</div>
             <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:10px">{{ notaBloquear }}</div>
             <div style="display:flex;flex-direction:column;gap:8px">
@@ -715,7 +723,7 @@ class Component extends DCLogic {
     //   bloqueados  la unica salida por persona, y es la negativa
     // Los indices van de mejor a peor porque asi estan los botones. El
     // servidor los da la vuelta en notaDesdeIndice, y solo ahi.
-    mesaVal: -1, sitio: {}, volveria: -1,
+    mesaVal: -1, sitio: {}, volveria: -1, comentario: '',
     bloqueados: [], contado: false,
     reporte: false, motivo: -1, quien: -1, reportado: false,
     datos: null, errorF11: '', enviando: false,
@@ -921,6 +929,7 @@ class Component extends DCLogic {
     // mas se guardaria del reves sin que nada avise.
     this.enviar({
       accion: 'valorar',
+      comentario: (this.state.comentario || '').trim() || null,
       mesa: this.state.mesaVal >= 0 ? this.state.mesaVal : null,
       sitio: sitio,
       volveriaAAro: this.state.volveria >= 0 ? this.state.volveria === 1 : null
@@ -1628,6 +1637,14 @@ class Component extends DCLogic {
 
       cuenta, comensales, retrasos, bloqueables, motivos, reportables,
       mesaOpciones, sitioFilas, volveriaSiBtn, volveriaNoBtn, volveriaSiPick, volveriaNoPick,
+      // El texto libre. Lo único de la encuesta que no es una escala, y por
+      // eso lo único que puede contar algo que no habíamos pensado
+      // preguntar: que el sitio tenía la música alta, que faltó alguien,
+      // que la mesa estaba al lado de la cocina.
+      comentario: this.state.comentario,
+      onComentario: (e) => this.setState({ comentario: e.target.value.slice(0, 600) }),
+      notaComentario: 'Lo lee el equipo, no la mesa. Opcional, como todo lo demás.',
+      campoComentario: 'width:100%;min-height:96px;padding:14px 16px;border-radius:20px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:400 15px/1.5 \'Inter Tight\',sans-serif;outline:none;resize:vertical',
       numeroMesa, restaurante, direccion, cuando,
       hayNumeroMesa: !mesaUnica && !!(dt && dt.numeroMesa != null),
 

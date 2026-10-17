@@ -1414,6 +1414,7 @@ export type Database = {
           avg_score: number | null
           created_at: string
           created_by: string | null
+          descartada_at: string | null
           event_id: string
           forced_at: string | null
           forced_by: string | null
@@ -1435,6 +1436,7 @@ export type Database = {
           avg_score?: number | null
           created_at?: string
           created_by?: string | null
+          descartada_at?: string | null
           event_id: string
           forced_at?: string | null
           forced_by?: string | null
@@ -1456,6 +1458,7 @@ export type Database = {
           avg_score?: number | null
           created_at?: string
           created_by?: string | null
+          descartada_at?: string | null
           event_id?: string
           forced_at?: string | null
           forced_by?: string | null
