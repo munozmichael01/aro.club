@@ -157,6 +157,41 @@ export function roturas(mesa: Persona[]): Rotura[] {
     })
   }
 
+  /**
+   * Y NADIE sentado al lado de alguien con quien no comparte nada.
+   *
+   * Michael, 17-10, viendo que la cohesion daba 1,00 en las cinco mesas:
+   * «y da una regla dura que hoy no existe: ninguna pareja sin nada en
+   * comun. Hazlo».
+   *
+   * La puntuacion mira la mesa entera y por eso no ve esto: una mesa donde
+   * cinco se entienden y el sexto no tiene de que hablar con nadie puntua
+   * alto, y esa persona pasa tres horas asintiendo. Lo que arruina una cena
+   * no es la media, es el que sobra.
+   *
+   * «Nada» es nada de nada: ni un interes ni un tema. Dos personas que
+   * comparten uno ya tienen por donde empezar.
+   */
+  const sinNada: string[] = []
+  for (let i = 0; i < mesa.length; i++) {
+    for (let j = i + 1; j < mesa.length; j++) {
+      const a = mesa[i]
+      const b = mesa[j]
+      const comun =
+        a.intereses.filter((x) => b.intereses.includes(x)).length +
+        a.temas.filter((x) => b.temas.includes(x)).length
+      if (comun === 0) sinNada.push(`${a.nombre} y ${b.nombre}`)
+    }
+  }
+  if (sinNada.length) {
+    fallos.push({
+      regla: 'sin-nada-en-comun',
+      detalle: sinNada.length === 1
+        ? `${sinNada[0]} no comparten ni un interes ni un tema`
+        : `${sinNada.length} parejas sin nada en comun: ${sinNada.join(' · ')}`,
+    })
+  }
+
   const deVisita = mesa.filter((p) => p.arraigo === 'visita')
   if (deVisita.length > 2) {
     fallos.push({ regla: 'visita', detalle: deVisita.map((p) => p.nombre).join(', ') })
