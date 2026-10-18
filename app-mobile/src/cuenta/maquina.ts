@@ -212,7 +212,12 @@ export function filtros(agenda: FechaAgenda[], elegido: string | null): Filtro[]
   const filtra = conFechas.length > 1
   // Un elegido que ya no tiene fechas vuelve a «Todos».
   const sel = filtra ? (elegido && conFechas.includes(elegido as never) ? elegido : TODOS) : null
-  const cuatro: Filtro[] = T.ORDEN_FORMATOS.map((f) => {
+  // Primero los que TIENEN fecha abierta, como la web: el brunch caía el
+  // último, detrás de tres «Próximamente», y había que deslizar la fila
+  // entera para llegar a lo único reservable (Michael, 18-10). Dentro de
+  // cada grupo, el orden de siempre.
+  const orden = [...T.ORDEN_FORMATOS].sort((a, b) => (tiene(a).length ? 0 : 1) - (tiene(b).length ? 0 : 1))
+  const cuatro: Filtro[] = orden.map((f) => {
     const suyas = tiene(f)
     const hay = suyas.length > 0
     return {

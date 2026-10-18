@@ -228,3 +228,10 @@ test('las preguntas nuevas al reservar (18-10): mismas reglas que el cuestionari
   assert.deepEqual(e.bebidas, ['vino', 'ron', 'ginebra'], 'tope de tres')
   assert.deepEqual(C.paraMandar({ copas: null, bebidas: [], otra: 'x' }), [['otra', 'x']])
 })
+
+test('los formatos: primero los que tienen fecha, luego los «Próximamente» (18-10)', async () => {
+  const C = await import('../src/cuenta/maquina')
+  const f = (formato: string) => ({ id: formato, formato, empiezaEn: '2026-10-25T15:00:00Z', cierraEn: null, creditos: 1, zonas: [], apuntados: 0, cerrada: false, mia: false })
+  const orden = C.filtros([f('dinner'), f('brunch')], null).map((x) => x.formato)
+  assert.deepEqual(orden, [C.TODOS, 'dinner', 'brunch', 'drinks', 'movement', 'coffee'])
+})
