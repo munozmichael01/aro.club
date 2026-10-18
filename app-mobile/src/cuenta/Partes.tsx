@@ -258,6 +258,10 @@ function FilaFecha(p: {
   alAbrir: () => void
   alConfirmar: () => void
   fallo: string
+  /** Con crédito se pide aquí el permiso de grabación; sin crédito, en el pago. */
+  pidePermiso: boolean
+  permiso: boolean
+  alPermiso: () => void
 }) {
   const { f, abierta } = p
   const m = MARCAS[f.formato]
@@ -340,8 +344,31 @@ function FilaFecha(p: {
           <Texto variante="nota" style={{ marginBottom: 16 }}>
             {T.agenda.nota}
           </Texto>
+          {/* Esta cena se graba: se dice antes del botón (18-10). */}
+          {f.graba ? (
+            <View style={estilos.graba}>
+              <Texto variante="cuerpoChico" tono="terracota" style={{ fontFamily: fuente.textoSemi }}>
+                {T.grabacionFecha.titulo}
+              </Texto>
+              <Texto variante="cuerpoChico" style={{ marginTop: 6 }}>
+                {T.grabacionFecha.cuerpo}
+              </Texto>
+              {p.pidePermiso ? (
+                <Pressable
+                  onPress={p.alPermiso}
+                  accessibilityRole="checkbox"
+                  aria-checked={p.permiso}
+                  style={[estilos.permiso, p.permiso ? { backgroundColor: color.terracota, borderColor: color.terracota } : null]}
+                >
+                  <Texto variante="cuerpo" style={{ fontFamily: fuente.textoMedia, color: p.permiso ? '#FFF8EA' : color.verdeProfundo }}>
+                    {T.grabacionFecha.permiso(p.permiso)}
+                  </Texto>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 11, alignItems: 'center' }}>
-            <Boton texto={p.textoReservar(f.precio)} onPress={p.alConfirmar} />
+            <Boton texto={p.textoReservar(f.precio)} onPress={p.alConfirmar} apagado={f.graba && p.pidePermiso && !p.permiso} />
             <Boton tipo="fantasma" texto={T.agenda.cancelar} onPress={p.alAbrir} />
           </View>
           {/* El «no» del servidor, JUNTO al botón: debajo de la agenda (como la web) quedaba fuera de la pantalla. */}
@@ -360,8 +387,12 @@ export function Agenda(p: {
   filtros: Filtro[]
   grupos: { semana: string; filas: FilaAgenda[] }[]
   abierta: string | null
-  textoReservar: (precio: string) => string
+  textoReservar: (precio: string, graba: boolean) => string
   fallo: string
+  /** Con crédito: el permiso de grabación se pide en la tarjeta. */
+  pidePermiso: boolean
+  permiso: boolean
+  alPermiso: () => void
   alFiltro: (formato: string) => void
   alAbrir: (id: string) => void
   alConfirmar: (id: string) => void
@@ -412,8 +443,11 @@ export function Agenda(p: {
                 key={f.id}
                 f={f}
                 abierta={p.abierta === f.id}
-                textoReservar={p.textoReservar}
+                textoReservar={(precio) => p.textoReservar(precio, f.graba)}
                 fallo={p.abierta === f.id ? p.fallo : ''}
+                pidePermiso={p.pidePermiso}
+                permiso={p.permiso}
+                alPermiso={p.alPermiso}
                 alAbrir={() => p.alAbrir(f.id)}
                 alConfirmar={() => p.alConfirmar(f.id)}
               />
@@ -546,6 +580,8 @@ export function Seccion({ children, arriba = 40, onLayout }: { children: ReactNo
 }
 
 const estilos = StyleSheet.create({
+  graba: { borderRadius: 20, backgroundColor: '#FFF8EA', borderWidth: 1, borderColor: 'rgba(143,69,21,.28)', paddingVertical: 16, paddingHorizontal: 18, marginBottom: 16 },
+  permiso: { alignSelf: 'flex-start', minHeight: 46, marginTop: 13, paddingHorizontal: 18, borderRadius: radio.capsula, borderWidth: 1, borderColor: 'rgba(20,52,42,.22)', justifyContent: 'center' },
   bloque: { borderRadius: 30, padding: 22 },
   selloFila: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 16 },
   sello: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 14, borderRadius: radio.capsula },

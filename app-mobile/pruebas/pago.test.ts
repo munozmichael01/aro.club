@@ -57,6 +57,11 @@ test('lo que viaja: solo los campos del método, la letra y la tasa vista', () =
     captura: 'yo/1.jpg',
     tasaVista: REAL.tasa,
   })
+  // El permiso de grabación solo viaja en una fecha que se graba (18-10).
+  assert.equal('permiteGrabacion' in M.cuerpoReporte(REAL, PM, rep, null, true), false)
+  const grabada = { ...REAL, evento: { ...REAL.evento, grabamos: true } }
+  assert.equal(M.cuerpoReporte(grabada, PM, rep, null, true).permiteGrabacion, true)
+  assert.equal('permiteGrabacion' in M.cuerpoReporte(grabada, PM, rep, null, false), false)
 })
 
 test('Bizum exige captura; la fecha va y vuelve entre DD/MM/AAAA y sus partes', () => {

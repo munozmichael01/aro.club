@@ -116,6 +116,10 @@ test('reservar: el botón dice lo que va a pasar según quién lo pulsa', () => 
   assert.equal(M.botonReservar(base({ creditos: 0 }), false).accion, 'pagar')
   assert.deepEqual(M.botonReservar(base({ creditos: 2 }), false), { accion: 'reservar', texto: 'Reservar mi puesto · 1 encuentro' })
   assert.equal(M.botonReservar(base(), true).texto, 'Apuntándote')
+  // Una fecha que se graba (18-10): con crédito, el permiso es la condición para pulsar.
+  assert.deepEqual(M.botonReservar(base({ creditos: 2 }), false, undefined, { graba: true, permiso: false }), { accion: 'nada', texto: 'Marca el permiso para seguir' })
+  assert.equal(M.botonReservar(base({ creditos: 2 }), false, undefined, { graba: true, permiso: true }).accion, 'reservar')
+  assert.equal(M.botonReservar(base({ creditos: 0 }), false, undefined, { graba: true, permiso: false }).accion, 'pagar', 'sin crédito se pide en el pago, no aquí')
 })
 
 test('reservar: sin preguntas o datos no se reserva, y se va a completarlos (no a verificarse)', () => {

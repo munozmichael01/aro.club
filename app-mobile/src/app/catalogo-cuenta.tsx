@@ -92,7 +92,7 @@ const PREGUNTAS_NUEVAS = [
 ]
 
 function Pantalla() {
-  const { estado = 'reservar', captura, varios, ciudad, nuevas } = useLocalSearchParams<{ estado?: string; captura?: string; varios?: string; ciudad?: string; nuevas?: string }>()
+  const { estado = 'reservar', captura, varios, ciudad, nuevas, graba } = useLocalSearchParams<{ estado?: string; captura?: string; varios?: string; ciudad?: string; nuevas?: string; graba?: string }>()
   const servicio = useMemo((): ReturnType<typeof crearServicioCuenta> => ({
     async cuenta() {
       if (estado === 'cargando') return new Promise(() => {})
@@ -101,6 +101,8 @@ function Pantalla() {
       // ?ciudad=Valencia: vive en una ciudad que aún no abre (sin agenda ni próxima fecha).
       if (ciudad) return { ok: true, datos: { ...d, ciudad: { slug: 'x', nombre: ciudad, abierta: false }, agenda: [], proximaFecha: null } }
       // ?nuevas=1: las dos preguntas de bebida sin contestar, al reservar (18-10).
+      // ?graba=1: todas las fechas de la agenda se graban enteras (18-10).
+      if (graba) return { ok: true, datos: { ...d, agenda: d.agenda.map((a) => ({ ...a, grabamos: true })) } }
       if (nuevas) return { ok: true, datos: { ...d, preguntasNuevas: PREGUNTAS_NUEVAS } }
       return { ok: true, datos: captura ? deCaptura(d, !!varios) : d }
     },
@@ -118,11 +120,12 @@ function Pantalla() {
     async preguntasVistas() {
       return { ok: true, datos: { ok: true } }
     },
-    async reservar() {
+    async reservar(id, permiso) {
+      console.log('[catálogo] reservar', id, permiso)
       await new Promise((ok) => setTimeout(ok, 700))
       return { ok: false, error: 'No te quedan encuentros.' }
     },
-  }), [estado, captura, varios, ciudad, nuevas]) // estable: si no, la carga se relanzaría en cada render
+  }), [estado, captura, varios, ciudad, nuevas, graba]) // estable: si no, la carga se relanzaría en cada render
   return (
     <Inicio
       key={estado}

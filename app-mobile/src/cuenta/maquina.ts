@@ -30,6 +30,8 @@ export type FechaAgenda = {
   precioUsd?: number | null
   /** Cuándo se creó (18-10): desempata dos fechas a la misma hora en zonas distintas, como el servidor. */
   creadaEn?: string | null
+  /** La fecha entera se graba (18-10): el permiso es condición para apartar puesto. */
+  grabamos?: boolean
 }
 
 /** «10 ref», «12,50 ref»: el precio de una fecha. Sin precio en la fecha, el del club (`reglas.precioTexto`). */
@@ -241,6 +243,8 @@ export type FilaAgenda = {
   va: boolean
   /** «10 ref»: el precio de esta fecha. */
   precio: string
+  /** Se graba esa fecha: se dice antes del botón, y con crédito el permiso es la condición para pulsarlo. */
+  graba: boolean
 }
 
 export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: number): { semana: string; filas: FilaAgenda[] }[] {
@@ -275,6 +279,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       llenado: Math.min(1, a.apuntados / T.MESA),
       va: a.apuntados >= T.MESA,
       precio: precioDe(a),
+      graba: !!a.grabamos,
     })
   }
   return grupos
@@ -283,7 +288,13 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
 /** Qué hace «Reservar» según quién lo pulsa. El candado de verdad está en el servidor. */
 export type Reserva = { accion: 'nada' | 'completar' | 'verificar' | 'pagar' | 'reservar'; texto: string; destino?: string }
 
-export function botonReservar(d: MiCuenta, reservando: boolean, precio: string = reglas.precioTexto()): Reserva {
+export function botonReservar(
+  d: MiCuenta,
+  reservando: boolean,
+  precio: string = reglas.precioTexto(),
+  /** Si la fecha se graba y si ya marcó el permiso (18-10). */
+  grabacion: { graba: boolean; permiso: boolean } = { graba: false, permiso: false },
+): Reserva {
   if (reservando) return { accion: 'nada', texto: T.agenda.apuntandote }
   // Sin las preguntas o los datos no se reserva (decidido el 01-10-2026): el
   // reparto no puede sentar a quien no conoce. Qué falta lo dice el servidor
@@ -298,6 +309,10 @@ export function botonReservar(d: MiCuenta, reservando: boolean, precio: string =
   if (d.verif === 'revision') return { accion: 'nada', texto: T.agenda.enRevision }
   if (d.verif !== 'ok') return { accion: 'verificar', texto: T.agenda.verificaPrimero }
   const conCredito = d.creditos > 0
+  // Con crédito se aparta aquí, así que aquí se pide el permiso. Sin crédito
+  // se pide en la pantalla de pago, que es donde se aparta: dos veces en
+  // treinta segundos se lee como que la primera no contó.
+  if (conCredito && grabacion.graba && !grabacion.permiso) return { accion: 'nada', texto: T.agenda.marcaPermiso }
   // Sin créditos hay que pagar, y eso es otra pantalla: reportar un pago es
   // salir al banco y volver, no pulsar un botón.
   return { accion: conCredito ? 'reservar' : 'pagar', texto: T.agenda.reservar(conCredito, precio) }

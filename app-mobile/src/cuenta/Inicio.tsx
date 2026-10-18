@@ -45,6 +45,8 @@ export function Inicio(p: {
   const [abierta, setAbierta] = useState<string | null>(null)
   const [reservando, setReservando] = useState(false)
   const [falloReserva, setFalloReserva] = useState('')
+  // El permiso de grabación de la fecha abierta (18-10). Se olvida al cambiar de tarjeta.
+  const [permiteGrabacion, setPermiteGrabacion] = useState(false)
   const [saliendo, setSaliendo] = useState(false)
 
   const scroll = useRef<ScrollView>(null)
@@ -136,14 +138,15 @@ export function Inicio(p: {
 
   const confirmar = async (id: string) => {
     if (!datos || !vista) return
-    const r = vista.reservar
+    const graba = !!datos.agenda.find((a) => a.id === id)?.grabamos
+    const r = M.botonReservar(datos, reservando, undefined, { graba, permiso: permiteGrabacion })
     if (r.accion === 'nada') return
     if (r.accion === 'completar' && r.destino) return p.ir(r.destino)
     if (r.accion === 'verificar') return p.ir('/verificacion')
     if (r.accion === 'pagar') return p.ir('/pago', { evento: id })
     setReservando(true)
     setFalloReserva('')
-    const res = await servicio.reservar(id)
+    const res = await servicio.reservar(id, graba ? true : undefined)
     setReservando(false)
     if (!res.ok) {
       // El candado del servidor: si falta algo del embudo, se lleva allí.
@@ -188,7 +191,10 @@ export function Inicio(p: {
             filtros={vista.filtros}
             grupos={vista.grupos}
             abierta={abierta}
-            textoReservar={(precio) => M.botonReservar(datos, reservando, precio).texto}
+            textoReservar={(precio, graba) => M.botonReservar(datos, reservando, precio, { graba, permiso: permiteGrabacion }).texto}
+            pidePermiso={datos.creditos > 0}
+            permiso={permiteGrabacion}
+            alPermiso={() => setPermiteGrabacion((x) => !x)}
             fallo={falloReserva}
             alFiltro={(f) => {
               // «Todos» deja la lista entera; tocar otra vez la elegida no desmarca (entrega 19).
@@ -198,6 +204,7 @@ export function Inicio(p: {
             alAbrir={(id) => {
               setAbierta((x) => (x === id ? null : id))
               setFalloReserva('')
+              setPermiteGrabacion(false)
             }}
             alConfirmar={confirmar}
           />

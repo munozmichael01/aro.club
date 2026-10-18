@@ -29,6 +29,7 @@ import { usePreguntaAvisos } from '../avisos/PreguntaAvisos'
 import { reglas, type CampoDePago } from '../reglas'
 import { MESES_CORTOS } from '../texto/fechas'
 import * as F from '../texto/fechas'
+import * as TC from '../texto/cuenta'
 import * as T from '../texto/pago'
 import { useUltimo } from '../util/useUltimo'
 import { encoger } from '../verificacion/foto'
@@ -57,6 +58,8 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   const [fallo, setFallo] = useState(evento ? '' : T.sinEvento)
   const [copiado, setCopiado] = useState(-1)
   const [rep, setRep] = useState<Record<string, string>>(M.repInicial)
+  // El permiso de grabación: en una fecha que se graba, condición para apartar puesto (18-10).
+  const [permiteGrabacion, setPermiteGrabacion] = useState(false)
   const [captura, setCaptura] = useState<string | null>(null)
   const [subiendo, setSubiendo] = useState(false)
   const [cuponAbierto, setCuponAbierto] = useState(false)
@@ -92,6 +95,8 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
 
   const m: M.Metodo | null = d ? (d.metodos[metodo] ?? d.metodos[0] ?? null) : null
   const estado = m ? M.estadoReporte(m, rep, !!captura, ahora()) : null
+  const graba = !!d?.evento.grabamos
+  const permisoOk = !graba || permiteGrabacion
 
   const aplicarCupon = async () => {
     const codigo = cupon.trim()
@@ -121,10 +126,10 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   }
 
   const reportar = async () => {
-    if (!d || !m || !estado?.ok || fase === 'enviando') return
+    if (!d || !m || !estado?.ok || !permisoOk || fase === 'enviando') return
     setFallo('')
     setFase('enviando')
-    const r = await servicio.reportar(M.cuerpoReporte(d, m, rep, captura))
+    const r = await servicio.reportar(M.cuerpoReporte(d, m, rep, captura, permiteGrabacion))
     if (!r.ok) {
       if (M.esFechaCerrada(r)) return setFase('cerrada')
       setFase('reportar')
@@ -343,13 +348,38 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
             </Pressable>
           </View>
         ) : null}
+        {/* Esta cena se graba: se dice antes del botón, y el permiso es la condición para apartar (18-10). */}
+        {graba ? (
+          <View style={estilos.graba}>
+            <Texto variante="cuerpoChico" tono="terracota" style={{ fontFamily: fuente.textoSemi }}>
+              {TC.grabacionFecha.titulo}
+            </Texto>
+            <Texto variante="cuerpoChico" style={{ marginTop: 6 }}>
+              {TC.grabacionFecha.cuerpo}
+            </Texto>
+            <Pressable
+              onPress={() => setPermiteGrabacion((x) => !x)}
+              accessibilityRole="checkbox"
+              aria-checked={permiteGrabacion}
+              style={[estilos.permiso, permiteGrabacion ? { backgroundColor: color.terracota, borderColor: color.terracota } : null]}
+            >
+              <Texto variante="cuerpo" style={{ fontFamily: fuente.textoMedia, color: permiteGrabacion ? '#FFF8EA' : color.verdeProfundo }}>
+                {TC.grabacionFecha.permiso(permiteGrabacion)}
+              </Texto>
+            </Pressable>
+          </View>
+        ) : null}
         {fallo ? (
           <View style={{ marginTop: 14 }}>
             <Aviso tono="ojo">{fallo}</Aviso>
           </View>
         ) : null}
         <Acciones>
-          <Boton texto={T.reporte.boton({ ...estado, manual: m.manual })} onPress={reportar} apagado={!estado.ok} />
+          <Boton
+            texto={!permisoOk && estado.camposOk ? T.marcaPermiso : T.reporte.boton({ ...estado, manual: m.manual })}
+            onPress={reportar}
+            apagado={!estado.ok || !permisoOk}
+          />
           <Boton tipo="fantasma" texto={T.reporte.verOtraVez} onPress={() => setFase('datos')} />
         </Acciones>
         <Texto variante="nota" tono="cuerpo" style={{ marginTop: 14 }}>
@@ -705,6 +735,8 @@ function Comprobante({ titulo, filas, pie }: { titulo: string; filas: { campo: s
 }
 
 const estilos = StyleSheet.create({
+  graba: { borderRadius: 20, backgroundColor: '#FFF8EA', borderWidth: 1, borderColor: 'rgba(143,69,21,.28)', paddingVertical: 16, paddingHorizontal: 18, marginTop: 22 },
+  permiso: { alignSelf: 'flex-start', minHeight: 46, marginTop: 13, paddingHorizontal: 18, borderRadius: radio.capsula, borderWidth: 1, borderColor: 'rgba(20,52,42,.22)', justifyContent: 'center' },
   pagina: { paddingHorizontal: medida.margenLateral, maxWidth: 620, width: '100%', alignSelf: 'center' },
   volver: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: medida.toqueMinimo, alignSelf: 'flex-start', marginBottom: 22 },
   caja: { borderRadius: 26, backgroundColor: color.cremaElevada, padding: 20 },

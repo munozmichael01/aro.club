@@ -50,13 +50,14 @@ export function crearServicioCuenta(api: Api) {
         () => api.pedir('/mi-cuenta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accion: 'preguntas-vistas' }) }),
         T.sinRespuesta.cargar,
       ),
-    reservar: (eventoId: string) =>
+    /** `permiteGrabacion` solo en una fecha que se graba: sin él, el servidor responde 409 `falta-permiso-grabacion`. */
+    reservar: (eventoId: string, permiteGrabacion?: boolean) =>
       intentar<{ ok?: boolean }>(
         () =>
           api.pedir('/reservar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ eventoId }),
+            body: JSON.stringify(permiteGrabacion ? { eventoId, permiteGrabacion } : { eventoId }),
           }),
         T.agenda.noPudimos,
       ),

@@ -200,3 +200,6 @@ export const comprobante = {
 
 export const sinEvento = 'Falta la fecha. Vuelve a Mi cuenta y elige una.'
 export const sinRespuesta = { cargar: 'No pudimos cargar el pago. Revisa tu conexión e inténtalo otra vez.', reintentar: 'Reintentar' }
+
+/** En una fecha que se graba, con los datos ya puestos y sin el permiso (18-10), como la web. */
+export const marcaPermiso = 'Marca el permiso para seguir'

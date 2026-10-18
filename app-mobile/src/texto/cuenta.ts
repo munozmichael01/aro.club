@@ -123,6 +123,8 @@ export const mesa = {
 }
 
 export const agenda = {
+  /** Con crédito, en una fecha que se graba, hasta marcar el permiso (18-10). */
+  marcaPermiso: 'Marca el permiso para seguir',
   titulo: `Lo que viene en ${CIUDAD_PRODUCTO.nombre}`,
   /** Cómo se arma la mesa. Va en la hoja de reservar, no encima de la agenda: allí empujaba la primera fecha fuera de la pantalla (entrega 19), y es al reservar cuando hace falta. */
   comoFunciona: `Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona, y antes de la cena te decimos en cuál te tocó. La fecha se cierra ${reglas.HORAS_DE_CIERRE} horas antes.`,
@@ -265,4 +267,11 @@ export const preguntasNuevas = {
   guardar: (guardando: boolean) => (guardando ? 'Guardando…' : 'Guardar'),
   ahoraNo: 'Ahora no',
   sinAlcohol: 'Dijiste que no tomas alcohol, así que la dejamos en «sin alcohol».',
+}
+
+/** La fecha que se graba entera (18-10): el permiso es condición para apartar puesto. Palabra por palabra de la web. */
+export const grabacionFecha = {
+  titulo: 'Esta cena la grabamos',
+  cuerpo: 'Vamos a grabar contenido en esta cena: fotos y video para las redes de Aro. Apartar puesto aquí es darnos permiso para que salgas. Si prefieres que no, hay otras fechas sin cámara.',
+  permiso: (marcado: boolean) => (marcado ? 'Sí, pueden grabarme ✓' : 'Sí, pueden grabarme'),
 }

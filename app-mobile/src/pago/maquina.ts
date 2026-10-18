@@ -24,7 +24,7 @@ export type Metodo = {
 }
 
 export type DeServidor = {
-  evento: { id: string; empiezaEn: string; cierraEn: string | null; zona: string | null; revelaEn?: string | null; zonaHoraria?: string | null; formato?: string | null }
+  evento: { id: string; empiezaEn: string; cierraEn: string | null; zona: string | null; revelaEn?: string | null; zonaHoraria?: string | null; formato?: string | null; /** La fecha se graba (18-10): el permiso es condición para apartar puesto. */ grabamos?: boolean }
   montoUsd: number
   tasa: number | null
   tasaDe: string | null
@@ -125,7 +125,7 @@ export function estadoReporte(m: Metodo, rep: Record<string, string>, conCaptura
 }
 
 /** Lo que viaja a `POST /api/pago`: solo los campos del método (y la letra si la pide). */
-export function cuerpoReporte(d: DeServidor, m: Metodo, rep: Record<string, string>, captura: string | null) {
+export function cuerpoReporte(d: DeServidor, m: Metodo, rep: Record<string, string>, captura: string | null, permiteGrabacion = false) {
   const datos: Record<string, string> = {}
   for (const c of m.campos) datos[c.campo] = c.tipo === 'fecha' ? conCeros((rep[c.campo] ?? '').trim()) : (rep[c.campo] ?? '').trim()
   if (m.campos.some((c) => c.conTipo)) datos.doc_tipo = rep.doc_tipo ?? 'V'
@@ -136,6 +136,8 @@ export function cuerpoReporte(d: DeServidor, m: Metodo, rep: Record<string, stri
     ...(captura ? { captura } : {}),
     // La tasa que se le ENSEÑÓ: si el cron la cambió mientras estaba en el banco, vale la suya.
     ...(d.tasa ? { tasaVista: d.tasa } : {}),
+    // Solo en una fecha que se graba: sin él, el servidor responde 409 `falta-permiso-grabacion`.
+    ...(d.evento.grabamos && permiteGrabacion ? { permiteGrabacion: true } : {}),
   }
 }
 
