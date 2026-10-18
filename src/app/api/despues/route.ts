@@ -84,6 +84,21 @@ const accion = z.discriminatedUnion('accion', [
      */
     noRepetirSitio: z.boolean().optional(),
   }),
+  /**
+   * «Ahora no». La encuesta se cierra sin contestarla.
+   *
+   * Michael, 18-10: la encuesta deja de verse cuando la contestan O LA
+   * SALTAN, no a las 48 horas. Hasta hoy ese botón solo volvía a Inicio y no
+   * guardaba nada, así que sin plazo se quedaría para siempre delante de
+   * quien ya dijo que no quiere contestarla.
+   *
+   * No es una valoración vacía: es la constancia de que no quiere. Por eso
+   * no escribe ninguna nota, solo la fecha.
+   */
+  z.object({
+    accion: z.literal('saltar'),
+    mesaId: z.string().uuid(),
+  }),
   z.object({
     accion: z.literal('bloquear'),
     mesaId: z.string().uuid(),
@@ -157,7 +172,14 @@ export async function POST(request: Request) {
     // Los cuatro bloques son opcionales por separado, así que se escribe solo
     // lo que vino. Mandar `null` en el resto borraría lo que ya contestó
     // quien vuelve a entrar a completar la encuesta.
-    const fila: Record<string, unknown> = { table_id: d.mesaId, profile_id: user.id }
+    // `saltada_at` a null: si antes dijo «ahora no» y ahora contesta, lo que
+    // vale es la respuesta. Al revés no: saltar después de valorar no borra
+    // lo que ya contó.
+    const fila: Record<string, unknown> = {
+      table_id: d.mesaId,
+      profile_id: user.id,
+      saltada_at: null,
+    }
 
     const nota = notaDesdeIndice(d.mesa)
     if (nota !== null) fila.conversation_rating = nota
@@ -244,6 +266,19 @@ export async function POST(request: Request) {
     return NextResponse.json(
       sobraElVeto ? { estado: 'valorada', sitioNoGuardado: sobraElVeto } : { estado: 'valorada' },
     )
+  }
+
+  if (d.accion === 'saltar') {
+    const { error } = await admin.from('table_feedback').upsert(
+      { table_id: d.mesaId, profile_id: user.id, saltada_at: new Date().toISOString() } as never,
+      { onConflict: 'table_id,profile_id' },
+    )
+
+    if (error) {
+      console.error('[despues] saltar', error)
+      return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+    }
+    return NextResponse.json({ estado: 'saltada' })
   }
 
   if (d.accion === 'bloquear') {

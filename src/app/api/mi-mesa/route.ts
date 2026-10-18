@@ -67,9 +67,16 @@ export async function GET() {
 
   const { data: yaContadas } = await admin
     .from('table_feedback')
-    .select('table_id')
+    .select('table_id, saltada_at')
     .eq('profile_id', user.id)
 
+  /**
+   * Las que ya cerró: contestadas O SALTADAS.
+   *
+   * Desde el 18-10 la encuesta no caduca a las 48 h —Michael: «que no deje
+   * de mostrarse a las 48 h, sino cuando la persona la conteste o se la
+   * salte»— así que lo que la quita de la pantalla es esto y nada más.
+   */
   const valoradas = new Set((yaContadas ?? []).map((f) => f.table_id))
   const mesaDeReserva = new Map((suyasEnMesa ?? []).map((m) => [m.booking_id, m.table_id]))
   const yaLaConto = (r: Reserva) => {
@@ -335,7 +342,7 @@ export async function GET() {
 
   const { data: yaValoro } = await admin
     .from('table_feedback')
-    .select('id')
+    .select('id, saltada_at')
     .eq('table_id', miembro.table_id)
     .eq('profile_id', user.id)
     .maybeSingle()
@@ -548,7 +555,15 @@ export async function GET() {
     todosVerificados: true,
     // Lo que ya hizo. Los tres caminos son independientes, asi que se
     // devuelven por separado: haber valorado no cierra reportar.
-    yaValoro: !!yaValoro,
+    /**
+     * Contestada, y saltada, que no son lo mismo.
+     *
+     * `yaValoro` es «ya contó lo que le pareció» y enseña el «Anotado,
+     * gracias». `yaSalto` es «dijo que ahora no»: la encuesta no se le
+     * vuelve a enseñar y no hay nada que agradecerle.
+     */
+    yaValoro: !!yaValoro && !yaValoro.saltada_at,
+    yaSalto: !!yaValoro?.saltada_at,
     yaBloqueados: suyas.map((e) => e.otro),
     // A quién reportó, no un sí/no: al recargar, la pantalla decía
     // «Reportaste a alguien». Con el id puede volver a decir su nombre.

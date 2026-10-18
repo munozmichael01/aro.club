@@ -484,7 +484,7 @@
 
     <sc-if value="{{ esPasada }}" hint-placeholder-val="{{ false }}">
       <div id="pasada" style="animation:aro-open 380ms ease both">
-        <div style="{{ selloEspera }}">ANOCHE</div>
+        <div style="{{ selloEspera }}">{{ selloPasada }}</div>
         <h1 style="{{ h1 }}">¿Qué tal estuvo?</h1>
         <p style="{{ bajada }}">{{ textoAnoche }}</p>
 
@@ -564,7 +564,7 @@
 
             <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
               <button onClick="{{ enviarValoracion }}" aria-disabled="{{ enviarInerte }}" style="{{ botonEnviar }}">{{ textoEnviar }}</button>
-              <a href="/cuenta" style="{{ botonFantasma }}">Ahora no</a>
+              <button onClick="{{ saltarValoracion }}" style="{{ botonFantasma }}">{{ textoSaltar }}</button>
             </div>
             <sc-if value="{{ hayErrorF11 }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:14px">
@@ -828,7 +828,7 @@ class Component extends DCLogic {
     mesaVal: -1, sitio: {}, volveria: -1, comentario: '',
     // Lo que gastó —índice del tramo— y si prefiere no volver a ese sitio.
     gasto: -1, noRepetirSitio: false,
-    bloqueados: [], contado: false, avisoSitio: '',
+    bloqueados: [], contado: false, avisoSitio: '', saltando: false,
     reporte: false, motivo: -1, quien: -1, reportado: false,
     datos: null, errorF11: '', enviando: false,
     // El juego: `null` = cerrado. Dentro, el paso y dónde va.
@@ -1043,6 +1043,27 @@ class Component extends DCLogic {
   juegoSalir() {
     this.juegoDespierto(false);
     this.setState({ juego: null });
+  }
+
+  /**
+   * «Ahora no», y que se note.
+   *
+   * Era un enlace a Inicio: no guardaba nada, así que la encuesta seguía ahí
+   * hasta que caducaba sola a las 48 horas. Desde el 18-10 no caduca
+   * —Michael: «que no deje de mostrarse a las 48 h, sino cuando la persona
+   * la conteste o se la salte»— así que sin esto se quedaría para siempre
+   * delante de quien ya dijo que no.
+   *
+   * Si el guardado falla se va igual a Inicio: lo que pidió fue salir de
+   * aquí, y retenerla en una pantalla que no quiere para contarle que no
+   * pudimos anotar que no la quería sería el peor sitio donde insistir.
+   */
+  saltarValoracion() {
+    if (this.state.saltando) return;
+    this.setState({ saltando: true });
+    this.enviar({ accion: 'saltar' })
+      .catch(() => {})
+      .then(() => { window.location.href = '/cuenta'; });
   }
 
   guardarValoracion() {
@@ -2023,11 +2044,31 @@ class Component extends DCLogic {
         : 'Busca al grupo' + (mesaUnica ? ' de Aro' : ' ' + numeroMesa + ' de Aro') + ' en el punto de encuentro. Son ' +
           (['cero','una','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez'][comensales.length + 1] ||
             (comensales.length + 1)) + ' y nadie lleva cartel: pregunta por Aro.',
+      /**
+       * CUÁNDO fue, y no «ANOCHE» a secas.
+       *
+       * Estaba escrito en el marcado porque la encuesta solo duraba 48 h:
+       * cualquier cena que llegara aquí era de anoche o de anteayer. Desde
+       * que no caduca —se cierra al contestarla o al saltarla— aquí puede
+       * caer una de hace un mes, y el sello decía «ANOCHE» de una cena del
+       * 18 de septiembre. Lo vi probándolo.
+       */
+      selloPasada: (function () {
+        const iso = dJ && dJ.empiezaEn;
+        if (!iso) return 'TU ÚLTIMA MESA';
+        const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+        if (dias <= 1) return 'ANOCHE';
+        if (dias < 7) return 'HACE ' + dias + ' DÍAS';
+        const p = window.AroReglas.partesDe(iso, (dJ && dJ.zonaHoraria) || undefined);
+        return p ? ('EL ' + p.numero + ' DE ' + p.mes.toUpperCase()) : 'TU ÚLTIMA MESA';
+      })(),
       textoAnoche: VOZ.estuviste + ' ' + restaurante +
         (mesaUnica ? '' : ', ' + VOZ.unidad + ' ' + numeroMesa) +
         '. Lo que nos cuentes entra en cómo armamos tu próxima mesa, y nadie más lo ve.',
       sinContar: !this.state.contado,
       contado: this.state.contado,
+      saltarValoracion: () => this.saltarValoracion(),
+      textoSaltar: this.state.saltando ? 'Un momento' : 'Ahora no',
       haySitioNoGuardado: !!this.state.avisoSitio,
       avisoSitio: this.state.avisoSitio,
       resumenValoracion: this.state.bloqueados.length

@@ -398,6 +398,9 @@ export async function GET() {
   // Sin mesa no hubo cena que valorar: no llegó a sentarse.
   let porValorar: { cuando: string; sitio: string | null } | null = null
   if (mesaRecien) {
+    // Contestada o saltada: las dos cierran la tarjeta. Desde el 18-10 no
+    // hay plazo, así que si no se mirara el salto la tarjeta se quedaría
+    // para siempre delante de quien ya dijo que no quiere contestar.
     const { data: yaValoro } = await admin
       .from('table_feedback')
       .select('id')

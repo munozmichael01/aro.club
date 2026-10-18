@@ -21,15 +21,28 @@ import { JUEGO } from '@/lib/reglas'
  */
 export const FIN_CENA = JUEGO.cierraMin * 60 * 1000
 
-/** Y se puede valorar hasta dos días después de que empezara. */
+/**
+ * Hasta cuándo se ESCRIBE pidiendo la encuesta. Dos días.
+ *
+ * Sigue existiendo, pero ya solo para el correo: lo usa
+ * `/api/cron/encuesta` para no escribirle a nadie por una cena de hace tres
+ * semanas. Escribir tiene un plazo; la pantalla, desde hoy, no.
+ */
 export const VENTANA_VALORAR = 48 * 3600 * 1000
 
 /**
- * Si esa cena está dentro de la ventana para valorarla: ya terminó, y no
- * han pasado aún las 48 horas.
+ * Si esa cena se puede valorar: con que haya TERMINADO basta.
+ *
+ * Michael, 18-10: «que no deje de mostrarse a las 48 h, sino cuando la
+ * persona la conteste o se la salte». La encuesta dejaba de verse sola a los
+ * dos días, así que quien la abría el miércoles no encontraba nada y su
+ * respuesta se perdía sin que nadie lo supiera. Ahora la cierra ella: o la
+ * contesta, o dice «Ahora no» —y eso se guarda en `table_feedback.saltada_at`—.
+ *
+ * Quién decide que ya no sale es, por tanto, cada pantalla mirando esas dos
+ * cosas, no el reloj. Aquí solo queda el «ya terminó».
  */
 export function sePuedeValorar(empiezaEn: string | Date | number, ahora = Date.now()): boolean {
   const inicio = typeof empiezaEn === 'number' ? empiezaEn : new Date(empiezaEn).getTime()
-  const desde = ahora - inicio
-  return desde > FIN_CENA && desde < VENTANA_VALORAR
+  return ahora - inicio > FIN_CENA
 }

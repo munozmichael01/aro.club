@@ -2884,6 +2884,7 @@ export type Database = {
           nps: number | null
           profile_id: string
           restaurant_rating: number | null
+          saltada_at: string | null
           sitio_ambiente: number | null
           sitio_comida: number | null
           sitio_conversar: number | null
@@ -2903,6 +2904,7 @@ export type Database = {
           nps?: number | null
           profile_id: string
           restaurant_rating?: number | null
+          saltada_at?: string | null
           sitio_ambiente?: number | null
           sitio_comida?: number | null
           sitio_conversar?: number | null
@@ -2922,6 +2924,7 @@ export type Database = {
           nps?: number | null
           profile_id?: string
           restaurant_rating?: number | null
+          saltada_at?: string | null
           sitio_ambiente?: number | null
           sitio_comida?: number | null
           sitio_conversar?: number | null
