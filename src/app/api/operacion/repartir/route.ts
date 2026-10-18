@@ -539,8 +539,27 @@ export async function GET(request: Request) {
            * eso es lo que hace decidir si merece la pena repartir otra vez.
            */
           espera: (() => {
-            const guardada = ((corrida.unmatched ?? []) as unknown as { profileId: string }[]).map(
-              (p) => ({
+            /**
+             * Y quien canceló DESPUÉS de repartir se cae de la espera.
+             *
+             * `unmatched` es la foto de quién se quedó fuera aquel día, y
+             * una foto no se entera de nada. Kristhina canceló dos minutos
+             * después de la última corrida del 18-10 y el panel la seguía
+             * contando en espera: Michael leía que había alguien esperando
+             * mesa cuando ya no estaba apuntada.
+             *
+             * En las mesas esto se marca y no se quita —quién se sienta con
+             * quién es una decisión y el hueco hay que verlo—, pero la
+             * espera no es una decisión: es quien está en el pool y nadie
+             * sentó. Si ya no está en el pool, no está esperando nada.
+             */
+            const enElPool = new Set(
+              (pool ?? []).map((x) => x.profile_id).filter((x): x is string => !!x),
+            )
+
+            const guardada = ((corrida.unmatched ?? []) as unknown as { profileId: string }[])
+              .filter((p) => enElPool.has(p.profileId))
+              .map((p) => ({
                 ...p,
                 ...(rasgoGuardado.get(p.profileId) ?? {}),
                 comidas: comidaGuardada.get(p.profileId) ?? [],

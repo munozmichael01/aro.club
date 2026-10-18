@@ -359,6 +359,28 @@ export async function POST(request: Request) {
     { eventoId: reserva.event_id },
   )
 
+  /**
+   * Y CUÁNTOS CRÉDITOS LE QUEDAN AHORA, con el abono ya hecho.
+   *
+   * La pantalla enseñaba el saldo que había pedido al ENTRAR, o sea el de
+   * antes de cancelar, que para quien canceló su única reserva es cero. Así
+   * que decía «Tu crédito volvió entero» y justo debajo, en grande, «0
+   * disponibles».
+   *
+   * Lo contó Kristhina el 18-10 con la frase exacta: canceló y «no le
+   * aparece el crédito». Lo tenía: en la base estaba abonado el mismo
+   * segundo en que canceló. Lo que no tenía era una pantalla que se lo
+   * dijera, y no hay forma de que lo supiera.
+   *
+   * Se devuelve desde aquí y no se vuelve a preguntar: es el saldo después
+   * de esta operación, que es exactamente lo que la pantalla quiere decir.
+   */
+  const { data: saldoAhora } = await admin
+    .from('v_credit_balance')
+    .select('balance')
+    .eq('profile_id', user.id)
+    .maybeSingle()
+
   return NextResponse.json({
     estado: 'cancelada',
     creditoDevuelto: creditoVuelveYa,
@@ -366,5 +388,6 @@ export async function POST(request: Request) {
     // crédito que todavía no existe.
     creditoEnEspera: conMargen && enRevision,
     horasQueFaltaban: Math.max(0, Math.round(faltan)),
+    creditos: saldoAhora?.balance ?? 0,
   })
 }

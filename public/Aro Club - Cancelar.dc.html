@@ -138,7 +138,7 @@ class Component extends DCLogic {
    * dinero cuando lo que pasa es que todavía no lo hemos mirado es lo peor
    * que puede decir esta pantalla.
    */
-  state = { fase: 0, tarde: false, esperando: false, motivo: -1, datos: null, cancelando: false, fallo: '' };
+  state = { fase: 0, tarde: false, esperando: false, motivo: -1, datos: null, cancelando: false, fallo: '', creditosAhora: null };
 
   componentDidMount() {
     // Si hay margen o no lo decide el servidor contra la hora de la cena.
@@ -160,7 +160,16 @@ class Component extends DCLogic {
       .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
       .then(({ ok, x }) => {
         if (!ok) { this.setState({ cancelando: false, fallo: x.error || 'No pudimos cancelar.' }); return; }
-        this.setState({ cancelando: false, fase: 2, tarde: !x.creditoDevuelto && !x.creditoEnEspera, esperando: !!x.creditoEnEspera });
+        // El saldo DE AHORA, con el abono hecho. El de `datos` es el de
+        // antes de cancelar —cero, para quien cancela su única reserva— y
+        // era el que se pintaba debajo de «Tu crédito volvió entero».
+        this.setState({
+          cancelando: false,
+          fase: 2,
+          tarde: !x.creditoDevuelto && !x.creditoEnEspera,
+          esperando: !!x.creditoEnEspera,
+          creditosAhora: (x.creditos != null) ? x.creditos : null,
+        });
       })
       .catch(() => this.setState({ cancelando: false, fallo: 'No pudimos cancelar.' }));
   }
@@ -247,7 +256,15 @@ class Component extends DCLogic {
       // Del saldo de verdad. Decia «3» si cancelaba tarde y «4» si a tiempo,
       // sin mirar nada: dos cifras inventadas en la pantalla que le dice a
       // alguien si acaba de perder su dinero.
-      creditosRestantes: String((d && d.creditos != null) ? d.creditos : 0),
+      //
+      // Y DESPUES de cancelar, el de despues: `datos` se pidio al entrar,
+      // asi que llevaba el saldo de antes del abono. Quien cancelaba su
+      // unica reserva leia «Tu credito volvio entero» encima de un cero.
+      creditosRestantes: String(
+        this.state.creditosAhora != null
+          ? this.state.creditosAhora
+          : ((d && d.creditos != null) ? d.creditos : 0),
+      ),
       resumenHecho: tarde
         ? 'Avisaste con menos de 24 horas, así que ese crédito se pierde. Gracias por decirlo igual: preferimos una mesa de cinco a un puesto vacío.'
         : 'Tu crédito volvió entero. Puedes apuntarte a otra fecha cuando quieras.'
