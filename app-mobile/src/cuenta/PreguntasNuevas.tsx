@@ -47,9 +47,10 @@ export function PreguntasNuevas(p: {
 
   return (
     <Modal visible={p.visible && p.preguntas.length > 0} transparent animationType="fade" onRequestClose={cerrar} statusBarTranslucent>
-      <View style={e.velo}>
-        <ScrollView contentContainerStyle={e.desplazar} style={{ width: '100%' }} keyboardShouldPersistTaps="handled">
-          <View style={[e.hoja, { paddingBottom: Math.max(24, insets.bottom) }]} accessibilityViewIsModal>
+      {/* Contenida: con margen arriba y abajo (fuera de la barra de estado), cabecera y botones fijos, y el scroll solo en las preguntas. */}
+      <View style={[e.velo, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 16 }]}>
+        <View style={e.hoja} accessibilityViewIsModal>
+          <View style={e.cabeza}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Texto style={[media(11), { letterSpacing: 1.76, color: K.terracota }]}>{T.preguntasNuevas.cinta}</Texto>
@@ -62,7 +63,9 @@ export function PreguntasNuevas(p: {
               </Pressable>
             </View>
             <Texto style={[texto(15, 1.5), { color: K.cuerpoFuerte, marginTop: 12 }]}>{T.preguntasNuevas.bajada}</Texto>
+          </View>
 
+          <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
             {p.preguntas.map((q) => {
               const atada = q.clave === C.ATADURA.atada && C.atada(elegidas)
               const ayuda = atada ? T.preguntasNuevas.sinAlcohol : q.ayuda
@@ -91,17 +94,17 @@ export function PreguntasNuevas(p: {
                 </View>
               )
             })}
+          </ScrollView>
 
-            <View style={{ marginTop: 22, gap: 9 }}>
-              <Pressable onPress={guardar} accessibilityRole="button" style={({ pressed }) => [e.guardar, pressed && { opacity: 0.88 }]}>
-                <Texto style={[semi(16), { color: K.crema }]}>{T.preguntasNuevas.guardar(guardando)}</Texto>
-              </Pressable>
-              <Pressable onPress={cerrar} accessibilityRole="button" style={e.ahoraNo}>
-                <Texto style={[media(15), { color: K.nota }]}>{T.preguntasNuevas.ahoraNo}</Texto>
-              </Pressable>
-            </View>
+          <View style={e.pie}>
+            <Pressable onPress={guardar} accessibilityRole="button" style={({ pressed }) => [e.guardar, pressed && { opacity: 0.88 }]}>
+              <Texto style={[semi(16), { color: K.crema }]}>{T.preguntasNuevas.guardar(guardando)}</Texto>
+            </Pressable>
+            <Pressable onPress={cerrar} accessibilityRole="button" style={e.ahoraNo}>
+              <Texto style={[media(15), { color: K.nota }]}>{T.preguntasNuevas.ahoraNo}</Texto>
+            </Pressable>
           </View>
-        </ScrollView>
+        </View>
       </View>
     </Modal>
   )
@@ -119,10 +122,10 @@ const media = (tam: number): TextStyle => ({ fontFamily: fuente.textoMedia, font
 const semi = (tam: number, alto = 1): TextStyle => ({ fontFamily: fuente.textoSemi, fontSize: tam, lineHeight: lh(tam, alto, 1.21) })
 
 const e = StyleSheet.create({
-  velo: { flex: 1, backgroundColor: 'rgba(20,52,42,.72)' },
-  // `flexGrow` + `justifyContent: flex-end` dentro del scroll: lo que no cabe se alcanza desplazando, también el título y la cruz.
-  desplazar: { flexGrow: 1, justifyContent: 'flex-end', alignItems: 'center', padding: 16 },
-  hoja: { width: '100%', maxWidth: 460, backgroundColor: K.hoja, borderRadius: 28, paddingTop: 24, paddingHorizontal: 22 },
+  velo: { flex: 1, backgroundColor: 'rgba(20,52,42,.72)', justifyContent: 'flex-end', alignItems: 'center', paddingHorizontal: 16 },
+  hoja: { width: '100%', maxWidth: 460, maxHeight: '100%', backgroundColor: K.hoja, borderRadius: 28, overflow: 'hidden' },
+  cabeza: { paddingTop: 24, paddingHorizontal: 22, paddingBottom: 4 },
+  pie: { paddingTop: 14, paddingHorizontal: 22, paddingBottom: 14, gap: 4, borderTopWidth: 1, borderTopColor: 'rgba(20,52,42,.1)' },
   cruz: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(20,52,42,.18)', alignItems: 'center', justifyContent: 'center' },
   pregunta: { marginTop: 20, paddingTop: 18, borderTopWidth: 1, borderTopColor: 'rgba(20,52,42,.12)' },
   ficha: { minHeight: 44, paddingHorizontal: 15, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(20,52,42,.18)', justifyContent: 'center' },
