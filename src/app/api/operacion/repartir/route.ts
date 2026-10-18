@@ -223,7 +223,7 @@ export async function GET(request: Request) {
   const { data: rasgosGuardados } = idsGuardados.length
     ? await admin
         .from('profile_traits')
-        .select('profile_id, cuisines, budget_tier, age, gender, industry, employer, dietary')
+        .select('profile_id, cuisines, budget_tier, age, gender, industry, employer, dietary, drinks, drink_level')
         .in('profile_id', idsGuardados)
     : { data: [] }
 
@@ -235,6 +235,20 @@ export async function GET(request: Request) {
   )
   const gastoGuardado = new Map(
     (rasgosGuardados ?? []).map((r) => [r.profile_id, r.budget_tier as number | null]),
+  )
+  /**
+   * Qué bebe cada uno, y si bebe.
+   *
+   * Michael, 18-10: «quiero saber quiénes beberán en la cena y quiénes no».
+   * Es de la misma familia que lo que come y lo que gasta: no reparte nada,
+   * se mira para elegir sitio y para lo que hay que decirle al local antes de
+   * sentar a seis personas ahí.
+   */
+  const bebidaGuardada = new Map(
+    (rasgosGuardados ?? []).map((r) => [r.profile_id, (r.drinks ?? []) as string[]]),
+  )
+  const copasGuardadas = new Map(
+    (rasgosGuardados ?? []).map((r) => [r.profile_id, r.drink_level]),
   )
   // La espera guardada no lleva edad ni empresa: solo nombre. Se completan
   // aquí, que es donde ya estamos leyendo los rasgos.
@@ -388,6 +402,8 @@ export async function GET(request: Request) {
       tramoGasto: x.budget_tier,
       dietas: (x.dietary ?? []) as string[],
       comidas: comidaGuardada.get(x.profile_id as string) ?? [],
+      bebidas: bebidaGuardada.get(x.profile_id as string) ?? [],
+      copas: copasGuardadas.get(x.profile_id as string) ?? null,
       foto: caraGuardada.has(x.profile_id as string)
         ? `/api/operacion/cara?perfil=${x.profile_id}`
         : null,
@@ -453,6 +469,8 @@ export async function GET(request: Request) {
               sector: p.sector ? (etiquetaDe.get(p.sector) ?? p.sector) : null,
               comidas: comidaGuardada.get(p.profileId) ?? [],
               dietas: dietaGuardada.get(p.profileId) ?? [],
+              bebidas: bebidaGuardada.get(p.profileId) ?? [],
+              copas: copasGuardadas.get(p.profileId) ?? null,
               tramoGasto: gastoGuardado.get(p.profileId) ?? null,
               foto: caraGuardada.has(p.profileId)
                 ? `/api/operacion/cara?perfil=${p.profileId}`
@@ -508,6 +526,8 @@ export async function GET(request: Request) {
                 ...(rasgoGuardado.get(p.profileId) ?? {}),
                 comidas: comidaGuardada.get(p.profileId) ?? [],
                 dietas: dietaGuardada.get(p.profileId) ?? [],
+                bebidas: bebidaGuardada.get(p.profileId) ?? [],
+                copas: copasGuardadas.get(p.profileId) ?? null,
                 tramoGasto: gastoGuardado.get(p.profileId) ?? null,
                 foto: caraGuardada.has(p.profileId)
                   ? `/api/operacion/cara?perfil=${p.profileId}`
@@ -537,6 +557,8 @@ export async function GET(request: Request) {
                 tramoGasto: x.budget_tier,
                 dietas: (x.dietary ?? []) as string[],
                 comidas: comidaGuardada.get(x.profile_id as string) ?? [],
+                bebidas: bebidaGuardada.get(x.profile_id as string) ?? [],
+                copas: copasGuardadas.get(x.profile_id as string) ?? null,
                 foto: caraGuardada.has(x.profile_id as string)
                   ? `/api/operacion/cara?perfil=${x.profile_id}`
                   : null,
@@ -657,7 +679,7 @@ export async function POST(request: Request) {
   )
   const { data: rasgosCerrados } = await admin
     .from('profile_traits')
-    .select('profile_id, age, gender, industry, employer, budget_tier, dietary')
+    .select('profile_id, age, gender, industry, employer, budget_tier, dietary, drinks, drink_level')
     .in('profile_id', idsCerrados.length ? idsCerrados : ['00000000-0000-0000-0000-000000000000'])
 
   const rasgoDe = new Map((rasgosCerrados ?? []).map((r) => [r.profile_id, r]))
@@ -751,6 +773,8 @@ export async function POST(request: Request) {
           tramoGasto: r?.budget_tier ?? null,
           dietas: (r?.dietary ?? []) as string[],
           comidas: comidaDe.get(m.profile_id) ?? [],
+          bebidas: (r?.drinks ?? []) as string[],
+          copas: r?.drink_level ?? null,
           foto: caraDe(m.profile_id),
         }
       }),
@@ -932,7 +956,7 @@ export async function POST(request: Request) {
     // numero. Va en la propuesta y no se recalcula en la pantalla.
     resumen: resumen(mesa),
     roturas: roturas(mesa),
-    // Las siete, cumplidas y rotas. El panel las enseña todas y con solo las
+    // Las ocho, cumplidas y rotas. El panel las enseña todas y con solo las
     // rotas tendria que volver a contarlas por su cuenta.
     reglas: evaluacion(mesa, zona, nombreZonaDe(zona)),
     // La aritmética del panel sale de aquí; nada se escribe a mano.

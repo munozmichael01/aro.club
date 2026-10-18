@@ -606,7 +606,13 @@ class Component extends DCLogic {
         }
         return v || 'Sin responder';
       }
-      if (c.tipo === 'unica') return c.opciones[v];
+      // Sin contestar se DICE, igual que en las multiples y en las de
+      // texto. Devolvia `c.opciones[undefined]`, o sea nada, y la fila
+      // quedaba con la pregunta y un hueco al lado: se lee como que la
+      // pantalla no cargo, no como que falta contestar. Se veia en `romance`
+      // desde siempre y con las dos de bebida pasaria a verse en todo el
+      // mundo, porque son de hoy y nadie las ha contestado.
+      if (c.tipo === 'unica') return c.opciones[v] || 'Sin responder';
       const l = (v || []).map((i) => c.opciones[i]);
       return l.length ? l.join(' · ') : 'Sin responder';
     };

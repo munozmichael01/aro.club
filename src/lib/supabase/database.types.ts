@@ -2146,6 +2146,8 @@ export type Database = {
           dealbreakers: string[]
           dietary: string[]
           dining_focus: string | null
+          drink_level: string | null
+          drinks: string[]
           employer: string | null
           employer_normalized: string | null
           formats: string[]
@@ -2172,6 +2174,8 @@ export type Database = {
           dealbreakers?: string[]
           dietary?: string[]
           dining_focus?: string | null
+          drink_level?: string | null
+          drinks?: string[]
           employer?: string | null
           employer_normalized?: string | null
           formats?: string[]
@@ -2198,6 +2202,8 @@ export type Database = {
           dealbreakers?: string[]
           dietary?: string[]
           dining_focus?: string | null
+          drink_level?: string | null
+          drinks?: string[]
           employer?: string | null
           employer_normalized?: string | null
           formats?: string[]

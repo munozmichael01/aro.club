@@ -518,7 +518,9 @@ const CIFRAS = ['Cero', 'Una', 'Dos', 'Tres', 'Cuatro', 'Cinco', 'Seis', 'Siete'
 // la pantalla de datos personales.
 const YA_PREGUNTADAS = [...ORDEN_PUERTA, 'nacimiento', 'genero']
 const restantes = (catalogo ?? []).filter((q) => !YA_PREGUNTADAS.includes(q.key)).length
-const prometidas = landing.match(/'(\w+) preguntas más/)
+// `\w` no incluye acentos, y la cifra que tocaba era «Dieciséis»: el
+// comprobador leia la frase como que la portada ya no decia ninguna cifra.
+const prometidas = landing.match(/'([A-Za-zÀ-ÿ]+) preguntas más/)
 
 if (!prometidas) {
   errores++

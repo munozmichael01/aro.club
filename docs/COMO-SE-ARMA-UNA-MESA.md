@@ -98,6 +98,23 @@ repetidores × 3   −   cuántos comen lo suyo   +   tramos que se pasa × 2
 A igualdad de todo, el orden de siempre: el mismo pool tiene que dar el mismo
 reparto.
 
+### Lo que bebe la mesa
+
+Desde el 18-10 el cuestionario pregunta dos cosas más, **las dos opcionales**:
+si tomas alcohol cuando sales, y qué tomas. Michael: «quiero saber quiénes
+beberán en la cena y quiénes no, y de los que beben, qué beben. Esto es clave
+al menos en Caracas».
+
+De momento **no entra en la fórmula ni es regla dura**, igual que las dietas:
+se enseña en la tarjeta de la mesa, que es donde se decide. Cada mesa dice
+cuántos toman, cuántos no, cuántos no lo han dicho, y qué se bebe ahí, en
+orden. Al lado de cada persona sale lo suyo, y quien no toma sale marcado.
+
+Por qué no puntúa todavía: para meterlo en la elección del sitio haría falta
+saber qué tiene cada local, y de eso no hay ni una columna. Y para que una
+regla sobre quién bebe tenga sentido hace falta ver primero unas cuantas mesas
+con el dato puesto. Se puede añadir después sin tocar nada de esto.
+
 ### Cómo quedó contra la cena del 17-10
 
 | Mesa | Fue a | Habría ido a | Por qué |
@@ -122,6 +139,13 @@ reparto.
   cenas, eso debería sustituir al tramo declarado.
 - **Las dietas.** No son regla dura: se listan para que operación elija sitio
   con criterio, y se le dicen al restaurante. Decisión de Michael, 17-10.
+- **Que la base conteste lo de la bebida.** Las dos preguntas son nuevas y
+  opcionales, así que de las 574 fichas no las tiene ninguna todavía. Quien ya
+  está dentro las contesta desde Mi perfil; quien llega ahora las ve en el
+  cuestionario. Obligarlas no era una opción: una pregunta obligatoria nueva
+  deja «incompleto» a todo el mundo y le cierra el paso de reservar.
+- **Qué bebida tiene cada local.** Sin eso, lo que bebe la mesa no puede
+  elegir sitio, solo informarlo.
 
 ---
 
@@ -134,3 +158,4 @@ reparto.
 | La elección de sitio | `sedeDe()` en `src/app/api/operacion/repartir/route.ts` |
 | El veto de un local | `table_feedback.sitio_no_repetir`, y `/api/mis-sitios` para verlo y quitarlo |
 | Lo que gasta la gente | `table_feedback.gasto_usd`, vista `v_gasto_de_local` |
+| Quién bebe y qué bebe | `profile_traits.drink_level` y `profile_traits.drinks`, preguntas `copas` y `bebidas` |
