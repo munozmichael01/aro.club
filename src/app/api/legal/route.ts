@@ -26,8 +26,17 @@ import legal from '../../../../public/legal.js'
  * ciegas.
  */
 
+type Seccion = { cinta: string; titulo: string; intro: string }
+
 type Legal = {
   version: string
+  cabecera: { titulo: string; bajada: string; actualizado: string }
+  secciones: { reglas: Seccion; terminos: Seccion; privacidad: Seccion }
+  mesa: { titulo: string; fuerte: string; cuerpo: string }
+  nuncaTitulo: string
+  nuncaNota: string
+  derechos: { titulo: string; cuerpo: string; correo: string }
+  pie: string
   reglas: [string, string][]
   terminos: [string, string][]
   nunca: string[]
@@ -51,6 +60,24 @@ const DOCS = {
 export async function GET(request: Request) {
   const pedido = new URL(request.url).searchParams.get('doc')
 
+  /**
+   * Y lo que NO es una lista: los títulos, las entradillas y los dos
+   * bloques sueltos.
+   *
+   * Va en todas las respuestas, también en las de un solo documento, porque
+   * sin la cinta y el título de su sección la app tendría que escribirlos, y
+   * entonces volveríamos a tener dos textos legales.
+   */
+  const marco = {
+    cabecera: L.cabecera,
+    secciones: L.secciones,
+    mesa: L.mesa,
+    nuncaTitulo: L.nuncaTitulo,
+    nuncaNota: L.nuncaNota,
+    derechos: L.derechos,
+    pie: L.pie,
+  }
+
   if (pedido) {
     const parte = DOCS[pedido as keyof typeof DOCS]
     if (!parte) {
@@ -59,11 +86,12 @@ export async function GET(request: Request) {
         { status: 404 },
       )
     }
-    return NextResponse.json({ version: L.version, doc: pedido, partes: parte() })
+    return NextResponse.json({ version: L.version, doc: pedido, partes: parte(), ...marco })
   }
 
   return NextResponse.json({
     version: L.version,
+    ...marco,
     reglas: DOCS.reglas(),
     terminos: DOCS.terminos(),
     privacidad: DOCS.privacidad(),

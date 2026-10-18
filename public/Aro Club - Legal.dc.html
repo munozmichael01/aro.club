@@ -48,14 +48,14 @@
 
   <div style="max-width:820px;margin:0 auto;padding:clamp(30px,5vw,56px) clamp(16px,4vw,32px) clamp(56px,9vw,100px)">
 
-    <h1 style="font:400 clamp(32px,5.2vw,56px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0;max-width:17ch;text-wrap:balance">Las reglas, los términos y qué hacemos con tus datos.</h1>
-    <p style="font:400 17px/1.6 'Inter Tight',sans-serif;color:#456352;max-width:54ch;margin:16px 0 0;text-wrap:pretty">Escrito para que se entienda. Si algo aquí no te cuadra, escríbenos y lo hablamos.</p>
-    <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:20px">Última actualización: 5 de agosto de 2026 · Caracas, Venezuela</div>
+    <h1 style="font:400 clamp(32px,5.2vw,56px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;margin:0;max-width:17ch;text-wrap:balance">{{ tituloLegal }}</h1>
+    <p style="font:400 17px/1.6 'Inter Tight',sans-serif;color:#456352;max-width:54ch;margin:16px 0 0;text-wrap:pretty">{{ bajadaLegal }}</p>
+    <div style="font:400 14px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:20px">{{ actualizadoLegal }}</div>
 
     <div class="aro-anc" id="reglas" style="margin-top:clamp(40px,6vw,72px)">
-      <div style="{{ eyebrow }}">01 · REGLAS DE LA MESA</div>
-      <h2 style="{{ h2 }}">Lo que aceptas al sentarte.</h2>
-      <p style="{{ intro }}">Estas seis reglas son la razón por la que alguien se atreve a cenar con cinco desconocidos. Romperlas es motivo de salida del club, sin devolución de créditos usados.</p>
+      <div style="{{ eyebrow }}">{{ cintaReglas }}</div>
+      <h2 style="{{ h2 }}">{{ tituloReglas }}</h2>
+      <p style="{{ intro }}">{{ introReglas }}</p>
 
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:26px">
         <sc-for list="{{ reglas }}" as="r" hint-placeholder-count="6">
@@ -70,14 +70,14 @@
       </div>
 
       <div style="border-radius:22px;border:1px solid rgba(143,69,21,.3);padding:clamp(17px,2.2vw,22px);margin-top:14px">
-        <div style="font:400 clamp(19px,2.2vw,23px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#8F4515">Si algo pasa en una mesa</div>
-        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;margin-top:8px;max-width:60ch;text-wrap:pretty"><strong style="font-weight:600;color:#2C4A38">Tolerancia cero: no se permite contenido ofensivo, acoso ni abuso de ningún tipo, ni en la mesa ni en la app. Quien lo haga sale del club.</strong> Lo reportas desde tu mesa y lo lee una persona el mismo día. Puedes bloquear a alguien para que nunca vuelva a coincidir contigo, y no se le avisa. Quien acumula reportes sale del club. Si hay un delito de por medio, colaboramos con las autoridades y te acompañamos en la denuncia; no hacemos de juez ni de policía.</div>
+        <div style="font:400 clamp(19px,2.2vw,23px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#8F4515">{{ tituloMesa }}</div>
+        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#456352;margin-top:8px;max-width:60ch;text-wrap:pretty"><strong style="font-weight:600;color:#2C4A38">{{ fuerteMesa }}</strong> {{ cuerpoMesa }}</div>
       </div>
     </div>
 
     <div class="aro-anc" id="terminos" style="margin-top:clamp(40px,6vw,72px)">
-      <div style="{{ eyebrow }}">02 · TÉRMINOS DE SERVICIO</div>
-      <h2 style="{{ h2 }}">Qué te damos y qué no.</h2>
+      <div style="{{ eyebrow }}">{{ cintaTerminos }}</div>
+      <h2 style="{{ h2 }}">{{ tituloTerminos }}</h2>
 
       <div style="display:flex;flex-direction:column;gap:0;margin-top:26px">
         <sc-for list="{{ terminos }}" as="t" hint-placeholder-count="9">
@@ -91,18 +91,18 @@
     </div>
 
     <div class="aro-anc" id="privacidad" style="margin-top:clamp(40px,6vw,72px)">
-      <div style="{{ eyebrow }}">03 · PRIVACIDAD</div>
-      <h2 style="{{ h2 }}">Qué guardamos, quién lo ve, cuánto dura.</h2>
-      <p style="{{ intro }}">Te pedimos cédula y una selfie. Es lo más delicado que vas a darnos, así que esta sección es la más concreta de las tres.</p>
+      <div style="{{ eyebrow }}">{{ cintaPrivacidad }}</div>
+      <h2 style="{{ h2 }}">{{ tituloPrivacidad }}</h2>
+      <p style="{{ intro }}">{{ introPrivacidad }}</p>
 
       <div style="border-radius:22px;background:#14342A;color:#FAF3E4;padding:clamp(20px,2.8vw,28px);margin-top:26px">
-        <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#9CBBA6;margin-bottom:18px">LO QUE NUNCA VE OTRO MIEMBRO</div>
+        <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#9CBBA6;margin-bottom:18px">{{ tituloNunca }}</div>
         <div style="display:flex;flex-wrap:wrap;gap:9px">
           <sc-for list="{{ nunca }}" as="n" hint-placeholder-count="8">
             <span style="display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(250,243,228,.28);font:500 14px/1 'Inter Tight',sans-serif;color:#FAF3E4">{{ n.texto }}</span>
           </sc-for>
         </div>
-        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:20px;max-width:60ch;text-wrap:pretty">De ti, los otros cinco solo ven el nombre con el que quieres que te llamen y tu sector. Nada más, en ninguna pantalla, en ningún estado del producto.</div>
+        <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:20px;max-width:60ch;text-wrap:pretty">{{ notaNunca }}</div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:0;margin-top:20px">
@@ -125,14 +125,14 @@
       </div>
 
       <div style="border-radius:22px;background:#FFFBF0;padding:clamp(20px,2.8vw,28px);margin-top:26px">
-        <div style="font:400 clamp(21px,2.4vw,26px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cómo ejercer tus derechos</div>
-        <div style="font:400 15px/1.65 'Inter Tight',sans-serif;color:#456352;margin-top:10px;max-width:62ch;text-wrap:pretty">Escribe desde el correo con el que te registraste y pide lo que quieras: ver tus datos, corregirlos, llevártelos o borrarlos. Respondemos en menos de quince días hábiles. Borrar la cuenta borra tus respuestas y tus documentos; lo que no se borra son los registros de facturación, que la ley obliga a conservar.</div>
-          <a href="mailto:hola@aro.club" style="display:inline-flex;align-items:center;min-height:52px;padding:0 22px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;margin-top:18px;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">hola@aro.club</a>
+        <div style="font:400 clamp(21px,2.4vw,26px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloDerechos }}</div>
+        <div style="font:400 15px/1.65 'Inter Tight',sans-serif;color:#456352;margin-top:10px;max-width:62ch;text-wrap:pretty">{{ cuerpoDerechos }}</div>
+          <a href="mailto:hola@aro.club" style="display:inline-flex;align-items:center;min-height:52px;padding:0 22px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;margin-top:18px;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">{{ correoDerechos }}</a>
       </div>
     </div>
 
     <div style="margin-top:clamp(40px,6vw,72px);padding-top:24px;border-top:1px solid rgba(20,52,42,.13);font:400 14px/1.65 'Inter Tight',sans-serif;color:#566A5D;max-width:62ch;text-wrap:pretty">
-      Aro Club opera en Caracas, Venezuela. Estos términos se rigen por la legislación venezolana y cualquier disputa se resuelve en los tribunales de la ciudad de Caracas. Si cambiamos algo importante, te lo escribimos por correo con treinta días de antelación.
+      {{ pieLegal }}
     </div>
 
     <div style="margin-top:18px">
@@ -213,8 +213,32 @@ class Component extends DCLogic {
 
     const privacidad = window.AroLegal.privacidad.map((p) => ({ titulo: p[0], cuerpo: p[1] }));
 
+    // Todo el texto sale de `legal.js`. Aquí no queda ni una frase: lo que
+    // la pantalla pone es la forma, no las palabras.
+    const L = window.AroLegal;
+
     return {
       indice, reglas, terminos, nunca, datos, privacidad,
+      tituloLegal: L.cabecera.titulo,
+      bajadaLegal: L.cabecera.bajada,
+      actualizadoLegal: L.cabecera.actualizado,
+      cintaReglas: L.secciones.reglas.cinta,
+      tituloReglas: L.secciones.reglas.titulo,
+      introReglas: L.secciones.reglas.intro,
+      cintaTerminos: L.secciones.terminos.cinta,
+      tituloTerminos: L.secciones.terminos.titulo,
+      cintaPrivacidad: L.secciones.privacidad.cinta,
+      tituloPrivacidad: L.secciones.privacidad.titulo,
+      introPrivacidad: L.secciones.privacidad.intro,
+      tituloMesa: L.mesa.titulo,
+      fuerteMesa: L.mesa.fuerte,
+      cuerpoMesa: L.mesa.cuerpo,
+      tituloNunca: L.nuncaTitulo,
+      notaNunca: L.nuncaNota,
+      tituloDerechos: L.derechos.titulo,
+      cuerpoDerechos: L.derechos.cuerpo,
+      correoDerechos: L.derechos.correo,
+      pieLegal: L.pie,
       eyebrow: 'font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.16em;color:#8F4515;margin-bottom:14px',
       h2: 'font:400 clamp(26px,3.4vw,40px)/1.05 \'Young Serif\',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin:0;max-width:20ch;text-wrap:balance',
       intro: 'font:400 16px/1.6 \'Inter Tight\',sans-serif;color:#456352;max-width:58ch;margin:13px 0 0;text-wrap:pretty'

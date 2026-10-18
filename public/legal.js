@@ -85,8 +85,68 @@
       ['Menores de edad', 'El servicio es solo para mayores de 18. Si detectamos una cuenta de un menor, la cerramos y borramos todo lo asociado.']
     ]
 
+  /**
+   * Y LO QUE NO ES UNA LISTA: titulos, entradillas y los dos bloques
+   * sueltos.
+   *
+   * Estaba escrito dentro de la pantalla, y es texto legal igual que lo
+   * demas: la frase de tolerancia cero, como se ejercen los derechos, bajo
+   * que legislacion y con cuanta antelacion avisamos de un cambio. Lo vio el
+   * agente de la app antes de copiarlo: «si copio eso en la app volvemos a
+   * tener dos textos legales, justo lo que querias evitar».
+   */
+  var cabecera = {
+    titulo: 'Las reglas, los términos y qué hacemos con tus datos.',
+    bajada: 'Escrito para que se entienda. Si algo aquí no te cuadra, escríbenos y lo hablamos.',
+    actualizado: 'Última actualización: 5 de agosto de 2026 · Caracas, Venezuela',
+  }
+
+  var secciones = {
+    reglas: {
+      cinta: '01 · REGLAS DE LA MESA',
+      titulo: 'Lo que aceptas al sentarte.',
+      intro: 'Estas seis reglas son la razón por la que alguien se atreve a cenar con cinco desconocidos. Romperlas es motivo de salida del club, sin devolución de créditos usados.',
+    },
+    terminos: {
+      cinta: '02 · TÉRMINOS DE SERVICIO',
+      titulo: 'Qué te damos y qué no.',
+      intro: '',
+    },
+    privacidad: {
+      cinta: '03 · PRIVACIDAD',
+      titulo: 'Qué guardamos, quién lo ve, cuánto dura.',
+      intro: 'Te pedimos cédula y una selfie. Es lo más delicado que vas a darnos, así que esta sección es la más concreta de las tres.',
+    },
+  }
+
+  var mesa = {
+    titulo: 'Si algo pasa en una mesa',
+    // La primera frase va en negrita en la pantalla. Se guarda aparte para
+    // que la app pueda hacer lo mismo sin partir el texto por su cuenta.
+    fuerte: 'Tolerancia cero: no se permite contenido ofensivo, acoso ni abuso de ningún tipo, ni en la mesa ni en la app. Quien lo haga sale del club.',
+    cuerpo: 'Lo reportas desde tu mesa y lo lee una persona el mismo día. Puedes bloquear a alguien para que nunca vuelva a coincidir contigo, y no se le avisa. Quien acumula reportes sale del club. Si hay un delito de por medio, colaboramos con las autoridades y te acompañamos en la denuncia; no hacemos de juez ni de policía.',
+  }
+
+  var nuncaTitulo = 'LO QUE NUNCA VE OTRO MIEMBRO'
+  var nuncaNota = 'De ti, los otros cinco solo ven el nombre con el que quieres que te llamen y tu sector. Nada más, en ninguna pantalla, en ningún estado del producto.'
+
+  var derechos = {
+    titulo: 'Cómo ejercer tus derechos',
+    cuerpo: 'Escribe desde el correo con el que te registraste y pide lo que quieras: ver tus datos, corregirlos, llevártelos o borrarlos. Respondemos en menos de quince días hábiles. Borrar la cuenta borra tus respuestas y tus documentos; lo que no se borra son los registros de facturación, que la ley obliga a conservar.',
+    correo: 'hola@aro.club',
+  }
+
+  var pie = 'Aro Club opera en Caracas, Venezuela. Estos términos se rigen por la legislación venezolana y cualquier disputa se resuelve en los tribunales de la ciudad de Caracas. Si cambiamos algo importante, te lo escribimos por correo con treinta días de antelación.'
+
   var api = {
     version: '2026-08',
+    cabecera: cabecera,
+    secciones: secciones,
+    mesa: mesa,
+    nuncaTitulo: nuncaTitulo,
+    nuncaNota: nuncaNota,
+    derechos: derechos,
+    pie: pie,
     // Las seis reglas de la mesa. No son las normas de seguridad que se
     // aceptan al entrar —esas están en `AroReglas.NORMAS`—: estas son cómo
     // se comporta uno en una cena.
