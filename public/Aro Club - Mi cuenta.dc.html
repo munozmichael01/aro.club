@@ -345,6 +345,52 @@
 </div>
 
 
+<!-- Las normas, encima de todo y sin salida.
+     Apple (norma 1.2) pide aceptarlas antes de ver contenido de otra gente,
+     y Michael quiere que se acepten UNA vez por cuenta. No lleva cruz a
+     proposito: es la unica pantalla del producto que no se puede cerrar,
+     porque cerrarla seria entrar sin aceptar. Sale solo si el servidor dice
+     que no las ha aceptado; si la llamada falla, no sale. -->
+<sc-if value="{{ hayNormas }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:98;background:#FAF3E4;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto">
+    <div style="width:100%;max-width:460px;margin:auto;padding:clamp(20px,3vw,28px) 0">
+
+      <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">{{ cintaNormas }}</div>
+      <h1 style="margin:14px 0 0 0;font:400 clamp(32px,8vw,40px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A">{{ tituloNormas }}</h1>
+      <div style="margin-top:14px;font:400 17px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ bajadaNormas }}</div>
+      <div style="margin-top:10px;font:400 15px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ actualizacionNormas }}</div>
+
+      <sc-for list="{{ puntosNormas }}" as="p" hint-placeholder-count="3">
+        <div style="margin-top:22px;padding-top:20px;border-top:1px solid rgba(20,52,42,.14)">
+          <div style="font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ p.titulo }}</div>
+          <div style="margin-top:6px;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ p.texto }}</div>
+        </div>
+      </sc-for>
+
+      <div style="margin-top:22px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ pieNormas }}</div>
+
+      <button onClick="{{ tocarNormas }}" style="display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;margin-top:22px;padding:14px;border-radius:18px;border:1px solid rgba(20,52,42,.16);background:#FFFBF0;cursor:pointer">
+        <span style="{{ marcaNormas }}">{{ marcaNormasTexto }}</span>
+        <span style="flex:1;min-width:0;font:400 15px/1.45 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ casillaNormas }}</span>
+      </button>
+
+      <div style="margin-top:16px">
+        <button onClick="{{ aceptarNormas }}" style="{{ botonNormas }}">{{ textoBotonNormas }}</button>
+      </div>
+
+      <sc-if value="{{ hayFalloNormas }}" hint-placeholder-val="{{ false }}">
+        <div role="alert" style="margin-top:12px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#8F4515">{{ falloNormas }}</div>
+      </sc-if>
+
+      <div style="margin-top:20px;display:flex;gap:14px;flex-wrap:wrap">
+        <a href="/terminos" style="font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:5px">Términos</a>
+        <a href="/privacidad" style="font:500 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:5px">Privacidad</a>
+      </div>
+
+    </div>
+  </div>
+</sc-if>
+
 <!-- Preguntas nuevas, encima de Mi cuenta.
      Sale a quien ya reservó y tiene preguntas del catálogo sin contestar.
      Se contesta aquí mismo: mandarla a otra pantalla a buscarlas es perder
@@ -405,7 +451,9 @@ class Component extends DCLogic {
             elegidas: {}, preguntasCerrado: false, guardandoPreguntas: false,
             // El permiso de grabación de la fecha que está mirando. Vive
             // aquí y no en la tarjeta porque solo se abre una a la vez.
-            permiteGrabacion: false };
+            permiteGrabacion: false,
+            // Las normas: lo que lleva marcado y si se está guardando.
+            aceptoNormas: false, guardandoNormas: false, falloNormas: '' };
 
   /**
    * Marcar una opción del aviso de preguntas nuevas.
@@ -511,6 +559,30 @@ class Component extends DCLogic {
         this.setState({ guardandoPreguntas: false, preguntasCerrado: true, elegidas: {} });
         this.releer();
       });
+  }
+
+  /**
+   * Aceptar las normas. Una vez por cuenta.
+   *
+   * Lo pide Apple (norma 1.2) antes de enseñar contenido de otra gente, y
+   * Michael quiere que se acepte UNA vez y quede guardado. La constancia la
+   * escribe `/api/normas` en `profiles.terms_accepted_at` con su versión.
+   *
+   * Si falla, no se pasa: lo contrario sería dejar entrar sin constancia a
+   * quien creímos que había aceptado, que es justo lo que esta pantalla
+   * existe para que no pase.
+   */
+  aceptarNormas() {
+    if (this.state.guardandoNormas || !this.state.aceptoNormas) return;
+    this.setState({ guardandoNormas: true });
+    fetch('/api/normas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acepto: true }),
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no'))))
+      .then(() => { this.setState({ guardandoNormas: false }); this.releer(); })
+      .catch(() => this.setState({ guardandoNormas: false, falloNormas: 'No pudimos guardarlo. Vuelve a intentarlo.' }));
   }
 
   /** Vuelve a pedir la cuenta. Sin tocar nada si el servidor dice que no. */
@@ -1500,6 +1572,32 @@ class Component extends DCLogic {
       nav: AroNav.items('inicio', !!(d && d.reserva), d && d.reserva && d.reserva.formato),
       hayMios: mios.length > 0,
       sinMios: mios.length === 0,
+
+      /**
+       * LAS NORMAS, antes que nada.
+       *
+       * Sale solo si el servidor dice que NO las ha aceptado. Si la llamada
+       * falla, `datos` es null y esto no se pinta: ante la duda no se le
+       * cierra la puerta a nadie, que es lo que hace la app también.
+       */
+      hayNormas: !!(d && d.normasAceptadas === false),
+      cintaNormas: window.AroReglas.NORMAS.cinta,
+      tituloNormas: window.AroReglas.NORMAS.titulo,
+      bajadaNormas: window.AroReglas.NORMAS.bajada,
+      actualizacionNormas: window.AroReglas.NORMAS.actualizacion,
+      puntosNormas: window.AroReglas.NORMAS.puntos.map((x) => ({ titulo: x[0], texto: x[1] })),
+      pieNormas: window.AroReglas.NORMAS.pie,
+      casillaNormas: window.AroReglas.NORMAS.casilla,
+      marcaNormas: 'flex:0 0 auto;width:22px;height:22px;border-radius:7px;border:1px solid ' + (this.state.aceptoNormas ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (this.state.aceptoNormas ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif',
+      marcaNormasTexto: this.state.aceptoNormas ? '✓' : '',
+      tocarNormas: () => this.setState({ aceptoNormas: !this.state.aceptoNormas }),
+      textoBotonNormas: this.state.guardandoNormas
+        ? 'Guardando…'
+        : (this.state.aceptoNormas ? window.AroReglas.NORMAS.botonListo : window.AroReglas.NORMAS.botonFalta),
+      botonNormas: 'display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:56px;padding:0 24px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (this.state.aceptoNormas ? 'pointer' : 'not-allowed') + ';background:' + (this.state.aceptoNormas ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (this.state.aceptoNormas ? '#FAF3E4' : '#456352'),
+      aceptarNormas: () => this.aceptarNormas(),
+      hayFalloNormas: !!this.state.falloNormas,
+      falloNormas: this.state.falloNormas || '',
 
       // El aviso de preguntas nuevas. Quién decide que sale es el servidor,
       // comparando el catálogo con lo que esa persona tiene contestado.

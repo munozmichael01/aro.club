@@ -691,6 +691,40 @@
     },
 
     /**
+     * LAS NORMAS QUE SE ACEPTAN UNA VEZ.
+     *
+     * Vive aqui porque la pintan dos sitios —la pantalla de la web y la de
+     * la app— y es un texto legal: dos copias de un texto legal son dos
+     * textos legales, y el dia que cambie uno nadie se acuerda del otro.
+     *
+     * Viene del rechazo de Apple por la norma 1.2: hay que aceptar antes de
+     * ver contenido de otra gente. Michael eligio el copy el 18-10: la cinta
+     * de «NORMAS ACTUALIZADAS» como titulo y la linea de contexto debajo,
+     * «B como titulo + A como contexto».
+     *
+     * La linea de `actualizacion` no es relleno: esta pantalla le sale de
+     * golpe a gente que lleva semanas en el club, y sin ella se lee como un
+     * error o como una trampa. Michael: «hay que dejar claro que es una
+     * actualizacion porque el que no vio esto antes se confunde al ver esta
+     * pantalla y nada mas».
+     */
+    NORMAS: {
+      cinta: 'NORMAS ACTUALIZADAS',
+      titulo: 'Seguridad y normas',
+      bajada: 'Aro Club funciona porque cada mesa es un sitio seguro.',
+      actualizacion: 'Las pusimos por escrito y te las enseñamos una vez. Si las aceptas, esta pantalla no vuelve a salir.',
+      puntos: [
+        ['Tolerancia cero', 'Con el acoso, los insultos, el contenido ofensivo y cualquier abuso, en la mesa y en la app. Quien lo haga sale del club.'],
+        ['Puedes reportar', 'A cualquier persona de tu mesa, desde Mi mesa. Lo lee una persona el mismo día.'],
+        ['Puedes bloquear', 'A quien quieras: no vuelve a coincidir contigo y no se le avisa.'],
+      ],
+      pie: 'Al usar Aro Club aceptas estas normas, los Términos y la Privacidad.',
+      casilla: 'Acepto las normas de seguridad y los Términos, con tolerancia cero a cualquier abuso.',
+      botonListo: 'Continuar',
+      botonFalta: 'Acepta las normas para continuar',
+    },
+
+    /**
      * EN QUE SEMANA CAE UNA FECHA. 0 esta, 1 la que viene, 2 mas adelante.
      *
      * Michael, 18-10, viendo la app: «estoy viendo todas las cenas en ESTA
