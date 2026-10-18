@@ -202,7 +202,14 @@ export function yaHecho(d: DeServidor) {
 
 /** Cada bloque es opcional, pero enviar sin nada no es contar nada. */
 export const algoQueContar = (v: Valoracion) =>
-  v.mesa >= 0 || v.volveria >= 0 || Object.values(v.sitio).some((x) => x != null && x >= 0) || v.bloqueados.length > 0
+  v.mesa >= 0 ||
+  v.volveria >= 0 ||
+  Object.values(v.sitio).some((x) => x != null && x >= 0) ||
+  v.bloqueados.length > 0 ||
+  // Lo que ganó la encuesta el 17-10 también cuenta: solo un comentario es una respuesta (d57b509).
+  v.comentario.trim().length > 0 ||
+  v.gasto >= 0 ||
+  v.noRepetirSitio
 
 /** El cuerpo de `POST /api/despues` para valorar: los índices tal cual, de mejor a peor. */
 export function cuerpoValorar(mesaId: string, v: Valoracion) {

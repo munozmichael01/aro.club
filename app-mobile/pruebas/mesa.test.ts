@@ -66,6 +66,9 @@ test('lo de después: solo lo contestado, índices de mejor a peor, y lo ya hech
     accion: 'valorar', mesaId: 'm', mesa: 0, sitio: { comida: 3 }, volveriaAAro: true, comentario: null, gasto: null, noRepetirSitio: false,
   })
   assert.equal(M.algoQueContar({ ...v, bloqueados: ['x'] }), true)
+  assert.equal(M.algoQueContar({ ...v, comentario: 'la música alta' }), true, 'solo un comentario se puede enviar')
+  assert.equal(M.algoQueContar({ ...v, comentario: '   ' }), false)
+  assert.equal(M.algoQueContar({ ...v, gasto: 0 }), true)
   assert.deepEqual(M.alternar(['a', 'b'], 'a'), ['b'])
   const ya = M.yaHecho({ fase: 'pasada', yaValoro: true, yaReporto: 'b', yaBloqueados: ['b', 'fuera'], companeros: [{ id: 'b', nombre: 'B', sector: null }] })
   assert.deepEqual(ya, { contado: true, reportadoA: 'b', bloqueados: ['b'] })
