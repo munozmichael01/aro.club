@@ -31,6 +31,12 @@
  *       se manda a revisar, y otra vez si Apple la devuelve. Con
  *       `--horas=144` la cena queda a seis días y aguanta la revisión entera.
  *
+ *   node scripts/cuenta-revision.mjs --sin-normas
+ *       Deja la cuenta SIN haber aceptado las normas, para que el revisor vea
+ *       esa pantalla. Hace falta porque grabar el video con esa cuenta la
+ *       hace aceptarlas: quien graba pulsa «Continuar» y el revisor ya no ve
+ *       nada. Se corre DESPUÉS de grabar y ANTES de mandar a revisar.
+ *
  *   node scripts/cuenta-revision.mjs --borrar
  *       Quita la cuenta, su fecha, su restaurante y sus cinco acompañantes.
  *
@@ -59,7 +65,7 @@ const DOMINIO_MESA = 'prueba.aro.club'
 const RASTRO = fileURLToPath(new URL('../.cuenta-revision.json', import.meta.url))
 
 const args = process.argv.slice(2)
-const CONOCIDOS = ['--borrar', '--refrescar', '--acompanantes']
+const CONOCIDOS = ['--borrar', '--refrescar', '--acompanantes', '--sin-normas']
 const raros = args.filter((a) => !CONOCIDOS.includes(a) && !/^--horas=-?\d+$/.test(a))
 if (raros.length) {
   console.error('No conozco: ' + raros.join(', ') + '. Los modos son: ' + CONOCIDOS.join(', ') + '.')
@@ -171,6 +177,41 @@ if (args.includes('--acompanantes')) {
   }
   writeFileSync(RASTRO, JSON.stringify(r, null, 2))
   console.log(`Acompañantes: ${puestos} vueltos a sentar. La cuenta del revisor y su contraseña, sin tocar.`)
+  process.exit(0)
+}
+
+// ------------------------------------------------------------ sin normas
+//
+// Apple (norma 1.2) pide que se acepten las normas antes de ver contenido de
+// otra gente, y desde hoy eso se acepta UNA vez por cuenta y queda guardado.
+// El efecto secundario es este: grabar el video con la cuenta del revisor la
+// deja aceptada, y el revisor entraría sin ver la pantalla que viene a
+// comprobar. Esto la devuelve a cero.
+if (args.includes('--sin-normas')) {
+  const { data: perfil } = await admin
+    .from('profiles')
+    .select('id, terms_accepted_at')
+    .eq('email', CORREO)
+    .maybeSingle()
+
+  if (!perfil) {
+    console.error('No hay cuenta de revisión montada. Corre el guión sin argumentos primero.')
+    process.exit(1)
+  }
+
+  const { error } = await admin
+    .from('profiles')
+    .update({ terms_accepted_at: null, terms_version: null })
+    .eq('id', perfil.id)
+
+  if (error) {
+    console.error('✗ no se pudo: ' + error.message)
+    process.exit(1)
+  }
+
+  console.log(perfil.terms_accepted_at
+    ? 'Listo: la cuenta vuelve a no haber aceptado las normas (las aceptó el ' + perfil.terms_accepted_at.slice(0, 16) + ').'
+    : 'Ya estaba sin aceptar: el revisor verá la pantalla.')
   process.exit(0)
 }
 
