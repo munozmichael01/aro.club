@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { AppState, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
+import { AppState, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useUltimo } from '../util/useUltimo'
 import { useFocusEffect } from 'expo-router'
@@ -12,6 +12,7 @@ import * as T from '../texto/mesa'
 import * as M from './maquina'
 import * as J from '../juego/maquina'
 import { MesaCena } from './MesaCena'
+import { AvisoAjustes, LineaGrabacion, PreguntaGrabacion, useGrabacion } from './Avisos'
 import { reglas } from '../reglas'
 import type { crearServicioMesa } from './servicio'
 
@@ -136,7 +137,7 @@ function Bajada({ children }: { children: ReactNode }) {
   )
 }
 
-function Acuse({ titulo, cuerpo, reporte }: { titulo: string; cuerpo: string; reporte?: boolean }) {
+function Acuse({ titulo, cuerpo, reporte, extra }: { titulo: string; cuerpo: string; reporte?: boolean; extra?: string | null }) {
   return (
     <View
       accessibilityLiveRegion="polite"
@@ -150,8 +151,30 @@ function Acuse({ titulo, cuerpo, reporte }: { titulo: string; cuerpo: string; re
         <Texto variante="cuerpoChico" style={{ marginTop: 3 }}>
           {cuerpo}
         </Texto>
+        {/* El veto del sitio que no cupo: la valoración SÍ se guardó, y decirlo como error haría que la volviera a mandar. */}
+        {extra ? (
+          <Texto variante="cuerpoChico" tono="terracota" style={{ marginTop: 7 }}>
+            {extra}
+          </Texto>
+        ) : null}
       </View>
     </View>
+  )
+}
+
+/** Una píldora de elegir (el gasto, «No me mandes más a este sitio»), como la web: rellena al marcarla. */
+function Pildora({ texto, marcada, onPress, relleno = color.verdeProfundo }: { texto: string; marcada: boolean; onPress: () => void; relleno?: string }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="checkbox"
+      aria-checked={marcada}
+      style={[estilos.pildora, marcada ? { backgroundColor: relleno, borderColor: relleno } : null]}
+    >
+      <Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia, color: marcada ? (relleno === color.verdeProfundo ? color.crema : '#FFF8EA') : color.verdeProfundo }}>
+        {texto}
+      </Texto>
+    </Pressable>
   )
 }
 
@@ -245,6 +268,11 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
   const [avisando, setAvisando] = useState(false)
   const [falloTarde, setFalloTarde] = useState('')
   const [avisado, setAvisado] = useState<number | null>(null)
+  const grab = useGrabacion(d, async (eventoId, permite) => {
+    const r = await servicio.grabacion(eventoId, permite)
+    return r.ok ? { ok: true } : { ok: false, error: r.error }
+  })
+  const pregunta = <PreguntaGrabacion {...grab.pregunta} />
 
   const mesa = M.esMesa(d)
   const v = M.voz(d)
@@ -307,7 +335,20 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
 
   // Una cena: la entrega 20 (paso a paso, juego, foto de la entrada). Lo demás, como estaba.
   if (J.hayJuego(d.formato)) {
-    return <MesaCena d={d} ahora={ahora} ir={ir} alTarde={() => setTardeAbierto((x) => !x)} tarde={panelTarde} />
+    return (
+      <>
+        <MesaCena
+          d={d}
+          ahora={ahora}
+          ir={ir}
+          alTarde={() => setTardeAbierto((x) => !x)}
+          tarde={panelTarde}
+          ajustes={<AvisoAjustes d={d} />}
+          grabacion={grab.linea ? <LineaGrabacion suelta permiso={grab.permiso} alCambiar={grab.cambiar} /> : null}
+        />
+        {pregunta}
+      </>
+    )
   }
 
   return (
@@ -404,6 +445,7 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
         <Texto variante="cuerpoChico" style={{ marginTop: 16 }}>
           {T.abierta.notaCompaneros(mesa)}
         </Texto>
+        {grab.linea ? <LineaGrabacion permiso={grab.permiso} alCambiar={grab.cambiar} /> : null}
       </View>
 
       <View style={[estilos.caja, { backgroundColor: 'transparent', borderWidth: 1, borderColor: tinta(0.18), marginTop: 30 }]}>
@@ -414,6 +456,7 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
       </View>
 
       <EnlaceCancelar ir={ir} />
+      {pregunta}
     </View>
   )
 }
@@ -430,6 +473,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
   const [motivo, setMotivo] = useState(-1)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
+  const [avisoSitio, setAvisoSitio] = useState<string | null>(null)
 
   const mesa = M.esMesa(d)
   const voz = M.voz(d)
@@ -445,6 +489,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
     const r = await servicio.valorar(d.mesaId, v)
     setEnviando(false)
     if (!r.ok) return setError(r.error)
+    setAvisoSitio(r.datos.avisoSitio)
     setContado(true)
   }
 
@@ -461,8 +506,8 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
     setV((x) => (x.bloqueados.includes(quien) ? x : { ...x, bloqueados: [...x.bloqueados, quien] }))
   }
 
-  const Pregunta = ({ children, arriba = 28 }: { children: ReactNode; arriba?: number }) => (
-    <Texto variante="rotulo" style={{ fontFamily: fuente.titular, fontSize: 16, lineHeight: 23, marginTop: arriba, marginBottom: 10 }}>
+  const Pregunta = ({ children, arriba = 28, abajo = 10 }: { children: ReactNode; arriba?: number; abajo?: number }) => (
+    <Texto variante="rotulo" style={{ fontFamily: fuente.titular, fontSize: 16, lineHeight: 23, marginTop: arriba, marginBottom: abajo }}>
       {children}
     </Texto>
   )
@@ -516,6 +561,50 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
             <Ficha texto={T.pasada.no} marcada={v.volveria === 0} mala onPress={() => setV((x) => ({ ...x, volveria: x.volveria === 0 ? -1 : 0 }))} />
           </View>
 
+          {/* Cuánto gastó y si repetiría el sitio: son del sitio, así que van con lo del sitio y antes del texto libre (17-10). */}
+          <Pregunta abajo={6}>{T.pasada.gasto}</Pregunta>
+          <Texto variante="nota" style={{ marginBottom: 10 }}>
+            {T.pasada.notaGasto(reglas.precioTexto())}
+          </Texto>
+          <View style={estilos.fichas}>
+            {T.pasada.tramosGasto.map(([t], i) => (
+              <Pildora key={t} texto={t} marcada={v.gasto === i} onPress={() => setV((x) => ({ ...x, gasto: x.gasto === i ? -1 : i }))} />
+            ))}
+          </View>
+
+          {M.puedeVetarSitio(v) ? (
+            <View style={{ marginTop: 14 }}>
+              <View style={{ alignSelf: 'flex-start' }}>
+                <Pildora
+                  texto={T.pasada.noRepetir(v.noRepetirSitio)}
+                  marcada={v.noRepetirSitio}
+                  relleno={color.terracota}
+                  onPress={() => setV((x) => ({ ...x, noRepetirSitio: !x.noRepetirSitio }))}
+                />
+              </View>
+              <Texto variante="nota" style={{ marginTop: 7 }}>
+                {T.pasada.notaNoRepetir}
+              </Texto>
+            </View>
+          ) : null}
+
+          {/* El texto libre (17-10): después de las escalas y antes de la pregunta incómoda. */}
+          <Pregunta abajo={6}>{T.pasada.comentario}</Pregunta>
+          <Texto variante="nota" style={{ marginBottom: 10 }}>
+            {T.pasada.notaComentario}
+          </Texto>
+          <TextInput
+            value={v.comentario}
+            onChangeText={(t) => setV((x) => ({ ...x, comentario: t.slice(0, M.MAX_COMENTARIO) }))}
+            maxLength={M.MAX_COMENTARIO}
+            multiline
+            textAlignVertical="top"
+            placeholder={T.pasada.comentarioEjemplo}
+            placeholderTextColor={color.secundario}
+            accessibilityLabel={T.pasada.comentario}
+            style={estilos.comentario}
+          />
+
           <Pregunta>{T.pasada.noCoincidir}</Pregunta>
           <Texto variante="nota" style={{ marginTop: -4, marginBottom: 10 }}>
             {T.pasada.notaBloquear(voz as never)}
@@ -560,7 +649,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
 
       {contado ? (
         <View style={{ marginTop: 26 }}>
-          <Acuse titulo={T.pasada.anotado} cuerpo={T.pasada.resumen(v.bloqueados.length)} />
+          <Acuse titulo={T.pasada.anotado} cuerpo={T.pasada.resumen(v.bloqueados.length)} extra={avisoSitio} />
         </View>
       ) : null}
 
@@ -651,4 +740,18 @@ const estilos = StyleSheet.create({
   acuse: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderRadius: 26, backgroundColor: verdeAlfa(0.1), padding: 18 },
   acuseIcono: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   fichas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  pildora: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 16, borderRadius: radio.capsula, borderWidth: 1, borderColor: 'rgba(20,52,42,.22)' },
+  comentario: {
+    minHeight: 96,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(20,52,42,.22)',
+    backgroundColor: '#FFFBF0',
+    color: color.verdeProfundo,
+    fontFamily: fuente.texto,
+    fontSize: 15,
+    lineHeight: 22,
+  },
 })

@@ -51,7 +51,12 @@ export const corto: Record<string, string> = {
   dias: 'tus días',
   idiomas: 'tus idiomas',
   dieta: 'tu dieta',
+  copas: 'si tomas',
+  bebidas: 'qué tomas',
 }
+
+/** El contador de «¿Y qué tomas?» cuando dijo que no toma alcohol, como la web. */
+export const sinAlcoholComoDijiste = 'Sin alcohol, como dijiste'
 
 export const progreso = (pantalla: number, total: number) => `PANTALLA ${pantalla + 1} DE ${total}`
 export const completo = 'COMPLETO'

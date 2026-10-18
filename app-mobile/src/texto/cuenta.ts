@@ -254,3 +254,15 @@ export const sinRespuesta = {
   reintentar: 'Reintentar',
   cargando: 'Cargando tu cuenta',
 }
+
+/** El aviso de preguntas nuevas al reservar (18-10), palabra por palabra de la web. */
+export const preguntasNuevas = {
+  cinta: 'PARA TU MESA',
+  titulo: (n: number) =>
+    ['', 'Una pregunta nueva', 'Dos preguntas nuevas', 'Tres preguntas nuevas', 'Cuatro preguntas nuevas', 'Cinco preguntas nuevas', 'Seis preguntas nuevas'][n] ??
+    `${n} preguntas nuevas`,
+  bajada: 'Nos ayudan a armar mejor tu mesa, y no se le enseñan a nadie de tu cena.',
+  guardar: (guardando: boolean) => (guardando ? 'Guardando…' : 'Guardar'),
+  ahoraNo: 'Ahora no',
+  sinAlcohol: 'Dijiste que no tomas alcohol, así que la dejamos en «sin alcohol».',
+}

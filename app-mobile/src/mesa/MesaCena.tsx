@@ -33,6 +33,10 @@ export function MesaCena(p: {
   /** «Voy tarde»: abre o cierra el panel, que va justo debajo de la tarjeta. */
   alTarde: () => void
   tarde: ReactNode
+  /** «Hubo ajustes de última hora», arriba del todo (16-10). */
+  ajustes?: ReactNode
+  /** Lo que contestó de la grabación y «Cambiarlo», fuera del desplegable: se cambia sin buscarlo. */
+  grabacion?: ReactNode
 }) {
   const { d, ahora, ir } = p
   const zona = d.zonaHoraria ?? null
@@ -80,6 +84,7 @@ export function MesaCena(p: {
 
   return (
     <View style={{ gap: 12 }}>
+      {p.ajustes}
       <TarjetaMesa d={d} momento={momento} mapa={mapa} ir={ir} alTarde={p.alTarde} />
       {p.tarde}
 
@@ -106,6 +111,8 @@ export function MesaCena(p: {
           <Texto style={[texto(13, 1.4), e.nota]}>{T.abierta.notaCompaneros(true)}</Texto>
         </View>
       </Desplegable>
+
+      {p.grabacion}
 
       {pasos.length ? (
         <Desplegable titulo={T.cena.paso.titulo} resumen={resumenPaso} abierta={abiertas.paso} alTocar={() => poner('paso', !abiertas.paso)}>

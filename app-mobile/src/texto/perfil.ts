@@ -79,6 +79,16 @@ export const exclusiones = {
   noQuitado: 'No pudimos quitarlo.',
 }
 
+/** Los sitios vetados en la encuesta de después (17-10), como la web. */
+export const sitios = {
+  titulo: 'Sitios a los que no vuelves',
+  nota: 'Caben dos. No se lo decimos al restaurante.',
+  vacio: 'Ninguno. Puedes marcarlo al contestar la encuesta de después de una cena.',
+  desde: (numero: number | string, mes: string) => `Lo marcaste el ${numero} de ${mes}`,
+  quitar: (quitando: boolean) => (quitando ? 'Quitando…' : 'Quitar'),
+  noQuitado: 'No pudimos quitarlo.',
+}
+
 export const cenas = {
   titulo: 'Mis cenas',
   nota: 'Dónde has estado y cuándo.',

@@ -6,6 +6,7 @@
  * misma persona. Aquí solo se elige el copy y se calculan las cifras.
  */
 
+import * as C from '../cuestionario/maquina'
 import { reglas } from '../reglas'
 import * as F from '../texto/fechas'
 import * as T from '../texto/cuenta'
@@ -27,6 +28,8 @@ export type FechaAgenda = {
   edadMinima?: number | null
   /** El precio del puesto en ESTA fecha, en ref (el campo se llama Usd por historia). Fechas distintas, precios distintos. */
   precioUsd?: number | null
+  /** Cuándo se creó (18-10): desempata dos fechas a la misma hora en zonas distintas, como el servidor. */
+  creadaEn?: string | null
 }
 
 /** «10 ref», «12,50 ref»: el precio de una fecha. Sin precio en la fecha, el del club (`reglas.precioTexto`). */
@@ -68,6 +71,18 @@ export type MiCuenta = {
   ciudad?: { slug: string; nombre: string; abierta: boolean }
   creditos: number
   reserva: { id: string; formato: string | null; empiezaEn: string | null; revelaEn: string | null; revelado: boolean; zonaHoraria?: string | null } | null
+  /** Preguntas del catálogo que no ha contestado, al reservar (18-10). Casi siempre vacío. */
+  preguntasNuevas?: PreguntaNueva[]
+}
+
+export type PreguntaNueva = {
+  clave: string
+  enunciado: string
+  ayuda: string | null
+  tipo: 'single' | 'multi' | string
+  opciones: { value: string; label: string }[]
+  max: number | null
+  exclusiva: string | null
 }
 
 export type MiMesa = {
@@ -230,8 +245,12 @@ export type FilaAgenda = {
 
 export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: number): { semana: string; filas: FilaAgenda[] }[] {
   const grupos: { semana: string; filas: FilaAgenda[] }[] = []
-  // Por fecha, pase lo que pase con el orden en que llegue.
-  const ordenadas = [...fechas].sort((a, b) => new Date(a.empiezaEn).getTime() - new Date(b.empiezaEn).getTime())
+  // Por fecha, pase lo que pase con el orden en que llegue. Dos a la misma
+  // hora (zonas separadas, 18-10) van por cuándo se crearon, como las manda
+  // el servidor; nunca por zona, que cambia si se abren en otro orden.
+  const ordenadas = [...fechas].sort(
+    (a, b) => Date.parse(a.empiezaEn) - Date.parse(b.empiezaEn) || Date.parse(a.creadaEn ?? '') - Date.parse(b.creadaEn ?? '') || 0,
+  )
   for (const a of ordenadas) {
     const formato = T.FORMATOS[a.formato] ? a.formato : 'dinner'
     if (filtro && filtro !== TODOS && formato !== filtro) continue
@@ -320,3 +339,39 @@ export function atajos(d: MiCuenta, nExclusiones: number | null): Atajo[] {
     { titulo: A.cenas.titulo, cuerpo: A.cenas.cuerpo, pie: A.cenas.pie(cenas), destino: '/perfil' },
   ]
 }
+
+// --- Las preguntas nuevas al reservar (18-10) ---------------------------------------
+
+export type Elegidas = Record<string, string | string[] | null>
+
+/**
+ * Marcar en el aviso, con las mismas reglas que el cuestionario y Mi
+ * perfil: la de una se desmarca tocándola otra vez; la de varias respeta la
+ * exclusiva y el tope; y «no tomo alcohol» ata «¿y qué tomas?».
+ */
+export function marcarNueva(e: Elegidas, q: PreguntaNueva, valor: string): Elegidas {
+  if (q.tipo !== 'multi') {
+    const r = { ...e, [q.clave]: e[q.clave] === valor ? null : valor }
+    return q.clave === C.ATADURA.pregunta ? C.atar(r, r[q.clave]) : r
+  }
+  if (C.bloqueadaPorAtadura(e, q.clave, valor) || (q.clave === C.ATADURA.atada && C.atada(e))) return e
+  const antes = (Array.isArray(e[q.clave]) ? e[q.clave] : []) as string[]
+  let despues: string[]
+  if (antes.includes(valor)) despues = antes.filter((x) => x !== valor)
+  else if (q.exclusiva && valor === q.exclusiva) despues = [valor]
+  else {
+    const limpio = q.exclusiva ? antes.filter((x) => x !== q.exclusiva) : antes
+    if (q.max && limpio.length >= q.max) return e
+    despues = [...limpio, valor]
+  }
+  return { ...e, [q.clave]: despues }
+}
+
+export const marcadaNueva = (e: Elegidas, clave: string, valor: string) => {
+  const v = e[clave]
+  return Array.isArray(v) ? v.includes(valor) : v === valor
+}
+
+/** Lo que se manda: lo que se dejó en blanco no se manda, ni vacío. «No contesté» y «contesté nada» no son lo mismo. */
+export const paraMandar = (e: Elegidas) =>
+  Object.entries(e).filter(([, v]) => (Array.isArray(v) ? v.length > 0 : !!v)) as [string, string | string[]][]

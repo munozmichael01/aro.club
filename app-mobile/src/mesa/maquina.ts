@@ -5,7 +5,6 @@
  */
 
 import { reglas } from '../reglas'
-import * as F from '../texto/fechas'
 import * as T from '../texto/mesa'
 
 export type Companero = {
@@ -44,7 +43,19 @@ export type DeServidor = {
   yaValoro?: boolean
   yaBloqueados?: string[]
   yaReporto?: string | null
+  /** La fecha, para contestar la grabación (`POST /api/grabacion`). */
+  eventoId?: string
+  /** Esa noche se graba (marca por fecha o por mesa, 16-10). */
+  grabamos?: boolean
+  /** `null` es que no ha contestado, que no es un no. */
+  permisoGrabacion?: boolean | null
+  /** Lo que cambió después de la revelación (16-10). */
+  ajustes?: Ajustes | null
+  /** En `sin-mesa`: si el abono de esa reserva está de verdad en el libro de créditos (17-10). */
+  creditoDevuelto?: boolean
 }
+
+export type Ajustes = { alguienCancelo?: boolean; sonCuantos?: number; caben?: number; teMovimos?: boolean; seSumoAlguien?: boolean }
 
 export type Fase = 'vacia' | 'cerrada' | 'abierta' | 'pasada'
 
@@ -66,8 +77,10 @@ export const conNumero = (d: DeServidor) => !d.mesaUnica && d.numeroMesa != null
 export function vacia(d: DeServidor) {
   const revisando = d.fase === 'sin-reserva' && (d.estado === 'pending_verification' || d.estado === 'in_review')
   if (revisando) return { ...T.vacia.revision, accion: null }
+  // `sin-mesa` es DESPUÉS de la revelación: se quedó sin mesa. Lo que se dice
+  // del crédito lo dice el servidor mirando el abono, no la pantalla.
   if (d.fase === 'sin-mesa')
-    return { ...T.vacia.sinMesa, bajada: T.vacia.sinMesa.bajada(F.elMismoDia(d.empiezaEn, d.zonaHoraria)), accion: null }
+    return { ...T.vacia.sinMesa, nota: d.creditoDevuelto === false ? T.vacia.sinMesa.notaSinAbono : T.vacia.sinMesa.nota }
   return T.vacia.sinReserva
 }
 
@@ -124,6 +137,34 @@ export function otros(d: DeServidor): Otro[] {
   }))
 }
 
+// --- La grabación (16-10) --------------------------------------------------------
+
+/** La pregunta sale sola, a los 6 s de abrir la mesa, solo si se graba y no ha contestado. */
+export const ESPERA_GRABACION = 6000
+export const preguntarGrabacion = (d: DeServidor, permiso: boolean | null) => fase(d) === 'abierta' && !!d.grabamos && permiso === null && !!d.eventoId
+/** La línea para cambiarlo, solo si ya contestó: sin ella el «puedes cambiarlo» sería mentira. */
+export const lineaGrabacion = (d: DeServidor, permiso: boolean | null) => !!d.grabamos && permiso !== null
+
+// --- Los ajustes de última hora (16-10) ---------------------------------------------
+
+/** Una mesa que salió corta desde el principio no es un ajuste: se publicó así. */
+export const hayAjustes = (d: DeServidor) => !!(d.ajustes && (d.ajustes.seSumoAlguien || d.ajustes.alguienCancelo || d.ajustes.teMovimos))
+
+/** Se recuerda por mesa Y por lo que decía: si cambia algo, ya no es el aviso que se leyó. */
+export function claveAjustes(d: DeServidor) {
+  const a = d.ajustes ?? {}
+  return [d.mesaId, a.sonCuantos, a.seSumoAlguien ? 1 : 0, a.alguienCancelo ? 1 : 0, a.teMovimos ? 1 : 0].join(':')
+}
+
+export function textoAjustes(d: DeServidor) {
+  const a = d.ajustes ?? {}
+  const cuantos = T.ajustes.enLetra[a.sonCuantos ?? -1] ?? String(a.sonCuantos ?? '')
+  if (a.teMovimos) return T.ajustes.teMovimos
+  if (a.alguienCancelo && a.seSumoAlguien) return T.ajustes.cancelYSuma(cuantos)
+  if (a.seSumoAlguien) return T.ajustes.seSuma
+  return T.ajustes.cancelo(cuantos)
+}
+
 // --- Lo de después (F11) -------------------------------------------------------
 
 export type Valoracion = {
@@ -132,9 +173,23 @@ export type Valoracion = {
   /** 1 sí, 0 no, -1 sin contestar. */
   volveria: number
   bloqueados: string[]
+  /** El índice del tramo de gasto, -1 sin contestar (17-10). */
+  gasto: number
+  /** El texto libre, hasta 600 (17-10). */
+  comentario: string
+  /** «No me mandes más a este sitio» (17-10). */
+  noRepetirSitio: boolean
 }
 
-export const valoracionVacia = (): Valoracion => ({ mesa: -1, sitio: {}, volveria: -1, bloqueados: [] })
+export const valoracionVacia = (): Valoracion => ({ mesa: -1, sitio: {}, volveria: -1, bloqueados: [], gasto: -1, comentario: '', noRepetirSitio: false })
+
+export const MAX_COMENTARIO = 600
+
+/**
+ * El veto del sitio solo sale tras una mala nota: un 2 o un 3 (Regular o
+ * Mal) en cualquiera de las cuatro. Michael: «la gente es muy quejona».
+ */
+export const puedeVetarSitio = (v: Valoracion) => Object.values(v.sitio).some((x) => x != null && x >= 2)
 
 /** Lo que ya hizo se recupera: si no, le pediríamos otra vez que valore lo valorado. */
 export function yaHecho(d: DeServidor) {
@@ -153,7 +208,18 @@ export const algoQueContar = (v: Valoracion) =>
 export function cuerpoValorar(mesaId: string, v: Valoracion) {
   const sitio: Record<string, number> = {}
   for (const [k, x] of Object.entries(v.sitio)) if (x != null && x >= 0) sitio[k] = x
-  return { accion: 'valorar' as const, mesaId, mesa: v.mesa >= 0 ? v.mesa : null, sitio, volveriaAAro: v.volveria >= 0 ? v.volveria === 1 : null }
+  return {
+    accion: 'valorar' as const,
+    mesaId,
+    mesa: v.mesa >= 0 ? v.mesa : null,
+    sitio,
+    volveriaAAro: v.volveria >= 0 ? v.volveria === 1 : null,
+    comentario: v.comentario.trim().slice(0, MAX_COMENTARIO) || null,
+    // El punto medio del tramo, no el índice: es lo que guarda el servidor.
+    gasto: v.gasto >= 0 ? (T.pasada.tramosGasto[v.gasto]?.[1] ?? null) : null,
+    // Sin mala nota no hay botón, y un veto que ya no se ve no se manda.
+    noRepetirSitio: v.noRepetirSitio && puedeVetarSitio(v),
+  }
 }
 
 /** Marcar o desmarcar a alguien. */

@@ -24,6 +24,11 @@ let avisos: Aviso[] = [
   { clave: 'whatsapp', titulo: 'Avisarte por WhatsApp', cuerpo: 'Además del correo. Solo lo de arriba, nunca nada más.', encendido: false, fijo: false },
 ]
 
+let sitios = [
+  { id: 'r1', nombre: 'La Ventana', desde: '2026-10-17T23:40:00Z' },
+  { id: 'r2', nombre: 'Madre', desde: '2026-10-11T01:10:00Z' },
+]
+
 function Pantalla() {
   const espera = () => new Promise((ok) => setTimeout(ok, 500))
   const servicio = useMemo((): ReturnType<typeof crearServicioPerfil> => ({
@@ -38,6 +43,13 @@ function Pantalla() {
       await espera()
       avisos = avisos.map((a) => (a.clave === clave ? { ...a, encendido: valor } : a))
       return { ok: true, datos: { estado: 'guardado' } }
+    },
+    // Los sitios vetados (17-10): dos, y «Quitar» los quita de verdad en el catálogo.
+    sitios: async () => ({ ok: true, datos: { sitios } }),
+    quitarSitio: async (id) => {
+      await espera()
+      sitios = sitios.filter((x) => x.id !== id)
+      return { ok: true, datos: { estado: 'quitado' } }
     },
     exclusiones: async () => ({
       ok: true,

@@ -141,3 +141,28 @@ test('una pantalla con todo ya contestado se salta, adelante y atrás', async ()
   assert.equal(vecina({ pantalla: 2, heredadas: ['b'] }, preguntas, -1), 0)
   assert.equal(vecina({ pantalla: 2, heredadas: [] }, preguntas, 1), null, 'no hay más: es la última')
 })
+
+test('la bebida (18-10): «no tomo alcohol» ata «¿y qué tomas?», y al soltar solo se borra lo que pusimos', async () => {
+  const { atar, bloqueadaPorAtadura } = await import('../src/cuestionario/maquina')
+  const B = armar(
+    [
+      { clave: 'copas', enunciado: '¿Tomas alcohol cuando sales?', ayuda: null, tipo: 'single', opciones: op('nada', 'una', 'algunas', 'varias'), min: null, max: null, obligatoria: false, pantalla: 4 },
+      { clave: 'bebidas', enunciado: '¿Y qué tomas?', ayuda: null, tipo: 'multi', opciones: op('vino', 'ron', 'sin-alcohol'), min: null, max: 3, exclusiva: 'sin-alcohol', obligatoria: false, pantalla: 4 },
+    ],
+    null,
+  )!
+  const [copas, bebidas] = B
+  let e = elegir(inicial(), copas, 'nada')
+  assert.deepEqual(e.r.bebidas, ['sin-alcohol'], 'se pone sola en «sin alcohol»')
+  assert.equal(alternar(e, bebidas, 'ron'), e, 'no se puede marcar ron')
+  assert.equal(alternar(e, bebidas, 'sin-alcohol'), e, 'ni quitar «sin alcohol»')
+  assert.equal(bloqueadaPorAtadura(e.r, 'bebidas', 'vino'), true)
+  assert.equal(bloqueadaPorAtadura(e.r, 'bebidas', 'sin-alcohol'), false)
+  e = elegir(e, copas, 'una')
+  assert.equal(e.r.bebidas, undefined, 'al decir que sí toma, se suelta y se vacía')
+  e = alternar(e, bebidas, 'vino')
+  e = elegir(e, copas, 'varias')
+  assert.deepEqual(e.r.bebidas, ['vino'], 'lo que eligió a mano es suyo y no se toca')
+  assert.deepEqual(atar({ bebidas: ['sin-alcohol', 'x'] }, 'una'), { bebidas: ['sin-alcohol', 'x'] })
+  assert.equal(nombresDe(['copas', 'bebidas']).join(', '), 'si tomas, qué tomas')
+})

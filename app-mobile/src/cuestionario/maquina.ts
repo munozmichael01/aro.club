@@ -208,9 +208,38 @@ export function textoContinuar(e: Estado, preguntas: Pregunta[], hoy = new Date(
   return f.length === 1 ? T.boton.faltaUna(T.corto[f[0].clave]) : T.boton.faltan(f.length)
 }
 
+/**
+ * La única pregunta atada a otra: la bebida (Michael, 18-10). Quien dice
+ * que no toma alcohol no se puede quedar eligiendo ron: «¿Y qué tomas?» se
+ * pone sola en «sin alcohol» y lo demás se apaga. Si después dice que sí
+ * toma, se suelta y se vacía, pero SOLO si lo que había es lo que pusimos
+ * nosotros: lo que eligió a mano es suyo. El servidor hace lo mismo al
+ * guardar `copas` (`src/lib/questionnaire/atar.ts`), así que `bebidas` no se
+ * manda aparte: dos envíos seguidos se pisan en el trigger de los rasgos.
+ */
+export const ATADURA = { pregunta: 'copas', nada: 'nada', atada: 'bebidas', sin: 'sin-alcohol' } as const
+
+export const atada = (r: Record<string, unknown>) => r[ATADURA.pregunta] === ATADURA.nada
+
+/** Si esa opción está apagada por la atadura: todas las de `bebidas` menos «sin alcohol». */
+export const bloqueadaPorAtadura = (r: Record<string, unknown>, clave: string, valor: string) =>
+  clave === ATADURA.atada && atada(r) && valor !== ATADURA.sin
+
+/** Las respuestas después de cambiar `copas`: ata o suelta `bebidas`. */
+export function atar<R extends Record<string, unknown>>(r: R, valorCopas: unknown): R {
+  if (valorCopas === ATADURA.nada) return { ...r, [ATADURA.atada]: [ATADURA.sin] }
+  const b = r[ATADURA.atada]
+  if (Array.isArray(b) && b.length === 1 && b[0] === ATADURA.sin) {
+    const { [ATADURA.atada]: _fuera, ...resto } = r
+    return resto as R
+  }
+  return r
+}
+
 /** Una de una sola: el código elegido. */
 export function elegir(e: Estado, q: Pregunta, valor: string): Estado {
-  return { ...e, r: { ...e.r, [q.clave]: valor } }
+  const r = { ...e.r, [q.clave]: valor }
+  return { ...e, r: q.clave === ATADURA.pregunta ? atar(r, valor) : r }
 }
 
 /** Si «cualquier zona» cuenta como marcada: están todas las reales. */
@@ -227,6 +256,8 @@ export const todasMarcadas = (e: Estado, q: Pregunta) => {
  * no deja marcar.
  */
 export function alternar(e: Estado, q: Pregunta, valor: string | null): Estado {
+  // Atada a «no tomo alcohol»: ni se marca otra ni se quita «sin alcohol».
+  if (q.clave === ATADURA.atada && atada(e.r)) return e
   const sel = (e.r[q.clave] as string[] | undefined) ?? []
   let nueva: string[]
   if (valor === null) {

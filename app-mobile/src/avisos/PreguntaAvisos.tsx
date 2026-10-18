@@ -67,7 +67,7 @@ export function usePreguntaAvisos(zona?: string | null) {
     cerrar.current?.()
     cerrar.current = null
   }, [])
-  return { preguntar, hoja: <PreguntaAvisos momento={momento} zona={zona} alCerrar={alCerrar} /> }
+  return { preguntar, abierta: momento !== null, hoja: <PreguntaAvisos momento={momento} zona={zona} alCerrar={alCerrar} /> }
 }
 
 const estilos = StyleSheet.create({

@@ -10,8 +10,9 @@ import { reglas } from '../reglas'
 import { MESES_CORTOS } from '../texto/fechas'
 import * as F from '../texto/fechas'
 import * as T from '../texto/perfil'
+import * as C from '../cuestionario/maquina'
 import * as M from './maquina'
-import type { crearServicioPerfil, Exclusion } from './servicio'
+import type { crearServicioPerfil, Exclusion, SitioVetado } from './servicio'
 
 type Servicio = ReturnType<typeof crearServicioPerfil>
 
@@ -40,6 +41,9 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
   const [excl, setExcl] = useState<Exclusion[] | null>(null)
   const [quitando, setQuitando] = useState<string | null>(null)
   const [falloExcl, setFalloExcl] = useState('')
+  const [sitios, setSitios] = useState<SitioVetado[] | null>(null)
+  const [quitandoSitio, setQuitandoSitio] = useState<string | null>(null)
+  const [falloSitios, setFalloSitios] = useState('')
 
   const [avisos, setAvisos] = useState<M.Aviso[]>([])
   const [whatsappDesde, setWhatsappDesde] = useState<string | null>(null)
@@ -63,6 +67,11 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
     setExcl(r.ok ? r.datos.exclusiones : [])
     setQuitando(null)
   }, [servicio])
+  const leerSitios = useCallback(async () => {
+    const r = await servicio.sitios()
+    setSitios(r.ok ? (r.datos.sitios ?? []) : [])
+    setQuitandoSitio(null)
+  }, [servicio])
   const leerAvisos = useCallback(async () => {
     const r = await servicio.avisos()
     if (r.ok) {
@@ -76,7 +85,10 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
     const r = await servicio.ciudades()
     if (r.ok) setCiudades(r.datos.ciudades ?? [])
   }, [servicio])
-  const todo = useCallback(() => Promise.all([leerPerfil(), leerExcl(), leerAvisos(), leerCiudades()]), [leerPerfil, leerExcl, leerAvisos, leerCiudades])
+  const todo = useCallback(
+    () => Promise.all([leerPerfil(), leerExcl(), leerSitios(), leerAvisos(), leerCiudades()]),
+    [leerPerfil, leerExcl, leerSitios, leerAvisos, leerCiudades],
+  )
 
   // Al entrar y al volver a la pestaña (una exclusión puesta en Mi mesa aparece aquí).
   useFocusEffect(
@@ -133,6 +145,19 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
       return setFalloExcl(r.error)
     }
     leerExcl()
+  }
+
+  // Se relee en vez de quitarlo a mano: lo que se ve es lo que hay.
+  const quitarSitio = async (id: string) => {
+    if (quitandoSitio) return
+    setQuitandoSitio(id)
+    setFalloSitios('')
+    const r = await servicio.quitarSitio(id)
+    if (!r.ok) {
+      setQuitandoSitio(null)
+      return setFalloSitios(r.error)
+    }
+    leerSitios()
   }
 
   const darDeBaja = async () => {
@@ -217,6 +242,7 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
                     alAbrir={() => abrir(c)}
                     alCambiar={setBorrador}
                     alGuardar={() => guardar(c)}
+                    atada={c.clave === C.ATADURA.atada && C.atada(vals)}
                   />
                 ))}
               </View>
@@ -247,6 +273,39 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
           {falloExcl ? (
             <View style={{ marginTop: 10 }}>
               <Aviso tono="ojo">{falloExcl}</Aviso>
+            </View>
+          ) : null}
+        </Seccion>
+
+        {/* Debajo del de personas: es la misma idea, una preferencia suya que se puede deshacer (17-10). */}
+        <Seccion titulo={T.sitios.titulo} nota={T.sitios.nota}>
+          {sitios && sitios.length ? (
+            <View style={estilos.caja}>
+              {sitios.map((x, i) => {
+                const p = reglas.partesDe(x.desde)
+                return (
+                  <View key={x.id} style={[estilos.fila, i < sitios.length - 1 ? estilos.separada : null]}>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Texto variante="rotulo">{x.nombre}</Texto>
+                      {p ? (
+                        <Texto variante="cuerpoChico" tono="secundario" style={{ marginTop: 3 }}>
+                          {T.sitios.desde(p.numero, p.mes)}
+                        </Texto>
+                      ) : null}
+                    </View>
+                    <Boton tipo="secundario" texto={T.sitios.quitar(quitandoSitio === x.id)} onPress={() => quitarSitio(x.id)} />
+                  </View>
+                )
+              })}
+            </View>
+          ) : sitios ? (
+            <View style={[estilos.caja, { padding: 18 }]}>
+              <Texto variante="cuerpo">{T.sitios.vacio}</Texto>
+            </View>
+          ) : null}
+          {falloSitios ? (
+            <View style={{ marginTop: 10 }}>
+              <Aviso tono="ojo">{falloSitios}</Aviso>
             </View>
           ) : null}
         </Seccion>
@@ -429,6 +488,8 @@ function FilaCampo(p: {
   alAbrir: () => void
   alCambiar: (v: M.Valor) => void
   alGuardar: () => void
+  /** «¿Y qué tomas?» con «no tomo alcohol» (18-10): queda en «sin alcohol» y lo demás apagado. */
+  atada?: boolean
 }) {
   const { c, abierta, borrador } = p
   const falta = abierta ? M.falta(c, borrador) : null
@@ -489,6 +550,8 @@ function FilaCampo(p: {
                     unica={c.tipo === 'unica'}
                     marcada={marcada}
                     enTope={c.tipo === 'multi' && !!c.max && sel.length >= c.max && !marcada}
+                    apagada={!!p.atada && cod !== C.ATADURA.sin}
+                    fija={!!p.atada && cod === C.ATADURA.sin && marcada}
                     onPress={() => p.alCambiar(M.marcar(c, borrador, cod))}
                   />
                 )

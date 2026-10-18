@@ -415,6 +415,18 @@ líneas, que Michael reenvía. Ya hecho de su lado:
 - el cuerpo de los correos que entran a `hola@aro.club`: el webhook de
   Resend no lo trae.
 
+Desde el 18-10 cada despliegue suyo que cambie lo que ve la persona trae un
+bloque «Para Móvil» (campo o endpoint, qué pasa si no viene, copy literal y
+pantalla de la web). El contrato de lo del 16 al 18-10 está en
+`Entregas/espejo/CONTRATO-16-18.md` y ya está en la app: grabación
+(`Avisos.tsx`), ajustes de última hora, «Esta vez no entraste», gasto, veto
+de sitio y texto libre en la encuesta, «Sitios a los que no vuelves» en
+Perfil, la bebida atada (`ATADURA` en `cuestionario/maquina.ts`) y las
+preguntas nuevas al reservar (`cuenta/PreguntasNuevas.tsx`). Todo se ve en
+los catálogos: `/catalogo-mesa?estado=graba|ajuste-ambos|sin-abono|pasada&tope=1`,
+`/catalogo-perfil`, `/catalogo-cuenta?estado=reservado&nuevas=1` y
+`/catalogo-cuestionario?pantalla=3`.
+
 La cuenta de prueba de Michael `munozmichael01+app@gmail.com` se mantiene
 hasta que él termine de probar; después se borra con sus ficheros de
 `verificaciones/<id>/`. Nadie aprueba su verificación en el panel.

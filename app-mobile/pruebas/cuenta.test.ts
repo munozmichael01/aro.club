@@ -196,3 +196,31 @@ test('el precio de cada fecha sale del evento, en ref', async () => {
   assert.equal(M.precioDe({ precioUsd: 12.5 }), '12,50 ref')
   assert.match(M.precioDe({}), / ref$/)
 })
+
+test('dos fechas a la misma hora (18-10): van por cuándo se crearon, nunca por zona', async () => {
+  const C = await import('../src/cuenta/maquina')
+  const base = { formato: 'dinner', empiezaEn: '2026-10-23T23:30:00Z', cierraEn: null, creditos: 1, apuntados: 0, cerrada: false, mia: false, zonaHoraria: 'America/Caracas' }
+  const fechas = [
+    { ...base, id: 'mercedes', zonas: ['Las Mercedes'], creadaEn: '2026-10-18T15:00:00Z' },
+    { ...base, id: 'chacao', zonas: ['Chacao', 'Los Palos Grandes'], creadaEn: '2026-10-12T10:00:00Z' },
+  ]
+  const filas = C.agenda(fechas, null, Date.parse('2026-10-18T12:00:00Z')).flatMap((g) => g.filas.map((f) => f.id))
+  assert.deepEqual(filas, ['chacao', 'mercedes'])
+  const alReves = C.agenda([...fechas].reverse(), null, Date.parse('2026-10-18T12:00:00Z')).flatMap((g) => g.filas.map((f) => f.id))
+  assert.deepEqual(alReves, filas, 'el mismo orden llegue como llegue')
+})
+
+test('las preguntas nuevas al reservar (18-10): mismas reglas que el cuestionario, y en blanco no se manda', async () => {
+  const C = await import('../src/cuenta/maquina')
+  const copas = { clave: 'copas', enunciado: '', ayuda: null, tipo: 'single', opciones: [], max: null, exclusiva: null }
+  const bebidas = { clave: 'bebidas', enunciado: '', ayuda: null, tipo: 'multi', opciones: [], max: 3, exclusiva: 'sin-alcohol' }
+  let e = C.marcarNueva({}, copas, 'nada')
+  assert.deepEqual(e, { copas: 'nada', bebidas: ['sin-alcohol'] })
+  assert.equal(C.marcarNueva(e, bebidas, 'ron'), e, 'atada: no se marca ron')
+  e = C.marcarNueva(e, copas, 'nada')
+  assert.equal(e.copas, null, 'tocar otra vez la de una la desmarca')
+  assert.equal(e.bebidas, undefined, 'y suelta «sin alcohol»')
+  e = C.marcarNueva(C.marcarNueva(C.marcarNueva(C.marcarNueva(e, bebidas, 'vino'), bebidas, 'ron'), bebidas, 'ginebra'), bebidas, 'tequila')
+  assert.deepEqual(e.bebidas, ['vino', 'ron', 'ginebra'], 'tope de tres')
+  assert.deepEqual(C.paraMandar({ copas: null, bebidas: [], otra: 'x' }), [['otra', 'x']])
+})

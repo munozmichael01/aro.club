@@ -35,6 +35,9 @@ const con = (method: string, cuerpo: object): RequestInit => ({
 
 export type Exclusion = { id: string; nombre: string; porQue: string; sePuedeQuitar: boolean }
 
+/** Un sitio vetado: `id` es el del restaurante, `desde` cuándo lo marcó (17-10). */
+export type SitioVetado = { id: string; nombre: string; desde: string | null }
+
 export function crearServicioPerfil(api: Api) {
   return {
     perfil: () => intentar<DeServidor>(() => api.pedir('/mi-perfil'), T.sinRespuesta.cargar),
@@ -45,6 +48,10 @@ export function crearServicioPerfil(api: Api) {
     aviso: (clave: string, valor: boolean) => intentar<{ estado: string }>(() => api.pedir('/mis-avisos', con('POST', { [clave]: valor })), T.avisos.noGuardado),
     exclusiones: () => intentar<{ exclusiones: Exclusion[] }>(() => api.pedir('/mis-exclusiones'), T.sinRespuesta.cargar),
     quitarExclusion: (aQuien: string) => intentar<{ ok?: boolean }>(() => api.pedir('/mis-exclusiones', con('DELETE', { aQuien })), T.exclusiones.noQuitado),
+    sitios: () => intentar<{ sitios: SitioVetado[] }>(() => api.pedir('/mis-sitios'), T.sinRespuesta.cargar),
+    /** Limpia todas sus filas de ese local: lo que dice es «ahí no», no «esa noche no». */
+    quitarSitio: (restauranteId: string) =>
+      intentar<{ estado: string }>(() => api.pedir('/mis-sitios', con('POST', { restauranteId, quitar: true })), T.sitios.noQuitado),
     baja: () => intentar<{ estado: string }>(() => api.pedir('/baja', con('POST', { confirmacion: 'BAJA' })), T.baja.noPudimos),
   }
 }

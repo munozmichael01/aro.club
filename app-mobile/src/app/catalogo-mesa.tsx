@@ -11,7 +11,9 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Mi mesa con un servidor SIMULADO, para ver cada fase en el navegador:
- * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|cerrada|abierta|antes|en-curso|sin-foto|terminada|unica|guion|movimiento|pasada|valorada|fallo
+ * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|sin-abono|cerrada|abierta|antes|en-curso|sin-foto|terminada|unica|guion|movimiento|pasada|valorada|fallo
+ * Lo del 16-10: graba|grabado|grabado-movimiento (la grabación) y ajuste-cancelo|ajuste-suma|ajuste-ambos|ajuste-movido.
+ * ?tope=1 en `pasada`: el veto del sitio no cabe (ya tiene dos).
  * Catálogo de desarrollo: no se enlaza desde ningún sitio. La forma imita la
  * real (pruebas/mesa-contra-la-api.mjs); las fechas se cuentan desde ahora.
  */
@@ -40,7 +42,8 @@ const ABIERTA: DeServidor = {
 const ESTADOS: Record<string, DeServidor> = {
   revision: { fase: 'sin-reserva', estado: 'pending_verification' },
   'sin-reserva': { fase: 'sin-reserva', estado: 'active' },
-  'sin-mesa': { fase: 'sin-mesa', formato: 'dinner', empiezaEn: en(4), zonaHoraria: 'America/Caracas' },
+  'sin-mesa': { fase: 'sin-mesa', formato: 'dinner', empiezaEn: en(4), zonaHoraria: 'America/Caracas', creditoDevuelto: true },
+  'sin-abono': { fase: 'sin-mesa', formato: 'dinner', empiezaEn: en(4), zonaHoraria: 'America/Caracas', creditoDevuelto: false },
   cerrada: { fase: 'cerrada', formato: 'dinner', zonaHoraria: 'America/Caracas', revelaEn: en(26), empiezaEn: en(34), zonas: ['Las Mercedes', 'Chacao', 'Altamira'] },
   abierta: ABIERTA,
   movimiento: { ...ABIERTA, formato: 'walk', restaurante: 'Entrada de Sabas Nieves', direccion: 'Av. Boyacá, Altamira', actividad: { ruta: 'Sabas Nieves → La Silla', km: 7, minutos: 150, nivel: 'medio' } },
@@ -56,12 +59,21 @@ const ESTADOS: Record<string, DeServidor> = {
   'sin-foto': { ...ABIERTA, empiezaEn: en(-37 / 60), paraSeguir: [] },
   terminada: { ...ABIERTA, empiezaEn: en(-125 / 60), fotoEntrada: FACHADA, paraSeguir: SITIOS },
   unica: { ...ABIERTA, mesaUnica: true, fotoEntrada: FACHADA },
+  // La grabación: sin contestar (sale a los 6 s), y ya contestada.
+  graba: { ...ABIERTA, fotoEntrada: FACHADA, eventoId: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', grabamos: true, permisoGrabacion: null },
+  grabado: { ...ABIERTA, fotoEntrada: FACHADA, eventoId: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', grabamos: true, permisoGrabacion: true },
+  'grabado-movimiento': { ...ABIERTA, formato: 'walk', eventoId: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', grabamos: true, permisoGrabacion: false },
+  // Los ajustes de última hora.
+  'ajuste-cancelo': { ...ABIERTA, companeros: CINCO.slice(0, 4), ajustes: { alguienCancelo: true, sonCuantos: 5, caben: 6, teMovimos: false, seSumoAlguien: false } },
+  'ajuste-suma': { ...ABIERTA, ajustes: { alguienCancelo: false, sonCuantos: 6, caben: 6, teMovimos: false, seSumoAlguien: true } },
+  'ajuste-ambos': { ...ABIERTA, ajustes: { alguienCancelo: true, sonCuantos: 6, caben: 6, teMovimos: false, seSumoAlguien: true } },
+  'ajuste-movido': { ...ABIERTA, ajustes: { alguienCancelo: false, sonCuantos: 6, caben: 6, teMovimos: true, seSumoAlguien: false } },
   pasada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10) },
   valorada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10), yaValoro: true, yaBloqueados: [CINCO[2].id], yaReporto: CINCO[2].id },
 }
 
 function Pantalla() {
-  const { estado = 'abierta', captura } = useLocalSearchParams<{ estado?: string; captura?: string }>()
+  const { estado = 'abierta', captura, tope } = useLocalSearchParams<{ estado?: string; captura?: string; tope?: string }>()
   const espera = () => new Promise((ok) => setTimeout(ok, 600))
   const servicio = useMemo((): ReturnType<typeof crearServicioMesa> => ({
     async mesa() {
@@ -74,15 +86,21 @@ function Pantalla() {
       await espera()
       return { ok: true, datos: { avisado: true, minutos } }
     },
-    async valorar() {
+    async valorar(_mesa, v) {
       await espera()
-      return { ok: true, datos: true }
+      console.log('[catálogo] valorar', v)
+      const avisoSitio = tope && v.noRepetirSitio ? 'Ya tienes 2 sitios marcados: La Ventana y Madre. Tu valoración sí quedó guardada. Si quieres marcar este, quita uno en tu perfil.' : null
+      return { ok: true, datos: { avisoSitio } }
+    },
+    async grabacion(_evento, permite) {
+      await espera()
+      return { ok: true, datos: { estado: 'guardado', permite } }
     },
     async reportar() {
       await espera()
       return { ok: true, datos: { ok: true } }
     },
-  }), [estado, captura]) // estable: si no, la carga se relanzaría en cada render
+  }), [estado, captura, tope]) // estable: si no, la carga se relanzaría en cada render
   return (
     <MiMesa
       key={estado}

@@ -78,8 +78,21 @@ const MESA: MiMesa = {
   ],
 }
 
+/** Las dos de bebida tal como las manda `/api/mi-cuenta` (18-10). */
+const PREGUNTAS_NUEVAS = [
+  {
+    clave: 'copas', enunciado: '¿Tomas alcohol cuando sales?', tipo: 'single', max: null, exclusiva: null,
+    ayuda: 'Con esto elegimos el sitio y sabemos qué pedirle al restaurante. No se muestra en tu perfil ni lo ve nadie de tu mesa.',
+    opciones: [{ value: 'nada', label: 'No tomo alcohol' }, { value: 'una', label: 'Una copa' }, { value: 'algunas', label: 'Algunas' }, { value: 'varias', label: 'Varias' }],
+  },
+  {
+    clave: 'bebidas', enunciado: '¿Y qué tomas?', tipo: 'multi', max: 3, exclusiva: 'sin-alcohol', ayuda: 'Hasta tres.',
+    opciones: ['vino', 'cerveza', 'ron', 'whisky', 'vodka', 'ginebra', 'tequila', 'cocteles', 'aperitivos', 'espumoso'].map((v) => ({ value: v, label: v.charAt(0).toUpperCase() + v.slice(1) })).concat([{ value: 'sin-alcohol', label: 'Sin alcohol' }]),
+  },
+]
+
 function Pantalla() {
-  const { estado = 'reservar', captura, varios, ciudad } = useLocalSearchParams<{ estado?: string; captura?: string; varios?: string; ciudad?: string }>()
+  const { estado = 'reservar', captura, varios, ciudad, nuevas } = useLocalSearchParams<{ estado?: string; captura?: string; varios?: string; ciudad?: string; nuevas?: string }>()
   const servicio = useMemo((): ReturnType<typeof crearServicioCuenta> => ({
     async cuenta() {
       if (estado === 'cargando') return new Promise(() => {})
@@ -87,6 +100,8 @@ function Pantalla() {
       const d = simulada(estado as EstadoCuenta)
       // ?ciudad=Valencia: vive en una ciudad que aún no abre (sin agenda ni próxima fecha).
       if (ciudad) return { ok: true, datos: { ...d, ciudad: { slug: 'x', nombre: ciudad, abierta: false }, agenda: [], proximaFecha: null } }
+      // ?nuevas=1: las dos preguntas de bebida sin contestar, al reservar (18-10).
+      if (nuevas) return { ok: true, datos: { ...d, preguntasNuevas: PREGUNTAS_NUEVAS } }
       return { ok: true, datos: captura ? deCaptura(d, !!varios) : d }
     },
     async mesa() {
@@ -95,11 +110,19 @@ function Pantalla() {
     async exclusiones() {
       return { ok: true, datos: { exclusiones: [] } }
     },
+    async responder(clave, valor) {
+      await new Promise((ok) => setTimeout(ok, 300))
+      console.log('[catálogo] responder', clave, valor)
+      return { ok: true, datos: { ok: true } }
+    },
+    async preguntasVistas() {
+      return { ok: true, datos: { ok: true } }
+    },
     async reservar() {
       await new Promise((ok) => setTimeout(ok, 700))
       return { ok: false, error: 'No te quedan encuentros.' }
     },
-  }), [estado, captura, varios, ciudad]) // estable: si no, la carga se relanzaría en cada render
+  }), [estado, captura, varios, ciudad, nuevas]) // estable: si no, la carga se relanzaría en cada render
   return (
     <Inicio
       key={estado}

@@ -38,6 +38,18 @@ export function crearServicioCuenta(api: Api) {
     /** La mesa, de la MISMA fuente que Mi mesa: dos sitios calculando «cuál es mi mesa» acaban discrepando. */
     mesa: () => intentar<MiMesa>(() => api.pedir('/mi-mesa'), T.sinRespuesta.cargar),
     exclusiones: () => intentar<{ exclusiones: unknown[] }>(() => api.pedir('/mis-exclusiones'), T.sinRespuesta.cargar),
+    /** Una respuesta de las preguntas nuevas: la misma puerta que Mi perfil, que valida contra el catálogo. */
+    responder: (clave: string, valor: unknown) =>
+      intentar<{ ok?: boolean }>(
+        () => api.pedir('/mi-perfil', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clave, valor }) }),
+        T.sinRespuesta.cargar,
+      ),
+    /** Se conteste o no, no vuelve a salir por esta reserva. */
+    preguntasVistas: () =>
+      intentar<{ ok?: boolean }>(
+        () => api.pedir('/mi-cuenta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accion: 'preguntas-vistas' }) }),
+        T.sinRespuesta.cargar,
+      ),
     reservar: (eventoId: string) =>
       intentar<{ ok?: boolean }>(
         () =>

@@ -36,7 +36,12 @@ const json = (cuerpo: object): RequestInit => ({
 })
 
 export function crearServicioMesa(api: Api) {
-  const despues = (cuerpo: object, porDefecto: string) => intentar<{ ok?: boolean }>(() => api.pedir('/despues', json(cuerpo)), porDefecto, porDefecto)
+  const despues = (cuerpo: object, porDefecto: string) =>
+    intentar<{ ok?: boolean; estado?: string; sitioNoGuardado?: { motivo?: string; texto?: string } | null }>(
+      () => api.pedir('/despues', json(cuerpo)),
+      porDefecto,
+      porDefecto,
+    )
   return {
     mesa: () => intentar<DeServidor>(() => api.pedir('/mi-mesa'), T.sinRespuesta.cargar),
 
@@ -47,16 +52,30 @@ export function crearServicioMesa(api: Api) {
         T.tarde.sinRed,
       ),
 
-    /** Valorar y, si marcó a alguien, bloquear. El acuse solo cuando el servidor confirma las dos. */
-    async valorar(mesaId: string, v: Valoracion): Promise<Resultado<true>> {
+    /**
+     * Valorar y, si marcó a alguien, bloquear. El acuse solo cuando el
+     * servidor confirma las dos. Si el veto del sitio no cupo (ya tiene dos),
+     * la valoración SÍ se guardó: vuelve el texto para enseñarlo dentro del
+     * acuse, no como error (15a918c).
+     */
+    async valorar(mesaId: string, v: Valoracion): Promise<Resultado<{ avisoSitio: string | null }>> {
       const r = await despues(cuerpoValorar(mesaId, v), T.pasada.noGuardado)
       if (!r.ok) return r
+      const avisoSitio = r.datos.sitioNoGuardado?.texto || null
       if (v.bloqueados.length) {
         const b = await despues({ accion: 'bloquear', mesaId, aQuien: v.bloqueados }, T.pasada.noGuardado)
         if (!b.ok) return b
       }
-      return { ok: true, datos: true }
+      return { ok: true, datos: { avisoSitio } }
     },
+
+    /** Sí, no, o `null` para volver a «no he contestado». Se puede cambiar siempre. */
+    grabacion: (eventoId: string, permite: boolean | null) =>
+      intentar<{ estado?: string; permite?: boolean | null }>(
+        () => api.pedir('/grabacion', json({ eventoId, permite })),
+        T.grabacion.noGuardado,
+        T.grabacion.noGuardado,
+      ),
 
     reportar: (mesaId: string, aQuien: string, motivo: string) =>
       despues({ accion: 'reportar', mesaId, aQuien, motivo }, T.reporte.noRegistrado),

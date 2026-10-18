@@ -23,11 +23,19 @@ export const vacia = {
     bajada: 'Lo mira una persona, no un programa. Suele estar en menos de 24 horas y te avisamos por correo en cuanto esté.',
     nota: 'Mientras tanto no tienes que hacer nada. En cuanto te verifiquemos podrás apartar puesto en la próxima fecha.',
   },
+  /**
+   * `sin-mesa` es DESPUÉS de la revelación y sin mesa (17-10, como la web):
+   * la espera de antes es `cerrada`. La bajada no culpa a la persona; la
+   * primera versión sí, y Michael la tumbó.
+   */
   sinMesa: {
-    sello: 'PUESTO APARTADO',
-    titulo: 'Tu puesto está apartado.',
-    bajada: (elMismoDia: string) => `Ya estás dentro de esta fecha. Falta armar los grupos, y eso se hace ${elMismoDia}.`,
-    nota: 'En cuanto estén, se abre todo: el sitio, la dirección, tu número de mesa y los otros cinco.',
+    sello: 'ESTA VEZ NO',
+    titulo: 'Esta vez no entraste.',
+    bajada: 'No salió una mesa en la que encajaras: los grupos se arman por zona, por días y por edad, y esta vez no cuadró.',
+    nota: 'Tu crédito volvió entero a tu cuenta y no caduca: la próxima fecha la pagas con él.',
+    /** El abono no está (17-10: cinco personas leyeron que había vuelto y no). */
+    notaSinAbono: 'Tu crédito sigue descontado. Lo estamos arreglando hoy mismo: si no lo ves de vuelta esta tarde, escríbenos.',
+    accion: 'Apuntarme a la próxima',
   },
   sinReserva: {
     sello: 'TODAVÍA NO',
@@ -72,6 +80,33 @@ export const abierta = {
   nivel: (n: string) => `nivel ${n}`,
 }
 
+/** «¿Te podemos grabar?» (16-10), palabra por palabra de la web. */
+export const grabacion = {
+  cinta: 'HOY, EN LA ZONA',
+  titulo: '¿Te podemos grabar?',
+  cuerpo: 'Esta noche estamos grabando contenido por la zona. Si dices que no, no te grabamos y no pasa nada: la cena es igual.',
+  si: 'Sí, pueden',
+  no: 'No, gracias',
+  guardando: 'Guardando…',
+  pie: 'Puedes cambiarlo cuando quieras, también en la cena.',
+  cerrar: 'Ahora no',
+  dijisteSi: 'Dijiste que sí te podemos grabar.',
+  dijisteNo: 'Dijiste que prefieres no salir en cámara.',
+  cambiarlo: 'Cambiarlo',
+  noGuardado: 'No pudimos guardarlo. Vuelve a intentarlo.',
+}
+
+/** «Hubo ajustes de última hora» (16-10), palabra por palabra de la web. */
+export const ajustes = {
+  titulo: 'Hubo ajustes de última hora',
+  teMovimos: 'Te cambiamos de mesa esta tarde y te lo escribimos por correo. Esto es lo que vale: el sitio y la gente de abajo.',
+  cancelYSuma: (cuantos: string) => `Alguien canceló hoy y movimos a otra persona a tu mesa, que va marcada abajo. Son ${cuantos}.`,
+  seSuma: 'Se suma alguien que no estaba esta mañana, y va marcado abajo. Lo demás no cambia.',
+  cancelo: (cuantos: string) => `Alguien canceló después de decirte con quién cenabas. Son ${cuantos}, y el sitio y la hora no cambian.`,
+  enLetra: ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho'],
+  entendido: 'Entendido',
+}
+
 export const tarde = {
   titulo: '¿Cuánto te falta?',
   nota: (esMesa: boolean) => `Se lo decimos a${esMesa ? ' la mesa' : 'l grupo'}. Nadie se queda mirando la puerta.`,
@@ -109,6 +144,21 @@ export const pasada = {
   volverias: '¿Volverías a Aro Club?',
   si: 'Sí, volvería',
   no: 'No, no volvería',
+  /** Del sitio, así que va con las del sitio y antes del texto libre (17-10). */
+  gasto: '¿Cuánto gastaste?',
+  notaGasto: (precio: string) => `Sin contar los ${precio} de tu plaza. Opcional, y sirve para elegir mejor el sitio la próxima vez.`,
+  /** [texto, punto medio]: se manda el punto medio, no el índice. */
+  tramosGasto: [
+    ['Menos de 15', 10],
+    ['15 a 25', 20],
+    ['25 a 40', 32],
+    ['Más de 40', 50],
+  ] as [string, number][],
+  noRepetir: (marcado: boolean) => (marcado ? 'No me mandes más a este sitio ✓' : 'No me mandes más a este sitio'),
+  notaNoRepetir: 'Es tuyo y lo puedes quitar en tu perfil. Caben dos sitios a la vez.',
+  comentario: '¿Algo que quieras destacar o contarnos?',
+  notaComentario: 'Lo lee el equipo, no la mesa. Opcional, como todo lo demás.',
+  comentarioEjemplo: 'Lo que quieras',
   noCoincidir: '¿Alguien con quien preferirías no volver a coincidir?',
   notaBloquear: (v: Voz) =>
     `Opcional. No se le avisa a nadie, y no es una queja: si nadie te chocó, déjalo así. Solo deja de salir en ${v.tu}s ${v.unidades}.`,

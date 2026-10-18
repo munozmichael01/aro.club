@@ -23,6 +23,9 @@ const CATALOGO: CatalogoCompleto = {
     { ...base, clave: 'temas', enunciado: '¿De qué podrías hablar dos horas seguidas?', tipo: 'multi', min: 2, max: 4, opciones: op(['cocina', 'Cocina'], ['viajes', 'Viajes'], ['cine', 'Cine'], ['musica', 'Música'], ['libros', 'Libros']), pantalla: 3 },
     { ...base, clave: 'evitar', enunciado: '¿Hay algún tema que prefieras que no salga?', tipo: 'multi', obligatoria: false, exclusiva: 'ninguno', opciones: op(['politica', 'Política'], ['religion', 'Religión'], ['ninguno', 'Ninguno']), pantalla: 3 },
     { ...base, clave: 'gasto', enunciado: '¿Cuánto piensas gastar en la cena?', tipo: 'single', opciones: op(['20', 'Hasta 20 ref'], ['35', 'Hasta 35 ref']), pantalla: 4 },
+    // La bebida (18-10): opcionales, y «no tomo alcohol» ata la segunda.
+    { ...base, clave: 'copas', enunciado: '¿Tomas alcohol cuando sales?', tipo: 'single', obligatoria: false, opciones: op(['nada', 'No tomo alcohol'], ['una', 'Una copa'], ['algunas', 'Algunas'], ['varias', 'Varias']), pantalla: 4 },
+    { ...base, clave: 'bebidas', enunciado: '¿Y qué tomas?', tipo: 'multi', obligatoria: false, max: 3, exclusiva: 'sin-alcohol', opciones: op(['vino', 'Vino'], ['cerveza', 'Cerveza'], ['ron', 'Ron'], ['cocteles', 'Cocteles'], ['sin-alcohol', 'Sin alcohol']), pantalla: 4 },
     { ...base, clave: 'zonas', enunciado: '¿En qué zonas puedes asistir sin problema?', tipo: 'multi', min: 1, opciones: op(['mercedes', 'Las Mercedes'], ['chacao', 'Chacao'], ['rosal', 'El Rosal']), pantalla: 5 },
     { ...base, clave: 'idiomas', enunciado: '¿En qué idiomas conversas cómodo?', tipo: 'multi', min: 1, opciones: op(['es', 'Español'], ['en', 'Inglés']), pantalla: 5 },
   ],
@@ -41,7 +44,9 @@ const simulado: ReturnType<typeof crearServicioCuestionario> = {
   },
   async cargar() {
     await espera(120)
-    return { ok: true, datos: { respuestas: {}, heredadas: [], pantalla: 0, completado: false, faltan: faltan(), donde: '/datos' } }
+    // ?pantalla=3 en la web: empieza en esa pantalla (la de la bebida es la 3).
+    const desde = typeof window !== 'undefined' && window.location ? Number(new URLSearchParams(window.location.search).get('pantalla')) || 0 : 0
+    return { ok: true, datos: { respuestas: {}, heredadas: [], pantalla: desde, completado: false, faltan: faltan(), donde: '/datos' } }
   },
   async enviar(_lead, clave, valor) {
     await espera(60)

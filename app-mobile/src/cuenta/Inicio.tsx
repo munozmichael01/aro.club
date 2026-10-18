@@ -10,6 +10,7 @@ import * as F from '../texto/fechas'
 import * as T from '../texto/cuenta'
 import * as M from './maquina'
 import { Cabecera } from './Cabecera'
+import { PreguntasNuevas } from './PreguntasNuevas'
 import { Agenda, Atajos, Esqueleto, LoProximo, Pie, Seccion, TarjetaEstado, Valorar } from './Partes'
 import type { crearServicioCuenta } from './servicio'
 import { contarFormato } from './voz'
@@ -117,7 +118,11 @@ export function Inicio(p: {
     p.ir(destino)
   }
 
-  const { preguntar, hoja } = usePreguntaAvisos()
+  const { preguntar, abierta: avisosAbierta, hoja } = usePreguntaAvisos()
+  // Las preguntas nuevas al reservar (18-10): cerradas o guardadas, no vuelven por esta reserva.
+  const [preguntasCerradas, setPreguntasCerradas] = useState(false)
+  const reservaId = datos?.reserva?.id
+  useEffect(() => setPreguntasCerradas(false), [reservaId])
 
   // Cuarto momento: la primera vez que entra a su cuenta en la app, si nunca
   // se le preguntó (quien hizo todo en la web). Una vez cargado el Inicio, no
@@ -243,6 +248,17 @@ export function Inicio(p: {
         <Pie alPulsar={(ruta) => p.ir(ruta.startsWith('app:') ? ruta.slice(4) : `web:${ruta}`)} />
       </ScrollView>
       {hoja}
+      <PreguntasNuevas
+        preguntas={datos?.preguntasNuevas ?? []}
+        // Nunca a la vez que la pregunta de los avisos: dos hojas a la vez, en iOS, una no se abre.
+        visible={!preguntasCerradas && !avisosAbierta}
+        responder={servicio.responder}
+        vistas={servicio.preguntasVistas}
+        alTerminar={() => {
+          setPreguntasCerradas(true)
+          releer()
+        }}
+      />
     </View>
   )
 }

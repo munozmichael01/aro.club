@@ -28,6 +28,8 @@ type Props = {
   pieFuerte?: boolean
   /** Fija: se ve marcada y no se puede desmarcar. */
   fija?: boolean
+  /** Apagada: atenuada a .4 y sin responder al toque (la bebida atada a «no tomo alcohol»). */
+  apagada?: boolean
 }
 
 const TONOS = {
@@ -63,12 +65,12 @@ function Visto() {
   )
 }
 
-export function Opcion({ texto, marcada, onPress, unica, fondo = 'crema', enTope, pie, pieFuerte, fija }: Props) {
+export function Opcion({ texto, marcada, onPress, unica, fondo = 'crema', enTope, pie, pieFuerte, fija, apagada }: Props) {
   const t = TONOS[fondo]
   return (
     <Pressable
-      onPress={fija ? undefined : onPress}
-      aria-disabled={fija || undefined}
+      onPress={fija || apagada ? undefined : onPress}
+      aria-disabled={fija || apagada || undefined}
       accessibilityRole={unica ? 'radio' : 'checkbox'}
       aria-checked={marcada}
       style={[
@@ -77,7 +79,7 @@ export function Opcion({ texto, marcada, onPress, unica, fondo = 'crema', enTope
         {
           borderColor: marcada ? t.bordeMarcada : t.borde,
           backgroundColor: marcada ? t.fondoMarcada : unica ? t.fondoUnica : 'transparent',
-          opacity: enTope ? 0.45 : 1,
+          opacity: apagada ? 0.4 : enTope ? 0.45 : 1,
         },
       ]}
     >

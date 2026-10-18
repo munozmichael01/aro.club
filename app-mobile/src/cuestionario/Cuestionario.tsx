@@ -30,6 +30,9 @@ import {
   TOTAL_PANTALLAS,
   aReenviar,
   alternar,
+  ATADURA,
+  atada,
+  bloqueadaPorAtadura,
   armar,
   contestada,
   desdeServidor,
@@ -330,7 +333,11 @@ export function Cuestionario(p: {
                 ) : null}
                 {q.tipo === 'multi' && q.max ? (
                   <View style={{ marginTop: 9 }}>
-                    <Chip texto={T.contador(n, q.min, q.max)} destacado={n >= (q.min ?? 0)} />
+                    {q.clave === ATADURA.atada && atada(e.r) ? (
+                      <Chip texto={T.sinAlcoholComoDijiste} destacado />
+                    ) : (
+                      <Chip texto={T.contador(n, q.min, q.max)} destacado={n >= (q.min ?? 0)} />
+                    )}
                   </View>
                 ) : null}
 
@@ -389,6 +396,8 @@ export function Cuestionario(p: {
                           texto={o.label}
                           marcada={q.tipo === 'ficha' ? sel === o.valor : Array.isArray(sel) && sel.includes(o.valor)}
                           enTope={q.tipo === 'multi' && enTope(e, q, o.valor)}
+                          apagada={bloqueadaPorAtadura(e.r, q.clave, o.valor)}
+                          fija={q.clave === ATADURA.atada && atada(e.r) && o.valor === ATADURA.sin}
                           onPress={() => marcar(q, o.valor)}
                         />
                       ))}
