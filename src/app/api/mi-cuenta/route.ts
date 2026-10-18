@@ -277,7 +277,7 @@ export async function GET() {
   // gente.
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, created_at, grabacion')
+    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, created_at, grabacion, grabacion_requerida')
     // Las de prueba no son de nadie más que de quien las creó.
     .eq('es_prueba', false)
     // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
@@ -550,6 +550,9 @@ export async function GET() {
        * devuelve `/api/reservar`.
        */
       grabamos: !!(f as { grabacion?: boolean }).grabacion,
+      // Y si ese permiso es condición para apartar puesto. Lo que decide no
+      // es la altura —fecha o mesa— sino si está marcada como requerida.
+      permisoObligatorio: !!(f as { grabacion_requerida?: boolean }).grabacion_requerida,
       cierraEn: f.booking_closes_at,
       creditos: f.credit_cost ?? 1,
       // Lo que cuesta ESTA fecha. El botón de reservar lo escribía desde

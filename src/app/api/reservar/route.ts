@@ -60,7 +60,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion')
+    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion, grabacion_requerida')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -108,9 +108,11 @@ export async function GET(request: Request) {
       empiezaEn: evento.starts_at,
       cierraEn: evento.booking_closes_at,
       creditos: evento.credit_cost,
-      // Si esta fecha se graba entera. La pantalla lo necesita para pedir el
-      // permiso ANTES del botón, no para enterarse por un 409.
+      // Si esta fecha se graba entera, y si el permiso es CONDICIÓN. La
+      // pantalla lo necesita para pedirlo ANTES del botón, no para enterarse
+      // por un 409.
       grabamos: !!(evento as { grabacion?: boolean }).grabacion,
+      permisoObligatorio: !!(evento as { grabacion_requerida?: boolean }).grabacion_requerida,
     },
     // Solo las que abrimos. Las demás no se enseñan apagadas: una opción
     // que no se puede elegir es ruido, no información.
@@ -144,7 +146,7 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion')
+    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion, grabacion_requerida')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -161,7 +163,7 @@ export async function POST(request: Request) {
    * Quien diga que no, no se queda fuera del club: se queda fuera de ESTA
    * fecha, y hay otras sin cámara.
    */
-  if ((evento as { grabacion?: boolean }).grabacion && parsed.data.permiteGrabacion !== true) {
+  if ((evento as { grabacion_requerida?: boolean }).grabacion_requerida && parsed.data.permiteGrabacion !== true) {
     return NextResponse.json(
       {
         error: 'Esta cena la grabamos, así que para apartar puesto hace falta tu permiso.',
@@ -402,7 +404,9 @@ export async function POST(request: Request) {
         // Si la fecha se graba, el permiso que acaba de dar queda escrito en
         // su reserva: el mismo sitio donde vive el de la mesa, así que quien
         // graba lo lee igual que siempre.
-        ...((evento as { grabacion?: boolean }).grabacion ? { permiso_grabacion: true } : {}),
+        ...((evento as { grabacion_requerida?: boolean }).grabacion_requerida
+          ? { permiso_grabacion: true }
+          : {}),
       })
       .select('id')
       .single()

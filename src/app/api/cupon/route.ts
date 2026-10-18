@@ -31,6 +31,16 @@ import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
 const cuerpo = z.object({
   eventoId: z.string().uuid(),
   codigo: z.string().min(1).max(40),
+  /**
+   * El permiso de grabación, si la fecha se graba entera.
+   *
+   * La tercera puerta por la que se aparta un puesto, y se me había pasado:
+   * puse el candado en `/api/reservar` y en `/api/pago` y dejé esta abierta,
+   * así que un código canjeaba puesto en una fecha con cámara sin que nadie
+   * diera permiso. Lo vio el agente de la app preguntando «¿el cupón también
+   * aparta puesto?».
+   */
+  permiteGrabacion: z.boolean().optional(),
 })
 
 /** Mayúsculas y sin espacios: nadie teclea un código como está guardado. */
@@ -54,11 +64,23 @@ export async function POST(request: Request) {
   // --- la fecha ---------------------------------------------------------
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, status, credit_cost')
+    .select('id, starts_at, booking_closes_at, status, credit_cost, grabacion, grabacion_requerida')
     .eq('id', parsed.data.eventoId)
     .maybeSingle()
 
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
+
+  // El mismo candado que en las otras dos puertas: sin permiso no hay puesto
+  // en una fecha que se graba, se pague como se pague.
+  if ((evento as { grabacion_requerida?: boolean }).grabacion_requerida && parsed.data.permiteGrabacion !== true) {
+    return NextResponse.json(
+      {
+        error: 'Esta cena la grabamos, así que para apartar puesto hace falta tu permiso.',
+        motivo: 'falta-permiso-grabacion',
+      },
+      { status: 409 },
+    )
+  }
 
   if (new Date(evento.booking_closes_at).getTime() < Date.now()) {
     return NextResponse.json(
@@ -163,7 +185,14 @@ export async function POST(request: Request) {
   if (!bookingId) {
     const { data: creada, error } = await admin
       .from('bookings')
-      .insert({ event_id: evento.id, profile_id: user.id, status: 'pending_payment' })
+      .insert({
+        event_id: evento.id,
+        profile_id: user.id,
+        status: 'pending_payment',
+        ...((evento as { grabacion_requerida?: boolean }).grabacion_requerida
+          ? { permiso_grabacion: true }
+          : {}),
+      })
       .select('id')
       .single()
 

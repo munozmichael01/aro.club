@@ -736,10 +736,10 @@ class Component extends DCLogic {
      * sin ella, la del producto.
      */
     const piezas = (iso, zona) => window.AroReglas.partesDe(iso, zona);
-    const semanaDe = (f) => {
-      const dias = Math.floor((f - new Date()) / 86400000);
-      return dias < 7 ? 'Esta semana' : (dias < 14 ? 'La semana que viene' : 'Más adelante');
-    };
+    // La semana la decide `reglas.js`, que es lo que comparten la web y la
+    // app: contaba DIAS QUE FALTAN y partia una misma semana en dos títulos.
+    const NOMBRE_SEMANA = ['Esta semana', 'La semana que viene', 'Más adelante'];
+    const semanaDe = (iso, zona) => NOMBRE_SEMANA[window.AroReglas.semanaDe(iso, zona)];
     const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
     // "Hay cena el sábado en Las Mercedes" y "Ya van 34 apuntados y se
     // cierra el martes" estaban escritos a mano. Con doce apuntados y otra
@@ -1079,9 +1079,9 @@ class Component extends DCLogic {
       const f = new Date(a.empiezaEn);
       const q = piezas(a.empiezaEn, a.zonaHoraria);
       return [
-        // `semanaDe` compara dos instantes, no dos calendarios: ahí la zona
-        // no cambia el resultado y el `Date` vale.
-        semanaDe(f),
+        // Con su zona: la semana de la cena es la de Caracas, no la del
+        // teléfono de quien mira.
+        semanaDe(a.empiezaEn, a.zonaHoraria),
         FORMATOS[a.formato] || 'Cenas',
         q ? DIASEM[q.diaNumero] + ' ' + q.numero + ' · ' + q.hora : '',
         // Las zonas ABIERTAS de esa fecha, no un sitio: el sitio se decide
@@ -1113,7 +1113,12 @@ class Component extends DCLogic {
         // Y si esta fecha se graba entera. Al final por lo mismo que el
         // precio: esta tupla se lee por índice y meterlo en medio corre
         // todo lo que viene detrás sin que falle nada.
-        !!a.grabamos
+        //
+        // Lo que decide si el permiso es CONDICIÓN no es que se grabe, es
+        // que esté marcada como requerida (Michael, 18-10). Una fecha que se
+        // graba «si sale» no le cierra la puerta a nadie: a esa se le
+        // pregunta al revelar la mesa, como siempre.
+        !!a.permisoObligatorio
       ];
     });
     // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato

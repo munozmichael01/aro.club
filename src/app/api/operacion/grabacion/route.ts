@@ -21,14 +21,26 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * vuelve a grabar ahí, quien ya dijo que no sigue diciendo que no.
  */
 
+/**
+ * OPCIONAL O REQUERIDA, en las dos alturas.
+ *
+ * Michael, 18-10: «ambas se puedan marcar como opcionales o requeridas, y
+ * ahí sí entra la condición para poder reservar o no». Así que lo que decide
+ * si el permiso es condición no es la altura, es `requerida`.
+ *
+ * `requerida` sin `graba` no significa nada, así que apagar la grabación
+ * apaga las dos: una fecha que no se graba no puede exigir permiso.
+ */
 const cuerpo = z.union([
   z.object({
     mesaId: z.string().uuid(),
     graba: z.boolean(),
+    requerida: z.boolean().default(false),
   }),
   z.object({
     eventoId: z.string().uuid(),
     graba: z.boolean(),
+    requerida: z.boolean().default(false),
   }),
 ])
 
@@ -47,7 +59,7 @@ export async function POST(request: Request) {
   if ('mesaId' in d) {
     const { error } = await admin
       .from('dinner_tables')
-      .update({ grabacion: d.graba } as never)
+      .update({ grabacion: d.graba, grabacion_requerida: d.graba && d.requerida } as never)
       .eq('id', d.mesaId)
 
     if (error) {
@@ -63,7 +75,7 @@ export async function POST(request: Request) {
 
   const { error } = await admin
     .from('events')
-    .update({ grabacion: d.graba } as never)
+    .update({ grabacion: d.graba, grabacion_requerida: d.graba && d.requerida } as never)
     .eq('id', d.eventoId)
 
   if (error) {

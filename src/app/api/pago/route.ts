@@ -89,7 +89,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, price_usd, booking_closes_at, zone_slug, reveal_at, city_slug, age_band_min, age_band_max, grabacion')
+    .select('id, starts_at, price_usd, booking_closes_at, zone_slug, reveal_at, city_slug, age_band_min, age_band_max, grabacion, grabacion_requerida')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -173,9 +173,10 @@ export async function GET(request: Request) {
       // el «ya cerró» justo al pulsar «Reportar mi pago». Quien hubiera
       // transferido ya lo había hecho.
       cerrada: new Date(evento.booking_closes_at).getTime() <= Date.now(),
-      // Si esta cena se graba entera: la pantalla tiene que pedir el permiso
-      // antes del botón, porque sin él no se aparta el puesto.
+      // Si esta cena se graba entera, y si el permiso es condición: sin él
+      // no se aparta el puesto, así que se pide antes del botón.
       grabamos: !!(evento as { grabacion?: boolean }).grabacion,
+      permisoObligatorio: !!(evento as { grabacion_requerida?: boolean }).grabacion_requerida,
       // Cuándo se abre todo. Lo pidió la app: sin esto tiene que escribir «a
       // mediodía» a mano, y la hora sale del evento.
       revelaEn: evento.reveal_at,
@@ -359,7 +360,7 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, price_usd, booking_closes_at, age_band_min, age_band_max, grabacion')
+    .select('id, starts_at, price_usd, booking_closes_at, age_band_min, age_band_max, grabacion, grabacion_requerida')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -373,7 +374,7 @@ export async function POST(request: Request) {
    * solo en la otra ruta sería dejar abierta la puerta por la que entra casi
    * todo el mundo, porque la primera cena se paga.
    */
-  if ((evento as { grabacion?: boolean }).grabacion && parsed.data.permiteGrabacion !== true) {
+  if ((evento as { grabacion_requerida?: boolean }).grabacion_requerida && parsed.data.permiteGrabacion !== true) {
     return NextResponse.json(
       {
         error: 'Esta cena la grabamos, así que para apartar puesto hace falta tu permiso.',
@@ -515,7 +516,9 @@ export async function POST(request: Request) {
         // confirmado. Lo confirma quien concilia.
         status: 'pending_payment',
         // Y el permiso de grabación, si esta fecha se graba entera.
-        ...((evento as { grabacion?: boolean }).grabacion ? { permiso_grabacion: true } : {}),
+        ...((evento as { grabacion_requerida?: boolean }).grabacion_requerida
+          ? { permiso_grabacion: true }
+          : {}),
       })
       .select('id')
       .single()

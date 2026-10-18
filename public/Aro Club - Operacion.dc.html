@@ -2431,10 +2431,23 @@ class Component extends DCLogic {
    * Recarga el reparto: lo que decide es el servidor, y pintar aquí lo que
    * creemos deja el panel diciendo una cosa y el correo otra.
    */
-  marcarGrabacion(mesaId, graba) {
+  /**
+   * TRES ESTADOS, no dos: no se graba · opcional · requerida.
+   *
+   * Michael, 18-10: «ambas se puedan marcar como opcionales o requeridas, y
+   * ahí sí entra la condición para poder reservar o no». El botón los cicla
+   * en ese orden, que es el de menos a más compromiso.
+   */
+  siguienteGrabacion(graba, requerida) {
+    if (!graba) return { graba: true, requerida: false };
+    if (!requerida) return { graba: true, requerida: true };
+    return { graba: false, requerida: false };
+  }
+
+  marcarGrabacion(mesaId, estado) {
     if (!mesaId) return;
     const f = this.fechaElegida();
-    this.mandar("/api/operacion/grabacion", { mesaId: mesaId, graba: graba })
+    this.mandar('/api/operacion/grabacion', { mesaId: mesaId, graba: estado.graba, requerida: estado.requerida })
       .then((r) => { if (r.ok && f) this.cargarReparto(f.id); });
   }
 
@@ -2454,9 +2467,9 @@ class Component extends DCLogic {
    * pregunta de permiso en Mi mesa para TODAS sus mesas. Marcar una mesa
    * suelta sigue valiendo para grabar solo en esa.
    */
-  marcarGrabacionFecha(eventoId, graba) {
+  marcarGrabacionFecha(eventoId, estado) {
     if (!eventoId) return;
-    this.mandar('/api/operacion/grabacion', { eventoId: eventoId, graba: graba })
+    this.mandar('/api/operacion/grabacion', { eventoId: eventoId, graba: estado.graba, requerida: estado.requerida })
       .then((r) => { if (r.ok) this.cargarReparto(eventoId); });
   }
 
@@ -3673,11 +3686,13 @@ class Component extends DCLogic {
         // y la pregunta— sale de la mesa ya armada.
         sePuedeMarcar: !!m.mesaId,
         grabaPulsado: m.grabacion ? 'true' : 'false',
-        textoGraba: m.grabacion ? 'Grabamos en esta mesa' : 'Marcar para grabar',
+        textoGraba: m.grabacionRequerida
+          ? 'Grabamos en esta mesa · seguro'
+          : (m.grabacion ? 'Grabamos en esta mesa · opcional' : 'Marcar para grabar'),
         botonGraba: 'display:inline-flex;align-items:center;min-height:42px;padding:0 15px;border-radius:999px;cursor:pointer;'
           + 'font:500 13px/1 \'Inter Tight\',sans-serif;border:1px solid '
           + (m.grabacion ? '#8F4515;background:#8F4515;color:#FFF8EA' : 'rgba(20,52,42,.2);background:transparent;color:#2C4A38'),
-        marcarGraba: () => this.marcarGrabacion(m.mesaId, !m.grabacion),
+        marcarGraba: () => this.marcarGrabacion(m.mesaId, this.siguienteGrabacion(m.grabacion, m.grabacionRequerida)),
 
         // Y lo que ha contestado la mesa, que es lo que necesita quien va a
         // grabar. Los que dicen que no van por su nombre: es lo único que
@@ -5172,14 +5187,23 @@ class Component extends DCLogic {
        * enviar ese correo.
        */
       grabaFechaPulsado: (REP && REP.evento && REP.evento.grabacion) ? 'true' : 'false',
-      textoGrabaFecha: (REP && REP.evento && REP.evento.grabacion)
-        ? 'Grabamos esta fecha'
-        : 'Marcar la fecha para grabar',
+      // El estado se LEE en el botón, y el toque lleva al siguiente. Con
+      // «requerida» se dice lo que implica —el permiso es condición para
+      // reservar— porque es lo que de verdad cambia para la gente.
+      textoGrabaFecha: (REP && REP.evento && REP.evento.grabacionRequerida)
+        ? 'Grabamos · permiso obligatorio'
+        : ((REP && REP.evento && REP.evento.grabacion)
+          ? 'Grabamos · opcional'
+          : 'Marcar la fecha para grabar'),
       botonGrabaFecha: 'display:inline-flex;align-items:center;min-height:42px;padding:0 18px;border-radius:999px;cursor:pointer;font:500 14px/1 \'Inter Tight\',sans-serif;margin-bottom:clamp(14px,1.8vw,18px);border:1px solid '
-        + ((REP && REP.evento && REP.evento.grabacion) ? '#8F4515;background:#8F4515;color:#FFF8EA' : 'rgba(20,52,42,.2);background:transparent;color:#2C4A38'),
+        + ((REP && REP.evento && REP.evento.grabacionRequerida)
+          ? '#6E340F;background:#6E340F;color:#FFF8EA'
+          : ((REP && REP.evento && REP.evento.grabacion)
+            ? '#8F4515;background:rgba(143,69,21,.14);color:#8F4515'
+            : 'rgba(20,52,42,.2);background:transparent;color:#2C4A38')),
       marcarGrabaFecha: () => {
         const e = REP && REP.evento;
-        if (e) this.marcarGrabacionFecha(e.id, !e.grabacion);
+        if (e) this.marcarGrabacionFecha(e.id, this.siguienteGrabacion(e.grabacion, e.grabacionRequerida));
       },
 
       textoNuevaMesa: 'Añadir una mesa vacía',

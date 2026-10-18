@@ -835,7 +835,9 @@ class Component extends DCLogic {
      * prometa algo que el servidor va a negar, y para que se entere ANTES de
      * ir al banco.
      */
-    const grabaLaFecha = !!(D.evento && D.evento.grabamos);
+    // El obligatorio, no el «se graba»: una fecha que se graba de forma
+    // opcional no bloquea el pago, se le pregunta al revelar la mesa.
+    const grabaLaFecha = !!(D.evento && D.evento.permisoObligatorio);
     const permisoOk = !grabaLaFecha || !!this.state.permiteGrabacion;
     const repOk = camposOk && (!capturaObligatoria || conCaptura) && permisoOk;
 

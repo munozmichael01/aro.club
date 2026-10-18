@@ -77,7 +77,7 @@ export async function GET(request: Request) {
 
   const consulta = admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, reveal_at, seats_per_table, status, format, grabacion, restaurants!events_restaurant_id_fkey(name)')
+    .select('id, starts_at, booking_closes_at, reveal_at, seats_per_table, status, format, grabacion, grabacion_requerida, restaurants!events_restaurant_id_fkey(name)')
 
   const { data: evento } = pedido
     ? await consulta.eq('id', pedido).maybeSingle()
@@ -319,7 +319,7 @@ export async function GET(request: Request) {
 
   const { data: mesasVivas } = await admin
     .from('dinner_tables')
-    .select('id, table_number, grabacion, avisado_local_at, avisado_local_num')
+    .select('id, table_number, grabacion, grabacion_requerida, avisado_local_at, avisado_local_num')
     .eq('event_id', evento.id)
 
   const mesaPorNumero = new Map((mesasVivas ?? []).map((m) => [m.table_number, m]))
@@ -399,6 +399,10 @@ export async function GET(request: Request) {
        * había nada que marcar.
        */
       grabacion: !!(evento as { grabacion?: boolean }).grabacion,
+      // Y si el permiso es CONDICIÓN para reservar en ella. Michael, 18-10:
+      // las dos alturas se marcan opcional o requerida, y eso es lo que
+      // decide si se le cierra la puerta a quien no quiera salir.
+      grabacionRequerida: !!(evento as { grabacion_requerida?: boolean }).grabacion_requerida,
     },
     apuntados: reservas ?? 0,
     // Los que entran al reparto, con nombre y con las zonas que aceptan. El
@@ -453,6 +457,7 @@ export async function GET(request: Request) {
             // —para poder marcarla— y si está marcada para grabar.
             mesaId: mesaPorNumero.get((m as unknown as { numero: number }).numero)?.id ?? null,
             grabacion: !!mesaPorNumero.get((m as unknown as { numero: number }).numero)?.grabacion,
+            grabacionRequerida: !!(mesaPorNumero.get((m as unknown as { numero: number }).numero) as { grabacion_requerida?: boolean } | undefined)?.grabacion_requerida,
             /**
              * Lo que le dijimos al local, si se dijo. La tarjeta compara con
              * los que hay ahora: esa diferencia es lo único que justifica

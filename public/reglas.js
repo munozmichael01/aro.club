@@ -691,6 +691,49 @@
     },
 
     /**
+     * EN QUE SEMANA CAE UNA FECHA. 0 esta, 1 la que viene, 2 mas adelante.
+     *
+     * Michael, 18-10, viendo la app: «estoy viendo todas las cenas en ESTA
+     * SEMANA y brunch en LA SEMANA QUE VIENE. Ambas son esta semana. Nuestra
+     * semana va de lunes a viernes».
+     *
+     * Tenia razon y el fallo era de bulto: no se agrupaba por semanas, se
+     * agrupaba por DIAS QUE FALTAN —menos de siete, esta semana; menos de
+     * catorce, la que viene—. Un domingo por la tarde, la cena del jueves
+     * caia a cuatro dias y el brunch del domingo siguiente a siete, asi que
+     * la misma semana salia partida en dos titulos.
+     *
+     * Ahora son semanas de calendario y empiezan en LUNES, que es como se
+     * cuentan aqui. Y en la zona de la fecha, no en la del telefono: un
+     * domingo a las nueve de la noche en Caracas ya es lunes en Madrid, y la
+     * semana de la cena es la de Caracas.
+     */
+    semanaDe: function (iso, zona) {
+      var p = api.partesDe(iso, zona)
+      var hoy = api.partesDe(new Date().toISOString(), zona)
+      if (!p || !hoy) return 2
+      // Dia absoluto, para restar sin que el horario de verano estorbe.
+      var dia = function (q) { return Math.floor(Date.UTC(q.ano, q.mesNumero, q.numero) / 86400000) }
+      // Y el lunes de SU semana: domingo es 0, asi que va seis dias atras.
+      var lunes = function (q) { return dia(q) - ((q.diaNumero + 6) % 7) }
+      /**
+       * EL DOMINGO YA CUENTA COMO LA SEMANA QUE EMPIEZA.
+       *
+       * Solo para HOY, no para las fechas. Es como se habla: un domingo por
+       * la tarde, «esta semana» es la que empieza mañana, no la que se está
+       * acabando. Michael lo dijo asi mismo mirando la agenda un domingo
+       * —«todas son esta semana»— con la cena del jueves dentro.
+       *
+       * Sin esto, un domingo la agenda entera dice «La semana que viene»,
+       * que es verdad de calendario y mentira de como se lee.
+       */
+      var lunesHoy = lunes(hoy) + (hoy.diaNumero === 0 ? 7 : 0)
+      var semanas = (lunes(p) - lunesHoy) / 7
+      if (semanas <= 0) return 0
+      return semanas === 1 ? 1 : 2
+    },
+
+    /**
      * La hora de una fecha, en la zona del producto y como se dice.
      *
      * «12:00 p.m.» la calculaban por su cuenta la app, los correos y las

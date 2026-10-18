@@ -698,6 +698,7 @@ export type Database = {
           created_at: string
           event_id: string
           grabacion: boolean
+          grabacion_requerida: boolean
           id: string
           notes_ops: string | null
           restaurant_id: string | null
@@ -712,6 +713,7 @@ export type Database = {
           created_at?: string
           event_id: string
           grabacion?: boolean
+          grabacion_requerida?: boolean
           id?: string
           notes_ops?: string | null
           restaurant_id?: string | null
@@ -726,6 +728,7 @@ export type Database = {
           created_at?: string
           event_id?: string
           grabacion?: boolean
+          grabacion_requerida?: boolean
           id?: string
           notes_ops?: string | null
           restaurant_id?: string | null
@@ -958,6 +961,7 @@ export type Database = {
           es_prueba: boolean
           format: Database["public"]["Enums"]["event_format_t"]
           grabacion: boolean
+          grabacion_requerida: boolean
           id: string
           max_seats: number | null
           min_tables: number
@@ -984,6 +988,7 @@ export type Database = {
           es_prueba?: boolean
           format?: Database["public"]["Enums"]["event_format_t"]
           grabacion?: boolean
+          grabacion_requerida?: boolean
           id?: string
           max_seats?: number | null
           min_tables?: number
@@ -1010,6 +1015,7 @@ export type Database = {
           es_prueba?: boolean
           format?: Database["public"]["Enums"]["event_format_t"]
           grabacion?: boolean
+          grabacion_requerida?: boolean
           id?: string
           max_seats?: number | null
           min_tables?: number
