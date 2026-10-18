@@ -414,7 +414,13 @@ class Component extends DCLogic {
        * esto es lo que se VE y aquello es lo que se cumple.
        */
       if (q.clave === 'copas') {
-        todas.bebidas = todas.copas === 'nada' ? ['sin-alcohol'] : [];
+        // Se ata si dice que no toma, y se SUELTA solo si lo que hay es lo
+        // que pusimos nosotros: quien eligió vino y ron no los pierde por
+        // cambiar de «una copa» a «dos o tres». Es la misma regla que el
+        // servidor (`atar.ts`), que era lo que esto no cumplía.
+        const antes = todas.bebidas || [];
+        if (todas.copas === 'nada') todas.bebidas = ['sin-alcohol'];
+        else if (antes.length === 1 && antes[0] === 'sin-alcohol') todas.bebidas = [];
       }
       this.setState({ elegidas: todas });
       return;

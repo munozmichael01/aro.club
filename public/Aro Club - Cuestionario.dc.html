@@ -950,14 +950,32 @@ class Component extends DCLogic {
   set(id, v) {
     if (id === 'copas') {
       const sinAlcohol = this.indiceDe('bebidas', 'sin-alcohol');
-      const bebidas = v === this.indiceDe('copas', 'nada') ? [sinAlcohol] : [];
-      this.setState((s) => ({ r: Object.assign({}, s.r, { copas: v, bebidas: bebidas }) }),
+      const antes = this.state.r.bebidas || [];
+      /**
+       * Se ata si dice que no toma. Se SUELTA solo si lo que hay es lo que
+       * pusimos nosotros.
+       *
+       * Esto vaciaba `bebidas` con cualquier cambio de nivel, asi que quien
+       * habia elegido vino y ron y pasaba de «una copa» a «dos o tres»
+       * perdia las dos, y encima se guardaba el vacio. Lo cazo el agente de
+       * la app al copiar la regla: el servidor —`atar.ts`— solo suelta
+       * `['sin-alcohol']` exacto, y la pantalla hacia otra cosa.
+       *
+       * `null` aqui es «no se toca»: ni se cambia en pantalla ni se manda.
+       */
+      let bebidas = null;
+      if (v === this.indiceDe('copas', 'nada')) bebidas = [sinAlcohol];
+      else if (antes.length === 1 && antes[0] === sinAlcohol) bebidas = [];
+
+      this.setState(
+        (s) => ({ r: Object.assign({}, s.r, bebidas === null ? { copas: v } : { copas: v, bebidas: bebidas }) }),
         // UNA DETRAS DE OTRA. Cada respuesta dispara el trigger que
         // reconstruye los rasgos ENTEROS desde `answers`, y mandadas a la vez
         // la segunda empieza sin ver la fila de la primera y la deja en
         // blanco. No falla nada: se pierde media respuesta en silencio.
         () => this.enviar('copas', this.aCodigo('copas', v))
-          .then(() => this.enviar('bebidas', this.aCodigo('bebidas', bebidas))));
+          .then(() => (bebidas === null ? null : this.enviar('bebidas', this.aCodigo('bebidas', bebidas)))),
+      );
       return;
     }
     this.setState((s) => ({ r: Object.assign({}, s.r, { [id]: v }) }),

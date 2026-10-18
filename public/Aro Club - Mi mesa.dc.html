@@ -941,10 +941,26 @@ class Component extends DCLogic {
     return this.state.bloqueados.map((i) => cs[i] && cs[i].id).filter(Boolean);
   }
 
+  /**
+   * Si hay algo que mandar. Lo que apaga el botón de «Enviar».
+   *
+   * Contaba solo las escalas y los bloqueos, y se quedó así cuando la
+   * encuesta ganó tres cosas más: el texto libre, lo que gastó y el «no me
+   * mandes más a este sitio». Quien entraba a contar lo que pasó —la música
+   * alta, que faltó alguien— escribía el párrafo y se encontraba el botón
+   * apagado, sin decirle que le faltaba poner una estrella que no quería
+   * poner. El texto libre es justo lo que trae lo que no sabíamos
+   * preguntar, así que era la respuesta que más caro costaba perder.
+   *
+   * Lo cazó el agente de la app al replicar la pantalla.
+   */
   algoQueContar() {
     return this.state.mesaVal >= 0
       || this.state.volveria >= 0
       || Object.keys(this.state.sitio).some((k) => this.state.sitio[k] >= 0)
+      || (this.state.comentario || '').trim().length > 0
+      || this.state.gasto >= 0
+      || !!this.state.noRepetirSitio
       || this.state.bloqueados.length > 0;
   }
 

@@ -639,12 +639,34 @@ class Component extends DCLogic {
       const fechaFloja = esFecha && !/^\d{4}-\d{2}-\d{1,2}$/.test(String(val || ''));
       const bajo = fechaFloja || (!esUnica && !esFecha && c.min && sel.length < c.min);
 
+      /**
+       * «¿Y qué tomas?» atada a «¿tomas alcohol?».
+       *
+       * Quien contestó que no toma no puede marcar ron aquí: el servidor lo
+       * corrige al guardar —`atar.ts`— y en pantalla eso se ve como una
+       * respuesta que se perdió, que es justo lo que la atadura venía a
+       * evitar. Lo cazó el agente de la app: estaba en el cuestionario y en
+       * el aviso de Mi cuenta, y faltaba aquí.
+       *
+       * Los valores de esta pantalla son ÍNDICES, no códigos: se compara
+       * contra la posición de `nada` en las opciones de `copas`.
+       */
+      const noToma = (() => {
+        if (id !== 'bebidas') return false;
+        const cop = campos.copas;
+        if (!cop) return false;
+        const iNada = (cop.codigos || []).indexOf('nada');
+        return iNada >= 0 && R.copas === iNada;
+      })();
+      const iSinAlcohol = (c.codigos || []).indexOf('sin-alcohol');
+
       const opciones = (c.opciones || []).map((label, i) => {
         const marcada = esUnica ? sel === i : sel.indexOf(i) >= 0;
-        const tope = !esUnica && c.max && sel.length >= c.max && !marcada;
+        const bloqueada = noToma && i !== iSinAlcohol;
+        const tope = bloqueada || (!esUnica && c.max && sel.length >= c.max && !marcada);
         return {
           label, icono: marcada ? '✓' : '', aro: aro(marcada),
-          pick: () => this.setState((s) => {
+          pick: bloqueada ? () => {} : () => this.setState((s) => {
             if (esUnica) return { borrador: i };
             const a = (s.borrador || []).slice();
             if (a.indexOf(i) >= 0) return { borrador: a.filter((x) => x !== i) };
