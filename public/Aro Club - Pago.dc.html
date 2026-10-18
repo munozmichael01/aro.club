@@ -124,6 +124,16 @@
 
           <sc-if value="{{ cuponAbierto }}" hint-placeholder-val="{{ false }}">
             <div style="animation:aro-open 260ms ease both">
+              <!-- Canjear un código también aparta puesto, así que aquí se
+                   pide el mismo permiso que abajo. Es el MISMO control: si
+                   ya lo marcó en el otro sitio, sale marcado. -->
+              <sc-if value="{{ graba }}" hint-placeholder-val="{{ false }}">
+                <div style="border-radius:20px;background:#FFF8EA;border:1px solid rgba(143,69,21,.28);padding:16px 18px;margin-bottom:16px">
+                  <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#8F4515">{{ tituloGraba }}</div>
+                  <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:6px;max-width:52ch;text-wrap:pretty">{{ textoGraba }}</div>
+                  <button onClick="{{ tocarPermiso }}" style="{{ botonPermiso }}">{{ textoPermiso }}</button>
+                </div>
+              </sc-if>
               <label for="cupon" style="display:block;font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin-bottom:10px">TU CÓDIGO</label>
               <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
                 <input id="cupon" type="text" value="{{ cupon }}" onChange="{{ onCupon }}" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false" style="{{ campoCupon }}" />
@@ -516,7 +526,10 @@ class Component extends DCLogic {
     this.setState({ aplicandoCupon: true, falloCupon: '' });
     fetch('/api/cupon', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ eventoId: this._evento, codigo: codigo })
+      // Con el permiso, si la fecha lo exige: canjear un código TAMBIÉN
+      // aparta puesto. Sin esto, quien tiene un código choca con el 409 de
+      // una pregunta que no se le hizo. Lo vio el agente de la app.
+      body: JSON.stringify({ eventoId: this._evento, codigo: codigo, permiteGrabacion: this.state.permiteGrabacion || undefined })
     })
       .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
       .then(({ ok, x }) => {
@@ -891,10 +904,14 @@ class Component extends DCLogic {
       cupon: this.state.cupon,
       hayFalloCupon: !!this.state.falloCupon,
       falloCupon: this.state.falloCupon,
-      inerteCupon: this.state.aplicandoCupon || !this.state.cupon.trim(),
-      textoCupon: this.state.aplicandoCupon ? 'Aplicando' : 'Aplicar',
+      inerteCupon: this.state.aplicandoCupon || !this.state.cupon.trim() || !permisoOk,
+      textoCupon: this.state.aplicandoCupon
+        ? 'Aplicando'
+        : (!permisoOk ? 'Marca el permiso' : 'Aplicar'),
       campoCupon: 'flex:1 1 160px;min-width:0;min-height:54px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;text-transform:uppercase;outline:none',
-      botonCupon: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:54px;padding:0 24px;border-radius:999px;border:none;background:' + (this.state.aplicandoCupon || !this.state.cupon.trim() ? 'rgba(27,81,56,.13)' : '#1B5138') + ';color:' + (this.state.aplicandoCupon || !this.state.cupon.trim() ? '#456352' : '#FAF3E4') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (this.state.aplicandoCupon || !this.state.cupon.trim() ? 'not-allowed' : 'pointer'),
+      botonCupon: (function (apagado) {
+        return 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:54px;padding:0 24px;border-radius:999px;border:none;background:' + (apagado ? 'rgba(27,81,56,.13)' : '#1B5138') + ';color:' + (apagado ? '#456352' : '#FAF3E4') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (apagado ? 'not-allowed' : 'pointer');
+      })(this.state.aplicandoCupon || !this.state.cupon.trim() || !permisoOk),
       abrirCupon: () => this.setState({ cuponAbierto: true }),
       onCupon: (e) => this.setState({ cupon: String(e.target.value || '').toUpperCase().replace(/\s+/g, ''), falloCupon: '' }),
       aplicarCupon: () => this.aplicarCupon(),

@@ -708,9 +708,13 @@
      * domingo a las nueve de la noche en Caracas ya es lunes en Madrid, y la
      * semana de la cena es la de Caracas.
      */
-    semanaDe: function (iso, zona) {
+    semanaDe: function (iso, zona, ahora) {
       var p = api.partesDe(iso, zona)
-      var hoy = api.partesDe(new Date().toISOString(), zona)
+      // `ahora` opcional: sin el, el reloj de verdad. Con el, se puede
+      // probar una semana concreta sin esperar al domingo que viene. Lo
+      // pidio el agente de la app, que tuvo que copiar esta funcion para
+      // poder escribir pruebas que pasen siempre.
+      var hoy = api.partesDe(ahora || new Date().toISOString(), zona)
       if (!p || !hoy) return 2
       // Dia absoluto, para restar sin que el horario de verano estorbe.
       var dia = function (q) { return Math.floor(Date.UTC(q.ano, q.mesNumero, q.numero) / 86400000) }
