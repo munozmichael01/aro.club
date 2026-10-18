@@ -42,3 +42,16 @@ test('la hora y el cuándo se revela, calculados de la fecha real', async () => 
   // Movida a un martes, dice martes sin tocar código (criterio 9.5).
   assert.equal(cuandoSeRevela({ empiezaEn: '2026-10-07T00:00:00+00:00' }), 'el martes')
 })
+
+test('la semana de la agenda: de lunes a domingo, en la zona de la fecha, y el domingo ya es la que empieza (18-10)', async () => {
+  const F2 = await import('../src/texto/fechas')
+  const Z = 'America/Caracas'
+  const domingo = Date.parse('2026-10-18T18:00:00Z') // domingo 18, 2 p.m. en Caracas
+  assert.equal(F2.semanaDe('2026-10-22T23:00:00Z', domingo, Z), 'Esta semana', 'el jueves 22')
+  assert.equal(F2.semanaDe('2026-10-25T15:00:00Z', domingo, Z), 'Esta semana', 'el brunch del domingo 25, en el mismo grupo')
+  assert.equal(F2.semanaDe('2026-10-26T23:00:00Z', domingo, Z), 'La semana que viene', 'el lunes 26')
+  assert.equal(F2.semanaDe('2026-11-03T23:00:00Z', domingo, Z), 'Más adelante')
+  const miercoles = Date.parse('2026-10-21T18:00:00Z')
+  assert.equal(F2.semanaDe('2026-10-25T15:00:00Z', miercoles, Z), 'Esta semana')
+  assert.equal(F2.semanaDe('2026-10-27T23:00:00Z', miercoles, Z), 'La semana que viene', 'a seis días, pero ya es otra semana')
+})

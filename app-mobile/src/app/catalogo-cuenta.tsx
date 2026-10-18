@@ -102,7 +102,7 @@ function Pantalla() {
       if (ciudad) return { ok: true, datos: { ...d, ciudad: { slug: 'x', nombre: ciudad, abierta: false }, agenda: [], proximaFecha: null } }
       // ?nuevas=1: las dos preguntas de bebida sin contestar, al reservar (18-10).
       // ?graba=1: todas las fechas de la agenda se graban enteras (18-10).
-      if (graba) return { ok: true, datos: { ...d, agenda: d.agenda.map((a) => ({ ...a, grabamos: true })) } }
+      if (graba) return { ok: true, datos: { ...d, agenda: d.agenda.map((a) => ({ ...a, grabamos: true, permisoObligatorio: true })) } }
       if (nuevas) return { ok: true, datos: { ...d, preguntasNuevas: PREGUNTAS_NUEVAS } }
       return { ok: true, datos: captura ? deCaptura(d, !!varios) : d }
     },

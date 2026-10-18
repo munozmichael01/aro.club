@@ -95,15 +95,36 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
 
   const m: M.Metodo | null = d ? (d.metodos[metodo] ?? d.metodos[0] ?? null) : null
   const estado = m ? M.estadoReporte(m, rep, !!captura, ahora()) : null
-  const graba = !!d?.evento.grabamos
+  const graba = !!d?.evento.permisoObligatorio
   const permisoOk = !graba || permiteGrabacion
+  // El mismo bloque en las dos puertas que apartan puesto aquí: reportar el pago y el código de invitación.
+  const permiso = (
+    <View style={estilos.graba}>
+      <Texto variante="cuerpoChico" tono="terracota" style={{ fontFamily: fuente.textoSemi }}>
+        {TC.grabacionFecha.titulo}
+      </Texto>
+      <Texto variante="cuerpoChico" style={{ marginTop: 6 }}>
+        {TC.grabacionFecha.cuerpo}
+      </Texto>
+      <Pressable
+        onPress={() => setPermiteGrabacion((x) => !x)}
+        accessibilityRole="checkbox"
+        aria-checked={permiteGrabacion}
+        style={[estilos.permiso, permiteGrabacion ? { backgroundColor: color.terracota, borderColor: color.terracota } : null]}
+      >
+        <Texto variante="cuerpo" style={{ fontFamily: fuente.textoMedia, color: permiteGrabacion ? '#FFF8EA' : color.verdeProfundo }}>
+          {TC.grabacionFecha.permiso(permiteGrabacion)}
+        </Texto>
+      </Pressable>
+    </View>
+  )
 
   const aplicarCupon = async () => {
     const codigo = cupon.trim()
-    if (!d || !codigo || aplicando) return
+    if (!d || !codigo || aplicando || !permisoOk) return
     setAplicando(true)
     setFalloCupon('')
-    const r = await servicio.cupon(d.evento.id, codigo)
+    const r = await servicio.cupon(d.evento.id, codigo, graba ? permiteGrabacion : undefined)
     setAplicando(false)
     // El fallo se enseña junto al campo: un código mal tecleado se corrige donde se escribió.
     if (!r.ok) return setFalloCupon(r.error)
@@ -234,8 +255,10 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
                     accessibilityLabel={T.cupon.etiqueta}
                   />
                 </View>
-                <Boton texto={T.cupon.aplicar(aplicando)} onPress={aplicarCupon} apagado={aplicando || !cupon.trim()} />
+                <Boton texto={T.cupon.aplicar(aplicando)} onPress={aplicarCupon} apagado={aplicando || !cupon.trim() || !permisoOk} />
               </View>
+              {/* El código también aparta puesto: en una fecha con grabación requerida, el permiso va aquí (48f5823). */}
+              {graba ? <View style={{ marginTop: 12 }}>{permiso}</View> : null}
               {falloCupon ? (
                 <View style={{ marginTop: 12 }}>
                   <Aviso tono="ojo">{falloCupon}</Aviso>
@@ -349,26 +372,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
           </View>
         ) : null}
         {/* Esta cena se graba: se dice antes del botón, y el permiso es la condición para apartar (18-10). */}
-        {graba ? (
-          <View style={estilos.graba}>
-            <Texto variante="cuerpoChico" tono="terracota" style={{ fontFamily: fuente.textoSemi }}>
-              {TC.grabacionFecha.titulo}
-            </Texto>
-            <Texto variante="cuerpoChico" style={{ marginTop: 6 }}>
-              {TC.grabacionFecha.cuerpo}
-            </Texto>
-            <Pressable
-              onPress={() => setPermiteGrabacion((x) => !x)}
-              accessibilityRole="checkbox"
-              aria-checked={permiteGrabacion}
-              style={[estilos.permiso, permiteGrabacion ? { backgroundColor: color.terracota, borderColor: color.terracota } : null]}
-            >
-              <Texto variante="cuerpo" style={{ fontFamily: fuente.textoMedia, color: permiteGrabacion ? '#FFF8EA' : color.verdeProfundo }}>
-                {TC.grabacionFecha.permiso(permiteGrabacion)}
-              </Texto>
-            </Pressable>
-          </View>
-        ) : null}
+        {graba ? <View style={{ marginTop: 22 }}>{permiso}</View> : null}
         {fallo ? (
           <View style={{ marginTop: 14 }}>
             <Aviso tono="ojo">{fallo}</Aviso>
@@ -735,7 +739,7 @@ function Comprobante({ titulo, filas, pie }: { titulo: string; filas: { campo: s
 }
 
 const estilos = StyleSheet.create({
-  graba: { borderRadius: 20, backgroundColor: '#FFF8EA', borderWidth: 1, borderColor: 'rgba(143,69,21,.28)', paddingVertical: 16, paddingHorizontal: 18, marginTop: 22 },
+  graba: { borderRadius: 20, backgroundColor: '#FFF8EA', borderWidth: 1, borderColor: 'rgba(143,69,21,.28)', paddingVertical: 16, paddingHorizontal: 18 },
   permiso: { alignSelf: 'flex-start', minHeight: 46, marginTop: 13, paddingHorizontal: 18, borderRadius: radio.capsula, borderWidth: 1, borderColor: 'rgba(20,52,42,.22)', justifyContent: 'center' },
   pagina: { paddingHorizontal: medida.margenLateral, maxWidth: 620, width: '100%', alignSelf: 'center' },
   volver: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: medida.toqueMinimo, alignSelf: 'flex-start', marginBottom: 22 },

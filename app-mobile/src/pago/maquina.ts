@@ -24,7 +24,7 @@ export type Metodo = {
 }
 
 export type DeServidor = {
-  evento: { id: string; empiezaEn: string; cierraEn: string | null; zona: string | null; revelaEn?: string | null; zonaHoraria?: string | null; formato?: string | null; /** La fecha se graba (18-10): el permiso es condición para apartar puesto. */ grabamos?: boolean }
+  evento: { id: string; empiezaEn: string; cierraEn: string | null; zona: string | null; revelaEn?: string | null; zonaHoraria?: string | null; formato?: string | null; /** La fecha se graba (18-10). */ grabamos?: boolean; /** Requerida: el permiso es condición para apartar puesto (48f5823). */ permisoObligatorio?: boolean }
   montoUsd: number
   tasa: number | null
   tasaDe: string | null
@@ -137,7 +137,7 @@ export function cuerpoReporte(d: DeServidor, m: Metodo, rep: Record<string, stri
     // La tasa que se le ENSEÑÓ: si el cron la cambió mientras estaba en el banco, vale la suya.
     ...(d.tasa ? { tasaVista: d.tasa } : {}),
     // Solo en una fecha que se graba: sin él, el servidor responde 409 `falta-permiso-grabacion`.
-    ...(d.evento.grabamos && permiteGrabacion ? { permiteGrabacion: true } : {}),
+    ...(d.evento.permisoObligatorio && permiteGrabacion ? { permiteGrabacion: true } : {}),
   }
 }
 

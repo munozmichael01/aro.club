@@ -37,8 +37,13 @@ export function crearServicioPago(api: Api) {
     reportar: (cuerpo: object) =>
       intentar<{ estado: 'reportado' | 'confirmado'; puestoApartado?: boolean }>(() => api.pedir('/pago', json(cuerpo)), T.reporte.noRegistrado, T.reporte.noRegistrado),
 
-    cupon: (eventoId: string, codigo: string) =>
-      intentar<{ ok?: boolean }>(() => api.pedir('/cupon', json({ eventoId, codigo })), T.cupon.noPudimos, T.cupon.sinRed),
+    /** El cupón también aparta puesto: en una fecha con grabación requerida, sin `permiteGrabacion` responde 409 (48f5823). */
+    cupon: (eventoId: string, codigo: string, permiteGrabacion?: boolean) =>
+      intentar<{ ok?: boolean }>(
+        () => api.pedir('/cupon', json(permiteGrabacion ? { eventoId, codigo, permiteGrabacion } : { eventoId, codigo })),
+        T.cupon.noPudimos,
+        T.cupon.sinRed,
+      ),
 
     /**
      * La captura se sube ANTES de reportar y el servidor devuelve la RUTA,

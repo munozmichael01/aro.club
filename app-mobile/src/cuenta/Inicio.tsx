@@ -138,7 +138,7 @@ export function Inicio(p: {
 
   const confirmar = async (id: string) => {
     if (!datos || !vista) return
-    const graba = !!datos.agenda.find((a) => a.id === id)?.grabamos
+    const graba = !!datos.agenda.find((a) => a.id === id)?.permisoObligatorio
     const r = M.botonReservar(datos, reservando, undefined, { graba, permiso: permiteGrabacion })
     if (r.accion === 'nada') return
     if (r.accion === 'completar' && r.destino) return p.ir(r.destino)

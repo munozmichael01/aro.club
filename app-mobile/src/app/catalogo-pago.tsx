@@ -25,7 +25,7 @@ function Pantalla() {
     const datos: DeServidor = {
       ...REAL,
       // Las fechas del fichero ya pasaron: se mueven a dentro de tres días para que la fecha siga abierta.
-      evento: { ...REAL.evento, empiezaEn: new Date(Date.now() + 72 * 3600_000).toISOString(), cierraEn: new Date(Date.now() + 48 * 3600_000).toISOString(), grabamos: !!graba },
+      evento: { ...REAL.evento, empiezaEn: new Date(Date.now() + 72 * 3600_000).toISOString(), cierraEn: new Date(Date.now() + 48 * 3600_000).toISOString(), grabamos: !!graba, permisoObligatorio: !!graba },
       verificada: estado !== 'sin-verificar',
       pago: estado === 'pendiente' ? { ...pago, estado: 'under_review' } : estado === 'listo' ? { ...pago, estado: 'confirmed' } : estado === 'fallo' ? { ...pago, estado: 'rejected' } : null,
       metodos: estado === 'prueba' ? REAL.metodos.map((m) => (m.id === 'pm' ? { ...m, datosDePrueba: true } : m)) : REAL.metodos,

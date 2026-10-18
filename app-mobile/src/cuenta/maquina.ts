@@ -30,8 +30,10 @@ export type FechaAgenda = {
   precioUsd?: number | null
   /** Cuándo se creó (18-10): desempata dos fechas a la misma hora en zonas distintas, como el servidor. */
   creadaEn?: string | null
-  /** La fecha entera se graba (18-10): el permiso es condición para apartar puesto. */
+  /** La fecha se graba (18-10), opcional o requerida. */
   grabamos?: boolean
+  /** Requerida: el permiso es condición para apartar puesto. Opcional: se pregunta al revelar la mesa (48f5823). */
+  permisoObligatorio?: boolean
 }
 
 /** «10 ref», «12,50 ref»: el precio de una fecha. Sin precio en la fecha, el del club (`reglas.precioTexto`). */
@@ -243,7 +245,7 @@ export type FilaAgenda = {
   va: boolean
   /** «10 ref»: el precio de esta fecha. */
   precio: string
-  /** Se graba esa fecha: se dice antes del botón, y con crédito el permiso es la condición para pulsarlo. */
+  /** La grabación es requerida: se dice antes del botón, y el permiso es la condición para apartar. */
   graba: boolean
 }
 
@@ -258,7 +260,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
   for (const a of ordenadas) {
     const formato = T.FORMATOS[a.formato] ? a.formato : 'dinner'
     if (filtro && filtro !== TODOS && formato !== filtro) continue
-    const semana = F.semanaDe(a.empiezaEn, ahora)
+    const semana = F.semanaDe(a.empiezaEn, ahora, a.zonaHoraria)
     // Cerrada por estado O porque ya pasó su cierre: el estado de la fecha no
     // cambia solo al llegar la hora, y se veía abierta (01-10-2026).
     const cerrada = a.cerrada || (a.cierraEn != null && Date.parse(a.cierraEn) <= ahora)
@@ -279,7 +281,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       llenado: Math.min(1, a.apuntados / T.MESA),
       va: a.apuntados >= T.MESA,
       precio: precioDe(a),
-      graba: !!a.grabamos,
+      graba: !!a.permisoObligatorio,
     })
   }
   return grupos
