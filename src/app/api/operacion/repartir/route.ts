@@ -77,7 +77,7 @@ export async function GET(request: Request) {
 
   const consulta = admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, reveal_at, seats_per_table, status, format, restaurants!events_restaurant_id_fkey(name)')
+    .select('id, starts_at, booking_closes_at, reveal_at, seats_per_table, status, format, grabacion, restaurants!events_restaurant_id_fkey(name)')
 
   const { data: evento } = pedido
     ? await consulta.eq('id', pedido).maybeSingle()
@@ -388,6 +388,17 @@ export async function GET(request: Request) {
       // por zona, y esto pasara a salir de la mesa.
       restaurante:
         (evento.restaurants as unknown as { name: string } | null)?.name ?? null,
+      /**
+       * Si esa noche grabamos POR LA FECHA ENTERA.
+       *
+       * Michael pidió las dos alturas el 17-10 —«podría estar a nivel de
+       * mesa y a nivel de fecha»— y la de la mesa se cableó en el panel; la
+       * de la fecha se quedó con su endpoint y sin botón, así que la única
+       * forma de encenderla era por base. Hoy lo pidió otra vez delante de
+       * una fecha sin mesas todavía, donde la marca por mesa no existe: no
+       * había nada que marcar.
+       */
+      grabacion: !!(evento as { grabacion?: boolean }).grabacion,
     },
     apuntados: reservas ?? 0,
     // Los que entran al reparto, con nombre y con las zonas que aceptan. El

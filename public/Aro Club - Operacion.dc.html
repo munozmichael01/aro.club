@@ -191,6 +191,11 @@
             <button onClick="{{ nuevaMesa }}" style="{{ botonNuevaMesa }}">{{ textoNuevaMesa }}</button>
           </sc-if>
 
+          <!-- Grabar en esta FECHA. La otra altura está en cada mesa; esta
+               vale para toda la noche y es la única que existe antes de
+               repartir, cuando todavía no hay mesas que marcar. -->
+          <button onClick="{{ marcarGrabaFecha }}" aria-pressed="{{ grabaFechaPulsado }}" style="{{ botonGrabaFecha }}">{{ textoGrabaFecha }}</button>
+
           <!-- Cuántas mesas por fila. Solo en pantalla ancha: en el móvil
                siempre va a una y el selector sobraría. -->
           <span class="aro-columnas" style="display:flex;gap:6px;align-items:center;margin-left:auto">
@@ -2431,6 +2436,28 @@ class Component extends DCLogic {
     const f = this.fechaElegida();
     this.mandar("/api/operacion/grabacion", { mesaId: mesaId, graba: graba })
       .then((r) => { if (r.ok && f) this.cargarReparto(f.id); });
+  }
+
+  /**
+   * Y la fecha entera, que es la otra altura.
+   *
+   * Michael pidió las dos el 17-10 —«podría estar a nivel de mesa y a nivel
+   * de fecha»— y solo se cableó la de la mesa. La de la fecha tenía su
+   * endpoint desde el primer día y ningún botón: se encendía por base.
+   *
+   * Hace falta de verdad y no es un atajo: una fecha sin repartir todavía
+   * no tiene mesas, así que la marca por mesa no existe. Es justo el caso
+   * de hoy —el viernes en Las Mercedes, recién abierto— donde no había nada
+   * que marcar.
+   *
+   * Encender la fecha enciende la nota del correo de la revelación y la
+   * pregunta de permiso en Mi mesa para TODAS sus mesas. Marcar una mesa
+   * suelta sigue valiendo para grabar solo en esa.
+   */
+  marcarGrabacionFecha(eventoId, graba) {
+    if (!eventoId) return;
+    this.mandar('/api/operacion/grabacion', { eventoId: eventoId, graba: graba })
+      .then((r) => { if (r.ok) this.cargarReparto(eventoId); });
   }
 
   /**
@@ -5135,6 +5162,26 @@ class Component extends DCLogic {
        * deja— pero se mira, y mirar es el trabajo.
        */
       haySitioParaMesa: !!CORRIDA,
+
+      /**
+       * GRABAR EN ESTA FECHA. La otra altura de lo mismo.
+       *
+       * Sale siempre, con corrida o sin ella: antes de repartir no hay
+       * mesas que marcar y es justo cuando hace falta decidirlo, porque lo
+       * que enciende —la nota del correo de la revelación— se compone al
+       * enviar ese correo.
+       */
+      grabaFechaPulsado: (REP && REP.evento && REP.evento.grabacion) ? 'true' : 'false',
+      textoGrabaFecha: (REP && REP.evento && REP.evento.grabacion)
+        ? 'Grabamos esta fecha'
+        : 'Marcar la fecha para grabar',
+      botonGrabaFecha: 'display:inline-flex;align-items:center;min-height:42px;padding:0 18px;border-radius:999px;cursor:pointer;font:500 14px/1 \'Inter Tight\',sans-serif;margin-bottom:clamp(14px,1.8vw,18px);border:1px solid '
+        + ((REP && REP.evento && REP.evento.grabacion) ? '#8F4515;background:#8F4515;color:#FFF8EA' : 'rgba(20,52,42,.2);background:transparent;color:#2C4A38'),
+      marcarGrabaFecha: () => {
+        const e = REP && REP.evento;
+        if (e) this.marcarGrabacionFecha(e.id, !e.grabacion);
+      },
+
       textoNuevaMesa: 'Añadir una mesa vacía',
       botonNuevaMesa: 'display:inline-flex;align-items:center;min-height:42px;padding:0 18px;border-radius:999px;border:1px dashed rgba(20,52,42,.32);background:transparent;color:#33513F;font:500 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;margin-bottom:clamp(14px,1.8vw,18px)',
       nuevaMesa: () => {
