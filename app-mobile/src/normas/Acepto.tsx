@@ -1,12 +1,10 @@
-import Constants from 'expo-constants'
-import { openBrowserAsync } from 'expo-web-browser'
+import { router } from 'expo-router'
 import { Pressable, StyleSheet, View } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 
 import { Texto, color, cremaAlfa, tinta } from '../diseno'
 import { acepto as T } from '../texto/normas'
 
-const SITIO = (Constants.expoConfig?.extra as { sitio: string }).sitio
 
 /**
  * La casilla «Acepto las normas de seguridad y los Términos» (Apple 1.2,
@@ -43,7 +41,7 @@ export function Acepto(p: { marcada: boolean; alCambiar: (v: boolean) => void; a
           {T.normas}
         </Texto>
         {T.medio}
-        <Texto variante="nota" tono={enlace} style={estilos.enlace} onPress={() => openBrowserAsync(`${SITIO}/terminos`)}>
+        <Texto variante="nota" tono={enlace} style={estilos.enlace} onPress={() => router.push('/legal?doc=terminos')}>
           {T.terminos}
         </Texto>
         {T.despues}

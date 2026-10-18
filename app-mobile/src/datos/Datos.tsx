@@ -1,5 +1,4 @@
-import Constants from 'expo-constants'
-import { openBrowserAsync } from 'expo-web-browser'
+import { router } from 'expo-router'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -55,7 +54,6 @@ import { Acepto } from '../normas/Acepto'
 import { acepto as A } from '../texto/normas'
 
 type Servicio = ReturnType<typeof crearServicioDatos>
-const SITIO = (Constants.expoConfig?.extra as { sitio: string }).sitio
 
 const conSuelo = async <X,>(p: Promise<X>): Promise<X> => {
   const empezo = Date.now()
@@ -286,7 +284,7 @@ export function Datos(p: {
             {/* Google y Apple: cuando exista /api/auth/nativo (PROPUESTA §g). */}
             <Texto variante="nota" style={{ marginTop: 9 }}>
               {T.cuenta.legal.antes}
-              <Texto variante="nota" tono="verde" style={estilos.enlace} onPress={() => openBrowserAsync(`${SITIO}/privacidad`)}>
+              <Texto variante="nota" tono="verde" style={estilos.enlace} onPress={() => router.push('/legal?doc=privacidad')}>
                 {T.cuenta.legal.privacidad}
               </Texto>
               {T.cuenta.legal.despues}

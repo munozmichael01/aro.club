@@ -22,8 +22,9 @@ export const inicio = {
 
 export const pie = [
   { texto: 'Por qué existe Aro Club', ruta: '/por-que' },
-  { texto: 'Privacidad', ruta: '/privacidad' },
-  { texto: 'Términos', ruta: '/terminos' },
+  /** «app:» se abre dentro de la app: el legal, desde el 18-10. */
+  { texto: 'Privacidad', ruta: 'app:/legal?doc=privacidad' },
+  { texto: 'Términos', ruta: 'app:/legal?doc=terminos' },
 ]
 
 export const correo = {

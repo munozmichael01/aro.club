@@ -355,7 +355,7 @@ export function atajos(d: MiCuenta, nExclusiones: number | null): Atajo[] {
   const A = T.atajos
   return [
     { titulo: A.respuestas.titulo, cuerpo: A.respuestas.cuerpo(d.respuestas.total), pie: A.respuestas.pie(d.respuestas.faltan), destino: '/perfil' },
-    { titulo: A.creditos.titulo, cuerpo: A.creditos.cuerpo(d.creditos, !!d.reserva), pie: A.creditos.pie(d.creditos), destino: 'web:/terminos' },
+    { titulo: A.creditos.titulo, cuerpo: A.creditos.cuerpo(d.creditos, !!d.reserva), pie: A.creditos.pie(d.creditos), destino: '/legal?doc=terminos' },
     { titulo: A.verificacion.titulo, cuerpo: A.verificacion.cuerpo, pie: A.verificacion.pie[d.verif] ?? '', destino: '/verificacion' },
     { titulo: A.exclusiones.titulo, cuerpo: A.exclusiones.cuerpo, pie: A.exclusiones.pie(nExclusiones), destino: '/perfil' },
     { titulo: A.cenas.titulo, cuerpo: A.cenas.cuerpo, pie: A.cenas.pie(cenas), destino: '/perfil' },

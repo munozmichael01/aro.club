@@ -19,6 +19,8 @@ export default function Pantalla() {
       ir={(destino, params) => {
         // Las páginas de la web (términos, reglas, el panel) se abren en el navegador de la app.
         if (destino.startsWith('web:')) return void openBrowserAsync(SITIO + destino.slice(4))
+        // Con su propia consulta («/legal?doc=terminos») va tal cual.
+        if (destino.includes('?')) return void router.push(destino as never)
         router.push({ pathname: destino as never, params })
       }}
       alEntrar={() => router.replace('/entrar')}

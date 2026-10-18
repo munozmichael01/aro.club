@@ -236,10 +236,11 @@ export const atajos = {
 /** El pie: páginas de la web, se abren en el navegador de la app. */
 export const pie = [
   { texto: 'Preguntas', ruta: '/#faq' },
-  { texto: 'Reglas de la mesa', ruta: '/reglas' },
+  /** El legal también dentro de la app (Michael, 18-10). */
+  { texto: 'Reglas de la mesa', ruta: 'app:/legal?doc=reglas' },
   /** «app:» se abre dentro de la app, no en la web (Apple 1.2, 14-10). */
   { texto: 'Seguridad y normas', ruta: 'app:/normas' },
-  { texto: 'Privacidad', ruta: '/privacidad' },
+  { texto: 'Privacidad', ruta: 'app:/legal?doc=privacidad' },
 ]
 
 export const nav = {

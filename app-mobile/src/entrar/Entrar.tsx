@@ -1,3 +1,4 @@
+import { router } from 'expo-router'
 import Constants from 'expo-constants'
 import { openBrowserAsync } from 'expo-web-browser'
 import { useState, type ReactNode } from 'react'
@@ -408,7 +409,7 @@ export function Entrar(p: {
         <Image source={require('../../assets/fotos/entrar.jpg')} style={estilos.foto} resizeMode="cover" accessibilityIgnoresInvertColors />
         <View style={estilos.pie}>
           {T.pie.map((l) => (
-            <EnlacePie key={l.ruta} texto={l.texto} onPress={() => openBrowserAsync(`${SITIO}${l.ruta}`)} />
+            <EnlacePie key={l.ruta} texto={l.texto} onPress={() => (l.ruta.startsWith('app:') ? router.push(l.ruta.slice(4) as never) : openBrowserAsync(`${SITIO}${l.ruta}`))} />
           ))}
         </View>
       </ScrollView>

@@ -422,7 +422,7 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
 
         <View style={estilos.pie}>
           <EnlacePie fondo="crema" texto={T.pie.verificacion} onPress={() => p.ir('/verificacion')} />
-          <EnlacePie fondo="crema" texto={T.pie.privacidad} onPress={() => p.ir('web:/privacidad')} />
+          <EnlacePie fondo="crema" texto={T.pie.privacidad} onPress={() => p.ir('/legal?doc=privacidad')} />
         </View>
       </>
     )

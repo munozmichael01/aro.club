@@ -1,4 +1,4 @@
-import { openBrowserAsync } from 'expo-web-browser'
+import { router } from 'expo-router'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -6,10 +6,8 @@ import { useState } from 'react'
 
 import { Aviso, Boton, Texto, color, medida, tinta } from '../diseno'
 import { Acepto } from './Acepto'
-import Constants from 'expo-constants'
 import * as T from '../texto/normas'
 
-const SITIO = (Constants.expoConfig?.extra as { sitio: string }).sitio
 
 /**
  * /normas: tolerancia cero, reportar y bloquear (Apple 1.2, 14-10-2026). Se
@@ -45,9 +43,9 @@ export function Normas(p: { alVolver?: () => void; aceptar?: { alAceptar: () => 
       ))}
       <Texto variante="nota" style={{ marginTop: 22 }}>
         {L.antes}
-        <Texto variante="nota" tono="verde" style={estilos.enlace} onPress={() => openBrowserAsync(`${SITIO}/terminos`)}>{L.terminos}</Texto>
+        <Texto variante="nota" tono="verde" style={estilos.enlace} onPress={() => router.push('/legal?doc=terminos')}>{L.terminos}</Texto>
         {L.medio}
-        <Texto variante="nota" tono="verde" style={estilos.enlace} onPress={() => openBrowserAsync(`${SITIO}/privacidad`)}>{L.privacidad}</Texto>
+        <Texto variante="nota" tono="verde" style={estilos.enlace} onPress={() => router.push('/legal?doc=privacidad')}>{L.privacidad}</Texto>
         {L.despues}
       </Texto>
       {a ? (
