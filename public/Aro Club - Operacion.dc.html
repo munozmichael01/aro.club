@@ -319,7 +319,7 @@
                   </sc-if>
 
                   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:13px">
-                    <sc-for list="{{ t.reglas }}" as="r" hint-placeholder-count="7">
+                    <sc-for list="{{ t.reglas }}" as="r" hint-placeholder-count="8">
                       <span style="{{ r.chip }}">{{ r.texto }}</span>
                     </sc-for>
                   </div>
@@ -1671,7 +1671,7 @@ class Component extends DCLogic {
   // Esta pantalla NO simula nada.
   //
   // La entrega venía con el reparto resuelto en el navegador: un pool de
-  // veinte nombres, las siete reglas evaluadas aquí y las mesas armadas al
+  // veinte nombres, las ocho reglas evaluadas aquí y las mesas armadas al
   // vuelo. Como diseño está bien —enseña qué tiene que verse—, pero como
   // producto sería una segunda implementación del reparto, y la que manda es
   // la del servidor: es la que se publica y la que sale en los correos. Dos
@@ -3746,7 +3746,7 @@ class Component extends DCLogic {
       ['APUNTADOS', String(apuntadosDelDia), 'En ' + fr.zonas.length + (fr.zonas.length === 1 ? ' zona' : ' zonas'), null],
       [vozRep.Unidades.toUpperCase(), oNada(totalMesas), (repartoListo ? sentados + ' ' + vozRep.sent + (desiguales ? ', ' + desiguales + ' sin seis' : ', ' + (totalMesas === 1 ? 'de ' + POR_MESA : 'todas de ' + POR_MESA)) : sinSaber), desiguales ? '#8F4515' : null],
       ['PUBLICADAS', repartoListo ? publicadas + ' de ' + totalMesas : '—', (!repartoListo ? sinSaber : (publicadas === totalMesas ? 'Todas fijas' : 'El resto sigue moviéndose')), publicadas === totalMesas ? '#1B5138' : null],
-      ['NO PUEDEN SALIR', oNada(rotas), (!repartoListo ? sinSaber : (rotas ? 'Rompen alguna de las siete reglas' : 'Ninguna rompe reglas')), rotas ? '#8F4515' : null]
+      ['NO PUEDEN SALIR', oNada(rotas), (!repartoListo ? sinSaber : (rotas ? 'Rompen alguna de las ocho reglas' : 'Ninguna rompe reglas')), rotas ? '#8F4515' : null]
     ].map((m) => ({ etiqueta: m[0], cifra: m[1], nota: m[2], cifraEstilo: cifraRep(m[3]) }));
 
     // Antes de repartir no hay espera: hay apuntados, y hasta hoy no se veía

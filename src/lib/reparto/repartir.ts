@@ -60,24 +60,27 @@ export type Pesos = {
 }
 
 /**
- * El arraigo YA NO PUNTUA.
+ * EL ARRAIGO VUELVE A PUNTUAR, pero midiendo otra cosa.
  *
- * Pesaba 0.2 empujando hacia mesas con al menos un `volvio` y dos
- * `se-quedo`. Eso era una teoria sobre quien conecta con quien —el que
- * volvio y el que se quedo tienen de que hablar— que nunca comprobamos, y
- * mientras tanto le quitaba sitio a lo que si sabemos que importa.
+ * Estuvo en 0.2 con una teoria —que el que volvio y el que se quedo tienen
+ * de que hablar— que nunca comprobamos, y por eso se bajo a cero. Michael,
+ * 18-10: «por que este no suma si al final es un punto en comun».
  *
- * El arraigo se sigue guardando: es espejo en la landing y segmento en
- * operacion —a quien viene de visita no se le ofrece pack ni recurrencia—.
- * Guardarlo y no aplicarlo al reparto son dos cosas distintas.
+ * Tiene razon, y lo que estaba mal no era el peso sino la cuenta. La vieja
+ * premiaba una COMBINACION concreta (un `volvio` y dos `se-quedo`), que es
+ * una receta inventada. La de ahora mide lo que el dice: cuanta gente de la
+ * mesa comparte su situacion con alguien mas. Dos que acaban de llegar a
+ * Caracas, o dos que volvieron despues de anos fuera, tienen una
+ * conversacion que no hay que provocar.
  *
- * Su 0.2 se reparte entre cohesion y sector, que son los dos terminos que
- * miden algo observable: si tienen de que hablar y si la mesa es diversa.
+ * El 0.1 sale de la cohesion, que es el termino que hoy no decide nada: da
+ * 1,00 en todas las mesas porque basta compartir dos intereses y con el
+ * catalogo actual eso lo cumple todo el mundo. Sigue siendo el que mas pesa.
  */
 export const PESOS: Pesos = {
-  cohesion: 0.4,
+  cohesion: 0.3,
   sector: 0.3,
-  arraigo: 0,
+  arraigo: 0.1,
   energia: 0.2,
   novedad: 0.1,
 }
@@ -192,11 +195,6 @@ export function roturas(mesa: Persona[]): Rotura[] {
     })
   }
 
-  const deVisita = mesa.filter((p) => p.arraigo === 'visita')
-  if (deVisita.length > 2) {
-    fallos.push({ regla: 'visita', detalle: deVisita.map((p) => p.nombre).join(', ') })
-  }
-
   // Zona: la misma operacion que el idioma. Una mesa solo existe si hay un
   // sitio al que los seis irian. No se reparte por zona en pools separados
   // —eso fragmenta y con poca gente no se llena ninguna mesa—: la zona es
@@ -243,7 +241,7 @@ export const esLegal = (mesa: Persona[]) => roturas(mesa).length === 0
  * Las reglas evaluadas TODAS, cumplidas y rotas, con su texto.
  *
  * `roturas` solo devuelve lo que falla, que es lo que necesita el reparto.
- * Pero el panel enseña las siete a la vez —en verde las que cuadran— y con
+ * Pero el panel enseña las ocho a la vez —en verde las que cuadran— y con
  * solo las rotas tendría que deducir las buenas: volver a contar géneros,
  * edades y empresas en el navegador. Eso es una segunda implementación de
  * las reglas, y el día que discrepe de esta, la pantalla diría que una mesa
@@ -296,6 +294,11 @@ export function evaluacion(
     di('edad', rango),
     di('empresa', 'Sin empresa repetida'),
     di('veto', 'Nadie repetido'),
+    // La de hoy. Faltaba aquí: el servidor se negaba a publicar la mesa y el
+    // panel no tenía chip que ponerse en rojo, así que la razón solo salía en
+    // la línea de «rompe N reglas». Una regla que bloquea y no se ve es una
+    // regla que operación descubre cuando ya está intentando publicar.
+    di('sin-nada-en-comun', 'Todos con alguien de qué hablar'),
     di('gasto', 'Gasto compatible'),
     di('idioma', 'Idioma común'),
     { regla: 'zona', ok: zonaOk, texto: textoZona },
@@ -324,12 +327,20 @@ export function desglose(mesa: Persona[]): Record<keyof Pesos, number> {
   const exceso = [...porSector.values()].reduce((t, c) => t + Math.max(0, c - 2), 0)
   const sector = Math.max(0, 1 - exceso / n)
 
-  // Se mantiene calculado pero con peso cero: el desglose lo sigue
-  // enseñando en el panel como dato de la mesa, no como algo que la
-  // puntuacion premie.
-  const volvio = mesa.filter((p) => p.arraigo === 'volvio').length
-  const seQuedo = mesa.filter((p) => p.arraigo === 'se-quedo').length
-  const arraigo = (Math.min(volvio, 1) + Math.min(seQuedo, 2) / 2) / 2
+  // Arraigo: cuánta gente comparte su situación con al menos otra persona.
+  //
+  // No premia ninguna combinación en concreto —eso era lo que hacía antes, y
+  // era una receta inventada—: premia que nadie sea el único que llegó hace
+  // dos meses en una mesa de seis que se conoce la ciudad de memoria. Quien
+  // no contestó no cuenta ni a favor ni en contra.
+  const cuantosPorArraigo = new Map<string, number>()
+  for (const p of mesa) {
+    if (p.arraigo) cuantosPorArraigo.set(p.arraigo, (cuantosPorArraigo.get(p.arraigo) ?? 0) + 1)
+  }
+  const acompanados = mesa.filter(
+    (p) => p.arraigo && (cuantosPorArraigo.get(p.arraigo) ?? 0) > 1,
+  ).length
+  const arraigo = acompanados / n
 
   // Balance de energía: dos o tres que llevan la conversación.
   const llevan = mesa.filter((p) => p.energia === 'lleva').length

@@ -30,25 +30,38 @@ deja constancia de quién lo hizo.
 | **Empresa** | Dos de la misma empresa. Trabajar por cuenta propia no cuenta como empresa |
 | **Veto** | Dos personas que se bloquearon, o que ya cenaron juntas en los últimos tres meses |
 | **Gasto** | Dos tramos de distancia entre el más ajustado y el que más gasta |
-| **Visita** | Más de dos personas que están de paso por la ciudad |
 | **Zona** | Que no haya una zona que acepten los seis |
 | **Idioma** | Que no haya un idioma común |
-| **Sin nada en común** | Una pareja que no comparte **ni un interés ni un tema**. Es de hoy: lo que arruina una cena no es la media de la mesa, es el que no tiene de qué hablar con nadie |
+| **Sin nada en común** | Una pareja que no comparte **ni un interés ni un tema**. Lo que arruina una cena no es la media de la mesa, es el que no tiene de qué hablar con nadie |
+
+**Y una que se fue (18-10).** «Más de dos personas de paso por la ciudad»
+bloqueaba una mesa, y no tenía por qué: estar de paso no es un problema, es un
+punto en común. Además nunca mordió, porque de 574 fichas solo 14 están de
+paso. Michael: «esto no debe ser un impedimento».
 
 ### La puntuación: entre las mesas legales, cuál es mejor
 
 | Término | Peso | Qué mide |
 |---|---|---|
-| Cohesión | 0,4 | Cuánta gente comparte al menos dos intereses o temas con el resto |
+| Cohesión | 0,3 | Cuánta gente comparte al menos dos intereses o temas con el resto |
 | Sector | 0,3 | Diversidad de a qué se dedican. Penaliza a partir de dos del mismo |
 | Energía | 0,2 | Que haya dos o tres de los que llevan la conversación |
+| Arraigo | 0,1 | Cuánta gente comparte su situación con alguien más de la mesa |
 | Novedad | 0,1 | Penaliza mesas donde ya se conocían |
-| Arraigo | 0 | Se calcula y se enseña, pero no puntúa |
+
+**El arraigo volvió a puntuar el 18-10**, y midiendo otra cosa. Estuvo en 0,2
+premiando una combinación concreta —un «volvió» y dos «se quedó»—, que era una
+receta inventada, y por eso se bajó a cero. Ahora mide lo que Michael dijo que
+es: un punto en común. Dos que acaban de llegar a Caracas, o dos que volvieron
+después de años fuera, tienen conversación sin que nadie la provoque. Y la
+cuenta discrimina de verdad: sobre las fichas reales, seis personas al azar dan
+0,70 de media y el término se mueve entre 0,33 y 1,00.
 
 **Ojo con la cohesión:** hoy da 1,00 en todas las mesas, porque basta
 compartir dos intereses y con el catálogo actual eso lo cumple todo el mundo.
-O sea: el 40% de la nota no está decidiendo nada. Está pendiente medirlo por
-parejas en vez de con un umbral por persona.
+O sea: el 30% de la nota no está decidiendo nada. Está pendiente medirlo por
+parejas en vez de con un umbral por persona. El 0,1 que recuperó el arraigo
+salió de ahí, del término que no estaba decidiendo nada.
 
 ---
 
