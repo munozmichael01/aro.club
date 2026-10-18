@@ -474,6 +474,18 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   const [avisoSitio, setAvisoSitio] = useState<string | null>(null)
+  const [saltando, setSaltando] = useState(false)
+
+  // «Ahora no» GUARDA que la saltó (8dc6b47): la encuesta ya no caduca, y sin
+  // esto se quedaría delante para siempre. Si falla, se sale igual: lo que
+  // pidió fue salir.
+  const saltar = async () => {
+    if (saltando) return
+    setSaltando(true)
+    if (d.mesaId) await servicio.saltar(d.mesaId).catch(() => null)
+    setSaltando(false)
+    ir('/cuenta')
+  }
 
   const mesa = M.esMesa(d)
   const voz = M.voz(d)
@@ -514,7 +526,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
 
   return (
     <View>
-      <SelloBorde texto={T.pasada.sello} />
+      <SelloBorde texto={M.selloPasada(d, Date.now())} />
       <Titular>{T.pasada.titulo}</Titular>
       <Bajada>{T.pasada.bajada(voz.estuviste, d.restaurante || '—', voz.unidad, M.conNumero(d) ? M.numero(d) : '')}</Bajada>
       <Texto variante="nota" style={{ marginTop: 8 }}>
@@ -629,7 +641,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginTop: 28 }}>
             <Boton texto={T.pasada.enviar(enviando)} onPress={enviar} apagado={!hay || enviando} />
-            <Boton tipo="fantasma" texto={T.pasada.ahoraNo} onPress={() => ir('/cuenta')} />
+            <Boton tipo="fantasma" texto={saltando ? T.pasada.saltando : T.pasada.ahoraNo} onPress={saltar} />
           </View>
           {error && !reporteAbierto ? (
             <View style={{ marginTop: 14 }}>

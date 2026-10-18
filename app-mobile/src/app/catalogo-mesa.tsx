@@ -69,6 +69,8 @@ const ESTADOS: Record<string, DeServidor> = {
   'ajuste-ambos': { ...ABIERTA, ajustes: { alguienCancelo: true, sonCuantos: 6, caben: 6, teMovimos: false, seSumoAlguien: true } },
   'ajuste-movido': { ...ABIERTA, ajustes: { alguienCancelo: false, sonCuantos: 6, caben: 6, teMovimos: true, seSumoAlguien: false } },
   pasada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10) },
+  // La encuesta ya no caduca (8dc6b47): una cena de hace un mes lleva su fecha en el sello.
+  'pasada-vieja': { ...ABIERTA, fase: 'pasada', empiezaEn: en(-24 * 30) },
   valorada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10), yaValoro: true, yaBloqueados: [CINCO[2].id], yaReporto: CINCO[2].id },
 }
 
@@ -91,6 +93,11 @@ function Pantalla() {
       console.log('[catálogo] valorar', v)
       const avisoSitio = tope && v.noRepetirSitio ? 'Ya tienes 2 sitios marcados: La Ventana y Madre. Tu valoración sí quedó guardada. Si quieres marcar este, quita uno en tu perfil.' : null
       return { ok: true, datos: { avisoSitio } }
+    },
+    async saltar() {
+      await espera()
+      console.log('[catálogo] saltar')
+      return { ok: true, datos: { estado: 'saltada' } }
     },
     async grabacion(_evento, permite) {
       await espera()

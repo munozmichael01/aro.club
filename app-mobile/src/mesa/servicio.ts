@@ -77,6 +77,9 @@ export function crearServicioMesa(api: Api) {
         T.grabacion.noGuardado,
       ),
 
+    /** «Ahora no»: deja constancia de que la saltó, y no vuelve a salir (8dc6b47). */
+    saltar: (mesaId: string) => despues({ accion: 'saltar', mesaId }, T.pasada.noGuardado),
+
     reportar: (mesaId: string, aQuien: string, motivo: string) =>
       despues({ accion: 'reportar', mesaId, aQuien, motivo }, T.reporte.noRegistrado),
   }

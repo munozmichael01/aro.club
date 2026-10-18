@@ -124,7 +124,12 @@ export const tarde = {
 }
 
 export const pasada = {
-  sello: 'ANOCHE',
+  /**
+   * Cuándo fue, y no «ANOCHE» a secas: la encuesta ya no caduca a las 48 h
+   * (8dc6b47) y aquí puede caer una cena de hace un mes. Como la web.
+   */
+  sello: (dias: number | null, numero?: number | string, mes?: string) =>
+    dias == null ? 'TU ÚLTIMA MESA' : dias <= 1 ? 'ANOCHE' : dias < 7 ? `HACE ${dias} DÍAS` : numero != null && mes ? `EL ${numero} DE ${mes.toUpperCase()}` : 'TU ÚLTIMA MESA',
   titulo: '¿Qué tal estuvo?',
   /** `estuviste` sale de `vozDe` (reglas.js): «Cenaste en» / «Estuviste en». */
   bajada: (estuviste: string, sitio: string, unidad: string, numero: string) =>
@@ -165,6 +170,7 @@ export const pasada = {
   bloqueadaPorReporte: 'Bloqueada por tu reporte',
   enviar: (enviando: boolean) => (enviando ? 'Enviando…' : 'Enviar'),
   ahoraNo: 'Ahora no',
+  saltando: 'Un momento',
   noGuardado: 'No pudimos guardarlo. Vuelve a intentarlo.',
   anotado: 'Anotado, gracias.',
   resumen: (bloqueados: number) =>

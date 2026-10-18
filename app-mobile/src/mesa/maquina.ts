@@ -40,7 +40,10 @@ export type DeServidor = {
   mapa?: string | null
   mapaApple?: string | null
   companeros?: Companero[]
+  /** Contestó de verdad. Una encuesta saltada ya NO cuenta como valorada (8dc6b47). */
   yaValoro?: boolean
+  /** La saltó con «Ahora no»: no vuelve a salir. */
+  yaSalto?: boolean
   yaBloqueados?: string[]
   yaReporto?: string | null
   /** La fecha, para contestar la grabación (`POST /api/grabacion`). */
@@ -231,3 +234,11 @@ export function cuerpoValorar(mesaId: string, v: Valoracion) {
 
 /** Marcar o desmarcar a alguien. */
 export const alternar = (lista: string[], id: string) => (lista.includes(id) ? lista.filter((x) => x !== id) : [...lista, id])
+
+/** El sello de la encuesta: «ANOCHE», «HACE 3 DÍAS» o «EL 18 DE SEPTIEMBRE», contado como la web. */
+export function selloPasada(d: DeServidor, ahora: number) {
+  if (!d.empiezaEn) return T.pasada.sello(null)
+  const dias = Math.floor((ahora - new Date(d.empiezaEn).getTime()) / 86400000)
+  const p = reglas.partesDe(d.empiezaEn, d.zonaHoraria)
+  return T.pasada.sello(dias, p?.numero, p?.mes)
+}
