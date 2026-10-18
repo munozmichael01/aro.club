@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { cabeEnLaFecha } from '@/lib/edad'
 
 import { respuestasDePerfil, situacionDePerfil } from '@/lib/embudo'
+import { VERSION_LEGAL } from '@/lib/legal'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
@@ -45,7 +46,7 @@ export async function GET() {
   const { data: perfil } = await admin
     .from('profiles')
     .select(
-      'id, full_name, display_name, email, contact_email, status, role, waitlist_id, birthdate, gender, phone_e164, city_slug',
+      'id, full_name, display_name, email, contact_email, status, role, waitlist_id, birthdate, gender, phone_e164, city_slug, terms_accepted_at, terms_version',
     )
     .eq('id', user.id)
     .maybeSingle()
@@ -499,6 +500,16 @@ export async function GET() {
   )
 
   return NextResponse.json({
+    /**
+     * Si esta cuenta aceptó ya las normas y los Términos.
+     *
+     * Lo pide Apple (norma 1.2) antes de enseñar contenido de otra gente, y
+     * Michael quiere que se acepte UNA vez y quede guardado, no una casilla
+     * en cada inicio de sesión. La constancia es `profiles.terms_accepted_at`
+     * con su `terms_version`, que existen desde agosto: quien se dio de alta
+     * con correo ya las tiene puestas y no vuelve a ver nada.
+     */
+    normasAceptadas: !!perfil.terms_accepted_at && perfil.terms_version === VERSION_LEGAL,
     preguntasNuevas,
     nombre: perfil.display_name || perfil.full_name || null,
     esOps: perfil.role === 'ops' || perfil.role === 'admin',
