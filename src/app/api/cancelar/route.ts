@@ -133,13 +133,42 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient()
 
-  const { data: reserva } = await admin
+  const { data: reserva, error: errorReserva } = await admin
     .from('bookings')
-    // `table_members` para saber de qué mesa se baja: hay que rellenar ESE
-    // hueco, no cualquiera.
-    .select('id, status, event_id, profile_id, events(starts_at, reveal_at), table_members(table_id), profiles(display_name, full_name)')
+    /**
+     * `table_members` para saber de qué mesa se baja: hay que rellenar ESE
+     * hueco, no cualquiera.
+     *
+     * Y `profiles` CON SU CLAVE, que es lo que rompió cancelar en producción
+     * durante seis horas. `bookings` tiene dos claves hacia `profiles`
+     * —`profile_id` y `attended_marked_by`— así que `profiles(...)` a secas
+     * es ambiguo: PostgREST devuelve PGRST201 y no devuelve fila. Como esta
+     * ruta no miraba el error, `reserva` llegaba nula y el candado de abajo
+     * respondía «Esa reserva no existe» a todo el mundo.
+     *
+     * Lo metí yo ayer al añadir el aviso de mesa encogida (b732efd): solo
+     * quería el nombre para el aviso al equipo. Lo encontró el agente de la
+     * app porque Michael no podía cancelar la suya.
+     */
+    .select('id, status, event_id, profile_id, events(starts_at, reveal_at), table_members(table_id), profiles!bookings_profile_id_fkey(display_name, full_name)')
     .eq('id', parsed.data.reservaId)
     .maybeSingle()
+
+  /**
+   * El error ANTES del 404, como ya hacía el GET de esta misma ruta.
+   *
+   * «No existe» y «no pude leerla» son dos cosas distintas y las dos salían
+   * por la misma puerta. Mientras una diga lo de la otra, un fallo de
+   * consulta se lee como una reserva que no está, y nadie va a buscar en el
+   * sitio correcto.
+   */
+  if (errorReserva) {
+    console.error('[cancelar] no se pudo leer la reserva', errorReserva)
+    return NextResponse.json(
+      { error: 'No pudimos leer tu reserva. Vuelve a intentarlo.' },
+      { status: 500 },
+    )
+  }
 
   if (!reserva || reserva.profile_id !== user.id) {
     // 404 y no 403: confirmar que la reserva existe pero es de otro ya dice
