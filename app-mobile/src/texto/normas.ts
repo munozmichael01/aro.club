@@ -28,3 +28,10 @@ export const acepto = {
   despues: ', con tolerancia cero a cualquier abuso.',
   falta: 'Acepta las normas para continuar',
 }
+
+/** La puerta de después de entrar, una vez por cuenta (18-10). */
+export const puerta = {
+  continuar: 'Continuar',
+  guardando: 'Guardando…',
+  noGuardado: 'No pudimos guardarlo. Vuelve a intentarlo.',
+}

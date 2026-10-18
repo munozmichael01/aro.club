@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 
 import { refrescarAvisos } from '../../avisos/push'
 import { Pestanas } from '../../cuenta/Pestanas'
+import { PuertaNormas } from '../../normas/PuertaNormas'
 
 /** La cuenta: tres pestañas abajo, las mismas siempre. Las rutas no cambian: /cuenta, /mesa, /perfil. */
 export default function Cuenta() {
@@ -14,10 +15,12 @@ export default function Cuenta() {
     refrescarAvisos()
   }, [])
   return (
-    <Tabs tabBar={(p) => <Pestanas {...p} />} screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="cuenta" />
-      <Tabs.Screen name="mesa" />
-      <Tabs.Screen name="perfil" />
-    </Tabs>
+    <PuertaNormas>
+      <Tabs tabBar={(p) => <Pestanas {...p} />} screenOptions={{ headerShown: false }}>
+        <Tabs.Screen name="cuenta" />
+        <Tabs.Screen name="mesa" />
+        <Tabs.Screen name="perfil" />
+      </Tabs>
+    </PuertaNormas>
   )
 }

@@ -8,8 +8,6 @@ import Svg, { Path } from 'react-native-svg'
 import { AroCarga, Boton, Campo, CampoClave, EnlacePie, Marca, Opcion, Texto, color, cremaAlfa, fuente, medida, radio } from '../diseno'
 import { reglas } from '../reglas'
 import * as T from '../texto/entrar'
-import { Acepto } from '../normas/Acepto'
-import { acepto as A } from '../texto/normas'
 
 type Fase = 'inicio' | 'correo' | 'recuperar' | 'entrando' | 'otroCorreo' | 'relay'
 
@@ -117,7 +115,6 @@ export function Entrar(p: {
   const [contacto, setContacto] = useState('')
   const [guardando, setGuardando] = useState(false)
   // La casilla de las normas: sin ella no se entra (Apple 1.2, 14-10).
-  const [acepto, setAcepto] = useState(false)
 
   const conProveedor = async (prov: 'apple' | 'google') => {
     setAviso('')
@@ -145,7 +142,9 @@ export function Entrar(p: {
   }
 
   const datosListos = reglas.valido('correo', correo.trim()) && clave.length > 0
-  const listo = datosListos && acepto
+  // Sin casilla al entrar (Michael, 18-10): las normas se aceptan una vez por
+  // cuenta, y a quien no las aceptó se le piden justo después (PuertaNormas).
+  const listo = datosListos
 
   const entrar = async () => {
     if (!listo) return
@@ -319,8 +318,7 @@ export function Entrar(p: {
             onAlternar={() => setVer((x) => !x)}
             textos={T.correo}
           />
-          <Acepto fondo="verde" marcada={acepto} alCambiar={setAcepto} alNormas={p.alNormas} />
-          <Boton tipo="sobreVerde" texto={listo ? T.correo.entrar : datosListos ? A.falta : T.correo.falta} ancho onPress={entrar} apagado={!listo} />
+          <Boton tipo="sobreVerde" texto={listo ? T.correo.entrar : T.correo.falta} ancho onPress={entrar} apagado={!listo} />
         </View>
         {error ? (
           <Texto variante="cuerpoChico" tono="avisoSobreVerde" accessibilityLiveRegion="polite" style={{ marginTop: 13 }}>
@@ -350,9 +348,8 @@ export function Entrar(p: {
         <Texto variante="cuerpoGrande" tono="cuerpoSobreVerde" style={{ marginTop: 14 }}>
           {T.inicio.bajada}
         </Texto>
-        <Acepto fondo="verde" marcada={acepto} alCambiar={setAcepto} alNormas={p.alNormas} />
         <View style={{ marginTop: 20 }}>
-          <Boton tipo="secundarioSobreVerde" texto={T.inicio.conCorreo} ancho disabled={!acepto} onPress={() => setFase('correo')} />
+          <Boton tipo="secundarioSobreVerde" texto={T.inicio.conCorreo} ancho onPress={() => setFase('correo')} />
         </View>
         <View style={estilos.separador}>
           <View style={estilos.linea} />
@@ -362,8 +359,8 @@ export function Entrar(p: {
           <View style={estilos.linea} />
         </View>
         <View style={{ gap: 10 }}>
-          {p.hayProveedor('apple') ? <Proveedor texto={T.inicio.apple} logo={<LogoApple />} onPress={() => conProveedor('apple')} disabled={!acepto} /> : null}
-          {p.hayProveedor('google') ? <Proveedor texto={T.inicio.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} disabled={!acepto} /> : null}
+          {p.hayProveedor('apple') ? <Proveedor texto={T.inicio.apple} logo={<LogoApple />} onPress={() => conProveedor('apple')} /> : null}
+          {p.hayProveedor('google') ? <Proveedor texto={T.inicio.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} /> : null}
         </View>
         {aviso ? (
           <Texto variante="cuerpoChico" tono="avisoSobreVerde" accessibilityLiveRegion="polite" style={{ marginTop: 13 }}>
