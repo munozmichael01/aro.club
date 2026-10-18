@@ -586,6 +586,12 @@
             <span style="flex:1;min-width:0">
               <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">Anotado, gracias.</span>
               <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px">{{ resumenValoracion }}</span>
+              <!-- El veto del sitio que no cupo. Va aquí dentro y no como
+                   error: la valoración SÍ se guardó, y decirlo como fallo
+                   haría que la volviera a mandar. -->
+              <sc-if value="{{ haySitioNoGuardado }}" hint-placeholder-val="{{ false }}">
+                <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-top:7px">{{ avisoSitio }}</span>
+              </sc-if>
             </span>
           </div>
         </sc-if>
@@ -822,7 +828,7 @@ class Component extends DCLogic {
     mesaVal: -1, sitio: {}, volveria: -1, comentario: '',
     // Lo que gastó —índice del tramo— y si prefiere no volver a ese sitio.
     gasto: -1, noRepetirSitio: false,
-    bloqueados: [], contado: false,
+    bloqueados: [], contado: false, avisoSitio: '',
     reporte: false, motivo: -1, quien: -1, reportado: false,
     datos: null, errorF11: '', enviando: false,
     // El juego: `null` = cerrado. Dentro, el paso y dónde va.
@@ -1051,7 +1057,13 @@ class Component extends DCLogic {
       sitio: sitio,
       volveriaAAro: this.state.volveria >= 0 ? this.state.volveria === 1 : null
     })
-      .then(() => (aQuien.length ? this.enviar({ accion: 'bloquear', aQuien: aQuien }) : null))
+      // Si el veto del sitio no cupo —ya tiene dos marcados— la valoración
+      // SÍ se guardó, y hay que decirle las dos cosas. Antes esto volvía
+      // como un error y se perdía la encuesta entera.
+      .then((r) => {
+        if (r && r.sitioNoGuardado) this.setState({ avisoSitio: r.sitioNoGuardado.texto });
+        return aQuien.length ? this.enviar({ accion: 'bloquear', aQuien: aQuien }) : null;
+      })
       .then(() => this.setState({ contado: true, enviando: false }))
       .catch(() => this.setState({ enviando: false, errorF11: 'No pudimos guardarlo. Vuelve a intentarlo.' }));
   }
@@ -2000,6 +2012,8 @@ class Component extends DCLogic {
         '. Lo que nos cuentes entra en cómo armamos tu próxima mesa, y nadie más lo ve.',
       sinContar: !this.state.contado,
       contado: this.state.contado,
+      haySitioNoGuardado: !!this.state.avisoSitio,
+      avisoSitio: this.state.avisoSitio,
       resumenValoracion: this.state.bloqueados.length
         ? 'Entra en tu próxima mesa. ' + (this.state.bloqueados.length === 1
             ? 'La persona que marcaste no volverá'

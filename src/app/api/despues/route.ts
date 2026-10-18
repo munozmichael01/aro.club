@@ -151,6 +151,9 @@ export async function POST(request: Request) {
   }
 
   if (d.accion === 'valorar') {
+    /** Si el veto no cupo, para decirlo al final sin perder la encuesta. */
+    let sobraElVeto: { motivo: 'tope-sitios'; texto: string } | null = null
+
     // Los cuatro bloques son opcionales por separado, así que se escribe solo
     // lo que vino. Mandar `null` en el resto borraría lo que ya contestó
     // quien vuelve a entrar a completar la encuesta.
@@ -203,19 +206,31 @@ export async function POST(request: Request) {
           .select('name')
           .in('id', [...sitios])
 
-        return NextResponse.json(
-          {
-            error:
-              `Ya tienes ${sitios.size} sitios marcados: ${(nombres ?? []).map((n) => n.name).join(' y ')}. ` +
-              'Quita uno en tu perfil y vuelve a marcar este.',
-            motivo: 'tope-sitios',
-          },
-          { status: 409 },
-        )
+        /**
+         * EL TOPE TUMBA EL VETO, NO LA ENCUESTA.
+         *
+         * Esto devolvía 409 y se iba, o sea que quien ya tenía dos sitios
+         * marcados contestaba la encuesta entera —las cuatro notas, el
+         * comentario, lo que gastó— y no se guardaba NADA. La pantalla
+         * enseñaba «No pudimos guardarlo. Vuelve a intentarlo», y al
+         * intentarlo otra vez volvía a fallar igual, porque el tope seguía
+         * lleno. Sin salida y sin decir por qué.
+         *
+         * Lo que la persona quiso decir fueron dos cosas, y solo una choca
+         * con el tope. Así que se guarda la valoración y se le dice lo del
+         * sitio: `estado: 'valorada'` con `sitioNoGuardado` dentro.
+         */
+        sobraElVeto = {
+          motivo: 'tope-sitios' as const,
+          texto:
+            `Ya tienes ${sitios.size} sitios marcados: ${(nombres ?? []).map((n) => n.name).join(' y ')}. ` +
+            'Tu valoración sí quedó guardada. Si quieres marcar este, quita uno en tu perfil.',
+        }
       }
     }
 
-    if (d.noRepetirSitio !== undefined) fila.sitio_no_repetir = d.noRepetirSitio
+    // El veto solo entra si cabe. Lo demás de la encuesta se guarda igual.
+    if (d.noRepetirSitio !== undefined && !sobraElVeto) fila.sitio_no_repetir = d.noRepetirSitio
 
     const { error } = await admin.from('table_feedback').upsert(
       fila as never,
@@ -226,7 +241,9 @@ export async function POST(request: Request) {
       console.error('[despues] valorar', error)
       return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
     }
-    return NextResponse.json({ estado: 'valorada' })
+    return NextResponse.json(
+      sobraElVeto ? { estado: 'valorada', sitioNoGuardado: sobraElVeto } : { estado: 'valorada' },
+    )
   }
 
   if (d.accion === 'bloquear') {
