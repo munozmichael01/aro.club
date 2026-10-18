@@ -241,6 +241,8 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
             </Pressable>
           ) : (
             <View>
+              {/* El código también aparta puesto: el permiso se lee ANTES del campo, como la web (58f40f4). Es el mismo control que el de reportar. */}
+              {graba ? <View style={{ marginBottom: 16 }}>{permiso}</View> : null}
               <Texto variante="etiqueta" tono="cuerpo" style={{ letterSpacing: 1.9, marginBottom: 10 }}>
                 {T.cupon.etiqueta}
               </Texto>
@@ -255,10 +257,9 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
                     accessibilityLabel={T.cupon.etiqueta}
                   />
                 </View>
-                <Boton texto={T.cupon.aplicar(aplicando)} onPress={aplicarCupon} apagado={aplicando || !cupon.trim() || !permisoOk} />
+                <Boton texto={permisoOk ? T.cupon.aplicar(aplicando) : T.cupon.marcaPermiso} onPress={aplicarCupon} apagado={aplicando || !cupon.trim() || !permisoOk} />
               </View>
-              {/* El código también aparta puesto: en una fecha con grabación requerida, el permiso va aquí (48f5823). */}
-              {graba ? <View style={{ marginTop: 12 }}>{permiso}</View> : null}
+
               {falloCupon ? (
                 <View style={{ marginTop: 12 }}>
                   <Aviso tono="ojo">{falloCupon}</Aviso>

@@ -56,6 +56,8 @@ type Api = {
   horaEnLetra: (horas: number, minutos: number) => string
   /** Las partes de una fecha en la zona que se pase (`zonaHoraria` de esa fecha); sin zona, `ZONA`. */
   partesDe: (iso: string | null | undefined, zona?: string | null) => PartesFecha | null
+  /** 0 esta semana · 1 la que viene · 2 más adelante. Lunes a domingo, en la zona de la fecha; el domingo ya es la que empieza. `ahora` opcional (58f40f4). */
+  semanaDe: (iso: string, zona?: string | null, ahora?: number) => 0 | 1 | 2
   /** Las cuatro preguntas de la puerta, UN sitio para web y app. Opciones como [texto, código]. */
   PUERTA: Record<string, PreguntaPuerta>
   ORDEN_PUERTA: string[]

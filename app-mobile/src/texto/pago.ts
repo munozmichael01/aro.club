@@ -36,6 +36,8 @@ export const elegir = {
 }
 
 export const cupon = {
+  /** En una fecha con grabación requerida, hasta marcar el permiso (58f40f4). */
+  marcaPermiso: 'Marca el permiso',
   pregunta: '¿Tienes un código de invitación?',
   etiqueta: 'TU CÓDIGO',
   ejemplo: 'CÓDIGO',

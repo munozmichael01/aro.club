@@ -119,23 +119,11 @@ export function diasDe(fechas: { iso: string; zona?: Zona }[]): string {
 
 /**
  * «Esta semana», «La semana que viene», «Más adelante»: los grupos de la agenda.
- *
- * Semanas de calendario que empiezan en LUNES, en la zona de la fecha, y el
- * domingo ya cuenta como la semana que empieza (Michael, 18-10). Es la regla
- * de `AroReglas.semanaDe` (48f5823) con `ahora` explícito para las pruebas;
- * antes se contaban días que faltan, y un domingo la cena del jueves y el
- * brunch del domingo caían en grupos distintos.
+ * La regla vive en `reglas.js` (lunes a domingo, en la zona de la fecha, y el
+ * domingo ya cuenta como la semana que empieza), la misma que usa la web.
  */
 export function semanaDe(iso: string, ahora: number, zona?: Zona): string {
-  const ETIQUETAS = ['Esta semana', 'La semana que viene', 'Más adelante']
-  const p = reglas.partesDe(iso, zona)
-  const hoy = reglas.partesDe(new Date(ahora).toISOString(), zona)
-  if (!p || !hoy) return ETIQUETAS[2]
-  const dia = (q: { ano: number; mesNumero: number; numero: number }) => Math.floor(Date.UTC(q.ano, q.mesNumero, q.numero) / 86400000)
-  const lunes = (q: { ano: number; mesNumero: number; numero: number; diaNumero: number }) => dia(q) - ((q.diaNumero + 6) % 7)
-  const lunesHoy = lunes(hoy) + (hoy.diaNumero === 0 ? 7 : 0)
-  const semanas = (lunes(p) - lunesHoy) / 7
-  return ETIQUETAS[semanas <= 0 ? 0 : semanas === 1 ? 1 : 2]
+  return ['Esta semana', 'La semana que viene', 'Más adelante'][reglas.semanaDe(iso, zona, ahora)] ?? 'Más adelante'
 }
 
 /**
