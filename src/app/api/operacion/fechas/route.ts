@@ -725,17 +725,50 @@ export async function POST(request: Request) {
 
   const nuevaSegmenta = d.edadMinima != null || d.edadMaxima != null
 
-  const choca = (mismasDelDia ?? []).some(
-    (e) => !nuevaSegmenta && e.age_band_min == null && e.age_band_max == null,
-  )
+  /**
+   * NI CUANDO SON DE OTRA ZONA (18-10).
+   *
+   * El mismo razonamiento que la edad: la regla existe para que dos fechas
+   * no se quiten gente, y dos zonas que no se tocan no se quitan nada. Quien
+   * solo llega a Las Mercedes no estaba compitiendo por la mesa de Chacao;
+   * estaba esperando a que alguien abriera la suya.
+   *
+   * Michael lo pidió así para el viernes y el sábado: «separa el viernes y
+   * sábado en Chacao y Los Palos Grandes, aparte Las Mercedes». Sin esta
+   * puerta, la segunda fecha de esa noche no se puede abrir desde el panel
+   * aunque sea de otro barrio.
+   *
+   * Lo que se sigue rechazando es lo de siempre: dos fechas que COMPARTEN
+   * zona, las dos para todo el mundo, el mismo día.
+   */
+  const { data: zonasDeEsas } = (mismasDelDia ?? []).length
+    ? await admin
+        .from('event_venues')
+        .select('event_id, zone_slug')
+        .in('event_id', (mismasDelDia ?? []).map((e) => e.id))
+    : { data: [] as { event_id: string; zone_slug: string | null }[] }
+
+  const zonasPorEvento = new Map<string, Set<string>>()
+  for (const v of zonasDeEsas ?? []) {
+    if (!v.zone_slug) continue
+    if (!zonasPorEvento.has(v.event_id)) zonasPorEvento.set(v.event_id, new Set())
+    zonasPorEvento.get(v.event_id)!.add(v.zone_slug)
+  }
+  const zonasNuevas = new Set(d.zonas.map((z) => z.zona))
+
+  const choca = (mismasDelDia ?? []).some((e) => {
+    if (nuevaSegmenta || e.age_band_min != null || e.age_band_max != null) return false
+    const suyas = zonasPorEvento.get(e.id) ?? new Set<string>()
+    return [...suyas].some((z) => zonasNuevas.has(z))
+  })
 
   if (choca) {
     return NextResponse.json(
       {
         error:
-          'Ya hay una fecha de ese tipo ese día, y las dos serían para todo el mundo:'
-          + ' partirían el pool en dos y no llenaría ninguna. Si la nueva es para otras'
-          + ' edades, ponle su banda y ábrela.',
+          'Ya hay una fecha de ese tipo ese día en alguna de esas zonas, y las dos'
+          + ' serían para todo el mundo: partirían el pool en dos y no llenaría'
+          + ' ninguna. Si la nueva es de otras zonas o para otras edades, ábrela así.',
       },
       { status: 409 },
     )

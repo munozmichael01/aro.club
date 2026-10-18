@@ -292,6 +292,12 @@ export async function GET() {
     .gte('starts_at', new Date().toISOString())
     .eq('city_slug', ciudad.slug)
     .order('starts_at', { ascending: true })
+    // Y por creación para deshacer los empates. Desde que una misma noche
+    // puede tener dos fechas de zonas distintas —el viernes en Chacao y el
+    // viernes en Las Mercedes— las dos tienen la MISMA hora, y sin segundo
+    // criterio Postgres las devuelve en el orden que le convenga: la agenda
+    // las barajaba entre una recarga y la siguiente.
+    .order('created_at', { ascending: true })
     .limit(12)
 
   const { data: misReservas } = await admin
