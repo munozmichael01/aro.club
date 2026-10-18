@@ -26,6 +26,23 @@ import { createClient } from '@/lib/supabase/server'
 
 const cuerpo = z.object({
   eventoId: z.string().uuid(),
+  /**
+   * El permiso de grabación, cuando la fecha entera se graba.
+   *
+   * Michael, 18-10: «si es un evento que vamos a grabar sí o sí, debe darnos
+   * permiso y debería ser una condición para reservar; cuando es opcional,
+   * es a nivel de mesa, y las respuestas de la gente de la mesa son las que
+   * nos dirán si grabamos o no».
+   *
+   * Las dos alturas quieren decir cosas distintas y se preguntan en momentos
+   * distintos:
+   *
+   *  · FECHA marcada → se graba seguro. El permiso es condición para apartar
+   *    el puesto, y se pregunta aquí, antes de que haya reserva.
+   *  · MESA marcada → puede que se grabe. Se pregunta al revelar la mesa, es
+   *    opcional, y lo que conteste la mesa decide si se graba ahí.
+   */
+  permiteGrabacion: z.boolean().optional(),
   // Opcional a propósito. Por defecto valen las zonas que ya declaró en el
   // cuestionario: no se le vuelve a preguntar.
   zonas: z.array(z.string().regex(/^[a-z-]+$/)).optional(),
@@ -43,7 +60,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max')
+    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -91,6 +108,9 @@ export async function GET(request: Request) {
       empiezaEn: evento.starts_at,
       cierraEn: evento.booking_closes_at,
       creditos: evento.credit_cost,
+      // Si esta fecha se graba entera. La pantalla lo necesita para pedir el
+      // permiso ANTES del botón, no para enterarse por un 409.
+      grabamos: !!(evento as { grabacion?: boolean }).grabacion,
     },
     // Solo las que abrimos. Las demás no se enseñan apagadas: una opción
     // que no se puede elegir es ruido, no información.
@@ -124,11 +144,32 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max')
+    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion')
     .eq('id', eventoId)
     .maybeSingle()
 
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
+
+  /**
+   * Sin permiso no hay puesto en una fecha que se graba.
+   *
+   * Va ANTES que el embudo y que el cobro, como la edad: no se deja a nadie
+   * invertir esfuerzo delante de una puerta que le vamos a cerrar. El
+   * `motivo` es un código estable para que la pantalla —y la app— sepan qué
+   * enseñar sin leer el texto.
+   *
+   * Quien diga que no, no se queda fuera del club: se queda fuera de ESTA
+   * fecha, y hay otras sin cámara.
+   */
+  if ((evento as { grabacion?: boolean }).grabacion && parsed.data.permiteGrabacion !== true) {
+    return NextResponse.json(
+      {
+        error: 'Esta cena la grabamos, así que para apartar puesto hace falta tu permiso.',
+        motivo: 'falta-permiso-grabacion',
+      },
+      { status: 409 },
+    )
+  }
 
   if (new Date(evento.booking_closes_at).getTime() < Date.now()) {
     return NextResponse.json(
@@ -358,6 +399,10 @@ export async function POST(request: Request) {
         profile_id: user.id,
         status: 'confirmed',
         confirmed_at: new Date().toISOString(),
+        // Si la fecha se graba, el permiso que acaba de dar queda escrito en
+        // su reserva: el mismo sitio donde vive el de la mesa, así que quien
+        // graba lo lee igual que siempre.
+        ...((evento as { grabacion?: boolean }).grabacion ? { permiso_grabacion: true } : {}),
       })
       .select('id')
       .single()

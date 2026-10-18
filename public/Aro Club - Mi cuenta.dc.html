@@ -249,6 +249,18 @@
                   </div>
                   <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:16px;max-width:50ch;text-wrap:pretty">{{ ev.nota }}</div>
 
+                  <!-- Esta cena se graba: se dice antes del botón, y con
+                       crédito el permiso es la condición para pulsarlo. -->
+                  <sc-if value="{{ ev.graba }}" hint-placeholder-val="{{ false }}">
+                    <div style="border-radius:20px;background:#FFF8EA;border:1px solid rgba(143,69,21,.28);padding:16px 18px;margin-bottom:16px">
+                      <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#8F4515">{{ ev.tituloGraba }}</div>
+                      <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:6px;max-width:52ch;text-wrap:pretty">{{ ev.textoGraba }}</div>
+                      <sc-if value="{{ ev.pidePermiso }}" hint-placeholder-val="{{ true }}">
+                        <button onClick="{{ ev.tocarPermiso }}" style="{{ ev.botonPermiso }}">{{ ev.textoPermiso }}</button>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+
                   <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:center">
                     <button onClick="{{ ev.confirmar }}" style="{{ ev.botonConfirmar }}">{{ ev.textoConfirmar }}</button>
                     <button onClick="{{ ev.abrir }}" style="{{ botonFantasmaOscuro }}">Cancelar</button>
@@ -390,7 +402,10 @@ class Component extends DCLogic {
             // El aviso de preguntas nuevas: lo que lleva elegido y si ya se
             // cerró en esta visita. El servidor decide si sale; esto solo
             // recuerda lo de ahora mismo.
-            elegidas: {}, preguntasCerrado: false, guardandoPreguntas: false };
+            elegidas: {}, preguntasCerrado: false, guardandoPreguntas: false,
+            // El permiso de grabación de la fecha que está mirando. Vive
+            // aquí y no en la tarjeta porque solo se abre una a la vez.
+            permiteGrabacion: false };
 
   /**
    * Marcar una opción del aviso de preguntas nuevas.
@@ -1094,7 +1109,11 @@ class Component extends DCLogic {
          * nada. Es el mismo fallo que el cuestionario ya pagó guardando
          * respuestas por posición.
          */
-        a.precioUsd ?? null
+        a.precioUsd ?? null,
+        // Y si esta fecha se graba entera. Al final por lo mismo que el
+        // precio: esta tupla se lee por índice y meterlo en medio corre
+        // todo lo que viene detrás sin que falle nada.
+        !!a.grabamos
       ];
     });
     // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato
@@ -1236,6 +1255,34 @@ class Component extends DCLogic {
         //
         // `paso` y `donde` los sirve `/api/mi-cuenta` desde `embudo.ts`, que es
         // el mismo que `/api/reservar` consulta para decidir si deja pasar.
+        /**
+         * ESTA CENA LA GRABAMOS, y por eso el permiso es condición.
+         *
+         * Michael, 18-10: «si es un evento que vamos a grabar sí o sí, debe
+         * darnos permiso y debería ser una condición para reservar». La otra
+         * altura —marcar una mesa suelta— sigue siendo opcional y se
+         * pregunta al revelar.
+         *
+         * Se pide ANTES del botón y no después: enterarse de que hay cámara
+         * por un error al pulsar «Reservar» es enterarse tarde.
+         */
+        // `c[11]`, que es la última de la tupla. La escribí como `c[9]` y
+        // `c[9]` es la edad máxima: el bloque no salía nunca y nada fallaba.
+        // Es EL MISMO fallo que el comentario de arriba avisa dos pantallas
+        // antes, y lo cometí igual.
+        graba: !!c[11],
+        // Con crédito se reserva aquí, así que aquí se pide el permiso. Sin
+        // crédito el puesto se aparta en la pantalla de pago y se pide allí:
+        // marcarlo dos veces en treinta segundos se lee como que la primera
+        // no contó.
+        pidePermiso: !!c[11] && !!(d && d.creditos > 0),
+        tituloGraba: 'Esta cena la grabamos',
+        textoGraba: 'Vamos a grabar contenido en esta cena: fotos y video para las redes de Aro. Apartar puesto aquí es darnos permiso para que salgas. Si prefieres que no, hay otras fechas sin cámara.',
+        textoPermiso: this.state.permiteGrabacion ? 'Sí, pueden grabarme ✓' : 'Sí, pueden grabarme',
+        botonPermiso: 'display:inline-flex;align-items:center;min-height:46px;margin-top:13px;padding:0 18px;border-radius:999px;cursor:pointer;font:500 15px/1 \'Inter Tight\',sans-serif;border:1px solid '
+          + (this.state.permiteGrabacion ? '#8F4515;background:#8F4515;color:#FFF8EA' : 'rgba(20,52,42,.22);background:transparent;color:#14342A'),
+        tocarPermiso: () => this.setState({ permiteGrabacion: !this.state.permiteGrabacion }),
+
         textoConfirmar: this.state.reservandoYa
           ? 'Apuntándote'
           : (d && d.paso === 'preguntas'
@@ -1254,12 +1301,18 @@ class Component extends DCLogic {
                       ? 'Te avisamos al aprobarla'
                       : (d && d.verif !== 'ok'
                           ? 'Verifica tu identidad primero'
-                          : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : precioFecha))))),
+                          : ((c[11] && d && d.creditos > 0 && !this.state.permiteGrabacion)
+                              ? 'Marca el permiso para seguir'
+                              : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : precioFecha)))))),
         botonConfirmar: 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
         abrir: cerrada ? (() => {}) : (() => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0 }))),
         // Reservar de verdad. Antes solo se marcaba en la pantalla: al
         // recargar desaparecia, y en la base no habia nada.
         confirmar: () => {
+          // Sin permiso no se aparta puesto en una fecha que se graba. El
+          // candado de verdad está en `/api/reservar`; esto es para que el
+          // botón no prometa algo que el servidor va a negar.
+          if (c[11] && d && d.creditos > 0 && !this.state.permiteGrabacion) return;
           // Sin verificar no hay puesto, y decirselo aqui es decirselo donde
           // decide. Antes se le mandaba a pagar y el candado saltaba al final,
           // despues de ver los datos del banco: el "no" llegaba cuando ya
@@ -1289,7 +1342,9 @@ class Component extends DCLogic {
           this.setState({ reservandoYa: true, falloReserva: '' });
           fetch('/api/reservar', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ eventoId: c[5] })
+            body: JSON.stringify(c[11]
+              ? { eventoId: c[5], permiteGrabacion: true }
+              : { eventoId: c[5] })
           })
             .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
             .then(({ ok, x }) => {

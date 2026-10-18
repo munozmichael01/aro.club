@@ -876,7 +876,12 @@ if (relojes.length) {
     fileURLToPath(new URL('../public/Aro Club - Operacion.dc.html', import.meta.url)), 'utf8')
 
   // `this.mandar('/api/operacion/X', { a: 1, b: 2 })` con cuerpo literal.
-  const llamadas = [...panel.matchAll(/this\.mandar\(\s*'\/api\/operacion\/([a-z-]+)'\s*,\s*\{([^}]*)\}/g)]
+  //
+  // Con comilla simple O DOBLE. Miraba solo la simple, y la llamada que
+  // marca una mesa para grabar está escrita con dobles: llevaba desde el
+  // 17-10 sin comprobarse, invisible para esto. No es que pasara el examen,
+  // es que no se presentaba.
+  const llamadas = [...panel.matchAll(/this\.mandar\(\s*['"]\/api\/operacion\/([a-z-]+)['"]\s*,\s*\{([^}]*)\}/g)]
 
   // Y las que pasan una VARIABLE, que antes se saltaban en silencio. Eran
   // cuatro —publicar, abrir fecha, mover a alguien a mano— y justo las que

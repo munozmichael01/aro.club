@@ -44,6 +44,15 @@ const cuerpo = z.object({
   // La tasa que la pantalla le ENSEÑÓ. No es un dato de adorno: es con la
   // que hizo la transferencia.
   tasaVista: z.number().positive().optional(),
+  /**
+   * El permiso de grabación, si la fecha entera se graba.
+   *
+   * La misma condición que en `/api/reservar`, y aquí hace más falta: esta
+   * es la puerta por la que entra casi todo el mundo, porque la primera cena
+   * se paga. Sin permiso no se aparta el puesto, y el puesto se aparta antes
+   * que el pago.
+   */
+  permiteGrabacion: z.boolean().optional(),
 })
 
 
@@ -80,7 +89,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, price_usd, booking_closes_at, zone_slug, reveal_at, city_slug, age_band_min, age_band_max')
+    .select('id, starts_at, price_usd, booking_closes_at, zone_slug, reveal_at, city_slug, age_band_min, age_band_max, grabacion')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -164,6 +173,9 @@ export async function GET(request: Request) {
       // el «ya cerró» justo al pulsar «Reportar mi pago». Quien hubiera
       // transferido ya lo había hecho.
       cerrada: new Date(evento.booking_closes_at).getTime() <= Date.now(),
+      // Si esta cena se graba entera: la pantalla tiene que pedir el permiso
+      // antes del botón, porque sin él no se aparta el puesto.
+      grabamos: !!(evento as { grabacion?: boolean }).grabacion,
       // Cuándo se abre todo. Lo pidió la app: sin esto tiene que escribir «a
       // mediodía» a mano, y la hora sale del evento.
       revelaEn: evento.reveal_at,
@@ -347,11 +359,30 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, price_usd, booking_closes_at, age_band_min, age_band_max')
+    .select('id, starts_at, price_usd, booking_closes_at, age_band_min, age_band_max, grabacion')
     .eq('id', eventoId)
     .maybeSingle()
 
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
+
+  /**
+   * Sin permiso no hay puesto en una fecha que se graba.
+   *
+   * El mismo candado que en `/api/reservar`, y repetirlo aquí no es
+   * duplicar: reportar el pago es lo que aparta el puesto de verdad. Dejarlo
+   * solo en la otra ruta sería dejar abierta la puerta por la que entra casi
+   * todo el mundo, porque la primera cena se paga.
+   */
+  if ((evento as { grabacion?: boolean }).grabacion && parsed.data.permiteGrabacion !== true) {
+    return NextResponse.json(
+      {
+        error: 'Esta cena la grabamos, así que para apartar puesto hace falta tu permiso.',
+        motivo: 'falta-permiso-grabacion',
+      },
+      { status: 409 },
+    )
+  }
+
   if (new Date(evento.booking_closes_at).getTime() < Date.now()) {
     return NextResponse.json(
       // `motivo` es un código estable: quien llama no tiene que leer el texto
@@ -483,6 +514,8 @@ export async function POST(request: Request) {
         // `pending_payment` y no `confirmed`: el puesto está apartado, no
         // confirmado. Lo confirma quien concilia.
         status: 'pending_payment',
+        // Y el permiso de grabación, si esta fecha se graba entera.
+        ...((evento as { grabacion?: boolean }).grabacion ? { permiso_grabacion: true } : {}),
       })
       .select('id')
       .single()

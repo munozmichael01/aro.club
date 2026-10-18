@@ -22,8 +22,14 @@ import { createAdminClient } from '@/lib/supabase/admin'
  */
 
 const cuerpo = z.union([
-  z.object({ mesaId: z.string().uuid(), graba: z.boolean() }),
-  z.object({ eventoId: z.string().uuid(), graba: z.boolean() }),
+  z.object({
+    mesaId: z.string().uuid(),
+    graba: z.boolean(),
+  }),
+  z.object({
+    eventoId: z.string().uuid(),
+    graba: z.boolean(),
+  }),
 ])
 
 export async function POST(request: Request) {

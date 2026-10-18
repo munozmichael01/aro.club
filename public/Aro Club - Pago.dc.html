@@ -270,6 +270,14 @@
           </div>
         </sc-if>
 
+        <sc-if value="{{ graba }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:20px;background:#FFF8EA;border:1px solid rgba(143,69,21,.28);padding:16px 18px;margin-top:clamp(20px,2.6vw,24px)">
+            <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#8F4515">{{ tituloGraba }}</div>
+            <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:6px;max-width:52ch;text-wrap:pretty">{{ textoGraba }}</div>
+            <button onClick="{{ tocarPermiso }}" style="{{ botonPermiso }}">{{ textoPermiso }}</button>
+          </div>
+        </sc-if>
+
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(22px,3vw,28px)">
           <button onClick="{{ reportar }}" aria-disabled="{{ inerteRep }}" style="{{ botonReportar }}">{{ textoReportar }}</button>
           <button onClick="{{ volverDatos }}" style="{{ botonFantasma }}">Ver los datos otra vez</button>
@@ -422,6 +430,9 @@ class Component extends DCLogic {
     // Qué campo de banco tiene su lista desplegada.
     bancoAbierto: null,
     cupon: '', cuponAbierto: false, aplicandoCupon: false, falloCupon: '',
+    // El permiso de grabación, cuando la fecha se graba entera. Aquí es
+    // condición: esta pantalla es la que aparta el puesto.
+    permiteGrabacion: false,
             datos: null, enviando: false, fallo: '' };
 
   componentDidMount() {
@@ -531,7 +542,10 @@ class Component extends DCLogic {
         // La tasa que esta pantalla le enseño, que es con la que hizo la
         // transferencia. Si el cron la cambio mientras estaba en el banco,
         // vale la suya y no la de ahora.
-        tasaVista: this.state.datos.tasa || undefined
+        tasaVista: this.state.datos.tasa || undefined,
+        // El permiso, cuando la fecha se graba entera. El servidor no aparta
+        // puesto sin él.
+        permiteGrabacion: this.state.permiteGrabacion || undefined
       })
     })
       .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
@@ -810,7 +824,20 @@ class Component extends DCLogic {
     const pideLetra = listaCampos.some((c) => c.conTipo);
     const faltaLetra = pideLetra && !campo('doc_tipo');
     const camposOk = listaCampos.length > 0 && !elQueFalta && !faltaLetra;
-    const repOk = camposOk && (!capturaObligatoria || conCaptura);
+    /**
+     * Y el permiso de grabación, si esta fecha se graba entera.
+     *
+     * Michael, 18-10: una fecha marcada se graba seguro, así que dar permiso
+     * es condición para apartar el puesto. Y esta pantalla es por donde entra
+     * casi todo el mundo, porque la primera cena se paga.
+     *
+     * El candado de verdad está en `/api/pago`; esto es para que el botón no
+     * prometa algo que el servidor va a negar, y para que se entere ANTES de
+     * ir al banco.
+     */
+    const grabaLaFecha = !!(D.evento && D.evento.grabamos);
+    const permisoOk = !grabaLaFecha || !!this.state.permiteGrabacion;
+    const repOk = camposOk && (!capturaObligatoria || conCaptura) && permisoOk;
 
     const comprobante = [
       [titulos[ev.tipo] || 'Cena', [cuandoEv ? DIAS[cuandoEv.getDay()] + ' ' + cuandoEv.getDate() : null, horaEv].filter(Boolean).join(', '), false],
@@ -969,17 +996,28 @@ class Component extends DCLogic {
       // cinco campos para encontrar cual es.
       textoReportar: repOk
         ? (mSel.manual ? 'Reportar mi pago' : 'Confirmar y pagar')
-        : (camposOk
+        : (!permisoOk && camposOk
+          ? 'Marca el permiso para seguir'
+          : (camposOk
             ? 'Adjunta la captura'
             : (elQueFalta
                 ? 'Falta ' + elQueFalta.etiqueta.toLowerCase()
-                : (faltaLetra ? 'Elige si tu documento es V o E' : 'Falta algo'))),
+                : (faltaLetra ? 'Elige si tu documento es V o E' : 'Falta algo')))),
       botonReportar: btn(repOk ? '#1B5138' : 'rgba(20,52,42,.12)', repOk ? '#FAF3E4' : '#456352', repOk ? '' : 'cursor:not-allowed'),
       notaRevision: mSel.manual
         ? 'Lo revisa una persona. Si algo no cuadra te escribimos, y tu puesto sigue apartado mientras tanto.'
         : 'Se cobra al confirmar. Si cancelas con margen, vuelve a tu cuenta sola.',
       tituloEnviando: mSel.manual ? 'Enviando tu reporte.' : 'Confirmando el cobro.',
       tituloListo: cuandoEv ? 'Nos vemos el ' + DIAS[cuandoEv.getDay()].toLowerCase() + ' ' + cuandoEv.getDate() + '.' : 'Nos vemos.',
+
+      // Esta cena se graba: se dice antes del botón y antes del banco.
+      graba: grabaLaFecha,
+      tituloGraba: 'Esta cena la grabamos',
+      textoGraba: 'Vamos a grabar contenido en esta cena: fotos y video para las redes de Aro. Apartar puesto aquí es darnos permiso para que salgas. Si prefieres que no, hay otras fechas sin cámara.',
+      textoPermiso: this.state.permiteGrabacion ? 'Sí, pueden grabarme ✓' : 'Sí, pueden grabarme',
+      botonPermiso: 'display:inline-flex;align-items:center;min-height:46px;margin-top:13px;padding:0 18px;border-radius:999px;cursor:pointer;font:500 15px/1 \'Inter Tight\',sans-serif;border:1px solid '
+        + (this.state.permiteGrabacion ? '#8F4515;background:#8F4515;color:#FFF8EA' : 'rgba(20,52,42,.22);background:transparent;color:#14342A'),
+      tocarPermiso: () => this.setState({ permiteGrabacion: !this.state.permiteGrabacion }),
 
       irDatos: () => this.setState({ fase: 1, copiado: -1 }),
       volverElegir: () => this.setState({ fase: 0 }),

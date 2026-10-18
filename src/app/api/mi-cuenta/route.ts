@@ -277,7 +277,7 @@ export async function GET() {
   // gente.
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, created_at')
+    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, created_at, grabacion')
     // Las de prueba no son de nadie más que de quien las creó.
     .eq('es_prueba', false)
     // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
@@ -541,6 +541,15 @@ export async function GET() {
        * criterio. Lo pidió el agente de la app, 18-10.
        */
       creadaEn: f.created_at,
+      /**
+       * Si esta fecha se graba ENTERA.
+       *
+       * Michael, 18-10: una fecha marcada se graba seguro, así que el
+       * permiso es condición para apartar puesto. La tarjeta tiene que
+       * poder pedirlo ANTES del botón, no enterarse por el error que
+       * devuelve `/api/reservar`.
+       */
+      grabamos: !!(f as { grabacion?: boolean }).grabacion,
       cierraEn: f.booking_closes_at,
       creditos: f.credit_cost ?? 1,
       // Lo que cuesta ESTA fecha. El botón de reservar lo escribía desde
