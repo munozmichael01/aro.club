@@ -174,10 +174,19 @@ export async function GET() {
   }[] = []
 
   if (reserva && !(reserva as { preguntas_avisadas_at?: string | null }).preguntas_avisadas_at) {
+    /**
+     * EN ORDEN DE CREACIÓN, que es lo que pidió Michael para el tope de
+     * tres: primero las que llevan más tiempo esperando una respuesta.
+     *
+     * No es el orden en que se pintan —ese es `screen`/`sort_order`, y lo
+     * decide el diseño de la pantalla—, así que `created_at` existe desde
+     * hoy y las dieciocho de siempre llevan la fecha de la versión.
+     */
     const { data: todas } = await admin
       .from('questions')
-      .select('key, prompt, help_text, input_type, options, max_select, exclusive_value, screen, sort_order')
+      .select('key, prompt, help_text, input_type, options, max_select, exclusive_value, created_at, screen, sort_order')
       .eq('version_id', version?.id ?? 0)
+      .order('created_at')
       .order('screen')
       .order('sort_order')
 

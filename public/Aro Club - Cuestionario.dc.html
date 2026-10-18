@@ -930,7 +930,36 @@ class Component extends DCLogic {
     }));
   }
 
+  /**
+   * LA UNICA PREGUNTA ATADA A OTRA: la bebida.
+   *
+   * Michael, 18-10: quien contesta «no tomo alcohol» no puede quedarse
+   * eligiendo ron en la siguiente. Asi que «¿y que tomas?» se pone sola en
+   * «sin alcohol» y lo demas se bloquea; si cambia de idea y dice que si
+   * toma, se suelta y se queda vacia para que elija.
+   *
+   * Esta escrita a mano y no deducida del catalogo a proposito: es UNA
+   * relacion entre dos preguntas, y montar un motor de condiciones para un
+   * caso es mas cosas que pueden romperse que el caso en si. El dia que haya
+   * tres, se generaliza.
+   */
+  indiceDe(pregunta, codigo) {
+    return (this.OPC[pregunta] || []).findIndex((o) => o[1] === codigo);
+  }
+
   set(id, v) {
+    if (id === 'copas') {
+      const sinAlcohol = this.indiceDe('bebidas', 'sin-alcohol');
+      const bebidas = v === this.indiceDe('copas', 'nada') ? [sinAlcohol] : [];
+      this.setState((s) => ({ r: Object.assign({}, s.r, { copas: v, bebidas: bebidas }) }),
+        // UNA DETRAS DE OTRA. Cada respuesta dispara el trigger que
+        // reconstruye los rasgos ENTEROS desde `answers`, y mandadas a la vez
+        // la segunda empieza sin ver la fila de la primera y la deja en
+        // blanco. No falla nada: se pierde media respuesta en silencio.
+        () => this.enviar('copas', this.aCodigo('copas', v))
+          .then(() => this.enviar('bebidas', this.aCodigo('bebidas', bebidas))));
+      return;
+    }
     this.setState((s) => ({ r: Object.assign({}, s.r, { [id]: v }) }),
       () => this.enviar(id, this.aCodigo(id, v)));
   }
@@ -1226,15 +1255,27 @@ class Component extends DCLogic {
         base.contadorEstilo = 'display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;margin-top:9px;font:500 12px/1 \'Inter Tight\',sans-serif;background:' + (falta > 0 ? 'rgba(20,52,42,.07)' : 'rgba(27,81,56,.12)') + ';color:' + (falta > 0 ? '#566A5D' : '#1B5138');
       }
 
+      // Y si dijo que no toma alcohol, «¿y que tomas?» se queda en «sin
+      // alcohol»: marcada, y lo demas apagado y sin responder al toque.
+      const atada = q.id === 'bebidas' && r.copas === this.indiceDe('copas', 'nada');
+      if (atada) {
+        base.hayContador = true;
+        base.contador = 'Sin alcohol, como dijiste';
+        base.contadorEstilo = 'display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;margin-top:9px;font:500 12px/1 \'Inter Tight\',sans-serif;background:rgba(27,81,56,.12);color:#1B5138';
+      }
+
       base.opciones = q.opciones.map((label, i) => {
         const on = q.tipo === 'unica' ? sel === i : sel.indexOf(i) >= 0;
-        const tope = q.tipo === 'multi' && q.max && sel.length >= q.max && !on;
+        const bloqueada = atada && i !== this.indiceDe('bebidas', 'sin-alcohol');
+        const tope = bloqueada || (q.tipo === 'multi' && q.max && sel.length >= q.max && !on);
         return {
           label,
           icono: on ? '✓' : '',
-          pick: q.tipo === 'unica'
+          pick: bloqueada
+            ? () => {}
+            : (q.tipo === 'unica'
             ? () => this.set(q.id, i)
-            : () => this.multi(q.id, i, q.max, q.exclusiva, q.todas),
+            : () => this.multi(q.id, i, q.max, q.exclusiva, q.todas)),
           btnUnica: 'display:flex;align-items:center;gap:13px;width:100%;padding:14px 18px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.18)') + ';cursor:pointer;text-align:left;min-height:56px;transition:all 180ms ease',
           radio: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif',
           txtUnica: 'font:' + (on ? '600' : '400') + ' clamp(15px,1.5vw,17px)/1.3 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:#14342A',

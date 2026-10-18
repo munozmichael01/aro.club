@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { valido } from '@/lib/reglas'
 import { faltanDePerfil, respuestasDePerfil } from '@/lib/embudo'
+import { atarBebida } from '@/lib/questionnaire/atar'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
@@ -392,6 +393,11 @@ export async function POST(request: Request) {
     console.error('[mi-perfil] no se guardó la respuesta', error)
     return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
   }
+
+  // Y si la respuesta arrastra a otra, se arrastra aquí. DESPUÉS de la
+  // suya y no a la vez: cada escritura dispara el trigger que reconstruye
+  // los rasgos enteros, y dos a la vez se pisan.
+  await atarBebida(admin, user.id, version?.id ?? 0, clave, valor)
 
   // El trigger de `answers` recalcula los rasgos: editar aquí cambia el
   // reparto de la próxima fecha sin que nadie tenga que acordarse.

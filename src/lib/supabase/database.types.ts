@@ -2508,6 +2508,7 @@ export type Database = {
       questions: {
         Row: {
           autocomplete: Json | null
+          created_at: string
           exclusive_value: string | null
           help_text: string | null
           id: string
@@ -2526,6 +2527,7 @@ export type Database = {
         }
         Insert: {
           autocomplete?: Json | null
+          created_at?: string
           exclusive_value?: string | null
           help_text?: string | null
           id?: string
@@ -2544,6 +2546,7 @@ export type Database = {
         }
         Update: {
           autocomplete?: Json | null
+          created_at?: string
           exclusive_value?: string | null
           help_text?: string | null
           id?: string

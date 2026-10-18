@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { respuestasDePerfil, situacionDeLead, situacionDePerfil } from '@/lib/embudo'
 import { verificar } from '@/lib/lead-token'
 import { leerCatalogo, validar } from '@/lib/questionnaire/catalogo'
+import { atarBebida } from '@/lib/questionnaire/atar'
 import { MAX_TEXTO } from '@/lib/reglas'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -320,6 +321,10 @@ export async function POST(request: Request) {
         console.error('[cuestionario] no se guardó la respuesta del perfil', error)
         return NextResponse.json({ error: 'No pudimos guardar tu respuesta.' }, { status: 500 })
       }
+
+      // «No tomo alcohol» arrastra a «¿y qué tomas?». La pantalla ya lo
+      // hace, y esto lo sostiene igual si la pantalla se queda vieja.
+      await atarBebida(createAdminClient(), quien.id, version.id, clave, valor)
     }
 
     const espejo: Record<string, unknown> = { questionnaire_screen: pantalla ?? 0 }
@@ -423,6 +428,28 @@ export async function POST(request: Request) {
   if (error) {
     console.error('[cuestionario] no se guardó', error)
     return NextResponse.json({ error: 'No pudimos guardar tu respuesta.' }, { status: 500 })
+  }
+
+  /**
+   * «No tomo alcohol» arrastra a «¿y qué tomas?», también en el lead.
+   *
+   * La pantalla ya manda las dos, y esto es lo que sostiene la regla si la
+   * pantalla se queda vieja o si alguien llama a la ruta por su cuenta. Un
+   * lead que diga que no toma y tenga ron guardado es un dato que no
+   * significa nada, y lo hereda su perfil al crear la cuenta.
+   *
+   * La suelta es con `p_valor: null`, que en esta RPC es «borra esta clave»:
+   * si deja de ser «no tomo», se queda sin bebidas para que elija.
+   */
+  if (clave === 'copas') {
+    const { error: errorAtado } = await supabase.rpc('guardar_respuesta', {
+      p_email: correoLead,
+      p_clave: 'bebidas',
+      p_valor: (valor === 'nada' ? ['sin-alcohol'] : null) as never,
+      p_pantalla: pantalla ?? 0,
+      p_fin: false,
+    })
+    if (errorAtado) console.error('[cuestionario] no se pudo atar la bebida', errorAtado)
   }
 
   // Se relee de la base, no del cuerpo de la petición: es la única forma de

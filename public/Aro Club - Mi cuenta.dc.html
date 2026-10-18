@@ -403,6 +403,19 @@ class Component extends DCLogic {
     const todas = Object.assign({}, this.state.elegidas || {});
     if (q.tipo !== 'multi') {
       todas[q.clave] = todas[q.clave] === valor ? null : valor;
+      /**
+       * «No tomo alcohol» arrastra a «¿y qué tomas?».
+       *
+       * Michael, 18-10: quien dice que no toma no se puede quedar eligiendo
+       * ron en la pregunta de al lado. Se pone sola en «sin alcohol» y lo
+       * demás se bloquea; si cambia de idea, se suelta y se vacía.
+       *
+       * El servidor hace lo mismo al guardar, pase por donde pase, así que
+       * esto es lo que se VE y aquello es lo que se cumple.
+       */
+      if (q.clave === 'copas') {
+        todas.bebidas = todas.copas === 'nada' ? ['sin-alcohol'] : [];
+      }
       this.setState({ elegidas: todas });
       return;
     }
@@ -1426,19 +1439,27 @@ class Component extends DCLogic {
       // comparando el catálogo con lo que esa persona tiene contestado.
       hayPreguntasNuevas: nuevas.length > 0 && !this.state.preguntasCerrado,
       tituloPreguntas: CIFRA[nuevas.length] || (nuevas.length + ' preguntas nuevas'),
-      bajadaPreguntas: 'Las añadimos después de que contestaras. Nos ayudan a armar mejor tu mesa, y no se le enseñan a nadie de tu cena.',
+      // Sin «las añadimos después de que contestaras»: con el tope de tres y
+      // el orden de creación, a quien le falten muchas le pueden salir unas
+      // que llevan ahí desde agosto, y entonces esa frase era mentira.
+      bajadaPreguntas: 'Nos ayudan a armar mejor tu mesa, y no se le enseñan a nadie de tu cena.',
       preguntas: nuevas.map((q) => {
         const puesto = elegidas[q.clave];
         const marcada = (v) => (Array.isArray(puesto) ? puesto.indexOf(v) >= 0 : puesto === v);
+        // Atada: si dijo que no toma alcohol, aquí solo cabe «sin alcohol».
+        const atada = q.clave === 'bebidas' && elegidas.copas === 'nada';
         return {
           enunciado: q.enunciado,
-          hayAyuda: !!q.ayuda,
-          ayuda: q.ayuda || '',
-          opciones: (q.opciones || []).map((o) => ({
-            texto: o.label,
-            tocar: () => this.marcar(q, o.value),
-            chip: 'display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;cursor:pointer;font:500 14px/1 \'Inter Tight\',sans-serif;transition:all 160ms ease;background:' + (marcada(o.value) ? 'rgba(143,69,21,.1)' : 'transparent') + ';border:1px solid ' + (marcada(o.value) ? '#8F4515' : 'rgba(20,52,42,.18)') + ';color:#14342A',
-          })),
+          hayAyuda: !!q.ayuda || atada,
+          ayuda: atada ? 'Dijiste que no tomas alcohol, así que la dejamos en «sin alcohol».' : (q.ayuda || ''),
+          opciones: (q.opciones || []).map((o) => {
+            const bloqueada = atada && o.value !== 'sin-alcohol';
+            return {
+              texto: o.label,
+              tocar: bloqueada ? () => {} : () => this.marcar(q, o.value),
+              chip: 'display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;cursor:' + (bloqueada ? 'default' : 'pointer') + ';font:500 14px/1 \'Inter Tight\',sans-serif;transition:all 160ms ease;opacity:' + (bloqueada ? '.4' : '1') + ';background:' + (marcada(o.value) ? 'rgba(143,69,21,.1)' : 'transparent') + ';border:1px solid ' + (marcada(o.value) ? '#8F4515' : 'rgba(20,52,42,.18)') + ';color:#14342A',
+            };
+          }),
         };
       }),
       guardarPreguntas: () => this.guardarPreguntas(),
