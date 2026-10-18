@@ -32,6 +32,11 @@ export type Persona = {
    */
   empresaTexto?: string | null
   energia: string | null
+  /**
+   * Si bebe y cuanto: `nada`, `una`, `algunas`, `varias`. Nulo es NO
+   * CONTESTADO, que no es lo mismo que `nada`.
+   */
+  copas: string | null
   tramoGasto: number | null
   intereses: string[]
   temas: string[]
@@ -57,6 +62,7 @@ export type Pesos = {
   arraigo: number
   energia: number
   novedad: number
+  bebida: number
 }
 
 /**
@@ -77,12 +83,26 @@ export type Pesos = {
  * 1,00 en todas las mesas porque basta compartir dos intereses y con el
  * catalogo actual eso lo cumple todo el mundo. Sigue siendo el que mas pesa.
  */
+/**
+ * Y la bebida PUNTUA, no es regla dura.
+ *
+ * Michael, 18-10: «esto debe tomarse en cuenta en el emparejamiento
+ * tambien», y eligio puntuacion sobre regla dura. Es la decision prudente:
+ * con la gente que se apunta hoy, cada regla dura nueva es una mesa menos,
+ * y quedarse sin mesa es peor que una mesa donde uno toma agua.
+ *
+ * Su 0.1 sale otra vez de la cohesion, y por el mismo motivo: da 1,00 en
+ * todas las mesas, asi que bajarla hoy no cambia ni un reparto. Cuando la
+ * cohesion se mida por parejas habra que repartir los pesos de nuevo, y eso
+ * se decide con Michael, no aqui.
+ */
 export const PESOS: Pesos = {
-  cohesion: 0.3,
+  cohesion: 0.2,
   sector: 0.3,
   arraigo: 0.1,
   energia: 0.2,
   novedad: 0.1,
+  bebida: 0.1,
 }
 
 /**
@@ -356,7 +376,30 @@ export function desglose(mesa: Persona[]): Record<keyof Pesos, number> {
   }
   const novedad = 1 - conocidos / pares
 
-  return { cohesion, sector, arraigo, energia, novedad }
+  /**
+   * Bebida: cuanta gente de la mesa bebe PARECIDO a alguien mas.
+   *
+   * «Parecido» es un escalon de distancia, no identico: quien toma una copa
+   * y quien toma dos o tres estan en la misma cena. El que queda fuera es el
+   * extremo solo, y es el caso que esto evita: el unico que no toma en una
+   * mesa que pide botella, o el reves.
+   *
+   * SIN CONTESTAR NO CUENTA, ni a favor ni en contra: no esta en el de
+   * arriba ni en el de abajo. Y si no contesto casi nadie, el termino vale 1
+   * para todas las mesas, que es lo mismo que no existir: un numero igual en
+   * todas no cambia cual gana. Hoy es asi en todas, porque las preguntas son
+   * de hoy.
+   */
+  const NIVEL: Record<string, number> = { nada: 0, una: 1, algunas: 2, varias: 3 }
+  const conNivel = mesa
+    .map((p) => (p.copas ? NIVEL[p.copas] : undefined))
+    .filter((x): x is number => x != null)
+  const acompanadosBebiendo = conNivel.filter(
+    (x, i) => conNivel.some((y, j) => i !== j && Math.abs(x - y) <= 1),
+  ).length
+  const bebida = conNivel.length < 2 ? 1 : acompanadosBebiendo / conNivel.length
+
+  return { cohesion, sector, arraigo, energia, novedad, bebida }
 }
 
 /**
@@ -425,7 +468,8 @@ export function puntuar(mesa: Persona[], pesos: Pesos = PESOS): number {
     d.sector * pesos.sector +
     d.arraigo * pesos.arraigo +
     d.energia * pesos.energia +
-    d.novedad * pesos.novedad
+    d.novedad * pesos.novedad +
+    d.bebida * pesos.bebida
   )
 }
 

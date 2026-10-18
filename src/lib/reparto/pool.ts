@@ -203,6 +203,9 @@ export async function construirPool(
     empresa: p.employer_key,
     empresaTexto: empresaTextoDe.get(p.profile_id as string) ?? p.employer_key,
     energia: p.social_energy,
+    // Si bebe y cuanto. Lo que BEBE —`drinks`— no sube a la vista: eso
+    // elige sitio y lo lee el panel aparte, no reparte.
+    copas: p.drink_level,
     tramoGasto: p.budget_tier,
     intereses: p.interests ?? [],
     temas: p.conversation_topics ?? [],

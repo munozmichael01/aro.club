@@ -75,7 +75,7 @@ r.mesas.forEach((mesa, i) => {
   console.log(`   ${mesa.map((p) => `${p.nombre} (${p.edad})`).join(', ')}`)
   console.log(`   género ${m}/${h} · edades ${Math.min(...edades)}-${Math.max(...edades)} (spread ${Math.max(...edades) - Math.min(...edades)}) · empresas ${mesa.map((p) => p.empresa || 'propia').join(', ')}`)
   console.log(`   sectores ${[...new Set(mesa.map((p) => p.sector))].length} distintos · zonas ${[...new Set(mesa.flatMap((p) => p.zonas))].join(', ')}`)
-  console.log(`   desglose  cohesión ${d.cohesion.toFixed(2)} · sector ${d.sector.toFixed(2)} · arraigo ${d.arraigo.toFixed(2)} · energía ${d.energia.toFixed(2)} · novedad ${d.novedad.toFixed(2)}`)
+  console.log(`   desglose  cohesión ${d.cohesion.toFixed(2)} · sector ${d.sector.toFixed(2)} · arraigo ${d.arraigo.toFixed(2)} · energía ${d.energia.toFixed(2)} · novedad ${d.novedad.toFixed(2)} · bebida ${d.bebida.toFixed(2)}`)
   if (fallos.length) fallos.forEach((f) => console.log(`   ROTO: ${f.regla} — ${f.detalle}`))
   console.log()
 })

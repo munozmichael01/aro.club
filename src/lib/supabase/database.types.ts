@@ -215,6 +215,7 @@ export type Database = {
           hold_until: string | null
           id: string
           permiso_grabacion: boolean | null
+          preguntas_avisadas_at: string | null
           profile_id: string
           status: Database["public"]["Enums"]["booking_status_t"]
         }
@@ -230,6 +231,7 @@ export type Database = {
           hold_until?: string | null
           id?: string
           permiso_grabacion?: boolean | null
+          preguntas_avisadas_at?: string | null
           profile_id: string
           status?: Database["public"]["Enums"]["booking_status_t"]
         }
@@ -245,6 +247,7 @@ export type Database = {
           hold_until?: string | null
           id?: string
           permiso_grabacion?: boolean | null
+          preguntas_avisadas_at?: string | null
           profile_id?: string
           status?: Database["public"]["Enums"]["booking_status_t"]
         }
@@ -3704,6 +3707,7 @@ export type Database = {
           dealbreakers: string[] | null
           dietary: string[] | null
           dining_focus: string | null
+          drink_level: string | null
           employer_key: string | null
           event_id: string | null
           gender: Database["public"]["Enums"]["gender_t"] | null

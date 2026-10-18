@@ -551,9 +551,14 @@ class Component extends DCLogic {
       ["Cerveza", "cerveza"],
       ["Ron", "ron"],
       ["Whisky", "whisky"],
+      ["Vodka", "vodka"],
       ["Ginebra", "ginebra"],
       ["Tequila o mezcal", "tequila"],
       ["Cócteles", "cocteles"],
+      ["Aperitivos o vermut", "aperitivos"],
+      ["Champaña o espumoso", "espumoso"],
+      // La sangria no esta a proposito: Michael, 18-10, se entiende dentro
+      // de vino, y preguntarla aparte parte el dato en dos.
       ["Sin alcohol", "sin-alcohol"],
     ],
     dieta: [
@@ -1067,7 +1072,7 @@ class Component extends DCLogic {
           // toma y despues que toma: quien contesta que no toma puede pasar
           // la segunda, que es opcional igual que esta.
           { id: 'copas', corto: 'si tomas', tipo: 'unica', opcional: true, pregunta: '¿Tomas alcohol cuando sales?', ayuda: 'Con esto elegimos el sitio y sabemos qué pedirle al restaurante. No se muestra en tu perfil ni lo ve nadie de tu mesa.', opciones: this.textos('copas') },
-          { id: 'bebidas', corto: 'qué tomas', tipo: 'multi', max: 3, opcional: true, exclusiva: 7, pregunta: '¿Y qué tomas?', ayuda: 'Hasta tres. En Caracas no todos los sitios tienen buena carta de todo, así que esto decide bastante.', opciones: this.textos('bebidas') },
+          { id: 'bebidas', corto: 'qué tomas', tipo: 'multi', max: 3, opcional: true, exclusiva: 10, pregunta: '¿Y qué tomas?', ayuda: 'Hasta tres. En Caracas no todos los sitios tienen buena carta de todo, así que esto decide bastante.', opciones: this.textos('bebidas') },
           { id: 'gasto', corto: 'tu presupuesto', tipo: 'unica', pregunta: '¿Cuánto piensas gastar en la cena, sin contar lo que pagas aquí?', ayuda: 'Responde con honestidad: elegimos el restaurante con el número más bajo de la mesa, así que marcar de más solo hace que la noche te salga cara.', opciones: this.textos('gasto') },
         ]
       },

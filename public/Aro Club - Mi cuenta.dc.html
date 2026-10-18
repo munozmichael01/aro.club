@@ -332,11 +332,152 @@
   </div>
 </div>
 
+
+<!-- Preguntas nuevas, encima de Mi cuenta.
+     Sale a quien ya reservó y tiene preguntas del catálogo sin contestar.
+     Se contesta aquí mismo: mandarla a otra pantalla a buscarlas es perder
+     a la mitad por el camino. Cerrar sin contestar es una respuesta válida,
+     y no vuelve a salir por esta reserva. -->
+<sc-if value="{{ hayPreguntasNuevas }}" hint-placeholder-val="{{ false }}">
+  <!-- `align-items:flex-start` + `margin-top:auto` y NO `flex-end`: con
+       flex-end, lo que se sale por ARRIBA no se puede alcanzar con el
+       scroll —es cosa vieja de flexbox— y este aviso es alto. En el
+       teléfono eso deja el título y la cruz de cerrar fuera de alcance.
+       Visto al probarlo, no deducido. -->
+  <div style="position:fixed;inset:0;z-index:95;background:rgba(20,52,42,.72);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto">
+    <div style="width:100%;max-width:460px;margin-top:auto;background:#FFFBF0;border-radius:28px;padding:24px 22px max(24px,env(safe-area-inset-bottom));box-shadow:0 18px 50px rgba(20,52,42,.35)">
+
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">PARA TU MESA</div>
+          <div style="margin-top:10px;font:400 clamp(24px,6vw,29px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloPreguntas }}</div>
+        </div>
+        <button onClick="{{ cerrarPreguntas }}" aria-label="Ahora no" style="flex:0 0 auto;width:40px;height:40px;border-radius:999px;border:1px solid rgba(20,52,42,.18);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2C4A38" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </div>
+
+      <div style="margin-top:12px;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ bajadaPreguntas }}</div>
+
+      <sc-for list="{{ preguntas }}" as="q" hint-placeholder-count="2">
+        <div style="margin-top:20px;padding-top:18px;border-top:1px solid rgba(20,52,42,.12)">
+          <div style="font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A;text-wrap:pretty">{{ q.enunciado }}</div>
+          <sc-if value="{{ q.hayAyuda }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top:6px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ q.ayuda }}</div>
+          </sc-if>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+            <sc-for list="{{ q.opciones }}" as="o" hint-placeholder-count="4">
+              <button onClick="{{ o.tocar }}" style="{{ o.chip }}">{{ o.texto }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+
+      <div style="margin-top:22px;display:flex;flex-direction:column;gap:9px">
+        <button onClick="{{ guardarPreguntas }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:54px;padding:0 24px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;cursor:pointer">{{ textoGuardarPreguntas }}</button>
+        <button onClick="{{ cerrarPreguntas }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 24px;border-radius:999px;border:none;background:transparent;color:#566A5D;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer">Ahora no</button>
+      </div>
+
+    </div>
+  </div>
+</sc-if>
+
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
   state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {}, datos: null, sinCuenta: false,
-            reservandoYa: false, falloReserva: '', nExclusiones: null, saliendo: false };
+            reservandoYa: false, falloReserva: '', nExclusiones: null, saliendo: false,
+            // El aviso de preguntas nuevas: lo que lleva elegido y si ya se
+            // cerró en esta visita. El servidor decide si sale; esto solo
+            // recuerda lo de ahora mismo.
+            elegidas: {}, preguntasCerrado: false, guardandoPreguntas: false };
+
+  /**
+   * Marcar una opción del aviso de preguntas nuevas.
+   *
+   * Única: sustituye. Múltiple: alterna, respeta el tope y la exclusiva
+   * —marcarla desmarca las demás, y marcar otra la quita—. Es la misma
+   * regla que el cuestionario y Mi perfil, porque es la misma pregunta.
+   */
+  marcar(q, valor) {
+    const todas = Object.assign({}, this.state.elegidas || {});
+    if (q.tipo !== 'multi') {
+      todas[q.clave] = todas[q.clave] === valor ? null : valor;
+      this.setState({ elegidas: todas });
+      return;
+    }
+    const antes = todas[q.clave] || [];
+    let despues;
+    if (antes.indexOf(valor) >= 0) {
+      despues = antes.filter((x) => x !== valor);
+    } else if (q.exclusiva && valor === q.exclusiva) {
+      despues = [valor];
+    } else {
+      const limpio = q.exclusiva ? antes.filter((x) => x !== q.exclusiva) : antes;
+      if (q.max && limpio.length >= q.max) return;
+      despues = limpio.concat([valor]);
+    }
+    todas[q.clave] = despues;
+    this.setState({ elegidas: todas });
+  }
+
+  /** Cerrar el aviso. Se conteste o no, no vuelve a salir por esta reserva. */
+  cerrarPreguntas() {
+    this.setState({ preguntasCerrado: true });
+    fetch('/api/mi-cuenta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accion: 'preguntas-vistas' }),
+    }).catch(() => {});
+  }
+
+  /**
+   * Guardar lo contestado.
+   *
+   * Cada respuesta va por `/api/mi-perfil`, que es la misma puerta que usa
+   * Mi perfil: valida contra el catálogo y deja que el trigger refresque los
+   * rasgos. Lo que se dejó en blanco no se manda, y no se manda vacío: «no
+   * contesté» y «contesté nada» no son lo mismo.
+   */
+  guardarPreguntas() {
+    const todas = this.state.elegidas || {};
+    const claves = Object.keys(todas).filter((k) => {
+      const v = todas[k];
+      return Array.isArray(v) ? v.length > 0 : !!v;
+    });
+    if (!claves.length) { this.cerrarPreguntas(); return; }
+    this.setState({ guardandoPreguntas: true });
+    /**
+     * UNA DETRAS DE OTRA, no todas a la vez.
+     *
+     * Cada respuesta dispara el trigger que reconstruye `profile_traits`
+     * ENTERO desde `answers`. Mandadas en paralelo, la segunda puede
+     * empezar sin ver la fila de la primera, reconstruir sin ella y dejarla
+     * en blanco. Lo vi probándolo: contesté las dos y se guardó `drinks`
+     * con `drink_level` en nulo, que es justo el dato que vinimos a tener.
+     *
+     * No falla nada ni avisa nadie: la pantalla dice «guardado» y la mitad
+     * de la respuesta no está.
+     */
+    claves.reduce(
+      (antes, k) => antes.then(() => fetch('/api/mi-perfil', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clave: k, valor: todas[k] }),
+      })),
+      Promise.resolve(),
+    )
+      .then(() => fetch('/api/mi-cuenta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'preguntas-vistas' }),
+      }))
+      .catch(() => {})
+      .then(() => {
+        this.setState({ guardandoPreguntas: false, preguntasCerrado: true, elegidas: {} });
+        this.releer();
+      });
+  }
 
   /** Vuelve a pedir la cuenta. Sin tocar nada si el servidor dice que no. */
   releer() {
@@ -1151,6 +1292,18 @@ class Component extends DCLogic {
 
     const cuentaAtras = this.reloj();
 
+    /**
+     * Las preguntas que le faltan, y lo que lleva elegido de ellas.
+     *
+     * `nuevas` viene del servidor y casi siempre está vacío: solo sale a
+     * quien reservó y tiene algo sin contestar. Aquí no hay ninguna pregunta
+     * escrita, así que la que añadamos mañana aparece sola.
+     */
+    const nuevas = (d && d.preguntasNuevas) || [];
+    const elegidas = this.state.elegidas || {};
+    const CIFRA = ['', 'Una pregunta nueva', 'Dos preguntas nuevas', 'Tres preguntas nuevas',
+                   'Cuatro preguntas nuevas', 'Cinco preguntas nuevas', 'Seis preguntas nuevas'];
+
     return {
       comensales, atajos, pie, filtros,
 
@@ -1268,6 +1421,29 @@ class Component extends DCLogic {
       nav: AroNav.items('inicio', !!(d && d.reserva), d && d.reserva && d.reserva.formato),
       hayMios: mios.length > 0,
       sinMios: mios.length === 0,
+
+      // El aviso de preguntas nuevas. Quién decide que sale es el servidor,
+      // comparando el catálogo con lo que esa persona tiene contestado.
+      hayPreguntasNuevas: nuevas.length > 0 && !this.state.preguntasCerrado,
+      tituloPreguntas: CIFRA[nuevas.length] || (nuevas.length + ' preguntas nuevas'),
+      bajadaPreguntas: 'Las añadimos después de que contestaras. Nos ayudan a armar mejor tu mesa, y no se le enseñan a nadie de tu cena.',
+      preguntas: nuevas.map((q) => {
+        const puesto = elegidas[q.clave];
+        const marcada = (v) => (Array.isArray(puesto) ? puesto.indexOf(v) >= 0 : puesto === v);
+        return {
+          enunciado: q.enunciado,
+          hayAyuda: !!q.ayuda,
+          ayuda: q.ayuda || '',
+          opciones: (q.opciones || []).map((o) => ({
+            texto: o.label,
+            tocar: () => this.marcar(q, o.value),
+            chip: 'display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;cursor:pointer;font:500 14px/1 \'Inter Tight\',sans-serif;transition:all 160ms ease;background:' + (marcada(o.value) ? 'rgba(143,69,21,.1)' : 'transparent') + ';border:1px solid ' + (marcada(o.value) ? '#8F4515' : 'rgba(20,52,42,.18)') + ';color:#14342A',
+          })),
+        };
+      }),
+      guardarPreguntas: () => this.guardarPreguntas(),
+      cerrarPreguntas: () => this.cerrarPreguntas(),
+      textoGuardarPreguntas: this.state.guardandoPreguntas ? 'Guardando…' : 'Guardar',
 
     };
   }

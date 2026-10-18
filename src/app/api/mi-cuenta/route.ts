@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { cabeEnLaFecha } from '@/lib/edad'
 
-import { situacionDePerfil } from '@/lib/embudo'
+import { respuestasDePerfil, situacionDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
@@ -105,7 +105,7 @@ export async function GET() {
   const { data: reservas, error: errorReserva } = await admin
     .from('bookings')
     .select(
-      'id, status, event_id, events(starts_at, reveal_at, status, format, restaurants!events_restaurant_id_fkey(name, address, zone_slug))',
+      'id, status, event_id, preguntas_avisadas_at, events(starts_at, reveal_at, status, format, restaurants!events_restaurant_id_fkey(name, address, zone_slug))',
     )
     .eq('profile_id', user.id)
     // `pending_payment` cuenta como reserva: el puesto ESTA apartado
@@ -141,6 +141,78 @@ export async function GET() {
       if (!ev) return false
       return Date.now() < new Date(ev.starts_at).getTime() + FIN_CENA
     }) ?? null
+
+  /**
+   * LAS PREGUNTAS NUEVAS, para quien ya reservó y no las ha contestado.
+   *
+   * Michael, 18-10: «cuando una persona que no haya respondido reserve una
+   * mesa, le mostramos un popup en su admin con las preguntas que le falten
+   * por responder», y «que esto suceda siempre que agreguemos preguntas
+   * nuevas».
+   *
+   * Por eso NO hay ninguna lista de preguntas escrita aquí: se compara el
+   * catálogo activo contra lo que esa persona tiene contestado, y lo que
+   * sobre es lo que se pregunta. Una pregunta que se añada en diciembre
+   * entra sola, sin tocar esta ruta ni la pantalla.
+   *
+   * Cuenta las OPCIONALES también, que es justo lo que `faltan` de arriba
+   * no hace: ahí «falta» significa «no puede reservar», y aquí significa
+   * «no lo sabemos y nos vendría bien saberlo».
+   *
+   * Y va atado a la RESERVA, no al perfil: el aviso es «te faltan preguntas
+   * para esta mesa». Si lo cierra sin contestar, la próxima vez que reserve
+   * vuelve a salir. Nunca interrumpe a quien solo viene a mirar su cena.
+   */
+  const preguntasNuevas: {
+    clave: string
+    enunciado: string
+    ayuda: string | null
+    tipo: string
+    opciones: { value: string; label: string }[]
+    max: number | null
+    exclusiva: string | null
+  }[] = []
+
+  if (reserva && !(reserva as { preguntas_avisadas_at?: string | null }).preguntas_avisadas_at) {
+    const { data: todas } = await admin
+      .from('questions')
+      .select('key, prompt, help_text, input_type, options, max_select, exclusive_value, screen, sort_order')
+      .eq('version_id', version?.id ?? 0)
+      .order('screen')
+      .order('sort_order')
+
+    const dadas = await respuestasDePerfil(user.id)
+    for (const q of todas ?? []) {
+      const suya = dadas[q.key]
+      const vacia =
+        suya === undefined ||
+        suya === null ||
+        suya === '' ||
+        (Array.isArray(suya) && suya.length === 0)
+      if (!vacia) continue
+      // Sin opciones no se puede contestar en un popup —el empleador se
+      // escribe, el nacimiento se elige con tres ruedas— y esas dos viven en
+      // el embudo, que ya las pide antes de dejar reservar.
+      const opciones = (q.options ?? []) as { value: string; label: string }[]
+      if (!opciones.length) continue
+      // Tres como mucho.
+      //
+      // El aviso es un empujón, no el cuestionario otra vez: con diez
+      // preguntas delante se cierra sin leer, y entonces no contesta
+      // ninguna. A quien le falten más, las demás siguen en Mi perfil,
+      // que es donde se contestan con calma.
+      if (preguntasNuevas.length >= 3) break
+      preguntasNuevas.push({
+        clave: q.key,
+        enunciado: q.prompt,
+        ayuda: q.help_text,
+        tipo: q.input_type,
+        opciones,
+        max: q.max_select,
+        exclusiva: q.exclusive_value,
+      })
+    }
+  }
 
   // La próxima fecha abierta, para quien todavía no ha reservado. El copy
   // decía "Ya van 34 apuntados y se cierra el martes" con doce apuntados y
@@ -412,6 +484,7 @@ export async function GET() {
   )
 
   return NextResponse.json({
+    preguntasNuevas,
     nombre: perfil.display_name || perfil.full_name || null,
     esOps: perfil.role === 'ops' || perfil.role === 'admin',
     porValorar,
@@ -533,4 +606,55 @@ export async function GET() {
         }
       : null,
   })
+}
+
+/**
+ * «Ya se lo enseñamos».
+ *
+ * Lo llama la pantalla cuando el aviso de preguntas nuevas se cierra, se
+ * conteste o no. Sin esto, el popup saldría en cada recarga hasta que
+ * contestara, que es la forma más rápida de que alguien deje de leerlo.
+ *
+ * Marca la reserva VIVA, que es la misma que decidió enseñarlo.
+ */
+export async function POST(request: Request) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
+
+  const cuerpo = (await request.json().catch(() => null)) as { accion?: string } | null
+  if (cuerpo?.accion !== 'preguntas-vistas') {
+    return NextResponse.json({ error: 'Petición inválida.' }, { status: 400 })
+  }
+
+  const admin = createAdminClient()
+
+  const { data: reservas } = await admin
+    .from('bookings')
+    .select('id, events(starts_at)')
+    .eq('profile_id', user.id)
+    .in('status', ['pending_payment', 'confirmed'])
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  const viva = (reservas ?? []).find((r) => {
+    const ev = r.events as unknown as { starts_at: string } | null
+    return ev && Date.now() < new Date(ev.starts_at).getTime() + FIN_CENA
+  })
+
+  if (!viva) return NextResponse.json({ estado: 'sin-reserva' })
+
+  const { error } = await admin
+    .from('bookings')
+    .update({ preguntas_avisadas_at: new Date().toISOString() })
+    .eq('id', viva.id)
+
+  if (error) {
+    console.error('[mi-cuenta] no se pudo marcar el aviso', error)
+    return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+  }
+
+  return NextResponse.json({ estado: 'visto' })
 }

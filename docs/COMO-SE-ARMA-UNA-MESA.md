@@ -43,11 +43,21 @@ paso. Michael: «esto no debe ser un impedimento».
 
 | Término | Peso | Qué mide |
 |---|---|---|
-| Cohesión | 0,3 | Cuánta gente comparte al menos dos intereses o temas con el resto |
 | Sector | 0,3 | Diversidad de a qué se dedican. Penaliza a partir de dos del mismo |
+| Cohesión | 0,2 | Cuánta gente comparte al menos dos intereses o temas con el resto |
 | Energía | 0,2 | Que haya dos o tres de los que llevan la conversación |
 | Arraigo | 0,1 | Cuánta gente comparte su situación con alguien más de la mesa |
 | Novedad | 0,1 | Penaliza mesas donde ya se conocían |
+| Bebida | 0,1 | Cuánta gente bebe parecido a alguien más de la mesa |
+
+**La bebida puntúa desde el 18-10**, y no es regla dura: lo decidió Michael
+así, y es lo prudente, porque con la gente que se apunta hoy cada regla dura
+nueva es una mesa menos. Mide a un escalón de distancia: quien toma una copa y
+quien toma dos o tres están en la misma cena. El que sale penalizado es el
+extremo solo, el único que no toma en una mesa que pide botella. Quien no
+contestó no cuenta ni a favor ni en contra, y mientras casi nadie haya
+contestado el término vale 1 en todas las mesas, que es lo mismo que no
+existir: un número igual en todas no cambia cuál gana.
 
 **El arraigo volvió a puntuar el 18-10**, y midiendo otra cosa. Estuvo en 0,2
 premiando una combinación concreta —un «volvió» y dos «se quedó»—, que era una
@@ -59,9 +69,11 @@ cuenta discrimina de verdad: sobre las fichas reales, seis personas al azar dan
 
 **Ojo con la cohesión:** hoy da 1,00 en todas las mesas, porque basta
 compartir dos intereses y con el catálogo actual eso lo cumple todo el mundo.
-O sea: el 30% de la nota no está decidiendo nada. Está pendiente medirlo por
-parejas en vez de con un umbral por persona. El 0,1 que recuperó el arraigo
-salió de ahí, del término que no estaba decidiendo nada.
+O sea: el 20% de la nota no está decidiendo nada. Está pendiente medirlo por
+parejas en vez de con un umbral por persona. De ahí salieron los dos 0,1 que
+se repartieron después, el del arraigo y el de la bebida: del término que no
+estaba decidiendo nada. Cuando se arregle hay que repartir los pesos otra vez,
+y eso se decide con Michael.
 
 ---
 
@@ -105,7 +117,9 @@ si tomas alcohol cuando sales, y qué tomas. Michael: «quiero saber quiénes
 beberán en la cena y quiénes no, y de los que beben, qué beben. Esto es clave
 al menos en Caracas».
 
-De momento **no entra en la fórmula ni es regla dura**, igual que las dietas:
+Lo que bebe cada quien **no elige sitio todavía** y no es regla dura, igual
+que las dietas. Lo que sí hace desde el 18-10 es puntuar: el NIVEL entra en el
+emparejamiento, arriba. Lo que toma cada uno se usa para decidir:
 se enseña en la tarjeta de la mesa, que es donde se decide. Cada mesa dice
 cuántos toman, cuántos no, cuántos no lo han dicho, y qué se bebe ahí, en
 orden. Al lado de cada persona sale lo suyo, y quien no toma sale marcado.
@@ -140,10 +154,13 @@ con el dato puesto. Se puede añadir después sin tocar nada de esto.
 - **Las dietas.** No son regla dura: se listan para que operación elija sitio
   con criterio, y se le dicen al restaurante. Decisión de Michael, 17-10.
 - **Que la base conteste lo de la bebida.** Las dos preguntas son nuevas y
-  opcionales, así que de las 574 fichas no las tiene ninguna todavía. Quien ya
-  está dentro las contesta desde Mi perfil; quien llega ahora las ve en el
-  cuestionario. Obligarlas no era una opción: una pregunta obligatoria nueva
-  deja «incompleto» a todo el mundo y le cierra el paso de reservar.
+  opcionales, así que de las 574 fichas no las tiene ninguna todavía. Desde el
+  18-10 hay un empujón: a quien reserva y tiene preguntas sin contestar se le
+  enseñan en Mi cuenta, hasta tres, y se contestan ahí mismo. Funciona para
+  cualquier pregunta que añadamos: sale de comparar el catálogo con lo que esa
+  persona tiene contestado, así que no hay ninguna lista que mantener.
+  Obligarlas no era una opción: una pregunta obligatoria nueva deja
+  «incompleto» a todo el mundo y le cierra el paso de reservar.
 - **Qué bebida tiene cada local.** Sin eso, lo que bebe la mesa no puede
   elegir sitio, solo informarlo.
 

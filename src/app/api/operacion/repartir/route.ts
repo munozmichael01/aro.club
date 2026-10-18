@@ -51,6 +51,9 @@ const cuerpo = z.object({
       arraigo: z.number(),
       energia: z.number(),
       novedad: z.number(),
+      // Opcional con su valor por defecto: una corrida vieja, o la app, que
+      // manda los cinco de antes, no se cae por el termino nuevo.
+      bebida: z.number().default(PESOS.bebida),
     })
     .optional(),
 })
