@@ -25,8 +25,18 @@ export function Normas(p: { alVolver?: () => void; aceptar?: { alAceptar: () => 
   const a = p.aceptar
   return (
     <ScrollView style={{ flex: 1, backgroundColor: color.crema }} contentContainerStyle={[estilos.pagina, { paddingTop: insets.top + 28, paddingBottom: insets.bottom + 28 }]}>
+      {a ? (
+        <Texto variante="etiqueta" tono="terracota" style={{ letterSpacing: 1.8, marginBottom: 10 }}>
+          {T.puerta.cinta}
+        </Texto>
+      ) : null}
       <Texto variante="titularGrande">{T.normas.titulo}</Texto>
       <Texto variante="cuerpoGrande" tono="secundario" style={{ marginTop: 12 }}>{T.normas.bajada}</Texto>
+      {a ? (
+        <Texto variante="cuerpo" style={{ marginTop: 10 }}>
+          {T.puerta.contexto}
+        </Texto>
+      ) : null}
       {T.normas.puntos.map((x) => (
         <View key={x.titulo} style={estilos.punto}>
           <Texto variante="rotulo">{x.titulo}</Texto>

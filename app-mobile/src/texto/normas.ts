@@ -31,6 +31,9 @@ export const acepto = {
 
 /** La puerta de después de entrar, una vez por cuenta (18-10). */
 export const puerta = {
+  /** Michael, 18-10: que se entienda que es una actualización (B como cinta + A como contexto). */
+  cinta: 'NORMAS ACTUALIZADAS',
+  contexto: 'Las pusimos por escrito y te las enseñamos una vez. Si las aceptas, esta pantalla no vuelve a salir.',
   continuar: 'Continuar',
   guardando: 'Guardando…',
   noGuardado: 'No pudimos guardarlo. Vuelve a intentarlo.',
