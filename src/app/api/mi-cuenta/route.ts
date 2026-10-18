@@ -277,7 +277,7 @@ export async function GET() {
   // gente.
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd')
+    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, created_at')
     // Las de prueba no son de nadie más que de quien las creó.
     .eq('es_prueba', false)
     // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
@@ -531,6 +531,16 @@ export async function GET() {
       id: f.id,
       formato: f.format,
       empiezaEn: f.starts_at,
+      /**
+       * Cuándo se creó, que es el desempate de la lista.
+       *
+       * Desde el 18-10 una misma noche puede tener dos fechas de zonas
+       * distintas, y las dos llevan el MISMO `empiezaEn`. Esta lista ya
+       * viene ordenada, pero cualquier pantalla que la reordene por su
+       * cuenta —la app— necesita con qué romper el empate sin inventarse un
+       * criterio. Lo pidió el agente de la app, 18-10.
+       */
+      creadaEn: f.created_at,
       cierraEn: f.booking_closes_at,
       creditos: f.credit_cost ?? 1,
       // Lo que cuesta ESTA fecha. El botón de reservar lo escribía desde
