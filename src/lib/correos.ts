@@ -447,7 +447,16 @@ export async function despacharPendientes(
      * Ordenar por `send_at` dentro de cada grupo se mantiene: dentro de lo
      * que contesta, lo más viejo primero.
      */
-    const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima'] as const
+    /**
+     * Y el resumen de los lunes es BULTO, no acuse.
+     *
+     * Son seiscientas filas con la misma hora. Sin esto entran por la puerta
+     * de los acuses y se comen las veinticinco de cada vuelta durante seis
+     * horas: quien suba su cédula un lunes a las nueve recibiría su «cuenta
+     * lista» a mediodía. Es el mismo fallo del 13-10 con los empujones, con
+     * cinco veces más filas.
+     */
+    const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima', 'resumen_semanal'] as const
     const TOPE = 25
 
     const { data: acuses } = await consulta

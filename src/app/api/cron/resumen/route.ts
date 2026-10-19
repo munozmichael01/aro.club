@@ -66,9 +66,30 @@ function semanaDeHoy(ahora = new Date()): { desde: Date; hasta: Date; semana: st
   }
 }
 
-async function resumir(seco: boolean, solo: string | null) {
+/**
+ * A qué hora de Caracas sale, si no es ahora mismo.
+ *
+ * `encolar` sin hora manda en el acto, y eso vale para una prueba de una
+ * fila. Para seiscientas no: se encolan con su hora y la cola las va sacando.
+ * Devuelve la próxima vez que den esas horas y minutos, hoy o mañana.
+ */
+function aLasDeCaracas(hhmm: string, ahora = new Date()): Date | null {
+  const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(hhmm.trim())
+  if (!m) return null
+  const enCcs = new Date(ahora.getTime() - CARACAS * 3600_000)
+  const hoy = Date.UTC(enCcs.getUTCFullYear(), enCcs.getUTCMonth(), enCcs.getUTCDate(), Number(m[1]), Number(m[2]))
+  const cuando = new Date(hoy + CARACAS * 3600_000)
+  return cuando.getTime() > ahora.getTime() ? cuando : new Date(cuando.getTime() + 24 * 3600_000)
+}
+
+async function resumir(seco: boolean, solo: string | null, hora: string | null) {
   const admin = createAdminClient()
   const { desde, hasta, semana } = semanaDeHoy()
+
+  const cuando = hora ? aLasDeCaracas(hora) : null
+  if (hora && !cuando) {
+    return NextResponse.json({ error: 'La hora no se entiende. Se escribe como 08:00.' }, { status: 400 })
+  }
 
   const { data: fechas } = await admin
     .from('events')
@@ -203,7 +224,12 @@ async function resumir(seco: boolean, solo: string | null) {
 
     if (seco) { encolados++; continue }
 
-    const r = await encolar({ perfil: p.id }, 'resumen_semanal', { semana, tuyas, otras })
+    const r = await encolar(
+      { perfil: p.id },
+      'resumen_semanal',
+      { semana, tuyas, otras },
+      cuando ? { cuando } : {},
+    )
     if (r === 'encolado') encolados++
     else repetidos++
   }
@@ -216,6 +242,7 @@ async function resumir(seco: boolean, solo: string | null) {
     sinCoincidencia: perfiles.length - conCoincidencia,
     encolados,
     repetidos,
+    ...(cuando ? { salen: cuando.toISOString() } : { salen: 'ahora' }),
     ...(seco ? { seco: true } : {}),
     ...(solo ? { solo } : {}),
   })
@@ -234,5 +261,5 @@ export async function GET(request: Request) {
   }
 
   const params = new URL(request.url).searchParams
-  return resumir(params.get('seco') === '1', params.get('solo'))
+  return resumir(params.get('seco') === '1', params.get('solo'), params.get('hora'))
 }
