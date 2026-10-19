@@ -1166,7 +1166,23 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           tituloOtras: tuyas.length ? 'TAMBIÉN ESTA SEMANA' : 'LO QUE ABRIMOS',
           otras,
           boton: 'Ver la agenda',
-          destino: '/cuenta#agenda',
+          /**
+           * Con etiquetas de campaña, y el `?` ANTES del `#`.
+           *
+           * Sin ellas, lo que llega de un correo entra en Analytics como
+           * tráfico directo y el resumen de los lunes es invisible: no hay
+           * forma de saber si los seiscientos correos trajeron a alguien.
+           * Michael, hoy: «me interesa que registremos correctamente el
+           * tráfico que traigamos con los emails de hoy».
+           *
+           * El orden importa: `/cuenta#agenda?utm_…` deja los parámetros
+           * dentro del fragmento y el navegador no los manda. Van antes de
+           * la almohadilla o no van.
+           *
+           * `utm_content` lleva la semana para poder comparar un lunes con
+           * otro sin inventar una campaña nueva cada vez.
+           */
+          destino: `/cuenta?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal&utm_content=${encodeURIComponent(String(p.semana ?? ''))}#agenda`,
           cierre: 'Si esta semana no te sirve, no hace falta hacer nada. El lunes que viene hay otra.',
         },
       }

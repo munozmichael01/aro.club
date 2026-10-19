@@ -570,6 +570,31 @@
      * Sin fecha abierta devuelve null, y la frase se dice sin dia. Es mejor
      * que inventarse uno.
      */
+    /**
+     * Las etiquetas de campana que trae la URL, para que no se pierdan.
+     *
+     * Quien pulsa el boton de un correo sin sesion aterriza en una pantalla
+     * privada, que lo manda a /entrar con la direccion original metida
+     * dentro de `volver`. Ahi dentro, Analytics no las ve: la visita entra
+     * como trafico directo y el correo que la trajo es invisible.
+     *
+     * Se probo el 19-10 con el resumen de los lunes: /cuenta?utm_... acaba
+     * en /entrar?volver=%2Fcuenta%3Futm_source%3D... y la unica baliza que
+     * sale no lleva campana ninguna.
+     *
+     * Asi que al mandar a entrar se copian tambien sueltas. `volver` sigue
+     * llevandolas para cuando la persona entre y vuelva.
+     */
+    campanaDe: function (busqueda) {
+      var fuera = []
+      try {
+        new URLSearchParams(busqueda || '').forEach(function (v, k) {
+          if (k.slice(0, 4) === 'utm_') fuera.push([k, v])
+        })
+      } catch (e) { /* sin URLSearchParams no hay campana que copiar */ }
+      return fuera
+    },
+
     diaDe: function (iso, zona) {
       if (!iso) return null
       var d = new Date(iso)
