@@ -27,8 +27,21 @@ import { despacharPendientes } from '@/lib/correos'
  * ver qué saldría sin escribirle a nadie.
  */
 
-/** De cuántos en cuántos. Resend deja 100 al día en la cuenta gratis. */
-const POR_VUELTA = 50
+/**
+ * Cinco minutos de margen para la vuelta.
+ *
+ * Ninguna ruta del proyecto declaraba su tope y todas corrían con el de por
+ * defecto, que es el que había que adivinar cada vez que se tocaba el tamaño
+ * del lote. Con el bulto en cien por vuelta —el resumen de los lunes son
+ * seiscientos correos— una vuelta tarda cerca de un minuto, y eso merece un
+ * número escrito en vez de una suposición.
+ *
+ * De cuántos en cuántos lo decide `despacharPendientes`, que es quien manda:
+ * aquí vivía una constante `POR_VUELTA = 50` que no usaba nadie y que decía
+ * un número distinto del real. Una cifra muerta que contradice a la viva es
+ * la forma barata de tomar una decisión equivocada dentro de un año.
+ */
+export const maxDuration = 300
 
 /**
  * Vercel llama por GET con `Authorization: Bearer <CRON_SECRET>`.

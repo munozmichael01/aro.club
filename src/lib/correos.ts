@@ -459,6 +459,26 @@ export async function despacharPendientes(
     const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima', 'resumen_semanal'] as const
     const TOPE = 25
 
+    /**
+     * El bulto va de cien en cien, y los acuses siguen de veinticinco.
+     *
+     * Veinticinco por vuelta es una hora y cuarto por cada cien correos:
+     * bien para los empujones, que son unas decenas, y mal para el resumen
+     * de los lunes, que son seiscientos. A ese ritmo el último lo recibía
+     * seis horas después del primero, o sea a las dos de la tarde un correo
+     * que se anuncia como el de las ocho. Michael, 19-10: «me parece mucho
+     * tiempo».
+     *
+     * Cien y no más por dos frenos que no se ven desde aquí: Resend acepta
+     * dos envíos por segundo, y una vuelta manda uno detrás de otro sin
+     * pausa. Cien tarda cerca de un minuto, que cabe de sobra en el tope de
+     * la función; cuatrocientos ya es pedirle a Resend más de lo que deja.
+     *
+     * Los acuses NO suben: siguen entrando primero y siguen siendo 25. Lo
+     * que contesta a alguien no necesita más sitio, necesita no esperar.
+     */
+    const TOPE_BULTO = 100
+
     const { data: acuses } = await consulta
       .not('kind', 'in', `(${DE_BULTO.join(',')})`)
       .order('send_at')
@@ -478,7 +498,7 @@ export async function despacharPendientes(
       if (seco && filaId) delBulto = delBulto.eq('id', filaId)
       else delBulto = delBulto.lte('send_at', new Date().toISOString())
 
-      const { data: resto } = await delBulto.order('send_at').limit(TOPE - pendientes.length)
+      const { data: resto } = await delBulto.order('send_at').limit(TOPE_BULTO)
       pendientes = [...pendientes, ...(resto ?? [])]
     }
 
