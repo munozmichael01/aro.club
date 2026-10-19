@@ -37,9 +37,27 @@ export async function updateSession(request: NextRequest) {
 
   // getUser() y no getSession(): valida el token contra el servidor de auth
   // en vez de confiar en lo que venga en la cookie.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  //
+  // Con tope. Esta llamada sale por la red y está delante de CADA página: si
+  // el auth de Supabase se pone lento, la petición se queda esperando hasta
+  // que Vercel corta el middleware y devuelve un 504. Eso le pasó a Michael
+  // el 19-10 desde el celular, en una página que ni siquiera necesitaba
+  // sesión.
+  //
+  // Dos segundos y medio, y si no llega se sigue sin refrescar. Lo que se
+  // pierde es que esa petición concreta no renueve el token —la siguiente lo
+  // hará— y que una ruta del panel mande a entrar de más. Lo que se gana es
+  // que un auth lento sea una página lenta y no una página caída. Ninguna
+  // puerta se abre por esto: sin usuario, el panel no entra.
+  const { data: { user } } = await Promise.race([
+    supabase.auth.getUser(),
+    new Promise<{ data: { user: null } }>((listo) =>
+      setTimeout(() => {
+        console.warn('[middleware] auth no contestó en 2,5 s:', request.nextUrl.pathname)
+        listo({ data: { user: null } })
+      }, 2500),
+    ),
+  ])
 
   // El panel no puede quedar detrás de una URL difícil de adivinar: eso no
   // es una puerta, es un cartel tapado. Se comprueba el rol de verdad.
