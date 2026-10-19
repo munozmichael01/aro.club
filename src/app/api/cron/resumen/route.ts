@@ -129,9 +129,48 @@ async function resumir(seco: boolean, solo: string | null) {
    * sirve, edad de la fecha y ciudad. Dos ideas distintas de «esto te cuadra»
    * es como se acaba mandando una cena de +40 a alguien de veintitrés.
    */
+  /**
+   * Las zonas que marcó cada quien, que `quienQuiereSaberDe` NO mira.
+   *
+   * Esa función resuelve plan, día, edad, ciudad y cuentas de prueba; la zona
+   * la filtra quien la llama, porque cada aviso sabe qué zonas abre. Faltaba
+   * aquí y se vio en la primera prueba: a Michael, que marcó Las Mercedes,
+   * Los Palos Grandes, Chacao y El Rosal, el resumen le ponía como «para ti»
+   * las dos cenas de Los Naranjos y El Hatillo.
+   */
+  const { data: respuestasZonas } = await admin
+    .from('answers')
+    .select('profile_id, value')
+    .eq('question_key', 'zonas')
+
+  const zonasDe = new Map<string, string[]>()
+  for (const r of respuestasZonas ?? []) {
+    if (r.profile_id && Array.isArray(r.value)) {
+      zonasDe.set(r.profile_id, (r.value as string[]).filter((z) => typeof z === 'string'))
+    }
+  }
+
   const leCuadra = new Map<string, string[]>()
   for (const f of fechas) {
-    const quieren = await quienQuiereSaberDe(todos, f.format, f)
+    const { data: sedes } = await admin
+      .from('event_venues')
+      .select('zone_slug')
+      .eq('event_id', f.id)
+    const abiertas = [...new Set((sedes ?? []).map((s) => s.zone_slug).filter((z): z is string => !!z))]
+    if (!abiertas.length) continue
+
+    /**
+     * Quien no contestó las zonas sí entra, igual que con los planes: no
+     * contestar no es decir que no, es no haber llegado. Y son veintidós
+     * cuentas que si no, no verían nunca nada arriba.
+     */
+    const enZona = todos.filter((id) => {
+      const suyas = zonasDe.get(id)
+      return !suyas || !suyas.length || suyas.some((z) => abiertas.includes(z))
+    })
+    if (!enZona.length) continue
+
+    const quieren = await quienQuiereSaberDe(enZona, f.format, f)
     for (const id of quieren) leCuadra.set(id, [...(leCuadra.get(id) ?? []), f.id])
   }
 

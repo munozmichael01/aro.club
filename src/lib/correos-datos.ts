@@ -1079,6 +1079,22 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
       }
 
+      /**
+       * Y en cuáles ya tiene puesto.
+       *
+       * Se mira al MANDAR y no al encolar: entre que el cron arma la semana y
+       * sale el correo pueden pasar horas, y quien reservó por el camino leería
+       * una invitación a algo en lo que ya está. Se dice, no se esconde: la
+       * fecha sigue en la lista porque es su semana.
+       */
+      const { data: yaVa } = await admin
+        .from('bookings')
+        .select('event_id')
+        .eq('profile_id', fila.profile_id ?? '')
+        .in('status', ['pending_payment', 'confirmed', 'attended'])
+
+      const conPuesto = new Set((yaVa ?? []).map((b) => b.event_id).filter((x): x is string => !!x))
+
       const deLasFechas = async (lista: string[]) => {
         if (!lista.length) return []
         const { data: evs } = await admin
@@ -1109,9 +1125,16 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
             // que anuncia la apertura de las zonas, no la elección.
             zonas: unirCon(nombres, ' o '),
             precio: ev.price_usd != null ? `${Number(ev.price_usd)} ref` : '',
-            // La banda de edad se dice. A quien le llega es porque cabe, y
-            // callarlo hace que parezca que la mesa es otra cosa.
-            nota: ev.age_band_min != null ? `Solo para mayores de ${ev.age_band_min}` : '',
+            /**
+             * Una nota, y la que más cambia lo que hay que hacer manda.
+             *
+             * «Ya tienes puesto» por encima de la banda de edad: quien ya
+             * reservó no necesita saber para quién es la mesa, necesita saber
+             * que no tiene que hacer nada.
+             */
+            nota: conPuesto.has(ev.id)
+              ? 'Ya tienes puesto'
+              : ev.age_band_min != null ? `Solo para mayores de ${ev.age_band_min}` : '',
           })
         }
         return salida
