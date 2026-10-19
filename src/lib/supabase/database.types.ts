@@ -3973,6 +3973,7 @@ export type Database = {
         | "mensaje"
         | "avisos_del_dia"
         | "revision_previa"
+        | "resumen_semanal"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -4216,6 +4217,7 @@ export const Constants = {
         "mensaje",
         "avisos_del_dia",
         "revision_previa",
+        "resumen_semanal",
       ],
       event_format_t: [
         "dinner",

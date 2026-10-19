@@ -179,6 +179,23 @@ export type Correo =
    * y la plantilla saca el número del evento.
    */
   | 'cena_edad_minima'
+  /**
+   * El resumen de los lunes.
+   *
+   * Lo que abrimos esa semana, en un solo sobre, con lo que le cuadra a cada
+   * quien arriba y el resto debajo. Michael, 19-10: «al final el envío
+   * semanal debería ser para todos para despertar interés».
+   *
+   * **Y sustituye al `abrimos_zona` de los lunes**, no se suma: un plan que
+   * va dentro del resumen ya está contado, y mandarle además su aviso de
+   * apertura es contarle lo mismo dos veces en el mismo día. De martes a
+   * domingo todo sigue igual, cada apertura con su aviso.
+   *
+   * Por eso lleva las fechas por id y no por texto: lo que la semana ES se
+   * decide al encolar, y lo que se VE —el día, la zona, el precio— se
+   * resuelve al mandar, como en `avisos_del_dia`.
+   */
+  | 'resumen_semanal'
 
 /**
  * Los que NO llevan correo.

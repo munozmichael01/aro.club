@@ -1061,6 +1061,94 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       }
     }
 
+    /**
+     * El resumen de los lunes.
+     *
+     * Dos listas: lo que le cuadra a quien lo recibe y el resto de la semana.
+     * Quien no tiene ninguna coincidencia recibe la semana entera igual
+     * (Michael, 19-10: «al final el envío semanal debería ser para todos para
+     * despertar interés»), solo que presentada como lo que es.
+     *
+     * NO lleva hora de cierre a propósito. Es una invitación, no un plazo, y
+     * el cierre está a punto de pasar a medianoche: un correo a seiscientas
+     * personas con la hora vieja dentro se corrige mandando otro.
+     */
+    case 'resumen_semanal': {
+      const ids = (clave: string): string[] => {
+        const v = (p as Record<string, unknown>)[clave]
+        return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+      }
+
+      const deLasFechas = async (lista: string[]) => {
+        if (!lista.length) return []
+        const { data: evs } = await admin
+          .from('events')
+          .select('id, format, starts_at, price_usd, city_slug, status, age_band_min')
+          .in('id', lista)
+          .eq('status', 'open')
+          .order('starts_at')
+
+        const salida = []
+        for (const ev of evs ?? []) {
+          const zonaDeEv = await zonaDeLaCiudad(admin, ev.city_slug)
+          const { data: sedes } = await admin
+            .from('event_venues')
+            .select('zone_slug')
+            .eq('event_id', ev.id)
+          const slugs = [...new Set((sedes ?? []).map((v) => v.zone_slug).filter((z): z is string => !!z))]
+          const nombres = await nombresDeZonas(admin, slugs)
+          const cuandoEs = partesDe(ev.starts_at, zonaDeEv)
+          salida.push({
+            dia: cuandoEs
+              ? `${alta(cuandoEs.dia)} ${cuandoEs.numero} de ${cuandoEs.mes}`
+              : diaEnZonaAlto(ev.starts_at, zonaDeEv),
+            plan: NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan',
+            hora: horaDe(ev.starts_at, zonaDeEv) ?? '',
+            // Con «o» y no con «y»: son zonas entre las que se elige, no un
+            // sitio repartido entre varias. Lo de «y» es de `avisos_del_dia`,
+            // que anuncia la apertura de las zonas, no la elección.
+            zonas: unirCon(nombres, ' o '),
+            precio: ev.price_usd != null ? `${Number(ev.price_usd)} ref` : '',
+            // La banda de edad se dice. A quien le llega es porque cabe, y
+            // callarlo hace que parezca que la mesa es otra cosa.
+            nota: ev.age_band_min != null ? `Solo para mayores de ${ev.age_band_min}` : '',
+          })
+        }
+        return salida
+      }
+
+      const tuyas = await deLasFechas(ids('tuyas'))
+      const otras = await deLasFechas(ids('otras'))
+      if (!tuyas.length && !otras.length) return { error: 'esa semana se quedó sin fechas abiertas' }
+
+      const total = tuyas.length + otras.length
+      const titular = tuyas.length
+        ? { titular: 'Esta semana', acento: `hay ${enLetra(tuyas.length)} para ti.` }
+        : { titular: 'Esta semana', acento: `${enLetra(total)} ${total === 1 ? 'plan' : 'planes'} en Aro.` }
+
+      return {
+        a,
+        datos: {
+          ...base,
+          titular: titular.titular,
+          titularAcento: titular.acento,
+          resumen: `${titular.titular} ${titular.acento}`,
+          bajada: tuyas.length
+            ? 'Esto es lo que abrimos, empezando por lo que encaja con lo que nos dijiste.'
+            : 'Esto es lo que abrimos. Nada encaja del todo con lo que nos dijiste, pero ahí está por si te animas.',
+          hayTuyas: tuyas.length ? 'si' : '',
+          tituloTuyas: 'PARA TI',
+          tuyas,
+          hayOtras: otras.length ? 'si' : '',
+          tituloOtras: tuyas.length ? 'TAMBIÉN ESTA SEMANA' : 'LO QUE ABRIMOS',
+          otras,
+          boton: 'Ver la agenda',
+          destino: '/cuenta#agenda',
+          cierre: 'Si esta semana no te sirve, no hace falta hacer nada. El lunes que viene hay otra.',
+        },
+      }
+    }
+
     // El cupón no lleva importes a propósito: no hay ninguno. Lleva lo mismo
     // que el resto —qué fecha, dónde y cuándo se revela— y nada de banco.
     case 'puesto_con_cupon':

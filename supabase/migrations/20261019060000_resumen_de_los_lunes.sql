@@ -1,0 +1,27 @@
+-- El resumen de los lunes.
+--
+-- Un solo correo con los planes de la semana, con lo que le cuadra a cada
+-- quien arriba y el resto debajo. Michael, 19-10: «¿no vale la pena agrupar
+-- un correo todos los lunes a las 8 a todos los que les coincida al menos un
+-- plan con sus preferencias?», y un rato después, al preguntarle si era solo
+-- para quien tuviera coincidencia: «al final el envío semanal debería ser
+-- para todos para despertar interés».
+--
+-- Tipo propio y no `avisos_del_dia` reutilizado, por lo mismo que el empujón
+-- no podía viajar como `bienvenida`: el tipo es lo que elige la plantilla, lo
+-- que cuenta los envíos y lo que deja apagar un correo sin apagar los demás.
+-- Dos cosas distintas con el mismo nombre acaban siendo un correo mintiendo.
+--
+-- Y SUSTITUYE al aviso de apertura de los lunes, no se suma. Un plan que va
+-- dentro del resumen ya está contado; mandarle además su `abrimos_zona` es
+-- contarle lo mismo dos veces el mismo día. De martes a domingo no cambia
+-- nada.
+--
+-- No lleva índice único de «uno por semana» a propósito: el de
+-- `scheduled_emails` es por persona, tipo y FECHA, y este correo no cuelga de
+-- ninguna fecha —cuelga de una semana—, así que un índice nuevo tendría que
+-- mirar dentro del payload. Mientras tanto lo impide una consulta en el cron,
+-- que corre una vez al día. Si alguna vez se encola desde dos sitios, esto se
+-- convierte en el índice que falta.
+
+alter type email_kind_t add value if not exists 'resumen_semanal';
