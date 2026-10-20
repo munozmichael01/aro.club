@@ -241,17 +241,23 @@
 
             <div class="aro-rejilla" style="{{ rejillaMesas }}">
               <sc-for list="{{ z.mesas }}" as="t" hint-placeholder-count="3">
-                <div data-mesa="{{ t.n }}" style="{{ t.caja }}">
+                <div data-mesa="{{ t.n }}" data-corrida="{{ t.corrida }}" style="{{ t.caja }}">
                   <div style="display:flex;align-items:center;gap:12px;margin-bottom:13px">
                     <span style="{{ t.numero }}">{{ t.n }}</span>
                     <span style="flex:1;min-width:0">
                       <span style="display:block;font:400 clamp(19px,2vw,22px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ t.titulo }}</span>
                       <span style="display:block;font:500 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ t.hora }}</span>
-                      <!-- La banda de edad va en la MESA, no en la fecha: esa
-                           noche no hay dos cenas, hay una con cuatro mesas y
-                           una de ellas es de mayores de 40. -->
-                      <sc-if value="{{ t.hayBanda }}" hint-placeholder-val="{{ false }}">
-                        <span style="display:inline-flex;align-items:center;min-height:24px;margin-top:5px;padding:0 10px;border-radius:999px;background:rgba(143,69,21,.1);font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.04em;color:#8F4515">{{ t.banda }}</span>
+                      <!-- DE QUÉ FECHA ES ESTA MESA. Va en la mesa y no en la
+                           fecha: esa noche no hay dos cenas, hay una con
+                           varias mesas y cada una viene de su fecha. Las dos
+                           numeran desde el 1, así que sin esto hay dos «Mesa
+                           01» idénticas y no se sabe a quién se mueve. -->
+                      <sc-if value="{{ t.hayOrigen }}" hint-placeholder-val="{{ false }}">
+                        <span style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px">
+                          <sc-for list="{{ t.origen }}" as="o" hint-placeholder-count="1">
+                            <span style="{{ o.estilo }}">{{ o.texto }}</span>
+                          </sc-for>
+                        </span>
                       </sc-if>
                     </span>
                     <span style="{{ t.sello }}">{{ t.estado }}</span>
@@ -2102,6 +2108,19 @@ class Component extends DCLogic {
           ? ficha.edadMinima + ' a ' + ficha.edadMaxima
           : (ficha.edadMinima != null ? '+' + ficha.edadMinima : 'hasta ' + ficha.edadMaxima))
         : null,
+      idiomaFecha: ficha.idioma || null,
+      /**
+       * Y el resto de lo que es de la FECHA, no del día.
+       *
+       * Michael, 20-10: «en reparto se me mezclan las dos mesas del jueves».
+       * Lo que se juntaba era la lista de mesas y nada más: los sitios, los
+       * locales y la hora de revelación seguían siendo los de la fecha
+       * ELEGIDA, así que la mesa de la otra ofrecía locales que su fecha no
+       * tiene abiertos y al pulsarlos los ponía en el evento equivocado.
+       */
+      sedes: datos.sedes || [],
+      locales: datos.locales || [],
+      revelaEn: (datos.evento && datos.evento.revelaEn) || null,
     });
 
     const suyas = ((datos.corrida && datos.corrida.propuesta) || []).map(marca);
@@ -2660,12 +2679,20 @@ class Component extends DCLogic {
     return c ? c.id : null;
   }
 
-  moverPersona(profileId, aMesa) {
-    const c = this.corridaId();
+  /**
+   * `corrida` llega desde la mesa, igual que en `publicar`.
+   *
+   * En un día con dos fechas las dos numeran sus mesas desde el 1. Mandar
+   * «a la mesa 1» sin decir de cuál movía a la persona a la Mesa 01 de la
+   * corrida ELEGIDA aunque el dedo estuviera encima de la otra, y sin
+   * avisar de nada: el panel pintaba el movimiento que no había pasado.
+   */
+  moverPersona(profileId, aMesa, corrida) {
+    const c = corrida || this.corridaId();
     if (!c) return;
     // Se pinta YA y se revalida después: lo que tarda es la revalidación, no
     // el movimiento, y una espera muda se lee como que el arrastre no funcionó.
-    this.setState({ recalculando: [aMesa] });
+    this.setState({ recalculando: [String(aMesa) + '|' + c] });
     return this.mandar('/api/operacion/propuesta', { accion: 'mover', corridaId: c, profileId, aMesa })
       .then((r) => {
         this.setState({ recalculando: [] });
@@ -2674,8 +2701,8 @@ class Component extends DCLogic {
       });
   }
 
-  cambiarSede(mesa, restaurantId) {
-    const c = this.corridaId();
+  cambiarSede(mesa, restaurantId, corrida) {
+    const c = corrida || this.corridaId();
     if (!c) return;
     return this.mandar('/api/operacion/propuesta', { accion: 'sede', corridaId: c, mesa, restaurantId })
       .then((r) => {
@@ -2906,10 +2933,18 @@ class Component extends DCLogic {
       const bajo = document.elementFromPoint(e.clientX, e.clientY);
       const caja = bajo && bajo.closest ? bajo.closest('[data-mesa]') : null;
       const n = caja ? parseInt(caja.getAttribute('data-mesa'), 10) : null;
+      // De QUÉ fecha es la mesa de debajo, no solo su número.
+      //
+      // Las dos fechas del jueves numeran sus mesas desde el 1, así que
+      // soltar a alguien encima de la «Mesa 01» de la otra fecha mandaba el
+      // movimiento a la Mesa 01 de la elegida. El número solo no identifica
+      // una mesa en un día con más de una fecha.
+      const corrida = caja ? (caja.getAttribute('data-corrida') || null) : null;
       // En una referencia del objeto y no solo en el estado: setState es
       // asíncrono, y al soltar rápido el destino todavía era el de antes.
-      this._sobre = n;
-      if (this.state.sobreMesa !== n) this.setState({ sobreMesa: n });
+      this._sobre = n == null ? null : { n: n, corrida: corrida };
+      const clave = n == null ? null : String(n) + '|' + (corrida || '');
+      if (this.state.sobreMesa !== clave) this.setState({ sobreMesa: clave });
     };
 
     this._levantar = () => {
@@ -2921,7 +2956,25 @@ class Component extends DCLogic {
       const destino = this._sobre;
       this._sobre = null;
       this.setState({ arrastrando: null, sobreMesa: null });
-      if (destino != null && destino !== d.desde) this.moverPersona(d.pid, destino);
+      if (!destino) return;
+      /**
+       * ENTRE FECHAS NO SE MUEVE, y se dice por qué.
+       *
+       * Las mesas del día se ven juntas a propósito, pero cada persona
+       * reservó UNA fecha: su reserva, su pago y su correo son de esa. El
+       * servidor lo rechaza con «esa persona no está», que desde aquí se
+       * lee como que el arrastre no funcionó. Así que se para antes y se
+       * cuenta lo que de verdad hace falta hacer.
+       */
+      if (d.corrida && destino.corrida && d.corrida !== destino.corrida) {
+        this.setState({ aviso: 'Esa persona reservó la otra fecha de ese día, así que no se puede sentar en una mesa de esta. Entre fechas no es un movimiento de mesa: hay que cambiarle la reserva.' });
+        return;
+      }
+      // A la espera (`0`) se vuelve a la fecha de la que salió: la espera es
+      // de su fecha, no del día.
+      const mismaMesa = d.desde != null && d.desde === destino.n
+        && (!d.corrida || !destino.corrida || d.corrida === destino.corrida);
+      if (!mismaMesa) this.moverPersona(d.pid, destino.n, destino.corrida || d.corrida || null);
     };
 
     // El hueco de abajo se MIDE: la barra cambia de alto según cuánta gente
@@ -2945,8 +2998,8 @@ class Component extends DCLogic {
     window.addEventListener('pointercancel', this._levantar);
   }
 
-  tomar(e, pid, desde) {
-    this._drag = { pid, desde, x: e.clientX, y: e.clientY, activo: false };
+  tomar(e, pid, desde, corrida) {
+    this._drag = { pid, desde, corrida: corrida || null, x: e.clientX, y: e.clientY, activo: false };
   }
 
   componentDidUpdate() { if (this._ajustarHueco) this._ajustarHueco(); }
@@ -3094,9 +3147,23 @@ class Component extends DCLogic {
        * tiene que ofrecer lo mismo o se queda pidiendo permiso a una foto
        * vieja.
        */
+      /**
+       * Y los de SU fecha, que en un día con dos no son los mismos.
+       *
+       * `SEDES`, `CANDIDATOS` y la hora de revelación son de la fecha
+       * elegida en el riel. Las mesas de la otra fecha del día se pintan en
+       * la misma pantalla, así que usando esos la mesa del grupo +40 ofrecía
+       * los locales de la cena abierta y al pulsarlos los ponía en el evento
+       * equivocado.
+       */
+      const SUS_SEDES = Array.isArray(m.sedes) ? m.sedes : SEDES;
+      const SUS_LOCALES = Array.isArray(m.locales) ? m.locales : CANDIDATOS;
+      const suRevela = m.revelaEn || REVELA;
+      const suYaRevelada = !suRevela || new Date(suRevela).getTime() <= Date.now();
+
       // Los sitios que la fecha ya tiene puestos. Todos, sin filtrar por zona.
-      const suyos = SEDES.filter((v) => !!v.restaurantId);
-      const fijo = pub && YA_REVELADA;
+      const suyos = SUS_SEDES.filter((v) => !!v.restaurantId);
+      const fijo = pub && suYaRevelada;
 
       /**
        * Y SI LA FECHA NO TIENE NINGUNO, los que se pueden poner.
@@ -3115,8 +3182,8 @@ class Component extends DCLogic {
        * —una zona tiene su local y las mesas de esa zona van ahí— y en
        * cuanto está puesto, el reparto lo asigna solo.
        */
-      const zonasAbiertas = SEDES.map((v) => v.zona).filter((z, i, a) => a.indexOf(z) === i);
-      const porPoner = suyos.length ? [] : CANDIDATOS
+      const zonasAbiertas = SUS_SEDES.map((v) => v.zona).filter((z, i, a) => a.indexOf(z) === i);
+      const porPoner = suyos.length ? [] : SUS_LOCALES
         .filter((l) => zonasAbiertas.indexOf(l.zona) >= 0);
 
       /**
@@ -3130,7 +3197,7 @@ class Component extends DCLogic {
       const suyasPosibles = m.zonasPosibles || [];
       const zonaSuya = m.zona || (suyasPosibles.length === 1 ? suyasPosibles[0] : null);
       const nombreSuyo = zonaSuya
-        ? ((SEDES.filter((v) => v.zona === zonaSuya)[0] || {}).zonaNombre || zonaSuya)
+        ? ((SUS_SEDES.filter((v) => v.zona === zonaSuya)[0] || {}).zonaNombre || zonaSuya)
         : null;
 
       return {
@@ -3147,7 +3214,7 @@ class Component extends DCLogic {
                 texto: v.nombre || v.zonaNombre,
                 ayuda: on ? 'Esta mesa cena en ' + (v.nombre || v.zonaNombre)
                   : 'Mover la mesa ' + String(m.numero).padStart(2, '0') + ' a ' + (v.nombre || v.zonaNombre),
-                elegir: (on || fijo) ? (() => {}) : (() => this.cambiarSede(m.numero, v.restaurantId)),
+                elegir: (on || fijo) ? (() => {}) : (() => this.cambiarSede(m.numero, v.restaurantId, m.corridaId)),
                 chip: chipSitio(on, fijo, false)
               };
             })
@@ -3171,8 +3238,8 @@ class Component extends DCLogic {
                  * de lo segundo, y encadenarlos es lo que convierte el clic
                  * en lo que la persona quería.
                  */
-                elegir: no ? (() => {}) : (() => this.ponerSitio(EVENTO_ID, l.zona, l.id)
-                  .then((r) => (r && r.ok) ? this.cambiarSede(m.numero, l.id) : r)),
+                elegir: no ? (() => {}) : (() => this.ponerSitio(m.eventoId || EVENTO_ID, l.zona, l.id)
+                  .then((r) => (r && r.ok) ? this.cambiarSede(m.numero, l.id, m.corridaId) : r)),
                 chip: chipSitio(false, false, no)
               };
             })
@@ -3304,6 +3371,74 @@ class Component extends DCLogic {
       noCaben: 0, noCabenGente: [], zonasSinLocal: []
     };
     const POR_MESA = fr.porMesa || 6;
+
+    /**
+     * QUÉ FECHAS TIENE ESA NOCHE, y qué distingue a una de otra.
+     *
+     * Michael, 20-10: «en reparto se me mezclan las dos mesas del jueves.
+     * Que te pedí que se vieran todas las mesas del mismo día para hacer
+     * movimientos, pero si no me marcas quién reservó en qué mesa, no sé
+     * cómo moverlos».
+     *
+     * Juntarlas fue lo que él pidió el 17 y sigue siendo lo correcto: esa
+     * noche no hay dos cenas, hay una con varias mesas. Lo que faltaba es
+     * que cada mesa dijera de cuál de las fechas es. El jueves 22 hay dos
+     * —una abierta y una de +40— y las dos numeran sus mesas desde el 1, así
+     * que en pantalla había dos «Mesa 01» idénticas y nada que las separara.
+     *
+     * Solo se marca cuando el día tiene más de una fecha: con una sola, la
+     * etiqueta no distingue nada y es ruido.
+     */
+    const lasDelDiaDe = (f) => {
+      const dia = String((f && f.empiezaEn) || '').slice(0, 10);
+      if (!dia) return [];
+      return FECHAS_REP.filter((x) =>
+        String(x.empiezaEn || '').slice(0, 10) === dia && !!x.esPrueba === !!f.esPrueba);
+    };
+    const FECHAS_DEL_DIA = lasDelDiaDe(fr);
+    const VARIAS_DEL_DIA = FECHAS_DEL_DIA.length > 1;
+    const IDIOMA_FECHA = { en: 'En inglés', pt: 'En portugués', fr: 'En francés', it: 'En italiano' };
+    // Las mismas dos del riel —naranja la edad, verde el idioma— porque es
+    // donde se acaban de aprender a mirar. Y una neutra para la fecha que no
+    // lleva ninguna: sin ella, «sin etiqueta» se lee como «sin marcar».
+    const pastillaOrigen = (fondo, color) => 'display:inline-flex;align-items:center;height:20px;padding:0 9px;border-radius:999px;background:' + fondo + ';font:700 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.07em;color:' + color + ';white-space:nowrap;text-transform:uppercase';
+    const bandaDe = (f) => (f.edadMinima != null || f.edadMaxima != null)
+      ? (f.edadMinima != null && f.edadMaxima != null
+        ? f.edadMinima + ' a ' + f.edadMaxima
+        : (f.edadMinima != null ? '+' + f.edadMinima : 'hasta ' + f.edadMaxima))
+      : null;
+    const origenDeFecha = (banda, idioma) => {
+      const etiquetas = [];
+      if (banda) etiquetas.push({ texto: banda + ' años', estilo: pastillaOrigen('#8F4515', '#FAF3E4') });
+      if (idioma) etiquetas.push({ texto: IDIOMA_FECHA[idioma] || idioma, estilo: pastillaOrigen('#1B5138', '#FAF3E4') });
+      if (!etiquetas.length) etiquetas.push({ texto: 'Abierta a todos', estilo: pastillaOrigen('rgba(20,52,42,.09)', '#33513F') });
+      return etiquetas;
+    };
+
+    /**
+     * Y CUANDO LA EDAD Y EL IDIOMA NO DISTINGUEN, la zona.
+     *
+     * El viernes 23 hay dos cenas abiertas y sin idioma: las dos saldrían
+     * marcadas «ABIERTA A TODOS», que es tan poco útil como no marcar nada.
+     * Lo que las separa ahí son las zonas —Los Naranjos y El Hatillo contra
+     * Chacao y Los Palos Grandes— así que se añade esa etiqueta solo a las
+     * que, si no, dirían lo mismo que otra de su noche.
+     *
+     * Se calcula por noche y no por fecha suelta: una etiqueta de zona en
+     * una noche con una sola fecha no distingue nada y es ruido.
+     */
+    const rotuloDeFecha = (f, delDia) => {
+      const base = origenDeFecha(bandaDe(f), f.idioma);
+      const texto = (xs) => xs.map((x) => x.texto).join(' · ');
+      const choca = (delDia || []).some((o) => o.id !== f.id
+        && texto(origenDeFecha(bandaDe(o), o.idioma)) === texto(base));
+      if (!choca) return base;
+      const zonas = zonasUnicas(f.zonas || []).map((z) => z[0]).join(' · ');
+      return zonas
+        ? base.concat([{ texto: zonas, estilo: pastillaOrigen('rgba(20,52,42,.09)', '#33513F') }])
+        : base;
+    };
+
     const vozRep = fr.fam !== 'movimiento'
       ? { unidad: 'mesa', unidades: 'mesas', Unidad: 'Mesa', Unidades: 'Mesas', art: 'una', sent: 'sentados', sitio: 'restaurante' }
       : { unidad: 'grupo', unidades: 'grupos', Unidad: 'Grupo', Unidades: 'Grupos', art: 'un', sent: 'repartidos', sitio: 'punto de encuentro' };
@@ -3456,8 +3591,10 @@ class Component extends DCLogic {
        */
       const corta = g.length > 0 && g.length < POR_MESA;
       const pasada = g.length > POR_MESA;
-      const calc = (St.recalculando || []).indexOf(m.numero) >= 0;
       const clave = String(m.numero) + '|' + (m.corridaId || '');
+      // Por la clave y no por el número: moviendo en la Mesa 01 de una fecha,
+      // la Mesa 01 de la otra también se quedaba en «CALCULANDO».
+      const calc = (St.recalculando || []).indexOf(clave) >= 0;
       const forzada = false;
       totalMesas++;
       sentados += g.length;
@@ -3503,7 +3640,7 @@ class Component extends DCLogic {
         // moviéndola, que es lo que de verdad pasa.
         sePuedeQuitar: !pub && g.length === 0,
         quitarMesa: () => {
-          const c = this.corridaId();
+          const c = m.corridaId || this.corridaId();
           if (!c) return;
           this.mandar('/api/operacion/propuesta', { accion: 'quitar-mesa', corridaId: c, mesa: m.numero })
             .then((r) => { if (r.ok) this.cargarReparto(this.fechaElegida() && this.fechaElegida().id); });
@@ -3613,13 +3750,24 @@ class Component extends DCLogic {
           botonMover: 'flex:0 0 auto;min-height:30px;padding:0 11px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:' + (St.moviendo === p.profileId ? '#14342A' : 'transparent') + ';color:' + (St.moviendo === p.profileId ? '#FAF3E4' : '#33513F') + ';font:500 12px/1 \'Inter Tight\',sans-serif;cursor:pointer',
           tocarMover: () => this.setState({ moviendo: St.moviendo === p.profileId ? null : p.profileId }),
           destinos: (St.moviendo !== p.profileId ? [] : PROPUESTA
-            .filter((x) => !x.publicada && x.numero !== m.numero)
-            .map((x) => ({ n: x.numero, texto: 'Mesa ' + x.numero }))
+            /**
+             * Y SOLO LAS DE SU FECHA.
+             *
+             * Las mesas del día se ven juntas, pero esta persona reservó una
+             * fecha concreta: en la otra no tiene ni reserva ni pago, así
+             * que el servidor la rechaza. Ofrecerla era ofrecer un 404 —y
+             * peor, con las dos fechas numerando desde el 1, pulsar «Mesa
+             * 01» movía a la Mesa 01 de esta.
+             */
+            .filter((x) => !x.publicada
+              && (x.corridaId || null) === (m.corridaId || null)
+              && x.numero !== m.numero)
+            .map((x) => ({ n: x.numero, texto: vozRep.Unidad + ' ' + String(x.numero).padStart(2, '0') }))
             .concat([{ n: 0, texto: 'A la espera' }])
           ).map((x) => ({
             texto: x.texto,
             chip: 'min-height:34px;padding:0 14px;border-radius:999px;border:none;background:' + (x.n === 0 ? 'rgba(143,69,21,.13)' : '#1B5138') + ';color:' + (x.n === 0 ? '#8F4515' : '#FAF3E4') + ';font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
-            ir: () => { this.setState({ moviendo: null }); this.moverPersona(p.profileId, x.n); },
+            ir: () => { this.setState({ moviendo: null }); this.moverPersona(p.profileId, x.n, m.corridaId); },
           })),
           hayFoto: !!p.foto,
           sinFoto: !p.foto,
@@ -3654,7 +3802,7 @@ class Component extends DCLogic {
           perfil: '/miembro?id=' + p.profileId,
 
           fila: 'display:flex;align-items:center;gap:10px;padding:8px 6px;margin:0 -6px;border-radius:12px;border-bottom:1px solid rgba(20,52,42,.09);cursor:' + (pub ? 'default' : 'grab') + ';touch-action:' + (pub ? 'auto' : 'none') + ';background:' + (St.arrastrando === p.profileId ? 'rgba(143,69,21,.1)' : 'transparent'),
-          tomar: (e) => { if (!pub) this.tomar(e, p.profileId, m.numero); }
+          tomar: (e) => { if (!pub) this.tomar(e, p.profileId, m.numero, m.corridaId); }
         })),
         reglas: reglas.map((r) => ({
           texto: r.texto,
@@ -3775,9 +3923,18 @@ class Component extends DCLogic {
         },
         forzar: () => this.setState({ confirmar: clave }),
 
-        // Y de qué grupo es esta mesa, cuando el día tiene más de uno.
-        hayBanda: !!m.banda,
-        banda: m.banda ? m.banda + ' años' : '',
+        /**
+         * Y DE QUÉ FECHA es esta mesa, cuando el día tiene más de una.
+         *
+         * Antes solo se marcaba la banda de edad, así que el jueves la mesa
+         * de +40 llevaba su etiqueta y la de la cena abierta no llevaba
+         * ninguna: en pantalla eso no dice «es la otra fecha», dice «a esta
+         * no le hemos puesto nada». Van las dos marcadas o ninguna.
+         */
+        hayOrigen: VARIAS_DEL_DIA,
+        origen: VARIAS_DEL_DIA ? rotuloDeFecha(
+          FECHAS_DEL_DIA.filter((f) => f.id === m.eventoId)[0] || fr, FECHAS_DEL_DIA) : [],
+        corrida: m.corridaId || '',
       };
     };
 
@@ -3972,6 +4129,11 @@ class Component extends DCLogic {
 
     // quien está en espera se arrastra igual que quien está en una mesa:
     // meterlo en un hueco es la mitad del trabajo de repartir.
+    //
+    // `ESPERA_SRV` es la espera de la fecha ELEGIDA —`conLasDelDia` junta las
+    // mesas del día, no las esperas— así que su gente solo se puede sentar
+    // en mesas de esa misma fecha.
+    const SU_CORRIDA = (CORRIDA && CORRIDA.id) || null;
     const espera = ESPERA_SRV.map((p, i) => ({
       nombre: p.nombre, inicial: (p.nombre || '—').charAt(0), avatar: avatarRep(i, true),
       /**
@@ -4009,21 +4171,25 @@ class Component extends DCLogic {
       estiloDietas: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:' + ((p.dietas || []).indexOf('alergias') >= 0 ? 'rgba(143,69,21,.16)' : 'rgba(20,52,42,.07)') + ';color:' + ((p.dietas || []).indexOf('alergias') >= 0 ? '#8F4515' : '#2C4A38'),
       fila: 'display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 6px;margin:0 -6px;border-radius:12px;border-bottom:1px solid rgba(20,52,42,.09);cursor:grab;touch-action:none;background:' + (St.arrastrando === p.profileId ? 'rgba(143,69,21,.1)' : 'transparent'),
       /** Sentarlo sin arrastrar, igual que en las mesas. */
-      hayDonde: PROPUESTA.some((x) => !x.publicada),
+      // Las mesas de SU fecha: la espera que se pinta aquí es la de la fecha
+      // elegida en el riel, no la del día.
+      hayDonde: PROPUESTA.some((x) => !x.publicada && (x.corridaId || null) === SU_CORRIDA),
       abierto: St.moviendo === p.profileId,
       textoMover: St.moviendo === p.profileId ? 'Cancelar' : 'Sentar',
       botonMover: 'flex:0 0 auto;min-height:30px;padding:0 11px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:' + (St.moviendo === p.profileId ? '#14342A' : 'transparent') + ';color:' + (St.moviendo === p.profileId ? '#FAF3E4' : '#33513F') + ';font:500 12px/1 \'Inter Tight\',sans-serif;cursor:pointer',
       tocarMover: () => this.setState({ moviendo: St.moviendo === p.profileId ? null : p.profileId }),
-      destinos: (St.moviendo !== p.profileId ? [] : PROPUESTA.filter((x) => !x.publicada).map((x) => ({ n: x.numero, texto: 'Mesa ' + x.numero }))).map((x) => ({
+      destinos: (St.moviendo !== p.profileId ? [] : PROPUESTA
+        .filter((x) => !x.publicada && (x.corridaId || null) === SU_CORRIDA)
+        .map((x) => ({ n: x.numero, texto: vozRep.Unidad + ' ' + String(x.numero).padStart(2, '0') }))).map((x) => ({
         texto: x.texto,
         chip: 'min-height:34px;padding:0 14px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
-        ir: () => { this.setState({ moviendo: null }); this.moverPersona(p.profileId, x.n); },
+        ir: () => { this.setState({ moviendo: null }); this.moverPersona(p.profileId, x.n, SU_CORRIDA); },
       })),
       pastilla: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 8px 0 8px;border-radius:999px;background:' + (St.arrastrando === p.profileId ? '#F2E9D5' : '#FAF3E4') + ';border:1px solid ' + (St.arrastrando === p.profileId ? '#8F4515' : 'transparent') + ';font:500 14px/1 \'Inter Tight\',sans-serif;color:#14342A;cursor:grab;touch-action:none',
       enlace: 'flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:0 -9px 0 0;border-radius:999px',
       circulo: 'width:26px;height:26px;border-radius:999px;background:rgba(20,52,42,.09);color:#1B5138;display:flex;align-items:center;justify-content:center;font:500 12px/1 \'Inter Tight\',sans-serif',
       perfil: '/miembro?id=' + p.profileId,
-      tomar: (e) => this.tomar(e, p.profileId, null)
+      tomar: (e) => this.tomar(e, p.profileId, null, SU_CORRIDA)
     }));
 
     const NOMBRE_FILTRO = { cenas: 'Cenas', drinks: 'Drinks', coffee: 'Coffee', brunch: 'Brunch', movimiento: 'Movimiento' };
@@ -4117,7 +4283,22 @@ class Component extends DCLogic {
                 estilo: 'display:inline-flex;align-items:center;height:20px;padding:0 9px;border-radius:999px;background:#1B5138;font:700 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.07em;color:#FAF3E4;white-space:nowrap;text-transform:uppercase'
               }
             : null
-        ].filter(Boolean),
+        ].filter(Boolean).concat(
+          /**
+           * Y LA QUE NO LLEVA NINGUNA, cuando comparte día con otra.
+           *
+           * El jueves 22 hay dos cenas: la de +40 llevaba su etiqueta y la
+           * abierta no llevaba nada, que no se lee como «esta es la otra»
+           * sino como «a esta le falta algo». Con dos tarjetas iguales en el
+           * riel, una de las dos tiene que decir qué es.
+           *
+           * Es el MISMO rótulo que llevan sus mesas: el riel y el tablero
+           * tienen que llamar igual a la misma fecha o marcar no sirve.
+           */
+          (bandaDe(f) == null && !f.idioma && lasDelDiaDe(f).length > 1)
+            ? rotuloDeFecha(f, lasDelDiaDe(f))
+            : []
+        ),
         // `f.apuntados` y NO la suma de las zonas: quien acepta dos cuenta en
         // las dos, y esta línea decía «3 apuntados» donde hay 2. Es el mismo
         // «8 donde hay 7» que se arregló en las métricas de arriba el 19 de
@@ -5443,7 +5624,19 @@ class Component extends DCLogic {
                 + ' después de repartir: ' + (tarde === 1 ? 'esa no se miró' : 'esas no se miraron')
                 + ' todavía, y ' + (tarde === 1 ? 'puede' : 'pueden') + ' caber.'
               : base;
-          })(),
+          })()
+          /**
+           * Y DE QUÉ FECHA ES ESTA ESPERA.
+           *
+           * Las mesas de abajo son las de toda la noche; la espera no. Es la
+           * de la fecha elegida en el riel, porque quien espera un sitio lo
+           * espera en SU fecha. Sin decirlo, una espera corta debajo de las
+           * mesas de dos fechas se lee como la espera del día entero.
+           */
+          + (VARIAS_DEL_DIA
+            ? ' Es la espera de esta fecha (' + rotuloDeFecha(fr, FECHAS_DEL_DIA).map((x) => x.texto).join(' · ').toLowerCase()
+              + '): esa noche hay ' + FECHAS_DEL_DIA.length + ' fechas y cada una tiene la suya.'
+            : ''),
       cola, hayCola: porConciliar > 0, sinCola: porConciliar === 0,
       esMesas: esta('mesas'), esVerificaciones: esta('verificaciones'), esPagos: esta('pagos'),
       esReportes: esta('reportes'), esFechas: esta('fechas'), esLocales: esta('locales'),
