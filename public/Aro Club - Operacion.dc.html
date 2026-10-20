@@ -3230,6 +3230,12 @@ class Component extends DCLogic {
       empiezaEn: f.empiezaEn,
       titulo: (NOMBRE_FORMATO[f.formato] || f.formato) + ' · ' + diaTexto(f.empiezaEn),
       formato: f.formato,
+      // Para qué edades es y en qué idioma se habla. Esta proyección solo
+      // copia lo que use el riel, así que sin estas dos líneas las etiquetas
+      // salían vacías aunque el servidor las mandara.
+      edadMinima: f.edadMinima != null ? f.edadMinima : null,
+      edadMaxima: f.edadMaxima != null ? f.edadMaxima : null,
+      idioma: f.idioma || null,
       hora: horaTexto(f.empiezaEn),
       cierra: cuantoQueda(f.cierraEn),
       // El estado de la fecha, que no es lo mismo que el reloj: una fecha se
