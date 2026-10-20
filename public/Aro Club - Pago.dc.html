@@ -907,7 +907,6 @@ class Component extends DCLogic {
       // Cerrada manda sobre todo lo demas: ni elegir metodo, ni datos del
       // banco, ni «falta verificar». No hay pago que hacer.
       fechaCerrada: cerrada,
-      horasCierre: AroReglas.HORAS_DE_CIERRE,
       botonVolver: btn('#1B5138', '#FAF3E4', 'text-decoration:none'),
       esElegir: f === 0 && puedePagar !== false && !cerrada,
       esDatos: f === 1 && puedePagar !== false && !cerrada,

@@ -1021,7 +1021,12 @@ class Component extends DCLogic {
       if (p.estado === 'attended') return [titulo, cuando, 'Fuiste', 'Fuiste'];
       if (p.pasada) return [titulo, cuando, 'Ya pasó', 'Pasada'];
       if (p.estado === 'pending_payment') return [titulo, cuando, 'Pago en revisión · puesto apartado', 'Por confirmar'];
-      return [titulo, cuando, 'Confirmada, se cierra 48 h antes', 'Confirmada'];
+      // «Confirmada» y nada más. Decía «se cierra 48 h antes», que nunca fue
+      // cierto —la regla fue 24 y desde el 20-10 es medianoche, o las cinco
+      // de la víspera en un brunch— y además no le importa a quien ya tiene
+      // puesto: el cierre es para quien todavía no lo tiene. Lo encontró el
+      // agente de la app repasando los copys del cierre.
+      return [titulo, cuando, 'Confirmada', 'Confirmada'];
     });
     // §10: "Mis planes" era una lista sin techo en la portada —una entrada
     // por cena, para siempre, hundiendo cada semana lo que hay debajo—. Aqui
@@ -1529,11 +1534,9 @@ class Component extends DCLogic {
       // De `reglas.js`, no escrita aquí: bajarla de 48 a 24 dejaba este
       // párrafo, el de Legal y el correo de fecha cancelada diciendo otra cosa
       // que el panel al abrir la fecha.
-      horasCierre: AroReglas.HORAS_DE_CIERRE,
       // El MISMO texto que la app (`texto/cuenta.ts`, `agenda.comoFunciona`).
       // Sin el dia escrito: en la hoja la fecha ya esta a la vista dos lineas
       // mas arriba, y repetirla es decirle a alguien lo que acaba de leer.
-      comoFunciona: 'Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona, y antes de la cena te decimos en cuál te tocó. La fecha se cierra ' + AroReglas.HORAS_DE_CIERRE + ' horas antes.',
       cuandoSeSabe: (() => {
         const iso = d && d.proximaFecha && d.proximaFecha.revelaEn;
         const dia = iso && window.AroReglas ? window.AroReglas.diaDe(iso) : null;
