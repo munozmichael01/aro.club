@@ -4282,7 +4282,21 @@ class Component extends DCLogic {
       candidatos.push(d);
       if (candidatos.length >= (deManana ? 10 : 6)) break;
     }
-    const fmt = (d) => DIAS_SEM[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()];
+    /**
+     * El dia, EN CARACAS. Con `getDay()` era el del navegador.
+     *
+     * Hasta el 20-10 daba igual porque lo unico que se formateaba asi eran
+     * fechas elegidas a mano en el propio panel. Con el cierre a medianoche
+     * dejo de darlo: el cierre de la cena del sabado es el sabado a las
+     * 00:00 de Caracas, que en un navegador puesto mas al oeste es VIERNES.
+     * El panel decia «viernes 23 a las 12:00 a.m.» de una fecha que cierra
+     * el sabado, y es el mismo fallo que ya mordio dos veces en la web.
+     */
+    const fmt = (d) => {
+      const p = window.AroReglas ? AroReglas.partesDe(d.toISOString(), AroReglas.ZONA) : null;
+      return p ? p.dia + ' ' + p.numero + ' de ' + p.mes
+        : DIAS_SEM[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()];
+    };
     const dias = candidatos.map((d, i) => {
       const on = St.diaSel === i;
       return {
