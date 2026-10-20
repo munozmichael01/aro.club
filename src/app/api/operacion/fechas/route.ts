@@ -543,6 +543,14 @@ export async function GET() {
       // esquema inicial, sin cablear: `age_band_min` / `age_band_max`.
       edadMinima: e.age_band_min ?? null,
       edadMaxima: e.age_band_max ?? null,
+      /**
+       * Y en qué idioma se habla, si no es español.
+       *
+       * Hace falta en el panel por lo mismo que la edad: con tres cenas el
+       * mismo sábado, en las mismas zonas y a la misma hora, las tarjetas se
+       * leen idénticas y no hay forma de saber cuál es cuál.
+       */
+      idioma: e.idioma ?? null,
       actividad: e.activity ?? null,
       apuntados: suPool.length,
       publicadas: susMesas.length,

@@ -148,7 +148,15 @@
             <button onClick="{{ f.pick }}" style="{{ f.btn }}">
               <span style="{{ f.aro }}">{{ f.icono }}</span>
               <span style="flex:1;min-width:0;text-align:left">
-                <span style="{{ f.txt }}">{{ f.titulo }}</span>
+                <span style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+                  <span style="{{ f.txt }}">{{ f.titulo }}</span>
+                  <!-- Para qué edades es y en qué idioma se habla. Con tres
+                       cenas el mismo sábado, en las mismas zonas y a la misma
+                       hora, sin esto las tarjetas se leen idénticas. -->
+                  <sc-for list="{{ f.etiquetas }}" as="e" hint-placeholder-count="1">
+                    <span style="{{ e.estilo }}">{{ e.texto }}</span>
+                  </sc-for>
+                </span>
                 <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ f.detalle }}</span>
                 <sc-if value="{{ f.hayAviso }}" hint-placeholder-val="{{ false }}">
                   <span style="{{ f.avisoEstilo }}">{{ f.aviso }}</span>
@@ -3891,6 +3899,9 @@ class Component extends DCLogic {
       return suyas.reduce((n, f) => n + (f.apuntados || 0), 0);
     })();
 
+    // Las zonas de la fecha, sin repetir: `fr.zonas` trae una fila por sitio.
+    const zonasDeLaFecha = zonasUnicas(fr.zonas || []).length;
+
     const repartoListo = repartoPedido && !!CORRIDA;
     const oNada = (n) => (repartoListo ? String(n) : '—');
     const sinSaber = repartoPedido ? 'Todavía sin repartir' : 'Leyendo el reparto';
@@ -3903,7 +3914,26 @@ class Component extends DCLogic {
        * sentados. Es el mismo error que me hizo contar cuatro mesas donde
        * había cinco.
        */
-      ['APUNTADOS', String(apuntadosDelDia), 'En ' + fr.zonas.length + (fr.zonas.length === 1 ? ' zona' : ' zonas'), null],
+      /**
+       * Los apuntados de ESTA fecha, y los del día como nota.
+       *
+       * Enseñaba los del día entero con la etiqueta «APUNTADOS», una línea
+       * debajo de una bajada que decía los de la fecha: el jueves 22 ponía
+       * «2 apuntados en 3 zonas» arriba y «APUNTADOS 10» justo debajo.
+       * Michael, 20-10: «en todo reparto la métrica dice 10 apuntados y hay
+       * más que eso… ¿qué pasa con los conteos?».
+       *
+       * Los dos números eran ciertos y ninguno decía cuál era cuál. Manda el
+       * de la fecha, que es la que se está repartiendo, y el del día se dice
+       * aparte y solo cuando hay más de una fecha esa noche.
+       *
+       * Y las zonas, CONTADAS SIN REPETIR. `fr.zonas` trae una fila por
+       * sitio, así que una cena con tres restaurantes en Chacao decía «3
+       * zonas» donde la tarjeta de arriba decía «1 zona».
+       */
+      ['APUNTADOS', String(apuntadosRep),
+        'En ' + zonasDeLaFecha + (zonasDeLaFecha === 1 ? ' zona' : ' zonas')
+        + (apuntadosDelDia !== apuntadosRep ? ' · ' + apuntadosDelDia + ' en toda la noche' : ''), null],
       [vozRep.Unidades.toUpperCase(), oNada(totalMesas), (repartoListo ? sentados + ' ' + vozRep.sent + (desiguales ? ', ' + desiguales + ' sin seis' : ', ' + (totalMesas === 1 ? 'de ' + POR_MESA : 'todas de ' + POR_MESA)) : sinSaber), desiguales ? '#8F4515' : null],
       ['PUBLICADAS', repartoListo ? publicadas + ' de ' + totalMesas : '—', (!repartoListo ? sinSaber : (publicadas === totalMesas ? 'Todas fijas' : 'El resto sigue moviéndose')), publicadas === totalMesas ? '#1B5138' : null],
       ['NO PUEDEN SALIR', oNada(rotas), (!repartoListo ? sinSaber : (rotas ? 'Rompen alguna de las ocho reglas' : 'Ninguna rompe reglas')), rotas ? '#8F4515' : null]
@@ -4054,6 +4084,34 @@ class Component extends DCLogic {
       const nz = suyas.length;
       return {
         titulo: f.titulo, icono: on ? '✓' : '',
+        /**
+         * Lo que distingue una fecha de la de al lado: la edad y el idioma.
+         *
+         * Michael, 20-10: «en reparto identifícame las etiquetas +40 e inglés
+         * en las fechas». El sábado 24 hay tres cenas, dos de ellas en las
+         * mismas zonas y a la misma hora, y la única diferencia entre dos
+         * tarjetas era invisible.
+         *
+         * Mismo tratamiento que en la agenda del miembro: naranja la edad,
+         * verde el idioma, para que no compitan cuando una fecha lleve las
+         * dos.
+         */
+        etiquetas: [
+          (f.edadMinima != null || f.edadMaxima != null)
+            ? {
+                texto: f.edadMinima != null && f.edadMaxima != null
+                  ? f.edadMinima + ' a ' + f.edadMaxima
+                  : (f.edadMinima != null ? '+' + f.edadMinima : 'hasta ' + f.edadMaxima),
+                estilo: 'display:inline-flex;align-items:center;height:20px;padding:0 9px;border-radius:999px;background:#8F4515;font:700 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.07em;color:#FAF3E4;white-space:nowrap;text-transform:uppercase'
+              }
+            : null,
+          f.idioma
+            ? {
+                texto: ({ en: 'En inglés', pt: 'En portugués', fr: 'En francés', it: 'En italiano' })[f.idioma] || f.idioma,
+                estilo: 'display:inline-flex;align-items:center;height:20px;padding:0 9px;border-radius:999px;background:#1B5138;font:700 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.07em;color:#FAF3E4;white-space:nowrap;text-transform:uppercase'
+              }
+            : null
+        ].filter(Boolean),
         // `f.apuntados` y NO la suma de las zonas: quien acepta dos cuenta en
         // las dos, y esta línea decía «3 apuntados» donde hay 2. Es el mismo
         // «8 donde hay 7» que se arregló en las métricas de arriba el 19 de
@@ -5109,7 +5167,7 @@ class Component extends DCLogic {
         : 'No hay fechas de ' + (NOMBRE_FILTRO[tipoRep] || 'ese tipo').toLowerCase() + ' abiertas.',
       tituloRep: St.fechas === null ? 'Cargando…' : (fr.titulo + (fr.hora ? ' · ' + fr.hora : '')),
       textoCierre: fr.cierra,
-      bajadaRep: apuntadosRep + ' apuntados en ' + (fr.zonas.length === 1 ? 'una zona' : fr.zonas.length + ' zonas') + '. Cada ' + vozRep.unidad + ' se publica por separado: al publicarla queda fija y esa gente sale del reparto.',
+      bajadaRep: apuntadosRep + (apuntadosRep === 1 ? ' apuntado en ' : ' apuntados en ') + (zonasDeLaFecha === 1 ? 'una zona' : zonasDeLaFecha + ' zonas') + '. Cada ' + vozRep.unidad + ' se publica por separado: al publicarla queda fija y esa gente sale del reparto.',
       // Barra fija: los botones dejan de estar al final del scroll, y la espera
       // sigue siendo destino sin traerse los avatares aquí.
       barra: 'position:sticky;bottom:0;z-index:30;border-top:1px solid ' + (St.arrastrando ? '#8F4515' : 'rgba(20,52,42,.16)') + ';background:' + (St.arrastrando ? '#F2E9D5' : 'rgba(242,233,213,.96)') + ';backdrop-filter:blur(12px);transition:all 180ms ease',
