@@ -681,10 +681,22 @@ export async function GET() {
    * puedo sentar»; esto contesta «cuántos han dicho que vienen», y cuando
    * difieran hay que verlo, no promediarlo.
    */
+  /**
+   * Solo las que NO han pasado, y con el mismo umbral que usa la lista.
+   *
+   * `eventos` trae también las cenas que ya ocurrieron y siguen en `open` o
+   * `matched` —el panel las necesita para consultarlas—, así que contarlas
+   * aquí daba «33 reservas activas en 22 fechas» con ocho fechas por
+   * delante: una cena de hace dos semanas no es una reserva activa.
+   */
+  const porVenir = (eventos ?? []).filter(
+    (e) => new Date(e.starts_at).getTime() + FIN_CENA > Date.now(),
+  )
+
   const { data: vivas } = await admin
     .from('bookings')
     .select('event_id, status')
-    .in('event_id', (eventos ?? []).map((e) => e.id))
+    .in('event_id', porVenir.map((e) => e.id))
     .in('status', ['confirmed', 'pending_payment'])
 
   const reservasActivas = {
@@ -693,7 +705,7 @@ export async function GET() {
     // Puesto apartado con el pago todavía por conciliar. Se dice aparte
     // porque es trabajo pendiente de operación, no gente sentada.
     enRevision: (vivas ?? []).filter((b) => b.status === 'pending_payment').length,
-    fechas: (eventos ?? []).length,
+    fechas: porVenir.length,
   }
 
   return NextResponse.json({
