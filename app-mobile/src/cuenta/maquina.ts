@@ -34,6 +34,10 @@ export type FechaAgenda = {
   grabamos?: boolean
   /** Requerida: el permiso es condición para apartar puesto. Opcional: se pregunta al revelar la mesa (48f5823). */
   permisoObligatorio?: boolean
+  /** La mesa se habla en ese idioma (20-10, «Dinner in English»). `null`: en español. Solo la ve quien lo marcó. */
+  idioma?: string | null
+  /** «En inglés»: el texto lo manda el servidor. */
+  etiquetaIdioma?: string | null
 }
 
 /** «10 ref», «12,50 ref»: el precio de una fecha. Sin precio en la fecha, el del club (`reglas.precioTexto`). */
@@ -252,6 +256,8 @@ export type FilaAgenda = {
   precio: string
   /** La grabación es requerida: se dice antes del botón, y el permiso es la condición para apartar. */
   graba: boolean
+  /** «En inglés», o null. */
+  idioma: string | null
 }
 
 export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: number): { semana: string; filas: FilaAgenda[] }[] {
@@ -287,6 +293,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       va: a.apuntados >= T.MESA,
       precio: precioDe(a),
       graba: !!a.permisoObligatorio,
+      idioma: a.idioma ? (a.etiquetaIdioma ?? null) : null,
     })
   }
   return grupos

@@ -92,7 +92,7 @@ const PREGUNTAS_NUEVAS = [
 ]
 
 function Pantalla() {
-  const { estado = 'reservar', captura, varios, ciudad, nuevas, graba } = useLocalSearchParams<{ estado?: string; captura?: string; varios?: string; ciudad?: string; nuevas?: string; graba?: string }>()
+  const { estado = 'reservar', captura, varios, ciudad, nuevas, graba, ingles } = useLocalSearchParams<{ estado?: string; captura?: string; varios?: string; ciudad?: string; nuevas?: string; graba?: string; ingles?: string }>()
   const servicio = useMemo((): ReturnType<typeof crearServicioCuenta> => ({
     async cuenta() {
       if (estado === 'cargando') return new Promise(() => {})
@@ -103,6 +103,8 @@ function Pantalla() {
       // ?nuevas=1: las dos preguntas de bebida sin contestar, al reservar (18-10).
       // ?graba=1: todas las fechas de la agenda se graban enteras (18-10).
       if (graba) return { ok: true, datos: { ...d, agenda: d.agenda.map((a) => ({ ...a, grabamos: true, permisoObligatorio: true })) } }
+      // ?ingles=1: la segunda fecha es la mesa en inglés (20-10).
+      if (ingles) return { ok: true, datos: { ...d, agenda: d.agenda.map((a, i) => (i === 1 ? { ...a, idioma: 'en', etiquetaIdioma: 'En inglés' } : a)) } }
       if (nuevas) return { ok: true, datos: { ...d, preguntasNuevas: PREGUNTAS_NUEVAS } }
       return { ok: true, datos: captura ? deCaptura(d, !!varios) : d }
     },
@@ -125,7 +127,7 @@ function Pantalla() {
       await new Promise((ok) => setTimeout(ok, 700))
       return { ok: false, error: 'No te quedan encuentros.' }
     },
-  }), [estado, captura, varios, ciudad, nuevas, graba]) // estable: si no, la carga se relanzaría en cada render
+  }), [estado, captura, varios, ciudad, nuevas, graba, ingles]) // estable: si no, la carga se relanzaría en cada render
   return (
     <Inicio
       key={estado}

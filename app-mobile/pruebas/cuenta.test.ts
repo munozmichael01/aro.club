@@ -235,3 +235,11 @@ test('los formatos: primero los que tienen fecha, luego los «Próximamente» (1
   const orden = C.filtros([f('dinner'), f('brunch')], null).map((x) => x.formato)
   assert.deepEqual(orden, [C.TODOS, 'dinner', 'brunch', 'drinks', 'movement', 'coffee'])
 })
+
+test('la mesa en inglés lleva su etiqueta, la que manda el servidor (20-10)', async () => {
+  const C = await import('../src/cuenta/maquina')
+  const base = { formato: 'dinner', empiezaEn: '2026-10-24T23:00:00Z', cierraEn: null, creditos: 1, zonas: ['Chacao'], apuntados: 2, cerrada: false, mia: false }
+  const filas = C.agenda([{ ...base, id: 'en', idioma: 'en', etiquetaIdioma: 'En inglés' }, { ...base, id: 'es' }], null, Date.parse('2026-10-20T12:00:00Z')).flatMap((g) => g.filas)
+  assert.equal(filas.find((f) => f.id === 'en')?.idioma, 'En inglés')
+  assert.equal(filas.find((f) => f.id === 'es')?.idioma, null)
+})

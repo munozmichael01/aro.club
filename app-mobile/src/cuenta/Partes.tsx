@@ -289,6 +289,12 @@ function FilaFecha(p: {
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 9, rowGap: 2, alignItems: 'baseline' }}>
             <Texto variante="rotulo">{f.tipo}</Texto>
+            {/* Maciza, como la web: no es un detalle, es en otro idioma (20-10). */}
+            {f.idioma ? (
+              <View style={estilos.idioma}>
+                <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 11, lineHeight: 14, letterSpacing: 0.9, color: color.crema }}>{f.idioma.toUpperCase()}</Texto>
+              </View>
+            ) : null}
             <Texto variante="cuerpoChico" tono="secundario">
               {f.cuando}
             </Texto>
@@ -580,6 +586,7 @@ export function Seccion({ children, arriba = 40, onLayout }: { children: ReactNo
 }
 
 const estilos = StyleSheet.create({
+  idioma: { height: 22, paddingHorizontal: 10, borderRadius: 999, backgroundColor: color.verde, justifyContent: 'center', alignSelf: 'center' },
   graba: { borderRadius: 20, backgroundColor: '#FFF8EA', borderWidth: 1, borderColor: 'rgba(143,69,21,.28)', paddingVertical: 16, paddingHorizontal: 18, marginBottom: 16 },
   permiso: { alignSelf: 'flex-start', minHeight: 46, marginTop: 13, paddingHorizontal: 18, borderRadius: radio.capsula, borderWidth: 1, borderColor: 'rgba(20,52,42,.22)', justifyContent: 'center' },
   bloque: { borderRadius: 30, padding: 22 },
