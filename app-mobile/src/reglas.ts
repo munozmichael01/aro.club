@@ -35,8 +35,6 @@ type Api = {
   PRECIO_USD: number
   /** Lo más largo que admite una respuesta escrita (hoy, «¿Dónde trabajas?»). */
   MAX_TEXTO: number
-  /** Cuántas horas antes de empezar cierra una fecha (24 desde el 01-10-2026). Web, servidor y app leen esta. */
-  HORAS_DE_CIERRE: number
   /** Cuándo cierra una fecha (20-10): las cenas a medianoche al empezar su día; los planes de mañana, a las 5:00 p.m. del día anterior. */
   cierreDe: (inicioIso: string) => string | null
   /** «se cierra a medianoche, cuando empieza el viernes» / «se cierra el sábado a las 5:00 p.m.»: lo mismo en web, app y correos. */
