@@ -196,7 +196,8 @@ export const proximo = {
   vacioCuerpo: 'Cuando te apuntes a una fecha aparece aquí, y después de ir podrás contarnos qué tal fue. Eso entra en el emparejamiento de la siguiente.',
   verLoQueViene: 'Ver lo que viene',
   porConfirmar: { detalle: 'Pago en revisión · puesto apartado', estado: 'Por confirmar' },
-  confirmada: { detalle: `Confirmada, se cierra ${reglas.HORAS_DE_CIERRE} h antes`, estado: 'Confirmada' },
+  /** Sin plazo (20-10): el cierre es de quien todavía no tiene puesto. Como la web. */
+  confirmada: { detalle: 'Confirmada', estado: 'Confirmada' },
   mesa: (n: number) => ` · mesa ${String(n).padStart(2, '0')}`,
 }
 
