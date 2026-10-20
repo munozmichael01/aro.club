@@ -31,6 +31,20 @@ type Estado =
   | 'reservada'
   | 'abierta'
 
+/**
+ * Como se llama en la tarjeta una mesa que no es en espanol.
+ *
+ * Corta y en espanol: la lee quien navega la agenda en espanol, y «En
+ * ingles» cabe al lado del dia sin empujar nada. La app pinta esta misma
+ * cadena, no la traduce por su cuenta.
+ */
+const ETIQUETA_IDIOMA: Record<string, string> = {
+  en: 'En inglés',
+  pt: 'En portugués',
+  fr: 'En francés',
+  it: 'En italiano',
+}
+
 export async function GET() {
   const supabase = await createClient()
   const {
@@ -278,7 +292,7 @@ export async function GET() {
   // gente.
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, created_at, grabacion, grabacion_requerida')
+    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, created_at, grabacion, grabacion_requerida, idioma')
     // Las de prueba no son de nadie más que de quien las creó.
     .eq('es_prueba', false)
     // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
@@ -322,8 +336,38 @@ export async function GET() {
    * de contarle que algo cambió. Es la misma razón por la que las fechas
    * cerradas se siguen viendo.
    */
+  /**
+   * Y las que piden un idioma que esta persona no marco, tampoco se ven.
+   *
+   * Mismo criterio que la edad, y por la misma razon de producto: ensenarle
+   * a alguien una mesa que no puede reservar es ofrecerle un 409. Pero aqui
+   * hay ademas una razon de mesa, y es la que lo decide.
+   *
+   * El sabado 24 ya tenia dos fechas, una con SEIS apuntados, que es
+   * exactamente una mesa. Una tercera opcion visible para todos solo puede
+   * partir esa mesa: el que ya estaba se mueve y la de seis se queda en
+   * cinco. Es lo mismo que resolvio `quitarALosDeLaOtra` con la cena de +40.
+   *
+   * Quien marco el idioma la ve con su etiqueta. Quien no, no la ve y no se
+   * entera de que existe — salvo por el correo, que va a los que si lo
+   * marcaron. Y anadir el idioma en las respuestas la hace aparecer.
+   */
+  const { data: misIdiomas } = await admin
+    .from('answers')
+    .select('value')
+    .eq('profile_id', perfil.id)
+    .eq('question_key', 'idiomas')
+    .maybeSingle()
+
+  const idiomasMios = new Set(
+    (Array.isArray(misIdiomas?.value) ? (misIdiomas?.value as unknown[]) : []).map((x) => String(x)),
+  )
+
   const fechasVisibles = (fechas ?? []).filter(
-    (f) => cabeEnLaFecha(perfil.birthdate, f) || mias.has(f.id),
+    (f) =>
+      (cabeEnLaFecha(perfil.birthdate, f)
+        && (!f.idioma || idiomasMios.has(String(f.idioma))))
+      || mias.has(f.id),
   )
 
   const idsFechas = fechasVisibles.map((f) => f.id)
@@ -597,6 +641,12 @@ export async function GET() {
       // «Cena +40». Aditivo: quien no lo lea sigue igual.
       edadMinima: f.age_band_min ?? null,
       edadMaxima: f.age_band_max ?? null,
+      /**
+       * En que idioma se habla esa mesa. Nulo es espanol, que es lo de
+       * siempre. Aditivo: quien no lo lea sigue viendo lo mismo.
+       */
+      idioma: f.idioma ?? null,
+      etiquetaIdioma: f.idioma ? ETIQUETA_IDIOMA[String(f.idioma)] ?? null : null,
     })),
     proximaFecha: proxima
       ? {

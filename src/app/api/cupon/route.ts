@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { anotarPagoDeEvento } from '@/lib/creditos'
 import { encolar } from '@/lib/correos'
+import { hablaElIdioma, noCabePorIdioma, pideIdioma } from '@/lib/idioma'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
   // --- la fecha ---------------------------------------------------------
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, status, credit_cost, grabacion, grabacion_requerida')
+    .select('id, starts_at, booking_closes_at, status, credit_cost, grabacion, grabacion_requerida, idioma')
     .eq('id', parsed.data.eventoId)
     .maybeSingle()
 
@@ -80,6 +81,21 @@ export async function POST(request: Request) {
       },
       { status: 409 },
     )
+  }
+
+  /**
+   * Y sin el idioma de la mesa tampoco hay puesto.
+   *
+   * Justo detras del permiso de grabacion y por lo mismo. La regla entera
+   * vive en `lib/idioma`, compartida por las tres puertas: una que vigile
+   * solo una de las tres no es una regla, y por aqui se entra sin pasar por
+   * reservar.
+   */
+  if (pideIdioma(evento)) {
+    const suIdioma = String((evento as { idioma?: string | null }).idioma)
+    if (!(await hablaElIdioma(admin, user.id, suIdioma))) {
+      return NextResponse.json(noCabePorIdioma(suIdioma), { status: 409 })
+    }
   }
 
   if (new Date(evento.booking_closes_at).getTime() < Date.now()) {

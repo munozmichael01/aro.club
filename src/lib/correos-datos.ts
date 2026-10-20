@@ -28,6 +28,9 @@ import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
 
+/** Y en inglés, para el único correo que va en inglés. */
+const DIAS_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
 /** Caracas, cuatro horas por detrás. Todo lo que lee una persona va en su hora. */
 function enCaracas(iso: string): Date {
   return new Date(new Date(iso).getTime() - 4 * 3600_000)
@@ -1184,6 +1187,49 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
            */
           destino: `/cuenta?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal&utm_content=${encodeURIComponent(String(p.semana ?? ''))}#agenda`,
           cierre: 'Si esta semana no te sirve, no hace falta hacer nada. El lunes que viene hay otra.',
+        },
+      }
+    }
+
+    /**
+     * «Dinner in English», el anuncio de la mesa en inglés.
+     *
+     * El día, la hora y las zonas salen del EVENTO, no del payload ni
+     * escritos en la plantilla. Entre que se encola y sale puede cambiar la
+     * hora —ya pasó esta semana, las cenas se movieron de 7:30 a 7:00— y un
+     * correo que anuncia una hora vieja manda a alguien a la puerta
+     * equivocada.
+     *
+     * En inglés porque la mesa es en inglés y quien lo recibe lo marcó. El
+     * único trozo en español es el pie, que ofrece el resto de la semana.
+     *
+     * Y NO lleva precio. Michael, 20-10: no se muestra.
+     */
+    case 'cena_en_ingles': {
+      const zona = await zonaDeLaCiudad(admin, evento?.city_slug)
+      const zonasAbiertas = await (async () => {
+        if (!fila.event_id) return []
+        const { data: sedes } = await admin
+          .from('event_venues')
+          .select('zone_slug')
+          .eq('event_id', fila.event_id)
+        const slugs = [...new Set((sedes ?? []).map((v) => v.zone_slug).filter((z): z is string => !!z))]
+        return nombresDeZonas(admin, slugs)
+      })()
+
+      const partes = evento?.starts_at ? partesDe(evento.starts_at, zona) : null
+
+      return {
+        a,
+        datos: {
+          ...base,
+          // «Saturday 24», en inglés: el correo entero lo está.
+          dia: partes ? `${DIAS_EN[partes.diaNumero] ?? ''} ${partes.numero}`.trim() : '',
+          hora: horaDe(evento?.starts_at, zona) ?? '',
+          zonas: unirCon(zonasAbiertas, ' or '),
+          // A la tarjeta de ESA fecha, desplegada. Es lo que ya hace el
+          // correo de la cena con edad mínima.
+          enlaceReserva: `${SITIO}/cuenta?fecha=${fila.event_id ?? ''}`,
         },
       }
     }

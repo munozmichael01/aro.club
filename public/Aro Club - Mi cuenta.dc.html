@@ -211,6 +211,9 @@
                     <sc-if value="{{ ev.hayEdad }}" hint-placeholder-val="{{ false }}">
                       <span style="{{ ev.estiloEdad }}">{{ ev.etiquetaEdad }}</span>
                     </sc-if>
+                    <sc-if value="{{ ev.hayIdioma }}" hint-placeholder-val="{{ false }}">
+                      <span style="{{ ev.estiloIdioma }}">{{ ev.etiquetaIdioma }}</span>
+                    </sc-if>
                     <span style="font:400 14px/1.3 'Inter Tight',sans-serif;color:#566A5D">{{ ev.cuando }}</span>
                   </span>
                   <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#566A5D;margin-top:3px">{{ ev.zona }}</span>
@@ -1196,7 +1199,11 @@ class Component extends DCLogic {
         // arriba: esta tupla se lee por índice. Hace falta para decir cuándo
         // cierra ESTA fecha, que desde el 19-10 ya no es un número de horas
         // igual para todas.
-        a.empiezaEn
+        a.empiezaEn,
+        // Y en qué idioma se habla esa mesa, si no es español. Lo manda el
+        // servidor ya escrito —«En inglés»— para que la app y la web no
+        // tengan dos tablas de traducción. También al final.
+        a.etiquetaIdioma ?? null
       ];
     });
     // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato
@@ -1285,6 +1292,13 @@ class Component extends DCLogic {
       g.eventos.push({
         hayEdad: !!etiquetaEdad,
         etiquetaEdad,
+        // El idioma, con el MISMO tratamiento que la edad: no es un detalle
+        // de la fecha, es la razón por la que alguien elige esta y no la de
+        // al lado. Verde y no naranja para que las dos no compitan cuando
+        // una fecha llevara las dos.
+        hayIdioma: !!c[13],
+        etiquetaIdioma: c[13] || '',
+        estiloIdioma: 'display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:#1B5138;font:700 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;color:#FAF3E4;white-space:nowrap;text-transform:uppercase',
         /**
          * MACIZA, no un contorno suave.
          *

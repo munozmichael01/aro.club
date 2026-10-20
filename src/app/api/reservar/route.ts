@@ -4,6 +4,7 @@ import { cabeEnLaFecha, MOTIVO_EDAD, porQueNoCabe, tieneEdadMinima } from '@/lib
 import { z } from 'zod'
 
 import { situacionDePerfil } from '@/lib/embudo'
+import { hablaElIdioma, noCabePorIdioma, pideIdioma } from '@/lib/idioma'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -60,7 +61,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion, grabacion_requerida')
+    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -146,7 +147,7 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion, grabacion_requerida')
+    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -171,6 +172,20 @@ export async function POST(request: Request) {
       },
       { status: 409 },
     )
+  }
+
+  /**
+   * Y sin el idioma de la mesa tampoco hay puesto.
+   *
+   * Justo detrás del permiso de grabación y por lo mismo: antes del embudo y
+   * antes del cobro. La regla entera vive en `lib/idioma`, compartida por las
+   * tres puertas, porque una que vigile solo una de las tres no es una regla.
+   */
+  if (pideIdioma(evento)) {
+    const suIdioma = String((evento as { idioma?: string | null }).idioma)
+    if (!(await hablaElIdioma(admin, user.id, suIdioma))) {
+      return NextResponse.json(noCabePorIdioma(suIdioma), { status: 409 })
+    }
   }
 
   if (new Date(evento.booking_closes_at).getTime() < Date.now()) {

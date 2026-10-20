@@ -8,6 +8,7 @@ import { campoDe, valido } from '@/lib/reglas'
 import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
 import { datosDePago } from '@/lib/datos-de-pago'
 import { PRECIO_USD } from '@/lib/reglas'
+import { hablaElIdioma, noCabePorIdioma, pideIdioma } from '@/lib/idioma'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
@@ -89,7 +90,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, price_usd, booking_closes_at, zone_slug, reveal_at, city_slug, age_band_min, age_band_max, grabacion, grabacion_requerida')
+    .select('id, starts_at, price_usd, booking_closes_at, zone_slug, reveal_at, city_slug, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -360,7 +361,7 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, price_usd, booking_closes_at, age_band_min, age_band_max, grabacion, grabacion_requerida')
+    .select('id, starts_at, price_usd, booking_closes_at, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -382,6 +383,21 @@ export async function POST(request: Request) {
       },
       { status: 409 },
     )
+  }
+
+  /**
+   * Y sin el idioma de la mesa tampoco hay puesto.
+   *
+   * Justo detras del permiso de grabacion y por lo mismo. La regla entera
+   * vive en `lib/idioma`, compartida por las tres puertas: una que vigile
+   * solo una de las tres no es una regla, y por aqui se entra sin pasar por
+   * reservar.
+   */
+  if (pideIdioma(evento)) {
+    const suIdioma = String((evento as { idioma?: string | null }).idioma)
+    if (!(await hablaElIdioma(admin, user.id, suIdioma))) {
+      return NextResponse.json(noCabePorIdioma(suIdioma), { status: 409 })
+    }
   }
 
   if (new Date(evento.booking_closes_at).getTime() < Date.now()) {

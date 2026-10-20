@@ -963,6 +963,7 @@ export type Database = {
           grabacion: boolean
           grabacion_requerida: boolean
           id: string
+          idioma: string | null
           max_seats: number | null
           min_tables: number
           price_usd: number | null
@@ -990,6 +991,7 @@ export type Database = {
           grabacion?: boolean
           grabacion_requerida?: boolean
           id?: string
+          idioma?: string | null
           max_seats?: number | null
           min_tables?: number
           price_usd?: number | null
@@ -1017,6 +1019,7 @@ export type Database = {
           grabacion?: boolean
           grabacion_requerida?: boolean
           id?: string
+          idioma?: string | null
           max_seats?: number | null
           min_tables?: number
           price_usd?: number | null
@@ -3974,6 +3977,7 @@ export type Database = {
         | "avisos_del_dia"
         | "revision_previa"
         | "resumen_semanal"
+        | "cena_en_ingles"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -4218,6 +4222,7 @@ export const Constants = {
         "avisos_del_dia",
         "revision_previa",
         "resumen_semanal",
+        "cena_en_ingles",
       ],
       event_format_t: [
         "dinner",

@@ -196,6 +196,16 @@ export type Correo =
    * resuelve al mandar, como en `avisos_del_dia`.
    */
   | 'resumen_semanal'
+  /**
+   * El anuncio de una mesa en otro idioma. Hoy, la de ingles del 24-10.
+   *
+   * Tipo propio y no `mensaje`: el de mensaje es texto libre escrito por una
+   * persona, y este tiene plantilla, va a una lista calculada —verificados
+   * que marcaron ese idioma y no tienen reserva esa semana— y lleva su
+   * cabecera de baja. Mezclarlos seria perder la cuenta de a quien se le
+   * conto que.
+   */
+  | 'cena_en_ingles'
 
 /**
  * Los que NO llevan correo.
