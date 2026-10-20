@@ -348,6 +348,15 @@ const cuerpo = z.object({
    */
   edadMinima: z.number().int().min(18).max(99).nullable().optional(),
   edadMaxima: z.number().int().min(18).max(99).nullable().optional(),
+  /**
+   * El idioma de la mesa, si no es español.
+   *
+   * Nulo es lo de siempre. Es una propiedad de la fecha, como la edad: esa
+   * mesa se habla en ese idioma y quien se sienta tiene que poder seguirla.
+   * El candado de quién puede reservar vive en `lib/idioma` y lo miran las
+   * tres puertas.
+   */
+  idioma: z.enum(['en', 'pt', 'fr', 'it']).nullable().optional(),
   // Dónde puede caer. El local es OPCIONAL aquí a propósito.
   //
   // Elegirlo al abrir es elegirlo a ciegas: la decisión buena depende de
@@ -394,7 +403,7 @@ export async function GET() {
 
   const { data: eventos } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug, es_prueba, age_band_min, age_band_max')
+    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug, es_prueba, age_band_min, age_band_max, idioma')
     .in('status', ['draft', 'open', 'locked', 'matched'])
     .order('starts_at', { ascending: true })
 
@@ -725,14 +734,25 @@ export async function POST(request: Request) {
    */
   const { data: mismasDelDia } = await admin
     .from('events')
-    .select('id, age_band_min, age_band_max')
+    .select('id, age_band_min, age_band_max, idioma')
     .eq('city_slug', d.ciudad)
     .eq('format', d.formato)
     .neq('status', 'cancelled')
     .gte('starts_at', enUTC(d.dia, 0).toISOString())
     .lt('starts_at', enUTC(d.dia, 24).toISOString())
 
-  const nuevaSegmenta = d.edadMinima != null || d.edadMaxima != null
+  /**
+   * Y DOS FECHAS EN DISTINTO IDIOMA TAMPOCO CHOCAN (20-10).
+   *
+   * Tercera forma de segmentar, después de la edad y la zona, y por el mismo
+   * razonamiento: la regla existe para que dos fechas no se quiten gente, y
+   * una mesa en inglés no compite con la de al lado. Quien no marcó el
+   * idioma ni siquiera la ve en su agenda.
+   *
+   * Sin esto, la cena «Dinner in English» del sábado 24 no se puede abrir
+   * desde el panel: comparte Chacao con la que ya existe.
+   */
+  const nuevaSegmenta = d.edadMinima != null || d.edadMaxima != null || !!d.idioma
 
   /**
    * NI CUANDO SON DE OTRA ZONA (18-10).
@@ -766,7 +786,7 @@ export async function POST(request: Request) {
   const zonasNuevas = new Set(d.zonas.map((z) => z.zona))
 
   const choca = (mismasDelDia ?? []).some((e) => {
-    if (nuevaSegmenta || e.age_band_min != null || e.age_band_max != null) return false
+    if (nuevaSegmenta || e.age_band_min != null || e.age_band_max != null || e.idioma) return false
     const suyas = zonasPorEvento.get(e.id) ?? new Set<string>()
     return [...suyas].some((z) => zonasNuevas.has(z))
   })
@@ -818,6 +838,8 @@ export async function POST(request: Request) {
       age_band_min: d.edadMinima ?? null,
       age_band_max: d.edadMaxima ?? null,
       status: 'open',
+      // El idioma de la mesa, si lo lleva. Nulo es español.
+      idioma: d.idioma ?? null,
     } as never)
     .select('id')
     .single()

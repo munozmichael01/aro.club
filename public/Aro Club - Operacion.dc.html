@@ -965,6 +965,18 @@
                     <input type="text" inputmode="numeric" value="{{ edadMax }}" onChange="{{ onEdadMax }}" placeholder="Hasta" aria-label="Edad máxima" style="{{ campoCorto }}" />
                     <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ resumenEdades }}</span>
                   </div>
+
+                  <!-- El idioma de la mesa. Tercera forma de segmentar una
+                       fecha, despues de la edad y la zona: esa mesa se habla
+                       en ese idioma y solo la ve, y la puede reservar, quien
+                       lo marco en sus respuestas. -->
+                  <div style="{{ etiqueta }};margin-top:clamp(20px,2.4vw,26px)">EN QUE IDIOMA</div>
+                  <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin:-4px 0 12px;max-width:52ch;text-wrap:pretty">{{ notaIdioma }}</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:9px">
+                    <sc-for list="{{ idiomas }}" as="i" hint-placeholder-count="3">
+                      <button onClick="{{ i.pick }}" style="{{ i.btn }}">{{ i.nombre }}</button>
+                    </sc-for>
+                  </div>
                 </div>
 
                 <div>
@@ -4395,6 +4407,8 @@ class Component extends DCLogic {
         // lo que ha sido siempre.
         edadMinima: edadMinNum,
         edadMaxima: edadMaxNum,
+        // El idioma de la mesa. Nulo es español, que es lo de siempre.
+        idioma: St.idiomaFecha || null,
         precioUsd: precioNum,
         zonas: idxZonas.map((i) => ({
           zona: ZONAS_OP[i][3],
@@ -4465,6 +4479,7 @@ class Component extends DCLogic {
       ['Hora', dSel ? fSel[1] + ' · la pone el formato' : fSel[1], false],
       ['Se cierra', cierre ? (fmt(cierre) + ' a las ' + new Intl.DateTimeFormat('es-VE', { timeZone: 'America/Caracas', hour: 'numeric', minute: '2-digit', hour12: true }).format(cierre)) : '—', !!cierre],
       ['Se revela', revela ? fmt(revela) + ' a las 12:00' + (mananero ? ' · el día antes' : '') : 'a las 12:00', !!revela],
+      ['Idioma', St.idiomaFecha ? ({ en: 'Inglés · solo la ve quien lo marcó', pt: 'Portugués · solo la ve quien lo marcó', fr: 'Francés · solo la ve quien lo marcó' }[St.idiomaFecha] || St.idiomaFecha) : 'Español', !!St.idiomaFecha],
       ['Cupo', 'Abierto · quien no entre queda en espera', true],
       ['Precio', precioOk ? precioNum.toFixed(2).replace('.', ',') + ' ref por plaza' : 'Falta el precio', precioOk],
       ['Zonas', idxZonas.length ? idxZonas.map((i) => ZONAS_OP[i][0]).join(', ') : 'Ninguna', idxZonas.length > 0],
@@ -6222,6 +6237,15 @@ class Component extends DCLogic {
       edadMax: St.edadMax || '',
       onEdadMin: (e) => this.setState({ edadMin: e.target.value.replace(/[^0-9]/g, '').slice(0, 2), abierta: false }),
       onEdadMax: (e) => this.setState({ edadMax: e.target.value.replace(/[^0-9]/g, '').slice(0, 2), abierta: false }),
+      notaIdioma: 'En español salvo que digas otra cosa. Una mesa en otro idioma solo la ve, y solo la puede reservar, quien lo marcó en sus respuestas: no compite con la del mismo día ni le quita gente.',
+      idiomas: [['Español', null], ['Inglés', 'en'], ['Portugués', 'pt'], ['Francés', 'fr']].map((x) => {
+        const on = (St.idiomaFecha || null) === x[1];
+        return {
+          nombre: x[0],
+          pick: () => this.setState({ idiomaFecha: x[1], abierta: false }),
+          btn: 'display:inline-flex;align-items:center;min-height:38px;padding:0 15px;border-radius:999px;font:' + (on ? '600' : '500') + ' 13px/1 \'Inter Tight\',sans-serif;white-space:nowrap;cursor:pointer;transition:all 180ms ease;background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#2C4A38') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.22)')
+        };
+      }),
       notaEdades: 'En blanco, para todo el mundo. La ventana que empareja son diez años: una fecha «40 a 52» es una mesa posible y un «+40» abierto puede juntar a alguien de 43 con alguien de 68, que el reparto no sienta.',
       resumenEdades: edadesAlReves
         ? 'La mínima no puede ser mayor que la máxima.'
