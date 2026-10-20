@@ -29,6 +29,8 @@
  *   3. Que cada variable de enlace la sirva `correos-datos.ts` para el tipo
  *      que usa esa plantilla — si no, ese botón sale en blanco.
  *   4. Que la plantilla PINTADA cierre todas sus etiquetas.
+ *   5. Que ninguna imagen vaya con ruta relativa, y que las que apuntan al
+ *      sitio existan. Por aquí salieron 234 correos con el logo en blanco.
  *
  * Lo tercero se comprueba leyendo el `case` del tipo en `correos-datos.ts`,
  * que es aproximado a propósito: prefiere avisar de más a callarse un botón
@@ -145,6 +147,62 @@ for (const fichero of readdirSync(dir).filter((f) => f.endsWith('.html')).sort()
   if (rotas.length) {
     problemas.push(`${fichero}: el HTML no cierra al repetir la lista`
       + rotas.slice(0, 4).map((r) => `\n      → ${r}`).join(''))
+  }
+
+  /**
+   * Y las IMÁGENES, que es por donde se coló el logo roto.
+   *
+   * El 20-10 salieron 234 correos con el logo en blanco: la plantilla venía
+   * de Design con `src="aro-verde.png"`, relativo, que funciona abriendo el
+   * fichero en su carpeta y no significa nada dentro de un buzón. Las otras
+   * veinticuatro plantillas lo tienen absoluto y nadie lo comprobaba, porque
+   * esto solo miraba los `href`.
+   *
+   * Un `src` relativo no rompe nada visible al pintar: el correo sale, se
+   * lee, y el hueco del logo solo lo ve quien lo recibe.
+   */
+  for (const m of html.matchAll(/<img[^>]*\ssrc="([^"]*)"/g)) {
+    const src = m[1].trim()
+
+    if (!src) {
+      problemas.push(`${fichero}: hay un <img> sin src`)
+      continue
+    }
+
+    const interna = src.match(/^\{\{\{\s*sitioWeb\s*\}\}\}(\/[^"]*)$/)
+    if (interna) {
+      // A la misma bolsa que los href: se piden de verdad a producción.
+      const ruta = interna[1].split('#')[0]
+      if (!rutas.has(ruta)) rutas.set(ruta, new Set())
+      rutas.get(ruta).add(`${fichero} (${tipo}, imagen)`)
+      continue
+    }
+
+    if (/^https?:/.test(src) || src.startsWith('data:')) continue
+
+    /**
+     * Un `src` que es SOLO una variable: la URL entera la pone el servidor,
+     * como la foto de la entrada del restaurante. Se comprueba lo mismo que
+     * en un href, que `correos-datos` la sirva para ese tipo: si no, el
+     * `<img>` sale con el src vacío y el correo enseña un hueco.
+     */
+    const variable = src.match(/^\{\{\{?\s*([a-zA-Z][a-zA-Z0-9_]*)\s*\}?\}\}$/)
+    if (variable) {
+      const clave = variable[1]
+      const ok = sirve(tipo, clave)
+      if (ok === false) {
+        problemas.push(
+          `${fichero}: la imagen usa {{{ ${clave} }}} y correos-datos no la sirve para '${tipo}'`
+          + '\n      → el correo enseña un hueco donde iba la foto')
+      } else if (ok === null) {
+        avisos.push(`${fichero}: '${tipo}' no tiene case propio; la imagen {{{ ${clave} }}} sin comprobar`)
+      }
+      continue
+    }
+
+    problemas.push(
+      `${fichero}: la imagen va con una ruta relativa → ${src}`
+      + '\n      → en un buzón no resuelve: usa {{{ sitioWeb }}}/correo/…')
   }
 
   for (const m of html.matchAll(/href="([^"]*)"/g)) {
