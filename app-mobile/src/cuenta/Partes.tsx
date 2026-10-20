@@ -337,7 +337,7 @@ function FilaFecha(p: {
             <Texto variante="rotulo">{f.hora}</Texto>
           </View>
           <Texto variante="cuerpoChico" tono="secundario" style={{ marginBottom: 14 }}>
-            {T.agenda.comoFunciona}
+            {T.agenda.comoFunciona(f.cierre)}
           </Texto>
           <View style={estilos.cargo}>
             <Texto variante="cuerpoChico" tono="tinta" style={{ flex: 1, fontFamily: fuente.textoMedia }}>

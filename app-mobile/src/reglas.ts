@@ -37,6 +37,10 @@ type Api = {
   MAX_TEXTO: number
   /** Cuántas horas antes de empezar cierra una fecha (24 desde el 01-10-2026). Web, servidor y app leen esta. */
   HORAS_DE_CIERRE: number
+  /** Cuándo cierra una fecha (20-10): las cenas a medianoche al empezar su día; los planes de mañana, a las 5:00 p.m. del día anterior. */
+  cierreDe: (inicioIso: string) => string | null
+  /** «se cierra a medianoche, cuando empieza el viernes» / «se cierra el sábado a las 5:00 p.m.»: lo mismo en web, app y correos. */
+  textoCierre: (inicioIso: string, zona?: string | null) => string
   /** El juego de la mesa (mazo aprobado por Michael, JUEGO.md). */
   JUEGO: JuegoDeMesa
   /** Las `porRonda` preguntas de una ronda, deterministas por mesa: todos los teléfonos de la mesa ven las mismas. `ronda` = índice o clave; `[]` si no existe. */

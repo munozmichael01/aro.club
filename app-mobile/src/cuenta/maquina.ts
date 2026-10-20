@@ -258,6 +258,8 @@ export type FilaAgenda = {
   graba: boolean
   /** «En inglés», o null. */
   idioma: string | null
+  /** «se cierra a medianoche, cuando empieza el viernes», de `reglas.textoCierre`. */
+  cierre: string
 }
 
 export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: number): { semana: string; filas: FilaAgenda[] }[] {
@@ -294,6 +296,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       precio: precioDe(a),
       graba: !!a.permisoObligatorio,
       idioma: a.idioma ? (a.etiquetaIdioma ?? null) : null,
+      cierre: reglas.textoCierre(a.empiezaEn, a.zonaHoraria),
     })
   }
   return grupos

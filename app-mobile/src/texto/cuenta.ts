@@ -127,7 +127,9 @@ export const agenda = {
   marcaPermiso: 'Marca el permiso para seguir',
   titulo: `Lo que viene en ${CIUDAD_PRODUCTO.nombre}`,
   /** Cómo se arma la mesa. Va en la hoja de reservar, no encima de la agenda: allí empujaba la primera fecha fuera de la pantalla (entrega 19), y es al reservar cuando hace falta. */
-  comoFunciona: `Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona, y antes de la cena te decimos en cuál te tocó. La fecha se cierra ${reglas.HORAS_DE_CIERRE} horas antes.`,
+  /** El cierre sale de `reglas.textoCierre` (20-10): a medianoche las cenas, a las 5:00 p.m. del día antes los planes de mañana. Como la web. */
+  comoFunciona: (cierre: string) =>
+    `Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona, y antes te decimos en cuál te tocó. La fecha ${cierre || 'se cierra a medianoche, cuando empieza su día'}.`,
   verTodo: 'Ver todo',
   vacia: 'Nada de ese tipo abierto ahora mismo. Abrimos según lo que pida la gente: marca ese plan en tu perfil y cuentas para que salga.',
   eligeHora: 'ELIGE LA HORA',

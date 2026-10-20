@@ -243,3 +243,18 @@ test('la mesa en inglés lleva su etiqueta, la que manda el servidor (20-10)', a
   assert.equal(filas.find((f) => f.id === 'en')?.idioma, 'En inglés')
   assert.equal(filas.find((f) => f.id === 'es')?.idioma, null)
 })
+
+test('el cierre de cada fecha lo dice reglas.js: medianoche las cenas, 5 p.m. del día antes el brunch (20-10)', async () => {
+  const C = await import('../src/cuenta/maquina')
+  const base = { cierraEn: null, creditos: 1, zonas: ['Chacao'], apuntados: 2, cerrada: false, mia: false, zonaHoraria: 'America/Caracas' }
+  const filas = C.agenda(
+    [
+      { ...base, id: 'cena', formato: 'dinner', empiezaEn: '2026-10-23T23:00:00Z' },
+      { ...base, id: 'brunch', formato: 'brunch', empiezaEn: '2026-10-25T15:00:00Z' },
+    ],
+    null,
+    Date.parse('2026-10-20T12:00:00Z'),
+  ).flatMap((g) => g.filas)
+  assert.match(filas.find((f) => f.id === 'cena')!.cierre, /^se cierra a medianoche, cuando empieza el viernes/)
+  assert.match(filas.find((f) => f.id === 'brunch')!.cierre, /^se cierra el sábado a las 5:00 p\.m\./)
+})
