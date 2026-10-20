@@ -71,15 +71,31 @@ async function anunciar(seco: boolean, solo: string | null, eventoId: string | n
       .filter((x): x is string => !!x),
   )
 
-  // Y de esos, los verificados: la misma vista con la que `/api/reservar`
-  // decide si deja apartar puesto. Invitar a quien la ruta va a decir que no
-  // es el correo que enseña a desconfiar de los correos.
-  const { data: verificados } = await admin
-    .from('v_verified_profiles')
-    .select('id')
+  /**
+   * Y de esos, las cuentas vivas. SIN exigir verificación.
+   *
+   * Estuvo filtrado a verificados y Michael lo cambió el 20-10: «¿será que
+   * mandamos a los 253 menos los que tienen plan?». Son noventa y una
+   * personas que marcaron inglés y no han subido la cédula, y para ellas
+   * este correo es justo la razón que les faltaba: hay una mesa que les
+   * interesa y para sentarse hay que terminar. Es el mismo criterio que ya
+   * tiene el resumen de los lunes, que también va a los sin verificar.
+   *
+   * Lo que sí se quita siempre: cuentas de prueba, borradas y sin correo.
+   * Las de prueba son las de los guiones y la del revisor de Apple, y ya han
+   * llenado el buzón de Michael otras veces.
+   */
+  const { data: cuentas } = await admin
+    .from('profiles')
+    .select('id, email, es_prueba, deleted_at')
     .in('id', [...loHablan])
 
-  const puede = new Set((verificados ?? []).map((v) => v.id).filter((x): x is string => !!x))
+  const puede = new Set(
+    (cuentas ?? [])
+      .filter((p) => !p.es_prueba && !p.deleted_at && p.email)
+      .map((p) => p.id)
+      .filter((x): x is string => !!x),
+  )
 
   // Quién ya tiene plan esa semana. No se les escribe.
   const { desde, hasta } = semanaDe(fecha.starts_at)
@@ -137,7 +153,7 @@ async function anunciar(seco: boolean, solo: string | null, eventoId: string | n
     empieza: fecha.starts_at,
     idioma: fecha.idioma,
     loHablan: loHablan.size,
-    verificados: puede.size,
+    cuentasVivas: puede.size,
     conPlanEstaSemana: [...puede].filter((id) => yaTienenPlan.has(id)).length,
     destinatarios: destinatarios.length,
     encolados,

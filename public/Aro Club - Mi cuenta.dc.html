@@ -276,6 +276,19 @@
         </div>
       </sc-for>
 
+      <!-- ¿Hablas inglés? La mesa en otro idioma se enseña a todo el mundo y
+           es la puerta la que pregunta, en vez de esconderla. Michael, 20-10. -->
+      <sc-if value="{{ hayPreguntaIdioma }}" hint-placeholder-val="{{ false }}">
+        <div style="border-radius:22px;background:#F2E9D5;padding:clamp(16px,2vw,20px);margin-top:12px">
+          <div style="font:500 16px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ preguntaIdioma }}</div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:6px;max-width:48ch;text-wrap:pretty">{{ notaPreguntaIdioma }}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:14px">
+            <button onClick="{{ siHabloIdioma }}" style="{{ botonSiIdioma }}">{{ textoSiIdioma }}</button>
+            <button onClick="{{ noHabloIdioma }}" style="{{ botonNoIdioma }}">No</button>
+          </div>
+        </div>
+      </sc-if>
+
       <sc-if value="{{ hayFalloReserva }}" hint-placeholder-val="{{ false }}">
         <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:15px 18px;margin-top:12px">
           <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
@@ -445,6 +458,7 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
+const NOMBRE_IDIOMA = { en: 'inglés', pt: 'portugués', fr: 'francés', it: 'italiano' };
 class Component extends DCLogic {
   state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {}, datos: null, sinCuenta: false,
             reservandoYa: false, falloReserva: '', nExclusiones: null, saliendo: false,
@@ -596,6 +610,8 @@ class Component extends DCLogic {
       .catch(() => {});
   }
 
+  // Como se llama cada idioma al preguntarlo. En español: lo lee quien no
+  // lo marcó.
   componentDidMount() {
     /**
      * `?fecha=<id>` abre esa tarjeta y solo esa.
@@ -1460,7 +1476,17 @@ class Component extends DCLogic {
           })
             .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
             .then(({ ok, x }) => {
-              if (!ok) { this.setState({ reservandoYa: false, falloReserva: x.error || 'No pudimos apuntarte.' }); return; }
+              if (!ok) {
+                // Sin el idioma de la mesa no se pinta un error, se pregunta.
+                // El candado sigue en el servidor: esto solo cambia cómo se
+                // ve un «no» que la persona puede convertir en un «sí».
+                if (x && x.motivo === 'falta-idioma') {
+                  this.setState({ reservandoYa: false, falloReserva: '', idiomaQueFalta: x.idioma || 'en', eventoDelIdioma: c[5], grabaDelIdioma: !!c[11] });
+                  return;
+                }
+                this.setState({ reservandoYa: false, falloReserva: x.error || 'No pudimos apuntarte.' });
+                return;
+              }
               this.setState({ reservandoYa: false, reservando: null });
               // Se relee: el estado de la cuenta cambia con la reserva.
               fetch('/api/mi-cuenta').then((r) => r.json()).then((d2) => this.setState({ datos: d2 }));
@@ -1532,6 +1558,46 @@ class Component extends DCLogic {
       },
       botonFantasmaOscuro: 'display:inline-flex;align-items:center;min-height:50px;padding:0 10px;background:transparent;border:none;color:#566A5D;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
       hayDatos: !!this.state.datos,
+      /**
+       * La pregunta del idioma, cuando la puerta la pide y no la tenemos.
+       *
+       * «Sí» guarda el idioma en sus respuestas —la misma pregunta del
+       * cuestionario, no un campo nuevo— y vuelve a intentar la reserva sin
+       * que tenga que buscar el botón otra vez. «No» cierra y ya.
+       */
+      hayPreguntaIdioma: !!this.state.idiomaQueFalta,
+      preguntaIdioma: '¿Hablas ' + (NOMBRE_IDIOMA[this.state.idiomaQueFalta] || 'ese idioma') + '?',
+      notaPreguntaIdioma: 'Esta mesa se habla en ' + (NOMBRE_IDIOMA[this.state.idiomaQueFalta] || 'ese idioma') + ' de principio a fin. No hace falta que sea perfecto, solo que te deje disfrutar la conversación.',
+      textoSiIdioma: this.state.guardandoIdioma ? 'Guardando…' : 'Sí, añádelo a mi perfil',
+      botonSiIdioma: 'display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;border:0;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      botonNoIdioma: 'display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;background:transparent;color:#2C4A38;border:1px solid rgba(20,52,42,.26);font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      noHabloIdioma: () => this.setState({ idiomaQueFalta: null, eventoDelIdioma: null, reservando: null }),
+      siHabloIdioma: () => {
+        if (this.state.guardandoIdioma) return;
+        const idioma = this.state.idiomaQueFalta;
+        const evento = this.state.eventoDelIdioma;
+        const graba = this.state.grabaDelIdioma;
+        this.setState({ guardandoIdioma: true });
+        fetch('/api/idioma', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idioma })
+        })
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no se guardó'))))
+          // Guardado el idioma, se vuelve a intentar la reserva sola: hacerle
+          // buscar el botón otra vez es cobrarle el clic dos veces.
+          .then(() => fetch('/api/reservar', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(graba ? { eventoId: evento, permiteGrabacion: true } : { eventoId: evento })
+          }))
+          .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
+          .then(({ ok, x }) => {
+            this.setState({ guardandoIdioma: false, idiomaQueFalta: null, eventoDelIdioma: null });
+            if (!ok) { this.setState({ falloReserva: x.error || 'No pudimos apuntarte.' }); return; }
+            this.setState({ reservando: null });
+            fetch('/api/mi-cuenta').then((r) => r.json()).then((d2) => this.setState({ datos: d2 }));
+          })
+          .catch(() => this.setState({ guardandoIdioma: false, falloReserva: 'No pudimos guardarlo. Inténtalo otra vez.' }));
+      },
       hayFalloReserva: !!this.state.falloReserva,
       falloReserva: this.state.falloReserva,
       // La API ya decia quien es ops y la pantalla no lo usaba: un admin

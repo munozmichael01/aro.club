@@ -352,22 +352,25 @@ export async function GET() {
    * entera de que existe — salvo por el correo, que va a los que si lo
    * marcaron. Y anadir el idioma en las respuestas la hace aparecer.
    */
-  const { data: misIdiomas } = await admin
-    .from('answers')
-    .select('value')
-    .eq('profile_id', perfil.id)
-    .eq('question_key', 'idiomas')
-    .maybeSingle()
-
-  const idiomasMios = new Set(
-    (Array.isArray(misIdiomas?.value) ? (misIdiomas?.value as unknown[]) : []).map((x) => String(x)),
-  )
-
+  /**
+   * Y la de otro idioma SÍ se ve, la hayas marcado o no.
+   *
+   * Nació escondida —enseñar una mesa que no puedes reservar es ofrecer un
+   * 409— y Michael lo cambió el 20-10: «mejor que se la mostremos a todo el
+   * mundo, y al reservar, si no tenemos el inglés de esa persona, le
+   * preguntamos ¿hablas inglés?».
+   *
+   * Tiene razón en lo que yo no vi: 247 cuentas marcaron inglés pero la
+   * pregunta del cuestionario lleva meses ahí y mucha gente que lo habla
+   * nunca la tocó. Esconder la mesa a quien no la contestó es perder justo a
+   * quien podría llenarla.
+   *
+   * El filtro sigue existiendo en las tres puertas: ver la fecha no es poder
+   * reservarla. Lo que cambia es que ahora la puerta pregunta en vez de
+   * cerrarse.
+   */
   const fechasVisibles = (fechas ?? []).filter(
-    (f) =>
-      (cabeEnLaFecha(perfil.birthdate, f)
-        && (!f.idioma || idiomasMios.has(String(f.idioma))))
-      || mias.has(f.id),
+    (f) => cabeEnLaFecha(perfil.birthdate, f) || mias.has(f.id),
   )
 
   const idsFechas = fechasVisibles.map((f) => f.id)
