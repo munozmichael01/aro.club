@@ -11,6 +11,8 @@ import * as T from '../texto/cuenta'
 import * as M from './maquina'
 import { Cabecera } from './Cabecera'
 import { PreguntasNuevas } from './PreguntasNuevas'
+import { PreguntaIdioma } from '../idioma/PreguntaIdioma'
+import * as TI from '../texto/idioma'
 import { Agenda, Atajos, Esqueleto, LoProximo, Pie, Seccion, TarjetaEstado, Valorar } from './Partes'
 import type { crearServicioCuenta } from './servicio'
 import { contarFormato } from './voz'
@@ -47,6 +49,8 @@ export function Inicio(p: {
   const [falloReserva, setFalloReserva] = useState('')
   // El permiso de grabación de la fecha abierta (18-10). Se olvida al cambiar de tarjeta.
   const [permiteGrabacion, setPermiteGrabacion] = useState(false)
+  // La mesa en otro idioma (20-10): el 409 `falta-idioma` se convierte en una pregunta.
+  const [pidiendoIdioma, setPidiendoIdioma] = useState<{ id: string; idioma: string } | null>(null)
   const [saliendo, setSaliendo] = useState(false)
 
   const scroll = useRef<ScrollView>(null)
@@ -151,6 +155,7 @@ export function Inicio(p: {
     if (!res.ok) {
       // El candado del servidor: si falta algo del embudo, se lleva allí.
       if (res.motivo === 'perfil-incompleto' && res.donde) return p.ir(res.donde)
+      if (res.motivo === TI.MOTIVO) return setPidiendoIdioma({ id, idioma: res.idioma ?? 'en' })
       return setFalloReserva(res.error)
     }
     setAbierta(null)
@@ -255,6 +260,16 @@ export function Inicio(p: {
         <Pie alPulsar={(ruta) => p.ir(ruta.startsWith('app:') ? ruta.slice(4) : `web:${ruta}`)} />
       </ScrollView>
       {hoja}
+      <PreguntaIdioma
+        idioma={pidiendoIdioma?.idioma ?? null}
+        alCerrar={() => setPidiendoIdioma(null)}
+        alAnadir={() => {
+          const id = pidiendoIdioma?.id
+          setPidiendoIdioma(null)
+          // Reintenta la reserva sola: ya dijo que sí.
+          if (id) confirmar(id)
+        }}
+      />
       <PreguntasNuevas
         preguntas={datos?.preguntasNuevas ?? []}
         // Nunca a la vez que la pregunta de los avisos: dos hojas a la vez, en iOS, una no se abre.

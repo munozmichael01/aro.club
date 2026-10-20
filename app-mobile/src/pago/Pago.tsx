@@ -30,6 +30,8 @@ import { reglas, type CampoDePago } from '../reglas'
 import { MESES_CORTOS } from '../texto/fechas'
 import * as F from '../texto/fechas'
 import * as TC from '../texto/cuenta'
+import { PreguntaIdioma } from '../idioma/PreguntaIdioma'
+import * as TI from '../texto/idioma'
 import * as T from '../texto/pago'
 import { useUltimo } from '../util/useUltimo'
 import { encoger } from '../verificacion/foto'
@@ -60,6 +62,8 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   const [rep, setRep] = useState<Record<string, string>>(M.repInicial)
   // El permiso de grabación: en una fecha que se graba, condición para apartar puesto (18-10).
   const [permiteGrabacion, setPermiteGrabacion] = useState(false)
+  // La mesa en otro idioma (20-10): el 409 `falta-idioma` pregunta, y al decir que sí se reintenta lo que estaba haciendo.
+  const [pidiendoIdioma, setPidiendoIdioma] = useState<{ idioma: string; reintentar: 'cupon' | 'reportar' } | null>(null)
   const [captura, setCaptura] = useState<string | null>(null)
   const [subiendo, setSubiendo] = useState(false)
   const [cuponAbierto, setCuponAbierto] = useState(false)
@@ -127,7 +131,10 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     const r = await servicio.cupon(d.evento.id, codigo, graba ? permiteGrabacion : undefined)
     setAplicando(false)
     // El fallo se enseña junto al campo: un código mal tecleado se corrige donde se escribió.
-    if (!r.ok) return setFalloCupon(r.error)
+    if (!r.ok) {
+      if (r.motivo === TI.MOTIVO) return setPidiendoIdioma({ idioma: r.idioma ?? 'en', reintentar: 'cupon' })
+      return setFalloCupon(r.error)
+    }
     setFase('cupon')
     preguntar('reserva')
   }
@@ -154,6 +161,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     if (!r.ok) {
       if (M.esFechaCerrada(r)) return setFase('cerrada')
       setFase('reportar')
+      if (r.motivo === TI.MOTIVO) return setPidiendoIdioma({ idioma: r.idioma ?? 'en', reintentar: 'reportar' })
       return setFallo(r.error)
     }
     setFase(r.datos.estado === 'confirmado' ? 'listo' : 'pendiente')
@@ -532,6 +540,17 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
         {cuerpo}
       </ScrollView>
       {hoja}
+      <PreguntaIdioma
+        idioma={pidiendoIdioma?.idioma ?? null}
+        alCerrar={() => setPidiendoIdioma(null)}
+        alAnadir={() => {
+          const otra = pidiendoIdioma?.reintentar
+          setPidiendoIdioma(null)
+          // Ya dijo que sí: se repite lo que estaba haciendo, sin volver a pulsar.
+          if (otra === 'cupon') aplicarCupon()
+          else if (otra === 'reportar') reportar()
+        }}
+      />
     </View>
   )
 }

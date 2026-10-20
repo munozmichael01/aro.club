@@ -125,6 +125,8 @@ function Pantalla() {
     async reservar(id, permiso) {
       console.log('[catálogo] reservar', id, permiso)
       await new Promise((ok) => setTimeout(ok, 700))
+      // ?ingles=1: reservar la de inglés sin tenerlo marcado devuelve el 409 que pregunta (20-10).
+      if (ingles) return { ok: false, error: 'Esta mesa se habla en inglés. Añádelo en tus respuestas y te apuntas.', status: 409, motivo: 'falta-idioma', idioma: 'en' }
       return { ok: false, error: 'No te quedan encuentros.' }
     },
   }), [estado, captura, varios, ciudad, nuevas, graba, ingles]) // estable: si no, la carga se relanzaría en cada render

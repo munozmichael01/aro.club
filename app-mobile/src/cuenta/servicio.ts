@@ -9,7 +9,7 @@ import type { MiCuenta, MiMesa } from './maquina'
 type Api = ReturnType<typeof crearApi>
 export type Resultado<T> =
   | { ok: true; datos: T }
-  | { ok: false; error: string; status?: number; motivo?: string; donde?: string }
+  | { ok: false; error: string; status?: number; motivo?: string; donde?: string; idioma?: string }
 
 async function intentar<T>(f: () => Promise<Response>, porDefecto: string): Promise<Resultado<T>> {
   let r: Response
@@ -29,7 +29,7 @@ async function intentar<T>(f: () => Promise<Response>, porDefecto: string): Prom
   if (r.ok && j) return { ok: true, datos: j as T }
   // `motivo` es el código estable del servidor (p. ej. 'perfil-incompleto'),
   // y `donde` la ruta del paso pendiente: con eso se lleva, no solo se avisa.
-  return { ok: false, error: j?.error || porDefecto, status: r.status, motivo: j?.motivo, donde: j?.donde }
+  return { ok: false, error: j?.error || porDefecto, status: r.status, motivo: j?.motivo, donde: j?.donde, idioma: j?.idioma }
 }
 
 export function crearServicioCuenta(api: Api) {

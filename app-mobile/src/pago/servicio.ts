@@ -7,7 +7,7 @@ import type { DeServidor } from './maquina'
  * operación: contra producción solo con la cuenta del banco.
  */
 type Api = ReturnType<typeof crearApi>
-export type Resultado<T> = { ok: true; datos: T } | { ok: false; error: string; status?: number; motivo?: string }
+export type Resultado<T> = { ok: true; datos: T } | { ok: false; error: string; status?: number; motivo?: string; idioma?: string }
 
 async function intentar<T>(f: () => Promise<Response>, porDefecto: string, sinRed: string): Promise<Resultado<T>> {
   let r: Response
@@ -24,7 +24,7 @@ async function intentar<T>(f: () => Promise<Response>, porDefecto: string, sinRe
     /* no era JSON */
   }
   if (r.ok && j) return { ok: true, datos: j as T }
-  return { ok: false, error: j?.error || porDefecto, status: r.status, motivo: j?.motivo }
+  return { ok: false, error: j?.error || porDefecto, status: r.status, motivo: j?.motivo, idioma: j?.idioma }
 }
 
 const json = (cuerpo: object): RequestInit => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) })
