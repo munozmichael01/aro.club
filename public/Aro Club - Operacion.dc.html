@@ -1264,15 +1264,16 @@
           <sc-if value="{{ grafico.hayBarras }}" hint-placeholder-val="{{ true }}">
             <div style="display:flex;align-items:flex-end;gap:3px;height:132px;margin-top:20px">
               <sc-for list="{{ grafico.barras }}" as="b" hint-placeholder-count="14">
-                <span style="{{ b.columna }}" title="{{ b.ayuda }}" aria-label="{{ b.ayuda }}">
+                <button onClick="{{ b.tocar }}" style="{{ b.columna }}" title="{{ b.ayuda }}" aria-label="{{ b.ayuda }}">
                   <span style="{{ b.barra }}"></span>
-                </span>
+                </button>
               </sc-for>
             </div>
             <div style="display:flex;justify-content:space-between;font:400 12px/1.4 'Inter Tight',sans-serif;color:#566A5D;margin-top:7px">
               <span>{{ grafico.primerDia }}</span>
               <span>{{ grafico.ultimoDia }}</span>
             </div>
+            <div style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#14342A;margin-top:10px;font-variant-numeric:tabular-nums">{{ grafico.detalleDia }}</div>
           </sc-if>
           <sc-if value="{{ grafico.sinBarras }}" hint-placeholder-val="{{ false }}">
             <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:16px">Todavía no ha entrado nada en este rango.</div>
@@ -4929,14 +4930,35 @@ class Component extends DCLogic {
         sinBarras: techo === 0,
         primerDia: filas.length ? comoDia(filas[0].dia) : '',
         ultimoDia: filas.length ? comoDia(filas[filas.length - 1].dia) : '',
+        /**
+         * El detalle del día elegido, EN TEXTO Y DEBAJO.
+         *
+         * La cifra de cada barra vivía solo en el `title`, que es el globito
+         * del navegador: se enseña al pasar el ratón por encima y en un
+         * teléfono no hay ratón. Michael, 19-10: «no tengo manera como ver el
+         * acumulado de la gráfica en movil».
+         *
+         * Así que se toca la barra y sale aquí. Y sin tocar nada ya sale el
+         * último día con movimiento, que es la pregunta que se hace quien
+         * abre esta pantalla: cuánto llevamos hoy.
+         */
+        detalleDia: (() => {
+          const elegido = filas.filter((f) => f.dia === St.diaPago)[0];
+          const conAlgo = filas.filter((f) => f.bolivares > 0);
+          const f = elegido || conAlgo[conAlgo.length - 1];
+          if (!f) return '';
+          return comoDia(f.dia) + ' · ' + dinero(f.bolivares, 'VES') + ' · ' + f.puestos + (f.puestos === 1 ? ' puesto' : ' puestos');
+        })(),
         barras: filas.map((f) => {
           // Un mínimo de 2px para el día que tuvo algo pero poco: una barra
           // de medio píxel se lee como un día vacío, que es lo contrario.
           const alto = techo ? Math.max(f.bolivares ? 2 : 0, Math.round((f.bolivares / techo) * 112)) : 0;
+          const on = St.diaPago === f.dia;
           return {
             ayuda: comoDia(f.dia) + ': ' + dinero(f.bolivares, 'VES') + ' · ' + f.puestos + (f.puestos === 1 ? ' puesto' : ' puestos'),
-            columna: 'flex:1 1 0;min-width:0;height:112px;display:flex;align-items:flex-end',
-            barra: 'display:block;width:100%;border-radius:4px 4px 2px 2px;background:' + (f.bolivares ? '#1B5138' : 'rgba(20,52,42,.10)') + ';height:' + (f.bolivares ? alto : 3) + 'px'
+            tocar: () => this.setState({ diaPago: St.diaPago === f.dia ? null : f.dia }),
+            columna: 'flex:1 1 0;min-width:0;height:112px;display:flex;align-items:flex-end;padding:0;border:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent',
+            barra: 'display:block;width:100%;border-radius:4px 4px 2px 2px;background:' + (f.bolivares ? (on ? '#8F4515' : '#1B5138') : 'rgba(20,52,42,.10)') + ';height:' + (f.bolivares ? alto : 3) + 'px'
           };
         })
       };

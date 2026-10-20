@@ -69,10 +69,27 @@ export async function GET() {
   // "12 puestos", "tasa 62,40"— justo donde se mira cuanto ha entrado.
   const hoy = new Date(Date.now() - 4 * 3600_000).toISOString().slice(0, 10)
 
+  /**
+   * Y el día de Caracas EMPIEZA A LAS CUATRO EN UTC, no a las cero.
+   *
+   * `hoy` ya venía bien —se calcula restando las cuatro horas— pero después
+   * se comparaba contra `hoy + 'T00:00:00Z'`, que es medianoche de UTC. Entre
+   * esas dos medianoches caben las últimas cuatro horas de la víspera, o sea
+   * de ocho de la noche a doce en Caracas, que es justo cuando la gente paga.
+   *
+   * Michael, 19-10: «¿por qué no cuadran los totales con los gráficos?». Esa
+   * mañana la tarjeta decía 14 puestos y 138.600,05 Bs y la barra del mismo
+   * día decía 11 y 109.028,15. La diferencia eran tres pagos de las 8:07, las
+   * 8:33 y las 9:41 de la noche ANTERIOR. La barra estaba bien: agrupa por
+   * día de Caracas desde que se escribió. La tarjeta era la que contaba un
+   * día que empezaba cuatro horas antes de tiempo.
+   */
+  const desdeMedianoche = hoy + 'T04:00:00Z'
+
   const { data: delDia } = await admin
     .from('payments')
     .select('amount_usd, amount_local, moneda, status')
-    .gte('created_at', hoy + 'T00:00:00Z')
+    .gte('created_at', desdeMedianoche)
 
   const confirmados = (delDia ?? []).filter((p) => p.status === 'confirmed')
   const { data: tasaHoy } = await admin
@@ -87,11 +104,12 @@ export async function GET() {
     .select('*', { count: 'exact', head: true })
     .eq('status', 'under_review')
 
+  // Lo devuelto va por la misma medianoche: tenía el mismo corte de más.
   const { data: devueltos } = await admin
     .from('payments')
     .select('amount_local')
     .eq('status', 'refunded')
-    .gte('created_at', hoy + 'T00:00:00Z')
+    .gte('created_at', desdeMedianoche)
 
   /**
    * LO COBRADO, DÍA A DÍA.

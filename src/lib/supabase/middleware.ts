@@ -44,18 +44,22 @@ export async function updateSession(request: NextRequest) {
   // el 19-10 desde el celular, en una página que ni siquiera necesitaba
   // sesión.
   //
-  // Dos segundos y medio, y si no llega se sigue sin refrescar. Lo que se
-  // pierde es que esa petición concreta no renueve el token —la siguiente lo
-  // hará— y que una ruta del panel mande a entrar de más. Lo que se gana es
-  // que un auth lento sea una página lenta y no una página caída. Ninguna
-  // puerta se abre por esto: sin usuario, el panel no entra.
+  // CUATRO segundos, y si no llega se sigue sin refrescar. Lo que se pierde
+  // es que esa petición concreta no renueve el token —la siguiente lo hará— y
+  // que una ruta del panel mande a entrar de más. Lo que se gana es que un
+  // auth lento sea una página lenta y no una página caída. Ninguna puerta se
+  // abre por esto: sin usuario, el panel no entra.
+  //
+  // Empezó en dos y medio y se subió el mismo día: con el servidor frío la
+  // primera entrada al panel se pasaba de ese tope y rebotaba a /entrar. Un
+  // freno que salta cuando no hay nada que frenar enseña a desconfiar de él.
   const { data: { user } } = await Promise.race([
     supabase.auth.getUser(),
     new Promise<{ data: { user: null } }>((listo) =>
       setTimeout(() => {
-        console.warn('[middleware] auth no contestó en 2,5 s:', request.nextUrl.pathname)
+        console.warn('[middleware] auth no contestó en 4 s:', request.nextUrl.pathname)
         listo({ data: { user: null } })
-      }, 2500),
+      }, 4000),
     ),
   ])
 
