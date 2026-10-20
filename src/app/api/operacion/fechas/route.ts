@@ -666,8 +666,39 @@ export async function GET() {
     }
   })
 
+  /**
+   * Cuántas reservas vivas hay ahora mismo, en todo lo abierto.
+   *
+   * Lo pidió Michael el 20-10: «necesito ver en reparto un conteo de
+   * reservas activas». La lista enseña el número de CADA fecha y nunca el
+   * total, así que para saber cómo viene la semana había que sumar de
+   * cabeza siete tarjetas.
+   *
+   * Y se cuenta sobre `bookings`, no sobre el pool. Hoy dan lo mismo —quien
+   * reserva está verificado— pero no son lo mismo: una reserva con el pago
+   * en revisión aparta puesto y no entra al pool, y a quien se le caduque la
+   * verificación sigue teniendo su reserva. El pool contesta «a cuántos
+   * puedo sentar»; esto contesta «cuántos han dicho que vienen», y cuando
+   * difieran hay que verlo, no promediarlo.
+   */
+  const { data: vivas } = await admin
+    .from('bookings')
+    .select('event_id, status')
+    .in('event_id', (eventos ?? []).map((e) => e.id))
+    .in('status', ['confirmed', 'pending_payment'])
+
+  const reservasActivas = {
+    total: (vivas ?? []).length,
+    confirmadas: (vivas ?? []).filter((b) => b.status === 'confirmed').length,
+    // Puesto apartado con el pago todavía por conciliar. Se dice aparte
+    // porque es trabajo pendiente de operación, no gente sentada.
+    enRevision: (vivas ?? []).filter((b) => b.status === 'pending_payment').length,
+    fechas: (eventos ?? []).length,
+  }
+
   return NextResponse.json({
     fechas: conAviso,
+    reservasActivas,
     // Las horas por formato, para que el panel no las escriba a mano: las
     // tenía duplicadas, y moverlas aquí lo dejaba diciendo «7:00 p.m.» con la
     // cena ya a las 7:30.

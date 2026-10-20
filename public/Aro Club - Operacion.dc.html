@@ -124,6 +124,16 @@
     <sc-if value="{{ esMesas }}" hint-placeholder-val="{{ true }}">
       <div style="animation:aro-open 300ms ease both">
 
+        <!-- Cuántas reservas vivas hay en todo lo abierto. La lista da el
+             número de cada fecha y nunca el total, así que para saber cómo
+             viene la semana había que sumar siete tarjetas de cabeza. -->
+        <sc-if value="{{ hayReservasVivas }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-bottom:clamp(18px,2.2vw,24px)">
+            <span style="font:700 clamp(26px,3.2vw,34px)/1 'Inter Tight',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#14342A">{{ reservasVivas }}</span>
+            <span style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ reservasVivasNota }}</span>
+          </div>
+        </sc-if>
+
         <div style="{{ etiqueta }}">QUÉ FECHA ESTÁS REPARTIENDO</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
           <sc-for list="{{ tiposRep }}" as="t" hint-placeholder-count="4">
@@ -1987,7 +1997,7 @@ class Component extends DCLogic {
         // panel salta de fecha solo.
         const antes = this.fechaElegida();
         const i = antes ? Math.max(0, d.fechas.findIndex((f) => f.id === antes.id)) : 0;
-        return { fechas: d.fechas, horasFormato: d.horasFormato || null, precioPorDefecto: d.precioPorDefecto, horasCierre: d.horasCierre, fechaRep: i };
+        return { fechas: d.fechas, horasFormato: d.horasFormato || null, precioPorDefecto: d.precioPorDefecto, horasCierre: d.horasCierre, reservasActivas: d.reservasActivas || null, fechaRep: i };
       },
       { fechas: [] });
   }
@@ -5054,6 +5064,23 @@ class Component extends DCLogic {
         };
       }),
       gruposCola, grupoVacio: colas.length === 0, textoGrupoVacio,
+      /**
+       * Las reservas vivas de todo lo abierto, en una línea.
+       *
+       * «Activas» son las confirmadas MÁS las que tienen el pago en
+       * revisión: esas ya apartan puesto. Se dicen aparte cuando las hay,
+       * porque no son gente sentada, son trabajo pendiente de conciliar.
+       */
+      hayReservasVivas: !!(St.reservasActivas && St.reservasActivas.fechas),
+      reservasVivas: String((St.reservasActivas && St.reservasActivas.total) || 0),
+      reservasVivasNota: (() => {
+        const r = St.reservasActivas || {};
+        const n = r.total || 0;
+        const fechas = r.fechas || 0;
+        return (n === 1 ? 'reserva activa' : 'reservas activas')
+          + ' en ' + fechas + (fechas === 1 ? ' fecha abierta' : ' fechas abiertas')
+          + (r.enRevision ? ' · ' + r.enRevision + (r.enRevision === 1 ? ' con el pago por conciliar' : ' con el pago por conciliar') : '');
+      })(),
       fechasRep, zonasRep, tiposRep,
       // Se enseña solo si hay algo que enseñar: un botón que no cambia nada
       // es ruido.
