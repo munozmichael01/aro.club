@@ -4421,7 +4421,17 @@ class Component extends DCLogic {
     // prometía el cierre un día antes del que escribe la ruta. Y no se leen
     // de `reglas.js` porque esta pantalla no lo carga.
     const HORAS_CIERRE = St.horasCierre;
-    const cierre = (dSel && HORAS_CIERRE) ? new Date(dSel.getTime() - HORAS_CIERRE * 3600000) : null;
+    /**
+     * El cierre sale de la regla, no de restar horas.
+     *
+     * Desde el 19-10 una fecha cierra a MEDIANOCHE de su propio dia, no 24
+     * horas antes: cerrabamos a las siete de la tarde de la vispera, justo
+     * cuando empieza la franja en la que entra el 31% de las reservas. Los
+     * planes de mañana siguen a 24 horas hasta que se mueva su revelacion, y
+     * eso tambien lo sabe `cierreDe`.
+     */
+    const cierreIso = (dSel && window.AroReglas) ? AroReglas.cierreDe(dSel.toISOString()) : null;
+    const cierre = cierreIso ? new Date(cierreIso) : ((dSel && HORAS_CIERRE) ? new Date(dSel.getTime() - HORAS_CIERRE * 3600000) : null);
     // «todo se abre a las 12:00» se diseñó para cenas: un formato de mañana
     // se revelaría después de haber pasado, así que se adelanta la víspera.
     const mananero = /a\.m\./.test(fSel[1]) && parseInt(fSel[1], 10) < 12;
@@ -4453,7 +4463,7 @@ class Component extends DCLogic {
     const resumen = [
       ['Día', dSel ? fmt(dSel) : 'Sin elegir', !!dSel],
       ['Hora', dSel ? fSel[1] + ' · la pone el formato' : fSel[1], false],
-      ['Se cierra', cierre ? fmt(cierre) + ' a las ' + fSel[1] : (HORAS_CIERRE ? HORAS_CIERRE + ' h antes' : '—'), !!cierre],
+      ['Se cierra', cierre ? (fmt(cierre) + ' a las ' + new Intl.DateTimeFormat('es-VE', { timeZone: 'America/Caracas', hour: 'numeric', minute: '2-digit', hour12: true }).format(cierre)) : '—', !!cierre],
       ['Se revela', revela ? fmt(revela) + ' a las 12:00' + (mananero ? ' · el día antes' : '') : 'a las 12:00', !!revela],
       ['Cupo', 'Abierto · quien no entre queda en espera', true],
       ['Precio', precioOk ? precioNum.toFixed(2).replace('.', ',') + ' ref por plaza' : 'Falta el precio', precioOk],

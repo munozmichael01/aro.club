@@ -160,7 +160,21 @@ export async function GET() {
     .select('id, metodo, moneda, amount_usd, amount_local, status, datos, reference_code, created_at, profiles!payments_profile_id_fkey(display_name, full_name)')
     .in('status', ['confirmed', 'refunded', 'rejected'])
     .order('created_at', { ascending: false })
-    .limit(30)
+    /**
+     * Doscientos y no treinta.
+     *
+     * Estaba en treinta sin decirlo en ninguna parte, así que la lista
+     * parecía empezar el 17 de octubre cuando hay pagos desde el 17 de
+     * agosto. Michael, 19-10: «tanto en pagos como en historial muestra
+     * datos solo a partir del 10/10». En pagos era esto; el histórico no
+     * recorta nada, simplemente no se publicó ninguna mesa entre el 20 de
+     * agosto y el 7 de octubre.
+     *
+     * Doscientos cubre medio año al ritmo de hoy —ciento quince pagos desde
+     * agosto— y sigue siendo una consulta sola. El día que no quepa, esto
+     * pide paginación de verdad, no un número más grande.
+     */
+    .limit(200)
 
   const ESTADO: Record<string, string> = {
     confirmed: 'confirmado',

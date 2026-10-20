@@ -1104,6 +1104,48 @@
     HORAS_DE_CIERRE: 24,
 
     /**
+     * Cuando se cierra una fecha: A MEDIANOCHE, al empezar su dia.
+     *
+     * Antes eran 24 horas antes y punto. El problema no eran las horas, era
+     * DONDE caia el corte: una cena del viernes a las siete cerraba el jueves
+     * a las siete, justo cuando empieza la mejor franja para reservar. De 125
+     * reservas reales, 39 entran entre las siete de la tarde y la medianoche:
+     * el 31% del total, y el bloque de tres horas mas fuerte del dia son las
+     * 7, las 8 y las 9. Cerrabamos en el minuto en que la gente saca el
+     * telefono.
+     *
+     * Michael lo decidio el 19-10 con ese dato delante. La noche anterior
+     * queda entera abierta y el plazo se dice sin calcular: «cierra a
+     * medianoche» se entiende, «24 horas antes» hay que restarlo.
+     *
+     * LOS PLANES DE MAÑANA NO, todavia. Un brunch de las once se revela el
+     * mediodia ANTERIOR, asi que cerrarlo a medianoche de su propio dia seria
+     * cerrar despues de haber dicho con quien va: la revelacion tiene que
+     * cambiar primero y esa es otra decision. Mientras tanto siguen con sus
+     * 24 horas, que es lo que hay hoy.
+     */
+    cierreDe: function (inicioIso) {
+      var t = Date.parse(inicioIso)
+      if (!isFinite(t)) return null
+      // El instante movido a «reloj de Caracas» sobre UTC, que es como se
+      // saca el dia y la hora de la ciudad sin librerias.
+      var ccs = new Date(t - 4 * 3600000)
+      if (ccs.getUTCHours() < 12) return new Date(t - 24 * 3600000).toISOString()
+      var medianoche = Date.UTC(ccs.getUTCFullYear(), ccs.getUTCMonth(), ccs.getUTCDate(), 0, 0, 0)
+      return new Date(medianoche + 4 * 3600000).toISOString()
+    },
+
+    /** Y como se dice, con el dia dentro para no obligar a nadie a restar. */
+    textoCierre: function (inicioIso, zona) {
+      var t = Date.parse(inicioIso)
+      if (!isFinite(t)) return ''
+      var ccs = new Date(t - 4 * 3600000)
+      if (ccs.getUTCHours() < 12) return 'se cierra 24 horas antes'
+      var dia = api.diaDe(inicioIso, zona)
+      return 'se cierra a medianoche, cuando empieza el ' + (dia || 'dia')
+    },
+
+    /**
      * Cuántos días guardamos la cédula y la selfie después de verificar.
      *
      * CIENTO VEINTE desde el 13-10. Estaba en 90 y lo sube Michael mientras

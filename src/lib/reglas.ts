@@ -41,6 +41,8 @@ type Api = {
   aE164: (valor: unknown) => string
   PRECIO_USD: number
   HORAS_DE_CIERRE: number
+  cierreDe: (inicioIso: string) => string | null
+  textoCierre: (inicioIso: string, zona?: string) => string
   DIAS_GUARDA_FOTOS: number
   MAX_TEXTO: number
   precioTexto: () => string
@@ -115,6 +117,16 @@ export const PUERTA = api.PUERTA
  * `/api/operacion/fechas` y repetida en texto en cuatro sitios más.
  */
 export const HORAS_DE_CIERRE: number = api.HORAS_DE_CIERRE
+
+/**
+ * Cuándo cierra una fecha: a medianoche, al empezar su día.
+ *
+ * La regla entera vive en `reglas.js` con su porqué. Aquí solo se asoma para
+ * que el panel la use al abrir una fecha y para que el copy del servidor diga
+ * lo mismo que la pantalla.
+ */
+export const cierreDe = api.cierreDe
+export const textoCierre = api.textoCierre
 
 /** Cuántos días guardamos la cédula y la selfie. Ciento veinte. */
 export const DIAS_GUARDA_FOTOS: number = api.DIAS_GUARDA_FOTOS

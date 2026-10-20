@@ -35,7 +35,7 @@ const CARACAS = 4
 /** Cuánto antes cierra: el reparto necesita el pool cerrado dos días antes. */
 // La cifra vive en `reglas.js`: la comparten el panel, el copy que la promete
 // y la app. Escrita aquí, bajarla de 48 a 24 dejaba cuatro textos mintiendo.
-import { HORAS_DE_CIERRE, PRECIO_USD } from '@/lib/reglas'
+import { HORAS_DE_CIERRE, PRECIO_USD, cierreDe } from '@/lib/reglas'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 
 import { quienQuiereSaberDe } from '@/lib/a-quien-avisar'
@@ -681,13 +681,22 @@ export async function POST(request: Request) {
   const [horaElegida, minElegidos] = partesHora(d.hora || HORA_DE[d.formato] || '19:30')
   const horaDeInicio = horaElegida
   const empieza = enUTC(d.dia, horaDeInicio, minElegidos)
-  const cierra = new Date(empieza.getTime() - HORAS_DE_CIERRE * 3600_000)
+  /**
+   * El cierre ya no se resta, se calcula: medianoche del día del plan.
+   *
+   * `cierreDe` vive en `reglas.js` con el porqué —el 31% de las reservas
+   * entran entre las siete y la medianoche y cerrábamos justo ahí— y los
+   * planes de mañana siguen con sus 24 horas hasta que se mueva su
+   * revelación.
+   */
+  const cierraIso = cierreDe(empieza.toISOString())
+  const cierra = new Date(cierraIso ?? empieza.getTime() - HORAS_DE_CIERRE * 3600_000)
   const revela = revelacionDe(d.dia, horaDeInicio)
 
   // Una fecha que ya cerró nace muerta: nadie puede apuntarse.
   if (cierra.getTime() <= Date.now()) {
     return NextResponse.json(
-      { error: `Esa fecha cierra en el pasado: hacen falta ${HORAS_DE_CIERRE} horas de margen.` },
+      { error: 'Esa fecha cierra en el pasado: cierra a medianoche, al empezar su día.' },
       { status: 400 },
     )
   }

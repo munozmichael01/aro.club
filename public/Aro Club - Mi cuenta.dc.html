@@ -241,7 +241,7 @@
                        primera fecha, y empujaban la primera fecha fuera de la
                        pantalla en un telefono. Aqui llega cuando hace falta:
                        justo antes de decir lo que se paga. -->
-                  <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:16px;max-width:50ch;text-wrap:pretty">{{ comoFunciona }}</div>
+                  <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:16px;max-width:50ch;text-wrap:pretty">{{ ev.comoFunciona }}</div>
 
                   <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:14px 0;border-top:1px solid rgba(20,52,42,.12);border-bottom:1px solid rgba(20,52,42,.12);margin-bottom:16px">
                     <span style="flex:1 1 auto;font:500 14px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ ev.cargo }}</span>
@@ -1191,7 +1191,12 @@ class Component extends DCLogic {
         // que esté marcada como requerida (Michael, 18-10). Una fecha que se
         // graba «si sale» no le cierra la puerta a nadie: a esa se le
         // pregunta al revelar la mesa, como siempre.
-        !!a.permisoObligatorio
+        !!a.permisoObligatorio,
+        // Y cuándo empieza, en crudo. AL FINAL, por lo mismo que los dos de
+        // arriba: esta tupla se lee por índice. Hace falta para decir cuándo
+        // cierra ESTA fecha, que desde el 19-10 ya no es un número de horas
+        // igual para todas.
+        a.empiezaEn
       ];
     });
     // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato
@@ -1319,6 +1324,21 @@ class Component extends DCLogic {
         envoltorio: 'border-radius:22px;overflow:hidden;background:' + (abierta ? '#F2E9D5' : 'transparent'),
         abierta,
         horas,
+        /**
+         * Como funciona, con el plan y el cierre de ESTA fecha dentro.
+         *
+         * Era una frase sola para todas: decia «antes de la cena te decimos
+         * en cual te toco» encima de una tarjeta de BRUNCH, y «la fecha se
+         * cierra 24 horas antes» cuando desde el 19-10 cierra a medianoche.
+         * Michael la vio en la app, que comparte este texto.
+         *
+         * Sin nombrar el plan —«antes te decimos»— porque la tarjeta ya dice
+         * si es cena o brunch dos lineas mas arriba, y asi vale igual para
+         * una caminata. Y el cierre sale de `reglas.js`, que sabe que los
+         * planes de manana todavia van a 24 horas.
+         */
+        comoFunciona: 'Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona, y antes te decimos en cuál te tocó. La fecha '
+          + (window.AroReglas && c[12] ? AroReglas.textoCierre(c[12]) : 'se cierra a medianoche, cuando empieza su día') + '.',
         cargo: 'Tu puesto en esta fecha',
         precio: precioFecha + ' en bolívares',
         nota: 'Cubre armar tu mesa, la verificación de identidad del grupo y el restaurante reservado a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
