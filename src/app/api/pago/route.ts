@@ -8,7 +8,7 @@ import { campoDe, valido } from '@/lib/reglas'
 import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
 import { datosDePago } from '@/lib/datos-de-pago'
 import { PRECIO_USD } from '@/lib/reglas'
-import { hablaElIdioma, noCabePorIdioma, pideIdioma } from '@/lib/idioma'
+import { hablaElIdioma, nombreDeIdioma, noCabePorIdioma, pideIdioma } from '@/lib/idioma'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
@@ -178,6 +178,20 @@ export async function GET(request: Request) {
       // no se aparta el puesto, así que se pide antes del botón.
       grabamos: !!(evento as { grabacion?: boolean }).grabacion,
       permisoObligatorio: !!(evento as { grabacion_requerida?: boolean }).grabacion_requerida,
+      /**
+       * Y en qué idioma se habla esta mesa, y si a quien mira le falta.
+       *
+       * Se dice ANTES de enseñar los datos del banco, igual que el permiso de
+       * grabación. El candado está en el POST, pero enterarse ahí es
+       * enterarse después de haber transferido, que es exactamente el fallo
+       * que esta pantalla ya pagó una vez con el cierre.
+       */
+      idioma: (evento as { idioma?: string | null }).idioma ?? null,
+      /** Nombre del idioma, para que la pantalla no tenga su propia tabla. */
+      idiomaNombre: nombreDeIdioma((evento as { idioma?: string | null }).idioma),
+      /** Verdadero solo si la mesa lo pide y esta persona no lo tiene. */
+      faltaIdioma: pideIdioma(evento)
+        && !(await hablaElIdioma(admin, user.id, String((evento as { idioma?: string | null }).idioma))),
       // Cuándo se abre todo. Lo pidió la app: sin esto tiene que escribir «a
       // mediodía» a mano, y la hora sale del evento.
       revelaEn: evento.reveal_at,

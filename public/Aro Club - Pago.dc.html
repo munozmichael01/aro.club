@@ -127,6 +127,13 @@
               <!-- Canjear un código también aparta puesto, así que aquí se
                    pide el mismo permiso que abajo. Es el MISMO control: si
                    ya lo marcó en el otro sitio, sale marcado. -->
+              <sc-if value="{{ preguntaIdioma }}" hint-placeholder-val="{{ false }}">
+                <div style="border-radius:20px;background:#F2E9D5;padding:16px 18px;margin-bottom:16px">
+                  <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloIdioma }}</div>
+                  <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:6px;max-width:52ch;text-wrap:pretty">{{ textoIdioma }}</div>
+                  <button onClick="{{ tocarSiIdioma }}" style="{{ botonSiIdioma }}">{{ textoSiIdioma }}</button>
+                </div>
+              </sc-if>
               <sc-if value="{{ graba }}" hint-placeholder-val="{{ false }}">
                 <div style="border-radius:20px;background:#FFF8EA;border:1px solid rgba(143,69,21,.28);padding:16px 18px;margin-bottom:16px">
                   <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#8F4515">{{ tituloGraba }}</div>
@@ -280,6 +287,13 @@
           </div>
         </sc-if>
 
+        <sc-if value="{{ preguntaIdioma }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:20px;background:#F2E9D5;padding:16px 18px;margin-bottom:16px">
+            <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloIdioma }}</div>
+            <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:6px;max-width:52ch;text-wrap:pretty">{{ textoIdioma }}</div>
+            <button onClick="{{ tocarSiIdioma }}" style="{{ botonSiIdioma }}">{{ textoSiIdioma }}</button>
+          </div>
+        </sc-if>
         <sc-if value="{{ graba }}" hint-placeholder-val="{{ false }}">
           <div style="border-radius:20px;background:#FFF8EA;border:1px solid rgba(143,69,21,.28);padding:16px 18px;margin-top:clamp(20px,2.6vw,24px)">
             <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#8F4515">{{ tituloGraba }}</div>
@@ -853,7 +867,11 @@ class Component extends DCLogic {
     // opcional no bloquea el pago, se le pregunta al revelar la mesa.
     const grabaLaFecha = !!(D.evento && D.evento.permisoObligatorio);
     const permisoOk = !grabaLaFecha || !!this.state.permiteGrabacion;
-    const repOk = camposOk && (!capturaObligatoria || conCaptura) && permisoOk;
+    // Y el idioma, que lo dice el servidor en el GET: así no se enseña el
+    // banco a quien la puerta va a rechazar después.
+    const faltaIdioma = !!(D.evento && D.evento.faltaIdioma) && !this.state.idiomaPuesto;
+    const idiomaNombre = (D.evento && D.evento.idiomaNombre) || '';
+    const repOk = camposOk && (!capturaObligatoria || conCaptura) && permisoOk && !faltaIdioma;
 
     const comprobante = [
       [titulos[ev.tipo] || 'Cena', [cuandoEv ? DIAS[cuandoEv.getDay()] + ' ' + cuandoEv.getDate() : null, horaEv].filter(Boolean).join(', '), false],
@@ -1029,6 +1047,31 @@ class Component extends DCLogic {
         : 'Se cobra al confirmar. Si cancelas con margen, vuelve a tu cuenta sola.',
       tituloEnviando: mSel.manual ? 'Enviando tu reporte.' : 'Confirmando el cobro.',
       tituloListo: cuandoEv ? 'Nos vemos el ' + DIAS[cuandoEv.getDay()].toLowerCase() + ' ' + cuandoEv.getDate() + '.' : 'Nos vemos.',
+
+      /**
+       * Esta mesa se habla en otro idioma y no lo tenemos: se pregunta ANTES
+       * del banco, igual que el permiso de grabación.
+       *
+       * El candado está en el servidor. Enterarse ahí es enterarse después de
+       * haber transferido, que es el fallo que esta pantalla ya pagó una vez
+       * con el cierre de la fecha.
+       */
+      preguntaIdioma: faltaIdioma,
+      tituloIdioma: '¿Hablas ' + (idiomaNombre || 'ese idioma') + '?',
+      textoIdioma: 'Esta mesa se habla en ' + (idiomaNombre || 'ese idioma') + ' de principio a fin. No hace falta que sea perfecto, solo que te deje disfrutar la conversación. Si lo hablas, lo añadimos a tu perfil y sigues.',
+      textoSiIdioma: this.state.guardandoIdioma ? 'Guardando…' : 'Sí, añádelo a mi perfil',
+      botonSiIdioma: 'display:inline-flex;align-items:center;min-height:46px;margin-top:13px;padding:0 18px;border-radius:999px;cursor:pointer;font:500 15px/1 \'Inter Tight\',sans-serif;border:1px solid #1B5138;background:#1B5138;color:#FAF3E4',
+      tocarSiIdioma: () => {
+        if (this.state.guardandoIdioma) return;
+        this.setState({ guardandoIdioma: true });
+        fetch('/api/idioma', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idioma: (D.evento && D.evento.idioma) || 'en' })
+        })
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no se guardó'))))
+          .then(() => this.setState({ guardandoIdioma: false, idiomaPuesto: true }))
+          .catch(() => this.setState({ guardandoIdioma: false, fallo: 'No pudimos guardarlo. Inténtalo otra vez.' }));
+      },
 
       // Esta cena se graba: se dice antes del botón y antes del banco.
       graba: grabaLaFecha,
