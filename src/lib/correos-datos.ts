@@ -1229,7 +1229,17 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           zonas: unirCon(zonasAbiertas, ' or '),
           // A la tarjeta de ESA fecha, desplegada. Es lo que ya hace el
           // correo de la cena con edad mínima.
-          enlaceReserva: `${SITIO}/cuenta?fecha=${fila.event_id ?? ''}`,
+          /**
+           * A la tarjeta de ESA fecha, desplegada, y con etiquetas de
+           * campaña.
+           *
+           * Sin ellas estos 234 clics entran en Analytics como tráfico
+           * directo y el correo que los trajo es invisible, que es justo lo
+           * que Michael pidió arreglar ayer. Van en el mismo formato que el
+           * resumen de los lunes para poder comparar un envío con otro.
+           */
+          enlaceReserva: `${SITIO}/cuenta?fecha=${fila.event_id ?? ''}`
+            + '&utm_source=correo&utm_medium=email&utm_campaign=dinner-in-english',
         },
       }
     }
