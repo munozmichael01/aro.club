@@ -26,6 +26,22 @@ export const dynamic = 'force-dynamic'
 /** Caracas va cuatro horas por detrás de UTC y no cambia con la estación. */
 const CARACAS = 4
 
+/**
+ * A qué hora de Caracas sale, si no es ahora mismo.
+ *
+ * Doscientos treinta y cuatro correos no se sueltan en el segundo en que se
+ * pulsa: se encolan con su hora y la cola los va sacando. Devuelve la próxima
+ * vez que den esas horas y minutos, hoy o mañana.
+ */
+function aLasDeCaracas(hhmm: string, ahora = new Date()): Date | null {
+  const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(hhmm.trim())
+  if (!m) return null
+  const enCcs = new Date(ahora.getTime() - CARACAS * 3600_000)
+  const hoy = Date.UTC(enCcs.getUTCFullYear(), enCcs.getUTCMonth(), enCcs.getUTCDate(), Number(m[1]), Number(m[2]))
+  const cuando = new Date(hoy + CARACAS * 3600_000)
+  return cuando.getTime() > ahora.getTime() ? cuando : new Date(cuando.getTime() + 24 * 3600_000)
+}
+
 /** El lunes de la semana de esa fecha, en hora de Caracas. */
 function semanaDe(iso: string): { desde: string; hasta: string } {
   const enCcs = new Date(Date.parse(iso) - CARACAS * 3600_000)
@@ -37,8 +53,13 @@ function semanaDe(iso: string): { desde: string; hasta: string } {
   }
 }
 
-async function anunciar(seco: boolean, solo: string | null, eventoId: string | null) {
+async function anunciar(seco: boolean, solo: string | null, eventoId: string | null, hora: string | null) {
   const admin = createAdminClient()
+
+  const cuando = hora ? aLasDeCaracas(hora) : null
+  if (hora && !cuando) {
+    return NextResponse.json({ error: 'La hora no se entiende. Se escribe como 12:00.' }, { status: 400 })
+  }
 
   // La fecha: la que se pida, o la próxima abierta que pida un idioma.
   const columnas = 'id, starts_at, idioma, status'
@@ -143,7 +164,7 @@ async function anunciar(seco: boolean, solo: string | null, eventoId: string | n
   for (const id of destinatarios) {
     if (hechos.has(id)) { repetidos++; continue }
     if (seco) { encolados++; continue }
-    const r = await encolar({ perfil: id }, 'cena_en_ingles', {}, { eventoId: fecha.id })
+    const r = await encolar({ perfil: id }, 'cena_en_ingles', {}, cuando ? { eventoId: fecha.id, cuando } : { eventoId: fecha.id })
     if (r === 'encolado') encolados++
     else repetidos++
   }
@@ -158,6 +179,7 @@ async function anunciar(seco: boolean, solo: string | null, eventoId: string | n
     destinatarios: destinatarios.length,
     encolados,
     repetidos,
+    ...(cuando ? { salen: cuando.toISOString() } : { salen: 'ahora' }),
     ...(seco ? { seco: true } : {}),
     ...(solo ? { solo } : {}),
   })
@@ -173,5 +195,5 @@ export async function GET(request: Request) {
   }
 
   const params = new URL(request.url).searchParams
-  return anunciar(params.get('seco') === '1', params.get('solo'), params.get('evento'))
+  return anunciar(params.get('seco') === '1', params.get('solo'), params.get('evento'), params.get('hora'))
 }

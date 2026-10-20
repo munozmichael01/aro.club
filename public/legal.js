@@ -28,8 +28,12 @@
    * identificable sin tocarle la fecha a nadie.
    */
   var R = raiz.AroReglas
+    // Este fichero lo carga el navegador con un `<script>` Y el servidor con
+    // `import`, asi que el `require` es el unico puente cuando no hay window.
+    // Es la misma excepcion que `support.js`, escrita aqui porque la regla
+    // lleva desde el 18-10 dejando el CI en rojo en cada push.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     || (typeof require !== 'undefined' ? require('./reglas.js') : null)
-  var horasCierre = (R && R.HORAS_DE_CIERRE) || 24
   var diasFotos = (R && R.DIAS_GUARDA_FOTOS) || 120
 
   var reglas = [

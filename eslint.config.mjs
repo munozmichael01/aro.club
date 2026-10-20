@@ -18,6 +18,13 @@ const eslintConfig = defineConfig([
     // nadie lee es un lint que no existe.
     "docs/entrega/**",
     "public/support.js",
+    // Y el mismo runtime de Design cuando llega en una carpeta de entrega
+    // fuera de `docs/`. Son copias byte a byte de `public/support.js`, con
+    // sus cuatro errores propios, y cada entrega nueva traía otra: el CI
+    // llevaba desde el 18-10 en rojo mandándole un correo a Michael por cada
+    // push.
+    "Agenda/**",
+    "Social-media/**",
     // React, ReactDOM y Babel, tal cual vienen de su publicacion. Son suyos,
     // no se tocan, y revisarlos aqui son 129 errores que no significan nada.
     "public/vendor/**",

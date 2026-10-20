@@ -1130,8 +1130,22 @@
       // El instante movido a «reloj de Caracas» sobre UTC, que es como se
       // saca el dia y la hora de la ciudad sin librerias.
       var ccs = new Date(t - 4 * 3600000)
-      if (ccs.getUTCHours() < 12) return new Date(t - 24 * 3600000).toISOString()
-      var medianoche = Date.UTC(ccs.getUTCFullYear(), ccs.getUTCMonth(), ccs.getUTCDate(), 0, 0, 0)
+      var y = ccs.getUTCFullYear(), m = ccs.getUTCMonth(), d = ccs.getUTCDate()
+      /**
+       * LOS PLANES DE MAÑANA cierran a las 5 de la tarde del dia ANTERIOR.
+       *
+       * Un brunch de las once no puede cerrar a medianoche de su propio dia:
+       * se revela antes de eso y estariamos cerrando despues de haber dicho
+       * con quien va. Michael, 20-10: «que cierre a las 5pm del dia anterior
+       * y revelacion 6pm del dia anterior».
+       *
+       * La tarde del sabado es cuando la gente decide su domingo, asi que el
+       * corte cae donde cae la decision, igual que la medianoche en la cena.
+       */
+      if (ccs.getUTCHours() < 12) {
+        return new Date(Date.UTC(y, m, d - 1, 17, 0, 0) + 4 * 3600000).toISOString()
+      }
+      var medianoche = Date.UTC(y, m, d, 0, 0, 0)
       return new Date(medianoche + 4 * 3600000).toISOString()
     },
 
@@ -1140,7 +1154,11 @@
       var t = Date.parse(inicioIso)
       if (!isFinite(t)) return ''
       var ccs = new Date(t - 4 * 3600000)
-      if (ccs.getUTCHours() < 12) return 'se cierra 24 horas antes'
+      var cierre = api.cierreDe(inicioIso)
+      if (ccs.getUTCHours() < 12) {
+        var diaCierre = cierre ? api.diaDe(cierre, zona) : null
+        return 'se cierra el ' + (diaCierre || 'dia antes') + ' a las 5:00 p.m.'
+      }
       var dia = api.diaDe(inicioIso, zona)
       return 'se cierra a medianoche, cuando empieza el ' + (dia || 'dia')
     },

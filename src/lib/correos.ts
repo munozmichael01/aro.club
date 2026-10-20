@@ -466,7 +466,7 @@ export async function despacharPendientes(
      * lista» a mediodía. Es el mismo fallo del 13-10 con los empujones, con
      * cinco veces más filas.
      */
-    const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima', 'resumen_semanal'] as const
+    const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima', 'resumen_semanal', 'cena_en_ingles'] as const
     const TOPE = 25
 
     /**

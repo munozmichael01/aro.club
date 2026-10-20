@@ -66,7 +66,19 @@ function enUTC(dia: string, horaCaracas: number, minutos = 0): Date {
 function revelacionDe(dia: string, horaDeInicio: number): Date {
   const mediodia = enUTC(dia, HORA_REVELACION)
   if (horaDeInicio >= HORA_REVELACION) return mediodia
-  return new Date(mediodia.getTime() - 24 * 3600_000)
+  /**
+   * Y los de mañana, a las SEIS DE LA TARDE del día anterior.
+   *
+   * Estaba en el mediodía anterior, o sea que un brunch del domingo se sabía
+   * el sábado a las doce: veintitrés horas de antelación contra las siete de
+   * una cena. Michael, 20-10: «que cierre a las 5pm del día anterior y
+   * revelación 6pm del día anterior».
+   *
+   * Lo que compra: el plan se cuenta la tarde antes, cuando la gente está
+   * decidiendo su domingo, y no un día entero por delante. El cierre va una
+   * hora antes y vive en `reglas.js`, con las dos cuentas en el mismo sitio.
+   */
+  return new Date(enUTC(dia, 18).getTime() - 24 * 3600_000)
 }
 
 
