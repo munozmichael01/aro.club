@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>body{margin:0;background:#FAF3E4;-webkit-font-smoothing:antialiased}*{box-sizing:border-box}a{color:#1B5138;text-decoration:none}a:hover{color:#8F4515}</style>
+</helmet>
+<div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;width:100%">
+
+  <div style="position:sticky;top:0;z-index:40;background:rgba(250,243,228,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.09)">
+    <div style="max-width:1240px;margin:0 auto;padding:13px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <a href="Aro Club - Landing v4.dc.html" style="display:flex;align-items:center;gap:9px;color:#14342A;min-height:44px">
+        <img src="isologo-unificado.svg" alt="" style="width:26px;height:26px;display:block" />
+        <span style="font:400 21px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;white-space:nowrap">Aro Club</span>
+      </a>
+      <sc-if value="{{ escritorio }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:4px">
+          <a href="Aro Club - Agenda.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;color:#8F4515;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Agenda</a>
+          <sc-if value="{{ sinSesion }}" hint-placeholder-val="{{ true }}">
+            <a href="Aro Club - Entrar.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;color:#1B5138;font:500 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Entrar</a>
+            <a href="Aro Club - Landing v4.dc.html#registro" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap" style-hover="background:#8F4515;color:#FFF8EA">Empezar</a>
+          </sc-if>
+          <sc-if value="{{ conSesion }}" hint-placeholder-val="{{ false }}">
+            <a href="Aro Club - Mi cuenta.dc.html" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap" style-hover="background:#8F4515;color:#FFF8EA">Mi cuenta</a>
+          </sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ movil }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:6px">
+          <sc-if value="{{ sinSesion }}" hint-placeholder-val="{{ true }}">
+            <a href="Aro Club - Landing v4.dc.html#registro" style="display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Empezar</a>
+          </sc-if>
+          <button onClick="{{ alternarMenu }}" aria-label="{{ etiquetaMenu }}" style="width:44px;height:44px;border-radius:999px;border:1.5px solid rgba(20,52,42,.2);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+            <sc-if value="{{ menuCerrado }}" hint-placeholder-val="{{ true }}">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 5h14M2 13h14" stroke="#14342A" stroke-width="2" stroke-linecap="round"></path></svg>
+            </sc-if>
+            <sc-if value="{{ menuAbierto }}" hint-placeholder-val="{{ false }}">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 4l10 10M14 4L4 14" stroke="#14342A" stroke-width="2" stroke-linecap="round"></path></svg>
+            </sc-if>
+          </button>
+        </div>
+      </sc-if>
+    </div>
+    <sc-if value="{{ menuAbierto }}" hint-placeholder-val="{{ false }}">
+      <div style="border-top:1px solid rgba(20,52,42,.09);background:#FAF3E4;padding:8px 20px 24px;display:flex;flex-direction:column">
+        <a href="Aro Club - Agenda.dc.html" style="display:flex;align-items:center;justify-content:space-between;min-height:60px;border-bottom:1px solid rgba(20,52,42,.1);font:400 26px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#8F4515">Agenda</a>
+        <sc-if value="{{ sinSesion }}" hint-placeholder-val="{{ true }}">
+          <a href="Aro Club - Landing v4.dc.html" style="display:flex;align-items:center;min-height:60px;border-bottom:1px solid rgba(20,52,42,.1);font:400 26px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cómo funciona</a>
+          <a href="Aro Club - Entrar.dc.html" style="display:flex;align-items:center;min-height:60px;border-bottom:1px solid rgba(20,52,42,.1);font:400 26px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Entrar</a>
+          <a href="Aro Club - Landing v4.dc.html#registro" style="display:flex;align-items:center;justify-content:center;min-height:56px;margin-top:22px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif">Encuentra tu mesa</a>
+        </sc-if>
+        <sc-if value="{{ conSesion }}" hint-placeholder-val="{{ false }}">
+          <a href="Aro Club - Mi cuenta.dc.html" style="display:flex;align-items:center;min-height:60px;border-bottom:1px solid rgba(20,52,42,.1);font:400 26px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Mi cuenta</a>
+          <a href="Aro Club - Mi perfil.dc.html" style="display:flex;align-items:center;min-height:60px;border-bottom:1px solid rgba(20,52,42,.1);font:400 26px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Mi perfil</a>
+          <a href="Aro Club - Landing v4.dc.html" style="display:flex;align-items:center;min-height:52px;margin-top:14px;font:500 15px/1 'Inter Tight',sans-serif;color:#456352">Cerrar sesión</a>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="max-width:1240px;margin:0 auto;padding:40px 20px 28px">
+    <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8F4515;margin-bottom:18px">{{ semana }}</div>
+    <sc-if value="{{ escritorio }}" hint-placeholder-val="{{ false }}">
+      <h1 style="font:400 96px/.92 'Young Serif',Georgia,serif;letter-spacing:-.04em;margin:0">Cenas y planes en Caracas.</h1>
+      <p style="font:400 21px/1.45 'Inter Tight',sans-serif;margin:20px 0 0;max-width:52ch;text-wrap:pretty">Seis personas verificadas, un plan. <span style="font-weight:600">Nosotros elegimos el sitio y tú solo llegas.</span> <span style="color:#456352">El sitio se revela el mismo día a las 12:00. Antes, solo la zona.</span></p>
+    </sc-if>
+    <sc-if value="{{ movil }}" hint-placeholder-val="{{ true }}">
+      <h1 style="font:400 54px/.94 'Young Serif',Georgia,serif;letter-spacing:-.04em;margin:0">Cenas y planes en Caracas.</h1>
+      <p style="font:400 17px/1.45 'Inter Tight',sans-serif;margin:16px 0 0;text-wrap:pretty">Seis personas verificadas, un plan. <span style="font-weight:600">Nosotros elegimos el sitio y tú solo llegas.</span> <span style="color:#456352">El sitio se revela el mismo día a las 12:00. Antes, solo la zona.</span></p>
+    </sc-if>
+    <sc-if value="{{ hayFiltros }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin:22px -20px 0;padding:10px 20px 16px;scroll-padding-left:20px;scroll-snap-type:x mandatory">
+        <sc-for list="{{ filtros }}" as="p" hint-placeholder-count="5">
+          <div onClick="{{ p.elegir }}" style="{{ p.marco }}">
+            <div style="{{ p.foto }}">
+              <sc-if value="{{ p.esTodos }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:2px">
+                  <div style="background:url('fotos/cenas.jpg') center/cover"></div>
+                  <div style="background:url('fotos/brunch.jpg') center/cover"></div>
+                  <div style="background:url('fotos/drinks.jpg') center/cover"></div>
+                  <div style="background:url('fotos/coffee.jpg') center/cover"></div>
+                </div>
+              </sc-if>
+            </div>
+            <div style="{{ p.nombreEstilo }}">{{ p.n }}</div>
+            <div style="font:500 11px/1.3 'Inter Tight',sans-serif;text-align:center;padding:3px 2px 9px;min-height:14px;color:#566A5D">{{ p.detalle }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ hayFechas }}" hint-placeholder-val="{{ true }}">
+    <div style="max-width:1240px;margin:0 auto;padding:0 20px 56px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+      <sc-for list="{{ fechas }}" as="c" hint-placeholder-count="4">
+        <div style="background:{{ c.fondo }};border:1px solid rgba(20,52,42,.12);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#456352">{{ c.formato }}</div>
+              <div style="font:400 30px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">{{ c.dia }}</div>
+            </div>
+            <div style="font:400 22px/1 'Young Serif',Georgia,serif;white-space:nowrap;padding-top:20px">{{ c.precio }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;font:400 16px/1.35 'Inter Tight',sans-serif">
+            <div>{{ c.hora }}</div>
+            <div style="font-weight:600">{{ c.zona }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;font:600 15px/1 'Inter Tight',sans-serif;color:{{ c.colorCupo }}">
+            <span style="width:8px;height:8px;border-radius:999px;background:{{ c.puntoCupo }};flex:none"></span><span>{{ c.cupo }}</span>
+          </div>
+          <sc-if value="{{ c.abierta }}" hint-placeholder-val="{{ true }}">
+            <a href="Aro Club - Landing v4.dc.html#registro" style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif" style-hover="background:#8F4515;color:#FFF8EA">Reservar mi puesto</a>
+          </sc-if>
+          <sc-if value="{{ c.agotada }}" hint-placeholder-val="{{ false }}">
+            <a href="Aro Club - Landing v4.dc.html#registro" style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;border:1.5px solid #1B5138;color:#1B5138;font:600 16px/1 'Inter Tight',sans-serif" style-hover="background:#1B5138;color:#FAF3E4">Apuntarme a la lista de espera</a>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ sinFechas }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1240px;margin:0 auto;padding:0 20px 56px">
+      <div style="background:#14342A;color:#FAF3E4;border-radius:24px;padding:36px 26px;display:flex;flex-direction:column;gap:16px;align-items:flex-start">
+        <img src="isologo-crema.svg" alt="" style="width:44px;height:44px;display:block" />
+        <div style="font:400 36px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em;max-width:16ch">Esta semana ya se llenó.</div>
+        <p style="font:400 17px/1.5 'Inter Tight',sans-serif;color:#E4EDE6;margin:0;max-width:40ch">Apúntate y te avisamos en cuanto abramos las próximas fechas.</p>
+        <a href="Aro Club - Landing v4.dc.html#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 16px/1 'Inter Tight',sans-serif;margin-top:6px" style-hover="background:#E39C63;color:#14342A">Apúntate para la próxima</a>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="border-top:1px solid rgba(20,52,42,.12)">
+    <div style="max-width:1240px;margin:0 auto;padding:48px 20px;display:flex;flex-direction:column;gap:14px">
+      <div style="font:400 34px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em">Antes de reservar</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));column-gap:48px">
+        <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="4">
+          <div style="padding:18px 0;border-bottom:1px solid rgba(20,52,42,.12);display:flex;flex-direction:column;gap:7px">
+            <div style="font:600 17px/1.35 'Inter Tight',sans-serif">{{ f.p }}</div>
+            <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#2E4A3E;text-wrap:pretty">{{ f.r }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#14342A;color:#FAF3E4">
+    <div style="max-width:1240px;margin:0 auto;padding:56px 20px;display:flex;flex-wrap:wrap;gap:24px 40px;align-items:center;justify-content:space-between">
+      <div style="font:400 40px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em;max-width:15ch">Seis desconocidos. <span style="color:#E39C63">Un plan.</span></div>
+      <a href="Aro Club - Landing v4.dc.html#registro" style="display:inline-flex;align-items:center;min-height:60px;padding:0 32px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif" style-hover="background:#E39C63;color:#14342A">Encuentra tu mesa</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;estado&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;abiertas&quot;,&quot;casi&quot;,&quot;vacia&quot;],&quot;default&quot;:&quot;abiertas&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;escritorio&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;sesion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;menu&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const estado = this.props.estado ?? 'abiertas';
+    const esc = !!this.props.escritorio;
+    const base = [
+      { formato: 'Cena', dia: 'Jueves 22 de octubre', hora: '7:00 p.m.', zona: 'Chacao', q: 7 },
+      { formato: 'Cena · +40', dia: 'Jueves 22 de octubre', hora: '7:00 p.m.', zona: 'Chacao', q: 3 },
+      { formato: 'Cena', dia: 'Viernes 23 de octubre', hora: '7:00 p.m.', zona: 'Chacao o Los Palos Grandes', q: 9 },
+      { formato: 'Cena', dia: 'Viernes 23 de octubre', hora: '7:00 p.m.', zona: 'Los Naranjos y Cerro Verde o El Hatillo', q: 0 },
+      { formato: 'Cena', dia: 'Sábado 24 de octubre', hora: '7:00 p.m.', zona: 'Chacao o Los Palos Grandes', q: 11 },
+      { formato: 'Cena', dia: 'Sábado 24 de octubre', hora: '7:00 p.m.', zona: 'Los Naranjos y Cerro Verde o El Hatillo', q: 6 },
+      { formato: 'Brunch', dia: 'Domingo 25 de octubre', hora: '11:00 a.m.', zona: 'Chacao', q: 8 }
+    ];
+    const casi = [0, 2, 0, 0, 3, 1, 2];
+    const filtro = this.state?.filtro ?? this.props.filtro ?? 'Todos';
+    const conFechas = [...new Set(base.map(f => f.formato.split(' · ')[0]))];
+    const varios = conFechas.length > 1;
+    const NOM = { Cena: 'Cenas', Brunch: 'Brunch', Drinks: 'Drinks', Movimiento: 'Movimiento', Coffee: 'Coffee' };
+    const FOTO = { Cena: 'fotos/cenas.jpg', Brunch: 'fotos/brunch.jpg', Drinks: 'fotos/drinks.jpg', Movimiento: 'fotos/movimiento.jpg', Coffee: 'fotos/coffee.jpg' };
+    const DIA = { Cena: 'Jueves a sábado', Brunch: 'Domingo' };
+    const ROT = ['-1.2deg', '1.4deg', '-1.6deg', '1.2deg', '-1.4deg', '1.5deg'];
+    const todos = ['Cena', 'Brunch', 'Drinks', 'Movimiento', 'Coffee'];
+    const lista0 = varios ? ['Todos', ...todos.filter(k => conFechas.includes(k))] : [];
+    const filtros = lista0.map((k, i) => {
+      const activo = k === 'Todos' || conFechas.includes(k);
+      const filtra = varios && activo;
+      const marcado = varios && filtro === k;
+      const tono = !activo ? 'grayscale(.9) saturate(.3) brightness(.95)' : (varios && filtro !== 'Todos' && !marcado ? 'grayscale(.8) saturate(.35)' : 'grayscale(.2) contrast(1.12) saturate(.78) brightness(.92)');
+      return {
+        n: k === 'Todos' ? 'Todos' : NOM[k], esTodos: k === 'Todos',
+        detalle: !activo ? 'Próximamente' : (varios ? (k === 'Todos' ? 'Todo lo que viene' : DIA[k]) : ''),
+        elegir: filtra ? () => this.setState({ filtro: k }) : undefined,
+        marco: 'flex:0 0 auto;width:' + (esc ? 168 : 112) + 'px;scroll-snap-align:start;display:flex;flex-direction:column;background:#FFFBF0;padding:6px 6px 0;border-radius:10px;border:2px solid ' + (marcado ? '#8F4515' : 'transparent') + ';box-shadow:0 10px 22px -16px rgba(20,52,42,.5);transform:rotate(' + (marcado ? '0deg' : ROT[i]) + ');transition:all 200ms ease;cursor:' + (filtra ? 'pointer' : 'default'),
+        foto: 'position:relative;aspect-ratio:1;border-radius:5px;overflow:hidden;background:#DCD3BC ' + (FOTO[k] ? "url('" + FOTO[k] + "') center/cover" : '') + ';filter:' + tono + ';transition:filter 200ms ease',
+        nombreEstilo: "font:400 16px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;text-align:center;padding:8px 2px 0;color:" + (marcado ? '#8F4515' : (!activo ? '#566A5D' : '#14342A'))
+      };
+    });
+    const lista = (estado === 'vacia' ? [] : base).map((f, i) => ({ ...f, i }))
+      .filter(f => filtro === 'Todos' || f.formato.startsWith(filtro));
+    const fechas = lista.map((f) => {
+      const i = f.i;
+      const q = estado === 'casi' ? casi[i] : f.q;
+      const agotada = q === 0, pocas = q > 0 && q <= 3;
+      return {
+        ...f, precio: '10 ref', abierta: !agotada, agotada,
+        cupo: agotada ? 'Completa' : (q === 1 ? 'Queda 1 puesto' : `Quedan ${q} puestos`),
+        colorCupo: agotada ? '#456352' : pocas ? '#8F4515' : '#1B5138',
+        puntoCupo: agotada ? 'rgba(20,52,42,.28)' : pocas ? '#E39C63' : '#9CBBA6',
+        fondo: agotada ? '#F2E9D5' : '#FFF8EA'
+      };
+    });
+    return {
+      ...(() => {
+        const sesion = !!this.props.sesion;
+        const abierto = this.state?.menu ?? (this.props.menu === true);
+        return {
+          sinSesion: !sesion, conSesion: sesion,
+          menuAbierto: !esc && abierto, menuCerrado: !abierto,
+          etiquetaMenu: abierto ? 'Cerrar menú' : 'Abrir menú',
+          alternarMenu: () => this.setState({ menu: !abierto })
+        };
+      })(),
+      escritorio: esc, movil: !esc, filtros, hayFiltros: varios && estado !== 'vacia',
+      semana: 'Esta semana · 22 al 25 de octubre',
+      hayFechas: fechas.length > 0, sinFechas: fechas.length === 0, fechas,
+      faqs: [
+        { p: '¿Con quién me siento?', r: 'Con cinco personas verificadas que elegimos según tus respuestas del cuestionario. No eliges tú, y nadie te elige.' },
+        { p: '¿Dónde son los planes?', r: 'En Caracas. Por ahora en Chacao, Los Palos Grandes, Los Naranjos, Cerro Verde y El Hatillo. Abrimos zonas donde se junta más gente.' },
+        { p: '¿Cuándo sé el sitio?', r: 'El mismo día del plan a las 12:00 te llega el sitio y quién va contigo. Antes solo ves la zona.' },
+        { p: '¿Qué incluye el precio?', r: 'Tu puesto en el grupo. Lo que comas y bebas se paga aparte en el sitio, cada quien lo suyo.' },
+        { p: '¿Cómo pago?', r: 'Pago Móvil, transferencia, Zelle o Bizum. Si pagas en bolívares, es a la tasa del día.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

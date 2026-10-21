@@ -13,6 +13,35 @@ La única dependencia aceptada es `POST /api/auth/nativo` (ver abajo).
 
 ---
 
+## Dónde lo dejamos (20-10-2026, noche) · empezar por aquí
+
+**Apple:** la 1.0 (build 18) está en REVISIÓN URGENTE (concedida el 20-10) por la
+guía 1.2. Video y texto enviados. Mientras dure:
+- **No publicar EAS Updates que toquen Entrar, el alta (`/puerta`), la puerta
+  de normas, Mi mesa, el bloqueo o el reporte.**
+- **No entrar con `revision.appstore@aro.club`.** Está limpia: normas sin
+  aceptar, sin encuesta/bloqueo/reporte, cena a −6 h. Si hay que volver a
+  grabar: `node scripts/cuenta-revision.mjs --sin-normas`, luego `--sin-encuesta`,
+  luego `--refrescar --horas=-6`.
+- Si la aprueban: la publicación es MANUAL.
+
+**Pendiente mío (app), por orden:**
+1. **Entrega «acceso»** (`Entregas/entrega acceso/Aro Club - Entrar o crear
+   cuenta.dc.html`): el selector «Entrar · Crear cuenta» en Entrar, Entrar con
+   correo y Crear cuenta (`/puerta`, fase cuenta); la nota de Apple/Google; el
+   error de correo con la pista; la bajada «Tus respuestas ya están guardadas…»;
+   «Crear mi cuenta» como secundario con borde. «Crear cuenta» desde Entrar va al
+   principio del alta. Montarla y NO publicarla hasta que Apple apruebe.
+2. Preguntar a Michael si les enseñamos la puerta de normas a quienes se dieron
+   de alta con correo desde la app entre el 14 y el 20-10 (el servidor los dejó
+   aceptados sin casilla).
+3. Cuando el agente quite `HORAS_DE_CIERRE` de `reglas.js`, nada que hacer (el
+   tipo ya está fuera).
+
+**Del agente web:** `/agenda` pública + header + landing (`docs/entrega/entrega
+agenda/`), la web de la entrega acceso, y el candado para que `bloquear` no
+pise una exclusión con `reason = 'reporte'` (en la app ya no se manda).
+
 ## App Store: enviada a revisión (07-10-2026)
 
 - **Versión 1.0, build 13**, enviada el 07-10 a la 1:41 (Caracas), con
