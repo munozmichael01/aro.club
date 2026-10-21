@@ -498,7 +498,10 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
     if (!hay || enviando || !d.mesaId) return
     setEnviando(true)
     setError('')
-    const r = await servicio.valorar(d.mesaId, v)
+    // A quien se reportó NO se le vuelve a mandar como bloqueo: el reporte ya
+    // lo bloquea, y para siempre. Mandarlo aquí convertía ese bloqueo en uno
+    // normal, que se puede quitar en Perfil (Michael lo vio el 20-10).
+    const r = await servicio.valorar(d.mesaId, { ...v, bloqueados: v.bloqueados.filter((id) => id !== reportadoA) })
     setEnviando(false)
     if (!r.ok) return setError(r.error)
     setAvisoSitio(r.datos.avisoSitio)
