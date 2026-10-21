@@ -214,6 +214,9 @@ export type Database = {
           held_until: string | null
           hold_until: string | null
           id: string
+          movida_at: string | null
+          movida_de: string | null
+          movida_por: string | null
           permiso_grabacion: boolean | null
           preguntas_avisadas_at: string | null
           profile_id: string
@@ -230,6 +233,9 @@ export type Database = {
           held_until?: string | null
           hold_until?: string | null
           id?: string
+          movida_at?: string | null
+          movida_de?: string | null
+          movida_por?: string | null
           permiso_grabacion?: boolean | null
           preguntas_avisadas_at?: string | null
           profile_id: string
@@ -246,6 +252,9 @@ export type Database = {
           held_until?: string | null
           hold_until?: string | null
           id?: string
+          movida_at?: string | null
+          movida_de?: string | null
+          movida_por?: string | null
           permiso_grabacion?: boolean | null
           preguntas_avisadas_at?: string | null
           profile_id?: string
@@ -300,6 +309,34 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_matching_signal"
             referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "bookings_movida_por_fkey"
+            columns: ["movida_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_movida_por_fkey"
+            columns: ["movida_por"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "bookings_movida_por_fkey"
+            columns: ["movida_por"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "bookings_movida_por_fkey"
+            columns: ["movida_por"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "bookings_profile_id_fkey"
