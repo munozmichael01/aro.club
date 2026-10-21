@@ -4,7 +4,9 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AroCarga, Boton, Campo, CampoClave, Fecha, Texto, Velo, color, cremaAlfa, fuente, medida } from '../diseno'
-import { LogoApple, LogoGoogle, Proveedor } from '../entrar/Entrar'
+import { AvisoAcceso, Etiqueta, LogoApple, LogoGoogle, Proveedor } from '../entrar/Entrar'
+import { SelectorAcceso } from '../entrar/SelectorAcceso'
+import { etiquetas as TA } from '../texto/entrar'
 import { Acepto } from '../normas/Acepto'
 import { acepto as A } from '../texto/normas'
 import { Cabecera, FaseQuiz, FaseSinPreguntas, Progreso } from '../entrada/Fases'
@@ -283,6 +285,8 @@ export function Puerta(p: {
               : TC.boton.crear
     cuerpo = (
       <View>
+        {/* «Entrar · Crear cuenta» (entrega «acceso», 20-10): a Entrar con el correo que lleve escrito. */}
+        <SelectorAcceso activo="crear" alEntrar={() => p.alEntrar(c || undefined)} alCrear={() => {}} />
         <Texto variante="display" tono="crema" accessibilityRole="header">
           {T.titulos.cuenta}
         </Texto>
@@ -293,6 +297,11 @@ export function Puerta(p: {
         <View style={{ gap: 10, marginTop: 26 }}>
           {p.hayProveedor('apple') ? <Proveedor texto={TE.apple} logo={<LogoApple />} onPress={() => conProveedor('apple')} /> : null}
           {p.hayProveedor('google') ? <Proveedor texto={TE.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} /> : null}
+          {p.hayProveedor('apple') || p.hayProveedor('google') ? (
+            <Texto variante="cuerpoChico" tono="sobreVerdeSecundario" style={{ marginTop: 4, marginHorizontal: 6 }}>
+              {T.cuenta.notaProveedores}
+            </Texto>
+          ) : null}
         </View>
         <View style={estilos.separador}>
           <View style={estilos.linea} />
@@ -301,7 +310,8 @@ export function Puerta(p: {
           </Texto>
           <View style={estilos.linea} />
         </View>
-        <View style={{ gap: 11 }}>
+        <View style={{ gap: 12 }}>
+          <Etiqueta texto={TA.correo} />
           <Campo
             fondo="verde"
             value={correo}
@@ -314,11 +324,12 @@ export function Puerta(p: {
             textContentType="username"
             accessibilityLabel={T.cuenta.correo}
           />
+          <Etiqueta texto={TA.clave} />
           <CampoClave
             fondo="verde"
             value={clave}
             onChangeText={setClave}
-            placeholder={TC.clave}
+            placeholder={T.cuenta.claveEjemplo}
             accessibilityLabel={TC.clave}
             textContentType="newPassword"
             autoComplete="new-password"
@@ -326,11 +337,12 @@ export function Puerta(p: {
             onAlternar={() => setVer((x) => !x)}
             textos={TC}
           />
+          <Etiqueta texto={TA.repetir} />
           <CampoClave
             fondo="verde"
             value={clave2}
             onChangeText={setClave2}
-            placeholder={TC.repetir}
+            placeholder={T.cuenta.repetirEjemplo}
             accessibilityLabel={TC.repetirEtiqueta}
             textContentType="newPassword"
             autoComplete="new-password"
@@ -340,26 +352,16 @@ export function Puerta(p: {
             dispar={!!clave2 && clave !== clave2}
           />
           <Acepto fondo="verde" marcada={acepto} alCambiar={setAcepto} />
-          <Boton tipo="sobreVerde" ancho texto={textoClave} apagado={!listoClave || trabajando} onPress={conClave} />
+          {/* Secundario con borde: Apple y Google ya son los botones crema, y tres primarios en la misma vista no dicen cuál toca (entrega «acceso»). */}
+          <Boton tipo="secundarioSobreVerde" ancho texto={textoClave} apagado={!listoClave || trabajando} onPress={conClave} />
         </View>
         {trabajando ? (
           <View style={{ marginTop: 16 }}>
             <AroCarga tam={22} sobreVerde />
           </View>
         ) : null}
-        {aviso ? (
-          <Texto variante="cuerpoChico" tono="avisoSobreVerde" accessibilityLiveRegion="polite" style={{ marginTop: 14 }}>
-            {aviso}
-          </Texto>
-        ) : null}
-        <Pressable onPress={() => p.alEntrar(c || undefined)} accessibilityRole="link" style={estilos.entrar}>
-          <Texto variante="cuerpo" tono="sobreVerdeSecundario" style={{ fontFamily: fuente.textoMedia }}>
-            {T.cuenta.yaTengo}
-            <Texto variante="cuerpo" tono="crema" style={{ fontFamily: fuente.textoSemi }}>
-              {T.cuenta.entrar}
-            </Texto>
-          </Texto>
-        </Pressable>
+        {aviso ? <AvisoAcceso texto={aviso} /> : null}
+        {/* «Ya tengo cuenta · Entrar» se va: lo hace el selector de arriba. */}
         <Boton tipo="fantasmaSobreVerde" texto={T.quiz.atras} onPress={() => setFase('nacimiento')} />
       </View>
     )

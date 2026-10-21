@@ -3,10 +3,12 @@
  * Google y Apple («correo distinto», relay) llegan con /api/auth/nativo.
  */
 export const inicio = {
-  titulo: 'Entra a tu mesa.',
-  bajada: 'Con la cuenta que usaste al registrarte.',
+  titulo: 'Entra a tu cuenta.',
+  bajada: 'Con la que usaste al registrarte.',
+  /** Lo que pasa con Apple o Google si todavía no tienes cuenta (entrega «acceso», 20-10). */
+  notaProveedores: 'Con Apple o Google: si ya tienes cuenta, entras; si todavía no, te llevamos a crearla.',
   conCorreo: 'Entrar con correo y contraseña',
-  o: 'O',
+  o: 'o',
   apple: 'Continuar con Apple',
   google: 'Continuar con Google',
   empezarAntes: '¿Todavía no tienes puesto? ',
@@ -58,7 +60,14 @@ export const entrando = { titulo: 'Entrando.' }
  * La web lo recibe de /api/entrar; la app entra con el SDK, que devuelve
  * sus propios errores en inglés. Se enseña el mismo texto que la web.
  */
-export const noCoinciden = 'Ese correo y esa contraseña no coinciden.'
+/** Idéntico exista o no la cuenta: la pista no revela nada y apunta al selector (entrega «acceso»). */
+export const noCoinciden = 'Ese correo y esa contraseña no coinciden. Si es tu primera vez, toca Crear cuenta arriba.'
+
+/** El selector de arriba de Entrar y Crear cuenta (entrega «acceso», 20-10). */
+export const acceso = { entrar: 'Entrar', crear: 'Crear cuenta' }
+
+/** Las etiquetas encima de cada campo. */
+export const etiquetas = { correo: 'Correo', clave: 'Contraseña', repetir: 'Repite la contraseña' }
 export const sinRed = 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
 export const tuCorreo = 'tu correo'
 

@@ -1,4 +1,5 @@
 import { router } from 'expo-router'
+import { SelectorAcceso } from './SelectorAcceso'
 import Constants from 'expo-constants'
 import { openBrowserAsync } from 'expo-web-browser'
 import { useState, type ReactNode } from 'react'
@@ -9,6 +10,7 @@ import Svg, { Path } from 'react-native-svg'
 import { AroCarga, Boton, Campo, CampoClave, EnlacePie, Marca, Opcion, Texto, color, cremaAlfa, fuente, medida, radio } from '../diseno'
 import { reglas } from '../reglas'
 import * as T from '../texto/entrar'
+import { etiquetas as TA } from '../texto/entrar'
 
 type Fase = 'inicio' | 'correo' | 'recuperar' | 'entrando' | 'otroCorreo' | 'relay'
 
@@ -276,6 +278,7 @@ export function Entrar(p: {
   } else if (fase === 'correo') {
     cuerpo = (
       <View>
+        <SelectorAcceso activo="entrar" alEntrar={() => {}} alCrear={p.alEmpezar} />
         <Texto variante="titularGrande" tono="crema">
           {T.correo.titulo}
         </Texto>
@@ -287,7 +290,10 @@ export function Entrar(p: {
             {avisoCorreo}
           </Texto>
         ) : null}
-        <View style={{ gap: 11, marginTop: 28 }}>
+        {/* El error, arriba de los campos y en su caja (entrega «acceso»): idéntico exista o no la cuenta. */}
+        {error ? <AvisoAcceso texto={error} /> : null}
+        <View style={{ gap: 12, marginTop: 22 }}>
+          <Etiqueta texto={TA.correo} />
           <Campo
             fondo="verde"
             value={correo}
@@ -303,6 +309,7 @@ export function Entrar(p: {
             textContentType="username"
             accessibilityLabel={T.correo.etiquetaCorreo}
           />
+          <Etiqueta texto={TA.clave} />
           <CampoClave
             fondo="verde"
             value={clave}
@@ -321,11 +328,6 @@ export function Entrar(p: {
           />
           <Boton tipo="sobreVerde" texto={listo ? T.correo.entrar : T.correo.falta} ancho onPress={entrar} apagado={!listo} />
         </View>
-        {error ? (
-          <Texto variante="cuerpoChico" tono="avisoSobreVerde" accessibilityLiveRegion="polite" style={{ marginTop: 13 }}>
-            {error}
-          </Texto>
-        ) : null}
         <View style={estilos.acciones}>
           <Boton tipo="fantasmaSobreVerde" texto={T.correo.olvide} onPress={olvide} />
           <Boton
@@ -343,40 +345,32 @@ export function Entrar(p: {
   } else {
     cuerpo = (
       <View>
+        <SelectorAcceso activo="entrar" alEntrar={() => {}} alCrear={p.alEmpezar} />
         <Texto variante="titularGrande" tono="crema">
           {T.inicio.titulo}
         </Texto>
         <Texto variante="cuerpoGrande" tono="cuerpoSobreVerde" style={{ marginTop: 14 }}>
           {T.inicio.bajada}
         </Texto>
-        <View style={{ marginTop: 20 }}>
-          <Boton tipo="secundarioSobreVerde" texto={T.inicio.conCorreo} ancho onPress={() => setFase('correo')} />
+        {/* Apple y Google primero, con el mismo peso, y lo que pasa si aún no tienes cuenta (entrega «acceso»). */}
+        <View style={{ gap: 10, marginTop: 26 }}>
+          {p.hayProveedor('apple') ? <Proveedor texto={T.inicio.apple} logo={<LogoApple />} onPress={() => conProveedor('apple')} /> : null}
+          {p.hayProveedor('google') ? <Proveedor texto={T.inicio.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} /> : null}
+          {p.hayProveedor('apple') || p.hayProveedor('google') ? (
+            <Texto variante="cuerpoChico" tono="sobreVerdeSecundario" style={{ marginTop: 4, marginHorizontal: 6 }}>
+              {T.inicio.notaProveedores}
+            </Texto>
+          ) : null}
         </View>
         <View style={estilos.separador}>
           <View style={estilos.linea} />
-          <Texto variante="etiqueta" tono="sobreVerdeSecundario">
+          <Texto variante="cuerpo" tono="sobreVerdeSecundario">
             {T.inicio.o}
           </Texto>
           <View style={estilos.linea} />
         </View>
-        <View style={{ gap: 10 }}>
-          {p.hayProveedor('apple') ? <Proveedor texto={T.inicio.apple} logo={<LogoApple />} onPress={() => conProveedor('apple')} /> : null}
-          {p.hayProveedor('google') ? <Proveedor texto={T.inicio.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} /> : null}
-        </View>
-        {aviso ? (
-          <Texto variante="cuerpoChico" tono="avisoSobreVerde" accessibilityLiveRegion="polite" style={{ marginTop: 13 }}>
-            {aviso}
-          </Texto>
-        ) : null}
-        <View style={estilos.empezar}>
-          <Texto variante="cuerpo" tono="sobreVerdeSecundario">
-            {T.inicio.empezarAntes}
-            <Texto variante="cuerpo" tono="sobreVerdeSecundario" style={estilos.enlace} onPress={p.alEmpezar}>
-              {T.inicio.empezar}
-            </Texto>
-            .
-          </Texto>
-        </View>
+        {aviso ? <AvisoAcceso texto={aviso} /> : null}
+        <Boton tipo="secundarioSobreVerde" texto={T.inicio.conCorreo} ancho onPress={() => setFase('correo')} />
       </View>
     )
   }
@@ -417,7 +411,28 @@ export function Entrar(p: {
   )
 }
 
+/** La etiqueta encima de un campo (entrega «acceso»). */
+export function Etiqueta({ texto }: { texto: string }) {
+  return (
+    <Texto variante="cuerpoChico" tono="cuerpoSobreVerde" style={{ fontFamily: fuente.textoSemi, paddingLeft: 6, marginBottom: -6 }}>
+      {texto}
+    </Texto>
+  )
+}
+
+/** El aviso en su caja melocotón, como la entrega «acceso». */
+export function AvisoAcceso({ texto }: { texto: string }) {
+  return (
+    <View accessibilityRole="alert" accessibilityLiveRegion="polite" style={estilos.aviso}>
+      <Texto variante="cuerpo" tono="crema" style={{ fontFamily: fuente.textoMedia }}>
+        {texto}
+      </Texto>
+    </View>
+  )
+}
+
 const estilos = StyleSheet.create({
+  aviso: { marginTop: 22, marginBottom: 4, borderRadius: 16, backgroundColor: 'rgba(227,156,99,.14)', borderWidth: 1, borderColor: 'rgba(227,156,99,.55)', paddingVertical: 14, paddingHorizontal: 16 },
   pagina: { paddingHorizontal: medida.margenLateral, maxWidth: 560, width: '100%', alignSelf: 'center' },
   cabecera: { flexDirection: 'row', alignItems: 'center', gap: 9, minHeight: medida.toqueMinimo, marginBottom: 32 },
   capsula: {
