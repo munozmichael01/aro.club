@@ -31,7 +31,9 @@ guía 1.2. Video y texto enviados. Mientras dure:
    correo y Crear cuenta (`/puerta`, fase cuenta); la nota de Apple/Google; el
    error de correo con la pista; la bajada «Tus respuestas ya están guardadas…»;
    «Crear mi cuenta» como secundario con borde. «Crear cuenta» desde Entrar va al
-   principio del alta. Montarla y NO publicarla hasta que Apple apruebe.
+   principio del alta. **HECHA en la rama `app-acceso`** (no en main, para que
+   ningún EAS Update la publique por error). Cuando Apple apruebe:
+   `git merge app-acceso` en main, pruebas, y EAS Update.
 2. Preguntar a Michael si les enseñamos la puerta de normas a quienes se dieron
    de alta con correo desde la app entre el 14 y el 20-10 (el servidor los dejó
    aceptados sin casilla).
