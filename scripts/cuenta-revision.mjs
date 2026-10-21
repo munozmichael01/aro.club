@@ -37,6 +37,15 @@
  *       hace aceptarlas: quien graba pulsa «Continuar» y el revisor ya no ve
  *       nada. Se corre DESPUÉS de grabar y ANTES de mandar a revisar.
  *
+ *   node scripts/cuenta-revision.mjs --sin-encuesta
+ *       Deshace lo que la cuenta hizo en Mi mesa después de la cena: la
+ *       valoración, los bloqueos y los reportes. Mismo motivo que
+ *       `--sin-normas`: grabar el video con esta cuenta valora de verdad, y
+ *       el revisor entraría y vería «Anotado, gracias» con la persona ya
+ *       reportada, sin nada que probar. Va aparte y no dentro de
+ *       `--sin-normas` a propósito: aquello pone una columna a null y esto
+ *       borra filas, y una bandera que borra datos tiene que pedirse.
+ *
  *   node scripts/cuenta-revision.mjs --borrar
  *       Quita la cuenta, su fecha, su restaurante y sus cinco acompañantes.
  *
@@ -65,7 +74,7 @@ const DOMINIO_MESA = 'prueba.aro.club'
 const RASTRO = fileURLToPath(new URL('../.cuenta-revision.json', import.meta.url))
 
 const args = process.argv.slice(2)
-const CONOCIDOS = ['--borrar', '--refrescar', '--acompanantes', '--sin-normas']
+const CONOCIDOS = ['--borrar', '--refrescar', '--acompanantes', '--sin-normas', '--sin-encuesta']
 const raros = args.filter((a) => !CONOCIDOS.includes(a) && !/^--horas=-?\d+$/.test(a))
 if (raros.length) {
   console.error('No conozco: ' + raros.join(', ') + '. Los modos son: ' + CONOCIDOS.join(', ') + '.')
@@ -111,6 +120,20 @@ if (args.includes('--borrar')) {
   if (!r) {
     console.log('No hay nada anotado: este guión no ha creado nada que borrar.')
     process.exit(0)
+  }
+  /**
+   * Los reportes, a mano y los primeros.
+   *
+   * `incident_reports.reporter_id` y `subject_id` son `on delete set null`,
+   * no `cascade`: borrando las cuentas, la fila SOBREVIVE con los dos
+   * extremos en null y el panel la sigue enseñando como un reporte abierto
+   * «sobre —». La encuesta y los bloqueos sí caen solos, porque sus claves
+   * son `on delete cascade`.
+   */
+  const ids = r.perfiles ?? []
+  if (ids.length) {
+    await admin.from('incident_reports').delete().in('reporter_id', ids)
+    await admin.from('incident_reports').delete().in('subject_id', ids)
   }
   // Primero lo que apunta a las reservas, que bloquean el borrado.
   for (const id of r.perfiles ?? []) {
@@ -212,6 +235,91 @@ if (args.includes('--sin-normas')) {
   console.log(perfil.terms_accepted_at
     ? 'Listo: la cuenta vuelve a no haber aceptado las normas (las aceptó el ' + perfil.terms_accepted_at.slice(0, 16) + ').'
     : 'Ya estaba sin aceptar: el revisor verá la pantalla.')
+  process.exit(0)
+}
+
+// ----------------------------------------------------------- sin encuesta
+//
+// Lo mismo que `--sin-normas`, para lo que pasa DESPUÉS de la cena.
+//
+// Me lo pidió el agente de la app el 20-10, antes del reenvío a Apple: en el
+// video Michael entra con la cuenta del revisor y en Mi mesa valora la cena,
+// bloquea a un acompañante y reporta a otro. Eso deja una fila en
+// `table_feedback`, el bloqueo en `exclusions` y el reporte en
+// `incident_reports`, todo de esa cuenta. Cuando entre el revisor de Apple ve
+// «Anotado, gracias» y la persona ya reportada: nada que probar.
+// `--refrescar` no lo deshace, solo mueve la fecha.
+//
+// Toca SOLO a la cuenta del revisor y dentro de SU mesa, y los bloqueos solo
+// entre cuentas que montó este guión. Si apareciera un reporte suyo sobre
+// alguien de fuera del guión, no se borra: se dice y se para, porque eso ya
+// no es un ensayo.
+if (args.includes('--sin-encuesta')) {
+  const r = leerRastro()
+  if (!r?.mesa) {
+    console.error('No hay cuenta de revisión montada. Corre el guión sin argumentos primero.')
+    process.exit(1)
+  }
+
+  const { data: perfil } = await admin
+    .from('profiles').select('id').eq('email', CORREO).maybeSingle()
+
+  if (!perfil) {
+    console.error('No hay cuenta de revisión montada. Corre el guión sin argumentos primero.')
+    process.exit(1)
+  }
+
+  const delGuion = r.perfiles ?? []
+  if (!delGuion.includes(perfil.id)) delGuion.push(perfil.id)
+
+  // Qué hay, antes de tocar nada: este guión dice lo que borra.
+  const { data: encuesta } = await admin
+    .from('table_feedback').select('created_at, nps, saltada_at')
+    .eq('table_id', r.mesa).eq('profile_id', perfil.id)
+
+  const { data: bloqueos } = await admin
+    .from('exclusions').select('profile_a, profile_b, reason')
+    .in('profile_a', delGuion).in('profile_b', delGuion)
+
+  const { data: reportes } = await admin
+    .from('incident_reports').select('id, subject_id, description, resolved_at')
+    .eq('reporter_id', perfil.id)
+
+  const deFuera = (reportes ?? []).filter((x) => x.subject_id && !delGuion.includes(x.subject_id))
+  if (deFuera.length) {
+    console.error('✗ me paro: la cuenta del revisor tiene ' + deFuera.length
+      + ' reporte(s) sobre alguien que NO es de este guión. Eso no es un ensayo y no lo borro yo.')
+    process.exit(1)
+  }
+
+  const fallo = (qué, { error }) => {
+    if (!error) return
+    console.error('✗ no se pudo borrar ' + qué + ': ' + error.message)
+    process.exit(1)
+  }
+
+  fallo('la valoración', await admin.from('table_feedback')
+    .delete().eq('table_id', r.mesa).eq('profile_id', perfil.id))
+  fallo('los bloqueos', await admin.from('exclusions')
+    .delete().in('profile_a', delGuion).in('profile_b', delGuion))
+  fallo('los reportes', await admin.from('incident_reports')
+    .delete().eq('reporter_id', perfil.id))
+
+  // Se borran y no se marcan cerrados: un reporte resuelto sigue siendo un
+  // reporte, le queda pegado al perfil en su ficha de operación y cuenta como
+  // reincidencia la próxima vez. Esto no pasó: lo grabó Michael.
+  const cuantas = (encuesta ?? []).length
+  const laSalto = (encuesta ?? []).some((x) => x.saltada_at)
+  console.log('Encuesta: ' + (cuantas
+    ? (laSalto ? 'estaba saltada, borrada.' : 'estaba valorada, borrada.')
+    : 'no había.'))
+  console.log('Bloqueos: ' + ((bloqueos ?? []).length
+    ? (bloqueos ?? []).length + ' borrado(s) · ' + (bloqueos ?? []).map((x) => x.reason).join(', ')
+    : 'no había.'))
+  console.log('Reportes: ' + ((reportes ?? []).length
+    ? (reportes ?? []).length + ' borrado(s), todos sobre acompañantes del guión.'
+    : 'no había.'))
+  console.log('La cuenta, su contraseña y su mesa, sin tocar.')
   process.exit(0)
 }
 
