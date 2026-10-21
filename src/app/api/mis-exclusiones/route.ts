@@ -27,6 +27,40 @@ const par = (a: string, b: string) => (a < b ? [a, b] : [b, a])
 
 const SUYO = 'bloqueo del miembro'
 
+/**
+ * Y UNA SEGUNDA CERRADURA, que no depende de `reason`.
+ *
+ * `reason` es una columna que se sobrescribe, y el 20-10 se sobrescribió:
+ * reportar dejaba `reason: 'reporte'` y la encuesta que iba detrás lo
+ * degradaba a «bloqueo del miembro», así que la persona a la que habías
+ * reportado se podía desbloquear desde aquí. El origen está tapado en
+ * `/api/despues`, pero no se puede dejar la única defensa en un campo que
+ * cualquier escritura puede pisar.
+ *
+ * `incident_reports` sí es un registro de lo que pasó, no un estado: si hay
+ * un reporte entre estas dos personas, en cualquier dirección, ese bloqueo
+ * no se quita y punto. Y también repara lo ya degradado en la base sin
+ * tocar ni una fila.
+ */
+async function hayReporteEntre(
+  admin: ReturnType<typeof createAdminClient>,
+  yo: string,
+  otros: string[],
+): Promise<Set<string>> {
+  if (!otros.length) return new Set()
+  const { data } = await admin
+    .from('incident_reports')
+    .select('reporter_id, subject_id')
+    .or(`reporter_id.eq.${yo},subject_id.eq.${yo}`)
+
+  const con = new Set<string>()
+  for (const r of data ?? []) {
+    const otro = r.reporter_id === yo ? r.subject_id : r.reporter_id
+    if (otro && otros.includes(otro)) con.add(otro)
+  }
+  return con
+}
+
 export async function GET() {
   const supabase = await createClient()
   const {
@@ -58,16 +92,21 @@ export async function GET() {
     (perfiles ?? []).map((p) => [p.id, p.display_name || p.full_name?.split(' ')[0] || 'Alguien']),
   )
 
+  const conReporte = await hayReporteEntre(admin, user.id, otros)
+
   return NextResponse.json({
     exclusiones: (data ?? []).map((e) => {
       const otro = e.profile_a === user.id ? e.profile_b : e.profile_a
+      // El reporte manda sobre lo que diga `reason`: la pantalla no puede
+      // ofrecer un botón que el DELETE va a negar.
+      const delMiembro = e.reason === SUYO && !conReporte.has(otro)
       return {
         id: otro,
         nombre: nombreDe.get(otro) ?? 'Alguien',
         // Por qué está puesta, en sus términos y no en los de la base.
-        porQue: e.reason === SUYO ? 'La bloqueaste tú' : 'Viene de un reporte',
+        porQue: delMiembro ? 'La bloqueaste tú' : 'Viene de un reporte',
         cuando: e.created_at,
-        sePuedeQuitar: e.reason === SUYO,
+        sePuedeQuitar: delMiembro,
       }
     }),
   })
@@ -87,6 +126,12 @@ export async function DELETE(request: Request) {
 
   const admin = createAdminClient()
   const [a, b] = par(user.id, parsed.data.aQuien)
+
+  // Primero el registro de lo que pasó, que no se puede sobrescribir.
+  const conReporte = await hayReporteEntre(admin, user.id, [parsed.data.aQuien])
+  if (conReporte.size) {
+    return NextResponse.json({ error: 'Ese bloqueo no se puede quitar.' }, { status: 409 })
+  }
 
   // El `reason` en el filtro es la protección, no un adorno: sin él, esta
   // ruta desharía también los bloqueos que vinieron de un reporte.

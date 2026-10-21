@@ -287,6 +287,25 @@ export async function POST(request: Request) {
       if (!(await estaEnLaMesa(admin, d.mesaId, otro))) continue
 
       const [a, b] = par(user.id, otro)
+      /**
+       * SI YA HAY UNA EXCLUSIÓN, NO SE TOCA.
+       *
+       * `ignoreDuplicates` y no un upsert normal. El upsert pisaba `reason`,
+       * y ese campo es lo único que decide si la exclusión se puede quitar
+       * desde Mi perfil. Reportar escribe `reason: 'reporte'`, que no se
+       * puede quitar; acto seguido la encuesta manda `bloquear` con esa
+       * misma persona dentro —las dos pantallas la añaden a la lista de
+       * bloqueados al reportar— y la degradaba a «bloqueo del miembro».
+       * Desde ahí, la persona a la que reportaste se podía desbloquear.
+       *
+       * Lo encontró Michael grabando el video para Apple, y lo trazó el
+       * agente de la app. En la app ya no se manda, pero el candado va aquí:
+       * la web hace lo mismo y cualquier cliente futuro también podría.
+       *
+       * Ignorar el conflicto es además lo correcto en general: una exclusión
+       * que ya existe —de un reporte o puesta por operación— ya cumple lo
+       * que esta persona pide, y volver a pedirlo no puede debilitarla.
+       */
       await admin.from('exclusions').upsert(
         {
           profile_a: a,
@@ -296,7 +315,7 @@ export async function POST(request: Request) {
           reason: 'bloqueo del miembro',
           created_by: user.id,
         },
-        { onConflict: 'profile_a,profile_b' },
+        { onConflict: 'profile_a,profile_b', ignoreDuplicates: true },
       )
     }
 
