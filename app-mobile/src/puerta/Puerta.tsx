@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { AroCarga, Boton, Campo, CampoClave, Fecha, Texto, Velo, color, cremaAlfa, fuente, medida } from '../diseno'
 import { LogoApple, LogoGoogle, Proveedor } from '../entrar/Entrar'
+import { Acepto } from '../normas/Acepto'
+import { acepto as A } from '../texto/normas'
 import { Cabecera, FaseQuiz, FaseSinPreguntas, Progreso } from '../entrada/Fases'
 import { inicial, reducir, type Estado } from '../entrada/maquina'
 import { zonaParaPregunta } from '../avisos/maquina'
@@ -47,13 +49,15 @@ export function Puerta(p: {
   entrarConClave: (correo: string, clave: string) => Promise<boolean>
   alTerminar: (destino: string) => void
   alEntrar: (correo?: string) => void
+  /** Solo el catálogo: empezar en otra fase para verla sin contestar el quiz. */
+  faseInicial?: Fase
 }) {
   const insets = useSafeAreaInsets()
   const { servicio } = p
   const alTerminar = useUltimo(p.alTerminar)
   const [preguntas, setPreguntas] = useState<Pregunta[] | null | undefined>(undefined)
   const [conSesion, setConSesion] = useState<boolean | null>(null)
-  const [fase, setFase] = useState<Fase>('quiz')
+  const [fase, setFase] = useState<Fase>(p.faseInicial ?? 'quiz')
   const [e, despachar] = useReducer(reducir, undefined, () => ({ ...inicial(), fase: 'quiz' }) as Estado)
   const [nac, setNac] = useState(M.vacio().nacimiento)
   // La lista de `/api/ciudades`. La ciudad elegida es la respuesta de la primera pregunta (`e.respuestas.ciudad`).
@@ -62,6 +66,9 @@ export function Puerta(p: {
   const [correo, setCorreo] = useState('')
   const [clave, setClave] = useState('')
   const [clave2, setClave2] = useState('')
+  // La casilla de las normas, en el alta con correo (Apple 1.2; Michael, 18-10).
+  // Con Apple o Google las pide la puerta de después de entrar (PuertaNormas).
+  const [acepto, setAcepto] = useState(false)
   const [ver, setVer] = useState(false)
   const [aviso, setAviso] = useState('')
   const [trabajando, setTrabajando] = useState(false)
@@ -170,7 +177,7 @@ export function Puerta(p: {
 
   const conClave = async () => {
     const c = correo.trim()
-    if (trabajando || !reglas.valido('correo', c) || clave.length < 8 || clave !== clave2) return
+    if (trabajando || !acepto || !reglas.valido('correo', c) || clave.length < 8 || clave !== clave2) return
     setTrabajando(true)
     setAviso('')
     const r = await servicio.crearCuenta(c, clave, T.cuenta.noCreada)
@@ -262,7 +269,7 @@ export function Puerta(p: {
     )
   } else if (fase === 'cuenta') {
     const c = correo.trim()
-    const listoClave = reglas.valido('correo', c) && clave.length >= 8 && clave === clave2
+    const listoClave = reglas.valido('correo', c) && clave.length >= 8 && clave === clave2 && acepto
     const textoClave = !reglas.valido('correo', c)
       ? T.cuenta.faltaCorreo
       : clave.length < 8
@@ -271,7 +278,9 @@ export function Puerta(p: {
           ? TC.boton.repetir
           : clave !== clave2
             ? TC.boton.dispares
-            : TC.boton.crear
+            : !acepto
+              ? A.falta
+              : TC.boton.crear
     cuerpo = (
       <View>
         <Texto variante="display" tono="crema" accessibilityRole="header">
@@ -330,6 +339,7 @@ export function Puerta(p: {
             textos={TC}
             dispar={!!clave2 && clave !== clave2}
           />
+          <Acepto fondo="verde" marcada={acepto} alCambiar={setAcepto} />
           <Boton tipo="sobreVerde" ancho texto={textoClave} apagado={!listoClave || trabajando} onPress={conClave} />
         </View>
         {trabajando ? (

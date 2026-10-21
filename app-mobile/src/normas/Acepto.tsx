@@ -37,7 +37,7 @@ export function Acepto(p: { marcada: boolean; alCambiar: (v: boolean) => void; a
       </Pressable>
       <Texto variante="nota" tono={tono} style={{ flex: 1 }} onPress={() => p.alCambiar(!p.marcada)}>
         {T.antes}
-        <Texto variante="nota" tono={enlace} style={estilos.enlace} onPress={p.alNormas}>
+        <Texto variante="nota" tono={enlace} style={estilos.enlace} onPress={p.alNormas ?? (() => router.push('/normas'))}>
           {T.normas}
         </Texto>
         {T.medio}

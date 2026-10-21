@@ -19,7 +19,7 @@ const ZONAS = [
 ]
 
 function Pantalla() {
-  const { sesion } = useLocalSearchParams<{ sesion?: string }>()
+  const { sesion, fase } = useLocalSearchParams<{ sesion?: string; fase?: string }>()
   const servicio = useMemo(
     (): ReturnType<typeof crearServicioPuerta> => ({
       guardar: async (envios) => (console.log('[catálogo] guardar', JSON.stringify(envios)), { ok: true, datos: true }),
@@ -50,6 +50,8 @@ function Pantalla() {
       entrarConClave={async () => false}
       alTerminar={(d) => console.log('[catálogo] a', d)}
       alEntrar={() => console.log('[catálogo] entrar')}
+      // ?fase=cuenta: directo a crear la cuenta, con la casilla de las normas.
+      faseInicial={fase === 'cuenta' ? 'cuenta' : undefined}
     />
   )
 }
