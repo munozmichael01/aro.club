@@ -145,11 +145,3 @@ test('el sello de la encuesta dice cuándo fue, porque ya no caduca a las 48 h (
   assert.equal(M.selloPasada(d('2026-09-18T23:30:00Z'), ahora), 'EL 18 DE SEPTIEMBRE')
   assert.equal(M.selloPasada({ fase: 'pasada' }, ahora), 'TU ÚLTIMA MESA')
 })
-
-test('el aviso de las dos horas (21-10): sin doble punto, y los sitios solo si hay', async () => {
-  const T = await import('../src/texto/mesa')
-  const t = T.cena.dosHoras('7:00', '9:00 p.m.', true)
-  assert.match(t, /de 7:00 a 9:00 p\.m\. El restaurante/)
-  assert.doesNotMatch(t, /\.\./)
-  assert.doesNotMatch(T.cena.dosHoras('7:00', '9:00 p.m.', false), /sitios cerca/)
-})

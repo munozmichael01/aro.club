@@ -58,6 +58,10 @@ export type DeServidor = {
   creditoDevuelto?: boolean
   /** En `sin-mesa`: el reembolso de ese crédito (21-10). */
   reembolso?: import('../reembolso/maquina').Reembolso
+  /** Cuánto dura la mesa, ya redactado por el servidor (`avisoDeDosHoras`, la misma frase que el correo). */
+  avisoDosHoras?: string | null
+  /** Si la mesa salió de menos de seis, la frase de por qué (`fraseDeMesaCorta`, 22-10). */
+  mesaCorta?: string | null
 }
 
 export type Ajustes = { alguienCancelo?: boolean; sonCuantos?: number; caben?: number; teMovimos?: boolean; seSumoAlguien?: boolean }

@@ -236,11 +236,6 @@ export const cena = {
   alLlegar: 'AL LLEGAR',
   diLaMesa: (numero: string) => (numero ? `Di que vas a la mesa de Aro, la ${numero}.` : 'Di que vas a la mesa de Aro.'),
   fotoEntrada: (sitio: string) => `La entrada de ${sitio}`,
-  /** Aprobado por Michael el 21-10: va en la revelación, el recordatorio y aquí. */
-  dosHoras: (desde: string, hasta: string, haySitios: boolean) =>
-    // «a.m.» ya trae su punto: sin quitarlo, la frase acaba en «a.m..».
-    `La mesa es tuya por dos horas, de ${desde} a ${hasta.replace(/\.$/, '')}. El restaurante puede tener otra reserva esperando esa mesa, así que tenlo en cuenta para la sobremesa.${haySitios ? ' Si quieren seguir, en el paso a paso hay sitios cerca.' : ''}`,
-  importante: 'Importante',
   conQuien: {
     titulo: 'Con quién cenas',
     resumen: (n: number) => (n === 1 ? '1 persona · verificada' : `${n} personas · todas verificadas`),

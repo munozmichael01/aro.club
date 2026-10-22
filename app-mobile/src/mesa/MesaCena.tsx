@@ -91,6 +91,7 @@ export function MesaCena(p: {
       <Desplegable
         titulo={T.cena.conQuien.titulo}
         resumen={T.cena.conQuien.resumen(otros.length)}
+        nota={d.mesaCorta}
         abierta={abiertas.gente}
         alTocar={() => poner('gente', !abiertas.gente)}
       >
@@ -249,19 +250,6 @@ function TarjetaMesa(p: { d: M.DeServidor; momento: Gu.MomentoCena; mapa: string
           <Texto style={[texto(14, 1.4), { color: C.crema }]}>{T.cena.diLaMesa(num)}</Texto>
         </View>
       </View>
-      {/* Las dos horas (Michael, 21-10): el restaurante puede tener otra reserva esperando la mesa. */}
-      {d.empiezaEn ? (
-        <View style={e.dosHoras}>
-          <Texto style={[semi(13), { color: C.acento, letterSpacing: 1.2 }]}>{T.cena.importante.toUpperCase()}</Texto>
-          <Texto style={[texto(14, 1.45), { color: C.crema, marginTop: 4 }]}>
-            {T.cena.dosHoras(
-              Gu.sinSufijo(F.horaEn(d.empiezaEn, zona)),
-              F.horaEn(new Date(Date.parse(d.empiezaEn) + Gu.DURACION_POR_DEFECTO * 60000).toISOString(), zona),
-              (d.paraSeguir ?? []).some((x) => x.nombre),
-            )}
-          </Texto>
-        </View>
-      ) : null}
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
         {p.mapa ? (
           <Pressable onPress={() => p.ir('externo:' + p.mapa)} accessibilityRole="button" style={({ pressed }) => [e.botonMesa, { backgroundColor: pressed ? C.acento : C.crema }]}>
@@ -272,13 +260,15 @@ function TarjetaMesa(p: { d: M.DeServidor; momento: Gu.MomentoCena; mapa: string
           <Texto style={[semi(14), { color: C.crema }]}>{T.abierta.vozTarde}</Texto>
         </Pressable>
       </View>
+      {/* Cuánto dura la mesa (Michael, 22-10): en gris y dentro de la tarjeta, como «Al llegar». No es una alarma. */}
+      {d.avisoDosHoras ? <Texto style={[texto(13, 1.5), { color: C.secundarioVerde, marginTop: 14 }]}>{d.avisoDosHoras}</Texto> : null}
     </View>
   )
 }
 
 // --- La tarjeta que se despliega ---------------------------------------------------
 
-function Desplegable(p: { titulo: string; resumen: string; abierta: boolean; alTocar: () => void; oscura?: boolean; children: ReactNode }) {
+function Desplegable(p: { titulo: string; resumen: string; nota?: string | null; abierta: boolean; alTocar: () => void; oscura?: boolean; children: ReactNode }) {
   const o = !!p.oscura
   return (
     <View style={[e.tarjeta, o ? { backgroundColor: C.tinta, borderWidth: 0 } : null]}>
@@ -297,6 +287,8 @@ function Desplegable(p: { titulo: string; resumen: string; abierta: boolean; alT
           <Texto style={[semi(18), { color: o ? C.acento : C.tinta }]}>{p.abierta ? '−' : '+'}</Texto>
         </View>
       </Pressable>
+      {/* La mesa corta (Michael, 22-10): «informativo y ya». Debajo del resumen, con el tamaño de una nota, abierta o cerrada. */}
+      {p.nota ? <Texto style={[texto(13, 1.5), { color: o ? C.secundarioVerde : C.pasado, paddingHorizontal: 18, paddingBottom: 15, marginTop: -6 }]}>{p.nota}</Texto> : null}
       {p.abierta ? p.children : null}
     </View>
   )
@@ -446,7 +438,6 @@ const e = StyleSheet.create({
   selloTexto: { fontFamily: fuente.textoSemi, fontSize: 11, lineHeight: 14, letterSpacing: 1.54, color: C.tinta },
   numero: { fontFamily: fuente.textoNegrita, fontSize: 48, lineHeight: 58, letterSpacing: -2.4, color: C.crema, marginTop: 4, fontVariant: ['tabular-nums'] },
   llegada: { marginTop: 14, borderRadius: 16, overflow: 'hidden', backgroundColor: C.verde },
-  dosHoras: { marginTop: 12, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(227,156,99,.55)', backgroundColor: 'rgba(227,156,99,.12)', paddingVertical: 11, paddingHorizontal: 13 },
   etiqueta: { fontFamily: fuente.textoSemi, fontSize: 11, lineHeight: 14, letterSpacing: 1.54 },
   botonMesa: { flex: 1, minHeight: 44, borderRadius: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 },
   botonTarde: { borderWidth: 1.5, borderColor: 'rgba(250,243,228,.5)' },
