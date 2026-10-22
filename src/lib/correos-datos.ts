@@ -1979,8 +1979,24 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
      * Vacía cuando la mesa está completa, y entonces la plantilla se salta la
      * fila entera. Lo normal es que esté completa.
      */
+    /**
+     * Y CUATRO NO SE CUENTA COMO CINCO.
+     *
+     * Michael, 22-10, con la revelación del jueves a las doce y mesas de
+     * cuatro: «esta vez no nos cuadró el sexto puesto» da a entender que
+     * falta UNO. A quien se sienta con tres desconocidos esperando cinco,
+     * esa frase le hace contar sillas.
+     *
+     * Así que a partir de dos huecos se dice el número y se dice lo que de
+     * verdad pensamos: que cuatro bastan. No es consuelo, es la decisión que
+     * se tomó al publicarla.
+     */
     mesaCorta: !(enLaMesa > 0 && enLaMesa < porMesa)
       ? ''
+      : porMesa - enLaMesa >= 2
+        ? (cancelaronDeEstaMesa
+            ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: se nos cayeron dos y no llegamos a sentar a nadie más, pero creemos que ${EN_LETRA[enLaMesa] ?? enLaMesa} desconocidos son suficientes para pasarla bien.`
+            : `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: esta vez no completamos la mesa de ${EN_LETRA[porMesa] ?? porMesa}, pero creemos que ${EN_LETRA[enLaMesa] ?? enLaMesa} desconocidos son suficientes para pasarla bien.`)
       : cancelaronDeEstaMesa
         ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: alguien canceló y no llegamos a sentar a nadie más.`
         // Sin cancelación la mesa salió así, y eso también hay que
