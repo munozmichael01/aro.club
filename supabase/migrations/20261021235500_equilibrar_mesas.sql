@@ -1,0 +1,13 @@
+-- El correo que pide hombres.
+--
+-- Michael, 21-10 por la noche: en las fechas abiertas de esta semana hay 32
+-- mujeres y 12 hombres, y la cena de +40 son nueve personas con un solo
+-- hombre. Va a los hombres que no tienen puesto esta semana, en dos
+-- variantes: a quien ya está verificado se le ofrece reservar, y a quien
+-- tiene el cuestionario hecho y no ha subido la cédula se le pide ese paso,
+-- porque el botón de reservar le llevaría contra el candado.
+--
+-- Un solo tipo y no dos: es el mismo correo, el mismo asunto y el mismo
+-- motivo. Lo que cambia es el último paso de cada uno, y eso es un dato, no
+-- otro correo.
+alter type email_kind_t add value if not exists 'equilibrar_mesas';

@@ -7,7 +7,7 @@ import { enlaceDeMapa } from '@/lib/mapa'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
-import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, vozDe } from '@/lib/reglas'
+import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
@@ -1240,6 +1240,91 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
            */
           enlaceReserva: `${SITIO}/cuenta?fecha=${fila.event_id ?? ''}`
             + '&utm_source=correo&utm_medium=email&utm_campaign=dinner-in-english',
+        },
+      }
+    }
+
+    /**
+     * «Hombres, vamos a equilibrar las mesas».
+     *
+     * Michael, 21-10 de noche: en las fechas abiertas hay 32 mujeres y 12
+     * hombres, y la cena de +40 son nueve personas con un hombre.
+     *
+     * Dos variantes y un solo correo, porque es el mismo correo: lo que
+     * cambia es el último paso. Quien está verificado reserva; quien tiene
+     * el cuestionario hecho y no ha subido la cédula no puede reservar
+     * todavía, y mandarle «Reservar mi puesto» sería mandarlo contra el
+     * candado de la verificación.
+     *
+     * Las fechas las elige la ruta y llegan aquí por id: quién cabe en una
+     * cena con banda de edad se decide con `cabeEnLaFecha`, que mide la edad
+     * EL DÍA DE LA CENA, y eso ya está resuelto antes de llegar aquí.
+     */
+    case 'equilibrar_mesas': {
+      const ids = Array.isArray(p.fechas)
+        ? (p.fechas as unknown[]).filter((x): x is string => typeof x === 'string')
+        : []
+      if (!ids.length) return { error: 'ese envío se quedó sin fechas abiertas' }
+
+      const faltaVerificar = p.falta === 'verificacion'
+
+      const { data: evs } = await admin
+        .from('events')
+        .select('id, format, starts_at, price_usd, city_slug, status, age_band_min')
+        .in('id', ids)
+        .eq('status', 'open')
+        .order('starts_at')
+
+      const lista = []
+      for (const ev of evs ?? []) {
+        const zonaDeEv = await zonaDeLaCiudad(admin, ev.city_slug)
+        const { data: sedes } = await admin
+          .from('event_venues')
+          .select('zone_slug')
+          .eq('event_id', ev.id)
+        const slugs = [...new Set((sedes ?? []).map((v) => v.zone_slug).filter((z): z is string => !!z))]
+        const nombres = await nombresDeZonas(admin, slugs)
+        const cuandoEs = partesDe(ev.starts_at, zonaDeEv)
+        lista.push({
+          dia: cuandoEs
+            ? `${alta(cuandoEs.dia)} ${cuandoEs.numero} de ${cuandoEs.mes}`
+            : diaEnZonaAlto(ev.starts_at, zonaDeEv),
+          plan: NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan',
+          hora: horaDe(ev.starts_at, zonaDeEv) ?? '',
+          zonas: unirCon(nombres, ' o '),
+          precio: ev.price_usd != null ? `${Number(ev.price_usd)} ref` : '',
+          // Cuándo se cierra cada una, con la misma frase que ve en la web y
+          // en la app. El jueves sale como «se cierra hoy a medianoche».
+          nota: alta(textoCierre(ev.starts_at, zonaDeEv)),
+        })
+      }
+
+      if (!lista.length) return { error: 'ese envío se quedó sin fechas abiertas' }
+
+      return {
+        a,
+        datos: {
+          ...base,
+          cinta: 'VAMOS A EQUILIBRAR LAS MESAS',
+          titular: 'Esta semana se apuntaron',
+          titularAcento: 'casi tres mujeres por cada hombre.',
+          resumen: 'Esta semana se apuntaron casi tres mujeres por cada hombre.',
+          bajada: faltaVerificar
+            ? 'En Aro queremos que cada mesa sea mixta y equilibrada, y para eso nos faltas tú. Ya tienes las preguntas contestadas. Te falta un paso: verificar tu identidad con tu cédula y una selfie. Te toma dos minutos, y en cuanto la revisemos puedes apartar tu puesto.'
+            : 'En Aro queremos que cada mesa sea mixta y equilibrada, y para eso nos faltas tú. Nosotros armamos el grupo y reservamos el restaurante. Tú solo llegas, a una cena con cinco personas que no conoces y con las que tienes cosas en común.',
+          hayTuyas: 'si',
+          tituloTuyas: faltaVerificar ? 'HAY SITIO ESTE FIN DE SEMANA' : 'HAY SITIO ESTA SEMANA',
+          tuyas: lista,
+          hayOtras: '',
+          tituloOtras: '',
+          otras: [],
+          boton: faltaVerificar ? 'Verificar mi identidad' : 'Reservar mi puesto',
+          destino: (faltaVerificar ? '/verificacion' : '/cuenta')
+            + '?utm_source=correo&utm_medium=email&utm_campaign=equilibrar-mesas'
+            + (faltaVerificar ? '-sin-verificar' : '-verificados'),
+          cierre: faltaVerificar
+            ? 'La verificación la mira una persona, así que súbela cuanto antes y te avisamos en cuanto esté.'
+            : 'Si ninguna te cuadra, no hagas nada: la semana que viene abrimos más.',
         },
       }
     }

@@ -4015,6 +4015,7 @@ export type Database = {
         | "revision_previa"
         | "resumen_semanal"
         | "cena_en_ingles"
+        | "equilibrar_mesas"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -4260,6 +4261,7 @@ export const Constants = {
         "revision_previa",
         "resumen_semanal",
         "cena_en_ingles",
+        "equilibrar_mesas",
       ],
       event_format_t: [
         "dinner",
