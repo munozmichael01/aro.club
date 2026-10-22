@@ -155,7 +155,7 @@ async function mandar(seco: boolean, solo: string | null, conJueves: boolean, va
   let encolados = 0
   let repetidos = 0
   let sinFechas = 0
-  let deBaja = 0
+  let noLesVa = 0
 
   for (const [grupo, gente] of Object.entries(grupos)) {
     const falta = grupo === 'sin-verificar' ? 'verificacion' : ''
@@ -207,7 +207,7 @@ async function mandar(seco: boolean, solo: string | null, conJueves: boolean, va
       const suyas = ofrecibles.filter((e) => cabeEnLaFecha(p.birthdate, e))
       if (!suyas.length) { sinFechas++; continue }
 
-      if (!quieren.has(p.id)) { deBaja++; continue }
+      if (!quieren.has(p.id)) { noLesVa++; continue }
       // A quien ya se le mandó, no se le repite. Salvo `?solo=`, que es la
       // prueba y tiene que poder verse más de una vez.
       if (!solo && hechos.has(p.id)) { repetidos++; continue }
@@ -237,7 +237,16 @@ async function mandar(seco: boolean, solo: string | null, conJueves: boolean, va
     encolados,
     yaLoTenian: repetidos,
     sinFechasQueOfrecer: sinFechas,
-    deBajaDeCorreos: deBaja,
+    /**
+     * Y NO son bajas de correo, que es como lo llamé al principio.
+     *
+     * `quienQuiereSaberDe` filtra varias cosas a la vez, y de las dieciséis
+     * que quedaron fuera de este envío CERO eran bajas: catorce habían
+     * dicho en el cuestionario que las cenas no son su plan, y dos no
+     * contestaron esa pregunta. Llamarlo «de baja» en la respuesta me hizo
+     * contárselo mal a Michael.
+     */
+    noLesVaEsteplan: noLesVa,
     ...(seco ? { seco: true } : {}),
     ...(solo ? { solo } : {}),
   })
