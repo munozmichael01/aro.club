@@ -1427,6 +1427,31 @@
         <h1 style="{{ h1 }}">Avisos</h1>
         <p style="{{ bajada }}">{{ bajadaAvisos }}</p>
 
+        <!-- QUÉ NOS CUESTA ESCRIBIR. Michael lo pidió dos veces: el 20 y
+             otra vez el 21 después de mandar a doscientas personas. Hasta
+             ahora las bajas solo se veían abriendo la ficha de cada uno. -->
+        <sc-if value="{{ hayBajas }}" hint-placeholder-val="{{ true }}">
+          <div style="{{ cajaBajas }}">
+            <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:12px">BAJAS DE CORREO</div>
+            <div style="display:flex;flex-wrap:wrap;gap:clamp(18px,3vw,36px)">
+              <sc-for list="{{ cifrasBajas }}" as="c" hint-placeholder-count="4">
+                <span style="display:block">
+                  <span style="display:block;font:400 clamp(26px,3.4vw,34px)/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:{{ c.color }}">{{ c.n }}</span>
+                  <span style="display:block;font:500 12px/1.4 'Inter Tight',sans-serif;color:#566A5D;margin-top:5px">{{ c.que }}</span>
+                </span>
+              </sc-for>
+            </div>
+            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:13px;max-width:60ch;text-wrap:pretty">{{ notaBajas }}</div>
+            <sc-if value="{{ hayUltimasBajas }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:5px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(20,52,42,.1)">
+                <sc-for list="{{ ultimasBajas }}" as="b" hint-placeholder-count="3">
+                  <span style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ b.linea }}</span>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
         <div style="display:flex;flex-wrap:wrap;gap:10px;margin:clamp(22px,2.8vw,30px) 0 16px">
           <input type="search" value="{{ filtroPersona }}" onChange="{{ ponerPersona }}" placeholder="Correo de alguien" style="{{ campoFiltro }}" />
           <select value="{{ filtroFecha }}" onChange="{{ ponerFecha }}" style="{{ campoFiltro }}">
@@ -1844,7 +1869,7 @@ class Component extends DCLogic {
     paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {}, empujon: null,
     pruebaGente: null, verPruebaGente: false,
     perfilesGente: 0, leadsGente: null, pidiendoGente: false,
-    avisos: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
+    avisos: null, bajas: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
     // Mover a una persona a mano en la fecha elegida. Vive en Reparto y
     // cerrado por defecto: es la única acción del panel que se salta el
     // cierre de una fecha, así que no se tropieza con ella.
@@ -2039,8 +2064,8 @@ class Component extends DCLogic {
     if (this.state.filtroTipo) q.push('tipo=' + encodeURIComponent(this.state.filtroTipo));
     this.setState({ pidiendoAvisos: true });
     return this.pedir('/api/operacion/avisos' + (q.length ? '?' + q.join('&') : ''),
-      (d) => ({ avisos: d.filas || [], pidiendoAvisos: false }),
-      { avisos: [], pidiendoAvisos: false });
+      (d) => ({ avisos: d.filas || [], bajas: d.bajas || null, pidiendoAvisos: false }),
+      { avisos: [], bajas: null, pidiendoAvisos: false });
   }
 
   /**
@@ -3115,6 +3140,22 @@ class Component extends DCLogic {
     // pasa en esta pantalla es que se pinta y se arrastra, y arrastrar
     // pregunta a /api/operacion/propuesta, que revalida y devuelve las mesas
     // recalculadas.
+    /**
+     * Las bajas de correo, tal como las manda `/api/operacion/avisos`.
+     *
+     * `null` mientras no se ha abierto esa pestaña: el bloque no se pinta y
+     * no enseña ceros que no son ceros, que es el mismo error de «no hay» y
+     * «no se sabe» que ya costó caro en las cifras del reparto.
+     */
+    const BAJAS = St.bajas || null;
+    const NOMBRE_ENVIO = {
+      empujon: 'empujón',
+      abrimos_zona: 'abrimos zona',
+      resumen_semanal: 'el resumen de los lunes',
+      cena_en_ingles: 'la cena en inglés',
+      equilibrar_mesas: 'equilibrar las mesas',
+    };
+
     const REP = St.reparto || null;
     const CORRIDA = REP && REP.corrida ? REP.corrida : null;
     const PROPUESTA = CORRIDA ? (CORRIDA.propuesta || []) : [];
@@ -5735,6 +5776,42 @@ class Component extends DCLogic {
         + (St.fallo
           ? 'background:rgba(143,69,21,.14);color:#8F4515'
           : 'background:rgba(27,81,56,.12);color:#1B5138'),
+      /**
+       * Las bajas de correo, en la pantalla de los correos.
+       *
+       * Tres cifras y una línea. «Desde el último envío» es la que se mira
+       * de verdad después de mandar a doscientas personas, y es la que
+       * nadie calcula a mano a las once de la noche.
+       */
+      hayBajas: !!BAJAS,
+      cifrasBajas: !BAJAS ? [] : [
+        ['Hoy', BAJAS.hoy, BAJAS.hoy > 0 ? '#8F4515' : '#14342A'],
+        ['Últimos 7 días', BAJAS.semana, '#14342A'],
+        ['Desde el último envío', BAJAS.desdeElUltimoEnvio != null ? BAJAS.desdeElUltimoEnvio : '—',
+          BAJAS.desdeElUltimoEnvio > 0 ? '#8F4515' : '#14342A'],
+        ['Desde siempre', BAJAS.total, '#14342A'],
+      ].map((c) => ({ que: c[0], n: String(c[1]), color: c[2] })),
+      cajaBajas: 'border:1px solid rgba(20,52,42,.14);border-radius:22px;padding:clamp(16px,2.2vw,22px);background:#FAF3E4;margin-top:clamp(22px,2.8vw,30px)',
+      notaBajas: (() => {
+        if (!BAJAS) return '';
+        if (!BAJAS.ultimoEnvio) return 'Todavía no ha salido ningún envío de bulto.';
+        const q = NOMBRE_ENVIO[BAJAS.ultimoEnvio.tipo] || BAJAS.ultimoEnvio.tipo;
+        // `horaTexto` ya acaba en «p.m.», así que el punto de la frase sobra.
+        const cuando = diaTexto(BAJAS.ultimoEnvio.cuando) + ' a las ' + horaTexto(BAJAS.ultimoEnvio.cuando);
+        return 'El último envío de bulto fue «' + q + '», el ' + cuando
+          + (BAJAS.desdeElUltimoEnvio === 0
+            ? ' Nadie se ha dado de baja desde entonces.'
+            : ' Desde entonces se han dado de baja ' + BAJAS.desdeElUltimoEnvio
+              + (BAJAS.desdeElUltimoEnvio === 1 ? ' persona.' : ' personas.'));
+      })(),
+      hayUltimasBajas: !!(BAJAS && BAJAS.ultimas && BAJAS.ultimas.length),
+      ultimasBajas: !BAJAS ? [] : (BAJAS.ultimas || []).map((b) => ({
+        // El origen importa: el clic de Gmail y el pie del correo no se leen
+        // igual. Una racha de un clic puede ser el cliente de correo
+        // mandando a promociones, no la gente huyendo.
+        linea: b.correo + ' · ' + diaTexto(b.cuando) + ' · '
+          + (b.origen === 'un-clic' ? 'un clic desde el buzón' : 'el pie del correo'),
+      })),
       esAvisos: esta('avisos'),
       ...(() => {
         const A = St.avisos;
