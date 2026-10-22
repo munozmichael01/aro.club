@@ -2823,6 +2823,7 @@ export type Database = {
           push_ticket: Json | null
           send_at: string
           sent_at: string | null
+          tomada_at: string | null
         }
         Insert: {
           created_at?: string
@@ -2841,6 +2842,7 @@ export type Database = {
           push_ticket?: Json | null
           send_at: string
           sent_at?: string | null
+          tomada_at?: string | null
         }
         Update: {
           created_at?: string
@@ -2859,6 +2861,7 @@ export type Database = {
           push_ticket?: Json | null
           send_at?: string
           sent_at?: string | null
+          tomada_at?: string | null
         }
         Relationships: [
           {
