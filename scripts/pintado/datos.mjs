@@ -99,6 +99,52 @@ export const PANTALLAS = {
   ],
 
   /**
+   * La agenda pública, con fechas y sin ellas.
+   *
+   * Es la única pantalla que no se sirve sola —la sirve
+   * `src/app/agenda/route.ts`, que le pega el JSON-LD— pero lo que se mira
+   * aquí es lo mismo que en las demás: que pinte. El estado vacío va aparte
+   * porque es un bloque distinto, no la misma rejilla con cero tarjetas.
+   */
+  'Aro Club - Agenda.dc.html': [
+    {
+      caso: 'con fechas',
+      rutas: {
+        '/api/agenda': {
+          zonas: ['Chacao', 'Los Palos Grandes'],
+          fechas: [
+            {
+              id: '33333333-3333-4333-8333-333333333333',
+              formato: 'dinner', nombreFormato: 'Cena',
+              empiezaEn: en(30), cierraEn: en(20), creadaEn: en(-48),
+              zonaHoraria: 'America/Caracas', zonas: ['Chacao'],
+              precioUsd: 10, apuntados: 7,
+              edadMinima: null, edadMaxima: null, idioma: null, etiquetaIdioma: null,
+            },
+            {
+              id: '44444444-4444-4444-8444-444444444444',
+              formato: 'dinner', nombreFormato: 'Cena',
+              empiezaEn: en(54), cierraEn: en(44), creadaEn: en(-47),
+              zonaHoraria: 'America/Caracas', zonas: ['Chacao', 'Los Palos Grandes'],
+              precioUsd: 10, apuntados: 2,
+              edadMinima: 40, edadMaxima: null, idioma: null, etiquetaIdioma: null,
+            },
+            {
+              id: '55555555-5555-4555-8555-555555555555',
+              formato: 'brunch', nombreFormato: 'Brunch',
+              empiezaEn: en(78), cierraEn: en(68), creadaEn: en(-46),
+              zonaHoraria: 'America/Caracas', zonas: ['Chacao'],
+              precioUsd: 10, apuntados: 4,
+              edadMinima: null, edadMaxima: null, idioma: 'en', etiquetaIdioma: 'En inglés',
+            },
+          ],
+        },
+      },
+    },
+    { caso: 'sin fechas', rutas: { '/api/agenda': { fechas: [], zonas: [] } } },
+  ],
+
+  /**
    * El reembolso, en sus dos caras: la de pedirlo y la de ya haberlo pedido.
    *
    * Sin datos simulados esta pantalla se va a `/entrar`, que en el servidor

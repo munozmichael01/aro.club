@@ -62,6 +62,8 @@ type Api = {
     vasCon: string
   }
   NOMBRES_DE_FORMATO: Record<string, string>
+  /** Las cinco de la agenda pública, como pares [pregunta, respuesta]. */
+  FRECUENTES_AGENDA: string[][]
   /** Las opciones son pares [texto, código], y el código manda. */
   PUERTA: Record<string, { clave: string; pregunta: string; opciones: (string | null)[][] }>
   ZONA: string
@@ -179,6 +181,14 @@ export type { Campo }
  * precio sin una fecha delante, y el respaldo si una fecha no lo trae.
  */
 export const PRECIO_USD: number = api.PRECIO_USD
+
+/**
+ * Las cinco preguntas de `/agenda`, que no son las de la portada.
+ *
+ * Las lee la pantalla, para la gente, y esta ruta, para el JSON-LD. `{zonas}`
+ * lo rellena quien la pinta con las zonas que de verdad tienen fecha abierta.
+ */
+export const FRECUENTES_AGENDA: string[][] = api.FRECUENTES_AGENDA
 export const precioTexto = api.precioTexto.bind(api)
 
 /** El catálogo de cocinas, uno solo: lo usan el cuestionario y la ficha del local. */

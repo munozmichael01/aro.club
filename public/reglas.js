@@ -767,6 +767,15 @@
      * domingo a las nueve de la noche en Caracas ya es lunes en Madrid, y la
      * semana de la cena es la de Caracas.
      */
+    /**
+     * Cómo se llama cada una de las tres. El índice es el de `semanaDe`.
+     *
+     * Estaba dentro de Mi cuenta y la agenda pública necesitaba las mismas
+     * palabras: dos listas de tres títulos son dos vocabularios en cuanto
+     * alguien cambie uno.
+     */
+    NOMBRE_SEMANA: ['Esta semana', 'La semana que viene', 'Más adelante'],
+
     semanaDe: function (iso, zona, ahora) {
       var p = api.partesDe(iso, zona)
       // `ahora` opcional: sin el, el reloj de verdad. Con el, se puede
@@ -1648,6 +1657,93 @@
       ['¿Por qué preguntan mi edad y mi género?', 'Para que el grupo tenga referencias parecidas y esté balanceado. No se muestran a los demás: de ti solo ven el nombre con el que quieres que te llamen y tu sector.'],
       ['¿Cuándo hay mesa en mi zona?', 'Abrimos donde se junta suficiente gente que pueda llegar. Marca las tuyas arriba y te escribimos el día que se abre la primera. No antes: no queremos escribirte para nada.'],
     ],
+
+    /**
+     * Las cinco preguntas de la agenda pública, que no son las de la portada.
+     *
+     * La portada le responde a quien todavía no sabe qué es esto; la agenda,
+     * a quien ya está mirando fechas y decide si se apunta. Son dos
+     * conversaciones distintas y Design las escribió aparte.
+     *
+     * Viven aquí porque las leen DOS: la pantalla, para la gente, y el
+     * servidor, para el JSON-LD de `/agenda`. Un rastreador no ejecuta
+     * JavaScript, así que una lista armada al vuelo no existe para él. Es la
+     * misma razón por la que acabó aquí `FRECUENTES`.
+     *
+     * `{zonas}` lo rellena quien la pinta con las zonas que de verdad tienen
+     * fecha abierta: escribirlas a mano es prometer El Hatillo el mes que no
+     * haya nada en El Hatillo.
+     */
+    FRECUENTES_AGENDA: [
+      ['¿Con quién me siento?', 'Con cinco personas verificadas que elegimos según tus respuestas del cuestionario. No eliges tú, y nadie te elige.'],
+      ['¿Dónde son los planes?', 'En Caracas. Por ahora en {zonas}. Abrimos zonas donde se junta más gente.'],
+      ['¿Cuándo sé el sitio?', 'El mismo día del plan a las 12:00 te llega el sitio y quién va contigo. Antes solo ves la zona.'],
+      ['¿Qué incluye el precio?', 'Tu puesto en el grupo. Lo que comas y bebas se paga aparte en el sitio, cada quien lo suyo.'],
+      ['¿Cómo pago?', 'Pago Móvil, transferencia, Zelle o Bizum. Si pagas en bolívares, es a la tasa del día.'],
+    ],
+
+    /**
+     * La familia de un formato: cómo se agrupa para enseñarlo.
+     *
+     * Trece formatos y cinco fotos. La fila de polaroids —la de Mi cuenta y
+     * la de la agenda— no separa «Cena foodie» de «Cena de mujeres»: las dos
+     * son cenas. Vivía como una tabla suelta dentro de Mi cuenta que cubría
+     * seis de los trece y mandaba el resto a «Cenas», así que una caminata
+     * del domingo salía llamándose cena en la propia agenda.
+     */
+    FAMILIAS: [
+      { clave: 'cenas', nombre: 'Cenas', foto: 'fotos/cenas.jpg' },
+      { clave: 'brunch', nombre: 'Brunch', foto: 'fotos/brunch.jpg' },
+      { clave: 'drinks', nombre: 'Drinks', foto: 'fotos/drinks.jpg' },
+      { clave: 'movimiento', nombre: 'Movimiento', foto: 'fotos/movimiento.jpg' },
+      { clave: 'coffee', nombre: 'Coffee', foto: 'fotos/coffee.jpg' },
+    ],
+
+    /**
+     * A qué familia pertenece un formato. Los trece están cubiertos; lo que
+     * no reconozca cae en cenas, que es lo que era el producto entero.
+     */
+    familiaDe: function (formato) {
+      var f = String(formato || '')
+      var clave = 'cenas'
+      if (api.DE_MOVIMIENTO.indexOf(f) >= 0) clave = 'movimiento'
+      else if (f === 'brunch' || f === 'women_brunch') clave = 'brunch'
+      else if (f === 'drinks') clave = 'drinks'
+      else if (f === 'coffee') clave = 'coffee'
+      for (var i = 0; i < api.FAMILIAS.length; i++) {
+        if (api.FAMILIAS[i].clave === clave) return api.FAMILIAS[i]
+      }
+      return api.FAMILIAS[0]
+    },
+
+    /**
+     * Por debajo de esto no se enseña el número de apuntados.
+     *
+     * «0 apuntados · faltan 6 para la primera mesa» es verdad y desanima:
+     * quien lo lee entiende que no va nadie y se va. Con 2 tampoco ayuda. A
+     * partir de 3 el número juega a favor y se enseña tal cual.
+     */
+    UMBRAL_APUNTADOS: 3,
+
+    /**
+     * Cuánta gente va, dicho como lo decimos nosotros.
+     *
+     * NUNCA cuántos puestos quedan: aquí no hay cupo. Las mesas se arman con
+     * quien haya, y un contador de escasez sería lo primero que contamos que
+     * no es verdad. Lo pedía la agenda pública y ya estaba escrito dentro de
+     * Mi cuenta: dos copias de la misma frase son dos frases en cuanto
+     * alguien toque una.
+     */
+    fraseDeApuntados: function (n) {
+      var x = Number(n) || 0
+      if (x < api.UMBRAL_APUNTADOS) return 'Una mesa son seis'
+      if (x >= 6) {
+        var mesas = Math.ceil(x / 6)
+        return x + ' apuntados · ' + mesas + (mesas === 1 ? ' mesa' : ' mesas')
+      }
+      var faltan = 6 - x
+      return x + ' apuntados · ' + (faltan === 1 ? 'falta 1' : 'faltan ' + faltan) + ' para la primera mesa'
+    },
 
     /** Valida un conjunto. Devuelve el primer campo que falla, o null. */
     primerFallo: function (valores) {

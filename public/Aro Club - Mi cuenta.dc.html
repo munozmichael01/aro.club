@@ -808,7 +808,12 @@ class Component extends DCLogic {
         accion: 'Cómo llegar', enlace: '/mesa', secundaria: 'Volver al principio'
       }
     ];
-    const FORMATOS = { dinner: 'Cenas', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee', brunch: 'Brunch', women_brunch: 'Brunch de mujeres' };
+    // La familia de cada formato sale de `reglas.js`. Esta tabla cubría seis
+    // de los trece y mandaba el resto a «Cenas»: la caminata del domingo
+    // salía llamándose cena en la propia agenda. Y la agenda pública
+    // necesitaba la misma tabla, que es cuando dos copias se vuelven dos
+    // vocabularios.
+    const nombreFormato = (f) => window.AroReglas.familiaDe(f).nombre;
     const DIASEM = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
     /**
@@ -830,8 +835,7 @@ class Component extends DCLogic {
     const piezas = (iso, zona) => window.AroReglas.partesDe(iso, zona);
     // La semana la decide `reglas.js`, que es lo que comparten la web y la
     // app: contaba DIAS QUE FALTAN y partia una misma semana en dos títulos.
-    const NOMBRE_SEMANA = ['Esta semana', 'La semana que viene', 'Más adelante'];
-    const semanaDe = (iso, zona) => NOMBRE_SEMANA[window.AroReglas.semanaDe(iso, zona)];
+    const semanaDe = (iso, zona) => window.AroReglas.NOMBRE_SEMANA[window.AroReglas.semanaDe(iso, zona)];
     const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
     // "Hay cena el sábado en Las Mercedes" y "Ya van 34 apuntados y se
     // cierra el martes" estaban escritos a mano. Con doce apuntados y otra
@@ -1063,7 +1067,7 @@ class Component extends DCLogic {
     // acuerda.
     const suyas = {};
     ((d && d.agenda) || []).forEach((a) => {
-      const n = FORMATOS[a.formato] || 'Cenas';
+      const n = nombreFormato(a.formato);
       (suyas[n] = suyas[n] || []).push({ iso: a.empiezaEn, zona: a.zonaHoraria });
     });
     const conFecha = {};
@@ -1179,7 +1183,7 @@ class Component extends DCLogic {
         // Con su zona: la semana de la cena es la de Caracas, no la del
         // teléfono de quien mira.
         semanaDe(a.empiezaEn, a.zonaHoraria),
-        FORMATOS[a.formato] || 'Cenas',
+        nombreFormato(a.formato),
         q ? DIASEM[q.diaNumero] + ' ' + q.numero + ' · ' + q.hora : '',
         // Las zonas ABIERTAS de esa fecha, no un sitio: el sitio se decide
         // al armar la mesa y ella no lo sabe hasta la revelación.

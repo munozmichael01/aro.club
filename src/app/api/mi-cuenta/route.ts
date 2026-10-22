@@ -5,6 +5,7 @@ import { cabeEnLaFecha } from '@/lib/edad'
 import { respuestasDePerfil, situacionDePerfil } from '@/lib/embudo'
 import { VERSION_LEGAL } from '@/lib/legal'
 import { bloqueDeReembolso } from '@/lib/reembolso'
+import { etiquetaDeIdioma } from '@/lib/idioma-mesa'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
@@ -39,13 +40,6 @@ type Estado =
  * ingles» cabe al lado del dia sin empujar nada. La app pinta esta misma
  * cadena, no la traduce por su cuenta.
  */
-const ETIQUETA_IDIOMA: Record<string, string> = {
-  en: 'En inglés',
-  pt: 'En portugués',
-  fr: 'En francés',
-  it: 'En italiano',
-}
-
 export async function GET() {
   const supabase = await createClient()
   const {
@@ -650,7 +644,7 @@ export async function GET() {
        * siempre. Aditivo: quien no lo lea sigue viendo lo mismo.
        */
       idioma: f.idioma ?? null,
-      etiquetaIdioma: f.idioma ? ETIQUETA_IDIOMA[String(f.idioma)] ?? null : null,
+      etiquetaIdioma: etiquetaDeIdioma(f.idioma),
     })),
     proximaFecha: proxima
       ? {
