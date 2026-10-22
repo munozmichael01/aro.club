@@ -151,6 +151,13 @@
             <a href="{{ mapa }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:none">Cómo llegar</a>
             <button onClick="{{ abrirTarde }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;border:1.5px solid rgba(250,243,228,.5);background:transparent;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;cursor:pointer">Voy tarde</button>
           </div>
+
+          <!-- CUÁNTO DURA LA MESA. Dentro de la tarjeta y en gris, porque es
+               del mismo orden que «al llegar, di que vas a la mesa de Aro»:
+               lo que hay que saber para esa noche, no una alarma. -->
+          <sc-if value="{{ hayAvisoDosHoras }}" hint-placeholder-val="{{ false }}">
+            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#9CBBA6;margin-top:14px;text-wrap:pretty">{{ avisoDosHoras }}</div>
+          </sc-if>
         </div>
 
         <!-- «Voy tarde», con el mismo panel de siempre: lo que cambia es
@@ -1805,6 +1812,8 @@ class Component extends DCLogic {
       tituloGente: 'Con quién cenas',
       // La misma frase que el correo de la revelación, servida por
       // `/api/mi-mesa`. Si la mesa está completa viene en null y no se pinta.
+      hayAvisoDosHoras: !!(dJ && dJ.avisoDosHoras),
+      avisoDosHoras: (dJ && dJ.avisoDosHoras) || '',
       hayMesaCorta: !!(dJ && dJ.mesaCorta),
       mesaCorta: (dJ && dJ.mesaCorta) || '',
       resumenGente: comensales.length === 1

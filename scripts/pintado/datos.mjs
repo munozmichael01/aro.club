@@ -65,6 +65,7 @@ export const PANTALLAS = {
         '/api/mi-mesa': {
           ...MESA_ABIERTA,
           mesaCorta: 'Son cuatro: esta vez no completamos la mesa de seis, pero creemos que cuatro desconocidos son suficientes para pasarla bien.',
+          avisoDosHoras: 'La mesa es tuya por dos horas, de 7:00 p.m. a 9:00 p.m. El restaurante puede tener otra reserva esperando esa mesa, así que tenlo en cuenta para la sobremesa. Si quieren seguir, en el paso a paso hay sitios cerca.',
         },
       },
     },

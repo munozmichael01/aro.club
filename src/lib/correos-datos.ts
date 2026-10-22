@@ -4,7 +4,7 @@ import type { Correo } from '@/lib/correos'
 import { firmarBaja } from '@/lib/baja-token'
 import { firmar } from '@/lib/lead-token'
 import { enlaceDeMapa } from '@/lib/mapa'
-import { FIN_CENA } from '@/lib/ventana-mesa'
+import { avisoDeDosHoras, FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, textoCierre, vozDe } from '@/lib/reglas'
@@ -928,22 +928,9 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           ...(yaAbierta
             ? await (async () => {
                 const suya = await laMesaDe(admin, fila.event_id!, fila.profile_id)
-                return {
-                  fotoEntrada: suya?.fotoEntrada ?? '',
-                  sitio: suya?.sitio ?? '',
-                  avisoDosHoras: suya?.avisoDosHoras ?? '',
-                }
+                return { fotoEntrada: suya?.fotoEntrada ?? '', sitio: suya?.sitio ?? '' }
               })()
-            /**
-             * Antes de la revelación también se avisa, pero SIN la frase de
-             * los sitios cerca: a las nueve de la mañana no sabemos en qué
-             * restaurante cena esta persona, así que tampoco sabemos si hay
-             * dónde seguir. Prometerlo y que luego no haya es peor que
-             * callarlo hasta el mediodía, cuando el correo de la mesa lo
-             * dice entero.
-             */
-            : { fotoEntrada: '', sitio: '',
-                avisoDosHoras: avisoDeDosHoras(evento.starts_at, zona, false) }),
+            : { fotoEntrada: '', sitio: '' }),
         },
       }
     }
@@ -1753,44 +1740,6 @@ async function textoDelMotivo(admin: Admin, codigo: string | undefined): Promise
     .eq('code', codigo)
     .maybeSingle()
   return data?.message ?? 'hay que repetir la foto.'
-}
-
-/**
- * «La mesa es tuya por dos horas».
- *
- * Michael lo aprobó el 21-10, palabra por palabra. Va en la revelación, en
- * el recordatorio y en Mi mesa, y en los tres sale de aquí: es el aviso que
- * evita que un grupo se quede hasta las doce en una mesa que el restaurante
- * ya tiene prometida a otros, y decirlo distinto en cada sitio es la forma
- * de que acabe diciendo tres cosas.
- *
- * Las horas salen del evento, nunca escritas a mano, y la última frase solo
- * aparece si esa mesa tiene sitios cerca de verdad: prometer un paso a paso
- * que está vacío es peor que no prometer nada.
- */
-export function avisoDeDosHoras(
-  inicioIso: string | null | undefined,
-  zona: string | undefined,
-  haySitiosCerca: boolean,
-  donde = 'Mi mesa',
-): string {
-  if (!inicioIso) return ''
-  const empieza = horaDe(inicioIso, zona)
-  const acaba = horaDe(new Date(Date.parse(inicioIso) + 2 * 3600_000).toISOString(), zona)
-  if (!empieza || !acaba) return ''
-  // Sin punto detrás de la hora: `horaDe` ya devuelve «9:00 p.m.», con el
-  // suyo. Añadir el de la frase deja «9:00 p.m..», que es el mismo descuido
-  // que ya apareció esta noche en el panel.
-  /**
-   * Sin «Importante:» delante.
-   *
-   * Esa palabra era para la caja roja; ahora la frase vive dentro de
-   * RECUERDA, entre lo que cubre la plaza y lo del consumo aparte, y un
-   * «importante» ahí dentro grita por encima de sus vecinas sin motivo.
-   */
-  return `La mesa es tuya por dos horas, de ${empieza} a ${acaba} `
-    + 'El restaurante puede tener otra reserva esperando esa mesa, así que tenlo en cuenta para la sobremesa.'
-    + (haySitiosCerca ? ` Si quieren seguir, en ${donde} hay sitios cerca.` : '')
 }
 
 async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null) {

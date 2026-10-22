@@ -4,6 +4,7 @@ import { minutosAPie } from '@/lib/distancia'
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { fraseDeMesaCorta } from '@/lib/mesa-corta'
+import { avisoDeDosHoras } from '@/lib/ventana-mesa'
 import { bloqueDeReembolso } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
@@ -532,6 +533,24 @@ export async function GET() {
      * mesa está completa, que es lo normal. Michael: «no debe ser lo
      * protagonista de Mi mesa, es informativo y ya».
      */
+    /**
+     * Cuánto dura la mesa, también aquí.
+     *
+     * Michael, 22-10: «lo de las dos horas con la revelación y la mesa es
+     * suficiente». El correo se lee una vez a mediodía; esta pantalla se
+     * abre otra vez camino del restaurante, que es cuando la pregunta
+     * importa de verdad.
+     *
+     * Misma frase y misma función que el correo, y con la coletilla de los
+     * sitios cerca solo si esta mesa los tiene: `paraSeguir` ya se calculó
+     * arriba, así que aquí no se adivina nada.
+     */
+    avisoDosHoras: avisoDeDosHoras(
+      evento.starts_at,
+      zonaHoraria,
+      paraSeguir.length > 0,
+      'el paso a paso',
+    ) || null,
     mesaCorta: fraseDeMesaCorta(
       (companeros ?? []).length + 1,
       evento.seats_per_table ?? 6,
