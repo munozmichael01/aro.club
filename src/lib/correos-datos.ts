@@ -10,6 +10,7 @@ import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeMesaCorta } from '@/lib/mesa-corta'
+import { DIAS_DE_PLAZO } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
@@ -542,11 +543,26 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     // que se le puede ofrecer.
     case 'sin_mesa': {
       const proximas = await proximasFechas(admin, nacimiento)
+      /**
+       * Hasta cuándo puede pedir el dinero en vez del crédito.
+       *
+       * El plazo cuenta desde el abono, y el abono lo acaba de hacer
+       * `publicar` justo antes de encolar esto, así que contar desde ahora
+       * es contar desde el mismo momento con un minuto de diferencia. Si
+       * algún día dejaran de ir juntos, esta fecha sería la equivocada y hay
+       * que leerla del apunte.
+       */
+      const limite = new Date(Date.now() + DIAS_DE_PLAZO * 86400_000).toISOString()
+      const cuandoAcaba = partesDe(limite, ZONA_POR_DEFECTO)
+
       return {
         a,
         datos: {
           ...base,
           proxima1: proximas[0] ?? 'Te avisamos en cuanto abramos otra',
+          hastaCuando: cuandoAcaba
+            ? `${cuandoAcaba.dia} ${cuandoAcaba.numero} de ${cuandoAcaba.mes}`
+            : 'dentro de tres días',
         },
       }
     }
