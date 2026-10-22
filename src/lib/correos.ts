@@ -207,6 +207,8 @@ export type Correo =
    */
   | 'cena_en_ingles'
   | 'equilibrar_mesas'
+  | 'reembolso_pedido'
+  | 'reembolso_hecho'
 
 /**
  * Los que NO llevan correo.

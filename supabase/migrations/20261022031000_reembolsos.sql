@@ -1,0 +1,20 @@
+-- Devolverle el dinero a quien se quedó sin mesa.
+--
+-- Michael, 21-10. Hasta hoy, a quien el reparto deja en espera se le abona un
+-- crédito y punto: si esa persona no quiere volver, su dinero se queda aquí.
+-- Esto le da la salida.
+--
+-- ALCANCE: solo los créditos de quedarse sin mesa. Ni cancelaciones, ni
+-- cortesías, ni cupones, que no se pagaron.
+--
+-- El motivo del apunte NO puede ser `refund`, que es el que ya lleva el abono
+-- de quedarse sin mesa. `/api/mi-mesa` pregunta si ese crédito volvió con un
+-- `.eq('booking_id', …).eq('reason','refund').maybeSingle()`, y con dos filas
+-- iguales `maybeSingle` no devuelve la primera: FALLA, y `creditoDevuelto` se
+-- queda en false. O sea que la pantalla «Esta vez no entraste» le diría «tu
+-- crédito no volvió» justo a quien le estamos devolviendo el dinero. Lo cazó
+-- el agente de la app revisando la propuesta.
+--
+-- Por eso un motivo propio, y sin `booking_id`: el enlace con el crédito
+-- original lo guarda la solicitud, que es su sitio.
+alter type credit_reason_t add value if not exists 'reembolso_pedido';

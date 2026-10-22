@@ -34,6 +34,13 @@ guía 1.2. Video y texto enviados. Mientras dure:
    principio del alta. **HECHA en la rama `app-acceso`** (no en main, para que
    ningún EAS Update la publique por error). Cuando Apple apruebe:
    `git merge app-acceso` en main, pruebas, y EAS Update.
+   La rama lleva también el **aviso de las dos horas** en la tarjeta de la mesa
+   (aprobado el 21-10; el agente lo pone en la revelación y el recordatorio).
+4. **Solicitar reembolso** de los créditos por lista de espera (Michael, 21-10):
+   tasa BCV del día, se paga en 24 h, no se cancela, plazo de 3 días desde que
+   se quedó sin mesa; el crédito sale del saldo al pedirlo. Espero el contrato
+   «Para Móvil» del agente (campo `reembolso` y endpoint). Botón en Mi mesa
+   (`sin-mesa`) y en la tarjeta de créditos de Mi cuenta.
 2. Preguntar a Michael si les enseñamos la puerta de normas a quienes se dieron
    de alta con correo desde la app entre el 14 y el 20-10 (el servidor los dejó
    aceptados sin casilla).

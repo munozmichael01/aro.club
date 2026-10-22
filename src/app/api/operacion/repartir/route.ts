@@ -188,9 +188,23 @@ export async function GET(request: Request) {
    * `/api/operacion/fechas` al guardar: ofrecer lo que la otra ruta va a
    * rechazar es ofrecer un error.
    */
+  /**
+   * Los locales que se le pueden poner a esta fecha.
+   *
+   * SIN los de segundo acto. Michael, 21-10: «el segundo acto no debe salir
+   * en las mesas, aquí seleccionamos solo restaurantes si es cena o brunch».
+   *
+   * Y tiene razón además de ser lo que quiere: un bar de segundo acto es
+   * donde se sigue después, no donde se sienta la mesa. Desde que los bares
+   * pueden activarse con menos datos, si entraran aquí saldrían siete sitios
+   * nuevos entre los que elegir para una cena, todos sin contacto al que
+   * avisar y sin foto de la entrada, que es justo lo que no les pedimos
+   * porque ahí no cena nadie.
+   */
   const { data: candidatos } = await admin
     .from('restaurants')
     .select('id, name, zone_slug, open_days, is_active, formats, commission_pct')
+    .or('is_after_venue.is.null,is_after_venue.eq.false')
     .order('name')
 
   // El día de la semana EN CARACAS. Una cena del viernes a las 7:30 p.m. es

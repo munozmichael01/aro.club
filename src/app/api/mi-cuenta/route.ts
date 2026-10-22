@@ -4,6 +4,7 @@ import { cabeEnLaFecha } from '@/lib/edad'
 
 import { respuestasDePerfil, situacionDePerfil } from '@/lib/embudo'
 import { VERSION_LEGAL } from '@/lib/legal'
+import { bloqueDeReembolso } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
@@ -695,6 +696,7 @@ export async function GET() {
     motivoRechazo: rechazada?.rejection_reason ?? null,
     respuestas: { faltan, total: totalPreguntas },
     creditos,
+    reembolso: await bloqueDeReembolso(admin, user.id),
     reserva: reserva
       ? {
           id: reserva.id,

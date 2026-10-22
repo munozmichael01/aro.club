@@ -238,13 +238,38 @@ function loQueFalta(l: {
   contact_phone: string | null
   facade_photo_path: string | null
   maps_url: string | null
+  is_after_venue?: boolean | null
 }) {
   const falta: string[] = []
-  if (!l.noise_level) falta.push('medir el ruido')
   if (!l.address) falta.push('la dirección')
+  if (!l.maps_url?.trim()) falta.push('el enlace del mapa')
+
+  /**
+   * UN BAR PARA SEGUIR NO NECESITA LO MISMO QUE UNA MESA.
+   *
+   * Michael, 21-10: «si entras ves deshabilitado los bares que cargamos la
+   * semana pasada. Recuerda que dijimos que al cargarlos desde Google Maps
+   * íbamos a necesitar menos datos para estos bares».
+   *
+   * Y es que los tres candados que quedan debajo existen por cosas que a un
+   * bar de segundo acto no le pasan: el ruido se mide porque seis
+   * desconocidos tienen que oírse, el contacto es para avisar al local
+   * cuántos van, y la foto de la entrada es para que nadie se quede dando
+   * vueltas en la puerta de una cena a la que llega tarde.
+   *
+   * A un bar al que solo mandamos a quien quiera seguir no le reservamos
+   * nada, no le avisamos de nadie y no le sentamos a nadie. Lo único que
+   * tiene que estar bien es dónde está y cómo llegar, y eso viene de Google
+   * Maps al cargarlo.
+   *
+   * Son siete bares de los diecinueve locales, todos desactivados por pedir
+   * un contacto que nunca vamos a usar.
+   */
+  if (l.is_after_venue) return falta
+
+  if (!l.noise_level) falta.push('medir el ruido')
   if (!l.contact_name || !l.contact_phone) falta.push('un contacto')
   if (!l.facade_photo_path) falta.push('la foto de la entrada')
-  if (!l.maps_url?.trim()) falta.push('el enlace del mapa')
   return falta
 }
 
@@ -683,7 +708,9 @@ export async function PATCH(request: Request) {
 
   const { data: local } = await admin
     .from('restaurants')
-    .select('id, noise_level, address, contact_name, contact_phone, facade_photo_path, maps_url')
+    // `is_after_venue` entra aquí porque `loQueFalta` lo mira: sin él, un
+    // bar de segundo acto seguiría sin poder activarse.
+    .select('id, noise_level, address, contact_name, contact_phone, facade_photo_path, maps_url, is_after_venue')
     .eq('id', d.id)
     .maybeSingle()
 

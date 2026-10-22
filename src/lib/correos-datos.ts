@@ -927,9 +927,22 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           ...(yaAbierta
             ? await (async () => {
                 const suya = await laMesaDe(admin, fila.event_id!, fila.profile_id)
-                return { fotoEntrada: suya?.fotoEntrada ?? '', sitio: suya?.sitio ?? '' }
+                return {
+                  fotoEntrada: suya?.fotoEntrada ?? '',
+                  sitio: suya?.sitio ?? '',
+                  avisoDosHoras: suya?.avisoDosHoras ?? '',
+                }
               })()
-            : { fotoEntrada: '', sitio: '' }),
+            /**
+             * Antes de la revelación también se avisa, pero SIN la frase de
+             * los sitios cerca: a las nueve de la mañana no sabemos en qué
+             * restaurante cena esta persona, así que tampoco sabemos si hay
+             * dónde seguir. Prometerlo y que luego no haya es peor que
+             * callarlo hasta el mediodía, cuando el correo de la mesa lo
+             * dice entero.
+             */
+            : { fotoEntrada: '', sitio: '',
+                avisoDosHoras: avisoDeDosHoras(evento.starts_at, zona, false) }),
         },
       }
     }
@@ -1329,6 +1342,40 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       }
     }
 
+    /**
+     * Los dos del reembolso.
+     *
+     * No leen nada de la base: todo lo que dicen —el monto, la tasa, el
+     * teléfono, la referencia— se fijó cuando pasó, y volver a calcularlo
+     * aquí sería arriesgarse a que el correo diga una cifra distinta de la
+     * que se prometió o de la que se pagó.
+     */
+    case 'reembolso_pedido':
+      return {
+        a,
+        datos: {
+          ...base,
+          montoBs: (p.montoBs as string) ?? '',
+          precio: (p.precio as string) ?? '',
+          telefono: (p.telefono as string) ?? '',
+          banco: (p.banco as string) ?? '',
+          cedula: (p.cedula as string) ?? '',
+          resumen: `Te mandamos ${(p.montoBs as string) ?? ''} Bs por Pago Móvil en un día hábil.`,
+        },
+      }
+
+    case 'reembolso_hecho':
+      return {
+        a,
+        datos: {
+          ...base,
+          montoBs: (p.montoBs as string) ?? '',
+          telefono: (p.telefono as string) ?? '',
+          referencia: (p.referencia as string) ?? '',
+          resumen: `${(p.montoBs as string) ?? ''} Bs por Pago Móvil. Referencia ${(p.referencia as string) ?? ''}.`,
+        },
+      }
+
     // El cupón no lleva importes a propósito: no hay ninguno. Lleva lo mismo
     // que el resto —qué fecha, dónde y cuándo se revela— y nada de banco.
     case 'puesto_con_cupon':
@@ -1707,6 +1754,37 @@ async function textoDelMotivo(admin: Admin, codigo: string | undefined): Promise
   return data?.message ?? 'hay que repetir la foto.'
 }
 
+/**
+ * «La mesa es tuya por dos horas».
+ *
+ * Michael lo aprobó el 21-10, palabra por palabra. Va en la revelación, en
+ * el recordatorio y en Mi mesa, y en los tres sale de aquí: es el aviso que
+ * evita que un grupo se quede hasta las doce en una mesa que el restaurante
+ * ya tiene prometida a otros, y decirlo distinto en cada sitio es la forma
+ * de que acabe diciendo tres cosas.
+ *
+ * Las horas salen del evento, nunca escritas a mano, y la última frase solo
+ * aparece si esa mesa tiene sitios cerca de verdad: prometer un paso a paso
+ * que está vacío es peor que no prometer nada.
+ */
+export function avisoDeDosHoras(
+  inicioIso: string | null | undefined,
+  zona: string | undefined,
+  haySitiosCerca: boolean,
+  donde = 'Mi mesa',
+): string {
+  if (!inicioIso) return ''
+  const empieza = horaDe(inicioIso, zona)
+  const acaba = horaDe(new Date(Date.parse(inicioIso) + 2 * 3600_000).toISOString(), zona)
+  if (!empieza || !acaba) return ''
+  // Sin punto detrás de la hora: `horaDe` ya devuelve «9:00 p.m.», con el
+  // suyo. Añadir el de la frase deja «9:00 p.m..», que es el mismo descuido
+  // que ya apareció esta noche en el panel.
+  return `Importante: la mesa es tuya por dos horas, de ${empieza} a ${acaba} `
+    + 'El restaurante puede tener otra reserva esperando esa mesa, así que tenlo en cuenta para la sobremesa.'
+    + (haySitiosCerca ? ` Si quieren seguir, en ${donde} hay sitios cerca.` : '')
+}
+
 async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null) {
   if (!perfilId) return null
 
@@ -1771,12 +1849,19 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   const numero = String(mesa.table_number).padStart(2, '0')
   const direccion = mesa.restaurants?.address ?? ''
 
+  // ¿Tiene sitios cerca a los que seguir? De la misma tabla que Mi mesa.
+  const { data: cerca } = await admin
+    .from('restaurant_after_venues')
+    .select('after_id')
+    .eq('restaurant_id', mesa.restaurants?.id ?? '')
+    .limit(1)
+
   // De cuántos es una mesa en ESTA fecha. De la fecha y no de una constante:
   // `seats_per_table` se puede cambiar al abrirla, y el día que haya una de
   // cuatro a propósito esto no puede llamarla corta.
   const { data: deLaFecha } = await admin
     .from('events')
-    .select('seats_per_table, reveal_at')
+    .select('seats_per_table, reveal_at, starts_at, city_slug')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -1830,6 +1915,13 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
     numero,
     sitio: mesa.restaurants?.name ?? '',
     direccion,
+    // El aviso de las dos horas, con las horas de ESTA fecha y la última
+    // frase solo si ese local tiene sitios cerca.
+    avisoDosHoras: avisoDeDosHoras(
+      deLaFecha?.starts_at,
+      await zonaDeLaCiudad(admin, deLaFecha?.city_slug),
+      (cerca ?? []).length > 0,
+    ),
     zona: zonas[0] ?? '',
     // El de la ficha si lo tiene; si no, uno construido, que es mejor que un
     // botón que no lleva a ningún sitio.
@@ -1887,8 +1979,24 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
      * Vacía cuando la mesa está completa, y entonces la plantilla se salta la
      * fila entera. Lo normal es que esté completa.
      */
+    /**
+     * Y CUATRO NO SE CUENTA COMO CINCO.
+     *
+     * Michael, 22-10, con la revelación del jueves a las doce y mesas de
+     * cuatro: «esta vez no nos cuadró el sexto puesto» da a entender que
+     * falta UNO. A quien se sienta con tres desconocidos esperando cinco,
+     * esa frase le hace contar sillas.
+     *
+     * Así que a partir de dos huecos se dice el número y se dice lo que de
+     * verdad pensamos: que cuatro bastan. No es consuelo, es la decisión que
+     * se tomó al publicarla.
+     */
     mesaCorta: !(enLaMesa > 0 && enLaMesa < porMesa)
       ? ''
+      : porMesa - enLaMesa >= 2
+        ? (cancelaronDeEstaMesa
+            ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: se nos cayeron dos y no llegamos a sentar a nadie más, pero creemos que ${EN_LETRA[enLaMesa] ?? enLaMesa} desconocidos son suficientes para pasarla bien.`
+            : `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: esta vez no completamos la mesa de ${EN_LETRA[porMesa] ?? porMesa}, pero creemos que ${EN_LETRA[enLaMesa] ?? enLaMesa} desconocidos son suficientes para pasarla bien.`)
       : cancelaronDeEstaMesa
         ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: alguien canceló y no llegamos a sentar a nadie más.`
         // Sin cancelación la mesa salió así, y eso también hay que

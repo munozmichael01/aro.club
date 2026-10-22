@@ -11,6 +11,9 @@ import * as T from '../texto/cuenta'
 import * as M from './maquina'
 import { Cabecera } from './Cabecera'
 import { PreguntasNuevas } from './PreguntasNuevas'
+import * as RM from '../reembolso/maquina'
+import * as TR from '../texto/reembolso'
+import { reglas } from '../reglas'
 import { PreguntaIdioma } from '../idioma/PreguntaIdioma'
 import * as TI from '../texto/idioma'
 import { Agenda, Atajos, Esqueleto, LoProximo, Pie, Seccion, TarjetaEstado, Valorar } from './Partes'
@@ -190,6 +193,25 @@ export function Inicio(p: {
         </Texto>
         <TarjetaEstado t={vista.tarjeta} revelaEn={datos.proximaFecha?.revelaEn} alAccion={() => irA(vista.tarjeta.destino)} />
 
+        {/* El reembolso del crédito por lista de espera (21-10): el botón mientras haya plazo, y el acuse si ya lo pidió. */}
+        {RM.fase(datos.reembolso) === 'pedir' ? (
+          <View style={estilos.reembolso}>
+            <Boton tipo="secundario" texto={TR.boton} onPress={() => p.ir('/reembolso')} />
+            {datos.reembolso?.hasta ? (
+              <Texto variante="nota" style={{ marginTop: 10 }}>
+                {TR.hasta((() => { const x = reglas.partesDe(datos.reembolso!.hasta); return x ? `${x.dia} ${x.numero}` : '' })())}
+              </Texto>
+            ) : null}
+          </View>
+        ) : RM.fase(datos.reembolso) === 'pendiente' ? (
+          <View style={estilos.reembolso}>
+            <Texto variante="rotulo">{TR.acuse.titulo}</Texto>
+            <Texto variante="cuerpoChico" style={{ marginTop: 3 }}>
+              {TR.acuse.cuerpo(RM.bs(datos.reembolso?.montoBs), null)}
+            </Texto>
+          </View>
+        ) : null}
+
         <Seccion onLayout={(y) => (yAgenda.current = y)}>
           <Agenda
             ciudadCerrada={datos?.ciudad && !datos.ciudad.abierta ? datos.ciudad.nombre : null}
@@ -287,4 +309,5 @@ export function Inicio(p: {
 
 const estilos = StyleSheet.create({
   pagina: { paddingHorizontal: medida.margenLateral, paddingTop: 24, maxWidth: 720, width: '100%', alignSelf: 'center' },
+  reembolso: { marginTop: 18, borderRadius: 26, backgroundColor: color.cremaElevada, padding: 18 },
 })

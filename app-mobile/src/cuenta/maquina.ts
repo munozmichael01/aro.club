@@ -79,6 +79,8 @@ export type MiCuenta = {
   ciudad?: { slug: string; nombre: string; abierta: boolean }
   creditos: number
   reserva: { id: string; formato: string | null; empiezaEn: string | null; revelaEn: string | null; revelado: boolean; zonaHoraria?: string | null } | null
+  /** Reembolso del crédito por lista de espera (21-10). `{ puede: false, estado: null }` si no hay nada. */
+  reembolso?: import('../reembolso/maquina').Reembolso
   /** Preguntas del catálogo que no ha contestado, al reservar (18-10). Casi siempre vacío. */
   preguntasNuevas?: PreguntaNueva[]
 }
