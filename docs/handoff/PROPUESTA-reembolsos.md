@@ -1,36 +1,77 @@
-# Solicitar reembolso · propuesta de copy y contrato
+# Solicitar reembolso · copy y contrato
 
-Para que Michael lo apruebe antes de construirlo. Nada de esto está hecho.
+Michael contestó el 21-10 de noche. **Aprobado todo menos el punto (a)**,
+que el agente de la app le está explicando. Nada de esto está construido:
+se monta cuando (a) esté cerrado.
+
+Lo que cambió respecto a la primera propuesta:
+
+- Las 24 horas pasan a ser **«un día hábil»**.
+- La tasa y el monto en Bs se **fijan al solicitar**, no al pagar, y se le
+  enseñan antes de enviar. Eso cierra el hueco (c).
+- El botón es **«Pedir el reembolso»**.
+- El apunte negativo del crédito **no puede llevar `reason: 'refund'`**.
 
 ---
 
-## 1 · Tres huecos del encargo que hay que cerrar antes
+## 1 · Los huecos del encargo
+
+Tres están cerrados. Queda **(a)**, que es el que de verdad importa.
 
 ### a) Si operación no paga, el crédito no vuelve
 
 El flujo dice: al solicitar, **el crédito sale del saldo en ese mismo
 momento**, y **la persona no puede cancelar**. Si por lo que sea el pago no
-se hace —datos malos, la persona cambia de opinión, se nos pasa— esa
-persona se queda **sin crédito y sin dinero**, y sin ninguna puerta.
+se hace, por datos malos o porque se nos pasa, esa persona se queda **sin
+crédito y sin dinero**, y sin ninguna puerta.
 
 Propongo añadir en el panel, junto a «Marcar reembolsado», un **«Devolver el
 crédito»**: cierra la solicitud como `devuelta`, el crédito vuelve al saldo
 y le llega un correo diciéndolo. No es poder cancelar del usuario, es que
 nosotros podamos deshacerlo.
 
-### b) Las 24 horas son una promesa a gente real
+### b) CERRADO · «un día hábil»
 
-El correo promete el pago en 24 horas. Hoy los pagos los revisa una persona.
-Si entra un reembolso un viernes por la noche, ¿se paga el sábado? Si la
-respuesta es «en días de semana», el copy tiene que decir eso y no «24
-horas».
+Michael: «1 día hábil». En el acuse, el correo 1 y la push 1.
 
-### c) La tasa del día puede no existir
+### c) CERRADO · la tasa se fija al solicitar
 
-El monto sale de la tasa BCV del día del reembolso, de `fx_rates`. Esa tabla
-la llena un cron. Si ese día falta la fila, el panel no puede calcular el
-monto. Propongo: **el botón de marcar reembolsado se desactiva y dice por
-qué**, en vez de usar una tasa vieja en silencio.
+Michael: «la tasa es del día que recibimos la solicitud y debe marcarse al
+momento de solicitarlo, así sabe cuánto va a recibir».
+
+Cambia el acuerdo anterior: **la tasa y el monto en Bs se guardan en la
+solicitud**, el formulario los enseña antes de enviar, y «Marcar
+reembolsado» ya no calcula nada, paga lo guardado.
+
+Si al pedirlo no hay tasa del día se usa la misma regla que al reportar un
+pago: el navegador manda la tasa que vio (`tasaVista`), el servidor la
+acepta solo si es una de las **tres últimas publicadas**, y si no lo es
+responde 409 con la tasa buena para que la pantalla enseñe el monto nuevo.
+Si no hay ninguna tasa, el botón de solicitar dice que lo intente más tarde.
+
+### d) El apunte del crédito NO puede ser `reason: 'refund'`
+
+Lo cazó el agente de la app y es correcto, con una consecuencia peor de la
+que él mismo describe.
+
+`reason: 'refund'` ya lo usa el abono de quedarse sin mesa, y
+`/api/mi-mesa` pregunta así si ese crédito volvió:
+
+```ts
+.eq('booking_id', reserva.id).eq('reason', 'refund').maybeSingle()
+```
+
+Con dos filas, `maybeSingle` no devuelve la primera: **falla**, `data` queda
+en null y `creditoDevuelto` se vuelve **false**. La pantalla «Esta vez no
+entraste» le diría «tu crédito no volvió» justo a la persona a la que le
+estamos devolviendo el dinero.
+
+Hay tres sitios más que filtran por ese mismo motivo, en `creditos.ts` y en
+el panel de pagos.
+
+**Solución:** motivo nuevo `reembolso_pedido`, con su migración sobre
+`credit_reason_t`, **y sin `booking_id`**. El enlace con el crédito original
+lo guarda la solicitud, que es donde tiene que estar.
 
 ---
 
@@ -38,7 +79,7 @@ qué**, en vez de usar una tasa vieja en silencio.
 
 ### Botón, en Mi mesa y en Mi cuenta
 
-> **Pedir que me devuelvan el dinero**
+> **Pedir el reembolso**
 
 Debajo, en pequeño:
 > Tienes hasta el {día} para pedirlo. Después, el crédito sigue siendo tuyo
@@ -49,8 +90,10 @@ Debajo, en pequeño:
 **Título:** Te devolvemos tu plaza en bolívares
 
 **Bajada:**
-> Te devolvemos los {precio} ref de tu plaza, a la tasa del día en que
-> hagamos el pago. Te lo mandamos por Pago Móvil.
+> Te devolvemos los {precio} ref de tu plaza por Pago Móvil.
+
+**Antes del botón, el monto ya fijado:**
+> Vas a recibir **{monto} Bs** ({precio} ref a la tasa de hoy, {tasa}).
 
 **Campos:** Teléfono · Cédula · Banco (los mismos de pagar)
 
@@ -63,18 +106,18 @@ Debajo, en pequeño:
 ### Acuse en pantalla
 
 **Título:** Listo, vamos a ello
-> Te lo mandamos a {teléfono} en las próximas 24 horas. Te avisamos en
+> Te mandamos {monto} Bs a {teléfono} en un día hábil. Te avisamos en
 > cuanto salga.
 
 ### Correo 1 · «Recibimos tu solicitud»
 
 **Asunto:** Recibimos tu solicitud de reembolso
-**Vista previa:** Te lo mandamos por Pago Móvil en las próximas 24 horas.
+**Vista previa:** Te mandamos {monto} Bs por Pago Móvil en un día hábil.
 
 > Hola, {trato}:
 >
-> Recibimos tu solicitud. Te devolvemos {precio} ref por Pago Móvil, a la
-> tasa del día del pago, en las próximas 24 horas.
+> Recibimos tu solicitud. Te mandamos **{monto} Bs** por Pago Móvil en un
+> día hábil, que son los {precio} ref de tu plaza a la tasa de hoy.
 >
 > Te lo mandamos a:
 > {teléfono} · {banco} · {cédula}
@@ -92,8 +135,8 @@ Debajo, en pequeño:
 
 > Hola, {trato}:
 >
-> Ya está. Te mandamos **{monto} Bs** por Pago Móvil a {teléfono}, que son
-> los {precio} ref de tu plaza a la tasa de hoy.
+> Ya está. Te mandamos **{monto} Bs** por Pago Móvil a {teléfono}, los
+> mismos que te dijimos al pedirlo.
 >
 > Referencia: **{referencia}**
 >
@@ -106,7 +149,7 @@ Debajo, en pequeño:
 
 | | título | cuerpo |
 |---|---|---|
-| Solicitud | Recibimos tu solicitud | Te mandamos el dinero por Pago Móvil en las próximas 24 horas. |
+| Solicitud | Recibimos tu solicitud | Te mandamos {monto} Bs por Pago Móvil en un día hábil. |
 | Pagado | Te devolvimos el dinero | {monto} Bs a {teléfono}. Referencia {referencia}. |
 
 ### Si se devuelve el crédito (el hueco (a))
@@ -127,6 +170,8 @@ En **`/api/mi-mesa`** (fase `sin-mesa`) y en **`/api/mi-cuenta`**:
   "puede": true,              // hay un crédito de espera reembolsable y queda plazo
   "hasta": "2026-10-25T04:00:00Z",  // fin del plazo, 3 días desde el crédito
   "monto": "10 ref",          // lo que se devuelve, en ref
+  "montoBs": null,            // los Bs ya fijados, solo si hay solicitud
+  "tasa": null,               // la tasa con la que se fijó
   "estado": null,             // null | "pendiente" | "reembolsado" | "devuelta"
   "solicitadoEn": null,
   "reembolsadoEn": null,
@@ -167,10 +212,11 @@ cosas distintas.
 
 - Tabla `refund_requests`: persona, el `credit_ledger.id` concreto que se
   reembolsa, teléfono, cédula, banco, `solicitado_at`, `estado`,
-  `reembolsado_at`, `referencia`, `monto_ves`, `tasa`.
-- Al solicitar, un apunte negativo en `credit_ledger` con `reason: 'refund'`,
-  que es el valor que ya existe en el enum. El saldo sale de esa tabla, así
-  que el crédito desaparece sin tocar nada más.
+  `reembolsado_at`, `referencia`, `monto_ves`, `tasa`. El monto y la tasa se
+  escriben AL SOLICITAR y no se vuelven a tocar.
+- Al solicitar, un apunte negativo en `credit_ledger` con un motivo NUEVO,
+  `reembolso_pedido`, y **sin `booking_id`**. Ver el punto (d): con
+  `reason: 'refund'` se rompe «Esta vez no entraste».
 - Dos tipos nuevos en `email_kind_t`, que es un enum de Postgres y pide
   migración.
 - Y el alcance: solo créditos cuyo apunte original sea por quedarse sin
