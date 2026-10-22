@@ -12,6 +12,8 @@ import * as T from '../texto/mesa'
 import * as M from './maquina'
 import * as J from '../juego/maquina'
 import { MesaCena } from './MesaCena'
+import * as RM from '../reembolso/maquina'
+import * as TR from '../texto/reembolso'
 import { AvisoAjustes, LineaGrabacion, PreguntaGrabacion, useGrabacion } from './Avisos'
 import { reglas } from '../reglas'
 import type { crearServicioMesa } from './servicio'
@@ -203,6 +205,21 @@ function Vacia({ d, ir }: { d: M.DeServidor; ir: (d: string) => void }) {
           <View style={{ marginTop: 18 }}>
             <Boton texto={v.accion} onPress={() => ir('/cuenta#agenda')} />
           </View>
+        ) : null}
+        {/* Si prefiere el dinero al crédito (21-10): mientras haya plazo, o el acuse si ya lo pidió. */}
+        {RM.fase(d.reembolso) === 'pedir' ? (
+          <View style={{ marginTop: 12 }}>
+            <Boton tipo="secundario" texto={TR.boton} onPress={() => ir('/reembolso')} />
+            {d.reembolso?.hasta ? (
+              <Texto variante="nota" style={{ marginTop: 10 }}>
+                {TR.hasta((() => { const x = reglas.partesDe(d.reembolso!.hasta); return x ? `${x.dia} ${x.numero}` : '' })())}
+              </Texto>
+            ) : null}
+          </View>
+        ) : RM.fase(d.reembolso) === 'pendiente' ? (
+          <Texto variante="cuerpoChico" style={{ marginTop: 12 }}>
+            {TR.acuse.cuerpo(RM.bs(d.reembolso?.montoBs), null)}
+          </Texto>
         ) : null}
       </View>
     </View>

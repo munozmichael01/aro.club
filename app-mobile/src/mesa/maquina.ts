@@ -56,6 +56,8 @@ export type DeServidor = {
   ajustes?: Ajustes | null
   /** En `sin-mesa`: si el abono de esa reserva está de verdad en el libro de créditos (17-10). */
   creditoDevuelto?: boolean
+  /** En `sin-mesa`: el reembolso de ese crédito (21-10). */
+  reembolso?: import('../reembolso/maquina').Reembolso
 }
 
 export type Ajustes = { alguienCancelo?: boolean; sonCuantos?: number; caben?: number; teMovimos?: boolean; seSumoAlguien?: boolean }
