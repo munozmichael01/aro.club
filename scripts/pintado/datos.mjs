@@ -88,6 +88,45 @@ export const PANTALLAS = {
     },
   ],
 
+  /**
+   * El reembolso, en sus dos caras: la de pedirlo y la de ya haberlo pedido.
+   *
+   * Sin datos simulados esta pantalla se va a `/entrar`, que en el servidor
+   * de pruebas es un 404, y el comprobador la veía en blanco con razón.
+   */
+  'Aro Club - Reembolso.dc.html': [
+    {
+      caso: 'puede pedirlo',
+      rutas: {
+        '/api/mi-cuenta': {
+          nombre: 'Ana', esOps: false, porValorar: null, planes: [], agenda: [], proximaFecha: null,
+          estado: 'verified', ciudad: 'caracas', paso: null, donde: [], puedeReservar: true,
+          verif: { estado: 'approved' }, motivoRechazo: null,
+          respuestas: { faltan: 0, total: 17 }, creditos: 1, reserva: null,
+          reembolso: {
+            puede: true, hasta: en(72), precio: 10, montoBs: 9931.76, tasa: 993.176,
+            estado: null, solicitadoEn: null, reembolsadoEn: null, referencia: null,
+          },
+        },
+      },
+    },
+    {
+      caso: 'ya lo pidió',
+      rutas: {
+        '/api/mi-cuenta': {
+          nombre: 'Ana', esOps: false, porValorar: null, planes: [], agenda: [], proximaFecha: null,
+          estado: 'verified', ciudad: 'caracas', paso: null, donde: [], puedeReservar: true,
+          verif: { estado: 'approved' }, motivoRechazo: null,
+          respuestas: { faltan: 0, total: 17 }, creditos: 0, reserva: null,
+          reembolso: {
+            puede: false, hasta: en(72), precio: 10, montoBs: 9931.76, tasa: 993.176,
+            estado: 'pendiente', solicitadoEn: en(-2), reembolsadoEn: null, referencia: null,
+          },
+        },
+      },
+    },
+  ],
+
   'Aro Club - Mi cuenta.dc.html': [{
     caso: 'con reserva',
     rutas: {

@@ -70,6 +70,9 @@ const PANTALLAS: Array<[string, string]> = [
   // Entrega 4 · la transacción y la operación
   ['/pago', '/Aro Club - Pago.dc.html'],
   ['/cancelar', '/Aro Club - Cancelar.dc.html'],
+  // La misma URL que la app: dos caminos distintos para pedir lo mismo es
+  // el principio de que digan cosas distintas.
+  ['/reembolso', '/Aro Club - Reembolso.dc.html'],
   ['/operacion', '/Aro Club - Operacion.dc.html'],
   // Entrega 7 y 8 · la ficha de miembro y los locales, ambas de operación
   ['/miembro', '/Aro Club - Perfil miembro.dc.html'],

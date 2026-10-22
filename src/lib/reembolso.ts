@@ -1,6 +1,19 @@
 import 'server-only'
 
+import { BANCOS } from '@/lib/reglas'
 import type { createAdminClient } from '@/lib/supabase/admin'
+
+/**
+ * El banco por su nombre, no por su código.
+ *
+ * Se guarda el código porque es lo que cuadra contra el movimiento bancario,
+ * pero «0134» no le dice nada a quien lee el correo: lo que esa persona
+ * reconoce es «Banesco». Quien paga ve los dos.
+ */
+export function nombreDeBanco(codigo: string): string {
+  const b = BANCOS.find((x) => x.codigo === codigo || x.nombre === codigo)
+  return b ? b.nombre : codigo
+}
 
 /**
  * Los bolívares, como se escriben aquí.

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { encolar } from '@/lib/correos'
-import { enBolivares, reembolsable } from '@/lib/reembolso'
+import { enBolivares, nombreDeBanco, reembolsable } from '@/lib/reembolso'
 import { valido } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'

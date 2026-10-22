@@ -47,6 +47,7 @@ type Api = {
   MAX_TEXTO: number
   precioTexto: () => string
   COCINAS: string[][]
+  BANCOS: { codigo: string; nombre: string }[]
   REGLAS: Record<Campo, { etiqueta: string; ayuda?: string }>
   vozDe: (formato: string | null | undefined) => {
     unidad: string; unidades: string; Unidad: string; Unidades: string
@@ -181,6 +182,12 @@ export const PRECIO_USD: number = api.PRECIO_USD
 export const precioTexto = api.precioTexto.bind(api)
 
 /** El catálogo de cocinas, uno solo: lo usan el cuestionario y la ficha del local. */
+/**
+ * Los bancos, de `reglas.js`, que es el catálogo que ya usan pagar y el
+ * reembolso. Escribirlo otra vez aquí sería la tercera copia.
+ */
+export const BANCOS = api.BANCOS
+
 export const COCINAS = api.COCINAS
 export const nombreDeCocina = (codigo: string): string => {
   const par = api.COCINAS.find((c) => c[1] === codigo)
