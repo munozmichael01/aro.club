@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { anotarPagoDeEvento } from '@/lib/creditos'
-import { exigirOps } from '@/lib/ops'
+import { DESDE_QUE_ES_REAL, exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
 import { encolar } from '@/lib/correos'
@@ -37,6 +37,8 @@ export async function GET() {
 
   const { data: pagos, error } = await admin
     .from('payments')
+    // Nada anterior al 12/10: antes de esa fecha son pagos de ensayo.
+    // Se filtra aquí y no al pintar, para que ni siquiera viajen.
     // `profiles!payments_profile_id_fkey` y no `profiles` a secas: payments
     // tiene DOS claves hacia profiles —quien paga y quien revisa— y sin
     // decir cual, PostgREST responde 300 y la cola llega vacia. Es la
@@ -44,6 +46,7 @@ export async function GET() {
     .select(
       'id, metodo, moneda, amount_usd, amount_local, fx_rate, reportado_en, datos, captura_path, status, rejection_note, profile_id, booking_id, profiles!payments_profile_id_fkey(display_name, full_name, phone_e164), bookings(event_id, status, hold_until, events(starts_at))',
     )
+    .gte('created_at', DESDE_QUE_ES_REAL)
     .in('status', ['under_review', 'rejected'])
     .order('reportado_en', { ascending: true })
 
@@ -131,6 +134,9 @@ export async function GET() {
     .from('payments')
     .select('created_at, amount_local, amount_usd, status')
     .eq('status', 'confirmed')
+    // Desde que el club es de verdad: antes del 12 son pagos de ensayo y
+    // ponen una joroba en la gráfica que no es dinero de nadie.
+    .gte('created_at', DESDE_QUE_ES_REAL)
     .order('created_at')
 
   const diaCaracas = (iso: string) =>
@@ -159,20 +165,25 @@ export async function GET() {
     .from('payments')
     .select('id, metodo, moneda, amount_usd, amount_local, status, datos, reference_code, created_at, profiles!payments_profile_id_fkey(display_name, full_name)')
     .in('status', ['confirmed', 'refunded', 'rejected'])
+    /**
+     * DESDE EL 12/10 Y NADA ANTES.
+     *
+     * Michael me lo dijo el 19-10 —«tanto en pagos como en historial muestra
+     * datos solo a partir del 10/10»— y lo que hice entonces fue subir el
+     * límite de treinta a doscientos, que es exactamente lo contrario: en
+     * vez de recortar lo viejo, enseñé más. Me lo volvió a decir el 21 con
+     * la fecha afinada al 12.
+     *
+     * Son veintitrés pagos de ensayo de ciento treinta y dos, con nombres
+     * como «Candidato» o «Prueba» y referencias tipo «123455». Mezclados con
+     * los de verdad, cuadrar un día es imposible.
+     */
+    .gte('created_at', DESDE_QUE_ES_REAL)
     .order('created_at', { ascending: false })
     /**
-     * Doscientos y no treinta.
-     *
-     * Estaba en treinta sin decirlo en ninguna parte, así que la lista
-     * parecía empezar el 17 de octubre cuando hay pagos desde el 17 de
-     * agosto. Michael, 19-10: «tanto en pagos como en historial muestra
-     * datos solo a partir del 10/10». En pagos era esto; el histórico no
-     * recorta nada, simplemente no se publicó ninguna mesa entre el 20 de
-     * agosto y el 7 de octubre.
-     *
-     * Doscientos cubre medio año al ritmo de hoy —ciento quince pagos desde
-     * agosto— y sigue siendo una consulta sola. El día que no quepa, esto
-     * pide paginación de verdad, no un número más grande.
+     * Doscientos cubre de sobra lo que queda después del corte, y sigue
+     * siendo una consulta sola. El día que no quepa, esto pide paginación de
+     * verdad, no un número más grande.
      */
     .limit(200)
 

@@ -11,6 +11,24 @@ import { createClient } from '@/lib/supabase/server'
  * escribe mal: es el tipo de comprobación que no puede depender de que
  * alguien se acuerde de repetirla igual.
  */
+/**
+ * DESDE CUÁNDO CUENTA LO QUE SE MIRA EN OPERACIÓN.
+ *
+ * Michael, 21-10: «te había dicho que en los pagos e historial de mesas no
+ * quiero nada anterior al 12/10».
+ *
+ * Antes de esa fecha el club estaba probándose: pagos de mentira, cenas que
+ * no ocurrieron, cuentas de ensayo. Mezclarlos con lo real no es un detalle
+ * estético, hace que las cifras mientan: hoy son 23 pagos viejos de 132 y
+ * cuatro mesas de quince.
+ *
+ * No se borra nada. Se deja de enseñar en las dos pantallas donde esos
+ * números se leen como negocio. La base conserva todo.
+ *
+ * Es medianoche del 12 en Caracas, que es UTC-4 y no cambia con la estación.
+ */
+export const DESDE_QUE_ES_REAL = '2026-10-12T04:00:00+00:00'
+
 export async function exigirOps(): Promise<string | null> {
   const supabase = await createClient()
   const {

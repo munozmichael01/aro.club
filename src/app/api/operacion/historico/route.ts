@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { resumenDeRespuesta } from '@/lib/encuesta'
-import { exigirOps } from '@/lib/ops'
+import { DESDE_QUE_ES_REAL, exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -232,7 +232,19 @@ export async function GET(request: Request) {
       todasLasFilas<{ table_id: string; profile_id: string; booking_id: string; seat_order: number | null }>(
         (d, h) => admin.from('table_members').select('table_id, profile_id, booking_id, seat_order').range(d, h)),
       todasLasFilas<{ id: string; starts_at: string; format: string; zone_slug: string | null; restaurant_id: string | null }>(
-        (d, h) => admin.from('events').select('id, starts_at, format, zone_slug, restaurant_id').range(d, h)),
+        /**
+         * Nada anterior al 12/10. Michael, 21-10.
+         *
+         * Antes de esa fecha las cenas eran ensayos, y el historial de mesas
+         * es justo donde se mira qué funcionó: cuatro mesas de quince que no
+         * ocurrieron de verdad desplazan la media de todo.
+         *
+         * Se corta por las FECHAS y no por las mesas: una mesa se arma días
+         * después de abrirse la fecha, así que filtrar por cuándo se creó la
+         * mesa dejaría dentro cenas viejas armadas tarde.
+         */
+        (d, h) => admin.from('events').select('id, starts_at, format, zone_slug, restaurant_id')
+          .gte('starts_at', DESDE_QUE_ES_REAL).range(d, h)),
       todasLasFilas<{ id: string; name: string; zone_slug: string | null }>(
         (d, h) => admin.from('restaurants').select('id, name, zone_slug').range(d, h)),
       todasLasFilas<{ slug: string; name: string }>(
@@ -292,7 +304,17 @@ export async function GET(request: Request) {
 
   const ahora = Date.now()
 
-  const todas: Mesa[] = mesasRaw.map((t) => {
+  /**
+   * Y las mesas de una fecha que ya no se lee, fuera.
+   *
+   * Las fechas vienen cortadas por el 12/10, así que una mesa de antes se
+   * queda sin su `ev` y el `?.` la deja pasar entera: sin día, sin zona y
+   * sin local, una fila vacía en medio del historial. Peor que enseñarla
+   * tal cual, porque parece un fallo de datos.
+   */
+  const todas: Mesa[] = mesasRaw
+    .filter((t) => evPorId.has(t.event_id))
+    .map((t) => {
     const ev = evPorId.get(t.event_id)
     // El local puede estar en la mesa o en la fecha: el reparto puede repartir
     // dos mesas del mismo día a dos sitios, y cuando no lo hace vale el de la
