@@ -1,8 +1,6 @@
 # Solicitar reembolso · copy y contrato
 
-Michael contestó el 21-10 de noche. **Aprobado todo menos el punto (a)**,
-que el agente de la app le está explicando. Nada de esto está construido:
-se monta cuando (a) esté cerrado.
+**Todo cerrado el 21-10 de noche. Listo para construir.**
 
 Lo que cambió respecto a la primera propuesta:
 
@@ -14,21 +12,27 @@ Lo que cambió respecto a la primera propuesta:
 
 ---
 
-## 1 · Los huecos del encargo
+## 1 · Los huecos del encargo, todos cerrados
 
-Tres están cerrados. Queda **(a)**, que es el que de verdad importa.
+### a) CERRADO · no hay «devolver el crédito», se paga
 
-### a) Si operación no paga, el crédito no vuelve
+Yo proponía un botón para devolverle el crédito cuando el pago no se
+hiciera. Michael lo descartó, y tiene razón:
 
-El flujo dice: al solicitar, **el crédito sale del saldo en ese mismo
-momento**, y **la persona no puede cancelar**. Si por lo que sea el pago no
-se hace, por datos malos o porque se nos pasa, esa persona se queda **sin
-crédito y sin dinero**, y sin ninguna puerta.
+> «la misma persona que le daría a ese botón de devolver el crédito es la
+> que devolvería el pago, así que no, se hace el pago».
 
-Propongo añadir en el panel, junto a «Marcar reembolsado», un **«Devolver el
-crédito»**: cierra la solicitud como `devuelta`, el crédito vuelve al saldo
-y le llega un correo diciéndolo. No es poder cancelar del usuario, es que
-nosotros podamos deshacerlo.
+El botón resolvía un problema que no existe: quien está mirando la
+solicitud en el panel es quien tiene el teléfono para pagar. Darle una
+salida fácil es invitar a no pagar.
+
+**Lo que sí cambia:** «Marcar reembolsado» deja de ser un botón y pasa a ser
+**un formulario igual al que rellena quien paga**, con los mismos campos y
+**adjuntando el soporte del pago**. El comprobante queda guardado en la
+solicitud, igual que la captura de un pago.
+
+Así que no hay estado `devuelta` y el contrato pierde ese valor: los
+estados son `pendiente` y `reembolsado`.
 
 ### b) CERRADO · «un día hábil»
 
@@ -152,12 +156,17 @@ Debajo, en pequeño:
 | Solicitud | Recibimos tu solicitud | Te mandamos {monto} Bs por Pago Móvil en un día hábil. |
 | Pagado | Te devolvimos el dinero | {monto} Bs a {teléfono}. Referencia {referencia}. |
 
-### Si se devuelve el crédito (el hueco (a))
+### El formulario del panel, al marcar reembolsado
 
-**Asunto:** Tu crédito está de vuelta
-> No pudimos hacerte el pago, así que te devolvimos el crédito a tu cuenta:
-> ya puedes usarlo para reservar. Si quieres el dinero en vez del crédito,
-> vuelve a pedirlo desde tu cuenta.
+Los mismos campos que rellena quien paga, más el soporte:
+
+- Referencia del Pago Móvil
+- Monto en Bs, ya calculado y guardado desde la solicitud, sin poder
+  tocarlo
+- **Adjuntar el comprobante**, como la captura de un pago
+
+Sin comprobante no se marca: la referencia sola es lo que se escribe mal y
+luego nadie puede rastrear.
 
 ---
 
@@ -172,7 +181,7 @@ En **`/api/mi-mesa`** (fase `sin-mesa`) y en **`/api/mi-cuenta`**:
   "monto": "10 ref",          // lo que se devuelve, en ref
   "montoBs": null,            // los Bs ya fijados, solo si hay solicitud
   "tasa": null,               // la tasa con la que se fijó
-  "estado": null,             // null | "pendiente" | "reembolsado" | "devuelta"
+  "estado": null,             // null | "pendiente" | "reembolsado"
   "solicitadoEn": null,
   "reembolsadoEn": null,
   "referencia": null          // solo cuando está reembolsado
