@@ -927,9 +927,22 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           ...(yaAbierta
             ? await (async () => {
                 const suya = await laMesaDe(admin, fila.event_id!, fila.profile_id)
-                return { fotoEntrada: suya?.fotoEntrada ?? '', sitio: suya?.sitio ?? '' }
+                return {
+                  fotoEntrada: suya?.fotoEntrada ?? '',
+                  sitio: suya?.sitio ?? '',
+                  avisoDosHoras: suya?.avisoDosHoras ?? '',
+                }
               })()
-            : { fotoEntrada: '', sitio: '' }),
+            /**
+             * Antes de la revelación también se avisa, pero SIN la frase de
+             * los sitios cerca: a las nueve de la mañana no sabemos en qué
+             * restaurante cena esta persona, así que tampoco sabemos si hay
+             * dónde seguir. Prometerlo y que luego no haya es peor que
+             * callarlo hasta el mediodía, cuando el correo de la mesa lo
+             * dice entero.
+             */
+            : { fotoEntrada: '', sitio: '',
+                avisoDosHoras: avisoDeDosHoras(evento.starts_at, zona, false) }),
         },
       }
     }
@@ -1707,6 +1720,37 @@ async function textoDelMotivo(admin: Admin, codigo: string | undefined): Promise
   return data?.message ?? 'hay que repetir la foto.'
 }
 
+/**
+ * «La mesa es tuya por dos horas».
+ *
+ * Michael lo aprobó el 21-10, palabra por palabra. Va en la revelación, en
+ * el recordatorio y en Mi mesa, y en los tres sale de aquí: es el aviso que
+ * evita que un grupo se quede hasta las doce en una mesa que el restaurante
+ * ya tiene prometida a otros, y decirlo distinto en cada sitio es la forma
+ * de que acabe diciendo tres cosas.
+ *
+ * Las horas salen del evento, nunca escritas a mano, y la última frase solo
+ * aparece si esa mesa tiene sitios cerca de verdad: prometer un paso a paso
+ * que está vacío es peor que no prometer nada.
+ */
+export function avisoDeDosHoras(
+  inicioIso: string | null | undefined,
+  zona: string | undefined,
+  haySitiosCerca: boolean,
+  donde = 'Mi mesa',
+): string {
+  if (!inicioIso) return ''
+  const empieza = horaDe(inicioIso, zona)
+  const acaba = horaDe(new Date(Date.parse(inicioIso) + 2 * 3600_000).toISOString(), zona)
+  if (!empieza || !acaba) return ''
+  // Sin punto detrás de la hora: `horaDe` ya devuelve «9:00 p.m.», con el
+  // suyo. Añadir el de la frase deja «9:00 p.m..», que es el mismo descuido
+  // que ya apareció esta noche en el panel.
+  return `Importante: la mesa es tuya por dos horas, de ${empieza} a ${acaba} `
+    + 'El restaurante puede tener otra reserva esperando esa mesa, así que tenlo en cuenta para la sobremesa.'
+    + (haySitiosCerca ? ` Si quieren seguir, en ${donde} hay sitios cerca.` : '')
+}
+
 async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null) {
   if (!perfilId) return null
 
@@ -1771,12 +1815,19 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   const numero = String(mesa.table_number).padStart(2, '0')
   const direccion = mesa.restaurants?.address ?? ''
 
+  // ¿Tiene sitios cerca a los que seguir? De la misma tabla que Mi mesa.
+  const { data: cerca } = await admin
+    .from('restaurant_after_venues')
+    .select('after_id')
+    .eq('restaurant_id', mesa.restaurants?.id ?? '')
+    .limit(1)
+
   // De cuántos es una mesa en ESTA fecha. De la fecha y no de una constante:
   // `seats_per_table` se puede cambiar al abrirla, y el día que haya una de
   // cuatro a propósito esto no puede llamarla corta.
   const { data: deLaFecha } = await admin
     .from('events')
-    .select('seats_per_table, reveal_at')
+    .select('seats_per_table, reveal_at, starts_at, city_slug')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -1830,6 +1881,13 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
     numero,
     sitio: mesa.restaurants?.name ?? '',
     direccion,
+    // El aviso de las dos horas, con las horas de ESTA fecha y la última
+    // frase solo si ese local tiene sitios cerca.
+    avisoDosHoras: avisoDeDosHoras(
+      deLaFecha?.starts_at,
+      await zonaDeLaCiudad(admin, deLaFecha?.city_slug),
+      (cerca ?? []).length > 0,
+    ),
     zona: zonas[0] ?? '',
     // El de la ficha si lo tiene; si no, uno construido, que es mejor que un
     // botón que no lleva a ningún sitio.
