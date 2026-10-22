@@ -3797,6 +3797,19 @@ class Component extends DCLogic {
        * moviendo a alguien, no decidiendo.
        */
       const corta = g.length > 0 && g.length < POR_MESA;
+      /**
+       * CUATRO ES EL MÍNIMO, y no es un freno.
+       *
+       * Michael, 22-10: «el mínimo es 4, pero lo decide él a mano. En el
+       * reparto, una mesa de menos de 4 tiene que verse con un aviso claro y
+       * él elige: publicarla igual o dejar a esa gente en espera».
+       *
+       * Así que no se bloquea nada: se distingue. Una mesa de cuatro o cinco
+       * es una decisión normal; una de tres o menos es otra cosa, y el correo
+       * de la revelación ya le dice a esa gente que creemos que bastan, cosa
+       * que con dos no sostiene nadie.
+       */
+      const bajoMinimo = g.length > 0 && g.length < 4;
       const pasada = g.length > POR_MESA;
       const clave = String(m.numero) + '|' + (m.corridaId || '');
       // Por la clave y no por el número: moviendo en la Mesa 01 de una fecha,
@@ -4061,7 +4074,9 @@ class Component extends DCLogic {
         hayRota: malas.length > 0 && !pub && !calc,
         textoRota: !tamOk
           ? (g.length < POR_MESA
-            ? 'Se quedó en ' + g.length + ': ' + ((POR_MESA - g.length) === 1 ? 'falta una persona' : 'faltan ' + (POR_MESA - g.length)) + ' para poder publicarla.'
+            ? (bajoMinimo
+              ? 'Se quedó en ' + g.length + ', por debajo del mínimo de cuatro. Puedes publicarla igual, pero el correo le va a decir a esa gente que creemos que bastan, y con ' + g.length + ' eso no lo sostiene nadie. La otra salida es dejarlos en espera: reciben «Esta vez no entraste» y su crédito vuelve.'
+              : 'Se quedó en ' + g.length + ' de ' + POR_MESA + '. Se puede publicar: el correo lo dice y no promete seis. Si prefieres completarla, ' + ((POR_MESA - g.length) === 1 ? 'falta una persona' : 'faltan ' + (POR_MESA - g.length)) + '.')
             : 'Son ' + g.length + ' y caben ' + POR_MESA + '. Mueve ' + (g.length - POR_MESA) + ' a otra ' + vozRep.unidad + ' o a la espera.')
           : malas.length === 1
           ? 'Rompe una regla: ' + malas[0].detalle + '. Publicar se para aquí.'
