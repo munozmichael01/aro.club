@@ -12,6 +12,7 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./cabecera.js"></script>
 <!--
   ESTA PANTALLA NO SE SIRVE SOLA: la sirve `src/app/agenda/route.ts`.
 
@@ -55,6 +56,9 @@
 </head>
 <body>
 <noscript><div style="max-width:40rem;margin:10vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Cenas y planes en Caracas.</p><p style="margin:0 0 12px">Para apartar tu puesto hace falta JavaScript. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p><!--AGENDA-LISTA--></div></noscript>
+<!-- La cabecera pública, fuera del árbol de DCLogic a propósito: su
+     porqué está en cabecera.js. -->
+<div data-cabecera="agenda" data-ancho="1240"></div>
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -81,53 +85,6 @@
 </style>
 </helmet>
 <div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;width:100%;overflow-x:clip">
-
-  <div style="position:sticky;top:0;z-index:40;background:rgba(250,243,228,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.09)">
-    <div style="max-width:1240px;margin:0 auto;padding:13px clamp(16px,4vw,36px);display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <a href="/" style="display:flex;align-items:center;gap:9px;color:#14342A;min-height:44px">
-        <svg width="25" height="25" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="2.5" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#1B5138"></circle></svg>
-        <span style="font:400 21px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;white-space:nowrap">Aro Club</span>
-      </a>
-      <div class="solo-esc" style="display:flex;align-items:center;gap:4px">
-        <a href="/agenda" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;color:#8F4515;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Agenda</a>
-        <sc-if value="{{ sinSesion }}" hint-placeholder-val="{{ true }}">
-          <a href="/entrar" style="display:inline-flex;align-items:center;min-height:44px;padding:0 14px;color:#1B5138;font:500 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Entrar</a>
-          <a href="/#registro" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">Empezar</a>
-        </sc-if>
-        <sc-if value="{{ conSesion }}" hint-placeholder-val="{{ false }}">
-          <a href="/cuenta" style="display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">{{ textoCuenta }}</a>
-        </sc-if>
-      </div>
-      <div class="solo-mov" style="display:flex;align-items:center;gap:6px">
-        <sc-if value="{{ sinSesion }}" hint-placeholder-val="{{ true }}">
-          <a href="/#registro" style="display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;white-space:nowrap">Empezar</a>
-        </sc-if>
-        <button onClick="{{ alternarMenu }}" aria-label="{{ etiquetaMenu }}" style="width:44px;height:44px;border-radius:999px;border:1.5px solid rgba(20,52,42,.2);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
-          <sc-if value="{{ menuCerrado }}" hint-placeholder-val="{{ true }}">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 5h14M2 13h14" stroke="#14342A" stroke-width="2" stroke-linecap="round"></path></svg>
-          </sc-if>
-          <sc-if value="{{ menuAbierto }}" hint-placeholder-val="{{ false }}">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 4l10 10M14 4L4 14" stroke="#14342A" stroke-width="2" stroke-linecap="round"></path></svg>
-          </sc-if>
-        </button>
-      </div>
-    </div>
-    <sc-if value="{{ menuAbierto }}" hint-placeholder-val="{{ false }}">
-      <div class="solo-mov" style="border-top:1px solid rgba(20,52,42,.09);background:#FAF3E4;padding:8px clamp(16px,4vw,36px) 24px;display:flex;flex-direction:column">
-        <a href="/agenda" style="display:flex;align-items:center;min-height:60px;border-bottom:1px solid rgba(20,52,42,.1);font:400 26px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#8F4515">Agenda</a>
-        <sc-if value="{{ sinSesion }}" hint-placeholder-val="{{ true }}">
-          <a href="/" style="display:flex;align-items:center;min-height:60px;border-bottom:1px solid rgba(20,52,42,.1);font:400 26px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Cómo funciona</a>
-          <a href="/entrar" style="display:flex;align-items:center;min-height:60px;border-bottom:1px solid rgba(20,52,42,.1);font:400 26px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Entrar</a>
-          <a href="/#registro" style="display:flex;align-items:center;justify-content:center;min-height:56px;margin-top:22px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif">Encuentra tu mesa</a>
-        </sc-if>
-        <sc-if value="{{ conSesion }}" hint-placeholder-val="{{ false }}">
-          <a href="/cuenta" style="display:flex;align-items:center;min-height:60px;border-bottom:1px solid rgba(20,52,42,.1);font:400 26px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Mi cuenta</a>
-          <a href="/perfil" style="display:flex;align-items:center;min-height:60px;border-bottom:1px solid rgba(20,52,42,.1);font:400 26px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">Mi perfil</a>
-          <button onClick="{{ salir }}" style="display:flex;align-items:center;min-height:52px;margin-top:14px;padding:0;border:0;background:transparent;font:500 15px/1 'Inter Tight',sans-serif;color:#456352;cursor:pointer;text-align:left">Cerrar sesión</button>
-        </sc-if>
-      </div>
-    </sc-if>
-  </div>
 
   <div style="max-width:1240px;margin:0 auto;padding:40px clamp(16px,4vw,36px) 28px">
     <sc-if value="{{ hayEncabezado }}" hint-placeholder-val="{{ true }}">
@@ -235,7 +192,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { datos: null, cargado: false, sesion: null, sesionSabida: false, filtro: null, menu: false };
+  state = { datos: null, cargado: false, sesion: null, sesionSabida: false, filtro: null };
 
   componentDidMount() {
     // Las fechas, de la base. La maqueta traía siete escritas a mano —con
@@ -246,14 +203,10 @@ class Component extends DCLogic {
       .then((d) => this.setState({ datos: d, cargado: true }))
       .catch(() => this.setState({ datos: { fechas: [], zonas: [] }, cargado: true }));
 
-    // Y quién mira, si es que hay alguien. Sin esto, un miembro aterriza
-    // aquí y ve «Entrar» y «Empezar»: desde dentro eso no se lee como una
-    // página pública, se lee como que te han echado. Es lo mismo que la
-    // portada ya tenía resuelto.
-    fetch('/api/mi-cuenta')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((s) => this.setState({ sesion: s || null, sesionSabida: true }))
-      .catch(() => this.setState({ sesionSabida: true }));
+    // Y quién mira, para que el botón de cada tarjeta lleve a su reserva y
+    // no al alta. Se la pide a la cabecera, que ya la trae: tres fetch de
+    // `/api/mi-cuenta` en la misma carga eran tres.
+    AroCabecera.sesion().then((s) => this.setState({ sesion: s || null, sesionSabida: true }));
   }
 
   /** «Jueves 22 de octubre», en la hora de la ciudad de esa fecha. */
@@ -368,24 +321,8 @@ class Component extends DCLogic {
     const semanas = todas.map((f) => AroReglas.semanaDe(f.empiezaEn, f.zonaHoraria));
     const unaSemana = semanas.length > 0 && semanas.every((s) => s === semanas[0]);
     const rango = this.rango(lista);
-    const abierto = !!this.state.menu;
 
     return {
-      sinSesion: this.state.sesionSabida && !sesion,
-      conSesion: this.state.sesionSabida && !!sesion,
-      textoCuenta: sesion && sesion.estado === 'abierta' ? 'Mi mesa' : 'Mi cuenta',
-      // `/api/salir` es un POST: un enlace a la portada dejaba la sesión
-      // viva y era una promesa falsa en una computadora prestada.
-      salir: () => {
-        fetch('/api/salir', { method: 'POST' })
-          .catch(() => {})
-          .then(() => { window.location.href = '/' })
-      },
-      menuAbierto: abierto,
-      menuCerrado: !abierto,
-      etiquetaMenu: abierto ? 'Cerrar menú' : 'Abrir menú',
-      alternarMenu: () => this.setState({ menu: !abierto }),
-
       cargando: !cargado,
       huesos: [1, 2, 3],
       hayFiltros: cargado && conFecha.length > 0,

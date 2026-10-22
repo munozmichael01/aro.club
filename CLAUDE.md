@@ -48,12 +48,16 @@ enlazaba a una ruta que `comprobar-pantallas` no sabía que existía, y ese
 comprobador no estaba en esta lista. Correr menos de lo que corre el CI es
 enterarse por correo.
 
-El primero porque el CI lo exige y el dev server no caza errores de tipos. El
-segundo porque compara las opciones del cuestionario con el catálogo de la
-base, y ese descuadre no falla nada visible: la respuesta se pierde al guardar
-y la persona sigue adelante creyendo que quedó.
+`tsc` porque el CI lo exige y el dev server no caza errores de tipos.
+`comprobar-pantallas` porque los `.dc.html` no los mira nadie más: enlaces a
+rutas que no existen, etiquetas que no cierran, piezas que falta cargar.
+`comprobar-correos`, para que ningún botón de un correo lleve a un 404.
+`comprobar-cuestionario` porque compara las opciones de la pantalla con el
+catálogo de la base, y ese descuadre no falla nada visible: la respuesta se
+pierde al guardar y la persona sigue adelante creyendo que quedó.
 
-El tercero porque los otros dos leen las pantallas y no las abren. El 17-10
+Y `comprobar-pintado`, el que NO está en el CI, porque todos los anteriores
+leen las pantallas y no las abren. El 17-10
 subi un bloque que cierra bien, parsea y **deja Mi mesa en blanco**: media
 hora en produccion con la pantalla vacia para todo el mundo, y el
 comprobador decia 0 problemas. `comprobar-pintado` abre cada `.dc.html` en

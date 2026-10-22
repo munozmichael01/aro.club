@@ -360,6 +360,29 @@ for (const nombre of pantallas) {
   }
 }
 
+/**
+ * Y los enlaces de las piezas COMPARTIDAS, que ya no viven en ninguna
+ * pantalla.
+ *
+ * `cabecera.js` es la barra pública de todas y `nav.js` la de la zona de
+ * miembro: entre las dos llevan «Agenda», «Entrar», «Mi cuenta», «Mi
+ * perfil» y «Empezar». El dia que la barra se mudo a su propio fichero,
+ * este comprobador dejo de ver esos enlaces sin decir nada — y dejar de
+ * comprobar en silencio es exactamente lo que no puede hacer.
+ */
+for (const pieza of ['cabecera.js', 'nav.js']) {
+  let js
+  try {
+    js = readFileSync(fileURLToPath(new URL(`../public/${pieza}`, import.meta.url)), 'utf8')
+  } catch { continue }
+  for (const m of js.matchAll(/'(\/[a-z0-9-][^'#?]*)'/gi)) {
+    const r = m[1].replace(/\/$/, '') || '/'
+    if (/\.[a-z0-9]{2,4}$/i.test(r)) continue
+    if (!rutasUsadas.has(r)) rutasUsadas.set(r, new Set())
+    rutasUsadas.get(r).add(pieza)
+  }
+}
+
 console.log(`${pantallas.length} pantallas · ${rutasUsadas.size} rutas internas distintas\n`)
 
 for (const [ruta, quien] of [...rutasUsadas].sort()) {
