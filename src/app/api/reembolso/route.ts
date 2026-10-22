@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { encolar } from '@/lib/correos'
 import { enBolivares, reembolsable } from '@/lib/reembolso'
+import { valido } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -63,6 +64,45 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Faltan datos del Pago Móvil.' }, { status: 400 })
   }
   const d = parsed.data
+
+  /**
+   * Y QUE LOS DATOS SIRVAN, con los mismos validadores que pagar.
+   *
+   * `zod` solo miraba el largo, así que un teléfono de seis cifras pasaba.
+   * Aquí eso no es un campo mal puesto: es dinero saliendo hacia un número
+   * que no existe, y el error aparece dos días después, cuando alguien
+   * pregunta dónde está su plata.
+   *
+   * La cédula llega como «V12345678» —así la manda la app— y el validador
+   * compartido mide solo los dígitos, así que la letra se separa antes.
+   */
+  const laCedula = /^([VEJGvejg])[-\s]?(\d{6,9})$/.exec(d.cedula.trim())
+
+  /**
+   * El cero de delante se descuenta antes de medir.
+   *
+   * `telefonoPagoMovil` exige diez cifras exactas, y la app manda
+   * «04141234567», que son once. Sin esto, TODA solicitud hecha desde la app
+   * se caía con «revisa el teléfono». Lo vi probando el validador contra el
+   * formato que el agente dijo que manda, no leyendo el código.
+   *
+   * Se acepta con cero y sin él, y se guarda con cero, que es como se teclea
+   * en el banco y como lo va a copiar quien pague.
+   */
+  const soloCifras = d.telefono.replace(/\D/g, '')
+  const diez = soloCifras.replace(/^0(?!0)/, '')
+
+  const pegas: string[] = []
+  if (!valido('telefonoPagoMovil', diez)) pegas.push('el teléfono')
+  if (!laCedula) pegas.push('la cédula')
+  if (!valido('banco', d.banco)) pegas.push('el banco')
+
+  if (pegas.length) {
+    return NextResponse.json(
+      { error: 'Revisa ' + pegas.join(' y ') + '.', motivo: 'datos', campos: pegas },
+      { status: 400 },
+    )
+  }
 
   const admin = createAdminClient()
   const puede = await reembolsable(admin, user.id)
@@ -137,8 +177,10 @@ export async function POST(request: Request) {
     profile_id: user.id,
     credito_id: puede.abono.id,
     salida_id: salida.id,
-    telefono: d.telefono.trim(),
-    cedula: d.cedula.trim().toUpperCase(),
+    telefono: '0' + diez,
+    // Normalizada: «V12345678», sin guiones ni espacios, para que quien
+    // paga la vea siempre igual.
+    cedula: laCedula![1].toUpperCase() + laCedula![2],
     banco: d.banco.trim(),
     precio_usd: puede.precio,
     tasa,
@@ -154,9 +196,11 @@ export async function POST(request: Request) {
 
   await encolar({ perfil: user.id }, 'reembolso_pedido', {
     montoBs: enBolivares(montoBs),
-    telefono: d.telefono.trim(),
+    telefono: '0' + diez,
     banco: d.banco.trim(),
-    cedula: d.cedula.trim().toUpperCase(),
+    // Normalizada: «V12345678», sin guiones ni espacios, para que quien
+    // paga la vea siempre igual.
+    cedula: laCedula![1].toUpperCase() + laCedula![2],
     precio: String(puede.precio),
   })
 
