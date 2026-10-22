@@ -3,6 +3,15 @@ import 'server-only'
 import type { createAdminClient } from '@/lib/supabase/admin'
 
 /**
+ * Los bolívares, como se escriben aquí.
+ *
+ * El correo decía «9931.76 Bs», con el punto de programar y sin miles. Lo
+ * que esa persona busca en su banco es «9.931,76».
+ */
+export const enBolivares = (n: number) =>
+  Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+/**
  * Qué crédito se puede devolver, y hasta cuándo.
  *
  * Vive aquí y no en la ruta porque lo preguntan tres sitios: la ruta que
@@ -81,3 +90,53 @@ export async function reembolsable(
   }
 }
 
+
+/**
+ * El bloque que leen las pantallas, con el mismo nombre en las tres.
+ *
+ * `puede` dice si va el botón. `estado` manda sobre él: con una solicitud
+ * viva se enseña el acuse, no el botón, porque pedirlo dos veces no es una
+ * opción que exista.
+ */
+export async function bloqueDeReembolso(
+  admin: ReturnType<typeof createAdminClient>,
+  perfilId: string,
+) {
+  const r = await reembolsable(admin, perfilId)
+  if (!r) return { puede: false, estado: null }
+
+  const { data: tasa } = await admin
+    .from('fx_rates')
+    .select('ves_por_ref')
+    .order('rate_date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const laTasa = tasa ? Number(tasa.ves_por_ref) : null
+  const s = r.solicitud as {
+    estado?: string
+    solicitado_at?: string
+    reembolsado_at?: string | null
+    referencia?: string | null
+    monto_ves?: number | null
+    tasa?: number | null
+  } | null
+
+  return {
+    // Sin solicitud, con el crédito todavía en el saldo y con tasa que
+    // enseñarle: las tres cosas, o el botón promete algo que no ocurre.
+    puede: !s && r.saldo >= 1 && laTasa != null,
+    hasta: r.hasta,
+    precio: r.precio,
+    // Lo que va a recibir, ya calculado. Michael: «así sabe cuánto va a
+    // recibir». Si ya lo pidió, el de su solicitud y no el de hoy.
+    montoBs: s?.monto_ves != null
+      ? Number(s.monto_ves)
+      : (laTasa != null ? Number((r.precio * laTasa).toFixed(2)) : null),
+    tasa: s?.tasa != null ? Number(s.tasa) : laTasa,
+    estado: s?.estado ?? null,
+    solicitadoEn: s?.solicitado_at ?? null,
+    reembolsadoEn: s?.reembolsado_at ?? null,
+    referencia: s?.referencia ?? null,
+  }
+}

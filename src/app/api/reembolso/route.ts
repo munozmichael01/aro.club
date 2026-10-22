@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { encolar } from '@/lib/correos'
-import { reembolsable } from '@/lib/reembolso'
+import { enBolivares, reembolsable } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -153,7 +153,7 @@ export async function POST(request: Request) {
   }
 
   await encolar({ perfil: user.id }, 'reembolso_pedido', {
-    montoBs: montoBs.toFixed(2),
+    montoBs: enBolivares(montoBs),
     telefono: d.telefono.trim(),
     banco: d.banco.trim(),
     cedula: d.cedula.trim().toUpperCase(),

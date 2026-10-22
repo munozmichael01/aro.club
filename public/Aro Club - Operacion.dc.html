@@ -1282,6 +1282,45 @@
           </sc-for>
         </div>
 
+        <!-- LO QUE HAY QUE DEVOLVER. Va arriba del todo porque es lo único
+             de esta pantalla que tiene a alguien esperando su dinero, y
+             porque prometimos un día hábil. -->
+        <sc-if value="{{ hayReembolsos }}" hint-placeholder-val="{{ false }}">
+          <div style="border:1px solid #8F4515;border-radius:24px;padding:clamp(18px,2.4vw,24px);margin:clamp(20px,2.6vw,26px) 0;background:#FAF3E4">
+            <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:6px">REEMBOLSOS POR PAGAR</div>
+            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-bottom:16px;max-width:60ch;text-wrap:pretty">{{ notaReembolsos }}</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <sc-for list="{{ reembolsos }}" as="r" hint-placeholder-count="2">
+                <div style="{{ r.caja }}">
+                  <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between">
+                    <span style="font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ r.quien }}</span>
+                    <span style="font:400 22px/1 'Young Serif',Georgia,serif;color:#14342A">{{ r.monto }}</span>
+                  </div>
+                  <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:6px">{{ r.datos }}</div>
+                  <div style="font:400 12px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:3px">{{ r.cuando }}</div>
+
+                  <sc-if value="{{ r.porPagar }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:13px;align-items:center">
+                      <input type="text" value="{{ r.referencia }}" onChange="{{ r.ponerReferencia }}" placeholder="Referencia del pago" style="{{ campoFiltro }}" />
+                      <label style="{{ r.botonAdjuntar }}">
+                        <input type="file" accept="image/*,application/pdf" onChange="{{ r.adjuntar }}" style="position:absolute;width:1px;height:1px;opacity:0" />
+                        {{ r.textoAdjuntar }}
+                      </label>
+                      <button onClick="{{ r.pagar }}" style="{{ r.botonPagar }}">{{ r.textoPagar }}</button>
+                    </div>
+                    <sc-if value="{{ r.hayPega }}" hint-placeholder-val="{{ false }}">
+                      <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-top:8px">{{ r.pega }}</div>
+                    </sc-if>
+                  </sc-if>
+                  <sc-if value="{{ r.pagado }}" hint-placeholder-val="{{ false }}">
+                    <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#1B5138;margin-top:10px">{{ r.textoPagado }}</div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
         <!-- Cuánto ha entrado, día a día. La pregunta que se hace mirando
              pagos no es solo «qué falta por conciliar» sino «cómo venimos», y
              hasta ahora había que sumar a mano. -->
@@ -1869,6 +1908,7 @@ class Component extends DCLogic {
     paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {}, empujon: null,
     pruebaGente: null, verPruebaGente: false,
     perfilesGente: 0, leadsGente: null, pidiendoGente: false,
+    reembolsos: null, refRee: {}, compRee: {}, pegaRee: {}, pagandoRee: '',
     avisos: null, bajas: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
     // Mover a una persona a mano en la fecha elegida. Vive en Reparto y
     // cerrado por defecto: es la única acción del panel que se salta el
@@ -1891,6 +1931,7 @@ class Component extends DCLogic {
     this.cargarFechas();
     this.cargarCola();
     this.cargarPagos();
+    this.cargarReembolsos();
     this.cargarIncidencias();
     this.cargarLocales();
     // Equipo decide cuántas pestañas hay, así que la del hash se resuelve
@@ -2185,6 +2226,59 @@ class Component extends DCLogic {
     if (deFondo) return this.repedir('/api/operacion/verificaciones', leer);
     return this.pedir('/api/operacion/verificaciones', leer,
       { cola: [], motivosCola: [], colaConteo: null });
+  }
+
+  /**
+   * Los reembolsos por pagar. Se piden con los pagos porque se miran en la
+   * misma pantalla y en el mismo momento.
+   */
+  cargarReembolsos(deFondo) {
+    const leer = (d) => ({ reembolsos: d.filas || [] });
+    if (deFondo) return this.repedir('/api/operacion/reembolsos', leer);
+    return this.pedir('/api/operacion/reembolsos', leer, { reembolsos: [] });
+  }
+
+  /** Sube el comprobante y lo guarda para esa solicitud. */
+  adjuntarComprobante(id, archivo) {
+    if (!archivo) return;
+    const cuerpo = new FormData();
+    cuerpo.append('archivo', archivo);
+    this.setState((st) => ({ pegaRee: Object.assign({}, st.pegaRee, { [id]: '' }) }));
+    return fetch('/api/pago/captura', { method: 'POST', body: cuerpo })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then((res) => {
+        if (!res.ok || !res.d.ruta) {
+          this.setState((st) => ({ pegaRee: Object.assign({}, st.pegaRee, { [id]: res.d.error || 'No se pudo subir el comprobante.' }) }));
+          return;
+        }
+        this.setState((st) => ({ compRee: Object.assign({}, st.compRee, { [id]: res.d.ruta }) }));
+      })
+      .catch(() => this.setState((st) => ({ pegaRee: Object.assign({}, st.pegaRee, { [id]: 'No se pudo subir el comprobante.' }) })));
+  }
+
+  /**
+   * Marcar pagado. Pide referencia Y comprobante: la referencia sola es lo
+   * que se escribe mal y después no hay nada que rastrear.
+   */
+  marcarReembolsado(id) {
+    const referencia = (this.state.refRee[id] || '').trim();
+    const comprobante = this.state.compRee[id];
+    if (!referencia || !comprobante) {
+      this.setState((st) => ({ pegaRee: Object.assign({}, st.pegaRee, {
+        [id]: !referencia ? 'Falta la referencia del pago.' : 'Falta adjuntar el comprobante.' }) }));
+      return;
+    }
+    this.setState({ pagandoRee: id });
+    return this.mandar('/api/operacion/reembolsos', { solicitudId: id, referencia, comprobante })
+      .then((r) => {
+        this.setState({ pagandoRee: '' });
+        if (!r.ok) {
+          this.setState((st) => ({ pegaRee: Object.assign({}, st.pegaRee, { [id]: r.d.error || 'No se pudo.' }) }));
+          return r;
+        }
+        this.setState({ aviso: 'Reembolso pagado. Le sale el correo con la referencia.' });
+        return this.cargarReembolsos();
+      });
   }
 
   cargarPagos(deFondo) {
@@ -4464,7 +4558,12 @@ class Component extends DCLogic {
       if (!iso) return '';
       const ms = Date.now() - new Date(iso).getTime();
       const h = Math.floor(ms / 3600000);
-      if (h < 1) return 'Hace ' + Math.max(1, Math.floor(ms / 60000)) + ' minutos';
+      if (h < 1) {
+        // «Hace 1 minutos» salía en los reportes desde siempre y ahora
+        // también en los reembolsos. El singular es gratis.
+        const m = Math.max(1, Math.floor(ms / 60000));
+        return 'Hace ' + m + (m === 1 ? ' minuto' : ' minutos');
+      }
       if (h < 24) return 'Hace ' + h + (h === 1 ? ' hora' : ' horas');
       const d = Math.floor(h / 24);
       return d === 1 ? 'Ayer' : 'Hace ' + d + ' días';
@@ -5222,6 +5321,11 @@ class Component extends DCLogic {
     });
     const NOMBRE_METODO = {};
     (St.metodosPago || []).forEach((m) => { NOMBRE_METODO[m.id] = m.nombre; });
+    /** Los reembolsos por pagar, y cómo se escribe un monto en bolívares. */
+    const REEMBOLSOS = St.reembolsos || null;
+    const bolivares = (n) => (n == null ? '—' :
+      Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' Bs');
+
     const dinero = (n, moneda) => (n == null ? '—' :
       Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' +
       (moneda === 'VES' ? 'Bs' : moneda));
@@ -5776,6 +5880,52 @@ class Component extends DCLogic {
               + '): esa noche hay ' + FECHAS_DEL_DIA.length + ' fechas y cada una tiene la suya.'
             : ''),
       cola, hayCola: porConciliar > 0, sinCola: porConciliar === 0,
+      /**
+       * Los reembolsos por pagar, arriba de todo en Pagos.
+       *
+       * Es lo único de esa pantalla donde hay alguien esperando su dinero, y
+       * le prometimos un día hábil. Los ya pagados siguen en la lista un
+       * rato: sirve para contestar «¿me lo mandaron?» sin buscar en la base.
+       */
+      hayReembolsos: !!(REEMBOLSOS && REEMBOLSOS.length),
+      notaReembolsos: (() => {
+        if (!REEMBOLSOS) return '';
+        const porPagar = REEMBOLSOS.filter((r) => r.estado === 'pendiente');
+        if (!porPagar.length) return 'Nada por pagar. Abajo quedan los últimos ya devueltos.';
+        const suma = porPagar.reduce((a, r) => a + (r.montoBs || 0), 0);
+        return porPagar.length === 1
+          ? 'Una persona espera su dinero: ' + bolivares(suma) + '. Le dijimos un día hábil.'
+          : porPagar.length + ' personas esperan su dinero: ' + bolivares(suma) + ' en total. Les dijimos un día hábil.';
+      })(),
+      reembolsos: (REEMBOLSOS || []).map((r) => {
+        const pendiente = r.estado === 'pendiente';
+        const comp = St.compRee[r.id];
+        return {
+          quien: r.quien,
+          monto: bolivares(r.montoBs),
+          datos: r.telefono + ' · ' + r.banco + ' · ' + r.cedula,
+          cuando: 'Lo pidió ' + haceCuanto(r.pedidoEn).toLowerCase()
+            + ' · ' + r.precio + ' ref a la tasa de '
+            + Number(r.tasa).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          caja: 'border-radius:18px;padding:14px 16px;background:' + (pendiente ? '#FFF8EA' : 'rgba(20,52,42,.04)')
+            + ';border:1px solid ' + (pendiente ? 'rgba(143,69,21,.3)' : 'rgba(20,52,42,.1)'),
+          porPagar: pendiente,
+          pagado: !pendiente,
+          textoPagado: 'Pagado ' + haceCuanto(r.pagadoEn).toLowerCase() + ' · referencia ' + (r.referencia || '—'),
+          referencia: St.refRee[r.id] || '',
+          ponerReferencia: (e) => { const v = e.target.value; this.setState((st) => ({ refRee: Object.assign({}, st.refRee, { [r.id]: v }) })); },
+          adjuntar: (e) => this.adjuntarComprobante(r.id, e.target.files && e.target.files[0]),
+          textoAdjuntar: comp ? 'Comprobante adjunto' : 'Adjuntar comprobante',
+          botonAdjuntar: 'position:relative;display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;cursor:pointer;font:500 13px/1 \'Inter Tight\',sans-serif;border:1px '
+            + (comp ? 'solid #1B5138;color:#1B5138' : 'dashed rgba(20,52,42,.4);color:#2C4A38') + ';background:transparent',
+          textoPagar: St.pagandoRee === r.id ? 'Marcando…' : 'Marcar pagado',
+          botonPagar: 'display:inline-flex;align-items:center;min-height:44px;padding:0 17px;border-radius:999px;border:none;font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;background:'
+            + (comp && (St.refRee[r.id] || '').trim() ? '#1B5138' : 'rgba(27,81,56,.2)') + ';color:#FAF3E4',
+          pagar: () => this.marcarReembolsado(r.id),
+          hayPega: !!St.pegaRee[r.id],
+          pega: St.pegaRee[r.id] || '',
+        };
+      }),
       esMesas: esta('mesas'), esVerificaciones: esta('verificaciones'), esPagos: esta('pagos'),
       esReportes: esta('reportes'), esFechas: esta('fechas'), esLocales: esta('locales'),
       sinReportes: reportes.length === 0,

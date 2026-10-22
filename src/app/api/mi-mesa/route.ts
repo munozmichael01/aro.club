@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { minutosAPie } from '@/lib/distancia'
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
+import { bloqueDeReembolso } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
@@ -218,6 +219,8 @@ export async function GET() {
       empiezaEn: evento.starts_at,
       zonaHoraria,
       creditoDevuelto: !!abono,
+      // Y si prefiere el dinero al crédito. Mismo bloque que Mi cuenta.
+      reembolso: await bloqueDeReembolso(admin, user.id),
     })
   }
 
