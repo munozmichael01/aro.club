@@ -3240,9 +3240,27 @@ class Component extends DCLogic {
        * —una zona tiene su local y las mesas de esa zona van ahí— y en
        * cuanto está puesto, el reparto lo asigna solo.
        */
+      /**
+       * Y LOS QUE TODAVÍA NO ESTÁN PUESTOS, siempre, no solo cuando no hay
+       * ninguno.
+       *
+       * Michael, 21-10: «desde la mesa no puedo seleccionar Madre aunque se
+       * supone que tiene todos los detalles». Y era verdad: Madre está
+       * activa, completa y en Chacao, pero el jueves ya tenía tres locales
+       * puestos, y con `suyos.length ? [] : …` esta lista se apagaba entera
+       * en cuanto había uno. O sea que la primera elección condenaba a la
+       * fecha a ese puñado de sitios para siempre.
+       *
+       * Ahora salen los dos grupos: primero los que la fecha ya tiene, y
+       * detrás los demás de sus zonas abiertas, que al pulsarlos se ponen en
+       * la fecha y se asignan a la mesa en el mismo clic, que es lo que ya
+       * hacía el camino de «no hay ninguno».
+       */
       const zonasAbiertas = SUS_SEDES.map((v) => v.zona).filter((z, i, a) => a.indexOf(z) === i);
-      const porPoner = suyos.length ? [] : SUS_LOCALES
-        .filter((l) => zonasAbiertas.indexOf(l.zona) >= 0);
+      const yaPuestos = {};
+      suyos.forEach((v) => { yaPuestos[v.restaurantId] = true; });
+      const porPoner = SUS_LOCALES
+        .filter((l) => zonasAbiertas.indexOf(l.zona) >= 0 && !yaPuestos[l.id]);
 
       /**
        * Y si no hay ni sitios puestos ni candidatos, decir por qué.
@@ -3260,13 +3278,15 @@ class Component extends DCLogic {
 
       return {
         haySitios: suyos.length > 0 || porPoner.length > 0,
+        // El título cuenta los dos grupos: con uno puesto y tres por poner,
+        // «DÓNDE» a secas no dice que se pueda elegir.
         sinCandidatos: !suyos.length && !porPoner.length && !!nombreSuyo,
         textoSinCandidatos: 'No hay ningún local de ' + nombreSuyo + ' en el catálogo. Date de alta uno en Locales y aparece aquí.',
         sitioFijo: fijo && suyos.length > 1,
         textoSitioFijo: 'Ya son las doce: esta mesa tiene la dirección en su correo. Para cambiarla hay que publicarla otra vez, y a cada uno le sale un aviso.',
-        tituloSitios: suyos.length ? (suyos.length === 1 ? 'DÓNDE' : 'DÓNDE · ELIGE') : 'SIN LOCAL · PONER UNO',
-        sitios: suyos.length
-          ? suyos.map((v) => {
+        tituloSitios: !suyos.length ? 'SIN LOCAL · PONER UNO'
+          : (suyos.length + porPoner.length === 1 ? 'DÓNDE' : 'DÓNDE · ELIGE'),
+        sitios: suyos.map((v) => {
               const on = v.restaurantId === m.restaurantId;
               return {
                 texto: v.nombre || v.zonaNombre,
@@ -3276,7 +3296,7 @@ class Component extends DCLogic {
                 chip: chipSitio(on, fijo, false)
               };
             })
-          : porPoner.map((l) => {
+          .concat(porPoner.map((l) => {
               const no = !!l.problema;
               return {
                 texto: l.nombre + (l.comision != null ? ' · ' + l.comision + '%' : ''),
@@ -3300,7 +3320,7 @@ class Component extends DCLogic {
                   .then((r) => (r && r.ok) ? this.cambiarSede(m.numero, l.id, m.corridaId) : r)),
                 chip: chipSitio(false, false, no)
               };
-            })
+            })),
       };
     };
 
