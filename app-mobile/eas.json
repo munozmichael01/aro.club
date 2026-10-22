@@ -19,6 +19,10 @@
         "buildType": "app-bundle"
       },
       "channel": "production"
+    },
+    "pruebas": {
+      "extends": "production",
+      "channel": "pruebas"
     }
   },
   "submit": {
@@ -26,6 +30,9 @@
       "ios": {
         "ascAppId": "6818022672"
       }
+    },
+    "pruebas": {
+      "extends": "production"
     }
   }
 }
