@@ -45,10 +45,22 @@ export async function POST(request: Request) {
     const { error } = await supabase.auth.signInWithPassword({ email: correo, password: clave })
 
     if (error) {
-      // Mismo mensaje exista o no la cuenta: decir cuál de los dos falló
-      // convierte esta pantalla en un comprobador de quién está registrado.
+      /**
+       * Mismo mensaje exista o no la cuenta: decir cuál de los dos falló
+       * convierte esta pantalla en un comprobador de quién está registrado.
+       *
+       * Y con la salida, que es lo que faltaba. Quien se equivoca aquí
+       * muchas veces no tiene cuenta todavía, y el mensaje lo dejaba
+       * reintentando una contraseña que no existe. «Toca Crear cuenta
+       * arriba» apunta al selector de la entrega «acceso», que está en la
+       * misma pantalla en la web y en la app, y no revela nada: se dice
+       * igual a quien sí tiene cuenta.
+       */
       return NextResponse.json(
-        { error: 'Ese correo y esa contraseña no coinciden.' },
+        {
+          error:
+            'Ese correo y esa contraseña no coinciden. Si es tu primera vez, toca Crear cuenta arriba.',
+        },
         { status: 401 },
       )
     }
