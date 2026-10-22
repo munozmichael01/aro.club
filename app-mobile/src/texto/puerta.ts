@@ -17,7 +17,7 @@ export const titulos = {
 export const cuenta = {
   bajada: 'Tus respuestas ya están guardadas. Solo falta cómo vas a entrar.',
   /** Con Apple o Google la casilla llega después, en la puerta de normas (entrega «acceso»). */
-  notaProveedores: 'Con Apple o Google, la casilla de las normas te la pedimos justo después.',
+  notaProveedores: (cuales: string) => `Con ${cuales}, la casilla de las normas te la pedimos justo después.`,
   claveEjemplo: 'Mínimo 8 caracteres',
   repetirEjemplo: 'La misma otra vez',
   conCorreo: 'O con tu correo',

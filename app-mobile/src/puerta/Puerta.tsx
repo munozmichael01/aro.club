@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AroCarga, Boton, Campo, CampoClave, Fecha, Texto, Velo, color, cremaAlfa, fuente, medida } from '../diseno'
 import { AvisoAcceso, Etiqueta, LogoApple, LogoGoogle, Proveedor } from '../entrar/Entrar'
 import { SelectorAcceso } from '../entrar/SelectorAcceso'
-import { etiquetas as TA } from '../texto/entrar'
+import { etiquetas as TA, proveedores } from '../texto/entrar'
 import { Acepto } from '../normas/Acepto'
 import { acepto as A } from '../texto/normas'
 import { Cabecera, FaseQuiz, FaseSinPreguntas, Progreso } from '../entrada/Fases'
@@ -299,7 +299,7 @@ export function Puerta(p: {
           {p.hayProveedor('google') ? <Proveedor texto={TE.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} /> : null}
           {p.hayProveedor('apple') || p.hayProveedor('google') ? (
             <Texto variante="cuerpoChico" tono="sobreVerdeSecundario" style={{ marginTop: 4, marginHorizontal: 6 }}>
-              {T.cuenta.notaProveedores}
+              {T.cuenta.notaProveedores(proveedores(p.hayProveedor('apple'), p.hayProveedor('google')))}
             </Texto>
           ) : null}
         </View>

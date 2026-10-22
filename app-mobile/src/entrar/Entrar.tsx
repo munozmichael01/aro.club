@@ -10,7 +10,7 @@ import Svg, { Path } from 'react-native-svg'
 import { AroCarga, Boton, Campo, CampoClave, EnlacePie, Marca, Opcion, Texto, color, cremaAlfa, fuente, medida, radio } from '../diseno'
 import { reglas } from '../reglas'
 import * as T from '../texto/entrar'
-import { etiquetas as TA } from '../texto/entrar'
+import { etiquetas as TA, proveedores } from '../texto/entrar'
 
 type Fase = 'inicio' | 'correo' | 'recuperar' | 'entrando' | 'otroCorreo' | 'relay'
 
@@ -358,7 +358,7 @@ export function Entrar(p: {
           {p.hayProveedor('google') ? <Proveedor texto={T.inicio.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} /> : null}
           {p.hayProveedor('apple') || p.hayProveedor('google') ? (
             <Texto variante="cuerpoChico" tono="sobreVerdeSecundario" style={{ marginTop: 4, marginHorizontal: 6 }}>
-              {T.inicio.notaProveedores}
+              {T.inicio.notaProveedores(proveedores(p.hayProveedor('apple'), p.hayProveedor('google')))}
             </Texto>
           ) : null}
         </View>

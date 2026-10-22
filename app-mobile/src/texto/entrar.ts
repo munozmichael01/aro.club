@@ -5,8 +5,8 @@
 export const inicio = {
   titulo: 'Entra a tu cuenta.',
   bajada: 'Con la que usaste al registrarte.',
-  /** Lo que pasa con Apple o Google si todavía no tienes cuenta (entrega «acceso», 20-10). */
-  notaProveedores: 'Con Apple o Google: si ya tienes cuenta, entras; si todavía no, te llevamos a crearla.',
+  /** Lo que pasa con Apple o Google si todavía no tienes cuenta (entrega «acceso», 20-10). Nombra solo los botones que hay (Michael, 22-10: en Android, solo Google). */
+  notaProveedores: (cuales: string) => `Con ${cuales}: si ya tienes cuenta, entras; si todavía no, te llevamos a crearla.`,
   conCorreo: 'Entrar con correo y contraseña',
   o: 'o',
   apple: 'Continuar con Apple',
@@ -102,3 +102,6 @@ export const sinTerminar = {
   reintentar: 'Reintentar',
   noGuardado: 'No pudimos guardarlo. Inténtalo otra vez.',
 }
+
+/** «Apple o Google», «Apple» o «Google»: los proveedores que la pantalla enseña de verdad. */
+export const proveedores = (apple: boolean, google: boolean) => [apple && 'Apple', google && 'Google'].filter(Boolean).join(' o ')
