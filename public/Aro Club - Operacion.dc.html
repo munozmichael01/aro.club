@@ -187,6 +187,15 @@
           <h1 style="{{ h1 }}">{{ tituloRep }}</h1>
           <span style="{{ selloCierre }}">{{ textoCierre }}</span>
         </div>
+        <!-- CUÁL de las fechas de esa noche estás repartiendo. Solo cuando
+             hay más de una: con una sola no distingue nada. -->
+        <sc-if value="{{ hayOrigenFecha }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+            <sc-for list="{{ origenFecha }}" as="o" hint-placeholder-count="1">
+              <span style="{{ o.estilo }}">{{ o.texto }}</span>
+            </sc-for>
+          </div>
+        </sc-if>
         <p style="{{ bajada }}">{{ bajadaRep }}</p>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:clamp(20px,2.6vw,26px) 0">
@@ -247,18 +256,10 @@
                     <span style="flex:1;min-width:0">
                       <span style="display:block;font:400 clamp(19px,2vw,22px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ t.titulo }}</span>
                       <span style="display:block;font:500 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ t.hora }}</span>
-                      <!-- DE QUÉ FECHA ES ESTA MESA. Va en la mesa y no en la
-                           fecha: esa noche no hay dos cenas, hay una con
-                           varias mesas y cada una viene de su fecha. Las dos
-                           numeran desde el 1, así que sin esto hay dos «Mesa
-                           01» idénticas y no se sabe a quién se mueve. -->
-                      <sc-if value="{{ t.hayOrigen }}" hint-placeholder-val="{{ false }}">
-                        <span style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px">
-                          <sc-for list="{{ t.origen }}" as="o" hint-placeholder-count="1">
-                            <span style="{{ o.estilo }}">{{ o.texto }}</span>
-                          </sc-for>
-                        </span>
-                      </sc-if>
+                      <!-- De qué fecha es esta mesa ya no va aquí: desde que
+                           la pantalla volvió a ser de una sola fecha, el
+                           rótulo sale una vez arriba y repetirlo en cada
+                           tarjeta es ruido. -->
                     </span>
                     <span style="{{ t.sello }}">{{ t.estado }}</span>
                     <sc-if value="{{ t.sePuedeQuitar }}" hint-placeholder-val="{{ false }}">
@@ -313,7 +314,12 @@
                             </sc-if>
                           </span>
                           <span style="font:400 12px/1.35 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ g.dato }}</span>
-                          <sc-if value="{{ g.hayDietas }}" hint-placeholder-val="{{ false }}">
+                          <!-- Y si operación la movió desde otra fecha de esa
+                             noche, dónde reservó. -->
+                        <sc-if value="{{ g.hayVieneDe }}" hint-placeholder-val="{{ false }}">
+                          <span style="{{ g.estiloVieneDe }}">{{ g.vieneDe }}</span>
+                        </sc-if>
+                        <sc-if value="{{ g.hayDietas }}" hint-placeholder-val="{{ false }}">
                             <span style="{{ g.estiloDietas }}">{{ g.dietas }}</span>
                           </sc-if>
                           <sc-if value="{{ g.hayBebida }}" hint-placeholder-val="{{ false }}">
@@ -456,6 +462,9 @@
                     </sc-if>
                     <span style="flex:1 1 auto;min-width:0;font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ e.nombre }}</span>
                     <span style="flex:1 1 110px;min-width:0;font:400 12px/1.3 'Inter Tight',sans-serif;color:#566A5D;text-align:right;overflow-wrap:anywhere;text-wrap:pretty">{{ e.dato }}</span>
+                    <sc-if value="{{ e.hayVieneDe }}" hint-placeholder-val="{{ false }}">
+                      <span style="{{ e.estiloVieneDe }}">{{ e.vieneDe }}</span>
+                    </sc-if>
                     <sc-if value="{{ e.esNueva }}" hint-placeholder-val="{{ false }}">
                       <span style="{{ e.selloNueva }}">Nueva</span>
                     </sc-if>
@@ -1418,6 +1427,31 @@
         <h1 style="{{ h1 }}">Avisos</h1>
         <p style="{{ bajada }}">{{ bajadaAvisos }}</p>
 
+        <!-- QUÉ NOS CUESTA ESCRIBIR. Michael lo pidió dos veces: el 20 y
+             otra vez el 21 después de mandar a doscientas personas. Hasta
+             ahora las bajas solo se veían abriendo la ficha de cada uno. -->
+        <sc-if value="{{ hayBajas }}" hint-placeholder-val="{{ true }}">
+          <div style="{{ cajaBajas }}">
+            <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:12px">BAJAS DE CORREO</div>
+            <div style="display:flex;flex-wrap:wrap;gap:clamp(18px,3vw,36px)">
+              <sc-for list="{{ cifrasBajas }}" as="c" hint-placeholder-count="4">
+                <span style="display:block">
+                  <span style="display:block;font:400 clamp(26px,3.4vw,34px)/1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:{{ c.color }}">{{ c.n }}</span>
+                  <span style="display:block;font:500 12px/1.4 'Inter Tight',sans-serif;color:#566A5D;margin-top:5px">{{ c.que }}</span>
+                </span>
+              </sc-for>
+            </div>
+            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:13px;max-width:60ch;text-wrap:pretty">{{ notaBajas }}</div>
+            <sc-if value="{{ hayUltimasBajas }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:5px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(20,52,42,.1)">
+                <sc-for list="{{ ultimasBajas }}" as="b" hint-placeholder-count="3">
+                  <span style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ b.linea }}</span>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
         <div style="display:flex;flex-wrap:wrap;gap:10px;margin:clamp(22px,2.8vw,30px) 0 16px">
           <input type="search" value="{{ filtroPersona }}" onChange="{{ ponerPersona }}" placeholder="Correo de alguien" style="{{ campoFiltro }}" />
           <select value="{{ filtroFecha }}" onChange="{{ ponerFecha }}" style="{{ campoFiltro }}">
@@ -1835,7 +1869,7 @@ class Component extends DCLogic {
     paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {}, empujon: null,
     pruebaGente: null, verPruebaGente: false,
     perfilesGente: 0, leadsGente: null, pidiendoGente: false,
-    avisos: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
+    avisos: null, bajas: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
     // Mover a una persona a mano en la fecha elegida. Vive en Reparto y
     // cerrado por defecto: es la única acción del panel que se salta el
     // cierre de una fecha, así que no se tropieza con ella.
@@ -2030,60 +2064,68 @@ class Component extends DCLogic {
     if (this.state.filtroTipo) q.push('tipo=' + encodeURIComponent(this.state.filtroTipo));
     this.setState({ pidiendoAvisos: true });
     return this.pedir('/api/operacion/avisos' + (q.length ? '?' + q.join('&') : ''),
-      (d) => ({ avisos: d.filas || [], pidiendoAvisos: false }),
-      { avisos: [], pidiendoAvisos: false });
+      (d) => ({ avisos: d.filas || [], bajas: d.bajas || null, pidiendoAvisos: false }),
+      { avisos: [], bajas: null, pidiendoAvisos: false });
   }
 
   /**
-   * El reparto de un DÍA, no de una fecha.
+   * El reparto de UNA FECHA. Otra vez.
    *
-   * Michael, 17-10: «ponme todas las mesas del mismo día en la misma
-   * pantalla, si es +40 márcalo en la mesa, no en la fecha».
+   * El 17 Michael pidió juntar las mesas de la noche en una pantalla, y hoy,
+   * viéndolo: «lo veo igual, sigo viendo mezclado +40 y ahora la mesa de
+   * inglés. Sino mantenlo separado y en lugar de mezclar las mesas en la
+   * fecha, me permites mover a alguien de fecha desde el panel».
    *
-   * Y tiene razón en lo de fondo: el jueves no hay dos cenas, hay una noche
-   * con cuatro mesas, y que una sea de mayores de 40 es una propiedad de esa
-   * mesa. Tratarlas como dos fechas obliga a mirar dos pantallas para saber
-   * cuánta gente cena esa noche, y es como hoy conté cuatro mesas donde
-   * había cinco.
+   * Tenía razón y el error fue mío: juntarlas enseñaba los dos grupos pero no
+   * dejaba hacer nada con ellos, porque el reparto mueve gente entre MESAS de
+   * una fecha y entre fechas no puede: la reserva, el pago y los correos son
+   * de una fecha concreta. Marcar de cuál venía cada mesa hacía la mezcla
+   * legible, no útil. Lo que hacía falta era poder mover la reserva, y eso
+   * vive ahora en `/api/operacion/mover-fecha`.
    *
-   * Por dentro siguen siendo fechas distintas —cada una con su corrida, su
-   * aviso y su banda de edad— así que cada mesa se trae de dónde viene:
-   * `corridaId` para publicarla y `banda` para marcarla. Lo que se junta es
-   * la pantalla, no los datos.
+   * Así que vuelve a ser una fecha por pantalla, y la noche se recorre con el
+   * riel. Lo que SÍ se queda de aquel intento, porque sirve igual: cada mesa
+   * lleva su corrida, su evento y sus sitios, y las cifras de arriba siguen
+   * diciendo cuánta gente hay en toda la noche.
    */
   cargarReparto(eventoId) {
     if (!eventoId) return Promise.resolve();
-
-    const mismasDelDia = (id) => {
-      const todas = this.state.fechas || [];
-      const suya = todas.filter((f) => f.id === id)[0];
-      if (!suya) return [id];
-      const dia = String(suya.empiezaEn || '').slice(0, 10);
-      return todas
-        .filter((f) => String(f.empiezaEn || '').slice(0, 10) === dia && !!f.esPrueba === !!suya.esPrueba)
-        .map((f) => f.id);
-    };
-
-    const ids = mismasDelDia(eventoId);
-    const otras = ids.filter((id) => id !== eventoId);
-
     return this.pedir('/api/operacion/repartir?eventoId=' + eventoId,
-      (d) => ({ reparto: this.conLasDelDia(d, eventoId) }), { reparto: { evento: null } })
-      .then(() => {
-        if (!otras.length) return;
-        // Las demás del día, una a una y sin bloquear: la fecha elegida ya
-        // está pintada y estas se van sumando.
-        return Promise.all(otras.map((id) =>
-          fetch('/api/operacion/repartir?eventoId=' + id)
-            .then((r) => (r.ok ? r.json() : null))
-            .catch(() => null)))
-          .then((ds) => {
-            const base = this.state.reparto;
-            if (!base) return;
-            let juntas = base;
-            for (const d of ds) if (d) juntas = this.conLasDelDia(juntas, eventoId, d);
-            this.setState({ reparto: juntas });
-          });
+      (d) => ({ reparto: this.conLasDelDia(d, eventoId) }), { reparto: { evento: null } });
+  }
+
+  /**
+   * Cambiar a alguien de fecha dentro de la misma noche.
+   *
+   * No es `moverPersona`: aquello retoca una propuesta, esto cambia la
+   * reserva de sitio. Por eso no hay arrastre —se elige en una lista, como
+   * una decisión— y por eso después hay que volver a repartir las dos
+   * fechas: las dos propuestas guardadas se quedan viejas en el momento en
+   * que alguien se va de una a otra.
+   */
+  cambiarDeFecha(perfilId, desdeEventoId, aEventoId, comoSeLlama, forzar) {
+    const cuerpo = { perfilId: perfilId, desdeEventoId: desdeEventoId, aEventoId: aEventoId };
+    if (forzar) cuerpo.forzar = true;
+    return this.mandar('/api/operacion/mover-fecha', cuerpo)
+      .then((r) => {
+        /**
+         * Quien no encaja por edad o idioma se pregunta, no se niega.
+         *
+         * Mover gente a mano existe para los casos que el automático no
+         * resuelve, así que el servidor no puede ser quien decida. Lo que no
+         * puede es pasar sin querer: la cena de +40 la eligieron ocho
+         * personas porque era de +40.
+         */
+        if (!r.ok && r.d && r.d.motivo === 'no-encaja') {
+          if (!window.confirm(r.d.error + '\n\n¿La mueves igualmente?')) {
+            this.setState({ fallo: '' });
+            return r;
+          }
+          return this.cambiarDeFecha(perfilId, desdeEventoId, aEventoId, comoSeLlama, true);
+        }
+        if (!r.ok) return r;
+        this.setState({ aviso: 'Movida a ' + comoSeLlama + '. Las dos fechas hay que volver a repartirlas.' });
+        return this.cargarFechas().then(() => this.cargarReparto(desdeEventoId));
       });
   }
 
@@ -3098,6 +3140,22 @@ class Component extends DCLogic {
     // pasa en esta pantalla es que se pinta y se arrastra, y arrastrar
     // pregunta a /api/operacion/propuesta, que revalida y devuelve las mesas
     // recalculadas.
+    /**
+     * Las bajas de correo, tal como las manda `/api/operacion/avisos`.
+     *
+     * `null` mientras no se ha abierto esa pestaña: el bloque no se pinta y
+     * no enseña ceros que no son ceros, que es el mismo error de «no hay» y
+     * «no se sabe» que ya costó caro en las cifras del reparto.
+     */
+    const BAJAS = St.bajas || null;
+    const NOMBRE_ENVIO = {
+      empujon: 'empujón',
+      abrimos_zona: 'abrimos zona',
+      resumen_semanal: 'el resumen de los lunes',
+      cena_en_ingles: 'la cena en inglés',
+      equilibrar_mesas: 'equilibrar las mesas',
+    };
+
     const REP = St.reparto || null;
     const CORRIDA = REP && REP.corrida ? REP.corrida : null;
     const PROPUESTA = CORRIDA ? (CORRIDA.propuesta || []) : [];
@@ -3396,6 +3454,41 @@ class Component extends DCLogic {
         String(x.empiezaEn || '').slice(0, 10) === dia && !!x.esPrueba === !!f.esPrueba);
     };
     const FECHAS_DEL_DIA = lasDelDiaDe(fr);
+    /**
+     * Las OTRAS fechas de esa noche: a dónde se puede mandar a alguien.
+     *
+     * Solo las de la misma noche, que es lo único que el servidor acepta.
+     * Cambiarle el DÍA a una persona hay que avisárselo y eso todavía no lo
+     * hace el panel; dentro de la misma noche no se entera de nada, porque
+     * su mesa y su sitio se los contamos en la revelación igual que a todos.
+     */
+    const OTRAS_DEL_DIA = FECHAS_DEL_DIA.filter((f) => f.id !== fr.id && !f.pasada);
+    const comoSeLlama = (f) => rotuloDeFecha(f, FECHAS_DEL_DIA)
+      .map((x) => x.texto).join(' · ').toLowerCase();
+
+    /**
+     * Y DÓNDE RESERVÓ, si operación la movió.
+     *
+     * Michael, 20-10: «siguiendo marcándolo con la etiqueta de la mesa
+     * original donde reservó». Es el dato que impide que mover gente de una
+     * fecha a otra acabe siendo una mezcla sin memoria: dentro de dos días,
+     * mirando la mesa de +40, hay que poder ver quién llegó ahí porque la
+     * suya no llenó.
+     *
+     * Sale de `bookings.movida_de`, y el rótulo lo compone aquí el mismo
+     * `rotuloDeFecha` que usan el riel y la cabecera: la misma fecha no se
+     * puede llamar de dos maneras en la misma pantalla.
+     */
+    const dondeReservo = (movidaDe) => {
+      if (!movidaDe) return { hay: false, texto: '', estilo: '' };
+      const suya = FECHAS_REP.filter((f) => f.id === movidaDe)[0];
+      const texto = suya ? rotuloDeFecha(suya, lasDelDiaDe(suya)).map((x) => x.texto).join(' · ') : 'otra fecha';
+      return {
+        hay: true,
+        texto: 'Reservó en ' + texto.toLowerCase(),
+        estilo: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:transparent;border:1px dashed rgba(20,52,42,.4);color:#2C4A38',
+      };
+    };
     const VARIAS_DEL_DIA = FECHAS_DEL_DIA.length > 1;
     const IDIOMA_FECHA = { en: 'En inglés', pt: 'En portugués', fr: 'En francés', it: 'En italiano' };
     // Las mismas dos del riel —naranja la edad, verde el idioma— porque es
@@ -3764,14 +3857,30 @@ class Component extends DCLogic {
               && x.numero !== m.numero)
             .map((x) => ({ n: x.numero, texto: vozRep.Unidad + ' ' + String(x.numero).padStart(2, '0') }))
             .concat([{ n: 0, texto: 'A la espera' }])
+            /**
+             * Y A OTRA FECHA DE ESA NOCHE.
+             *
+             * Michael, 20-10. No es el mismo gesto que mover de mesa y por
+             * eso va al final y con otro color: aquello retoca una propuesta
+             * que todavía no ha salido, esto le cambia la reserva a una
+             * persona. Después hay que repartir las dos fechas.
+             */
+            .concat(OTRAS_DEL_DIA.map((f) => ({ fecha: f, texto: 'A la de ' + comoSeLlama(f) })))
           ).map((x) => ({
             texto: x.texto,
-            chip: 'min-height:34px;padding:0 14px;border-radius:999px;border:none;background:' + (x.n === 0 ? 'rgba(143,69,21,.13)' : '#1B5138') + ';color:' + (x.n === 0 ? '#8F4515' : '#FAF3E4') + ';font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
-            ir: () => { this.setState({ moviendo: null }); this.moverPersona(p.profileId, x.n, m.corridaId); },
+            chip: 'min-height:34px;padding:0 14px;border-radius:999px;border:' + (x.fecha ? '1px dashed rgba(20,52,42,.4)' : 'none') + ';background:' + (x.fecha ? 'transparent' : (x.n === 0 ? 'rgba(143,69,21,.13)' : '#1B5138')) + ';color:' + (x.fecha ? '#2C4A38' : (x.n === 0 ? '#8F4515' : '#FAF3E4')) + ';font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+            ir: () => {
+              this.setState({ moviendo: null });
+              if (x.fecha) this.cambiarDeFecha(p.profileId, fr.id, x.fecha.id, comoSeLlama(x.fecha));
+              else this.moverPersona(p.profileId, x.n, m.corridaId);
+            },
           })),
           hayFoto: !!p.foto,
           sinFoto: !p.foto,
           foto: p.foto || '',
+          hayVieneDe: dondeReservo(p.movidaDe).hay,
+          vieneDe: dondeReservo(p.movidaDe).texto,
+          estiloVieneDe: dondeReservo(p.movidaDe).estilo,
           dietas: dietaCorta(p.dietas).join(' · '),
           hayDietas: dietaCorta(p.dietas).length > 0,
           hayBebida: loQueBebe(p).hay,
@@ -3931,9 +4040,6 @@ class Component extends DCLogic {
          * ninguna: en pantalla eso no dice «es la otra fecha», dice «a esta
          * no le hemos puesto nada». Van las dos marcadas o ninguna.
          */
-        hayOrigen: VARIAS_DEL_DIA,
-        origen: VARIAS_DEL_DIA ? rotuloDeFecha(
-          FECHAS_DEL_DIA.filter((f) => f.id === m.eventoId)[0] || fr, FECHAS_DEL_DIA) : [],
         corrida: m.corridaId || '',
       };
     };
@@ -4161,6 +4267,9 @@ class Component extends DCLogic {
        * puede que sí quepan. Sin la marca, las dos cosas se leen igual y la
        * conclusión es la contraria.
        */
+      hayVieneDe: dondeReservo(p.movidaDe).hay,
+      vieneDe: dondeReservo(p.movidaDe).texto,
+      estiloVieneDe: dondeReservo(p.movidaDe).estilo,
       esNueva: !!p.llegoDespues,
       selloNueva: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:rgba(27,81,56,.13);color:#1B5138',
       dietas: dietaCorta(p.dietas).join(' · '),
@@ -4180,10 +4289,17 @@ class Component extends DCLogic {
       tocarMover: () => this.setState({ moviendo: St.moviendo === p.profileId ? null : p.profileId }),
       destinos: (St.moviendo !== p.profileId ? [] : PROPUESTA
         .filter((x) => !x.publicada && (x.corridaId || null) === SU_CORRIDA)
-        .map((x) => ({ n: x.numero, texto: vozRep.Unidad + ' ' + String(x.numero).padStart(2, '0') }))).map((x) => ({
+        .map((x) => ({ n: x.numero, texto: vozRep.Unidad + ' ' + String(x.numero).padStart(2, '0') }))
+        // Quien espera es justo a quien más falta le hace la otra fecha: es
+        // el caso del jueves, dos apuntados que no dan para una mesa.
+        .concat(OTRAS_DEL_DIA.map((f) => ({ fecha: f, texto: 'A la de ' + comoSeLlama(f) })))).map((x) => ({
         texto: x.texto,
-        chip: 'min-height:34px;padding:0 14px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
-        ir: () => { this.setState({ moviendo: null }); this.moverPersona(p.profileId, x.n, SU_CORRIDA); },
+        chip: 'min-height:34px;padding:0 14px;border-radius:999px;border:' + (x.fecha ? '1px dashed rgba(20,52,42,.4)' : 'none') + ';background:' + (x.fecha ? 'transparent' : '#1B5138') + ';color:' + (x.fecha ? '#2C4A38' : '#FAF3E4') + ';font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+        ir: () => {
+          this.setState({ moviendo: null });
+          if (x.fecha) this.cambiarDeFecha(p.profileId, fr.id, x.fecha.id, comoSeLlama(x.fecha));
+          else this.moverPersona(p.profileId, x.n, SU_CORRIDA);
+        },
       })),
       pastilla: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 8px 0 8px;border-radius:999px;background:' + (St.arrastrando === p.profileId ? '#F2E9D5' : '#FAF3E4') + ';border:1px solid ' + (St.arrastrando === p.profileId ? '#8F4515' : 'transparent') + ';font:500 14px/1 \'Inter Tight\',sans-serif;color:#14342A;cursor:grab;touch-action:none',
       enlace: 'flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:0 -9px 0 0;border-radius:999px',
@@ -5352,6 +5468,8 @@ class Component extends DCLogic {
       tituloSinFechas: St.fechas === null
         ? 'Cargando…'
         : 'No hay fechas de ' + (NOMBRE_FILTRO[tipoRep] || 'ese tipo').toLowerCase() + ' abiertas.',
+      hayOrigenFecha: VARIAS_DEL_DIA,
+      origenFecha: VARIAS_DEL_DIA ? rotuloDeFecha(fr, FECHAS_DEL_DIA) : [],
       tituloRep: St.fechas === null ? 'Cargando…' : (fr.titulo + (fr.hora ? ' · ' + fr.hora : '')),
       textoCierre: fr.cierra,
       bajadaRep: apuntadosRep + (apuntadosRep === 1 ? ' apuntado en ' : ' apuntados en ') + (zonasDeLaFecha === 1 ? 'una zona' : zonasDeLaFecha + ' zonas') + '. Cada ' + vozRep.unidad + ' se publica por separado: al publicarla queda fija y esa gente sale del reparto.',
@@ -5658,6 +5776,42 @@ class Component extends DCLogic {
         + (St.fallo
           ? 'background:rgba(143,69,21,.14);color:#8F4515'
           : 'background:rgba(27,81,56,.12);color:#1B5138'),
+      /**
+       * Las bajas de correo, en la pantalla de los correos.
+       *
+       * Tres cifras y una línea. «Desde el último envío» es la que se mira
+       * de verdad después de mandar a doscientas personas, y es la que
+       * nadie calcula a mano a las once de la noche.
+       */
+      hayBajas: !!BAJAS,
+      cifrasBajas: !BAJAS ? [] : [
+        ['Hoy', BAJAS.hoy, BAJAS.hoy > 0 ? '#8F4515' : '#14342A'],
+        ['Últimos 7 días', BAJAS.semana, '#14342A'],
+        ['Desde el último envío', BAJAS.desdeElUltimoEnvio != null ? BAJAS.desdeElUltimoEnvio : '—',
+          BAJAS.desdeElUltimoEnvio > 0 ? '#8F4515' : '#14342A'],
+        ['Desde siempre', BAJAS.total, '#14342A'],
+      ].map((c) => ({ que: c[0], n: String(c[1]), color: c[2] })),
+      cajaBajas: 'border:1px solid rgba(20,52,42,.14);border-radius:22px;padding:clamp(16px,2.2vw,22px);background:#FAF3E4;margin-top:clamp(22px,2.8vw,30px)',
+      notaBajas: (() => {
+        if (!BAJAS) return '';
+        if (!BAJAS.ultimoEnvio) return 'Todavía no ha salido ningún envío de bulto.';
+        const q = NOMBRE_ENVIO[BAJAS.ultimoEnvio.tipo] || BAJAS.ultimoEnvio.tipo;
+        // `horaTexto` ya acaba en «p.m.», así que el punto de la frase sobra.
+        const cuando = diaTexto(BAJAS.ultimoEnvio.cuando) + ' a las ' + horaTexto(BAJAS.ultimoEnvio.cuando);
+        return 'El último envío de bulto fue «' + q + '», el ' + cuando
+          + (BAJAS.desdeElUltimoEnvio === 0
+            ? ' Nadie se ha dado de baja desde entonces.'
+            : ' Desde entonces se han dado de baja ' + BAJAS.desdeElUltimoEnvio
+              + (BAJAS.desdeElUltimoEnvio === 1 ? ' persona.' : ' personas.'));
+      })(),
+      hayUltimasBajas: !!(BAJAS && BAJAS.ultimas && BAJAS.ultimas.length),
+      ultimasBajas: !BAJAS ? [] : (BAJAS.ultimas || []).map((b) => ({
+        // El origen importa: el clic de Gmail y el pie del correo no se leen
+        // igual. Una racha de un clic puede ser el cliente de correo
+        // mandando a promociones, no la gente huyendo.
+        linea: b.correo + ' · ' + diaTexto(b.cuando) + ' · '
+          + (b.origen === 'un-clic' ? 'un clic desde el buzón' : 'el pie del correo'),
+      })),
       esAvisos: esta('avisos'),
       ...(() => {
         const A = St.avisos;

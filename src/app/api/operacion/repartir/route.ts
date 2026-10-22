@@ -262,6 +262,25 @@ export async function GET(request: Request) {
     ]),
   )
 
+  /**
+   * Quién reservó en OTRA fecha de esa noche y la movió operación.
+   *
+   * Michael, 20-10: «me permites mover a alguien de fecha desde el panel,
+   * siguiendo marcándolo con la etiqueta de la mesa original donde reservó».
+   * Aquí solo viaja el id de aquella fecha; el rótulo —«+40», «en inglés»,
+   * la zona— lo compone el panel con el mismo código que usa en el riel,
+   * para que la misma fecha no se llame de dos maneras distintas.
+   */
+  const { data: movidas } = await admin
+    .from('bookings')
+    .select('profile_id, movida_de')
+    .eq('event_id', evento.id)
+    .not('movida_de', 'is', null)
+
+  const movidaDe = new Map(
+    (movidas ?? []).map((b) => [b.profile_id as string, b.movida_de as string]),
+  )
+
   const { data: carasGuardadas } = idsGuardados.length
     ? await admin
         .from('verifications')
@@ -409,6 +428,7 @@ export async function GET(request: Request) {
     // panel los enseña mientras no hay corrida.
     pool: (pool ?? []).map((x) => ({
       profileId: x.profile_id,
+      movidaDe: movidaDe.get(x.profile_id as string) ?? null,
       nombre: nombreDe.get(x.profile_id as string) ?? 'Sin nombre',
       zonas: (x.zones ?? []) as string[],
       // La misma ficha que en una mesa: esta lista es la de antes de
@@ -470,6 +490,7 @@ export async function GET(request: Request) {
             })(),
             integrantes: (m.integrantes ?? []).map((p) => ({
               ...p,
+              movidaDe: movidaDe.get(p.profileId) ?? null,
               // Qué contestó al «¿te podemos grabar?». `null` es que no ha
               // contestado, que no es un no.
               permisoGrabacion: permisoDe.get(p.profileId) ?? null,
@@ -561,6 +582,7 @@ export async function GET(request: Request) {
               .filter((p) => enElPool.has(p.profileId))
               .map((p) => ({
                 ...p,
+                movidaDe: movidaDe.get(p.profileId) ?? null,
                 ...(rasgoGuardado.get(p.profileId) ?? {}),
                 comidas: comidaGuardada.get(p.profileId) ?? [],
                 dietas: dietaGuardada.get(p.profileId) ?? [],
@@ -586,6 +608,7 @@ export async function GET(request: Request) {
               .filter((x) => x.profile_id && !colocados.has(x.profile_id))
               .map((x) => ({
                 profileId: x.profile_id as string,
+                movidaDe: movidaDe.get(x.profile_id as string) ?? null,
                 nombre: nombreDe.get(x.profile_id as string) ?? 'Sin nombre',
                 zonas: (x.zones ?? []) as string[],
                 edad: x.age,

@@ -206,6 +206,7 @@ export type Correo =
    * conto que.
    */
   | 'cena_en_ingles'
+  | 'equilibrar_mesas'
 
 /**
  * Los que NO llevan correo.
@@ -466,7 +467,7 @@ export async function despacharPendientes(
      * lista» a mediodía. Es el mismo fallo del 13-10 con los empujones, con
      * cinco veces más filas.
      */
-    const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima', 'resumen_semanal', 'cena_en_ingles'] as const
+    const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima', 'resumen_semanal', 'cena_en_ingles', 'equilibrar_mesas'] as const
     const TOPE = 25
 
     /**
@@ -634,6 +635,38 @@ export async function despacharPendientes(
     const dadosDeBaja = new Set((bajas ?? []).map((b) => b.correo))
 
     for (const fila of pendientes ?? []) {
+      /**
+       * PRIMERO SE TOMA LA FILA, y solo entonces se manda.
+       *
+       * Esta noche hubo quien recibió el mismo correo dos veces teniendo UNA
+       * sola fila en la cola. `encolar` termina llamando aquí, y esto no
+       * manda la fila que se acaba de crear: barre todas las que tengan
+       * `sent_at` nulo. Como `sent_at` se escribe DESPUÉS de que Resend
+       * acepte, dos barridos a la vez leen la misma fila sin marca y los dos
+       * la mandan.
+       *
+       * El update condicional lo cierra: Postgres serializa los dos updates
+       * sobre la misma fila, así que el segundo no encuentra nada y la salta.
+       * Con caducidad de diez minutos, para que una pasada que muera a medias
+       * no deje el correo tomado para siempre.
+       *
+       * En seco no se toma nada: el ensayo no puede dejar marcas.
+       */
+      if (!seco) {
+        const haceDiez = new Date(Date.now() - 10 * 60_000).toISOString()
+        const { data: mia } = await admin
+          .from('scheduled_emails')
+          .update({ tomada_at: new Date().toISOString() } as never)
+          .eq('id', fila.id)
+          .is('sent_at', null)
+          .or(`tomada_at.is.null,tomada_at.lt.${haceDiez}`)
+          .select('id')
+          .maybeSingle()
+
+        // Otra pasada la tiene. No es un fallo: es el candado funcionando.
+        if (!mia) continue
+      }
+
       const listo = await prepararCorreo(fila as Parameters<typeof prepararCorreo>[0])
 
       // No se puede armar y no se va a poder mañana: se cierra para que no se

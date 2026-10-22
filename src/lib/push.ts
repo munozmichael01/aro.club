@@ -82,6 +82,32 @@ export function copyDe(
         cuerpo: 'No salió una mesa en la que encajaras. Tu crédito volvió entero.',
         ruta: '/mesa',
       }
+    /**
+     * «Hombres, vamos a equilibrar las mesas».
+     *
+     * Michael, 21-10 de noche. Es un correo de empujón, y un empujón sin
+     * push llega solo a quien abre el correo: justo esta noche eso es la
+     * mitad del alcance y queda media semana de fechas abiertas.
+     *
+     * Dos cuerpos, el mismo que cada variante del correo: a quien puede
+     * reservar se le dice que la puerta se cierra, y a quien le falta la
+     * cédula se le dice que le falta la cédula. Mandarle «el jueves cierra»
+     * a alguien que todavía tiene que verificarse es contarle un plazo que
+     * él no puede cumplir.
+     */
+    case 'equilibrar_mesas':
+      return datos.falta === 'verificacion'
+        ? {
+            titulo: 'Hombres, vamos a equilibrar las mesas',
+            cuerpo: 'Te falta verificar tu identidad para llegar a la mesa de esta semana.',
+            ruta: '/verificacion',
+          }
+        : {
+            titulo: 'Hombres, vamos a equilibrar las mesas',
+            cuerpo: 'Esta semana hay casi tres mujeres por cada hombre. Quedan puestos.',
+            ruta: '/cuenta',
+          }
+
     case 'recordatorio': {
       // SALE A LAS NUEVE DE LA MAÑANA, antes de la revelación, y decía «abre
       // tu mesa para ver dónde es y cómo llegar»: a esa hora no hay nada que

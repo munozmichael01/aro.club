@@ -99,7 +99,65 @@ export async function GET(request: Request) {
 
   const ahora = Date.now()
 
+  /**
+   * LAS BAJAS DE CORREO, contadas.
+   *
+   * Michael lo pidió el 20-10 —«deberíamos registrar esto en algún lugar de
+   * operaciones»— y el 21 otra vez, después de un envío a doscientas
+   * personas: «sigamos de cerca las bajas». Hasta ahora solo se veían
+   * persona a persona, abriendo su ficha, que es justo lo que no sirve para
+   * vigilar una tendencia.
+   *
+   * Va aquí y no en una pantalla nueva porque esta es la de los correos: el
+   * sitio donde se mira qué salió es el sitio donde hay que ver qué costó.
+   *
+   * Las deshechas no cuentan: quien se dio de baja y volvió no está de baja.
+   */
+  const { data: todasLasBajas } = await admin
+    .from('bajas_correo')
+    .select('correo, baja_at, origen, deshecha_at')
+    .is('deshecha_at', null)
+    .order('baja_at', { ascending: false })
+
+  const bajas = todasLasBajas ?? []
+  const desde = (dias: number) => new Date(ahora - dias * 86400_000).toISOString()
+  const enUltimos = (dias: number) => bajas.filter((b) => b.baja_at >= desde(dias)).length
+
+  /**
+   * Y cuántas desde el último envío de bulto.
+   *
+   * Es la cifra que de verdad se mira después de mandar a doscientas
+   * personas, y restar fechas a mano es justo lo que nadie hace a las once
+   * de la noche.
+   */
+  const { data: ultimoBulto } = await admin
+    .from('scheduled_emails')
+    .select('kind, sent_at')
+    .in('kind', ['empujon', 'abrimos_zona', 'resumen_semanal', 'cena_en_ingles', 'equilibrar_mesas'])
+    .not('sent_at', 'is', null)
+    .order('sent_at', { ascending: false })
+    .limit(1)
+
+  const ultimo = ultimoBulto?.[0] ?? null
+
   return NextResponse.json({
+    bajas: {
+      total: bajas.length,
+      hoy: enUltimos(1),
+      semana: enUltimos(7),
+      desdeElUltimoEnvio: ultimo?.sent_at
+        ? bajas.filter((b) => b.baja_at >= ultimo.sent_at!).length
+        : null,
+      ultimoEnvio: ultimo ? { tipo: ultimo.kind, cuando: ultimo.sent_at } : null,
+      // Las últimas cinco, con su origen: el pie del correo y el clic de
+      // Gmail no se leen igual. Una racha por un clic puede ser un cliente
+      // de correo marcando promociones, no la gente huyendo.
+      ultimas: bajas.slice(0, 5).map((b) => ({
+        correo: b.correo,
+        cuando: b.baja_at,
+        origen: b.origen,
+      })),
+    },
     filas: (filas ?? []).map((f) => {
       const p = f.profile_id ? quien.get(f.profile_id) : null
       const pendiente = !f.sent_at && new Date(f.send_at).getTime() > ahora
