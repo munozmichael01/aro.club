@@ -646,7 +646,8 @@ function FilaMetodo({ m, elegido, onPress }: { m: M.Metodo; elegido: boolean; on
 }
 
 /** Un campo del reporte, como lo describe el método: teléfono con prefijo, cédula con V/E, banco de una lista, fecha, o texto. */
-function CampoReporte({ c, rep, poner }: { c: CampoDePago; rep: Record<string, string>; poner: (k: string, v: string) => void }) {
+/** Un campo de Pago Móvil (teléfono con prefijo, cédula con V/E, banco…). Lo usa también el reembolso. */
+export function CampoReporte({ c, rep, poner }: { c: CampoDePago; rep: Record<string, string>; poner: (k: string, v: string) => void }) {
   const v = rep[c.campo] ?? ''
   const pistas = T.reporte.pistas
   const pista = c.campo === 'tel' ? ((pistas.tel as Record<string, string>)[c.prefijo ?? ''] ?? '') : ((pistas[c.campo] as string) ?? '')
