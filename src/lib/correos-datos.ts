@@ -1781,7 +1781,14 @@ export function avisoDeDosHoras(
   // Sin punto detrás de la hora: `horaDe` ya devuelve «9:00 p.m.», con el
   // suyo. Añadir el de la frase deja «9:00 p.m..», que es el mismo descuido
   // que ya apareció esta noche en el panel.
-  return `Importante: la mesa es tuya por dos horas, de ${empieza} a ${acaba} `
+  /**
+   * Sin «Importante:» delante.
+   *
+   * Esa palabra era para la caja roja; ahora la frase vive dentro de
+   * RECUERDA, entre lo que cubre la plaza y lo del consumo aparte, y un
+   * «importante» ahí dentro grita por encima de sus vecinas sin motivo.
+   */
+  return `La mesa es tuya por dos horas, de ${empieza} a ${acaba} `
     + 'El restaurante puede tener otra reserva esperando esa mesa, así que tenlo en cuenta para la sobremesa.'
     + (haySitiosCerca ? ` Si quieren seguir, en ${donde} hay sitios cerca.` : '')
 }
