@@ -249,6 +249,19 @@ function TarjetaMesa(p: { d: M.DeServidor; momento: Gu.MomentoCena; mapa: string
           <Texto style={[texto(14, 1.4), { color: C.crema }]}>{T.cena.diLaMesa(num)}</Texto>
         </View>
       </View>
+      {/* Las dos horas (Michael, 21-10): el restaurante puede tener otra reserva esperando la mesa. */}
+      {d.empiezaEn ? (
+        <View style={e.dosHoras}>
+          <Texto style={[semi(13), { color: C.acento, letterSpacing: 1.2 }]}>{T.cena.importante.toUpperCase()}</Texto>
+          <Texto style={[texto(14, 1.45), { color: C.crema, marginTop: 4 }]}>
+            {T.cena.dosHoras(
+              Gu.sinSufijo(F.horaEn(d.empiezaEn, zona)),
+              F.horaEn(new Date(Date.parse(d.empiezaEn) + Gu.DURACION_POR_DEFECTO * 60000).toISOString(), zona),
+              (d.paraSeguir ?? []).some((x) => x.nombre),
+            )}
+          </Texto>
+        </View>
+      ) : null}
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
         {p.mapa ? (
           <Pressable onPress={() => p.ir('externo:' + p.mapa)} accessibilityRole="button" style={({ pressed }) => [e.botonMesa, { backgroundColor: pressed ? C.acento : C.crema }]}>
@@ -433,6 +446,7 @@ const e = StyleSheet.create({
   selloTexto: { fontFamily: fuente.textoSemi, fontSize: 11, lineHeight: 14, letterSpacing: 1.54, color: C.tinta },
   numero: { fontFamily: fuente.textoNegrita, fontSize: 48, lineHeight: 58, letterSpacing: -2.4, color: C.crema, marginTop: 4, fontVariant: ['tabular-nums'] },
   llegada: { marginTop: 14, borderRadius: 16, overflow: 'hidden', backgroundColor: C.verde },
+  dosHoras: { marginTop: 12, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(227,156,99,.55)', backgroundColor: 'rgba(227,156,99,.12)', paddingVertical: 11, paddingHorizontal: 13 },
   etiqueta: { fontFamily: fuente.textoSemi, fontSize: 11, lineHeight: 14, letterSpacing: 1.54 },
   botonMesa: { flex: 1, minHeight: 44, borderRadius: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 },
   botonTarde: { borderWidth: 1.5, borderColor: 'rgba(250,243,228,.5)' },
