@@ -37,8 +37,16 @@ nuevo en una respuesta, nunca uno que cambie de forma.
 ## Antes de cada push
 
 ```bash
-npx tsc --noEmit && node scripts/comprobar-cuestionario.mjs && node scripts/comprobar-pintado.mjs
+npx tsc --noEmit && npx eslint && node scripts/comprobar-pantallas.mjs \
+  && node scripts/comprobar-correos.mjs && node scripts/comprobar-cuestionario.mjs \
+  && node scripts/comprobar-pintado.mjs
 ```
+
+**Los cinco primeros son LOS DEL CI, en su mismo orden.** Aquí estaban solo
+tres, y el 22-10 `/agenda` subió a main con el CI en rojo: la pantalla
+enlazaba a una ruta que `comprobar-pantallas` no sabía que existía, y ese
+comprobador no estaba en esta lista. Correr menos de lo que corre el CI es
+enterarse por correo.
 
 El primero porque el CI lo exige y el dev server no caza errores de tipos. El
 segundo porque compara las opciones del cuestionario con el catálogo de la

@@ -37,6 +37,7 @@
  * mismo modo de fallo que viene a quitar.
  */
 import { readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const args = process.argv.slice(2)
@@ -56,8 +57,33 @@ const VACIAS = new Set(['img', 'br', 'hr', 'meta', 'link', 'input', 'area', 'bas
 const RUTAS = new Set(
   [...config.matchAll(/\['(\/[^']*)',\s*'\/[^']*'\]/g)].map((m) => m[1]),
 )
-// Las rutas que sirve Next por fichero, no por reescritura.
-for (const extra of ['/estado']) RUTAS.add(extra)
+/**
+ * Y las que sirve el App Router por fichero, que tambien existen.
+ *
+ * Estaba escrito a mano —`['/estado']`— y eso es el mismo modo de fallo que
+ * este comprobador viene a quitar: el dia que se anade una pagina asi, hay
+ * que acordarse de venir aqui. `/agenda` nacio el 22-10 servida por
+ * `src/app/agenda/route.ts` y este paso la declaro inexistente en el CI con
+ * razon, porque nadie se acordo.
+ *
+ * Ahora se leen del disco: cualquier carpeta de `src/app` con su `page.tsx`
+ * o su `route.ts` es una ruta. Las de `[corchetes]` no, que son plantillas
+ * y no una direccion que se pueda enlazar tal cual.
+ */
+{
+  const appDir = fileURLToPath(new URL('../src/app/', import.meta.url))
+  const mirar = (base, prefijo) => {
+    for (const hijo of readdirSync(base, { withFileTypes: true })) {
+      if (!hijo.isDirectory()) continue
+      if (hijo.name === 'api' || hijo.name.startsWith('[') || hijo.name.startsWith('_')) continue
+      const ruta = prefijo + '/' + hijo.name
+      const dentro = readdirSync(join(base, hijo.name))
+      if (dentro.includes('page.tsx') || dentro.includes('route.ts')) RUTAS.add(ruta)
+      mirar(join(base, hijo.name), ruta)
+    }
+  }
+  mirar(appDir, '')
+}
 
 /**
  * Y las rutas de API, que no son reescrituras: las sirve el App Router por
