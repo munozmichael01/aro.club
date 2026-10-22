@@ -1,4 +1,4 @@
-import { JUEGO } from '@/lib/reglas'
+import { horaDe, JUEGO } from '@/lib/reglas'
 
 /**
  * Cuándo una cena está "recién pasada".
@@ -46,3 +46,42 @@ export function sePuedeValorar(empiezaEn: string | Date | number, ahora = Date.n
   const inicio = typeof empiezaEn === 'number' ? empiezaEn : new Date(empiezaEn).getTime()
   return ahora - inicio > FIN_CENA
 }
+
+/**
+ * «La mesa es tuya por dos horas».
+ *
+ * Michael lo aprobó el 21-10, palabra por palabra. Va en la revelación, en
+ * el recordatorio y en Mi mesa, y en los tres sale de aquí: es el aviso que
+ * evita que un grupo se quede hasta las doce en una mesa que el restaurante
+ * ya tiene prometida a otros, y decirlo distinto en cada sitio es la forma
+ * de que acabe diciendo tres cosas.
+ *
+ * Las horas salen del evento, nunca escritas a mano, y la última frase solo
+ * aparece si esa mesa tiene sitios cerca de verdad: prometer un paso a paso
+ * que está vacío es peor que no prometer nada.
+ */
+export function avisoDeDosHoras(
+  inicioIso: string | null | undefined,
+  zona: string | undefined,
+  haySitiosCerca: boolean,
+  donde = 'Mi mesa',
+): string {
+  if (!inicioIso) return ''
+  const empieza = horaDe(inicioIso, zona)
+  const acaba = horaDe(new Date(Date.parse(inicioIso) + 2 * 3600_000).toISOString(), zona)
+  if (!empieza || !acaba) return ''
+  // Sin punto detrás de la hora: `horaDe` ya devuelve «9:00 p.m.», con el
+  // suyo. Añadir el de la frase deja «9:00 p.m..», que es el mismo descuido
+  // que ya apareció esta noche en el panel.
+  /**
+   * Sin «Importante:» delante.
+   *
+   * Esa palabra era para la caja roja; ahora la frase vive dentro de
+   * RECUERDA, entre lo que cubre la plaza y lo del consumo aparte, y un
+   * «importante» ahí dentro grita por encima de sus vecinas sin motivo.
+   */
+  return `La mesa es tuya por dos horas, de ${empieza} a ${acaba} `
+    + 'El restaurante puede tener otra reserva esperando esa mesa, así que tenlo en cuenta para la sobremesa.'
+    + (haySitiosCerca ? ` Si quieren seguir, en ${donde} hay sitios cerca.` : '')
+}
+

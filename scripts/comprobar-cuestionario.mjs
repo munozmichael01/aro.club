@@ -400,6 +400,28 @@ if (sinIcono.length) {
   console.log(`\u2713 favicon (${pantallas.length} pantallas)`)
 }
 
+// --- y la septima: el titulo de la pestana ----------------------------
+//
+// Mismo motivo que el favicon y mismo descuido: diecinueve de las
+// veintidos no tenian `<title>`, asi que la pestana ensenaba la URL
+// —«aro.club/entrar»— y lo mismo salia al guardar en marcadores, al
+// compartir y en el historial. Lo cazo el agente de la app auditando
+// /entrar, y al mirarlas todas eran casi todas.
+//
+// El titulo es el NOMBRE de la pantalla, no una frase: lo lee quien tiene
+// ocho pestanas abiertas y busca la suya.
+const sinTitulo = pantallas.filter((f) => !/<title>\s*\S[^<]*<\/title>/.test(
+  fs.readFileSync(fileURLToPath(new URL(`../public/${f}`, import.meta.url)), 'utf8')))
+
+if (sinTitulo.length) {
+  errores++
+  console.error('\n\u2717 pantallas sin <title>')
+  sinTitulo.forEach((f) => console.error(`    ${f}`))
+  console.error('  \u2192 la pestana ensena la URL, y eso es lo que se guarda y se comparte')
+} else {
+  console.log(`\u2713 titulo de la pestana (${pantallas.length} pantallas)`)
+}
+
 // --- el runtime sale de nuestro dominio --------------------------------
 //
 // `support.js` pide React, ReactDOM y Babel a unpkg.com. Si no llegan, la

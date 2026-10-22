@@ -55,43 +55,42 @@ Ligera. Que cualquiera responda sin pensarlo dos veces.
 9. Si mañana tuvieras el día libre, ¿qué harías primero?
 10. ¿A qué le dices que sí con demasiada facilidad?
 
-## Ronda 2 · Un poco más de ti
+## Ronda 2 · Cuéntanos una
 
-Personal, pero sin exponerse.
+Historias, no reflexiones. Se responde contando algo.
 
-1. ¿Qué te tiene con ilusión estos días, aunque sea algo pequeño?
-2. ¿Qué haces que te hace perder la noción del tiempo?
-3. ¿Qué aprendiste este año que no esperabas aprender?
-4. ¿En qué eres mejor de lo que la gente imagina?
-5. ¿Qué plan llevas tiempo diciendo que vas a hacer?
-6. ¿Quién te enseñó algo que todavía usas?
-7. ¿Qué te hace sentir en casa, estés donde estés?
-8. ¿Qué decisión tomaste que hoy volverías a tomar?
-9. ¿En qué has cambiado de opinión en los últimos años?
-10. ¿Qué te gustaría que te salga bien este año?
-11. ¿Qué te cuesta pedir?
+1. ¿Cuál es la peor comida que has probado en un viaje?
+2. ¿Qué es lo más raro que te ha pasado en Caracas?
+3. ¿Cuál es el regalo más extraño que te han hecho?
+4. ¿Qué hobby empezaste con todo y dejaste al mes?
+5. ¿Con qué famoso o famosa te han dicho que te pareces?
+6. ¿Qué plato te sale mejor que a nadie?
+7. ¿Cuál fue tu primer trabajo, y qué tenía de raro?
+8. ¿Cuál ha sido tu peor corte de pelo?
+9. ¿Qué es lo último que te dio un ataque de risa?
+10. ¿Qué app usas más de lo que te gustaría admitir?
 
-## Ronda 3 · Si la mesa quiere ir más hondo
+## Ronda 3 · Si la mesa quiere más
 
-Más hondo, y cualquiera puede pasar.
+Más personal, y cualquiera puede pasar.
 
 > La bajada NO repite el aviso. La pausa de antes de esta ronda ya dice
 > «Esta ronda es más personal. Solo si a la mesa le provoca», y las dos
 > juntas lo dirían dos veces seguidas en la misma pantalla.
 
-1. ¿Qué es lo más valiente que has hecho?
-2. ¿Qué piensa la gente de ti que no es del todo así?
-3. ¿Qué le dirías a la persona que eras hace diez años?
-4. ¿De qué te sientes orgulloso u orgullosa y casi nunca lo cuentas?
-5. ¿Qué te gustaría que te preguntaran más seguido?
-6. ¿Qué cosa pequeña te arregló un mal día hace poco?
-7. ¿Qué te gustaría hacer antes de que se te pase el momento?
-8. ¿Qué momento de tu vida te gustaría volver a vivir?
-9. ¿Quién ha sido importante en tu vida sin saberlo?
-10. ¿Qué te costó mucho y hoy agradeces?
-11. ¿Qué te da miedo intentar?
 
 ---
+
+1. ¿Qué es lo más espontáneo que has hecho?
+2. ¿Cuál es tu opinión impopular sobre la comida?
+3. Si pudieras aprender algo de un día para otro, ¿qué sería?
+4. Te ganas la lotería: ¿qué haces en las primeras 24 horas?
+5. ¿Cuál es el mejor consejo que te han dado?
+6. ¿Qué haces distinto a todo el mundo?
+7. ¿Qué es lo más valiente que has hecho?
+8. ¿Qué te gustaría que te preguntaran más seguido?
+9. ¿Qué momento de tu vida te gustaría volver a vivir?
+10. ¿Quién te enseñó algo que todavía usas?
 
 ## Decidido con Michael
 

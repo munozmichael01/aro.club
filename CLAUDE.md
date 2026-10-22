@@ -37,15 +37,27 @@ nuevo en una respuesta, nunca uno que cambie de forma.
 ## Antes de cada push
 
 ```bash
-npx tsc --noEmit && node scripts/comprobar-cuestionario.mjs && node scripts/comprobar-pintado.mjs
+npx tsc --noEmit && npx eslint && node scripts/comprobar-pantallas.mjs \
+  && node scripts/comprobar-correos.mjs && node scripts/comprobar-cuestionario.mjs \
+  && node scripts/comprobar-pintado.mjs
 ```
 
-El primero porque el CI lo exige y el dev server no caza errores de tipos. El
-segundo porque compara las opciones del cuestionario con el catálogo de la
-base, y ese descuadre no falla nada visible: la respuesta se pierde al guardar
-y la persona sigue adelante creyendo que quedó.
+**Los cinco primeros son LOS DEL CI, en su mismo orden.** Aquí estaban solo
+tres, y el 22-10 `/agenda` subió a main con el CI en rojo: la pantalla
+enlazaba a una ruta que `comprobar-pantallas` no sabía que existía, y ese
+comprobador no estaba en esta lista. Correr menos de lo que corre el CI es
+enterarse por correo.
 
-El tercero porque los otros dos leen las pantallas y no las abren. El 17-10
+`tsc` porque el CI lo exige y el dev server no caza errores de tipos.
+`comprobar-pantallas` porque los `.dc.html` no los mira nadie más: enlaces a
+rutas que no existen, etiquetas que no cierran, piezas que falta cargar.
+`comprobar-correos`, para que ningún botón de un correo lleve a un 404.
+`comprobar-cuestionario` porque compara las opciones de la pantalla con el
+catálogo de la base, y ese descuadre no falla nada visible: la respuesta se
+pierde al guardar y la persona sigue adelante creyendo que quedó.
+
+Y `comprobar-pintado`, el que NO está en el CI, porque todos los anteriores
+leen las pantallas y no las abren. El 17-10
 subi un bloque que cierra bien, parsea y **deja Mi mesa en blanco**: media
 hora en produccion con la pantalla vacia para todo el mundo, y el
 comprobador decia 0 problemas. `comprobar-pintado` abre cada `.dc.html` en

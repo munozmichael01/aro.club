@@ -47,6 +47,10 @@ guía 1.2. Video y texto enviados. Mientras dure:
 3. Cuando el agente quite `HORAS_DE_CIERRE` de `reglas.js`, nada que hacer (el
    tipo ya está fuera).
 
+5. Cuando Apple apruebe: pasar `T.FORMATOS` (texto/cuenta.ts) a `AroReglas.familiaDe` y
+   `T.estadoDeFecha` a `AroReglas.fraseDeApuntados` (reglas.js, 22-10), para no
+   tener copias propias.
+
 **Del agente web:** `/agenda` pública + header + landing (`docs/entrega/entrega
 agenda/`), la web de la entrega acceso, y el candado para que `bloquear` no
 pise una exclusión con `reason = 'reporte'` (en la app ya no se manda).

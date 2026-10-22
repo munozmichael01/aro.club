@@ -109,6 +109,18 @@
 
   <tr><td class="p" style="padding:32px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.4px;color:#9CBBA6;mso-line-height-rule:exactly;">{{ conQuien }}</td></tr>
 
+  <!-- Solo si la mesa salió corta, y ANTES de los nombres.
+       Michael, 22-10: «al inicio de la lista, como en la app». Y es lo
+       correcto: quien lee «son cuatro» después de haber contado cuatro ya
+       se hizo la pregunta. Dicho antes, lee la lista sabiendo qué espera.
+       En melocotón y en una línea, sin caja: es una aclaración, no un
+       aviso. -->
+  {{#si mesaCorta}}
+  <tr><td class="p" style="padding:10px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#E39C63;mso-line-height-rule:exactly;">
+    {{ mesaCorta }}
+  </td></tr>
+  {{/si}}
+
   <!-- Los cinco. Cada persona es UNA fila completa: el bucle NO puede abrir
        ni cerrar a caballo de la tabla. El porque, en el commit. -->
   <tr><td class="p" style="padding:16px 40px 0 40px;">
@@ -130,29 +142,6 @@
   <tr><td class="p" style="padding:18px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#9CBBA6;mso-line-height-rule:exactly;">
     Todos con identidad verificada. Al llegar, di que vas a {{ comoLlegar }}.
   </td></tr>
-
-  <!-- Solo si la mesa salió corta. Va pegada a los nombres, que es donde se
-       cuenta: leer cuatro donde se esperan cinco y no encontrar explicación
-       es lo que hace pensar que falta alguien por llegar. En melocotón y en
-       una línea, sin caja: es una aclaración, no un aviso. -->
-  {{#si mesaCorta}}
-  <tr><td class="p" style="padding:10px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#E39C63;mso-line-height-rule:exactly;">
-    {{ mesaCorta }}
-  </td></tr>
-  {{/si}}
-
-  <!-- LAS DOS HORAS DE LA MESA. Va destacado y no como una línea más: es lo
-       que evita que el grupo se quede hasta las doce en una mesa que el
-       restaurante ya tiene prometida. Texto aprobado por Michael el 21-10. -->
-  {{#si avisoDosHoras}}
-  <tr><td class="p" style="padding:28px 40px 0 40px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#6E340F;border-radius:22px;">
-      <tr><td style="padding:20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#FFF8EA;mso-line-height-rule:exactly;">
-        {{ avisoDosHoras }}
-      </td></tr>
-    </table>
-  </td></tr>
-  {{/si}}
 
   <tr><td class="p" style="padding:28px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;border:1px solid #6E340F;border-radius:22px;">
@@ -212,9 +201,20 @@
       <tr><td style="padding:0 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#33513F;mso-line-height-rule:exactly;">
         Los {{ precio }} de tu plaza cubren armar la mesa <span style="color:#C0662F;">·</span> la verificación de identidad de los seis <span style="color:#C0662F;">·</span> el sitio y la reserva a tu nombre.
       </td></tr>
-      <tr><td style="padding:10px 24px 20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#2C4A38;mso-line-height-rule:exactly;">
+      <tr><td style="padding:10px 24px 0 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#2C4A38;mso-line-height-rule:exactly;">
         <strong style="color:#14342A;">Tu consumo va aparte:</strong> lo pagas en el restaurante, como en cualquier salida.
       </td></tr>
+      <!-- LAS DOS HORAS, la última de la lista y sin caja propia.
+           En caja naranja era lo más llamativo del correo, más que el
+           nombre del restaurante, y es una cortesía, no el titular. Aquí
+           comparte sitio con «tu consumo va aparte», que es lo mismo: qué
+           esperar. El orden lo marcó Michael. -->
+      {{#si avisoDosHoras}}
+      <tr><td style="padding:10px 24px 0 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#2C4A38;mso-line-height-rule:exactly;">
+        {{ avisoDosHoras }}
+      </td></tr>
+      {{/si}}
+      <tr><td style="padding:0 24px 20px 24px;font-size:0;line-height:0;">&nbsp;</td></tr>
     </table>
   </td></tr>
 

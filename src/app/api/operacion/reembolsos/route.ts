@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 import { encolar } from '@/lib/correos'
 import { exigirOps } from '@/lib/ops'
-import { enBolivares } from '@/lib/reembolso'
+import { enBolivares, nombreDeBanco } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -72,7 +72,9 @@ export async function GET() {
         correo: p?.correo ?? null,
         telefono: f.telefono,
         cedula: f.cedula,
-        banco: f.banco,
+        // El nombre y el código: el nombre para reconocerlo, el código
+        // porque es lo que se teclea en la app del banco.
+        banco: nombreDeBanco(f.banco) + ' · ' + f.banco,
         precio: Number(f.precio_usd),
         tasa: Number(f.tasa),
         montoBs: Number(f.monto_ves),

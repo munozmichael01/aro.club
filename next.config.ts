@@ -70,6 +70,9 @@ const PANTALLAS: Array<[string, string]> = [
   // Entrega 4 · la transacción y la operación
   ['/pago', '/Aro Club - Pago.dc.html'],
   ['/cancelar', '/Aro Club - Cancelar.dc.html'],
+  // La misma URL que la app: dos caminos distintos para pedir lo mismo es
+  // el principio de que digan cosas distintas.
+  ['/reembolso', '/Aro Club - Reembolso.dc.html'],
   ['/operacion', '/Aro Club - Operacion.dc.html'],
   // Entrega 7 y 8 · la ficha de miembro y los locales, ambas de operación
   ['/miembro', '/Aro Club - Perfil miembro.dc.html'],
@@ -101,12 +104,36 @@ const PANTALLAS: Array<[string, string]> = [
  * baja o a cambiar la clave, y sin token las dos acaban en el mismo sitio
  * —«este enlace ya no vale»—, así que se manda a la que ya elige por defecto.
  */
-const CANONICA: Record<string, string> = { '/Aro Club - Sin sesion.dc.html': '/baja' }
+const CANONICA: Record<string, string> = {
+  '/Aro Club - Sin sesion.dc.html': '/baja',
+  /**
+   * La agenda no está en `PANTALLAS` porque no la sirve una reescritura: la
+   * sirve `src/app/agenda/route.ts`, que le pega el JSON-LD con las fechas
+   * antes de mandarla (su cabecera explica por qué). Pero el fichero sigue
+   * en `public/`, así que sin esta línea su URL fea devolvería 200 y
+   * tendríamos la misma página en dos direcciones, que es lo que esta lista
+   * vino a cerrar. Y sin las fechas dentro.
+   */
+  '/Aro Club - Agenda.dc.html': '/agenda',
+}
 for (const [limpia, fichero] of PANTALLAS) {
   if (!CANONICA[fichero]) CANONICA[fichero] = limpia
 }
 
 const nextConfig: NextConfig = {
+  /**
+   * La pantalla de la agenda viaja CON su función.
+   *
+   * `src/app/agenda/route.ts` la lee del disco con `readFileSync`. En local
+   * eso funciona siempre —ahí está el repositorio entero—; en Vercel la
+   * función solo se lleva lo que el trazado encuentra, y un `join()` en
+   * tiempo de ejecución no se traza. Sin esta línea la ruta se despliega y
+   * revienta con ENOENT en la primera visita, que es justo el tipo de fallo
+   * que no se ve hasta producción.
+   */
+  outputFileTracingIncludes: {
+    '/agenda': ['./public/Aro Club - Agenda.dc.html'],
+  },
   async redirects() {
     // 308 y no 307: es permanente. Un temporal deja que el buscador siga
     // prefiriendo la URL con el nombre del fichero dentro.

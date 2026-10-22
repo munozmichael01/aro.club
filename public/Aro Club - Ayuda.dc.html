@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ayuda · Aro Club</title>
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -12,9 +13,13 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./cabecera.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
+<!-- La cabecera pública, fuera del árbol de DCLogic a propósito: su
+     porqué está en cabecera.js. -->
+<div data-cabecera="" data-ancho="820"></div>
 <x-dc>
 <helmet>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -32,15 +37,6 @@
 </helmet>
 
 <div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif">
-
-  <div style="position:sticky;top:0;z-index:40;background:rgba(250,243,228,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(20,52,42,.1)">
-    <div style="max-width:820px;margin:0 auto;padding:11px clamp(16px,4vw,32px);display:flex;align-items:center;gap:11px">
-      <a href="/" style="display:flex;align-items:center;gap:9px;color:#14342A;min-height:44px;margin:-10px 0">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#1B5138" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#C0662F"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#1B5138"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#1B5138"></circle><circle cx="3.4" cy="12" r="2.5" fill="#1B5138"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#1B5138"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#1B5138"></circle></svg>
-        <span style="font:400 21px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
-      </a>
-    </div>
-  </div>
 
   <div style="max-width:820px;margin:0 auto;padding:clamp(30px,5vw,56px) clamp(16px,4vw,32px) clamp(56px,9vw,100px)">
 

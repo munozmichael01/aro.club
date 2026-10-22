@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { minutosAPie } from '@/lib/distancia'
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
+import { fraseDeMesaCorta } from '@/lib/mesa-corta'
+import { avisoDeDosHoras } from '@/lib/ventana-mesa'
 import { bloqueDeReembolso } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
@@ -373,6 +375,36 @@ export async function GET() {
     ]),
   )
 
+  /**
+   * ¿Se cayó alguien de ESTA mesa después de la revelación?
+   *
+   * Se calcula una vez y lo usan dos cosas: la frase de mesa corta y el
+   * bloque de ajustes. Con dos cálculos, el correo podría decir «alguien
+   * canceló» y la pantalla «no completamos la mesa» de la misma mesa.
+   */
+  const seCayoAlguienDeAqui = await (async () => {
+        if (!evento.reveal_at) return false
+        const { data: caidos } = await admin
+          .from('bookings')
+          .select('profile_id, cancelled_at')
+          .eq('event_id', mesa.event_id)
+          .not('cancelled_at', 'is', null)
+          .gt('cancelled_at', evento.reveal_at)
+
+        if (!caidos?.length) return false
+
+        const { data: loSuyo } = await admin
+          .from('scheduled_emails')
+          .select('payload')
+          .eq('event_id', mesa.event_id)
+          .eq('kind', 'mesa_asignada')
+          .in('profile_id', caidos.map((c) => c.profile_id))
+
+        return (loSuyo ?? []).some(
+          (f) => String(((f.payload ?? {}) as { mesa?: unknown }).mesa ?? '') === String(mesa.table_number),
+        )
+      })()
+
   return NextResponse.json({
     // Pasada: la cena ya ocurrió, toca F11.
     fase: ahora > empiezaEn + 5 * 3600 * 1000 ? 'pasada' : 'abierta',
@@ -488,6 +520,42 @@ export async function GET() {
      * Dos hechos, no una opinión: cuántos son y si se sumó alguien después.
      * La pantalla los junta en una frase.
      */
+    /**
+     * Y SI LA MESA SALIÓ CORTA, dicho aquí también.
+     *
+     * Lo encontró el agente de la app el 22-10: el correo de la revelación
+     * lo explicaba y la pantalla pintaba «4 personas» sin una palabra. El
+     * bloque de `ajustes` de abajo cuenta lo que pasa DESPUÉS de revelar
+     * —quién canceló, a quién movimos— y esto es otra cosa: la mesa nació
+     * así.
+     *
+     * Misma frase que el correo, de `fraseDeMesaCorta`, y `null` cuando la
+     * mesa está completa, que es lo normal. Michael: «no debe ser lo
+     * protagonista de Mi mesa, es informativo y ya».
+     */
+    /**
+     * Cuánto dura la mesa, también aquí.
+     *
+     * Michael, 22-10: «lo de las dos horas con la revelación y la mesa es
+     * suficiente». El correo se lee una vez a mediodía; esta pantalla se
+     * abre otra vez camino del restaurante, que es cuando la pregunta
+     * importa de verdad.
+     *
+     * Misma frase y misma función que el correo, y con la coletilla de los
+     * sitios cerca solo si esta mesa los tiene: `paraSeguir` ya se calculó
+     * arriba, así que aquí no se adivina nada.
+     */
+    avisoDosHoras: avisoDeDosHoras(
+      evento.starts_at,
+      zonaHoraria,
+      paraSeguir.length > 0,
+      'el paso a paso',
+    ) || null,
+    mesaCorta: fraseDeMesaCorta(
+      (companeros ?? []).length + 1,
+      evento.seats_per_table ?? 6,
+      seCayoAlguienDeAqui,
+    ) || null,
     ajustes: {
       /**
        * Si alguien se cayó de ESTA mesa después de la revelación.
@@ -504,28 +572,7 @@ export async function GET() {
        * payload en qué mesa estaba. Eso es exactamente «a quién le dijimos
        * que se sentaba aquí».
        */
-      alguienCancelo: await (async () => {
-        if (!evento.reveal_at) return false
-        const { data: caidos } = await admin
-          .from('bookings')
-          .select('profile_id, cancelled_at')
-          .eq('event_id', mesa.event_id)
-          .not('cancelled_at', 'is', null)
-          .gt('cancelled_at', evento.reveal_at)
-
-        if (!caidos?.length) return false
-
-        const { data: loSuyo } = await admin
-          .from('scheduled_emails')
-          .select('payload')
-          .eq('event_id', mesa.event_id)
-          .eq('kind', 'mesa_asignada')
-          .in('profile_id', caidos.map((c) => c.profile_id))
-
-        return (loSuyo ?? []).some(
-          (f) => String(((f.payload ?? {}) as { mesa?: unknown }).mesa ?? '') === String(mesa.table_number),
-        )
-      })(),
+      alguienCancelo: seCayoAlguienDeAqui,
       // Cuántos se sientan de verdad, contándose a sí misma.
       sonCuantos: (companeros ?? []).length + 1,
       // Y cuántos caben, que es lo que hace que «cinco» signifique algo.

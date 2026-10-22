@@ -4,11 +4,13 @@ import type { Correo } from '@/lib/correos'
 import { firmarBaja } from '@/lib/baja-token'
 import { firmar } from '@/lib/lead-token'
 import { enlaceDeMapa } from '@/lib/mapa'
-import { FIN_CENA } from '@/lib/ventana-mesa'
+import { avisoDeDosHoras, FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
+import { fraseDeMesaCorta } from '@/lib/mesa-corta'
+import { DIAS_DE_PLAZO } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
@@ -541,11 +543,26 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     // que se le puede ofrecer.
     case 'sin_mesa': {
       const proximas = await proximasFechas(admin, nacimiento)
+      /**
+       * Hasta cuándo puede pedir el dinero en vez del crédito.
+       *
+       * El plazo cuenta desde el abono, y el abono lo acaba de hacer
+       * `publicar` justo antes de encolar esto, así que contar desde ahora
+       * es contar desde el mismo momento con un minuto de diferencia. Si
+       * algún día dejaran de ir juntos, esta fecha sería la equivocada y hay
+       * que leerla del apunte.
+       */
+      const limite = new Date(Date.now() + DIAS_DE_PLAZO * 86400_000).toISOString()
+      const cuandoAcaba = partesDe(limite, ZONA_POR_DEFECTO)
+
       return {
         a,
         datos: {
           ...base,
           proxima1: proximas[0] ?? 'Te avisamos en cuanto abramos otra',
+          hastaCuando: cuandoAcaba
+            ? `${cuandoAcaba.dia} ${cuandoAcaba.numero} de ${cuandoAcaba.mes}`
+            : 'dentro de tres días',
         },
       }
     }
@@ -927,22 +944,9 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           ...(yaAbierta
             ? await (async () => {
                 const suya = await laMesaDe(admin, fila.event_id!, fila.profile_id)
-                return {
-                  fotoEntrada: suya?.fotoEntrada ?? '',
-                  sitio: suya?.sitio ?? '',
-                  avisoDosHoras: suya?.avisoDosHoras ?? '',
-                }
+                return { fotoEntrada: suya?.fotoEntrada ?? '', sitio: suya?.sitio ?? '' }
               })()
-            /**
-             * Antes de la revelación también se avisa, pero SIN la frase de
-             * los sitios cerca: a las nueve de la mañana no sabemos en qué
-             * restaurante cena esta persona, así que tampoco sabemos si hay
-             * dónde seguir. Prometerlo y que luego no haya es peor que
-             * callarlo hasta el mediodía, cuando el correo de la mesa lo
-             * dice entero.
-             */
-            : { fotoEntrada: '', sitio: '',
-                avisoDosHoras: avisoDeDosHoras(evento.starts_at, zona, false) }),
+            : { fotoEntrada: '', sitio: '' }),
         },
       }
     }
@@ -1754,37 +1758,6 @@ async function textoDelMotivo(admin: Admin, codigo: string | undefined): Promise
   return data?.message ?? 'hay que repetir la foto.'
 }
 
-/**
- * «La mesa es tuya por dos horas».
- *
- * Michael lo aprobó el 21-10, palabra por palabra. Va en la revelación, en
- * el recordatorio y en Mi mesa, y en los tres sale de aquí: es el aviso que
- * evita que un grupo se quede hasta las doce en una mesa que el restaurante
- * ya tiene prometida a otros, y decirlo distinto en cada sitio es la forma
- * de que acabe diciendo tres cosas.
- *
- * Las horas salen del evento, nunca escritas a mano, y la última frase solo
- * aparece si esa mesa tiene sitios cerca de verdad: prometer un paso a paso
- * que está vacío es peor que no prometer nada.
- */
-export function avisoDeDosHoras(
-  inicioIso: string | null | undefined,
-  zona: string | undefined,
-  haySitiosCerca: boolean,
-  donde = 'Mi mesa',
-): string {
-  if (!inicioIso) return ''
-  const empieza = horaDe(inicioIso, zona)
-  const acaba = horaDe(new Date(Date.parse(inicioIso) + 2 * 3600_000).toISOString(), zona)
-  if (!empieza || !acaba) return ''
-  // Sin punto detrás de la hora: `horaDe` ya devuelve «9:00 p.m.», con el
-  // suyo. Añadir el de la frase deja «9:00 p.m..», que es el mismo descuido
-  // que ya apareció esta noche en el panel.
-  return `Importante: la mesa es tuya por dos horas, de ${empieza} a ${acaba} `
-    + 'El restaurante puede tener otra reserva esperando esa mesa, así que tenlo en cuenta para la sobremesa.'
-    + (haySitiosCerca ? ` Si quieren seguir, en ${donde} hay sitios cerca.` : '')
-}
-
 async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null) {
   if (!perfilId) return null
 
@@ -1979,34 +1952,8 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
      * Vacía cuando la mesa está completa, y entonces la plantilla se salta la
      * fila entera. Lo normal es que esté completa.
      */
-    /**
-     * Y CUATRO NO SE CUENTA COMO CINCO.
-     *
-     * Michael, 22-10, con la revelación del jueves a las doce y mesas de
-     * cuatro: «esta vez no nos cuadró el sexto puesto» da a entender que
-     * falta UNO. A quien se sienta con tres desconocidos esperando cinco,
-     * esa frase le hace contar sillas.
-     *
-     * Así que a partir de dos huecos se dice el número y se dice lo que de
-     * verdad pensamos: que cuatro bastan. No es consuelo, es la decisión que
-     * se tomó al publicarla.
-     */
-    mesaCorta: !(enLaMesa > 0 && enLaMesa < porMesa)
-      ? ''
-      : porMesa - enLaMesa >= 2
-        ? (cancelaronDeEstaMesa
-            ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: se nos cayeron dos y no llegamos a sentar a nadie más, pero creemos que ${EN_LETRA[enLaMesa] ?? enLaMesa} desconocidos son suficientes para pasarla bien.`
-            : `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: esta vez no completamos la mesa de ${EN_LETRA[porMesa] ?? porMesa}, pero creemos que ${EN_LETRA[enLaMesa] ?? enLaMesa} desconocidos son suficientes para pasarla bien.`)
-      : cancelaronDeEstaMesa
-        ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: alguien canceló y no llegamos a sentar a nadie más.`
-        // Sin cancelación la mesa salió así, y eso también hay que
-        // justificarlo: la promesa es de seis, y quien cuenta cinco merece
-        // saber por qué. Lo que no vale es achacarle a alguien una
-        // cancelación que no ocurrió.
-        // Y la frase mira a lo nuestro, no a la persona: «no encontramos a
-        // nadie que encajara contigo» se lee como que el raro eres tú, y eso
-        // lo lee alguien que va a cenar con desconocidos en dos horas.
-        : `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: esta vez no nos cuadró el sexto puesto.`,
+    // La misma frase que Mi mesa, de `fraseDeMesaCorta`.
+    mesaCorta: fraseDeMesaCorta(enLaMesa, porMesa, cancelaronDeEstaMesa),
     /**
      * Si esa noche grabamos en ESTA mesa.
      *

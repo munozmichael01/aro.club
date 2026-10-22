@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icono-512.png">
+<script src="./errores.js"></script>
+<script src="./gtm.js"></script>
+<script src="./vendor.js"></script>
+<script src="./support.js"></script>
+<script src="./reglas.js"></script>
+<script src="./cabecera.js"></script>
+<!--
+  ESTA PANTALLA NO SE SIRVE SOLA: la sirve `src/app/agenda/route.ts`.
+
+  Es la única del producto que lo hace, y por una razón concreta: aquí lo
+  que vale para un buscador —y para el asistente que hoy responde «¿qué hay
+  esta semana en Caracas?»— son LAS FECHAS, y las fechas salen de la base.
+  Un rastreador no ejecuta JavaScript: si la lista se arma al vuelo, para él
+  esta página está vacía.
+
+  Así que la ruta de Next lee este fichero y rellena los dos huecos de más
+  abajo: el del final del head, con el JSON-LD y una entrada por fecha, y el
+  de dentro del `noscript`, con la lista en texto. Lo que se ve y lo que se
+  toca sigue siendo esto, servido sin traducción, como el resto.
+
+  Los huecos son comentarios con su nombre y NO se nombran aquí a propósito:
+  la ruta rellena la primera aparición, así que escribirlos en esta
+  explicación metería el JSON-LD dentro de este mismo comentario. Pasó, y
+  desde fuera la página se veía perfecta.
+
+  Si abres el fichero suelto los dos huecos se quedan como comentarios y no
+  pasa nada: la pantalla pinta igual, pidiendo `/api/agenda`.
+-->
+<title>Cenas y planes en Caracas esta semana · Aro Club</title>
+<meta name="description" content="Las cenas y los planes abiertos esta semana en Caracas, con su día, su hora, su zona y su precio. Seis desconocidos verificados por mesa y el sitio lo elegimos nosotros." />
+<link rel="canonical" href="https://aro.club/agenda" />
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+<meta name="theme-color" content="#FAF3E4" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Aro Club" />
+<meta property="og:locale" content="es_VE" />
+<meta property="og:url" content="https://aro.club/agenda" />
+<meta property="og:title" content="Cenas y planes en Caracas esta semana." />
+<meta property="og:description" content="Día, hora, zona y precio de cada fecha abierta. Seis desconocidos verificados por mesa." />
+<meta property="og:image" content="https://aro.club/correo/mesa-de-seis.jpg" />
+<meta property="og:image:alt" content="Seis personas cenando en una mesa" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Cenas y planes en Caracas esta semana." />
+<meta name="twitter:description" content="Día, hora, zona y precio de cada fecha abierta. Seis desconocidos verificados por mesa." />
+<meta name="twitter:image" content="https://aro.club/correo/mesa-de-seis.jpg" />
+<!--AGENDA-DATOS-->
+</head>
+<body>
+<noscript><div style="max-width:40rem;margin:10vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Cenas y planes en Caracas.</p><p style="margin:0 0 12px">Para apartar tu puesto hace falta JavaScript. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p><!--AGENDA-LISTA--></div></noscript>
+<!-- La cabecera pública, fuera del árbol de DCLogic a propósito: su
+     porqué está en cabecera.js. -->
+<div data-cabecera="agenda" data-ancho="1240"></div>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#FAF3E4; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  a { color:#1B5138; text-decoration:none; }
+  a:hover { color:#8F4515; }
+  button { font: inherit; color: inherit; }
+  ::selection { background:#1B5138; color:#FAF3E4; }
+  /* Computadora y celular se deciden con CSS y no con el ancho leído en
+     JavaScript: el ancho leído llega DESPUÉS del primer pintado, así que la
+     barra parpadea de una forma a la otra, y para quien no ejecuta nada no
+     existe ninguna de las dos. */
+  @media (max-width: 860px) { .solo-esc { display:none !important } }
+  @media (min-width: 861px) { .solo-mov { display:none !important } }
+  /* El carril de polaroids se desliza sin enseñar barra: es una fila de
+     fotos, no un contenedor de lista. */
+  .carril { scrollbar-width:none; -ms-overflow-style:none }
+  .carril::-webkit-scrollbar { display:none }
+  @keyframes aro-latido { 0%,100% { opacity:.55 } 50% { opacity:.9 } }
+</style>
+</helmet>
+<div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;width:100%;overflow-x:clip">
+
+  <div style="max-width:1240px;margin:0 auto;padding:40px clamp(16px,4vw,36px) 28px">
+    <sc-if value="{{ hayEncabezado }}" hint-placeholder-val="{{ true }}">
+      <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8F4515;margin-bottom:18px">{{ semana }}</div>
+    </sc-if>
+    <h1 style="font:400 clamp(54px,8vw,96px)/.93 'Young Serif',Georgia,serif;letter-spacing:-.04em;margin:0">Cenas y planes en Caracas.</h1>
+    <p style="font:400 clamp(17px,1.6vw,21px)/1.45 'Inter Tight',sans-serif;margin:18px 0 0;max-width:52ch;text-wrap:pretty">Seis personas verificadas, un plan. <span style="font-weight:600">Nosotros elegimos el sitio y tú solo llegas.</span> <span style="color:#456352">El sitio se revela el mismo día a las 12:00. Antes, solo la zona.</span></p>
+    <sc-if value="{{ hayFiltros }}" hint-placeholder-val="{{ true }}">
+      <div class="carril" style="display:flex;gap:12px;overflow-x:auto;margin:22px calc(clamp(16px,4vw,36px) * -1) 0;padding:10px clamp(16px,4vw,36px) 16px;scroll-padding-left:20px;scroll-snap-type:x mandatory">
+        <sc-for list="{{ filtros }}" as="p" hint-placeholder-count="3">
+          <div onClick="{{ p.elegir }}" style="{{ p.marco }}">
+            <div style="{{ p.foto }}">
+              <sc-if value="{{ p.esTodos }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:2px">
+                  <sc-for list="{{ p.trozos }}" as="t" hint-placeholder-count="4">
+                    <div style="{{ t.estilo }}"></div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+            <div style="{{ p.nombreEstilo }}">{{ p.n }}</div>
+            <div style="font:500 11px/1.3 'Inter Tight',sans-serif;text-align:center;padding:3px 2px 9px;min-height:14px;color:#566A5D">{{ p.detalle }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ cargando }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1240px;margin:0 auto;padding:0 clamp(16px,4vw,36px) 56px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+      <sc-for list="{{ huesos }}" as="h" hint-placeholder-count="3">
+        <div style="height:272px;border-radius:20px;background:rgba(20,52,42,.09);animation:aro-latido 1.5s ease-in-out infinite"></div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hayFechas }}" hint-placeholder-val="{{ true }}">
+    <div style="max-width:1240px;margin:0 auto;padding:0 clamp(16px,4vw,36px) 56px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+      <sc-for list="{{ fechas }}" as="c" hint-placeholder-count="4">
+        <div style="background:#FFF8EA;border:1px solid rgba(20,52,42,.12);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                <span style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#456352">{{ c.formato }}</span>
+                <sc-if value="{{ c.hayEdad }}" hint-placeholder-val="{{ false }}">
+                  <span style="display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:#8F4515;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;color:#FAF3E4;white-space:nowrap;text-transform:uppercase">{{ c.etiquetaEdad }}</span>
+                </sc-if>
+                <sc-if value="{{ c.hayIdioma }}" hint-placeholder-val="{{ false }}">
+                  <span style="display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;border:1.5px solid #8F4515;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#8F4515;white-space:nowrap;text-transform:uppercase">{{ c.etiquetaIdioma }}</span>
+                </sc-if>
+              </div>
+              <!-- Treinta, los de la maqueta. «Viernes 23 de octubre» parte en
+                   dos líneas en una tarjeta de la rejilla y así se queda: el
+                   precio se alinea con la primera y se lee bien. Bajarlo a
+                   25 tampoco hacía que cupiera, y dejaba la fecha pequeña. -->
+              <div style="font:400 30px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.02em">{{ c.dia }}</div>
+            </div>
+            <div style="font:400 22px/1 'Young Serif',Georgia,serif;white-space:nowrap;padding-top:20px">{{ c.precio }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;font:400 16px/1.35 'Inter Tight',sans-serif">
+            <div>{{ c.hora }}</div>
+            <div style="font-weight:600">{{ c.zona }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;font:600 15px/1 'Inter Tight',sans-serif;color:{{ c.colorGente }}">
+            <span style="width:8px;height:8px;border-radius:999px;background:{{ c.puntoGente }};flex:none"></span><span>{{ c.gente }}</span>
+          </div>
+          <a href="{{ c.enlace }}" style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;transition:background 220ms ease" style-hover="background:#8F4515;color:#FFF8EA">{{ c.boton }}</a>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ sinFechas }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1240px;margin:0 auto;padding:0 clamp(16px,4vw,36px) 56px">
+      <div style="background:#14342A;color:#FAF3E4;border-radius:24px;padding:36px 26px;display:flex;flex-direction:column;gap:16px;align-items:flex-start">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#FAF3E4" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#E39C63"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#FAF3E4"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#FAF3E4"></circle><circle cx="3.4" cy="12" r="2.5" fill="#FAF3E4"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#FAF3E4"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#FAF3E4"></circle></svg>
+        <div style="font:400 36px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em;max-width:16ch">Ahora mismo no hay fechas abiertas.</div>
+        <p style="font:400 17px/1.5 'Inter Tight',sans-serif;color:#E4EDE6;margin:0;max-width:40ch">Apúntate y te avisamos en cuanto abramos las próximas fechas.</p>
+        <a href="/#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 16px/1 'Inter Tight',sans-serif;margin-top:6px" style-hover="background:#E39C63;color:#14342A">Apúntate para la próxima</a>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="border-top:1px solid rgba(20,52,42,.12)">
+    <div style="max-width:1240px;margin:0 auto;padding:48px clamp(16px,4vw,36px);display:flex;flex-direction:column;gap:14px">
+      <div style="font:400 34px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em">Antes de reservar</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));column-gap:48px">
+        <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="5">
+          <div style="padding:18px 0;border-bottom:1px solid rgba(20,52,42,.12);display:flex;flex-direction:column;gap:7px">
+            <div style="font:600 17px/1.35 'Inter Tight',sans-serif">{{ f.p }}</div>
+            <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#2E4A3E;text-wrap:pretty">{{ f.r }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#14342A;color:#FAF3E4">
+    <div style="max-width:1240px;margin:0 auto;padding:56px clamp(16px,4vw,36px);display:flex;flex-wrap:wrap;gap:24px 40px;align-items:center;justify-content:space-between">
+      <div style="font:400 40px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em;max-width:15ch">Seis desconocidos. <span style="color:#E39C63">Un plan.</span></div>
+      <a href="/#registro" style="display:inline-flex;align-items:center;min-height:60px;padding:0 32px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif" style-hover="background:#E39C63;color:#14342A">Encuentra tu mesa</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { datos: null, cargado: false, sesion: null, sesionSabida: false, filtro: null };
+
+  componentDidMount() {
+    // Las fechas, de la base. La maqueta traía siete escritas a mano —con
+    // «Jueves 22 de octubre» dentro— y una agenda inventada es la peor de
+    // todas: la lee quien todavía no confía en nosotros.
+    fetch('/api/agenda')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin agenda'))))
+      .then((d) => this.setState({ datos: d, cargado: true }))
+      .catch(() => this.setState({ datos: { fechas: [], zonas: [] }, cargado: true }));
+
+    // Y quién mira, para que el botón de cada tarjeta lleve a su reserva y
+    // no al alta. Se la pide a la cabecera, que ya la trae: tres fetch de
+    // `/api/mi-cuenta` en la misma carga eran tres.
+    AroCabecera.sesion().then((s) => this.setState({ sesion: s || null, sesionSabida: true }));
+  }
+
+  /** «Jueves 22 de octubre», en la hora de la ciudad de esa fecha. */
+  diaLargo(f) {
+    const p = AroReglas.partesDe(f.empiezaEn, f.zonaHoraria);
+    if (!p) return '';
+    return p.dia.charAt(0).toUpperCase() + p.dia.slice(1) + ' ' + p.numero + ' de ' + p.mes;
+  }
+
+  /**
+   * De cuándo a cuándo va lo que se está enseñando.
+   *
+   * Sale de las fechas que hay, no de un «22 al 25 de octubre» escrito a
+   * mano: el día que la agenda tenga una sola fecha, o tres semanas, el
+   * rótulo seguiría diciendo lo de la maqueta.
+   */
+  rango(lista) {
+    if (!lista.length) return '';
+    const a = AroReglas.partesDe(lista[0].empiezaEn, lista[0].zonaHoraria);
+    const z = AroReglas.partesDe(lista[lista.length - 1].empiezaEn, lista[lista.length - 1].zonaHoraria);
+    if (!a || !z) return '';
+    if (a.numero === z.numero && a.mesNumero === z.mesNumero) return a.numero + ' de ' + a.mes;
+    if (a.mesNumero === z.mesNumero) return a.numero + ' al ' + z.numero + ' de ' + a.mes;
+    return a.numero + ' de ' + a.mes + ' al ' + z.numero + ' de ' + z.mes;
+  }
+
+  renderVals() {
+    const datos = this.state.datos || null;
+    const cargado = !!this.state.cargado;
+    const todas = (datos && datos.fechas) || [];
+    const sesion = this.state.sesion || null;
+
+    // La fila de polaroids: solo las familias que TIENEN fecha. En la agenda
+    // pública no hay «Próximamente» —eso es la portada, que enseña lo que
+    // viene—; aquí cada foto es algo que se puede reservar hoy.
+    const conFecha = [];
+    todas.forEach((f) => {
+      const fam = AroReglas.familiaDe(f.formato);
+      if (!conFecha.some((x) => x.clave === fam.clave)) conFecha.push(fam);
+    });
+    const varias = conFecha.length > 1;
+    const elegida = varias ? (this.state.filtro || 'todos') : 'todos';
+    const ROT = ['-1.2deg', '1.4deg', '-1.6deg', '1.2deg', '-1.4deg', '1.5deg'];
+    const foto = (f) => "url('" + f.foto + "') center/cover";
+
+    const columnas = (varias ? [{ clave: 'todos', nombre: 'Todos', foto: null }] : []).concat(conFecha);
+    const filtros = columnas.map((fam, i) => {
+      const marcado = varias && elegida === fam.clave;
+      const tono = varias && !marcado
+        ? 'grayscale(.8) saturate(.35)'
+        : 'grayscale(.2) contrast(1.12) saturate(.78) brightness(.92)';
+      return {
+        n: fam.nombre,
+        esTodos: fam.clave === 'todos',
+        trozos: conFecha.slice(0, 4).map((x) => ({ estilo: 'background:' + foto(x) })),
+        detalle: varias ? (fam.clave === 'todos' ? 'Todo lo que viene' : this.diasDe(fam.clave, todas)) : '',
+        elegir: varias ? () => this.setState({ filtro: fam.clave }) : undefined,
+        marco: 'flex:0 0 auto;width:clamp(112px,13vw,168px);scroll-snap-align:start;display:flex;flex-direction:column;background:#FFFBF0;padding:6px 6px 0;border-radius:10px;border:2px solid ' + (marcado ? '#8F4515' : 'transparent') + ';box-shadow:0 10px 22px -16px rgba(20,52,42,.5);transform:rotate(' + (marcado ? '0deg' : ROT[i % ROT.length]) + ');transition:all 200ms ease;cursor:' + (varias ? 'pointer' : 'default'),
+        foto: 'position:relative;aspect-ratio:1;border-radius:5px;overflow:hidden;background:#DCD3BC ' + (fam.foto ? foto(fam) : '') + ';filter:' + tono + ';transition:filter 200ms ease',
+        nombreEstilo: "font:400 16px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;text-align:center;padding:8px 2px 0;color:" + (marcado ? '#8F4515' : '#14342A'),
+      };
+    });
+
+    const lista = todas.filter((f) => elegida === 'todos' || AroReglas.familiaDe(f.formato).clave === elegida);
+
+    const fechas = lista.map((f) => {
+      const p = AroReglas.partesDe(f.empiezaEn, f.zonaHoraria);
+      const n = f.apuntados || 0;
+      const llena = n >= 6;
+      const etiquetaEdad = f.edadMinima != null && f.edadMaxima != null
+        ? f.edadMinima + '-' + f.edadMaxima
+        : f.edadMinima != null
+        ? '+' + f.edadMinima
+        : f.edadMaxima != null
+        ? 'hasta ' + f.edadMaxima
+        : '';
+      return {
+        formato: f.nombreFormato,
+        hayEdad: !!etiquetaEdad,
+        etiquetaEdad,
+        hayIdioma: !!f.etiquetaIdioma,
+        etiquetaIdioma: f.etiquetaIdioma || '',
+        dia: this.diaLargo(f),
+        hora: p ? p.hora : '',
+        // Las zonas ABIERTAS de esa fecha, nunca el restaurante: el sitio se
+        // decide al armar la mesa y se revela el mismo día a mediodía.
+        zona: (f.zonas || []).join(' o ') || 'Zona por confirmar',
+        // Lo que cuesta ESTA fecha. El día que el precio suba, las que ya
+        // estaban abiertas siguen cobrando lo suyo.
+        precio: f.precioUsd != null ? f.precioUsd + ' ref' : AroReglas.precioTexto(),
+        // Cuánta gente va, NO cuántos puestos quedan. Aquí no hay cupo: las
+        // mesas se arman con quien haya, y un contador de escasez sería lo
+        // primero que contamos que no es verdad.
+        gente: AroReglas.fraseDeApuntados(n),
+        colorGente: llena ? '#1B5138' : '#8F4515',
+        puntoGente: llena ? '#9CBBA6' : '#E39C63',
+        boton: 'Reservar mi puesto',
+        // Con sesión, a su tarjeta de esa fecha en Mi cuenta. Sin ella, al
+        // alta: ahí es donde se decide si puede sentarse.
+        enlace: sesion ? '/cuenta?fecha=' + f.id : '/#registro',
+      };
+    });
+
+    const zonas = (datos && datos.zonas) || [];
+    const faqs = AroReglas.FRECUENTES_AGENDA.map((par) => ({
+      p: par[0],
+      // Las zonas salen de las fechas abiertas. Escritas a mano prometían
+      // cinco zonas el mes que solo hay dos.
+      r: par[1].replace('{zonas}', zonas.length ? zonas.join(', ') : 'las zonas que abrimos cada semana'),
+    }));
+
+    const semanas = todas.map((f) => AroReglas.semanaDe(f.empiezaEn, f.zonaHoraria));
+    const unaSemana = semanas.length > 0 && semanas.every((s) => s === semanas[0]);
+    const rango = this.rango(lista);
+
+    return {
+      cargando: !cargado,
+      huesos: [1, 2, 3],
+      hayFiltros: cargado && conFecha.length > 0,
+      filtros,
+      hayEncabezado: cargado && lista.length > 0,
+      semana: (unaSemana ? AroReglas.NOMBRE_SEMANA[semanas[0]] + ' · ' : '') + rango,
+      hayFechas: cargado && fechas.length > 0,
+      sinFechas: cargado && todas.length === 0,
+      fechas,
+      faqs,
+    };
+  }
+
+  /** Qué días cae una familia, para la línea pequeña de su polaroid. */
+  diasDe(clave, todas) {
+    const dias = [];
+    todas.forEach((f) => {
+      if (AroReglas.familiaDe(f.formato).clave !== clave) return;
+      const p = AroReglas.partesDe(f.empiezaEn, f.zonaHoraria);
+      if (p && dias.indexOf(p.dia) < 0) dias.push(p.dia);
+    });
+    if (!dias.length) return '';
+    const uno = (d) => d.charAt(0).toUpperCase() + d.slice(1);
+    if (dias.length === 1) return uno(dias[0]);
+    return uno(dias[0]) + ' a ' + dias[dias.length - 1];
+  }
+}
+</script>
+</body>
+</html>

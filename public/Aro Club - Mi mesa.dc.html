@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi mesa · Aro Club</title>
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -151,6 +152,13 @@
             <a href="{{ mapa }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:none">Cómo llegar</a>
             <button onClick="{{ abrirTarde }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;border:1.5px solid rgba(250,243,228,.5);background:transparent;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;cursor:pointer">Voy tarde</button>
           </div>
+
+          <!-- CUÁNTO DURA LA MESA. Dentro de la tarjeta y en gris, porque es
+               del mismo orden que «al llegar, di que vas a la mesa de Aro»:
+               lo que hay que saber para esa noche, no una alarma. -->
+          <sc-if value="{{ hayAvisoDosHoras }}" hint-placeholder-val="{{ false }}">
+            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#9CBBA6;margin-top:14px;text-wrap:pretty">{{ avisoDosHoras }}</div>
+          </sc-if>
         </div>
 
         <!-- «Voy tarde», con el mismo panel de siempre: lo que cambia es
@@ -196,6 +204,13 @@
             </span>
             <span style="{{ sGente }}">{{ fGente }}</span>
           </button>
+          <!-- SI LA MESA SALIÓ CORTA, dicho aquí y no en grande.
+               Michael, 22-10: «no debe ser lo protagonista de Mi mesa, es
+               informativo y ya». Así que va dentro de la tarjeta de la
+               gente, debajo del resumen, con el tamaño de una nota. -->
+          <sc-if value="{{ hayMesaCorta }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 18px 15px;margin-top:-6px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ mesaCorta }}</div>
+          </sc-if>
           <sc-if value="{{ oGente }}" hint-placeholder-val="{{ true }}">
             <div style="padding:0 18px 12px">
               <sc-for list="{{ comensales }}" as="c" hint-placeholder-count="5">
@@ -1391,9 +1406,9 @@ class Component extends DCLogic {
       /**
        * Y la bajada, que en la última ronda es el aviso.
        *
-       * Estaban las dos: la bajada del mazo —«más hondo, y cualquiera puede
-       * pasar»— debajo del título, y el aviso —«es más personal, solo si a
-       * la mesa le provoca»— en una pastilla aparte más abajo. Dicen lo
+       * Estaban las dos: la bajada del mazo —«más personal, y cualquiera
+       * puede pasar»— debajo del título, y el aviso —«es más personal, solo
+       * si a la mesa le provoca»— en una pastilla aparte más abajo. Dicen lo
        * mismo con otras palabras y en la maqueta solo va una, pegada al
        * título, que es donde se lee antes de decidir.
        */
@@ -1796,6 +1811,12 @@ class Component extends DCLogic {
       // El titular de la tarjeta, en minúsculas y en Young Serif: `conQuien`
       // es la versión en versales del bloque viejo y de los correos.
       tituloGente: 'Con quién cenas',
+      // La misma frase que el correo de la revelación, servida por
+      // `/api/mi-mesa`. Si la mesa está completa viene en null y no se pinta.
+      hayAvisoDosHoras: !!(dJ && dJ.avisoDosHoras),
+      avisoDosHoras: (dJ && dJ.avisoDosHoras) || '',
+      hayMesaCorta: !!(dJ && dJ.mesaCorta),
+      mesaCorta: (dJ && dJ.mesaCorta) || '',
       resumenGente: comensales.length === 1
         ? '1 persona · verificada'
         : comensales.length
