@@ -19,6 +19,11 @@ export const cuenta = {
   /** Con Apple o Google la casilla llega después, en la puerta de normas (entrega «acceso»). */
   notaProveedores: (cuales: string) => `Con ${cuales}, la casilla de las normas te la pedimos justo después.`,
   claveEjemplo: 'Mínimo 8 caracteres',
+  /** Como la web (entrega «acceso»): el botón no enumera lo que falta, los errores van debajo de cada campo y se dicen al salir de él. */
+  completa: 'Completa los datos',
+  claveCorta: 'Tiene que tener al menos 8 caracteres.',
+  noCoincide: 'No coincide con la de arriba.',
+  marcaCasilla: 'Marca la casilla para crear tu cuenta.',
   repetirEjemplo: 'La misma otra vez',
   conCorreo: 'O con tu correo',
   correo: 'Tu correo',

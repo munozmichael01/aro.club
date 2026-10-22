@@ -11,11 +11,12 @@ import { acepto as T } from '../texto/normas'
  * 14-10-2026). Sin marcarla no se puede entrar ni crear cuenta. Los dos
  * enlaces abren las normas (dentro de la app) y los términos (la web).
  */
-export function Acepto(p: { marcada: boolean; alCambiar: (v: boolean) => void; alNormas?: () => void; fondo: 'verde' | 'crema' }) {
+export function Acepto(p: { marcada: boolean; alCambiar: (v: boolean) => void; alNormas?: () => void; fondo: 'verde' | 'crema'; error?: string }) {
   const verde = p.fondo === 'verde'
   const tono = verde ? 'sobreVerdeSecundario' : 'secundario'
   const enlace = verde ? 'crema' : 'verde'
   return (
+    <View>
     <View style={estilos.fila}>
       <Pressable
         onPress={() => p.alCambiar(!p.marcada)}
@@ -25,7 +26,7 @@ export function Acepto(p: { marcada: boolean; alCambiar: (v: boolean) => void; a
         hitSlop={10}
         style={[
           estilos.caja,
-          { borderColor: p.marcada ? color.terracota : verde ? cremaAlfa(0.5) : tinta(0.35) },
+          { borderColor: p.marcada ? color.terracota : p.error ? (verde ? color.avisoSobreVerde : color.terracota) : verde ? cremaAlfa(0.5) : tinta(0.35) },
           p.marcada && { backgroundColor: color.terracota },
         ]}
       >
@@ -46,6 +47,13 @@ export function Acepto(p: { marcada: boolean; alCambiar: (v: boolean) => void; a
         </Texto>
         {T.despues}
       </Texto>
+    </View>
+      {/* Donde está la casilla, que es donde hay que mirar (entrega «acceso»). */}
+      {p.error && !p.marcada ? (
+        <Texto variante="cuerpoChico" tono={verde ? 'avisoSobreVerde' : 'terracota'} accessibilityLiveRegion="polite" style={{ marginTop: 8, marginLeft: 34 }}>
+          {p.error}
+        </Texto>
+      ) : null}
     </View>
   )
 }

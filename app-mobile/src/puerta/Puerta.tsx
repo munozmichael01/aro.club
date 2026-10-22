@@ -8,7 +8,6 @@ import { AvisoAcceso, Etiqueta, LogoApple, LogoGoogle, Proveedor } from '../entr
 import { SelectorAcceso } from '../entrar/SelectorAcceso'
 import { etiquetas as TA, proveedores } from '../texto/entrar'
 import { Acepto } from '../normas/Acepto'
-import { acepto as A } from '../texto/normas'
 import { Cabecera, FaseQuiz, FaseSinPreguntas, Progreso } from '../entrada/Fases'
 import { inicial, reducir, type Estado } from '../entrada/maquina'
 import { zonaParaPregunta } from '../avisos/maquina'
@@ -71,6 +70,10 @@ export function Puerta(p: {
   // La casilla de las normas, en el alta con correo (Apple 1.2; Michael, 18-10).
   // Con Apple o Google las pide la puerta de después de entrar (PuertaNormas).
   const [acepto, setAcepto] = useState(false)
+  // Los errores de cada campo salen al salir de él, no mientras se escribe (entrega «acceso», regla 7).
+  const [salioClave, setSalioClave] = useState(false)
+  const [salioClave2, setSalioClave2] = useState(false)
+  const [faltaCasilla, setFaltaCasilla] = useState(false)
   const [ver, setVer] = useState(false)
   const [aviso, setAviso] = useState('')
   const [trabajando, setTrabajando] = useState(false)
@@ -179,7 +182,9 @@ export function Puerta(p: {
 
   const conClave = async () => {
     const c = correo.trim()
-    if (trabajando || !acepto || !reglas.valido('correo', c) || clave.length < 8 || clave !== clave2) return
+    if (trabajando || !reglas.valido('correo', c) || clave.length < 8 || clave !== clave2) return
+    // La casilla no apaga el botón: sin marcarla, el error sale junto a ella (como la web).
+    if (!acepto) return setFaltaCasilla(true)
     setTrabajando(true)
     setAviso('')
     const r = await servicio.crearCuenta(c, clave, T.cuenta.noCreada)
@@ -271,18 +276,10 @@ export function Puerta(p: {
     )
   } else if (fase === 'cuenta') {
     const c = correo.trim()
-    const listoClave = reglas.valido('correo', c) && clave.length >= 8 && clave === clave2 && acepto
-    const textoClave = !reglas.valido('correo', c)
-      ? T.cuenta.faltaCorreo
-      : clave.length < 8
-        ? TC.boton.corta
-        : !clave2
-          ? TC.boton.repetir
-          : clave !== clave2
-            ? TC.boton.dispares
-            : !acepto
-              ? A.falta
-              : TC.boton.crear
+    const listoClave = reglas.valido('correo', c) && clave.length >= 8 && clave === clave2
+    const textoClave = listoClave ? TC.boton.crear : T.cuenta.completa
+    const errorClave = salioClave && clave.length > 0 && clave.length < 8 ? T.cuenta.claveCorta : ''
+    const errorClave2 = salioClave2 && !!clave2 && clave !== clave2 ? T.cuenta.noCoincide : ''
     cuerpo = (
       <View>
         {/* «Entrar · Crear cuenta» (entrega «acceso», 20-10): a Entrar con el correo que lleve escrito. */}
@@ -329,6 +326,7 @@ export function Puerta(p: {
             fondo="verde"
             value={clave}
             onChangeText={setClave}
+            onBlur={() => setSalioClave(true)}
             placeholder={T.cuenta.claveEjemplo}
             accessibilityLabel={TC.clave}
             textContentType="newPassword"
@@ -337,6 +335,7 @@ export function Puerta(p: {
             onAlternar={() => setVer((x) => !x)}
             textos={TC}
           />
+          {errorClave ? <ErrorCampo texto={errorClave} /> : null}
           <Etiqueta texto={TA.repetir} />
           <CampoClave
             fondo="verde"
@@ -349,9 +348,11 @@ export function Puerta(p: {
             visible={ver}
             onAlternar={() => setVer((x) => !x)}
             textos={TC}
-            dispar={!!clave2 && clave !== clave2}
+            onBlur={() => setSalioClave2(true)}
+            dispar={!!errorClave2}
           />
-          <Acepto fondo="verde" marcada={acepto} alCambiar={setAcepto} />
+          {errorClave2 ? <ErrorCampo texto={errorClave2} /> : null}
+          <Acepto fondo="verde" marcada={acepto} alCambiar={(v) => (setAcepto(v), setFaltaCasilla(false))} error={faltaCasilla ? T.cuenta.marcaCasilla : undefined} />
           {/* Secundario con borde: Apple y Google ya son los botones crema, y tres primarios en la misma vista no dicen cuál toca (entrega «acceso»). */}
           <Boton tipo="secundarioSobreVerde" ancho texto={textoClave} apagado={!listoClave || trabajando} onPress={conClave} />
         </View>
@@ -407,6 +408,15 @@ export function Puerta(p: {
       </ScrollView>
       {hoja}
     </KeyboardAvoidingView>
+  )
+}
+
+/** El error de un campo, en melocotón y debajo de él (entrega «acceso», regla 6). */
+function ErrorCampo({ texto }: { texto: string }) {
+  return (
+    <Texto variante="cuerpoChico" tono="avisoSobreVerde" accessibilityLiveRegion="polite" style={{ marginTop: -4, marginHorizontal: 6 }}>
+      {texto}
+    </Texto>
   )
 }
 
