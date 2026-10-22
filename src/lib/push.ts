@@ -108,6 +108,24 @@ export function copyDe(
             ruta: '/cuenta',
           }
 
+    /**
+     * Los dos del reembolso. Llevan el monto porque es la única cifra que
+     * importa, y la misma que dice el correo.
+     */
+    case 'reembolso_pedido':
+      return {
+        titulo: 'Recibimos tu solicitud',
+        cuerpo: `Te mandamos ${t('montoBs')} Bs por Pago Móvil en un día hábil.`,
+        ruta: '/cuenta',
+      }
+
+    case 'reembolso_hecho':
+      return {
+        titulo: 'Te devolvimos el dinero',
+        cuerpo: `${t('montoBs')} Bs a ${t('telefono')}. Referencia ${t('referencia')}.`,
+        ruta: '/cuenta',
+      }
+
     case 'recordatorio': {
       // SALE A LAS NUEVE DE LA MAÑANA, antes de la revelación, y decía «abre
       // tu mesa para ver dónde es y cómo llegar»: a esa hora no hay nada que

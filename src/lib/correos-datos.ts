@@ -1342,6 +1342,40 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       }
     }
 
+    /**
+     * Los dos del reembolso.
+     *
+     * No leen nada de la base: todo lo que dicen —el monto, la tasa, el
+     * teléfono, la referencia— se fijó cuando pasó, y volver a calcularlo
+     * aquí sería arriesgarse a que el correo diga una cifra distinta de la
+     * que se prometió o de la que se pagó.
+     */
+    case 'reembolso_pedido':
+      return {
+        a,
+        datos: {
+          ...base,
+          montoBs: (p.montoBs as string) ?? '',
+          precio: (p.precio as string) ?? '',
+          telefono: (p.telefono as string) ?? '',
+          banco: (p.banco as string) ?? '',
+          cedula: (p.cedula as string) ?? '',
+          resumen: `Te mandamos ${(p.montoBs as string) ?? ''} Bs por Pago Móvil en un día hábil.`,
+        },
+      }
+
+    case 'reembolso_hecho':
+      return {
+        a,
+        datos: {
+          ...base,
+          montoBs: (p.montoBs as string) ?? '',
+          telefono: (p.telefono as string) ?? '',
+          referencia: (p.referencia as string) ?? '',
+          resumen: `${(p.montoBs as string) ?? ''} Bs por Pago Móvil. Referencia ${(p.referencia as string) ?? ''}.`,
+        },
+      }
+
     // El cupón no lleva importes a propósito: no hay ninguno. Lleva lo mismo
     // que el resto —qué fecha, dónde y cuándo se revela— y nada de banco.
     case 'puesto_con_cupon':

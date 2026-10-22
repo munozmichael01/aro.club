@@ -2619,6 +2619,134 @@ export type Database = {
           },
         ]
       }
+      refund_requests: {
+        Row: {
+          banco: string
+          cedula: string
+          comprobante_path: string | null
+          credito_id: string | null
+          estado: string
+          id: string
+          monto_ves: number
+          precio_usd: number
+          profile_id: string
+          reembolsado_at: string | null
+          reembolsado_por: string | null
+          referencia: string | null
+          salida_id: string | null
+          solicitado_at: string
+          tasa: number
+          telefono: string
+        }
+        Insert: {
+          banco: string
+          cedula: string
+          comprobante_path?: string | null
+          credito_id?: string | null
+          estado?: string
+          id?: string
+          monto_ves: number
+          precio_usd: number
+          profile_id: string
+          reembolsado_at?: string | null
+          reembolsado_por?: string | null
+          referencia?: string | null
+          salida_id?: string | null
+          solicitado_at?: string
+          tasa: number
+          telefono: string
+        }
+        Update: {
+          banco?: string
+          cedula?: string
+          comprobante_path?: string | null
+          credito_id?: string | null
+          estado?: string
+          id?: string
+          monto_ves?: number
+          precio_usd?: number
+          profile_id?: string
+          reembolsado_at?: string | null
+          reembolsado_por?: string | null
+          referencia?: string | null
+          salida_id?: string | null
+          solicitado_at?: string
+          tasa?: number
+          telefono?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_requests_credito_id_fkey"
+            columns: ["credito_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "refund_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "refund_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_requests_reembolsado_por_fkey"
+            columns: ["reembolsado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_requests_reembolsado_por_fkey"
+            columns: ["reembolsado_por"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "refund_requests_reembolsado_por_fkey"
+            columns: ["reembolsado_por"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "refund_requests_reembolsado_por_fkey"
+            columns: ["reembolsado_por"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refund_requests_salida_id_fkey"
+            columns: ["salida_id"]
+            isOneToOne: false
+            referencedRelation: "credit_ledger"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurant_after_venues: {
         Row: {
           after_id: string
@@ -3988,6 +4116,7 @@ export type Database = {
         | "expiry"
         | "manual_adjustment"
         | "coupon"
+        | "reembolso_pedido"
       email_kind_t:
         | "bienvenida"
         | "verificacion"
@@ -4019,6 +4148,8 @@ export type Database = {
         | "resumen_semanal"
         | "cena_en_ingles"
         | "equilibrar_mesas"
+        | "reembolso_pedido"
+        | "reembolso_hecho"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -4233,6 +4364,7 @@ export const Constants = {
         "expiry",
         "manual_adjustment",
         "coupon",
+        "reembolso_pedido",
       ],
       email_kind_t: [
         "bienvenida",
@@ -4265,6 +4397,8 @@ export const Constants = {
         "resumen_semanal",
         "cena_en_ingles",
         "equilibrar_mesas",
+        "reembolso_pedido",
+        "reembolso_hecho",
       ],
       event_format_t: [
         "dinner",
