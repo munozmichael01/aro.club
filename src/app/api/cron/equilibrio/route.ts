@@ -32,6 +32,15 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * Cinco minutos, porque doscientos correos no caben en el plazo de siempre.
+ *
+ * El primer envío real se cortó a los noventa y dos: la función se quedó sin
+ * tiempo, la petición volvió vacía y la mitad de la gente se quedó sin su
+ * correo. No se vio desde fuera, se vio contando filas en la cola.
+ */
+export const maxDuration = 300
+
 /** Caracas va cuatro horas por detrás de UTC y no cambia con la estación. */
 const CARACAS = 4
 const diaDe = (iso: string) => new Date(Date.parse(iso) - CARACAS * 3600_000).toISOString().slice(0, 10)
@@ -123,8 +132,28 @@ async function mandar(seco: boolean, solo: string | null, conJueves: boolean, va
       !aprobados.has(p.id) && !enRevision.has(p.id) && p.status === 'pending_verification'),
   }
 
+  /**
+   * A QUIÉN YA SE LE MANDÓ.
+   *
+   * Esto faltaba y por poco cuesta caro: `equilibrar_mesas` no está en el
+   * índice único de los correos que anuncian algo una vez, así que volver a
+   * lanzar la ruta le habría escrito por segunda vez a los noventa y dos que
+   * ya lo tenían. Un envío que no se puede reanudar sin duplicar no es un
+   * envío, es una apuesta.
+   *
+   * Con esto la ruta se puede llamar las veces que haga falta: sigue por
+   * donde se quedó y a nadie le llega dos veces.
+   */
+  const { data: yaTienen } = await admin
+    .from('scheduled_emails')
+    .select('profile_id')
+    .eq('kind', 'equilibrar_mesas')
+
+  const hechos = new Set((yaTienen ?? []).map((r) => r.profile_id).filter((x): x is string => !!x))
+
   const salida: Record<string, unknown> = {}
   let encolados = 0
+  let repetidos = 0
   let sinFechas = 0
   let deBaja = 0
 
@@ -179,6 +208,9 @@ async function mandar(seco: boolean, solo: string | null, conJueves: boolean, va
       if (!suyas.length) { sinFechas++; continue }
 
       if (!quieren.has(p.id)) { deBaja++; continue }
+      // A quien ya se le mandó, no se le repite. Salvo `?solo=`, que es la
+      // prueba y tiene que poder verse más de una vez.
+      if (!solo && hechos.has(p.id)) { repetidos++; continue }
 
       if (seco) { delGrupo++; encolados++; continue }
 
@@ -203,6 +235,7 @@ async function mandar(seco: boolean, solo: string | null, conJueves: boolean, va
     conJueves,
     ...salida,
     encolados,
+    yaLoTenian: repetidos,
     sinFechasQueOfrecer: sinFechas,
     deBajaDeCorreos: deBaja,
     ...(seco ? { seco: true } : {}),
