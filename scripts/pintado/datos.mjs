@@ -59,6 +59,15 @@ const MESA_ABIERTA = {
  */
 export const PANTALLAS = {
   'Aro Club - Mi mesa.dc.html': [
+    {
+      caso: 'mesa corta',
+      rutas: {
+        '/api/mi-mesa': {
+          ...MESA_ABIERTA,
+          mesaCorta: 'Son cuatro: esta vez no completamos la mesa de seis, pero creemos que cuatro desconocidos son suficientes para pasarla bien.',
+        },
+      },
+    },
     { caso: 'abierta', rutas: { '/api/mi-mesa': MESA_ABIERTA } },
     {
       caso: 'cerrada',

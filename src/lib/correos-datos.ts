@@ -9,6 +9,7 @@ import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
+import { fraseDeMesaCorta } from '@/lib/mesa-corta'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
@@ -1979,34 +1980,8 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
      * Vacía cuando la mesa está completa, y entonces la plantilla se salta la
      * fila entera. Lo normal es que esté completa.
      */
-    /**
-     * Y CUATRO NO SE CUENTA COMO CINCO.
-     *
-     * Michael, 22-10, con la revelación del jueves a las doce y mesas de
-     * cuatro: «esta vez no nos cuadró el sexto puesto» da a entender que
-     * falta UNO. A quien se sienta con tres desconocidos esperando cinco,
-     * esa frase le hace contar sillas.
-     *
-     * Así que a partir de dos huecos se dice el número y se dice lo que de
-     * verdad pensamos: que cuatro bastan. No es consuelo, es la decisión que
-     * se tomó al publicarla.
-     */
-    mesaCorta: !(enLaMesa > 0 && enLaMesa < porMesa)
-      ? ''
-      : porMesa - enLaMesa >= 2
-        ? (cancelaronDeEstaMesa
-            ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: se nos cayeron dos y no llegamos a sentar a nadie más, pero creemos que ${EN_LETRA[enLaMesa] ?? enLaMesa} desconocidos son suficientes para pasarla bien.`
-            : `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: esta vez no completamos la mesa de ${EN_LETRA[porMesa] ?? porMesa}, pero creemos que ${EN_LETRA[enLaMesa] ?? enLaMesa} desconocidos son suficientes para pasarla bien.`)
-      : cancelaronDeEstaMesa
-        ? `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: alguien canceló y no llegamos a sentar a nadie más.`
-        // Sin cancelación la mesa salió así, y eso también hay que
-        // justificarlo: la promesa es de seis, y quien cuenta cinco merece
-        // saber por qué. Lo que no vale es achacarle a alguien una
-        // cancelación que no ocurrió.
-        // Y la frase mira a lo nuestro, no a la persona: «no encontramos a
-        // nadie que encajara contigo» se lee como que el raro eres tú, y eso
-        // lo lee alguien que va a cenar con desconocidos en dos horas.
-        : `Son ${EN_LETRA[enLaMesa] ?? enLaMesa}: esta vez no nos cuadró el sexto puesto.`,
+    // La misma frase que Mi mesa, de `fraseDeMesaCorta`.
+    mesaCorta: fraseDeMesaCorta(enLaMesa, porMesa, cancelaronDeEstaMesa),
     /**
      * Si esa noche grabamos en ESTA mesa.
      *

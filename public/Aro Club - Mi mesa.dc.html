@@ -196,6 +196,13 @@
             </span>
             <span style="{{ sGente }}">{{ fGente }}</span>
           </button>
+          <!-- SI LA MESA SALIÓ CORTA, dicho aquí y no en grande.
+               Michael, 22-10: «no debe ser lo protagonista de Mi mesa, es
+               informativo y ya». Así que va dentro de la tarjeta de la
+               gente, debajo del resumen, con el tamaño de una nota. -->
+          <sc-if value="{{ hayMesaCorta }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 18px 15px;margin-top:-6px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ mesaCorta }}</div>
+          </sc-if>
           <sc-if value="{{ oGente }}" hint-placeholder-val="{{ true }}">
             <div style="padding:0 18px 12px">
               <sc-for list="{{ comensales }}" as="c" hint-placeholder-count="5">
@@ -1796,6 +1803,10 @@ class Component extends DCLogic {
       // El titular de la tarjeta, en minúsculas y en Young Serif: `conQuien`
       // es la versión en versales del bloque viejo y de los correos.
       tituloGente: 'Con quién cenas',
+      // La misma frase que el correo de la revelación, servida por
+      // `/api/mi-mesa`. Si la mesa está completa viene en null y no se pinta.
+      hayMesaCorta: !!(dJ && dJ.mesaCorta),
+      mesaCorta: (dJ && dJ.mesaCorta) || '',
       resumenGente: comensales.length === 1
         ? '1 persona · verificada'
         : comensales.length
