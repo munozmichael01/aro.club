@@ -3841,8 +3841,21 @@ class Component extends DCLogic {
         // ahí los dos son el mismo.
         n: String(m.numeroDicho != null ? m.numeroDicho : m.numero).padStart(2, '0'),
         ...sitiosDe(m, pub),
-        titulo: vozRep.Unidad + ' ' + String(m.numeroDicho != null ? m.numeroDicho : m.numero).padStart(2, '0'),
-        hora: fr.hora + ' · ' + (m.restaurante || 'sitio sin elegir'),
+        /**
+         * Y el sitio EN EL TÍTULO, si ya está elegido.
+         *
+         * Michael, 23-10. Desde que el número es el del restaurante, dos
+         * mesas en sitios distintos se llaman las dos «Mesa 01», y el
+         * título solo no distingue nada. Con el sitio al lado, cada tarjeta
+         * se identifica sola.
+         *
+         * Baja de la línea de la hora, donde ya estaba: no se dice dos
+         * veces. Cuando todavía no hay sitio, el aviso se queda abajo, que
+         * es donde está el selector para ponerlo.
+         */
+        titulo: vozRep.Unidad + ' ' + String(m.numeroDicho != null ? m.numeroDicho : m.numero).padStart(2, '0')
+          + (m.restaurante ? ' · ' + m.restaurante : ''),
+        hora: m.restaurante ? fr.hora : fr.hora + ' · sitio sin elegir',
         estado: pub ? 'PUBLICADA' : (calc ? 'CALCULANDO' : (malas.length ? 'NO PUEDE SALIR' : 'LISTA')),
         recibe,
         caja: 'border-radius:24px;padding:clamp(16px,2vw,20px);transition:all 180ms ease;background:' + (recibe ? '#F2E9D5' : '#FAF3E4') + ';border:1px ' + (recibe ? 'dashed #8F4515' : 'solid ' + (pub ? '#1B5138' : (calc ? '#8F4515' : (malas.length ? '#C0662F' : 'rgba(20,52,42,.14)')))),
