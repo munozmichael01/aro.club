@@ -80,6 +80,20 @@
 
   var privacidad = [
       ['La cédula y la selfie se borran a los ' + diasFotos + ' días', 'Una vez verificada tu identidad, el documento y la foto dejan de hacer falta. Se borran a los ' + diasFotos + ' días y solo queda una marca de que la verificación ocurrió y quién la aprobó. No se guardan en el teléfono de nadie ni en ninguna carpeta compartida.'],
+      /**
+       * Lo de la cara, con todas las letras.
+       *
+       * Apple rechazó la 18 por la directriz 2.1 pidiendo exactamente esto:
+       * qué datos sacamos de la cara, para qué, con quién se comparten,
+       * dónde viven y cuándo se borran, y citando la Privacidad. Lo que
+       * hacíamos ya era esto; lo que faltaba era decirlo.
+       *
+       * Y es verdad comprobable en el código: no hay ninguna llamada a
+       * ningún servicio de reconocimiento facial, ni aquí ni en la app, y
+       * quien compara las dos fotos es una persona —`reviewed_by` guarda
+       * quién, con nombre—.
+       */
+      ['La selfie no se analiza con ningún programa', 'No usamos reconocimiento facial ni guardamos rasgos ni medidas de tu cara. Una persona del equipo mira la selfie al lado de la foto de tu cédula para confirmar que eres tú y que eres mayor de edad. La selfie no se usa para nada más ni se comparte con nadie.'],
       ['Quién los ve dentro de Aro', 'Solo el equipo de operación que hace la verificación, con acceso registrado y nominal. Nadie más de la empresa, y ningún otro miembro, en ningún caso.'],
       ['Con quién los compartimos fuera', 'Con el proveedor de pagos, lo mínimo para cobrar. Con el restaurante, solo el nombre de la reserva y el número de personas. Con nadie más. No vendemos datos ni los cedemos a anunciantes.'],
       ['No hay perfiles públicos ni fotos de perfil', 'La base de miembros no se puede navegar. No existe una pantalla donde alguien vea quién está en el club. Y no hay foto de perfil en ninguna parte del producto: es una decisión de diseño, no una función pendiente.'],
@@ -102,7 +116,7 @@
   var cabecera = {
     titulo: 'Las reglas, los términos y qué hacemos con tus datos.',
     bajada: 'Escrito para que se entienda. Si algo aquí no te cuadra, escríbenos y lo hablamos.',
-    actualizado: 'Última actualización: 5 de agosto de 2026 · Caracas, Venezuela',
+    actualizado: 'Última actualización: 23 de octubre de 2026 · Caracas, Venezuela',
   }
 
   var secciones = {

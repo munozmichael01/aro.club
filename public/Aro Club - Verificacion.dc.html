@@ -9,7 +9,18 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/icono-512.png">
 <script src="./errores.js"></script>
-<script src="./gtm.js"></script>
+<!--
+  ESTA PANTALLA NO LLEVA ANALÍTICA, y es la única.
+
+  `gtm.js` carga Analytics y Clarity, y Clarity graba la sesión. Aquí, en
+  esta pantalla y en ningún otro sitio, lo que hay en la ventana es la
+  vista previa de una cédula y de una selfie. Grabar la sesión aquí es
+  mandarle la cara y el documento de alguien a un tercero.
+
+  Y a Apple le estamos diciendo, por escrito y en la Privacidad, que la
+  selfie no se comparte con nadie. O se quita esto, o esa frase no es
+  verdad.
+-->
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
