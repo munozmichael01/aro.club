@@ -47,8 +47,22 @@ const alta = z.object({
   contacto: z.string().trim().max(120).optional(),
   telefono: z.string().trim().max(32).optional(),
   familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch', 'cercanos'])).min(1),
-  aforo: z.number().int().min(1).max(20),
-  ruido: z.number().int().min(1).max(3),
+  /**
+   * El aforo y el ruido, OBLIGATORIOS salvo para un bar cercano.
+   *
+   * Los dos existen por cosas que a un bar de segundo acto no le pasan: el
+   * aforo es cuántas mesas le cabemos a la vez y el ruido se mide porque
+   * seis desconocidos tienen que oírse sentados. A un bar al que solo
+   * mandamos a quien quiera seguir no le reservamos nada ni le sentamos a
+   * nadie.
+   *
+   * `loQueFalta` ya los perdonaba para activarlo, pero el alta los seguía
+   * exigiendo, así que al cargar un bar había que inventarse los dos. Los
+   * ocho que hay llevan «ruido 2» puesto por eso: nadie lo midió. Un dato
+   * inventado es peor que uno vacío, porque el vacío se ve.
+   */
+  aforo: z.number().int().min(1).max(20).optional(),
+  ruido: z.number().int().min(1).max(3).optional(),
   // Qué se come. Los mismos códigos que la pregunta «comidas» del
   // cuestionario: cruzar los dos es lo que dice qué restaurante pide la bolsa
   // de una fecha, y con dos catálogos paralelos el cruce falla en silencio.
@@ -102,6 +116,13 @@ const alta = z.object({
     .refine((u) => /^https:\/\/((maps\.app\.)?goo\.gl\/maps|maps\.app\.goo\.gl|maps\.google\.[a-z.]+|(www\.)?google\.[a-z.]+\/maps)/i.test(u), {
       message: 'El enlace tiene que ser de Google Maps.',
     }),
+}).superRefine((d, ctx) => {
+  // Lo que se perdona es SOLO para el bar cercano. Un restaurante sin aforo
+  // no se puede repartir y uno sin ruido medido no se puede ofrecer: que el
+  // alta los deje pasar sería dar de alta un local que nace sin poder usarse.
+  if (d.familias.length === 1 && d.familias[0] === 'cercanos') return
+  if (d.aforo == null) ctx.addIssue({ code: 'custom', path: ['aforo'], message: 'Falta el aforo.' })
+  if (d.ruido == null) ctx.addIssue({ code: 'custom', path: ['ruido'], message: 'Falta medir el ruido.' })
 })
 
 const cambio = z.discriminatedUnion('accion', [
@@ -655,8 +676,8 @@ export async function POST(request: Request) {
       address: d.direccion?.trim() || '',
       ...(d.contacto ? { contact_name: d.contacto } : {}),
       ...(d.telefono ? { contact_phone: d.telefono } : {}),
-      max_tables: d.aforo,
-      noise_level: d.ruido,
+      ...(d.aforo != null ? { max_tables: d.aforo } : {}),
+      ...(d.ruido != null ? { noise_level: d.ruido } : {}),
       ...(d.cocinas?.length ? { cuisines: [...new Set(d.cocinas)] } : {}),
       formats: formatos as never,
       metro_nearby: d.metro?.trim() || null,
