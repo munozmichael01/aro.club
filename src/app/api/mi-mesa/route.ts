@@ -267,6 +267,22 @@ export async function GET() {
    */
   const LO_CARO: Record<number, string> = { 1: 'Barato', 2: 'Precio medio', 3: 'Caro', 4: 'Muy caro' }
 
+  /**
+   * DE MOMENTO NO SE ENSEÑA. Michael, 22-10: «ojo que los precios no podemos
+   * mostrarlos con esta clasificación, por ahora no los muestres mientras lo
+   * pensamos bien».
+   *
+   * El tramo se sigue guardando y se sigue calculando aquí: lo que está en
+   * duda es cómo se dice, no el dato. Apagarlo en el servidor y no en la
+   * pantalla es a propósito, porque esta respuesta la leen las dos —la web y
+   * la app— y así se apaga en las dos a la vez.
+   *
+   * Lo que se está pensando es enseñar «$», «$$» y «$$$» al lado de los
+   * minutos en vez de la palabra. El día que se decida, esto vuelve a true
+   * y se cambia la tabla de arriba.
+   */
+  const ENSEÑAR_PRECIO = false
+
   const paraSeguir = (seguires ?? []).map((s) => {
     const sitio = s.restaurants as unknown as {
       name: string
@@ -286,7 +302,7 @@ export async function GET() {
        * restaurante nuevo.
        */
       minutosAPie: s.minutos_a_pie ?? minutosAPie(mesa.restaurants, sitio),
-      precio: sitio?.budget_tier != null ? (LO_CARO[sitio.budget_tier] ?? '') : '',
+      precio: ENSEÑAR_PRECIO && sitio?.budget_tier != null ? (LO_CARO[sitio.budget_tier] ?? '') : '',
       mapa: enlaceDeMapa(sitio),
       mapaApple: enlaceApple(sitio),
     }

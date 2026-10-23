@@ -260,6 +260,7 @@ function loQueFalta(l: {
   facade_photo_path: string | null
   maps_url: string | null
   is_after_venue?: boolean | null
+  formats?: string[] | null
 }) {
   const falta: string[] = []
   if (!l.address) falta.push('la dirección')
@@ -286,7 +287,17 @@ function loQueFalta(l: {
    * Son siete bares de los diecinueve locales, todos desactivados por pedir
    * un contacto que nunca vamos a usar.
    */
-  if (l.is_after_venue) return falta
+  /**
+   * Y SOLO si es ÚNICAMENTE un bar cercano.
+   *
+   * Michael, 22-10: «podrían ser Bares cercanos y Drinks al mismo tiempo;
+   * para Bares cercanos no hace falta toda la ficha, para Drinks sí toda la
+   * info». Tiene razón y así estaba mal: un local marcado con los dos se
+   * activaba sin ruido, sin contacto y sin foto, y después podía ser la sede
+   * de una fecha de drinks. El papel que perdona es «solo para seguir»; en
+   * cuanto tiene un formato de fecha, se le pide todo.
+   */
+  if (l.is_after_venue && !((l.formats ?? []) as string[]).length) return falta
 
   if (!l.noise_level) falta.push('medir el ruido')
   if (!l.contact_name || !l.contact_phone) falta.push('un contacto')
@@ -739,7 +750,7 @@ export async function PATCH(request: Request) {
     .from('restaurants')
     // `is_after_venue` entra aquí porque `loQueFalta` lo mira: sin él, un
     // bar de segundo acto seguiría sin poder activarse.
-    .select('id, noise_level, address, contact_name, contact_phone, facade_photo_path, maps_url, is_after_venue, budget_tier')
+    .select('id, noise_level, address, contact_name, contact_phone, facade_photo_path, maps_url, is_after_venue, budget_tier, formats')
     .eq('id', d.id)
     .maybeSingle()
 
