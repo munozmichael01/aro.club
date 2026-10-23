@@ -4455,7 +4455,15 @@ class Component extends DCLogic {
       tocarMover: () => this.setState({ moviendo: St.moviendo === p.profileId ? null : p.profileId }),
       destinos: (St.moviendo !== p.profileId ? [] : PROPUESTA
         .filter((x) => !x.publicada && (x.corridaId || null) === SU_CORRIDA)
-        .map((x) => ({ n: x.numero, texto: vozRep.Unidad + ' ' + String(x.numero).padStart(2, '0') }))
+        // Igual que en las tarjetas: el número que se dice y el sitio. Este
+        // es el de la ESPERA, que es una segunda lista con el mismo trabajo
+        // —Michael lo vio enseguida: «en la espera lo veo igual»— y se le
+        // había quedado el número guardado y sin sitio.
+        .map((x) => ({
+          n: x.numero,
+          texto: vozRep.Unidad + ' ' + String(x.numeroDicho != null ? x.numeroDicho : x.numero).padStart(2, '0')
+            + (x.restaurante ? ' · ' + x.restaurante : ''),
+        }))
         // Quien espera es justo a quien más falta le hace la otra fecha: es
         // el caso del jueves, dos apuntados que no dan para una mesa.
         .concat(OTRAS_DEL_DIA.map((f) => ({ fecha: f, texto: 'A la de ' + comoSeLlama(f) })))).map((x) => ({
