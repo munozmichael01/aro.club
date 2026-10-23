@@ -483,14 +483,53 @@ export async function POST(request: Request) {
   // Va aquí y no en el reparto porque hasta que no se PUBLICA no es verdad:
   // repartir se puede repetir, y quien está fuera de una propuesta puede
   // entrar en la siguiente.
-  const fuera = ((corrida.unmatched ?? []) as unknown as { profileId: string }[])
-    .map((p) => p.profileId)
-    .filter(Boolean)
+  /**
+   * QUIÉN SE QUEDA SIN MESA PUBLICADA. No quién quedó fuera del algoritmo.
+   *
+   * Esto leía `corrida.unmatched`, y por eso este aviso NO HA SALIDO NUNCA:
+   * cero filas de `sin_mesa` en toda la historia del club.
+   *
+   * El motivo, con nombre y fecha. El viernes 23 el reparto armó cinco
+   * mesas: cuatro de seis con su sitio y una quinta con dos personas y sin
+   * sitio. Michael publicó las cuatro, que es lo correcto —una mesa de dos
+   * no se publica—, y esas dos personas no estaban en `unmatched`: estaban
+   * en la mesa 05. Para el sistema no eran gente sin mesa, eran gente de
+   * una mesa que nunca se publicó. Se enteraron de que no cenaban porque no
+   * les llegó nada, el mismo día de la cena.
+   *
+   * En la práctica el que sobra SIEMPRE acaba así: el reparto lo sienta en
+   * una mesa corta en vez de dejarlo fuera, y esa mesa no se puede
+   * publicar. `unmatched` se queda en cero casi siempre.
+   *
+   * Así que la pregunta correcta no es a quién no emparejó el algoritmo,
+   * sino quién tiene reserva viva y NO está sentado en una mesa publicada.
+   * Eso se le pregunta a la base, que es donde está la verdad.
+   */
+  const { data: reservasVivas } = await admin
+    .from('bookings')
+    .select('profile_id')
+    .eq('event_id', corrida.event_id)
+    .in('status', ['confirmed', 'pending_payment'])
 
-  // Solo los de las mesas que se publican AHORA quedan sentados; si quedan
-  // mesas por publicar, quien está en ellas no es «espera».
+  const { data: mesasPublicadas } = await admin
+    .from('dinner_tables')
+    .select('table_members(profile_id)')
+    .eq('event_id', corrida.event_id)
+
+  const yaSentados = new Set(
+    (mesasPublicadas ?? []).flatMap((t) =>
+      ((t.table_members ?? []) as unknown as { profile_id: string }[]).map((m) => m.profile_id),
+    ),
+  )
+
+  // Los que se acaban de publicar en esta misma llamada: la consulta de
+  // arriba ya los ve, pero se suman por si el orden de escritura cambia.
   const sentadosAhora = new Set(mesas.flatMap((m) => m.integrantes.map((p) => p.profileId)))
-  const enEspera = fuera.filter((id) => !sentadosAhora.has(id))
+  for (const id of sentadosAhora) yaSentados.add(id)
+
+  const enEspera = [...new Set((reservasVivas ?? []).map((r) => r.profile_id))].filter(
+    (id) => !yaSentados.has(id),
+  )
 
   // --- y quien pasa de la espera a una mesa ---------------------------
   //
@@ -529,7 +568,20 @@ export async function POST(request: Request) {
     for (const id of sentadosAhora) await retirarAbonoSinMesa(id, corrida.event_id)
   }
 
-  if (enEspera.length && quedan === 0) {
+  /**
+   * Y SIN ESPERAR A QUE NO QUEDE NINGUNA MESA POR PUBLICAR.
+   *
+   * Era la segunda cerradura del mismo candado: el aviso solo se encolaba
+   * con `quedan === 0`, y el viernes siempre quedaba una, la mesa de dos
+   * que no se puede publicar. Dos condiciones, y las dos fallaban por el
+   * mismo motivo.
+   *
+   * No hace falta esperar: el aviso se programa para la hora de la
+   * revelación, no sale antes, y si esa persona entra en una mesa mientras
+   * tanto, el bloque de arriba le retira la fila antes de que salga. Eso ya
+   * existía y es lo que hace que publicar mesa por mesa sea seguro.
+   */
+  if (enEspera.length) {
     // El aviso, a la hora de la revelación: se entera a la vez que quien sí
     // tiene mesa. Antes, no.
     const avisoEspera = enEspera.map((id) => ({
