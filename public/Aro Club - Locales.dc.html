@@ -750,7 +750,13 @@ class Component extends DCLogic {
 
     // Las familias son las cuatro de la pantalla; la base guarda el formato
     // del evento y la API traduce. Aqui solo se nombran.
-    const FAMILIAS = [['cenas', 'Cenas'], ['drinks', 'Drinks'], ['movimiento', 'Movimiento'], ['coffee', 'Coffee'], ['brunch', 'Brunch']];
+    // «Bares cercanos» va al final y NO es un formato: es el papel del
+    // segundo acto, el sitio al que mandamos a quien quiera seguir después
+    // de cenar. Michael, 22-10: «drinks son sitios donde haremos encuentros
+    // puntuales para beber, directo a ese plan; estos son para seguir, no es
+    // el mismo plan». Estaban mezclados en Drinks, así que un bar de seguir
+    // era candidato a ser la sede de una fecha.
+    const FAMILIAS = [['cenas', 'Cenas'], ['drinks', 'Drinks'], ['movimiento', 'Movimiento'], ['coffee', 'Coffee'], ['brunch', 'Brunch'], ['cercanos', 'Bares cercanos']];
     const nombreFamilia = (c) => (FAMILIAS.find((f) => f[0] === c) || [c, c])[1];
     // 1-3, como en la base. El numero no sale a pantalla: solo su etiqueta.
     const RUIDO = [

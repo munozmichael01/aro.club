@@ -42,7 +42,24 @@ const CAMPOS = [
   'places.formattedAddress',
   'places.location',
   'places.googleMapsUri',
+  /**
+   * Lo caro que es, según Google.
+   *
+   * Michael, 21-10: el tramo de precio lo pone Google al cargar el sitio. No
+   * estaba pedido aquí, así que no llegaba y nadie lo echaba de menos: la
+   * línea del paso a paso está escrita para decir «6 min a pie · Barato» y
+   * llevaba desde entonces diciendo solo los minutos, en los ocho bares.
+   */
+  'places.priceLevel',
 ].join(',')
+
+/** El tramo de Google, en el número que guarda `restaurants.budget_tier`. */
+const TRAMO: Record<string, number> = {
+  PRICE_LEVEL_INEXPENSIVE: 1,
+  PRICE_LEVEL_MODERATE: 2,
+  PRICE_LEVEL_EXPENSIVE: 3,
+  PRICE_LEVEL_VERY_EXPENSIVE: 4,
+}
 
 export type Sitio = {
   placeId: string
@@ -51,6 +68,8 @@ export type Sitio = {
   lat: number
   lng: number
   mapa: string
+  /** 1 a 4, o `null` si Google no lo sabe. Gratis y sin tramo son lo mismo aquí. */
+  tramo: number | null
 }
 
 export type Busqueda =
@@ -105,6 +124,7 @@ export async function buscarSitio(consulta: string, cuantos = 5): Promise<Busque
     formattedAddress?: string
     location?: { latitude?: number; longitude?: number }
     googleMapsUri?: string
+    priceLevel?: string
   }
 
   const sitios = ((datos.places ?? []) as Cruda[])
@@ -115,6 +135,7 @@ export async function buscarSitio(consulta: string, cuantos = 5): Promise<Busque
       lat: p.location?.latitude ?? NaN,
       lng: p.location?.longitude ?? NaN,
       mapa: p.googleMapsUri ?? '',
+      tramo: p.priceLevel ? (TRAMO[p.priceLevel] ?? null) : null,
     }))
     // Sin id o sin coordenadas no sirve para lo que se guarda.
     .filter((s) => s.placeId && s.mapa && Number.isFinite(s.lat) && Number.isFinite(s.lng))
