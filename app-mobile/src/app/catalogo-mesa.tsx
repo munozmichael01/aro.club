@@ -29,8 +29,8 @@ const CINCO = [
   { id: '55555555-5555-5555-5555-555555555555', nombre: 'Andrés', sector: 'Tecnología', seUnioDespues: true },
 ]
 const SITIOS = [
-  { nombre: 'Bar Caracas', minutosAPie: 4, precio: 'Barato', mapa: 'https://www.google.com/maps/search/?api=1&query=Las+Mercedes' },
-  { nombre: 'La Terraza de Juan', minutosAPie: 7, precio: 'Precio medio', mapa: 'https://www.google.com/maps/search/?api=1&query=Las+Mercedes' },
+  { nombre: 'Bar Caracas', minutosAPie: 4, precio: '$', mapa: 'https://www.google.com/maps/search/?api=1&query=Las+Mercedes' },
+  { nombre: 'La Terraza de Juan', minutosAPie: 7, precio: '$$', mapa: 'https://www.google.com/maps/search/?api=1&query=Las+Mercedes' },
   { nombre: 'Café Tostao', minutosAPie: null, mapa: null },
 ]
 const ABIERTA: DeServidor = {

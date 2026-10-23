@@ -93,7 +93,7 @@ test('quien se sumó después y el detalle de un sitio para seguir (16-10, como 
   const o = M.otros({ fase: 'abierta', companeros: [{ id: 'a', nombre: 'Ana', sector: 'Salud', seUnioDespues: true }, { id: 'b', nombre: 'Beto', sector: null }] } as M.DeServidor)
   assert.deepEqual(o.map((x) => x.seUnio), [true, false])
   const aPie = (n: number) => `${n} min a pie`
-  assert.equal(M.detalleSitio({ nombre: 'X', minutosAPie: 3, precio: 'Barato' }, aPie), '3 min a pie · Barato')
+  assert.equal(M.detalleSitio({ nombre: 'X', minutosAPie: 3, precio: '$$' }, aPie), '3 min a pie · $$')
   assert.equal(M.detalleSitio({ nombre: 'X', minutosAPie: null, precio: 'Caro' }, aPie), 'Caro')
   assert.equal(M.detalleSitio({ nombre: 'X', minutosAPie: 0, precio: '' }, aPie), '0 min a pie')
   assert.equal(M.detalleSitio({ nombre: 'X' }, aPie), '')

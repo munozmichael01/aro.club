@@ -106,13 +106,13 @@ export type SitioParaSeguir = {
   nombre: string
   /** Los calcula el servidor con las coordenadas de los dos sitios (16-10). */
   minutosAPie?: number | null
-  /** «Barato», «Precio medio», «Caro», «Muy caro», o vacío: ya resuelto por el servidor. */
+  /** «$», «$$», «$$$», «$$$$» (Michael, 22-10), o vacío: ya resuelto por el servidor. */
   precio?: string | null
   mapa?: string | null
   mapaApple?: string | null
 }
 
-/** «3 min a pie · Barato»: con lo que haya, como la web. Vacío si no hay nada. */
+/** «3 min a pie · $$»: con lo que haya, como la web. Vacío si no hay nada. */
 export const detalleSitio = (s: SitioParaSeguir, aPie: (n: number) => string) =>
   [s.minutosAPie != null ? aPie(s.minutosAPie) : '', s.precio || ''].filter(Boolean).join(' · ')
 
