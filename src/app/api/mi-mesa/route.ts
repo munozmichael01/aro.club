@@ -265,23 +265,19 @@ export async function GET() {
    * «¿cuánto me va a costar seguir» (Michael, 16-10). Sin tramo no sale
    * nada: inventarlo es peor que callarlo.
    */
-  const LO_CARO: Record<number, string> = { 1: 'Barato', 2: 'Precio medio', 3: 'Caro', 4: 'Muy caro' }
-
   /**
-   * DE MOMENTO NO SE ENSEÑA. Michael, 22-10: «ojo que los precios no podemos
-   * mostrarlos con esta clasificación, por ahora no los muestres mientras lo
-   * pensamos bien».
+   * Lo caro que es, en signos y no en palabras.
    *
-   * El tramo se sigue guardando y se sigue calculando aquí: lo que está en
-   * duda es cómo se dice, no el dato. Apagarlo en el servidor y no en la
-   * pantalla es a propósito, porque esta respuesta la leen las dos —la web y
-   * la app— y así se apaga en las dos a la vez.
+   * Michael, 22-10: «"Caro" no lo podemos mostrar con esta clasificación».
+   * Y tiene razón: «caro» es un juicio nuestro sobre el sitio al que
+   * mandamos a alguien, y «$$$» es una escala que se lee sin discutirla.
+   * Cuatro niveles, los mismos que distingue Google, y van pegados a los
+   * minutos: «6 min a pie · $$$».
    *
-   * Lo que se está pensando es enseñar «$», «$$» y «$$$» al lado de los
-   * minutos en vez de la palabra. El día que se decida, esto vuelve a true
-   * y se cambia la tabla de arriba.
+   * Sin tramo no sale nada. Inventarlo es peor que callarlo, y hay bares a
+   * los que Google no les pone precio.
    */
-  const ENSEÑAR_PRECIO = false
+  const LO_CARO: Record<number, string> = { 1: '$', 2: '$$', 3: '$$$', 4: '$$$$' }
 
   const paraSeguir = (seguires ?? []).map((s) => {
     const sitio = s.restaurants as unknown as {
@@ -302,7 +298,7 @@ export async function GET() {
        * restaurante nuevo.
        */
       minutosAPie: s.minutos_a_pie ?? minutosAPie(mesa.restaurants, sitio),
-      precio: ENSEÑAR_PRECIO && sitio?.budget_tier != null ? (LO_CARO[sitio.budget_tier] ?? '') : '',
+      precio: sitio?.budget_tier != null ? (LO_CARO[sitio.budget_tier] ?? '') : '',
       mapa: enlaceDeMapa(sitio),
       mapaApple: enlaceApple(sitio),
     }
