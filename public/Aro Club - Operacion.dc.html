@@ -3990,7 +3990,23 @@ class Component extends DCLogic {
             .filter((x) => !x.publicada
               && (x.corridaId || null) === (m.corridaId || null)
               && x.numero !== m.numero)
-            .map((x) => ({ n: x.numero, texto: vozRep.Unidad + ' ' + String(x.numero).padStart(2, '0') }))
+            /**
+             * El texto lleva el número QUE SE DICE y el sitio, no el guardado.
+             *
+             * Michael, 23-10: «tengo problemas para mover las mesas con el
+             * tema de los números, no me salen todas en las opciones». Desde
+             * que el número es el del restaurante, dos mesas en sitios
+             * distintos se llaman las dos «Mesa 01», y una lista con dos
+             * «Mesa 01» no es una lista: es una donde falta una.
+             *
+             * Lo que se MANDA sigue siendo `x.numero`, el guardado, que es
+             * lo que el servidor entiende.
+             */
+            .map((x) => ({
+              n: x.numero,
+              texto: vozRep.Unidad + ' ' + String(x.numeroDicho != null ? x.numeroDicho : x.numero).padStart(2, '0')
+                + (x.restaurante ? ' · ' + x.restaurante : ''),
+            }))
             .concat([{ n: 0, texto: 'A la espera' }])
             /**
              * Y A OTRA FECHA DE ESA NOCHE.
