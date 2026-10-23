@@ -194,7 +194,7 @@
                  justo después, que es la pantalla de normas de Mi cuenta. -->
             <button onClick="{{ tocarNormas }}" role="checkbox" aria-checked="{{ normasMarcadas }}" style="display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;margin-top:7px;padding:13px;border-radius:18px;border:1px solid rgba(20,52,42,.16);background:#FAF3E4;cursor:pointer">
               <span style="{{ marcaNormas }}">{{ marcaNormasTexto }}</span>
-              <span style="flex:1;min-width:0;font:400 14px/1.45 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ casillaNormas }}</span>
+              <span style="flex:1;min-width:0;font:400 14px/1.45 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty"><sc-for list="{{ casillaNormas }}" as="t" hint-placeholder-count="5"><sc-if value="{{ t.hayEnlace }}" hint-placeholder-val="{{ false }}"><a href="{{ t.enlace }}" target="_blank" onClick="{{ t.soloAbrir }}" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">{{ t.texto }}</a></sc-if><sc-if value="{{ t.suelto }}" hint-placeholder-val="{{ true }}">{{ t.texto }}</sc-if></sc-for></span>
             </button>
             <sc-if value="{{ hayCasillaError }}" hint-placeholder-val="{{ false }}">
               <div role="alert" style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin:-3px 0 2px;padding-left:6px">Marca la casilla para crear tu cuenta.</div>
@@ -211,7 +211,6 @@
             </div>
           </sc-if>
 
-          <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;max-width:46ch;text-wrap:pretty">Al crear tu cuenta aceptas los <a href="/terminos" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Términos</a> y la <a href="/privacidad" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Privacidad</a>. Te pediremos la cédula y una selfie para verificar que eres quien dices; ahí se explica qué hacemos con ellas y cuándo se borran.</div>
         </div>
     </sc-if>
 
@@ -902,7 +901,36 @@ class Component extends DCLogic {
       // La casilla de las normas. El texto sale de `reglas.js`, que es el
       // mismo que lee la pantalla de normas: dos copias de lo que alguien
       // acepta son dos cosas distintas aceptadas.
-      casillaNormas: window.AroReglas.NORMAS.casilla,
+      /**
+       * La frase de la casilla, partida para poder enlazar lo que se acepta.
+       *
+       * El texto sigue siendo UNO, el de `reglas.js`, el mismo que lee la
+       * pantalla de normas. Lo que se hace aquí es buscar dentro las dos
+       * cosas que se aceptan y envolverlas en su enlace: si alguien cambia
+       * la frase, los trozos salen de la frase nueva y como mucho se queda
+       * sin subrayar lo que ya no diga. Escribirla otra vez aquí con las
+       * etiquetas dentro sería la segunda copia de lo que alguien firma.
+       */
+      casillaNormas: (() => {
+        const frase = window.AroReglas.NORMAS.casilla;
+        const enlazables = [['normas de seguridad', '/reglas'], ['Términos', '/terminos']];
+        const trozos = [];
+        let resto = frase;
+        for (const [palabra, enlace] of enlazables) {
+          const i = resto.indexOf(palabra);
+          if (i < 0) continue;
+          if (i > 0) trozos.push({ texto: resto.slice(0, i), hayEnlace: false, suelto: true, enlace: '' });
+          // El enlace vive DENTRO del botón de la casilla, que es lo que la
+          // marca y desmarca. Sin esto, leer los Términos también marcaba
+          // la casilla: abres la pestaña y vuelves con algo aceptado que no
+          // aceptaste.
+          trozos.push({ texto: palabra, hayEnlace: true, suelto: false, enlace,
+            soloAbrir: (e) => { if (e && e.stopPropagation) e.stopPropagation(); } });
+          resto = resto.slice(i + palabra.length);
+        }
+        if (resto) trozos.push({ texto: resto, hayEnlace: false, suelto: true, enlace: '' });
+        return trozos;
+      })(),
       normasMarcadas: this.state.aceptoNormas ? 'true' : 'false',
       marcaNormas: 'flex:0 0 auto;width:22px;height:22px;border-radius:7px;border:1px solid ' + (this.state.aceptoNormas ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (this.state.aceptoNormas ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif',
       marcaNormasTexto: this.state.aceptoNormas ? '✓' : '',
