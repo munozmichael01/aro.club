@@ -60,6 +60,8 @@ type Api = {
   partesDe: (iso: string | null | undefined, zona?: string | null) => PartesFecha | null
   /** 0 esta semana · 1 la que viene · 2 más adelante. Lunes a domingo, en la zona de la fecha; el domingo ya es la que empieza. `ahora` opcional (58f40f4). */
   semanaDe: (iso: string, zona?: string | null, ahora?: number) => 0 | 1 | 2
+  /** Los días que se guardan la cédula y la selfie tras aprobarse: lo que dice Privacidad (120). Nunca escrito a mano. */
+  DIAS_GUARDA_FOTOS: number
   /** Las cuatro preguntas de la puerta, UN sitio para web y app. Opciones como [texto, código]. */
   PUERTA: Record<string, PreguntaPuerta>
   ORDEN_PUERTA: string[]

@@ -258,3 +258,12 @@ test('el cierre de cada fecha lo dice reglas.js: medianoche las cenas, 5 p.m. de
   assert.match(filas.find((f) => f.id === 'cena')!.cierre, /^se cierra a medianoche, cuando empieza el viernes/)
   assert.match(filas.find((f) => f.id === 'brunch')!.cierre, /^se cierra el sábado a las 5:00 p\.m\./)
 })
+
+test('los días que se guardan las fotos salen de la regla, no a mano (23-10: la app decía 90 y Privacidad 120)', async () => {
+  const { reglas } = await import('../src/reglas')
+  const V = await import('../src/texto/verificacion')
+  const C = await import('../src/texto/cuenta')
+  const dias = String(reglas.DIAS_GUARDA_FOTOS)
+  assert.ok(V.intro.explicacion.some(([, t]) => t.includes(`${dias} días`)))
+  assert.match(C.ESTADOS.verificar.cuerpo(), new RegExp(`${dias} días`))
+})

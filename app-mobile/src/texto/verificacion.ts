@@ -7,6 +7,8 @@
  * teléfono, y en la app ya se está en el teléfono.
  */
 
+import { reglas } from '../reglas'
+
 export const etiqueta = {
   intro: 'VERIFICACIÓN',
   captura: 'VERIFICACIÓN',
@@ -25,7 +27,7 @@ export const intro = {
     ['PARA QUÉ', 'Confirmar que eres quien dices y que eres mayor de edad. Es lo único que hace que cinco desconocidos se sienten contigo.'],
     ['QUIÉN LO VE', 'Una persona del equipo de operación. Ni los otros cinco, ni el restaurante, ni el resto del equipo.'],
     ['DÓNDE SE GUARDA', 'Cifrado, en nuestros servidores. No se guarda en el teléfono de nadie ni en carpetas compartidas.'],
-    ['CUÁNTO DURA', 'Se borra a los 90 días de aprobarse. Solo queda la marca de que la verificación ocurrió.'],
+    ['CUÁNTO DURA', `Se borra a los ${reglas.DIAS_GUARDA_FOTOS} días de aprobarse. Solo queda la marca de que la verificación ocurrió.`],
   ] as const,
   nadieTitulo: 'Nadie más ve tu documento',
   nadieCuerpo: 'Ni los otros cinco de tu mesa, ni el restaurante, ni el resto del equipo. Solo quien hace la revisión, con acceso registrado y nominal.',
