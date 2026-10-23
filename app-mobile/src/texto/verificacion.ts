@@ -117,10 +117,19 @@ export const rechazo = {
 /** Lo que pide el pedido (§7, criterio 9.3): repetir ANTES de enviar. */
 export const usarEsta = 'Usar esta'
 
+/**
+ * Antes de que el sistema pregunte, y después de un no. Apple (5.1.1(iv),
+ * 23-10): el botón que lleva a la pregunta del sistema dice «Continuar», no
+ * «Permitir»: la decisión es de la persona, en la pregunta del sistema.
+ */
 export const permiso = {
+  antes: {
+    titulo: 'Las dos fotos se toman con la cámara',
+    cuerpo: 'Al continuar, el celular te pregunta si Aro Club puede usarla. Si prefieres, también puedes elegir las fotos de tu galería.',
+  },
   titulo: 'La cámara está apagada para Aro Club',
   cuerpo: 'Para la foto de la cédula y la selfie hace falta la cámara. Puedes activarla en los ajustes del celular, o elegir las fotos de tu galería.',
-  pedir: 'Permitir la cámara',
+  pedir: 'Continuar',
   ajustes: 'Abrir los ajustes',
 }
 
