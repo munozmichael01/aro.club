@@ -927,7 +927,11 @@ class Component extends DCLogic {
       etiqueta: '¿Para qué sirve el sitio?', valor: '', pista: '',
       hayPista: true, ayuda: 'Al menos uno. Una fecha solo se le ofrece si admite ese formato.',
       esTexto: false, esOpciones: true, campo: campoEstilo,
-      opciones: [['cenas','Cenas'],['drinks','Drinks'],['movimiento','Movimiento'],['coffee','Coffee'],['brunch','Brunch']].map((o) => {
+      // `FAMILIAS` y no una lista escrita aquí: eran dos, y la de aquí se
+      // quedó sin «Bares cercanos» el día que se creó la categoría. Se podía
+      // filtrar por ella y dar de alta con ella, pero no ponérsela a un
+      // local que ya existía, que es justo lo que hacía falta.
+      opciones: FAMILIAS.map((o) => {
         const puestas = a.familias || [];
         const sel = puestas.indexOf(o[0]) >= 0;
         return {
@@ -960,8 +964,11 @@ class Component extends DCLogic {
     }]).concat(!a ? [] : [['estacionamiento', '¿Tiene estacionamiento?', ''],
       ['terraza', '¿Tiene terraza?', ''],
       ['accesible', '¿Es accesible?', 'Para quien llega en silla de ruedas o con movilidad reducida.'],
-      ['divide', '¿Dividen la cuenta?', 'Seis desconocidos pagando: un sitio que no divide arruina el final de la noche.'],
-      ['segundoActo', '¿Sirve para el segundo acto?', 'Si la mesa quiere seguir después, sin cambiar de sitio.']
+      // «¿Sirve para el segundo acto?» estaba aquí como sí o no y escribía
+      // la MISMA columna que la categoría «Bares cercanos» de arriba. Dos
+      // mandos para un dato es como empiezan a discrepar: se queda el de
+      // arriba, que es donde se decide qué es el sitio.
+      ['divide', '¿Dividen la cuenta?', 'Seis desconocidos pagando: un sitio que no divide arruina el final de la noche.']
     ].map((b) => ({
       // Los sí o no, que la migración que los creó ya decía que había que
       // «hacer editables en la ficha». Nunca se hizo: se ponían por base.
@@ -1088,12 +1095,17 @@ class Component extends DCLogic {
         };
       })
     }]).concat(!a || !(a.paraSeguir || []).length ? [] : (a.paraSeguir || []).map((s) => ({
-      // Y los minutos a pie de cada uno, que es lo único que no sale del
-      // catálogo. Sin minutos la línea no se enseña en Mi mesa, así que
-      // vacío es una respuesta y no un campo a medias.
-      etiqueta: 'Minutos a pie · ' + (nombreDeLocal[s.id] || 'ese sitio'),
+      // Los minutos a pie, que NO hay que buscar: los calcula el servidor
+      // con las coordenadas de los dos sitios cada vez que los enseña.
+      //
+      // Michael, 22-10: «¿de dónde sale la distancia? ¿La tengo que calcular
+      // yo? Es un dolor de cabeza estar buscando esta info». No: esto es un
+      // campo para CORREGIR, y vacío es lo normal. Decía «Minutos a pie» a
+      // secas, que se lee como un dato que falta.
+      etiqueta: 'Corregir los minutos a pie · ' + (nombreDeLocal[s.id] || 'ese sitio'),
       valor: s.minutos == null ? '' : String(s.minutos),
-      pista: '', hayPista: false, ayuda: '',
+      pista: '', hayPista: true,
+      ayuda: 'Déjalo vacío: se calculan solos con las coordenadas de los dos sitios. Escribe un número solo si sabes que la cuenta se queda corta, por ejemplo si hay que rodear algo para llegar.',
       esTexto: true, esOpciones: false, campo: campoEstilo,
       onInput: (e) => {
         const v = String(e.target.value || '').replace(/\D/g, '').slice(0, 2);
