@@ -353,10 +353,28 @@ export async function GET(request: Request) {
 
   const { data: mesasVivas } = await admin
     .from('dinner_tables')
-    .select('id, table_number, grabacion, grabacion_requerida, avisado_local_at, avisado_local_num')
+    .select('id, table_number, restaurant_id, grabacion, grabacion_requerida, avisado_local_at, avisado_local_num')
     .eq('event_id', evento.id)
 
   const mesaPorNumero = new Map((mesasVivas ?? []).map((m) => [m.table_number, m]))
+
+  /**
+   * El número que se dice de cada mesa publicada, también por aquí.
+   *
+   * Esta rama es la que lee el panel cuando ya hay una corrida guardada, que
+   * es casi siempre: la propuesta viene del JSON que se escribió al repartir
+   * y ahí dentro está el número de entonces. Si solo se calculara en la otra
+   * rama —la de repartir de nuevo— el panel seguiría enseñando el guardado y
+   * dejaría de coincidir con lo que ve quien va a cenar, que es justo lo que
+   * esto vino a arreglar.
+   */
+  const dichosGuardados = await numeroQueSeDice(
+    (mesasVivas ?? []).map((m) => ({
+      eventoId: evento.id,
+      sitioId: m.restaurant_id,
+      numero: m.table_number,
+    })),
+  )
   const seGuardaronYNoEstan = enLaPropuesta.filter((id) => !vivos.has(id)).length
 
   /**
@@ -490,6 +508,10 @@ export async function GET(request: Request) {
             ...m,
             // La fila de verdad de esta mesa, si ya está publicada: su id
             // —para poder marcarla— y si está marcada para grabar.
+            numeroDicho:
+              dichosGuardados.get(
+                claveDeNumero(evento.id, (m as unknown as { numero: number }).numero),
+              ) ?? (m as unknown as { numero: number }).numero,
             mesaId: mesaPorNumero.get((m as unknown as { numero: number }).numero)?.id ?? null,
             grabacion: !!mesaPorNumero.get((m as unknown as { numero: number }).numero)?.grabacion,
             grabacionRequerida: !!(mesaPorNumero.get((m as unknown as { numero: number }).numero) as { grabacion_requerida?: boolean } | undefined)?.grabacion_requerida,
