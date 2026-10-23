@@ -127,6 +127,12 @@ function empresaDe(p: Persona): string | null {
 export const MAX_DIFERENCIA_GENERO = 2
 
 /**
+ * Los años que caben entre el más joven y el mayor de una mesa. Diez, y es
+ * una promesa pública: está escrita en las preguntas frecuentes.
+ */
+export const MAX_SPREAD_EDAD = 10
+
+/**
  * CUÁNTOS DE CADA UNO CABEN POR MESA, según la demanda que hay.
  *
  * La regla dura solo dice que no se pasen de dos de diferencia, así que una
@@ -180,7 +186,7 @@ export function roturas(mesa: Persona[]): Rotura[] {
   const edades = mesa.map((p) => p.edad).filter((e): e is number => e != null)
   if (edades.length > 1) {
     const spread = Math.max(...edades) - Math.min(...edades)
-    if (spread > 10) {
+    if (spread > MAX_SPREAD_EDAD) {
       const joven = mesa.find((p) => p.edad === Math.min(...edades))
       const mayor = mesa.find((p) => p.edad === Math.max(...edades))
       fallos.push({
@@ -296,6 +302,39 @@ export function roturas(mesa: Persona[]): Rotura[] {
  * Las zonas donde esta mesa podria cenar: las que aceptan LOS SEIS.
  * Ordenadas para que el reparto sea estable ante el mismo pool.
  */
+/**
+ * CUÁNTO se pasa una mesa, no cuántas veces.
+ *
+ * `roturas` cuenta: una mesa con veintiún años de diferencia y otra con
+ * trece rompen las dos «una regla». Y eso era bastante mientras hubiera
+ * alguna combinación sin roturas; cuando no la hay —y con el pool del
+ * viernes 23 no la hay, porque las dos de 53 y 54 no tienen con quién
+ * sentarse— el reparto elegía entre dos males sin saber cuál era menor, y
+ * acabó sentando a Erick (45) con Gilbert (24).
+ *
+ * Michael, 22-10: «por qué pones en la mesa 1 a una persona de 45 con
+ * personas de 24 y 25 si tenemos más opciones».
+ *
+ * Esto mide el exceso de las dos reglas que tienen grado: los años que
+ * sobran por encima de diez y las personas que sobran por encima de dos de
+ * diferencia. Las demás —empresa repetida, veto, idioma— no tienen medio
+ * término, así que no suman aquí: para esas sigue mandando el número de
+ * roturas, que se compara primero.
+ *
+ * Se usa SOLO para desempatar entre repartos con las mismas roturas. No
+ * permite ninguna mesa que antes no fuera posible.
+ */
+export function gravedad(mesa: Persona[]): number {
+  const edades = mesa.map((p) => p.edad).filter((e): e is number => e != null)
+  const spread = edades.length > 1 ? Math.max(...edades) - Math.min(...edades) : 0
+  const mujeres = mesa.filter((p) => p.genero === 'mujer').length
+  const hombres = mesa.filter((p) => p.genero === 'hombre').length
+  return (
+    Math.max(0, spread - MAX_SPREAD_EDAD) +
+    Math.max(0, Math.abs(mujeres - hombres) - MAX_DIFERENCIA_GENERO)
+  )
+}
+
 export function zonasDe(mesa: Persona[]): string[] {
   if (!mesa.length) return []
   const comun = mesa
@@ -672,18 +711,27 @@ export function repartir(
         // rompe menos, porque una rotura se arregla intercambiando y una
         // espera de un solo género no se arregla con nada.
         let mejorCabe = false
+        let mejorGrave = Infinity
         for (let i = 0; i < libres.length; i++) {
           const tentativa = [...mesas[m], libres[i]]
           const cabe = cabeEnElCupo(tentativa, cupo)
           const n = roturas(tentativa).length
+          const g = gravedad(tentativa)
           const p = puntuar(tentativa, pesos)
+          // Y entre dos que rompen lo mismo, el que se pasa MENOS. Sin
+          // esto, meter a alguien de 45 en una mesa de veinteañeros y
+          // meterlo en una de cuarentones valían igual: las dos «una
+          // rotura de edad».
           const gana =
             mejor < 0 ||
             (cabe && !mejorCabe) ||
-            (cabe === mejorCabe && (n < menos || (n === menos && p > punto)))
+            (cabe === mejorCabe &&
+              (n < menos ||
+                (n === menos && (g < mejorGrave || (g === mejorGrave && p > punto)))))
           if (gana) {
             mejorCabe = cabe
             menos = n
+            mejorGrave = g
             punto = p
             mejor = i
           }
@@ -702,12 +750,16 @@ export function repartir(
   // roturas a dos, nunca se llega a cero.
   const mejorQue = (
     rotasNuevas: number,
+    gravesNuevas: number,
     puntosNuevos: number,
     rotasViejas: number,
+    gravesViejas: number,
     puntosViejos: number,
   ) =>
     rotasNuevas < rotasViejas ||
-    (rotasNuevas === rotasViejas && puntosNuevos > puntosViejos + 1e-9)
+    (rotasNuevas === rotasViejas &&
+      (gravesNuevas < gravesViejas ||
+        (gravesNuevas === gravesViejas && puntosNuevos > puntosViejos + 1e-9)))
 
   for (let vuelta = 0; vuelta < 60; vuelta++) {
     let mejoro = false
@@ -716,6 +768,7 @@ export function repartir(
         for (let i = 0; i < mesas[a].length; i++) {
           for (let j = 0; j < mesas[b].length; j++) {
             const rotasAntes = roturas(mesas[a]).length + roturas(mesas[b]).length
+            const gravesAntes = gravedad(mesas[a]) + gravedad(mesas[b])
             const puntosAntes = puntuar(mesas[a], pesos) + puntuar(mesas[b], pesos)
 
             const na = [...mesas[a]]
@@ -723,6 +776,7 @@ export function repartir(
             ;[na[i], nb[j]] = [nb[j], na[i]]
 
             const rotasDespues = roturas(na).length + roturas(nb).length
+            const gravesDespues = gravedad(na) + gravedad(nb)
             const puntosDespues = puntuar(na, pesos) + puntuar(nb, pesos)
 
             // Un intercambio que saca una mesa del cupo solo se acepta si
@@ -732,7 +786,7 @@ export function repartir(
             const cupoDespues = Number(cabeEnElCupo(na, cupo)) + Number(cabeEnElCupo(nb, cupo))
             if (cupoDespues < cupoAntes && rotasDespues >= rotasAntes) continue
 
-            if (mejorQue(rotasDespues, puntosDespues, rotasAntes, puntosAntes)) {
+            if (mejorQue(rotasDespues, gravesDespues, puntosDespues, rotasAntes, gravesAntes, puntosAntes)) {
               mesas[a] = na
               mesas[b] = nb
               mejoro = true
