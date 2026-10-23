@@ -3832,9 +3832,16 @@ class Component extends DCLogic {
       const barra = laBarra(g);
       return {
         clave, lista: !pub && !calc && tamOk && malas.length === 0,
-        n: String(m.numero).padStart(2, '0'),
+        // El que se DICE, no el guardado: `m.numero` sigue siendo con lo que
+        // se pide despublicar o quitar la mesa, pero en pantalla tiene que
+        // salir el mismo que ve quien va a cenar, que es su posición dentro
+        // de ese restaurante esa noche. Michael, 22-10: «debe coincidir con
+        // lo que yo veo en el reparto, porque si no, luego no sé de qué mesa
+        // eran». Una propuesta sin publicar no tiene sitio todavía, así que
+        // ahí los dos son el mismo.
+        n: String(m.numeroDicho != null ? m.numeroDicho : m.numero).padStart(2, '0'),
         ...sitiosDe(m, pub),
-        titulo: vozRep.Unidad + ' ' + String(m.numero).padStart(2, '0'),
+        titulo: vozRep.Unidad + ' ' + String(m.numeroDicho != null ? m.numeroDicho : m.numero).padStart(2, '0'),
         hora: fr.hora + ' · ' + (m.restaurante || 'sitio sin elegir'),
         estado: pub ? 'PUBLICADA' : (calc ? 'CALCULANDO' : (malas.length ? 'NO PUEDE SALIR' : 'LISTA')),
         recibe,

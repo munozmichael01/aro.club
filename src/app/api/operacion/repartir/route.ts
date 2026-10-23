@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { anotar } from '@/lib/auditoria'
 import { PESOS, repartir, roturas, evaluacion, desglose, resumen, zonasDe } from '@/lib/reparto/repartir'
 import { exigirOps } from '@/lib/ops'
+import { claveDeNumero, numeroQueSeDice } from '@/lib/mesa-unica'
 import { renumerar, yaSeRevelo } from '@/lib/reparto/numeros'
 import { construirPool } from '@/lib/reparto/pool'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -810,6 +811,15 @@ export async function POST(request: Request) {
   const conCara = new Set((selfies ?? []).map((f) => f.profile_id))
   const caraDe = (id: string) => (conCara.has(id) ? `/api/operacion/cara?perfil=${id}` : null)
 
+  // El número que se dice en cada mesa publicada, de una vez para todas.
+  const dichos = await numeroQueSeDice(
+    (yaSentados ?? []).map((t) => ({
+      eventoId,
+      sitioId: t.restaurant_id,
+      numero: t.table_number,
+    })),
+  )
+
   const cerradas = (yaSentados ?? []).map((t) => {
     const miembros = (t.table_members ?? []) as unknown as {
       profile_id: string
@@ -819,7 +829,14 @@ export async function POST(request: Request) {
     }[]
     const rest = t.restaurants as unknown as { name: string; zone_slug: string | null } | null
     return {
+      // `numero` sigue siendo el GUARDADO: es con lo que el panel pide
+      // despublicar o quitar una mesa, así que cambiarlo rompería las dos.
       numero: t.table_number,
+      // Y este es el que se enseña, el mismo que ve quien va a cenar: su
+      // posición dentro de ese restaurante esa noche. Michael, 22-10: «debe
+      // coincidir con lo que yo veo en el reparto, porque si no, luego no sé
+      // de qué mesa eran».
+      numeroDicho: dichos.get(claveDeNumero(eventoId, t.table_number)) ?? t.table_number,
       publicada: true,
       // La mesa, para poder marcarla; y si está marcada para grabar.
       mesaId: t.id,

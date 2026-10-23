@@ -10,7 +10,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
-import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
+import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
 
 /**
  * F10 · Mi mesa.
@@ -424,7 +424,13 @@ export async function GET() {
     // bloquear y reportar. Son uuid opacos; el nombre de pila y el sector
     // siguen siendo lo unico legible que se le enseña de ellos.
     mesaId: miembro.table_id,
-    numeroMesa: mesa.table_number,
+    // El número que se dice al llegar, que es la posición de esta mesa
+    // DENTRO de su restaurante esa noche, no el que guardamos. Su porqué
+    // está en `numeroQueSeDice`.
+    numeroMesa:
+      (await numeroQueSeDice([
+        { eventoId: mesa.event_id, sitioId: mesa.restaurant_id, numero: mesa.table_number },
+      ])).get(claveDeNumero(mesa.event_id, mesa.table_number)) ?? mesa.table_number,
     // Y si es la única de ese sitio en esta fecha. Cuando lo es, la pantalla
     // y los correos se callan el número: «la mesa de Aro, la 01» donde solo
     // hay una mesa de Aro manda a buscar un cartel que no existe.

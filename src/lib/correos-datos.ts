@@ -13,7 +13,7 @@ import { fraseDeMesaCorta } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
-import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
+import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
 
 
 /**
@@ -1819,7 +1819,12 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
     ? await nombresDeZonas(admin, [mesa.restaurants.zone_slug])
     : []
 
-  const numero = String(mesa.table_number).padStart(2, '0')
+  // El que se dice al llegar, no el guardado. Ver `numeroQueSeDice`.
+  const dicho =
+    (await numeroQueSeDice([
+      { eventoId, sitioId: mesa.restaurant_id, numero: mesa.table_number },
+    ])).get(claveDeNumero(eventoId, mesa.table_number)) ?? mesa.table_number
+  const numero = String(dicho).padStart(2, '0')
   const direccion = mesa.restaurants?.address ?? ''
 
   // ¿Tiene sitios cerca a los que seguir? De la misma tabla que Mi mesa.
