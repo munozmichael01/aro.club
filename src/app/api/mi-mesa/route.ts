@@ -88,8 +88,29 @@ export async function GET() {
     return !!mesa && valoradas.has(mesa)
   }
 
+  /**
+   * Y SIN MESA NO HAY NADA QUE VALORAR, NI NADA QUE CONTAR.
+   *
+   * `yaLaConto` mira si hay valoración de SU mesa, así que una reserva sin
+   * mesa devolvía `false` para siempre: nunca estaba contada porque nunca
+   * pudo contarse. Y entonces `porValorar` la elegía, la pantalla no
+   * encontraba mesa y caía en «sin-mesa», o sea «Esta vez no entraste. Tu
+   * crédito sigue descontado, lo estamos arreglando hoy mismo».
+   *
+   * De una cena del 7 de octubre. Michael lo vio hoy, el 24, al cancelar la
+   * de esta noche: lo que hacía era destapar lo que llevaba semanas debajo.
+   * Son NUEVE personas con una reserva viva sin mesa de una fecha ya
+   * pasada, y a todas les dice eso cada vez que abren Mi mesa.
+   *
+   * «Esta vez no entraste» es un estado de verdad, pero de la fecha que
+   * viene: lo saca `proxima`, que es la que lo necesita. Mirando hacia
+   * atrás no ayuda a nadie, y prometer que el crédito se arregla «hoy
+   * mismo» diecisiete días después es peor que no decir nada.
+   */
+  const tieneMesa = (r: Reserva) => mesaDeReserva.has(r.id)
+
   const porValorar = (reservas ?? [])
-    .filter((r) => sePuedeValorar(empiezaDe(r), ahora) && !yaLaConto(r))
+    .filter((r) => tieneMesa(r) && sePuedeValorar(empiezaDe(r), ahora) && !yaLaConto(r))
     .sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
 
   const proxima = (reservas ?? [])
@@ -104,7 +125,7 @@ export async function GET() {
   // apuntarse a la próxima. Solo se mira la ÚLTIMA: si esa está contada,
   // rebuscar hacia atrás hasta encontrar una sin contar sacaría una cena de
   // hace tres meses a la pantalla de hoy.
-  const ultima = (reservas ?? []).sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
+  const ultima = (reservas ?? []).filter(tieneMesa).sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
   const reserva = porValorar ?? proxima ?? (ultima && !yaLaConto(ultima) ? ultima : undefined)
 
   const evento = reserva?.events as
