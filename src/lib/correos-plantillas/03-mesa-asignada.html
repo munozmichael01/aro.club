@@ -42,11 +42,11 @@
   </td></tr>
 
   <tr><td class="p" style="padding:20px 40px 0 40px;font-family:'Young Serif',Georgia,'Times New Roman',serif;font-weight:700;font-size:42px;line-height:44px;color:#FAF3E4;mso-line-height-rule:exactly;">
-    Ya sabes con quién<br />cenas <span style="color:#E39C63;">esta noche.</span>
+    Ya sabes con quién<br />{{ revelaVerbo }} <span style="color:#E39C63;">{{ revelaCuando }}</span>
   </td></tr>
 
   <tr><td class="p" style="padding:16px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#C5D8CA;mso-line-height-rule:exactly;">
-    Son las doce{{#si trato}}, {{ trato }}{{/si}}. Esto es lo que te tocó.
+    Son las {{ revelaHoraEnLetra }}{{#si trato}}, {{ trato }}{{/si}}. Esto es lo que te tocó.
   </td></tr>
 
   <!-- la mesa, en negativo sobre crema -->

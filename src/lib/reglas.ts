@@ -60,6 +60,8 @@ type Api = {
     estuviste: string
     /** Con quién es el plan, mientras la mesa está cerrada. */
     vasCon: string
+    /** «cenas» o «vas», para las frases que se arman por trozos. */
+    verbo: string
   }
   NOMBRES_DE_FORMATO: Record<string, string>
   /** Las cinco de la agenda pública, como pares [pregunta, respuesta]. */
@@ -153,6 +155,8 @@ export const MAX_TEXTO: number = api.MAX_TEXTO
  */
 export const ZONA_POR_DEFECTO: string = api.ZONA
 export const diaDe = api.diaDe
+/** «doce», «una», «dos»… por hora del reloj de doce, sin la franja. */
+export const HORAS_EN_LETRA = api.HORAS_EN_LETRA
 export const horaDe = api.horaDe
 export const partesDe = api.partesDe
 export const MESES = api.MESES

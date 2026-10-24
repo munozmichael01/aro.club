@@ -1077,6 +1077,10 @@
       sentados: 'sentados', juntarse: 'sentarse', mia: 'Mi mesa', TU: 'TU MESA',
       conQuien: 'CON QUIÉN VAS', estuviste: 'Estuviste en',
       vasCon: 'Vas con cinco personas.',
+      // El verbo suelto, para las frases que se arman por trozos. El correo
+      // de la revelación decía «cenas esta noche» escrito a mano, y a las
+      // cinco personas del brunch del domingo les iba a llegar eso.
+      verbo: 'vas',
     },
 
     VOZ_GRUPO: {
@@ -1086,6 +1090,7 @@
       sentados: 'repartidos', juntarse: 'juntarse', mia: 'Mi grupo', TU: 'TU GRUPO',
       conQuien: 'CON QUIÉN VAS', estuviste: 'Estuviste en',
       vasCon: 'Vas con cinco personas.',
+      verbo: 'vas',
     },
 
     /**
@@ -1772,6 +1777,7 @@
     cena.conQuien = 'CON QUIÉN CENAS'
     cena.estuviste = 'Cenaste en'
     cena.vasCon = 'Cenas con cinco personas.'
+    cena.verbo = 'cenas'
     return cena
   }
 

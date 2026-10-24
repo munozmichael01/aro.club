@@ -7,7 +7,7 @@ import { enlaceDeMapa } from '@/lib/mapa'
 import { avisoDeDosHoras, FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
-import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, textoCierre, vozDe } from '@/lib/reglas'
+import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
@@ -297,6 +297,12 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     ? `${SITIO}/cuenta`
     : `${SITIO}/baja?correo=${encodeURIComponent(a)}&token=${encodeURIComponent(firmarBaja(a))}`
 
+  /**
+   * ¿Ya se contó quién va con quién? De `reveal_at`, no del reloj del
+   * formato: una fecha puede tener la suya movida a mano.
+   */
+  const yaSeRevelo = !!evento?.reveal_at && Date.now() >= new Date(evento.reveal_at).getTime()
+
   const base: Valores = {
     // El precio, de la regla compartida y no escrito en la plantilla. Estaba a
     // mano en «abrimos tu zona» y en cuatro sitios de la landing: bajarlo
@@ -337,6 +343,69 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     // son una cena, y esto les decía «CON QUIÉN CENAS» a las once.
     conQuien: voz.conQuien,
     alGrupo: voz.unidad === 'mesa' ? ' la mesa' : 'l grupo',
+
+    /**
+     * CUÁNDO SE REVELA, dicho en la voz de ESTA fecha.
+     *
+     * El correo de la revelación llevaba «Ya sabes con quién cenas esta
+     * noche» y «Son las doce» escritos a mano. Las dos frases son verdad
+     * para una cena, que es casi todo lo que hacemos, y las dos son falsas
+     * para un plan de mañana: el brunch del domingo se revela el sábado a
+     * las seis de la tarde, y a esas cinco personas les iba a llegar que
+     * cenaban esa noche a mediodía.
+     *
+     * Lo cazó el agente de la app el 24-10, seis horas antes de que saliera.
+     *
+     * No se escribe la regla otra vez: se lee de la fecha. `reveal_at` ya
+     * sabe si es el mismo día o la víspera, y `verbo` sale de la voz, que es
+     * la que ya distingue «CON QUIÉN CENAS» de «CON QUIÉN VAS».
+     */
+    revelaVerbo: voz.verbo,
+    revelaCuando: (() => {
+      // Caracas, como el resto de `base`: aquí la zona todavía se asume.
+      const zona = ZONA_POR_DEFECTO
+      const cuandoRevela = evento?.reveal_at ? diaDe(evento.reveal_at, zona) : null
+      const cuandoEs = evento?.starts_at ? diaDe(evento.starts_at, zona) : null
+      if (!cuandoRevela || !cuandoEs) return 'esta noche.'
+      // La víspera: el plan es mañana. El mismo día: es esta noche, y eso
+      // solo lo dice una cena, que es la única que se revela a mediodía.
+      return cuandoRevela === cuandoEs ? 'esta noche.' : 'mañana.'
+    })(),
+    /**
+     * La hora pelada, sin la franja.
+     *
+     * `horaEnLetraDe` devuelve «doce de la tarde» y «seis de la tarde», y
+     * aquí la frase ya trae el resto: «Son las doce, Michael». Con la franja
+     * salía «Son las doce de la tarde», que además de sobrar es falso, que
+     * el mediodía no es la tarde.
+     */
+    revelaHoraEnLetra: (() => {
+      const h = evento?.reveal_at ? partesDe(evento.reveal_at, ZONA_POR_DEFECTO)?.horas : 12
+      return HORAS_EN_LETRA[(h ?? 12) % 12]
+    })(),
+
+    /**
+     * Y el plazo para decir que no vas, en el recordatorio.
+     *
+     * Decía «Dilo antes de mediodía. A esa hora se reparte» escrito a mano.
+     * Para una cena es verdad: el recordatorio sale a las nueve y la
+     * revelación es a las doce. Para el brunch del domingo sale a las nueve
+     * de la mañana del mismo día, con la revelación hecha desde la tarde
+     * anterior y el plan empezando a las once: las dos frases mienten, y la
+     * segunda invita a avisar después de que la gente ya esté sentada.
+     */
+    avisarPlazo: (() => {
+      if (yaSeRevelo) return 'Dilo cuanto antes'
+      const h = evento?.reveal_at ? partesDe(evento.reveal_at, ZONA_POR_DEFECTO)?.horas : 12
+      // «mediodía» y no «las doce»: es la palabra aprobada y es la de casi
+      // todas las fechas. Las demás horas se dicen con su número.
+      return h === 12
+        ? 'Dilo antes de mediodía'
+        : `Dilo antes de las ${HORAS_EN_LETRA[(h ?? 12) % 12]}`
+    })(),
+    avisarPorque: yaSeRevelo
+      ? 'Tu sitio es el sitio que cinco personas cuentan contigo.'
+      : 'A esa hora se reparte, y a partir de ahí tu sitio es el sitio que cinco personas cuentan contigo.',
   }
 
   switch (fila.kind) {
