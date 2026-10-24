@@ -403,9 +403,22 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         ? 'Dilo antes de mediodía'
         : `Dilo antes de las ${HORAS_EN_LETRA[(h ?? 12) % 12]}`
     })(),
+    /**
+     * POR QUÉ HAY QUE DECIRLO, en una frase que se entienda.
+     *
+     * Decía «tu sitio es el sitio que cinco personas cuentan contigo».
+     * Michael, 24-10: «tu sitio es el sitio no se entiende, acomoda también
+     * el original». Tenía razón por partida doble: a la cláusula le falta
+     * un «con» —se cuenta CON un sitio— y el cinco solo es verdad en una
+     * mesa de seis. Esta misma noche hay una de ocho, y las hay de cuatro.
+     *
+     * Así que la frase deja de contar personas y dice lo mismo: que ese
+     * sitio ya no es solo tuyo. Vale para seis, para ocho y para cuatro, y
+     * vale para un grupo, que no tiene mesa.
+     */
     avisarPorque: yaSeRevelo
-      ? 'Tu sitio es el sitio que cinco personas cuentan contigo.'
-      : 'A esa hora se reparte, y a partir de ahí tu sitio es el sitio que cinco personas cuentan contigo.',
+      ? `${voz.Unidad === 'Mesa' ? 'Tu mesa' : 'Tu grupo'} ya cuenta con ese sitio.`
+      : `A esa hora se reparte, y a partir de ahí tu sitio es uno con el que cuenta ${voz.unidad === 'mesa' ? 'toda una mesa' : 'todo un grupo'}.`,
   }
 
   switch (fila.kind) {
