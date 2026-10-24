@@ -831,6 +831,24 @@
     HORAS_EN_LETRA: ['doce', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once'],
 
     /**
+     * Los números en letra, para contar PERSONAS.
+     *
+     * En femenino —«una», no «uno»— porque siempre cuenta gente. Hasta
+     * veintidós, que es el techo de verdad: `seats_per_table` llega a
+     * veinte y una mesa se estira dos por encima.
+     *
+     * Vive aquí porque ya hay tres tablas iguales repartidas por el repo
+     * —en `mesa-corta`, en los correos y en Mi mesa— y cada una se queda
+     * corta por su lado. Las que quedan deberían venirse a esta.
+     */
+    enLetra: function (n) {
+      var T = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho',
+        'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis',
+        'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuna', 'veintidós']
+      return T[n] || String(n)
+    },
+
+    /**
      * «siete y media de la noche». La hora como se dice, no como se escribe.
      *
      * LOS MINUTOS NO SE PUEDEN TIRAR. Esto existía en tres sitios —la app,
