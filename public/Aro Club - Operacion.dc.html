@@ -168,12 +168,12 @@
           </sc-for>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin:-18px 0 clamp(24px,3vw,32px)">
-          <sc-if value="{{ hayPasadas }}" hint-placeholder-val="{{ true }}">
-            <button onClick="{{ tocarPasadas }}" style="{{ botonPasadas }}">{{ textoPasadas }}</button>
-          </sc-if>
-          <sc-if value="{{ hayOcultarPasadas }}" hint-placeholder-val="{{ false }}">
-            <button onClick="{{ tocarOcultarPasadas }}" style="{{ botonOcultarPasadas }}">{{ textoOcultarPasadas }}</button>
-          </sc-if>
+          <sc-for list="{{ rangosRep }}" as="r" hint-placeholder-count="6">
+            <button onClick="{{ r.pick }}" style="{{ r.btn }}">
+              <span style="{{ r.txt }}">{{ r.nombre }}</span>
+              <span style="{{ r.contador }}">{{ r.n }}</span>
+            </button>
+          </sc-for>
           <!-- Las de prueba no las ve ningún miembro y no se reparten: en la
                pantalla donde se decide qué cena se arma, estorban. -->
           <sc-if value="{{ hayPrueba }}" hint-placeholder-val="{{ false }}">
@@ -514,6 +514,10 @@
                     <span style="font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ b.nombre }}</span>
                     <span style="{{ b.estiloQuien }}">{{ b.quien }}</span>
                     <span style="font:400 12px/1.3 'Inter Tight',sans-serif;color:#566A5D;white-space:nowrap">{{ b.cuando }}</span>
+                    <!-- Y si se cambió de día en vez de irse. -->
+                    <sc-if value="{{ b.hayReagendo }}" hint-placeholder-val="{{ false }}">
+                      <span style="{{ b.estiloReagendo }}">{{ b.reagendo }}</span>
+                    </sc-if>
                     <sc-if value="{{ b.hayMotivo }}" hint-placeholder-val="{{ false }}">
                       <span style="flex:1 1 100%;font:400 12px/1.45 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ b.motivo }}</span>
                     </sc-if>
@@ -1843,37 +1847,73 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 /**
- * Las semanas que hay por detrás, de la más reciente a la más vieja.
+ * QUÉ TRAMO DE FECHAS ENSEÑA EL CARRIL.
  *
- * Michael, 23-10: «El botón ver fechas anteriores está ok, pero no puede
- * irse a la primera, sino quedarse en la inmediatamente anterior e ir
- * mostrando semana anterior por semana anterior, hasta que no tenga más
- * fechas anteriores.»
+ * Michael, 24-10: «yo me refería a un filtro de fechas tipo selector»,
+ * después de probar el botón que destapaba una semana por pulsación. Tenía
+ * razón: aquello guardaba un contador invisible, cada pulsación cambiaba a
+ * la vez lo que se veía y la fecha elegida, y no había forma de saltar a un
+ * mes sin pasar por todas las semanas de en medio.
  *
- * Antes era un interruptor: o ninguna pasada, o las treinta y tantas de
- * golpe, y como el carril elige «la primera que se ve» y las fechas vienen
- * de vieja a nueva, el detalle de abajo saltaba a una cena de agosto.
+ * Un selector no guarda camino: se pulsa un tramo y eso es lo que hay. Los
+ * cinco son los que pidió —semana, semana anterior, mes, mes anterior— más
+ * «Abiertas», que es lo que el panel enseñaba siempre y sigue siendo lo de
+ * entrar.
  *
- * La semana es la de Caracas y empieza en lunes, que es la semana en la que
- * se piensa el trabajo: la cena del viernes y la del sábado siguiente son
- * la misma tanda, y destapar una partiría el fin de semana en dos.
+ * Todo en la hora de Caracas. La semana empieza en lunes, que es la semana
+ * en la que se piensa el trabajo: la cena del viernes y la del sábado son
+ * la misma tanda y no se pueden separar.
  */
+/**
+ * Funciones y no constantes, a propósito.
+ *
+ * Esto vive fuera de la clase, y fuera de la clase solo se iza lo que se
+ * declara con `function`: un `const TRAMOS` aquí arriba deja `renderVals`
+ * leyéndolo antes de que exista y la pantalla pinta «Cannot access TRAMOS
+ * before initialization» en lugar del panel. Lo cazó `comprobar-pintado`.
+ */
+function TRAMOS() {
+  return ['abiertas', 'semana', 'semana-1', 'mes', 'mes-1', 'todas'];
+}
+
+function nombreDeRango(r) {
+  return {
+    abiertas: 'Abiertas',
+    semana: 'Esta semana',
+    'semana-1': 'Semana pasada',
+    mes: 'Este mes',
+    'mes-1': 'Mes pasado',
+    todas: 'Todas',
+  }[r] || r;
+}
+
+/** La fecha de Caracas de un instante, como si fuera UTC: así se puede usar getUTC*. */
+function enCaracasDC(iso) {
+  return new Date(new Date(iso).getTime() - 4 * 3600000);
+}
+
+/** El lunes de su semana, en milisegundos. El domingo cuenta con la que termina. */
 function lunesDeAro(iso) {
-  const d = new Date(new Date(iso).getTime() - 4 * 3600000);
-  // Sobre la fecha ya corrida a Caracas, y con el domingo contando con la
-  // semana que TERMINA, no con la que empieza.
+  const d = enCaracasDC(iso);
   const atras = (d.getUTCDay() + 6) % 7;
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - atras);
 }
 
-function semanasDetras(fechas) {
-  const vistas = [];
-  (fechas || []).forEach((f) => {
-    if (!f || !f.pasada || !f.empiezaEn) return;
-    const l = lunesDeAro(f.empiezaEn);
-    if (vistas.indexOf(l) === -1) vistas.push(l);
-  });
-  return vistas.sort((a, b) => b - a);
+/** El primero de su mes, en milisegundos. */
+function mesDeAro(iso) {
+  const d = enCaracasDC(iso);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
+}
+
+/** El lunes de hace `n` semanas, contando desde hoy. */
+function lunesHace(n) {
+  return lunesDeAro(new Date().toISOString()) - n * 7 * 86400000;
+}
+
+/** El primero del mes de hace `n` meses, contando desde hoy. */
+function mesHace(n) {
+  const d = enCaracasDC(new Date().toISOString());
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - n, 1);
 }
 
 /**
@@ -1883,14 +1923,21 @@ function semanasDetras(fechas) {
  * coincidían, los botones trabajaban sobre una fecha que la pantalla no
  * enseñaba, y eso ya costó repartir agosto una vez.
  */
-function filtroDeFechas(fechas, semanasAtras, verPrueba) {
-  const abiertas = semanasDetras(fechas).slice(0, Math.max(0, semanasAtras || 0));
+function filtroDeFechas(rango, verPrueba) {
+  const cual = TRAMOS().indexOf(rango) === -1 ? 'abiertas' : rango;
   return (f) => {
     if (!f) return false;
     if (f.esPrueba && !verPrueba) return false;
-    if (!f.pasada) return true;
-    if (!f.empiezaEn) return abiertas.length > 0;
-    return abiertas.indexOf(lunesDeAro(f.empiezaEn)) !== -1;
+    if (cual === 'todas') return true;
+    if (cual === 'abiertas') return !f.pasada;
+    // Los tramos de calendario SÍ miran la fecha: sin ella no se puede
+    // decir que caiga dentro, y colarla sería enseñar en «mes pasado» algo
+    // que nadie sabe cuándo fue.
+    if (!f.empiezaEn) return false;
+    if (cual === 'semana') return lunesDeAro(f.empiezaEn) === lunesHace(0);
+    if (cual === 'semana-1') return lunesDeAro(f.empiezaEn) === lunesHace(1);
+    if (cual === 'mes') return mesDeAro(f.empiezaEn) === mesHace(0);
+    return mesDeAro(f.empiezaEn) === mesHace(1);
   };
 }
 
@@ -1912,8 +1959,8 @@ class Component extends DCLogic {
   state = {
     vista: 0, decididas: {}, conciliadas: {}, abriendo: null, motivos: {},
     fechaRep: 0, publicadas: {}, forzadas: {}, verPrueba: false,
-    // Cuántas semanas de atrás están destapadas. 0 = ninguna pasada.
-    semanasAtras: 0,
+    // Qué tramo de fechas enseña el carril. Ver `TRAMOS`.
+    rangoFechas: 'abiertas',
     sub: 'abrir', diaSel: -1, formatoSel: 0, zonasSel: {}, abierta: false,
     actividad: '', distancia: '', duracion: '', nivel: -1,
     limitado: false, tope: '', precio: undefined,
@@ -2636,7 +2683,7 @@ class Component extends DCLogic {
     // El MISMO filtro que el carril. Si aquí no se mirara lo de prueba, los
     // botones trabajarían sobre una fecha que la pantalla no enseña, que es
     // el descuadre que ya costó repartir agosto.
-    const seVe = filtroDeFechas(fs, this.state.semanasAtras, this.state.verPrueba);
+    const seVe = filtroDeFechas(this.state.rangoFechas, this.state.verPrueba);
     const elegida = fs[this.state.fechaRep];
     if (elegida && seVe(elegida)) return elegida;
     return fs.filter(seVe)[0] || fs[0] || null;
@@ -3632,10 +3679,7 @@ class Component extends DCLogic {
      * sería esconder el trabajo.
      */
     const FECHAS_VIVAS = FECHAS_REP.filter((f) => !f.pasada);
-    const SEMANAS_DETRAS = semanasDetras(FECHAS);
-    // Topado a las que existen: si se destapan todas y luego entra una
-    // fecha nueva, el contador no se queda apuntando a un hueco.
-    const SEMANAS_ATRAS = Math.min(St.semanasAtras || 0, SEMANAS_DETRAS.length);
+    const RANGO = TRAMOS().indexOf(St.rangoFechas) === -1 ? 'abiertas' : St.rangoFechas;
 
     /**
      * Y las de prueba, fuera del carril salvo que se pidan.
@@ -3651,7 +3695,7 @@ class Component extends DCLogic {
      */
     const FECHAS_PRUEBA = FECHAS_REP.filter((f) => f.esPrueba);
     const verPrueba = !!St.verPrueba;
-    const seVe = filtroDeFechas(FECHAS, SEMANAS_ATRAS, verPrueba);
+    const seVe = filtroDeFechas(RANGO, verPrueba);
 
     // La elegida, o la primera que se ve. `FECHAS_REP[0]` era la primera de
     // TODAS, así que con las pasadas ocultas el carril enseñaba tres fechas
@@ -5748,78 +5792,44 @@ class Component extends DCLogic {
           + (r.enRevision ? ' · ' + r.enRevision + (r.enRevision === 1 ? ' con el pago por conciliar' : ' con el pago por conciliar') : '');
       })(),
       fechasRep, zonasRep, tiposRep,
-      // Se enseña solo si hay algo que enseñar: un botón que no cambia nada
-      // es ruido.
-      // Una semana más atrás, mientras queden. Cuando no quedan, el botón
-      // se va: «no tiene más que mostrar» es la respuesta, no un botón que
-      // no hace nada.
-      hayPasadas: SEMANAS_ATRAS < SEMANAS_DETRAS.length,
       /**
-       * El botón dice QUÉ semana destapa, no «una más».
+       * EL SELECTOR DE TRAMO. Abiertas · Esta semana · Semana pasada ·
+       * Este mes · Mes pasado · Todas.
        *
-       * La primera pulsación casi nunca es «la semana anterior»: hoy es
-       * sábado y lo que aparece es el jueves y el viernes de ESTA semana.
-       * Un botón que lo llamara «anterior» estaría mintiendo sobre lo que
-       * va a enseñar, y con fechas que se parecen eso se paga mirando la
-       * cena equivocada.
-       */
-      textoPasadas: (function () {
-        const lunes = SEMANAS_DETRAS[SEMANAS_ATRAS];
-        const cuantas = FECHAS_REP.filter(
-          (f) => f.pasada && f.empiezaEn && lunesDeAro(f.empiezaEn) === lunes
-            && (verPrueba || !f.esPrueba)
-        ).length;
-        const cola = cuantas === 1 ? ' (1 fecha)' : ' (' + cuantas + ' fechas)';
-        if (lunes === lunesDeAro(new Date().toISOString())) {
-          return 'Ver lo que ya pasó esta semana' + cola;
-        }
-        const l = new Date(lunes);
-        const d = new Date(lunes + 6 * 86400000);
-        const rango = l.getUTCMonth() === d.getUTCMonth()
-          ? l.getUTCDate() + ' al ' + d.getUTCDate() + ' de ' + MESES[l.getUTCMonth()]
-          : l.getUTCDate() + ' de ' + MESES[l.getUTCMonth()] + ' al ' + d.getUTCDate() + ' de ' + MESES[d.getUTCMonth()];
-        return 'Ver la semana del ' + rango + cola;
-      })(),
-      botonPasadas: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F;cursor:pointer;white-space:nowrap',
-      /**
-       * Y se queda en la INMEDIATAMENTE anterior.
+       * Sustituye al botón que destapaba una semana por pulsación. Aquel
+       * guardaba un contador que no se veía en ninguna parte, mezclaba dos
+       * cosas en cada clic —lo que se enseña y qué fecha está elegida— y
+       * para llegar a un mes había que pasar por todas las semanas de en
+       * medio. Michael, 24-10: «tiene unas interacciones raras».
        *
-       * Antes esto hacía `fechaRep: 0`, y como «la primera que se ve» es la
-       * más vieja de todas —las fechas vienen de vieja a nueva—, destapar
-       * las pasadas mandaba el detalle de abajo a agosto. Ahora salta a la
-       * última fecha de la semana que se acaba de destapar, que es la que
-       * se estaba buscando al pulsar.
+       * Mismos chips que el filtro de formato de arriba, con su cuenta, y
+       * se componen: «Cenas» dentro de «Mes pasado» son las cenas del mes
+       * pasado. El de prueba sigue aparte, que es otra pregunta.
        */
-      tocarPasadas: () => {
-        const n = SEMANAS_ATRAS + 1;
-        const lunes = SEMANAS_DETRAS[SEMANAS_ATRAS];
-        // La ÚLTIMA de la semana que se acaba de destapar: se pulsa para
-        // mirar esa semana, así que dejar el detalle donde estaba haría que
-        // la segunda pulsación no pareciera hacer nada.
-        let i = St.fechaRep;
-        for (let k = 0; k < FECHAS_REP.length; k += 1) {
-          const f = FECHAS_REP[k];
-          if (f.pasada && f.empiezaEn && lunesDeAro(f.empiezaEn) === lunes
-            && (verPrueba || !f.esPrueba)) i = k;
-        }
-        this.setState({ semanasAtras: n, fechaRep: i, fechaVer: i }, () => this.centrarFecha());
-      },
-      // Volver a dejar solo las vivas. Separado del otro botón porque son
-      // dos cosas: una avanza y la otra deshace.
-      hayOcultarPasadas: SEMANAS_ATRAS > 0,
-      textoOcultarPasadas: 'Ocultar las que ya pasaron',
-      botonOcultarPasadas: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:#F2E9D5;font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F;cursor:pointer;white-space:nowrap',
-      tocarOcultarPasadas: () => {
-        // A la primera VIVA, no al índice 0: el 0 es una pasada y volvería
-        // a dejar el detalle en una fecha que el carril ya no enseña.
-        const ve = filtroDeFechas(FECHAS, 0, verPrueba);
-        let i = 0;
-        for (let k = 0; k < FECHAS_REP.length; k += 1) {
-          if (ve(FECHAS_REP[k])) { i = k; break; }
-        }
-        this.setState({ semanasAtras: 0, fechaRep: i, fechaVer: i }, () => this.centrarFecha());
-      },
-
+      rangosRep: TRAMOS().map((r) => {
+        const on = RANGO === r;
+        const ve = filtroDeFechas(r, verPrueba);
+        const n = FECHAS_REP.filter(ve).length;
+        return {
+          nombre: nombreDeRango(r), n: String(n),
+          /**
+           * Al cambiar de tramo, a la MÁS RECIENTE de las que quedan.
+           *
+           * No al índice 0: las fechas vienen de vieja a nueva, así que el
+           * cero de «Mes pasado» es la cena más vieja del mes y no la que
+           * se está buscando. Y si en ese tramo no hay ninguna, la elegida
+           * se queda donde está en vez de saltar a un hueco.
+           */
+          pick: () => {
+            let i = St.fechaRep;
+            for (let k = 0; k < FECHAS_REP.length; k += 1) if (ve(FECHAS_REP[k])) i = k;
+            this.setState({ rangoFechas: r, fechaRep: i, fechaVer: i }, () => this.centrarFecha());
+          },
+          btn: 'display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#F2E9D5' : 'transparent') + ';cursor:pointer;opacity:' + (n === 0 && !on ? '.45' : '1') + ';transition:all 180ms ease',
+          txt: 'font:' + (on ? '600' : '500') + ' 13px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#8F4515' : '#33513F'),
+          contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:' + (on ? 'rgba(143,69,21,.16)' : 'rgba(20,52,42,.09)') + ';font:600 11px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#8F4515' : '#33513F') + ';font-variant-numeric:tabular-nums'
+        };
+      }),
       hayPrueba: FECHAS_PRUEBA.length > 0,
       textoPrueba: verPrueba
         ? 'Esconder las de prueba'
@@ -6102,8 +6112,14 @@ class Component extends DCLogic {
         const partes = [];
         if (suyas) partes.push(suyas === 1 ? 'una se bajó' : suyas + ' se bajaron');
         if (nuestras) partes.push(nuestras === 1 ? 'a una la bajamos nosotros' : 'a ' + nuestras + ' las bajamos nosotros');
+        // Los que se cambiaron de día no son gente que se fue, y decirlo
+        // aquí evita leer la cifra de arriba como una fuga.
+        const movidos = CANCELAS.filter((c) => c.reagendo).length;
         return 'De esta fecha, ' + partes.join(' y ')
-          + '. Su crédito ya volvió y no cuentan entre los apuntados.';
+          + '. Su crédito ya volvió y no cuentan entre los apuntados.'
+          + (movidos
+            ? (movidos === 1 ? ' Una se pasó a otra fecha.' : ' ' + movidos + ' se pasaron a otra fecha.')
+            : '');
       })(),
       cancelas: CANCELAS.map((c) => ({
         nombre: c.nombre,
@@ -6115,6 +6131,16 @@ class Component extends DCLogic {
             ? 'background:rgba(143,69,21,.12);color:#8F4515'
             : 'background:rgba(20,52,42,.09);color:#33513F'),
         cuando: c.cuando ? diaTexto(c.cuando) + ', ' + horaTexto(c.cuando) : 'Sin fecha',
+        // A dónde se pasó. En verde porque no es una pérdida: es la misma
+        // persona en otra mesa, y leerlo igual que una baja infla la cuenta
+        // de cuánta gente se está yendo.
+        hayReagendo: !!c.reagendo,
+        reagendo: c.reagendo
+          ? 'Se pasó a ' + (NOMBRE_FORMATO[c.reagendo.formato] || c.reagendo.formato)
+            + ' · ' + diaTexto(c.reagendo.empiezaEn) + ', ' + horaTexto(c.reagendo.empiezaEn)
+          : '',
+        estiloReagendo: 'flex:0 0 auto;padding:3px 9px;border-radius:999px;white-space:nowrap;'
+          + "font:500 11px/1.3 'Inter Tight',sans-serif;background:rgba(27,81,56,.12);color:#1B5138",
         hayMotivo: !!c.motivo,
         motivo: c.motivo || '',
       })),

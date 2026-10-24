@@ -471,6 +471,12 @@ export async function GET(request: Request) {
      * Las dos clases juntas y distinguidas: `cancelled_by_user` es que se
      * bajó, `cancelled_by_ops` es que la bajamos nosotros, y esa diferencia
      * es la que decide si hay que escribirle a alguien.
+     *
+     * Y SI SE PASÓ A OTRA FECHA, cuál (Michael, 24-10). No es lo mismo que
+     * se cayera del club que que se cambiara de día: lo primero es una
+     * silla perdida y lo segundo es la misma persona en otra mesa. Sin esto
+     * las dos se leen igual, y la cuenta de cuánta gente se está yendo sale
+     * inflada con los que solo movieron el plan.
      */
     cancelaciones: await (async () => {
       const { data: bajas } = await admin
@@ -491,14 +497,56 @@ export async function GET(request: Request) {
         (quienes ?? []).map((q) => [q.id, q.display_name || q.full_name || 'Sin nombre']),
       )
 
-      return bajas.map((b) => ({
-        profileId: b.profile_id,
-        nombre: comoSeLlama.get(b.profile_id) ?? 'Sin nombre',
-        // `true` si se bajó ella; `false` si la bajamos nosotros.
-        suya: b.status === 'cancelled_by_user',
-        cuando: b.cancelled_at,
-        motivo: b.cancel_reason ?? null,
-      }))
+      /**
+       * A dónde se fue, si se fue a algún sitio.
+       *
+       * Una reserva viva en OTRA fecha, hecha DESPUÉS de cancelar esta. Lo
+       * de después importa: quien ya estaba apuntado a dos cosas y se cayó
+       * de una no se ha reagendado, y contarlo como tal diría que no se
+       * perdió a nadie cuando sí.
+       *
+       * Si hay varias, la primera que venga por calendario: es la que de
+       * verdad sustituye a esta.
+       */
+      const { data: vivas } = await admin
+        .from('bookings')
+        .select('profile_id, event_id, created_at')
+        .in('profile_id', bajas.map((b) => b.profile_id))
+        .neq('event_id', evento.id)
+        .not('status', 'in', '(cancelled_by_user,cancelled_by_ops)')
+
+      const { data: adonde } = (vivas ?? []).length
+        ? await admin
+            .from('events')
+            .select('id, starts_at, format, status')
+            .in('id', [...new Set((vivas ?? []).map((v) => v.event_id))])
+            .neq('status', 'cancelled')
+        : { data: [] as { id: string; starts_at: string; format: string; status: string }[] }
+
+      const fechaDe = new Map((adonde ?? []).map((e) => [e.id, e]))
+
+      return bajas.map((b) => {
+        const cancelo = b.cancelled_at ? Date.parse(b.cancelled_at) : 0
+        const suyas = (vivas ?? [])
+          .filter((v) => v.profile_id === b.profile_id)
+          .filter((v) => !cancelo || Date.parse(v.created_at) >= cancelo)
+          .map((v) => fechaDe.get(v.event_id))
+          .filter((e): e is NonNullable<typeof e> => !!e)
+          .sort((x, y) => Date.parse(x.starts_at) - Date.parse(y.starts_at))
+
+        return {
+          profileId: b.profile_id,
+          nombre: comoSeLlama.get(b.profile_id) ?? 'Sin nombre',
+          // `true` si se bajó ella; `false` si la bajamos nosotros.
+          suya: b.status === 'cancelled_by_user',
+          cuando: b.cancelled_at,
+          motivo: b.cancel_reason ?? null,
+          // A qué fecha se pasó, si se pasó a alguna.
+          reagendo: suyas[0]
+            ? { eventoId: suyas[0].id, empiezaEn: suyas[0].starts_at, formato: suyas[0].format }
+            : null,
+        }
+      })
     })(),
     // Los que entran al reparto, con nombre y con las zonas que aceptan. El
     // panel los enseña mientras no hay corrida.
