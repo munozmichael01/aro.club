@@ -11,7 +11,7 @@ import { reglas, type PasoDeLaMesa } from '../reglas'
 
 export const DURACION_POR_DEFECTO = reglas.GUION.duracionDeLaMesa
 
-export type Momento = 'llegada' | 'voz' | 'pedir' | 'vuelta' | 'hielo' | 'tema' | 'cuenta' | 'despedida'
+export type Momento = 'llegada' | 'pedir' | 'vuelta' | 'hielo' | 'tema' | 'cuenta' | 'despedida'
 export type Paso = PasoDeLaMesa & { momento: Momento }
 
 /** Los momentos de la mesa con su hora y su texto ya puestos. Sin `empiezaEn` válido, no hay guion. */
