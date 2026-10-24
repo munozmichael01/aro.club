@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { abonarSinMesa, retirarAbonoSinMesa } from '@/lib/creditos'
+import { DE_MAS } from '@/lib/mesa-corta'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
   if (!corrida) return NextResponse.json({ error: 'Esa corrida no existe.' }, { status: 404 })
   const { data: evento } = await admin
     .from('events')
-    .select('id, reveal_at, starts_at, format, booking_closes_at')
+    .select('id, reveal_at, starts_at, format, booking_closes_at, seats_per_table')
     .eq('id', corrida.event_id)
     .maybeSingle()
 
@@ -119,6 +120,39 @@ export async function POST(request: Request) {
             ? `La mesa ${String(sinSitio[0]).padStart(2, '0')} no tiene sitio. Elígelo antes de publicar.`
             : `Hay ${sinSitio.length} mesas sin sitio. Elígelo antes de publicar.`,
         mesasSinSitio: sinSitio,
+      },
+      { status: 409 },
+    )
+  }
+
+  /**
+   * Y NI FORZANDO SE PUBLICA UNA MESA DE MÁS DE OCHO.
+   *
+   * Forzar existe para saltarse una regla de afinidad o un hueco, y desde el
+   * 24-10 también para estirar la mesa una o dos sillas: con 27 apuntados y
+   * mesas de seis sobran tres personas, y dejarlas fuera cuesta más que
+   * pedirle dos sillas al restaurante.
+   *
+   * Con tres de más ya no es una silla extra, es otra mesa que no armamos, y
+   * la frase que les llega —«encajaban dos personas más»— dejaría de ser
+   * verdad. El tope y esa frase viven en el mismo fichero a propósito.
+   *
+   * Por arriba y solo por arriba: quedarse corto sigue sin tope, porque el
+   * mínimo de cuatro es una decisión de operación y no un freno, y eso ya
+   * estaba decidido.
+   */
+  const porMesa = evento.seats_per_table ?? 6
+  const estiradas = mesas
+    .filter((m) => m.integrantes.length > porMesa + DE_MAS)
+    .map((m) => ({ mesa: m.numero, gente: m.integrantes.length }))
+
+  if (estiradas.length) {
+    return NextResponse.json(
+      {
+        error:
+          `Una mesa se puede estirar hasta ${porMesa + DE_MAS}, no más.`
+          + ' Mueve a alguien a otra o a la espera.',
+        mesasEstiradas: estiradas,
       },
       { status: 409 },
     )

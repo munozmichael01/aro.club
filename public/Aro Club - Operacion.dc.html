@@ -3974,7 +3974,25 @@ class Component extends DCLogic {
        * que con dos no sostiene nadie.
        */
       const bajoMinimo = g.length > 0 && g.length < 4;
-      const pasada = g.length > POR_MESA;
+      /**
+       * Pasarse de UNA o DOS es una decisión; de tres ya no.
+       *
+       * Michael, 24-10: «deja que pueda agregar hasta 8 desde el panel».
+       * Antes esto se bloqueaba entero, con el argumento de que el sitio
+       * tiene la mesa reservada para seis y el séptimo se queda de pie.
+       * Resultó ser el argumento equivocado: con 27 apuntados y mesas de
+       * seis sobran tres personas, y dejarlas fuera cuesta más que pedir
+       * dos sillas. Lo que sí sigue bloqueado es +3, porque ahí ya no es
+       * una silla extra, es otra mesa que no armamos.
+       *
+       * El tope vive en `DE_MAS`, en `src/lib/mesa-corta.ts`, junto a la
+       * frase que se les dice a esos siete u ocho: el número y el texto que
+       * lo explica tienen que moverse juntos.
+       */
+      const DE_MAS = 2;
+      const sobran = g.length - POR_MESA;
+      const pasada = sobran > 0;
+      const demasiados = sobran > DE_MAS;
       const clave = String(m.numero) + '|' + (m.corridaId || '');
       // Por la clave y no por el número: moviendo en la Mesa 01 de una fecha,
       // la Mesa 01 de la otra también se quedaba en «CALCULANDO».
@@ -4277,7 +4295,9 @@ class Component extends DCLogic {
             ? (bajoMinimo
               ? 'Se quedó en ' + g.length + ', por debajo del mínimo de cuatro. Puedes publicarla igual, pero el correo le va a decir a esa gente que creemos que bastan, y con ' + g.length + ' eso no lo sostiene nadie. La otra salida es dejarlos en espera: reciben «Esta vez no entraste» y su crédito vuelve.'
               : 'Se quedó en ' + g.length + ' de ' + POR_MESA + '. Se puede publicar: el correo lo dice y no promete seis. Si prefieres completarla, ' + ((POR_MESA - g.length) === 1 ? 'falta una persona' : 'faltan ' + (POR_MESA - g.length)) + '.')
-            : 'Son ' + g.length + ' y caben ' + POR_MESA + '. Mueve ' + (g.length - POR_MESA) + ' a otra ' + vozRep.unidad + ' o a la espera.')
+            : (demasiados
+              ? 'Son ' + g.length + ' y caben ' + POR_MESA + '. Mueve ' + (sobran - DE_MAS) + ' a otra ' + vozRep.unidad + ' o a la espera: se puede estirar hasta ' + (POR_MESA + DE_MAS) + ', no más.'
+              : 'Son ' + g.length + ' y caben ' + POR_MESA + '. Se puede publicar: el correo y Mi mesa lo dicen, «son ' + g.length + '», y explican que ' + (sobran === 1 ? 'encajaba una persona más' : 'encajaban ' + sobran + ' personas más') + '. Antes de que lleguen dile al sitio que ' + (sobran === 1 ? 'ponga una silla más' : 'ponga ' + sobran + ' sillas más') + ': abajo tienes el botón, y te avisa si la cifra que le diste ya no vale.'))
           : malas.length === 1
           ? 'Rompe una regla: ' + malas[0].detalle + '. Publicar se para aquí.'
           : 'Rompe ' + malas.length + ' reglas: ' + malas.map((x) => x.detalle).join(' · ') + '. Publicar se para aquí.',
@@ -4346,7 +4366,10 @@ class Component extends DCLogic {
         // Y se puede forzar también una mesa CORTA, que es lo que faltaba:
         // el servidor nunca miró el tamaño —publica cinco sin rechistar— y
         // el único que lo impedía era este panel.
-        puedeForzar: (malas.length > 0 || corta) && !pasada && !pub && !calc && !!m.restaurantId,
+        // Y se puede forzar también una mesa de siete u ocho. Lo que no se
+        // ofrece es de nueve para arriba: el servidor lo rechaza igual, y
+        // ofrecer el botón sería prometer algo que no va a pasar.
+        puedeForzar: (malas.length > 0 || corta || pasada) && !demasiados && !pub && !calc && !!m.restaurantId,
         textoPublicar: pub ? 'Deshacer' : (calc ? 'Calculando…' : (sinSitio.length ? 'Falta el sitio' : (!tamOk ? (Math.abs(POR_MESA - g.length) === 1 ? (g.length < POR_MESA ? 'Falta una' : 'Sobra una') : (g.length < POR_MESA ? 'Faltan ' : 'Sobran ') + Math.abs(POR_MESA - g.length)) : (malas.length ? 'No se puede publicar' : 'Publicar esta ' + vozRep.unidad)))),
         botonPublicar: 'flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;font:600 14px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease;' + (pub
           ? 'background:transparent;color:#8F4515;border:1px solid rgba(143,69,21,.4);cursor:pointer'

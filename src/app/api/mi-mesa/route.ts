@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { minutosAPie } from '@/lib/distancia'
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
-import { fraseDeMesaCorta } from '@/lib/mesa-corta'
+import { fraseDeTamano } from '@/lib/mesa-corta'
 import { avisoDeDosHoras } from '@/lib/ventana-mesa'
 import { bloqueDeReembolso } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -547,7 +547,7 @@ export async function GET() {
      * —quién canceló, a quién movimos— y esto es otra cosa: la mesa nació
      * así.
      *
-     * Misma frase que el correo, de `fraseDeMesaCorta`, y `null` cuando la
+     * Misma frase que el correo, de `fraseDeTamano`, y `null` cuando la
      * mesa está completa, que es lo normal. Michael: «no debe ser lo
      * protagonista de Mi mesa, es informativo y ya».
      */
@@ -569,7 +569,7 @@ export async function GET() {
       paraSeguir.length > 0,
       'el paso a paso',
     ) || null,
-    mesaCorta: fraseDeMesaCorta(
+    mesaCorta: fraseDeTamano(
       (companeros ?? []).length + 1,
       evento.seats_per_table ?? 6,
       seCayoAlguienDeAqui,
