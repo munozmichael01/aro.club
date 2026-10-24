@@ -287,7 +287,12 @@ export async function quienQuiereSaberDe(
  */
 async function quitarALosDeLaOtra(
   permitidos: Set<string>,
-  evento: EdadMinima & { id?: string; starts_at: string; city_slug?: string | null },
+  evento: EdadMinima & {
+    id?: string
+    starts_at: string
+    city_slug?: string | null
+    idioma?: string | null
+  },
   zonaHoraria: string,
 ): Promise<Set<string>> {
   if (tieneEdadMinima(evento) || !evento.id || !permitidos.size) return permitidos
@@ -309,7 +314,7 @@ async function quitarALosDeLaOtra(
 
   const { data: otras } = await admin
     .from('events')
-    .select('id, starts_at, age_band_min, age_band_max')
+    .select('id, starts_at, age_band_min, age_band_max, idioma')
     .eq('status', 'open')
     .gt('booking_closes_at', new Date().toISOString())
     .not('id', 'eq', evento.id)
@@ -318,6 +323,24 @@ async function quitarALosDeLaOtra(
   for (const o of otras ?? []) {
     if (!tieneEdadMinima(o)) continue
     if (diaDe(o.starts_at, zonaHoraria) !== diaMio) continue
+    /**
+     * Y EN OTRO IDIOMA NO COMPITE, por lo mismo que en `fechas/route.ts`:
+     * una mesa en inglés y una en español no se quitan gente, se dirigen a
+     * listas distintas.
+     *
+     * Sin esto, el 24-10 la cena en inglés del 31 se quedó con CERO avisos.
+     * Ese día las dos cenas en español de esa noche pasaron a tener banda de
+     * edad —una hasta 44 y otra desde 45, para que no se vieran entre
+     * ellas—, y entre las dos cubren todas las edades que existen. Así que
+     * esta función, que quita a quien cabe en una fecha con edad que
+     * compite, quitó a todo el mundo: no quedaba un solo «resto» al que
+     * mandarle el correo de la de inglés.
+     *
+     * El reparto por edad es entre fechas del MISMO idioma. Quien habla
+     * inglés y tiene cincuenta años no recibe la de inglés en vez de la
+     * +45: recibe las dos, que son dos planes distintos.
+     */
+    if ((o.idioma ?? null) !== (evento.idioma ?? null)) continue
     const { data: suyas } = await admin
       .from('event_venues')
       .select('zone_slug')
