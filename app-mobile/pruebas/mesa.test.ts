@@ -125,7 +125,7 @@ test('la grabación: sale sola solo si se graba, en abierta, y no ha contestado 
 })
 
 test('los ajustes de última hora: cuándo salen, qué dicen y con qué se recuerdan (16-10)', () => {
-  const base = { fase: 'abierta', mesaId: 'm1' } as M.DeServidor
+  const base = { fase: 'abierta', mesaId: 'm1', formato: 'dinner' } as M.DeServidor
   const a = (x: M.Ajustes) => ({ ...base, ajustes: { sonCuantos: 5, caben: 6, alguienCancelo: false, seSumoAlguien: false, teMovimos: false, ...x } })
   assert.equal(M.hayAjustes(base), false)
   assert.equal(M.hayAjustes(a({})), false, 'una mesa que salió corta no es un ajuste')
@@ -139,7 +139,7 @@ test('los ajustes de última hora: cuándo salen, qué dicen y con qué se recue
 
 test('el sello de la encuesta dice cuándo fue, porque ya no caduca a las 48 h (8dc6b47)', () => {
   const ahora = Date.parse('2026-10-18T18:00:00Z')
-  const d = (iso: string) => ({ fase: 'pasada', empiezaEn: iso, zonaHoraria: 'America/Caracas' })
+  const d = (iso: string) => ({ fase: 'pasada', empiezaEn: iso, zonaHoraria: 'America/Caracas', formato: 'dinner' })
   assert.equal(M.selloPasada(d('2026-10-17T23:30:00Z'), ahora), 'ANOCHE')
   assert.equal(M.selloPasada(d('2026-10-15T23:30:00Z'), ahora), 'HACE 2 DÍAS')
   assert.equal(M.selloPasada(d('2026-09-18T23:30:00Z'), ahora), 'EL 18 DE SEPTIEMBRE')

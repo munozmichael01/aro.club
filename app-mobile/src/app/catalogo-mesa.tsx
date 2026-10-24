@@ -72,6 +72,12 @@ const ESTADOS: Record<string, DeServidor> = {
   // La encuesta ya no caduca (8dc6b47): una cena de hace un mes lleva su fecha en el sello.
   'pasada-vieja': { ...ABIERTA, fase: 'pasada', empiezaEn: en(-24 * 30) },
   valorada: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-10), yaValoro: true, yaBloqueados: [CINCO[2].id], yaReporto: CINCO[2].id },
+  // El brunch con la Mi mesa completa (24-10): juego sí, bares no, y su voz.
+  brunch: { ...ABIERTA, formato: 'brunch', empiezaEn: en(-110 / 60), fotoEntrada: FACHADA, paraSeguir: [] },
+  'brunch-antes': { ...ABIERTA, formato: 'brunch', fotoEntrada: FACHADA, paraSeguir: [] },
+  'brunch-graba': { ...ABIERTA, formato: 'brunch', fotoEntrada: FACHADA, eventoId: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', grabamos: true, permisoGrabacion: null },
+  'brunch-cancelo': { ...ABIERTA, formato: 'brunch', companeros: CINCO.slice(0, 4), ajustes: { alguienCancelo: true, sonCuantos: 5, caben: 6, teMovimos: false, seSumoAlguien: false } },
+  'brunch-pasada': { ...ABIERTA, formato: 'brunch', fase: 'pasada', empiezaEn: en(-20) },
 }
 
 function Pantalla() {
