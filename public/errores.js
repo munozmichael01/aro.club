@@ -162,7 +162,29 @@
       for (var i = 0; i < marcos.length; i++) {
         var m = marcos[i];
         if (m.indexOf('[native code]') >= 0) continue;
-        // Un fichero con nombre es nuestro: support.js, reglas.js, /vendor/…
+        /**
+         * Un fichero con nombre es nuestro SI VIVE EN NUESTRA CASA.
+         *
+         * Era «cualquier fichero con nombre», y eso daba por nuestro un
+         * `clarity.js` de scripts.clarity.ms. El 24-10 llegó un aviso de
+         * «una pantalla se rompió en /» cuya pila entera era de Clarity,
+         * sin un solo marco nuestro, desde un HeadlessChrome. Por el camino
+         * del `error` no habría pasado —ahí el origen sí se mira—, pero
+         * este venía por `unhandledrejection`, que no trae fichero y se
+         * queda solo con esta regla.
+         *
+         * Un marco sin URL absoluta sigue contando como nuestro: una ruta
+         * relativa es de esta casa, y ante la duda el error avisa.
+         */
+        var url = m.match(/https?:\/\/[^\s)'"]+/);
+        if (url) {
+          var suyo = true;
+          try {
+            var o = new URL(url[0]).origin;
+            suyo = o === location.origin || DE_FUERA_PERO_NUESTROS.indexOf(o) >= 0;
+          } catch (e) { suyo = false; }
+          if (!suyo) continue;
+        }
         if (/\.(js|mjs|ts|tsx)(:|\?|$)/.test(m)) { hayNuestro = true; break; }
         // Y el documento, solo si la línea NO es la 1.
         var enDoc = m.match(/:(\d+):(\d+)\)?$/);

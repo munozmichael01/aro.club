@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { fechasAbiertas, zonasConFecha, DURACION_MIN, type FechaDeAgenda } from '@/app/api/agenda/route'
-import { FRECUENTES_AGENDA, PRECIO_USD, partesDe } from '@/lib/reglas'
+import { FRECUENTES_AGENDA, PRECIO_USD, ZONA_POR_DEFECTO, partesDe, revelaDe } from '@/lib/reglas'
 
 /**
  * La agenda pública, servida por Next y no por una reescritura.
@@ -79,9 +79,22 @@ function eventoDe(f: FechaDeAgenda) {
     },
     organizer: { '@id': 'https://aro.club/#org' },
     inLanguage: f.idioma ?? 'es-VE',
-    description: `Seis personas verificadas que no se conocen. Nosotros elegimos el sitio${
-      zona ? ` en ${zona}` : ''
-    } y lo decimos el mismo día a las 12:00.`,
+    /**
+     * Cuándo se dice el sitio, de la regla y no escrito a mano: un brunch
+     * se revela la víspera a las seis, y esta descripción es la que lee
+     * Google y la que se enseña al compartir el enlace.
+     */
+    description: (() => {
+      const r = revelaDe(f.empiezaEn, ZONA_POR_DEFECTO)
+      const cuando = !r
+        ? 'el mismo día a las 12:00'
+        : r.mismoDia
+          ? `el mismo día a las ${r.hora}`
+          : `el día antes a las ${r.hora}`
+      return `Seis personas verificadas que no se conocen. Nosotros elegimos el sitio${
+        zona ? ` en ${zona}` : ''
+      } y lo decimos ${cuando}.`
+    })(),
     offers: {
       '@type': 'Offer',
       price: String(precio),

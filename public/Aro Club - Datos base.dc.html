@@ -408,7 +408,7 @@
 class Component extends DCLogic {
   state = { paso: 0, correo: '', nombre: '', trato: '', dia: '', mes: '', anio: '', genero: -1,
     prefijo: '+58', telefono: '', guardando: false, fallo: '',
-    clave: '', clave2: '', puedeCuenta: false, cargando: true, diaCena: null,
+    clave: '', clave2: '', puedeCuenta: false, cargando: true, diaCena: null, revelaCena: null,
     tocadaClave: false, aceptoNormas: false, faltaCasilla: false,
     repetido: false, repetidoConPerfil: false };
 
@@ -457,7 +457,12 @@ class Component extends DCLogic {
     fetch('/api/proxima')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (d && d.hay) this.setState({ diaCena: AroReglas.diaDe(d.empiezaEn) });
+        // Y cuándo se revela esa fecha, que no es siempre el mediodía del
+        // mismo día: en un brunch es la víspera a las seis.
+        if (d && d.hay) this.setState({
+          diaCena: AroReglas.diaDe(d.empiezaEn),
+          revelaCena: AroReglas.revelaDe(d.empiezaEn, d.zonaHoraria, d.revelaEn),
+        });
       })
       .catch(() => {});
   }
@@ -799,7 +804,11 @@ class Component extends DCLogic {
         ? 'Es con lo que vuelves a entrar el ' + elDia + ' para ver tu mesa.'
         : 'Es con lo que vuelves a entrar para ver tu mesa.',
       frasePista: 'Es por donde te avisamos de tu mesa: '
-        + (elDia ? 'el ' + elDia + ' a mediodía' : 'a mediodía del día de la cena')
+        + (() => {
+            const r = this.state.revelaCena;
+            if (!r) return elDia ? 'el ' + elDia + ' a mediodía' : 'a mediodía del día de la cena';
+            return 'el ' + r.dia + (r.enLetra === 'mediodía' ? ' a mediodía' : ' a ' + r.enLetra);
+          })()
         + ', cuando se revela. No hay lista de difusión ni nada que no hayas pedido.',
       // Quien todavia no tiene cuenta sigue al cuestionario; quien la tiene
       // esta editando y vuelve a su cuenta.

@@ -764,7 +764,7 @@ class Component extends DCLogic {
         verif: 'ok', respuestas: 'Completas', creditos: '4 de 4',
         creditosCuerpo: 'Cuatro encuentros comprados. No caducan.',
         titulo: 'Hay cena el sábado en Las Mercedes.',
-        cuerpo: 'Te apuntas a la fecha, pagas en bolívares, y el sábado al mediodía sabes en qué mesa te tocó y con quién.',
+        cuerpo: 'Te apuntas a la fecha, pagas en bolívares, y el mismo día al mediodía sabes en qué mesa te tocó y con quién. En los planes de mañana, la víspera a las 6:00 p.m.',
         // El boton dice lo que hace. Decia «Reservar mi puesto» y no reserva:
         // baja a la agenda, que es donde se elige zona y hora y donde esta el
         // boton que si aparta el puesto. El texto honesto ya existia catorce
@@ -940,11 +940,18 @@ class Component extends DCLogic {
         ? cuerpoReservar(d, base.cuerpo)
         : (d.estado === 'reservada' && d.reserva && d.reserva.revelaEn
             ? (() => {
-                const dia = window.AroReglas.diaDe(d.reserva.revelaEn, d.reserva.zonaHoraria);
+                // Y la HORA también, no solo el día. «Al mediodía» estaba
+                // escrito a mano: un brunch del domingo se revela el sábado
+                // a las seis de la tarde, y a esa persona se le prometía el
+                // mediodía del domingo, con el brunch ya terminando.
+                const r = window.AroReglas.revelaDe(
+                  d.reserva.empiezaEn, d.reserva.zonaHoraria, d.reserva.revelaEn,
+                );
                 const base2 = (esMovimiento && base.cuerpoMov) ? base.cuerpoMov : base.cuerpo;
-                return dia
-                  ? base2.replace('El sábado al mediodía', 'El ' + dia + ' al mediodía')
-                  : base2;
+                if (!r || !r.dia) return base2;
+                const cuando = 'El ' + r.dia
+                  + (r.enLetra === 'mediodía' ? ' al mediodía' : ' a ' + r.enLetra);
+                return base2.replace('El sábado al mediodía', cuando);
               })()
             : ((esMovimiento && base.cuerpoMov) ? base.cuerpoMov : base.cuerpo)),
       accion: d.estado === 'reservar' && !d.proximaFecha ? 'Ver la agenda' : base.accion

@@ -60,6 +60,18 @@ type Api = {
     estuviste: string
     /** Con quién es el plan, mientras la mesa está cerrada. */
     vasCon: string
+    /** «cenas» o «vas», para las frases que se arman por trozos. */
+    verbo: string
+    /** «de la cena» / «del brunch» / «del plan». */
+    delPlan: string
+    /** «la cena» / «el brunch» / «el plan». */
+    elPlan: string
+    /** «esta noche» / «hoy», para la grabación. */
+    cuando: string
+    /** «cenabas» / «ibas», para «con quién ibas». */
+    verboPasado: string
+    /** «ANOCHE» / «AYER», para el sello de la encuesta. */
+    ayer: string
   }
   NOMBRES_DE_FORMATO: Record<string, string>
   /** Las cinco de la agenda pública, como pares [pregunta, respuesta]. */
@@ -82,6 +94,15 @@ type Api = {
   // Con `zona`: la buena es la de la ciudad de cada fecha, y sin el parametro
   // en el tipo no habia forma de pedirla desde el servidor sin un cast.
   diaDe: (iso: string | null | undefined, zona?: string) => string | null
+  revelaDe: (
+    inicioIso: string | null | undefined,
+    zona?: string,
+    revelaIso?: string | null,
+  ) => { cuando: string; mismoDia: boolean; dia: string; hora: string; enLetra: string } | null
+  DE_MESA_COMPLETA: string[]
+  tieneMesaCompleta: (formato: string | null | undefined) => boolean
+  DE_MANANA: string[]
+  esDeManana: (formato: string | null | undefined) => boolean
   horaDe: (iso: string | null | undefined, zona?: string) => string | null
   partesDe: (
     iso: string | null | undefined,
@@ -153,6 +174,14 @@ export const MAX_TEXTO: number = api.MAX_TEXTO
  */
 export const ZONA_POR_DEFECTO: string = api.ZONA
 export const diaDe = api.diaDe
+/** «doce», «una», «dos»… por hora del reloj de doce, sin la franja. */
+export const HORAS_EN_LETRA = api.HORAS_EN_LETRA
+/** Qué formatos llevan la Mi mesa entera: foto, paso a paso, juego y las dos horas. */
+export const tieneMesaCompleta = api.tieneMesaCompleta.bind(api)
+/** Los que empiezan por la mañana: se revelan la víspera y no llevan bares. */
+export const esDeManana = api.esDeManana.bind(api)
+/** Cuándo se sabe con quién vas: el mismo día a mediodía, o la víspera a las seis. */
+export const revelaDe = api.revelaDe.bind(api)
 export const horaDe = api.horaDe
 export const partesDe = api.partesDe
 export const MESES = api.MESES
