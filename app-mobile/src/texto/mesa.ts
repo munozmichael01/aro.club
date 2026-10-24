@@ -18,7 +18,7 @@ const Mayus = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 
 /** Cuántos son, en letra. Hasta 22: `seats_per_table` llega a 20 y la mesa se estira +2 (24-10). */
-const EN_LETRA = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuno', 'veintidós']
+const EN_LETRA = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuna', 'veintidós']
 
 export const vacia = {
   revision: {
