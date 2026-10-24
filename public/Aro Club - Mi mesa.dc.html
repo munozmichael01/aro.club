@@ -1338,7 +1338,11 @@ class Component extends DCLogic {
         if (a.seSumoAlguien) {
           return 'Se suma alguien que no estaba esta mañana, y va marcado abajo. Lo demás no cambia.';
         }
-        return 'Alguien canceló después de decirte con quién cenabas. Son ' + cuantos + ', y el sitio y la hora no cambian.';
+        // «Cenabas» en una cena, «ibas» en un brunch. De la voz, como el
+        // resto: la app ya lo pinta así y aquí se quedaba a medias.
+        const VERBO = ((window.AroReglas && window.AroReglas.vozDe)
+          ? window.AroReglas.vozDe(dJ && dJ.formato) : {}).verboPasado || 'ibas';
+        return 'Alguien canceló después de decirte con quién ' + VERBO + '. Son ' + cuantos + ', y el sitio y la hora no cambian.';
       })(),
 
       // --- «¿Te podemos grabar?» ----------------------------------------
@@ -2133,7 +2137,9 @@ class Component extends DCLogic {
         const iso = dJ && dJ.empiezaEn;
         if (!iso) return 'TU ÚLTIMA MESA';
         const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-        if (dias <= 1) return 'ANOCHE';
+        // «ANOCHE» de una cena, «AYER» de un brunch: a las once de la
+        // mañana no hubo noche.
+        if (dias <= 1) return VOZ.ayer || 'AYER';
         if (dias < 7) return 'HACE ' + dias + ' DÍAS';
         const p = window.AroReglas.partesDe(iso, (dJ && dJ.zonaHoraria) || undefined);
         return p ? ('EL ' + p.numero + ' DE ' + p.mes.toUpperCase()) : 'TU ÚLTIMA MESA';
