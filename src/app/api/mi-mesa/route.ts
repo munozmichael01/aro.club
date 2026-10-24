@@ -3,14 +3,14 @@ import { NextResponse } from 'next/server'
 import { minutosAPie } from '@/lib/distancia'
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
-import { fraseDeMesaCorta } from '@/lib/mesa-corta'
+import { fraseDeTamano } from '@/lib/mesa-corta'
 import { avisoDeDosHoras } from '@/lib/ventana-mesa'
 import { bloqueDeReembolso } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
-import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
+import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
 
 /**
  * F10 · Mi mesa.
@@ -265,7 +265,19 @@ export async function GET() {
    * «¿cuánto me va a costar seguir» (Michael, 16-10). Sin tramo no sale
    * nada: inventarlo es peor que callarlo.
    */
-  const LO_CARO: Record<number, string> = { 1: 'Barato', 2: 'Precio medio', 3: 'Caro', 4: 'Muy caro' }
+  /**
+   * Lo caro que es, en signos y no en palabras.
+   *
+   * Michael, 22-10: «"Caro" no lo podemos mostrar con esta clasificación».
+   * Y tiene razón: «caro» es un juicio nuestro sobre el sitio al que
+   * mandamos a alguien, y «$$$» es una escala que se lee sin discutirla.
+   * Cuatro niveles, los mismos que distingue Google, y van pegados a los
+   * minutos: «6 min a pie · $$$».
+   *
+   * Sin tramo no sale nada. Inventarlo es peor que callarlo, y hay bares a
+   * los que Google no les pone precio.
+   */
+  const LO_CARO: Record<number, string> = { 1: '$', 2: '$$', 3: '$$$', 4: '$$$$' }
 
   const paraSeguir = (seguires ?? []).map((s) => {
     const sitio = s.restaurants as unknown as {
@@ -412,7 +424,13 @@ export async function GET() {
     // bloquear y reportar. Son uuid opacos; el nombre de pila y el sector
     // siguen siendo lo unico legible que se le enseña de ellos.
     mesaId: miembro.table_id,
-    numeroMesa: mesa.table_number,
+    // El número que se dice al llegar, que es la posición de esta mesa
+    // DENTRO de su restaurante esa noche, no el que guardamos. Su porqué
+    // está en `numeroQueSeDice`.
+    numeroMesa:
+      (await numeroQueSeDice([
+        { eventoId: mesa.event_id, sitioId: mesa.restaurant_id, numero: mesa.table_number },
+      ])).get(claveDeNumero(mesa.event_id, mesa.table_number)) ?? mesa.table_number,
     // Y si es la única de ese sitio en esta fecha. Cuando lo es, la pantalla
     // y los correos se callan el número: «la mesa de Aro, la 01» donde solo
     // hay una mesa de Aro manda a buscar un cartel que no existe.
@@ -529,7 +547,7 @@ export async function GET() {
      * —quién canceló, a quién movimos— y esto es otra cosa: la mesa nació
      * así.
      *
-     * Misma frase que el correo, de `fraseDeMesaCorta`, y `null` cuando la
+     * Misma frase que el correo, de `fraseDeTamano`, y `null` cuando la
      * mesa está completa, que es lo normal. Michael: «no debe ser lo
      * protagonista de Mi mesa, es informativo y ya».
      */
@@ -551,7 +569,7 @@ export async function GET() {
       paraSeguir.length > 0,
       'el paso a paso',
     ) || null,
-    mesaCorta: fraseDeMesaCorta(
+    mesaCorta: fraseDeTamano(
       (companeros ?? []).length + 1,
       evento.seats_per_table ?? 6,
       seCayoAlguienDeAqui,

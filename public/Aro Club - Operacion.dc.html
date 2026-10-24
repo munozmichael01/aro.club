@@ -146,7 +146,7 @@
         </div>
         <div class="aro-rail" style="display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:6px;margin-bottom:clamp(24px,3vw,32px)">
           <sc-for list="{{ fechasRep }}" as="f" hint-placeholder-count="3">
-            <button onClick="{{ f.pick }}" style="{{ f.btn }}">
+            <button onClick="{{ f.pick }}" data-fecha-activa="{{ f.activa }}" style="{{ f.btn }}">
               <span style="{{ f.aro }}">{{ f.icono }}</span>
               <span style="flex:1;min-width:0;text-align:left">
                 <span style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
@@ -168,9 +168,12 @@
           </sc-for>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin:-18px 0 clamp(24px,3vw,32px)">
-          <sc-if value="{{ hayPasadas }}" hint-placeholder-val="{{ true }}">
-            <button onClick="{{ tocarPasadas }}" style="{{ botonPasadas }}">{{ textoPasadas }}</button>
-          </sc-if>
+          <sc-for list="{{ rangosRep }}" as="r" hint-placeholder-count="6">
+            <button onClick="{{ r.pick }}" style="{{ r.btn }}">
+              <span style="{{ r.txt }}">{{ r.nombre }}</span>
+              <span style="{{ r.contador }}">{{ r.n }}</span>
+            </button>
+          </sc-for>
           <!-- Las de prueba no las ve ningún miembro y no se reparten: en la
                pantalla donde se decide qué cena se arma, estorban. -->
           <sc-if value="{{ hayPrueba }}" hint-placeholder-val="{{ false }}">
@@ -487,6 +490,39 @@
                       </sc-for>
                     </div>
                   </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- Las cancelaciones de ESTA fecha. Michael, 23-10: hasta ahora el
+             panel solo contaba a los que están, y quien se bajó desaparecía
+             de la pantalla. Es justo lo que explica por qué una mesa de seis
+             se quedó en cinco el día antes. -->
+        <sc-if value="{{ hayCancelas }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:24px;padding:clamp(16px,2vw,20px);margin-top:clamp(16px,2vw,20px);background:#FAF3E4;border:1px solid rgba(20,52,42,.14)">
+            <div style="font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloCancelas }}</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:7px;max-width:56ch;text-wrap:pretty">{{ notaCancelas }}</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:14px">
+              <sc-for list="{{ cancelas }}" as="b" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:#FFFBF0">
+                  <!-- El nombre, quién la bajó, cuándo y el motivo envuelven
+                       entre ellos; la flecha se queda fuera de ese grupo
+                       para no caer sola en una línea en el celular. -->
+                  <div style="flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px">
+                    <span style="font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ b.nombre }}</span>
+                    <span style="{{ b.estiloQuien }}">{{ b.quien }}</span>
+                    <span style="font:400 12px/1.3 'Inter Tight',sans-serif;color:#566A5D;white-space:nowrap">{{ b.cuando }}</span>
+                    <!-- Y si se cambió de día en vez de irse. -->
+                    <sc-if value="{{ b.hayReagendo }}" hint-placeholder-val="{{ false }}">
+                      <span style="{{ b.estiloReagendo }}">{{ b.reagendo }}</span>
+                    </sc-if>
+                    <sc-if value="{{ b.hayMotivo }}" hint-placeholder-val="{{ false }}">
+                      <span style="flex:1 1 100%;font:400 12px/1.45 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ b.motivo }}</span>
+                    </sc-if>
+                  </div>
+                  <a href="{{ b.perfil }}" aria-label="Ver el perfil de {{ b.nombre }}" style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:34px;min-height:34px;border-radius:999px"><span style="width:26px;height:26px;border-radius:999px;background:rgba(20,52,42,.09);color:#1B5138;display:flex;align-items:center;justify-content:center;font:500 12px/1 'Inter Tight',sans-serif">→</span></a>
                 </div>
               </sc-for>
             </div>
@@ -1810,6 +1846,101 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+/**
+ * QUÉ TRAMO DE FECHAS ENSEÑA EL CARRIL.
+ *
+ * Michael, 24-10: «yo me refería a un filtro de fechas tipo selector»,
+ * después de probar el botón que destapaba una semana por pulsación. Tenía
+ * razón: aquello guardaba un contador invisible, cada pulsación cambiaba a
+ * la vez lo que se veía y la fecha elegida, y no había forma de saltar a un
+ * mes sin pasar por todas las semanas de en medio.
+ *
+ * Un selector no guarda camino: se pulsa un tramo y eso es lo que hay. Los
+ * cinco son los que pidió —semana, semana anterior, mes, mes anterior— más
+ * «Abiertas», que es lo que el panel enseñaba siempre y sigue siendo lo de
+ * entrar.
+ *
+ * Todo en la hora de Caracas. La semana empieza en lunes, que es la semana
+ * en la que se piensa el trabajo: la cena del viernes y la del sábado son
+ * la misma tanda y no se pueden separar.
+ */
+/**
+ * Funciones y no constantes, a propósito.
+ *
+ * Esto vive fuera de la clase, y fuera de la clase solo se iza lo que se
+ * declara con `function`: un `const TRAMOS` aquí arriba deja `renderVals`
+ * leyéndolo antes de que exista y la pantalla pinta «Cannot access TRAMOS
+ * before initialization» en lugar del panel. Lo cazó `comprobar-pintado`.
+ */
+function TRAMOS() {
+  return ['abiertas', 'semana', 'semana-1', 'mes', 'mes-1', 'todas'];
+}
+
+function nombreDeRango(r) {
+  return {
+    abiertas: 'Abiertas',
+    semana: 'Esta semana',
+    'semana-1': 'Semana pasada',
+    mes: 'Este mes',
+    'mes-1': 'Mes pasado',
+    todas: 'Todas',
+  }[r] || r;
+}
+
+/** La fecha de Caracas de un instante, como si fuera UTC: así se puede usar getUTC*. */
+function enCaracasDC(iso) {
+  return new Date(new Date(iso).getTime() - 4 * 3600000);
+}
+
+/** El lunes de su semana, en milisegundos. El domingo cuenta con la que termina. */
+function lunesDeAro(iso) {
+  const d = enCaracasDC(iso);
+  const atras = (d.getUTCDay() + 6) % 7;
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - atras);
+}
+
+/** El primero de su mes, en milisegundos. */
+function mesDeAro(iso) {
+  const d = enCaracasDC(iso);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
+}
+
+/** El lunes de hace `n` semanas, contando desde hoy. */
+function lunesHace(n) {
+  return lunesDeAro(new Date().toISOString()) - n * 7 * 86400000;
+}
+
+/** El primero del mes de hace `n` meses, contando desde hoy. */
+function mesHace(n) {
+  const d = enCaracasDC(new Date().toISOString());
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - n, 1);
+}
+
+/**
+ * El filtro del carril, en un solo sitio.
+ *
+ * Lo tienen que compartir el carril y `fechaElegida()`: cuando no
+ * coincidían, los botones trabajaban sobre una fecha que la pantalla no
+ * enseñaba, y eso ya costó repartir agosto una vez.
+ */
+function filtroDeFechas(rango, verPrueba) {
+  const cual = TRAMOS().indexOf(rango) === -1 ? 'abiertas' : rango;
+  return (f) => {
+    if (!f) return false;
+    if (f.esPrueba && !verPrueba) return false;
+    if (cual === 'todas') return true;
+    if (cual === 'abiertas') return !f.pasada;
+    // Los tramos de calendario SÍ miran la fecha: sin ella no se puede
+    // decir que caiga dentro, y colarla sería enseñar en «mes pasado» algo
+    // que nadie sabe cuándo fue.
+    if (!f.empiezaEn) return false;
+    if (cual === 'semana') return lunesDeAro(f.empiezaEn) === lunesHace(0);
+    if (cual === 'semana-1') return lunesDeAro(f.empiezaEn) === lunesHace(1);
+    if (cual === 'mes') return mesDeAro(f.empiezaEn) === mesHace(0);
+    return mesDeAro(f.empiezaEn) === mesHace(1);
+  };
+}
+
 class Component extends DCLogic {
   // ---------------------------------------------------------------------
   // Esta pantalla NO simula nada.
@@ -1828,6 +1959,8 @@ class Component extends DCLogic {
   state = {
     vista: 0, decididas: {}, conciliadas: {}, abriendo: null, motivos: {},
     fechaRep: 0, publicadas: {}, forzadas: {}, verPrueba: false,
+    // Qué tramo de fechas enseña el carril. Ver `TRAMOS`.
+    rangoFechas: 'abiertas',
     sub: 'abrir', diaSel: -1, formatoSel: 0, zonasSel: {}, abierta: false,
     actividad: '', distancia: '', duracion: '', nivel: -1,
     limitado: false, tope: '', precio: undefined,
@@ -1965,6 +2098,30 @@ class Component extends DCLogic {
    * Solo se llama al montar y al cambiar de pestaña. En cada render pelearía
    * con el dedo de quien está deslizando.
    */
+  /**
+   * Trae la fecha elegida a la vista dentro de su carril.
+   *
+   * Hace falta desde que las pasadas se destapan semana a semana: las
+   * fechas van de vieja a nueva, así que cada semana que se destapa entra
+   * por la IZQUIERDA y empuja la elegida fuera de la pantalla. Sin esto, el
+   * detalle de abajo hablaba de una fecha que arriba no se veía.
+   *
+   * Restando rectángulos y no con `scrollIntoView`, por lo mismo que el
+   * carril de pestañas: ahí dentro también arrastra la página en vertical.
+   */
+  centrarFecha() {
+    setTimeout(() => {
+      const carril = document.querySelector('.aro-rail');
+      const activa = carril && carril.querySelector('[data-fecha-activa]');
+      if (!activa) return;
+      const r = activa.getBoundingClientRect();
+      const rc = carril.getBoundingClientRect();
+      const MARGEN = 8;
+      if (r.left < rc.left) carril.scrollLeft -= (rc.left - r.left) + MARGEN;
+      else if (r.right > rc.right) carril.scrollLeft += (r.right - rc.right) + MARGEN;
+    }, 0);
+  }
+
   centrarPestana() {
     // Trae la pestaña activa a la vista dentro del carril.
     //
@@ -2526,8 +2683,7 @@ class Component extends DCLogic {
     // El MISMO filtro que el carril. Si aquí no se mirara lo de prueba, los
     // botones trabajarían sobre una fecha que la pantalla no enseña, que es
     // el descuadre que ya costó repartir agosto.
-    const seVe = (f) => (!!this.state.verPasadas || !f.pasada)
-      && (!!this.state.verPrueba || !f.esPrueba);
+    const seVe = filtroDeFechas(this.state.rangoFechas, this.state.verPrueba);
     const elegida = fs[this.state.fechaRep];
     if (elegida && seVe(elegida)) return elegida;
     return fs.filter(seVe)[0] || fs[0] || null;
@@ -3256,6 +3412,14 @@ class Component extends DCLogic {
     const PROPUESTA = CORRIDA ? (CORRIDA.propuesta || []) : [];
     const ESPERA_SRV = CORRIDA ? (CORRIDA.espera || []) : [];
     const SEDES = REP ? (REP.sedes || []) : [];
+    /**
+     * Quién canceló ESTA fecha, tal como lo manda /api/operacion/repartir.
+     *
+     * No sale del reparto ni del pool: son reservas que ya no están, y por
+     * eso no aparecían en ninguna parte de esta pantalla. La diferencia
+     * entre «se bajó» y «la bajamos nosotros» viaja en `suya`.
+     */
+    const CANCELAS = REP ? (REP.cancelaciones || []) : [];
 
     /**
      * Dónde cena cada mesa, y cómo cambiarlo.
@@ -3515,8 +3679,7 @@ class Component extends DCLogic {
      * sería esconder el trabajo.
      */
     const FECHAS_VIVAS = FECHAS_REP.filter((f) => !f.pasada);
-    const FECHAS_PASADAS = FECHAS_REP.filter((f) => f.pasada);
-    const verPasadas = !!St.verPasadas;
+    const RANGO = TRAMOS().indexOf(St.rangoFechas) === -1 ? 'abiertas' : St.rangoFechas;
 
     /**
      * Y las de prueba, fuera del carril salvo que se pidan.
@@ -3532,7 +3695,7 @@ class Component extends DCLogic {
      */
     const FECHAS_PRUEBA = FECHAS_REP.filter((f) => f.esPrueba);
     const verPrueba = !!St.verPrueba;
-    const seVe = (f) => (verPasadas || !f.pasada) && (verPrueba || !f.esPrueba);
+    const seVe = filtroDeFechas(RANGO, verPrueba);
 
     // La elegida, o la primera que se ve. `FECHAS_REP[0]` era la primera de
     // TODAS, así que con las pasadas ocultas el carril enseñaba tres fechas
@@ -3811,7 +3974,25 @@ class Component extends DCLogic {
        * que con dos no sostiene nadie.
        */
       const bajoMinimo = g.length > 0 && g.length < 4;
-      const pasada = g.length > POR_MESA;
+      /**
+       * Pasarse de UNA o DOS es una decisión; de tres ya no.
+       *
+       * Michael, 24-10: «deja que pueda agregar hasta 8 desde el panel».
+       * Antes esto se bloqueaba entero, con el argumento de que el sitio
+       * tiene la mesa reservada para seis y el séptimo se queda de pie.
+       * Resultó ser el argumento equivocado: con 27 apuntados y mesas de
+       * seis sobran tres personas, y dejarlas fuera cuesta más que pedir
+       * dos sillas. Lo que sí sigue bloqueado es +3, porque ahí ya no es
+       * una silla extra, es otra mesa que no armamos.
+       *
+       * El tope vive en `DE_MAS`, en `src/lib/mesa-corta.ts`, junto a la
+       * frase que se les dice a esos siete u ocho: el número y el texto que
+       * lo explica tienen que moverse juntos.
+       */
+      const DE_MAS = 2;
+      const sobran = g.length - POR_MESA;
+      const pasada = sobran > 0;
+      const demasiados = sobran > DE_MAS;
       const clave = String(m.numero) + '|' + (m.corridaId || '');
       // Por la clave y no por el número: moviendo en la Mesa 01 de una fecha,
       // la Mesa 01 de la otra también se quedaba en «CALCULANDO».
@@ -3832,10 +4013,30 @@ class Component extends DCLogic {
       const barra = laBarra(g);
       return {
         clave, lista: !pub && !calc && tamOk && malas.length === 0,
-        n: String(m.numero).padStart(2, '0'),
+        // El que se DICE, no el guardado: `m.numero` sigue siendo con lo que
+        // se pide despublicar o quitar la mesa, pero en pantalla tiene que
+        // salir el mismo que ve quien va a cenar, que es su posición dentro
+        // de ese restaurante esa noche. Michael, 22-10: «debe coincidir con
+        // lo que yo veo en el reparto, porque si no, luego no sé de qué mesa
+        // eran». Una propuesta sin publicar no tiene sitio todavía, así que
+        // ahí los dos son el mismo.
+        n: String(m.numeroDicho != null ? m.numeroDicho : m.numero).padStart(2, '0'),
         ...sitiosDe(m, pub),
-        titulo: vozRep.Unidad + ' ' + String(m.numero).padStart(2, '0'),
-        hora: fr.hora + ' · ' + (m.restaurante || 'sitio sin elegir'),
+        /**
+         * Y el sitio EN EL TÍTULO, si ya está elegido.
+         *
+         * Michael, 23-10. Desde que el número es el del restaurante, dos
+         * mesas en sitios distintos se llaman las dos «Mesa 01», y el
+         * título solo no distingue nada. Con el sitio al lado, cada tarjeta
+         * se identifica sola.
+         *
+         * Baja de la línea de la hora, donde ya estaba: no se dice dos
+         * veces. Cuando todavía no hay sitio, el aviso se queda abajo, que
+         * es donde está el selector para ponerlo.
+         */
+        titulo: vozRep.Unidad + ' ' + String(m.numeroDicho != null ? m.numeroDicho : m.numero).padStart(2, '0')
+          + (m.restaurante ? ' · ' + m.restaurante : ''),
+        hora: m.restaurante ? fr.hora : fr.hora + ' · sitio sin elegir',
         estado: pub ? 'PUBLICADA' : (calc ? 'CALCULANDO' : (malas.length ? 'NO PUEDE SALIR' : 'LISTA')),
         recibe,
         caja: 'border-radius:24px;padding:clamp(16px,2vw,20px);transition:all 180ms ease;background:' + (recibe ? '#F2E9D5' : '#FAF3E4') + ';border:1px ' + (recibe ? 'dashed #8F4515' : 'solid ' + (pub ? '#1B5138' : (calc ? '#8F4515' : (malas.length ? '#C0662F' : 'rgba(20,52,42,.14)')))),
@@ -3983,7 +4184,23 @@ class Component extends DCLogic {
             .filter((x) => !x.publicada
               && (x.corridaId || null) === (m.corridaId || null)
               && x.numero !== m.numero)
-            .map((x) => ({ n: x.numero, texto: vozRep.Unidad + ' ' + String(x.numero).padStart(2, '0') }))
+            /**
+             * El texto lleva el número QUE SE DICE y el sitio, no el guardado.
+             *
+             * Michael, 23-10: «tengo problemas para mover las mesas con el
+             * tema de los números, no me salen todas en las opciones». Desde
+             * que el número es el del restaurante, dos mesas en sitios
+             * distintos se llaman las dos «Mesa 01», y una lista con dos
+             * «Mesa 01» no es una lista: es una donde falta una.
+             *
+             * Lo que se MANDA sigue siendo `x.numero`, el guardado, que es
+             * lo que el servidor entiende.
+             */
+            .map((x) => ({
+              n: x.numero,
+              texto: vozRep.Unidad + ' ' + String(x.numeroDicho != null ? x.numeroDicho : x.numero).padStart(2, '0')
+                + (x.restaurante ? ' · ' + x.restaurante : ''),
+            }))
             .concat([{ n: 0, texto: 'A la espera' }])
             /**
              * Y A OTRA FECHA DE ESA NOCHE.
@@ -4078,7 +4295,9 @@ class Component extends DCLogic {
             ? (bajoMinimo
               ? 'Se quedó en ' + g.length + ', por debajo del mínimo de cuatro. Puedes publicarla igual, pero el correo le va a decir a esa gente que creemos que bastan, y con ' + g.length + ' eso no lo sostiene nadie. La otra salida es dejarlos en espera: reciben «Esta vez no entraste» y su crédito vuelve.'
               : 'Se quedó en ' + g.length + ' de ' + POR_MESA + '. Se puede publicar: el correo lo dice y no promete seis. Si prefieres completarla, ' + ((POR_MESA - g.length) === 1 ? 'falta una persona' : 'faltan ' + (POR_MESA - g.length)) + '.')
-            : 'Son ' + g.length + ' y caben ' + POR_MESA + '. Mueve ' + (g.length - POR_MESA) + ' a otra ' + vozRep.unidad + ' o a la espera.')
+            : (demasiados
+              ? 'Son ' + g.length + ' y caben ' + POR_MESA + '. Mueve ' + (sobran - DE_MAS) + ' a otra ' + vozRep.unidad + ' o a la espera: se puede estirar hasta ' + (POR_MESA + DE_MAS) + ', no más.'
+              : 'Son ' + g.length + ' y caben ' + POR_MESA + '. Se puede publicar: el correo y Mi mesa lo dicen, «son ' + g.length + '», y explican que ' + (sobran === 1 ? 'encajaba una persona más' : 'encajaban ' + sobran + ' personas más') + '. Antes de que lleguen dile al sitio que ' + (sobran === 1 ? 'ponga una silla más' : 'ponga ' + sobran + ' sillas más') + ': abajo tienes el botón, y te avisa si la cifra que le diste ya no vale.'))
           : malas.length === 1
           ? 'Rompe una regla: ' + malas[0].detalle + '. Publicar se para aquí.'
           : 'Rompe ' + malas.length + ' reglas: ' + malas.map((x) => x.detalle).join(' · ') + '. Publicar se para aquí.',
@@ -4147,7 +4366,10 @@ class Component extends DCLogic {
         // Y se puede forzar también una mesa CORTA, que es lo que faltaba:
         // el servidor nunca miró el tamaño —publica cinco sin rechistar— y
         // el único que lo impedía era este panel.
-        puedeForzar: (malas.length > 0 || corta) && !pasada && !pub && !calc && !!m.restaurantId,
+        // Y se puede forzar también una mesa de siete u ocho. Lo que no se
+        // ofrece es de nueve para arriba: el servidor lo rechaza igual, y
+        // ofrecer el botón sería prometer algo que no va a pasar.
+        puedeForzar: (malas.length > 0 || corta || pasada) && !demasiados && !pub && !calc && !!m.restaurantId,
         textoPublicar: pub ? 'Deshacer' : (calc ? 'Calculando…' : (sinSitio.length ? 'Falta el sitio' : (!tamOk ? (Math.abs(POR_MESA - g.length) === 1 ? (g.length < POR_MESA ? 'Falta una' : 'Sobra una') : (g.length < POR_MESA ? 'Faltan ' : 'Sobran ') + Math.abs(POR_MESA - g.length)) : (malas.length ? 'No se puede publicar' : 'Publicar esta ' + vozRep.unidad)))),
         botonPublicar: 'flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:999px;font:600 14px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease;' + (pub
           ? 'background:transparent;color:#8F4515;border:1px solid rgba(143,69,21,.4);cursor:pointer'
@@ -4419,7 +4641,15 @@ class Component extends DCLogic {
       tocarMover: () => this.setState({ moviendo: St.moviendo === p.profileId ? null : p.profileId }),
       destinos: (St.moviendo !== p.profileId ? [] : PROPUESTA
         .filter((x) => !x.publicada && (x.corridaId || null) === SU_CORRIDA)
-        .map((x) => ({ n: x.numero, texto: vozRep.Unidad + ' ' + String(x.numero).padStart(2, '0') }))
+        // Igual que en las tarjetas: el número que se dice y el sitio. Este
+        // es el de la ESPERA, que es una segunda lista con el mismo trabajo
+        // —Michael lo vio enseguida: «en la espera lo veo igual»— y se le
+        // había quedado el número guardado y sin sitio.
+        .map((x) => ({
+          n: x.numero,
+          texto: vozRep.Unidad + ' ' + String(x.numeroDicho != null ? x.numeroDicho : x.numero).padStart(2, '0')
+            + (x.restaurante ? ' · ' + x.restaurante : ''),
+        }))
         // Quien espera es justo a quien más falta le hace la otra fecha: es
         // el caso del jueves, dos apuntados que no dan para una mesa.
         .concat(OTRAS_DEL_DIA.map((f) => ({ fecha: f, texto: 'A la de ' + comoSeLlama(f) })))).map((x) => ({
@@ -4502,6 +4732,8 @@ class Component extends DCLogic {
       const nz = suyas.length;
       return {
         titulo: f.titulo, icono: on ? '✓' : '',
+        // Para poder traerla a la vista cuando el carril crece por detrás.
+        activa: on ? '1' : null,
         /**
          * Lo que distingue una fecha de la de al lado: la edad y el idioma.
          *
@@ -5583,15 +5815,44 @@ class Component extends DCLogic {
           + (r.enRevision ? ' · ' + r.enRevision + (r.enRevision === 1 ? ' con el pago por conciliar' : ' con el pago por conciliar') : '');
       })(),
       fechasRep, zonasRep, tiposRep,
-      // Se enseña solo si hay algo que enseñar: un botón que no cambia nada
-      // es ruido.
-      hayPasadas: FECHAS_PASADAS.length > 0,
-      textoPasadas: verPasadas
-        ? 'Ocultar las que ya pasaron'
-        : 'Ver las ' + FECHAS_PASADAS.length + ' que ya pasaron',
-      botonPasadas: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:' + (verPasadas ? '#F2E9D5' : 'transparent') + ';font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F;cursor:pointer;white-space:nowrap',
-      tocarPasadas: () => this.setState({ verPasadas: !verPasadas, fechaRep: 0, fechaVer: 0 }),
-
+      /**
+       * EL SELECTOR DE TRAMO. Abiertas · Esta semana · Semana pasada ·
+       * Este mes · Mes pasado · Todas.
+       *
+       * Sustituye al botón que destapaba una semana por pulsación. Aquel
+       * guardaba un contador que no se veía en ninguna parte, mezclaba dos
+       * cosas en cada clic —lo que se enseña y qué fecha está elegida— y
+       * para llegar a un mes había que pasar por todas las semanas de en
+       * medio. Michael, 24-10: «tiene unas interacciones raras».
+       *
+       * Mismos chips que el filtro de formato de arriba, con su cuenta, y
+       * se componen: «Cenas» dentro de «Mes pasado» son las cenas del mes
+       * pasado. El de prueba sigue aparte, que es otra pregunta.
+       */
+      rangosRep: TRAMOS().map((r) => {
+        const on = RANGO === r;
+        const ve = filtroDeFechas(r, verPrueba);
+        const n = FECHAS_REP.filter(ve).length;
+        return {
+          nombre: nombreDeRango(r), n: String(n),
+          /**
+           * Al cambiar de tramo, a la MÁS RECIENTE de las que quedan.
+           *
+           * No al índice 0: las fechas vienen de vieja a nueva, así que el
+           * cero de «Mes pasado» es la cena más vieja del mes y no la que
+           * se está buscando. Y si en ese tramo no hay ninguna, la elegida
+           * se queda donde está en vez de saltar a un hueco.
+           */
+          pick: () => {
+            let i = St.fechaRep;
+            for (let k = 0; k < FECHAS_REP.length; k += 1) if (ve(FECHAS_REP[k])) i = k;
+            this.setState({ rangoFechas: r, fechaRep: i, fechaVer: i }, () => this.centrarFecha());
+          },
+          btn: 'display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#F2E9D5' : 'transparent') + ';cursor:pointer;opacity:' + (n === 0 && !on ? '.45' : '1') + ';transition:all 180ms ease',
+          txt: 'font:' + (on ? '600' : '500') + ' 13px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#8F4515' : '#33513F'),
+          contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:' + (on ? 'rgba(143,69,21,.16)' : 'rgba(20,52,42,.09)') + ';font:600 11px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#8F4515' : '#33513F') + ';font-variant-numeric:tabular-nums'
+        };
+      }),
       hayPrueba: FECHAS_PRUEBA.length > 0,
       textoPrueba: verPrueba
         ? 'Esconder las de prueba'
@@ -5862,6 +6123,50 @@ class Component extends DCLogic {
               ? 'Está abajo en la espera, marcada. Siéntala a mano con «Sentar» y no se mueve nadie más, o vuelve a repartir si prefieres rehacerlas.'
               : 'Están abajo en la espera, marcadas. Siéntalas a mano con «Sentar» y no se mueve nadie más, o vuelve a repartir si prefieres rehacerlas.'));
       })(),
+
+      hayCancelas: CANCELAS.length > 0,
+      tituloCancelas: CANCELAS.length === 1
+        ? 'Una cancelación' : CANCELAS.length + ' cancelaciones',
+      // Los dos grupos por separado: lo que hay que mirar es si alguien se
+      // bajó, porque esa silla se quedó vacía sin que nadie lo decidiera.
+      notaCancelas: (function () {
+        const suyas = CANCELAS.filter((c) => c.suya).length;
+        const nuestras = CANCELAS.length - suyas;
+        const partes = [];
+        if (suyas) partes.push(suyas === 1 ? 'una se bajó' : suyas + ' se bajaron');
+        if (nuestras) partes.push(nuestras === 1 ? 'a una la bajamos nosotros' : 'a ' + nuestras + ' las bajamos nosotros');
+        // Los que se cambiaron de día no son gente que se fue, y decirlo
+        // aquí evita leer la cifra de arriba como una fuga.
+        const movidos = CANCELAS.filter((c) => c.reagendo).length;
+        return 'De esta fecha, ' + partes.join(' y ')
+          + '. Su crédito ya volvió y no cuentan entre los apuntados.'
+          + (movidos
+            ? (movidos === 1 ? ' Una se pasó a otra fecha.' : ' ' + movidos + ' se pasaron a otra fecha.')
+            : '');
+      })(),
+      cancelas: CANCELAS.map((c) => ({
+        nombre: c.nombre,
+        perfil: '/miembro?id=' + c.profileId,
+        quien: c.suya ? 'Se bajó' : 'La bajamos',
+        estiloQuien: 'flex:0 0 auto;padding:3px 9px;border-radius:999px;white-space:nowrap;'
+          + "font:500 11px/1.3 'Inter Tight',sans-serif;"
+          + (c.suya
+            ? 'background:rgba(143,69,21,.12);color:#8F4515'
+            : 'background:rgba(20,52,42,.09);color:#33513F'),
+        cuando: c.cuando ? diaTexto(c.cuando) + ', ' + horaTexto(c.cuando) : 'Sin fecha',
+        // A dónde se pasó. En verde porque no es una pérdida: es la misma
+        // persona en otra mesa, y leerlo igual que una baja infla la cuenta
+        // de cuánta gente se está yendo.
+        hayReagendo: !!c.reagendo,
+        reagendo: c.reagendo
+          ? 'Se pasó a ' + (NOMBRE_FORMATO[c.reagendo.formato] || c.reagendo.formato)
+            + ' · ' + diaTexto(c.reagendo.empiezaEn) + ', ' + horaTexto(c.reagendo.empiezaEn)
+          : '',
+        estiloReagendo: 'flex:0 0 auto;padding:3px 9px;border-radius:999px;white-space:nowrap;'
+          + "font:500 11px/1.3 'Inter Tight',sans-serif;background:rgba(27,81,56,.12);color:#1B5138",
+        hayMotivo: !!c.motivo,
+        motivo: c.motivo || '',
+      })),
 
       tituloEspera: sinRepartir
         ? (apuntados.length === 1 ? 'Una persona apuntada' : apuntados.length + ' apuntados')

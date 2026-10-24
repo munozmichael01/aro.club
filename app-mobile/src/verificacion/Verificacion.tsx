@@ -322,11 +322,12 @@ export function Verificacion(p: {
           <Image source={{ uri: e.previa }} style={StyleSheet.absoluteFill} resizeMode="contain" accessibilityLabel={T.captura.laQueHiciste} />
         ) : sinPermiso ? (
           <View style={estilos.permiso}>
+            {/* Sin preguntar todavía no está «apagada»: se cuenta qué viene y se deja decidir al sistema. */}
             <Texto variante="rotulo" tono="crema" style={{ textAlign: 'center' }}>
-              {T.permiso.titulo}
+              {permiso?.canAskAgain ? T.permiso.antes.titulo : T.permiso.titulo}
             </Texto>
             <Texto variante="cuerpoChico" tono="cuerpoSobreVerde" style={{ textAlign: 'center' }}>
-              {T.permiso.cuerpo}
+              {permiso?.canAskAgain ? T.permiso.antes.cuerpo : T.permiso.cuerpo}
             </Texto>
             <Boton
               tipo="sobreVerde"

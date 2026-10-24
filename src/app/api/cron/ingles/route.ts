@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { encolar } from '@/lib/correos'
+import { enTrozos } from '@/lib/en-trozos'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -106,13 +107,14 @@ async function anunciar(seco: boolean, solo: string | null, eventoId: string | n
    * Las de prueba son las de los guiones y la del revisor de Apple, y ya han
    * llenado el buzón de Michael otras veces.
    */
-  const { data: cuentas } = await admin
-    .from('profiles')
-    .select('id, email, es_prueba, deleted_at')
-    .in('id', [...loHablan])
+  const cuentas = await enTrozos<{ id: string | null; email: string | null; es_prueba: boolean | null; deleted_at: string | null }>(
+    [...loHablan],
+    (t) => admin.from('profiles').select('id, email, es_prueba, deleted_at').in('id', t),
+    'las cuentas de quien habla inglés',
+  )
 
   const puede = new Set(
-    (cuentas ?? [])
+    cuentas
       .filter((p) => !p.es_prueba && !p.deleted_at && p.email)
       .map((p) => p.id)
       .filter((x): x is string => !!x),

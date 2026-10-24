@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { anotar } from '@/lib/auditoria'
 import { PESOS, repartir, roturas, evaluacion, desglose, resumen, zonasDe } from '@/lib/reparto/repartir'
 import { exigirOps } from '@/lib/ops'
+import { claveDeNumero, numeroQueSeDice } from '@/lib/mesa-unica'
 import { renumerar, yaSeRevelo } from '@/lib/reparto/numeros'
 import { construirPool } from '@/lib/reparto/pool'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -352,10 +353,28 @@ export async function GET(request: Request) {
 
   const { data: mesasVivas } = await admin
     .from('dinner_tables')
-    .select('id, table_number, grabacion, grabacion_requerida, avisado_local_at, avisado_local_num')
+    .select('id, table_number, restaurant_id, grabacion, grabacion_requerida, avisado_local_at, avisado_local_num')
     .eq('event_id', evento.id)
 
   const mesaPorNumero = new Map((mesasVivas ?? []).map((m) => [m.table_number, m]))
+
+  /**
+   * El número que se dice de cada mesa publicada, también por aquí.
+   *
+   * Esta rama es la que lee el panel cuando ya hay una corrida guardada, que
+   * es casi siempre: la propuesta viene del JSON que se escribió al repartir
+   * y ahí dentro está el número de entonces. Si solo se calculara en la otra
+   * rama —la de repartir de nuevo— el panel seguiría enseñando el guardado y
+   * dejaría de coincidir con lo que ve quien va a cenar, que es justo lo que
+   * esto vino a arreglar.
+   */
+  const dichosGuardados = await numeroQueSeDice(
+    (mesasVivas ?? []).map((m) => ({
+      eventoId: evento.id,
+      sitioId: m.restaurant_id,
+      numero: m.table_number,
+    })),
+  )
   const seGuardaronYNoEstan = enLaPropuesta.filter((id) => !vivos.has(id)).length
 
   /**
@@ -438,6 +457,97 @@ export async function GET(request: Request) {
       grabacionRequerida: !!(evento as { grabacion_requerida?: boolean }).grabacion_requerida,
     },
     apuntados: reservas ?? 0,
+    /**
+     * QUIÉN CANCELÓ ESTA FECHA, y si se bajó o la bajamos.
+     *
+     * Michael, 23-10: «quiero que me muestres en los días de reparto un
+     * bloque de cancelaciones con las personas que cancelaron la fecha».
+     *
+     * Hasta ahora el panel solo contaba a los que están. Quien se bajó
+     * desaparecía de la pantalla, y es justo lo que explica por qué una
+     * mesa de seis se quedó en cinco el día antes: sin esto hay que ir a la
+     * base a saber si faltó gente o nunca la hubo.
+     *
+     * Las dos clases juntas y distinguidas: `cancelled_by_user` es que se
+     * bajó, `cancelled_by_ops` es que la bajamos nosotros, y esa diferencia
+     * es la que decide si hay que escribirle a alguien.
+     *
+     * Y SI SE PASÓ A OTRA FECHA, cuál (Michael, 24-10). No es lo mismo que
+     * se cayera del club que que se cambiara de día: lo primero es una
+     * silla perdida y lo segundo es la misma persona en otra mesa. Sin esto
+     * las dos se leen igual, y la cuenta de cuánta gente se está yendo sale
+     * inflada con los que solo movieron el plan.
+     */
+    cancelaciones: await (async () => {
+      const { data: bajas } = await admin
+        .from('bookings')
+        .select('profile_id, status, cancelled_at, cancel_reason')
+        .eq('event_id', evento.id)
+        .in('status', ['cancelled_by_user', 'cancelled_by_ops'])
+        .order('cancelled_at', { ascending: false })
+
+      if (!bajas?.length) return []
+
+      const { data: quienes } = await admin
+        .from('profiles')
+        .select('id, full_name, display_name')
+        .in('id', bajas.map((b) => b.profile_id))
+
+      const comoSeLlama = new Map(
+        (quienes ?? []).map((q) => [q.id, q.display_name || q.full_name || 'Sin nombre']),
+      )
+
+      /**
+       * A dónde se fue, si se fue a algún sitio.
+       *
+       * Una reserva viva en OTRA fecha, hecha DESPUÉS de cancelar esta. Lo
+       * de después importa: quien ya estaba apuntado a dos cosas y se cayó
+       * de una no se ha reagendado, y contarlo como tal diría que no se
+       * perdió a nadie cuando sí.
+       *
+       * Si hay varias, la primera que venga por calendario: es la que de
+       * verdad sustituye a esta.
+       */
+      const { data: vivas } = await admin
+        .from('bookings')
+        .select('profile_id, event_id, created_at')
+        .in('profile_id', bajas.map((b) => b.profile_id))
+        .neq('event_id', evento.id)
+        .not('status', 'in', '(cancelled_by_user,cancelled_by_ops)')
+
+      const { data: adonde } = (vivas ?? []).length
+        ? await admin
+            .from('events')
+            .select('id, starts_at, format, status')
+            .in('id', [...new Set((vivas ?? []).map((v) => v.event_id))])
+            .neq('status', 'cancelled')
+        : { data: [] as { id: string; starts_at: string; format: string; status: string }[] }
+
+      const fechaDe = new Map((adonde ?? []).map((e) => [e.id, e]))
+
+      return bajas.map((b) => {
+        const cancelo = b.cancelled_at ? Date.parse(b.cancelled_at) : 0
+        const suyas = (vivas ?? [])
+          .filter((v) => v.profile_id === b.profile_id)
+          .filter((v) => !cancelo || Date.parse(v.created_at) >= cancelo)
+          .map((v) => fechaDe.get(v.event_id))
+          .filter((e): e is NonNullable<typeof e> => !!e)
+          .sort((x, y) => Date.parse(x.starts_at) - Date.parse(y.starts_at))
+
+        return {
+          profileId: b.profile_id,
+          nombre: comoSeLlama.get(b.profile_id) ?? 'Sin nombre',
+          // `true` si se bajó ella; `false` si la bajamos nosotros.
+          suya: b.status === 'cancelled_by_user',
+          cuando: b.cancelled_at,
+          motivo: b.cancel_reason ?? null,
+          // A qué fecha se pasó, si se pasó a alguna.
+          reagendo: suyas[0]
+            ? { eventoId: suyas[0].id, empiezaEn: suyas[0].starts_at, formato: suyas[0].format }
+            : null,
+        }
+      })
+    })(),
     // Los que entran al reparto, con nombre y con las zonas que aceptan. El
     // panel los enseña mientras no hay corrida.
     pool: (pool ?? []).map((x) => ({
@@ -489,6 +599,10 @@ export async function GET(request: Request) {
             ...m,
             // La fila de verdad de esta mesa, si ya está publicada: su id
             // —para poder marcarla— y si está marcada para grabar.
+            numeroDicho:
+              dichosGuardados.get(
+                claveDeNumero(evento.id, (m as unknown as { numero: number }).numero),
+              ) ?? (m as unknown as { numero: number }).numero,
             mesaId: mesaPorNumero.get((m as unknown as { numero: number }).numero)?.id ?? null,
             grabacion: !!mesaPorNumero.get((m as unknown as { numero: number }).numero)?.grabacion,
             grabacionRequerida: !!(mesaPorNumero.get((m as unknown as { numero: number }).numero) as { grabacion_requerida?: boolean } | undefined)?.grabacion_requerida,
@@ -810,6 +924,15 @@ export async function POST(request: Request) {
   const conCara = new Set((selfies ?? []).map((f) => f.profile_id))
   const caraDe = (id: string) => (conCara.has(id) ? `/api/operacion/cara?perfil=${id}` : null)
 
+  // El número que se dice en cada mesa publicada, de una vez para todas.
+  const dichos = await numeroQueSeDice(
+    (yaSentados ?? []).map((t) => ({
+      eventoId,
+      sitioId: t.restaurant_id,
+      numero: t.table_number,
+    })),
+  )
+
   const cerradas = (yaSentados ?? []).map((t) => {
     const miembros = (t.table_members ?? []) as unknown as {
       profile_id: string
@@ -819,7 +942,14 @@ export async function POST(request: Request) {
     }[]
     const rest = t.restaurants as unknown as { name: string; zone_slug: string | null } | null
     return {
+      // `numero` sigue siendo el GUARDADO: es con lo que el panel pide
+      // despublicar o quitar una mesa, así que cambiarlo rompería las dos.
       numero: t.table_number,
+      // Y este es el que se enseña, el mismo que ve quien va a cenar: su
+      // posición dentro de ese restaurante esa noche. Michael, 22-10: «debe
+      // coincidir con lo que yo veo en el reparto, porque si no, luego no sé
+      // de qué mesa eran».
+      numeroDicho: dichos.get(claveDeNumero(eventoId, t.table_number)) ?? t.table_number,
       publicada: true,
       // La mesa, para poder marcarla; y si está marcada para grabar.
       mesaId: t.id,

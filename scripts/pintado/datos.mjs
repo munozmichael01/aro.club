@@ -69,6 +69,25 @@ export const PANTALLAS = {
         },
       },
     },
+    /**
+     * Y la de siete, que es la misma ranura al revés.
+     *
+     * Desde el 24-10 una mesa se puede estirar una o dos sillas, y la frase
+     * que lo explica sale por `mesaCorta`, el mismo campo: el nombre se
+     * queda como está porque lo lee la app y un campo no cambia de forma.
+     * Aquí se mira que la ranura pinte con el texto de arriba, no solo con
+     * el de abajo.
+     */
+    {
+      caso: 'mesa de siete',
+      rutas: {
+        '/api/mi-mesa': {
+          ...MESA_ABIERTA,
+          mesaCorta: 'Son siete: esta vez encajaba una persona más y preferimos sentarla aquí antes que dejarla sin mesa.',
+          ajustes: { sonCuantos: 7, caben: 6, seSumoAlguien: false, alguienCancelo: false, teMovimos: false },
+        },
+      },
+    },
     { caso: 'abierta', rutas: { '/api/mi-mesa': MESA_ABIERTA } },
     {
       caso: 'cerrada',

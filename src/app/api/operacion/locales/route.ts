@@ -46,9 +46,23 @@ const alta = z.object({
    */
   contacto: z.string().trim().max(120).optional(),
   telefono: z.string().trim().max(32).optional(),
-  familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch'])).min(1),
-  aforo: z.number().int().min(1).max(20),
-  ruido: z.number().int().min(1).max(3),
+  familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch', 'cercanos'])).min(1),
+  /**
+   * El aforo y el ruido, OBLIGATORIOS salvo para un bar cercano.
+   *
+   * Los dos existen por cosas que a un bar de segundo acto no le pasan: el
+   * aforo es cuántas mesas le cabemos a la vez y el ruido se mide porque
+   * seis desconocidos tienen que oírse sentados. A un bar al que solo
+   * mandamos a quien quiera seguir no le reservamos nada ni le sentamos a
+   * nadie.
+   *
+   * `loQueFalta` ya los perdonaba para activarlo, pero el alta los seguía
+   * exigiendo, así que al cargar un bar había que inventarse los dos. Los
+   * ocho que hay llevan «ruido 2» puesto por eso: nadie lo midió. Un dato
+   * inventado es peor que uno vacío, porque el vacío se ve.
+   */
+  aforo: z.number().int().min(1).max(20).optional(),
+  ruido: z.number().int().min(1).max(3).optional(),
   // Qué se come. Los mismos códigos que la pregunta «comidas» del
   // cuestionario: cruzar los dos es lo que dice qué restaurante pide la bolsa
   // de una fecha, y con dos catálogos paralelos el cruce falla en silencio.
@@ -102,6 +116,13 @@ const alta = z.object({
     .refine((u) => /^https:\/\/((maps\.app\.)?goo\.gl\/maps|maps\.app\.goo\.gl|maps\.google\.[a-z.]+|(www\.)?google\.[a-z.]+\/maps)/i.test(u), {
       message: 'El enlace tiene que ser de Google Maps.',
     }),
+}).superRefine((d, ctx) => {
+  // Lo que se perdona es SOLO para el bar cercano. Un restaurante sin aforo
+  // no se puede repartir y uno sin ruido medido no se puede ofrecer: que el
+  // alta los deje pasar sería dar de alta un local que nace sin poder usarse.
+  if (d.familias.length === 1 && d.familias[0] === 'cercanos') return
+  if (d.aforo == null) ctx.addIssue({ code: 'custom', path: ['aforo'], message: 'Falta el aforo.' })
+  if (d.ruido == null) ctx.addIssue({ code: 'custom', path: ['ruido'], message: 'Falta medir el ruido.' })
 })
 
 const cambio = z.discriminatedUnion('accion', [
@@ -189,7 +210,7 @@ const cambio = z.discriminatedUnion('accion', [
   z.object({
     accion: z.literal('familias'),
     id: z.string().uuid(),
-    familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch'])).min(1),
+    familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch', 'cercanos'])).min(1),
   }),
   /**
    * Los sitios para seguir de ESE local (entrega 20).
@@ -239,6 +260,7 @@ function loQueFalta(l: {
   facade_photo_path: string | null
   maps_url: string | null
   is_after_venue?: boolean | null
+  formats?: string[] | null
 }) {
   const falta: string[] = []
   if (!l.address) falta.push('la dirección')
@@ -265,7 +287,17 @@ function loQueFalta(l: {
    * Son siete bares de los diecinueve locales, todos desactivados por pedir
    * un contacto que nunca vamos a usar.
    */
-  if (l.is_after_venue) return falta
+  /**
+   * Y SOLO si es ÚNICAMENTE un bar cercano.
+   *
+   * Michael, 22-10: «podrían ser Bares cercanos y Drinks al mismo tiempo;
+   * para Bares cercanos no hace falta toda la ficha, para Drinks sí toda la
+   * info». Tiene razón y así estaba mal: un local marcado con los dos se
+   * activaba sin ruido, sin contacto y sin foto, y después podía ser la sede
+   * de una fecha de drinks. El papel que perdona es «solo para seguir»; en
+   * cuanto tiene un formato de fecha, se le pide todo.
+   */
+  if (l.is_after_venue && !((l.formats ?? []) as string[]).length) return falta
 
   if (!l.noise_level) falta.push('medir el ruido')
   if (!l.contact_name || !l.contact_phone) falta.push('un contacto')
@@ -369,6 +401,9 @@ export async function GET() {
   const lista = (locales ?? []).map((l) => {
     const h = porSitio.get(l.id) ?? cero()
     const familias = [...new Set(((l.formats ?? []) as string[]).map(familiaDe).filter(Boolean))] as string[]
+    // Y el papel, que no sale de `formats`: un bar de segundo acto puede no
+    // tener ningún formato y aun así ser algo.
+    if ((l as { is_after_venue?: boolean | null }).is_after_venue) familias.push('cercanos')
     const falta = loQueFalta(l)
     return {
       id: l.id,
@@ -637,18 +672,23 @@ export async function POST(request: Request) {
     .maybeSingle()
   if (!zona) return NextResponse.json({ error: 'Esa zona no existe.' }, { status: 400 })
 
-  const formatos = [...new Set(d.familias.flatMap((f) => FORMATOS_DE_FAMILIA[f]))]
+  // «Bares cercanos» es un papel, no un formato: lo mismo que al editarlo.
+  const cercanos = d.familias.includes('cercanos')
+  const formatos = [
+    ...new Set(d.familias.filter((f) => f !== 'cercanos').flatMap((f) => FORMATOS_DE_FAMILIA[f] ?? [])),
+  ]
 
   const { data, error } = await admin
     .from('restaurants')
     .insert({
+      ...(cercanos ? { is_after_venue: true } : {}),
       name: d.nombre.trim(),
       zone_slug: d.zona,
       address: d.direccion?.trim() || '',
       ...(d.contacto ? { contact_name: d.contacto } : {}),
       ...(d.telefono ? { contact_phone: d.telefono } : {}),
-      max_tables: d.aforo,
-      noise_level: d.ruido,
+      ...(d.aforo != null ? { max_tables: d.aforo } : {}),
+      ...(d.ruido != null ? { noise_level: d.ruido } : {}),
       ...(d.cocinas?.length ? { cuisines: [...new Set(d.cocinas)] } : {}),
       formats: formatos as never,
       metro_nearby: d.metro?.trim() || null,
@@ -710,7 +750,7 @@ export async function PATCH(request: Request) {
     .from('restaurants')
     // `is_after_venue` entra aquí porque `loQueFalta` lo mira: sin él, un
     // bar de segundo acto seguiría sin poder activarse.
-    .select('id, noise_level, address, contact_name, contact_phone, facade_photo_path, maps_url, is_after_venue')
+    .select('id, noise_level, address, contact_name, contact_phone, facade_photo_path, maps_url, is_after_venue, budget_tier, formats')
     .eq('id', d.id)
     .maybeSingle()
 
@@ -758,6 +798,12 @@ export async function PATCH(request: Request) {
         // una escrita a mano, se respeta: puede llevar la referencia que de
         // verdad usa quien va —«al lado del banco»— y Google no la tiene.
         ...(sitio.direccion ? { address: sitio.direccion } : {}),
+        // Y lo caro que es, también de Google, con la misma regla que la
+        // dirección: solo si aquí no hay nada. Quien lo haya puesto a mano
+        // sabe algo que Google no —un menú cerrado, un trato— y no se le
+        // pisa. Sin esto, la línea del paso a paso decía los minutos y se
+        // callaba el precio en los ocho bares.
+        ...(sitio.tramo != null && local.budget_tier == null ? { budget_tier: sitio.tramo } : {}),
       } as never)
       .eq('id', d.id)
 
@@ -771,10 +817,30 @@ export async function PATCH(request: Request) {
   }
 
   if (d.accion === 'familias') {
-    const formatos = [...new Set(d.familias.flatMap((x) => FORMATOS_DE_FAMILIA[x]))]
+    /**
+     * «Bares cercanos» no es una familia de formato: es un PAPEL.
+     *
+     * Michael, 22-10: «drinks realmente son sitios donde haremos encuentros
+     * puntuales para beber, pero directo a ese plan; en cambio estos son
+     * para seguir, no es el mismo plan».
+     *
+     * Tiene razón y estaban mezclados: los ocho bares de segundo acto
+     * llevaban `drinks` puesto, así que eran candidatos a ser la sede de una
+     * fecha de drinks. Un sitio al que mandamos a quien quiera seguir
+     * después de cenar no es un sitio donde sentamos una mesa.
+     *
+     * Por eso no entra en `FORMATOS_DE_FAMILIA`: ahí viven los formatos que
+     * una FECHA puede tener, y nadie reserva un «bar cercano». Lo que marca
+     * es `is_after_venue`, que ya existía y es lo que relaja lo que hay que
+     * pedirle al local.
+     */
+    const cercanos = d.familias.includes('cercanos')
+    const formatos = [
+      ...new Set(d.familias.filter((x) => x !== 'cercanos').flatMap((x) => FORMATOS_DE_FAMILIA[x] ?? [])),
+    ]
     const { error } = await admin
       .from('restaurants')
-      .update({ formats: formatos as never })
+      .update({ formats: formatos as never, is_after_venue: cercanos } as never)
       .eq('id', d.id)
 
     if (error) {

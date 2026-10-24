@@ -129,34 +129,17 @@
     -->
     <sc-if value="{{ faltaCuenta }}" hint-placeholder-val="{{ false }}">
         <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(28px,4vw,38px);max-width:460px">
-          <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:6px">CÓMO QUIERES ENTRAR A PARTIR DE AHORA</div>
-          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin-bottom:18px;max-width:46ch;text-wrap:pretty">Guardamos tus respuestas en esta cuenta. {{ fraseVuelves }}</div>
-
-          <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
-            <div style="position:relative;display:flex;align-items:center">
-              <input type="{{ tipoClave }}" placeholder="Crea una contraseña" value="{{ clave }}" onChange="{{ onClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
-              <button onClick="{{ alternarVerClave }}" aria-label="{{ etiquetaVerClave }}" style="{{ botonVer }}">{{ textoVerClave }}</button>
-            </div>
-            <input type="{{ tipoClave }}" placeholder="Repítela" value="{{ clave2 }}" onChange="{{ onClave2 }}" autocomplete="new-password" aria-label="Repite la contraseña" style="{{ campoClave2 }}" />
-            <sc-if value="{{ hayClaveDispar }}" hint-placeholder-val="{{ false }}">
-              <div role="alert" style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin:-3px 0 2px">Las dos contraseñas no coinciden.</div>
-            </sc-if>
-            <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
+          <!-- El selector de la entrega de acceso. En la web «Crear cuenta»
+               es ESTE paso —la cuenta se crea al final del alta, no en una
+               pantalla suelta— así que el otro lado del selector es /entrar.
+               La entrega pone los proveedores por delante del correo, y aquí
+               también: el botón relleno es Google. -->
+          <div role="tablist" style="{{ selectorCaja }}">
+            <a role="tab" href="/entrar" style="{{ selectorOtro }}">Entrar</a>
+            <div role="tab" aria-selected="true" style="{{ selectorAqui }}">Crear cuenta</div>
           </div>
-          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
 
-          <sc-if value="{{ hayErrorCuenta }}" hint-placeholder-val="{{ false }}">
-            <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:13px;max-width:400px">
-              <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
-              <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ errorCuenta }}</span>
-            </div>
-          </sc-if>
-
-          <div style="display:flex;align-items:center;gap:14px;margin:20px 0;max-width:400px">
-            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
-            <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">O</span>
-            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
-          </div>
+          <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#456352;margin:16px 0 18px;max-width:46ch;text-wrap:pretty">{{ fraseVuelves }}</div>
 
           <div style="display:flex;flex-direction:column;gap:10px;max-width:400px">
             <!-- Apple, escondido desde el 21 de agosto de 2026.
@@ -180,7 +163,54 @@
               <span>Continuar con Google</span>
             </a>
           </div>
-          <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;max-width:46ch;text-wrap:pretty">Al crear tu cuenta aceptas los <a href="/terminos" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Términos</a> y la <a href="/privacidad" target="_blank" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">Privacidad</a>. Te pediremos la cédula y una selfie para verificar que eres quien dices; ahí se explica qué hacemos con ellas y cuándo se borran.</div>
+          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:9px;max-width:46ch;text-wrap:pretty">Con Google, la casilla de las normas te la pedimos justo después.</div>
+
+          <div style="display:flex;align-items:center;gap:14px;margin:20px 0;max-width:400px">
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
+            <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">O</span>
+            <span style="flex:1;height:1px;background:rgba(20,52,42,.16)"></span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:11px;max-width:400px">
+            <label for="clave" style="font:600 13px/1 'Inter Tight',sans-serif;color:#566A5D;padding-left:6px">Contraseña</label>
+            <div style="position:relative;display:flex;align-items:center">
+              <input id="clave" type="{{ tipoClave }}" placeholder="Mínimo 8 caracteres" value="{{ clave }}" onChange="{{ onClave }}" onBlur="{{ alSalirClave }}" autocomplete="new-password" aria-label="Crea una contraseña" style="{{ campoClave }}" />
+              <button onClick="{{ alternarVerClave }}" aria-label="{{ etiquetaVerClave }}" style="{{ botonVer }}">{{ textoVerClave }}</button>
+            </div>
+            <sc-if value="{{ hayClaveCorta }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin:-3px 0 2px;padding-left:6px">Tiene que tener al menos 8 caracteres.</div>
+            </sc-if>
+            <label for="clave2" style="font:600 13px/1 'Inter Tight',sans-serif;color:#566A5D;padding-left:6px">Repite la contraseña</label>
+            <input id="clave2" type="{{ tipoClave }}" placeholder="La misma otra vez" value="{{ clave2 }}" onChange="{{ onClave2 }}" autocomplete="new-password" aria-label="Repite la contraseña" style="{{ campoClave2 }}" />
+            <sc-if value="{{ hayClaveDispar }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin:-3px 0 2px;padding-left:6px">No coincide con la de arriba.</div>
+            </sc-if>
+
+            <!-- La casilla de las normas, SOLO en el alta con correo.
+                 Hasta hoy la aceptación existía y quedaba guardada con su
+                 versión, pero era implícita: una línea gris debajo del
+                 botón. Con Google no cabe aquí —la cuenta la crea el propio
+                 ida y vuelta— y por eso la nota de arriba dice que se pide
+                 justo después, que es la pantalla de normas de Mi cuenta. -->
+            <button onClick="{{ tocarNormas }}" role="checkbox" aria-checked="{{ normasMarcadas }}" style="display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;margin-top:7px;padding:13px;border-radius:18px;border:1px solid rgba(20,52,42,.16);background:#FAF3E4;cursor:pointer">
+              <span style="{{ marcaNormas }}">{{ marcaNormasTexto }}</span>
+              <span style="flex:1;min-width:0;font:400 14px/1.45 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty"><sc-for list="{{ casillaNormas }}" as="t" hint-placeholder-count="5"><sc-if value="{{ t.hayEnlace }}" hint-placeholder-val="{{ false }}"><a href="{{ t.enlace }}" target="_blank" onClick="{{ t.soloAbrir }}" style="color:#1B5138;text-decoration:underline;text-underline-offset:3px">{{ t.texto }}</a></sc-if><sc-if value="{{ t.suelto }}" hint-placeholder-val="{{ true }}">{{ t.texto }}</sc-if></sc-for></span>
+            </button>
+            <sc-if value="{{ hayCasillaError }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#6E340F;margin:-3px 0 2px;padding-left:6px">Marca la casilla para crear tu cuenta.</div>
+            </sc-if>
+
+            <button onClick="{{ crearCuenta }}" aria-disabled="{{ inerteClave }}" style="{{ botonClave }}">{{ textoClave }}</button>
+          </div>
+          <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-top:11px;max-width:44ch;text-wrap:pretty">{{ pistaClave }}</div>
+
+          <sc-if value="{{ hayErrorCuenta }}" hint-placeholder-val="{{ false }}">
+            <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:13px;max-width:400px">
+              <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
+              <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ errorCuenta }}</span>
+            </div>
+          </sc-if>
+
         </div>
     </sc-if>
 
@@ -379,6 +409,7 @@ class Component extends DCLogic {
   state = { paso: 0, correo: '', nombre: '', trato: '', dia: '', mes: '', anio: '', genero: -1,
     prefijo: '+58', telefono: '', guardando: false, fallo: '',
     clave: '', clave2: '', puedeCuenta: false, cargando: true, diaCena: null,
+    tocadaClave: false, aceptoNormas: false, faltaCasilla: false,
     repetido: false, repetidoConPerfil: false };
 
   GENEROS = ['mujer', 'hombre', 'no-binario', 'sin-decir'];
@@ -661,13 +692,17 @@ class Component extends DCLogic {
         // van antes; y la landing trae aqui antes de preguntar nada, asi que
         // a la mayoria le prometia una cuenta que el servidor no le iba a
         // dejar crear todavia.
+        // Con cuenta por crear, el titular es el de la entrega de acceso:
+        // esta tarjeta ES la pantalla «Crear cuenta» de la app, adaptada a
+        // que en la web la cuenta se crea al final del alta. El día de la
+        // cena no se pierde: lo sigue diciendo `fraseVuelves`, dentro.
         titulo: !this._lead
           ? 'Guardado.'
-          : (this.state.puedeCuenta ? 'Listo. Solo falta tu cuenta.' : 'Guardado. Ahora las preguntas.'),
+          : (this.state.puedeCuenta ? 'Crea tu cuenta.' : 'Guardado. Ahora las preguntas.'),
         bajada: !this._lead
           ? 'Esto es todo lo que guardamos de esta parte, y quién lo ve.'
           : (this.state.puedeCuenta
-              ? 'Crea la contraseña con la que ' + (elDia ? 'vuelves a entrar el ' + elDia + ' a ver tu mesa' : 'vuelves a entrar a ver tu mesa') + '. Debajo tienes todo lo que guardamos de ti, y quién lo ve.'
+              ? 'Tus respuestas ya están guardadas. Solo falta cómo vas a entrar.'
               : 'Esto es lo que guardamos de ti, y quién lo ve. Faltan las preguntas; al terminarlas creas tu cuenta.'),
         listo: true
       }
@@ -853,20 +888,75 @@ class Component extends DCLogic {
       // «No coinciden» estaba abajo, en el boton: el campo se ponia rojo y
       // habia que mirar a otro sitio para saber por que.
       hayClaveDispar: !!(this.state.clave2 || '') && this.state.clave !== this.state.clave2,
-      textoClave: (this.state.clave || '').length < 8
-        ? 'Al menos ocho caracteres'
-        : (!(this.state.clave2 || '') ? 'Repite la contraseña'
-            : (this.state.clave !== this.state.clave2 ? 'No coinciden' : 'Crear mi cuenta')),
+      /**
+       * El mínimo de ocho, avisado AL SALIR del campo y no mientras escribes.
+       *
+       * Escribiendo, toda contraseña empieza siendo corta: el aviso saldría
+       * en la primera tecla y se quedaría hasta la octava, regañando a quien
+       * lo está haciendo bien. Al salir ya es una contraseña terminada.
+       */
+      alSalirClave: () => this.setState({ tocadaClave: true }),
+      hayClaveCorta: !!this.state.tocadaClave && (this.state.clave || '').length > 0
+        && (this.state.clave || '').length < 8,
+      // La casilla de las normas. El texto sale de `reglas.js`, que es el
+      // mismo que lee la pantalla de normas: dos copias de lo que alguien
+      // acepta son dos cosas distintas aceptadas.
+      /**
+       * La frase de la casilla, partida para poder enlazar lo que se acepta.
+       *
+       * El texto sigue siendo UNO, el de `reglas.js`, el mismo que lee la
+       * pantalla de normas. Lo que se hace aquí es buscar dentro las dos
+       * cosas que se aceptan y envolverlas en su enlace: si alguien cambia
+       * la frase, los trozos salen de la frase nueva y como mucho se queda
+       * sin subrayar lo que ya no diga. Escribirla otra vez aquí con las
+       * etiquetas dentro sería la segunda copia de lo que alguien firma.
+       */
+      casillaNormas: (() => {
+        const frase = window.AroReglas.NORMAS.casilla;
+        const enlazables = [['normas de seguridad', '/reglas'], ['Términos', '/terminos']];
+        const trozos = [];
+        let resto = frase;
+        for (const [palabra, enlace] of enlazables) {
+          const i = resto.indexOf(palabra);
+          if (i < 0) continue;
+          if (i > 0) trozos.push({ texto: resto.slice(0, i), hayEnlace: false, suelto: true, enlace: '' });
+          // El enlace vive DENTRO del botón de la casilla, que es lo que la
+          // marca y desmarca. Sin esto, leer los Términos también marcaba
+          // la casilla: abres la pestaña y vuelves con algo aceptado que no
+          // aceptaste.
+          trozos.push({ texto: palabra, hayEnlace: true, suelto: false, enlace,
+            soloAbrir: (e) => { if (e && e.stopPropagation) e.stopPropagation(); } });
+          resto = resto.slice(i + palabra.length);
+        }
+        if (resto) trozos.push({ texto: resto, hayEnlace: false, suelto: true, enlace: '' });
+        return trozos;
+      })(),
+      normasMarcadas: this.state.aceptoNormas ? 'true' : 'false',
+      marcaNormas: 'flex:0 0 auto;width:22px;height:22px;border-radius:7px;border:1px solid ' + (this.state.aceptoNormas ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (this.state.aceptoNormas ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif',
+      marcaNormasTexto: this.state.aceptoNormas ? '✓' : '',
+      tocarNormas: () => this.setState({ aceptoNormas: !this.state.aceptoNormas, faltaCasilla: false }),
+      hayCasillaError: !!this.state.faltaCasilla,
+      // El botón dice lo que falta mientras no se puede pulsar, que es lo
+      // que pide la entrega. La casilla NO lo apaga: se puede pulsar con
+      // las contraseñas bien y sin marcarla, y entonces el error aparece
+      // donde está la casilla, que es donde hay que mirar.
+      textoClave: ((this.state.clave || '').length >= 8 && this.state.clave === this.state.clave2)
+        ? 'Crear mi cuenta'
+        : 'Completa los datos',
       pistaClave: (this.state.clave || '').length >= 8
         ? 'Entrarás con tu correo y esta contraseña.'
-        : 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Apple o Google.',
+        : 'Ocho caracteres como mínimo. Si prefieres no recordar otra contraseña, usa Google.',
       inerteClave: ((this.state.clave || '').length >= 8 && this.state.clave === this.state.clave2) ? null : 'true',
       // La cuenta se crea aqui, al cerrar el cuestionario: es cuando ya hay
       // algo que guardar. El servidor abre la sesion en la misma respuesta.
       crearCuenta: () => {
         const clave = this.state.clave || '';
         const s = this._lead;
-        if (clave.length < 8 || !s) return;
+        if (clave.length < 8 || clave !== this.state.clave2 || !s) return;
+        // Sin casilla no hay cuenta. La constancia la escribe el servidor
+        // al crearla, como siempre; lo que cambia es que ahora alguien la
+        // marca en vez de leerse una línea gris.
+        if (!this.state.aceptoNormas) { this.setState({ faltaCasilla: true }); return; }
         fetch('/api/cuenta', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -891,7 +981,20 @@ class Component extends DCLogic {
       },
       errorCuenta: this.state.errorCuenta || '',
       hayErrorCuenta: !!this.state.errorCuenta,
-      botonClave: 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease;background:' + ((this.state.clave || '').length >= 8 ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + ((this.state.clave || '').length >= 8 ? '#FAF3E4' : '#456352') + ';cursor:' + ((this.state.clave || '').length >= 8 ? 'pointer' : 'not-allowed'),
+      /**
+       * SECUNDARIO, con borde. Google es el botón relleno de esta tarjeta y
+       * la entrega no quiere dos primarios en la misma vista.
+       */
+      botonClave: (() => {
+        const ok = (this.state.clave || '').length >= 8 && this.state.clave === this.state.clave2;
+        return 'display:inline-flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease;background:transparent;border:1.5px solid '
+          + (ok ? '#1B5138' : 'rgba(20,52,42,.18)') + ';color:' + (ok ? '#1B5138' : '#566A5D')
+          + ';cursor:' + (ok ? 'pointer' : 'not-allowed');
+      })(),
+      // El selector de la entrega, en la variante clara de esta tarjeta.
+      selectorCaja: 'display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(20,52,42,.07);margin-bottom:4px',
+      selectorAqui: 'flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 15px/1 \'Inter Tight\',sans-serif;box-shadow:0 1px 2px rgba(20,52,42,.12)',
+      selectorOtro: 'flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:999px;color:#456352;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:none',
       botonProveedor: 'display:inline-flex;align-items:center;justify-content:center;gap:11px;width:100%;min-height:58px;padding:0 26px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;transition:all 200ms ease',
       // Seleccionar al enfocar.
       //

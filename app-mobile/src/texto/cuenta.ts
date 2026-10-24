@@ -51,7 +51,7 @@ export const ESTADOS: Record<EstadoCuenta, Copia> = {
     sello: 'FALTA VERIFICAR',
     titulo: 'Verifica tu identidad para poder reservar.',
     cuerpo: () =>
-      'Cédula y una selfie. Lo revisa una persona, no se le muestra a nadie más, y se borra a los 90 días. Es lo que hace que los otros cinco confíen.',
+      `Cédula y una selfie. Lo revisa una persona, no se le muestra a nadie más, y se borra a los ${reglas.DIAS_GUARDA_FOTOS} días. Es lo que hace que los otros cinco confíen.`,
     accion: 'Verificar mi identidad',
     destino: '/verificacion',
   },

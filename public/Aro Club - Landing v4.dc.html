@@ -812,6 +812,49 @@ class Component extends DCLogic {
            ['Bello Monte', 'bello-monte']];
 
   componentDidMount() {
+    /**
+     * LLEGAR CON `#registro` DESDE FUERA Y QUEDARSE ARRIBA.
+     *
+     * Michael, 23-10: «el botón crear cuenta te lleva a la home sin más».
+     *
+     * El ancla existe —es el bloque del registro, a siete mil píxeles— pero
+     * no existe TODAVÍA cuando el navegador lee el hash: esta pantalla la
+     * pinta el runtime, así que al cargar no hay ningún `id="registro"` al
+     * que saltar y el navegador se queda donde está. Dentro de la portada
+     * funcionaba —el enlace del header, el del precio— porque ahí el bloque
+     * ya está pintado.
+     *
+     * Son cuatro puertas las que entran así: «Crear cuenta» de Entrar,
+     * «Reservar mi puesto» de la agenda, y «Empezar» y «Encuentra tu mesa»
+     * de la barra común. Las cuatro aterrizaban en lo alto de la portada,
+     * que se lee como que el botón no hizo nada.
+     *
+     * Solo si no se ha movido nadie: con scroll ya hecho, quien manda es la
+     * persona.
+     */
+    try {
+      if (window.location.hash === '#registro' && window.scrollY === 0) {
+        /**
+         * Y se repite durante un segundo, porque la página SIGUE CRECIENDO.
+         *
+         * Con un solo salto aterrizaba 263 píxeles por encima del bloque:
+         * las fotos de arriba se cargan después y empujan todo hacia abajo,
+         * así que la posición que era buena deja de serlo. Tres pasadas y se
+         * acabó: a partir de ahí, si algo se mueve, es que la persona está
+         * leyendo y no se le toca.
+         */
+        const alBloque = () => {
+          const n = document.getElementById('registro');
+          if (n) n.scrollIntoView({ block: 'start' });
+          return !!n;
+        };
+        alBloque();
+        setTimeout(alBloque, 300);
+        setTimeout(alBloque, 900);
+        setTimeout(alBloque, 1800);
+      }
+    } catch (e) { /* sin hash o sin DOM, no hay nada a donde ir */ }
+
     this._t = setInterval(() => this.setState({ ahora: Date.now() }), 30000);
 
     // Las zonas de verdad. Se piden una vez y se reescriben nombre y código a

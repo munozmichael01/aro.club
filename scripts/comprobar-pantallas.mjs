@@ -50,6 +50,21 @@ const config = readFileSync(fileURLToPath(new URL('../next.config.ts', import.me
 /** Las piezas que TODA pantalla tiene que cargar, en este orden. */
 const COMUNES = ['./errores.js', './gtm.js']
 
+/**
+ * Menos una, y por un motivo que no se puede olvidar.
+ *
+ * `gtm.js` carga Analytics y Clarity, y Clarity GRABA LA SESIÓN. En la
+ * pantalla de verificación —y en ninguna otra— lo que hay en la ventana es
+ * la vista previa de una cédula y de una selfie. Grabar ahí es mandarle la
+ * cara y el documento de alguien a un tercero, y la Privacidad dice por
+ * escrito, y a Apple también, que la selfie no se comparte con nadie.
+ *
+ * Va aquí y no como un olvido: si mañana alguien «arregla» la pantalla
+ * añadiéndole la analítica que le falta, este comprobador no lo va a parar,
+ * pero al menos tendrá que borrar esta excepción y leer por qué está.
+ */
+const SIN_ANALITICA = { 'Aro Club - Verificacion.dc.html': './gtm.js' }
+
 /** Etiquetas que no cierran. */
 const VACIAS = new Set(['img', 'br', 'hr', 'meta', 'link', 'input', 'area', 'base', 'col', 'source', 'path', 'circle', 'rect', 'line', 'polygon', 'polyline', 'stop', 'use', 'ellipse'])
 
@@ -288,7 +303,10 @@ for (const nombre of pantallas) {
 
   // --- 1 · las piezas comunes -----------------------------------------
   const pos = COMUNES.map((c) => html.indexOf(`src="${c}"`))
-  COMUNES.forEach((c, i) => { if (pos[i] < 0) di(`no carga ${c}`) })
+  COMUNES.forEach((c, i) => {
+    if (SIN_ANALITICA[nombre] === c) return
+    if (pos[i] < 0) di(`no carga ${c}`)
+  })
   if (pos[0] >= 0 && pos[1] >= 0 && pos[0] > pos[1]) {
     di('carga gtm.js ANTES que errores.js — el capturador va primero, o no captura lo que falle antes')
   }

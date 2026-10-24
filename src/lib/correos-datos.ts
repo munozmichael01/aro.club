@@ -9,11 +9,11 @@ import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, horaDe, horaEnLetraDe, partesDe, precioTexto, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
-import { fraseDeMesaCorta } from '@/lib/mesa-corta'
+import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
-import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
+import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
 
 
 /**
@@ -1819,7 +1819,12 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
     ? await nombresDeZonas(admin, [mesa.restaurants.zone_slug])
     : []
 
-  const numero = String(mesa.table_number).padStart(2, '0')
+  // El que se dice al llegar, no el guardado. Ver `numeroQueSeDice`.
+  const dicho =
+    (await numeroQueSeDice([
+      { eventoId, sitioId: mesa.restaurant_id, numero: mesa.table_number },
+    ])).get(claveDeNumero(eventoId, mesa.table_number)) ?? mesa.table_number
+  const numero = String(dicho).padStart(2, '0')
   const direccion = mesa.restaurants?.address ?? ''
 
   // ¿Tiene sitios cerca a los que seguir? De la misma tabla que Mi mesa.
@@ -1952,8 +1957,8 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
      * Vacía cuando la mesa está completa, y entonces la plantilla se salta la
      * fila entera. Lo normal es que esté completa.
      */
-    // La misma frase que Mi mesa, de `fraseDeMesaCorta`.
-    mesaCorta: fraseDeMesaCorta(enLaMesa, porMesa, cancelaronDeEstaMesa),
+    // La misma frase que Mi mesa, de `fraseDeTamano`.
+    mesaCorta: fraseDeTamano(enLaMesa, porMesa, cancelaronDeEstaMesa),
     /**
      * Si esa noche grabamos en ESTA mesa.
      *
