@@ -75,6 +75,11 @@ type Api = {
   /** Qué regla aplica a un campo de un método de pago (`null`: solo que no esté vacío). */
   campoDe: (definicion: CampoDePago) => Campo | null
   vozDe: (formato: string | null | undefined) => { unidad: 'mesa' | 'grupo'; mia: string } & Record<string, string>
+  /** Las cenas: lo que se dice «cenas» y lleva la nota de la encuesta «Pensado para cenas». */
+  DE_CENA: string[]
+  /** La Mi mesa completa (foto de la entrada, paso a paso, juego): las cenas y el brunch (Michael, 24-10). */
+  DE_MESA_COMPLETA: string[]
+  tieneMesaCompleta: (formato: string | null | undefined) => boolean
   /** El guion de la mesa (paso a paso), compartido con la web desde el 15-10. */
   GUION: {
     titulo: string
@@ -86,7 +91,7 @@ type Api = {
     seguir: { titulo: string; aPie: string; comoLlegar: string }
   }
   /** Los momentos de esta mesa con su hora puesta, en la zona de la ciudad. `[]` sin hora de inicio. */
-  pasosDeLaMesa: (empiezaEn: string | null | undefined, zona?: string | null) => PasoDeLaMesa[]
+  pasosDeLaMesa: (empiezaEn: string | null | undefined, zona?: string | null, formato?: string | null) => PasoDeLaMesa[]
   momentoDeLaMesa: (pasos: PasoDeLaMesa[], ahora: number) => 'antes' | 'curso' | 'terminada'
   /** El índice del primero de los momentos en curso, o -1. */
   enCursoDeLaMesa: (pasos: PasoDeLaMesa[], ahora: number) => number

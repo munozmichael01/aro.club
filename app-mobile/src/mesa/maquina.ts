@@ -171,7 +171,7 @@ export function textoAjustes(d: DeServidor) {
   if (a.teMovimos) return T.ajustes.teMovimos
   if (a.alguienCancelo && a.seSumoAlguien) return T.ajustes.cancelYSuma(cuantos)
   if (a.seSumoAlguien) return T.ajustes.seSuma
-  return T.ajustes.cancelo(cuantos)
+  return T.ajustes.cancelo(cuantos, voz(d))
 }
 
 // --- Lo de después (F11) -------------------------------------------------------
@@ -243,8 +243,8 @@ export const alternar = (lista: string[], id: string) => (lista.includes(id) ? l
 
 /** El sello de la encuesta: «ANOCHE», «HACE 3 DÍAS» o «EL 18 DE SEPTIEMBRE», contado como la web. */
 export function selloPasada(d: DeServidor, ahora: number) {
-  if (!d.empiezaEn) return T.pasada.sello(null)
+  if (!d.empiezaEn) return T.pasada.sello(null, undefined, undefined, voz(d).ayer)
   const dias = Math.floor((ahora - new Date(d.empiezaEn).getTime()) / 86400000)
   const p = reglas.partesDe(d.empiezaEn, d.zonaHoraria)
-  return T.pasada.sello(dias, p?.numero, p?.mes)
+  return T.pasada.sello(dias, p?.numero, p?.mes, voz(d).ayer)
 }

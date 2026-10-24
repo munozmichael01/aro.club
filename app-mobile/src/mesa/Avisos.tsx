@@ -80,6 +80,8 @@ export function PreguntaGrabacion(p: {
   fallo: string
   alResponder: (permite: boolean) => void
   alCerrar: () => void
+  /** La voz del formato: «Esta noche…» en la cena, «Hoy…» en el brunch. */
+  voz: Record<string, string>
 }) {
   const insets = useSafeAreaInsets()
   return (
@@ -97,7 +99,7 @@ export function PreguntaGrabacion(p: {
               <IconoCruz tam={14} color={C.cuerpoFuerte} />
             </Pressable>
           </View>
-          <Texto style={[texto(16, 1.5), { color: C.cuerpoFuerte, marginTop: 12 }]}>{T.grabacion.cuerpo}</Texto>
+          <Texto style={[texto(16, 1.5), { color: C.cuerpoFuerte, marginTop: 12 }]}>{T.grabacion.cuerpo(p.voz)}</Texto>
           <View style={{ marginTop: 18, gap: 9 }}>
             <Pressable
               onPress={() => !p.guardando && p.alResponder(true)}
@@ -117,7 +119,7 @@ export function PreguntaGrabacion(p: {
             </Pressable>
           </View>
           {p.fallo ? <Texto style={[texto(13, 1.5), { color: C.terracota, marginTop: 12 }]}>{p.fallo}</Texto> : null}
-          <Texto style={[texto(13, 1.5), { color: C.nota, marginTop: 12 }]}>{T.grabacion.pie}</Texto>
+          <Texto style={[texto(13, 1.5), { color: C.nota, marginTop: 12 }]}>{T.grabacion.pie(p.voz)}</Texto>
         </View>
       </View>
     </Modal>
@@ -171,6 +173,7 @@ export function useGrabacion(d: M.DeServidor, guardar: (eventoId: string, permit
       fallo,
       alResponder: responder,
       alCerrar: () => (setAbierta(false), setFallo('')),
+      voz: M.voz(d),
     },
     cambiar: () => (setFallo(''), setAbierta(true)),
   }

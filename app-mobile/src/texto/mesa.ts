@@ -12,13 +12,15 @@ import { reglas } from '../reglas'
  * - «Cena · sábado 3» → el formato real de la fecha.
  */
 
-type Voz = { unidad: string; unidades: string; tu: string; TU: string }
+/** La voz de un formato (`reglas.vozDe`): «mesa» o «grupo», y «cenas», «la cena», «esta noche»… según de qué sea. */
+type Voz = Record<string, string>
 
 const Mayus = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 
 /** Cuántos son, en letra. Hasta 22: `seats_per_table` llega a 20 y la mesa se estira +2 (24-10). */
 const EN_LETRA = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuna', 'veintidós']
+
 
 export const vacia = {
   revision: {
@@ -87,11 +89,12 @@ export const abierta = {
 export const grabacion = {
   cinta: 'HOY, EN LA ZONA',
   titulo: '¿Te podemos grabar?',
-  cuerpo: 'Esta noche estamos grabando contenido por la zona. Si dices que no, no te grabamos y no pasa nada: la cena es igual.',
+  /** `cuando` y `elPlan` salen de la voz del formato: en la cena, «Esta noche…» y «la cena», como siempre. */
+  cuerpo: (v: Voz) => `${Mayus(v.cuando)} estamos grabando contenido por la zona. Si dices que no, no te grabamos y no pasa nada: ${v.elPlan} es igual.`,
   si: 'Sí, pueden',
   no: 'No, gracias',
   guardando: 'Guardando…',
-  pie: 'Puedes cambiarlo cuando quieras, también en la cena.',
+  pie: (v: Voz) => `Puedes cambiarlo cuando quieras, también en ${v.elPlan}.`,
   cerrar: 'Ahora no',
   dijisteSi: 'Dijiste que sí te podemos grabar.',
   dijisteNo: 'Dijiste que prefieres no salir en cámara.',
@@ -105,7 +108,7 @@ export const ajustes = {
   teMovimos: 'Te cambiamos de mesa esta tarde y te lo escribimos por correo. Esto es lo que vale: el sitio y la gente de abajo.',
   cancelYSuma: (cuantos: string) => `Alguien canceló hoy y movimos a otra persona a tu mesa, que va marcada abajo. Son ${cuantos}.`,
   seSuma: 'Se suma alguien que no estaba esta mañana, y va marcado abajo. Lo demás no cambia.',
-  cancelo: (cuantos: string) => `Alguien canceló después de decirte con quién cenabas. Son ${cuantos}, y el sitio y la hora no cambian.`,
+  cancelo: (cuantos: string, v: Voz) => `Alguien canceló después de decirte con quién ${v.verboPasado}. Son ${cuantos}, y el sitio y la hora no cambian.`,
   enLetra: EN_LETRA,
   entendido: 'Entendido',
 }
@@ -131,8 +134,9 @@ export const pasada = {
    * Cuándo fue, y no «ANOCHE» a secas: la encuesta ya no caduca a las 48 h
    * (8dc6b47) y aquí puede caer una cena de hace un mes. Como la web.
    */
-  sello: (dias: number | null, numero?: number | string, mes?: string) =>
-    dias == null ? 'TU ÚLTIMA MESA' : dias <= 1 ? 'ANOCHE' : dias < 7 ? `HACE ${dias} DÍAS` : numero != null && mes ? `EL ${numero} DE ${mes.toUpperCase()}` : 'TU ÚLTIMA MESA',
+  /** `ayer` sale de la voz: «ANOCHE» en la cena, «AYER» en un brunch. */
+  sello: (dias: number | null, numero?: number | string, mes?: string, ayer = 'ANOCHE') =>
+    dias == null ? 'TU ÚLTIMA MESA' : dias <= 1 ? ayer : dias < 7 ? `HACE ${dias} DÍAS` : numero != null && mes ? `EL ${numero} DE ${mes.toUpperCase()}` : 'TU ÚLTIMA MESA',
   titulo: '¿Qué tal estuvo?',
   /** `estuviste` sale de `vozDe` (reglas.js): «Cenaste en» / «Estuviste en». */
   bajada: (estuviste: string, sitio: string, unidad: string, numero: string) =>
@@ -240,7 +244,7 @@ export const cena = {
   diLaMesa: (numero: string) => (numero ? `Di que vas a la mesa de Aro, la ${numero}.` : 'Di que vas a la mesa de Aro.'),
   fotoEntrada: (sitio: string) => `La entrada de ${sitio}`,
   conQuien: {
-    titulo: 'Con quién cenas',
+    titulo: (v: Voz) => `Con quién ${v.verbo}`,
     resumen: (n: number) => (n === 1 ? '1 persona · verificada' : `${n} personas · todas verificadas`),
   },
   paso: {

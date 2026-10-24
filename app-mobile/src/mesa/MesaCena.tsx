@@ -41,7 +41,7 @@ export function MesaCena(p: {
   const { d, ahora, ir } = p
   const zona = d.zonaHoraria ?? null
   // La reserva dura siempre dos horas desde el inicio (Michael, 15-10): no se lee ningún cierre del servidor.
-  const pasos = Gu.pasos(d.empiezaEn, zona)
+  const pasos = Gu.pasos(d.empiezaEn, zona, d.formato)
   const momento = Gu.momentoDeCena(pasos, ahora)
   const [abiertas, setAbiertas] = useState<Record<Clave, boolean>>(() =>
     momento === 'antes' ? { gente: true, paso: false, juego: false } : { gente: false, paso: true, juego: false },
@@ -89,7 +89,7 @@ export function MesaCena(p: {
       {p.tarde}
 
       <Desplegable
-        titulo={T.cena.conQuien.titulo}
+        titulo={T.cena.conQuien.titulo(M.voz(d))}
         resumen={T.cena.conQuien.resumen(otros.length)}
         nota={d.mesaCorta}
         abierta={abiertas.gente}
@@ -178,7 +178,7 @@ export function MesaCena(p: {
       {d.mesaId ? (
         cerradoHasta != null ? (
           // 1a (entrega 21): a la hora de la cena, ni un minuto antes.
-          <JuegoCerrado hora={cerradoHasta} />
+          <JuegoCerrado hora={cerradoHasta} delPlan={M.voz(d).delPlan} />
         ) : J.terminado(guardado) ? (
           // 1b y 1c: jugado entero, o terminado con «Terminar aquí».
           <JuegoJugado
@@ -355,13 +355,13 @@ function TarjetaJuego(p: {
 }
 
 /** 1a · Antes de la hora de la cena: se ve qué hay, pero nada se puede abrir. */
-function JuegoCerrado({ hora }: { hora: string }) {
+function JuegoCerrado({ hora, delPlan }: { hora: string; delPlan: string }) {
   return (
     <View style={[e.tarjeta, { backgroundColor: C.tinta, borderWidth: 0 }]}>
       <View style={e.cabeza}>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Texto style={[serif(21, 1.1, -0.015), { color: C.crema }]}>{TJ.tarjeta.titulo}</Texto>
-          <Texto style={[texto(13, 1.35), { color: C.cuerpoVerde, marginTop: 3 }]}>{TJ.tarjeta.resumenCerrado}</Texto>
+          <Texto style={[texto(13, 1.35), { color: C.cuerpoVerde, marginTop: 3 }]}>{TJ.tarjeta.resumenCerrado(delPlan)}</Texto>
         </View>
       </View>
       <View style={{ paddingHorizontal: 18, paddingBottom: 18 }}>
@@ -378,7 +378,7 @@ function JuegoCerrado({ hora }: { hora: string }) {
         </View>
         <View style={e.candado} accessibilityRole="text">
           <IconoCandado tam={20} color={C.acento} />
-          <Texto style={[texto(14, 1.3), { fontFamily: fuente.textoMedia, color: C.crema, flex: 1 }]}>{TJ.tarjeta.seAbre(hora)}</Texto>
+          <Texto style={[texto(14, 1.3), { fontFamily: fuente.textoMedia, color: C.crema, flex: 1 }]}>{TJ.tarjeta.seAbre(hora, delPlan)}</Texto>
         </View>
       </View>
     </View>

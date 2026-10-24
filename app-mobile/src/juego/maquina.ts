@@ -34,7 +34,8 @@ export function ventana(empiezaEn: string | null | undefined, ahora: number): Ve
 }
 
 /** Es solo para las cenas por ahora (entrega 18): café y movimiento tendrán su versión. */
-export const hayJuego = (formato: string | null | undefined) => !!formato && /dinner/.test(formato)
+/** El juego va con la Mi mesa completa: las cenas y el brunch (Michael, 24-10: «juego sí»). */
+export const hayJuego = (formato: string | null | undefined) => reglas.tieneMesaCompleta(formato)
 
 export const preguntas = (mesaId: string, ronda: number) => reglas.preguntasDeRonda(mesaId, ronda)
 

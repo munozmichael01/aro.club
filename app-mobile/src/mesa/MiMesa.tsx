@@ -549,9 +549,12 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
       <SelloBorde texto={M.selloPasada(d, Date.now())} />
       <Titular>{T.pasada.titulo}</Titular>
       <Bajada>{T.pasada.bajada(voz.estuviste, d.restaurante || '—', voz.unidad, M.conNumero(d) ? M.numero(d) : '')}</Bajada>
-      <Texto variante="nota" style={{ marginTop: 8 }}>
-        {T.pasada.pensado}
-      </Texto>
+      {/* Solo en las cenas: el brunch se pregunta igual y la nota sobraría (24-10). */}
+      {reglas.DE_CENA.includes(d.formato ?? 'dinner') ? (
+        <Texto variante="nota" style={{ marginTop: 8 }}>
+          {T.pasada.pensado}
+        </Texto>
+      ) : null}
 
       {!contado ? (
         <View style={{ marginTop: 10 }}>

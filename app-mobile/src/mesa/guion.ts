@@ -15,8 +15,9 @@ export type Momento = 'llegada' | 'voz' | 'pedir' | 'vuelta' | 'hielo' | 'tema' 
 export type Paso = PasoDeLaMesa & { momento: Momento }
 
 /** Los momentos de la mesa con su hora y su texto ya puestos. Sin `empiezaEn` válido, no hay guion. */
-export function pasos(empiezaEn: string | null | undefined, zona?: string | null): Paso[] {
-  return reglas.pasosDeLaMesa(empiezaEn, zona ?? null).map((p) => ({ ...p, momento: p.clave as Momento }))
+export function pasos(empiezaEn: string | null | undefined, zona?: string | null, formato?: string | null): Paso[] {
+  // El formato cambia dos textos: en el brunch se llega a un café y se despide sin bares (24-10).
+  return reglas.pasosDeLaMesa(empiezaEn, zona ?? null, formato ?? null).map((p) => ({ ...p, momento: p.clave as Momento }))
 }
 
 /**

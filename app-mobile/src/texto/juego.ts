@@ -25,8 +25,9 @@ export const tarjeta = {
   reiniciar: 'Empezar de nuevo',
   irA: (n: number) => `Ir a la ronda ${n}`,
   /** 1a (entrega 21): antes de la hora de la cena. Nadie llega con las respuestas pensadas (Michael, 06-10 y 15-10). */
-  resumenCerrado: '3 rondas · se abre a la hora de la cena',
-  seAbre: (hora: string) => (hora ? `Se abre a las ${hora}, a la hora de la cena.` : 'Se abre a la hora de la cena.'),
+  /** `delPlan` sale de la voz: «de la cena», «del brunch». */
+  resumenCerrado: (delPlan: string) => `3 rondas · se abre a la hora ${delPlan}`,
+  seAbre: (hora: string, delPlan: string) => (hora ? `Se abre a las ${hora}, a la hora ${delPlan}.` : `Se abre a la hora ${delPlan}.`),
   /** 1b y 1c: jugado entero o con «Terminar aquí». */
   jugado: (n: number, total: number) => `Jugado · ${n} de ${total} rondas`,
   hecho: 'Hecho',
