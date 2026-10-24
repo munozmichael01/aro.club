@@ -457,6 +457,49 @@ export async function GET(request: Request) {
       grabacionRequerida: !!(evento as { grabacion_requerida?: boolean }).grabacion_requerida,
     },
     apuntados: reservas ?? 0,
+    /**
+     * QUIÉN CANCELÓ ESTA FECHA, y si se bajó o la bajamos.
+     *
+     * Michael, 23-10: «quiero que me muestres en los días de reparto un
+     * bloque de cancelaciones con las personas que cancelaron la fecha».
+     *
+     * Hasta ahora el panel solo contaba a los que están. Quien se bajó
+     * desaparecía de la pantalla, y es justo lo que explica por qué una
+     * mesa de seis se quedó en cinco el día antes: sin esto hay que ir a la
+     * base a saber si faltó gente o nunca la hubo.
+     *
+     * Las dos clases juntas y distinguidas: `cancelled_by_user` es que se
+     * bajó, `cancelled_by_ops` es que la bajamos nosotros, y esa diferencia
+     * es la que decide si hay que escribirle a alguien.
+     */
+    cancelaciones: await (async () => {
+      const { data: bajas } = await admin
+        .from('bookings')
+        .select('profile_id, status, cancelled_at, cancel_reason')
+        .eq('event_id', evento.id)
+        .in('status', ['cancelled_by_user', 'cancelled_by_ops'])
+        .order('cancelled_at', { ascending: false })
+
+      if (!bajas?.length) return []
+
+      const { data: quienes } = await admin
+        .from('profiles')
+        .select('id, full_name, display_name')
+        .in('id', bajas.map((b) => b.profile_id))
+
+      const comoSeLlama = new Map(
+        (quienes ?? []).map((q) => [q.id, q.display_name || q.full_name || 'Sin nombre']),
+      )
+
+      return bajas.map((b) => ({
+        profileId: b.profile_id,
+        nombre: comoSeLlama.get(b.profile_id) ?? 'Sin nombre',
+        // `true` si se bajó ella; `false` si la bajamos nosotros.
+        suya: b.status === 'cancelled_by_user',
+        cuando: b.cancelled_at,
+        motivo: b.cancel_reason ?? null,
+      }))
+    })(),
     // Los que entran al reparto, con nombre y con las zonas que aceptan. El
     // panel los enseña mientras no hay corrida.
     pool: (pool ?? []).map((x) => ({

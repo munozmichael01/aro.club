@@ -146,7 +146,7 @@
         </div>
         <div class="aro-rail" style="display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:6px;margin-bottom:clamp(24px,3vw,32px)">
           <sc-for list="{{ fechasRep }}" as="f" hint-placeholder-count="3">
-            <button onClick="{{ f.pick }}" style="{{ f.btn }}">
+            <button onClick="{{ f.pick }}" data-fecha-activa="{{ f.activa }}" style="{{ f.btn }}">
               <span style="{{ f.aro }}">{{ f.icono }}</span>
               <span style="flex:1;min-width:0;text-align:left">
                 <span style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
@@ -170,6 +170,9 @@
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin:-18px 0 clamp(24px,3vw,32px)">
           <sc-if value="{{ hayPasadas }}" hint-placeholder-val="{{ true }}">
             <button onClick="{{ tocarPasadas }}" style="{{ botonPasadas }}">{{ textoPasadas }}</button>
+          </sc-if>
+          <sc-if value="{{ hayOcultarPasadas }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ tocarOcultarPasadas }}" style="{{ botonOcultarPasadas }}">{{ textoOcultarPasadas }}</button>
           </sc-if>
           <!-- Las de prueba no las ve ningún miembro y no se reparten: en la
                pantalla donde se decide qué cena se arma, estorban. -->
@@ -487,6 +490,35 @@
                       </sc-for>
                     </div>
                   </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- Las cancelaciones de ESTA fecha. Michael, 23-10: hasta ahora el
+             panel solo contaba a los que están, y quien se bajó desaparecía
+             de la pantalla. Es justo lo que explica por qué una mesa de seis
+             se quedó en cinco el día antes. -->
+        <sc-if value="{{ hayCancelas }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:24px;padding:clamp(16px,2vw,20px);margin-top:clamp(16px,2vw,20px);background:#FAF3E4;border:1px solid rgba(20,52,42,.14)">
+            <div style="font:400 clamp(19px,2vw,22px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ tituloCancelas }}</div>
+            <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#2C4A38;margin-top:7px;max-width:56ch;text-wrap:pretty">{{ notaCancelas }}</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:14px">
+              <sc-for list="{{ cancelas }}" as="b" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:#FFFBF0">
+                  <!-- El nombre, quién la bajó, cuándo y el motivo envuelven
+                       entre ellos; la flecha se queda fuera de ese grupo
+                       para no caer sola en una línea en el celular. -->
+                  <div style="flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px">
+                    <span style="font:500 14px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ b.nombre }}</span>
+                    <span style="{{ b.estiloQuien }}">{{ b.quien }}</span>
+                    <span style="font:400 12px/1.3 'Inter Tight',sans-serif;color:#566A5D;white-space:nowrap">{{ b.cuando }}</span>
+                    <sc-if value="{{ b.hayMotivo }}" hint-placeholder-val="{{ false }}">
+                      <span style="flex:1 1 100%;font:400 12px/1.45 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ b.motivo }}</span>
+                    </sc-if>
+                  </div>
+                  <a href="{{ b.perfil }}" aria-label="Ver el perfil de {{ b.nombre }}" style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-width:34px;min-height:34px;border-radius:999px"><span style="width:26px;height:26px;border-radius:999px;background:rgba(20,52,42,.09);color:#1B5138;display:flex;align-items:center;justify-content:center;font:500 12px/1 'Inter Tight',sans-serif">→</span></a>
                 </div>
               </sc-for>
             </div>
@@ -1810,6 +1842,58 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+/**
+ * Las semanas que hay por detrás, de la más reciente a la más vieja.
+ *
+ * Michael, 23-10: «El botón ver fechas anteriores está ok, pero no puede
+ * irse a la primera, sino quedarse en la inmediatamente anterior e ir
+ * mostrando semana anterior por semana anterior, hasta que no tenga más
+ * fechas anteriores.»
+ *
+ * Antes era un interruptor: o ninguna pasada, o las treinta y tantas de
+ * golpe, y como el carril elige «la primera que se ve» y las fechas vienen
+ * de vieja a nueva, el detalle de abajo saltaba a una cena de agosto.
+ *
+ * La semana es la de Caracas y empieza en lunes, que es la semana en la que
+ * se piensa el trabajo: la cena del viernes y la del sábado siguiente son
+ * la misma tanda, y destapar una partiría el fin de semana en dos.
+ */
+function lunesDeAro(iso) {
+  const d = new Date(new Date(iso).getTime() - 4 * 3600000);
+  // Sobre la fecha ya corrida a Caracas, y con el domingo contando con la
+  // semana que TERMINA, no con la que empieza.
+  const atras = (d.getUTCDay() + 6) % 7;
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - atras);
+}
+
+function semanasDetras(fechas) {
+  const vistas = [];
+  (fechas || []).forEach((f) => {
+    if (!f || !f.pasada || !f.empiezaEn) return;
+    const l = lunesDeAro(f.empiezaEn);
+    if (vistas.indexOf(l) === -1) vistas.push(l);
+  });
+  return vistas.sort((a, b) => b - a);
+}
+
+/**
+ * El filtro del carril, en un solo sitio.
+ *
+ * Lo tienen que compartir el carril y `fechaElegida()`: cuando no
+ * coincidían, los botones trabajaban sobre una fecha que la pantalla no
+ * enseñaba, y eso ya costó repartir agosto una vez.
+ */
+function filtroDeFechas(fechas, semanasAtras, verPrueba) {
+  const abiertas = semanasDetras(fechas).slice(0, Math.max(0, semanasAtras || 0));
+  return (f) => {
+    if (!f) return false;
+    if (f.esPrueba && !verPrueba) return false;
+    if (!f.pasada) return true;
+    if (!f.empiezaEn) return abiertas.length > 0;
+    return abiertas.indexOf(lunesDeAro(f.empiezaEn)) !== -1;
+  };
+}
+
 class Component extends DCLogic {
   // ---------------------------------------------------------------------
   // Esta pantalla NO simula nada.
@@ -1828,6 +1912,8 @@ class Component extends DCLogic {
   state = {
     vista: 0, decididas: {}, conciliadas: {}, abriendo: null, motivos: {},
     fechaRep: 0, publicadas: {}, forzadas: {}, verPrueba: false,
+    // Cuántas semanas de atrás están destapadas. 0 = ninguna pasada.
+    semanasAtras: 0,
     sub: 'abrir', diaSel: -1, formatoSel: 0, zonasSel: {}, abierta: false,
     actividad: '', distancia: '', duracion: '', nivel: -1,
     limitado: false, tope: '', precio: undefined,
@@ -1965,6 +2051,30 @@ class Component extends DCLogic {
    * Solo se llama al montar y al cambiar de pestaña. En cada render pelearía
    * con el dedo de quien está deslizando.
    */
+  /**
+   * Trae la fecha elegida a la vista dentro de su carril.
+   *
+   * Hace falta desde que las pasadas se destapan semana a semana: las
+   * fechas van de vieja a nueva, así que cada semana que se destapa entra
+   * por la IZQUIERDA y empuja la elegida fuera de la pantalla. Sin esto, el
+   * detalle de abajo hablaba de una fecha que arriba no se veía.
+   *
+   * Restando rectángulos y no con `scrollIntoView`, por lo mismo que el
+   * carril de pestañas: ahí dentro también arrastra la página en vertical.
+   */
+  centrarFecha() {
+    setTimeout(() => {
+      const carril = document.querySelector('.aro-rail');
+      const activa = carril && carril.querySelector('[data-fecha-activa]');
+      if (!activa) return;
+      const r = activa.getBoundingClientRect();
+      const rc = carril.getBoundingClientRect();
+      const MARGEN = 8;
+      if (r.left < rc.left) carril.scrollLeft -= (rc.left - r.left) + MARGEN;
+      else if (r.right > rc.right) carril.scrollLeft += (r.right - rc.right) + MARGEN;
+    }, 0);
+  }
+
   centrarPestana() {
     // Trae la pestaña activa a la vista dentro del carril.
     //
@@ -2526,8 +2636,7 @@ class Component extends DCLogic {
     // El MISMO filtro que el carril. Si aquí no se mirara lo de prueba, los
     // botones trabajarían sobre una fecha que la pantalla no enseña, que es
     // el descuadre que ya costó repartir agosto.
-    const seVe = (f) => (!!this.state.verPasadas || !f.pasada)
-      && (!!this.state.verPrueba || !f.esPrueba);
+    const seVe = filtroDeFechas(fs, this.state.semanasAtras, this.state.verPrueba);
     const elegida = fs[this.state.fechaRep];
     if (elegida && seVe(elegida)) return elegida;
     return fs.filter(seVe)[0] || fs[0] || null;
@@ -3256,6 +3365,14 @@ class Component extends DCLogic {
     const PROPUESTA = CORRIDA ? (CORRIDA.propuesta || []) : [];
     const ESPERA_SRV = CORRIDA ? (CORRIDA.espera || []) : [];
     const SEDES = REP ? (REP.sedes || []) : [];
+    /**
+     * Quién canceló ESTA fecha, tal como lo manda /api/operacion/repartir.
+     *
+     * No sale del reparto ni del pool: son reservas que ya no están, y por
+     * eso no aparecían en ninguna parte de esta pantalla. La diferencia
+     * entre «se bajó» y «la bajamos nosotros» viaja en `suya`.
+     */
+    const CANCELAS = REP ? (REP.cancelaciones || []) : [];
 
     /**
      * Dónde cena cada mesa, y cómo cambiarlo.
@@ -3515,8 +3632,10 @@ class Component extends DCLogic {
      * sería esconder el trabajo.
      */
     const FECHAS_VIVAS = FECHAS_REP.filter((f) => !f.pasada);
-    const FECHAS_PASADAS = FECHAS_REP.filter((f) => f.pasada);
-    const verPasadas = !!St.verPasadas;
+    const SEMANAS_DETRAS = semanasDetras(FECHAS);
+    // Topado a las que existen: si se destapan todas y luego entra una
+    // fecha nueva, el contador no se queda apuntando a un hueco.
+    const SEMANAS_ATRAS = Math.min(St.semanasAtras || 0, SEMANAS_DETRAS.length);
 
     /**
      * Y las de prueba, fuera del carril salvo que se pidan.
@@ -3532,7 +3651,7 @@ class Component extends DCLogic {
      */
     const FECHAS_PRUEBA = FECHAS_REP.filter((f) => f.esPrueba);
     const verPrueba = !!St.verPrueba;
-    const seVe = (f) => (verPasadas || !f.pasada) && (verPrueba || !f.esPrueba);
+    const seVe = filtroDeFechas(FECHAS, SEMANAS_ATRAS, verPrueba);
 
     // La elegida, o la primera que se ve. `FECHAS_REP[0]` era la primera de
     // TODAS, así que con las pasadas ocultas el carril enseñaba tres fechas
@@ -4546,6 +4665,8 @@ class Component extends DCLogic {
       const nz = suyas.length;
       return {
         titulo: f.titulo, icono: on ? '✓' : '',
+        // Para poder traerla a la vista cuando el carril crece por detrás.
+        activa: on ? '1' : null,
         /**
          * Lo que distingue una fecha de la de al lado: la edad y el idioma.
          *
@@ -5629,12 +5750,75 @@ class Component extends DCLogic {
       fechasRep, zonasRep, tiposRep,
       // Se enseña solo si hay algo que enseñar: un botón que no cambia nada
       // es ruido.
-      hayPasadas: FECHAS_PASADAS.length > 0,
-      textoPasadas: verPasadas
-        ? 'Ocultar las que ya pasaron'
-        : 'Ver las ' + FECHAS_PASADAS.length + ' que ya pasaron',
-      botonPasadas: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:' + (verPasadas ? '#F2E9D5' : 'transparent') + ';font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F;cursor:pointer;white-space:nowrap',
-      tocarPasadas: () => this.setState({ verPasadas: !verPasadas, fechaRep: 0, fechaVer: 0 }),
+      // Una semana más atrás, mientras queden. Cuando no quedan, el botón
+      // se va: «no tiene más que mostrar» es la respuesta, no un botón que
+      // no hace nada.
+      hayPasadas: SEMANAS_ATRAS < SEMANAS_DETRAS.length,
+      /**
+       * El botón dice QUÉ semana destapa, no «una más».
+       *
+       * La primera pulsación casi nunca es «la semana anterior»: hoy es
+       * sábado y lo que aparece es el jueves y el viernes de ESTA semana.
+       * Un botón que lo llamara «anterior» estaría mintiendo sobre lo que
+       * va a enseñar, y con fechas que se parecen eso se paga mirando la
+       * cena equivocada.
+       */
+      textoPasadas: (function () {
+        const lunes = SEMANAS_DETRAS[SEMANAS_ATRAS];
+        const cuantas = FECHAS_REP.filter(
+          (f) => f.pasada && f.empiezaEn && lunesDeAro(f.empiezaEn) === lunes
+            && (verPrueba || !f.esPrueba)
+        ).length;
+        const cola = cuantas === 1 ? ' (1 fecha)' : ' (' + cuantas + ' fechas)';
+        if (lunes === lunesDeAro(new Date().toISOString())) {
+          return 'Ver lo que ya pasó esta semana' + cola;
+        }
+        const l = new Date(lunes);
+        const d = new Date(lunes + 6 * 86400000);
+        const rango = l.getUTCMonth() === d.getUTCMonth()
+          ? l.getUTCDate() + ' al ' + d.getUTCDate() + ' de ' + MESES[l.getUTCMonth()]
+          : l.getUTCDate() + ' de ' + MESES[l.getUTCMonth()] + ' al ' + d.getUTCDate() + ' de ' + MESES[d.getUTCMonth()];
+        return 'Ver la semana del ' + rango + cola;
+      })(),
+      botonPasadas: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F;cursor:pointer;white-space:nowrap',
+      /**
+       * Y se queda en la INMEDIATAMENTE anterior.
+       *
+       * Antes esto hacía `fechaRep: 0`, y como «la primera que se ve» es la
+       * más vieja de todas —las fechas vienen de vieja a nueva—, destapar
+       * las pasadas mandaba el detalle de abajo a agosto. Ahora salta a la
+       * última fecha de la semana que se acaba de destapar, que es la que
+       * se estaba buscando al pulsar.
+       */
+      tocarPasadas: () => {
+        const n = SEMANAS_ATRAS + 1;
+        const lunes = SEMANAS_DETRAS[SEMANAS_ATRAS];
+        // La ÚLTIMA de la semana que se acaba de destapar: se pulsa para
+        // mirar esa semana, así que dejar el detalle donde estaba haría que
+        // la segunda pulsación no pareciera hacer nada.
+        let i = St.fechaRep;
+        for (let k = 0; k < FECHAS_REP.length; k += 1) {
+          const f = FECHAS_REP[k];
+          if (f.pasada && f.empiezaEn && lunesDeAro(f.empiezaEn) === lunes
+            && (verPrueba || !f.esPrueba)) i = k;
+        }
+        this.setState({ semanasAtras: n, fechaRep: i, fechaVer: i }, () => this.centrarFecha());
+      },
+      // Volver a dejar solo las vivas. Separado del otro botón porque son
+      // dos cosas: una avanza y la otra deshace.
+      hayOcultarPasadas: SEMANAS_ATRAS > 0,
+      textoOcultarPasadas: 'Ocultar las que ya pasaron',
+      botonOcultarPasadas: 'display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:#F2E9D5;font:500 13px/1 \'Inter Tight\',sans-serif;color:#33513F;cursor:pointer;white-space:nowrap',
+      tocarOcultarPasadas: () => {
+        // A la primera VIVA, no al índice 0: el 0 es una pasada y volvería
+        // a dejar el detalle en una fecha que el carril ya no enseña.
+        const ve = filtroDeFechas(FECHAS, 0, verPrueba);
+        let i = 0;
+        for (let k = 0; k < FECHAS_REP.length; k += 1) {
+          if (ve(FECHAS_REP[k])) { i = k; break; }
+        }
+        this.setState({ semanasAtras: 0, fechaRep: i, fechaVer: i }, () => this.centrarFecha());
+      },
 
       hayPrueba: FECHAS_PRUEBA.length > 0,
       textoPrueba: verPrueba
@@ -5906,6 +6090,34 @@ class Component extends DCLogic {
               ? 'Está abajo en la espera, marcada. Siéntala a mano con «Sentar» y no se mueve nadie más, o vuelve a repartir si prefieres rehacerlas.'
               : 'Están abajo en la espera, marcadas. Siéntalas a mano con «Sentar» y no se mueve nadie más, o vuelve a repartir si prefieres rehacerlas.'));
       })(),
+
+      hayCancelas: CANCELAS.length > 0,
+      tituloCancelas: CANCELAS.length === 1
+        ? 'Una cancelación' : CANCELAS.length + ' cancelaciones',
+      // Los dos grupos por separado: lo que hay que mirar es si alguien se
+      // bajó, porque esa silla se quedó vacía sin que nadie lo decidiera.
+      notaCancelas: (function () {
+        const suyas = CANCELAS.filter((c) => c.suya).length;
+        const nuestras = CANCELAS.length - suyas;
+        const partes = [];
+        if (suyas) partes.push(suyas === 1 ? 'una se bajó' : suyas + ' se bajaron');
+        if (nuestras) partes.push(nuestras === 1 ? 'a una la bajamos nosotros' : 'a ' + nuestras + ' las bajamos nosotros');
+        return 'De esta fecha, ' + partes.join(' y ')
+          + '. Su crédito ya volvió y no cuentan entre los apuntados.';
+      })(),
+      cancelas: CANCELAS.map((c) => ({
+        nombre: c.nombre,
+        perfil: '/miembro?id=' + c.profileId,
+        quien: c.suya ? 'Se bajó' : 'La bajamos',
+        estiloQuien: 'flex:0 0 auto;padding:3px 9px;border-radius:999px;white-space:nowrap;'
+          + "font:500 11px/1.3 'Inter Tight',sans-serif;"
+          + (c.suya
+            ? 'background:rgba(143,69,21,.12);color:#8F4515'
+            : 'background:rgba(20,52,42,.09);color:#33513F'),
+        cuando: c.cuando ? diaTexto(c.cuando) + ', ' + horaTexto(c.cuando) : 'Sin fecha',
+        hayMotivo: !!c.motivo,
+        motivo: c.motivo || '',
+      })),
 
       tituloEspera: sinRepartir
         ? (apuntados.length === 1 ? 'Una persona apuntada' : apuntados.length + ' apuntados')
