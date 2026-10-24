@@ -326,14 +326,20 @@ export async function GET(request: Request) {
       ]
     : []
 
-  const { data: siguenApuntados } = enLaPropuesta.length
-    ? await admin
-        .from('bookings')
-        .select('profile_id, permiso_grabacion')
-        .eq('event_id', evento.id)
-        .eq('status', 'confirmed')
-        .in('profile_id', enLaPropuesta)
-    : { data: [] }
+  /**
+   * Y de toda la fecha, no solo de la propuesta.
+   *
+   * Miraba únicamente a los que estaban en la propuesta guardada, así que
+   * quien entró a una mesa DESPUÉS —al rellenarse un hueco— no aparecía en
+   * esta lista y la tarjeta lo pintaba tachado con un «Ya no está» encima
+   * de alguien que está sentado y con su correo mandado. Preguntar por la
+   * fecha entera cuesta lo mismo y no se puede quedar corto.
+   */
+  const { data: siguenApuntados } = await admin
+    .from('bookings')
+    .select('profile_id, permiso_grabacion')
+    .eq('event_id', evento.id)
+    .eq('status', 'confirmed')
 
   const vivos = new Set((siguenApuntados ?? []).map((b) => b.profile_id))
 
@@ -357,6 +363,39 @@ export async function GET(request: Request) {
     .eq('event_id', evento.id)
 
   const mesaPorNumero = new Map((mesasVivas ?? []).map((m) => [m.table_number, m]))
+
+  /**
+   * QUIÉN ESTÁ SENTADO DE VERDAD EN CADA MESA PUBLICADA.
+   *
+   * El panel dibujaba las mesas y la espera desde `matching_runs.proposal`,
+   * que es la foto del momento en que alguien pulsó repartir. Una mesa
+   * publicada ya no es una propuesta: es `table_members`, y entre las dos
+   * cosas pasan cosas.
+   *
+   * Michael, 24-10: Kris canceló a las 11:26 de una mesa publicada a las
+   * 5:23. El sistema la sacó, buscó en la espera a quien encajara con los
+   * cinco que quedaban y sentó a Michael, que era quien mejor puntuaba. Todo
+   * correcto y escrito a propósito. Pero el panel seguía enseñando a Kris
+   * sentada y a Michael en espera, con el texto de «se les avisa hoy y su
+   * crédito no se toca» debajo de alguien que tenía mesa y correo.
+   *
+   * «Si el panel está mal es un error grave, el panel es el que manda.»
+   * Así que para una mesa publicada manda `table_members`, y la espera es
+   * quien no está sentado en ninguna.
+   */
+  const { data: sentadosEnMesa } = (mesasVivas ?? []).length
+    ? await admin
+        .from('table_members')
+        .select('table_id, profile_id')
+        .in('table_id', (mesasVivas ?? []).map((m) => m.id))
+    : { data: [] as { table_id: string; profile_id: string }[] }
+
+  const sentadosPorMesa = new Map<string, string[]>()
+  const conSilla = new Set<string>()
+  for (const f of sentadosEnMesa ?? []) {
+    sentadosPorMesa.set(f.table_id, [...(sentadosPorMesa.get(f.table_id) ?? []), f.profile_id])
+    conSilla.add(f.profile_id)
+  }
 
   /**
    * El número que se dice de cada mesa publicada, también por aquí.
@@ -616,7 +655,44 @@ export async function GET(request: Request) {
               if (!viva?.avisado_local_at) return null
               return { cuando: viva.avisado_local_at, cuantos: viva.avisado_local_num ?? 0 }
             })(),
-            integrantes: (m.integrantes ?? []).map((p) => ({
+            /**
+             * Los de VERDAD si la mesa ya está publicada.
+             *
+             * Se parte de la propuesta, que es la que trae el nombre de
+             * trato y el sector de aquel día, y se corrige con
+             * `table_members`: fuera quien ya no está en esa mesa, dentro
+             * quien entró después. Los que entraron después no tienen fila
+             * en la propuesta, así que se arman del pool, igual que los que
+             * llegan tarde a la espera.
+             *
+             * Si la mesa NO está publicada no se toca nada: ahí la propuesta
+             * SÍ es la verdad, porque no hay otra.
+             */
+            integrantes: ((): { profileId: string; sector: string | null }[] => {
+              const mesaViva = mesaPorNumero.get((m as unknown as { numero: number }).numero)
+              const guardados = m.integrantes ?? []
+              if (!mesaViva) return guardados
+
+              const deVerdad = sentadosPorMesa.get(mesaViva.id) ?? []
+              const siguen = guardados.filter((p) => deVerdad.includes(p.profileId))
+              const nuevos = deVerdad
+                .filter((id) => !guardados.some((p) => p.profileId === id))
+                .map((id) => {
+                  const suyo = (pool ?? []).find((x) => x.profile_id === id)
+                  return {
+                    profileId: id,
+                    nombre: nombreDe.get(id) ?? 'Sin nombre',
+                    zonas: (suyo?.zones ?? []) as string[],
+                    edad: suyo?.age ?? null,
+                    genero: suyo?.gender ?? null,
+                    sector: suyo?.industry ?? null,
+                    empresa: suyo?.employer_key ?? null,
+                    tramoGasto: suyo?.budget_tier ?? null,
+                    dietas: (suyo?.dietary ?? []) as string[],
+                  } as unknown as { profileId: string; sector: string | null }
+                })
+              return [...siguen, ...nuevos]
+            })().map((p) => ({
               ...p,
               movidaDe: movidaDe.get(p.profileId) ?? null,
               // Qué contestó al «¿te podemos grabar?». `null` es que no ha
@@ -708,6 +784,10 @@ export async function GET(request: Request) {
 
             const guardada = ((corrida.unmatched ?? []) as unknown as { profileId: string }[])
               .filter((p) => enElPool.has(p.profileId))
+              // Y quien ya tiene silla publicada no está esperando nada. Es
+              // lo que pasó con Michael: entró a una mesa al cancelar otra
+              // persona, y el panel lo seguía contando en espera.
+              .filter((p) => !conSilla.has(p.profileId))
               .map((p) => ({
                 ...p,
                 movidaDe: movidaDe.get(p.profileId) ?? null,
@@ -734,6 +814,7 @@ export async function GET(request: Request) {
 
             const tarde = (pool ?? [])
               .filter((x) => x.profile_id && !colocados.has(x.profile_id))
+              .filter((x) => !conSilla.has(x.profile_id as string))
               .map((x) => ({
                 profileId: x.profile_id as string,
                 movidaDe: movidaDe.get(x.profile_id as string) ?? null,
