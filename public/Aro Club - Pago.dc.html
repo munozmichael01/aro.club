@@ -366,7 +366,7 @@
       <div style="animation:aro-open 420ms ease both">
         <div style="{{ selloListo }}">PAGO CONFIRMADO</div>
         <h1 style="{{ h1 }}">{{ tituloListo }}</h1>
-        <p style="{{ bajada }}">Cuadramos tu pago con el banco y tu puesto está confirmado. A las doce del mediodía se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
+        <p style="{{ bajada }}">Cuadramos tu pago con el banco y tu puesto está confirmado. {{ seAbreA }} se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
 
         <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,26px);margin-top:clamp(24px,3.4vw,32px)">
           <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:16px">COMPROBANTE</div>
@@ -399,7 +399,7 @@
       <div style="animation:aro-open 420ms ease both">
         <div style="{{ selloListo }}">PUESTO APARTADO</div>
         <h1 style="{{ h1 }}">Listo. Tu puesto es tuyo.</h1>
-        <p style="{{ bajada }}">Tu código cubre la plaza, así que no tienes que pagar nada ni reportar ningún pago. A las doce del mediodía del día de la cena se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
+        <p style="{{ bajada }}">Tu código cubre la plaza, así que no tienes que pagar nada ni reportar ningún pago. {{ seAbreA }} se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
 
         <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:14px 16px;margin-top:clamp(20px,3vw,26px);max-width:46ch">
           <span style="{{ iconoAviso }}">!</span>
@@ -1047,6 +1047,21 @@ class Component extends DCLogic {
         : 'Se cobra al confirmar. Si cancelas con margen, vuelve a tu cuenta sola.',
       tituloEnviando: mSel.manual ? 'Enviando tu reporte.' : 'Confirmando el cobro.',
       tituloListo: cuandoEv ? 'Nos vemos el ' + DIAS[cuandoEv.getDay()].toLowerCase() + ' ' + cuandoEv.getDate() + '.' : 'Nos vemos.',
+      /**
+       * «A las doce del mediodía se abre todo», que en un brunch es falso.
+       *
+       * De `revelaDe`, la misma regla con la que el servidor calcula
+       * `reveal_at`. Esta pantalla no recibe `revelaEn`, así que la deriva
+       * de la hora de inicio, que es de donde sale también en el servidor.
+       */
+      seAbreA: (() => {
+        const r = (D.evento && D.evento.empiezaEn && window.AroReglas && window.AroReglas.revelaDe)
+          ? window.AroReglas.revelaDe(D.evento.empiezaEn, D.evento.zonaHoraria)
+          : null;
+        if (!r) return 'A las doce del mediodía';
+        const hora = r.enLetra === 'mediodía' ? 'las doce del mediodía' : r.enLetra;
+        return r.mismoDia ? 'A ' + hora : 'El día antes, a ' + hora + ',';
+      })(),
 
       /**
        * Esta mesa se habla en otro idioma y no lo tenemos: se pregunta ANTES

@@ -1170,6 +1170,53 @@
     },
 
     /** Y como se dice, con el dia dentro para no obligar a nadie a restar. */
+    /**
+     * CUÁNDO SE SABE CON QUIÉN VAS, en las palabras de cada sitio.
+     *
+     * La regla: las cenas se revelan el MISMO día a las 12:00; los planes
+     * de mañana, la VÍSPERA a las 6:00 p.m. Vive en el servidor desde que
+     * existe `revelacionDe`, pero el copy la tenía escrita a mano en una
+     * docena de sitios como «a mediodía del día de la cena», así que a
+     * quien reservaba un brunch se le prometía una hora que no era la suya.
+     *
+     * Devuelve las PIEZAS y no una frase, porque las doce frases no tienen
+     * la misma forma: una dice «el mismo día de la cena, a las doce del
+     * mediodía», otra «el sábado al mediodía» y otra «a las 12:00 · el día
+     * antes». Lo que no puede divergir es la REGLA, y esa está aquí.
+     *
+     * `revelaIso` manda si se le pasa: una fecha puede tener su revelación
+     * movida a mano, y entonces la de la columna es la verdad.
+     */
+    revelaDe: function (inicioIso, zona, revelaIso) {
+      var t = Date.parse(inicioIso)
+      if (!isFinite(t)) return null
+
+      var cuando = revelaIso && isFinite(Date.parse(revelaIso)) ? revelaIso : null
+      if (!cuando) {
+        // Caracas va cuatro horas por detrás y no cambia con la estación, así
+        // que su calendario se saca restando y su instante se arma sumando.
+        var c = new Date(t - 4 * 3600000)
+        var medianoche = Date.UTC(c.getUTCFullYear(), c.getUTCMonth(), c.getUTCDate())
+        cuando = c.getUTCHours() < 12
+          ? new Date(medianoche - 24 * 3600000 + (18 + 4) * 3600000).toISOString()
+          : new Date(medianoche + (12 + 4) * 3600000).toISOString()
+      }
+
+      var p = api.partesDe(cuando, zona)
+      return {
+        /** El ISO de la revelación: el de la fecha si lo trae, o el de la regla. */
+        cuando: cuando,
+        /** Si cae el mismo día del plan o la víspera. */
+        mismoDia: api.diaDe(cuando, zona) === api.diaDe(inicioIso, zona),
+        /** El día de la semana en que se sabe. */
+        dia: api.diaDe(cuando, zona) || '',
+        /** «12:00 p.m.» / «6:00 p.m.», para las frases que dan la hora exacta. */
+        hora: api.horaDe(cuando, zona) || '',
+        /** «mediodía» / «las seis de la tarde», para las que la dicen en letra. */
+        enLetra: p && p.horas === 12 ? 'mediodía' : 'las ' + api.horaEnLetraDe(cuando, zona),
+      }
+    },
+
     textoCierre: function (inicioIso, zona) {
       var t = Date.parse(inicioIso)
       if (!isFinite(t)) return ''
@@ -1736,7 +1783,7 @@
     FRECUENTES_AGENDA: [
       ['¿Con quién me siento?', 'Con cinco personas verificadas que elegimos según tus respuestas del cuestionario. No eliges tú, y nadie te elige.'],
       ['¿Dónde son los planes?', 'En Caracas. Por ahora en {zonas}. Abrimos zonas donde se junta más gente.'],
-      ['¿Cuándo sé el sitio?', 'El mismo día del plan a las 12:00 te llega el sitio y quién va contigo. Antes solo ves la zona.'],
+      ['¿Cuándo sé el sitio?', 'El sitio y quién va contigo llegan a las 12:00 del mismo día. En los planes de mañana, como el brunch, a las 6:00 p.m. del día anterior. Antes, solo la zona.'],
       ['¿Qué incluye el precio?', 'Tu puesto en el grupo. Lo que comas y bebas se paga aparte en el sitio, cada quien lo suyo.'],
       ['¿Cómo pago?', 'Pago Móvil, transferencia, Zelle o Bizum. Si pagas en bolívares, es a la tasa del día.'],
     ],

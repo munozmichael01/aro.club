@@ -5235,7 +5235,10 @@ class Component extends DCLogic {
       ['Día', dSel ? fmt(dSel) : 'Sin elegir', !!dSel],
       ['Hora', dSel ? fSel[1] + ' · la pone el formato' : fSel[1], false],
       ['Se cierra', cierre ? (fmt(cierre) + ' a las ' + new Intl.DateTimeFormat('es-VE', { timeZone: 'America/Caracas', hour: 'numeric', minute: '2-digit', hour12: true }).format(cierre)) : '—', !!cierre],
-      ['Se revela', revela ? fmt(revela) + ' a las 12:00' + (mananero ? ' · el día antes' : '') : 'a las 12:00', !!revela],
+      // La hora de verdad: a mediodía las cenas, a las 6:00 p.m. de la
+      // víspera los planes de mañana. Decía «a las 12:00 · el día antes»,
+      // que junta las dos mitades de dos reglas distintas.
+      ['Se revela', revela ? fmt(revela) + ' a las ' + (mananero ? '6:00 p.m.' : '12:00') + (mananero ? ' · el día antes' : '') : 'a las 12:00', !!revela],
       ['Idioma', St.idiomaFecha ? ({ en: 'Inglés · solo la ve quien lo marcó', pt: 'Portugués · solo la ve quien lo marcó', fr: 'Francés · solo la ve quien lo marcó' }[St.idiomaFecha] || St.idiomaFecha) : 'Español', !!St.idiomaFecha],
       ['Cupo', 'Abierto · quien no entre queda en espera', true],
       ['Precio', precioOk ? precioNum.toFixed(2).replace('.', ',') + ' ref por plaza' : 'Falta el precio', precioOk],

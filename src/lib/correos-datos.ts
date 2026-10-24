@@ -7,7 +7,7 @@ import { enlaceDeMapa } from '@/lib/mapa'
 import { avisoDeDosHoras, FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
-import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, textoCierre, vozDe } from '@/lib/reglas'
+import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
@@ -379,6 +379,24 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
      * salía «Son las doce de la tarde», que además de sobrar es falso, que
      * el mediodía no es la tarde.
      */
+    /**
+     * «El mismo día de la cena, a las doce del mediodía».
+     *
+     * Estaba escrito a mano en el correo del pago confirmado y en el del
+     * puesto con cupón, y las dos frases son falsas para un brunch: ese se
+     * revela la víspera a las seis. La regla sale de `revelaDe`, que es la
+     * misma que usa el servidor para calcular `reveal_at`.
+     */
+    cuandoSeAbre: (() => {
+      const r = evento?.starts_at
+        ? revelaDe(evento.starts_at, ZONA_POR_DEFECTO, evento.reveal_at)
+        : null
+      if (!r) return `El mismo día ${voz.delPlan}, a las doce del mediodía`
+      const hora = r.enLetra === 'mediodía' ? 'las doce del mediodía' : r.enLetra
+      return r.mismoDia
+        ? `El mismo día ${voz.delPlan}, a ${hora}`
+        : `El día antes ${voz.delPlan}, a ${hora}`
+    })(),
     revelaHoraEnLetra: (() => {
       const h = evento?.reveal_at ? partesDe(evento.reveal_at, ZONA_POR_DEFECTO)?.horas : 12
       return HORAS_EN_LETRA[(h ?? 12) % 12]

@@ -75,7 +75,7 @@
       <div id="cerrada" style="animation:aro-open 380ms ease both">
         <div style="{{ selloEspera }}">{{ textoEspera }}</div>
         <h1 style="{{ h1 }}">{{ tituloEspera }}</h1>
-        <p style="{{ bajada }}">A mediodía se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
+        <p style="{{ bajada }}">{{ seAbreA }} se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
 
         <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(24px,3.4vw,32px)">
           <div style="font:700 clamp(38px,10vw,54px)/1 'Inter Tight',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:#14342A">{{ cuenta }}</div>
@@ -1811,6 +1811,22 @@ class Component extends DCLogic {
       // sirviendo a los demás formatos sin tocarlo.
       // La encuesta sí está escrita para cenas, y el brunch ya no se lee
       // como «un café o una salida de movimiento»: la nota sobra ahí.
+      /**
+       * «A mediodía se abre todo», que no es verdad en un brunch.
+       *
+       * De `revelaDe`, que es la misma regla con la que el servidor calcula
+       * `reveal_at`: el mismo día a mediodía las cenas, la víspera a las
+       * seis los planes de mañana.
+       */
+      seAbreA: (() => {
+        const r = (dt && dt.empiezaEn && window.AroReglas && window.AroReglas.revelaDe)
+          ? window.AroReglas.revelaDe(dt.empiezaEn, dt.zonaHoraria, dt.revelaEn)
+          : null;
+        if (!r) return 'A mediodía';
+        return r.mismoDia
+          ? 'A ' + r.enLetra
+          : 'El día antes, a ' + r.enLetra + ',';
+      })(),
       notaSoloCenas: esCena,
       // «Esta noche» en una cena, «Hoy» en un brunch. Con mayúscula, que
       // abre la frase.
