@@ -89,6 +89,27 @@ export const PANTALLAS = {
       },
     },
     { caso: 'abierta', rutas: { '/api/mi-mesa': MESA_ABIERTA } },
+    /**
+     * Y el brunch con la mesa entera.
+     *
+     * Desde el 24-10 un brunch lleva la misma Mi mesa que una cena: foto de
+     * la entrada, paso a paso, juego y aviso de dos horas. Lo que NO lleva
+     * son bares, y eso viaja en `paraSeguir` vacío desde el servidor: de ahí
+     * cuelgan la coletilla de «hay sitios cerca» y el bloque del paso a
+     * paso, así que el caso tiene que traerlo vacío para que se mire lo que
+     * de verdad va a ver esa gente.
+     */
+    {
+      caso: 'brunch',
+      rutas: {
+        '/api/mi-mesa': {
+          ...MESA_ABIERTA,
+          formato: 'brunch',
+          paraSeguir: [],
+          avisoDosHoras: 'La mesa es tuya por dos horas, de 11:00 a.m. a 1:00 p.m. El restaurante puede tener otra reserva esperando esa mesa, así que tenlo en cuenta para la sobremesa.',
+        },
+      },
+    },
     {
       caso: 'cerrada',
       rutas: {

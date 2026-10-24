@@ -84,6 +84,10 @@ type Api = {
   // Con `zona`: la buena es la de la ciudad de cada fecha, y sin el parametro
   // en el tipo no habia forma de pedirla desde el servidor sin un cast.
   diaDe: (iso: string | null | undefined, zona?: string) => string | null
+  DE_MESA_COMPLETA: string[]
+  tieneMesaCompleta: (formato: string | null | undefined) => boolean
+  DE_MANANA: string[]
+  esDeManana: (formato: string | null | undefined) => boolean
   horaDe: (iso: string | null | undefined, zona?: string) => string | null
   partesDe: (
     iso: string | null | undefined,
@@ -157,6 +161,10 @@ export const ZONA_POR_DEFECTO: string = api.ZONA
 export const diaDe = api.diaDe
 /** «doce», «una», «dos»… por hora del reloj de doce, sin la franja. */
 export const HORAS_EN_LETRA = api.HORAS_EN_LETRA
+/** Qué formatos llevan la Mi mesa entera: foto, paso a paso, juego y las dos horas. */
+export const tieneMesaCompleta = api.tieneMesaCompleta.bind(api)
+/** Los que empiezan por la mañana: se revelan la víspera y no llevan bares. */
+export const esDeManana = api.esDeManana.bind(api)
 export const horaDe = api.horaDe
 export const partesDe = api.partesDe
 export const MESES = api.MESES

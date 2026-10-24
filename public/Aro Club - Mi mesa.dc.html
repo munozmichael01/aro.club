@@ -503,7 +503,9 @@
         <h1 style="{{ h1 }}">¿Qué tal estuvo?</h1>
         <p style="{{ bajada }}">{{ textoAnoche }}</p>
 
-        <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:8px">Pensado para cenas. Un café o una salida de movimiento se van a preguntar distinto más adelante.</div>
+        <sc-if value="{{ notaSoloCenas }}" hint-placeholder-val="{{ true }}">
+          <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:8px">Pensado para cenas. Un café o una salida de movimiento se van a preguntar distinto más adelante.</div>
+        </sc-if>
 
         <sc-if value="{{ sinContar }}" hint-placeholder-val="{{ true }}">
           <div style="margin-top:clamp(26px,3.6vw,36px)">
@@ -690,12 +692,12 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2C4A38" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
         </button>
       </div>
-      <div style="margin-top:12px;font:400 16px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">Esta noche estamos grabando contenido por la zona. Si dices que no, no te grabamos y no pasa nada: la cena es igual.</div>
+      <div style="margin-top:12px;font:400 16px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ grabaCuando }} estamos grabando contenido por la zona. Si dices que no, no te grabamos y no pasa nada: {{ grabaElPlan }} es igual.</div>
       <div style="margin-top:18px;display:flex;flex-direction:column;gap:9px">
         <button onClick="{{ sePuedeGrabar }}" style="{{ botonGrabaSi }}">{{ textoGrabaSi }}</button>
         <button onClick="{{ noMeGrabes }}" style="{{ botonGrabaNo }}">{{ textoGrabaNo }}</button>
       </div>
-      <div style="margin-top:12px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">Puedes cambiarlo cuando quieras, también en la cena.</div>
+      <div style="margin-top:12px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">Puedes cambiarlo cuando quieras, también en {{ grabaElPlan }}.</div>
     </div>
   </div>
 </sc-if>
@@ -1199,8 +1201,22 @@ class Component extends DCLogic {
     // Solo para cenas por ahora: café y movimiento tendrán su versión. La
     // lista de cuáles son vive en `reglas.js` —la misma que decide si el
     // correo dice «CON QUIÉN CENAS»—, y aquí estaba escrita a mano.
+    /**
+     * QUIÉN LLEVA LA MI MESA ENTERA.
+     *
+     * Era `DE_CENA`, o sea dinner y sus dos variantes. Un brunch es seis
+     * personas sentadas dos horas en un restaurante, igual que una cena, y
+     * se quedaba con la pantalla genérica: sin la foto de la entrada, sin
+     * paso a paso, sin juego y sin el aviso de las dos horas. Michael,
+     * 24-10: «juego sí, bares no». Los bares los quita el servidor, que
+     * manda `paraSeguir` vacío en los planes de mañana.
+     *
+     * `DE_CENA` sigue existiendo y sigue decidiendo lo que de verdad es
+     * una cena, que es otra pregunta: la voz y las frases de la encuesta.
+     */
+    const mesaCompleta = !!dJ && AroReglas.tieneMesaCompleta(dJ.formato || '');
     const esCena = !!dJ && AroReglas.DE_CENA.indexOf(dJ.formato || '') >= 0;
-    const hayJuego = !!vent && esCena && this.state.fase === 1;
+    const hayJuego = !!vent && mesaCompleta && this.state.fase === 1;
     const juegoAbierto = hayJuego && ahora >= vent.abre && ahora < vent.cierra;
     const juegoCerrado = hayJuego && ahora < vent.abre;
 
@@ -1210,11 +1226,21 @@ class Component extends DCLogic {
     // Las mismas palabras que la app, y derivadas de `abreMin`: si mañana se
     // vuelve a adelantar, la frase se mueve con el número.
     const minAbre = Math.abs(J.abreMin);
+    /**
+     * Y el plan por su nombre. Desde el 24-10 el brunch lleva juego, y
+     * «se abre a la hora de la cena» a las once de la mañana no es verdad.
+     * `delPlan` vive en la voz, con el resto de las palabras del formato.
+     */
+    // De `dJ` y no de `dt`: aquí arriba `dt` todavía no existe, y leerlo
+    // deja la pantalla en «Cannot access 'dt' before initialization», que
+    // es la pantalla en blanco de siempre. Lo cazó `comprobar-pintado`.
+    const DEL_PLAN = ((window.AroReglas && window.AroReglas.vozDe)
+      ? window.AroReglas.vozDe(dJ && dJ.formato) : {}).delPlan || 'del plan';
     const cuandoAbre = J.abreMin === 0
       // «a la hora de la cena», como la app (entrega 21).
-      ? 'a la hora de la cena'
+      ? 'a la hora ' + DEL_PLAN
       : (J.abreMin < 0
-          ? (minAbre === 30 ? 'media hora antes de la cena' : minAbre + ' minutos antes de la cena')
+          ? (minAbre === 30 ? 'media hora antes ' + DEL_PLAN : minAbre + ' minutos antes ' + DEL_PLAN)
           : (minAbre === 30 ? 'media hora después de empezar' : minAbre + ' minutos después de empezar'));
     const jg = this.state.juego;
     const rondaIdx = jg ? jg.ronda : 0;
@@ -1257,7 +1283,7 @@ class Component extends DCLogic {
       // prometia quince minutos, que es una duracion que nadie cronometra y
       // que sonaba a compromiso.
       juegoBajada: 'Por si hace falta romper el hielo: unas preguntas en tres rondas, y después se guarda el teléfono.',
-      juegoCuando: horaAbre ? ('Se abre a las ' + horaAbre + ', ' + cuandoAbre + '.') : 'Se abre a la hora de la cena.',
+      juegoCuando: horaAbre ? ('Se abre a las ' + horaAbre + ', ' + cuandoAbre + '.') : ('Se abre a la hora ' + DEL_PLAN + '.'),
       abrirJuego: () => {
         // Retoma donde lo dejó ESTE teléfono: quien vuelve a entrar en la
         // ronda 2 no empieza otra vez por las reglas.
@@ -1498,7 +1524,8 @@ class Component extends DCLogic {
       : { unidad: 'mesa', unidades: 'mesas', Unidad: 'Mesa', art: 'una', el: 'la',
           sitio: 'restaurante', sentados: 'sentados', mia: 'Mi mesa', TU: 'TU MESA',
           conQuien: 'CON QUIÉN VAS', estuviste: 'Estuviste en',
-          vasCon: 'Vas con cinco personas.' };
+          vasCon: 'Vas con cinco personas.',
+          delPlan: 'del plan', elPlan: 'el plan', cuando: 'hoy' };
     const esMesa = VOZ.unidad === 'mesa';
     // Y cómo se llama el plan. La mesa cerrada decía «Cena · viernes 16»
     // siempre: con la palabra dentro de la frase, un brunch se anunciaba
@@ -1512,7 +1539,7 @@ class Component extends DCLogic {
     // El guion, las rondas y sus textos salen de `reglas.js`: los pinta esta
     // pantalla y los pinta la app, y dos copias de ocho párrafos son dos
     // guiones distintos en cuanto alguien corrija una coma.
-    const pasos = dt ? AroReglas.pasosDeLaMesa(dt.empiezaEn, dt.zonaHoraria) : [];
+    const pasos = dt ? AroReglas.pasosDeLaMesa(dt.empiezaEn, dt.zonaHoraria, dt.formato || (dJ && dJ.formato)) : [];
     const momentoCena = AroReglas.momentoDeLaMesa(pasos, ahora);
     const idxAhora = AroReglas.enCursoDeLaMesa(pasos, ahora);
     const G = AroReglas.GUION;
@@ -1782,8 +1809,15 @@ class Component extends DCLogic {
       // no tiene nada de eso. Por eso son dos bloques y no uno con diez
       // condiciones dentro: el genérico de abajo es el que había, y sigue
       // sirviendo a los demás formatos sin tocarlo.
-      esCenaAbierta: !!dt && f === 1 && esCena,
-      esAbiertaGenerica: !!dt && f === 1 && !esCena,
+      // La encuesta sí está escrita para cenas, y el brunch ya no se lee
+      // como «un café o una salida de movimiento»: la nota sobra ahí.
+      notaSoloCenas: esCena,
+      // «Esta noche» en una cena, «Hoy» en un brunch. Con mayúscula, que
+      // abre la frase.
+      grabaCuando: (VOZ.cuando || 'hoy').charAt(0).toUpperCase() + (VOZ.cuando || 'hoy').slice(1),
+      grabaElPlan: VOZ.elPlan || 'el plan',
+      esCenaAbierta: !!dt && f === 1 && mesaCompleta,
+      esAbiertaGenerica: !!dt && f === 1 && !mesaCompleta,
 
       selloTexto: momentoCena === 'antes' ? 'ABIERTO' : momentoCena === 'curso' ? 'EN CURSO' : 'TERMINADA',
       // Los tres sellos son la misma píldora melocotón: lo que cambia es la
@@ -1810,7 +1844,11 @@ class Component extends DCLogic {
       tGente: alternar('gente'),
       // El titular de la tarjeta, en minúsculas y en Young Serif: `conQuien`
       // es la versión en versales del bloque viejo y de los correos.
-      tituloGente: 'Con quién cenas',
+      // Y el título de la tarjeta, por la voz. Decía «Con quién cenas»
+      // escrito a mano, y en el brunch del domingo eso no es lo que pasa.
+      // `conQuien` ya existe para el mismo rótulo en el correo: aquí va en
+      // minúsculas porque es un título, no un antetítulo.
+      tituloGente: VOZ.conQuien === 'CON QUIÉN CENAS' ? 'Con quién cenas' : 'Con quién vas',
       // La misma frase que el correo de la revelación, servida por
       // `/api/mi-mesa`. Si la mesa está completa viene en null y no se pinta.
       hayAvisoDosHoras: !!(dJ && dJ.avisoDosHoras),

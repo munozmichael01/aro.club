@@ -1081,6 +1081,10 @@
       // de la revelación decía «cenas esta noche» escrito a mano, y a las
       // cinco personas del brunch del domingo les iba a llegar eso.
       verbo: 'vas',
+      // Y las cuatro que hablan de la hora del plan, que no es la misma en
+      // una cena que en un brunch. La genérica no se moja: «el plan», «hoy».
+      delPlan: 'del plan', elPlan: 'el plan', cuando: 'hoy',
+      verboPasado: 'ibas', ayer: 'AYER',
     },
 
     VOZ_GRUPO: {
@@ -1091,6 +1095,8 @@
       conQuien: 'CON QUIÉN VAS', estuviste: 'Estuviste en',
       vasCon: 'Vas con cinco personas.',
       verbo: 'vas',
+      delPlan: 'del plan', elPlan: 'el plan', cuando: 'hoy',
+      verboPasado: 'ibas', ayer: 'AYER',
     },
 
     /**
@@ -1335,7 +1341,17 @@
      * La mesa dura dos horas, siempre. Lo que un restaurante nos deje no es
      * un dato que tengamos: ver `duracionDeLaMesa`.
      */
-    pasosDeLaMesa: function (empiezaEn, zona) {
+    /**
+     * Los momentos de la mesa. Con `formato`, los dos que no valen igual.
+     *
+     * El tercer parámetro es opcional a propósito: sin él sale el guion de
+     * siempre, que es el de la cena, y ninguna llamada vieja cambia. En un
+     * brunch cambian dos frases y solo dos: «algo de tomar» a las once de
+     * la mañana es un café, y «busquen un sitio cerca» no aplica porque en
+     * los planes de mañana no ofrecemos bares (Michael, 24-10: «juego sí,
+     * bares no»).
+     */
+    pasosDeLaMesa: function (empiezaEn, zona, formato) {
       var t = empiezaEn ? Date.parse(empiezaEn) : NaN
       if (!isFinite(t)) return []
 
@@ -1361,14 +1377,21 @@
       // singular, y cae justo en la franja de un brunch.
       var conArticulo = /^1:/.test(limite) ? 'la ' + limite : 'las ' + limite
 
+      var deManana = api.esDeManana(formato)
+      var SUYOS = {
+        llegada: 'Pidan un café o un jugo si quieren. Esperamos a todos hasta {limite}.',
+        despedida: 'Si hay ganas de seguir, un café o una vuelta cerca. Si alguien te cayó bien, díselo.',
+      }
+
       return G.momentos.map(function (m) {
         var en = cuando(m)
+        var texto = (deManana && SUYOS[m.clave]) ? SUYOS[m.clave] : m.texto
         return {
           clave: m.clave,
           en: new Date(en).toISOString(),
           hora: api.horaDe(new Date(en).toISOString(), zona) || '',
           nombre: m.nombre,
-          texto: m.texto.replace('{limite}', conArticulo),
+          texto: texto.replace('{limite}', conArticulo),
           botonJuego: G.delJuego[m.clave] || '',
         }
       })
@@ -1625,6 +1648,36 @@
     DE_CENA: ['dinner', 'foodie_dinner', 'women_dinner'],
 
     /**
+     * QUIÉN SE SIENTA A UNA MESA DE VERDAD.
+     *
+     * No es lo mismo que `DE_CENA`, que dice qué comida es. Esto dice qué
+     * formatos merecen la Mi mesa entera: la foto de la entrada, el paso a
+     * paso, el juego y el aviso de las dos horas.
+     *
+     * El brunch los tenía todos escondidos porque la pantalla preguntaba
+     * por `DE_CENA`, y un brunch no es una cena. Pero sí es seis personas
+     * sentadas dos horas en un restaurante, que es lo que el paso a paso y
+     * el juego vienen a acompañar. Michael, 24-10, sobre el brunch del
+     * domingo: «juego sí, bares no».
+     */
+    DE_MESA_COMPLETA: ['dinner', 'foodie_dinner', 'women_dinner', 'brunch', 'women_brunch'],
+
+    tieneMesaCompleta: function (formato) {
+      return api.DE_MESA_COMPLETA.indexOf(String(formato || '')) >= 0
+    },
+
+    /**
+     * Los que empiezan por la mañana, que es lo que decide dos cosas: que
+     * se revelan la víspera y que no llevan bares para seguir. A las dos de
+     * la tarde no hay segundo acto.
+     */
+    DE_MANANA: ['brunch', 'women_brunch', 'coffee', 'walk', 'hike', 'run', 'padel', 'pilates', 'cycling'],
+
+    esDeManana: function (formato) {
+      return api.DE_MANANA.indexOf(String(formato || '')) >= 0
+    },
+
+    /**
      * La voz de un formato. Sin formato —o con uno que no conocemos— se
      * habla de mesa, que es lo que era el producto entero hasta ahora.
      */
@@ -1632,6 +1685,7 @@
       var f = String(formato || '')
       if (api.DE_MOVIMIENTO.indexOf(f) >= 0) return api.VOZ_GRUPO
       if (api.DE_CENA.indexOf(f) >= 0) return vozDeCena()
+      if (f === 'brunch' || f === 'women_brunch') return vozDeBrunch()
       return api.VOZ_MESA
     },
 
@@ -1778,7 +1832,36 @@
     cena.estuviste = 'Cenaste en'
     cena.vasCon = 'Cenas con cinco personas.'
     cena.verbo = 'cenas'
+    cena.delPlan = 'de la cena'
+    cena.elPlan = 'la cena'
+    cena.cuando = 'esta noche'
+    cena.verboPasado = 'cenabas'
+    cena.ayer = 'ANOCHE'
     return cena
+  }
+
+  /**
+   * Y la del brunch, que es una mesa pero no es una cena.
+   *
+   * Mismas palabras que la mesa salvo las que hablan de la hora: un brunch
+   * es a las once de la mañana, así que ni es «esta noche» ni fue «anoche».
+   * Sale de `VOZ_MESA` por lo mismo que la cena sale de ahí: de dieciséis
+   * palabras cambian cinco, y una tabla entera para eso son dieciséis
+   * sitios donde divergir.
+   */
+  var brunch = null
+  function vozDeBrunch() {
+    if (brunch) return brunch
+    brunch = {}
+    for (var k in api.VOZ_MESA) {
+      if (Object.prototype.hasOwnProperty.call(api.VOZ_MESA, k)) brunch[k] = api.VOZ_MESA[k]
+    }
+    brunch.delPlan = 'del brunch'
+    brunch.elPlan = 'el brunch'
+    brunch.cuando = 'hoy'
+    brunch.verboPasado = 'ibas'
+    brunch.ayer = 'AYER'
+    return brunch
   }
 
   raiz.AroReglas = api

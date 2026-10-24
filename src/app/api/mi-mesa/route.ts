@@ -4,6 +4,7 @@ import { minutosAPie } from '@/lib/distancia'
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { fraseDeTamano } from '@/lib/mesa-corta'
+import { esDeManana } from '@/lib/reglas'
 import { avisoDeDosHoras } from '@/lib/ventana-mesa'
 import { bloqueDeReembolso } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -279,7 +280,17 @@ export async function GET() {
    */
   const LO_CARO: Record<number, string> = { 1: '$', 2: '$$', 3: '$$$', 4: '$$$$' }
 
-  const paraSeguir = (seguires ?? []).map((s) => {
+  /**
+   * Y EN LOS PLANES DE MAÑANA, NINGUNO.
+   *
+   * Michael, 24-10, sobre el brunch: «juego sí, bares no». Un brunch acaba
+   * a la una de la tarde y el segundo acto de Aro son bares: ofrecerlos ahí
+   * es mandar a seis personas a tomar a las dos. La lista se vacía en el
+   * servidor y no en la pantalla porque de ella cuelgan dos cosas más: la
+   * coletilla de «hay sitios cerca» del aviso de las dos horas y el bloque
+   * del paso a paso. Vaciándola aquí, las tres desaparecen solas.
+   */
+  const paraSeguir = esDeManana(evento.format) ? [] : (seguires ?? []).map((s) => {
     const sitio = s.restaurants as unknown as {
       name: string
       address: string | null
