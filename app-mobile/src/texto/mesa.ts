@@ -16,6 +16,10 @@ type Voz = { unidad: string; unidades: string; tu: string; TU: string }
 
 const Mayus = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
+
+/** Cuántos son, en letra. Hasta 22: `seats_per_table` llega a 20 y la mesa se estira +2 (24-10). */
+const EN_LETRA = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuno', 'veintidós']
+
 export const vacia = {
   revision: {
     sello: 'EN REVISIÓN',
@@ -69,8 +73,7 @@ export const abierta = {
   alLlegar: 'Al llegar',
   /** `numero` vacío cuando es la única mesa del sitio: entonces no se nombra. */
   llegada: (esMesa: boolean, numero: string, total: number) => {
-    const letras = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez']
-    const son = letras[total] ?? String(total)
+    const son = EN_LETRA[total] ?? String(total)
     return esMesa
       ? `Di que vas a la mesa de Aro${numero ? `, la ${numero}` : ''}. Está reservada a tu nombre y el restaurante ya sabe que son ${son}.`
       : `Busca al grupo${numero ? ` ${numero}` : ''} de Aro en el punto de encuentro. Son ${son} y nadie lleva cartel: pregunta por Aro.`
@@ -103,7 +106,7 @@ export const ajustes = {
   cancelYSuma: (cuantos: string) => `Alguien canceló hoy y movimos a otra persona a tu mesa, que va marcada abajo. Son ${cuantos}.`,
   seSuma: 'Se suma alguien que no estaba esta mañana, y va marcado abajo. Lo demás no cambia.',
   cancelo: (cuantos: string) => `Alguien canceló después de decirte con quién cenabas. Son ${cuantos}, y el sitio y la hora no cambian.`,
-  enLetra: ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho'],
+  enLetra: EN_LETRA,
   entendido: 'Entendido',
 }
 
