@@ -34,18 +34,45 @@ import 'server-only'
  */
 
 /**
- * Hasta veinte porque `seats_per_table` llega hasta veinte.
+ * Hasta VEINTIDÓS, que es el techo de verdad.
  *
  * Se quedaba en ocho, que es lo que necesitaba una cena. Una caminata se
  * abre con doce, y nueve de doce salía como «Son 9: esta vez no completamos
  * la mesa de 12», con los números en cifras en medio de la frase.
+ *
+ * Y veinte tampoco bastaba. `seats_per_table` llega a veinte, pero una mesa
+ * se estira `DE_MAS` por encima: veintidós es el número más grande que puede
+ * acabar dentro de una de estas frases. Lo cazó el agente de la app
+ * haciendo esta misma tabla, y tenía razón.
+ *
+ * En femenino porque cuenta personas, como el «una» de arriba: veintiuna, no
+ * veintiuno.
  */
 const EN_LETRA = [
   'cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez',
   'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho',
-  'diecinueve', 'veinte',
+  'diecinueve', 'veinte', 'veintiuna', 'veintidós',
 ]
 const letra = (n: number) => EN_LETRA[n] ?? String(n)
+
+/**
+ * «El sexto puesto», cuando la mesa es de seis.
+ *
+ * La frase de Michael dice «sexto» porque una cena es de seis, y eso estaba
+ * escrito a mano dentro de una rama que ya recibía `porMesa`: en una
+ * caminata de veinte salía «Son diecinueve: esta vez no nos cuadró el sexto
+ * puesto». Apareció al imprimir la tabla nueva, en la línea de al lado.
+ *
+ * La de seis se queda palabra por palabra, que está aprobada. Lo demás cae
+ * en «el último puesto», que es verdad para cualquier tamaño y no obliga a
+ * inventarse un ordinal para una mesa de diecisiete.
+ */
+const ORDINAL = [
+  '', 'primer', 'segundo', 'tercer', 'cuarto', 'quinto', 'sexto', 'séptimo', 'octavo',
+  'noveno', 'décimo',
+]
+const elPuestoQueFalta = (porMesa: number) =>
+  ORDINAL[porMesa] ? `el ${ORDINAL[porMesa]} puesto` : 'el último puesto'
 
 /**
  * Cuánto se puede estirar una mesa por arriba.
@@ -90,5 +117,5 @@ export function fraseDeTamano(
     // Y la frase mira a lo nuestro, no a la persona: «no encontramos a nadie
     // que encajara contigo» se lee como que el raro eres tú, y eso lo lee
     // alguien que va a cenar con desconocidos en dos horas.
-    : `Son ${letra(enLaMesa)}: esta vez no nos cuadró el sexto puesto.`
+    : `Son ${letra(enLaMesa)}: esta vez no nos cuadró ${elPuestoQueFalta(porMesa)}.`
 }
