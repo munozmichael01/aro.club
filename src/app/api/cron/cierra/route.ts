@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { encolar } from '@/lib/correos'
+import { enTrozos } from '@/lib/en-trozos'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 import { quienQuiereSaberDe } from '@/lib/a-quien-avisar'
@@ -58,7 +59,7 @@ async function avisar(seco: boolean, soloEste?: string | null) {
 
   const consulta = admin
     .from('events')
-    .select('id, booking_closes_at, format, starts_at, city_slug, age_band_min, age_band_max')
+    .select('id, booking_closes_at, format, starts_at, city_slug, age_band_min, age_band_max, idioma')
     .eq('status', 'open')
     .gt('booking_closes_at', new Date(ahora).toISOString())
 
@@ -119,12 +120,13 @@ async function avisar(seco: boolean, soloEste?: string | null) {
     // Y de esos, los verificados. `v_verified_profiles` es la misma vista con
     // la que `/api/reservar` decide si deja apartar puesto: si se mirara otra
     // cosa aquí, el correo invitaría a gente a la que la ruta le dice que no.
-    const { data: verificados } = await admin
-      .from('v_verified_profiles')
-      .select('id')
-      .in('id', puedenLlegar)
+    const verificados = await enTrozos<{ id: string | null }>(
+      puedenLlegar,
+      (t) => admin.from('v_verified_profiles').select('id').in('id', t),
+      'quién está verificado',
+    )
 
-    const puede = new Set((verificados ?? []).map((v) => v.id).filter((id): id is string => !!id))
+    const puede = new Set(verificados.map((v) => v.id).filter((id): id is string => !!id))
     if (!puede.size) continue
 
     // Y de esos, quien quiere saber de ESTE plan y no es una cuenta de
@@ -133,11 +135,14 @@ async function avisar(seco: boolean, soloEste?: string | null) {
     const quieren = await quienQuiereSaberDe([...puede], ev.format, ev)
     if (!quieren.size) continue
 
-    const { data: perfiles } = await admin
-      .from('profiles')
-      .select('id, notificaciones')
-      .in('id', [...quieren])
-      .is('deleted_at', null)
+    // Por trozos: con la lista entera en la URL esto devuelve 400 en cuanto
+    // el club crece, y un nulo aquí es un cron que no escribe a nadie sin
+    // decir que no escribió. Es lo que mató `abrimos_zona` desde el 17-10.
+    const perfiles = await enTrozos<{ id: string; notificaciones: unknown }>(
+      [...quieren],
+      (t) => admin.from('profiles').select('id, notificaciones').in('id', t).is('deleted_at', null),
+      'a quién hay que escribir',
+    )
 
     // Quien ya lo tiene encolado para esta fecha. El índice único ya impide el
     // duplicado, pero filtrarlo aquí es lo que hace que la cuenta que devuelve

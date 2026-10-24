@@ -3,6 +3,7 @@ import 'server-only'
 import { cabeEnLaFecha, tieneEdadMinima, type EdadMinima } from '@/lib/edad'
 import { FAMILIA_DE_FORMATO, PLANES_DE_FAMILIA } from '@/lib/formatos'
 import { PUERTA, diaDe, partesDe } from '@/lib/reglas'
+import { enTrozos } from '@/lib/en-trozos'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 
@@ -123,7 +124,15 @@ export async function quienQuiereSaberDe(
    * La fecha de la que se avisa, para su banda de edad. Opcional: sin ella
    * no se filtra por edad y el aviso sale como salía.
    */
-  evento?: (EdadMinima & { id?: string; starts_at: string; city_slug?: string | null }) | null,
+  evento?:
+    | (EdadMinima & {
+        id?: string
+        starts_at: string
+        city_slug?: string | null
+        /** Nulo es español. Ver `lib/idioma`: es el mismo dato que la puerta. */
+        idioma?: string | null
+      })
+    | null,
 ): Promise<Set<string>> {
   const permitidos = new Set(ids)
   if (!ids.length) return permitidos
@@ -131,27 +140,28 @@ export async function quienQuiereSaberDe(
   const admin = createAdminClient()
 
   // --- las de prueba, fuera ---------------------------------------------
-  const { data: deprueba } = await admin
-    .from('profiles')
-    .select('id')
-    .in('id', ids)
-    .eq('es_prueba', true)
+  const deprueba = await enTrozos(
+    ids,
+    (t) => admin.from('profiles').select('id').in('id', t).eq('es_prueba', true),
+    'quiénes son cuentas de prueba',
+  )
 
-  for (const p of deprueba ?? []) permitidos.delete(p.id)
+  for (const p of deprueba) permitidos.delete(p.id)
 
   // --- y quien vive en otra ciudad --------------------------------------
   //
   // La ciudad de la fecha, no la del club: el día que haya dos abiertas, la
   // de Valencia no se anuncia en Caracas ni al revés.
   if (evento?.city_slug) {
-    const { data: deOtraCiudad } = await admin
-      .from('profiles')
-      .select('id')
-      .in('id', [...permitidos])
-      .not('city_slug', 'is', null)
-      .neq('city_slug', evento.city_slug)
+    const ciudad = evento.city_slug
+    const deOtraCiudad = await enTrozos(
+      [...permitidos],
+      (t) => admin.from('profiles').select('id').in('id', t)
+        .not('city_slug', 'is', null).neq('city_slug', ciudad),
+      'quién vive en otra ciudad',
+    )
 
-    for (const p of deOtraCiudad ?? []) permitidos.delete(p.id)
+    for (const p of deOtraCiudad) permitidos.delete(p.id)
   }
 
   // --- y quien no tiene la edad de esta fecha ---------------------------
@@ -160,10 +170,11 @@ export async function quienQuiereSaberDe(
   // `/api/reservar`: avisar a quien después no va a poder apuntarse es
   // precisamente lo que esto evita.
   if (tieneEdadMinima(evento)) {
-    const { data: edades, error } = await admin
-      .from('profiles')
-      .select('id, birthdate')
-      .in('id', [...permitidos])
+    const edades = await enTrozos<{ id: string; birthdate: string | null }>(
+      [...permitidos],
+      (t) => admin.from('profiles').select('id, birthdate').in('id', t),
+      'la edad de quien recibe el aviso',
+    )
 
     /**
      * Y si la consulta FALLA, se para en seco. No se avisa a nadie y no se
@@ -179,15 +190,43 @@ export async function quienQuiereSaberDe(
      * 500 que se ve, y en el cron queda en los registros. Un filtro de
      * quién recibe un correo no puede fallar en silencio hacia ningún lado.
      */
-    if (error) {
-      console.error('[avisos] no se pudo leer la edad: no se avisa a nadie', error)
-      throw new Error('No se pudo comprobar la edad de quien recibe el aviso.')
-    }
-
     const cabe = new Set(
-      (edades ?? []).filter((p) => cabeEnLaFecha(p.birthdate, evento!)).map((p) => p.id),
+      edades.filter((p) => cabeEnLaFecha(p.birthdate, evento!)).map((p) => p.id),
     )
     for (const id of [...permitidos]) if (!cabe.has(id)) permitidos.delete(id)
+  }
+
+  /**
+   * --- Y QUIEN NO HABLA EL IDIOMA DE ESA MESA --------------------------
+   *
+   * Lo mismo que la edad, por lo mismo. La cena en inglés del 31 iba a
+   * anunciarse a 442 personas, y `/api/reservar` le dice que no a quien no
+   * marcó inglés: es llamar a cuatrocientas personas para que empujen una
+   * puerta cerrada. El candado ya existe en `lib/idioma`; lo que faltaba era
+   * que el aviso mirara el mismo dato antes de salir.
+   *
+   * Nulo es español, que es lo de siempre y no filtra a nadie.
+   */
+  if (evento?.idioma) {
+    const suIdioma = evento.idioma
+    const idiomas = await enTrozos<{ profile_id: string | null; value: unknown }>(
+      [...permitidos],
+      (t) => admin.from('answers').select('profile_id, value')
+        .eq('question_key', 'idiomas').in('profile_id', t),
+      'qué idiomas habla cada uno',
+    )
+
+    // Quien no contestó la pregunta TAMPOCO recibe, al revés que en planes y
+    // días: ahí el silencio es «no he llegado a contestar» y el aviso sigue
+    // valiendo, aquí es la condición que la puerta exige, y pasarla por alto
+    // manda a alguien a una mesa que no va a entender.
+    const lo = new Set(
+      idiomas
+        .filter((r) => (Array.isArray(r.value) ? (r.value as unknown[]) : [])
+          .some((x) => String(x) === suIdioma))
+        .map((r) => r.profile_id),
+    )
+    for (const id of [...permitidos]) if (!lo.has(id)) permitidos.delete(id)
   }
 
   // --- y quien dijo que ese plan no ------------------------------------
@@ -199,13 +238,14 @@ export async function quienQuiereSaberDe(
   // eso, y mientras tanto el aviso sale como salía.
   if (!planes?.length) return permitidos
 
-  const { data: respuestas } = await admin
-    .from('answers')
-    .select('profile_id, value')
-    .eq('question_key', 'planes')
-    .in('profile_id', [...permitidos])
+  const respuestas = await enTrozos<{ profile_id: string | null; value: unknown }>(
+    [...permitidos],
+    (t) => admin.from('answers').select('profile_id, value')
+      .eq('question_key', 'planes').in('profile_id', t),
+    'qué planes quiere cada uno',
+  )
 
-  for (const r of respuestas ?? []) {
+  for (const r of respuestas) {
     if (!r.profile_id) continue
     const suyos = Array.isArray(r.value) ? (r.value as string[]) : []
     // Contestó y no marcó ninguno de este formato.
@@ -221,13 +261,14 @@ export async function quienQuiereSaberDe(
   const casilla = casillaDeDia(evento.starts_at, zonaHoraria)
   if (!casilla) return permitidos
 
-  const { data: suDia } = await admin
-    .from('answers')
-    .select('profile_id, value')
-    .eq('question_key', 'dias')
-    .in('profile_id', [...permitidos])
+  const suDia = await enTrozos<{ profile_id: string | null; value: unknown }>(
+    [...permitidos],
+    (t) => admin.from('answers').select('profile_id, value')
+      .eq('question_key', 'dias').in('profile_id', t),
+    'qué días le sirven a cada uno',
+  )
 
-  for (const r of suDia ?? []) {
+  for (const r of suDia) {
     if (!r.profile_id) continue
     const suyos = Array.isArray(r.value) ? (r.value as string[]) : []
     if (suyos.length && !suyos.includes(casilla)) permitidos.delete(r.profile_id)
@@ -286,21 +327,17 @@ async function quitarALosDeLaOtra(
 
   if (!compiten.length) return permitidos
 
-  const { data: edades, error } = await admin
-    .from('profiles')
-    .select('id, birthdate')
-    .in('id', [...permitidos])
-
   // Mismo criterio que el filtro de edad de arriba: si no se puede leer la
   // edad no se adivina hacia ningún lado. Aquí fallar en silencio mandaría
   // el correo de la cena normal a la gente de la +40, que es justo lo que
-  // esto evita.
-  if (error) {
-    console.error('[avisos] no se pudo leer la edad para la fecha que compite', error)
-    throw new Error('No se pudo comprobar quién cabe en la otra fecha.')
-  }
+  // esto evita, y `enTrozos` levanta el error en vez de devolver media lista.
+  const edades = await enTrozos<{ id: string; birthdate: string | null }>(
+    [...permitidos],
+    (t) => admin.from('profiles').select('id, birthdate').in('id', t),
+    'la edad de quien cabe en la otra fecha',
+  )
 
-  for (const p of edades ?? []) {
+  for (const p of edades) {
     if (compiten.some((o) => cabeEnLaFecha(p.birthdate, o))) permitidos.delete(p.id)
   }
 

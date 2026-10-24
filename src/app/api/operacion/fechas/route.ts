@@ -5,6 +5,7 @@ import { anotar } from '@/lib/auditoria'
 import { encolar } from '@/lib/correos'
 import { FAMILIA_DE_FORMATO, HORA_DE, MOVIMIENTO, horaBonita, partesHora } from '@/lib/formatos'
 import { exigirOps } from '@/lib/ops'
+import { enTrozos } from '@/lib/en-trozos'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -130,18 +131,27 @@ async function avisarDeLaApertura(
   // interesa no recibe, y las cuentas de prueba tampoco.
   const { data: evFormato } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, city_slug, age_band_min, age_band_max')
+    .select('id, format, starts_at, booking_closes_at, city_slug, age_band_min, age_band_max, idioma')
     .eq('id', eventoId)
     .maybeSingle()
 
   const quieren = await quienQuiereSaberDe(interesados, evFormato?.format, evFormato)
   if (!quieren.size) return 0
 
-  const { data: perfiles } = await admin
-    .from('profiles')
-    .select('id, notificaciones')
-    .in('id', [...quieren])
-    .is('deleted_at', null)
+  /**
+   * Por trozos, y levantando el error si lo hay.
+   *
+   * Esta era la consulta que mató el aviso. Con 756 interesados devolvía un
+   * 400 —la lista de ids no cabe en la URL—, `perfiles` quedaba en nulo, el
+   * bucle de abajo no daba ni una vuelta y la ruta contestaba «avisados: 0»
+   * con un 200. Doce fechas abiertas entre el 18 y el 24 de octubre no se
+   * le contaron a nadie y no falló nada.
+   */
+  const perfiles = await enTrozos<{ id: string; notificaciones: unknown }>(
+    [...quieren],
+    (t) => admin.from('profiles').select('id, notificaciones').in('id', t).is('deleted_at', null),
+    'a quién hay que escribir',
+  )
 
   /**
    * UNO POR PERSONA Y DÍA, y no en el momento de abrir: en la tanda.
@@ -174,12 +184,14 @@ async function avisarDeLaApertura(
   const diaDeLaTanda = diaDe(tanda, zona)
   const desde = new Date(tanda.getTime() - 36 * 3600_000).toISOString()
 
-  const { data: yaTienen } = await admin
-    .from('scheduled_emails')
-    .select('profile_id, send_at')
-    .in('kind', ['abrimos_zona', 'avisos_del_dia'])
-    .gte('send_at', desde)
-    .in('profile_id', [...quieren])
+  const yaTienen = await enTrozos<{ profile_id: string | null; send_at: string }>(
+    [...quieren],
+    (t) => admin.from('scheduled_emails').select('profile_id, send_at')
+      .in('kind', ['abrimos_zona', 'avisos_del_dia'])
+      .gte('send_at', desde)
+      .in('profile_id', t),
+    'quién tiene ya un aviso ese día',
+  )
 
   /**
    * Los que ya tienen un aviso ESE día en OTRA tanda.
@@ -191,7 +203,7 @@ async function avisarDeLaApertura(
    * correos de uno.
    */
   const ocupados = new Set(
-    (yaTienen ?? [])
+    yaTienen
       .filter((r) => {
         const suya = new Date(r.send_at)
         return diaDe(suya, zona) === diaDeLaTanda && !mismaTanda(suya, tanda)
@@ -201,7 +213,7 @@ async function avisarDeLaApertura(
 
   let avisados = 0
   let callados = 0
-  for (const p of perfiles ?? []) {
+  for (const p of perfiles) {
     // Encendido por defecto: solo se salta a quien lo apagó a propósito.
     const avisos = (p.notificaciones ?? {}) as Record<string, boolean>
     if (avisos.apertura_zona === false) continue
