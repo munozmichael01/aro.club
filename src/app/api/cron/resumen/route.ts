@@ -106,7 +106,19 @@ async function resumir(seco: boolean, solo: string | null, hora: string | null, 
 
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, city_slug, age_band_min, age_band_max')
+    /**
+     * `idioma` hace falta aunque el resumen no lo pinte.
+     *
+     * Se lo pasamos entero a `quienQuiereSaberDe`, y ahí dentro el idioma
+     * decide DOS cosas: a quién se le ofrece una mesa en inglés, y si esa
+     * fecha compite con las de edad de esa misma noche. Sin el campo, la
+     * cena en inglés del 31 se leía como una cena en español: las dos de
+     * edad del sábado le competían, entre «hasta 45» y «desde 46» cubren
+     * todas las edades que existen, y se quedó marcada para 14 personas de
+     * las 213 que hablan inglés y pueden ese sábado. Las 14 eran las que no
+     * tienen fecha de nacimiento.
+     */
+    .select('id, format, starts_at, city_slug, age_band_min, age_band_max, idioma')
     .eq('status', 'open')
     .gte('starts_at', desde.toISOString())
     .lt('starts_at', hasta.toISOString())
