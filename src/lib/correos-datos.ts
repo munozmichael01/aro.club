@@ -1207,11 +1207,15 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
        * una invitación a algo en lo que ya está. Se dice, no se esconde: la
        * fecha sigue en la lista porque es su semana.
        */
-      const { data: yaVa } = await admin
-        .from('bookings')
-        .select('event_id')
-        .eq('profile_id', fila.profile_id ?? '')
-        .in('status', ['pending_payment', 'confirmed', 'attended'])
+      // Sin cuenta no hay reservas que mirar, y preguntar por un uuid vacío
+      // es un error en los registros cada vez que sale uno de estos.
+      const { data: yaVa } = fila.profile_id
+        ? await admin
+            .from('bookings')
+            .select('event_id')
+            .eq('profile_id', fila.profile_id)
+            .in('status', ['pending_payment', 'confirmed', 'attended'])
+        : { data: [] as { event_id: string | null }[] }
 
       const conPuesto = new Set((yaVa ?? []).map((b) => b.event_id).filter((x): x is string => !!x))
 
@@ -1302,8 +1306,23 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
            * `utm_content` lleva la semana para poder comparar un lunes con
            * otro sin inventar una campaña nueva cada vez.
            */
-          destino: `/cuenta?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal&utm_content=${encodeURIComponent(String(p.semana ?? ''))}#agenda`,
-          cierre: 'Si esta semana no te sirve, no hace falta hacer nada. El lunes que viene hay otra.',
+          /**
+           * Y A DÓNDE, según si quien lee tiene cuenta.
+           *
+           * `/cuenta` exige sesión. A quien dejó su correo y nunca llegó a
+           * tener cuenta ese botón lo manda a una puerta que le pide entrar
+           * con algo que no tiene, que es el mismo fallo que ya se arregló
+           * en el pie con «Ajustes de correo».
+           *
+           * Sin cuenta va a la agenda pública, que es donde esa semana se
+           * ve entera y sin sesión, y desde ahí sale el alta.
+           */
+          destino: fila.profile_id
+            ? `/cuenta?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal&utm_content=${encodeURIComponent(String(p.semana ?? ''))}#agenda`
+            : `/agenda?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal-espera&utm_content=${encodeURIComponent(String(p.semana ?? ''))}`,
+          cierre: fila.profile_id
+            ? 'Si esta semana no te sirve, no hace falta hacer nada. El lunes que viene hay otra.'
+            : 'Para apuntarte hace falta terminar tu perfil. Son unas preguntas y la verificación de identidad, y con eso ya puedes reservar.',
         },
       }
     }

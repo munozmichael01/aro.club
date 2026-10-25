@@ -95,7 +95,109 @@ function aLasDeCaracas(hhmm: string, ahora = new Date()): Date | null {
   return cuando.getTime() > ahora.getTime() ? cuando : new Date(cuando.getTime() + 24 * 3600_000)
 }
 
-async function resumir(seco: boolean, solo: string | null, hora: string | null, semanas = 0) {
+
+/**
+ * LA LISTA DE ESPERA, por su cuenta.
+ *
+ * Michael, 25-10: «la lista de espera va también hoy en otro envío para que
+ * no tenga nada que ver con la lógica anterior». Y tiene razón en separarlo:
+ * de esta gente no sabemos NADA —ni zonas, ni días, ni planes, ni edad— así
+ * que ninguno de los filtros de arriba tiene con qué decidir, y aplicárselos
+ * a medias sería inventarse preferencias que nadie nos dijo.
+ *
+ * Así que reciben la semana entera, sin nada marcado como suyo, que es
+ * exactamente la variante que ya existe para quien no tiene coincidencias.
+ * El botón no los manda a `/cuenta`, que les pediría entrar con una cuenta
+ * que no tienen, sino a la agenda pública.
+ *
+ * Quien ya convirtió a cuenta queda fuera: esa persona recibe el otro envío,
+ * y mandarle los dos sería contarle la misma semana dos veces.
+ */
+async function espera(
+  admin: ReturnType<typeof createAdminClient>,
+  fechas: { id: string }[],
+  ciudades: string[],
+  semana: string,
+  cuando: Date | null,
+  seco: boolean,
+  solo: string | null,
+) {
+  // Las ciudades de ESTAS fechas, como arriba: quien dejó su correo para
+  // otra ciudad no tiene nada que leer en esta agenda.
+  const abiertas = new Set(ciudades.length ? ciudades : ['caracas'])
+
+  let filas: { email: string | null; city_slug: string | null }[] = []
+  for (let desde = 0; ; desde += 1000) {
+    const { data } = await admin
+      .from('waitlist')
+      .select('email, city_slug')
+      .is('converted_profile_id', null)
+      .range(desde, desde + 999)
+    if (!data?.length) break
+    filas = filas.concat(data)
+    if (data.length < 1000) break
+  }
+
+  /**
+   * Sin repetir direcciones y sin las que ya tienen cuenta.
+   *
+   * `converted_profile_id` cubre a quien convirtió por el camino normal,
+   * pero alguien pudo dejar su correo dos veces, o dejarlo y crear la cuenta
+   * con esa misma dirección sin que la conversión quedara apuntada. Se
+   * comprueba contra `profiles` por la dirección, que es lo que de verdad
+   * recibe el correo.
+   */
+  const correos = [...new Set(
+    filas
+      .filter((f) => f.email && abiertas.has(f.city_slug ?? 'caracas'))
+      .map((f) => f.email!.trim().toLowerCase()),
+  )]
+
+  const conCuenta = new Set<string>()
+  for (let i = 0; i < correos.length; i += 300) {
+    const { data } = await admin
+      .from('profiles')
+      .select('email')
+      .in('email', correos.slice(i, i + 300))
+    for (const p of data ?? []) if (p.email) conCuenta.add(p.email.trim().toLowerCase())
+  }
+
+  const destinatarios = correos
+    .filter((c) => !conCuenta.has(c))
+    .filter((c) => !solo || c === solo.trim().toLowerCase())
+
+  const todas = fechas.map((f) => f.id)
+  let encolados = 0
+  for (const correo of destinatarios) {
+    if (seco) { encolados++; continue }
+    const r = await encolar(
+      { correo },
+      'resumen_semanal',
+      { tuyas: [], otras: todas, semana },
+      cuando ? { cuando } : {},
+    )
+    if (r === 'encolado') encolados++
+  }
+
+  return NextResponse.json({
+    semana,
+    fechas: fechas.length,
+    enLaEspera: correos.length,
+    yaTienenCuenta: conCuenta.size,
+    destinatarios: destinatarios.length,
+    encolados,
+    salen: cuando ? cuando.toISOString() : 'ahora',
+    ...(seco ? { seco: true } : {}),
+  })
+}
+
+async function resumir(
+  seco: boolean,
+  solo: string | null,
+  hora: string | null,
+  semanas = 0,
+  paraLaEspera = false,
+) {
   const admin = createAdminClient()
   const { desde, hasta, semana } = semanaDeHoy(new Date(), semanas)
 
@@ -136,6 +238,10 @@ async function resumir(seco: boolean, solo: string | null, hora: string | null, 
    * hasta que hubo una segunda.
    */
   const ciudades = [...new Set(fechas.map((f) => f.city_slug).filter((c): c is string => !!c))]
+
+  // Y aquí se bifurca: o las cuentas, o la espera. Nunca las dos en la
+  // misma pasada, para que cada envío se cuente por separado.
+  if (paraLaEspera) return espera(admin, fechas, ciudades, semana, cuando, seco, solo)
 
   let perfiles: { id: string; email: string | null; notificaciones: unknown }[] = []
   for (let desdeFila = 0; ; desdeFila += 1000) {
@@ -303,5 +409,14 @@ export async function GET(request: Request) {
   if (!Number.isInteger(semanas) || semanas < 0 || semanas > 4) {
     return NextResponse.json({ error: 'semanas se escribe de 0 a 4.' }, { status: 400 })
   }
-  return resumir(params.get('seco') === '1', params.get('solo'), params.get('hora'), semanas)
+  // `?espera=1` manda el OTRO envío: el de quien dejó su correo y nunca
+  // llegó a tener cuenta. Va aparte a propósito y no comparte un solo
+  // filtro con el de las cuentas.
+  return resumir(
+    params.get('seco') === '1',
+    params.get('solo'),
+    params.get('hora'),
+    semanas,
+    params.get('espera') === '1',
+  )
 }
