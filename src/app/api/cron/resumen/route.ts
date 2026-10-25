@@ -49,8 +49,21 @@ const CARACAS = 4
  * del servidor, que corre en UTC: un sábado a las 8 de la noche de Caracas ya
  * es domingo en UTC.
  */
-function semanaDeHoy(ahora = new Date()): { desde: Date; hasta: Date; semana: string } {
-  const enCcs = new Date(ahora.getTime() - CARACAS * 3600_000)
+/**
+ * `semanas` desplaza la ventana: 1 es la siguiente.
+ *
+ * El resumen nació para correr los lunes, y entonces «la semana de hoy» es
+ * la que empieza ese día. Michael, 25-10, un domingo por la tarde: quiere
+ * mandar la agenda de la semana que viene esta misma tarde, que es cuando
+ * la gente arma su semana. Sin esto saldría la semana que termina hoy, con
+ * una fecha dentro y seiscientos repetidos.
+ *
+ * La clave de la semana se mueve con la ventana, así que el candado de «uno
+ * por persona y semana» sigue valiendo: mandar el domingo la que viene no
+ * impide el resumen del lunes siguiente, y mandarla dos veces sí se impide.
+ */
+function semanaDeHoy(ahora = new Date(), semanas = 0): { desde: Date; hasta: Date; semana: string } {
+  const enCcs = new Date(ahora.getTime() - CARACAS * 3600_000 + semanas * 7 * 24 * 3600_000)
   // getUTCDay sobre la fecha ya corrida es el día de Caracas. 0 es domingo.
   const atras = (enCcs.getUTCDay() + 6) % 7
   const lunes = Date.UTC(
@@ -82,9 +95,9 @@ function aLasDeCaracas(hhmm: string, ahora = new Date()): Date | null {
   return cuando.getTime() > ahora.getTime() ? cuando : new Date(cuando.getTime() + 24 * 3600_000)
 }
 
-async function resumir(seco: boolean, solo: string | null, hora: string | null) {
+async function resumir(seco: boolean, solo: string | null, hora: string | null, semanas = 0) {
   const admin = createAdminClient()
-  const { desde, hasta, semana } = semanaDeHoy()
+  const { desde, hasta, semana } = semanaDeHoy(new Date(), semanas)
 
   const cuando = hora ? aLasDeCaracas(hora) : null
   if (hora && !cuando) {
@@ -261,5 +274,11 @@ export async function GET(request: Request) {
   }
 
   const params = new URL(request.url).searchParams
-  return resumir(params.get('seco') === '1', params.get('solo'), params.get('hora'))
+  // `?semanas=1` para la que viene. Sin él, la de hoy, que es lo que hace
+  // el cron de los lunes.
+  const semanas = Number(params.get('semanas') ?? 0)
+  if (!Number.isInteger(semanas) || semanas < 0 || semanas > 4) {
+    return NextResponse.json({ error: 'semanas se escribe de 0 a 4.' }, { status: 400 })
+  }
+  return resumir(params.get('seco') === '1', params.get('solo'), params.get('hora'), semanas)
 }
