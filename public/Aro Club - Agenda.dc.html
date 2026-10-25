@@ -91,7 +91,7 @@
       <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8F4515;margin-bottom:18px">{{ semana }}</div>
     </sc-if>
     <h1 style="font:400 clamp(54px,8vw,96px)/.93 'Young Serif',Georgia,serif;letter-spacing:-.04em;margin:0">Cenas y planes en Caracas.</h1>
-    <p style="font:400 clamp(17px,1.6vw,21px)/1.45 'Inter Tight',sans-serif;margin:18px 0 0;max-width:52ch;text-wrap:pretty">Seis personas verificadas, un plan. <span style="font-weight:600">Nosotros elegimos el sitio y tú solo llegas.</span> <span style="color:#456352">El sitio y quién va contigo llegan a las 12:00 del mismo día. En los planes de mañana, como el brunch, a las 6:00 p.m. del día anterior. Antes, solo la zona.</span></p>
+    <p style="font:400 clamp(17px,1.6vw,21px)/1.45 'Inter Tight',sans-serif;margin:18px 0 0;max-width:52ch;text-wrap:pretty">Seis personas verificadas, un plan. <span style="font-weight:600">Nosotros elegimos el sitio y tú solo llegas.</span> <span style="color:#456352">El sitio y quién va contigo los sabes unas horas antes. Hasta entonces, solo la zona.</span></p>
     <sc-if value="{{ hayFiltros }}" hint-placeholder-val="{{ true }}">
       <div class="carril" style="display:flex;gap:12px;overflow-x:auto;margin:22px calc(clamp(16px,4vw,36px) * -1) 0;padding:10px clamp(16px,4vw,36px) 16px;scroll-padding-left:20px;scroll-snap-type:x mandatory">
         <sc-for list="{{ filtros }}" as="p" hint-placeholder-count="3">
@@ -147,6 +147,12 @@
           <div style="display:flex;flex-direction:column;gap:6px;font:400 16px/1.35 'Inter Tight',sans-serif">
             <div>{{ c.hora }}</div>
             <div style="font-weight:600">{{ c.zona }}</div>
+            <!-- Cuándo se sabe ESTA, y no las dos reglas en el encabezado.
+                 Michael, 25-10: «lo enredas con lo del brunch». Tenía razón:
+                 una cena y un brunch se revelan a horas distintas, y
+                 explicarlo arriba obliga a todo el mundo a leerse la regla
+                 del otro. Dicho en su tarjeta, cada quien lee la suya. -->
+            <div style="color:#456352">{{ c.seSabe }}</div>
           </div>
           <div style="display:flex;align-items:center;gap:9px;font:600 15px/1 'Inter Tight',sans-serif;color:{{ c.colorGente }}">
             <span style="width:8px;height:8px;border-radius:999px;background:{{ c.puntoGente }};flex:none"></span><span>{{ c.gente }}</span>
@@ -305,6 +311,20 @@ class Component extends DCLogic {
         // Las zonas ABIERTAS de esa fecha, nunca el restaurante: el sitio se
         // decide al armar la mesa y se revela el mismo día a mediodía.
         zona: (f.zonas || []).join(' o ') || 'Zona por confirmar',
+        /**
+         * Cuándo se sabe el sitio y con quién va, de ESTA fecha.
+         *
+         * De `revelaDe`, la misma regla con la que el servidor calcula
+         * `reveal_at`: el mismo día a mediodía las cenas, la víspera a las
+         * seis los planes de mañana.
+         */
+        seSabe: (() => {
+          const r = AroReglas.revelaDe(f.empiezaEn, f.zonaHoraria, f.revelaEn);
+          if (!r) return '';
+          return r.mismoDia
+            ? 'Lo sabes el mismo día a ' + r.enLetra
+            : 'Lo sabes el ' + r.dia + ' a ' + r.enLetra;
+        })(),
         // Lo que cuesta ESTA fecha. El día que el precio suba, las que ya
         // estaban abiertas siguen cobrando lo suyo.
         precio: f.precioUsd != null ? f.precioUsd + ' ref' : AroReglas.precioTexto(),

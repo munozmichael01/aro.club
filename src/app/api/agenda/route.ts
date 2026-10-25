@@ -35,6 +35,8 @@ export type FechaDeAgenda = {
   formato: string
   nombreFormato: string
   empiezaEn: string
+  /** Cuándo se sabe el sitio y con quién. De la columna, que puede moverse a mano. */
+  revelaEn: string | null
   cierraEn: string
   creadaEn: string
   zonaHoraria: string
@@ -55,7 +57,7 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
   const { data: fechas } = await admin
     .from('events')
     .select(
-      'id, format, starts_at, booking_closes_at, created_at, city_slug, price_usd, age_band_min, age_band_max, idioma',
+      'id, format, starts_at, booking_closes_at, reveal_at, created_at, city_slug, price_usd, age_band_min, age_band_max, idioma',
     )
     .eq('status', 'open')
     // Nunca una de prueba, aunque alguien la deje en `open` por error.
@@ -95,6 +97,7 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
     formato: f.format,
     nombreFormato: NOMBRES_DE_FORMATO[f.format] ?? NOMBRES_DE_FORMATO.dinner,
     empiezaEn: f.starts_at,
+    revelaEn: f.reveal_at ?? null,
     cierraEn: f.booking_closes_at,
     creadaEn: f.created_at,
     zonaHoraria: zonasHorarias.get(f.city_slug ?? CIUDAD_POR_DEFECTO) ?? 'America/Caracas',
