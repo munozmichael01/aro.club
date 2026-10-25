@@ -1337,10 +1337,23 @@ class Component extends DCLogic {
        * lee raro porque la convención son los números redondos. «Desde 46»
        * dice lo mismo sin que nadie tenga que interpretarlo.
        */
+      /**
+       * «+45», en todos lados.
+       *
+       * Michael, 25-10: «no, +45 en todos lados, tenemos que hacer que se
+       * entienda como identidad de marca». Y tiene razón: una etiqueta que
+       * se dice de tres formas —«+45», «desde 45», «mayores de 45»— no es
+       * una etiqueta, son tres, y ninguna se reconoce.
+       *
+       * El número sale del mínimo guardado, así que «+45» y la puerta son
+       * siempre el mismo 45. Lo que no se anuncia es el TOPE: existe para
+       * que cada quien vea la suya, no para contarle a los de treinta una
+       * frontera que no les afecta.
+       */
       const etiquetaEdad = eMin != null && eMax != null
-        ? 'de %s a %s'.replace('%s', eMin).replace('%s', eMax)
+        ? eMin + '-' + eMax
         : eMin != null
-        ? 'desde ' + eMin
+        ? '+' + eMin
         : '';
 
       g.eventos.push({

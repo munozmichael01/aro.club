@@ -1223,7 +1223,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         if (!lista.length) return []
         const { data: evs } = await admin
           .from('events')
-          .select('id, format, starts_at, price_usd, city_slug, status, age_band_min')
+          .select('id, format, starts_at, price_usd, city_slug, status, age_band_min, age_band_max')
           .in('id', lista)
           .eq('status', 'open')
           .order('starts_at')
@@ -1258,7 +1258,14 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
              */
             nota: conPuesto.has(ev.id)
               ? 'Ya tienes puesto'
-              : ev.age_band_min != null ? `Solo para mayores de ${ev.age_band_min}` : '',
+              // «+45» y no «mayores de 45»: la misma etiqueta que la agenda
+              // y que Mi cuenta. Michael la quiere como marca, y decirla de
+              // tres formas es no tener ninguna. Y con las dos puntas, el
+              // rango entero: «+30» en una de 30 a 39 dejaría fuera lo que
+              // de verdad la distingue, que es el techo.
+              : ev.age_band_min != null && ev.age_band_max != null
+                ? `Solo para ${ev.age_band_min}-${ev.age_band_max}`
+                : ev.age_band_min != null ? `Solo para +${ev.age_band_min}` : '',
           })
         }
         return salida
@@ -1406,7 +1413,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
 
       const { data: evs } = await admin
         .from('events')
-        .select('id, format, starts_at, price_usd, city_slug, status, age_band_min')
+        .select('id, format, starts_at, price_usd, city_slug, status, age_band_min, age_band_max')
         .in('id', ids)
         .eq('status', 'open')
         .order('starts_at')
