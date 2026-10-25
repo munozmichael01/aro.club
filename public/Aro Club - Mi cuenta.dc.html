@@ -1327,10 +1327,20 @@ class Component extends DCLogic {
        * al lado para quien puede ir a las dos. En el panel se siguen viendo
        * las dos, que ahí el tope es información de trabajo.
        */
+      /**
+       * «DESDE 46», y no «+46».
+       *
+       * Michael, 25-10: «quiero a los de 45 o menos en el grupo general»,
+       * así que el corte es 46 en adelante. La etiqueta sale del número y
+       * no al revés —decir «+45» con el mínimo en 46 es el descuadre que
+       * este repo ya ha pagado con el precio y con las horas— y «+46» se
+       * lee raro porque la convención son los números redondos. «Desde 46»
+       * dice lo mismo sin que nadie tenga que interpretarlo.
+       */
       const etiquetaEdad = eMin != null && eMax != null
-        ? eMin + '-' + eMax
+        ? 'de %s a %s'.replace('%s', eMin).replace('%s', eMax)
         : eMin != null
-        ? '+' + eMin
+        ? 'desde ' + eMin
         : '';
 
       g.eventos.push({
