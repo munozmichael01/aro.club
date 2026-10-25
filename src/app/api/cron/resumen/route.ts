@@ -228,12 +228,23 @@ async function resumir(seco: boolean, solo: string | null, hora: string | null, 
    * aquí no hay fecha— así que lo impide esta consulta. Mientras no haya
    * índice, dos pasadas a la vez podrían colarse: el cron corre una vez.
    */
+  /**
+   * Por la SEMANA de la que habla, no por cuándo sale.
+   *
+   * Miraba el `send_at` dentro de la ventana de la semana, y eso valía
+   * mientras el resumen saliera el lunes de esa misma semana. Desde que se
+   * puede mandar la que viene —`?semanas=1`, un domingo por la tarde— el
+   * correo sale FUERA de su propia ventana y el candado no se veía a sí
+   * mismo: una segunda pasada eran 822 correos repetidos.
+   *
+   * La semana de la que habla va en el payload, así que se pregunta por
+   * ahí, que es lo que de verdad no puede repetirse.
+   */
   const { data: yaTienen } = await admin
     .from('scheduled_emails')
     .select('profile_id')
     .eq('kind', 'resumen_semanal')
-    .gte('send_at', desde.toISOString())
-    .lt('send_at', hasta.toISOString())
+    .eq('payload->>semana', semana)
 
   const hechos = new Set((yaTienen ?? []).map((r) => r.profile_id).filter((x): x is string => !!x))
 
