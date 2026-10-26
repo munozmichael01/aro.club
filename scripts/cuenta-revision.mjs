@@ -380,7 +380,7 @@ writeFileSync(RASTRO, JSON.stringify(rastro, null, 2))
 // con una clave foránea.
 const { error: errPerfil } = await admin.from('profiles').insert({
   id, email: CORREO, full_name: 'Alex Revisión', display_name: 'Alex', es_prueba: true,
-  birthdate: '1992-04-18', gender: 'sin-decir', phone_e164: '+584141112233',
+  birthdate: '1992-04-18', gender: 'sin-decir', phone_e164: CORREO === 'revision.appstore@aro.club' ? '+584141112233' : '+584141112244',
   city_slug: 'caracas', status: 'active', locale: 'es-VE',
 })
 if (errPerfil) {
