@@ -11,6 +11,7 @@ import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO,
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
+import { situacionDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
@@ -1235,6 +1236,24 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
 
       const conPuesto = new Set((yaVa ?? []).map((b) => b.event_id).filter((x): x is string => !!x))
 
+      /**
+       * Y si de verdad PUEDE reservar lo que le estamos enseñando.
+       *
+       * El cierre miraba solo si había cuenta, y por eso el 25-10 este correo
+       * le dijo «no hace falta hacer nada» a 348 personas que no podían
+       * reservar ninguna de las siete fechas: tienen cuenta y perfil, y no han
+       * subido la cédula. Es la frase más cara que hemos mandado, porque las
+       * manda a casa justo cuando venían.
+       *
+       * La rama buena ya existía para quien no tiene cuenta. Lo que faltaba
+       * era usarla con quien sí la tiene y tampoco llega.
+       *
+       * Sale de `embudo`, que es la única verdad sobre qué le falta a alguien,
+       * y de ahí sale también A DÓNDE se le manda: `donde`. Escribir aquí otra
+       * comprobación de verificada sería la séptima copia de esa pregunta.
+       */
+      const situacion = fila.profile_id ? await situacionDePerfil(fila.profile_id) : null
+
       const deLasFechas = async (lista: string[]) => {
         if (!lista.length) return []
         const { data: evs } = await admin
@@ -1312,7 +1331,15 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           hayOtras: otras.length ? 'si' : '',
           tituloOtras: tuyas.length ? 'TAMBIÉN ESTA SEMANA' : 'LO QUE ABRIMOS',
           otras,
-          boton: 'Ver la agenda',
+          /**
+           * Y el botón, que tiene que decir a dónde lleva. «Ver la agenda»
+           * encima de un enlace que va a /verificacion es la promesa que ya
+           * nos costó caro en el empujón: lo que decía el botón y a dónde
+           * iba eran dos cosas distintas.
+           */
+          boton: fila.profile_id && situacion && !situacion.puedeReservar
+            ? (situacion.paso === 'verificacion' ? 'Verificar mi identidad' : 'Terminar mi perfil')
+            : 'Ver la agenda',
           /**
            * Con etiquetas de campaña, y el `?` ANTES del `#`.
            *
@@ -1340,12 +1367,40 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
            * Sin cuenta va a la agenda pública, que es donde esa semana se
            * ve entera y sin sesión, y desde ahí sale el alta.
            */
-          destino: fila.profile_id
-            ? `/cuenta?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal&utm_content=${encodeURIComponent(String(p.semana ?? ''))}#agenda`
-            : `/agenda?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal-espera&utm_content=${encodeURIComponent(String(p.semana ?? ''))}`,
-          cierre: fila.profile_id
-            ? 'Si esta semana no te sirve, no hace falta hacer nada. El lunes que viene hay otra.'
-            : 'Para apuntarte hace falta terminar tu perfil. Son unas preguntas y la verificación de identidad, y con eso ya puedes reservar.',
+          /**
+           * TRES ramas, no dos: sin cuenta, con cuenta y sin poder reservar,
+           * y con cuenta y pudiendo.
+           *
+           * La del medio es la que faltaba. A quien tiene cuenta y le falta
+           * la cédula no se le manda a la agenda, porque allí va a ver siete
+           * fechas y un candado: se le manda a donde dice `embudo`, que es su
+           * paso siguiente de verdad.
+           *
+           * Con su correo en la URL, por lo mismo que el empujón: sin él, la
+           * pantalla no ve sesión, manda a /entrar y le pregunta quién es a
+           * alguien que viene de nuestro propio correo.
+           */
+          destino: !fila.profile_id
+            ? `/agenda?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal-espera&utm_content=${encodeURIComponent(String(p.semana ?? ''))}`
+            : situacion && !situacion.puedeReservar
+              ? `${situacion.donde}?correo=${encodeURIComponent(a)}&utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal-falta&utm_content=${encodeURIComponent(String(p.semana ?? ''))}`
+              : `/cuenta?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal&utm_content=${encodeURIComponent(String(p.semana ?? ''))}#agenda`,
+          /**
+           * Y el cierre igual. «No hace falta hacer nada» solo es verdad para
+           * quien ya puede reservar; a los demás les estábamos dando permiso
+           * para no volver.
+           *
+           * Se distingue la verificación del resto porque es otra conversación:
+           * a quien le falta la cédula no le falta rellenar, le falta dar un
+           * paso que da pereza, y conviene decir lo corto que es.
+           */
+          cierre: !fila.profile_id
+            ? 'Para apuntarte hace falta terminar tu perfil. Son unas preguntas y la verificación de identidad, y con eso ya puedes reservar.'
+            : situacion && situacion.paso === 'verificacion'
+              ? 'Te faltan unos minutos para poder reservar cualquiera de estas: la verificación de identidad. Cédula y una selfie.'
+              : situacion && !situacion.puedeReservar
+                ? 'Para reservar cualquiera de estas te falta terminar tu perfil. Son unos minutos.'
+                : 'Si esta semana no te sirve, no hace falta hacer nada. El lunes que viene hay otra.',
         },
       }
     }
