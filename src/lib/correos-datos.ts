@@ -488,6 +488,22 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         ? `${SITIO}${destino}?correo=${encodeURIComponent(a)}`
         : `${SITIO}/cuestionario?t=${encodeURIComponent(firmar(a))}&correo=${encodeURIComponent(a)}`
 
+      /**
+       * NINGUNA de estas voces dice cuántas preguntas faltan.
+       *
+       * Decía «Dieciséis preguntas más» en el momento exacto en que se le
+       * pide el esfuerzo, y ese correo es el segundo más enviado del club:
+       * 1014 copias. De las 1037 personas que lo recibieron, 290 no llegaron
+       * nunca a tener cuenta.
+       *
+       * Un número en ese sitio no informa, tasa. Y el dato dice que no hay
+       * nadie atascado a mitad del cuestionario: las 747 que hicieron cuenta
+       * tienen sus respuestas guardadas, las 747. Quien empieza, termina. Lo
+       * que decide es si empieza.
+       *
+       * La landing sí lo cuenta, y ahí es otra cosa: nadie ha invertido nada
+       * todavía y saber de qué va es lo honesto. Aquí ya contestó cuatro.
+       */
       // Cada estado, sus palabras. `bienvenida` es la de Design, intacta.
       const voces: Record<string, Record<string, string>> = {
         bienvenida: {
@@ -499,7 +515,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           titularC: 'puesto',
           entradilla: `Gracias por contarnos quién eres${coma}. Con esas cuatro respuestas ya podemos empezar a pensar en tu mesa.`,
           paso1Titulo: 'Termina tu perfil',
-          paso1: 'Dieciséis preguntas más: de qué hablas, qué comes, qué tomas, qué prefieres esquivar. Es lo que hace que tu mesa no sea al azar.',
+          paso1: 'Unas preguntas más: de qué hablas, qué comes, qué tomas, qué prefieres esquivar. Es lo que hace que tu mesa no sea al azar.',
           paso2Titulo: 'Verifica tu identidad',
           paso2: 'Cédula y una selfie. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
           boton: 'Completar mi perfil',
@@ -514,7 +530,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           titularC: 'ahí',
           entradilla: `Te quedaste a medias${coma}, y no hemos dado tu puesto a nadie. Cuando quieras, sigues justo donde lo dejaste.`,
           paso1Titulo: 'Termina tu perfil',
-          paso1: 'Dieciséis preguntas más: de qué hablas, qué comes, qué tomas, qué prefieres esquivar. Es lo que hace que tu mesa no sea al azar.',
+          paso1: 'Unas preguntas más: de qué hablas, qué comes, qué tomas, qué prefieres esquivar. Es lo que hace que tu mesa no sea al azar.',
           paso2Titulo: 'Verifica tu identidad',
           paso2: 'Cédula y una selfie. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
           boton: 'Seguir donde lo dejé',
