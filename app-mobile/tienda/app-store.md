@@ -20,18 +20,18 @@ salen de cada fecha.
 > CÓMO FUNCIONA
 > • Respondes unas preguntas sobre cómo eres, de qué te gusta hablar y qué días puedes.
 > • Te apuntas a una fecha, no a un grupo. Con todos los apuntados armamos grupos de seis por afinidad.
-> • El mismo día sabes dónde y con quién: el sitio, la hora y el nombre y el sector de los otros cinco. Nada más.
+> • Antes del plan sabes dónde y con quién: el sitio, la hora y el nombre y el sector de los otros cinco. Nada más.
 > • Para romper el hielo, el juego de la mesa: preguntas en tres rondas, de menos a más.
 > • Al terminar, cuentas qué tal. Puedes pedir no volver a coincidir con alguien, y nadie se entera.
 >
-> HOY CENAS, MUY PRONTO MÁS PLANES
-> Empezamos con cenas. Muy pronto, café, drinks y planes en movimiento.
+> HOY CENAS Y BRUNCH, MUY PRONTO MÁS PLANES
+> Empezamos con cenas y brunch. Muy pronto, café, drinks y planes en movimiento.
 >
 > TODOS VERIFICADOS
-> Cada persona sube su cédula y una selfie, y las revisa alguien del equipo, no un programa. Nadie más las ve, y se borran a los 90 días de aprobarse.
+> Cada persona sube su cédula y una selfie, y las revisa alguien del equipo, no un programa. Nadie más las ve, y se borran a los 120 días de aprobarse.
 >
 > SIN SORPRESAS
-> Tu puesto cuesta 7 USD, en bolívares. Cubre el emparejamiento, la verificación del grupo y la reserva a tu nombre; lo que consumes lo pagas en el sitio. Si cancelas con más de 24 horas, recuperas el crédito.
+> Tu puesto cuesta 10 USD. Puedes pagar por Pago Móvil, transferencia, Zelle o Bizum; en bolívares, a la tasa del día. Cubre el emparejamiento, la verificación del grupo y la reserva a tu nombre. Lo que consumes lo pagas en el sitio. Si cancelas con más de 24 horas, recuperas el crédito.
 >
 > DÓNDE
 > Empezamos en Caracas, y pronto abrimos en más ciudades.
