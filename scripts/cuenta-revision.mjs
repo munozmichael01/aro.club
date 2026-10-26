@@ -461,7 +461,7 @@ if (errRest) {
 
 const ev = oExplota('la fecha', await admin.from('events').insert({
   format: 'dinner',
-  starts_at: en(30),
+  starts_at: en(HORAS),
   reveal_at: en(-2),
   booking_closes_at: en(-24),
   restaurant_id: rest.id,
