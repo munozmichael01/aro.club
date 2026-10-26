@@ -209,6 +209,7 @@ export type Correo =
   | 'equilibrar_mesas'
   | 'reembolso_pedido'
   | 'reembolso_hecho'
+  | 'probadores_android'
 
 /**
  * Los que NO llevan correo.

@@ -1577,6 +1577,55 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         },
       }
 
+    /**
+     * «¿Tienes Android? Ayúdanos a publicar la app».
+     *
+     * Google no deja publicar en Play hasta que doce personas tengan la app
+     * instalada catorce días seguidos. Va a quien verificó DESDE Android y
+     * ya cenó con nosotros, que es a quien le podemos pedir un favor.
+     *
+     * El texto es el que aprobó Michael el 26-10, palabra por palabra, y
+     * vive en `app-mobile/Entregas/correo-probadores-android.md`. No se
+     * escribe aquí nada que no esté ahí.
+     *
+     * Dos botones y tres pasos, por eso tiene plantilla propia: la del
+     * empujón lleva un botón al final y aquí cada paso es una puerta
+     * distinta, una en Google Groups y otra en Play.
+     *
+     * Los enlaces están ESCRITOS y no vienen del payload: son dos URLs de
+     * Google que no dependen de nadie, y un correo que manda a instalar
+     * algo no puede quedarse con el enlace vacío porque faltara un campo.
+     *
+     * NO es imprescindible: lleva `List-Unsubscribe` como el resto de lo
+     * que se puede apagar. Es un favor, no un aviso de su mesa.
+     */
+    case 'probadores_android':
+      return {
+        a,
+        datos: {
+          ...base,
+          asuntoCorreo: '¿Tienes Android? Ayúdanos a publicar la app',
+          anticipo: 'Son dos minutos, y la tienes antes que nadie.',
+          cinta: 'LA APP DE ARO · ANDROID',
+          titularA: 'Ayúdanos a llevar',
+          titularB: 'Aro a',
+          titularC: 'Android',
+          entradilla: 'La app de Aro para Android ya está lista, pero Google no nos deja publicarla hasta que la usen al menos doce personas durante catorce días. Te escribimos porque ya reservaste con nosotros, y nos ayudarías mucho si eres una de ellas. Hazlo con la misma cuenta de Google que usas en el celular.',
+          paso1Titulo: 'Únete al grupo de probadores',
+          paso1: 'Es solo para que Google sepa que puedes instalarla. Nadie más ve que estás en el grupo.',
+          boton1: 'Unirme al grupo',
+          enlace1: 'https://groups.google.com/g/aro-club-android',
+          paso2Titulo: 'Actívate como probador e instálala',
+          paso2: 'Toca «Convertirse en tester» y, después, instálala desde Google Play como cualquier app. Entras con la misma cuenta que usas en la web.',
+          boton2: 'Activarme e instalar',
+          enlace2: 'https://play.google.com/apps/testing/club.aro.app',
+          paso3Titulo: 'Déjala instalada catorce días',
+          paso3: 'Ábrela de vez en cuando, por ejemplo para ver tu próxima mesa.',
+          pie: 'Si tienes cualquier duda, o algo falla, responde a este correo y te ayudamos. Gracias por ayudarnos a crecer.',
+          resumen: 'La app de Aro para Android necesita doce probadores durante catorce días.',
+        },
+      }
+
     // El cupón no lleva importes a propósito: no hay ninguno. Lleva lo mismo
     // que el resto —qué fecha, dónde y cuándo se revela— y nada de banco.
     case 'puesto_con_cupon':
