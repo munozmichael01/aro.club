@@ -69,13 +69,23 @@ const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_RO
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-const CORREO = 'revision.appstore@aro.club'
-const DOMINIO_MESA = 'prueba.aro.club'
-const RASTRO = fileURLToPath(new URL('../.cuenta-revision.json', import.meta.url))
-
 const args = process.argv.slice(2)
+
+/**
+ * La cuenta del revisor de Apple, salvo que se pida otra con `--correo=`.
+ * Google Play pide la suya (26-10), y compartirla con Apple a mitad de una
+ * revisión cambiaría lo que ve el revisor: aceptar las normas o valorar la
+ * cena con una deja a la otra sin la pantalla que se le enseñó. Cada correo
+ * lleva su propio rastro, para que `--borrar` no se lleve la de nadie más.
+ */
+const CORREO = args.find((a) => a.startsWith('--correo='))?.slice(9) || 'revision.appstore@aro.club'
+const DOMINIO_MESA = 'prueba.aro.club'
+// Los cinco de su mesa, con el prefijo de su cuenta: la de Apple conserva los suyos de siempre.
+const PREFIJO_MESA = CORREO === 'revision.appstore@aro.club' ? 'revision-' : CORREO.split('@')[0] + '-'
+const RASTRO = fileURLToPath(new URL(CORREO === 'revision.appstore@aro.club' ? '../.cuenta-revision.json' : '../.cuenta-revision-' + CORREO.split('@')[0] + '.json', import.meta.url))
+
 const CONOCIDOS = ['--borrar', '--refrescar', '--acompanantes', '--sin-normas', '--sin-encuesta']
-const raros = args.filter((a) => !CONOCIDOS.includes(a) && !/^--horas=-?\d+$/.test(a))
+const raros = args.filter((a) => !CONOCIDOS.includes(a) && !/^--horas=-?\d+$/.test(a) && !/^--correo=[^@\s]+@aro\.club$/.test(a))
 if (raros.length) {
   console.error('No conozco: ' + raros.join(', ') + '. Los modos son: ' + CONOCIDOS.join(', ') + '.')
   process.exit(1)
@@ -174,7 +184,7 @@ if (args.includes('--acompanantes')) {
   const vivos = new Set((sentados ?? []).map((s) => s.profile_id))
   let puestos = 0
   for (const [nombre, sector] of OTROS) {
-    const correo = 'revision-' + nombre.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '') + '@' + DOMINIO_MESA
+    const correo = PREFIJO_MESA + nombre.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '') + '@' + DOMINIO_MESA
     let u = await usuarioPorCorreo(correo)
     if (u && vivos.has(u.id)) continue
     if (!u) {
@@ -483,7 +493,7 @@ const OTROS = [
 ]
 let asiento = 2
 for (const [nombre, sector] of OTROS) {
-  const correo = 'revision-' + nombre.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '') + '@' + DOMINIO_MESA
+  const correo = PREFIJO_MESA + nombre.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '') + '@' + DOMINIO_MESA
   const { data: u } = await admin.auth.admin.createUser({
     email: correo, password: 'Aro-' + randomBytes(9).toString('base64url'), email_confirm: true,
   })
