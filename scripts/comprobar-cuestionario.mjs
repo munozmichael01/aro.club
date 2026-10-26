@@ -527,32 +527,37 @@ if (textosDistintos.length) {
   textosDistintos.forEach((l) => console.log(`    ${l}`))
 }
 
-// --- «Catorce preguntas más» ------------------------------------------
+// --- la portada NO dice cuántas preguntas quedan -----------------------
 //
-// La portada promete cuántas preguntas quedan después de apuntarse. Era una
-// cifra escrita a mano: decía diez cuando eran catorce, y antes de eso
-// diecisiete. Nadie la mira al añadir una pregunta al catálogo.
+// Esta regla estaba al revés: exigía que la portada prometiera una cifra, y
+// vigilaba que cuadrara con el catálogo. Lo hacía porque la cifra estaba
+// escrita a mano y envejecía: decía diez cuando eran catorce, y antes
+// diecisiete.
+//
+// Ya no se dice ningún número, ni en la portada ni en el correo «Tienes
+// puesto». Un número en el momento en que se pide el esfuerzo no informa,
+// tasa: de las 1037 personas que recibieron ese correo, 290 no llegaron
+// nunca a tener cuenta. Y no hay nadie atascado a mitad del cuestionario,
+// así que la cifra no estaba evitando ninguna sorpresa.
+//
+// Se vigila el sentido contrario, que es el que puede volver solo: que nadie
+// reintroduzca una cifra a mano. El comprobador ya no tiene que saber
+// cuántas son.
 const CIFRAS = ['Cero', 'Una', 'Dos', 'Tres', 'Cuatro', 'Cinco', 'Seis', 'Siete',
   'Ocho', 'Nueve', 'Diez', 'Once', 'Doce', 'Trece', 'Catorce', 'Quince',
   'Dieciséis', 'Diecisiete', 'Dieciocho', 'Diecinueve', 'Veinte']
 
-// Las que NO se preguntan antes: las cuatro de la puerta y las dos que pide
-// la pantalla de datos personales.
-const YA_PREGUNTADAS = [...ORDEN_PUERTA, 'nacimiento', 'genero']
-const restantes = (catalogo ?? []).filter((q) => !YA_PREGUNTADAS.includes(q.key)).length
-// `\w` no incluye acentos, y la cifra que tocaba era «Dieciséis»: el
-// comprobador leia la frase como que la portada ya no decia ninguna cifra.
-const prometidas = landing.match(/'([A-Za-zÀ-ÿ]+) preguntas más/)
+// `\w` no incluye acentos, y la cifra que más cerca estuvo de colarse era
+// «Dieciséis»: con `\w` el comprobador no la veía.
+const prometidas = landing.match(/([A-Za-zÀ-ÿ]+) preguntas más/)
 
-if (!prometidas) {
+if (prometidas && CIFRAS.includes(prometidas[1])) {
   errores++
-  console.error('\n✗ la portada ya no dice cuántas preguntas quedan')
-} else if (prometidas[1] !== CIFRAS[restantes]) {
-  errores++
-  console.error(`\n✗ la portada promete «${prometidas[1]} preguntas más» y quedan ${restantes}`)
-  console.error(`  → deberia decir «${CIFRAS[restantes] ?? restantes} preguntas más»`)
+  console.error(`\n✗ la portada vuelve a decir «${prometidas[1]} preguntas más»`)
+  console.error('  → va sin cifra: «Unas preguntas más». Una cifra a mano envejece,')
+  console.error('    y en ese sitio desanima más de lo que informa.')
 } else {
-  console.log(`✓ «${prometidas[1]} preguntas más» (${restantes} en el catálogo)`)
+  console.log('✓ la portada no dice cuántas preguntas quedan')
 }
 
 // --- el reloj del navegador no decide qué día es --------------------
