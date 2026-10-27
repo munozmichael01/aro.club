@@ -101,6 +101,8 @@ type ValoracionCruda = {
   sitio_comida: number | null
   would_repeat: boolean | null
   comment: string | null
+  /** El punto medio del tramo, nunca la cifra: lo dice `tramoDeGasto`. */
+  gasto_usd: number | string | null
   created_at: string
 }
 
@@ -255,7 +257,7 @@ export async function GET(request: Request) {
         (d, h) => admin.from('bookings').select('id, status').range(d, h)),
       todasLasFilas<ValoracionCruda>(
         (d, h) => admin.from('table_feedback')
-          .select('table_id, profile_id, conversation_rating, sitio_ambiente, sitio_servicio, sitio_conversar, sitio_comida, would_repeat, comment, created_at')
+          .select('table_id, profile_id, conversation_rating, sitio_ambiente, sitio_servicio, sitio_conversar, sitio_comida, would_repeat, comment, gasto_usd, created_at')
           .range(d, h)),
     ])
   } catch (e) {

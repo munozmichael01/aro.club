@@ -432,6 +432,47 @@
     ],
 
     /**
+     * Los tramos de gasto de la encuesta del dia despues, con su punto medio.
+     *
+     * Se pregunta por tramos y no por una cifra: pedir el numero exacto es
+     * pedirle a alguien que abra la cuenta del restaurante, y para comparar
+     * locales entre si el tramo basta.
+     *
+     * Lo que se guarda en `table_feedback.gasto_usd` es EL PUNTO MEDIO, no
+     * lo que gasto: un 32 en la base es «25 a 40». Enseñar el 32 a pelo
+     * inventa una precision que nadie dio, y por eso la vuelta —
+     * `tramoDeGasto`— esta aqui al lado y no en cada pantalla.
+     *
+     * Vive aqui porque ya estaba escrito dos veces, en la encuesta de la web
+     * y en la de la app, y le faltaba el tercero: el panel, que es quien
+     * tiene que leer de vuelta lo que guardo.
+     */
+    TRAMOS_GASTO: [
+      ['Menos de 15', 10],
+      ['15 a 25', 20],
+      ['25 a 40', 32],
+      ['Más de 40', 50],
+    ],
+
+    /**
+     * Del punto medio guardado al tramo que pulso la persona.
+     *
+     * Por el punto medio EXACTO y no por el mas cercano: un numero que no es
+     * ninguno de los cuatro no salio de la encuesta, y redondearlo al tramo
+     * de al lado seria decir que alguien contesto algo que no contesto. Ese
+     * se devuelve tal cual, con su unidad.
+     */
+    tramoDeGasto: function (usd) {
+      if (usd === null || usd === undefined || usd === '') return null
+      var n = Number(usd)
+      if (!isFinite(n)) return null
+      for (var i = 0; i < this.TRAMOS_GASTO.length; i++) {
+        if (this.TRAMOS_GASTO[i][1] === n) return this.TRAMOS_GASTO[i][0] + ' ref'
+      }
+      return n + ' ref'
+    },
+
+    /**
      * Lo que cuesta la plaza. DIEZ desde el 13-10, antes siete.
      *
      * Y esto es SOLO el valor por defecto de una fecha nueva. Lo que se

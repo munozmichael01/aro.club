@@ -241,7 +241,7 @@ export async function GET(request: Request) {
   // histórico del perfil de la persona también».
   const { data: valoraciones } = await admin
     .from('table_feedback')
-    .select('table_id, would_repeat, conversation_rating, sitio_ambiente, sitio_servicio, sitio_conversar, sitio_comida, comment')
+    .select('table_id, would_repeat, conversation_rating, sitio_ambiente, sitio_servicio, sitio_conversar, sitio_comida, comment, gasto_usd')
     .eq('profile_id', id)
 
   // Los bloqueos viven en `exclusions` y solo ahí. `created_by` distingue

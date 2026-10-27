@@ -876,13 +876,18 @@
                 </sc-for>
               </span>
               <span style="flex:0 0 80px;text-align:right;font:500 14px/1.4 'Inter Tight',sans-serif;color:#2C4A38">{{ l.aforo }}</span>
-              <span style="flex:0 0 96px;text-align:right;font:600 14px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ l.porCabeza }}</span>
+              <span style="flex:0 0 96px;text-align:right;font:600 14px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ l.porCabeza }}
+                <sc-if value="{{ l.hayGastoReal }}" hint-placeholder-val="{{ false }}">
+                  <span style="{{ l.gastoRealEstilo }}">{{ l.gastoReal }}</span>
+                </sc-if>
+              </span>
               <span style="flex:0 0 44px;display:flex;justify-content:flex-end">
                 <span style="width:32px;height:32px;border-radius:999px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:500 14px/1 'Inter Tight',sans-serif">→</span>
               </span>
             </a>
           </sc-for>
         </div>
+        <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:16px;max-width:60ch;text-wrap:pretty">{{ notaPieLocales }}</div>
       </div>
     </sc-if>
 
@@ -4908,6 +4913,13 @@ class Component extends DCLogic {
         faltaEstilo: 'display:block;font:500 12px/1.45 \'Inter Tight\',sans-serif;color:#8F4515;margin-top:3px',
         aforo: (l.aforo || 0) + ((l.aforo || 0) === 1 ? ' mesa' : ' mesas'),
         porCabeza: l.gastoDeclarado ? l.gastoDeclarado + ' ref' : '—',
+        // Y debajo, lo que de verdad gasto la gente que ceno ahi, de la
+        // encuesta. Va aparte del declarado y nunca en su lugar: cuando los
+        // dos no cuadran, eso es el dato. Siempre con cuantas respuestas lo
+        // sostienen, porque una media de una persona no es una cuenta media.
+        hayGastoReal: l.gastoReal != null,
+        gastoReal: 'real ' + l.gastoReal + ' ref · ' + l.gastoRespuestas,
+        gastoRealEstilo: 'display:block;font:400 11px/1.4 \'Inter Tight\',sans-serif;color:#33513F;margin-top:2px;font-variant-numeric:tabular-nums',
         familias: (l.familias || []).map((x) => ({
           texto: NOMBRE_FAM[x] || x,
           chip: 'display:inline-flex;align-items:center;min-height:26px;padding:0 9px;border-radius:999px;background:rgba(20,52,42,.07);font:500 11px/1 \'Inter Tight\',sans-serif;color:#2C4A38;white-space:nowrap'
@@ -6593,6 +6605,7 @@ class Component extends DCLogic {
       // Ya no es de lectura: el interruptor de al lado de cada nombre escribe.
       // Dejar la frase vieja seria decirle a operacion que no puede tocar lo
       // unico que solo puede tocar ella.
+      notaPieLocales: 'Por cabeza es lo que declaramos al dar de alta el local. Debajo, cuando lo hay, lo que de verdad gastó la gente que cenó ahí: la media de lo que contestaron en la encuesta, con cuántas respuestas la sostienen. Se pregunta por tramos, así que es una media de tramos y no de cuentas exactas. Cuando los dos números no cuadran, el que hay que corregir es el declarado.',
       notaPieHistorico: 'Vino y No vino los marca operación, nunca la persona que cenó, porque de ahí salen las cenas contadas y el veto de tres meses. Pulsar la opción que ya está puesta la quita y la deja sin marcar. Las notas de la encuesta van de 1 a 4 y 4 es lo mejor. La ficha de cada persona se abre pinchando su nombre.',
 
       notaPieGente: 'Desde aquí no sale ningún correo: esta pestaña sirve para saber, no para disparar.'

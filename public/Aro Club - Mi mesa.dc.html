@@ -1179,18 +1179,18 @@ class Component extends DCLogic {
   }
 
   /**
-   * Los tramos de gasto, con su punto medio.
+   * Los tramos de gasto, con su punto medio, de `reglas.js`.
    *
    * Se pregunta por tramos y no por una cifra: pedir el número exacto es
    * pedirle a alguien que abra la cuenta del restaurante, y para comparar
    * locales entre sí el tramo basta. El punto medio es lo que se guarda.
+   *
+   * Estaba escrito aquí y otra vez en la app, y el 27-10 hizo falta un
+   * tercero —el panel, para leer de vuelta lo guardado—. Tres copias de la
+   * misma lista es como este repo ya ha divergido antes, así que vive en
+   * `reglas.js` con su vuelta (`AroReglas.tramoDeGasto`).
    */
-  TRAMOS_GASTO = [
-    ['Menos de 15', 10],
-    ['15 a 25', 20],
-    ['25 a 40', 32],
-    ['Más de 40', 50],
-  ];
+  TRAMOS_GASTO = AroReglas.TRAMOS_GASTO;
 
   renderVals() {
     // ── el juego de la mesa ─────────────────────────────────────────
