@@ -671,6 +671,28 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         },
       }
 
+      /**
+       * EL MISMO CORREO, otra vez, a quien ya lo recibió una vez.
+       *
+       * `scheduled_emails_empujon_perfil` es único por `(profile_id, falta)`
+       * y lo creó la migración del 28-08 con un motivo escrito: «un empujón
+       * por persona y por estado, insistir es spam». Por eso de las 362
+       * personas atascadas en la cédula, 320 no podían recibir nada: ya
+       * habían gastado su único aviso, algunas hace más de un mes.
+       *
+       * Michael decidió el 26-10 mandárselo igual, y pidió exactamente el
+       * mismo correo, no uno nuevo. `verificacion_semana` es eso: la MISMA
+       * voz, palabra por palabra, con otra clave de índice.
+       *
+       * Lo que NO se hace, a propósito: tocar el índice. La regla sigue en
+       * pie para todo lo demás, y esta segunda ronda hereda su protección,
+       * porque `(profile_id, 'verificacion_semana')` también es única. O
+       * sea que esto se puede mandar una vez y solo una. Si algún día hace
+       * falta una tercera, será otra decisión y se verá escrita aquí, que
+       * es justo lo que no pasaría si hubiéramos aflojado el índice.
+       */
+      voces.verificacion_semana = voces.verificacion
+
       const voz = { ...(voces[fila.kind === 'bienvenida' ? 'bienvenida' : falta] ?? voces.perfil) }
 
       // «Te falta la selfie» o «te falta la foto de tu cédula», con el
