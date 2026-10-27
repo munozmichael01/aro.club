@@ -155,13 +155,8 @@ export const pasada = {
   /** Del sitio, así que va con las del sitio y antes del texto libre (17-10). */
   gasto: '¿Cuánto gastaste?',
   notaGasto: (precio: string) => `Sin contar los ${precio} de tu plaza. Opcional, y sirve para elegir mejor el sitio la próxima vez.`,
-  /** [texto, punto medio]: se manda el punto medio, no el índice. */
-  tramosGasto: [
-    ['Menos de 15', 10],
-    ['15 a 25', 20],
-    ['25 a 40', 32],
-    ['Más de 40', 50],
-  ] as [string, number][],
+  /** [texto, punto medio]: se manda el punto medio, no el índice. De `reglas.js`, como la web y el panel (27-10). */
+  tramosGasto: reglas.TRAMOS_GASTO,
   noRepetir: (marcado: boolean) => (marcado ? 'No me mandes más a este sitio ✓' : 'No me mandes más a este sitio'),
   notaNoRepetir: 'Es tuyo y lo puedes quitar en tu perfil. Caben dos sitios a la vez.',
   comentario: '¿Algo que quieras destacar o contarnos?',

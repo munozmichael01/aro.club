@@ -7,6 +7,8 @@ import { test } from 'node:test'
 
 import * as M from '../src/mesa/maquina'
 import * as F from '../src/texto/fechas'
+import fs from 'node:fs'
+import path from 'node:path'
 
 const Z = 'America/Caracas'
 // Sábado 3 de octubre, 20:00 en Caracas; revela ese día a las 12:00.
@@ -144,4 +146,13 @@ test('el sello de la encuesta dice cuándo fue, porque ya no caduca a las 48 h (
   assert.equal(M.selloPasada(d('2026-10-15T23:30:00Z'), ahora), 'HACE 2 DÍAS')
   assert.equal(M.selloPasada(d('2026-09-18T23:30:00Z'), ahora), 'EL 18 DE SEPTIEMBRE')
   assert.equal(M.selloPasada({ fase: 'pasada' }, ahora), 'TU ÚLTIMA MESA')
+})
+
+test('los tramos de gasto salen de reglas.js, no de una copia', async () => {
+  const { reglas } = await import('../src/reglas')
+  const { pasada } = await import('../src/texto/mesa')
+  assert.equal(pasada.tramosGasto, reglas.TRAMOS_GASTO)
+  assert.deepEqual(reglas.TRAMOS_GASTO.map(([, usd]) => usd), [10, 20, 32, 50])
+  const texto = fs.readFileSync(path.resolve(import.meta.dirname, '../src/texto/mesa.ts'), 'utf8')
+  assert.doesNotMatch(texto, /Menos de 15|Más de 40/)
 })
