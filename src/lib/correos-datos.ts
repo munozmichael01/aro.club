@@ -467,6 +467,50 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       const falta = (p.falta as string) ?? 'perfil'
 
       /**
+       * QUÉ HAY ABIERTO Y HASTA CUÁNDO, sacado de la base y no escrito aquí.
+       *
+       * El aviso de verificación no decía ninguna fecha, y sin fecha no hay
+       * urgencia: «verifícate» es una tarea sin plazo y una tarea sin plazo
+       * se pospone. Con 362 personas con el perfil completo y la cédula sin
+       * subir, eso es lo que hay que romper.
+       *
+       * Se calcula al MANDAR y nunca se escribe a mano. Un correo que dice
+       * «de jueves a domingo» la semana que no hay jueves manda a alguien a
+       * una agenda que lo desmiente, y entonces el que mintió fuimos
+       * nosotros, no el calendario.
+       *
+       * El plazo es el día ANTES del primer cierre: quien se verifica ese
+       * día llega a tiempo a todo lo que queda abierto.
+       */
+      const { data: abiertasAhora } = await admin
+        .from('events')
+        .select('starts_at, booking_closes_at, city_slug')
+        .eq('status', 'open')
+        .eq('es_prueba', false)
+        .gte('starts_at', new Date().toISOString())
+        .order('starts_at')
+
+      const hayFechas = (abiertasAhora ?? []).length > 0
+      let cuandoHay = ''
+      let plazo = ''
+      if (hayFechas) {
+        const zonaAgenda = await zonaDeLaCiudad(admin, abiertasAhora![0].city_slug)
+        const dias = [...new Set((abiertasAhora ?? []).map((e) => diaDe(e.starts_at, zonaAgenda)).filter(Boolean))]
+        cuandoHay = dias.length > 1
+          ? `de ${dias[0]} a ${dias[dias.length - 1]}`
+          : `el ${dias[0]}`
+        // El primero que cierra manda: el plazo es la víspera de ese cierre.
+        const cierres = (abiertasAhora ?? [])
+          .map((e) => e.booking_closes_at)
+          .filter((x): x is string => !!x)
+          .sort()
+        if (cierres.length) {
+          const vispera = new Date(new Date(cierres[0]).getTime() - 24 * 3600_000).toISOString()
+          plazo = diaDe(vispera, zonaAgenda) ?? ''
+        }
+      }
+
+      /**
        * El botón. NO puede ser `/cuestionario` a secas.
        *
        * Quien NO tiene cuenta —dejó su correo y se fue— necesita el token
@@ -600,7 +644,11 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         // Perfil completo y nada subido. El peor de los tres: está a un
         // paso de poder apartar puesto.
         verificacion: {
-          asuntoCorreo: 'Te falta un paso',
+          // «para tu primera mesa» y no «Te falta un paso» a secas: 346
+          // personas ya recibieron ese asunto y no lo abrieron o no actuaron.
+          // Repetirlo es pedir que lo ignoren otra vez. Y nombra el premio,
+          // que es lo que falta en «te falta»: la mesa, no el trámite.
+          asuntoCorreo: 'Te falta un paso para tu primera mesa',
           cinta: 'TE FALTA UN PASO',
           anticipo: 'Tu perfil está completo. Solo queda verificar quién eres.',
           titularA: 'Te falta',
@@ -609,11 +657,17 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           // Dos minutos no es una forma de hablar: es la mediana medida
           // entre terminar el perfil y subir la cédula, y el p90 son diez.
           entradilla: `Tu perfil está completo${coma}. Lo único que falta para que puedas apartar puesto es verificar quién eres: una foto de tu cédula y una selfie. Dos minutos.`,
-          paso1Titulo: 'Tu perfil, listo',
-          paso1: 'Ya nos contaste de qué hablas, qué comes y qué prefieres esquivar. Eso no hay que repetirlo.',
-          paso2Titulo: 'Verifica tu identidad',
-          paso2: 'Esto es lo que falta: cédula y una selfie. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
-          boton: 'Verificar mi identidad',
+          paso1Titulo: 'Por qué te la pedimos',
+          paso1: `Para que cada persona de la mesa esté verificada, tú incluido. Las revisamos a mano, no las ve nadie más, y se borran a los ${DIAS_GUARDA_FOTOS} días.`,
+          paso2Titulo: 'Qué hay esta semana',
+          // Con fecha y con plazo, o sin nada. Media frase —«hay mesas» sin
+          // decir cuándo— es la que no mueve a nadie.
+          paso2: hayFechas && plazo
+            ? `Hay mesas ${cuandoHay}. Si te verificas antes del ${plazo}, te da tiempo de reservar.`
+            : hayFechas
+              ? `Hay mesas ${cuandoHay}. En cuanto estés verificado puedes reservar.`
+              : 'En cuanto abramos la próxima fecha en tu zona te escribimos, y ya podrás reservar sin tener que hacer nada más.',
+          boton: 'Verificarme',
         },
       }
 
