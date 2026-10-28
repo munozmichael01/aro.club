@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { encolar } from '@/lib/correos'
 import { quienQuiereSaberDe } from '@/lib/a-quien-avisar'
+import { ZONA_POR_DEFECTO, partesDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { todasLasFilas } from '@/lib/todas-las-filas'
 
 /**
  * «Hombres, vamos a equilibrar las mesas», a mano.
@@ -47,7 +49,13 @@ const diaDe = (iso: string) => new Date(Date.parse(iso) - CARACAS * 3600_000).to
 
 const VIVAS: ('pending_payment' | 'confirmed' | 'attended')[] = ['pending_payment', 'confirmed', 'attended']
 
-async function mandar(seco: boolean, solo: string | null, conJueves: boolean, variante: string | null) {
+async function mandar(
+  seco: boolean,
+  solo: string | null,
+  conJueves: boolean,
+  variante: string | null,
+  cuando: Date | null,
+) {
   const admin = createAdminClient()
   const ahora = new Date().toISOString()
 
@@ -88,14 +96,23 @@ async function mandar(seco: boolean, solo: string | null, conJueves: boolean, va
     return NextResponse.json({ error: 'No queda ninguna fecha abierta que ofrecer.' }, { status: 409 })
   }
 
-  // Quién tiene plan esta semana: de hoy en adelante, en cualquier fecha.
-  const { data: conPlan } = await admin
+  /**
+   * Quién tiene plan esta semana: de hoy en adelante, en cualquier fecha.
+   *
+   * Por tramos, porque `attended` no se borra nunca: esta consulta crece una
+   * fila por cada persona que cena, para siempre.
+   */
+  const conPlan = await todasLasFilas<{
+    profile_id: string | null
+    events: unknown
+  }>((desde, hasta) => admin
     .from('bookings')
     .select('profile_id, events!bookings_event_id_fkey(starts_at)')
     .in('status', VIVAS)
+    .range(desde, hasta))
 
   const ocupados = new Set(
-    (conPlan ?? [])
+    conPlan
       .filter((b) => {
         const ev = b.events as unknown as { starts_at?: string } | null
         return !!ev?.starts_at && ev.starts_at >= ahora
@@ -104,21 +121,44 @@ async function mandar(seco: boolean, solo: string | null, conJueves: boolean, va
       .filter((x): x is string => !!x),
   )
 
-  // Verificación: aprobada, o en revisión (que no es lo mismo y cuenta).
-  const { data: verifs } = await admin
-    .from('verifications')
-    .select('profile_id, status')
+  /**
+   * Verificación: aprobada, o en revisión (que no es lo mismo y cuenta).
+   *
+   * POR TRAMOS, y es el fallo que tuvo este envío.
+   *
+   * Esto pedía la tabla entera de un tirón, y PostgREST devuelve mil filas
+   * como máximo sin decir nada. `verifications` tenía mil doscientas sesenta
+   * el 27-10, así que doscientas sesenta no existían para esta ruta:
+   * TREINTA Y CINCO hombres verificados quedaban fuera del envío, y los que
+   * estaban en `pending_verification` habrían recibido el correo que pide
+   * una cédula que ya les habíamos aprobado.
+   *
+   * No falló nada. La consulta volvía sin error y con menos gente.
+   */
+  const verifs = await todasLasFilas<{ profile_id: string; status: string }>(
+    (desde, hasta) => admin
+      .from('verifications')
+      .select('profile_id, status')
+      .range(desde, hasta))
 
-  const aprobados = new Set((verifs ?? []).filter((v) => v.status === 'approved').map((v) => v.profile_id))
-  const enRevision = new Set((verifs ?? []).filter((v) => v.status === 'pending').map((v) => v.profile_id))
+  const aprobados = new Set(verifs.filter((v) => v.status === 'approved').map((v) => v.profile_id))
+  const enRevision = new Set(verifs.filter((v) => v.status === 'pending').map((v) => v.profile_id))
 
   // Los hombres vivos, con su nacimiento para medir las bandas de edad.
-  const { data: hombres } = await admin
+  const hombres = await todasLasFilas<{
+    id: string
+    email: string | null
+    birthdate: string | null
+    es_prueba: boolean | null
+    deleted_at: string | null
+    status: string | null
+  }>((desde, hasta) => admin
     .from('profiles')
     .select('id, email, birthdate, es_prueba, deleted_at, status')
     .eq('gender', 'hombre')
+    .range(desde, hasta))
 
-  const vivos = (hombres ?? []).filter((p) => !p.es_prueba && !p.deleted_at && p.email && !ocupados.has(p.id))
+  const vivos = hombres.filter((p) => !p.es_prueba && !p.deleted_at && p.email && !ocupados.has(p.id))
 
   const grupos = {
     verificados: vivos.filter((p) => aprobados.has(p.id)),
@@ -144,12 +184,14 @@ async function mandar(seco: boolean, solo: string | null, conJueves: boolean, va
    * Con esto la ruta se puede llamar las veces que haga falta: sigue por
    * donde se quedó y a nadie le llega dos veces.
    */
-  const { data: yaTienen } = await admin
-    .from('scheduled_emails')
-    .select('profile_id')
-    .eq('kind', 'equilibrar_mesas')
+  const yaTienen = await todasLasFilas<{ profile_id: string | null }>(
+    (desde, hasta) => admin
+      .from('scheduled_emails')
+      .select('profile_id')
+      .eq('kind', 'equilibrar_mesas')
+      .range(desde, hasta))
 
-  const hechos = new Set((yaTienen ?? []).map((r) => r.profile_id).filter((x): x is string => !!x))
+  const hechos = new Set(yaTienen.map((r) => r.profile_id).filter((x): x is string => !!x))
 
   const salida: Record<string, unknown> = {}
   let encolados = 0
@@ -218,6 +260,9 @@ async function mandar(seco: boolean, solo: string | null, conJueves: boolean, va
         { perfil: p.id },
         'equilibrar_mesas',
         { fechas: suyas.map((e) => e.id), falta },
+        // Sin `cuando` sale al momento. Con `cuando`, `encolar` NO despacha y
+        // la fila espera en la cola a que el cron de los correos la recoja.
+        cuando ? { cuando } : {},
       )
       if (r === 'encolado') { delGrupo++; encolados++ }
     }
@@ -249,6 +294,23 @@ async function mandar(seco: boolean, solo: string | null, conJueves: boolean, va
     noLesVaEsteplan: noLesVa,
     ...(seco ? { seco: true } : {}),
     ...(solo ? { solo } : {}),
+    /**
+     * A qué hora sale, dicho en Caracas y no en UTC.
+     *
+     * El cron de los correos pasa cada quince minutos, así que lo programado
+     * para las ocho sale entre las ocho y las ocho y cuarto. Decirlo aquí
+     * evita la pregunta de por qué a las 8:00 en punto no había salido.
+     */
+    ...(cuando
+      ? {
+        programado: cuando.toISOString(),
+        programadoEnCaracas: (() => {
+          const p = partesDe(cuando.toISOString(), ZONA_POR_DEFECTO)
+          return p ? `${p.dia} ${p.numero} de ${p.mes}, ${p.hora}` : cuando.toISOString()
+        })(),
+        nota: 'La cola pasa cada quince minutos: sale a esa hora o hasta un cuarto de hora después.',
+      }
+      : {}),
   })
 }
 
@@ -262,10 +324,47 @@ export async function GET(request: Request) {
   }
 
   const params = new URL(request.url).searchParams
+
+  /**
+   * `?cuando=` deja el envío PROGRAMADO en vez de soltarlo ahora.
+   *
+   * Michael, 27-10: «el correo sale mañana a las 8am, no ahorita». Sin esto
+   * la única forma de que saliera a esa hora era que alguien estuviera
+   * delante a esa hora, y eso no es una hora de envío, es una alarma.
+   *
+   * Se pide en UTC con la Z, a propósito: una hora sin zona escrita en una
+   * URL es la forma de fallo que este repositorio ya ha pagado dos veces.
+   * Las ocho de la mañana de Caracas son las 12:00Z. La respuesta devuelve
+   * la hora en Caracas para que se vea que se entendió bien.
+   *
+   * Y se rechaza una hora pasada: `encolar` despacha al momento cuando
+   * `cuando` ya venció, así que un error de un día aquí es un envío
+   * inmediato a todo el mundo.
+   */
+  const cuandoCrudo = params.get('cuando')
+  let cuando: Date | null = null
+  if (cuandoCrudo) {
+    const t = Date.parse(cuandoCrudo)
+    if (Number.isNaN(t)) {
+      return NextResponse.json(
+        { error: `no entiendo la hora «${cuandoCrudo}». Pídela en ISO con zona, por ejemplo 2026-10-28T12:00:00Z.` },
+        { status: 400 },
+      )
+    }
+    if (t <= Date.now()) {
+      return NextResponse.json(
+        { error: 'esa hora ya pasó, y eso haría que el envío saliera al momento. Pon una futura o quita el parámetro.' },
+        { status: 400 },
+      )
+    }
+    cuando = new Date(t)
+  }
+
   return mandar(
     params.get('seco') === '1',
     params.get('solo'),
     params.get('jueves') !== '0',
     params.get('variante'),
+    cuando,
   )
 }

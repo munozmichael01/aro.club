@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { resumenDeRespuesta } from '@/lib/encuesta'
 import { DESDE_QUE_ES_REAL, exigirOps } from '@/lib/ops'
+import { todasLasFilas } from '@/lib/todas-las-filas'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -64,21 +65,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const TAM = 12
 const TAM_MAX = 100
 
-/** El tope de PostgREST, que obliga a leer por tramos. */
-const TRAMO = 1000
-
-async function todasLasFilas<T>(
-  leer: (desde: number, hasta: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
-): Promise<T[]> {
-  const filas: T[] = []
-  for (let desde = 0; ; desde += TRAMO) {
-    const { data, error } = await leer(desde, desde + TRAMO - 1)
-    if (error) throw error
-    const tramo = data ?? []
-    filas.push(...tramo)
-    if (tramo.length < TRAMO) return filas
-  }
-}
 
 /**
  * Sin tildes y en minúscula, para comparar.
