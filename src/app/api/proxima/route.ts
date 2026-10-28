@@ -49,17 +49,22 @@ export async function GET() {
    * hay otra fecha abierta detrás que sí puede reservar—. Decir «no hay
    * fecha» teniéndola es la misma mentira que esta ruta vino a arreglar.
    *
-   * Cinco: con dos o tres fechas abiertas a la vez, sobra.
+   * Sin tope de cinco. «Con dos o tres fechas abiertas a la vez, sobra»,
+   * decía aquí, y la semana del 29-10 las cinco primeras eran todas de
+   * banda (≤44 y 45+): sin sesión se descartaban todas, y la cena del 31
+   * para cualquier edad era la sexta. La portada dijo «abrimos la próxima
+   * fecha en cuanto haya gente suficiente» con fechas abiertas (27-10).
+   * Por eso, sin sesión, las bandas se quitan EN la consulta y no después.
    */
-  const { data: abiertas } = await admin
+  let consulta = admin
     .from('events')
     .select('id, starts_at, booking_closes_at, reveal_at, format, city_slug, age_band_min, age_band_max')
     .eq('status', 'open')
     // Y nunca una de prueba, aunque alguien la deje en `open` por error.
     .eq('es_prueba', false)
     .gt('booking_closes_at', new Date().toISOString())
-    .order('starts_at', { ascending: true })
-    .limit(5)
+  if (!user) consulta = consulta.is('age_band_min', null).is('age_band_max', null)
+  const { data: abiertas } = await consulta.order('starts_at', { ascending: true }).limit(50)
 
   /**
    * Sin sesión, ninguna fecha con banda.
