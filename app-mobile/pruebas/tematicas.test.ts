@@ -52,3 +52,12 @@ test('el mazo de reglas.js: cinco temáticas de cinco preguntas, con clave únic
     assert.ok(t.preguntas.every((p) => !p.includes('—')), `${t.clave}: sin guiones largos`)
   }
 })
+
+// Los colores salen de reglas.js, los mismos que la web (bcc26e9): ninguna copia en la app.
+test('el color y el icono de cada temática son los de su estilo en reglas.js, no los de su posición', () => {
+  for (const [i, t] of M.delMazo().entries()) {
+    assert.ok(t.estilo, `${t.clave} sin estilo en reglas.js`)
+    assert.equal(M.estiloDe(i, t).fondo, t.estilo!.fondo)
+    assert.equal(M.estiloDe(i, t).icono, t.estilo!.icono)
+  }
+})

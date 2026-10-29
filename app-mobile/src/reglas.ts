@@ -167,7 +167,7 @@ export type JuegoDeMesa = {
 }
 
 /** Una temática: la mesa la elige. Lo visual (color, icono) es de la app, por posición. */
-export type TematicaDeJuego = { clave: string; nombre: string; linea: string; preguntas: string[] }
+export type TematicaDeJuego = { clave: string; nombre: string; linea: string; preguntas: string[]; estilo?: { fondo: string; tinta: string; suave: string; icono: string } }
 
 // JavaScript sin tipos a propósito: se declara la forma que la app usa y se
 // fía de ella. Si `reglas.js` cambiara esa forma, lo cazan las pruebas.
