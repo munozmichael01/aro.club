@@ -41,19 +41,36 @@ async function bloqueDeCambiarFecha(
   reserva: { id: string; event_id: string },
   evento: { starts_at: string; reveal_at: string | null },
 ): Promise<
-  | { puede: false; motivo: 'tarde' | 'revelada' | 'sin-destinos'; destinos: Destino[] }
-  | { puede: true; destinos: Destino[] }
+  | { reservaId: string; puede: false; motivo: 'tarde' | 'revelada' | 'sin-destinos'; destinos: Destino[] }
+  | { reservaId: string; puede: true; destinos: Destino[] }
 > {
+  /**
+   * El id de la reserva, dentro del bloque y siempre.
+   *
+   * Faltaba: el POST de cambiar de fecha lo pide y esta respuesta no lo
+   * daba por ningún lado, así que la app lo estaba sacando de
+   * `/api/cancelar`. Pedir en un sitio el id que da otro es una pareja de
+   * llamadas que alguien va a desemparejar.
+   *
+   * Y va AQUÍ dentro y no suelto porque es la reserva de la que habla este
+   * bloque: con dos reservas vivas, un `reservaId` en la raíz no diría a
+   * cuál se refieren estos destinos.
+   *
+   * Sale también cuando `puede` es falso, que es lo que deja enseñar «no se
+   * puede, y es por esto» sobre una reserva concreta.
+   */
   const ahora = Date.now()
 
   // Revelada primero: después de la revelación hay cinco personas que ya
   // saben que van a cenar contigo, y eso pesa más que las horas que falten.
   if (evento.reveal_at && Date.parse(evento.reveal_at) <= ahora) {
-    return { puede: false, motivo: 'revelada', destinos: [] }
+    return { reservaId: reserva.id, puede: false, motivo: 'revelada', destinos: [] }
   }
 
   const faltan = (Date.parse(evento.starts_at) - ahora) / 3600_000
-  if (faltan < HORAS_DE_MARGEN) return { puede: false, motivo: 'tarde', destinos: [] }
+  if (faltan < HORAS_DE_MARGEN) {
+    return { reservaId: reserva.id, puede: false, motivo: 'tarde', destinos: [] }
+  }
 
   const { data: suya } = await admin
     .from('events')
@@ -110,8 +127,10 @@ async function bloqueDeCambiarFecha(
     })
   }
 
-  if (!destinos.length) return { puede: false, motivo: 'sin-destinos', destinos: [] }
-  return { puede: true, destinos }
+  if (!destinos.length) {
+    return { reservaId: reserva.id, puede: false, motivo: 'sin-destinos', destinos: [] }
+  }
+  return { reservaId: reserva.id, puede: true, destinos }
 }
 
 /**
