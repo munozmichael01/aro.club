@@ -2,6 +2,7 @@ import { useFocusEffect } from 'expo-router'
 import { useCallback, useState, type ReactNode } from 'react'
 import { Image, Platform, Pressable, StyleSheet, View, type TextStyle } from 'react-native'
 
+import Svg, { Path } from 'react-native-svg'
 import { IconoCandado, Texto, fuente } from '../diseno'
 import * as G from '../juego/guardado'
 import * as J from '../juego/maquina'
@@ -193,11 +194,11 @@ export function MesaCena(p: {
 
       {d.mesaId ? (
         cerradoHasta != null ? (
-          // 1a (entrega 21): a la hora de la cena, ni un minuto antes.
-          <JuegoCerrado hora={cerradoHasta} delPlan={M.voz(d).delPlan} />
+          // 1a (entrega 21): a la hora de la cena, ni un minuto antes. Con temáticas, M2 de su entrega.
+          TM.delMazo().length ? <TematicasCerrada hora={cerradoHasta} memoria={memoria} /> : <JuegoCerrado hora={cerradoHasta} delPlan={M.voz(d).delPlan} />
         ) : TM.delMazo().length ? (
           // El juego por temáticas (entrega tematicas), cuando el mazo está en reglas.js.
-          <Desplegable oscura titulo={TJ.tarjeta.titulo} resumen={TarjetaTematicas.resumen(memoria)} abierta={abiertas.juego} alTocar={() => poner('juego', !abiertas.juego)}>
+          <Desplegable titulo={TJ.tarjeta.titulo} resumen={TarjetaTematicas.resumen(memoria)} adorno={<Puntos memoria={memoria} />} abierta={abiertas.juego} alTocar={() => poner('juego', !abiertas.juego)}>
             <TarjetaTematicas memoria={memoria} jugar={(tema) => d.mesaId && ir(`/juego?mesa=${d.mesaId}${tema != null ? `&tema=${tema}` : ''}`)} />
           </Desplegable>
         ) : J.terminado(guardado) ? (
@@ -289,7 +290,7 @@ function TarjetaMesa(p: { d: M.DeServidor; momento: Gu.MomentoCena; mapa: string
 
 // --- La tarjeta que se despliega ---------------------------------------------------
 
-function Desplegable(p: { titulo: string; resumen: string; nota?: string | null; abierta: boolean; alTocar: () => void; oscura?: boolean; children: ReactNode }) {
+function Desplegable(p: { titulo: string; resumen: string; nota?: string | null; abierta: boolean; alTocar: () => void; oscura?: boolean; adorno?: ReactNode; children: ReactNode }) {
   const o = !!p.oscura
   return (
     <View style={[e.tarjeta, o ? { backgroundColor: C.tinta, borderWidth: 0 } : null]}>
@@ -300,6 +301,7 @@ function Desplegable(p: { titulo: string; resumen: string; nota?: string | null;
         accessibilityLabel={p.abierta ? T.cena.cerrar(p.titulo) : T.cena.abrir(p.titulo)}
         style={e.cabeza}
       >
+        {p.adorno}
         <View style={{ flex: 1, minWidth: 0 }}>
           <Texto style={[serif(21, 1.1, -0.015), { color: o ? C.crema : C.tinta }]}>{p.titulo}</Texto>
           {p.resumen ? <Texto style={[texto(13, 1.35), { color: o ? C.cuerpoVerde : C.cuerpo, marginTop: 3 }]}>{p.resumen}</Texto> : null}
@@ -322,29 +324,62 @@ function TarjetaTematicas(p: { memoria: TM.Memoria; jugar: (tema: number | null)
   const r = TM.resumen(todas, p.memoria)
   return (
     <View style={{ paddingHorizontal: 18, paddingBottom: 18, gap: 12 }}>
-      <Texto style={[texto(14, 1.45), { color: C.cuerpoVerde }]}>{TT.tarjeta.intro}</Texto>
+      <Texto style={[texto(14, 1.45), { color: C.cuerpo }]}>{TT.tarjeta.intro}</Texto>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {todas.map((t, i) => {
           const es = TM.estiloDe(i)
           const est = TM.estado(t, p.memoria)
           return (
-            <Pressable key={t.clave} onPress={() => p.jugar(i)} accessibilityRole="button" style={[e.tema, { backgroundColor: es.fondo, opacity: est.tipo === 'jugada' ? 0.8 : 1 }]}>
-              <Texto style={[semi(10), { color: es.tinta, alignSelf: 'flex-end', letterSpacing: 1 }]}>
-                {est.tipo === 'jugada' ? TT.tarjeta.jugada : est.tipo === 'aMedias' ? TT.tarjeta.deCuantas(est.en, est.de) : TT.tarjeta.preguntas(t.preguntas.length)}
-              </Texto>
-              <Texto style={[serif(16, 1.42), { color: es.tinta }]}>{t.nombre}</Texto>
+            // Jugada: 0,8 y no el 0,55 de la maqueta, que con la luz de un restaurante no se lee (revisión del 29-10).
+            <Pressable key={t.clave} onPress={() => p.jugar(i)} accessibilityRole="button" accessibilityLabel={t.nombre} style={[e.tema, { backgroundColor: es.fondo, opacity: est.tipo === 'jugada' ? 0.8 : 1 }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                  <Path d={es.icono} stroke={es.tinta} strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+                <Texto style={[semi(9.5), { fontFamily: fuente.textoNegrita, color: es.tinta, letterSpacing: 0.95 }]}>
+                  {est.tipo === 'jugada' ? TT.tarjeta.jugada : est.tipo === 'aMedias' ? TT.tarjeta.deCuantas(est.en, est.de) : TT.tarjeta.preguntas(t.preguntas.length)}
+                </Texto>
+              </View>
+              <Texto style={[serif(16, 1.1), { color: es.tinta, marginTop: 'auto' }]}>{t.nombre}</Texto>
             </Pressable>
           )
         })}
       </View>
       <Pressable onPress={() => p.jugar(r.aMedias ? todas.findIndex((t) => t.nombre === r.aMedias!.nombre) : null)} accessibilityRole="button" style={e.botonJuego}>
-        <Texto style={[semi(15), { color: C.tinta }]}>{r.aMedias ? TT.tarjeta.seguir(r.aMedias.nombre, r.aMedias.en, r.aMedias.de) : TT.tarjeta.abrir}</Texto>
+        <Texto style={[semi(15), { color: C.crema }]}>{r.aMedias ? TT.tarjeta.seguir(r.aMedias.nombre, r.aMedias.en, r.aMedias.de) : TT.tarjeta.abrir}</Texto>
       </Pressable>
       {r.aMedias ? (
-        <Pressable onPress={() => p.jugar(null)} accessibilityRole="link" style={{ alignItems: 'center', minHeight: 40, justifyContent: 'center' }}>
-          <Texto style={[semi(14), { color: C.cuerpoVerde, textDecorationLine: 'underline' }]}>{TT.tarjeta.verTodas}</Texto>
+        <Pressable onPress={() => p.jugar(null)} accessibilityRole="link" style={{ alignItems: 'center', minHeight: 44, justifyContent: 'center' }}>
+          <Texto style={[semi(14), { color: C.verde, textDecorationLine: 'underline' }]}>{TT.tarjeta.verTodas}</Texto>
         </Pressable>
       ) : null}
+    </View>
+  )
+}
+
+/** Los puntos de color de la cabecera: una por temática, las jugadas apagadas (M1 a M5). */
+function Puntos({ memoria }: { memoria: TM.Memoria }) {
+  return (
+    <View style={{ flexDirection: 'row', paddingRight: 5 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {TM.delMazo().map((t, i) => (
+        <View key={t.clave} style={[e.punto, { backgroundColor: TM.estiloDe(i).fondo, opacity: TM.estado(t, memoria).tipo === 'jugada' ? 0.35 : 1 }]} />
+      ))}
+    </View>
+  )
+}
+
+/** M2 · Antes de la hora: la cabecera con candado, sin abrirse. */
+function TematicasCerrada({ hora, memoria }: { hora: string; memoria: TM.Memoria }) {
+  return (
+    <View style={e.tarjeta}>
+      <View style={e.cabeza}>
+        <Puntos memoria={memoria} />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Texto style={serif(21, 1.1, -0.015)}>{TJ.tarjeta.titulo}</Texto>
+          <Texto style={[texto(13, 1.35), { color: C.cuerpo, marginTop: 3 }]}>{TT.tarjeta.resumenCerrado(TM.delMazo().length, hora)}</Texto>
+        </View>
+        <IconoCandado tam={20} color="#456352" />
+      </View>
     </View>
   )
 }
@@ -416,28 +451,22 @@ function TarjetaJuego(p: {
 
 /** 1a · Antes de la hora de la cena: se ve qué hay, pero nada se puede abrir. */
 function JuegoCerrado({ hora, delPlan }: { hora: string; delPlan: string }) {
-  // Con el mazo por temáticas en reglas.js, lo que se ve apagado son las temáticas, no las rondas viejas.
-  const mazo = TM.delMazo()
-  const filas = mazo.length
-    ? mazo.map((t) => ({ clave: t.clave, titulo: t.nombre, bajada: t.linea }))
-    : reglas.JUEGO.rondas.map((r, i) => ({ clave: r.clave, titulo: r.titulo, bajada: TJ.tarjeta.bajada(i) }))
-  const resumen = mazo.length ? TT.tarjeta.resumenCerrado(mazo.length, delPlan) : TJ.tarjeta.resumenCerrado(delPlan, filas.length)
   return (
     <View style={[e.tarjeta, { backgroundColor: C.tinta, borderWidth: 0 }]}>
       <View style={e.cabeza}>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Texto style={[serif(21, 1.1, -0.015), { color: C.crema }]}>{TJ.tarjeta.titulo}</Texto>
-          <Texto style={[texto(13, 1.35), { color: C.cuerpoVerde, marginTop: 3 }]}>{resumen}</Texto>
+          <Texto style={[texto(13, 1.35), { color: C.cuerpoVerde, marginTop: 3 }]}>{TJ.tarjeta.resumenCerrado(delPlan)}</Texto>
         </View>
       </View>
       <View style={{ paddingHorizontal: 18, paddingBottom: 18 }}>
         <View style={{ opacity: 0.45 }}>
-          {filas.map((r, i) => (
+          {reglas.JUEGO.rondas.map((r, i) => (
             <View key={r.clave} style={e.ronda}>
               <Texto style={[serif(20, 1.1), { color: C.acento, width: 30 }]}>{i + 1}</Texto>
               <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
                 <Texto style={[serif(18, 1.15), { color: C.crema }]}>{r.titulo}</Texto>
-                <Texto style={[texto(13, 1.4), { color: C.cuerpoVerde }]}>{r.bajada}</Texto>
+                <Texto style={[texto(13, 1.4), { color: C.cuerpoVerde }]}>{TJ.tarjeta.bajada(i)}</Texto>
               </View>
             </View>
           ))}
@@ -499,8 +528,9 @@ const media = (tam: number): TextStyle => ({ fontFamily: fuente.textoMedia, font
 const semi = (tam: number): TextStyle => ({ fontFamily: fuente.textoSemi, fontSize: tam, lineHeight: lh(tam, 1, 1.21) })
 
 const e = StyleSheet.create({
-  tema: { width: '48.5%', minHeight: 84, borderRadius: 16, padding: 12, justifyContent: 'space-between' },
-  botonJuego: { minHeight: 52, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: C.acento, paddingHorizontal: 18 },
+  tema: { width: '48.5%', minHeight: 96, borderRadius: 16, padding: 12, gap: 10 },
+  punto: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: C.papel, marginRight: -5 },
+  botonJuego: { minHeight: 50, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: C.tinta, paddingHorizontal: 18 },
   mesa: { borderRadius: 24, backgroundColor: C.tinta, paddingTop: 18, paddingHorizontal: 18, paddingBottom: 16 },
   sello: { minHeight: 26, paddingHorizontal: 11, borderRadius: 999, backgroundColor: C.acento, justifyContent: 'center' },
   selloTexto: { fontFamily: fuente.textoSemi, fontSize: 11, lineHeight: 14, letterSpacing: 1.54, color: C.tinta },
