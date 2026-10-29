@@ -71,6 +71,10 @@ test('lo de después: solo lo contestado, índices de mejor a peor, y lo ya hech
   assert.equal(M.algoQueContar({ ...v, comentario: 'la música alta' }), true, 'solo un comentario se puede enviar')
   assert.equal(M.algoQueContar({ ...v, comentario: '   ' }), false)
   assert.equal(M.algoQueContar({ ...v, gasto: 0 }), true)
+  // «¿Faltó alguien?» es obligatoria para mandarla (Michael, 29-10); «No faltó nadie» es `[]` y vale.
+  assert.equal(M.puedeEnviar({ ...v, gasto: 0 }), false, 'sin contestar si faltó alguien no se manda')
+  assert.equal(M.puedeEnviar({ ...v, gasto: 0, falto: [] }), true)
+  assert.equal(M.puedeEnviar({ ...v, falto: ['x'] }), true)
   assert.deepEqual(M.alternar(['a', 'b'], 'a'), ['b'])
   const ya = M.yaHecho({ fase: 'pasada', yaValoro: true, yaReporto: 'b', yaBloqueados: ['b', 'fuera'], companeros: [{ id: 'b', nombre: 'B', sector: null }] })
   assert.deepEqual(ya, { contado: true, reportadoA: 'b', bloqueados: ['b'] })

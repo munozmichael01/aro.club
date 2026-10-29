@@ -526,7 +526,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
   const nombreDe = (id: string | null) => otros.find((o) => o.id === id)?.nombre ?? null
   // «Vinimos todos» solo si lo tocó; «Faltó alguien» sin marcar a nadie no es respuesta (`null`).
   const vinimosTodos = !faltoAbierto && v.falto !== null && v.falto.length === 0
-  const hay = M.algoQueContar(v)
+  const hay = M.puedeEnviar(v)
   const listoReporte = !!quien && motivo >= 0
 
   const enviar = async () => {
@@ -588,7 +588,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
             {T.pasada.notaFalto(otros.length + 1)}
           </Texto>
           <View style={estilos.fichas}>
-            <Ficha texto={T.pasada.vinimosTodos} marcada={vinimosTodos} onPress={() => { setFaltoAbierto(false); setV((x) => ({ ...x, falto: vinimosTodos ? null : [] })) }} />
+            <Ficha texto={T.pasada.vinimosTodos} marcada={vinimosTodos} onPress={() => { setFaltoAbierto(false); setV((x) => ({ ...x, falto: [] })) }} />
             <Ficha texto={T.pasada.faltoAlguien} marcada={faltoAbierto} onPress={() => { setFaltoAbierto(!faltoAbierto); setV((x) => ({ ...x, falto: null })) }} />
           </View>
           {faltoAbierto ? (
@@ -711,7 +711,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
           </View>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginTop: 28 }}>
-            <Boton texto={T.pasada.enviar(enviando)} onPress={enviar} apagado={!hay || enviando} />
+            <Boton texto={T.pasada.enviar(enviando, v.falto === null)} onPress={enviar} apagado={!M.puedeEnviar(v) || enviando} />
             <Boton tipo="fantasma" texto={saltando ? T.pasada.saltando : T.pasada.ahoraNo} onPress={saltar} />
           </View>
           {error && !reporteAbierto ? (

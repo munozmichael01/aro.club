@@ -180,7 +180,8 @@ export const pasada = {
   notaBloquear: (v: Voz) =>
     `Opcional. No se le avisa a nadie, y no es una queja: si nadie te chocó, déjalo así. Solo deja de salir en ${v.tu}s ${v.unidades}.`,
   bloqueadaPorReporte: 'Bloqueada por tu reporte',
-  enviar: (enviando: boolean) => (enviando ? 'Enviando…' : 'Enviar'),
+  /** Sin contestar «¿Faltó alguien?» el botón dice qué falta, no se queda gris y callado (web, ac78473). */
+  enviar: (enviando: boolean, sinFalto = false) => (enviando ? 'Enviando…' : sinFalto ? 'Dinos si faltó alguien' : 'Enviar'),
   ahoraNo: 'Ahora no',
   saltando: 'Un momento',
   noGuardado: 'No pudimos guardarlo. Vuelve a intentarlo.',

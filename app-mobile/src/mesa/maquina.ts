@@ -231,6 +231,13 @@ export const algoQueContar = (v: Valoracion) =>
   v.falto !== null ||
   v.contacto.length > 0
 
+/**
+ * Y para MANDARLA hace falta contestar «¿Faltó alguien?» (Michael, 29-10: «no
+ * contestar no es una opción»). Lo demás sigue siendo opcional. Saltar la
+ * encuesta entera sigue en pie: obliga a quien la manda, no a quien la cierra.
+ */
+export const puedeEnviar = (v: Valoracion) => algoQueContar(v) && v.falto !== null
+
 /** El cuerpo de `POST /api/despues` para valorar: los índices tal cual, de mejor a peor. */
 export function cuerpoValorar(mesaId: string, v: Valoracion) {
   const sitio: Record<string, number> = {}
