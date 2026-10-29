@@ -56,6 +56,8 @@ const datos = readFileSync(
   fileURLToPath(new URL('../src/lib/correos-datos.ts', import.meta.url)), 'utf8')
 const remitente = readFileSync(
   fileURLToPath(new URL('../src/lib/remitente.ts', import.meta.url)), 'utf8')
+const correos = readFileSync(
+  fileURLToPath(new URL('../src/lib/correos.ts', import.meta.url)), 'utf8')
 
 // --- qué tipo usa cada plantilla --------------------------------------
 // Del mapa PLANTILLA, que es donde vive. Escribirlo otra vez aquí sería la
@@ -282,6 +284,49 @@ for (const [ruta, quien] of [...rutas].sort()) {
         + '\n      → la pantalla carga pero el botón no salta a ningún sitio')
     }
   }
+}
+
+/**
+ * QUE TODO TIPO DE CORREO TENGA QUIEN LO ARME.
+ *
+ * El 29-10 se descubrió que `llego_tarde` no tenía `case` en `armar()` y
+ * no lo había tenido nunca. El tipo estaba declarado, la plantilla
+ * existía, la push estaba escrita y la ruta encolaba bien: faltaba solo el
+ * armado, así que las filas caían al `tipo desconocido` del final y morían
+ * ahí. Sesenta y seis avisos de «voy tarde» en tres semanas, y trece
+ * personas a las que la pantalla les dijo «ya avisamos a tu mesa».
+ *
+ * No falló nada en ningún sitio. Por eso se vigila desde aquí: las cuatro
+ * piezas de un correo viven en cuatro ficheros y nada obliga a que estén
+ * las cuatro. Esto obliga.
+ *
+ * Los de `SOLO_PUSH` quedan fuera a propósito: esos no componen correo, se
+ * mandan como push y la fila se cierra. Pedirles un `case` sería pedirles
+ * algo que no hacen.
+ */
+const inicio = correos.indexOf('export type Correo =')
+const fin = correos.indexOf('\n\n', inicio)
+const declarados = [...correos.slice(inicio, fin).matchAll(/\|\s*'([a-z_]+)'/g)].map((m) => m[1])
+
+const soloPush = new Set(
+  [...(correos.match(/const SOLO_PUSH[^=]*=\s*new Set\(\[([^\]]*)\]/) || [, ''])[1]
+    .matchAll(/'([a-z_]+)'/g)].map((m) => m[1]),
+)
+
+const sinArmado = declarados
+  .filter((t) => !soloPush.has(t))
+  .filter((t) => !new RegExp(`case '${t}':`).test(datos))
+
+console.log(`\n${declarados.length} tipos de correo declarados · ${soloPush.size} son solo push`)
+if (sinArmado.length) {
+  for (const t of sinArmado) {
+    problemas.push(
+      `'${t}' no tiene case en armar() de correos-datos.ts`
+      + '\n      → se encola bien y muere al despacharse: estado no_se_pudo_armar,'
+      + ' motivo «tipo desconocido». Nadie recibe nada y nada falla.')
+  }
+} else {
+  console.log('✓ los ' + (declarados.length - soloPush.size) + ' que componen correo tienen su case en armar()')
 }
 
 if (avisos.length) {
