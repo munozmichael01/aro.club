@@ -8,6 +8,9 @@ import * as J from '../juego/maquina'
 import { reglas } from '../reglas'
 import * as F from '../texto/fechas'
 import * as TJ from '../texto/juego'
+import * as TT from '../texto/tematicas'
+import * as TM from '../tematicas/maquina'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as T from '../texto/mesa'
 import * as Gu from './guion'
 import * as M from './maquina'
@@ -47,6 +50,17 @@ export function MesaCena(p: {
     momento === 'antes' ? { gente: true, paso: false, juego: false } : { gente: false, paso: true, juego: false },
   )
   const poner = (k: Clave, v: boolean) => setAbiertas((a) => ({ ...a, [k]: v }))
+
+  // El avance por temáticas, también en el teléfono, y también se relee al volver.
+  const [memoria, setMemoria] = useState<TM.Memoria>(TM.vacia())
+  useFocusEffect(
+    useCallback(() => {
+      if (!d.mesaId || !TM.delMazo().length) return
+      AsyncStorage.getItem(TM.CLAVE(d.mesaId))
+        .then((c) => setMemoria(TM.leer(c)))
+        .catch(() => undefined)
+    }, [d.mesaId]),
+  )
 
   // El avance del juego vive en el teléfono: se relee al volver del juego.
   const [guardado, setGuardado] = useState<J.Guardado>(J.guardadoVacio())
@@ -181,6 +195,11 @@ export function MesaCena(p: {
         cerradoHasta != null ? (
           // 1a (entrega 21): a la hora de la cena, ni un minuto antes.
           <JuegoCerrado hora={cerradoHasta} delPlan={M.voz(d).delPlan} />
+        ) : TM.delMazo().length ? (
+          // El juego por temáticas (entrega tematicas), cuando el mazo está en reglas.js.
+          <Desplegable oscura titulo={TJ.tarjeta.titulo} resumen={TarjetaTematicas.resumen(memoria)} abierta={abiertas.juego} alTocar={() => poner('juego', !abiertas.juego)}>
+            <TarjetaTematicas memoria={memoria} jugar={(tema) => d.mesaId && ir(`/juego?mesa=${d.mesaId}${tema != null ? `&tema=${tema}` : ''}`)} />
+          </Desplegable>
         ) : J.terminado(guardado) ? (
           // 1b y 1c: jugado entero, o terminado con «Terminar aquí».
           <JuegoJugado
@@ -294,6 +313,45 @@ function Desplegable(p: { titulo: string; resumen: string; nota?: string | null;
       {p.abierta ? p.children : null}
     </View>
   )
+}
+
+// --- El juego por temáticas en Mi mesa (M1 a M5 de la entrega tematicas) -------
+
+function TarjetaTematicas(p: { memoria: TM.Memoria; jugar: (tema: number | null) => void }) {
+  const todas = TM.delMazo()
+  const r = TM.resumen(todas, p.memoria)
+  return (
+    <View style={{ paddingHorizontal: 18, paddingBottom: 18, gap: 12 }}>
+      <Texto style={[texto(14, 1.45), { color: C.cuerpoVerde }]}>{TT.tarjeta.intro}</Texto>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {todas.map((t, i) => {
+          const es = TM.estiloDe(i)
+          const est = TM.estado(t, p.memoria)
+          return (
+            <Pressable key={t.clave} onPress={() => p.jugar(i)} accessibilityRole="button" style={[e.tema, { backgroundColor: es.fondo, opacity: est.tipo === 'jugada' ? 0.8 : 1 }]}>
+              <Texto style={[semi(10), { color: es.tinta, alignSelf: 'flex-end', letterSpacing: 1 }]}>
+                {est.tipo === 'jugada' ? TT.tarjeta.jugada : est.tipo === 'aMedias' ? TT.tarjeta.deCuantas(est.en, est.de) : TT.tarjeta.preguntas(t.preguntas.length)}
+              </Texto>
+              <Texto style={[serif(16, 1.42), { color: es.tinta }]}>{t.nombre}</Texto>
+            </Pressable>
+          )
+        })}
+      </View>
+      <Pressable onPress={() => p.jugar(r.aMedias ? todas.findIndex((t) => t.nombre === r.aMedias!.nombre) : null)} accessibilityRole="button" style={e.botonJuego}>
+        <Texto style={[semi(15), { color: C.tinta }]}>{r.aMedias ? TT.tarjeta.seguir(r.aMedias.nombre, r.aMedias.en, r.aMedias.de) : TT.tarjeta.abrir}</Texto>
+      </Pressable>
+      {r.aMedias ? (
+        <Pressable onPress={() => p.jugar(null)} accessibilityRole="link" style={{ alignItems: 'center', minHeight: 40, justifyContent: 'center' }}>
+          <Texto style={[semi(14), { color: C.cuerpoVerde, textDecorationLine: 'underline' }]}>{TT.tarjeta.verTodas}</Texto>
+        </Pressable>
+      ) : null}
+    </View>
+  )
+}
+TarjetaTematicas.resumen = (m: TM.Memoria) => {
+  const todas = TM.delMazo()
+  const r = TM.resumen(todas, m)
+  return r.jugadas || r.aMedias ? TT.tarjeta.conAvance(r.jugadas, r.aMedias) : TT.tarjeta.resumen(todas.length)
 }
 
 // --- El juego en Mi mesa --------------------------------------------------------
@@ -435,6 +493,8 @@ const media = (tam: number): TextStyle => ({ fontFamily: fuente.textoMedia, font
 const semi = (tam: number): TextStyle => ({ fontFamily: fuente.textoSemi, fontSize: tam, lineHeight: lh(tam, 1, 1.21) })
 
 const e = StyleSheet.create({
+  tema: { width: '48.5%', minHeight: 84, borderRadius: 16, padding: 12, justifyContent: 'space-between' },
+  botonJuego: { minHeight: 52, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: C.acento, paddingHorizontal: 18 },
   mesa: { borderRadius: 24, backgroundColor: C.tinta, paddingTop: 18, paddingHorizontal: 18, paddingBottom: 16 },
   sello: { minHeight: 26, paddingHorizontal: 11, borderRadius: 999, backgroundColor: C.acento, justifyContent: 'center' },
   selloTexto: { fontFamily: fuente.textoSemi, fontSize: 11, lineHeight: 14, letterSpacing: 1.54, color: C.tinta },

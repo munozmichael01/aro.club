@@ -1,0 +1,47 @@
+/**
+ * El juego por temáticas (entrega tematicas, 29-10): sin orden, con memoria
+ * de por dónde va cada una, y lo que queda después de terminar una.
+ */
+import assert from 'node:assert/strict'
+import { test } from 'node:test'
+
+import * as M from '../src/tematicas/maquina'
+
+const T: M.Tematica[] = [
+  { clave: 'a', nombre: 'Rápido', linea: '', preguntas: ['1', '2', '3', '4', '5'] },
+  { clave: 'b', nombre: 'Historias', linea: '', preguntas: ['1', '2', '3', '4', '5'] },
+  { clave: 'c', nombre: 'Para cerrar', linea: '', preguntas: ['1', '2', '3'] },
+]
+
+test('nueva, a medias y jugada', () => {
+  let m = M.vacia()
+  assert.deepEqual(M.estado(T[0], m), { tipo: 'nueva' })
+  m = M.avanzar(m, T[1], 2)
+  assert.deepEqual(M.estado(T[1], m), { tipo: 'aMedias', en: 3, de: 5 })
+  assert.equal(M.empiezaEn(T[1], m), 2)
+  m = M.avanzar(m, T[1], 5)
+  assert.deepEqual(M.estado(T[1], m), { tipo: 'jugada' })
+  // Jugada se puede repetir, y empieza por la primera.
+  assert.equal(M.empiezaEn(T[1], m), 0)
+})
+
+test('después de terminar: primero a medias, luego nuevas, al final las jugadas; sin la recién terminada', () => {
+  let m = M.vacia()
+  m = M.avanzar(m, T[0], 5) // jugada
+  m = M.avanzar(m, T[2], 1) // a medias
+  m = M.avanzar(m, T[1], 5) // la recién terminada
+  assert.deepEqual(M.queQueda(T, m, 'b').map((t) => t.clave), ['c', 'a'])
+  assert.equal(M.todasJugadas(T, m), false)
+})
+
+test('el resumen de la tarjeta y una memoria rota no rompen nada', () => {
+  let m = M.avanzar(M.vacia(), T[0], 5)
+  m = M.avanzar(m, T[1], 2)
+  assert.deepEqual(M.resumen(T, m), { jugadas: 1, aMedias: { nombre: 'Historias', en: 3, de: 5 } })
+  assert.deepEqual(M.leer('{roto'), M.vacia())
+  assert.deepEqual(M.leer(null), M.vacia())
+})
+
+test('sin mazo de temáticas en reglas.js, se juega por rondas', () => {
+  assert.deepEqual(M.delMazo(), [])
+})

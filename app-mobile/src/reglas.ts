@@ -159,7 +159,15 @@ export type JuegoDeMesa = {
   /** «Tres rondas · la última, opcional»: el subtítulo de la pantalla de reglas. */
   subtituloReglas: string
   final: string
+  /**
+   * El juego por temáticas (entrega tematicas de Design, 29-10), cuando esté
+   * aprobado y en `reglas.js`. Mientras no venga, la app juega por rondas.
+   */
+  tematicas?: TematicaDeJuego[]
 }
+
+/** Una temática: la mesa la elige. Lo visual (color, icono) es de la app, por posición. */
+export type TematicaDeJuego = { clave: string; nombre: string; linea: string; preguntas: string[] }
 
 // JavaScript sin tipos a propósito: se declara la forma que la app usa y se
 // fía de ella. Si `reglas.js` cambiara esa forma, lo cazan las pruebas.
