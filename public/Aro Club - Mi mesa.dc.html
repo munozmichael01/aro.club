@@ -596,6 +596,37 @@
             <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:10px">{{ notaComentario }}</div>
             <textarea value="{{ comentario }}" onChange="{{ onComentario }}" rows="4" maxlength="600" placeholder="Lo que quieras" aria-label="Algo que quieras destacar o contarnos" style="{{ campoComentario }}"></textarea>
 
+            <!-- «¿Faltó alguien?» (Michael, 29-10). Va antes de la pregunta
+                 incómoda y después del texto libre: es un hecho, no una
+                 opinión, y se contesta de un toque. -->
+            <div style="font:400 15px/1.4 'Young Serif',Georgia,serif;color:#14342A;margin:clamp(26px,3.4vw,32px) 0 6px">¿Faltó alguien?</div>
+            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:10px">{{ notaFalto }}</div>
+            <button onClick="{{ vinimosTodos.pick }}" style="{{ vinimosTodos.btn }}">{{ vinimosTodos.texto }}</button>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+              <sc-for list="{{ ausentes }}" as="a" hint-placeholder-count="5">
+                <button onClick="{{ a.pick }}" style="{{ a.btn }}">
+                  <span style="{{ a.aro }}">{{ a.icono }}</span>
+                  <span style="{{ a.txt }}">{{ a.nombre }}</span>
+                  <span style="{{ a.pie }}">{{ a.sector }}</span>
+                </button>
+              </sc-for>
+            </div>
+
+            <!-- Y la positiva. La nota de debajo es lo que sostiene la
+                 pregunta: sin ella, marcar a alguien se siente como
+                 declararse en público. -->
+            <div style="font:400 15px/1.4 'Young Serif',Georgia,serif;color:#14342A;margin:clamp(26px,3.4vw,32px) 0 6px">¿Te gustaría seguir en contacto con alguien de la mesa?</div>
+            <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:10px">{{ notaContacto }}</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ contactos }}" as="k" hint-placeholder-count="5">
+                <button onClick="{{ k.pick }}" style="{{ k.btn }}">
+                  <span style="{{ k.aro }}">{{ k.icono }}</span>
+                  <span style="{{ k.txt }}">{{ k.nombre }}</span>
+                  <span style="{{ k.pie }}">{{ k.sector }}</span>
+                </button>
+              </sc-for>
+            </div>
+
             <div style="font:400 15px/1.4 'Young Serif',Georgia,serif;color:#14342A;margin:clamp(26px,3.4vw,32px) 0 6px">¿Alguien con quien preferirías no volver a coincidir?</div>
             <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:10px">{{ notaBloquear }}</div>
             <div style="display:flex;flex-direction:column;gap:8px">
@@ -876,6 +907,14 @@ class Component extends DCLogic {
     gasto: -1, noRepetirSitio: false,
     bloqueados: [], contado: false, avisoSitio: '', saltando: false,
     reporte: false, motivo: -1, quien: -1, reportado: false,
+    /**
+     * «¿Faltó alguien?»: `null` es sin contestar, `[]` es «vinimos todos» y
+     * una lista son las caras marcadas. Los tres estados son distintos, y
+     * por eso no se empieza en `[]`.
+     */
+    faltaron: null,
+    /** A quién le dijo que sí le gustaría seguir en contacto. */
+    contacto: [],
     datos: null, errorF11: '', enviando: false,
     // El juego: `null` = cerrado. Dentro, el paso y dónde va.
     juego: null,
@@ -988,6 +1027,12 @@ class Component extends DCLogic {
     return this.state.bloqueados.map((i) => cs[i] && cs[i].id).filter(Boolean);
   }
 
+  /** De posiciones de la lista a ids, que es lo que entiende el servidor. */
+  quienesSon(indices) {
+    const cs = (this.state.datos && this.state.datos.companeros) || [];
+    return (indices || []).map((i) => cs[i] && cs[i].id).filter(Boolean);
+  }
+
   /**
    * Si hay algo que mandar. Lo que apaga el botón de «Enviar».
    *
@@ -1008,7 +1053,12 @@ class Component extends DCLogic {
       || (this.state.comentario || '').trim().length > 0
       || this.state.gasto >= 0
       || !!this.state.noRepetirSitio
-      || this.state.bloqueados.length > 0;
+      || this.state.bloqueados.length > 0
+      // Contestar «¿faltó alguien?» cuenta, y «vinimos todos» también: es
+      // una respuesta, no una casilla en blanco. Y marcar a alguien para
+      // seguir en contacto, igual.
+      || this.state.faltaron !== null
+      || (this.state.contacto || []).length > 0;
   }
 
 
@@ -1147,6 +1197,25 @@ class Component extends DCLogic {
       .then((r) => {
         if (r && r.sitioNoGuardado) this.setState({ avisoSitio: r.sitioNoGuardado.texto });
         return aQuien.length ? this.enviar({ accion: 'bloquear', aQuien: aQuien }) : null;
+      })
+      /**
+       * Y las dos señales de la mesa, detrás de la valoración.
+       *
+       * Van DESPUÉS a propósito: la valoración es lo que la persona vino a
+       * dar, y si una de estas fallara no puede llevarse por delante lo que
+       * ya se guardó. Cada una en su llamada porque el servidor reemplaza la
+       * lista entera de SU señal, no las mezcla.
+       *
+       * «¿Faltó alguien?» solo se manda si CONTESTÓ: `null` es que no tocó
+       * nada, y eso no es «vinimos todos». La lista vacía sí se manda.
+       */
+      .then(() => {
+        if (this.state.faltaron === null) return null;
+        return this.enviar({ accion: 'falto', aQuien: this.quienesSon(this.state.faltaron) });
+      })
+      .then(() => {
+        const k = this.state.contacto || [];
+        return k.length ? this.enviar({ accion: 'contacto', aQuien: this.quienesSon(k) }) : null;
       })
       .then(() => this.setState({ contado: true, enviando: false }))
       .catch(() => this.setState({ enviando: false, errorF11: 'No pudimos guardarlo. Vuelve a intentarlo.' }));
@@ -1864,6 +1933,62 @@ class Component extends DCLogic {
       };
     });
 
+    /**
+     * «¿FALTÓ ALGUIEN?». Michael, 29-10: «son ellos los que saben quién fue».
+     *
+     * Un toque, no una tarea: «Vinimos todos» o marcar caras. Por eso
+     * «Vinimos todos» es un botón y no la ausencia de respuesta, y se manda
+     * igual: decir que no faltó nadie es una respuesta, y no contestar es
+     * otra cosa.
+     *
+     * Marcarlo NO da a nadie por ausente. Hacen falta DOS de la mesa, y eso
+     * lo decide el servidor. La pantalla no lo promete.
+     */
+    const todosVinieron = this.state.faltaron !== null && this.state.faltaron.length === 0
+    const faltaronLista = this.state.faltaron || []
+    const vinimosTodos = {
+      texto: 'Vinimos todos',
+      pick: () => this.setState({ faltaron: todosVinieron ? null : [] }),
+      btn: 'display:inline-flex;align-items:center;gap:9px;min-height:48px;padding:0 20px;border-radius:999px;background:'
+        + (todosVinieron ? '#1B5138' : 'transparent') + ';border:1px solid '
+        + (todosVinieron ? '#1B5138' : 'rgba(20,52,42,.2)') + ';color:'
+        + (todosVinieron ? '#FAF3E4' : '#14342A')
+        + ';font:' + (todosVinieron ? '600' : '500') + ' 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease',
+    }
+    const ausentes = comensales.map((c, i) => {
+      const on = faltaronLista.indexOf(i) >= 0
+      return {
+        nombre: c.nombre, sector: c.sector, icono: on ? '✓' : '', aro: aroDe(on),
+        pick: () => this.setState((st) => {
+          const hoy = st.faltaron || []
+          return { faltaron: hoy.indexOf(i) >= 0 ? hoy.filter((x) => x !== i) : hoy.concat([i]) }
+        }),
+        btn: 'display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;padding:0 18px 0 14px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'flex:1;min-width:0;font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A',
+        pie: 'flex:0 0 auto;font:400 13px/1.2 \'Inter Tight\',sans-serif;color:#33513F'
+      };
+    });
+
+    /**
+     * «¿Te gustaría seguir en contacto con alguien de la mesa?».
+     *
+     * La nota de debajo es la que sostiene la pregunta: sin ella, marcar a
+     * alguien se siente como declararse en público. Con ella, no.
+     */
+    const contactos = comensales.map((c, i) => {
+      const on = (this.state.contacto || []).indexOf(i) >= 0
+      return {
+        nombre: c.nombre, sector: c.sector, icono: on ? '✓' : '', aro: aroDe(on),
+        pick: () => this.setState((st) => {
+          const hoy = st.contacto || []
+          return { contacto: hoy.indexOf(i) >= 0 ? hoy.filter((x) => x !== i) : hoy.concat([i]) }
+        }),
+        btn: 'display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;padding:0 18px 0 14px;border-radius:999px;background:' + (on ? '#F2F7F3' : 'transparent') + ';border:1px solid ' + (on ? '#1B5138' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
+        txt: 'flex:1;min-width:0;font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A',
+        pie: 'flex:0 0 auto;font:400 13px/1.2 \'Inter Tight\',sans-serif;color:#33513F'
+      };
+    });
+
     const reportables = comensales.map((c, i) => {
       const on = this.state.quien === i;
       return {
@@ -2149,6 +2274,10 @@ class Component extends DCLogic {
       botonVacia: btn('#14342A', '#FAF3E4', 'none', 'margin-top:18px;text-decoration:none'),
 
       cuenta, comensales, retrasos, bloqueables, motivos, reportables,
+      ausentes, contactos, vinimosTodos,
+      hayAusentes: faltaronLista.length > 0,
+      notaFalto: 'Nadie se entera de esto. Hacen falta dos de la mesa para darlo por bueno.',
+      notaContacto: 'Solo se lo decimos si esa persona también te marcó a ti.',
       mesaOpciones, sitioFilas, volveriaSiBtn, volveriaNoBtn, volveriaSiPick, volveriaNoPick,
       // El texto libre. Lo único de la encuesta que no es una escala, y por
       // eso lo único que puede contar algo que no habíamos pensado
