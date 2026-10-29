@@ -253,8 +253,9 @@ function Cabecera({ alCerrar, tinta: t, etiqueta, volver }: { alCerrar: () => vo
       ) : (
         <View />
       )}
-      <Pressable onPress={alCerrar} accessibilityRole="button" accessibilityLabel="Cerrar" style={[e.cerrar, volver ? { borderWidth: 1.5, borderColor: t } : { backgroundColor: 'rgba(250,243,228,.1)' }]}>
-        <IconoCruz tam={volver ? 16 : 18} color={t} />
+      <Pressable onPress={alCerrar} accessibilityRole="button" accessibilityLabel="Cerrar" style={[e.cerrar, etiqueta ? { backgroundColor: 'rgba(250,243,228,.1)' } : { borderWidth: 1.5, borderColor: t }]}>
+        {/* Rellena solo en elegir (Juego 1); con borde en la portada, la pregunta y todo el final, F3 incluido. */}
+        <IconoCruz tam={etiqueta ? 18 : 16} color={t} />
       </Pressable>
     </View>
   )
