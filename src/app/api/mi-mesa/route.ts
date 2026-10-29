@@ -368,7 +368,7 @@ export async function GET() {
 
   const { data: traits } = await admin
     .from('profile_traits')
-    .select('profile_id, industry')
+    .select('profile_id, industry, rootedness')
     .in('profile_id', (companeros ?? []).map((c) => c.profile_id))
 
   // `industry` se guarda con el código estable ("tecnologia"), que no es lo
@@ -418,6 +418,37 @@ export async function GET() {
       t.industry ? (etiquetaDe.get(t.industry) ?? t.industry) : null,
     ]),
   )
+
+  /**
+   * LOS ARRAIGOS DE LA MESA, en bloque y sin dueño.
+   *
+   * Michael, 29-10: enseñar, además del sector de cada uno, de qué está
+   * hecha la mesa —quién acaba de llegar a la ciudad y quién lleva aquí
+   * toda la vida—, porque es de lo que se habla en una cena de
+   * desconocidos.
+   *
+   * Van los CÓDIGOS, sin etiqueta: el catálogo vive en
+   * `AroReglas.PUERTA.arraigo` y lo leen la app y la web desde ahí. Un mapa
+   * de etiquetas aquí sería un segundo catálogo que se queda viejo la
+   * primera vez que Design cambie una palabra, que es justo lo que ya pasa
+   * con el sector y por eso se lee de `questions`.
+   *
+   * SIN REPETIR Y ORDENADOS POR CÓDIGO, no por persona. Ordenados por
+   * persona, la posición en la lista sería el dedo que señala.
+   *
+   * Y con eso NO queda anónimo del todo, y Michael lo decidió sabiéndolo:
+   * en una mesa de seis, si solo hay un «acaba de llegar», la lista dice
+   * que hay uno y mirando a los otros cinco se sabe cuál. Por eso va el
+   * conjunto de los que hay y nunca cuántos de cada uno: el recuento sí
+   * convertiría esto en un juego de adivinar.
+   */
+  const arraigos = [
+    ...new Set(
+      (traits ?? [])
+        .map((t) => t.rootedness)
+        .filter((r): r is NonNullable<typeof r> => !!r),
+    ),
+  ].sort()
 
   /**
    * ¿Se cayó alguien de ESTA mesa después de la revelación?
@@ -526,6 +557,19 @@ export async function GET() {
      * equivocada a una pregunta que no tenemos.
      */
     // Solo nombre de pila y sector. Sin apellidos, sin fotos, sin contacto.
+    /**
+     * De qué está hecha la mesa, sin decir quién es quién. Michael, 29-10.
+     *
+     * Va suelto y no dentro de un `mesa: { … }` porque todo lo de la mesa
+     * en esta respuesta va suelto —`mesaId`, `numeroMesa`, `mesaUnica`— y
+     * un objeto con una sola clave al lado de esos tres sería una segunda
+     * forma de decir lo mismo.
+     *
+     * Solo sale aquí, que es la rama de la mesa YA REVELADA. Antes de la
+     * revelación esta respuesta no devuelve ni restaurante ni compañeros, y
+     * esto es un dato de los compañeros.
+     */
+    arraigos,
     companeros: (companeros ?? []).map((c) => {
       const p = c.profiles as unknown as { display_name: string | null; full_name: string | null } | null
       const nombre = p?.display_name || p?.full_name?.split(' ')[0] || null
