@@ -49,6 +49,9 @@ const IMPRESCINDIBLES: ReadonlySet<string> = new Set([
   // con esa persona. Apagarlo no es respetar una baja, es dejar a cinco
   // personas mirando la puerta.
   'llego_tarde',
+  // Que tu cena sea otro día no es algo de lo que se pueda dar de baja: si
+  // no llega, la persona se presenta la noche que no es.
+  'fecha_cambiada',
 ])
 
 export type Correo =
@@ -209,6 +212,19 @@ export type Correo =
   | 'equilibrar_mesas'
   | 'reembolso_pedido'
   | 'reembolso_hecho'
+  /**
+   * Cambió de FECHA, no de mesa.
+   *
+   * Tipo propio y no `mesa_cambiada`: aquel dice «cambió tu mesa», que es
+   * otra cosa, y mandarlo aquí dejaría a quien lo lea rápido creyendo que
+   * sigue yendo la misma noche. Michael, 28-10, al analizarlo: cambiarle el
+   * día a alguien hay que avisárselo.
+   *
+   * Imprescindible, así que NO lleva cabecera de baja: se manda aunque la
+   * persona esté de baja de los correos. Ofrecer apagar un aviso de que tu
+   * cena es otro día sería ofrecer algo que no ocurre.
+   */
+  | 'fecha_cambiada'
   | 'probadores_android'
 
 /**

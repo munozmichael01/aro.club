@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+
+import { HORAS_DE_MARGEN as MARGEN_COMPARTIDO } from '@/lib/reglas'
 import { z } from 'zod'
 
 import { anotar } from '@/lib/auditoria'
@@ -25,7 +27,11 @@ const cuerpo = z.object({
   motivo: z.string().max(200).optional(),
 })
 
-const HORAS_DE_MARGEN = 24
+/**
+ * Sube a la regla compartida el 29-10: lo necesitan esta ruta, la de
+ * cambiar de fecha y la app, que tiene que saber si enseña el botón.
+ */
+const HORAS_DE_MARGEN = MARGEN_COMPARTIDO
 
 export async function GET(request: Request) {
   const supabase = await createClient()

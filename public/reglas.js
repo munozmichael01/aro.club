@@ -1183,6 +1183,21 @@
     HORAS_DE_CIERRE: 24,
 
     /**
+     * El margen para bajarse sin perder el credito. Y ahora, para cambiarse
+     * de fecha uno mismo.
+     *
+     * No es lo mismo que HORAS_DE_CIERRE aunque hoy valgan igual: aquella
+     * dice cuando dejamos de admitir gente nueva, y esta cuanto antes hay
+     * que avisar de que no vienes. Son dos decisiones distintas y el dia
+     * que una se mueva, la otra no tiene por que moverse.
+     *
+     * Estaba escrita a mano dentro de /api/cancelar. Sube aqui porque desde
+     * el 29-10 la necesitan tres: esa ruta, la de cambiar de fecha, y la app
+     * para saber si enseña el boton.
+     */
+    HORAS_DE_MARGEN: 24,
+
+    /**
      * Cuando se cierra una fecha: A MEDIANOCHE, al empezar su dia.
      *
      * Antes eran 24 horas antes y punto. El problema no eran las horas, era

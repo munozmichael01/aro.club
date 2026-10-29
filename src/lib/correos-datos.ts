@@ -1122,6 +1122,88 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
      * revelada y la persona de camino. Volver a consultarlo aquí solo
      * añadiría formas de que llegue tarde o no llegue.
      */
+    /**
+     * Cambió de FECHA. Michael, 29-10.
+     *
+     * Dentro de la misma noche NO se manda: la persona no se entera de
+     * nada, porque su mesa y su sitio se cuentan en la revelación como a
+     * todo el mundo. Esto es para cuando cambia el DÍA, que es lo único que
+     * ella ya sabía y que deja de ser verdad.
+     *
+     * Las dos fechas se leen de la base al MANDAR y no del payload. Un día
+     * escrito al encolar es el que sigue diciendo «el sábado 31» cuando esa
+     * fecha se movió de hora, que es exactamente lo que pasó con el viernes
+     * y el sábado el 20-10.
+     *
+     * Y el texto cambia según quién lo hizo. «Cambiaste tu cena» a quien no
+     * tocó nada se lee como que alguien entró en su cuenta.
+     */
+    case 'fecha_cambiada': {
+      const antesId = typeof p.desdeEventoId === 'string' ? p.desdeEventoId : ''
+      if (!antesId || !fila.event_id) return { error: 'sin las dos fechas' }
+
+      const { data: dos } = await admin
+        .from('events')
+        .select('id, starts_at, format, city_slug, event_venues(zones(name))')
+        .in('id', [antesId, fila.event_id])
+
+      const antes = (dos ?? []).find((e) => e.id === antesId)
+      const ahora = (dos ?? []).find((e) => e.id === fila.event_id)
+      if (!antes || !ahora) return { error: 'esa fecha ya no existe' }
+
+      const zonaAntes = await zonaDeLaCiudad(admin, antes.city_slug)
+      const zonaAhora = await zonaDeLaCiudad(admin, ahora.city_slug)
+
+      const comoSeLee = (ev: { starts_at: string; format: string | null }, zona: string) => {
+        const q = partesDe(ev.starts_at, zona)
+        const plan = NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan'
+        return q
+          ? `${alta(q.dia)} ${q.numero} de ${q.mes} · ${q.hora} · ${plan}`
+          : `${diaEnZonaAlto(ev.starts_at, zona)} · ${plan}`
+      }
+
+      const donde = unirCon(
+        [...new Set(
+          ((ahora.event_venues ?? []) as unknown as { zones: { name: string } | null }[])
+            .map((v) => v.zones?.name)
+            .filter((x): x is string => !!x),
+        )],
+        ' o ',
+      )
+
+      // Quién lo hizo. `ella` cuando se cambió sola desde Mi mesa.
+      const laMovioElla = p.loHizo === 'la-persona'
+      const trato = typeof p.trato === 'string' && p.trato.trim() ? p.trato.trim() : ''
+
+      const q = partesDe(ahora.starts_at, zonaAhora)
+      const elDiaNuevo = q ? `${q.dia} ${q.numero}` : 'otro día'
+
+      return {
+        a,
+        datos: {
+          ...base,
+          asunto: laMovioElla
+            ? `Cambiaste tu cena al ${elDiaNuevo}`
+            : `Te cambiamos la cena al ${elDiaNuevo}`,
+          resumen: laMovioElla
+            ? `Tu cena queda para el ${elDiaNuevo}. Tu puesto y lo que pagaste van contigo.`
+            : `Movimos tu cena al ${elDiaNuevo}. Tu puesto y lo que pagaste van contigo.`,
+          titular: laMovioElla ? 'Tu cena queda' : 'Movimos tu cena',
+          titularAcento: `para el ${elDiaNuevo}.`,
+          bajada: laMovioElla
+            ? `Listo${trato ? ', ' + trato : ''}. Cambiaste tu reserva y ya está hecho: no hay que volver a apartar nada ni pagar otra vez.`
+            : `Te movimos de fecha${trato ? ', ' + trato : ''}. No tuviste que hacer nada y no hay que volver a apartar nada ni pagar otra vez. Si esa noche no te sirve, escríbenos y lo arreglamos.`,
+          antes: comoSeLee(antes, zonaAntes),
+          ahora: comoSeLee(ahora, zonaAhora),
+          donde,
+          loQueNoCambia: 'Lo que pagaste va con tu reserva, así que no te cobramos de nuevo ni tienes que pedir nada. Con quién cenas y dónde te lo contamos ese mismo día, como siempre.',
+          cierre: laMovioElla
+            ? 'Si te vuelve a cambiar el plan, puedes moverla otra vez desde Mi cena mientras falten más de 24 horas.'
+            : 'Si esa fecha no te cuadra, puedes cambiarla tú desde Mi cena mientras falten más de 24 horas.',
+        },
+      }
+    }
+
     case 'llego_tarde': {
       const texto = (clave: string) => (typeof p[clave] === 'string' ? (p[clave] as string) : '')
       const quien = texto('quien')

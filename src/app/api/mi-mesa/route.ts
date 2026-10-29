@@ -4,7 +4,9 @@ import { minutosAPie } from '@/lib/distancia'
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { fraseDeTamano } from '@/lib/mesa-corta'
-import { esDeManana } from '@/lib/reglas'
+import { cabeEnLaFecha } from '@/lib/edad'
+import { hablaElIdioma } from '@/lib/idioma'
+import { HORAS_DE_MARGEN, esDeManana } from '@/lib/reglas'
 import { avisoDeDosHoras } from '@/lib/ventana-mesa'
 import { bloqueDeReembolso } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -12,6 +14,105 @@ import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
 import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
+
+/**
+ * ¿PUEDE CAMBIARSE DE FECHA, Y A CUÁLES?
+ *
+ * Michael, 29-10. La pantalla y la app no pueden decidirlo por su cuenta:
+ * las condiciones son las mismas que aplica `/api/mi-mesa/cambiar-fecha` al
+ * hacerlo de verdad, y dos listas de «a dónde puedo irme» serían un botón
+ * que ofrece fechas que el servidor rechaza.
+ *
+ * Si `puede` es falso viene el `motivo`, para que la pantalla pueda decir
+ * por qué en vez de esconder el botón sin explicación.
+ */
+type Destino = {
+  eventoId: string
+  empiezaEn: string
+  zonaHoraria: string
+  formato: string | null
+  idioma: string | null
+  zonas: string[]
+}
+
+async function bloqueDeCambiarFecha(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  reserva: { id: string; event_id: string },
+  evento: { starts_at: string; reveal_at: string | null },
+): Promise<
+  | { puede: false; motivo: 'tarde' | 'revelada' | 'sin-destinos'; destinos: Destino[] }
+  | { puede: true; destinos: Destino[] }
+> {
+  const ahora = Date.now()
+
+  // Revelada primero: después de la revelación hay cinco personas que ya
+  // saben que van a cenar contigo, y eso pesa más que las horas que falten.
+  if (evento.reveal_at && Date.parse(evento.reveal_at) <= ahora) {
+    return { puede: false, motivo: 'revelada', destinos: [] }
+  }
+
+  const faltan = (Date.parse(evento.starts_at) - ahora) / 3600_000
+  if (faltan < HORAS_DE_MARGEN) return { puede: false, motivo: 'tarde', destinos: [] }
+
+  const { data: suya } = await admin
+    .from('events')
+    .select('price_usd')
+    .eq('id', reserva.event_id)
+    .maybeSingle()
+
+  const { data: quien } = await admin
+    .from('profiles')
+    .select('birthdate')
+    .eq('id', userId)
+    .maybeSingle()
+
+  const ahoraIso = new Date().toISOString()
+  const { data: abiertas } = await admin
+    .from('events')
+    .select('id, starts_at, booking_closes_at, format, idioma, city_slug, price_usd, age_band_min, age_band_max, event_venues(zones(name))')
+    .eq('status', 'open')
+    .eq('es_prueba', false)
+    .gt('starts_at', ahoraIso)
+    .order('starts_at')
+
+  // Donde ya tiene reserva viva no se le ofrece: no puede estar dos veces.
+  const { data: yaTiene } = await admin
+    .from('bookings')
+    .select('event_id')
+    .eq('profile_id', userId)
+    .in('status', ['pending_payment', 'confirmed'])
+
+  const ocupadas = new Set((yaTiene ?? []).map((b) => b.event_id))
+
+  const destinos: Destino[] = []
+  for (const ev of abiertas ?? []) {
+    if (ev.id === reserva.event_id || ocupadas.has(ev.id)) continue
+    if (ev.booking_closes_at && Date.parse(ev.booking_closes_at) <= ahora) continue
+    // Mismo precio: lo pagado viaja con la reserva y nadie recalcula nada.
+    if (Number(ev.price_usd ?? 0) !== Number(suya?.price_usd ?? 0)) continue
+    if (!cabeEnLaFecha(quien?.birthdate, ev)) continue
+    if (ev.idioma && !(await hablaElIdioma(admin, userId, ev.idioma))) continue
+
+    destinos.push({
+      eventoId: ev.id,
+      empiezaEn: ev.starts_at,
+      // Viaja con CADA fecha, nunca en la raíz: una persona puede tener una
+      // cena en Caracas y otra en otra ciudad.
+      zonaHoraria: await zonaDeCiudad(ev.city_slug),
+      formato: ev.format,
+      idioma: ev.idioma,
+      zonas: [...new Set(
+        ((ev.event_venues ?? []) as unknown as { zones: { name: string } | null }[])
+          .map((v) => v.zones?.name)
+          .filter((x): x is string => !!x),
+      )],
+    })
+  }
+
+  if (!destinos.length) return { puede: false, motivo: 'sin-destinos', destinos: [] }
+  return { puede: true, destinos }
+}
 
 /**
  * F10 · Mi mesa.
@@ -202,6 +303,8 @@ export async function GET() {
       empiezaEn: evento.starts_at,
       zonas: (nombres ?? []).map((z) => z.name),
       faltanSegundos: Math.round((revelaEn - ahora) / 1000),
+      // Y a dónde puede irse, que es justo aquí donde todavía se puede.
+      cambiarFecha: await bloqueDeCambiarFecha(admin, user.id, reserva, evento),
     })
   }
 
@@ -242,6 +345,7 @@ export async function GET() {
       formato: evento.format,
       empiezaEn: evento.starts_at,
       zonaHoraria,
+      cambiarFecha: await bloqueDeCambiarFecha(admin, user.id, reserva, evento),
       creditoDevuelto: !!abono,
       // Y si prefiere el dinero al crédito. Mismo bloque que Mi cuenta.
       reembolso: await bloqueDeReembolso(admin, user.id),
@@ -570,6 +674,14 @@ export async function GET() {
      * esto es un dato de los compañeros.
      */
     arraigos,
+    /**
+     * Y aquí ya no se puede, pero se dice por qué.
+     *
+     * Escondiendo el botón sin explicación, quien lo vio ayer piensa que se
+     * rompió. Con la mesa revelada hay cinco personas que ya saben que van
+     * a cenar contigo, y eso es lo que hay que contar.
+     */
+    cambiarFecha: await bloqueDeCambiarFecha(admin, user.id, reserva, evento),
     companeros: (companeros ?? []).map((c) => {
       const p = c.profiles as unknown as { display_name: string | null; full_name: string | null } | null
       const nombre = p?.display_name || p?.full_name?.split(' ')[0] || null

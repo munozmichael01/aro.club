@@ -65,6 +65,7 @@ const PLANTILLA: Partial<Record<Correo, string>> = {
   empujon: '01-bienvenida.html',
   encuesta_despues: '16-encuesta-despues.html',
   llego_tarde: '18-llego-tarde.html',
+  fecha_cambiada: '30-fecha-cambiada.html',
   cierra_pronto: '19-cierra-pronto.html',
   disculpa_verificacion: '20-disculpa-verificacion.html',
   cena_edad_minima: '21-cena-edad-minima.html',
