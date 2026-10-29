@@ -153,9 +153,9 @@ export function Inicio(p: {
     if (!datos || dentroMirado.current) return
     const r = datos.reserva
     const plan = r?.empiezaEn ? datos.planes.find((x) => x.empiezaEn === r.empiezaEn && !x.cancelada) : null
-    if (!r || r.revelado || !plan || plan.estado !== 'confirmed') return
+    if (!r?.empiezaEn || r.revelado || !plan || plan.estado !== 'confirmed') return
     dentroMirado.current = true
-    AsyncStorage.getItem(MD.claveVista(r.id))
+    AsyncStorage.getItem(MD.claveVista(r.empiezaEn))
       .then((v) => {
         if (v !== '1') p.ir('/estas-dentro')
       })

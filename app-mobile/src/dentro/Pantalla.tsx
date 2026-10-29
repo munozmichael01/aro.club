@@ -14,8 +14,8 @@ import type { Datos, crearServicioDentro } from './servicio'
 type Servicio = ReturnType<typeof crearServicioDentro>
 
 /**
- * /estas-dentro: la reserva viva, en A si el pago sigue en revisión y en B si
- * no. Llegan aquí la reserva con crédito, la push y el correo de «pago
+ * /estas-dentro: la reserva viva, siempre en B; con el pago en revisión, con
+ * el sello «Puesto apartado». Llegan aquí la reserva con crédito, la push y el correo de «pago
  * confirmado», y la primera apertura después de confirmar. La B se marca vista.
  */
 export function PantallaDentro(p: { servicio: Servicio; via: M.Via; preguntarAvisos?: boolean; ir: (d: string) => void; alEntrar: () => void }) {
@@ -36,7 +36,7 @@ export function PantallaDentro(p: { servicio: Servicio; via: M.Via; preguntarAvi
     // Sin reserva viva no hay nada que celebrar: al Inicio.
     if (!r.datos) return ir.current('/cuenta')
     setD(r.datos)
-    if (!r.datos.pendiente) servicio.marcarVista(r.datos.reservaId)
+    servicio.marcarVista(r.datos.plan.empiezaEn)
   }, [servicio, alEntrar, ir])
 
   useFocusEffect(
@@ -66,7 +66,8 @@ export function PantallaDentro(p: { servicio: Servicio; via: M.Via; preguntarAvi
       </View>
     )
   }
-  const v = M.vista(d.plan, d.pendiente ? 'A' : 'B', d.pendiente ? null : p.via)
+  // Con el pago en revisión también es B (Michael, 29-10): «Puesto apartado».
+  const v = M.vista(d.plan, 'B', d.pendiente ? 'reportado' : p.via)
   return (
     <>
       <EstasDentro v={v} enCalendario={acciones.enCalendario} alCalendario={acciones.alCalendario} alCompartir={acciones.alCompartir} ir={p.ir} />

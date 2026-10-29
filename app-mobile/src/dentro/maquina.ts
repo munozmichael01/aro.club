@@ -18,8 +18,8 @@ export type Plan = {
 
 /** A: pago reportado, sin confirmar. B: confirmado (o con crédito o cupón). */
 export type Momento = 'A' | 'B'
-/** Cómo se llegó a B: con crédito al reservar, con el pago confirmado, o no se sabe. */
-export type Via = 'credito' | 'confirmado' | null
+/** Cómo se llegó a B: con crédito al reservar, con el pago confirmado, recién reportado, o no se sabe. */
+export type Via = 'credito' | 'confirmado' | 'reportado' | null
 
 const zonasEnTexto = (z: string[] | undefined) =>
   !z?.length ? '' : z.length === 1 ? z[0] : `${z.slice(0, -1).join(', ')} o ${z[z.length - 1]}`
@@ -30,7 +30,7 @@ export function vista(p: Plan, momento: Momento, via: Via) {
   const esMesa = reglas.vozDe(p.formato ?? 'dinner').unidad !== 'grupo'
   const dia = F.diaYNumero(p.empiezaEn, z)
   const hora = reglas.horaDe(p.empiezaEn, z) ?? ''
-  const b = via === 'credito' ? T.B.credito : via === 'confirmado' ? T.B.confirmado : T.B.sinSaber
+  const b = via === 'credito' ? T.B.credito : via === 'confirmado' ? T.B.confirmado : via === 'reportado' ? T.B.reportado : T.B.sinSaber
   return {
     momento,
     plan,
@@ -68,5 +68,9 @@ export function enlaceCalendario(p: Plan): string {
   return `https://calendar.google.com/calendar/render?${q.toString()}`
 }
 
-/** La pantalla B se ve UNA vez por reserva (HANDOFF): la clave con que se recuerda. */
-export const claveVista = (reservaId: string) => `estas-dentro:${reservaId}`
+/**
+ * La pantalla B se ve UNA vez por reserva (HANDOFF). Se recuerda por la hora
+ * de la fecha, que es lo que saben los tres sitios que la abren (Pago, Inicio
+ * y /estas-dentro): así quien la vio al reportar no la vuelve a ver al confirmarse.
+ */
+export const claveVista = (empiezaEn: string) => `estas-dentro:${empiezaEn}`

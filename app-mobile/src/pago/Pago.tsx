@@ -176,6 +176,8 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     }
     setFase(r.datos.estado === 'confirmado' ? 'listo' : 'pendiente')
     setRecien(true)
+    // Ya vio «Estás dentro»: que no se abra otra vez al confirmarse el pago.
+    if (d) AsyncStorage.setItem(MD.claveVista(d.evento.empiezaEn), '1').catch(() => undefined)
     // Reportar el pago aparta el puesto: lo siguiente que pasa es la mesa.
     // Tercer momento de la pregunta previa.
     preguntar('reserva')
@@ -541,11 +543,12 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   // Recién reportado: A (en revisión) o B (confirmado al instante), con lo de
   // Pago debajo para no perder nada: el comprobante y «algo no cuadra».
   if (recien && d && m && (fase === 'pendiente' || fase === 'listo')) {
+    // Al reportar ya está dentro (Michael, 29-10), sin decir «confirmado» si no lo está.
     const momento = fase === 'listo' ? 'B' : 'A'
     return (
       <View style={{ flex: 1 }}>
         <EstasDentro
-          v={MD.vista(planDentro!, momento, momento === 'B' ? 'confirmado' : null)}
+          v={MD.vista(planDentro!, 'B', momento === 'B' ? 'confirmado' : 'reportado')}
           enCalendario={dentro.enCalendario}
           alCalendario={dentro.alCalendario}
           alCompartir={dentro.alCompartir}

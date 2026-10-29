@@ -21,6 +21,12 @@ export const B = {
   titulo: 'Estás dentro.',
   credito: { sello: 'RESERVA CONFIRMADA', bajada: 'Pagaste con crédito. No hace falta nada más.' },
   confirmado: { sello: 'PAGO CONFIRMADO', bajada: 'Cuadramos tu pago con el banco. Te mandamos el comprobante por correo.' },
+  /**
+   * Al reportar el pago, ya «Estás dentro» (Michael, 29-10: nunca se ha
+   * rechazado un pago y, si algo falla, escribe él). Sin decir «confirmado»,
+   * que todavía no lo es.
+   */
+  reportado: { sello: 'PUESTO APARTADO', bajada: 'Reportaste tu pago. Lo cuadramos con el banco y, si algo no cuadra, te escribimos.' },
   /** Cuando no sabemos cómo pagó (la primera apertura tras confirmar). */
   sinSaber: { sello: 'RESERVA CONFIRMADA', bajada: null as string | null },
   compartir: 'Compartir mi plan',

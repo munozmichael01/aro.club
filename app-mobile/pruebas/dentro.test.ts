@@ -25,6 +25,10 @@ test('A y B dicen lo de la entrega, en la hora de la ciudad', () => {
   assert.equal(b.bajada, 'Pagaste con crédito. No hace falta nada más.')
   assert.equal(b.seAbre, 'EL VIERNES A MEDIODÍA')
   assert.equal(M.vista(CENA, 'B', 'confirmado').sello, 'PAGO CONFIRMADO')
+  // Al reportar ya está dentro, pero no se dice «confirmado» (Michael, 29-10).
+  const r = M.vista(CENA, 'B', 'reportado')
+  assert.equal(r.sello, 'PUESTO APARTADO')
+  assert.equal(r.bajada, 'Reportaste tu pago. Lo cuadramos con el banco y, si algo no cuadra, te escribimos.')
   // Sin saber cómo pagó, no se le dice que pagó con crédito.
   assert.equal(M.vista(CENA, 'B', null).bajada, null)
 })

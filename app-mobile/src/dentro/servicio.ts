@@ -48,7 +48,7 @@ export function crearServicioDentro(api: Api) {
       }
     },
     /** Si ya se vio la B de esta reserva: se ve una vez (HANDOFF). */
-    yaVista: async (reservaId: string) => (await AsyncStorage.getItem(M.claveVista(reservaId)).catch(() => null)) === '1',
-    marcarVista: (reservaId: string) => AsyncStorage.setItem(M.claveVista(reservaId), '1').catch(() => undefined),
+    yaVista: async (empiezaEn: string) => (await AsyncStorage.getItem(M.claveVista(empiezaEn)).catch(() => null)) === '1',
+    marcarVista: (empiezaEn: string) => AsyncStorage.setItem(M.claveVista(empiezaEn), '1').catch(() => undefined),
   }
 }
