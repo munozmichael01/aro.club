@@ -589,6 +589,7 @@ export type Database = {
           activo: boolean
           caduca_at: string | null
           code: string
+          creado_por: string | null
           created_at: string
           descuento_pct: number
           event_id: string | null
@@ -600,6 +601,7 @@ export type Database = {
           activo?: boolean
           caduca_at?: string | null
           code: string
+          creado_por?: string | null
           created_at?: string
           descuento_pct?: number
           event_id?: string | null
@@ -611,6 +613,7 @@ export type Database = {
           activo?: boolean
           caduca_at?: string | null
           code?: string
+          creado_por?: string | null
           created_at?: string
           descuento_pct?: number
           event_id?: string | null
@@ -619,6 +622,34 @@ export type Database = {
           usados?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "coupons_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupons_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "coupons_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "coupons_creado_por_fkey"
+            columns: ["creado_por"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "coupons_event_id_fkey"
             columns: ["event_id"]
@@ -2323,6 +2354,7 @@ export type Database = {
           full_name: string | null
           gender: Database["public"]["Enums"]["gender_t"]
           id: string
+          invitado_por: string | null
           invite_depth: number
           invited_by: string | null
           last_event_at: string | null
@@ -2332,6 +2364,7 @@ export type Database = {
           notes_ops: string | null
           notificaciones: Json
           phone_e164: string | null
+          premios_referido: number
           questionnaire_screen: number
           role: Database["public"]["Enums"]["app_role_t"]
           rootedness: Database["public"]["Enums"]["rootedness_t"] | null
@@ -2358,6 +2391,7 @@ export type Database = {
           full_name?: string | null
           gender?: Database["public"]["Enums"]["gender_t"]
           id: string
+          invitado_por?: string | null
           invite_depth?: number
           invited_by?: string | null
           last_event_at?: string | null
@@ -2367,6 +2401,7 @@ export type Database = {
           notes_ops?: string | null
           notificaciones?: Json
           phone_e164?: string | null
+          premios_referido?: number
           questionnaire_screen?: number
           role?: Database["public"]["Enums"]["app_role_t"]
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
@@ -2393,6 +2428,7 @@ export type Database = {
           full_name?: string | null
           gender?: Database["public"]["Enums"]["gender_t"]
           id?: string
+          invitado_por?: string | null
           invite_depth?: number
           invited_by?: string | null
           last_event_at?: string | null
@@ -2402,6 +2438,7 @@ export type Database = {
           notes_ops?: string | null
           notificaciones?: Json
           phone_e164?: string | null
+          premios_referido?: number
           questionnaire_screen?: number
           role?: Database["public"]["Enums"]["app_role_t"]
           rootedness?: Database["public"]["Enums"]["rootedness_t"] | null
@@ -2427,6 +2464,34 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_city_demand"
             referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "profiles_invitado_por_fkey"
+            columns: ["invitado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_invitado_por_fkey"
+            columns: ["invitado_por"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "profiles_invitado_por_fkey"
+            columns: ["invitado_por"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "profiles_invitado_por_fkey"
+            columns: ["invitado_por"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "profiles_invited_by_fkey"
@@ -4150,6 +4215,8 @@ export type Database = {
         | "equilibrar_mesas"
         | "reembolso_pedido"
         | "reembolso_hecho"
+        | "probadores_android"
+        | "fecha_cambiada"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -4399,6 +4466,8 @@ export const Constants = {
         "equilibrar_mesas",
         "reembolso_pedido",
         "reembolso_hecho",
+        "probadores_android",
+        "fecha_cambiada",
       ],
       event_format_t: [
         "dinner",
