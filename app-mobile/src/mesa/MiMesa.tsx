@@ -16,6 +16,8 @@ import * as RM from '../reembolso/maquina'
 import * as TR from '../texto/reembolso'
 import { AvisoAjustes, LineaGrabacion, PreguntaGrabacion, useGrabacion } from './Avisos'
 import { reglas } from '../reglas'
+import * as CM from '../cambiar/maquina'
+import * as TC from '../texto/cambiar'
 import type { crearServicioMesa } from './servicio'
 
 type Servicio = ReturnType<typeof crearServicioMesa>
@@ -190,6 +192,25 @@ function EnlaceCancelar({ ir }: { ir: (d: string) => void }) {
   )
 }
 
+/** Cambiar de fecha (29-10): el enlace si se puede; si no, por qué. Revelada, nada. */
+function CambiarDeFecha({ d, ir }: { d: M.DeServidor; ir: (d: string) => void }) {
+  const c = CM.enMiMesa(d.cambiarFecha)
+  if (!c) return null
+  if ('nota' in c)
+    return (
+      <Texto variante="cuerpoChico" style={{ marginTop: 18 }}>
+        {c.nota}
+      </Texto>
+    )
+  return (
+    <Pressable onPress={() => ir('/cambiar-fecha')} accessibilityRole="link" style={estilos.enlace}>
+      <Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia, textDecorationLine: 'underline' }}>
+        {TC.enlace}
+      </Texto>
+    </Pressable>
+  )
+}
+
 // --- Vacía ----------------------------------------------------------------------
 
 function Vacia({ d, ir }: { d: M.DeServidor; ir: (d: string) => void }) {
@@ -272,6 +293,7 @@ function Cerrada({ d, ir, alAbrirse }: { d: M.DeServidor; ir: (d: string) => voi
       <Texto variante="cuerpo" style={{ marginTop: 20 }}>
         {T.cerrada.nota(M.voz(d).vasCon)}
       </Texto>
+      <CambiarDeFecha d={d} ir={ir} />
       <EnlaceCancelar ir={ir} />
     </View>
   )
@@ -459,6 +481,22 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
             </View>
           </View>
         ))}
+        {M.arraigos(d).length ? (
+          <View style={{ marginTop: 18 }}>
+            <Texto variante="etiquetaChica" tono="cuerpo" style={{ marginBottom: 10 }}>
+              {T.abierta.arraigos(mesa)}
+            </Texto>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {M.arraigos(d).map((a) => (
+                <View key={a} style={estilos.ficha}>
+                  <Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia }}>
+                    {a}
+                  </Texto>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
         <Texto variante="cuerpoChico" style={{ marginTop: 16 }}>
           {T.abierta.notaCompaneros(mesa)}
         </Texto>
@@ -772,6 +810,7 @@ const estilos = StyleSheet.create({
   otro: { flexDirection: 'row', gap: 14, alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: tinta(0.13) },
   avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   enlace: { alignSelf: 'flex-start', minHeight: medida.toqueMinimo, justifyContent: 'center', marginTop: 16 },
+  ficha: { borderRadius: radio.capsula, borderWidth: 1, borderColor: tinta(0.18), paddingHorizontal: 12, paddingVertical: 7 },
   acuse: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderRadius: 26, backgroundColor: verdeAlfa(0.1), padding: 18 },
   acuseIcono: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   fichas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

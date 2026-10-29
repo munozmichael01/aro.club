@@ -11,7 +11,7 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Mi mesa con un servidor SIMULADO, para ver cada fase en el navegador:
- * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|sin-abono|cerrada|abierta|antes|en-curso|sin-foto|terminada|unica|guion|movimiento|pasada|valorada|fallo
+ * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|sin-abono|cerrada|cerrada-tarde|abierta|antes|en-curso|sin-foto|terminada|unica|guion|movimiento|pasada|valorada|fallo
  * Lo del 16-10: graba|grabado|grabado-movimiento (la grabación) y ajuste-cancelo|ajuste-suma|ajuste-ambos|ajuste-movido.
  * ?tope=1 en `pasada`: el veto del sitio no cabe (ya tiene dos).
  * Catálogo de desarrollo: no se enlaza desde ningún sitio. La forma imita la
@@ -44,8 +44,9 @@ const ESTADOS: Record<string, DeServidor> = {
   'sin-reserva': { fase: 'sin-reserva', estado: 'active' },
   'sin-mesa': { fase: 'sin-mesa', formato: 'dinner', empiezaEn: en(4), zonaHoraria: 'America/Caracas', creditoDevuelto: true },
   'sin-abono': { fase: 'sin-mesa', formato: 'dinner', empiezaEn: en(4), zonaHoraria: 'America/Caracas', creditoDevuelto: false },
-  cerrada: { fase: 'cerrada', formato: 'dinner', zonaHoraria: 'America/Caracas', revelaEn: en(26), empiezaEn: en(34), zonas: ['Las Mercedes', 'Chacao', 'Altamira'] },
-  abierta: ABIERTA,
+  cerrada: { fase: 'cerrada', formato: 'dinner', zonaHoraria: 'America/Caracas', revelaEn: en(26), empiezaEn: en(34), zonas: ['Las Mercedes', 'Chacao', 'Altamira'], cambiarFecha: { puede: true, reservaId: 'r', destinos: [{ eventoId: 'b', empiezaEn: en(58), zonaHoraria: 'America/Caracas', formato: 'dinner', zonas: ['Chacao'] }] } },
+  'cerrada-tarde': { fase: 'cerrada', formato: 'dinner', zonaHoraria: 'America/Caracas', revelaEn: en(6), empiezaEn: en(14), zonas: ['Las Mercedes'], cambiarFecha: { puede: false, motivo: 'tarde', reservaId: 'r', destinos: [] } },
+  abierta: { ...ABIERTA, arraigos: ['mismos', 'se-quedo', 'volvio'] },
   movimiento: { ...ABIERTA, formato: 'walk', restaurante: 'Entrada de Sabas Nieves', direccion: 'Av. Boyacá, Altamira', actividad: { ruta: 'Sabas Nieves → La Silla', km: 7, minutos: 150, nivel: 'medio' } },
   // El juego de la mesa: cerrado (la cena es en 5 h) y abierto (empezó hace 10 min).
   'juego-abierto': { ...ABIERTA, empiezaEn: en(-1 / 6) },

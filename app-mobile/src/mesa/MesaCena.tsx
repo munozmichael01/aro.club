@@ -108,6 +108,19 @@ export function MesaCena(p: {
               <Texto style={[texto(13, 1), { color: C.cuerpo }]}>{c.seUnio ? `${c.sector} · ${T.abierta.seUnio}` : c.sector}</Texto>
             </View>
           ))}
+          {/* De qué está hecha la mesa (29-10): solo el conjunto, sin decir quién es qué. */}
+          {M.arraigos(d).length ? (
+            <View style={e.arraigos}>
+              <Texto style={[texto(11, 1.2), { color: C.cuerpo, letterSpacing: 1.2, fontFamily: fuente.textoSemi }]}>{T.abierta.arraigos(true)}</Texto>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {M.arraigos(d).map((a) => (
+                  <View key={a} style={e.ficha}>
+                    <Texto style={texto(13, 1.2)}>{a}</Texto>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : null}
           {/* La nota de antes de la entrega 20: Michael la quiso de vuelta (15-10). */}
           <Texto style={[texto(13, 1.4), e.nota]}>{T.abierta.notaCompaneros(true)}</Texto>
         </View>
@@ -458,6 +471,8 @@ const e = StyleSheet.create({
   estado: { minHeight: 44, minWidth: 44, paddingHorizontal: 12, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   cta: { marginTop: 8, minHeight: 48, borderRadius: 999, backgroundColor: C.acento, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   reiniciar: { minHeight: 44, marginTop: 4, alignItems: 'center', justifyContent: 'center' },
+  arraigos: { gap: 10, paddingTop: 12, paddingBottom: 14 },
+  ficha: { borderRadius: 999, borderWidth: 1, borderColor: 'rgba(20,52,42,.18)', paddingHorizontal: 12, paddingVertical: 7 },
   nota: { color: C.cuerpo, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(20,52,42,.1)' },
   candado: { marginTop: 8, minHeight: 48, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(250,243,228,.25)', paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 12 },
   hecho: { minHeight: 30, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(156,187,166,.5)', justifyContent: 'center' },

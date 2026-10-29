@@ -62,6 +62,10 @@ export type DeServidor = {
   avisoDosHoras?: string | null
   /** Si la mesa salió de menos de seis, la frase de por qué (`fraseDeMesaCorta`, 22-10). */
   mesaCorta?: string | null
+  /** Con la mesa revelada: los arraigos de la mesa, CÓDIGOS sin repetir y sin atar a nadie (29-10). La etiqueta, de `AroReglas.PUERTA.arraigo`. */
+  arraigos?: string[]
+  /** A dónde puede cambiarse (29-10, `bloqueDeCambiarFecha`). Sin él, no se enseña nada. */
+  cambiarFecha?: import('../cambiar/maquina').Bloque | null
 }
 
 export type Ajustes = { alguienCancelo?: boolean; sonCuantos?: number; caben?: number; teMovimos?: boolean; seSumoAlguien?: boolean }
@@ -247,4 +251,11 @@ export function selloPasada(d: DeServidor, ahora: number) {
   const dias = Math.floor((ahora - new Date(d.empiezaEn).getTime()) / 86400000)
   const p = reglas.partesDe(d.empiezaEn, d.zonaHoraria)
   return T.pasada.sello(dias, p?.numero, p?.mes, voz(d).ayer)
+}
+
+/** Las etiquetas de los arraigos de la mesa, en el orden en que llegan. Un código que la app no conoce no se pinta. */
+export function arraigos(d: DeServidor): string[] {
+  const opciones = reglas.PUERTA.arraigo?.opciones ?? []
+  const etiqueta = new Map(opciones.map(([texto, codigo]) => [codigo, texto]))
+  return (d.arraigos ?? []).map((c) => etiqueta.get(c)).filter((t): t is string => !!t)
 }
