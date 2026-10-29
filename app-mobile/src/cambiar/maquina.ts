@@ -26,13 +26,14 @@ export type Bloque = {
   reservaId?: string
 }
 
-/** Qué enseña Mi mesa: el enlace, la frase de por qué no, o nada (revelada, o un servidor sin el bloque). */
-export function enMiMesa(b: Bloque | null | undefined): { enlace: true } | { nota: string } | null {
-  if (!b) return null
+/**
+ * Qué enseña Mi mesa: el enlace SOLO si hay fechas a las que irse (Michael,
+ * 29-10). Sin destinos, por tarde o por no haber otra abierta, no se enseña
+ * nada; la pantalla sí dice por qué si alguien llega a ella.
+ */
+export function enMiMesa(b: Bloque | null | undefined): { enlace: true } | null {
   // Sin saber qué reserva se mueve, no se ofrece moverla.
-  if (b.puede && b.destinos.length) return b.reservaId ? { enlace: true } : null
-  const nota = T.noSePuede(b.puede ? 'sin-destinos' : b.motivo)
-  return nota ? { nota } : null
+  return b?.puede && b.destinos.length && b.reservaId ? { enlace: true } : null
 }
 
 const zonasEnTexto = (z: string[] | undefined) =>

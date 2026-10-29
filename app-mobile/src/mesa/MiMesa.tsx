@@ -192,16 +192,9 @@ function EnlaceCancelar({ ir }: { ir: (d: string) => void }) {
   )
 }
 
-/** Cambiar de fecha (29-10): el enlace si se puede; si no, por qué. Revelada, nada. */
+/** Cambiar de fecha (29-10): solo si hay fechas abiertas a las que irse. */
 function CambiarDeFecha({ d, ir }: { d: M.DeServidor; ir: (d: string) => void }) {
-  const c = CM.enMiMesa(d.cambiarFecha)
-  if (!c) return null
-  if ('nota' in c)
-    return (
-      <Texto variante="cuerpoChico" style={{ marginTop: 18 }}>
-        {c.nota}
-      </Texto>
-    )
+  if (!CM.enMiMesa(d.cambiarFecha)) return null
   return (
     <Pressable onPress={() => ir('/cambiar-fecha')} accessibilityRole="link" style={estilos.enlace}>
       <Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia, textDecorationLine: 'underline' }}>

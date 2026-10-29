@@ -10,17 +10,13 @@ import * as M from '../src/mesa/maquina'
 
 const Z = 'America/Caracas'
 
-test('Mi mesa enseña el enlace, el porqué o nada', async () => {
-  const { reglas } = await import('../src/reglas')
+test('Mi mesa solo enseña el enlace si hay fechas a las que irse', () => {
   const d = { eventoId: 'a', empiezaEn: '2026-11-01T00:00:00Z', zonaHoraria: Z }
   assert.deepEqual(C.enMiMesa({ puede: true, reservaId: 'r', destinos: [d] }), { enlace: true })
   // Sin saber qué reserva se mueve, no se ofrece moverla (un servidor de antes de 7f93e05).
   assert.equal(C.enMiMesa({ puede: true, destinos: [d] }), null)
-  assert.deepEqual(C.enMiMesa({ puede: false, motivo: 'tarde', destinos: [] }), { nota: `Ya no puedes cambiar de fecha: faltan menos de ${reglas.HORAS_DE_MARGEN} horas.` })
-  assert.ok('nota' in (C.enMiMesa({ puede: false, motivo: 'sin-destinos', destinos: [] }) ?? {}))
-  // «puede» sin destinos es lo mismo que no tener a dónde ir.
-  assert.ok('nota' in (C.enMiMesa({ puede: true, destinos: [] }) ?? {}))
-  assert.equal(C.enMiMesa({ puede: false, motivo: 'revelada', destinos: [] }), null)
+  for (const motivo of ['tarde', 'sin-destinos', 'revelada']) assert.equal(C.enMiMesa({ puede: false, motivo, reservaId: 'r', destinos: [] }), null)
+  assert.equal(C.enMiMesa({ puede: true, reservaId: 'r', destinos: [] }), null)
   assert.equal(C.enMiMesa(undefined), null)
 })
 
