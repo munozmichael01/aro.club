@@ -42,6 +42,13 @@ test('el resumen de la tarjeta y una memoria rota no rompen nada', () => {
   assert.deepEqual(M.leer(null), M.vacia())
 })
 
-test('sin mazo de temáticas en reglas.js, se juega por rondas', () => {
-  assert.deepEqual(M.delMazo(), [])
+// El mazo V3 (Michael, 29-10; reglas.js 951c8ab): cinco de cinco, en el orden de los iconos.
+test('el mazo de reglas.js: cinco temáticas de cinco preguntas, con clave única', () => {
+  const mazo = M.delMazo()
+  assert.deepEqual(mazo.map((t) => t.clave), ['rapido', 'aqui', 'historias', 'ysi', 'temueve'])
+  for (const t of mazo) {
+    assert.equal(t.preguntas.length, 5, t.clave)
+    assert.ok(t.nombre && t.linea, t.clave)
+    assert.ok(t.preguntas.every((p) => !p.includes('—')), `${t.clave}: sin guiones largos`)
+  }
 })

@@ -416,22 +416,28 @@ function TarjetaJuego(p: {
 
 /** 1a · Antes de la hora de la cena: se ve qué hay, pero nada se puede abrir. */
 function JuegoCerrado({ hora, delPlan }: { hora: string; delPlan: string }) {
+  // Con el mazo por temáticas en reglas.js, lo que se ve apagado son las temáticas, no las rondas viejas.
+  const mazo = TM.delMazo()
+  const filas = mazo.length
+    ? mazo.map((t) => ({ clave: t.clave, titulo: t.nombre, bajada: t.linea }))
+    : reglas.JUEGO.rondas.map((r, i) => ({ clave: r.clave, titulo: r.titulo, bajada: TJ.tarjeta.bajada(i) }))
+  const resumen = mazo.length ? TT.tarjeta.resumenCerrado(mazo.length, delPlan) : TJ.tarjeta.resumenCerrado(delPlan, filas.length)
   return (
     <View style={[e.tarjeta, { backgroundColor: C.tinta, borderWidth: 0 }]}>
       <View style={e.cabeza}>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Texto style={[serif(21, 1.1, -0.015), { color: C.crema }]}>{TJ.tarjeta.titulo}</Texto>
-          <Texto style={[texto(13, 1.35), { color: C.cuerpoVerde, marginTop: 3 }]}>{TJ.tarjeta.resumenCerrado(delPlan)}</Texto>
+          <Texto style={[texto(13, 1.35), { color: C.cuerpoVerde, marginTop: 3 }]}>{resumen}</Texto>
         </View>
       </View>
       <View style={{ paddingHorizontal: 18, paddingBottom: 18 }}>
         <View style={{ opacity: 0.45 }}>
-          {reglas.JUEGO.rondas.map((r, i) => (
+          {filas.map((r, i) => (
             <View key={r.clave} style={e.ronda}>
               <Texto style={[serif(20, 1.1), { color: C.acento, width: 30 }]}>{i + 1}</Texto>
               <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
                 <Texto style={[serif(18, 1.15), { color: C.crema }]}>{r.titulo}</Texto>
-                <Texto style={[texto(13, 1.4), { color: C.cuerpoVerde }]}>{TJ.tarjeta.bajada(i)}</Texto>
+                <Texto style={[texto(13, 1.4), { color: C.cuerpoVerde }]}>{r.bajada}</Texto>
               </View>
             </View>
           ))}

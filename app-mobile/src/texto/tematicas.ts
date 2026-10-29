@@ -47,6 +47,8 @@ export const conversar = {
 /** La tarjeta en Mi mesa (M1 a M5 de la entrega). */
 export const tarjeta = {
   resumen: (n: number) => `${n} temáticas · elijan por dónde empezar`,
+  /** Cerrada hasta la hora del plan: las temáticas se ven, apagadas, como las rondas antes. */
+  resumenCerrado: (n: number, delPlan: string) => `${n} temáticas · se abre a la hora ${delPlan}`,
   conAvance: (jugadas: number, aMedias: { nombre: string; en: number; de: number } | null) =>
     [jugadas ? `${jugadas} jugada${jugadas === 1 ? '' : 's'}` : '', aMedias ? `${aMedias.nombre} por la ${aMedias.en} de ${aMedias.de}` : ''].filter(Boolean).join(' · '),
   intro: 'Preguntas para cuando la mesa las necesite. Elijan la temática que quieran, en el orden que quieran.',
