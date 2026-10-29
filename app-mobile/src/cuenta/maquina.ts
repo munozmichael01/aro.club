@@ -262,6 +262,9 @@ export type FilaAgenda = {
   idioma: string | null
   /** «se cierra a medianoche, cuando empieza el viernes», de `reglas.textoCierre`. */
   cierre: string
+  /** La fecha en crudo, para «Cómo funciona» (cuándo se revela, en su zona). */
+  empiezaEn: string
+  zonaHoraria: string | null
 }
 
 export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: number): { semana: string; filas: FilaAgenda[] }[] {
@@ -299,6 +302,8 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       graba: !!a.permisoObligatorio,
       idioma: a.idioma ? (a.etiquetaIdioma ?? null) : null,
       cierre: reglas.textoCierre(a.empiezaEn, a.zonaHoraria),
+      empiezaEn: a.empiezaEn,
+      zonaHoraria: a.zonaHoraria ?? null,
     })
   }
   return grupos

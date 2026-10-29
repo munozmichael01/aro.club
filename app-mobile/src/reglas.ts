@@ -64,6 +64,8 @@ type Api = {
   DIAS_GUARDA_FOTOS: number
   /** Cuántas horas antes hay que avisar para cancelar con crédito o cambiar de fecha (24). No es `HORAS_DE_CIERRE`, aunque hoy valgan igual. */
   HORAS_DE_MARGEN: number
+  /** Cuándo se revela un plan: el ISO de la fecha si lo trae, o el de la regla (mediodía, o la víspera a las 6 en los de mañana). */
+  revelaDe: (inicioIso: string, zona?: string | null, revelaIso?: string | null) => { cuando: string; mismoDia: boolean; dia: string; hora: string; enLetra: string } | null
   /** El arraigo dicho de otra persona («Volvió al país»), por código (f8f4cf5). */
   ARRAIGO_EN_LA_MESA: Record<string, string>
   /** Los tramos de gasto de la encuesta, [texto, punto medio]: se guarda el punto medio. Uno para app, web y panel. */

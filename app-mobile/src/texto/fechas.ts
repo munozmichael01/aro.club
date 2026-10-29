@@ -261,3 +261,16 @@ export function esFutura(ddmmaaaa: string, ahora: number, zona?: Zona): boolean 
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(ddmmaaaa)
   return !!m && `${m[3]}-${m[2]}-${m[1]}` > hoyISO(ahora, zona)
 }
+
+/**
+ * «El día de la cena, al mediodía» o «La víspera, a las seis de la tarde»:
+ * cuándo se revela un plan, para «Cómo funciona». De `reglas.revelaDe`, que
+ * sabe que los planes de mañana se revelan la víspera.
+ */
+export function cuandoSeRevelaPlan(p: { formato?: string | null; empiezaEn?: string | null; revelaEn?: string | null; zonaHoraria?: string | null }): string {
+  const voz = reglas.vozDe(p.formato ?? 'dinner') as unknown as Record<string, string>
+  const r = p.empiezaEn ? reglas.revelaDe(p.empiezaEn, p.zonaHoraria ?? null, p.revelaEn ?? null) : null
+  if (!r) return 'Antes del plan'
+  const aLas = r.enLetra === 'mediodía' ? 'al mediodía' : `a ${r.enLetra}`
+  return r.mismoDia ? `El día ${voz.delPlan ?? 'del plan'}, ${aLas}` : `La víspera, ${aLas}`
+}

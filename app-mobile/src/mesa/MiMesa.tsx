@@ -17,6 +17,7 @@ import * as TR from '../texto/reembolso'
 import { AvisoAjustes, LineaGrabacion, PreguntaGrabacion, useGrabacion } from './Avisos'
 import { reglas } from '../reglas'
 import * as CM from '../cambiar/maquina'
+import { FilaComoFunciona } from '../como/Fila'
 import * as TC from '../texto/cambiar'
 import type { crearServicioMesa } from './servicio'
 
@@ -283,6 +284,10 @@ function Cerrada({ d, ir, alAbrirse }: { d: M.DeServidor; ir: (d: string) => voi
       <Texto variante="cuerpo" style={{ marginTop: 20 }}>
         {T.cerrada.nota(M.voz(d).vasCon)}
       </Texto>
+      {/* Hasta la revelación (C3b); después lo reemplaza el paso a paso. La primera vez, se abre sola con las tres. */}
+      <View style={{ marginTop: 18 }}>
+        <FilaComoFunciona enMiMesa plan={{ formato: d.formato, empiezaEn: d.empiezaEn, revelaEn: d.revelaEn, zonaHoraria: d.zonaHoraria }} />
+      </View>
     </View>
   )
 }

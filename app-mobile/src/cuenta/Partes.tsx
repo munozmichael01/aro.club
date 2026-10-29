@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { FilaComoFunciona } from '../como/Fila'
 import { AccessibilityInfo, Animated, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
 import {
@@ -350,6 +351,10 @@ function FilaFecha(p: {
           <Texto variante="nota" style={{ marginBottom: 16 }}>
             {T.agenda.nota}
           </Texto>
+          {/* «¿Cómo funciona?» (entrega como-funciona, C1): entre los datos de la fecha y el botón. */}
+          <View style={{ marginBottom: 16 }}>
+            <FilaComoFunciona plan={{ formato: f.formato, empiezaEn: f.empiezaEn, zonaHoraria: f.zonaHoraria }} />
+          </View>
           {/* Esta cena se graba: se dice antes del botón (18-10). */}
           {f.graba ? (
             <View style={estilos.graba}>
