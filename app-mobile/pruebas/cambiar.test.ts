@@ -35,7 +35,7 @@ test('el arraigo va con cada persona; sin contestar o desconocido, no se pinta',
     { id: 'b', nombre: 'Ana', sector: 'Diseño', arraigo: null },
     { id: 'c', nombre: 'Leo', sector: 'Finanzas', arraigo: 'no-existe' },
   ] })
-  assert.ok(o[0].arraigo)
+  assert.equal(o[0].arraigo, 'Volvió al país')
   assert.equal(o[1].arraigo, null)
   assert.equal(o[2].arraigo, null)
 })

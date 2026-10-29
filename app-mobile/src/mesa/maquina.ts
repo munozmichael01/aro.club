@@ -255,15 +255,11 @@ export function selloPasada(d: DeServidor, ahora: number) {
 }
 
 /**
- * El arraigo de una persona dicho para la mesa: «Volvió al país». Las
- * etiquetas cortas vivirán en `AroReglas.ARRAIGO_EN_LA_MESA` (pendiente del
- * agente, 29-10); mientras no estén, la del cuestionario. Un código que la
- * app no conoce no se pinta.
+ * El arraigo de una persona dicho para la mesa: «Volvió al país», de
+ * `AroReglas.ARRAIGO_EN_LA_MESA` (f8f4cf5), la misma que la web y los
+ * correos. Un código sin etiqueta no se pinta: la del cuestionario va en
+ * primera persona y al lado del nombre de otro se lee al revés.
  */
 export function arraigoDe(codigo: string | null | undefined): string | null {
-  if (!codigo) return null
-  const corta = (reglas as { ARRAIGO_EN_LA_MESA?: Record<string, string> }).ARRAIGO_EN_LA_MESA?.[codigo]
-  if (corta) return corta
-  const opcion = (reglas.PUERTA.arraigo?.opciones ?? []).find(([, c]) => c === codigo)
-  return opcion ? opcion[0] : null
+  return (codigo && reglas.ARRAIGO_EN_LA_MESA?.[codigo]) || null
 }

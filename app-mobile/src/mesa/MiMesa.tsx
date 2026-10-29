@@ -662,7 +662,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
                   key={o.id}
                   unica
                   texto={o.nombre}
-                  pie={fija ? T.pasada.bloqueadaPorReporte : o.sector}
+                  pie={fija ? T.pasada.bloqueadaPorReporte : [o.sector, o.arraigo].filter(Boolean).join(' · ')}
                   pieFuerte={fija}
                   fija={fija}
                   marcada={v.bloqueados.includes(o.id)}
@@ -709,7 +709,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
           </Texto>
           <View style={{ gap: 8 }}>
             {otros.map((o) => (
-              <Opcion key={o.id} unica texto={o.nombre} pie={o.sector} marcada={quien === o.id} onPress={() => setQuien(o.id)} />
+              <Opcion key={o.id} unica texto={o.nombre} pie={[o.sector, o.arraigo].filter(Boolean).join(' · ')} marcada={quien === o.id} onPress={() => setQuien(o.id)} />
             ))}
           </View>
           <Texto variante="etiqueta" tono="cuerpo" style={{ letterSpacing: 1.9, marginTop: 20, marginBottom: 10 }}>
