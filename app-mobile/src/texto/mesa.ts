@@ -169,7 +169,8 @@ export const pasada = {
   /** ¿Faltó alguien? (Michael, 29-10, de Timeleft): un toque. Hacen falta dos marcas para que cuente, así que no se promete nada al marcar. */
   falto: '¿Faltó alguien?',
   notaFalto: (cuantos: number) => `Tenían que ser ${cuantos}, contándote a ti.`,
-  vinimosTodos: 'Vinimos todos',
+  /** «No faltó nadie» y no «Vinimos todos»: el copy de Aro va sin masculino genérico (29-10). */
+  vinimosTodos: 'No faltó nadie',
   faltoAlguien: 'Faltó alguien',
   quienFalto: 'Marca a quien no fue.',
   /** Seguir en contacto (Michael, 29-10). Marcar no avisa a nadie: solo cuenta si las dos personas se marcan. */

@@ -595,7 +595,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
             <View style={{ gap: 8, marginTop: 12 }}>
               <Texto variante="nota">{T.pasada.quienFalto}</Texto>
               {otros.map((o) => (
-                <Opcion key={o.id} texto={o.nombre} pie={o.sector} marcada={!!v.falto?.includes(o.id)} onPress={() => setV((x) => ({ ...x, falto: M.alternar(x.falto ?? [], o.id) }))} />
+                <Opcion key={o.id} texto={o.nombre} pie={o.sector} marcada={!!v.falto?.includes(o.id)} onPress={() => setV((x) => ({ ...x, falto: M.alternar(x.falto ?? [], o.id), contacto: x.contacto.filter((c) => c !== o.id) }))} />
               ))}
             </View>
           ) : null}
@@ -681,7 +681,8 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
           </Texto>
           <View style={{ gap: 8 }}>
             {otros
-              .filter((o) => !v.bloqueados.includes(o.id) && reportadoA !== o.id)
+              // Ni a quien bloqueó ni a quien marcó como ausente: con quien no vino no hay contacto que seguir.
+              .filter((o) => !v.bloqueados.includes(o.id) && reportadoA !== o.id && !(faltoAbierto && v.falto?.includes(o.id)))
               .map((o) => (
                 <Opcion key={o.id} texto={o.nombre} pie={[o.sector, o.arraigo].filter(Boolean).join(' · ')} marcada={v.contacto.includes(o.id)} onPress={() => setV((x) => ({ ...x, contacto: M.alternar(x.contacto, o.id) }))} />
               ))}
