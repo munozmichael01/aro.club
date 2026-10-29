@@ -1248,7 +1248,7 @@ if (relojes.length) {
 //   · sin fila en el panel, no se puede abrir;
 //   · sin nombre en `reglas.js`, Mi mesa y el panel de correos lo llaman
 //     «Cena», que es lo que hacía la mesa cerrada con el brunch;
-//   · sin su frase en los correos, el recordatorio dice «Hoy es tu plan» y
+//   · sin su frase en los correos, el recordatorio dice «Mañana es tu plan» y
 //     la invitación a otra fecha, «el plan», que es lo que escribe quien no
 //     sabe de qué habla.
 //
@@ -1289,7 +1289,7 @@ if (relojes.length) {
     ['hora (src/lib/formatos.ts)', conHora, 'la fecha se abriría a la hora de una cena'],
     ['fila del panel (Operación)', enElPanel, 'no se puede abrir una fecha con ese formato'],
     ['nombre (reglas.js)', conNombre, 'la mesa cerrada y el panel de correos lo llamarían «Cena»'],
-    ['«Hoy es tu…» (correos-datos)', mapa('HOY_ES'), 'el recordatorio diría «Hoy es tu plan»'],
+    ['«Mañana es tu…» (correos-datos)', mapa('MANANA_ES'), 'el recordatorio diría «Mañana es tu plan»'],
     ['«la cena del…» (correos-datos)', mapa('LA_DEL'), 'nombrar otra fecha diría «el plan»'],
     ['«Otra cena» (correos-datos)', mapa('OTRA'), 'la invitación a otra fecha diría «Otro plan»'],
   ]

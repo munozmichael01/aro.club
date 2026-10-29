@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/recordatorio",
-      "schedule": "0 13 * * *"
+      "schedule": "0 13-23 * * *"
     },
     {
       "path": "/api/cron/purga",

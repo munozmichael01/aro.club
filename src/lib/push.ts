@@ -127,22 +127,22 @@ export function copyDe(
       }
 
     case 'recordatorio': {
-      // SALE A LAS NUEVE DE LA MAÑANA, antes de la revelación, y decía «abre
-      // tu mesa para ver dónde es y cómo llegar»: a esa hora no hay nada que
-      // abrir. Prometer algo que no está es la forma más rápida de que la
-      // siguiente notificación no se abra.
+      // SALE LA VÍSPERA desde el 29-10, antes de la revelación, y decía
+      // «abre tu mesa para ver dónde es y cómo llegar»: a esa hora no hay
+      // nada que abrir. Prometer algo que no está es la forma más rápida de
+      // que la siguiente notificación no se abra.
       //
-      // Y por su nombre: «Hoy es tu cena» o «Hoy son tus drinks», no «cena»
-      // siempre. Sale del mismo sitio que el correo, así que los dos canales
-      // dicen lo mismo del mismo plan.
+      // Y por su nombre: «Mañana es tu cena» o «Mañana son tus drinks», no
+      // «cena» siempre. Sale del mismo sitio que el correo, así que los dos
+      // canales dicen lo mismo del mismo plan.
       const revelaA = t('revelaA')
       return {
-        titulo: t('tituloHoy', 'Hoy es tu plan'),
+        titulo: t('tituloHoy', 'Mañana es tu plan'),
         cuerpo: t('yaRevelado')
           ? 'Ya puedes ver dónde es y con quién.'
           : revelaA
-            ? `A las ${revelaA} sabrás dónde y con quién.`
-            : 'Hoy sabrás dónde y con quién.',
+            ? `Mañana a las ${revelaA} sabrás dónde y con quién.`
+            : 'Mañana sabrás dónde y con quién.',
         ruta: '/mesa',
       }
     }

@@ -24,24 +24,43 @@ export const dynamic = 'force-dynamic'
 async function recordar(seco: boolean) {
   const admin = createAdminClient()
 
-  // Una ventana explícita, no «hasta el final del día».
-  //
-  // `setHours(23,59)` usa la hora LOCAL DEL SERVIDOR, que en Vercel es UTC
-  // mientras las cenas son hora de Caracas —cuatro horas menos—. Una cena de
-  // las nueve de la noche cae en el día siguiente en UTC y se quedaba fuera:
-  // justo la gente a la que hay que recordarle dónde va.
-  //
-  // El cron corre a las nueve de la mañana de Caracas y las cenas son a las
-  // siete de la tarde, así que veinte horas cubren el día entero sin depender
-  // de en qué zona horaria corra esto.
+  /**
+   * LAS DE MAÑANA, por el calendario de Caracas.
+   *
+   * Michael, 29-10: «la víspera hay que mandársela a todos, con mesa o sin
+   * mesa; hasta las 11:59 tengo para elegir local, esa es la gracia».
+   *
+   * Salía el MISMO DÍA a las nueve, y eso lo ataba a que el reparto ya
+   * estuviera publicado a esa hora. El 29-10 las mesas se crearon a las
+   * 10:02 y el cron había pasado a las 9:00: miró, no encontró a nadie
+   * sentado, y las ocho personas que cenaban esa noche se quedaron sin
+   * aviso. Pasa una vez al día y no vuelve.
+   *
+   * La víspera no depende de nada de eso: la fecha existe desde que se
+   * abre, y quien reservó ya sabe que tiene plan. El local llega después.
+   *
+   * El día se calcula en Caracas y no en UTC. Vercel corre en UTC, y una
+   * cena de las siete de la tarde de Caracas es la una de la madrugada del
+   * día siguiente en UTC: preguntando por «mañana» en UTC se cuela la de
+   * pasado mañana y se escapa la de mañana.
+   */
   const ahora = new Date()
-  const hasta = new Date(ahora.getTime() + 20 * 3600_000)
+  const enCaracas = (t: number) => new Date(t - 4 * 3600_000)
+  const hoyCcs = enCaracas(ahora.getTime())
+  // Medianoche de MAÑANA en Caracas, y la de pasado mañana, en instantes.
+  const medianocheManana = Date.UTC(
+    hoyCcs.getUTCFullYear(), hoyCcs.getUTCMonth(), hoyCcs.getUTCDate() + 1,
+  ) + 4 * 3600_000
+  const desde = new Date(medianocheManana)
+  const hasta = new Date(medianocheManana + 24 * 3600_000)
 
   const { data: eventos } = await admin
     .from('events')
     .select('id, starts_at')
-    .gte('starts_at', ahora.toISOString())
-    .lte('starts_at', hasta.toISOString())
+    .gte('starts_at', desde.toISOString())
+    .lt('starts_at', hasta.toISOString())
+    // Las de prueba no le salen a nadie, y esta ruta no las filtraba.
+    .eq('es_prueba', false)
     /**
      * Cualquiera menos una cancelada, y no `matched` a secas.
      *
@@ -64,25 +83,31 @@ async function recordar(seco: boolean) {
   let encolados = 0
 
   for (const ev of eventos) {
-    // Quien tiene sitio, no quien reservó: a quien no se sentó no se le
-    // recuerda una cena que no tiene.
-    //
-    // Se piden los `profile_id` y NADA MÁS. Antes esta consulta traía también
-    // el restaurante, su dirección y el número de mesa, y los metía en el
-    // payload del correo. `correos-datos` ya no los sirve —el recordatorio
-    // dejó de llamar a `laMesaDe()`—, pero el dato salía igual de la zona
-    // segura por este otro camino y se quedaba en `scheduled_emails.payload`
-    // tres horas antes de la revelación. Hoy no se ve porque la plantilla no
-    // lo imprime; el día que alguien añada un campo a este correo, la fuga
-    // vuelve sin que nadie se entere. Lo que no se lee no se puede filtrar.
-    //
-    // Lo cazó cowork.
-    const { data: sentados } = await admin
-      .from('table_members')
-      .select('profile_id, dinner_tables!inner(event_id)')
-      .eq('dinner_tables.event_id', ev.id)
+    /**
+     * QUIEN RESERVÓ, tenga mesa o no. Michael, 29-10.
+     *
+     * Miraba `table_members`, o sea solo a quien ya estaba sentado, y eso
+     * es justo lo que no se sabe la víspera: el reparto puede no estar
+     * hecho todavía y el local se elige hasta las 11:59 del día.
+     *
+     * `pending_payment` entra a propósito: quien apartó su puesto y aún no
+     * ha reportado el pago es a quien más le sirve que le recuerden que es
+     * mañana. A quien canceló, no.
+     *
+     * Se piden los `profile_id` y NADA MÁS. Esta consulta traía antes el
+     * restaurante, su dirección y el número de mesa, y los metía en el
+     * payload del correo: el dato salía de la zona segura por la puerta de
+     * atrás y se quedaba escrito en `scheduled_emails.payload` horas antes
+     * de la revelación. Lo que no se lee no se puede filtrar. Lo cazó
+     * cowork, y por eso esto pide una sola columna.
+     */
+    const { data: reservados } = await admin
+      .from('bookings')
+      .select('profile_id')
+      .eq('event_id', ev.id)
+      .in('status', ['confirmed', 'pending_payment'])
 
-    if (!sentados?.length) continue
+    if (!reservados?.length) continue
 
     // Lo ya encolado para esta cena, para no repetir.
     const { data: yaHay } = await admin
@@ -93,8 +118,8 @@ async function recordar(seco: boolean) {
 
     const yaTienen = new Set((yaHay ?? []).map((r) => r.profile_id))
 
-    for (const s of sentados) {
-      if (yaTienen.has(s.profile_id)) continue
+    for (const s of reservados) {
+      if (!s.profile_id || yaTienen.has(s.profile_id)) continue
 
       // El payload va vacío a propósito. La hora se lee del evento al
       // componer, como todo lo demás: `empiezaEn` era una copia de
