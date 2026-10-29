@@ -753,7 +753,7 @@
             <div style="flex:0 1 auto;min-width:0;white-space:nowrap;font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">EL JUEGO DE LA MESA</div>
           </sc-if>
           <div style="flex:1"></div>
-          <button onClick="{{ jSalir }}" aria-label="Salir del juego" style="flex:0 0 auto;width:44px;height:44px;border-radius:22px;border:1.5px solid {{ jBordeX }};background:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <button onClick="{{ jSalir }}" aria-label="Salir del juego" style="{{ jEstiloX }}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ jTinta }}" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
           </button>
         </div>
@@ -1613,8 +1613,25 @@ class Component extends DCLogic {
       jNombre: T ? T.nombre : '',
       jLinea: T ? T.linea : '',
       jCuantas: preguntas.length + ' preguntas',
-      jBordeX: sobreVerde ? 'rgba(250,243,228,.35)' : E.tinta,
-      jHayCabecera: !!jg && pasoJ !== 'cierre',
+      /**
+       * La X, que no es la misma en las dos familias de pantalla.
+       *
+       * SOLO en elegir va rellena —círculo al diez por ciento, sin borde—.
+       * En las demás, incluido el cierre, va con borde de 1,5 en su tinta.
+       *
+       * Es pantalla por pantalla y no «verde contra color»: el cierre está
+       * sobre el mismo verde que elegir y la entrega le pone borde, no
+       * relleno. Lo comprobé en los tres ficheros antes de tocarlo, porque
+       * me llegó como «sobre verde, rellena» y en el cierre no es así.
+       */
+      jEstiloX: 'flex:0 0 auto;width:44px;height:44px;border-radius:22px;'
+        + 'display:flex;align-items:center;justify-content:center;cursor:pointer;'
+        + (pasoJ === 'elegir'
+          ? 'border:0;background:rgba(250,243,228,.1)'
+          : 'border:1.5px solid ' + (sobreVerde ? '#FAF3E4' : E.tinta) + ';background:none'),
+      // Y el cierre TAMBIÉN la lleva: la maqueta le pone su cabecera con la
+      // X a la derecha, sin el rótulo y sin «Temáticas». La tenía escondida.
+      jHayCabecera: !!jg,
       jHayVolver: !!jg && (pasoJ === 'portada' || pasoJ === 'pregunta'),
 
       jTitulo: (jugadas.length || aMedias) ? '¿Qué sigue?' : '¿De qué hablamos?',
