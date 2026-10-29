@@ -24,8 +24,8 @@ test('la mesa dura dos horas, siempre: la despedida a +120 y la cuenta a +90', (
 test('los textos salen de reglas.js con el límite puesto, y los dos del juego con su botón', () => {
   const p = pasos(EMPIEZA, ZONA)
   assert.equal(p[0].texto, 'Pidan algo de tomar si quieren. Esperamos a todos hasta las 7:45.')
-  assert.equal(p.find((x) => x.momento === 'hielo')!.botonJuego, 'Abrir el juego · ronda 1')
-  assert.equal(p.find((x) => x.momento === 'tema')!.botonJuego, 'Seguir el juego · rondas 2 y 3')
+  assert.equal(p.find((x) => x.momento === 'hielo')!.botonJuego, 'Abrir el juego') // sin rondas desde las temáticas (f14740d)
+  assert.equal(p.find((x) => x.momento === 'tema')!.botonJuego, 'Seguir el juego')
   assert.equal(p.find((x) => x.momento === 'pedir')!.botonJuego, '')
 })
 
