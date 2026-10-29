@@ -1,41 +1,48 @@
-# El juego de la mesa · V3 por temáticas (PROPUESTA, sin aprobar)
+# El juego de la mesa · V3 por temáticas (APROBADO, 29-10-2026)
 
-Borrador del 29-10-2026 para Michael. No está aplicado: el mazo vigente sigue
-siendo la V2 de `reglas.js` (`JUEGO.md`).
+Cerrado por Michael el 29-10, después de la cena de Timeleft. Sustituye a la
+V2 de rondas (`JUEGO-v2.md`), que se queda escrita por si alguna pregunta
+vuelve.
 
-**Qué cambia** (Michael, 29-10, después de la cena de Timeleft):
+**Cómo se juega**
 
-- La mesa **elige la temática**, en el orden que quiera. Ya no son tres
-  rondas de menos a más.
-- **Sin regla de quién lee.** Cada quien lo usa como le sirva.
-- **Más ligero.** Fuera lo que la gente ha sentido demasiado profundo.
-- Cuatro temáticas de cinco preguntas, como Timeleft, y una quinta opcional.
+- La mesa **elige la temática**, en el orden que quiera. No hay rondas de
+  menos a más.
+- **Sin regla de quién lee.** Solo una nota: «Si a alguien no le provoca, pasa».
+- **Cinco temáticas de cinco preguntas.** Todas están disponibles; ninguna es
+  opcional ni se desbloquea.
+- **Ligero.** Fuera lo que la gente sintió demasiado profundo.
+- Lo visual (color e icono) lo pone la app por posición, así que el orden de
+  aquí es el orden de la pantalla: rayo, brújula, libro, cruce de caminos y
+  luna.
 
-La mayoría de las preguntas ya están aprobadas en la V2. Las que no, van
-marcadas **(nueva)**.
+**Dónde vive:** en `public/reglas.js`, como `AroReglas.JUEGO.tematicas`,
+`[{ clave, nombre, linea, preguntas[] }]`. La app y la web lo leen de ahí. En
+la app, el juego por temáticas se enciende solo cuando existe esa lista; sin
+ella sigue el de rondas.
 
 ---
 
-## 1 · Para arrancar
-*Ligeras. Que cualquiera responda sin pensarlo dos veces.*
+## 1 · Rápido y ligero
+`clave: rapido` · *Para romper el hielo sin pensarlo.*
 
-1. ¿Playa o montaña, y por qué?
-2. ¿Cuál es tu talento más inútil?
-3. ¿Qué comida no dejarías de comer nunca?
+1. ¿Arepa de qué?
+2. ¿Playa o montaña, y por qué?
+3. ¿Cuál es tu talento más inútil?
 4. ¿Qué canción pones cuando necesitas ánimo?
 5. ¿Qué serie o película le recomiendas a todo el mundo?
 
 ## 2 · Lo de aquí
-*Caracas, la ciudad y lo que tiene.*
+`clave: aqui` · *Caracas y lo que tiene.*
 
 1. ¿Cuál es tu plan perfecto de domingo en Caracas?
-2. ¿Qué es lo más raro que te ha pasado en Caracas?
-3. ¿A qué sitio llevarías a alguien que acaba de llegar a la ciudad? **(nueva)**
-4. ¿Cuál es la mejor comida de calle que has probado aquí? **(nueva)**
-5. ¿Qué te gustaba de chamo o chama que todavía te gusta?
+2. ¿Qué te trajo a Caracas, o qué te hizo quedarte?
+3. ¿A qué sitio llevarías a alguien que acaba de llegar a la ciudad?
+4. ¿Cuál es la mejor comida de calle que has probado aquí?
+5. ¿Qué es lo más raro que te ha pasado en Caracas?
 
-## 3 · Cuéntanos una
-*Anécdotas. Las que se cuentan solas.*
+## 3 · Historias
+`clave: historias` · *Las anécdotas que se cuentan solas.*
 
 1. ¿Cuál es la peor comida que has probado en un viaje?
 2. ¿Cuál es el regalo más extraño que te han hecho?
@@ -44,16 +51,16 @@ marcadas **(nueva)**.
 5. ¿Qué es lo último que te dio un ataque de risa?
 
 ## 4 · ¿Y si…?
-*Para imaginar, votar y discutir.*
+`clave: ysi` · *Para imaginar, votar y discutir.*
 
 1. Si pudieras vivir un año en cualquier ciudad, ¿cuál sería?
-2. Te ganas la lotería: ¿qué haces en las primeras 24 horas?
-3. Si pudieras aprender algo de un día para otro, ¿qué sería?
-4. Si esta mesa montara un negocio juntos, ¿de qué sería y quién hace qué? **(nueva)**
-5. Si pudieras cenar con cualquier persona, de cualquier época, ¿con quién? **(nueva)**
+2. ¿Quién de esta mesa propondría un plan loco, y quién diría que sí primero?
+3. Si mañana nos fuéramos todos de viaje, ¿adónde iríamos?
+4. Si esta mesa montara un negocio juntos, ¿de qué sería y quién hace qué?
+5. Si pudieras cenar con cualquier persona, de cualquier época, ¿con quién?
 
-## 5 · Si la mesa quiere más (opcional)
-*Un poco más de ti, sin exponerse.*
+## 5 · Lo que te mueve
+`clave: temueve` · *Un poco más de ti, sin exponerte.*
 
 1. ¿Qué te tiene con ilusión estos días, aunque sea algo pequeño?
 2. ¿Qué haces que te hace perder la noción del tiempo?
@@ -63,10 +70,21 @@ marcadas **(nueva)**.
 
 ---
 
-## Lo que sale de la V2
+## Por qué así
 
-Estas no entran. Son las que más se acercan a lo «demasiado profundo», o se
-repiten con otras:
+- **Los nombres son los de Design**, salvo «Lo de aquí», que es nuestro: es
+  lo que Timeleft no puede tener.
+- **«¿Y si…?» habla de la mesa**, no solo de cada uno (2, 3 y 4): la mesa se
+  señala, vota y discute. Es lo que mejor hace el juego de Timeleft.
+- **«¿Qué te trajo a Caracas, o qué te hizo quedarte?»** engancha con el
+  arraigo que ya se ve junto a cada nombre.
+- **«Lo que te mueve» va al final y sin preguntas de valores.** Las de Design
+  («¿A quién le pides consejo?», «¿Qué no negocias en una amistad?») eran las
+  más parecidas a lo profundo de lo que se quejó la gente.
+- **«Para cerrar» no entra.** «¿Qué te sorprendió de alguien hoy?» pide hablar
+  de alguien delante de esa persona.
+
+## Lo que sale de la V2
 
 - ¿Qué momento de tu vida te gustaría volver a vivir?
 - ¿Qué es lo más valiente que has hecho?
@@ -77,17 +95,8 @@ repiten con otras:
 - ¿Quién te enseñó algo que todavía usas?
 - ¿A qué le dices que sí con demasiada facilidad?
 - Si mañana tuvieras el día libre, ¿qué harías primero?
+- Te ganas la lotería: ¿qué haces en las primeras 24 horas?
+- Si pudieras aprender algo de un día para otro, ¿qué sería?
+- ¿Qué comida no dejarías de comer nunca? (la cubre «¿Arepa de qué?»)
+- ¿Qué te gustaba de chamo o chama que todavía te gusta?
 - Y las de la ronda 2 de la V2 que no están arriba.
-
-No se pierden: se quedan escritas en `JUEGO-v2.md` por si alguna vuelve.
-
-## Lo que necesita Michael
-
-1. ¿Las cinco temáticas, o solo las cuatro primeras?
-2. Los nombres: «Para arrancar», «Lo de aquí», «Cuéntanos una», «¿Y si…?» y
-   «Si la mesa quiere más».
-3. Las cuatro **(nueva)**.
-4. Si alguna de las que salen debería quedarse.
-
-Con eso, el mazo pasa a `reglas.js`, que es donde lo leen la app y la web, y
-la pantalla espera a la entrega de Design (`BRIEF-juego-por-tematicas.md`).
