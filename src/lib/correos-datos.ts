@@ -1144,7 +1144,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
 
       const { data: dos } = await admin
         .from('events')
-        .select('id, starts_at, format, city_slug, event_venues(zones(name))')
+        .select('id, starts_at, format, city_slug, reveal_at, event_venues(zones(name))')
         .in('id', [antesId, fila.event_id])
 
       const antes = (dos ?? []).find((e) => e.id === antesId)
@@ -1191,6 +1191,21 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
        */
       const voz = vozDe(ahora.format)
 
+      /**
+       * Cuándo se sabe con quién y dónde, de la fecha NUEVA.
+       *
+       * Decía «ese mismo día, como siempre» escrito a mano, y para un brunch
+       * es falso: ese se abre la víspera a las seis de la tarde. Sale de
+       * `revelaDe`, que es la misma regla que usa el servidor para calcular
+       * `reveal_at`, y la columna manda si esa fecha la tiene movida a mano.
+       */
+      const cuandoSeAbre = (() => {
+        const r = revelaDe(ahora.starts_at, zonaAhora, ahora.reveal_at)
+        if (!r) return 'el mismo día'
+        const hora = r.enLetra === 'mediodía' ? 'las doce del mediodía' : r.enLetra
+        return r.mismoDia ? `ese mismo día a ${hora}` : `el día antes a ${hora}`
+      })()
+
       return {
         a,
         datos: {
@@ -1205,11 +1220,13 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           titularAcento: `para el ${elDiaNuevo}.`,
           bajada: laMovioElla
             ? `Listo${trato ? ', ' + trato : ''}. Cambiaste tu reserva y ya está hecho: no hay que volver a apartar nada ni pagar otra vez.`
-            : `Te movimos de fecha${trato ? ', ' + trato : ''}. No tuviste que hacer nada y no hay que volver a apartar nada ni pagar otra vez. Si esa noche no te sirve, escríbenos y lo arreglamos.`,
+            : `Te movimos de fecha${trato ? ', ' + trato : ''}. No tuviste que hacer nada y no hay que volver a apartar nada ni pagar otra vez. Si ese día no te sirve, escríbenos y lo arreglamos.`,
           antes: comoSeLee(antes, zonaAntes),
           ahora: comoSeLee(ahora, zonaAhora),
           donde,
-          loQueNoCambia: `Lo que pagaste va con tu reserva, así que no te cobramos de nuevo ni tienes que pedir nada. Con quién ${voz.verbo} y dónde te lo contamos ese mismo día, como siempre.`,
+          loQueNoCambia: `Lo que pagaste va con tu reserva. Con quién ${voz.verbo} y dónde te lo contamos ${cuandoSeAbre}, como siempre.`,
+          // El botón, en la voz del destino: «Ver mi mesa», «Ver mi grupo».
+          unidad: voz.unidad,
           /**
            * La pantalla se llama «Mi mesa», no «Mi cena». Y las horas salen
            * de la regla compartida: escritas a mano aquí, el día que se

@@ -1061,6 +1061,23 @@ class Component extends DCLogic {
       || (this.state.contacto || []).length > 0;
   }
 
+  /**
+   * Y lo que hace falta para MANDARLA, que no es lo mismo.
+   *
+   * «¿Faltó alguien?» es obligatoria desde el 29-10. Los demás bloques
+   * siguen siendo opcionales: lo que no se puede es mandar la encuesta sin
+   * decir si se sentó todo el mundo, porque es el único momento en que
+   * alguien lo sabe.
+   *
+   * El botón NO se queda gris y callado. Esa es la forma exacta en que
+   * esta pantalla ya falló una vez —el párrafo escrito y el botón muerto
+   * sin decir por qué—, así que lo que falta se dice en el propio botón,
+   * como ya hace el de reportar.
+   */
+  puedeEnviar() {
+    return this.algoQueContar() && this.state.faltaron !== null;
+  }
+
 
   /**
    * El juego de la mesa.
@@ -1167,7 +1184,7 @@ class Component extends DCLogic {
     // Todo es opcional, pero mandar la encuesta entera en blanco no dice
     // nada y ademas escribiria una fila vacia en table_feedback. Para eso
     // esta «Ahora no».
-    if (!this.algoQueContar() || this.state.enviando) return;
+    if (!this.puedeEnviar() || this.state.enviando) return;
     this.setState({ enviando: true, errorF11: '' });
 
     const aQuien = this.quienesBloquea();
@@ -1936,10 +1953,16 @@ class Component extends DCLogic {
     /**
      * «¿FALTÓ ALGUIEN?». Michael, 29-10: «son ellos los que saben quién fue».
      *
-     * Un toque, no una tarea: «Vinimos todos» o marcar caras. Por eso
-     * «Vinimos todos» es un botón y no la ausencia de respuesta, y se manda
-     * igual: decir que no faltó nadie es una respuesta, y no contestar es
-     * otra cosa.
+     * Un toque, no una tarea: «No faltó nadie» o marcar caras.
+     *
+     * Y HAY QUE CONTESTARLA. Michael, 29-10: «no contestar no es una
+     * opción». Antes eran tres estados —sin tocar, «no faltó nadie» y
+     * marcar a alguien— y el primero sobra: quien manda la encuesta ya
+     * sabe quién se sentó, y es el único momento en que lo sabe. Así que
+     * «No faltó nadie» no se desmarca, y el botón de enviar espera.
+     *
+     * Queda en pie el botón de saltar la encuesta entera: esto obliga a
+     * quien la manda, no a quien no la abre.
      *
      * Marcarlo NO da a nadie por ausente. Hacen falta DOS de la mesa, y eso
      * lo decide el servidor. La pantalla no lo promete.
@@ -1947,8 +1970,11 @@ class Component extends DCLogic {
     const todosVinieron = this.state.faltaron !== null && this.state.faltaron.length === 0
     const faltaronLista = this.state.faltaron || []
     const vinimosTodos = {
-      texto: 'Vinimos todos',
-      pick: () => this.setState({ faltaron: todosVinieron ? null : [] }),
+      texto: 'No faltó nadie',
+      // No se desmarca: para cambiar de idea se toca una cara, que es lo
+      // que de verdad quiere decir «sí faltó alguien». Volver a la casilla
+      // en blanco ya no es un sitio al que se pueda llegar.
+      pick: () => this.setState({ faltaron: [] }),
       btn: 'display:inline-flex;align-items:center;gap:9px;min-height:48px;padding:0 20px;border-radius:999px;background:'
         + (todosVinieron ? '#1B5138' : 'transparent') + ';border:1px solid '
         + (todosVinieron ? '#1B5138' : 'rgba(20,52,42,.2)') + ';color:'
@@ -1961,7 +1987,15 @@ class Component extends DCLogic {
         nombre: c.nombre, sector: c.sector, icono: on ? '✓' : '', aro: aroDe(on),
         pick: () => this.setState((st) => {
           const hoy = st.faltaron || []
-          return { faltaron: hoy.indexOf(i) >= 0 ? hoy.filter((x) => x !== i) : hoy.concat([i]) }
+          const marcada = hoy.indexOf(i) >= 0
+          const falta = marcada ? hoy.filter((x) => x !== i) : hoy.concat([i])
+          // Y si acaba de quedar como ausente, fuera de «seguir en
+          // contacto»: con quien no vino no hay contacto que seguir, y la
+          // pantalla no puede decir dos cosas a la vez de la misma persona.
+          return {
+            faltaron: falta,
+            contacto: marcada ? (st.contacto || []) : (st.contacto || []).filter((x) => x !== i),
+          }
         }),
         btn: 'display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;padding:0 18px 0 14px;border-radius:999px;background:' + (on ? '#FFFBF0' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
         txt: 'flex:1;min-width:0;font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A',
@@ -1975,7 +2009,9 @@ class Component extends DCLogic {
      * La nota de debajo es la que sostiene la pregunta: sin ella, marcar a
      * alguien se siente como declararse en público. Con ella, no.
      */
-    const contactos = comensales.map((c, i) => {
+    const contactos = comensales.map((c, i) => ({ c: c, i: i }))
+      .filter((x) => faltaronLista.indexOf(x.i) < 0)
+      .map(({ c, i }) => {
       const on = (this.state.contacto || []).indexOf(i) >= 0
       return {
         nombre: c.nombre, sector: c.sector, icono: on ? '✓' : '', aro: aroDe(on),
@@ -2427,7 +2463,9 @@ class Component extends DCLogic {
         : 'Entra en cómo armamos tu próxima mesa.',
       // Ya no exige una respuesta concreta: los cuatro bloques son
       // opcionales. Lo unico que no vale es mandarla entera en blanco.
-      textoEnviar: this.state.enviando ? 'Enviando…' : 'Enviar',
+      textoEnviar: this.state.enviando
+        ? 'Enviando…'
+        : (this.state.faltaron === null ? 'Dinos si faltó alguien' : 'Enviar'),
       // El aspecto sale de LO MISMO que decide si el botón hace algo.
       //
       // Miraba `this.state.valor`, que en esta pantalla no existe —se llama
@@ -2438,11 +2476,11 @@ class Component extends DCLogic {
       // lo pulsaba sin marcar nada tampoco pasaba nada y tampoco se le decía
       // por qué. Dos fuentes para una sola respuesta, otra vez.
       botonEnviar: (() => {
-        const hay = this.algoQueContar();
+        const hay = this.puedeEnviar();
         return btn(hay ? '#14342A' : 'rgba(20,52,42,.12)', hay ? '#FAF3E4' : '#2C4A38', 'none', hay ? '' : 'cursor:not-allowed');
       })(),
       // no está `disabled`: sigue siendo enfocable y anuncia por qué no responde
-      enviarInerte: this.algoQueContar() ? null : 'true',
+      enviarInerte: this.puedeEnviar() ? null : 'true',
       // Reportar deja de ser una tarjeta con titulo propio. No es un paso del
       // flujo —la inmensa mayoria de las cenas no tienen nada que reportar— y
       // como tarjeta pesaba tanto como la encuesta entera. Enlace discreto,

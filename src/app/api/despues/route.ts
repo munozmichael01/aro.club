@@ -381,6 +381,60 @@ export async function POST(request: Request) {
       suyos.push(otro)
     }
 
+    /**
+     * Y no se puede querer seguir en contacto con quien dices que no vino.
+     *
+     * La pantalla ya no lo deja —marcar a alguien como ausente lo saca de la
+     * otra lista—, pero las dos señales llegan en DOS llamadas, así que entre
+     * una y otra cabe cualquier cosa: una pantalla vieja en caché, la app en
+     * una versión distinta, o las dos llamadas cruzadas. Si se cuela, la
+     * coincidencia mutua acabaría pasándole un Instagram a nombre de una
+     * mesa en la que uno de los dos no estuvo.
+     *
+     * Se cae la marca de contacto, no la de ausente: la ausencia es la que
+     * tiene consecuencias para la otra persona y la que decide operación.
+     */
+    if (d.accion === 'contacto' && suyos.length) {
+      const { data: ausentes } = await admin
+        .from('peer_feedback')
+        .select('rated_id')
+        .eq('table_id', d.mesaId)
+        .eq('rater_id', user.id)
+        .eq('signal', 'ausente')
+
+      const noVinieron = new Set((ausentes ?? []).map((f) => f.rated_id))
+      for (let i = suyos.length - 1; i >= 0; i--) {
+        if (noVinieron.has(suyos[i])) suyos.splice(i, 1)
+      }
+    }
+
+    /**
+     * Y ANTES DE ESCRIBIR, fuera la señal contraria de esa misma gente.
+     *
+     * No es higiene: sin esto la escritura FALLA. `peer_feedback` lleva
+     * desde el 02-08 un único por `(table_id, rater_id, rated_id)` **sin la
+     * señal**, o sea una sola opinión por persona y mesa. Marcar a alguien
+     * de ausente cuando ya lo habías marcado para seguir en contacto choca
+     * con esa fila, Postgres devuelve 23505, y como el insert no miraba el
+     * error la encuesta contestaba «guardado» sin haber guardado nada.
+     *
+     * Pasó de verdad, probándolo: quedó sin marca de ausente Y sin marca de
+     * contacto. Las dos señales se perdieron y nadie se enteró.
+     *
+     * Se tira la contraria y se queda la nueva, que es la última que dijo
+     * esa persona. Y el orden importa: primero quitar, luego escribir.
+     */
+    const contraria = senal === 'ausente' ? 'connect' : 'ausente'
+    if (suyos.length) {
+      await admin
+        .from('peer_feedback')
+        .delete()
+        .eq('table_id', d.mesaId)
+        .eq('rater_id', user.id)
+        .eq('signal', contraria)
+        .in('rated_id', suyos)
+    }
+
     await admin
       .from('peer_feedback')
       .delete()
@@ -389,7 +443,10 @@ export async function POST(request: Request) {
       .eq('signal', senal)
 
     if (suyos.length) {
-      await admin.from('peer_feedback').insert(
+      // Y el error SE MIRA. Sin esto, una fila que no entra se lee en la
+      // pantalla como una respuesta guardada, que es la forma exacta en que
+      // este fallo estuvo vivo desde anoche.
+      const { error } = await admin.from('peer_feedback').insert(
         suyos.map((otro) => ({
           table_id: d.mesaId,
           rater_id: user.id,
@@ -397,7 +454,12 @@ export async function POST(request: Request) {
           signal: senal,
         })) as never,
       )
+      if (error) {
+        console.error('[despues] no se guardó', d.accion, d.mesaId, error)
+        return NextResponse.json({ error: 'no se pudo guardar' }, { status: 500 })
+      }
     }
+
 
     /**
      * Y EL CRUCE, que es lo que convierte dos opiniones en un hecho.

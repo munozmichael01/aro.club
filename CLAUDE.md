@@ -376,6 +376,17 @@ evidentes al usarlo.
   positiva». Los bloqueos siguen en `exclusions`, que es otra cosa: un bloqueo
   es de una pareja y es permanente.
 
+  **Y en `peer_feedback` cabe UNA opinión por persona y mesa, no una por
+  señal.** El único es `(table_id, rater_id, rated_id)` y viene del esquema
+  inicial del 02-08, sin la señal dentro. Así que marcar a alguien de ausente
+  cuando ya lo tenías marcado para seguir en contacto **choca**: Postgres
+  devuelve 23505 y, si el insert no mira el error, la pantalla dice
+  «guardado» sin haber guardado. Pasó. Por eso `/api/despues` borra la señal
+  contraria de esa gente ANTES de escribir la suya, y mira el error.
+
+  No es un defecto: una persona no puede decir de otra «no vino» y «quiero
+  seguir en contacto» a la vez. La base ya lo sabía antes que nosotros.
+
   Lo que NO cambió: el dato negativo —bloquear— sigue siendo una salida
   opcional y no una tarea.
 - Las escalas se guardan **más = mejor**, siempre, y la conversión desde el
