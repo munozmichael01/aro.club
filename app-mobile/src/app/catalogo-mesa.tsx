@@ -46,7 +46,7 @@ const ESTADOS: Record<string, DeServidor> = {
   'sin-abono': { fase: 'sin-mesa', formato: 'dinner', empiezaEn: en(4), zonaHoraria: 'America/Caracas', creditoDevuelto: false },
   cerrada: { fase: 'cerrada', formato: 'dinner', zonaHoraria: 'America/Caracas', revelaEn: en(26), empiezaEn: en(34), zonas: ['Las Mercedes', 'Chacao', 'Altamira'], cambiarFecha: { puede: true, reservaId: 'r', destinos: [{ eventoId: 'b', empiezaEn: en(58), zonaHoraria: 'America/Caracas', formato: 'dinner', zonas: ['Chacao'] }] } },
   'cerrada-tarde': { fase: 'cerrada', formato: 'dinner', zonaHoraria: 'America/Caracas', revelaEn: en(6), empiezaEn: en(14), zonas: ['Las Mercedes'], cambiarFecha: { puede: false, motivo: 'tarde', reservaId: 'r', destinos: [] } },
-  abierta: { ...ABIERTA, arraigos: ['mismos', 'se-quedo', 'volvio'] },
+  abierta: { ...ABIERTA, companeros: CINCO.map((c, i) => ({ ...c, arraigo: ['mismos', 'se-quedo', 'volvio', null, 'interior'][i] ?? null })) },
   movimiento: { ...ABIERTA, formato: 'walk', restaurante: 'Entrada de Sabas Nieves', direccion: 'Av. Boyacá, Altamira', actividad: { ruta: 'Sabas Nieves → La Silla', km: 7, minutos: 150, nivel: 'medio' } },
   // El juego de la mesa: cerrado (la cena es en 5 h) y abierto (empezó hace 10 min).
   'juego-abierto': { ...ABIERTA, empiezaEn: en(-1 / 6) },

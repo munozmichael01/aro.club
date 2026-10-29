@@ -459,7 +459,7 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
                 {c.nombre}
               </Texto>
               <Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia, marginTop: 3 }}>
-                {c.sector}
+                {[c.sector, c.arraigo].filter(Boolean).join(' · ')}
               </Texto>
               {c.seUnio ? (
                 <Texto variante="cuerpoChico" tono="terracota" style={{ fontFamily: fuente.textoMedia, marginTop: 2 }}>
@@ -469,22 +469,6 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
             </View>
           </View>
         ))}
-        {M.arraigos(d).length ? (
-          <View style={{ marginTop: 18 }}>
-            <Texto variante="etiquetaChica" tono="cuerpo" style={{ marginBottom: 10 }}>
-              {T.abierta.arraigos(mesa)}
-            </Texto>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {M.arraigos(d).map((a) => (
-                <View key={a} style={estilos.ficha}>
-                  <Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia }}>
-                    {a}
-                  </Texto>
-                </View>
-              ))}
-            </View>
-          </View>
-        ) : null}
         <Texto variante="cuerpoChico" style={{ marginTop: 16 }}>
           {T.abierta.notaCompaneros(mesa)}
         </Texto>
@@ -799,7 +783,6 @@ const estilos = StyleSheet.create({
   avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   enlace: { alignSelf: 'flex-start', minHeight: medida.toqueMinimo, justifyContent: 'center', marginTop: 16 },
   accionesFecha: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 18, rowGap: 8, marginTop: 18 },
-  ficha: { borderRadius: radio.capsula, borderWidth: 1, borderColor: tinta(0.18), paddingHorizontal: 12, paddingVertical: 7 },
   acuse: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderRadius: 26, backgroundColor: verdeAlfa(0.1), padding: 18 },
   acuseIcono: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   fichas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

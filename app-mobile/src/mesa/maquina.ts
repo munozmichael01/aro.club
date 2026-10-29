@@ -13,6 +13,8 @@ export type Companero = {
   sector: string | null
   /** Se sentó después de la revelación (16-10): sin esto, quien mira cuenta una cara de más y no sabe por qué. */
   seUnioDespues?: boolean
+  /** Su arraigo, código de `AroReglas.PUERTA.arraigo` (ac3aedb). `null`: no contestó. */
+  arraigo?: string | null
 }
 
 export type DeServidor = {
@@ -62,8 +64,6 @@ export type DeServidor = {
   avisoDosHoras?: string | null
   /** Si la mesa salió de menos de seis, la frase de por qué (`fraseDeMesaCorta`, 22-10). */
   mesaCorta?: string | null
-  /** Con la mesa revelada: los arraigos de la mesa, CÓDIGOS sin repetir y sin atar a nadie (29-10). La etiqueta, de `AroReglas.PUERTA.arraigo`. */
-  arraigos?: string[]
   /** A dónde puede cambiarse (29-10, `bloqueDeCambiarFecha`). Sin él, no se enseña nada. */
   cambiarFecha?: import('../cambiar/maquina').Bloque | null
 }
@@ -138,7 +138,7 @@ export function mapa<D extends { mapa?: string | null; mapaApple?: string | null
   return d.mapa || d.mapaApple || null
 }
 
-export type Otro = { id: string; nombre: string; inicial: string; sector: string; seUnio: boolean }
+export type Otro = { id: string; nombre: string; inicial: string; sector: string; seUnio: boolean; arraigo: string | null }
 
 export function otros(d: DeServidor): Otro[] {
   return (d.companeros ?? []).map((c) => ({
@@ -147,6 +147,7 @@ export function otros(d: DeServidor): Otro[] {
     inicial: (c.nombre || '—').trim().charAt(0).toUpperCase(),
     sector: c.sector || T.abierta.sinSector,
     seUnio: !!c.seUnioDespues,
+    arraigo: arraigoDe(c.arraigo),
   }))
 }
 
@@ -253,9 +254,16 @@ export function selloPasada(d: DeServidor, ahora: number) {
   return T.pasada.sello(dias, p?.numero, p?.mes, voz(d).ayer)
 }
 
-/** Las etiquetas de los arraigos de la mesa, en el orden en que llegan. Un código que la app no conoce no se pinta. */
-export function arraigos(d: DeServidor): string[] {
-  const opciones = reglas.PUERTA.arraigo?.opciones ?? []
-  const etiqueta = new Map(opciones.map(([texto, codigo]) => [codigo, texto]))
-  return (d.arraigos ?? []).map((c) => etiqueta.get(c)).filter((t): t is string => !!t)
+/**
+ * El arraigo de una persona dicho para la mesa: «Volvió al país». Las
+ * etiquetas cortas vivirán en `AroReglas.ARRAIGO_EN_LA_MESA` (pendiente del
+ * agente, 29-10); mientras no estén, la del cuestionario. Un código que la
+ * app no conoce no se pinta.
+ */
+export function arraigoDe(codigo: string | null | undefined): string | null {
+  if (!codigo) return null
+  const corta = (reglas as { ARRAIGO_EN_LA_MESA?: Record<string, string> }).ARRAIGO_EN_LA_MESA?.[codigo]
+  if (corta) return corta
+  const opcion = (reglas.PUERTA.arraigo?.opciones ?? []).find(([, c]) => c === codigo)
+  return opcion ? opcion[0] : null
 }

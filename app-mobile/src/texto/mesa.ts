@@ -70,8 +70,6 @@ export const abierta = {
   sinSector: 'Sin sector',
   /** Quien se sentó después de la revelación (16-10), igual que la web. */
   seUnio: 'se sumó después',
-  /** Sobre los arraigos de la mesa (29-10): el conjunto, nunca quién es qué. */
-  arraigos: (esMesa: boolean) => (esMesa ? 'EN ESTA MESA HAY' : 'EN ESTE GRUPO HAY'),
   notaCompaneros: (esMesa: boolean) =>
     `Todos con identidad verificada. No hay fotos ni apellidos: eso lo cuenta cada quien ${esMesa ? 'en la mesa' : 'sobre la marcha'} si quiere.`,
   alLlegar: 'Al llegar',

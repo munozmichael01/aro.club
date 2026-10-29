@@ -29,7 +29,13 @@ test('cada destino se dice en SU zona horaria, con el plan, las zonas y el idiom
   assert.equal(C.diaDe({ eventoId: 'a', empiezaEn: '2026-11-01T00:00:00Z', zonaHoraria: Z }), 'sábado 31')
 })
 
-test('los arraigos se etiquetan desde reglas.js y un código desconocido no se pinta', () => {
-  assert.deepEqual(M.arraigos({ fase: 'abierta', arraigos: ['volvio', 'no-existe'] }), ['Me fui del país y volví'])
-  assert.deepEqual(M.arraigos({ fase: 'abierta' }), [])
+test('el arraigo va con cada persona; sin contestar o desconocido, no se pinta', () => {
+  const o = M.otros({ fase: 'abierta', companeros: [
+    { id: 'a', nombre: 'Luis', sector: 'Salud', arraigo: 'volvio' },
+    { id: 'b', nombre: 'Ana', sector: 'Diseño', arraigo: null },
+    { id: 'c', nombre: 'Leo', sector: 'Finanzas', arraigo: 'no-existe' },
+  ] })
+  assert.ok(o[0].arraigo)
+  assert.equal(o[1].arraigo, null)
+  assert.equal(o[2].arraigo, null)
 })
