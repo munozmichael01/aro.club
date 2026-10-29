@@ -325,22 +325,21 @@ function TarjetaTematicas(p: { memoria: TM.Memoria; jugar: (tema: number | null)
   return (
     <View style={{ paddingHorizontal: 18, paddingBottom: 18, gap: 12 }}>
       <Texto style={[texto(14, 1.45), { color: C.cuerpo }]}>{TT.tarjeta.intro}</Texto>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      {/* Una encima de otra (Michael, 29-10), no la cuadrícula de dos de la maqueta: con cinco quedaba un hueco. */}
+      <View style={{ gap: 8 }}>
         {todas.map((t, i) => {
           const es = TM.estiloDe(i, t)
           const est = TM.estado(t, p.memoria)
           return (
             // Jugada: 0,8 y no el 0,55 de la maqueta, que con la luz de un restaurante no se lee (revisión del 29-10).
             <Pressable key={t.clave} onPress={() => p.jugar(i)} accessibilityRole="button" accessibilityLabel={t.nombre} style={[e.tema, { backgroundColor: es.fondo, opacity: est.tipo === 'jugada' ? 0.8 : 1 }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                  <Path d={es.icono} stroke={es.tinta} strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
-                <Texto style={[semi(9.5), { fontFamily: fuente.textoNegrita, color: es.tinta, letterSpacing: 0.95 }]}>
-                  {est.tipo === 'jugada' ? TT.tarjeta.jugada : est.tipo === 'aMedias' ? TT.tarjeta.deCuantas(est.en, est.de) : TT.tarjeta.preguntas(t.preguntas.length)}
-                </Texto>
-              </View>
-              <Texto style={[serif(16, 1.1), { color: es.tinta, marginTop: 'auto' }]}>{t.nombre}</Texto>
+              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+                <Path d={es.icono} stroke={es.tinta} strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+              <Texto style={[serif(16, 1.1), { color: es.tinta, flex: 1 }]}>{t.nombre}</Texto>
+              <Texto style={[semi(9.5), { fontFamily: fuente.textoNegrita, color: es.tinta, letterSpacing: 0.95 }]}>
+                {est.tipo === 'jugada' ? TT.tarjeta.jugada : est.tipo === 'aMedias' ? TT.tarjeta.deCuantas(est.en, est.de) : TT.tarjeta.preguntas(t.preguntas.length)}
+              </Texto>
             </Pressable>
           )
         })}
@@ -528,7 +527,7 @@ const media = (tam: number): TextStyle => ({ fontFamily: fuente.textoMedia, font
 const semi = (tam: number): TextStyle => ({ fontFamily: fuente.textoSemi, fontSize: tam, lineHeight: lh(tam, 1, 1.21) })
 
 const e = StyleSheet.create({
-  tema: { width: '48.5%', minHeight: 96, borderRadius: 16, padding: 12, gap: 10 },
+  tema: { flexDirection: 'row', alignItems: 'center', minHeight: 56, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, gap: 12 },
   punto: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: C.papel, marginRight: -5 },
   botonJuego: { minHeight: 50, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: C.tinta, paddingHorizontal: 18 },
   mesa: { borderRadius: 24, backgroundColor: C.tinta, paddingTop: 18, paddingHorizontal: 18, paddingBottom: 16 },
