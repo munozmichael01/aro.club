@@ -104,6 +104,40 @@ const accion = z.discriminatedUnion('accion', [
     mesaId: z.string().uuid(),
     aQuien: z.array(z.string().uuid()),
   }),
+  /**
+   * «¿FALTÓ ALGUIEN?». Michael, 29-10: «son ellos los que saben quién fue».
+   *
+   * Cruza a propósito la regla de que quién vino lo marca operación. El
+   * motivo de esa regla era no cobrarle a quien acaba de cenar un trabajo
+   * nuestro, y esto no es una tarea: es un toque. «Vinimos todos» es la
+   * lista vacía, y se manda igual, porque decir que no faltó nadie es una
+   * respuesta y no contestar es otra cosa.
+   *
+   * Y operación sigue decidiendo: hacen falta DOS para dar a alguien por
+   * ausente, y cuando no coinciden lo revisa una persona.
+   */
+  z.object({
+    accion: z.literal('falto'),
+    mesaId: z.string().uuid(),
+    /** Vacía es «vinimos todos». */
+    aQuien: z.array(z.string().uuid()),
+  }),
+  /**
+   * «¿Te gustaría seguir en contacto con alguien de la mesa?».
+   *
+   * Cruza a propósito la otra regla escrita, la de que la encuesta no
+   * clasifica persona por persona. Aquella se puso porque un «sí repetiría
+   * con X» no sirve para repartir: no volvemos a juntar a la misma gente.
+   * Esto no reparte, pasa un contacto, y el veto de tres meses no se toca.
+   *
+   * Marcar NO le dice nada a nadie. Solo cuando las dos se marcan hay
+   * coincidencia; si solo marca una, la otra no se entera nunca.
+   */
+  z.object({
+    accion: z.literal('contacto'),
+    mesaId: z.string().uuid(),
+    aQuien: z.array(z.string().uuid()),
+  }),
   z.object({
     accion: z.literal('reportar'),
     mesaId: z.string().uuid(),
@@ -320,6 +354,113 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ estado: 'bloqueados', cuantos: d.aQuien.length })
+  }
+
+  /**
+   * --- «¿faltó alguien?» y «¿seguir en contacto?» ------------------------
+   *
+   * Las dos son la misma escritura: una señal de quien se sentó sobre otra
+   * persona de SU mesa, y por eso van juntas. La tabla `peer_feedback` tiene
+   * justo esa forma y estaba reservada para esto desde el 10-08.
+   *
+   * Se REEMPLAZA la lista entera, no se añade: la respuesta es «estos y no
+   * los demás», así que desmarcar a alguien tiene que poder deshacerse. Con
+   * un insert suelto, quitar una marca sería imposible desde la pantalla.
+   *
+   * Marcar a nadie es una respuesta válida y se guarda como tal: «vinimos
+   * todos» es la lista vacía, y no es lo mismo que no contestar.
+   */
+  if (d.accion === 'falto' || d.accion === 'contacto') {
+    const senal = d.accion === 'falto' ? 'ausente' : 'connect'
+
+    // Solo gente de SU mesa, y nunca ella misma.
+    const suyos: string[] = []
+    for (const otro of d.aQuien) {
+      if (otro === user.id) continue
+      if (!(await estaEnLaMesa(admin, d.mesaId, otro))) continue
+      suyos.push(otro)
+    }
+
+    await admin
+      .from('peer_feedback')
+      .delete()
+      .eq('table_id', d.mesaId)
+      .eq('rater_id', user.id)
+      .eq('signal', senal)
+
+    if (suyos.length) {
+      await admin.from('peer_feedback').insert(
+        suyos.map((otro) => ({
+          table_id: d.mesaId,
+          rater_id: user.id,
+          rated_id: otro,
+          signal: senal,
+        })) as never,
+      )
+    }
+
+    /**
+     * Y EL CRUCE, que es lo que convierte dos opiniones en un hecho.
+     *
+     * Michael, 29-10: «si dos de la mesa marcan a alguien, queda como
+     * ausente, y operación solo revisa cuando no coinciden». Dos, no uno:
+     * una sola persona puede confundirse de nombre o de cara, y marcar a
+     * alguien de ausente le quita una cena de su historial.
+     *
+     * Las mismas guardas que `/api/operacion/asistencia`, que es quien hace
+     * esto a mano: una reserva CANCELADA no se toca —quien canceló no vino,
+     * y pisar el estado borraría por qué— y una cena que todavía no ha
+     * empezado tampoco.
+     *
+     * Y nunca pisa un `attended`: si operación ya dijo que vino, su palabra
+     * manda sobre dos recuerdos de la madrugada. Ahí se queda la discrepancia
+     * para que la mire una persona, que es lo que él pidió.
+     */
+    if (d.accion === 'falto' && suyos.length) {
+      // La fecha de esta mesa, para encontrar la reserva de cada uno.
+      const { data: deQueFecha } = await admin
+        .from('dinner_tables')
+        .select('event_id')
+        .eq('id', d.mesaId)
+        .maybeSingle()
+      const evento = deQueFecha?.event_id ?? null
+
+      const { data: senales } = await admin
+        .from('peer_feedback')
+        .select('rated_id')
+        .eq('table_id', d.mesaId)
+        .eq('signal', 'ausente')
+        .in('rated_id', suyos)
+
+      const cuantos = new Map<string, number>()
+      for (const x of senales ?? []) {
+        cuantos.set(x.rated_id, (cuantos.get(x.rated_id) ?? 0) + 1)
+      }
+
+      const conDos = [...cuantos.entries()].filter(([, n]) => n >= 2).map(([id]) => id)
+
+      if (evento) for (const quien of conDos) {
+        const { data: suya } = await admin
+          .from('bookings')
+          .select('id, status, events(starts_at)')
+          .eq('profile_id', quien)
+          .eq('event_id', evento)
+          .maybeSingle()
+
+        if (!suya) continue
+        if (suya.status !== 'confirmed' && suya.status !== 'pending_payment') continue
+        const empieza = (suya.events as unknown as { starts_at: string } | null)?.starts_at
+        if (empieza && Date.parse(empieza) > Date.now()) continue
+
+        const { error } = await admin
+          .from('bookings')
+          .update({ status: 'no_show' } as never)
+          .eq('id', suya.id)
+        if (error) console.error('[despues] no se pudo marcar la ausencia', suya.id, error)
+      }
+    }
+
+    return NextResponse.json({ estado: d.accion, cuantos: suyos.length })
   }
 
   // --- reportar ---------------------------------------------------------

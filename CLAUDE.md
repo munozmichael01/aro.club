@@ -350,12 +350,34 @@ evidentes al usarlo.
 - **Las mesas se cuentan sobre verificados**, nunca sobre el total filtrado. Y
   cuando total y verificados difieren, se dice.
 - La validación de la IA se le pide al dueño del dato, no a operación.
-- **Quién vino lo marca operación, no el usuario.** Pedirle a quien acaba de
-  cenar que diga quién faltó es cobrarle un trabajo nuestro. Por lo mismo, la
-  encuesta de después no clasifica persona por persona: no volvemos a juntar a
-  la misma gente —el veto es de tres meses— así que un «sí repetiría con X» no
-  se puede usar. El único dato aplicable es el negativo, y va como salida
-  opcional, no como tarea.
+- **Quién vino lo marca operación, y la encuesta SÍ marca personas, desde el
+  29-10.** Las dos reglas de aquí abajo cambiaron ese día, las dos a propósito
+  y las dos decididas por Michael. Se dejan escritas con su motivo viejo
+  porque el motivo viejo sigue siendo bueno para todo lo demás.
+
+  **Era:** «quién vino lo marca operación, no el usuario», porque pedirle a
+  quien acaba de cenar que diga quién faltó es cobrarle un trabajo nuestro.
+  **Ahora** la encuesta pregunta «¿faltó alguien?». Michael: «son ellos los
+  que saben quién fue». Sigue sin ser una tarea: es un toque, «vinimos todos»
+  o marcar. Y operación no deja de decidir: hacen falta **dos** marcas para
+  dar a alguien por ausente, nunca se pisa un `attended` ya puesto a mano, y
+  cuando no coinciden lo revisa una persona.
+
+  **Era:** «la encuesta de después no clasifica persona por persona», porque
+  no volvemos a juntar a la misma gente —el veto es de tres meses— así que un
+  «sí repetiría con X» no se puede usar para repartir. **Ahora** se marca a
+  quién quieres seguir viendo. Y la regla vieja sigue entera donde valía: eso
+  NO reparte nada y **el veto de tres meses no se toca**. Sirve para pasar un
+  contacto, y solo si las dos personas se marcan: sin coincidencia no pasa
+  nada y nadie se entera jamás de que alguien la marcó.
+
+  Las dos señales viven en `peer_feedback` —`ausente` y `connect`—, que es la
+  tabla que el 10-08 se dejó vacía y anotada «reservada para la señal
+  positiva». Los bloqueos siguen en `exclusions`, que es otra cosa: un bloqueo
+  es de una pareja y es permanente.
+
+  Lo que NO cambió: el dato negativo —bloquear— sigue siendo una salida
+  opcional y no una tarea.
 - Las escalas se guardan **más = mejor**, siempre, y la conversión desde el
   índice de la pantalla vive en **una sola función del servidor**. En la
   pantalla «Excelente» es el índice 0: guardar el índice tal cual deja la mejor

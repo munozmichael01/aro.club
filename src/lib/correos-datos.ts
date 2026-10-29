@@ -7,7 +7,7 @@ import { enlaceDeMapa } from '@/lib/mapa'
 import { avisoDeDosHoras, FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
-import { arraigoDe, DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
+import { arraigoDe, DIAS_GUARDA_FOTOS, HORAS_DE_MARGEN, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
@@ -1178,17 +1178,30 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       const q = partesDe(ahora.starts_at, zonaAhora)
       const elDiaNuevo = q ? `${q.dia} ${q.numero}` : 'otro día'
 
+      /**
+       * Y se dice en la voz del formato, no «cena» siempre.
+       *
+       * Decía «Cambiaste tu cena al domingo 1» de un BRUNCH. La voz
+       * compartida existe justo para esto y es la que usan la pantalla y los
+       * demás correos: `elPlan` es «la cena», «el brunch» o «el plan».
+       *
+       * La voz es la del destino, que es de lo que habla el correo. Si
+       * alguien se mueve de una cena a un brunch, lo que tiene ahora es un
+       * brunch.
+       */
+      const voz = vozDe(ahora.format)
+
       return {
         a,
         datos: {
           ...base,
           asunto: laMovioElla
-            ? `Cambiaste tu cena al ${elDiaNuevo}`
-            : `Te cambiamos la cena al ${elDiaNuevo}`,
+            ? `Cambiaste ${voz.elPlan} al ${elDiaNuevo}`
+            : `Te cambiamos ${voz.elPlan} al ${elDiaNuevo}`,
           resumen: laMovioElla
-            ? `Tu cena queda para el ${elDiaNuevo}. Tu puesto y lo que pagaste van contigo.`
-            : `Movimos tu cena al ${elDiaNuevo}. Tu puesto y lo que pagaste van contigo.`,
-          titular: laMovioElla ? 'Tu cena queda' : 'Movimos tu cena',
+            ? `${alta(voz.elPlan)} queda para el ${elDiaNuevo}. Tu puesto y lo que pagaste van contigo.`
+            : `Movimos ${voz.elPlan} al ${elDiaNuevo}. Tu puesto y lo que pagaste van contigo.`,
+          titular: laMovioElla ? `${alta(voz.elPlan)} queda` : `Movimos ${voz.elPlan}`,
           titularAcento: `para el ${elDiaNuevo}.`,
           bajada: laMovioElla
             ? `Listo${trato ? ', ' + trato : ''}. Cambiaste tu reserva y ya está hecho: no hay que volver a apartar nada ni pagar otra vez.`
@@ -1196,10 +1209,15 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           antes: comoSeLee(antes, zonaAntes),
           ahora: comoSeLee(ahora, zonaAhora),
           donde,
-          loQueNoCambia: 'Lo que pagaste va con tu reserva, así que no te cobramos de nuevo ni tienes que pedir nada. Con quién cenas y dónde te lo contamos ese mismo día, como siempre.',
+          loQueNoCambia: `Lo que pagaste va con tu reserva, así que no te cobramos de nuevo ni tienes que pedir nada. Con quién ${voz.verbo} y dónde te lo contamos ese mismo día, como siempre.`,
+          /**
+           * La pantalla se llama «Mi mesa», no «Mi cena». Y las horas salen
+           * de la regla compartida: escritas a mano aquí, el día que se
+           * muevan, este correo seguiría prometiendo veinticuatro.
+           */
           cierre: laMovioElla
-            ? 'Si te vuelve a cambiar el plan, puedes moverla otra vez desde Mi cena mientras falten más de 24 horas.'
-            : 'Si esa fecha no te cuadra, puedes cambiarla tú desde Mi cena mientras falten más de 24 horas.',
+            ? `Si te vuelve a cambiar el plan, puedes moverla otra vez desde ${voz.mia} mientras falten más de ${HORAS_DE_MARGEN} horas.`
+            : `Si esa fecha no te cuadra, puedes cambiarla tú desde ${voz.mia} mientras falten más de ${HORAS_DE_MARGEN} horas.`,
         },
       }
     }

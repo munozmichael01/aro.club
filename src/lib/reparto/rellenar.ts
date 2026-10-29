@@ -101,12 +101,26 @@ export async function rellenarHueco(
 
   if (!quedan.length || !espera.length) return null
 
-  // Lo que ya estaba roto antes de que llegara nadie.
-  const yaRotas = new Set(roturas(quedan).map((r) => r.regla))
+  /**
+   * Lo que ya estaba roto antes de que llegara nadie.
+   *
+   * CON LA SEDE, que esta mesa ya la tiene: está publicada, así que su local
+   * está elegido. Sin pasarla, la rotura del veto de local no saltaba y se
+   * podía sentar de sustituto a alguien que cenó en ese mismo sitio hace
+   * diez días: justo lo que el veto existe para impedir, y encima en la
+   * mesa de alguien que ya sabe dónde va.
+   *
+   * Lo cazó el agente de la app auditando. Es el mismo descuido que en
+   * `sedeDe`: la rotura nació con la sede opcional para que las llamadas de
+   * dentro del algoritmo no se inventaran una, y a las dos que SÍ la tienen
+   * había que acordarse de pasársela.
+   */
+  const sede = mesa.restaurant_id ?? null
+  const yaRotas = new Set(roturas(quedan, sede).map((r) => r.regla))
 
   const caben = espera
     .filter((c) => !zonaDeLaMesa || (c.zonas ?? []).includes(zonaDeLaMesa))
-    .filter((c) => roturas([...quedan, c]).every((r) => yaRotas.has(r.regla)))
+    .filter((c) => roturas([...quedan, c], sede).every((r) => yaRotas.has(r.regla)))
 
   if (!caben.length) return null
 

@@ -1169,7 +1169,15 @@ export async function POST(request: Request) {
    * El sitio de una mesa: el primero que quepa, que nadie haya vetado y, a
    * igualdad, el que menos reciente les quede.
    */
-  const sedeDe = (zona: string, mesa?: { profileId: string; tramoGasto?: number | null }[]) => {
+  const sedeDe = (
+    zona: string,
+    mesa?: {
+      profileId: string
+      tramoGasto?: number | null
+      /** Los locales donde se sentó dentro del veto. Lo trae `Persona`. */
+      localesRecientes?: Set<string>
+    }[],
+  ) => {
     const gente = mesa ?? []
     const candidatas = sedes
       .filter((v) => v.zona === zona)
@@ -1215,7 +1223,33 @@ export async function POST(request: Request) {
       v.tramo == null || tramoDeLaMesa == null ? 0 : Math.max(0, v.tramo - tramoDeLaMesa)
 
     /**
+     * LO QUE NO DEJARÍA PUBLICAR, AL FINAL DEL TODO.
+     *
+     * Hay dos reglas de no repetir local y no son la misma. Esta de aquí,
+     * `reciente`, es una preferencia de seis semanas desde hoy y solo pesa
+     * en la nota. La OTRA es la rotura `local` de `repartir.ts`, que es de
+     * treinta días desde la cena y frena publicar sin `forzar`.
+     *
+     * Sin esto, el reparto podía elegir un local que después no dejaba
+     * publicar la mesa: `reciente` pesa tres, y un sitio donde nadie come lo
+     * que se cocina pesa hasta seis, así que el que frena podía ganar. Con
+     * un solo local por zona, que es lo normal, cualquiera que cenó ahí hace
+     * diez días dejaba la mesa trabada sin que se viera hasta publicar.
+     *
+     * Lo cazó el agente de la app auditando, antes de las cenas del 30 y el
+     * 31, que es cuando habría pasado.
+     *
+     * Y se lee de `localesRecientes`, que es EL MISMO dato que mira la
+     * rotura: calculado por el pool, con su ventana y medido contra el día
+     * de la cena. Volver a calcularlo aquí sería la tercera ventana.
+     */
+    const frenaPublicar = (v: { restaurantId: string }) =>
+      gente.some((p) => p.localesRecientes?.has(v.restaurantId))
+
+    /**
      * El orden, con todo junto y por este orden de importancia:
+     *
+     *  0. Que la mesa se pueda publicar. Si hay un local limpio, ese.
      *
      *  1. No repetir sitio a nadie de la mesa. Volver al mismo restaurante
      *     en seis semanas es lo que más se nota.
@@ -1231,7 +1265,10 @@ export async function POST(request: Request) {
         i,
         nota: reciente(v) * 3 - comen(v) + lejosDelBolsillo(v) * 2,
       }))
-      .sort((a, b) => a.nota - b.nota || a.i - b.i)[0].v
+      .sort((a, b) =>
+        Number(frenaPublicar(a.v)) - Number(frenaPublicar(b.v))
+        || a.nota - b.nota
+        || a.i - b.i)[0].v
 
     ocupacion.set(elegida.restaurantId, (ocupacion.get(elegida.restaurantId) ?? 0) + 1)
     return { restaurantId: elegida.restaurantId, nombre: elegida.nombre }

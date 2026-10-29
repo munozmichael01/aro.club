@@ -254,10 +254,35 @@ export async function POST(request: Request) {
     .in('kind', ['mesa_asignada', 'mesa_cambiada', 'recordatorio', 'juego'] as never[])
     .is('sent_at', null)
 
-  // Si no encaja nadie, `rellenarHueco` devuelve null y la mesa se queda en
-  // cinco a propósito: confirmarla así o cambiarla a mano es una decisión, y
-  // el panel la enseña corta para que se tome.
-  const relleno = suMesa ? await rellenarHueco(reserva.event_id, suMesa.table_id) : null
+  /**
+   * Si no encaja nadie, `rellenarHueco` devuelve null y la mesa se queda en
+   * cinco a propósito: confirmarla así o cambiarla a mano es una decisión, y
+   * el panel la enseña corta para que se tome.
+   *
+   * Y SI REVIENTA, NO SE LLEVA LA CANCELACIÓN POR DELANTE.
+   *
+   * Para cuando esto corre, la reserva ya está cancelada y la silla ya se
+   * borró de `table_members`. Lo que viene DESPUÉS es el crédito y el correo
+   * de acuse. Sin este try/catch, un fallo aquí deja a una persona cancelada,
+   * fuera de su mesa, sin su crédito de vuelta y sin que nadie le diga nada,
+   * con un 500 en la pantalla que la invita a volver a intentarlo.
+   *
+   * No era posible hasta el 29-10: `construirPool` se tragaba los errores de
+   * lectura con `const { data } = await …`. Al pasarlo a `todasLasFilas`, que
+   * LANZA a propósito para que una lectura a medias no se cuele, abrí este
+   * camino sin verlo. Lo cazó el agente de la app auditando.
+   *
+   * Rellenar el hueco es lo deseable, no lo imprescindible: si no sale, la
+   * mesa se queda en cinco y el panel ya la enseña corta.
+   */
+  let relleno: Awaited<ReturnType<typeof rellenarHueco>> = null
+  if (suMesa) {
+    try {
+      relleno = await rellenarHueco(reserva.event_id, suMesa.table_id)
+    } catch (e) {
+      console.error('[cancelar] no se pudo rellenar el hueco, la mesa se queda corta', reserva.id, e)
+    }
+  }
 
   /**
    * Y si la mesa ya estaba contada, operación se entera.

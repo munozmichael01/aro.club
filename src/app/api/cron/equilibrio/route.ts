@@ -109,6 +109,7 @@ async function mandar(
     .from('bookings')
     .select('profile_id, events!bookings_event_id_fkey(starts_at)')
     .in('status', VIVAS)
+    .order('id')
     .range(desde, hasta))
 
   const ocupados = new Set(
@@ -139,6 +140,7 @@ async function mandar(
     (desde, hasta) => admin
       .from('verifications')
       .select('profile_id, status')
+      .order('profile_id')
       .range(desde, hasta))
 
   const aprobados = new Set(verifs.filter((v) => v.status === 'approved').map((v) => v.profile_id))
@@ -156,6 +158,7 @@ async function mandar(
     .from('profiles')
     .select('id, email, birthdate, es_prueba, deleted_at, status')
     .eq('gender', 'hombre')
+    .order('id')
     .range(desde, hasta))
 
   const vivos = hombres.filter((p) => !p.es_prueba && !p.deleted_at && p.email && !ocupados.has(p.id))
@@ -189,6 +192,7 @@ async function mandar(
       .from('scheduled_emails')
       .select('profile_id')
       .eq('kind', 'equilibrar_mesas')
+      .order('id')
       .range(desde, hasta))
 
   const hechos = new Set(yaTienen.map((r) => r.profile_id).filter((x): x is string => !!x))
