@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mi mesa · Aro Club</title>
+<meta name="apple-itunes-app" content="app-id=6818022672">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -329,14 +330,16 @@
           <sc-if value="{{ oJuego }}" hint-placeholder-val="{{ false }}">
             <div style="padding:0 18px 18px;display:flex;flex-direction:column;gap:12px">
               <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ bajadaJuego }}</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <!-- UNA ENCIMA DE OTRA, no en cuadrícula. Michael, 29-10: con
+                   cinco temáticas la rejilla de dos columnas dejaba un hueco
+                   en la última fila. En fila cada una se lee de un vistazo y
+                   da igual cuántas sean. -->
+              <div style="display:flex;flex-direction:column;gap:8px">
                 <sc-for list="{{ temasTarjeta }}" as="t" hint-placeholder-count="5">
-                  <button onClick="{{ t.ir }}" style="border:0;text-align:left;border-radius:16px;background:{{ t.bg }};color:{{ t.ink }};padding:12px;display:flex;flex-direction:column;gap:10px;min-height:96px;box-sizing:border-box;opacity:{{ t.op }};cursor:pointer">
-                    <span style="display:flex;align-items:center;justify-content:space-between">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.ink }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.ico }}"></path></svg>
-                      <span style="font:700 9.5px/1 'Inter Tight',sans-serif;letter-spacing:.1em">{{ t.estado }}</span>
-                    </span>
-                    <span style="margin-top:auto;font:400 16px/1.1 'Young Serif',Georgia,serif">{{ t.n }}</span>
+                  <button onClick="{{ t.ir }}" style="border:0;text-align:left;border-radius:16px;background:{{ t.bg }};color:{{ t.ink }};padding:10px 14px;display:flex;align-items:center;gap:10px;min-height:56px;box-sizing:border-box;opacity:{{ t.op }};cursor:pointer">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.ink }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ t.ico }}"></path></svg>
+                    <span style="flex:1;min-width:0;font:400 16px/1.1 'Young Serif',Georgia,serif">{{ t.n }}</span>
+                    <span style="flex:none;font:700 9.5px/1 'Inter Tight',sans-serif;letter-spacing:.1em">{{ t.estado }}</span>
                   </button>
                 </sc-for>
               </div>

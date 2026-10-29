@@ -400,6 +400,47 @@ if (sinIcono.length) {
   console.log(`\u2713 favicon (${pantallas.length} pantallas)`)
 }
 
+// --- la septima copia: el Smart App Banner de Apple --------------------
+//
+// `<meta name="apple-itunes-app">`. Solo lo ve quien entra con Safari en un
+// iPhone: una franja arriba que ofrece abrir la app, que no es una ventana
+// emergente y que no existe en Android ni en el escritorio. Michael lo
+// aprobo el 29-10.
+//
+// Va en el `<head>` de cada pantalla por lo mismo que el favicon: son
+// ficheros sueltos y el layout de Next no les llega. Y se vigila por lo
+// mismo: el favicon estuvo tres semanas en una sola pantalla.
+//
+// Las de OPERACION se quedan fuera a proposito: a quien reparte mesas desde
+// el panel no se le ofrece instalar la app de los comensales.
+const SIN_BANNER = [
+  'Aro Club - Operacion.dc.html',
+  'Aro Club - Perfil miembro.dc.html',
+  'Aro Club - Locales.dc.html',
+  'Aro Club - Sistema v3.dc.html',
+]
+const conBanner = pantallas.filter((f) => !SIN_BANNER.includes(f))
+const sinBanner = conBanner.filter((f) => !fs.readFileSync(
+  fileURLToPath(new URL(`../public/${f}`, import.meta.url)), 'utf8').includes('apple-itunes-app'))
+
+// Y al reves: que no se cuele en las del panel.
+const colado = SIN_BANNER.filter((f) => pantallas.includes(f) && fs.readFileSync(
+  fileURLToPath(new URL(`../public/${f}`, import.meta.url)), 'utf8').includes('apple-itunes-app'))
+
+if (sinBanner.length || colado.length) {
+  errores++
+  if (sinBanner.length) {
+    console.error('\n\u2717 pantallas sin el banner de la App Store')
+    sinBanner.forEach((f) => console.error(`    ${f}`))
+  }
+  if (colado.length) {
+    console.error('\n\u2717 el banner de la App Store se coló en una pantalla de operacion')
+    colado.forEach((f) => console.error(`    ${f}`))
+  }
+} else {
+  console.log(`\u2713 banner de la App Store (${conBanner.length} pantallas, ${SIN_BANNER.length} fuera)`)
+}
+
 // --- y la septima: el titulo de la pestana ----------------------------
 //
 // Mismo motivo que el favicon y mismo descuido: diecinueve de las
