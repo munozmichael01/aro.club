@@ -418,9 +418,16 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       const h = evento?.reveal_at ? partesDe(evento.reveal_at, ZONA_POR_DEFECTO)?.horas : 12
       // «mediodía» y no «las doce»: es la palabra aprobada y es la de casi
       // todas las fechas. Las demás horas se dicen con su número.
+      /**
+       * «de mañana» desde el 29-10, porque el recordatorio pasó a salir la
+       * víspera y es el único correo que usa esta frase. Leída el día antes,
+       * «dilo antes de mediodía» se entiende como el mediodía de HOY, y el
+       * reparto es al mediodía del día de la cena: un día entero de margen
+       * que la frase se estaba comiendo.
+       */
       return h === 12
-        ? 'Dilo antes de mediodía'
-        : `Dilo antes de las ${HORAS_EN_LETRA[(h ?? 12) % 12]}`
+        ? 'Dilo antes del mediodía de mañana'
+        : `Dilo mañana antes de las ${HORAS_EN_LETRA[(h ?? 12) % 12]}`
     })(),
     /**
      * POR QUÉ HAY QUE DECIRLO, en una frase que se entienda.
@@ -1288,12 +1295,16 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           // cosa: a las nueve de la mañana todavía no hay nada que abrir.
           yaRevelado: yaAbierta ? 'si' : '',
           // El plan por su nombre, no «cena» siempre.
-          tituloHoy: HOY_ES[evento.format ?? ''] ?? 'Hoy es tu plan',
+          tituloHoy: MANANA_ES[evento.format ?? ''] ?? 'Mañana es tu plan',
           // «una mesa» o «un grupo», de `vozDe`. Una caminata no tiene mesa.
           unaUnidad: (voz.unidad === 'grupo' ? 'un ' : 'una ') + voz.unidad,
           // Y la franja del día, de la hora REAL: un café de las diez de la
           // mañana no es «esta noche».
-          cuandoDelDia: horaDelPlan < 12 ? 'esta mañana' : horaDelPlan < 19 ? 'esta tarde' : 'esta noche',
+          // La franja del día, de la hora REAL y con el día que toca: este
+          // aviso sale la víspera, así que un brunch de las once es «mañana
+          // por la mañana» y no «esta mañana».
+          cuandoDelDia: horaDelPlan < 12 ? 'mañana por la mañana'
+            : horaDelPlan < 19 ? 'mañana por la tarde' : 'mañana por la noche',
           /**
            * La entrada del local, solo si la mesa YA está abierta.
            *
@@ -2156,20 +2167,31 @@ const OTRA: Record<string, string> = {
   cycling: 'Otra rodada',
 }
 
-const HOY_ES: Record<string, string> = {
-  dinner: 'Hoy es tu cena',
-  foodie_dinner: 'Hoy es tu cena',
-  women_dinner: 'Hoy es tu cena',
-  drinks: 'Hoy son tus drinks',
-  coffee: 'Hoy es tu café',
-  brunch: 'Hoy es tu brunch',
-  women_brunch: 'Hoy es tu brunch',
-  walk: 'Hoy es tu caminata',
-  hike: 'Hoy es tu senderismo',
-  run: 'Hoy toca correr',
-  padel: 'Hoy es tu pádel',
-  pilates: 'Hoy es tu pilates',
-  cycling: 'Hoy toca rodar',
+/**
+ * El titular del recordatorio, que desde el 29-10 sale LA VÍSPERA.
+ *
+ * Se llamaba `HOY_ES` y decía «Hoy es tu cena». Michael movió el aviso al
+ * día antes —«la víspera hay que mandársela a todos, con mesa o sin mesa»—
+ * y entonces cada una de estas trece frases pasó a ser mentira.
+ *
+ * Siguen siendo trece escritas a mano y no una plantilla, por lo de
+ * siempre: en español cambian el artículo y el número, y armarlo al vuelo
+ * acaba diciendo «mañana es tu drinks».
+ */
+const MANANA_ES: Record<string, string> = {
+  dinner: 'Mañana es tu cena',
+  foodie_dinner: 'Mañana es tu cena',
+  women_dinner: 'Mañana es tu cena',
+  drinks: 'Mañana son tus drinks',
+  coffee: 'Mañana es tu café',
+  brunch: 'Mañana es tu brunch',
+  women_brunch: 'Mañana es tu brunch',
+  walk: 'Mañana es tu caminata',
+  hike: 'Mañana es tu senderismo',
+  run: 'Mañana toca correr',
+  padel: 'Mañana es tu pádel',
+  pilates: 'Mañana es tu pilates',
+  cycling: 'Mañana toca rodar',
 }
 
 function nombreDelFormato(f: string | null | undefined): string {
