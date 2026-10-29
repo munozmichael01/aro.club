@@ -288,6 +288,17 @@ export async function POST(request: Request) {
     // El veto solo entra si cabe. Lo demás de la encuesta se guarda igual.
     if (d.noRepetirSitio !== undefined && !sobraElVeto) fila.sitio_no_repetir = d.noRepetirSitio
 
+    /**
+     * Y contestar BORRA el «ahora no» de antes.
+     *
+     * Desde el 29-10 lo que quita la encuesta de Mi mesa es contestarla, no
+     * cerrarla, así que `saltada_at` pasó a significar «la cerró, vuelve a
+     * salir». El upsert solo pisa las columnas que se le pasan: sin esta
+     * línea, quien la cierra hoy y la contesta mañana se queda con la marca
+     * vieja puesta y la encuesta no se le va nunca.
+     */
+    fila.saltada_at = null
+
     const { error } = await admin.from('table_feedback').upsert(
       fila as never,
       { onConflict: 'table_id,profile_id' },

@@ -74,7 +74,7 @@ async function bloqueDeCambiarFecha(
 
   const { data: suya } = await admin
     .from('events')
-    .select('price_usd')
+    .select('price_usd, city_slug')
     .eq('id', reserva.event_id)
     .maybeSingle()
 
@@ -90,6 +90,17 @@ async function bloqueDeCambiarFecha(
     .select('id, starts_at, booking_closes_at, format, idioma, city_slug, price_usd, age_band_min, age_band_max, event_venues(zones(name))')
     .eq('status', 'open')
     .eq('es_prueba', false)
+    /**
+     * SU MISMA CIUDAD. Michael, 29-10: «no muestres ciudades diferentes a
+     * la de la reserva».
+     *
+     * Hoy no cambia nada porque solo existe Caracas, y por eso faltaba: el
+     * día que abra una segunda ciudad, a alguien de Caracas se le ofrecería
+     * mudarse de ciudad para cambiar de fecha, dentro de una lista que no
+     * dice en qué ciudad es cada opción. Cambiar de fecha es cambiar de
+     * noche, no de ciudad.
+     */
+    .eq('city_slug', suya?.city_slug ?? '')
     .gt('starts_at', ahoraIso)
     .order('starts_at')
 
@@ -195,13 +206,24 @@ export async function GET() {
     .eq('profile_id', user.id)
 
   /**
-   * Las que ya cerró: contestadas O SALTADAS.
+   * Las que ya CONTESTÓ. Cerrarlas con «Ahora no» ya no las cierra.
    *
-   * Desde el 18-10 la encuesta no caduca a las 48 h —Michael: «que no deje
-   * de mostrarse a las 48 h, sino cuando la persona la conteste o se la
-   * salte»— así que lo que la quita de la pantalla es esto y nada más.
+   * El 18-10 Michael dijo «que no deje de mostrarse a las 48 h, sino cuando
+   * la persona la conteste o se la salte». El 29-10 quitó la segunda mitad:
+   * «no la saltemos, hagamos que nos la responda; va a estar en Mi mesa
+   * hasta que la responda».
+   *
+   * «Ahora no» sigue existiendo y sigue dejando salir de la pantalla: lo
+   * que ya no hace es cerrarla para siempre. Y contestar borra la marca de
+   * haberla cerrado, para que quien hizo las dos cosas no se quede con la
+   * encuesta puesta de por vida.
+   *
+   * Cuando se cambió, UNA sola persona en todo el club la había cerrado sin
+   * contestarla, y sin poner ni una nota.
    */
-  const valoradas = new Set((yaContadas ?? []).map((f) => f.table_id))
+  const valoradas = new Set(
+    (yaContadas ?? []).filter((f) => !f.saltada_at).map((f) => f.table_id),
+  )
   const mesaDeReserva = new Map((suyasEnMesa ?? []).map((m) => [m.booking_id, m.table_id]))
   const yaLaConto = (r: Reserva) => {
     const mesa = mesaDeReserva.get(r.id)
@@ -246,7 +268,29 @@ export async function GET() {
   // rebuscar hacia atrás hasta encontrar una sin contar sacaría una cena de
   // hace tres meses a la pantalla de hoy.
   const ultima = (reservas ?? []).filter(tieneMesa).sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
-  const reserva = porValorar ?? proxima ?? (ultima && !yaLaConto(ultima) ? ultima : undefined)
+
+  /**
+   * LA ENCUESTA TAPA LA MESA NUEVA, PERO NUNCA EL SITIO Y LA DIRECCIÓN.
+   *
+   * Michael, 29-10: «si hace una reserva nueva, debe responder primero para
+   * poder ver la mesa nueva». Eso ya pasaba, porque lo que está por valorar
+   * va delante de lo próximo; lo que faltaba es el freno.
+   *
+   * Una vez REVELADA, su cena manda. Taparle una mesa ya abierta por una
+   * encuesta pendiente es dejar a alguien sin saber a qué restaurante ir ni
+   * en qué dirección, la noche que tiene que ir. Un bloqueo que se cobra eso
+   * no es un bloqueo, es un fallo.
+   *
+   * Antes de la revelación no hay nada urgente que ver —ni sitio, ni
+   * acompañantes— así que ahí el bloqueo no le quita nada a nadie.
+   */
+  const yaAbierta = (r: Reserva) => {
+    const e = r.events as { reveal_at?: string | null } | null
+    return !!e?.reveal_at && Date.parse(e.reveal_at) <= ahora
+  }
+  const urge = proxima && yaAbierta(proxima) ? proxima : undefined
+
+  const reserva = urge ?? porValorar ?? proxima ?? (ultima && !yaLaConto(ultima) ? ultima : undefined)
 
   const evento = reserva?.events as
     | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string; grabacion: boolean; seats_per_table: number | null }
