@@ -43,6 +43,9 @@ type Api = {
   HORAS_DE_CIERRE: number
   /** Cuánto antes hay que avisar de que no vienes, o cambiarse de fecha. */
   HORAS_DE_MARGEN: number
+  /** El arraigo dicho de otro, para ponerlo al lado de su nombre. */
+  ARRAIGO_EN_LA_MESA: Record<string, string>
+  arraigoDe: (codigo: unknown) => string
   cierreDe: (inicioIso: string) => string | null
   textoCierre: (inicioIso: string, zona?: string) => string
   DIAS_GUARDA_FOTOS: number
@@ -147,6 +150,8 @@ export const PUERTA = api.PUERTA
  * `/api/operacion/fechas` y repetida en texto en cuatro sitios más.
  */
 export const HORAS_DE_MARGEN: number = api.HORAS_DE_MARGEN
+export const ARRAIGO_EN_LA_MESA: Record<string, string> = api.ARRAIGO_EN_LA_MESA
+export const arraigoDe = api.arraigoDe.bind(api)
 export const HORAS_DE_CIERRE: number = api.HORAS_DE_CIERRE
 
 /**

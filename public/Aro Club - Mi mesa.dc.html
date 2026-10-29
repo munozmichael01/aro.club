@@ -468,6 +468,9 @@
                 <span style="flex:1;min-width:0">
                   <span style="display:block;font:400 clamp(21px,2.4vw,25px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ c.nombre }}</span>
                   <span style="display:block;font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ c.sector }}</span>
+                  <sc-if value="{{ c.hayArraigo }}" hint-placeholder-val="{{ true }}">
+                    <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#566A5D;margin-top:1px">{{ c.arraigo }}</span>
+                  </sc-if>
                   <sc-if value="{{ c.seUnio }}" hint-placeholder-val="{{ false }}">
                     <span style="{{ c.estiloUnio }}">{{ c.notaUnio }}</span>
                   </sc-if>
@@ -1582,12 +1585,19 @@ class Component extends DCLogic {
       return (h % 12 || 12) + ':' + p(f.getMinutes()) + ' ' + (h < 12 ? 'a.m.' : 'p.m.');
     };
 
-    // Solo nombre de pila y sector: es lo único que devuelve la API. La
+    // Nombre de pila, sector y arraigo: es lo que devuelve la API. La
     // inicial se saca del nombre; escribirla aparte sería inventarla.
+    //
+    // El arraigo se dice en TERCERA persona, de `AroReglas`, no con el texto
+    // del cuestionario: aquel está en primera —«Me fui del país y volví»— y
+    // al lado del nombre de otro suena a que lo dice quien mira. Michael,
+    // 29-10, lo pidió donde sea que salga el nombre de un participante.
     const comensales = ((dt && dt.companeros) || []).map((c, i) => ({
       nombre: c.nombre || '—',
       inicial: (c.nombre || '—').trim().charAt(0).toUpperCase(),
       sector: c.sector || 'Sin sector',
+      arraigo: AroReglas.arraigoDe(c.arraigo),
+      hayArraigo: !!AroReglas.arraigoDe(c.arraigo),
       /**
        * Quien entró después de la revelación, marcado.
        *
@@ -1600,7 +1610,12 @@ class Component extends DCLogic {
       seUnio: !!c.seUnioDespues,
       notaUnio: 'se sumó después',
       estiloUnio: 'display:block;font:500 13px/1.4 \'Inter Tight\',sans-serif;color:#8F4515;margin-top:2px',
-      sectorYNota: (c.sector || 'Sin sector') + (c.seUnioDespues ? ' · se sumó después' : ''),
+      // Una sola línea donde no caben dos: sector, arraigo y la nota.
+      sectorYNota: [
+        c.sector || 'Sin sector',
+        AroReglas.arraigoDe(c.arraigo),
+        c.seUnioDespues ? 'se sumó después' : ''
+      ].filter(Boolean).join(' · '),
       avatar: 'flex:0 0 auto;width:44px;height:44px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 17px/1 \'Inter Tight\',sans-serif'
     }));
 

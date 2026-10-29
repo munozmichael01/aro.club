@@ -34,9 +34,9 @@ const MESA_ABIERTA = {
   ajustes: { sonCuantos: 5, caben: 6, seSumoAlguien: true, alguienCancelo: true, teMovimos: false },
   paraSeguir: [],
   companeros: [
-    { id: 'a1', nombre: 'Ana', inicial: 'A', sector: 'Diseño', seUnioDespues: false },
-    { id: 'a2', nombre: 'Luis', inicial: 'L', sector: 'Banca', seUnioDespues: true },
-    { id: 'a3', nombre: 'Marta', inicial: 'M', sector: 'Salud', seUnioDespues: false },
+    { id: 'a1', nombre: 'Ana', inicial: 'A', sector: 'Diseño', arraigo: 'volvio', seUnioDespues: false },
+    { id: 'a2', nombre: 'Luis', inicial: 'L', sector: 'Banca', arraigo: 'interior', seUnioDespues: true },
+    { id: 'a3', nombre: 'Marta', inicial: 'M', sector: 'Salud', arraigo: 'remoto', seUnioDespues: false },
     { id: 'a4', nombre: 'Pedro', inicial: 'P', sector: 'Obra', seUnioDespues: false },
   ],
   todosVerificados: true,
