@@ -1634,6 +1634,91 @@
       /** Cuando se acaba la ronda 3. */
       final: 'Hasta aquí el juego. Lo demás es suyo.',
 
+      /**
+       * EL MAZO POR TEMÁTICAS. Michael, 29-10, después de la cena de Timeleft.
+       *
+       * Sustituye a las rondas: la mesa ELIGE la temática, en el orden que
+       * quiera, y no hay de menos a más. Las cinco están abiertas desde el
+       * principio; ninguna se desbloquea ni es opcional.
+       *
+       * `rondas` se queda entera justo debajo, y no es un descuido: la web
+       * todavía juega con ellas, y la app vuelve a ellas si esta lista no
+       * llega. Quitarla dejaría sin juego a quien tenga una versión vieja
+       * en medio de una cena.
+       *
+       * Lo visual —color e icono— lo pone la pantalla POR POSICIÓN, así que
+       * este orden es el de la pantalla: rayo, brújula, libro, cruce de
+       * caminos y luna. Reordenar aquí reordena los iconos.
+       *
+       * Las claves no cambian aunque cambie el nombre: de ellas cuelga lo
+       * que cada mesa lleva jugado.
+       *
+       * El mazo aprobado está en `app-mobile/JUEGO-v3-tematicas.md`, con el
+       * porqué de cada entrada y de cada una que se cayó.
+       */
+      tematicas: [
+        {
+          clave: 'rapido',
+          nombre: 'Rápido y ligero',
+          linea: 'Para romper el hielo sin pensarlo.',
+          preguntas: [
+            '¿Arepa de qué?',
+            '¿Playa o montaña, y por qué?',
+            '¿Cuál es tu talento más inútil?',
+            '¿Qué canción pones cuando necesitas ánimo?',
+            '¿Qué serie o película le recomiendas a todo el mundo?',
+          ],
+        },
+        {
+          clave: 'aqui',
+          nombre: 'Lo de aquí',
+          linea: 'Caracas y lo que tiene.',
+          preguntas: [
+            '¿Cuál es tu plan perfecto de domingo en Caracas?',
+            '¿Qué te trajo a Caracas, o qué te hizo quedarte?',
+            '¿A qué sitio llevarías a alguien que acaba de llegar a la ciudad?',
+            '¿Cuál es la mejor comida de calle que has probado aquí?',
+            '¿Qué es lo más raro que te ha pasado en Caracas?',
+          ],
+        },
+        {
+          clave: 'historias',
+          nombre: 'Historias',
+          linea: 'Las anécdotas que se cuentan solas.',
+          preguntas: [
+            '¿Cuál es la peor comida que has probado en un viaje?',
+            '¿Cuál es el regalo más extraño que te han hecho?',
+            '¿Qué hobby empezaste con todo y dejaste al mes?',
+            '¿Cuál fue tu primer trabajo, y qué tenía de raro?',
+            '¿Qué es lo último que te dio un ataque de risa?',
+          ],
+        },
+        {
+          clave: 'ysi',
+          nombre: '¿Y si…?',
+          linea: 'Para imaginar, votar y discutir.',
+          preguntas: [
+            'Si pudieras vivir un año en cualquier ciudad, ¿cuál sería?',
+            '¿Quién de esta mesa propondría un plan loco, y quién diría que sí primero?',
+            'Si mañana nos fuéramos todos de viaje, ¿adónde iríamos?',
+            'Si esta mesa montara un negocio juntos, ¿de qué sería y quién hace qué?',
+            'Si pudieras cenar con cualquier persona, de cualquier época, ¿con quién?',
+          ],
+        },
+        {
+          clave: 'temueve',
+          nombre: 'Lo que te mueve',
+          linea: 'Un poco más de ti, sin exponerte.',
+          preguntas: [
+            '¿Qué te tiene con ilusión estos días, aunque sea algo pequeño?',
+            '¿Qué haces que te hace perder la noción del tiempo?',
+            '¿Qué plan llevas tiempo diciendo que vas a hacer?',
+            '¿Cuál es el mejor consejo que te han dado?',
+            '¿Qué es lo más espontáneo que has hecho?',
+          ],
+        },
+      ],
+
       rondas: [
         {
           clave: 'para-arrancar',
