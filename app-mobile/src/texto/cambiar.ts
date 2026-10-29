@@ -9,12 +9,12 @@ import { reglas } from '../reglas'
 export const enlace = 'Cambiar de fecha'
 
 /** Por qué no se puede, cuando no se puede. Ocultar el botón haría pensar que se rompió. */
-export const noSePuede = (motivo: string | undefined): string | null =>
+export const noSePuede = (motivo: string | undefined): string =>
   motivo === 'tarde'
     ? `Ya no puedes cambiar de fecha: faltan menos de ${reglas.HORAS_DE_MARGEN} horas.`
-    : motivo === 'sin-destinos'
-      ? 'Ahora mismo no hay otra fecha abierta a la que puedas cambiarte.'
-      : null
+    : motivo === 'revelada'
+      ? 'Ya no puedes cambiar de fecha: tu mesa ya está revelada.'
+      : 'Ahora mismo no hay otra fecha abierta a la que puedas cambiarte.'
 
 export const elegir = {
   titulo: '¿A qué fecha te cambias?',

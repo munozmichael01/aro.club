@@ -21,7 +21,7 @@ test('Mi mesa solo enseña el enlace si hay fechas a las que irse', () => {
 })
 
 test('cada destino se dice en SU zona horaria, con el plan, las zonas y el idioma', () => {
-  // Sábado 31 a las 7:00 p.m. en Caracas, que es domingo 1 en UTC.
+  // Sábado 31 a las 8:00 p.m. en Caracas, que es domingo 1 en UTC.
   const f = C.fila({ eventoId: 'a', empiezaEn: '2026-11-01T00:00:00Z', zonaHoraria: Z, formato: 'dinner', idioma: 'en', zonas: ['Chacao', 'Los Palos Grandes', 'Altamira'] })
   assert.match(f.titulo, /^Sábado 31 de octubre · 8:00 p\.m\./)
   assert.equal(f.detalle, 'Cena · Chacao, Los Palos Grandes o Altamira')
