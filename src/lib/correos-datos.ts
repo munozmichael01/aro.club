@@ -1096,6 +1096,59 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
      * poner: lo que no llega no se puede filtrar. Este correo dice que es
      * hoy, a qué hora, y que a mediodía se abre todo — y nada más.
      */
+    /**
+     * «Voy tarde», a los otros cinco. Y NUNCA SE ARMÓ.
+     *
+     * Este `case` no ha existido nunca. El tipo estaba en `correos.ts`, la
+     * plantilla en `remitente.ts`, la push en `push.ts` y la ruta encolaba
+     * bien: lo único que faltaba era esto, así que las filas caían al
+     * `tipo desconocido` del final y morían ahí.
+     *
+     * Lo encontró el agente de la app el 29-10, antes de las cenas del 29 al
+     * 31. SESENTA Y SEIS filas entre el 9 y el 24 de octubre, todas en
+     * `no_se_pudo_armar`, sin un solo recibo de Resend y sin una sola push.
+     * Son trece personas que pulsaron «voy tarde» y cinco compañeros cada
+     * una esperando en una mesa sin saber nada.
+     *
+     * Y lo peor no es el correo que no salió: la ruta cuenta los `encolado`
+     * y le responde «avisados: N» a quien avisó. `encolar` devuelve
+     * `encolado` porque la fila SÍ se escribe; se muere después, al
+     * despacharla. Así que durante tres semanas la pantalla le dijo «ya
+     * avisamos a tu mesa» a trece personas a las que no avisamos.
+     *
+     * No lee nada de la base, a propósito. Todo lo resolvió la ruta al
+     * encolar —el nombre de pila, el sitio, la dirección, el retraso— y
+     * tiene que ser así: este correo sale en el momento, con la mesa ya
+     * revelada y la persona de camino. Volver a consultarlo aquí solo
+     * añadiría formas de que llegue tarde o no llegue.
+     */
+    case 'llego_tarde': {
+      const texto = (clave: string) => (typeof p[clave] === 'string' ? (p[clave] as string) : '')
+      const quien = texto('quien')
+      const retraso = texto('retraso')
+      // Sin estos dos el correo no dice nada: «llega tarde» sin nombre ni
+      // cuánto es un aviso que no se puede usar para decidir si pedir ya.
+      if (!quien || !retraso) return { error: 'sin quién o sin cuánto' }
+
+      return {
+        a,
+        datos: {
+          ...base,
+          quien,
+          retraso,
+          trato: texto('trato'),
+          sitio: texto('sitio'),
+          zona: texto('zona'),
+          hora: texto('hora'),
+          // `unidad` y `TU` son la voz del formato —mesa o grupo— y la
+          // plantilla los usa en el cuerpo y en el pie. Sin ellos el correo
+          // sale diciendo «compartes  con quien avisó».
+          unidad: texto('unidad') || 'mesa',
+          TU: texto('TU') || 'TU MESA',
+        },
+      }
+    }
+
     case 'recordatorio': {
       if (!fila.event_id) return { error: 'sin fecha' }
       if (!evento) return { error: 'sin fecha' }
