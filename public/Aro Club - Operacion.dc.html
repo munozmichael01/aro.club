@@ -323,6 +323,10 @@
                         <sc-if value="{{ g.hayVieneDe }}" hint-placeholder-val="{{ false }}">
                           <span style="{{ g.estiloVieneDe }}">{{ g.vieneDe }}</span>
                         </sc-if>
+                        <!-- Qué cena es esta para ella. Michael, 28-10. -->
+                        <sc-if value="{{ g.hayCena }}" hint-placeholder-val="{{ true }}">
+                          <span style="{{ g.estiloCena }}">{{ g.cena }}</span>
+                        </sc-if>
                         <sc-if value="{{ g.hayDietas }}" hint-placeholder-val="{{ false }}">
                             <span style="{{ g.estiloDietas }}">{{ g.dietas }}</span>
                           </sc-if>
@@ -471,6 +475,9 @@
                     </sc-if>
                     <sc-if value="{{ e.esNueva }}" hint-placeholder-val="{{ false }}">
                       <span style="{{ e.selloNueva }}">Nueva</span>
+                    </sc-if>
+                    <sc-if value="{{ e.hayCena }}" hint-placeholder-val="{{ true }}">
+                      <span style="{{ e.estiloCena }}">{{ e.cena }}</span>
                     </sc-if>
                     <sc-if value="{{ e.hayDietas }}" hint-placeholder-val="{{ false }}">
                       <span style="{{ e.estiloDietas }}">{{ e.dietas }}</span>
@@ -3881,6 +3888,33 @@ class Component extends DCLogic {
       return { hay: false, texto: '', alerta: false };
     };
 
+    /**
+     * QUÉ CENA ES ESTA PARA ESA PERSONA.
+     *
+     * Michael, 28-10: «que diga cuál cena es esta para esa persona: 2ª cena,
+     * primera vez. Eso sirve para repartir: sabes si estás sentando a un
+     * novato o a alguien que ya lleva tres».
+     *
+     * `cenas` es cuántas lleva ANTES de esta, así que cero es primera vez y
+     * se marca en naranja: es el dato que cambia una decisión —a quien viene
+     * por primera vez conviene no sentarlo con cinco que ya se conocen la
+     * casa— y los demás van en gris, como el resto de la ficha.
+     *
+     * Va en un ayudante y no escrito en las dos fichas porque son dos —la de
+     * la mesa y la de la espera— y la misma frase en dos sitios acaba
+     * diciendo cosas distintas.
+     */
+    const laCenaQueEs = (p) => {
+      const n = Number(p && p.cenas);
+      // Sin el dato no se inventa nada: una propuesta guardada antes del
+      // 28-10 no lo trae, y «primera vez» sobre alguien que lleva tres es
+      // peor que no decir nada.
+      if (!isFinite(n) || n < 0) return { hay: false, texto: '', primera: false };
+      if (n === 0) return { hay: true, texto: 'Primera vez', primera: true };
+      // «2ª cena», «3ª cena». Con el ordinal femenino, que es como se dice.
+      return { hay: true, texto: (n + 1) + 'ª cena', primera: false };
+    };
+
     /** Y la barra de la mesa entera, que es lo que se le dice al local. */
     const laBarra = (gente) => {
       const toman = gente.filter((p) => p.copas && p.copas !== 'nada').length;
@@ -4233,6 +4267,9 @@ class Component extends DCLogic {
           estiloVieneDe: dondeReservo(p.movidaDe).estilo,
           dietas: dietaCorta(p.dietas).join(' · '),
           hayDietas: dietaCorta(p.dietas).length > 0,
+          hayCena: laCenaQueEs(p).hay,
+          cena: laCenaQueEs(p).texto,
+          estiloCena: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:' + (laCenaQueEs(p).primera ? 'rgba(143,69,21,.16)' : 'rgba(20,52,42,.07)') + ';color:' + (laCenaQueEs(p).primera ? '#8F4515' : '#2C4A38'),
           hayBebida: loQueBebe(p).hay,
           bebida: loQueBebe(p).texto,
           estiloBebida: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:' + (loQueBebe(p).alerta ? 'rgba(143,69,21,.16)' : 'rgba(20,52,42,.07)') + ';color:' + (loQueBebe(p).alerta ? '#8F4515' : '#2C4A38'),
@@ -4631,6 +4668,9 @@ class Component extends DCLogic {
       selloNueva: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:rgba(27,81,56,.13);color:#1B5138',
       dietas: dietaCorta(p.dietas).join(' · '),
       hayDietas: dietaCorta(p.dietas).length > 0,
+      hayCena: laCenaQueEs(p).hay,
+      cena: laCenaQueEs(p).texto,
+      estiloCena: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:' + (laCenaQueEs(p).primera ? 'rgba(143,69,21,.16)' : 'rgba(20,52,42,.07)') + ';color:' + (laCenaQueEs(p).primera ? '#8F4515' : '#2C4A38'),
       hayBebida: loQueBebe(p).hay,
       bebida: loQueBebe(p).texto,
       estiloBebida: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;white-space:nowrap;background:' + (loQueBebe(p).alerta ? 'rgba(143,69,21,.16)' : 'rgba(20,52,42,.07)') + ';color:' + (loQueBebe(p).alerta ? '#8F4515' : '#2C4A38'),

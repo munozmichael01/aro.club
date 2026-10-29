@@ -69,6 +69,14 @@ type Integrante = {
   genero: string | null
   empresa: string | null
   sector: string | null
+  /**
+   * Cuántas veces ha cenado ANTES de esta. Cero es primera vez.
+   *
+   * Se guarda en la propuesta y no se calcula en la pantalla, como todo lo
+   * demás de aquí: una persona movida a mano tiene que seguir enseñando lo
+   * mismo que antes de moverla.
+   */
+  cenas: number
 }
 
 const comoIntegrante = (p: {
@@ -80,6 +88,7 @@ const comoIntegrante = (p: {
   empresa: string | null
   sector: string | null
   empresaTexto?: string | null
+  cenas?: number
 }): Integrante => ({
   profileId: p.profileId,
   bookingId: p.bookingId,
@@ -89,6 +98,9 @@ const comoIntegrante = (p: {
   // Como se escribe, no como se compara.
   empresa: p.empresaTexto || p.empresa,
   sector: p.sector,
+  // Opcional al entrar y siempre un número al salir: una propuesta guardada
+  // antes del 28-10 no lo trae, y `undefined` en la pantalla pinta vacío.
+  cenas: p.cenas ?? 0,
 })
 type Mesa = {
   numero: number
@@ -340,10 +352,6 @@ export async function POST(request: Request) {
     m.desglose = desglose(gente)
     m.resumen = resumen(gente)
     m.zonasPosibles = zonasDe(gente)
-    m.roturas = roturas(gente)
-    // Las siete, otra vez: mover a alguien cambia el balance de las dos
-    // mesas, y la pantalla las pinta desde aqui.
-    m.reglas = evaluacion(gente, m.zona, nombresDeZona.get(m.zona ?? '') ?? m.zona)
 
     // Si la sede elegida ya no está entre las zonas posibles, se cae.
     if (m.restaurantId) {
@@ -354,6 +362,23 @@ export async function POST(request: Request) {
         m.zona = null
       }
     }
+
+    /**
+     * Las reglas y las roturas, DESPUÉS de saber si la sede sigue en pie.
+     *
+     * Iban antes, y con el veto de local eso se volvió un fallo: mover a
+     * alguien puede dejar la sede fuera de las zonas comunes, y entonces la
+     * pantalla enseñaba las dos cosas a la vez —«falta elegir sitio» y
+     * «tal ya cenó aquí»— sobre un local que ya no estaba asignado.
+     *
+     * Las dos leen el mismo `m.restaurantId`, así que las dos van después o
+     * discrepan entre ellas, que es peor que estar las dos viejas.
+     */
+    m.roturas = roturas(gente, m.restaurantId ?? null)
+    // Las ocho, otra vez, y la novena cuando hay sitio: mover a alguien
+    // cambia el balance de las dos mesas, y la pantalla las pinta desde aqui.
+    m.reglas = evaluacion(gente, m.zona, nombresDeZona.get(m.zona ?? '') ?? m.zona, m.restaurantId ?? null)
+
     if (!m.restaurantId) {
       m.zona = m.zonasPosibles[0] ?? null
       m.roturas = [

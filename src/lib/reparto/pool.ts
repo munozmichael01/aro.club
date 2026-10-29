@@ -4,6 +4,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { Database } from '@/lib/supabase/database.types'
 
+import { todasLasFilas } from '@/lib/todas-las-filas'
+
+import { historialDeMesas } from './historial'
 import type { Persona } from './repartir'
 
 /**
@@ -56,7 +59,7 @@ export async function construirPool(
 ): Promise<Pool> {
   const { data: evento } = await admin
     .from('events')
-    .select('seats_per_table, format')
+    .select('seats_per_table, format, starts_at')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -165,14 +168,26 @@ export async function construirPool(
   // Todos los encuentros, con su fecha. Los de los últimos tres meses son
   // veto; los demás siguen contando para la novedad, que es lo que mide si
   // la mesa es gente nueva de verdad.
-  const { data: todos } = await admin
-    .from('pair_encounters')
-    .select('profile_a, profile_b, last_met_at')
+  /**
+   * POR TRAMOS, porque esta tabla crece al cuadrado.
+   *
+   * Cada cena de seis añade quince parejas. Hoy son 398 filas y PostgREST
+   * corta en mil sin avisar: a unas sesenta y siete mesas, el veto empezaría
+   * a leer solo una parte y sentaría junta a gente que no debe coincidir,
+   * sin que fallara nada. Es el mismo corte que el 27-10 dejó a treinta y
+   * cinco hombres fuera de un envío.
+   */
+  const todos = await todasLasFilas<{ profile_a: string; profile_b: string; last_met_at: string }>(
+    (desde, hasta) => admin
+      .from('pair_encounters')
+      .select('profile_a, profile_b, last_met_at')
+      .range(desde, hasta))
 
   const corte = Date.now() - MESES_SIN_REPETIR * 30 * 86400_000
-  const encuentros = (todos ?? []).filter((e) => new Date(e.last_met_at).getTime() > corte)
+  const encuentros = todos.filter((e) => new Date(e.last_met_at).getTime() > corte)
 
-  const { data: exclusiones } = await admin.from('exclusions').select('profile_a, profile_b')
+  const exclusiones = await todasLasFilas<{ profile_a: string; profile_b: string }>(
+    (desde, hasta) => admin.from('exclusions').select('profile_a, profile_b').range(desde, hasta))
 
   const emparejar = (filas: { profile_a: string; profile_b: string }[]) => {
     const m = new Map<string, Set<string>>()
@@ -185,11 +200,23 @@ export async function construirPool(
     return m
   }
 
-  const vetos = emparejar([...encuentros, ...(exclusiones ?? [])])
-  const yaSeConocen = emparejar(todos ?? [])
+  const vetos = emparejar([...encuentros, ...exclusiones])
+  const yaSeConocen = emparejar(todos)
 
   const nombreDe = new Map(
     (perfiles ?? []).map((p) => [p.id, p.display_name || p.full_name?.split(' ')[0] || '—']),
+  )
+
+  /**
+   * Dónde se ha sentado ya cada uno, y cuántas veces. Michael, 28-10.
+   *
+   * La cuenta vive en `historialDeMesas` y no aquí porque el panel la pide
+   * también por otro camino, sin pasar por `Persona`.
+   */
+  const { cenasDe, localesRecientesDe } = await historialDeMesas(
+    admin,
+    ids,
+    evento?.starts_at ? Date.parse(evento.starts_at) : Date.now(),
   )
 
   const personas: Persona[] = (pool ?? []).map((p) => ({
@@ -238,6 +265,8 @@ export async function construirPool(
     dietas: p.dietary ?? [],
     vetados: vetos.get(p.profile_id as string) ?? new Set<string>(),
     conocidos: yaSeConocen.get(p.profile_id as string) ?? new Set<string>(),
+    localesRecientes: localesRecientesDe.get(p.profile_id as string) ?? new Set<string>(),
+    cenas: cenasDe.get(p.profile_id as string) ?? 0,
   }))
 
   return { personas, sedes, zonas, porMesa: evento?.seats_per_table ?? 6 }
