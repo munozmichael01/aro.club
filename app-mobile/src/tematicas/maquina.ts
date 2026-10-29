@@ -19,7 +19,19 @@ export const ESTILOS = [
   { fondo: '#F6D9B4', tinta: '#14342A', sub: '#14342A', icono: 'M6 3v5a6 6 0 0 0 6 6h6M15 11l3 3-3 3M6 21v-5' },
   { fondo: '#C5D8CA', tinta: '#14342A', sub: '#14342A', icono: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z' },
 ] as const
-export const estiloDe = (i: number) => ESTILOS[i % ESTILOS.length]
+/**
+ * El color y el icono van con la TEMÁTICA, no con la posición (revisión de fidelidad, 29-10):
+ * en la maqueta, cada nombre tiene el suyo. «Lo de aquí» no está en la maqueta: lleva el
+ * verde pálido con un pin. Una clave desconocida cae en el de su posición.
+ */
+const POR_CLAVE: Record<string, (typeof ESTILOS)[number] | { fondo: string; tinta: string; sub: string; icono: string }> = {
+  rapido: ESTILOS[0],
+  temueve: ESTILOS[1],
+  historias: ESTILOS[2],
+  ysi: ESTILOS[3],
+  aqui: { fondo: '#C5D8CA', tinta: '#14342A', sub: '#14342A', icono: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z' },
+}
+export const estiloDe = (i: number, t?: { clave: string }) => (t && POR_CLAVE[t.clave]) || ESTILOS[i % ESTILOS.length]
 
 /** `avance[clave]`: la pregunta en la que quedó (0 = sin empezar). `jugadas`: las terminadas. */
 export type Memoria = { avance: Record<string, number>; jugadas: string[] }

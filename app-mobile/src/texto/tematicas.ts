@@ -20,6 +20,7 @@ export const portada = {
   elegirOtra: 'Elegir otra',
   vanPor: (en: number, de: number) => `VAN POR LA ${en} DE ${de}`,
   yaLaJugaron: 'YA LA JUGARON',
+  sePuedePasar: 'Se puede pasar cualquiera',
 }
 export const pregunta = {
   tematicas: 'Temáticas',

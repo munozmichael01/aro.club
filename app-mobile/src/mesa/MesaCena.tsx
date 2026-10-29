@@ -327,7 +327,7 @@ function TarjetaTematicas(p: { memoria: TM.Memoria; jugar: (tema: number | null)
       <Texto style={[texto(14, 1.45), { color: C.cuerpo }]}>{TT.tarjeta.intro}</Texto>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {todas.map((t, i) => {
-          const es = TM.estiloDe(i)
+          const es = TM.estiloDe(i, t)
           const est = TM.estado(t, p.memoria)
           return (
             // Jugada: 0,8 y no el 0,55 de la maqueta, que con la luz de un restaurante no se lee (revisión del 29-10).
@@ -362,7 +362,7 @@ function Puntos({ memoria }: { memoria: TM.Memoria }) {
   return (
     <View style={{ flexDirection: 'row', paddingRight: 5 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {TM.delMazo().map((t, i) => (
-        <View key={t.clave} style={[e.punto, { backgroundColor: TM.estiloDe(i).fondo, opacity: TM.estado(t, memoria).tipo === 'jugada' ? 0.35 : 1 }]} />
+        <View key={t.clave} style={[e.punto, { backgroundColor: TM.estiloDe(i, t).fondo, opacity: TM.estado(t, memoria).tipo === 'jugada' ? 0.35 : 1 }]} />
       ))}
     </View>
   )
