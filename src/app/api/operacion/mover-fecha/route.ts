@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { encolar } from '@/lib/correos'
-import { moverReserva, type MotivoDeNo } from '@/lib/mover-reserva'
+import { deshacerMovida, moverReserva, type MotivoDeNo } from '@/lib/mover-reserva'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -119,10 +119,28 @@ export async function POST(request: Request) {
       { eventoId: d.aEventoId },
     )
     avisado = encolado === 'encolado'
+
+    /**
+     * Y si el aviso no salió, SE DESHACE.
+     *
+     * Mover a alguien de día sin que se entere es dejarlo yendo la noche que
+     * no es, que es justo lo que ese correo existe para evitar. Entre no
+     * moverla y moverla a escondidas, lo malo de verdad es lo segundo: lo
+     * primero se ve en el momento y se vuelve a intentar.
+     */
     if (!avisado) {
-      // No se traga: mover a alguien de día sin que se entere es dejarlo
-      // yendo la noche que no es, y el panel tiene que poder decirlo.
-      console.error('[mover-fecha] movida pero sin avisar', d.perfilId, encolado)
+      console.error('[mover-fecha] no se pudo avisar, deshaciendo', d.perfilId, encolado)
+      const vuelta = await deshacerMovida(admin, r.reservaId, r.deshacerCon.volverA, r.deshacerCon)
+      return NextResponse.json(
+        {
+          error: vuelta
+            ? 'No pudimos avisarle del cambio de día, así que no la movimos. Inténtalo otra vez.'
+            : 'La movimos, no pudimos avisarle y tampoco deshacerlo. Hay que arreglarlo a mano.',
+          motivo: 'sin-aviso',
+          deshecha: vuelta,
+        },
+        { status: vuelta ? 409 : 500 },
+      )
     }
   }
 

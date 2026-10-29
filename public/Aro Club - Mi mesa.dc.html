@@ -89,6 +89,32 @@
 
         <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:20px;max-width:46ch;text-wrap:pretty">{{ vasCon }} Te avisamos por correo en cuanto se abra.</div>
 
+        <!-- Cambiar de fecha. Michael, 29-10: hasta hoy habia que cancelar y
+           volver a reservar. Va ANTES de cancelar y con mas peso: si el plan
+           cambio, moverse es mejor para todos que soltar el puesto. -->
+        <sc-if value="{{ sePuedeCambiarFecha }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ tocarCambio }}" style="{{ botonBordeSuelto }}">{{ textoCambio }}</button>
+          <sc-if value="{{ abiertoCambio }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top:14px;max-width:46ch">
+              <div style="font:500 13px/1.4 'Inter Tight',sans-serif;letter-spacing:.1em;color:#566A5D">A CUAL TE MUEVES</div>
+              <sc-for list="{{ destinosCambio }}" as="x" hint-placeholder-count="2">
+                <button onClick="{{ x.ir }}" style="{{ x.chip }}">{{ x.texto }}</button>
+              </sc-for>
+              <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:12px;text-wrap:pretty">Tu puesto y lo que pagaste van contigo. No te cobramos de nuevo.</div>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <!-- Y si ya no se puede, por que. Escondiendo el boton sin decir
+           nada, quien lo vio ayer piensa que se rompio. -->
+        <sc-if value="{{ hayMotivoCambio }}" hint-placeholder-val="{{ false }}">
+          <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:18px;max-width:46ch;text-wrap:pretty">{{ motivoCambio }}</div>
+        </sc-if>
+
+        <sc-if value="{{ falloCambio }}" hint-placeholder-val="{{ '' }}">
+          <div style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#8F4515;margin-top:12px;max-width:46ch;text-wrap:pretty">{{ falloCambio }}</div>
+        </sc-if>
+
         <sc-if value="{{ sePuedeCancelar }}" hint-placeholder-val="{{ true }}">
           <a href="/cancelar" style="{{ enlaceCancelar }}">Cancelar mi puesto</a>
         </sc-if>
@@ -1192,6 +1218,44 @@ class Component extends DCLogic {
    */
   TRAMOS_GASTO = AroReglas.TRAMOS_GASTO;
 
+  /**
+   * Mover la reserva a otra fecha.
+   *
+   * Al salir bien se RECARGA la pantalla entera, no se retoca el estado.
+   *
+   * Lo intente pidiendo /api/mi-mesa otra vez y metiendo la respuesta en
+   * `datos`, y la pantalla se quedo diciendo la fecha vieja: `componentDidMount`
+   * no solo guarda los datos, tambien decide la fase comparando con la
+   * revelacion y fija media docena de cosas derivadas. Repetir todo eso aqui
+   * seria una segunda idea de en que estado queda la pantalla, y la unica
+   * manera de que no discrepen es que haya una.
+   *
+   * Recargar no pierde nada: aqui no hay nada escrito a medias.
+   */
+  cambiarDeFecha(reservaId, aEventoId) {
+    if (this.state.cambiando) return;
+    this.setState({ cambiando: true, falloCambio: '' });
+    fetch('/api/mi-mesa/cambiar-fecha', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reservaId: reservaId, aEventoId: aEventoId })
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) {
+          this.setState({
+            cambiando: false,
+            falloCambio: (d && d.error) || 'No pudimos cambiarla. Intentalo otra vez.'
+          });
+          return;
+        }
+        window.location.reload();
+      })
+      .catch(() => this.setState({
+        cambiando: false, falloCambio: 'No pudimos cambiarla. Revisa tu conexion.'
+      }));
+  }
+
   renderVals() {
     // ── el juego de la mesa ─────────────────────────────────────────
     const J = AroReglas.JUEGO;
@@ -1473,6 +1537,29 @@ class Component extends DCLogic {
     const fases = ['CERRADA', 'ABIERTA', 'PASADA'];
 
     const dt = this.state.datos;
+    const cf = dt && dt.cambiarFecha;
+
+    /**
+     * Por que NO se puede cambiar, dicho en una frase.
+     *
+     * El servidor manda el codigo y el texto vive aqui, que es donde vive
+     * todo el copy de esta pantalla. `sin-destinos` se calla a proposito:
+     * «no hay otra fecha a la que irte» no le pide nada a nadie y solo
+     * ensucia la pantalla.
+     */
+    const MOTIVO_CAMBIO = {
+      tarde: 'Ya no se puede cambiar de fecha: faltan menos de 24 horas.',
+      revelada: 'Ya no se puede cambiar: hay cinco personas que cuentan contigo.'
+    };
+
+    /** Una fecha de destino, como se lee: «Sabado 31 · 7:00 p.m. · Chacao». */
+    const comoSeLeeFecha = (x) => {
+      // De la regla compartida, con la zona que viaja CON la fecha: una
+      // persona puede tener una cena en Caracas y otra en otra ciudad.
+      const q = AroReglas.partesDe(x.empiezaEn, x.zonaHoraria);
+      const dia = q ? q.dia.charAt(0).toUpperCase() + q.dia.slice(1) + ' ' + q.numero : 'Otra fecha';
+      return [dia, q && q.hora, (x.zonas || []).join(' o ')].filter(Boolean).join(' · ');
+    };
 
     // Cuenta atrás a la revelación REAL de esta fecha, no al próximo sábado
     // de calendario: si una semana se mueve la cena, el reloj se movería con
@@ -1941,6 +2028,42 @@ class Component extends DCLogic {
         this.juegoDespierto(true);
         this.juegoIr({ paso: 'reglas', ronda: 0, idx: 0 });
       },
+
+      /**
+       * CAMBIARSE DE FECHA, sin cancelar.
+       *
+       * Michael, 29-10. Hasta hoy, para cambiar de dia habia que cancelar y
+       * volver a reservar, con el riesgo de perder el credito si quedaban
+       * menos de 24 horas. Ahora se mueve la misma reserva y el pago va con
+       * ella.
+       *
+       * Quien decide si se puede es el SERVIDOR, en `cambiarFecha` de
+       * /api/mi-mesa, y las fechas que ofrece son las mismas que aceptaria
+       * el POST. Calculandolo aqui —«faltan mas de 24 horas y no se ha
+       * revelado»— habria dos listas de a donde puedo irme, y la pantalla
+       * acabaria ofreciendo fechas que el servidor rechaza.
+       *
+       * Y cuando NO se puede se dice por que, en vez de esconder el boton:
+       * quien lo vio ayer y hoy no lo ve piensa que se rompio.
+       */
+      sePuedeCambiarFecha: !!cf && cf.puede === true,
+      hayMotivoCambio: !!cf && cf.puede === false && !!MOTIVO_CAMBIO[cf.motivo],
+      motivoCambio: (cf && MOTIVO_CAMBIO[cf.motivo]) || '',
+      abiertoCambio: !!this.state.abiertoCambio,
+      cambiando: !!this.state.cambiando,
+      falloCambio: this.state.falloCambio || '',
+      textoCambio: this.state.abiertoCambio ? 'Mejor no' : 'Cambiar de fecha',
+      tocarCambio: () => this.setState({
+        abiertoCambio: !this.state.abiertoCambio, falloCambio: ''
+      }),
+      destinosCambio: ((cf && cf.destinos) || []).map((x) => ({
+        texto: comoSeLeeFecha(x),
+        chip: 'display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;'
+          + 'min-height:52px;padding:0 18px;margin-top:8px;border-radius:16px;'
+          + 'border:1px solid rgba(20,52,42,.22);background:transparent;'
+          + 'font:500 15px/1.3 \'Inter Tight\',sans-serif;color:#14342A;text-align:left;cursor:pointer',
+        ir: () => this.cambiarDeFecha(cf.reservaId, x.eventoId)
+      })),
 
       // Cancelar existia solo en Inicio. Quien entra por el correo cae aqui,
       // y desde aqui no habia forma de soltar el puesto: habia que adivinar

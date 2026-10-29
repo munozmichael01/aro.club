@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { encolar } from '@/lib/correos'
-import { moverReserva, type MotivoDeNo } from '@/lib/mover-reserva'
+import { deshacerMovida, moverReserva, type MotivoDeNo } from '@/lib/mover-reserva'
 import { HORAS_DE_MARGEN } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
@@ -126,8 +126,25 @@ export async function POST(request: Request) {
     { eventoId: d.aEventoId },
   )
 
+  /**
+   * Y si el acuse no salió, SE DESHACE y se dice.
+   *
+   * Aquí es más claro todavía que en el panel: acaba de pulsar un botón. Si
+   * la movemos y no le llega nada, lo único que tiene es una pantalla que
+   * dice otra fecha y ninguna constancia. Mejor que no se mueva y lo vea.
+   */
   if (encolado !== 'encolado') {
-    console.error('[cambiar-fecha] movida pero sin acuse', user.id, encolado)
+    console.error('[cambiar-fecha] no se pudo avisar, deshaciendo', user.id, encolado)
+    const vuelta = await deshacerMovida(admin, r.reservaId, r.deshacerCon.volverA, r.deshacerCon)
+    return NextResponse.json(
+      {
+        error: vuelta
+          ? 'No pudimos mandarte la confirmación, así que no cambiamos nada. Inténtalo otra vez.'
+          : 'Algo salió mal a mitad. Escríbenos y lo arreglamos.',
+        motivo: 'sin-aviso',
+      },
+      { status: vuelta ? 409 : 500 },
+    )
   }
 
   return NextResponse.json({

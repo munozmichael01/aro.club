@@ -1,0 +1,21 @@
+-- El correo que avisa de que tu cena es otro día.
+--
+-- Michael, 28-10, al analizar lo de mover a alguien de fecha: «cambiarle el
+-- DÍA a alguien hay que avisárselo». Y 29-10, cuando la propia persona puede
+-- cambiarse desde Mi cena.
+--
+-- Tipo propio y no `mesa_cambiada`: aquel dice «cambió tu mesa», que es otra
+-- cosa, y mandarlo aquí dejaría a quien lo lea rápido creyendo que sigue
+-- yendo la misma noche.
+--
+-- ESTO FALTABA Y SE VIO PROBANDO, no leyendo el código. El tipo estaba
+-- declarado en `correos.ts`, la plantilla escrita y el armado hecho, pero sin
+-- el valor en el enum el INSERT de `encolar` se cae: la reserva se movía y el
+-- correo no se encolaba nunca. O sea, alguien cambiado de día sin enterarse,
+-- que es exactamente lo que este correo existe para evitar.
+--
+-- Es imprescindible y no lleva `List-Unsubscribe`: se manda aunque la persona
+-- esté de baja de los correos. Ofrecer apagar un aviso de que tu cena es otro
+-- día sería ofrecer algo que no ocurre.
+
+alter type email_kind_t add value if not exists 'fecha_cambiada';

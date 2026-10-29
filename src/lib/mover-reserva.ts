@@ -96,6 +96,13 @@ export type Movida =
     cambioDeDia: boolean
     /** Las dos propuestas se quedaron viejas. */
     hayQueRepartir: true
+    /** Dónde estaba y con qué rastro, por si hay que deshacerlo. */
+    deshacerCon: {
+      volverA: string
+      movida_de: string | null
+      movida_at: string | null
+      movida_por: string | null
+    }
   }
   | { ok: false; motivo: MotivoDeNo; error: string }
 
@@ -219,7 +226,7 @@ export async function moverReserva(
 
   const { data: suya } = await admin
     .from('bookings')
-    .select('id, status, movida_de')
+    .select('id, status, movida_de, movida_at, movida_por')
     .eq('profile_id', perfilId)
     .eq('event_id', desdeEventoId)
     .in('status', [...VIVAS])
@@ -331,5 +338,55 @@ export async function moverReserva(
     reservoEn: vuelveACasa ? null : (suya.movida_de ?? desdeEventoId),
     cambioDeDia,
     hayQueRepartir: true,
+    deshacerCon: {
+      volverA: desdeEventoId,
+      movida_de: suya.movida_de,
+      movida_at: suya.movida_at,
+      movida_por: suya.movida_por,
+    },
   }
+}
+
+/**
+ * DESHACER una movida porque no pudimos avisar.
+ *
+ * Mover a alguien de día y que el aviso no salga es dejarlo yendo la noche
+ * que no es, que es justo lo que ese correo existe para evitar. Entre las
+ * dos cosas malas —no moverla, o moverla a escondidas— la mala de verdad es
+ * la segunda: la primera la persona la ve en el momento y vuelve a
+ * intentarlo.
+ *
+ * No pasa por `moverReserva`: aquello comprueba el mundo otra vez —horas,
+ * revelación, precio— y aquí no hay nada que comprobar, solo devolver la
+ * fila a donde estaba. Volver a pasar por los candados podría negarse a
+ * deshacer lo que acabamos de hacer.
+ *
+ * Esto se escribió el 29-10, probando: el valor `fecha_cambiada` no estaba
+ * en el enum `email_kind_t` de la base, así que el INSERT se caía y la
+ * reserva se movía sin que saliera nada. La migración lo arregla; esto
+ * impide que vuelva a importar.
+ */
+export async function deshacerMovida(
+  admin: SupabaseClient<Database>,
+  reservaId: string,
+  volverA: string,
+  rastroAnterior: { movida_de: string | null; movida_at: string | null; movida_por: string | null },
+): Promise<boolean> {
+  const { error } = await admin
+    .from('bookings')
+    .update({
+      event_id: volverA,
+      movida_de: rastroAnterior.movida_de,
+      movida_at: rastroAnterior.movida_at,
+      movida_por: rastroAnterior.movida_por,
+    } as never)
+    .eq('id', reservaId)
+
+  if (error) {
+    // Y si ni siquiera se puede deshacer, que grite: esa persona está movida
+    // y sin avisar, y alguien lo tiene que arreglar a mano.
+    console.error('[mover-reserva] NO SE PUDO DESHACER', reservaId, error)
+    return false
+  }
+  return true
 }
