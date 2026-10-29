@@ -1464,9 +1464,10 @@
         // El juego en dos tiempos: la ronda ligera mientras llega la comida, y
         // el rescate cuando baja la conversación.
         { clave: 'hielo', desde: 'inicio', min: 35, nombre: 'Para romper el hielo',
-          // Quien abre el juego lee: es donde hacía falta decirlo, ahora
-          // que «La voz de Aro» ya no está.
-          texto: 'Mientras llega la comida, la primera ronda del juego. Quien lo abra lee las preguntas.' },
+          // Sin rondas y sin decir quién lee: desde el 29-10 el juego va por
+          // temáticas y la mesa elige, así que «la primera ronda» y «quien lo
+          // abra lee las preguntas» describían un juego que ya no existe.
+          texto: 'Mientras llega la comida, abran el juego y elijan una temática.' },
         { clave: 'tema', desde: 'inicio', min: 60, nombre: 'Si se acaba el tema',
           texto: 'Sigan con el juego donde lo dejaron. Se puede pasar.' },
         { clave: 'cuenta', desde: 'cierre', min: -30, nombre: 'Lo último y la cuenta',
@@ -1475,10 +1476,16 @@
           texto: 'Si hay ganas de seguir, busquen un sitio cerca. Si alguien te cayó bien, díselo.' },
       ],
 
-      /** Los dos que enlazan con el juego, con el texto de su botón. */
+      /**
+       * Los dos que enlazan con el juego, con el texto de su botón.
+       *
+       * Sin número de ronda desde el 29-10: con temáticas no hay una
+       * primera ni unas segundas, hay cinco y las elige la mesa. Lo dice la
+       * maqueta de la entrega de temáticas.
+       */
       delJuego: {
-        hielo: 'Abrir el juego · ronda 1',
-        tema: 'Seguir el juego · rondas 2 y 3',
+        hielo: 'Abrir el juego',
+        tema: 'Seguir el juego',
       },
 
       /** Los sitios para seguir, que elige operación en la ficha del local. */
@@ -1675,7 +1682,7 @@
           linea: 'Caracas y lo que tiene.',
           preguntas: [
             '¿Cuál es tu plan perfecto de domingo en Caracas?',
-            '¿Qué te trajo a Caracas, o qué te hizo quedarte?',
+            '¿Qué tiene Caracas que no cambiarías por nada?',
             '¿A qué sitio llevarías a alguien que acaba de llegar a la ciudad?',
             '¿Cuál es la mejor comida de calle que has probado aquí?',
             '¿Qué es lo más raro que te ha pasado en Caracas?',
