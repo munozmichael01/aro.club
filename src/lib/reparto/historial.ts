@@ -3,6 +3,7 @@ import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { Database } from '@/lib/supabase/database.types'
+import { DESDE_QUE_ES_REAL } from '@/lib/ops'
 import { todasLasFilas } from '@/lib/todas-las-filas'
 
 /**
@@ -22,6 +23,9 @@ import { todasLasFilas } from '@/lib/todas-las-filas'
  * quedó en la espera no ha cenado, y contarle esa reserva le diría a quien
  * reparte «2ª cena» sobre alguien que no ha venido nunca.
  */
+
+/** Cuántos ids caben en la URL por vuelta. El corte real ronda los 600. */
+const POR_TROZO_DE_IDS = 150
 
 /** Treinta días sin volver al mismo sitio. Michael, 28-10. */
 export const DIAS_SIN_REPETIR_LOCAL = 30
@@ -49,30 +53,69 @@ export async function historialDeMesas(
   const localesRecientesDe = new Map<string, Set<string>>()
   if (!ids.length) return { cenasDe, localesRecientesDe }
 
-  const sentados = await todasLasFilas<{ profile_id: string; dinner_tables: unknown }>(
-    (desde, hasta) => admin
-      .from('table_members')
-      .select('profile_id, dinner_tables!inner(restaurant_id, events!inner(starts_at))')
-      .in('profile_id', ids)
-      .range(desde, hasta),
-  )
+  /**
+   * POR TROZOS DE IDS, además de por tramos. Son dos topes distintos.
+   *
+   * El `in` viaja dentro de la URL, y con unos seiscientos uuid la petición
+   * se pasa de largo: PostgREST contesta 400, el cliente NO lanza y deja
+   * `data` en nulo. O sea, «esta gente no ha cenado nunca» para todo el
+   * pool. Es lo que dejó al club sin un solo «abrimos zona» desde el 17-10,
+   * y por eso existe `enTrozos`.
+   *
+   * Hoy un pool son treinta personas y no se nota. El día de una fecha
+   * grande sí, y entonces el veto de local dejaría de ver historia de nadie
+   * sin que fallara nada. Lo cazó el agente de la app auditando.
+   */
+  const sentados: { profile_id: string; dinner_tables: unknown }[] = []
+  for (let i = 0; i < ids.length; i += POR_TROZO_DE_IDS) {
+    const trozo = ids.slice(i, i + POR_TROZO_DE_IDS)
+    sentados.push(...await todasLasFilas<{ profile_id: string; dinner_tables: unknown }>(
+      (desde, hasta) => admin
+        .from('table_members')
+        .select('profile_id, dinner_tables!inner(restaurant_id, events!inner(starts_at))')
+        .in('profile_id', trozo)
+        .order('table_id')
+        .range(desde, hasta),
+    ))
+  }
 
   const desdeCuandoCuenta = cuandoEs - DIAS_SIN_REPETIR_LOCAL * 86400_000
 
   for (const fila of sentados) {
     const mesa = fila.dinner_tables as {
       restaurant_id?: string | null
-      events?: { starts_at?: string | null } | null
+      events?: { starts_at?: string | null; status?: string | null; es_prueba?: boolean | null } | null
     } | null
+
+    const cuando = mesa?.events?.starts_at ? Date.parse(mesa.events.starts_at) : null
+
+    /**
+     * LAS QUE NO CUENTAN COMO HABER CENADO.
+     *
+     * Una mesa de una fecha de PRUEBA, una de una fecha CANCELADA, y
+     * cualquiera anterior al 12-10, que es desde cuando hay gente real.
+     * Sentarse en una mesa de prueba no es haber cenado, y contarlo tiene
+     * dos efectos: le dice a quien reparte «2ª cena» de alguien que no ha
+     * venido nunca, y le frena una mesa por un local donde «ya cenó» en una
+     * prueba de principios de octubre.
+     *
+     * Y tiene que ser ANTERIOR a la cena que se mira: la mesa de esa misma
+     * fecha, si ya estaba publicada, no es historia suya, es ella misma.
+     *
+     * Lo cazó el agente de la app auditando.
+     */
+    if (cuando == null) continue
+    if (mesa?.events?.es_prueba) continue
+    if (mesa?.events?.status === 'cancelled') continue
+    if (cuando < Date.parse(DESDE_QUE_ES_REAL)) continue
+    if (cuando >= cuandoEs) continue
 
     cenasDe.set(fila.profile_id, (cenasDe.get(fila.profile_id) ?? 0) + 1)
 
     const local = mesa?.restaurant_id
-    const cuando = mesa?.events?.starts_at ? Date.parse(mesa.events.starts_at) : null
-    if (!local || cuando == null) continue
-    // Solo lo anterior a esta cena y dentro de la ventana. La mesa de ESTA
-    // misma fecha, si ya estaba publicada, no es un repetido: es ella misma.
-    if (cuando >= cuandoEs || cuando < desdeCuandoCuenta) continue
+    if (!local) continue
+    // Y de lo que cuenta, solo lo que cae dentro de la ventana del veto.
+    if (cuando < desdeCuandoCuenta) continue
     if (!localesRecientesDe.has(fila.profile_id)) {
       localesRecientesDe.set(fila.profile_id, new Set())
     }

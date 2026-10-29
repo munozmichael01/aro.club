@@ -40,6 +40,25 @@ const TRAMO = 1000
  *
  * Se para cuando un tramo viene incompleto, que es cómo se sabe que era el
  * último sin preguntar el total.
+ *
+ * ORDENA TÚ, por `id`, y eso no es decoración.
+ *
+ * `range()` sin `ORDER BY` deja el orden a criterio de Postgres, y entre un
+ * tramo y el siguiente pasa tiempo: si alguien escribe en esa tabla en
+ * medio, las filas se recolocan y el segundo tramo puede saltarse una o
+ * devolver otra dos veces. Nada falla, simplemente falta gente. En el envío
+ * de «equilibrar las mesas» una fila saltada es un correo que no sale o que
+ * sale repetido, y `verifications` ya se lee en dos tramos hoy.
+ *
+ * Ordenar desde aquí dentro no se puede: la consulta la arma quien llama y
+ * llega ya con su `range` puesto. Así que es responsabilidad suya, y por eso
+ * está escrito aquí arriba, que es donde se lee antes de usarla.
+ *
+ * Solo importa de verdad en lo que pasa de mil filas, que hoy es
+ * `verifications`. En lo que cabe en un tramo da igual, y se pone igual:
+ * la que no lo lleve el día que crezca será la que falle en silencio.
+ *
+ * Lo cazó el agente de la app auditando, el 29-10.
  */
 export async function todasLasFilas<T>(
   leer: (desde: number, hasta: number) => PromiseLike<{ data: T[] | null; error: unknown }>,

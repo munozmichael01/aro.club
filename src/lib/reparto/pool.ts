@@ -207,6 +207,8 @@ export async function construirPool(
         .from(tabla)
         .select(columnas)
         .in('profile_a', trozo)
+        .order('profile_a')
+        .order('profile_b')
         .range(desde, hasta) as never)
       // Y de esas, las que tienen al otro también dentro.
       salida.push(...filas.filter((f) => enElPool.has(f.profile_b)))
