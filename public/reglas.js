@@ -1660,12 +1660,28 @@
        * Las claves no cambian aunque cambie el nombre: de ellas cuelga lo
        * que cada mesa lleva jugado.
        *
+       * EL COLOR Y EL ICONO VIAJAN CON LA CLAVE, NO CON LA POSICIÓN. La
+       * entrega de Design trae cinco parejas de color e icono en su propio
+       * orden, y nuestro mazo tiene otro: cogiéndolos por posición, «Lo de
+       * aquí» se quedaba con la brújula de «Lo que te mueve» y «Lo que te
+       * mueve» con la luna de «Para cerrar». Le pasó a la app y lo cazó su
+       * revisor de fidelidad.
+       *
+       * «Lo de aquí» no existe en la entrega —es la temática que Timeleft no
+       * puede tener— así que lleva el verde claro que quedaba libre y un pin
+       * de mapa. La luna se queda sin usar.
+       *
+       * Viven aquí y no en cada pantalla por lo de siempre: son tres
+       * consumidores, y la tercera copia es la primera que diverge.
+       *
        * El mazo aprobado está en `app-mobile/JUEGO-v3-tematicas.md`, con el
        * porqué de cada entrada y de cada una que se cayó.
        */
       tematicas: [
         {
           clave: 'rapido',
+          /** Su color y su icono: el rayo. */
+          estilo: { fondo: '#E39C63', tinta: '#14342A', suave: '#14342A', icono: 'M13 2.5 4.5 13.5h6.5L10 21.5l8.5-11H12l1-8z' },
           nombre: 'Rápido y ligero',
           linea: 'Para romper el hielo sin pensarlo.',
           preguntas: [
@@ -1678,6 +1694,8 @@
         },
         {
           clave: 'aqui',
+          /** Su color y su icono: el pin. */
+          estilo: { fondo: '#C5D8CA', tinta: '#14342A', suave: '#14342A', icono: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z' },
           nombre: 'Lo de aquí',
           linea: 'Caracas y lo que tiene.',
           preguntas: [
@@ -1690,6 +1708,8 @@
         },
         {
           clave: 'historias',
+          /** Su color y su icono: el libro. */
+          estilo: { fondo: '#8F4515', tinta: '#FAF3E4', suave: '#F6D9B4', icono: 'M5 4.5A1.5 1.5 0 0 1 6.5 3H19v14H6.5A1.5 1.5 0 0 0 5 18.5zM5 18.5A1.5 1.5 0 0 0 6.5 20H19v-3' },
           nombre: 'Historias',
           linea: 'Las anécdotas que se cuentan solas.',
           preguntas: [
@@ -1702,6 +1722,8 @@
         },
         {
           clave: 'ysi',
+          /** Su color y su icono: el cruce de caminos. */
+          estilo: { fondo: '#F6D9B4', tinta: '#14342A', suave: '#14342A', icono: 'M6 3v5a6 6 0 0 0 6 6h6M15 11l3 3-3 3M6 21v-5' },
           nombre: '¿Y si…?',
           linea: 'Para imaginar, votar y discutir.',
           preguntas: [
@@ -1714,6 +1736,8 @@
         },
         {
           clave: 'temueve',
+          /** Su color y su icono: la brújula. */
+          estilo: { fondo: '#9CBBA6', tinta: '#14342A', suave: '#14342A', icono: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM15.5 8.5l-2 5-5 2 2-5z' },
           nombre: 'Lo que te mueve',
           linea: 'Un poco más de ti, sin exponerte.',
           preguntas: [

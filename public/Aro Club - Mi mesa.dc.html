@@ -306,81 +306,45 @@
           </sc-if>
         </div>
 
-        <!-- El juego de la mesa, con sus tres caras (entrega 21) -->
-        <div style="border-radius:22px;background:#14342A;color:#FAF3E4;overflow:hidden;margin-top:12px">
-
-          <!-- 1a · antes de la hora de la cena. Ni se despliega ni se toca:
-               se ve entero, apagado, con la hora a la que abre. -->
-          <sc-if value="{{ juegoNoAbreAun }}" hint-placeholder-val="{{ false }}">
-            <div style="padding:16px 18px 0">
-              <div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#FAF3E4">El juego de la mesa</div>
-              <div style="font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">{{ resumenJuegoCerrado }}</div>
-            </div>
-            <div style="padding:0 18px;opacity:.45">
-              <!-- Sin el «cuándo»: antes de la hora, decir «mientras llega
-                   la comida» al lado de un candado es contar dos veces que
-                   todavía no toca. -->
-              <sc-for list="{{ rondas }}" as="r" hint-placeholder-count="3">
-                <div style="display:grid;grid-template-columns:30px minmax(0,1fr);align-items:start;gap:8px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)">
-                  <div style="font:400 20px/1.1 'Young Serif',Georgia,serif;color:#E39C63">{{ r.n }}</div>
-                  <div style="display:flex;flex-direction:column;gap:4px">
-                    <div style="font:400 18px/1.15 'Young Serif',Georgia,serif">{{ r.titulo }}</div>
-                    <div style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#C5D8CA">{{ r.bajada }}</div>
-                  </div>
-                </div>
-              </sc-for>
-            </div>
-            <div style="margin:14px 18px 18px;display:flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:10px 14px;border:1px solid rgba(250,243,228,.3);border-radius:999px;text-align:center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E39C63" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><rect x="4.5" y="10.5" width="15" height="10" rx="2"></rect><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path></svg>
-              <span style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#FAF3E4">{{ juegoCuando }}</span>
-            </div>
-          </sc-if>
-
-          <!-- 1b y 1c · jugado. No queda botón: lo que hay es la frase del
-               final y un enlace por si quieren repetirlo. -->
-          <sc-if value="{{ juegoJugado }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;align-items:flex-start;gap:12px;padding:16px 18px">
-              <div style="flex:1;min-width:0">
-                <div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#FAF3E4">El juego de la mesa</div>
-                <div style="font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">{{ resumenJugado }}</div>
-              </div>
-              <span style="flex:0 0 auto;display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(156,187,166,.5);color:#9CBBA6;font:600 11px/1 'Inter Tight',sans-serif">Hecho</span>
-            </div>
-            <div style="padding:6px 18px 18px;display:flex;flex-direction:column;gap:14px;border-top:1px solid rgba(250,243,228,.15)">
-              <div style="font:400 26px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#FAF3E4;margin-top:8px">Hasta aquí el juego. <span style="color:#E39C63">Lo demás es suyo.</span></div>
-              <button onClick="{{ volverAJugar }}" style="align-self:flex-start;background:transparent;border:0;padding:6px 0;min-height:44px;color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">Volver a jugar</button>
-            </div>
-          </sc-if>
-
-          <!-- Y la normal, que es la de jugar -->
-          <sc-if value="{{ juegoNormal }}" hint-placeholder-val="{{ true }}">
-            <button onClick="{{ tJuego }}" aria-expanded="{{ oJuegoAria }}" style="display:flex;width:100%;box-sizing:border-box;align-items:center;gap:12px;padding:16px 18px;min-height:44px;background:transparent;border:0;text-align:left;cursor:pointer">
-              <span style="flex:1;min-width:0">
-                <span style="display:block;font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#FAF3E4">El juego de la mesa</span>
-                <span style="display:block;font:400 13px/1.35 'Inter Tight',sans-serif;color:#C5D8CA;margin-top:3px">{{ resumenJuego }}</span>
-              </span>
-              <span style="{{ sJuego }}">{{ fJuego }}</span>
-            </button>
-            <sc-if value="{{ oJuego }}" hint-placeholder-val="{{ false }}">
-              <div style="padding:0 18px 18px;display:flex;flex-direction:column">
-                <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;padding-bottom:6px">{{ bajadaJuego }}</div>
-                <sc-for list="{{ rondas }}" as="r" hint-placeholder-count="3">
-                  <div style="display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:start;gap:8px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)">
-                    <div style="font:400 20px/1.1 'Young Serif',Georgia,serif;color:#E39C63">{{ r.n }}</div>
-                    <div style="display:flex;flex-direction:column;gap:4px">
-                      <div style="font:400 18px/1.15 'Young Serif',Georgia,serif">{{ r.titulo }}</div>
-                      <div style="font:600 10px/1.3 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">{{ r.cuando }}</div>
-                      <div style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#C5D8CA">{{ r.bajada }}</div>
-                    </div>
-                    <button onClick="{{ r.ir }}" style="{{ r.estiloEstado }}">{{ r.estado }}</button>
-                  </div>
-                </sc-for>
-                <button onClick="{{ seguirJuego }}" style="margin-top:8px;display:flex;align-items:center;justify-content:center;min-height:48px;border:0;border-radius:999px;background:#E39C63;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">{{ ctaJuego }}</button>
-                <sc-if value="{{ hayAvanceJuego }}" hint-placeholder-val="{{ false }}">
-                  <button onClick="{{ reiniciarJuego }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;margin-top:4px;background:transparent;border:0;color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">Empezar de nuevo</button>
-                </sc-if>
-              </div>
+        <!-- EL JUEGO DE LA MESA, POR TEMÁTICAS (entrega temáticas, M1-M5).
+             Clara y no oscura: es una tarjeta de Mi mesa, no una pantalla de
+             juego. Cerrada dice cuántas temáticas hay y cómo van; abierta,
+             cuáles son. Antes de la hora, solo la cabecera y el candado. -->
+        <div style="border-radius:22px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);overflow:hidden;margin-top:12px">
+          <button onClick="{{ tJuego }}" aria-expanded="{{ oJuegoAria }}" style="display:flex;width:100%;box-sizing:border-box;align-items:center;gap:12px;padding:15px 18px;min-height:44px;background:transparent;border:0;text-align:left;cursor:{{ cursorJuego }}">
+            <span style="display:flex;flex:none">
+              <sc-for list="{{ puntosJuego }}" as="d" hint-placeholder-count="5"><span style="width:14px;height:14px;border-radius:7px;background:{{ d.bg }};border:2px solid #FFF8EA;margin-right:-5px;opacity:{{ d.op }}"></span></sc-for>
+            </span>
+            <span style="flex:1;min-width:0;margin-left:6px">
+              <span style="display:block;font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#14342A">El juego de la mesa</span>
+              <span style="display:block;font:400 13px/1.35 'Inter Tight',sans-serif;color:#33513F">{{ resumenJuego }}</span>
+            </span>
+            <sc-if value="{{ juegoCerrado }}" hint-placeholder-val="{{ false }}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#456352" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2"></rect><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path></svg>
             </sc-if>
+            <sc-if value="{{ juegoAbierto }}" hint-placeholder-val="{{ true }}">
+              <span style="width:32px;height:32px;border-radius:16px;background:#F2E9D5;display:flex;align-items:center;justify-content:center;font:500 18px/1 'Inter Tight',sans-serif;color:#14342A">{{ fJuego }}</span>
+            </sc-if>
+          </button>
+          <sc-if value="{{ oJuego }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 18px 18px;display:flex;flex-direction:column;gap:12px">
+              <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ bajadaJuego }}</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <sc-for list="{{ temasTarjeta }}" as="t" hint-placeholder-count="5">
+                  <button onClick="{{ t.ir }}" style="border:0;text-align:left;border-radius:16px;background:{{ t.bg }};color:{{ t.ink }};padding:12px;display:flex;flex-direction:column;gap:10px;min-height:96px;box-sizing:border-box;opacity:{{ t.op }};cursor:pointer">
+                    <span style="display:flex;align-items:center;justify-content:space-between">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.ink }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.ico }}"></path></svg>
+                      <span style="font:700 9.5px/1 'Inter Tight',sans-serif;letter-spacing:.1em">{{ t.estado }}</span>
+                    </span>
+                    <span style="margin-top:auto;font:400 16px/1.1 'Young Serif',Georgia,serif">{{ t.n }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <button onClick="{{ seguirJuego }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;border:0;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">{{ ctaJuego }}</button>
+              <sc-if value="{{ hayAvanceJuego }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ verTodasTematicas }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;background:transparent;border:0;color:#1B5138;font:600 14px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">Ver todas las temáticas</button>
+              </sc-if>
+            </div>
           </sc-if>
         </div>
 
@@ -762,115 +726,156 @@
   </div>
 </sc-if>
 
-<!-- El juego, a pantalla completa por encima de Mi mesa (entrega 18).
-     Centrado a 430 px sobre #14342A, como pide la entrega para la web. -->
+<!-- EL JUEGO, a pantalla completa por encima de Mi mesa.
+     Por temáticas desde el 29-10 (entrega temáticas, E, P, Q y F). Cuatro
+     pasos de una misma capa y no cuatro rutas: la web no tiene pantalla
+     propia de juego y nunca la ha tenido. El fondo lo pone la temática,
+     salvo en elegir y en el cierre, que van sobre el verde de Aro. -->
 <sc-if value="{{ enJuego }}" hint-placeholder-val="{{ false }}">
-  <div style="position:fixed;inset:0;z-index:90;background:#14342A;display:flex;justify-content:center;overflow:auto">
-    <div style="width:100%;max-width:430px;display:flex;flex-direction:column;padding:max(28px,env(safe-area-inset-top)) 24px max(30px,env(safe-area-inset-bottom));color:#FAF3E4;min-height:100%">
+  <div style="position:fixed;inset:0;z-index:90;background:{{ jFondo }};display:flex;justify-content:center;overflow:auto">
+    <div style="position:relative;width:100%;max-width:430px;display:flex;flex-direction:column;padding:max(28px,env(safe-area-inset-top)) 22px max(30px,env(safe-area-inset-bottom));color:{{ jTinta }};min-height:100%;box-sizing:border-box">
+
+      <sc-if value="{{ jEsPortada }}" hint-placeholder-val="{{ false }}">
+        <svg viewBox="0 0 24 24" width="460" height="460" fill="none" stroke="{{ jTinta }}" stroke-width=".9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position:absolute;right:-150px;top:150px;opacity:.1;pointer-events:none"><path d="{{ jIcono }}"></path></svg>
+      </sc-if>
 
       <sc-if value="{{ jHayCabecera }}" hint-placeholder-val="{{ true }}">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px">
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#9CBBA6">{{ jCabecera }}</div>
-            <div style="font:500 14px/1.2 'Inter Tight',sans-serif;color:#E4EDE6">{{ jSubcabecera }}</div>
-          </div>
-          <button onClick="{{ jSalir }}" aria-label="Salir del juego" style="flex:0 0 auto;width:44px;height:44px;border-radius:999px;border:1.5px solid rgba(250,243,228,.35);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="border-color:#FAF3E4">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        <div style="position:relative;display:flex;align-items:center;gap:10px;min-height:44px">
+          <sc-if value="{{ jHayVolver }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ jAlElegir }}" style="display:flex;align-items:center;gap:6px;min-height:44px;padding:0 14px 0 10px;border-radius:999px;border:1.5px solid {{ jTinta }};background:none;color:{{ jTinta }};font:600 14px/1 'Inter Tight',sans-serif;cursor:pointer">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ jTinta }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>Temáticas
+            </button>
+          </sc-if>
+          <sc-if value="{{ jEsElegir }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1;font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">EL JUEGO DE LA MESA</div>
+          </sc-if>
+          <div style="flex:1"></div>
+          <button onClick="{{ jSalir }}" aria-label="Salir del juego" style="flex:0 0 auto;width:44px;height:44px;border-radius:22px;border:1.5px solid {{ jBordeX }};background:none;display:flex;align-items:center;justify-content:center;cursor:pointer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ jTinta }}" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
           </button>
         </div>
       </sc-if>
 
-      <sc-if value="{{ jEsReglas }}" hint-placeholder-val="{{ true }}">
-        <div style="margin-top:28px;font:400 clamp(30px,8vw,36px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.025em">{{ jTituloReglas }}</div>
-        <div style="margin-top:18px">
-          <sc-for list="{{ jReglas }}" as="r" hint-placeholder-count="4">
-            <div style="display:grid;grid-template-columns:30px minmax(0,1fr);gap:6px;padding:12px 0;border-top:1px solid rgba(250,243,228,.15)">
-              <div style="font:400 20px/1.2 'Young Serif',Georgia,serif;color:#E39C63">{{ r.n }}</div>
-              <div style="font:400 18px/1.4 'Inter Tight',sans-serif;color:#FAF3E4;text-wrap:pretty">{{ r.texto }}</div>
-            </div>
+      <sc-if value="{{ jEsElegir }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:8px;padding:18px 4px 0">
+          <div style="font:400 clamp(30px,9vw,38px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.025em">{{ jTitulo }}</div>
+          <div style="font:400 15px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ jBajada }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px">
+          <sc-for list="{{ jTemas }}" as="t" hint-placeholder-count="5">
+            <button onClick="{{ t.ir }}" style="border:0;text-align:left;border-radius:24px;background:{{ t.bg }};color:{{ t.ink }};padding:12px 16px 12px 14px;display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:14px;align-items:center;min-height:{{ t.alto }}px;box-sizing:border-box;cursor:pointer;opacity:{{ t.op }}">
+              <span style="width:48px;height:48px;border-radius:24px;background:{{ t.ink }};display:flex;align-items:center;justify-content:center">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ t.bg }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.ico }}"></path></svg>
+              </span>
+              <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                <span style="font:400 22px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.015em">{{ t.n }}</span>
+                <span style="font:400 13.5px/1.35 'Inter Tight',sans-serif;color:{{ t.sub }};text-wrap:pretty">{{ t.l }}</span>
+              </span>
+              <span style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+                <sc-if value="{{ t.esJugada }}" hint-placeholder-val="{{ false }}">
+                  <span style="display:flex;align-items:center;gap:5px;background:{{ t.ink }};color:{{ t.bg }};border-radius:999px;padding:6px 9px 6px 7px;font:700 10.5px/1 'Inter Tight',sans-serif;letter-spacing:.1em;white-space:nowrap"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{ t.bg }}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>JUGADA</span>
+                </sc-if>
+                <sc-if value="{{ t.esCurso }}" hint-placeholder-val="{{ false }}">
+                  <span style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+                    <span style="font:700 10.5px/1 'Inter Tight',sans-serif;letter-spacing:.1em;white-space:nowrap">VAN POR LA {{ t.va }}</span>
+                    <span style="display:flex;gap:3px"><sc-for list="{{ t.barras }}" as="b" hint-placeholder-count="5"><span style="width:9px;height:4px;border-radius:2px;background:{{ t.ink }};opacity:{{ b.op }}"></span></sc-for></span>
+                  </span>
+                </sc-if>
+                <sc-if value="{{ t.esNueva }}" hint-placeholder-val="{{ true }}">
+                  <span style="font:600 12px/1 'Inter Tight',sans-serif;color:{{ t.sub }};white-space:nowrap">{{ t.cuantas }}</span>
+                </sc-if>
+              </span>
+            </button>
           </sc-for>
         </div>
-        <div style="margin-top:auto;padding-top:28px;display:flex;flex-direction:column;gap:10px">
-          <button onClick="{{ jEmpezar }}" style="min-height:56px;border:0;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#E39C63">{{ jTextoEmpezar }}</button>
-          <div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;font:400 14px/1 'Inter Tight',sans-serif;color:#C5D8CA">
-            <span>¿Ya empezaron?</span>
-            <button onClick="{{ jRonda2 }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:999px;border:1px solid rgba(250,243,228,.35);background:none;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="border-color:#FAF3E4">Ronda 2</button>
-            <button onClick="{{ jRonda3 }}" style="display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:999px;border:1px solid rgba(250,243,228,.35);background:none;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="border-color:#FAF3E4">Ronda 3</button>
+        <div style="margin-top:auto;padding-top:20px;display:flex;align-items:center;justify-content:center;gap:8px;font:400 12.5px/1.4 'Inter Tight',sans-serif;color:#9CBBA6;text-align:center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CBBA6" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+          La pantalla queda encendida mientras juegan.
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ jEsPortada }}" hint-placeholder-val="{{ false }}">
+        <div style="position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;gap:20px">
+          <div style="width:76px;height:76px;border-radius:38px;background:{{ jTinta }};display:flex;align-items:center;justify-content:center">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="{{ jFondo }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ jIcono }}"></path></svg>
           </div>
+          <sc-if value="{{ jHayChip }}" hint-placeholder-val="{{ false }}">
+            <div style="align-self:flex-start;display:flex;align-items:center;gap:6px;border-radius:999px;background:{{ jTinta }};color:{{ jFondo }};padding:8px 12px;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em">{{ jChip }}</div>
+          </sc-if>
+          <div style="font:400 clamp(44px,14vw,60px)/.96 'Young Serif',Georgia,serif;letter-spacing:-.035em;text-wrap:balance">{{ jNombre }}</div>
+          <div style="font:400 clamp(17px,5vw,20px)/1.4 'Inter Tight',sans-serif;color:{{ jSuave }};text-wrap:pretty;max-width:300px">{{ jLinea }}</div>
+          <div style="display:flex;align-items:center;gap:14px;font:600 14px/1 'Inter Tight',sans-serif;color:{{ jSuave }}">
+            <span>{{ jCuantas }}</span><span style="width:4px;height:4px;border-radius:2px;background:{{ jSuave }}"></span><span>Se puede pasar cualquiera</span>
+          </div>
+        </div>
+        <div style="position:relative;display:flex;flex-direction:column;gap:10px">
+          <button onClick="{{ jEmpezar }}" style="display:flex;align-items:center;justify-content:center;min-height:58px;border:0;border-radius:999px;background:{{ jTinta }};color:{{ jFondo }};font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer">{{ jPrincipal }}</button>
+          <sc-if value="{{ jHaySecundario }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ jSecundarioIr }}" style="display:flex;align-items:center;justify-content:center;min-height:48px;border:0;background:none;color:{{ jTinta }};font:600 15px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">{{ jSecundario }}</button>
+          </sc-if>
         </div>
       </sc-if>
 
       <sc-if value="{{ jEsPregunta }}" hint-placeholder-val="{{ false }}">
-        <!-- Melocotón las vistas, incluida la de ahora. Estaban en crema y
-             eso es el color de un botón, no el de un progreso: en la
-             maqueta (entrega 20, la barra de 4h) es #E39C63. Lo cazó el
-             agente de la app comparando las dos pantallas. -->
-        <div style="display:flex;gap:6px;margin-top:22px">
-          <sc-for list="{{ jProgreso }}" as="d" hint-placeholder-count="2">
-            <sc-if value="{{ d.hecha }}" hint-placeholder-val="{{ false }}"><div style="flex:1;height:4px;border-radius:999px;background:#E39C63"></div></sc-if>
-            <sc-if value="{{ d.pendiente }}" hint-placeholder-val="{{ true }}"><div style="flex:1;height:4px;border-radius:999px;background:rgba(250,243,228,.2)"></div></sc-if>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:26px">
+          <div style="width:30px;height:30px;border-radius:15px;background:{{ jTinta }};display:flex;align-items:center;justify-content:center;flex:none">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{{ jFondo }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ jIcono }}"></path></svg>
+          </div>
+          <div style="font:400 18px/1.1 'Young Serif',Georgia,serif">{{ jNombre }}</div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:16px">
+          <sc-for list="{{ jBarras }}" as="b" hint-placeholder-count="5"><button onClick="{{ b.ir }}" aria-label="{{ b.rotulo }}" style="flex:1;height:5px;border:0;padding:0;border-radius:3px;background:{{ jTinta }};opacity:{{ b.op }};cursor:pointer"></button></sc-for>
+        </div>
+        <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;margin-top:14px;color:{{ jSuave }}">PREGUNTA {{ jN }} DE {{ jTotal }}</div>
+        <div style="flex:1;display:flex;align-items:center;padding:20px 0">
+          <div style="font:400 {{ jTamano }}px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.025em;text-wrap:pretty">{{ jPregunta }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;gap:12px">
+            <button onClick="{{ jAtras }}" aria-label="Pregunta anterior" style="flex:none;width:58px;height:58px;border-radius:29px;border:1.5px solid {{ jTinta }};background:none;opacity:{{ jAtrasOp }};display:flex;align-items:center;justify-content:center;cursor:pointer">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{ jTinta }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+            </button>
+            <button onClick="{{ jSiguiente }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:10px;min-height:58px;border:0;border-radius:999px;background:{{ jTinta }};color:{{ jFondo }};font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer">{{ jSigTexto }}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{ jFondo }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
+          </div>
+          <div style="text-align:center;font:400 13px/1.4 'Inter Tight',sans-serif;color:{{ jSuave }}">Si a alguien no le provoca, pasa. No pasa nada.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ jEsFinTema }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:14px;padding:18px 4px 0">
+          <div style="display:flex;align-items:center;gap:8px;font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ jTinta }}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>{{ jSello }}
+          </div>
+          <div style="font:400 clamp(34px,11vw,44px)/1 'Young Serif',Georgia,serif;letter-spacing:-.03em;text-wrap:balance">{{ jFinTitulo }}</div>
+          <div style="font:400 16px/1.45 'Inter Tight',sans-serif;color:{{ jSuave }};text-wrap:pretty">{{ jFinTexto }}</div>
+        </div>
+        <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;margin:26px 4px 10px;color:{{ jSuave }}">{{ jOtrasTitulo }}</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ jOtras }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.ir }}" style="text-align:left;border-radius:20px;background:{{ t.bg }};color:{{ t.ink }};padding:12px 14px 12px 12px;display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;opacity:{{ t.op }};border:1.5px solid {{ t.borde }};cursor:pointer">
+              <span style="width:40px;height:40px;border-radius:20px;background:{{ t.ink }};display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.bg }}" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.ico }}"></path></svg></span>
+              <span style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font:400 19px/1.05 'Young Serif',Georgia,serif">{{ t.n }}</span><span style="font:500 12px/1.2 'Inter Tight',sans-serif;color:{{ t.sub }}">{{ t.meta }}</span></span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.ink }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+            </button>
           </sc-for>
         </div>
-        <div style="margin-top:8px;font:600 12px/1 'Inter Tight',sans-serif;color:#9CBBA6">{{ jContador }}</div>
-        <div style="flex:1;display:flex;align-items:center;padding:28px 0">
-          <div style="font:400 clamp(30px,8.5vw,42px)/1.08 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#FAF3E4;text-wrap:balance">{{ jPregunta }}</div>
-        </div>
-        <div style="font:400 15px/1.4 'Inter Tight',sans-serif;color:#C5D8CA;margin-bottom:16px">{{ jNotaPregunta }}</div>
-        <div style="display:flex;gap:12px">
-          <button onClick="{{ jAtras }}" aria-label="Pregunta anterior" style="flex:0 0 auto;width:58px;height:58px;border-radius:999px;border:1.5px solid rgba(250,243,228,.45);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="border-color:#FAF3E4">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
-          </button>
-          <button onClick="{{ jSiguiente }}" style="flex:1;min-height:58px;border:0;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#E39C63">Siguiente</button>
+        <div style="margin-top:auto;padding-top:16px">
+          <button onClick="{{ jTerminarJuego }}" style="width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:center;min-height:56px;border-radius:999px;border:1.5px solid {{ jTinta }};background:none;color:{{ jTinta }};font:600 16px/1 'Inter Tight',sans-serif;cursor:pointer">Terminar el juego</button>
         </div>
       </sc-if>
 
-      <sc-if value="{{ jEsCambio }}" hint-placeholder-val="{{ false }}">
-        <!-- Sin cabecera arriba, el renglón de «ronda 1 de 3 · terminada»
-             es lo único que sitúa: va el primero y no en medio. -->
-        <sc-if value="{{ jCambioTrasPrimera }}" hint-placeholder-val="{{ false }}">
-          <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#9CBBA6">{{ jCambioEyebrowSolo }}</div>
-        </sc-if>
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:20px;padding:34px 0">
-          <!-- Sin el renglón cuando la cabecera ya lo dice: en la pausa de
-               después de la primera ronda, «Ronda 1 terminada» arriba y
-               «Ronda 1 de 3 · terminada» aquí es lo mismo dos veces. -->
-          <sc-if value="{{ hayEyebrowCambio }}" hint-placeholder-val="{{ true }}">
-            <div style="font:700 13px/1 'Inter Tight',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#E39C63">{{ jCambioEyebrow }}</div>
-          </sc-if>
-          <div style="font:400 clamp(36px,10vw,50px)/1 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#FAF3E4;text-wrap:balance">{{ jCambioNombre }}</div>
-          <div style="font:400 clamp(17px,4.5vw,20px)/1.4 'Inter Tight',sans-serif;color:#E4EDE6;text-wrap:pretty">{{ jCambioBajada }}</div>
+      <sc-if value="{{ jEsCierre }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:20px;padding:0 4px">
+          <svg viewBox="0 0 240 240" width="96" height="96" aria-hidden="true"><circle cx="120" cy="120" r="86" fill="none" stroke="#FAF3E4" stroke-width="20"></circle><circle cx="206" cy="120" r="25" fill="#E39C63"></circle><circle cx="163" cy="194.5" r="25" fill="#9CBBA6"></circle><circle cx="77" cy="194.5" r="25" fill="#F6D9B4"></circle><circle cx="34" cy="120" r="25" fill="#C5D8CA"></circle><circle cx="77" cy="45.5" r="25" fill="#E39C63"></circle><circle cx="163" cy="45.5" r="25" fill="#9CBBA6"></circle></svg>
+          <div style="font:400 clamp(38px,13vw,52px)/.98 'Young Serif',Georgia,serif;letter-spacing:-.035em">Ahora, a conversar.</div>
+          <div style="font:400 17px/1.5 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">Guarden el teléfono. El juego queda en Mi mesa por si se acaba el tema, y recuerda dónde iban.</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:16px">
-          <div style="border-top:1px solid rgba(250,243,228,.18);padding-top:16px;font:400 15px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ jCambioLector }}</div>
-
-          <!-- Después de la primera ronda se vuelve a la mesa: el botón
-               lleno devuelve al paso a paso y seguir queda debajo. -->
-          <sc-if value="{{ jCambioTrasPrimera }}" hint-placeholder-val="{{ false }}">
-            <button onClick="{{ jVolverAlPaso }}" style="min-height:58px;border:0;border-radius:999px;background:#E39C63;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#FAF3E4">Volver al paso a paso</button>
-            <button onClick="{{ jSeguirRonda }}" style="min-height:52px;border:0;background:none;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">{{ jCambioSeguirDespues }}</button>
-          </sc-if>
-
-          <!-- Las pausas de en medio: un botón y adelante. -->
-          <sc-if value="{{ jCambioNormal }}" hint-placeholder-val="{{ true }}">
-            <button onClick="{{ jSeguirRonda }}" style="min-height:58px;border:0;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#E39C63">{{ jCambioBoton }}</button>
-          </sc-if>
-
-          <!-- La última es opcional: se pregunta, y terminar aquí es una
-               salida de verdad, no un «cancelar» escondido. -->
-          <sc-if value="{{ jCambioOpcional }}" hint-placeholder-val="{{ false }}">
-            <button onClick="{{ jSeguirRonda }}" style="min-height:58px;border:0;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#E39C63">{{ jCambioSeguir }}</button>
-            <button onClick="{{ jTerminarAqui }}" style="min-height:48px;border:0;background:none;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">Terminar aquí</button>
-          </sc-if>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button onClick="{{ jSalir }}" style="display:flex;align-items:center;justify-content:center;min-height:56px;border:0;border-radius:999px;background:#E39C63;color:#14342A;font:600 16px/1 'Inter Tight',sans-serif;cursor:pointer">Volver a Mi mesa</button>
+          <button onClick="{{ jAlElegir }}" style="display:flex;align-items:center;justify-content:center;min-height:48px;border:0;background:none;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:4px;cursor:pointer">Ver las temáticas</button>
         </div>
-      </sc-if>
-
-      <sc-if value="{{ jEsFinal }}" hint-placeholder-val="{{ false }}">
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:28px;padding:34px 0">
-          <svg width="88" height="88" viewBox="0 0 240 240" aria-hidden="true"><circle cx="120" cy="120" r="86" fill="none" stroke="#FAF3E4" stroke-width="24"></circle><circle cx="206" cy="120" r="25" fill="#E39C63"></circle><circle cx="163" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="34" cy="120" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="45.5" r="25" fill="#FAF3E4"></circle><circle cx="163" cy="45.5" r="25" fill="#FAF3E4"></circle></svg>
-          <div style="font:400 clamp(36px,10vw,50px)/1 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#FAF3E4">Hasta aquí el juego. <span style="color:#E39C63">Lo demás es suyo.</span></div>
-          <div style="font:400 clamp(17px,4.5vw,20px)/1.4 'Inter Tight',sans-serif;color:#E4EDE6">Ya pueden guardar el teléfono.</div>
-        </div>
-        <button onClick="{{ jSalir }}" style="min-height:56px;border:0;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#E39C63">Volver a Mi mesa</button>
       </sc-if>
 
     </div>
@@ -1095,16 +1100,36 @@ class Component extends DCLogic {
     return { abre: t0 + J.abreMin * 60000, cierra: t0 + J.cierraMin * 60000 };
   }
 
-  /** Lo último que vio ESTE teléfono, para retomar donde lo dejó. */
-  juegoGuardado(mesaId) {
+  /**
+   * LO QUE ESTA MESA LLEVA JUGADO, EN ESTE TELÉFONO.
+   *
+   * `{ clave: { idx, jugada } }`: por dónde va cada temática y si ya la
+   * terminaron. No se comparte con la app ni con los otros cinco teléfonos,
+   * igual que pasaba con las rondas: cada quien lleva su cuenta, y lo que
+   * de verdad sincroniza la mesa es que están sentados juntos.
+   *
+   * Clave nueva —`aro.juego2`— y no la de antes, a propósito. Lo guardado
+   * con rondas tiene otra forma, `{paso, ronda, idx}`, y leerlo como si
+   * fuera esto dejaría a quien jugó esta tarde dentro de una temática que
+   * no existe. La vieja se queda donde está y nadie la lee.
+   */
+  juegoAvance(mesaId) {
+    if (!mesaId) return {};
     try {
-      const v = window.localStorage.getItem('aro.juego.' + mesaId);
-      return v ? JSON.parse(v) : null;
-    } catch (e) { return null; }
+      const v = window.localStorage.getItem('aro.juego2.' + mesaId);
+      const d = v ? JSON.parse(v) : null;
+      return (d && typeof d === 'object') ? d : {};
+    } catch (e) { return {}; }
   }
 
-  juegoGuardar(mesaId, j) {
-    try { window.localStorage.setItem('aro.juego.' + mesaId, JSON.stringify(j)); } catch (e) {}
+  /** Apunta por dónde va una temática. `jugada` solo sube, nunca baja. */
+  juegoApuntar(mesaId, clave, idx, jugada) {
+    if (!mesaId || !clave) return {};
+    const todo = this.juegoAvance(mesaId);
+    const antes = todo[clave] || {};
+    todo[clave] = { idx: Math.max(0, idx | 0), jugada: !!jugada || !!antes.jugada };
+    try { window.localStorage.setItem('aro.juego2.' + mesaId, JSON.stringify(todo)); } catch (e) {}
+    return todo;
   }
 
   /**
@@ -1126,30 +1151,27 @@ class Component extends DCLogic {
     }).catch(() => {});
   }
 
+  /**
+   * Mover el juego de paso, y apuntar lo que haya que apuntar.
+   *
+   * Lo que se guarda NO es el paso: es el avance de la temática. Dónde
+   * está la pantalla ahora mismo da igual al volver mañana; por qué
+   * pregunta iban, no. Así «Temáticas» y la X guardan igual, que es lo que
+   * pide la maqueta: las dos salidas conservan dónde quedaron.
+   */
   juegoIr(j) {
     const d = this.state.datos;
-    /**
-     * El final SÍ se guarda, desde la entrega 21.
-     *
-     * Antes se anotaba el principio en su lugar, porque si no, quien
-     * terminaba el juego y volvía a abrirlo caía otra vez en «Hasta aquí el
-     * juego» sin forma de jugar de nuevo. Ahora la tarjeta tiene su propia
-     * cara para eso —«Jugado · 3 de 3 rondas», con «Volver a jugar»—, así
-     * que guardar el final es lo que la hace aparecer.
-     *
-     * Y las rondas hechas se arrastran: `j` dice dónde se está, no qué se ha
-     * jugado ya.
-     */
-    const antes = this.state.juego;
-    const paso = Object.assign({}, j, { hechas: j.hechas || (antes && antes.hechas) || [] });
-    if (d && d.mesaId) this.juegoGuardar(d.mesaId, paso);
-    this.setState({ juego: paso });
+    const mesaId = d && d.mesaId;
+    if (mesaId && j && j.tema && (j.paso === 'pregunta' || j.paso === 'finTema')) {
+      this.juegoApuntar(mesaId, j.tema, j.paso === 'finTema' ? 0 : (j.idx || 0), j.paso === 'finTema');
+    }
+    this.setState({ juego: j });
   }
 
-  /** Olvida el avance de esta mesa en este teléfono: «volver a jugar». */
+  /** Olvida el avance de esta mesa en este teléfono. */
   juegoOlvidar(mesaId) {
     if (mesaId) {
-      try { window.localStorage.removeItem('aro.juego.' + mesaId); } catch (e) {}
+      try { window.localStorage.removeItem('aro.juego2.' + mesaId); } catch (e) {}
     }
     this.setState({ juego: null });
   }
@@ -1396,55 +1418,107 @@ class Component extends DCLogic {
           ? (minAbre === 30 ? 'media hora antes ' + DEL_PLAN : minAbre + ' minutos antes ' + DEL_PLAN)
           : (minAbre === 30 ? 'media hora después de empezar' : minAbre + ' minutos después de empezar'));
     const jg = this.state.juego;
-    const rondaIdx = jg ? jg.ronda : 0;
-    const R = J.rondas[rondaIdx] || J.rondas[0];
-    const preguntas = (dJ && dJ.mesaId) ? AroReglas.preguntasDeRonda(dJ.mesaId, rondaIdx) : [];
-    const ultimaRonda = J.rondas.length - 1;
+    const TEMAS = J.tematicas || [];
+    const avance = this.juegoAvance(dJ && dJ.mesaId);
+    const deClave = (c) => TEMAS.filter((t) => t.clave === c)[0] || null;
+    const comoVa = (t) => avance[t.clave] || {};
+    const jugadas = TEMAS.filter((t) => comoVa(t).jugada);
+    const aMedias = TEMAS.filter((t) => !comoVa(t).jugada && (comoVa(t).idx || 0) > 0)[0] || null;
 
-    // Si la pausa que se esta viendo es la de la ultima ronda, que es la
-    // opcional. Misma regla que `esOpcional` de la app.
-    const esOpcional = !!jg && jg.paso === 'cambio' && rondaIdx === ultimaRonda;
-    // Y la de después de la primera, que es la de volver a comer. Si algún
-    // día el juego tuviera dos rondas, la primera pausa sería también la
-    // última: manda `esOpcional`, que es la que ofrece salir.
-    const trasPrimera = !!jg && jg.paso === 'cambio' && rondaIdx === 1 && !esOpcional;
-    // «Una ronda», «Dos rondas», «Tres rondas»: escritas, no armadas con el
-    // numero delante. Es el mismo motivo que las listas de formatos de los
-    // correos, y son tres.
-    const palabraRondas = (n) => (n === 1 ? 'Una ronda' : n === 2 ? 'Dos rondas' : n === 3 ? 'Tres rondas' : n + ' rondas');
+    /** La temática abierta ahora, y de ella salen el color y el icono. */
+    const T = (jg && jg.tema) ? deClave(jg.tema) : null;
+    const E = (T && T.estilo) || { fondo: '#14342A', tinta: '#FAF3E4', suave: '#C5D8CA', icono: '' };
+    const preguntas = T ? (T.preguntas || []) : [];
+    const pasoJ = jg ? jg.paso : '';
+    // Elegir y el cierre van sobre el verde de Aro; lo demás toma el color de
+    // su temática, que es lo que hace que la mesa sepa en cuál está.
+    const sobreVerde = !jg || pasoJ === 'elegir' || pasoJ === 'cierre';
 
-    const irA = (paso, ronda, idx) => () => this.juegoIr({ paso, ronda, idx });
+    const irTema = (clave, desde) => () => {
+      const t = deClave(clave);
+      if (!t) return;
+      const v = avance[clave] || {};
+      const i = desde != null ? desde : Math.min(v.idx || 0, (t.preguntas || []).length - 1);
+      this.juegoIr({ paso: 'portada', tema: clave, idx: Math.max(0, i) });
+    };
+    const alElegir = () => this.juegoIr({ paso: 'elegir', tema: null, idx: 0 });
+
     const siguiente = () => {
-      const i = jg.idx + 1;
-      if (i < preguntas.length) return this.juegoIr({ paso: 'pregunta', ronda: rondaIdx, idx: i });
-      // Se acabaron las preguntas de esta ronda: queda hecha. Es lo que
-      // cuenta «Jugado · 2 de 3 rondas» cuando se termina por la mitad.
-      const hechas = (jg.hechas || []).slice();
-      hechas[rondaIdx] = true;
-      if (rondaIdx < ultimaRonda) return this.juegoIr({ paso: 'cambio', ronda: rondaIdx + 1, idx: 0, hechas });
-      return this.juegoIr({ paso: 'final', ronda: rondaIdx, idx: 0, hechas });
+      const i = (jg.idx || 0) + 1;
+      if (i < preguntas.length) return this.juegoIr({ paso: 'pregunta', tema: jg.tema, idx: i });
+      return this.juegoIr({ paso: 'finTema', tema: jg.tema, idx: 0 });
     };
     const atras = () => {
-      if (jg.idx > 0) return this.juegoIr({ paso: 'pregunta', ronda: rondaIdx, idx: jg.idx - 1 });
-      if (rondaIdx > 0) return this.juegoIr({ paso: 'cambio', ronda: rondaIdx, idx: 0 });
-      return this.juegoIr({ paso: 'reglas', ronda: 0, idx: 0 });
+      if ((jg.idx || 0) > 0) return this.juegoIr({ paso: 'pregunta', tema: jg.tema, idx: jg.idx - 1 });
+      return this.juegoIr({ paso: 'portada', tema: jg.tema, idx: 0 });
     };
+
+    /** Lo que dice la pastilla de una temática. Corto en la tarjeta. */
+    const rotuloDe = (t, corto) => {
+      const v = comoVa(t), n = (t.preguntas || []).length;
+      if (v.jugada) return 'JUGADA';
+      if ((v.idx || 0) > 0) return (v.idx + 1) + ' DE ' + n;
+      return corto ? (n + ' PREG.') : (n + ' preguntas');
+    };
+
+    const tarjetaDe = (t) => ({
+      clave: t.clave, n: t.nombre, l: t.linea,
+      bg: t.estilo.fondo, ink: t.estilo.tinta, sub: t.estilo.suave, ico: t.estilo.icono,
+      // Jugada se apaga a 0,8, igual que la app. Más apagado y el nombre
+      // sobre su propio color deja de leerse.
+      op: comoVa(t).jugada ? '.8' : '1',
+      estado: rotuloDe(t, true), ir: irTema(t.clave),
+    });
 
     const jVals = {
       juegoAbierto, juegoCerrado,
-      // El copy aprobado el 10-10, el mismo que la app. El de antes
-      // prometia quince minutos, que es una duracion que nadie cronometra y
-      // que sonaba a compromiso.
-      juegoBajada: 'Por si hace falta romper el hielo: unas preguntas en tres rondas, y después se guarda el teléfono.',
-      juegoCuando: horaAbre ? ('Se abre a las ' + horaAbre + ', ' + cuandoAbre + '.') : ('Se abre a la hora ' + DEL_PLAN + '.'),
-      abrirJuego: () => {
-        // Retoma donde lo dejó ESTE teléfono: quien vuelve a entrar en la
-        // ronda 2 no empieza otra vez por las reglas.
-        const guardado = (dJ && dJ.mesaId) ? this.juegoGuardado(dJ.mesaId) : null;
+      cursorJuego: juegoAbierto ? 'pointer' : 'default',
+      // Un punto por temática, apagados los que ya jugaron.
+      puntosJuego: TEMAS.map((t) => ({ bg: t.estilo.fondo, op: comoVa(t).jugada ? '.35' : '1' })),
+      /**
+       * El renglón de la cabecera, con sus tres caras.
+       *
+       * Cerrada dice a qué hora abre; abierta y sin avance, que elijan; con
+       * avance, cuánto llevan. El número de temáticas sale de la lista y no
+       * escrito: el día que sean cuatro, esto dice cuatro.
+       */
+      resumenJuego: (() => {
+        const n = TEMAS.length;
+        if (juegoCerrado) return n + ' temáticas · se abre a las ' + horaAbre;
+        if (aMedias) {
+          const v = comoVa(aMedias);
+          const cuantas = jugadas.length
+            ? (jugadas.length === 1 ? '1 jugada · ' : jugadas.length + ' jugadas · ') : '';
+          return cuantas + aMedias.nombre + ' por la ' + (v.idx + 1) + ' de ' + (aMedias.preguntas || []).length;
+        }
+        if (n && jugadas.length === n) return 'Jugaron las ' + n;
+        if (jugadas.length) return (jugadas.length === 1 ? '1 jugada' : jugadas.length + ' jugadas') + ' · elijan otra';
+        return n + ' temáticas · elijan por dónde empezar';
+      })(),
+      bajadaJuego: 'Preguntas para cuando la mesa las necesite. Elijan la temática que quieran, en el orden que quieran.',
+      temasTarjeta: TEMAS.map(tarjetaDe),
+      hayAvanceJuego: !!aMedias || jugadas.length > 0,
+      ctaJuego: aMedias
+        ? ('Seguir · ' + aMedias.nombre + ', ' + ((comoVa(aMedias).idx || 0) + 1) + ' de ' + (aMedias.preguntas || []).length)
+        : 'Abrir el juego',
+      seguirJuego: () => {
         this.juegoDespierto(true);
-        this.setState({ juego: guardado || { paso: 'reglas', ronda: 0, idx: 0 } });
+        if (aMedias) return irTema(aMedias.clave)();
+        return alElegir();
       },
-
+      verTodasTematicas: () => { this.juegoDespierto(true); alElegir(); },
+      /**
+       * Y las dos que pide la tarjeta de la vista GENÉRICA, que es otra.
+       *
+       * La de arriba es la de una mesa completa —cena o brunch— y va por
+       * temáticas. Esta es la del resto de formatos: una tarjeta sin lista,
+       * con un botón y su hora. Comparten el juego, no la tarjeta.
+       */
+      abrirJuego: () => { this.juegoDespierto(true); alElegir(); },
+      juegoBajada: 'Por si hace falta romper el hielo: preguntas por temáticas, y después se guarda el teléfono.',
+      juegoCuando: horaAbre
+        ? ('Se abre a las ' + horaAbre + ', ' + cuandoAbre + '.')
+        : ('Se abre a la hora ' + DEL_PLAN + '.'),
       /**
        * Lo que cambió después de contarte la mesa.
        *
@@ -1522,104 +1596,112 @@ class Component extends DCLogic {
 
       enJuego: !!jg,
       jSalir: () => this.juegoSalir(),
-      jEsReglas: !!jg && jg.paso === 'reglas',
-      jEsPregunta: !!jg && jg.paso === 'pregunta',
-      jEsCambio: !!jg && jg.paso === 'cambio',
-      jEsFinal: !!jg && jg.paso === 'final',
+      jAlElegir: () => alElegir(),
+      jEsElegir: !!jg && pasoJ === 'elegir',
+      jEsPortada: !!jg && pasoJ === 'portada',
+      jEsPregunta: !!jg && pasoJ === 'pregunta',
+      jEsFinTema: !!jg && pasoJ === 'finTema',
+      jEsCierre: !!jg && pasoJ === 'cierre',
 
+      jFondo: sobreVerde ? '#14342A' : E.fondo,
+      jTinta: sobreVerde ? '#FAF3E4' : E.tinta,
+      jSuave: sobreVerde ? '#C5D8CA' : E.suave,
+      jIcono: E.icono,
+      jNombre: T ? T.nombre : '',
+      jLinea: T ? T.linea : '',
+      jCuantas: preguntas.length + ' preguntas',
+      jBordeX: sobreVerde ? 'rgba(250,243,228,.35)' : E.tinta,
+      jHayCabecera: !!jg && pasoJ !== 'cierre',
+      jHayVolver: !!jg && (pasoJ === 'portada' || pasoJ === 'pregunta'),
+
+      jTitulo: (jugadas.length || aMedias) ? '¿Qué sigue?' : '¿De qué hablamos?',
+      jBajada: (jugadas.length || aMedias)
+        ? 'Pueden retomar, probar otra o repetir la que les gustó.'
+        : 'Elijan una temática. En el orden que quieran, las veces que quieran.',
       /**
-       * La cabecera, igual en las cinco pantallas (entrega 20).
-       *
-       * Arriba siempre «EL JUEGO DE LA MESA», y debajo dónde estás: antes de
-       * empezar, en qué ronda, o qué acabas de terminar. Antes la primera
-       * línea cambiaba —decía «Ronda 1 · Para arrancar»— y la segunda hacía
-       * de contador: dos cosas en el sitio de una.
-       *
-       * El fin de la primera ronda no lleva cabecera ni X a propósito: ahí
-       * no se sale del juego, se vuelve a la mesa, y las dos salidas están
-       * abajo con su nombre.
+       * El alto sale de cuántas hay: con tres respiran y con cinco se
+       * compactan. Lo pide la maqueta, y es lo que hace que cinco quepan sin
+       * que la lista se vaya debajo del pliegue.
        */
-      jHayCabecera: !(jg && jg.paso === 'cambio' && trasPrimera),
-      jCabecera: 'El juego de la mesa',
-      jSubcabecera: !jg ? ''
-        : jg.paso === 'pregunta' ? 'Ronda ' + (rondaIdx + 1) + ' · ' + R.titulo
-        : jg.paso === 'cambio' ? 'Ronda ' + rondaIdx + ' terminada'
-        // Las rondas JUGADAS, no las que trae el mazo: desde que la ultima
-        // es opcional, quien termina antes jugo dos y el final tiene que
-        // decir dos. Con `J.rondas.length` decia tres siempre.
-        : jg.paso === 'final' ? palabraRondas(rondaIdx + 1)
-        : 'Antes de empezar',
-      /** El título de las reglas, que es otra cosa que la cabecera. */
-      jTituloReglas: 'Cómo se juega',
-      /** «1 de 2», debajo de las barras y no en la cabecera. */
-      jContador: (jg && jg.paso === 'pregunta') ? (jg.idx + 1) + ' de ' + preguntas.length : '',
-      /** Quién responde primero. Faltaba en la web y la app ya lo decía. */
-      jNotaPregunta: 'Empieza quien leyó. Se puede pasar.',
-      jTextoEmpezar: 'Empezar la ronda 1',
+      jTemas: TEMAS.map((t) => {
+        const v = comoVa(t), n = (t.preguntas || []).length;
+        return Object.assign(tarjetaDe(t), {
+          alto: TEMAS.length <= 3 ? 128 : TEMAS.length >= 5 ? 80 : 104,
+          cuantas: n + ' preguntas',
+          esJugada: !!v.jugada,
+          esCurso: !v.jugada && (v.idx || 0) > 0,
+          esNueva: !v.jugada && !(v.idx || 0),
+          va: (v.idx || 0) + 1,
+          barras: (t.preguntas || []).map((q, i) => ({ op: i < (v.idx || 0) ? '1' : '.25' })),
+        });
+      }),
 
-      jReglas: J.reglas.map((texto, i) => ({ n: String(i + 1), texto })),
-      jEmpezar: irA('pregunta', 0, 0),
-      jRonda2: irA('pregunta', 1, 0),
-      jRonda3: irA('pregunta', 2, 0),
+      jHayChip: !!T && (!!comoVa(T).jugada || (comoVa(T).idx || 0) > 0),
+      jChip: T ? (comoVa(T).jugada
+        ? 'YA LA JUGARON'
+        : 'VAN POR LA ' + ((comoVa(T).idx || 0) + 1) + ' DE ' + preguntas.length) : '',
+      jPrincipal: T ? (comoVa(T).jugada
+        ? 'Jugar otra vez'
+        : (comoVa(T).idx || 0) > 0
+          ? ('Seguir · pregunta ' + ((comoVa(T).idx || 0) + 1) + ' de ' + preguntas.length)
+          : 'Empezar') : '',
+      jHaySecundario: !!T && (!!comoVa(T).jugada || (comoVa(T).idx || 0) > 0),
+      jSecundario: (T && comoVa(T).jugada) ? 'Elegir otra' : 'Empezar de nuevo',
+      jSecundarioIr: () => {
+        if (!T) return alElegir();
+        if (comoVa(T).jugada) return alElegir();
+        return this.juegoIr({ paso: 'pregunta', tema: T.clave, idx: 0 });
+      },
+      jEmpezar: () => {
+        if (!T) return alElegir();
+        const v = comoVa(T);
+        const i = v.jugada ? 0 : Math.min(v.idx || 0, preguntas.length - 1);
+        this.juegoIr({ paso: 'pregunta', tema: T.clave, idx: Math.max(0, i) });
+      },
 
-      jPregunta: (jg && jg.paso === 'pregunta') ? (preguntas[jg.idx] || '') : '',
-      // Tantos segmentos como preguntas haya: el diseño trae cuatro y hoy son
-      // dos, y una cifra escrita aquí dejaría dos barras muertas.
-      jProgreso: preguntas.map((q, k) => ({ hecha: !!jg && k <= jg.idx, pendiente: !jg || k > jg.idx })),
+      jPregunta: (jg && pasoJ === 'pregunta') ? (preguntas[jg.idx] || '') : '',
+      jN: jg ? (jg.idx || 0) + 1 : 1,
+      jTotal: preguntas.length,
+      // Cuarenta píxeles, y treinta y cuatro si pasa de setenta caracteres.
+      jTamano: ((jg && pasoJ === 'pregunta' && (preguntas[jg.idx] || '').length > 70) ? 34 : 40),
+      jBarras: preguntas.map((q, i) => ({
+        op: (jg && i <= (jg.idx || 0)) ? '1' : '.25',
+        rotulo: 'Ir a la pregunta ' + (i + 1),
+        ir: () => this.juegoIr({ paso: 'pregunta', tema: jg.tema, idx: i }),
+      })),
+      jAtrasOp: (jg && (jg.idx || 0) === 0) ? '.3' : '1',
+      jSigTexto: (jg && pasoJ === 'pregunta' && (jg.idx || 0) === preguntas.length - 1) ? 'Terminar' : 'Siguiente',
       jAtras: () => atras(),
       jSiguiente: () => siguiente(),
 
+      jSello: T ? (T.nombre.toUpperCase() + ' · ' + preguntas.length + ' DE ' + preguntas.length) : '',
+      jFinTitulo: (TEMAS.length && jugadas.length >= TEMAS.length) ? 'Jugaron todas.' : '¿Otra, o hasta aquí?',
+      jFinTexto: (TEMAS.length && jugadas.length >= TEMAS.length)
+        ? 'Si la mesa quiere más, repitan la que más les gustó. Si no, a seguir hablando.'
+        : 'Pueden seguir con otra temática o guardar el teléfono y seguir hablando.',
+      jOtrasTitulo: (TEMAS.length && jugadas.length >= TEMAS.length) ? 'REPETIR UNA' : 'QUEDAN',
       /**
-       * La pausa de después de la PRIMERA ronda no es una pausa: es volver a
-       * la mesa (entrega 20, pantalla 4e).
-       *
-       * Las de en medio dicen «ahora viene la ronda 2» y siguen. Esta dice
-       * «ahora, a comer», porque la primera ronda se juega mientras llega la
-       * comida: lo normal es cerrar el teléfono, y seguir es lo opcional. Por
-       * eso el botón lleno devuelve al paso a paso y seguir queda debajo.
-       *
-       * «Ahora, a comer.» está PENDIENTE DE MICHAEL (Design, 15-10).
+       * Las otras, ordenadas: primero la que quedó a medias, luego las
+       * nuevas y al final las jugadas. La recién terminada no sale.
        */
-      jCambioTrasPrimera: trasPrimera,
-      hayEyebrowCambio: !trasPrimera,
-      // El renglón de arriba del 4e, que ahí hace de cabecera.
-      jCambioEyebrowSolo: 'Ronda 1 de ' + J.rondas.length + ' · terminada',
-      jCambioEyebrow: 'Ronda ' + (rondaIdx + 1) + ' de ' + J.rondas.length,
-      jCambioNombre: trasPrimera ? 'Ahora, a comer.' : R.titulo,
-      /**
-       * Y la bajada, que en la última ronda es el aviso.
-       *
-       * Estaban las dos: la bajada del mazo —«más personal, y cualquiera
-       * puede pasar»— debajo del título, y el aviso —«es más personal, solo
-       * si a la mesa le provoca»— en una pastilla aparte más abajo. Dicen lo
-       * mismo con otras palabras y en la maqueta solo va una, pegada al
-       * título, que es donde se lee antes de decidir.
-       */
-      jCambioBajada: trasPrimera
-        ? 'Guarden el teléfono y sigan con el paso a paso. La ronda 2 queda aquí para cuando se acabe el tema, o cuando quieran.'
-        : esOpcional
-          ? 'Esta ronda es más personal. Solo si a la mesa le provoca.'
-          : R.bajada,
-      jVolverAlPaso: () => {
-        this.juegoSalir();
-        this.setState({ abierta: 'paso' });
-      },
-      jCambioLector: '¿Otra persona quiere leer? Que abra el juego en su teléfono y toque «Ronda ' + (rondaIdx + 1) + '». Verá las mismas preguntas.',
-
-      // LA ULTIMA RONDA ES OPCIONAL (Michael, 10-10). La pausa de antes de
-      // la 3 pregunta en vez de empujar: es la mas personal, y una mesa que
-      // no quiere ir ahi tiene que poder parar sin sentir que deja algo a
-      // medias. Las otras pausas no cambian: siguen con su «Empezar la
-      // ronda N» y un solo boton.
-      jCambioOpcional: esOpcional,
-      jCambioNormal: !!jg && jg.paso === 'cambio' && !esOpcional && !trasPrimera,
-      jCambioBoton: 'Empezar la ronda ' + (rondaIdx + 1),
-      jCambioSeguirDespues: 'Seguir con la ronda ' + (rondaIdx + 1),
-      jCambioSeguir: 'Seguir con la ronda ' + (rondaIdx + 1),
-      jSeguirRonda: irA('pregunta', rondaIdx, 0),
-      // «Terminar aquí»: al final, con la ronda ANTERIOR como la ultima
-      // jugada, que es lo que hace que el final diga «Dos rondas».
-      jTerminarAqui: () => this.juegoIr({ paso: 'final', ronda: Math.max(0, rondaIdx - 1), idx: 0 }),
+      jOtras: (() => {
+        if (!T) return [];
+        const resto = TEMAS.filter((t) => t.clave !== T.clave);
+        const peso = (t) => { const v = comoVa(t); return v.jugada ? 2 : ((v.idx || 0) > 0 ? 0 : 1); };
+        return resto.slice().sort((a, b) => peso(a) - peso(b)).map((t) => {
+          const v = comoVa(t), n = (t.preguntas || []).length;
+          return {
+            n: t.nombre, bg: t.estilo.fondo, ink: t.estilo.tinta, sub: t.estilo.suave, ico: t.estilo.icono,
+            op: v.jugada ? '.8' : '1',
+            // Sobre su mismo color, el borde es lo único que separa una
+            // tarjeta del fondo.
+            borde: t.estilo.fondo === E.fondo ? t.estilo.tinta : 'transparent',
+            meta: v.jugada ? 'Jugada · repetir' : (v.idx || 0) > 0 ? ('Van por la ' + (v.idx + 1) + ' de ' + n) : (n + ' preguntas'),
+            ir: irTema(t.clave),
+          };
+        });
+      })(),
+      jTerminarJuego: () => this.juegoIr({ paso: 'cierre', tema: null, idx: 0 }),
     };
 
     const f = this.state.fase;
@@ -1754,20 +1836,6 @@ class Component extends DCLogic {
       + 'align-items:center;justify-content:center;font:600 18px/1 \'Inter Tight\',sans-serif;'
       + (oscura ? 'background:rgba(250,243,228,.12);color:#E39C63' : 'background:#F2E9D5;color:#14342A');
 
-    // El avance del juego de ESTE teléfono, para los sellos de las rondas.
-    const guardado = (dt && dt.mesaId) ? this.juegoGuardado(dt.mesaId) : null;
-    const hayAvance = !!guardado && !(guardado.paso === 'reglas' && guardado.ronda === 0 && guardado.idx === 0);
-    const rondaGuardada = guardado ? guardado.ronda : 0;
-    /**
-     * Jugado entero, o terminado en «Terminar aquí» (entrega 21).
-     *
-     * Antes el final NO se guardaba —se anotaba el principio— para que quien
-     * terminara pudiera volver a jugar. Ahora la tarjeta tiene su propia cara
-     * para eso, con «Volver a jugar», así que guardar el final es lo que hace
-     * que esa cara exista.
-     */
-    const juegoJugado = !!guardado && guardado.paso === 'final';
-    const rondasJugadas = Math.max(1, ((guardado && guardado.hechas) || []).filter(Boolean).length);
 
     const sitiosParaSeguir = ((dt && dt.paraSeguir) || []).map((s) => ({
       nombre: s.nombre,
@@ -1803,7 +1871,7 @@ class Component extends DCLogic {
         ahora: esAhora,
         conJuego: !!m.botonJuego, botonJuego: m.botonJuego,
         // Al tocarlo se despliega la tarjeta del juego, no se abre el juego:
-        // lo que hace falta ahí es elegir ronda, y eso está en la tarjeta.
+        // lo que hace falta ahí es elegir temática, y eso está en la tarjeta.
         irAlJuego: () => this.setState({ abierta: 'juego' }),
         conSitios: m.clave === 'despedida' && sitiosParaSeguir.length > 0,
         fila: 'display:grid;grid-template-columns:54px minmax(0,1fr);gap:8px;padding:14px 12px;margin:0 -12px;'
@@ -1828,33 +1896,6 @@ class Component extends DCLogic {
         : tipo === 'hecha' ? 'background:transparent;color:#9CBBA6;border:1px solid rgba(156,187,166,.5)'
         : 'background:transparent;color:#FAF3E4;border:1px solid rgba(250,243,228,.35)');
 
-    const rondasTarjeta = J.rondas.map((r, i) => {
-      // Hecha la que quedó atrás, «n de 2» la que se está jugando, «Ir» las
-      // demás. Sale del único punto que se guarda —dónde quedó— y no de una
-      // lista de rondas terminadas: el juego no se juega dos veces.
-      const hecha = !!((guardado && guardado.hechas) || [])[i];
-      const enCurso = hayAvance && !hecha && i === rondaGuardada;
-      const estado = hecha ? 'Hecha'
-        : enCurso ? ((guardado.idx + 1) + ' de ' + J.porRonda)
-        : 'Ir';
-      return {
-        n: String(i + 1), titulo: r.titulo, bajada: r.enLaTarjeta || r.bajada,
-        // La hora de la primera sale del guion, no escrita aquí: si el
-        // restaurante nos deja la mesa hasta otra hora, se mueve con ella.
-        cuando: i === 0 && pasos.length
-          ? r.cuando + ' · ' + (pasos.find((p) => p.clave === 'hielo') || {}).hora.toUpperCase()
-          : r.cuando,
-        estado,
-        // Antes de la hora de la cena se ven y no se tocan: el juego se abre
-        // con la cena, ni un minuto antes.
-        estiloEstado: pastillaRonda(hecha ? 'hecha' : enCurso ? 'ahora' : 'ir')
-          + (juegoAbierto ? '' : ';opacity:.5;cursor:default'),
-        inerte: juegoAbierto ? null : 'true',
-        ir: juegoAbierto
-          ? () => { this.juegoDespierto(true); this.juegoIr({ paso: 'pregunta', ronda: i, idx: 0 }); }
-          : () => {}
-      };
-    });
 
 
     // La mesa 4 se enseña como "04": es el formato del diseño, y con dos
@@ -2170,40 +2211,6 @@ class Component extends DCLogic {
       oJuego: cualAbierta === 'juego', oJuegoAria: cualAbierta === 'juego' ? 'true' : 'false',
       fJuego: cualAbierta === 'juego' ? '−' : '+', sJuego: chevron(cualAbierta === 'juego', true),
       tJuego: alternar('juego'),
-      resumenJuego: J.rondas.length === 3
-        ? '3 rondas · la primera va con la comida'
-        : J.rondas.length + ' rondas',
-      bajadaJuego: 'Una persona lee en voz alta, todos responden. Siempre se puede pasar.',
-      rondas: rondasTarjeta,
-      // El juego se abre A LA HORA DE LA CENA, ni un minuto antes (Michael,
-      // 06-10, confirmado el 15-10): quien llega pronto se leería las
-      // preguntas y llegaría con las respuestas pensadas. Antes de esa hora
-      // las rondas se ven y no se tocan.
-      // Las tres caras de la tarjeta: cerrada por hora, jugada, o la de
-      // jugar. Se excluyen entre ellas y en ese orden.
-      juegoNoAbreAun: juegoCerrado,
-      juegoJugado: juegoAbierto && juegoJugado,
-      juegoNormal: juegoAbierto && !juegoJugado,
-      // Cerrada, la línea de debajo del título dice por qué no se puede
-      // tocar; jugada, cuántas rondas se jugaron.
-      resumenJuegoCerrado: J.rondas.length + ' rondas · se abre a la hora de la cena',
-      resumenJugado: 'Jugado · ' + rondasJugadas + ' de ' + J.rondas.length + ' rondas',
-      volverAJugar: () => {
-        this.juegoOlvidar(dt && dt.mesaId);
-        this.setState({ abierta: 'juego' });
-      },
-      ctaJuego: hayAvance
-        ? 'Seguir · ronda ' + (rondaGuardada + 1) + ', pregunta ' + (guardado.idx + 1)
-        : 'Empezar la ronda 1',
-      seguirJuego: () => {
-        this.juegoDespierto(true);
-        this.setState({ juego: guardado || { paso: 'reglas', ronda: 0, idx: 0 } });
-      },
-      hayAvanceJuego: hayAvance,
-      reiniciarJuego: () => {
-        this.juegoDespierto(true);
-        this.juegoIr({ paso: 'reglas', ronda: 0, idx: 0 });
-      },
 
       /**
        * CAMBIARSE DE FECHA, sin cancelar.
