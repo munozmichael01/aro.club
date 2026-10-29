@@ -36,7 +36,7 @@ ella sigue el de rondas.
 `clave: aqui` · *Caracas y lo que tiene.*
 
 1. ¿Cuál es tu plan perfecto de domingo en Caracas?
-2. ¿Qué te trajo a Caracas, o qué te hizo quedarte?
+2. ¿Qué tiene Caracas que no cambiarías por nada?
 3. ¿A qué sitio llevarías a alguien que acaba de llegar a la ciudad?
 4. ¿Cuál es la mejor comida de calle que has probado aquí?
 5. ¿Qué es lo más raro que te ha pasado en Caracas?
@@ -76,8 +76,10 @@ ella sigue el de rondas.
   lo que Timeleft no puede tener.
 - **«¿Y si…?» habla de la mesa**, no solo de cada uno (2, 3 y 4): la mesa se
   señala, vota y discute. Es lo que mejor hace el juego de Timeleft.
-- **«¿Qué te trajo a Caracas, o qué te hizo quedarte?»** engancha con el
-  arraigo que ya se ve junto a cada nombre.
+- **«¿Qué tiene Caracas que no cambiarías por nada?»** la puede contestar
+  cualquiera, sea de aquí o no. Sustituye a «¿Qué te trajo a Caracas, o qué te
+  hizo quedarte?», que no servía en una mesa donde todos son de aquí (Michael,
+  29-10).
 - **«Lo que te mueve» va al final y sin preguntas de valores.** Las de Design
   («¿A quién le pides consejo?», «¿Qué no negocias en una amistad?») eran las
   más parecidas a lo profundo de lo que se quejó la gente.
