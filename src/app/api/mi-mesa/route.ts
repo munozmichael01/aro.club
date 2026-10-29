@@ -543,35 +543,28 @@ export async function GET() {
   )
 
   /**
-   * LOS ARRAIGOS DE LA MESA, en bloque y sin dueño.
+   * EL ARRAIGO DE CADA UNO, con su nombre al lado.
    *
-   * Michael, 29-10: enseñar, además del sector de cada uno, de qué está
-   * hecha la mesa —quién acaba de llegar a la ciudad y quién lleva aquí
-   * toda la vida—, porque es de lo que se habla en una cena de
-   * desconocidos.
+   * Michael, 29-10: «cada persona va con su arraigo en la mesa». Como el
+   * sector, que ya va así.
    *
-   * Van los CÓDIGOS, sin etiqueta: el catálogo vive en
+   * Lo monté primero como un conjunto de la mesa, sin dueño, por si
+   * enseñarlo por persona decía de alguien algo que no quiso decir. Era al
+   * revés y por partida doble: el conjunto no esconde nada —en una mesa de
+   * seis, si solo uno acaba de llegar a la ciudad, la lista lo dice y la
+   * cara se adivina sola— y además esto no es un dato que haya que
+   * esconder, es de lo que se habla en una cena de desconocidos. Puesto con
+   * nombre es lo que hace que alguien tenga de qué tirar.
+   *
+   * Va el CÓDIGO, no la etiqueta: el catálogo vive en
    * `AroReglas.PUERTA.arraigo` y lo leen la app y la web desde ahí. Un mapa
    * de etiquetas aquí sería un segundo catálogo que se queda viejo la
-   * primera vez que Design cambie una palabra, que es justo lo que ya pasa
-   * con el sector y por eso se lee de `questions`.
-   *
-   * SIN REPETIR Y ORDENADOS POR CÓDIGO, no por persona. Ordenados por
-   * persona, la posición en la lista sería el dedo que señala.
-   *
-   * Y con eso NO queda anónimo del todo, y Michael lo decidió sabiéndolo:
-   * en una mesa de seis, si solo hay un «acaba de llegar», la lista dice
-   * que hay uno y mirando a los otros cinco se sabe cuál. Por eso va el
-   * conjunto de los que hay y nunca cuántos de cada uno: el recuento sí
-   * convertiría esto en un juego de adivinar.
+   * primera vez que Design cambie una palabra, que es por lo que el sector
+   * se lee de `questions`.
    */
-  const arraigos = [
-    ...new Set(
-      (traits ?? [])
-        .map((t) => t.rootedness)
-        .filter((r): r is NonNullable<typeof r> => !!r),
-    ),
-  ].sort()
+  const arraigoDe = new Map(
+    (traits ?? []).map((t) => [t.profile_id, t.rootedness ?? null]),
+  )
 
   /**
    * ¿Se cayó alguien de ESTA mesa después de la revelación?
@@ -692,7 +685,6 @@ export async function GET() {
      * revelación esta respuesta no devuelve ni restaurante ni compañeros, y
      * esto es un dato de los compañeros.
      */
-    arraigos,
     /**
      * Y aquí ya no se puede, pero se dice por qué.
      *
@@ -708,6 +700,9 @@ export async function GET() {
         id: c.profile_id,
         nombre,
         sector: sectorDe.get(c.profile_id) ?? null,
+        // Su arraigo, en código. La etiqueta la pone quien pinta, desde
+        // `AroReglas.PUERTA.arraigo`. Nulo es que no lo contestó.
+        arraigo: arraigoDe.get(c.profile_id) ?? null,
         /**
          * Si entró DESPUÉS de que se contara la mesa.
          *
