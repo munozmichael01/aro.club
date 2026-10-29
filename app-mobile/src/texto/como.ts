@@ -16,16 +16,30 @@ export const primeraVez = { sello: (plan: string) => `TU PRIMERA ${plan.toUpperC
 
 export const etiquetas = { antes: 'ANTES', durante: 'DURANTE', despues: 'DESPUÉS' }
 
-/** Las tres, con mesa (cena y brunch) o con grupo (los planes de movimiento). `cuando`: «El día de la cena, al mediodía». */
-export const tarjetas = (esMesa: boolean, cuando: string) =>
-  esMesa
+export type Tipo = 'cena' | 'brunch' | 'grupo'
+
+/**
+ * Las tres, por tipo de plan, con los textos de la maqueta de Design (C2, C4 y C5).
+ * `cuando`: «El día de la cena, al mediodía», de la hora real. En «Después»,
+ * «márcalo en la encuesta» en vez de «díselo», ahora que existe seguir en contacto.
+ */
+export const tarjetas = (tipo: Tipo, cuando: string) =>
+  tipo === 'grupo'
     ? [
-        { clave: 'antes', titulo: 'Llega y pregunta por la mesa de Aro', cuerpo: `${cuando}, te decimos dónde es y con quién vas. Se espera a todos un cuarto de hora.` },
-        { clave: 'durante', titulo: 'Pidan, preséntense y dejen que fluya', cuerpo: 'Una vuelta rápida de nombres y a comer. Si se acaba el tema, el juego de la mesa está en la app.' },
-        { clave: 'despues', titulo: 'Cada quien paga lo suyo, y si hay ganas, se sigue', cuerpo: 'Te sugerimos sitios cerca para seguir. Y si alguien te cayó bien, márcalo en la encuesta.' },
+        { clave: 'antes', titulo: 'Llega al punto de encuentro', cuerpo: `${cuando}, te decimos dónde se reúne el grupo y con quién vas. Pregunta por el grupo de Aro.` },
+        { clave: 'durante', titulo: 'Preséntense y arranquen juntos', cuerpo: 'Una vuelta rápida de nombres al empezar. El ritmo lo pone el grupo, no quien va más rápido.' },
+        { clave: 'despues', titulo: 'Si hay ganas, sigan juntos', cuerpo: 'Un café o algo de comer cerca, cada quien lo suyo. Y si alguien te cayó bien, márcalo en la encuesta.' },
       ]
     : [
-        { clave: 'antes', titulo: 'Llega al punto de encuentro', cuerpo: `${cuando}, te decimos dónde se reúne el grupo y con quién vas. Pregunta por el grupo de Aro.` },
-        { clave: 'durante', titulo: 'Preséntense y a moverse', cuerpo: 'Una vuelta rápida de nombres y arrancan juntos. Cada quien a su ritmo.' },
-        { clave: 'despues', titulo: 'Cada quien sigue su camino, o no', cuerpo: 'Si hay ganas, se sigue. Y si alguien te cayó bien, márcalo en la encuesta.' },
+        { clave: 'antes', titulo: 'Llega y pregunta por la mesa de Aro', cuerpo: `${cuando}, te decimos dónde es y con quién vas. Se espera a todos un cuarto de hora.` },
+        {
+          clave: 'durante',
+          titulo: tipo === 'brunch' ? 'Pidan café, preséntense y dejen que fluya' : 'Pidan, preséntense y dejen que fluya',
+          cuerpo: 'Una vuelta rápida de nombres y a comer. Si se acaba el tema, el juego de la mesa está en la app.',
+        },
+        {
+          clave: 'despues',
+          titulo: 'Cada quien paga lo suyo, y si hay ganas, se sigue',
+          cuerpo: tipo === 'brunch' ? 'Una caminata o un café más, cerca. Y si alguien te cayó bien, márcalo en la encuesta.' : 'Te sugerimos sitios cerca para seguir. Y si alguien te cayó bien, márcalo en la encuesta.',
+        },
       ]

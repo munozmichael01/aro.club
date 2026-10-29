@@ -18,8 +18,9 @@ export function vista(p: Plan) {
   const esMesa = reglas.vozDe(formato).unidad !== 'grupo'
   const conFotos = reglas.DE_CENA.includes(formato)
   const voz = reglas.vozDe(formato) as unknown as Record<string, string>
-  const tarjetas: Tarjeta[] = T.tarjetas(esMesa, cuandoSeSabe(p)).map((t) => ({ ...t, clave: t.clave as Tarjeta['clave'], etiqueta: T.etiquetas[t.clave as Tarjeta['clave']] }))
-  return { tarjetas, conFotos, esMesa, miMesa: voz.mia ?? 'Mi mesa' }
+  const tipo: T.Tipo = !esMesa ? 'grupo' : conFotos ? 'cena' : 'brunch'
+  const tarjetas: Tarjeta[] = T.tarjetas(tipo, cuandoSeSabe(p)).map((t) => ({ ...t, clave: t.clave as Tarjeta['clave'], etiqueta: T.etiquetas[t.clave as Tarjeta['clave']] }))
+  return { tarjetas, conFotos, esMesa, tipo, miMesa: voz.mia ?? 'Mi mesa' }
 }
 
 /** Se abre sola una vez (HANDOFF). En el teléfono hasta que el servidor lo guarde en la cuenta. */

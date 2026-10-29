@@ -43,7 +43,15 @@ export function EstasDentro(p: {
   )
 
   return (
-    <View style={{ flex: 1, backgroundColor: b ? color.verdeProfundo : color.crema }}>
+    <View style={{ flex: 1, backgroundColor: b ? color.verdeProfundo : color.crema, overflow: 'hidden' }}>
+      {/* B1, B2, BR y «reportado»: el aro enorme y casi transparente arriba a la derecha (maqueta). */}
+      {b ? (
+        <View pointerEvents="none" style={{ position: 'absolute', right: -250, top: -120 + insets.top, opacity: 0.07 }}>
+          <Svg width={520} height={520} viewBox="0 0 240 240">
+            <Circle cx={120} cy={120} r={86} fill="none" stroke="#9CBBA6" strokeWidth={16} />
+          </Svg>
+        </View>
+      ) : null}
       <ScrollView contentContainerStyle={[e.pagina, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 32 }]}>
         <View style={{ alignItems: 'flex-end' }}>
           <Pressable onPress={() => p.ir('/cuenta')} accessibilityRole="button" accessibilityLabel="Cerrar" style={[e.cerrar, { backgroundColor: b ? cremaAlfa(0.1) : tinta(0.07) }]}>

@@ -56,7 +56,7 @@ export function JuegoTematicas(p: { mesaId: string; tematicas: M.Tematica[]; alS
             const es = M.estiloDe(i, tm)
             const est = M.estado(tm, m)
             return (
-              <Pressable key={tm.clave} onPress={() => setV({ en: 'portada', i })} accessibilityRole="button" style={[e.tarjeta, { minHeight: alto, backgroundColor: es.fondo, opacity: est.tipo === 'jugada' ? 0.78 : 1 }]}>
+              <Pressable key={tm.clave} onPress={() => setV({ en: 'portada', i })} accessibilityRole="button" style={[e.tarjeta, { minHeight: alto, backgroundColor: es.fondo, opacity: est.tipo === 'jugada' ? 0.8 : 1 }]}>
                 <Icono d={es.icono} fondo={es.tinta} trazo={es.fondo} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Texto style={{ fontFamily: fuente.titular, fontSize: 21, lineHeight: 30, color: es.tinta }}>{tm.nombre}</Texto>
