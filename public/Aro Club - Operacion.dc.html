@@ -3747,12 +3747,36 @@ class Component extends DCLogic {
     /**
      * Las OTRAS fechas de esa noche: a dónde se puede mandar a alguien.
      *
-     * Solo las de la misma noche, que es lo único que el servidor acepta.
-     * Cambiarle el DÍA a una persona hay que avisárselo y eso todavía no lo
-     * hace el panel; dentro de la misma noche no se entera de nada, porque
-     * su mesa y su sitio se los contamos en la revelación igual que a todos.
+     * CUALQUIER FECHA QUE ADMITA GENTE, no solo las de esa noche.
+     *
+     * Esto decía «solo las de la misma noche, que es lo único que el
+     * servidor acepta», y dejó de ser verdad el 29-10: `mover-fecha` mueve
+     * entre días y MANDA EL AVISO, y si el aviso no se puede encolar
+     * deshace la movida. Lo que faltaba era que el panel lo ofreciera.
+     *
+     * Las que admiten son `open` y `locked`, que es lo que acepta el
+     * servidor; una cerrada a mano o ya repartida y publicada, no. Y nunca
+     * se mezcla una fecha de prueba con una de verdad.
      */
-    const OTRAS_DEL_DIA = FECHAS_DEL_DIA.filter((f) => f.id !== fr.id && !f.pasada);
+    const DESTINOS = FECHAS_REP.filter((f) =>
+      f.id !== fr.id && !f.pasada && !!f.esPrueba === !!fr.esPrueba
+      && (f.estado === 'open' || f.estado === 'locked'));
+    const esOtroDia = (f) =>
+      String(f.empiezaEn || '').slice(0, 10) !== String(fr.empiezaEn || '').slice(0, 10);
+
+    /**
+     * Cómo se llama una fecha que NO es de esta noche.
+     *
+     * `comoSeLlama` la distingue de las de ESTE día, así que fuera de él
+     * devuelve «+45» a secas: tres chips decían «al cena · sábado 31» y no
+     * había manera de saber cuál era cuál. Esta la distingue de las de SU
+     * día, con el mismo `rotuloDeFecha` con el que ya se pinta «reservó
+     * en…», Y CON EL DÍA DELANTE: ese rótulo distingue dentro de un día y
+     * no lo dice, así que sin el día dos chips decían «a la de hasta 44
+     * años», uno el viernes y otro el sábado.
+     */
+    const comoSeLlamaFuera = (f) => diaTexto(f.empiezaEn).toLowerCase() + ' · '
+      + rotuloDeFecha(f, lasDelDiaDe(f)).map((x) => x.texto).join(' · ').toLowerCase();
     const comoSeLlama = (f) => rotuloDeFecha(f, FECHAS_DEL_DIA)
       .map((x) => x.texto).join(' · ').toLowerCase();
 
@@ -4249,11 +4273,31 @@ class Component extends DCLogic {
              * que todavía no ha salido, esto le cambia la reserva a una
              * persona. Después hay que repartir las dos fechas.
              */
-            .concat(OTRAS_DEL_DIA.map((f) => ({ fecha: f, texto: 'A la de ' + comoSeLlama(f) })))
+            .concat(DESTINOS.map((f) => ({
+              fecha: f,
+              // Dentro de la noche basta con el rótulo que distingue las de
+              // ese día; cruzando de día hay que decir QUÉ día, porque «a la
+              // de +45» no dice si es mañana o el sábado.
+              texto: 'A la de ' + (esOtroDia(f) ? comoSeLlamaFuera(f) : comoSeLlama(f)),
+            })))
           ).map((x) => ({
             texto: x.texto,
             chip: 'min-height:34px;padding:0 14px;border-radius:999px;border:' + (x.fecha ? '1px dashed rgba(20,52,42,.4)' : 'none') + ';background:' + (x.fecha ? 'transparent' : (x.n === 0 ? 'rgba(143,69,21,.13)' : '#1B5138')) + ';color:' + (x.fecha ? '#2C4A38' : (x.n === 0 ? '#8F4515' : '#FAF3E4')) + ';font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
             ir: () => {
+              /**
+               * Cruzar de día LE ESCRIBE. Dentro de la noche, no.
+               *
+               * Su mesa y su sitio se los contamos en la revelación igual
+               * que a todos, así que moverla entre fechas de esa misma noche
+               * no se nota. Cambiarle el DÍA sí: tenía apuntado el viernes y
+               * ahora es el sábado, y eso sale en un correo suyo. Quien lo
+               * pulsa tiene que saber que manda un correo antes de pulsarlo,
+               * no después.
+               */
+              if (x.fecha && esOtroDia(x.fecha)
+                && !window.confirm('Le cambias el DÍA a ' + (p.nombre || 'esta persona')
+                  + ', de ' + comoSeLlamaFuera(fr) + ' a ' + comoSeLlamaFuera(x.fecha)
+                  + '.\n\nLe llega un correo diciéndoselo. ¿La mueves?')) return;
               this.setState({ moviendo: null });
               if (x.fecha) this.cambiarDeFecha(p.profileId, fr.id, x.fecha.id, comoSeLlama(x.fecha));
               else this.moverPersona(p.profileId, x.n, m.corridaId);
@@ -4697,10 +4741,18 @@ class Component extends DCLogic {
         }))
         // Quien espera es justo a quien más falta le hace la otra fecha: es
         // el caso del jueves, dos apuntados que no dan para una mesa.
-        .concat(OTRAS_DEL_DIA.map((f) => ({ fecha: f, texto: 'A la de ' + comoSeLlama(f) })))).map((x) => ({
+        .concat(DESTINOS.map((f) => ({
+          fecha: f,
+          texto: 'A la de ' + (esOtroDia(f) ? comoSeLlamaFuera(f) : comoSeLlama(f)),
+        })))).map((x) => ({
         texto: x.texto,
         chip: 'min-height:34px;padding:0 14px;border-radius:999px;border:' + (x.fecha ? '1px dashed rgba(20,52,42,.4)' : 'none') + ';background:' + (x.fecha ? 'transparent' : '#1B5138') + ';color:' + (x.fecha ? '#2C4A38' : '#FAF3E4') + ';font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
         ir: () => {
+          // Mismo aviso que en las tarjetas: cruzar de día le escribe.
+          if (x.fecha && esOtroDia(x.fecha)
+            && !window.confirm('Le cambias el DÍA a ' + (p.nombre || 'esta persona')
+              + ', de ' + comoSeLlamaFuera(fr) + ' a ' + comoSeLlamaFuera(x.fecha)
+              + '.\n\nLe llega un correo diciéndoselo. ¿La mueves?')) return;
           this.setState({ moviendo: null });
           if (x.fecha) this.cambiarDeFecha(p.profileId, fr.id, x.fecha.id, comoSeLlama(x.fecha));
           else this.moverPersona(p.profileId, x.n, SU_CORRIDA);
