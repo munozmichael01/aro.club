@@ -66,6 +66,16 @@ export function crearServicioMesa(api: Api) {
         const b = await despues({ accion: 'bloquear', mesaId, aQuien: v.bloqueados }, T.pasada.noGuardado)
         if (!b.ok) return b
       }
+      // ¿Faltó alguien? y el contacto (e4fb1c6): las dos REEMPLAZAN la lista.
+      // «Vinimos todos» es `[]` y se manda; sin contestar, no se manda nada.
+      if (v.falto !== null) {
+        const f = await despues({ accion: 'falto', mesaId, aQuien: v.falto }, T.pasada.noGuardado)
+        if (!f.ok) return f
+      }
+      if (v.contacto.length) {
+        const c = await despues({ accion: 'contacto', mesaId, aQuien: v.contacto }, T.pasada.noGuardado)
+        if (!c.ok) return c
+      }
       return { ok: true, datos: { avisoSitio } }
     },
 

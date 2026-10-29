@@ -502,6 +502,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
   const [error, setError] = useState('')
   const [avisoSitio, setAvisoSitio] = useState<string | null>(null)
   const [saltando, setSaltando] = useState(false)
+  const [faltoAbierto, setFaltoAbierto] = useState(false)
 
   // «Ahora no» GUARDA que la saltó (8dc6b47): la encuesta ya no caduca, y sin
   // esto se quedaría delante para siempre. Si falla, se sale igual: lo que
@@ -518,6 +519,8 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
   const voz = M.voz(d)
   const otros = M.otros(d)
   const nombreDe = (id: string | null) => otros.find((o) => o.id === id)?.nombre ?? null
+  // «Vinimos todos» solo si lo tocó; «Faltó alguien» sin marcar a nadie no es respuesta (`null`).
+  const vinimosTodos = !faltoAbierto && v.falto !== null && v.falto.length === 0
   const hay = M.algoQueContar(v)
   const listoReporte = !!quien && motivo >= 0
 
@@ -574,6 +577,23 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
               <Ficha key={t} texto={t} marcada={v.mesa === i} mala={i === 3} onPress={() => setV((x) => ({ ...x, mesa: x.mesa === i ? -1 : i }))} />
             ))}
           </View>
+
+          <Pregunta>{T.pasada.falto}</Pregunta>
+          <Texto variante="nota" style={{ marginTop: -4, marginBottom: 10 }}>
+            {T.pasada.notaFalto(otros.length + 1)}
+          </Texto>
+          <View style={estilos.fichas}>
+            <Ficha texto={T.pasada.vinimosTodos} marcada={vinimosTodos} onPress={() => { setFaltoAbierto(false); setV((x) => ({ ...x, falto: vinimosTodos ? null : [] })) }} />
+            <Ficha texto={T.pasada.faltoAlguien} marcada={faltoAbierto} onPress={() => { setFaltoAbierto(!faltoAbierto); setV((x) => ({ ...x, falto: null })) }} />
+          </View>
+          {faltoAbierto ? (
+            <View style={{ gap: 8, marginTop: 12 }}>
+              <Texto variante="nota">{T.pasada.quienFalto}</Texto>
+              {otros.map((o) => (
+                <Opcion key={o.id} texto={o.nombre} pie={o.sector} marcada={!!v.falto?.includes(o.id)} onPress={() => setV((x) => ({ ...x, falto: M.alternar(x.falto ?? [], o.id) }))} />
+              ))}
+            </View>
+          ) : null}
 
           <Pregunta>{T.pasada.elSitio}</Pregunta>
           <View style={{ gap: 14 }}>
@@ -650,6 +670,18 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
             style={estilos.comentario}
           />
 
+          <Pregunta>{T.pasada.contacto(voz as never)}</Pregunta>
+          <Texto variante="nota" style={{ marginTop: -4, marginBottom: 10 }}>
+            {T.pasada.notaContacto}
+          </Texto>
+          <View style={{ gap: 8 }}>
+            {otros
+              .filter((o) => !v.bloqueados.includes(o.id) && reportadoA !== o.id)
+              .map((o) => (
+                <Opcion key={o.id} texto={o.nombre} pie={[o.sector, o.arraigo].filter(Boolean).join(' · ')} marcada={v.contacto.includes(o.id)} onPress={() => setV((x) => ({ ...x, contacto: M.alternar(x.contacto, o.id) }))} />
+              ))}
+          </View>
+
           <Pregunta>{T.pasada.noCoincidir}</Pregunta>
           <Texto variante="nota" style={{ marginTop: -4, marginBottom: 10 }}>
             {T.pasada.notaBloquear(voz as never)}
@@ -666,7 +698,7 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
                   pieFuerte={fija}
                   fija={fija}
                   marcada={v.bloqueados.includes(o.id)}
-                  onPress={() => setV((x) => ({ ...x, bloqueados: M.alternar(x.bloqueados, o.id) }))}
+                  onPress={() => setV((x) => ({ ...x, bloqueados: M.alternar(x.bloqueados, o.id), contacto: x.contacto.filter((c) => c !== o.id) }))}
                 />
               )
             })}

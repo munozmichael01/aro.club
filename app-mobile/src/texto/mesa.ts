@@ -166,6 +166,15 @@ export const pasada = {
   comentario: '¿Algo que quieras destacar o contarnos?',
   notaComentario: 'Lo lee el equipo, no la mesa. Opcional, como todo lo demás.',
   comentarioEjemplo: 'Lo que quieras',
+  /** ¿Faltó alguien? (Michael, 29-10, de Timeleft): un toque. Hacen falta dos marcas para que cuente, así que no se promete nada al marcar. */
+  falto: '¿Faltó alguien?',
+  notaFalto: (cuantos: number) => `Tenían que ser ${cuantos}, contándote a ti.`,
+  vinimosTodos: 'Vinimos todos',
+  faltoAlguien: 'Faltó alguien',
+  quienFalto: 'Marca a quien no fue.',
+  /** Seguir en contacto (Michael, 29-10). Marcar no avisa a nadie: solo cuenta si las dos personas se marcan. */
+  contacto: (v: Voz) => `¿Te gustaría seguir en contacto con alguien ${v.unidad === 'grupo' ? 'del grupo' : 'de la mesa'}?`,
+  notaContacto: 'Solo se lo decimos si esa persona también te marcó a ti.',
   noCoincidir: '¿Alguien con quien preferirías no volver a coincidir?',
   notaBloquear: (v: Voz) =>
     `Opcional. No se le avisa a nadie, y no es una queja: si nadie te chocó, déjalo así. Solo deja de salir en ${v.tu}s ${v.unidades}.`,

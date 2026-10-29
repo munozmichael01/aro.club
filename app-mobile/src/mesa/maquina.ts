@@ -193,9 +193,13 @@ export type Valoracion = {
   comentario: string
   /** «No me mandes más a este sitio» (17-10). */
   noRepetirSitio: boolean
+  /** ¿Faltó alguien? (29-10). `null`: no contestó. `[]`: «Vinimos todos», que SÍ es respuesta y se manda. */
+  falto: string[] | null
+  /** Con quién quiere seguir en contacto (29-10). Solo cuenta si la otra persona también lo marca. */
+  contacto: string[]
 }
 
-export const valoracionVacia = (): Valoracion => ({ mesa: -1, sitio: {}, volveria: -1, bloqueados: [], gasto: -1, comentario: '', noRepetirSitio: false })
+export const valoracionVacia = (): Valoracion => ({ mesa: -1, sitio: {}, volveria: -1, bloqueados: [], gasto: -1, comentario: '', noRepetirSitio: false, falto: null, contacto: [] })
 
 export const MAX_COMENTARIO = 600
 
@@ -223,7 +227,9 @@ export const algoQueContar = (v: Valoracion) =>
   // Lo que ganó la encuesta el 17-10 también cuenta: solo un comentario es una respuesta (d57b509).
   v.comentario.trim().length > 0 ||
   v.gasto >= 0 ||
-  v.noRepetirSitio
+  v.noRepetirSitio ||
+  v.falto !== null ||
+  v.contacto.length > 0
 
 /** El cuerpo de `POST /api/despues` para valorar: los índices tal cual, de mejor a peor. */
 export function cuerpoValorar(mesaId: string, v: Valoracion) {
