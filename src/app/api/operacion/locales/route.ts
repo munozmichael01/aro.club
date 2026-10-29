@@ -382,6 +382,27 @@ export async function GET() {
   )
 
   /**
+   * Y lo que de verdad se gasta ahí, de la encuesta del día después.
+   *
+   * Michael, 17-10, cuando pidió la pregunta: «sin eso el tramo de los
+   * locales se queda en lo que escribimos a ojo». La pregunta se hizo y se
+   * guardó desde entonces, y esta pantalla siguió enseñando solo lo
+   * declarado: el dato llevaba diez días entrando y no lo leía nadie.
+   *
+   * La vista existe desde esa misma migración (`v_gasto_de_local`) y nunca
+   * se había consultado. Es la media de los PUNTOS MEDIOS de los tramos, no
+   * de cifras exactas, así que va redondeada y siempre con cuántas
+   * respuestas la sostienen: una media de una persona no es la cuenta media
+   * de un restaurante.
+   */
+  const { data: gastosDeSitio } = await admin
+    .from('v_gasto_de_local')
+    .select('restaurant_id, respuestas, gasto_medio')
+  const gastoDelSitio = new Map(
+    (gastosDeSitio ?? []).map((g) => [g.restaurant_id as string, g]),
+  )
+
+  /**
    * Los sitios para seguir de cada local (entrega 20).
    *
    * De una vez para todos y no uno por ficha: son pocas filas y la pestaña
@@ -422,10 +443,15 @@ export async function GET() {
       contacto: l.contact_name,
       telefono: l.contact_phone,
       menu: l.fixed_menu_usd != null ? Number(l.fixed_menu_usd) : null,
-      // El gasto medio DECLARADO. El real, por persona, saldría de lo que
-      // gastó cada mesa, y eso no lo capturamos en ningún sitio: decir que
-      // este número sale de las mesas que ya cenaron sería falso.
+      // El gasto medio DECLARADO: lo que escribió operación al dar de alta
+      // el local. Al lado va el real, el de la gente que cenó ahí, y los dos
+      // se dicen por separado a propósito: cuando no cuadran, lo que hay que
+      // mirar es el local, no elegir un número.
       gastoDeclarado: l.avg_check_usd != null ? Number(l.avg_check_usd) : null,
+      gastoReal: gastoDelSitio.get(l.id)?.gasto_medio != null
+        ? Math.round(Number(gastoDelSitio.get(l.id)!.gasto_medio))
+        : null,
+      gastoRespuestas: Number(gastoDelSitio.get(l.id)?.respuestas ?? 0),
       comision: l.commission_pct != null ? Number(l.commission_pct) : null,
       ruido: l.noise_level,
       // Las cocinas. El CÓDIGO para cruzar contra `profile_traits.cuisines`,

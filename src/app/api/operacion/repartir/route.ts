@@ -6,6 +6,7 @@ import { PESOS, repartir, roturas, evaluacion, desglose, resumen, zonasDe } from
 import { exigirOps } from '@/lib/ops'
 import { claveDeNumero, numeroQueSeDice } from '@/lib/mesa-unica'
 import { renumerar, yaSeRevelo } from '@/lib/reparto/numeros'
+import { historialDeMesas } from '@/lib/reparto/historial'
 import { construirPool } from '@/lib/reparto/pool'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -94,6 +95,20 @@ export async function GET(request: Request) {
     .from('v_matching_pool')
     .select('profile_id, zones, age, gender, industry, employer_key, budget_tier, dietary')
     .eq('event_id', evento.id)
+
+  /**
+   * CUÁNTAS CENAS LLEVA CADA UNO, para toda esta lectura.
+   *
+   * Michael, 28-10. Va aquí arriba y no en cada lista porque de este
+   * endpoint salen TRES con ficha de persona —el pool de antes de repartir,
+   * la espera guardada y la de quien llegó tarde— y las tres tienen que
+   * decir lo mismo. Las mesas ya lo traen dentro de la propuesta.
+   */
+  const { cenasDe } = await historialDeMesas(
+    admin,
+    (pool ?? []).map((x) => x.profile_id).filter((x): x is string => !!x),
+    Date.parse(evento.starts_at),
+  )
 
   // Quiénes son, no cuántos.
   //
@@ -601,6 +616,7 @@ export async function GET(request: Request) {
       sector: x.industry,
       empresa: x.employer_key,
       tramoGasto: x.budget_tier,
+      cenas: cenasDe.get(x.profile_id as string) ?? 0,
       dietas: (x.dietary ?? []) as string[],
       comidas: comidaGuardada.get(x.profile_id as string) ?? [],
       bebidas: bebidaGuardada.get(x.profile_id as string) ?? [],
@@ -797,6 +813,7 @@ export async function GET(request: Request) {
                 bebidas: bebidaGuardada.get(p.profileId) ?? [],
                 copas: copasGuardadas.get(p.profileId) ?? null,
                 tramoGasto: gastoGuardado.get(p.profileId) ?? null,
+                cenas: cenasDe.get(p.profileId) ?? 0,
                 foto: caraGuardada.has(p.profileId)
                   ? `/api/operacion/cara?perfil=${p.profileId}`
                   : null,
@@ -825,6 +842,7 @@ export async function GET(request: Request) {
                 sector: x.industry,
                 empresa: x.employer_key,
                 tramoGasto: x.budget_tier,
+                cenas: cenasDe.get(x.profile_id as string) ?? 0,
                 dietas: (x.dietary ?? []) as string[],
                 comidas: comidaGuardada.get(x.profile_id as string) ?? [],
                 bebidas: bebidaGuardada.get(x.profile_id as string) ?? [],
@@ -1241,10 +1259,13 @@ export async function POST(request: Request) {
     // Lo que comparten, para poder decidir con criterio y no solo con un
     // numero. Va en la propuesta y no se recalcula en la pantalla.
     resumen: resumen(mesa),
-    roturas: roturas(mesa),
+    // Con la sede, para que salte el veto de local de treinta dias: aqui ya
+    // esta elegida —`sedeDe` la resolvio dos lineas arriba— y sin pasarla la
+    // regla no tendria local que comparar.
+    roturas: roturas(mesa, sede?.restaurantId ?? null),
     // Las ocho, cumplidas y rotas. El panel las enseña todas y con solo las
     // rotas tendria que volver a contarlas por su cuenta.
-    reglas: evaluacion(mesa, zona, nombreZonaDe(zona)),
+    reglas: evaluacion(mesa, zona, nombreZonaDe(zona), sede?.restaurantId ?? null),
     // La aritmética del panel sale de aquí; nada se escribe a mano.
     integrantes: mesa.map((p) => ({
       profileId: p.profileId,
@@ -1254,6 +1275,14 @@ export async function POST(request: Request) {
       genero: p.genero,
       empresa: p.empresaTexto || p.empresa,
       sector: p.sector,
+      /**
+       * Cuántas veces ha cenado ANTES de esta. Cero es primera vez.
+       *
+       * Michael, 28-10: «sabes si estás sentando a un novato o a alguien que
+       * ya lleva tres». Cuenta sitios en mesas, no reservas: quien reservó y
+       * se quedó en la espera no ha cenado.
+       */
+      cenas: p.cenas,
       // Cuánto espera gastar, 1 a 4. Lo pide el panel para elegir
       // restaurante: es la otra mitad de la decisión, con la comida.
       tramoGasto: p.tramoGasto,

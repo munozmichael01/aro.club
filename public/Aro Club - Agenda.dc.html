@@ -91,7 +91,7 @@
       <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8F4515;margin-bottom:18px">{{ semana }}</div>
     </sc-if>
     <h1 style="font:400 clamp(54px,8vw,96px)/.93 'Young Serif',Georgia,serif;letter-spacing:-.04em;margin:0">Cenas y planes en Caracas.</h1>
-    <p style="font:400 clamp(17px,1.6vw,21px)/1.45 'Inter Tight',sans-serif;margin:18px 0 0;max-width:52ch;text-wrap:pretty">Seis personas verificadas, un plan. <span style="font-weight:600">Nosotros elegimos el sitio y tú solo llegas.</span> <span style="color:#456352">El sitio y quién va contigo llegan a las 12:00 del mismo día. En los planes de mañana, como el brunch, a las 6:00 p.m. del día anterior. Antes, solo la zona.</span></p>
+    <p style="font:400 clamp(17px,1.6vw,21px)/1.45 'Inter Tight',sans-serif;margin:18px 0 0;max-width:52ch;text-wrap:pretty">Seis personas verificadas, un plan. <span style="font-weight:600">Nosotros elegimos el sitio y tú solo llegas.</span> <span style="color:#456352">El sitio y quién va contigo los sabes unas horas antes. Hasta entonces, solo la zona.</span></p>
     <sc-if value="{{ hayFiltros }}" hint-placeholder-val="{{ true }}">
       <div class="carril" style="display:flex;gap:12px;overflow-x:auto;margin:22px calc(clamp(16px,4vw,36px) * -1) 0;padding:10px clamp(16px,4vw,36px) 16px;scroll-padding-left:20px;scroll-snap-type:x mandatory">
         <sc-for list="{{ filtros }}" as="p" hint-placeholder-count="3">
@@ -147,6 +147,12 @@
           <div style="display:flex;flex-direction:column;gap:6px;font:400 16px/1.35 'Inter Tight',sans-serif">
             <div>{{ c.hora }}</div>
             <div style="font-weight:600">{{ c.zona }}</div>
+            <!-- Cuándo se sabe ESTA, y no las dos reglas en el encabezado.
+                 Michael, 25-10: «lo enredas con lo del brunch». Tenía razón:
+                 una cena y un brunch se revelan a horas distintas, y
+                 explicarlo arriba obliga a todo el mundo a leerse la regla
+                 del otro. Dicho en su tarjeta, cada quien lee la suya. -->
+            <div style="color:#456352">{{ c.seSabe }}</div>
           </div>
           <div style="display:flex;align-items:center;gap:9px;font:600 15px/1 'Inter Tight',sans-serif;color:{{ c.colorGente }}">
             <span style="width:8px;height:8px;border-radius:999px;background:{{ c.puntoGente }};flex:none"></span><span>{{ c.gente }}</span>
@@ -276,12 +282,46 @@ class Component extends DCLogic {
       const p = AroReglas.partesDe(f.empiezaEn, f.zonaHoraria);
       const n = f.apuntados || 0;
       const llena = n >= 6;
+      /**
+       * UN TOPE NO SE ANUNCIA; UN MÍNIMO SÍ.
+       *
+       * Michael, 25-10: «solo se marcan las +45». El tope de 44 existe para
+       * que cada quien vea la fecha que le toca, y eso ya lo hace el filtro:
+       * quien pasa de 44 no la ve. Ponerle encima una etiqueta «hasta 44» es
+       * contarle a los de treinta una frontera que no les afecta, y hace que
+       * la cena normal deje de parecer la cena normal.
+       *
+       * El mínimo sí se marca: «+45» es lo que distingue esa fecha de la de
+       * al lado para quien puede ir a las dos. En el panel se siguen viendo
+       * las dos, que ahí el tope es información de trabajo.
+       */
+      /**
+       * «DESDE 46», y no «+46».
+       *
+       * Michael, 25-10: «quiero a los de 45 o menos en el grupo general»,
+       * así que el corte es 46 en adelante. La etiqueta sale del número y
+       * no al revés —decir «+45» con el mínimo en 46 es el descuadre que
+       * este repo ya ha pagado con el precio y con las horas— y «+46» se
+       * lee raro porque la convención son los números redondos. «Desde 46»
+       * dice lo mismo sin que nadie tenga que interpretarlo.
+       */
+      /**
+       * «+45», en todos lados.
+       *
+       * Michael, 25-10: «no, +45 en todos lados, tenemos que hacer que se
+       * entienda como identidad de marca». Y tiene razón: una etiqueta que
+       * se dice de tres formas —«+45», «desde 45», «mayores de 45»— no es
+       * una etiqueta, son tres, y ninguna se reconoce.
+       *
+       * El número sale del mínimo guardado, así que «+45» y la puerta son
+       * siempre el mismo 45. Lo que no se anuncia es el TOPE: existe para
+       * que cada quien vea la suya, no para contarle a los de treinta una
+       * frontera que no les afecta.
+       */
       const etiquetaEdad = f.edadMinima != null && f.edadMaxima != null
         ? f.edadMinima + '-' + f.edadMaxima
         : f.edadMinima != null
         ? '+' + f.edadMinima
-        : f.edadMaxima != null
-        ? 'hasta ' + f.edadMaxima
         : '';
       return {
         formato: f.nombreFormato,
@@ -294,6 +334,20 @@ class Component extends DCLogic {
         // Las zonas ABIERTAS de esa fecha, nunca el restaurante: el sitio se
         // decide al armar la mesa y se revela el mismo día a mediodía.
         zona: (f.zonas || []).join(' o ') || 'Zona por confirmar',
+        /**
+         * Cuándo se sabe el sitio y con quién va, de ESTA fecha.
+         *
+         * De `revelaDe`, la misma regla con la que el servidor calcula
+         * `reveal_at`: el mismo día a mediodía las cenas, la víspera a las
+         * seis los planes de mañana.
+         */
+        seSabe: (() => {
+          const r = AroReglas.revelaDe(f.empiezaEn, f.zonaHoraria, f.revelaEn);
+          if (!r) return '';
+          return r.mismoDia
+            ? 'Lo sabes el mismo día a ' + r.enLetra
+            : 'Lo sabes el ' + r.dia + ' a ' + r.enLetra;
+        })(),
         // Lo que cuesta ESTA fecha. El día que el precio suba, las que ya
         // estaban abiertas siguen cobrando lo suyo.
         precio: f.precioUsd != null ? f.precioUsd + ' ref' : AroReglas.precioTexto(),

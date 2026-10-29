@@ -1,0 +1,14 @@
+-- El correo que pide probadores de Android.
+--
+-- Google no deja publicar en Play hasta que doce personas tengan la app
+-- instalada catorce días SEGUIDOS. La prueba cerrada arrancó el 26-10, así
+-- que cada día que pasa sin probadores corre el reloj de la publicación.
+--
+-- Va a quien verificó DESDE Android (`profiles.dispositivo_verificacion`),
+-- tiene la cuenta activa, llegó a tener una reserva confirmada o asistida y
+-- no tiene ninguna cancelación, ni suya ni nuestra. El 26-10 son 37
+-- personas de las 264 que verificaron desde Android.
+--
+-- No es imprescindible: lleva `List-Unsubscribe` como todo lo que se puede
+-- apagar. Pedir un favor no es avisar a alguien de su mesa.
+alter type email_kind_t add value if not exists 'probadores_android';

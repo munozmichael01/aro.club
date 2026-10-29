@@ -1179,18 +1179,18 @@ class Component extends DCLogic {
   }
 
   /**
-   * Los tramos de gasto, con su punto medio.
+   * Los tramos de gasto, con su punto medio, de `reglas.js`.
    *
    * Se pregunta por tramos y no por una cifra: pedir el número exacto es
    * pedirle a alguien que abra la cuenta del restaurante, y para comparar
    * locales entre sí el tramo basta. El punto medio es lo que se guarda.
+   *
+   * Estaba escrito aquí y otra vez en la app, y el 27-10 hizo falta un
+   * tercero —el panel, para leer de vuelta lo guardado—. Tres copias de la
+   * misma lista es como este repo ya ha divergido antes, así que vive en
+   * `reglas.js` con su vuelta (`AroReglas.tramoDeGasto`).
    */
-  TRAMOS_GASTO = [
-    ['Menos de 15', 10],
-    ['15 a 25', 20],
-    ['25 a 40', 32],
-    ['Más de 40', 50],
-  ];
+  TRAMOS_GASTO = AroReglas.TRAMOS_GASTO;
 
   renderVals() {
     // ── el juego de la mesa ─────────────────────────────────────────
@@ -1338,7 +1338,11 @@ class Component extends DCLogic {
         if (a.seSumoAlguien) {
           return 'Se suma alguien que no estaba esta mañana, y va marcado abajo. Lo demás no cambia.';
         }
-        return 'Alguien canceló después de decirte con quién cenabas. Son ' + cuantos + ', y el sitio y la hora no cambian.';
+        // «Cenabas» en una cena, «ibas» en un brunch. De la voz, como el
+        // resto: la app ya lo pinta así y aquí se quedaba a medias.
+        const VERBO = ((window.AroReglas && window.AroReglas.vozDe)
+          ? window.AroReglas.vozDe(dJ && dJ.formato) : {}).verboPasado || 'ibas';
+        return 'Alguien canceló después de decirte con quién ' + VERBO + '. Son ' + cuantos + ', y el sitio y la hora no cambian.';
       })(),
 
       // --- «¿Te podemos grabar?» ----------------------------------------
@@ -2133,7 +2137,9 @@ class Component extends DCLogic {
         const iso = dJ && dJ.empiezaEn;
         if (!iso) return 'TU ÚLTIMA MESA';
         const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-        if (dias <= 1) return 'ANOCHE';
+        // «ANOCHE» de una cena, «AYER» de un brunch: a las once de la
+        // mañana no hubo noche.
+        if (dias <= 1) return VOZ.ayer || 'AYER';
         if (dias < 7) return 'HACE ' + dias + ' DÍAS';
         const p = window.AroReglas.partesDe(iso, (dJ && dJ.zonaHoraria) || undefined);
         return p ? ('EL ' + p.numero + ' DE ' + p.mes.toUpperCase()) : 'TU ÚLTIMA MESA';

@@ -49,8 +49,21 @@ const CARACAS = 4
  * del servidor, que corre en UTC: un sábado a las 8 de la noche de Caracas ya
  * es domingo en UTC.
  */
-function semanaDeHoy(ahora = new Date()): { desde: Date; hasta: Date; semana: string } {
-  const enCcs = new Date(ahora.getTime() - CARACAS * 3600_000)
+/**
+ * `semanas` desplaza la ventana: 1 es la siguiente.
+ *
+ * El resumen nació para correr los lunes, y entonces «la semana de hoy» es
+ * la que empieza ese día. Michael, 25-10, un domingo por la tarde: quiere
+ * mandar la agenda de la semana que viene esta misma tarde, que es cuando
+ * la gente arma su semana. Sin esto saldría la semana que termina hoy, con
+ * una fecha dentro y seiscientos repetidos.
+ *
+ * La clave de la semana se mueve con la ventana, así que el candado de «uno
+ * por persona y semana» sigue valiendo: mandar el domingo la que viene no
+ * impide el resumen del lunes siguiente, y mandarla dos veces sí se impide.
+ */
+function semanaDeHoy(ahora = new Date(), semanas = 0): { desde: Date; hasta: Date; semana: string } {
+  const enCcs = new Date(ahora.getTime() - CARACAS * 3600_000 + semanas * 7 * 24 * 3600_000)
   // getUTCDay sobre la fecha ya corrida es el día de Caracas. 0 es domingo.
   const atras = (enCcs.getUTCDay() + 6) % 7
   const lunes = Date.UTC(
@@ -82,9 +95,111 @@ function aLasDeCaracas(hhmm: string, ahora = new Date()): Date | null {
   return cuando.getTime() > ahora.getTime() ? cuando : new Date(cuando.getTime() + 24 * 3600_000)
 }
 
-async function resumir(seco: boolean, solo: string | null, hora: string | null) {
+
+/**
+ * LA LISTA DE ESPERA, por su cuenta.
+ *
+ * Michael, 25-10: «la lista de espera va también hoy en otro envío para que
+ * no tenga nada que ver con la lógica anterior». Y tiene razón en separarlo:
+ * de esta gente no sabemos NADA —ni zonas, ni días, ni planes, ni edad— así
+ * que ninguno de los filtros de arriba tiene con qué decidir, y aplicárselos
+ * a medias sería inventarse preferencias que nadie nos dijo.
+ *
+ * Así que reciben la semana entera, sin nada marcado como suyo, que es
+ * exactamente la variante que ya existe para quien no tiene coincidencias.
+ * El botón no los manda a `/cuenta`, que les pediría entrar con una cuenta
+ * que no tienen, sino a la agenda pública.
+ *
+ * Quien ya convirtió a cuenta queda fuera: esa persona recibe el otro envío,
+ * y mandarle los dos sería contarle la misma semana dos veces.
+ */
+async function espera(
+  admin: ReturnType<typeof createAdminClient>,
+  fechas: { id: string }[],
+  ciudades: string[],
+  semana: string,
+  cuando: Date | null,
+  seco: boolean,
+  solo: string | null,
+) {
+  // Las ciudades de ESTAS fechas, como arriba: quien dejó su correo para
+  // otra ciudad no tiene nada que leer en esta agenda.
+  const abiertas = new Set(ciudades.length ? ciudades : ['caracas'])
+
+  let filas: { email: string | null; city_slug: string | null }[] = []
+  for (let desde = 0; ; desde += 1000) {
+    const { data } = await admin
+      .from('waitlist')
+      .select('email, city_slug')
+      .is('converted_profile_id', null)
+      .range(desde, desde + 999)
+    if (!data?.length) break
+    filas = filas.concat(data)
+    if (data.length < 1000) break
+  }
+
+  /**
+   * Sin repetir direcciones y sin las que ya tienen cuenta.
+   *
+   * `converted_profile_id` cubre a quien convirtió por el camino normal,
+   * pero alguien pudo dejar su correo dos veces, o dejarlo y crear la cuenta
+   * con esa misma dirección sin que la conversión quedara apuntada. Se
+   * comprueba contra `profiles` por la dirección, que es lo que de verdad
+   * recibe el correo.
+   */
+  const correos = [...new Set(
+    filas
+      .filter((f) => f.email && abiertas.has(f.city_slug ?? 'caracas'))
+      .map((f) => f.email!.trim().toLowerCase()),
+  )]
+
+  const conCuenta = new Set<string>()
+  for (let i = 0; i < correos.length; i += 300) {
+    const { data } = await admin
+      .from('profiles')
+      .select('email')
+      .in('email', correos.slice(i, i + 300))
+    for (const p of data ?? []) if (p.email) conCuenta.add(p.email.trim().toLowerCase())
+  }
+
+  const destinatarios = correos
+    .filter((c) => !conCuenta.has(c))
+    .filter((c) => !solo || c === solo.trim().toLowerCase())
+
+  const todas = fechas.map((f) => f.id)
+  let encolados = 0
+  for (const correo of destinatarios) {
+    if (seco) { encolados++; continue }
+    const r = await encolar(
+      { correo },
+      'resumen_semanal',
+      { tuyas: [], otras: todas, semana },
+      cuando ? { cuando } : {},
+    )
+    if (r === 'encolado') encolados++
+  }
+
+  return NextResponse.json({
+    semana,
+    fechas: fechas.length,
+    enLaEspera: correos.length,
+    yaTienenCuenta: conCuenta.size,
+    destinatarios: destinatarios.length,
+    encolados,
+    salen: cuando ? cuando.toISOString() : 'ahora',
+    ...(seco ? { seco: true } : {}),
+  })
+}
+
+async function resumir(
+  seco: boolean,
+  solo: string | null,
+  hora: string | null,
+  semanas = 0,
+  paraLaEspera = false,
+) {
   const admin = createAdminClient()
-  const { desde, hasta, semana } = semanaDeHoy()
+  const { desde, hasta, semana } = semanaDeHoy(new Date(), semanas)
 
   const cuando = hora ? aLasDeCaracas(hora) : null
   if (hora && !cuando) {
@@ -93,7 +208,19 @@ async function resumir(seco: boolean, solo: string | null, hora: string | null) 
 
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, city_slug, age_band_min, age_band_max')
+    /**
+     * `idioma` hace falta aunque el resumen no lo pinte.
+     *
+     * Se lo pasamos entero a `quienQuiereSaberDe`, y ahí dentro el idioma
+     * decide DOS cosas: a quién se le ofrece una mesa en inglés, y si esa
+     * fecha compite con las de edad de esa misma noche. Sin el campo, la
+     * cena en inglés del 31 se leía como una cena en español: las dos de
+     * edad del sábado le competían, entre «hasta 45» y «desde 46» cubren
+     * todas las edades que existen, y se quedó marcada para 14 personas de
+     * las 213 que hablan inglés y pueden ese sábado. Las 14 eran las que no
+     * tienen fecha de nacimiento.
+     */
+    .select('id, format, starts_at, city_slug, age_band_min, age_band_max, idioma')
     .eq('status', 'open')
     .gte('starts_at', desde.toISOString())
     .lt('starts_at', hasta.toISOString())
@@ -111,6 +238,10 @@ async function resumir(seco: boolean, solo: string | null, hora: string | null) 
    * hasta que hubo una segunda.
    */
   const ciudades = [...new Set(fechas.map((f) => f.city_slug).filter((c): c is string => !!c))]
+
+  // Y aquí se bifurca: o las cuentas, o la espera. Nunca las dos en la
+  // misma pasada, para que cada envío se cuente por separado.
+  if (paraLaEspera) return espera(admin, fechas, ciudades, semana, cuando, seco, solo)
 
   let perfiles: { id: string; email: string | null; notificaciones: unknown }[] = []
   for (let desdeFila = 0; ; desdeFila += 1000) {
@@ -203,12 +334,23 @@ async function resumir(seco: boolean, solo: string | null, hora: string | null) 
    * aquí no hay fecha— así que lo impide esta consulta. Mientras no haya
    * índice, dos pasadas a la vez podrían colarse: el cron corre una vez.
    */
+  /**
+   * Por la SEMANA de la que habla, no por cuándo sale.
+   *
+   * Miraba el `send_at` dentro de la ventana de la semana, y eso valía
+   * mientras el resumen saliera el lunes de esa misma semana. Desde que se
+   * puede mandar la que viene —`?semanas=1`, un domingo por la tarde— el
+   * correo sale FUERA de su propia ventana y el candado no se veía a sí
+   * mismo: una segunda pasada eran 822 correos repetidos.
+   *
+   * La semana de la que habla va en el payload, así que se pregunta por
+   * ahí, que es lo que de verdad no puede repetirse.
+   */
   const { data: yaTienen } = await admin
     .from('scheduled_emails')
     .select('profile_id')
     .eq('kind', 'resumen_semanal')
-    .gte('send_at', desde.toISOString())
-    .lt('send_at', hasta.toISOString())
+    .eq('payload->>semana', semana)
 
   const hechos = new Set((yaTienen ?? []).map((r) => r.profile_id).filter((x): x is string => !!x))
 
@@ -261,5 +403,20 @@ export async function GET(request: Request) {
   }
 
   const params = new URL(request.url).searchParams
-  return resumir(params.get('seco') === '1', params.get('solo'), params.get('hora'))
+  // `?semanas=1` para la que viene. Sin él, la de hoy, que es lo que hace
+  // el cron de los lunes.
+  const semanas = Number(params.get('semanas') ?? 0)
+  if (!Number.isInteger(semanas) || semanas < 0 || semanas > 4) {
+    return NextResponse.json({ error: 'semanas se escribe de 0 a 4.' }, { status: 400 })
+  }
+  // `?espera=1` manda el OTRO envío: el de quien dejó su correo y nunca
+  // llegó a tener cuenta. Va aparte a propósito y no comparte un solo
+  // filtro con el de las cuentas.
+  return resumir(
+    params.get('seco') === '1',
+    params.get('solo'),
+    params.get('hora'),
+    semanas,
+    params.get('espera') === '1',
+  )
 }

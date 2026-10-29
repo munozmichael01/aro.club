@@ -1314,12 +1314,46 @@ class Component extends DCLogic {
       // plural— así que pegarle la palabra delante daba «CENAS +40». El
       // tipo ya está escrito justo al lado; la etiqueta solo tiene que
       // decir lo que esa fecha tiene de distinto.
+      /**
+       * UN TOPE NO SE ANUNCIA; UN MÍNIMO SÍ.
+       *
+       * Michael, 25-10: «solo se marcan las +45». El tope de 44 existe para
+       * que cada quien vea la fecha que le toca, y eso ya lo hace el filtro:
+       * quien pasa de 44 no la ve. Ponerle encima una etiqueta «hasta 44» es
+       * contarle a los de treinta una frontera que no les afecta, y hace que
+       * la cena normal deje de parecer la cena normal.
+       *
+       * El mínimo sí se marca: «+45» es lo que distingue esa fecha de la de
+       * al lado para quien puede ir a las dos. En el panel se siguen viendo
+       * las dos, que ahí el tope es información de trabajo.
+       */
+      /**
+       * «DESDE 46», y no «+46».
+       *
+       * Michael, 25-10: «quiero a los de 45 o menos en el grupo general»,
+       * así que el corte es 46 en adelante. La etiqueta sale del número y
+       * no al revés —decir «+45» con el mínimo en 46 es el descuadre que
+       * este repo ya ha pagado con el precio y con las horas— y «+46» se
+       * lee raro porque la convención son los números redondos. «Desde 46»
+       * dice lo mismo sin que nadie tenga que interpretarlo.
+       */
+      /**
+       * «+45», en todos lados.
+       *
+       * Michael, 25-10: «no, +45 en todos lados, tenemos que hacer que se
+       * entienda como identidad de marca». Y tiene razón: una etiqueta que
+       * se dice de tres formas —«+45», «desde 45», «mayores de 45»— no es
+       * una etiqueta, son tres, y ninguna se reconoce.
+       *
+       * El número sale del mínimo guardado, así que «+45» y la puerta son
+       * siempre el mismo 45. Lo que no se anuncia es el TOPE: existe para
+       * que cada quien vea la suya, no para contarle a los de treinta una
+       * frontera que no les afecta.
+       */
       const etiquetaEdad = eMin != null && eMax != null
         ? eMin + '-' + eMax
         : eMin != null
         ? '+' + eMin
-        : eMax != null
-        ? 'hasta ' + eMax
         : '';
 
       g.eventos.push({

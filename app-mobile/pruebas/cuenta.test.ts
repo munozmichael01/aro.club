@@ -265,5 +265,5 @@ test('los días que se guardan las fotos salen de la regla, no a mano (23-10: la
   const C = await import('../src/texto/cuenta')
   const dias = String(reglas.DIAS_GUARDA_FOTOS)
   assert.ok(V.intro.explicacion.some(([, t]) => t.includes(`${dias} días`)))
-  assert.match(C.ESTADOS.verificar.cuerpo(), new RegExp(`${dias} días`))
+  assert.match(C.ESTADOS.verificar.cuerpo(''), new RegExp(`${dias} días`))
 })

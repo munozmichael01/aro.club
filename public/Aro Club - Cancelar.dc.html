@@ -199,6 +199,10 @@ class Component extends DCLogic {
     // «7:00 p.m. · Las Mercedes»— asi que quien iba a soltar su puesto leia
     // la fecha de otra persona.
     const D = this.state.datos;
+    // «Una mesa» o «un grupo», de la voz: una caminata no tiene mesa, y
+    // el artículo va con ella o sale «una grupo».
+    const VOZ_PLAN = (window.AroReglas && window.AroReglas.vozDe)
+      ? window.AroReglas.vozDe(D && D.formato) : { unidad: 'mesa', art: 'una' };
     const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
     const MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
     const NOMBRE = { dinner: 'Cena', drinks: 'Drinks', movement: 'Movimiento', coffee: 'Coffee', brunch: 'Brunch', women_brunch: 'Brunch de mujeres' };
@@ -239,8 +243,22 @@ class Component extends DCLogic {
       cajaAviso: 'display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:' + (tarde ? 'rgba(143,69,21,.1)' : 'rgba(27,81,56,.09)') + ';padding:14px 16px;margin-top:14px',
       iconoAviso: 'flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:' + (tarde ? '#6E340F' : '#1B5138') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif;margin-top:1px',
       glifoAviso: tarde ? '!' : '✓',
+      /**
+       * La única frase del producto que cuenta gente DESPUÉS de repartir.
+       *
+       * Decía «los otros cinco cuentan con seis» y «una mesa de seis»
+       * escritas a mano, con la mesa ya armada delante. Desde que una mesa
+       * se puede estirar a siete u ocho, las dos pueden mentir: anoche hubo
+       * una de ocho. Los números salen ahora de `enLaMesa`, que es la
+       * cuenta de los que de verdad están sentados con esa persona.
+       */
       textoAviso: tarde
-        ? 'Con menos de 24 horas el crédito no se devuelve: el restaurante ya tiene la reserva y los otros cinco cuentan con seis. Aun así, cancelar es mejor que no aparecer: un puesto vacío se nota en una mesa de seis.'
+        ? (() => {
+            const cuantos = (D && D.enLaMesa) || 6;
+            const otros = window.AroReglas.enLetra(Math.max(1, cuantos - 1));
+            const todos = window.AroReglas.enLetra(cuantos);
+            return 'Con menos de 24 horas el crédito no se devuelve: el restaurante ya tiene la reserva y los otros ' + otros + ' cuentan con ' + todos + '. Aun así, cancelar es mejor que no aparecer: un puesto vacío se nota en una ' + VOZ_PLAN.art + ' ' + VOZ_PLAN.unidad + ' de ' + todos + '.';
+          })()
         : esperando
         ? 'Tu puesto queda libre ya. El crédito está esperando a que alguien compruebe tu transferencia, y en cuanto lo haga te lo abonamos entero. No tienes que hacer nada.'
         : 'Cancelas con margen, así que el crédito vuelve entero a tu cuenta y no pasa nada. Nadie de la mesa se entera.',

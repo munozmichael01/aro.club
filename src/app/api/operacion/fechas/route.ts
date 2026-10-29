@@ -709,8 +709,20 @@ export async function GET() {
    * aquí daba «33 reservas activas en 22 fechas» con ocho fechas por
    * delante: una cena de hace dos semanas no es una reserva activa.
    */
+  /**
+   * Y SIN LAS DE PRUEBA, por el mismo motivo que sin las pasadas.
+   *
+   * La lista de arriba las esconde —`filtroDeFechas` las quita salvo que se
+   * encienda «ver prueba»— y este contador las sumaba igual. El 26-10 decía
+   * «16 reservas activas en 8 fechas» con siete fechas y diez reservas
+   * delante: las otras seis eran de una cena de prueba del domingo que no ve
+   * ningún miembro.
+   *
+   * Un contador que no cuadra con la lista que tiene debajo no se lee como
+   * dos números distintos, se lee como que uno de los dos miente.
+   */
   const porVenir = (eventos ?? []).filter(
-    (e) => new Date(e.starts_at).getTime() + FIN_CENA > Date.now(),
+    (e) => !e.es_prueba && new Date(e.starts_at).getTime() + FIN_CENA > Date.now(),
   )
 
   const { data: vivas } = await admin

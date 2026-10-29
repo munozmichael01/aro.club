@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { reglas } from '../reglas'
 import { router, useLocalSearchParams } from 'expo-router'
 
 import { Inicio } from '../cuenta/Inicio'
@@ -20,19 +21,21 @@ const en = (h: number) => new Date(Date.now() + h * 3600_000).toISOString()
 function deCaptura(d: MiCuenta, varios = false): MiCuenta {
   const s0 = sabado(0)
   const menos = (iso: string, h: number) => new Date(Date.parse(iso) - h * 3600_000).toISOString()
+  // El cierre de verdad (medianoche al empezar el día de la cena), no 24 h a mano: sale en las capturas de las tiendas.
+  const cierre = (iso: string) => reglas.cierreDe(iso) ?? menos(iso, 24)
   return {
     ...d,
     porValorar: null,
     agenda: [
-      { id: 'a', formato: 'dinner', empiezaEn: s0, cierraEn: menos(s0, 24), creditos: 1, zonas: ['Chacao', 'Los Palos Grandes'], apuntados: 9, cerrada: false, mia: false },
-      { id: 'b', formato: 'dinner', empiezaEn: sabado(1), cierraEn: menos(sabado(1), 24), creditos: 1, zonas: ['Las Mercedes', 'Altamira'], apuntados: 4, cerrada: false, mia: false },
-      { id: 'c', formato: 'dinner', empiezaEn: sabado(2), cierraEn: menos(sabado(2), 24), creditos: 1, zonas: ['La Castellana'], apuntados: 2, cerrada: false, mia: false },
+      { id: 'a', formato: 'dinner', empiezaEn: s0, cierraEn: cierre(s0), creditos: 1, zonas: ['Chacao', 'Los Palos Grandes'], apuntados: 9, cerrada: false, mia: false },
+      { id: 'b', formato: 'dinner', empiezaEn: sabado(1), cierraEn: cierre(sabado(1)), creditos: 1, zonas: ['Las Mercedes', 'Altamira'], apuntados: 4, cerrada: false, mia: false },
+      { id: 'c', formato: 'dinner', empiezaEn: sabado(2), cierraEn: cierre(sabado(2)), creditos: 1, zonas: ['La Castellana'], apuntados: 2, cerrada: false, mia: false },
       // ?varios=1: también drinks, para ver el filtro con «Todos» (entrega 19, 2a).
       ...(varios ? [{ id: 'd', formato: 'drinks', empiezaEn: menos(sabado(0), 47), cierraEn: menos(sabado(0), 71), creditos: 1, zonas: ['Altamira'], apuntados: 5, cerrada: false, mia: false }] : []),
       // El brunch (entrega 21): polaroid, icono y color propios.
       ...(varios ? [{ id: 'b', formato: 'brunch', empiezaEn: menos(sabado(0), -40), cierraEn: menos(sabado(0), 0), creditos: 1, zonas: ['Chacao'], apuntados: 3, cerrada: false, mia: false }] : []),
     ],
-    proximaFecha: { empiezaEn: s0, cierraEn: menos(s0, 24), revelaEn: menos(s0, 7.5), zona: 'Chacao', apuntados: 9, zonaHoraria: 'America/Caracas' },
+    proximaFecha: { empiezaEn: s0, cierraEn: cierre(s0), revelaEn: menos(s0, 7.5), zona: 'Chacao', apuntados: 9, zonaHoraria: 'America/Caracas' },
   }
 }
 

@@ -4,6 +4,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type { Database } from '@/lib/supabase/database.types'
 
+import { todasLasFilas } from '@/lib/todas-las-filas'
+
+import { historialDeMesas } from './historial'
 import type { Persona } from './repartir'
 
 /**
@@ -56,7 +59,7 @@ export async function construirPool(
 ): Promise<Pool> {
   const { data: evento } = await admin
     .from('events')
-    .select('seats_per_table, format')
+    .select('seats_per_table, format, starts_at')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -165,14 +168,63 @@ export async function construirPool(
   // Todos los encuentros, con su fecha. Los de los últimos tres meses son
   // veto; los demás siguen contando para la novedad, que es lo que mide si
   // la mesa es gente nueva de verdad.
-  const { data: todos } = await admin
-    .from('pair_encounters')
-    .select('profile_a, profile_b, last_met_at')
+  /**
+   * LAS PAREJAS DE ESTA GENTE, no la tabla entera.
+   *
+   * `pair_encounters` crece al cuadrado: cada cena de seis añade quince
+   * filas, y no se borra ninguna porque el término de novedad mira toda la
+   * historia. Leerla entera en cada reparto era pedir la historia del club
+   * completo para sentar a treinta personas, y además PostgREST corta en
+   * mil filas sin avisar: pasadas unas sesenta y siete mesas el veto habría
+   * empezado a leer solo una parte y a sentar junta a gente que no debe
+   * coincidir, sin que fallara nada.
+   *
+   * Las dos cosas se arreglan con la misma idea, y es que `vetados` y
+   * `conocidos` SOLO se preguntan entre gente de la misma mesa
+   * —`repartir.ts:263` y `:531`— y toda mesa sale de este pool. O sea que
+   * las únicas parejas que importan son las que tienen a los dos dentro.
+   *
+   * Y como la tabla guarda cada pareja una sola vez, si los dos están en el
+   * pool entonces el que esté en `profile_a` también lo está: preguntando
+   * por `profile_a` no se escapa ninguna.
+   *
+   * Así la consulta deja de depender del tamaño del club y pasa a depender
+   * del de la fecha. Por trozos de ids por la URL, y por tramos dentro de
+   * cada trozo por el tope de las mil: son dos topes distintos y hacen
+   * falta los dos.
+   */
+  const enElPool = new Set(ids)
+  const POR_TROZO_DE_IDS = 150
+
+  async function parejasDe<T extends { profile_a: string; profile_b: string }>(
+    tabla: 'pair_encounters' | 'exclusions',
+    columnas: string,
+  ): Promise<T[]> {
+    const salida: T[] = []
+    for (let i = 0; i < ids.length; i += POR_TROZO_DE_IDS) {
+      const trozo = ids.slice(i, i + POR_TROZO_DE_IDS)
+      const filas = await todasLasFilas<T>((desde, hasta) => admin
+        .from(tabla)
+        .select(columnas)
+        .in('profile_a', trozo)
+        .range(desde, hasta) as never)
+      // Y de esas, las que tienen al otro también dentro.
+      salida.push(...filas.filter((f) => enElPool.has(f.profile_b)))
+    }
+    return salida
+  }
+
+  const todos = ids.length
+    ? await parejasDe<{ profile_a: string; profile_b: string; last_met_at: string }>(
+      'pair_encounters', 'profile_a, profile_b, last_met_at')
+    : []
 
   const corte = Date.now() - MESES_SIN_REPETIR * 30 * 86400_000
-  const encuentros = (todos ?? []).filter((e) => new Date(e.last_met_at).getTime() > corte)
+  const encuentros = todos.filter((e) => new Date(e.last_met_at).getTime() > corte)
 
-  const { data: exclusiones } = await admin.from('exclusions').select('profile_a, profile_b')
+  const exclusiones = ids.length
+    ? await parejasDe<{ profile_a: string; profile_b: string }>('exclusions', 'profile_a, profile_b')
+    : []
 
   const emparejar = (filas: { profile_a: string; profile_b: string }[]) => {
     const m = new Map<string, Set<string>>()
@@ -185,11 +237,23 @@ export async function construirPool(
     return m
   }
 
-  const vetos = emparejar([...encuentros, ...(exclusiones ?? [])])
-  const yaSeConocen = emparejar(todos ?? [])
+  const vetos = emparejar([...encuentros, ...exclusiones])
+  const yaSeConocen = emparejar(todos)
 
   const nombreDe = new Map(
     (perfiles ?? []).map((p) => [p.id, p.display_name || p.full_name?.split(' ')[0] || '—']),
+  )
+
+  /**
+   * Dónde se ha sentado ya cada uno, y cuántas veces. Michael, 28-10.
+   *
+   * La cuenta vive en `historialDeMesas` y no aquí porque el panel la pide
+   * también por otro camino, sin pasar por `Persona`.
+   */
+  const { cenasDe, localesRecientesDe } = await historialDeMesas(
+    admin,
+    ids,
+    evento?.starts_at ? Date.parse(evento.starts_at) : Date.now(),
   )
 
   const personas: Persona[] = (pool ?? []).map((p) => ({
@@ -238,6 +302,8 @@ export async function construirPool(
     dietas: p.dietary ?? [],
     vetados: vetos.get(p.profile_id as string) ?? new Set<string>(),
     conocidos: yaSeConocen.get(p.profile_id as string) ?? new Set<string>(),
+    localesRecientes: localesRecientesDe.get(p.profile_id as string) ?? new Set<string>(),
+    cenas: cenasDe.get(p.profile_id as string) ?? 0,
   }))
 
   return { personas, sedes, zonas, porMesa: evento?.seats_per_table ?? 6 }

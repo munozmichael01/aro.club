@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { DIAS_SIN_REPETIR_LOCAL } from './historial'
+
 /**
  * El reparto en mesas.
  *
@@ -54,6 +56,31 @@ export type Persona = {
    * Un diez por ciento de la puntuación que no medía nada.
    */
   conocidos: Set<string>
+  /**
+   * Los locales donde se sentó en los últimos treinta días.
+   *
+   * Michael, 28-10: «veto de local por 30 días». No es lo mismo que el veto
+   * entre personas, que son tres meses: ahí lo que se protege es que la mesa
+   * sea gente nueva, y aquí que la noche no sea el mismo sitio otra vez.
+   *
+   * La ventana se resuelve en `construirPool`, que es quien sabe el día de
+   * ESTA cena. Aquí llega ya decidido: lo que está en el conjunto es lo que
+   * repite. Calcularlo en la rotura obligaría a pasarle la fecha a una
+   * función que hoy solo mira a la gente de la mesa.
+   */
+  localesRecientes: Set<string>
+  /**
+   * Cuántas veces se ha sentado ANTES de esta. Cero es primera vez.
+   *
+   * Michael, 28-10: «que diga cuál cena es esta para esa persona: 2ª cena,
+   * primera vez. Eso sirve para repartir: sabes si estás sentando a un
+   * novato o a alguien que ya lleva tres».
+   *
+   * Cuenta sitios en mesas, no reservas: quien reservó y se quedó en la
+   * espera no ha cenado, y decirle «2ª cena» a quien solo ha cenado una vez
+   * es contarle mal su propia historia a quien reparte.
+   */
+  cenas: number
 }
 
 export type Pesos = {
@@ -180,7 +207,21 @@ export function cabeEnElCupo(mesa: Persona[], cupo: { mujer: number; hombre: num
 
 export type Rotura = { regla: string; detalle: string }
 
-export function roturas(mesa: Persona[]): Rotura[] {
+/**
+ * Qué reglas duras rompe esta mesa.
+ *
+ * `sede` es el local YA elegido de esta mesa, y es opcional a propósito:
+ * cuando el algoritmo arma las mesas todavía no hay local del que hablar
+ * —el local se elige después, mesa por mesa, desde el panel— así que las
+ * llamadas de dentro del reparto no lo pasan y la regla del local no salta.
+ * Salta en las dos que sí lo saben: el panel al pintar y la propuesta al
+ * retocar.
+ *
+ * Escrito al revés —obligando a pasar la sede— habría que inventarse una
+ * para las siete llamadas que no la tienen, y una sede inventada es una
+ * rotura inventada.
+ */
+export function roturas(mesa: Persona[], sede?: string | null): Rotura[] {
   const fallos: Rotura[] = []
 
   const edades = mesa.map((p) => p.edad).filter((e): e is number => e != null)
@@ -224,6 +265,20 @@ export function roturas(mesa: Persona[]): Rotura[] {
       if (vistos.has(clave)) continue
       vistos.add(clave)
       fallos.push({ regla: 'veto', detalle: `${a.nombre} y ${b.nombre}` })
+    }
+  }
+
+  // Y quién vuelve al mismo sitio. Con nombres, como la de empresa: «repite
+  // local» obliga a mirar uno por uno justo cuando hay que decidir.
+  if (sede) {
+    const repiten = mesa.filter((p) => p.localesRecientes.has(sede)).map((p) => p.nombre)
+    if (repiten.length) {
+      fallos.push({
+        regla: 'local',
+        detalle: repiten.length === 1
+          ? `${repiten[0]} ya cenó aquí en los últimos ${DIAS_SIN_REPETIR_LOCAL} días`
+          : `${repiten.join(', ')} ya cenaron aquí en los últimos ${DIAS_SIN_REPETIR_LOCAL} días`,
+      })
     }
   }
 
@@ -368,8 +423,17 @@ export function evaluacion(
   zonaDeLaMesa?: string | null,
   /** Y su nombre, que es lo que se lee. Sin él se enseña el slug. */
   nombreDeLaZona?: string | null,
+  /**
+   * El local elegido de esta mesa, si ya lo hay.
+   *
+   * Sin él la regla del local NO SALE de la lista, en vez de salir en verde.
+   * Un chip verde de «nadie repite local» en una mesa sin sitio elegido
+   * diría que una comprobación pasó cuando no se ha podido hacer, y eso es
+   * peor que no enseñarla.
+   */
+  sede?: string | null,
 ): Regla[] {
-  const rotas = new Map(roturas(mesa).map((r) => [r.regla, r.detalle]))
+  const rotas = new Map(roturas(mesa, sede).map((r) => [r.regla, r.detalle]))
   const di = (clave: string, bien: string): Regla => ({
     regla: clave,
     ok: !rotas.has(clave),
@@ -413,6 +477,8 @@ export function evaluacion(
     di('gasto', 'Gasto compatible'),
     di('idioma', 'Idioma común'),
     { regla: 'zona', ok: zonaOk, texto: textoZona },
+    // La novena, y solo cuando hay sitio del que hablar. Michael, 28-10.
+    ...(sede ? [di('local', `Nadie ha cenado aquí en ${DIAS_SIN_REPETIR_LOCAL} días`)] : []),
   ]
 }
 

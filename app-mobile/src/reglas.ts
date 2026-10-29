@@ -62,6 +62,8 @@ type Api = {
   semanaDe: (iso: string, zona?: string | null, ahora?: number) => 0 | 1 | 2
   /** Los días que se guardan la cédula y la selfie tras aprobarse: lo que dice Privacidad (120). Nunca escrito a mano. */
   DIAS_GUARDA_FOTOS: number
+  /** Los tramos de gasto de la encuesta, [texto, punto medio]: se guarda el punto medio. Uno para app, web y panel. */
+  TRAMOS_GASTO: [string, number][]
   /** Las cuatro preguntas de la puerta, UN sitio para web y app. Opciones como [texto, código]. */
   PUERTA: Record<string, PreguntaPuerta>
   ORDEN_PUERTA: string[]

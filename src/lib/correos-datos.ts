@@ -11,6 +11,7 @@ import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO,
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
+import { situacionDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
@@ -466,6 +467,50 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       const falta = (p.falta as string) ?? 'perfil'
 
       /**
+       * QUÉ HAY ABIERTO Y HASTA CUÁNDO, sacado de la base y no escrito aquí.
+       *
+       * El aviso de verificación no decía ninguna fecha, y sin fecha no hay
+       * urgencia: «verifícate» es una tarea sin plazo y una tarea sin plazo
+       * se pospone. Con 362 personas con el perfil completo y la cédula sin
+       * subir, eso es lo que hay que romper.
+       *
+       * Se calcula al MANDAR y nunca se escribe a mano. Un correo que dice
+       * «de jueves a domingo» la semana que no hay jueves manda a alguien a
+       * una agenda que lo desmiente, y entonces el que mintió fuimos
+       * nosotros, no el calendario.
+       *
+       * El plazo es el día ANTES del primer cierre: quien se verifica ese
+       * día llega a tiempo a todo lo que queda abierto.
+       */
+      const { data: abiertasAhora } = await admin
+        .from('events')
+        .select('starts_at, booking_closes_at, city_slug')
+        .eq('status', 'open')
+        .eq('es_prueba', false)
+        .gte('starts_at', new Date().toISOString())
+        .order('starts_at')
+
+      const hayFechas = (abiertasAhora ?? []).length > 0
+      let cuandoHay = ''
+      let plazo = ''
+      if (hayFechas) {
+        const zonaAgenda = await zonaDeLaCiudad(admin, abiertasAhora![0].city_slug)
+        const dias = [...new Set((abiertasAhora ?? []).map((e) => diaDe(e.starts_at, zonaAgenda)).filter(Boolean))]
+        cuandoHay = dias.length > 1
+          ? `de ${dias[0]} a ${dias[dias.length - 1]}`
+          : `el ${dias[0]}`
+        // El primero que cierra manda: el plazo es la víspera de ese cierre.
+        const cierres = (abiertasAhora ?? [])
+          .map((e) => e.booking_closes_at)
+          .filter((x): x is string => !!x)
+          .sort()
+        if (cierres.length) {
+          const vispera = new Date(new Date(cierres[0]).getTime() - 24 * 3600_000).toISOString()
+          plazo = diaDe(vispera, zonaAgenda) ?? ''
+        }
+      }
+
+      /**
        * El botón. NO puede ser `/cuestionario` a secas.
        *
        * Quien NO tiene cuenta —dejó su correo y se fue— necesita el token
@@ -488,6 +533,22 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         ? `${SITIO}${destino}?correo=${encodeURIComponent(a)}`
         : `${SITIO}/cuestionario?t=${encodeURIComponent(firmar(a))}&correo=${encodeURIComponent(a)}`
 
+      /**
+       * NINGUNA de estas voces dice cuántas preguntas faltan.
+       *
+       * Decía «Dieciséis preguntas más» en el momento exacto en que se le
+       * pide el esfuerzo, y ese correo es el segundo más enviado del club:
+       * 1014 copias. De las 1037 personas que lo recibieron, 290 no llegaron
+       * nunca a tener cuenta.
+       *
+       * Un número en ese sitio no informa, tasa. Y el dato dice que no hay
+       * nadie atascado a mitad del cuestionario: las 747 que hicieron cuenta
+       * tienen sus respuestas guardadas, las 747. Quien empieza, termina. Lo
+       * que decide es si empieza.
+       *
+       * La landing sí lo cuenta, y ahí es otra cosa: nadie ha invertido nada
+       * todavía y saber de qué va es lo honesto. Aquí ya contestó cuatro.
+       */
       // Cada estado, sus palabras. `bienvenida` es la de Design, intacta.
       const voces: Record<string, Record<string, string>> = {
         bienvenida: {
@@ -499,7 +560,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           titularC: 'puesto',
           entradilla: `Gracias por contarnos quién eres${coma}. Con esas cuatro respuestas ya podemos empezar a pensar en tu mesa.`,
           paso1Titulo: 'Termina tu perfil',
-          paso1: 'Dieciséis preguntas más: de qué hablas, qué comes, qué tomas, qué prefieres esquivar. Es lo que hace que tu mesa no sea al azar.',
+          paso1: 'Unas preguntas más: de qué hablas, qué comes, qué tomas, qué prefieres esquivar. Es lo que hace que tu mesa no sea al azar.',
           paso2Titulo: 'Verifica tu identidad',
           paso2: 'Cédula y una selfie. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
           boton: 'Completar mi perfil',
@@ -514,7 +575,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           titularC: 'ahí',
           entradilla: `Te quedaste a medias${coma}, y no hemos dado tu puesto a nadie. Cuando quieras, sigues justo donde lo dejaste.`,
           paso1Titulo: 'Termina tu perfil',
-          paso1: 'Dieciséis preguntas más: de qué hablas, qué comes, qué tomas, qué prefieres esquivar. Es lo que hace que tu mesa no sea al azar.',
+          paso1: 'Unas preguntas más: de qué hablas, qué comes, qué tomas, qué prefieres esquivar. Es lo que hace que tu mesa no sea al azar.',
           paso2Titulo: 'Verifica tu identidad',
           paso2: 'Cédula y una selfie. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
           boton: 'Seguir donde lo dejé',
@@ -583,7 +644,11 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         // Perfil completo y nada subido. El peor de los tres: está a un
         // paso de poder apartar puesto.
         verificacion: {
-          asuntoCorreo: 'Te falta un paso',
+          // «para tu primera mesa» y no «Te falta un paso» a secas: 346
+          // personas ya recibieron ese asunto y no lo abrieron o no actuaron.
+          // Repetirlo es pedir que lo ignoren otra vez. Y nombra el premio,
+          // que es lo que falta en «te falta»: la mesa, no el trámite.
+          asuntoCorreo: 'Te falta un paso para tu primera mesa',
           cinta: 'TE FALTA UN PASO',
           anticipo: 'Tu perfil está completo. Solo queda verificar quién eres.',
           titularA: 'Te falta',
@@ -592,13 +657,41 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           // Dos minutos no es una forma de hablar: es la mediana medida
           // entre terminar el perfil y subir la cédula, y el p90 son diez.
           entradilla: `Tu perfil está completo${coma}. Lo único que falta para que puedas apartar puesto es verificar quién eres: una foto de tu cédula y una selfie. Dos minutos.`,
-          paso1Titulo: 'Tu perfil, listo',
-          paso1: 'Ya nos contaste de qué hablas, qué comes y qué prefieres esquivar. Eso no hay que repetirlo.',
-          paso2Titulo: 'Verifica tu identidad',
-          paso2: 'Esto es lo que falta: cédula y una selfie. Es la razón por la que los otros cinco se atreven a sentarse contigo.',
-          boton: 'Verificar mi identidad',
+          paso1Titulo: 'Por qué te la pedimos',
+          paso1: `Para que cada persona de la mesa esté verificada, tú incluido. Las revisamos a mano, no las ve nadie más, y se borran a los ${DIAS_GUARDA_FOTOS} días.`,
+          paso2Titulo: 'Qué hay esta semana',
+          // Con fecha y con plazo, o sin nada. Media frase —«hay mesas» sin
+          // decir cuándo— es la que no mueve a nadie.
+          paso2: hayFechas && plazo
+            ? `Hay mesas ${cuandoHay}. Si te verificas antes del ${plazo}, te da tiempo de reservar.`
+            : hayFechas
+              ? `Hay mesas ${cuandoHay}. En cuanto estés verificado puedes reservar.`
+              : 'En cuanto abramos la próxima fecha en tu zona te escribimos, y ya podrás reservar sin tener que hacer nada más.',
+          boton: 'Verificarme',
         },
       }
+
+      /**
+       * EL MISMO CORREO, otra vez, a quien ya lo recibió una vez.
+       *
+       * `scheduled_emails_empujon_perfil` es único por `(profile_id, falta)`
+       * y lo creó la migración del 28-08 con un motivo escrito: «un empujón
+       * por persona y por estado, insistir es spam». Por eso de las 362
+       * personas atascadas en la cédula, 320 no podían recibir nada: ya
+       * habían gastado su único aviso, algunas hace más de un mes.
+       *
+       * Michael decidió el 26-10 mandárselo igual, y pidió exactamente el
+       * mismo correo, no uno nuevo. `verificacion_semana` es eso: la MISMA
+       * voz, palabra por palabra, con otra clave de índice.
+       *
+       * Lo que NO se hace, a propósito: tocar el índice. La regla sigue en
+       * pie para todo lo demás, y esta segunda ronda hereda su protección,
+       * porque `(profile_id, 'verificacion_semana')` también es única. O
+       * sea que esto se puede mandar una vez y solo una. Si algún día hace
+       * falta una tercera, será otra decisión y se verá escrita aquí, que
+       * es justo lo que no pasaría si hubiéramos aflojado el índice.
+       */
+      voces.verificacion_semana = voces.verificacion
 
       const voz = { ...(voces[fila.kind === 'bienvenida' ? 'bienvenida' : falta] ?? voces.perfil) }
 
@@ -1003,6 +1096,141 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
      * poner: lo que no llega no se puede filtrar. Este correo dice que es
      * hoy, a qué hora, y que a mediodía se abre todo — y nada más.
      */
+    /**
+     * «Voy tarde», a los otros cinco. Y NUNCA SE ARMÓ.
+     *
+     * Este `case` no ha existido nunca. El tipo estaba en `correos.ts`, la
+     * plantilla en `remitente.ts`, la push en `push.ts` y la ruta encolaba
+     * bien: lo único que faltaba era esto, así que las filas caían al
+     * `tipo desconocido` del final y morían ahí.
+     *
+     * Lo encontró el agente de la app el 29-10, antes de las cenas del 29 al
+     * 31. SESENTA Y SEIS filas entre el 9 y el 24 de octubre, todas en
+     * `no_se_pudo_armar`, sin un solo recibo de Resend y sin una sola push.
+     * Son trece personas que pulsaron «voy tarde» y cinco compañeros cada
+     * una esperando en una mesa sin saber nada.
+     *
+     * Y lo peor no es el correo que no salió: la ruta cuenta los `encolado`
+     * y le responde «avisados: N» a quien avisó. `encolar` devuelve
+     * `encolado` porque la fila SÍ se escribe; se muere después, al
+     * despacharla. Así que durante tres semanas la pantalla le dijo «ya
+     * avisamos a tu mesa» a trece personas a las que no avisamos.
+     *
+     * No lee nada de la base, a propósito. Todo lo resolvió la ruta al
+     * encolar —el nombre de pila, el sitio, la dirección, el retraso— y
+     * tiene que ser así: este correo sale en el momento, con la mesa ya
+     * revelada y la persona de camino. Volver a consultarlo aquí solo
+     * añadiría formas de que llegue tarde o no llegue.
+     */
+    /**
+     * Cambió de FECHA. Michael, 29-10.
+     *
+     * Dentro de la misma noche NO se manda: la persona no se entera de
+     * nada, porque su mesa y su sitio se cuentan en la revelación como a
+     * todo el mundo. Esto es para cuando cambia el DÍA, que es lo único que
+     * ella ya sabía y que deja de ser verdad.
+     *
+     * Las dos fechas se leen de la base al MANDAR y no del payload. Un día
+     * escrito al encolar es el que sigue diciendo «el sábado 31» cuando esa
+     * fecha se movió de hora, que es exactamente lo que pasó con el viernes
+     * y el sábado el 20-10.
+     *
+     * Y el texto cambia según quién lo hizo. «Cambiaste tu cena» a quien no
+     * tocó nada se lee como que alguien entró en su cuenta.
+     */
+    case 'fecha_cambiada': {
+      const antesId = typeof p.desdeEventoId === 'string' ? p.desdeEventoId : ''
+      if (!antesId || !fila.event_id) return { error: 'sin las dos fechas' }
+
+      const { data: dos } = await admin
+        .from('events')
+        .select('id, starts_at, format, city_slug, event_venues(zones(name))')
+        .in('id', [antesId, fila.event_id])
+
+      const antes = (dos ?? []).find((e) => e.id === antesId)
+      const ahora = (dos ?? []).find((e) => e.id === fila.event_id)
+      if (!antes || !ahora) return { error: 'esa fecha ya no existe' }
+
+      const zonaAntes = await zonaDeLaCiudad(admin, antes.city_slug)
+      const zonaAhora = await zonaDeLaCiudad(admin, ahora.city_slug)
+
+      const comoSeLee = (ev: { starts_at: string; format: string | null }, zona: string) => {
+        const q = partesDe(ev.starts_at, zona)
+        const plan = NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan'
+        return q
+          ? `${alta(q.dia)} ${q.numero} de ${q.mes} · ${q.hora} · ${plan}`
+          : `${diaEnZonaAlto(ev.starts_at, zona)} · ${plan}`
+      }
+
+      const donde = unirCon(
+        [...new Set(
+          ((ahora.event_venues ?? []) as unknown as { zones: { name: string } | null }[])
+            .map((v) => v.zones?.name)
+            .filter((x): x is string => !!x),
+        )],
+        ' o ',
+      )
+
+      // Quién lo hizo. `ella` cuando se cambió sola desde Mi mesa.
+      const laMovioElla = p.loHizo === 'la-persona'
+      const trato = typeof p.trato === 'string' && p.trato.trim() ? p.trato.trim() : ''
+
+      const q = partesDe(ahora.starts_at, zonaAhora)
+      const elDiaNuevo = q ? `${q.dia} ${q.numero}` : 'otro día'
+
+      return {
+        a,
+        datos: {
+          ...base,
+          asunto: laMovioElla
+            ? `Cambiaste tu cena al ${elDiaNuevo}`
+            : `Te cambiamos la cena al ${elDiaNuevo}`,
+          resumen: laMovioElla
+            ? `Tu cena queda para el ${elDiaNuevo}. Tu puesto y lo que pagaste van contigo.`
+            : `Movimos tu cena al ${elDiaNuevo}. Tu puesto y lo que pagaste van contigo.`,
+          titular: laMovioElla ? 'Tu cena queda' : 'Movimos tu cena',
+          titularAcento: `para el ${elDiaNuevo}.`,
+          bajada: laMovioElla
+            ? `Listo${trato ? ', ' + trato : ''}. Cambiaste tu reserva y ya está hecho: no hay que volver a apartar nada ni pagar otra vez.`
+            : `Te movimos de fecha${trato ? ', ' + trato : ''}. No tuviste que hacer nada y no hay que volver a apartar nada ni pagar otra vez. Si esa noche no te sirve, escríbenos y lo arreglamos.`,
+          antes: comoSeLee(antes, zonaAntes),
+          ahora: comoSeLee(ahora, zonaAhora),
+          donde,
+          loQueNoCambia: 'Lo que pagaste va con tu reserva, así que no te cobramos de nuevo ni tienes que pedir nada. Con quién cenas y dónde te lo contamos ese mismo día, como siempre.',
+          cierre: laMovioElla
+            ? 'Si te vuelve a cambiar el plan, puedes moverla otra vez desde Mi cena mientras falten más de 24 horas.'
+            : 'Si esa fecha no te cuadra, puedes cambiarla tú desde Mi cena mientras falten más de 24 horas.',
+        },
+      }
+    }
+
+    case 'llego_tarde': {
+      const texto = (clave: string) => (typeof p[clave] === 'string' ? (p[clave] as string) : '')
+      const quien = texto('quien')
+      const retraso = texto('retraso')
+      // Sin estos dos el correo no dice nada: «llega tarde» sin nombre ni
+      // cuánto es un aviso que no se puede usar para decidir si pedir ya.
+      if (!quien || !retraso) return { error: 'sin quién o sin cuánto' }
+
+      return {
+        a,
+        datos: {
+          ...base,
+          quien,
+          retraso,
+          trato: texto('trato'),
+          sitio: texto('sitio'),
+          zona: texto('zona'),
+          hora: texto('hora'),
+          // `unidad` y `TU` son la voz del formato —mesa o grupo— y la
+          // plantilla los usa en el cuerpo y en el pie. Sin ellos el correo
+          // sale diciendo «compartes  con quien avisó».
+          unidad: texto('unidad') || 'mesa',
+          TU: texto('TU') || 'TU MESA',
+        },
+      }
+    }
+
     case 'recordatorio': {
       if (!fila.event_id) return { error: 'sin fecha' }
       if (!evento) return { error: 'sin fecha' }
@@ -1207,19 +1435,41 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
        * una invitación a algo en lo que ya está. Se dice, no se esconde: la
        * fecha sigue en la lista porque es su semana.
        */
-      const { data: yaVa } = await admin
-        .from('bookings')
-        .select('event_id')
-        .eq('profile_id', fila.profile_id ?? '')
-        .in('status', ['pending_payment', 'confirmed', 'attended'])
+      // Sin cuenta no hay reservas que mirar, y preguntar por un uuid vacío
+      // es un error en los registros cada vez que sale uno de estos.
+      const { data: yaVa } = fila.profile_id
+        ? await admin
+            .from('bookings')
+            .select('event_id')
+            .eq('profile_id', fila.profile_id)
+            .in('status', ['pending_payment', 'confirmed', 'attended'])
+        : { data: [] as { event_id: string | null }[] }
 
       const conPuesto = new Set((yaVa ?? []).map((b) => b.event_id).filter((x): x is string => !!x))
+
+      /**
+       * Y si de verdad PUEDE reservar lo que le estamos enseñando.
+       *
+       * El cierre miraba solo si había cuenta, y por eso el 25-10 este correo
+       * le dijo «no hace falta hacer nada» a 348 personas que no podían
+       * reservar ninguna de las siete fechas: tienen cuenta y perfil, y no han
+       * subido la cédula. Es la frase más cara que hemos mandado, porque las
+       * manda a casa justo cuando venían.
+       *
+       * La rama buena ya existía para quien no tiene cuenta. Lo que faltaba
+       * era usarla con quien sí la tiene y tampoco llega.
+       *
+       * Sale de `embudo`, que es la única verdad sobre qué le falta a alguien,
+       * y de ahí sale también A DÓNDE se le manda: `donde`. Escribir aquí otra
+       * comprobación de verificada sería la séptima copia de esa pregunta.
+       */
+      const situacion = fila.profile_id ? await situacionDePerfil(fila.profile_id) : null
 
       const deLasFechas = async (lista: string[]) => {
         if (!lista.length) return []
         const { data: evs } = await admin
           .from('events')
-          .select('id, format, starts_at, price_usd, city_slug, status, age_band_min')
+          .select('id, format, starts_at, price_usd, city_slug, status, age_band_min, age_band_max')
           .in('id', lista)
           .eq('status', 'open')
           .order('starts_at')
@@ -1254,7 +1504,14 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
              */
             nota: conPuesto.has(ev.id)
               ? 'Ya tienes puesto'
-              : ev.age_band_min != null ? `Solo para mayores de ${ev.age_band_min}` : '',
+              // «+45» y no «mayores de 45»: la misma etiqueta que la agenda
+              // y que Mi cuenta. Michael la quiere como marca, y decirla de
+              // tres formas es no tener ninguna. Y con las dos puntas, el
+              // rango entero: «+30» en una de 30 a 39 dejaría fuera lo que
+              // de verdad la distingue, que es el techo.
+              : ev.age_band_min != null && ev.age_band_max != null
+                ? `Solo para ${ev.age_band_min}-${ev.age_band_max}`
+                : ev.age_band_min != null ? `Solo para +${ev.age_band_min}` : '',
           })
         }
         return salida
@@ -1285,7 +1542,15 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           hayOtras: otras.length ? 'si' : '',
           tituloOtras: tuyas.length ? 'TAMBIÉN ESTA SEMANA' : 'LO QUE ABRIMOS',
           otras,
-          boton: 'Ver la agenda',
+          /**
+           * Y el botón, que tiene que decir a dónde lleva. «Ver la agenda»
+           * encima de un enlace que va a /verificacion es la promesa que ya
+           * nos costó caro en el empujón: lo que decía el botón y a dónde
+           * iba eran dos cosas distintas.
+           */
+          boton: fila.profile_id && situacion && !situacion.puedeReservar
+            ? (situacion.paso === 'verificacion' ? 'Verificar mi identidad' : 'Terminar mi perfil')
+            : 'Ver la agenda',
           /**
            * Con etiquetas de campaña, y el `?` ANTES del `#`.
            *
@@ -1302,8 +1567,51 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
            * `utm_content` lleva la semana para poder comparar un lunes con
            * otro sin inventar una campaña nueva cada vez.
            */
-          destino: `/cuenta?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal&utm_content=${encodeURIComponent(String(p.semana ?? ''))}#agenda`,
-          cierre: 'Si esta semana no te sirve, no hace falta hacer nada. El lunes que viene hay otra.',
+          /**
+           * Y A DÓNDE, según si quien lee tiene cuenta.
+           *
+           * `/cuenta` exige sesión. A quien dejó su correo y nunca llegó a
+           * tener cuenta ese botón lo manda a una puerta que le pide entrar
+           * con algo que no tiene, que es el mismo fallo que ya se arregló
+           * en el pie con «Ajustes de correo».
+           *
+           * Sin cuenta va a la agenda pública, que es donde esa semana se
+           * ve entera y sin sesión, y desde ahí sale el alta.
+           */
+          /**
+           * TRES ramas, no dos: sin cuenta, con cuenta y sin poder reservar,
+           * y con cuenta y pudiendo.
+           *
+           * La del medio es la que faltaba. A quien tiene cuenta y le falta
+           * la cédula no se le manda a la agenda, porque allí va a ver siete
+           * fechas y un candado: se le manda a donde dice `embudo`, que es su
+           * paso siguiente de verdad.
+           *
+           * Con su correo en la URL, por lo mismo que el empujón: sin él, la
+           * pantalla no ve sesión, manda a /entrar y le pregunta quién es a
+           * alguien que viene de nuestro propio correo.
+           */
+          destino: !fila.profile_id
+            ? `/agenda?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal-espera&utm_content=${encodeURIComponent(String(p.semana ?? ''))}`
+            : situacion && !situacion.puedeReservar
+              ? `${situacion.donde}?correo=${encodeURIComponent(a)}&utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal-falta&utm_content=${encodeURIComponent(String(p.semana ?? ''))}`
+              : `/cuenta?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal&utm_content=${encodeURIComponent(String(p.semana ?? ''))}#agenda`,
+          /**
+           * Y el cierre igual. «No hace falta hacer nada» solo es verdad para
+           * quien ya puede reservar; a los demás les estábamos dando permiso
+           * para no volver.
+           *
+           * Se distingue la verificación del resto porque es otra conversación:
+           * a quien le falta la cédula no le falta rellenar, le falta dar un
+           * paso que da pereza, y conviene decir lo corto que es.
+           */
+          cierre: !fila.profile_id
+            ? 'Para apuntarte hace falta terminar tu perfil. Son unas preguntas y la verificación de identidad, y con eso ya puedes reservar.'
+            : situacion && situacion.paso === 'verificacion'
+              ? 'Te faltan unos minutos para poder reservar cualquiera de estas: la verificación de identidad. Cédula y una selfie.'
+              : situacion && !situacion.puedeReservar
+                ? 'Para reservar cualquiera de estas te falta terminar tu perfil. Son unos minutos.'
+                : 'Si esta semana no te sirve, no hace falta hacer nada. El lunes que viene hay otra.',
         },
       }
     }
@@ -1387,7 +1695,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
 
       const { data: evs } = await admin
         .from('events')
-        .select('id, format, starts_at, price_usd, city_slug, status, age_band_min')
+        .select('id, format, starts_at, price_usd, city_slug, status, age_band_min, age_band_max')
         .in('id', ids)
         .eq('status', 'open')
         .order('starts_at')
@@ -1477,6 +1785,55 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           telefono: (p.telefono as string) ?? '',
           referencia: (p.referencia as string) ?? '',
           resumen: `${(p.montoBs as string) ?? ''} Bs por Pago Móvil. Referencia ${(p.referencia as string) ?? ''}.`,
+        },
+      }
+
+    /**
+     * «¿Tienes Android? Ayúdanos a publicar la app».
+     *
+     * Google no deja publicar en Play hasta que doce personas tengan la app
+     * instalada catorce días seguidos. Va a quien verificó DESDE Android y
+     * ya cenó con nosotros, que es a quien le podemos pedir un favor.
+     *
+     * El texto es el que aprobó Michael el 26-10, palabra por palabra, y
+     * vive en `app-mobile/Entregas/correo-probadores-android.md`. No se
+     * escribe aquí nada que no esté ahí.
+     *
+     * Dos botones y tres pasos, por eso tiene plantilla propia: la del
+     * empujón lleva un botón al final y aquí cada paso es una puerta
+     * distinta, una en Google Groups y otra en Play.
+     *
+     * Los enlaces están ESCRITOS y no vienen del payload: son dos URLs de
+     * Google que no dependen de nadie, y un correo que manda a instalar
+     * algo no puede quedarse con el enlace vacío porque faltara un campo.
+     *
+     * NO es imprescindible: lleva `List-Unsubscribe` como el resto de lo
+     * que se puede apagar. Es un favor, no un aviso de su mesa.
+     */
+    case 'probadores_android':
+      return {
+        a,
+        datos: {
+          ...base,
+          asuntoCorreo: '¿Tienes Android? Ayúdanos a publicar la app',
+          anticipo: 'Son dos minutos, y la tienes antes que nadie.',
+          cinta: 'LA APP DE ARO · ANDROID',
+          titularA: 'Ayúdanos a llevar',
+          titularB: 'Aro a',
+          titularC: 'Android',
+          entradilla: 'La app de Aro para Android ya está lista, pero Google no nos deja publicarla hasta que la usen al menos doce personas durante catorce días. Te escribimos porque ya reservaste con nosotros, y nos ayudarías mucho si eres una de ellas. Hazlo con la misma cuenta de Google que usas en el celular.',
+          paso1Titulo: 'Únete al grupo de probadores',
+          paso1: 'Es solo para que Google sepa que puedes instalarla. Nadie más ve que estás en el grupo.',
+          boton1: 'Unirme al grupo',
+          enlace1: 'https://groups.google.com/g/aro-club-android',
+          paso2Titulo: 'Actívate como probador e instálala',
+          paso2: 'Toca «Convertirse en tester» y, después, instálala desde Google Play como cualquier app. Entras con la misma cuenta que usas en la web.',
+          boton2: 'Activarme e instalar',
+          enlace2: 'https://play.google.com/apps/testing/club.aro.app',
+          paso3Titulo: 'Déjala instalada catorce días',
+          paso3: 'Ábrela de vez en cuando, por ejemplo para ver tu próxima mesa.',
+          pie: 'Si tienes cualquier duda, o algo falla, responde a este correo y te ayudamos. Gracias por ayudarnos a crecer.',
+          resumen: 'La app de Aro para Android necesita doce probadores durante catorce días.',
         },
       }
 

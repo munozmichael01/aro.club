@@ -10,8 +10,8 @@ const hora = (p: ReturnType<typeof pasos>, m: string) => p.find((x) => x.momento
 
 test('los momentos, en orden y con la hora de esa mesa (la tabla aprobada el 14-10)', () => {
   const p = pasos(EMPIEZA, ZONA)
-  assert.deepEqual(p.map((x) => x.momento), ['llegada', 'voz', 'pedir', 'vuelta', 'hielo', 'tema', 'cuenta', 'despedida'])
-  assert.deepEqual(p.map((x) => sinSufijo(x.hora)), ['7:30', '7:45', '7:45', '7:50', '8:05', '8:30', '9:00', '9:30'])
+  assert.deepEqual(p.map((x) => x.momento), ['llegada', 'pedir', 'vuelta', 'hielo', 'tema', 'cuenta', 'despedida'])
+  assert.deepEqual(p.map((x) => sinSufijo(x.hora)), ['7:30', '7:45', '7:50', '8:05', '8:30', '9:00', '9:30'])
   assert.equal(DURACION_POR_DEFECTO, 120)
 })
 

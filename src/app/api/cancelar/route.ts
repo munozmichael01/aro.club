@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+
+import { HORAS_DE_MARGEN as MARGEN_COMPARTIDO } from '@/lib/reglas'
 import { z } from 'zod'
 
 import { anotar } from '@/lib/auditoria'
@@ -25,7 +27,11 @@ const cuerpo = z.object({
   motivo: z.string().max(200).optional(),
 })
 
-const HORAS_DE_MARGEN = 24
+/**
+ * Sube a la regla compartida el 29-10: lo necesitan esta ruta, la de
+ * cambiar de fecha y la app, que tiene que saber si enseña el botón.
+ */
+const HORAS_DE_MARGEN = MARGEN_COMPARTIDO
 
 export async function GET(request: Request) {
   const supabase = await createClient()
@@ -40,7 +46,7 @@ export async function GET(request: Request) {
   let q = admin
     .from('bookings')
     .select(
-      'id, status, event_id, events(starts_at, reveal_at, format, city_slug, restaurants!events_restaurant_id_fkey(name, zone_slug)), table_members(table_id)',
+      'id, status, event_id, events(starts_at, reveal_at, format, city_slug, seats_per_table, restaurants!events_restaurant_id_fkey(name, zone_slug)), table_members(table_id)',
     )
     .eq('profile_id', user.id)
     .in('status', ['pending_payment', 'confirmed'])
@@ -65,6 +71,7 @@ export async function GET(request: Request) {
     starts_at: string
     reveal_at: string | null
     format: string | null
+    seats_per_table: number | null
     restaurants: { name: string; zone_slug: string | null } | null
   } | null
 
@@ -108,9 +115,28 @@ export async function GET(request: Request) {
     horasQueFaltan: Math.max(0, Math.round(faltan)),
     // Lo único que cambia el resultado, y por eso se decide aquí.
     conMargen: faltan >= HORAS_DE_MARGEN,
-    // Si ya tiene mesa, cancelar la deja en cinco: nadie ocupa su sitio a
-    // estas alturas.
+    // Si ya tiene mesa, cancelar la deja con uno menos.
     yaTieneMesa: ((reserva.table_members ?? []) as unknown[]).length > 0,
+    /**
+     * Y CUÁNTOS SON EN ESA MESA.
+     *
+     * La pantalla decía «los otros cinco cuentan con seis» escrito a mano,
+     * con la mesa ya armada delante. Es la única frase del producto que
+     * habla de números DESPUÉS de repartir, y desde que una mesa se puede
+     * estirar a siete u ocho puede mentir: anoche hubo una de ocho.
+     *
+     * Con mesa, los que de verdad están sentados. Sin ella —se cancela
+     * antes de publicar—, lo que promete la fecha.
+     */
+    enLaMesa: await (async () => {
+      const suya = ((reserva.table_members ?? []) as unknown as { table_id: string }[])[0]
+      if (!suya) return evento?.seats_per_table ?? 6
+      const { count } = await admin
+        .from('table_members')
+        .select('profile_id', { count: 'exact', head: true })
+        .eq('table_id', suya.table_id)
+      return count ?? evento?.seats_per_table ?? 6
+    })(),
     // En qué hora habla esta fecha. Lo pidió la app; sin esto formatea en
     // Caracas por defecto y desde fuera de Venezuela dice otro día.
     zonaHoraria: await zonaDeCiudad(

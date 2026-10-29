@@ -69,13 +69,23 @@ const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_RO
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
-const CORREO = 'revision.appstore@aro.club'
-const DOMINIO_MESA = 'prueba.aro.club'
-const RASTRO = fileURLToPath(new URL('../.cuenta-revision.json', import.meta.url))
-
 const args = process.argv.slice(2)
+
+/**
+ * La cuenta del revisor de Apple, salvo que se pida otra con `--correo=`.
+ * Google Play pide la suya (26-10), y compartirla con Apple a mitad de una
+ * revisión cambiaría lo que ve el revisor: aceptar las normas o valorar la
+ * cena con una deja a la otra sin la pantalla que se le enseñó. Cada correo
+ * lleva su propio rastro, para que `--borrar` no se lleve la de nadie más.
+ */
+const CORREO = args.find((a) => a.startsWith('--correo='))?.slice(9) || 'revision.appstore@aro.club'
+const DOMINIO_MESA = 'prueba.aro.club'
+// Los cinco de su mesa, con el prefijo de su cuenta: la de Apple conserva los suyos de siempre.
+const PREFIJO_MESA = CORREO === 'revision.appstore@aro.club' ? 'revision-' : CORREO.split('@')[0] + '-'
+const RASTRO = fileURLToPath(new URL(CORREO === 'revision.appstore@aro.club' ? '../.cuenta-revision.json' : '../.cuenta-revision-' + CORREO.split('@')[0] + '.json', import.meta.url))
+
 const CONOCIDOS = ['--borrar', '--refrescar', '--acompanantes', '--sin-normas', '--sin-encuesta']
-const raros = args.filter((a) => !CONOCIDOS.includes(a) && !/^--horas=-?\d+$/.test(a))
+const raros = args.filter((a) => !CONOCIDOS.includes(a) && !/^--horas=-?\d+$/.test(a) && !/^--correo=[^@\s]+@aro\.club$/.test(a))
 if (raros.length) {
   console.error('No conozco: ' + raros.join(', ') + '. Los modos son: ' + CONOCIDOS.join(', ') + '.')
   process.exit(1)
@@ -174,7 +184,7 @@ if (args.includes('--acompanantes')) {
   const vivos = new Set((sentados ?? []).map((s) => s.profile_id))
   let puestos = 0
   for (const [nombre, sector] of OTROS) {
-    const correo = 'revision-' + nombre.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '') + '@' + DOMINIO_MESA
+    const correo = PREFIJO_MESA + nombre.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '') + '@' + DOMINIO_MESA
     let u = await usuarioPorCorreo(correo)
     if (u && vivos.has(u.id)) continue
     if (!u) {
@@ -370,7 +380,7 @@ writeFileSync(RASTRO, JSON.stringify(rastro, null, 2))
 // con una clave foránea.
 const { error: errPerfil } = await admin.from('profiles').insert({
   id, email: CORREO, full_name: 'Alex Revisión', display_name: 'Alex', es_prueba: true,
-  birthdate: '1992-04-18', gender: 'sin-decir', phone_e164: '+584141112233',
+  birthdate: '1992-04-18', gender: 'sin-decir', phone_e164: CORREO === 'revision.appstore@aro.club' ? '+584141112233' : '+584141112244',
   city_slug: 'caracas', status: 'active', locale: 'es-VE',
 })
 if (errPerfil) {
@@ -451,7 +461,7 @@ if (errRest) {
 
 const ev = oExplota('la fecha', await admin.from('events').insert({
   format: 'dinner',
-  starts_at: en(30),
+  starts_at: en(HORAS),
   reveal_at: en(-2),
   booking_closes_at: en(-24),
   restaurant_id: rest.id,
@@ -483,7 +493,7 @@ const OTROS = [
 ]
 let asiento = 2
 for (const [nombre, sector] of OTROS) {
-  const correo = 'revision-' + nombre.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '') + '@' + DOMINIO_MESA
+  const correo = PREFIJO_MESA + nombre.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '') + '@' + DOMINIO_MESA
   const { data: u } = await admin.auth.admin.createUser({
     email: correo, password: 'Aro-' + randomBytes(9).toString('base64url'), email_confirm: true,
   })
@@ -510,14 +520,14 @@ rastro.restaurante = rest.id
 writeFileSync(RASTRO, JSON.stringify(rastro, null, 2))
 
 console.log('')
-console.log('Cuenta de revisión lista. Esto es lo que se le da a Apple:')
+console.log('Cuenta de revisión lista. Esto es lo que se le da al revisor:')
 console.log('')
 console.log('   Usuario:     ' + CORREO)
 console.log('   Contraseña:  ' + CLAVE)
 console.log('')
 console.log('Se imprime UNA vez y no queda en ningún fichero: el repositorio es público.')
 console.log('Tiene el perfil completo, la identidad aprobada, cuatro créditos y una mesa')
-console.log('ya revelada en La Ventana, con cinco acompañantes, dentro de 30 h.')
+console.log('ya revelada en La Ventana, con cinco acompañantes, dentro de ' + HORAS + ' h.')
 console.log('')
 console.log('El día que mandes a revisar, y otra vez si Apple la devuelve:')
-console.log('   node scripts/cuenta-revision.mjs --refrescar')
+console.log('   node scripts/cuenta-revision.mjs --refrescar' + (CORREO === 'revision.appstore@aro.club' ? '' : ' --correo=' + CORREO))

@@ -432,6 +432,47 @@
     ],
 
     /**
+     * Los tramos de gasto de la encuesta del dia despues, con su punto medio.
+     *
+     * Se pregunta por tramos y no por una cifra: pedir el numero exacto es
+     * pedirle a alguien que abra la cuenta del restaurante, y para comparar
+     * locales entre si el tramo basta.
+     *
+     * Lo que se guarda en `table_feedback.gasto_usd` es EL PUNTO MEDIO, no
+     * lo que gasto: un 32 en la base es «25 a 40». Enseñar el 32 a pelo
+     * inventa una precision que nadie dio, y por eso la vuelta —
+     * `tramoDeGasto`— esta aqui al lado y no en cada pantalla.
+     *
+     * Vive aqui porque ya estaba escrito dos veces, en la encuesta de la web
+     * y en la de la app, y le faltaba el tercero: el panel, que es quien
+     * tiene que leer de vuelta lo que guardo.
+     */
+    TRAMOS_GASTO: [
+      ['Menos de 15', 10],
+      ['15 a 25', 20],
+      ['25 a 40', 32],
+      ['Más de 40', 50],
+    ],
+
+    /**
+     * Del punto medio guardado al tramo que pulso la persona.
+     *
+     * Por el punto medio EXACTO y no por el mas cercano: un numero que no es
+     * ninguno de los cuatro no salio de la encuesta, y redondearlo al tramo
+     * de al lado seria decir que alguien contesto algo que no contesto. Ese
+     * se devuelve tal cual, con su unidad.
+     */
+    tramoDeGasto: function (usd) {
+      if (usd === null || usd === undefined || usd === '') return null
+      var n = Number(usd)
+      if (!isFinite(n)) return null
+      for (var i = 0; i < this.TRAMOS_GASTO.length; i++) {
+        if (this.TRAMOS_GASTO[i][1] === n) return this.TRAMOS_GASTO[i][0] + ' ref'
+      }
+      return n + ' ref'
+    },
+
+    /**
      * Lo que cuesta la plaza. DIEZ desde el 13-10, antes siete.
      *
      * Y esto es SOLO el valor por defecto de una fecha nueva. Lo que se
@@ -831,6 +872,24 @@
     HORAS_EN_LETRA: ['doce', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once'],
 
     /**
+     * Los números en letra, para contar PERSONAS.
+     *
+     * En femenino —«una», no «uno»— porque siempre cuenta gente. Hasta
+     * veintidós, que es el techo de verdad: `seats_per_table` llega a
+     * veinte y una mesa se estira dos por encima.
+     *
+     * Vive aquí porque ya hay tres tablas iguales repartidas por el repo
+     * —en `mesa-corta`, en los correos y en Mi mesa— y cada una se queda
+     * corta por su lado. Las que quedan deberían venirse a esta.
+     */
+    enLetra: function (n) {
+      var T = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho',
+        'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis',
+        'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuna', 'veintidós']
+      return T[n] || String(n)
+    },
+
+    /**
      * «siete y media de la noche». La hora como se dice, no como se escribe.
      *
      * LOS MINUTOS NO SE PUEDEN TIRAR. Esto existía en tres sitios —la app,
@@ -1124,6 +1183,21 @@
     HORAS_DE_CIERRE: 24,
 
     /**
+     * El margen para bajarse sin perder el credito. Y ahora, para cambiarse
+     * de fecha uno mismo.
+     *
+     * No es lo mismo que HORAS_DE_CIERRE aunque hoy valgan igual: aquella
+     * dice cuando dejamos de admitir gente nueva, y esta cuanto antes hay
+     * que avisar de que no vienes. Son dos decisiones distintas y el dia
+     * que una se mueva, la otra no tiene por que moverse.
+     *
+     * Estaba escrita a mano dentro de /api/cancelar. Sube aqui porque desde
+     * el 29-10 la necesitan tres: esa ruta, la de cambiar de fecha, y la app
+     * para saber si enseña el boton.
+     */
+    HORAS_DE_MARGEN: 24,
+
+    /**
      * Cuando se cierra una fecha: A MEDIANOCHE, al empezar su dia.
      *
      * Antes eran 24 horas antes y punto. El problema no eran las horas, era
@@ -1299,9 +1373,16 @@
     /**
      * El guion de la mesa: los momentos de una cena, con su hora real.
      *
-     * Sustituye al anfitrión que no podemos pagar. Lo ve toda la mesa y la
-     * propia mesa elige a «la voz de Aro», que lo va leyendo; no hay anfitrión
-     * elegido por el servidor (se descartó el 14-10: demasiado lío).
+     * Sustituye al anfitrión que no podemos pagar. Lo ve toda la mesa y no
+     * hay anfitrión elegido por el servidor (se descartó el 14-10:
+     * demasiado lío).
+     *
+     * Y tampoco elegido por la mesa. Había un momento a y cuarto, «La voz
+     * de Aro», que pedía designar a alguien para ir leyendo la lista en voz
+     * alta. Michael lo quita el 24-10: «no hace falta que nadie sea papá de
+     * nadie en la mesa, son adultos todos». Esas y cuarto ya las cubre «A
+     * pedir», que cae a la misma hora, y las reglas del juego siguen
+     * diciendo que alguien lee las preguntas, que es donde hace falta.
      *
      * Vive aquí porque lo pintan la app y la web, y es texto que Michael
      * aprobó una vez. Lo escribió el agente de la app y lo pidió compartido
@@ -1344,8 +1425,6 @@
           texto: 'Pidan algo de tomar si quieren. Esperamos a todos hasta {limite}.' },
         // A los quince minutos se pide, falte quien falte: con los creadores,
         // el 10-10, se esperó con hambre.
-        { clave: 'voz', desde: 'inicio', min: 15, nombre: 'La voz de Aro',
-          texto: 'Antes de pedir, elijan a alguien que vaya leyendo en voz alta cada momento de esta lista. Si nadie se ofrece, le toca a quien llegó de último.' },
         { clave: 'pedir', desde: 'inicio', min: 15, nombre: 'A pedir',
           texto: 'Falte quien falte, pidan la comida. Quien llegue después se suma sin problema.' },
         { clave: 'vuelta', desde: 'inicio', min: 20, nombre: 'Una vuelta rápida',
@@ -1353,7 +1432,9 @@
         // El juego en dos tiempos: la ronda ligera mientras llega la comida, y
         // el rescate cuando baja la conversación.
         { clave: 'hielo', desde: 'inicio', min: 35, nombre: 'Para romper el hielo',
-          texto: 'Mientras llega la comida, la primera ronda del juego.' },
+          // Quien abre el juego lee: es donde hacía falta decirlo, ahora
+          // que «La voz de Aro» ya no está.
+          texto: 'Mientras llega la comida, la primera ronda del juego. Quien lo abra lee las preguntas.' },
         { clave: 'tema', desde: 'inicio', min: 60, nombre: 'Si se acaba el tema',
           texto: 'Sigan con el juego donde lo dejaron. Se puede pasar.' },
         { clave: 'cuenta', desde: 'cierre', min: -30, nombre: 'Lo último y la cuenta',

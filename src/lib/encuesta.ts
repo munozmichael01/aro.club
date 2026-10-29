@@ -1,3 +1,5 @@
+import { tramoDeGasto } from '@/lib/reglas'
+
 /**
  * La encuesta del día después. Solo la traducción pantalla → base.
  *
@@ -61,6 +63,13 @@ export type RespuestaCruda = {
   sitio_conversar?: number | null
   sitio_comida?: number | null
   would_repeat?: boolean | null
+  /**
+   * Lo que gastó esa noche, y es el PUNTO MEDIO del tramo que pulsó.
+   *
+   * No la cifra que pagó: la encuesta pregunta por tramos a propósito. Por
+   * eso se dice con `tramoDeGasto` y nunca con el número crudo.
+   */
+  gasto_usd?: number | string | null
 }
 
 /**
@@ -107,5 +116,18 @@ export function resumenDeRespuesta(r: RespuestaCruda): string {
   }
   if (r.would_repeat === true) partes.push('Volvería a Aro')
   if (r.would_repeat === false) partes.push('No volvería a Aro')
+  /**
+   * Y lo que gastó, al final.
+   *
+   * Michael, 27-10: «agregamos la pregunta de cuánto gastaron a la encuesta
+   * pero no la he visto en las respuestas del historial». Se preguntaba y se
+   * guardaba desde el 17-10 —sesenta y una respuestas— y no la leía nadie:
+   * ni esta línea, ni la ficha del miembro, ni la pantalla de Locales.
+   *
+   * Va en el tramo que pulsó la persona y no en el número de la base, que es
+   * el punto medio: «Gastó 32 ref» es una cifra que nadie dijo.
+   */
+  const gasto = tramoDeGasto(r.gasto_usd)
+  if (gasto) partes.push(`Gastó ${gasto}`)
   return partes.length ? partes.join(' · ') : 'Solo escribió, sin notas.'
 }

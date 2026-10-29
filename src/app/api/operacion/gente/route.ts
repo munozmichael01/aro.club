@@ -4,6 +4,7 @@ import { familiasDe, planesDe } from '@/lib/formatos'
 import { exigirOps } from '@/lib/ops'
 import { leerCatalogo } from '@/lib/questionnaire/catalogo'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { todasLasFilas } from '@/lib/todas-las-filas'
 
 /**
  * Gente: la base entera, en un solo pool.
@@ -63,28 +64,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
 /** Cuántas filas por página si nadie dice otra cosa. */
 const TAM = 10
 const TAM_MAX = 200
-
-/** El tope de PostgREST, que es lo que obliga a leer por tramos. */
-const TRAMO = 1000
-
-/**
- * Lee una tabla entera, en tramos de mil.
- *
- * Se para cuando un tramo viene incompleto, que es cómo se sabe que era el
- * último sin preguntar el total.
- */
-async function todasLasFilas<T>(
-  leer: (desde: number, hasta: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
-): Promise<T[]> {
-  const filas: T[] = []
-  for (let desde = 0; ; desde += TRAMO) {
-    const { data, error } = await leer(desde, desde + TRAMO - 1)
-    if (error) throw error
-    const tramo = data ?? []
-    filas.push(...tramo)
-    if (tramo.length < TRAMO) return filas
-  }
-}
 
 /** Lo que la pantalla pinta de cada fila. */
 type Fila = {

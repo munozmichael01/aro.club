@@ -41,12 +41,18 @@ type Api = {
   aE164: (valor: unknown) => string
   PRECIO_USD: number
   HORAS_DE_CIERRE: number
+  /** Cuánto antes hay que avisar de que no vienes, o cambiarse de fecha. */
+  HORAS_DE_MARGEN: number
   cierreDe: (inicioIso: string) => string | null
   textoCierre: (inicioIso: string, zona?: string) => string
   DIAS_GUARDA_FOTOS: number
   MAX_TEXTO: number
   precioTexto: () => string
   COCINAS: string[][]
+  /** Los tramos de la encuesta, como pares [texto, punto medio]. */
+  TRAMOS_GASTO: (string | number)[][]
+  /** Del punto medio guardado al tramo que se pulsó, ya con su unidad. */
+  tramoDeGasto: (usd: unknown) => string | null
   BANCOS: { codigo: string; nombre: string }[]
   REGLAS: Record<Campo, { etiqueta: string; ayuda?: string }>
   vozDe: (formato: string | null | undefined) => {
@@ -140,6 +146,7 @@ export const PUERTA = api.PUERTA
  * de Legal, el correo de fecha cancelada y la app. Estaba escrita a mano en
  * `/api/operacion/fechas` y repetida en texto en cuatro sitios más.
  */
+export const HORAS_DE_MARGEN: number = api.HORAS_DE_MARGEN
 export const HORAS_DE_CIERRE: number = api.HORAS_DE_CIERRE
 
 /**
@@ -232,3 +239,15 @@ export const nombreDeCocina = (codigo: string): string => {
   const par = api.COCINAS.find((c) => c[1] === codigo)
   return par ? par[0] : codigo
 }
+
+/**
+ * Los tramos de gasto de la encuesta, y la vuelta desde lo guardado.
+ *
+ * `table_feedback.gasto_usd` guarda el punto medio del tramo, así que quien
+ * lo lea tiene que traducirlo: un 32 es «25 a 40», y el panel que enseñe 32
+ * está inventando una cifra que nadie dio.
+ */
+export const TRAMOS_GASTO: [string, number][] = api.TRAMOS_GASTO.map(
+  (t) => [String(t[0]), Number(t[1])],
+)
+export const tramoDeGasto = api.tramoDeGasto.bind(api)
