@@ -34,6 +34,10 @@ import { PreguntaIdioma } from '../idioma/PreguntaIdioma'
 import * as TI from '../texto/idioma'
 import * as T from '../texto/pago'
 import { useUltimo } from '../util/useUltimo'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useAccionesDentro } from '../dentro/acciones'
+import { EstasDentro } from '../dentro/EstasDentro'
+import * as MD from '../dentro/maquina'
 import { encoger } from '../verificacion/foto'
 import * as M from './maquina'
 import type { crearServicioPago } from './servicio'
@@ -56,6 +60,8 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
 
   const [d, setD] = useState<M.DeServidor | null>(null)
   const [fase, setFase] = useState<M.Fase>('elegir')
+  /** Acaba de reportar en esta visita: entonces «Estás dentro» (entrega estas-dentro). Al volver otro día, las pantallas de Pago de siempre. */
+  const [recien, setRecien] = useState(false)
   const [metodo, setMetodo] = useState(0)
   const [fallo, setFallo] = useState(evento ? '' : T.sinEvento)
   const [copiado, setCopiado] = useState(-1)
@@ -72,6 +78,10 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   const [falloCupon, setFalloCupon] = useState('')
 
   const { preguntar, hoja } = usePreguntaAvisos()
+  const planDentro: MD.Plan | null = d
+    ? { empiezaEn: d.evento.empiezaEn, zonaHoraria: d.evento.zonaHoraria, formato: d.evento.formato, revelaEn: d.evento.revelaEn, zonas: d.evento.zona ? [d.evento.zona] : [] }
+    : null
+  const dentro = useAccionesDentro(d ? d.evento.id : null, planDentro)
 
   const cargar = useCallback(async () => {
     if (!evento) return
@@ -165,6 +175,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
       return setFallo(r.error)
     }
     setFase(r.datos.estado === 'confirmado' ? 'listo' : 'pendiente')
+    setRecien(true)
     // Reportar el pago aparta el puesto: lo siguiente que pasa es la mesa.
     // Tercer momento de la pregunta previa.
     preguntar('reserva')
@@ -523,6 +534,30 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
           <Boton texto={T.fallo.corregir} onPress={() => (setRep(M.repInicial()), setCaptura(null), setFase('reportar'))} />
           <Boton tipo="fantasma" texto={T.fallo.escribirnos} onPress={() => Linking.openURL('mailto:hola@aro.club')} />
         </Acciones>
+      </View>
+    )
+  }
+
+  // Recién reportado: A (en revisión) o B (confirmado al instante), con lo de
+  // Pago debajo para no perder nada: el comprobante y «algo no cuadra».
+  if (recien && d && m && (fase === 'pendiente' || fase === 'listo')) {
+    const momento = fase === 'listo' ? 'B' : 'A'
+    return (
+      <View style={{ flex: 1 }}>
+        <EstasDentro
+          v={MD.vista(planDentro!, momento, momento === 'B' ? 'confirmado' : null)}
+          enCalendario={dentro.enCalendario}
+          alCalendario={dentro.alCalendario}
+          alCompartir={dentro.alCompartir}
+          ir={p.ir}
+          extra={
+            <View style={{ backgroundColor: color.crema, borderRadius: 20, padding: 16, marginTop: 8 }}>
+              <Comprobante titulo={momento === 'A' ? T.pendiente.loQueReportaste : T.listo.comprobante} filas={M.comprobante(d, m, fase)} />
+              {momento === 'A' ? <Boton tipo="fantasma" texto={T.pendiente.algoNoCuadra} onPress={() => Linking.openURL('mailto:hola@aro.club')} /> : null}
+            </View>
+          }
+        />
+        {hoja}
       </View>
     )
   }

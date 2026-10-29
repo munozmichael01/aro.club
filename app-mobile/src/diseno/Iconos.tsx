@@ -133,3 +133,31 @@ export function IconoAtras({ tam = 22, color }: P) {
     </Svg>
   )
 }
+
+/** Calendario: «Añadir al calendario» (entrega estas-dentro). */
+export function IconoCalendario({ tam = 18, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M6.5 5h11a3 3 0 0 1 3 3v9.5a3 3 0 0 1-3 3h-11a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM3.5 10h17M8 3v4M16 3v4" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  )
+}
+
+/** Compartir: la flecha que sale de la bandeja (entrega estas-dentro). */
+export function IconoCompartir({ tam = 18, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}
+
+/** Reloj: la nota de cancelar (entrega estas-dentro). */
+export function IconoReloj({ tam = 16, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={9} stroke={color} strokeWidth={2} />
+      <Path d="M12 7v5l3 2" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  )
+}

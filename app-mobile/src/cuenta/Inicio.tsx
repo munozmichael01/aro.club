@@ -4,7 +4,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useUltimo } from '../util/useUltimo'
 import { useFocusEffect } from 'expo-router'
 
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
 import { usePreguntaAvisos } from '../avisos/PreguntaAvisos'
+import * as MD from '../dentro/maquina'
 import { Aviso, Boton, Texto, color, medida } from '../diseno'
 import * as F from '../texto/fechas'
 import * as T from '../texto/cuenta'
@@ -143,6 +146,22 @@ export function Inicio(p: {
     preguntar('entrada')
   }, [datos, preguntar])
 
+  // La primera vez que entra con la reserva ya confirmada, se abre «Estás
+  // dentro» una vez (B3 de la entrega): la push o el correo pudieron no tocarse.
+  const dentroMirado = useRef(false)
+  useEffect(() => {
+    if (!datos || dentroMirado.current) return
+    const r = datos.reserva
+    const plan = r?.empiezaEn ? datos.planes.find((x) => x.empiezaEn === r.empiezaEn && !x.cancelada) : null
+    if (!r || r.revelado || !plan || plan.estado !== 'confirmed') return
+    dentroMirado.current = true
+    AsyncStorage.getItem(MD.claveVista(r.id))
+      .then((v) => {
+        if (v !== '1') p.ir('/estas-dentro')
+      })
+      .catch(() => undefined)
+  }, [datos, p])
+
   const confirmar = async (id: string) => {
     if (!datos || !vista) return
     const graba = !!datos.agenda.find((a) => a.id === id)?.permisoObligatorio
@@ -162,11 +181,13 @@ export function Inicio(p: {
       return setFalloReserva(res.error)
     }
     setAbierta(null)
-    // Apartó puesto: espera su mesa. Tercer momento de la pregunta previa
-    // (si las dos anteriores fueron «Ahora no»).
-    preguntar('reserva')
     // El estado de la cuenta cambia con la reserva: se relee todo.
+    // Ya va a «Estás dentro»: que la primera apertura no la abra otra vez.
+    dentroMirado.current = true
     cargarTodo()
+    // Reservó con crédito: ya está dentro (entrega estas-dentro, B1). La
+    // pregunta de los avisos de «reserva» la hace esa pantalla.
+    p.ir('/estas-dentro', { via: 'credito' })
   }
 
   const salir = async () => {

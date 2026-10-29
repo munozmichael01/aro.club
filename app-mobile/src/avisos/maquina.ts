@@ -16,7 +16,8 @@ const POR_TIPO: Record<string, string> = {
   mesa_cambiada: '/mesa',
   recordatorio: '/mesa',
   llego_tarde: '/mesa',
-  pago_confirmado: '/mesa',
+  // La push de «pago confirmado» abre «Estás dentro» (B3 de la entrega estas-dentro, 29-10).
+  pago_confirmado: '/estas-dentro',
   puesto_con_cupon: '/mesa',
   verificacion: '/verificacion',
   verificacion_rechazada: '/verificacion',
@@ -28,7 +29,7 @@ const POR_TIPO: Record<string, string> = {
 }
 
 /** Las rutas que una push puede abrir. `/pago` solo con su `evento`. */
-const PERMITIDAS = ['/mesa', '/verificacion', '/cuenta', '/perfil', '/pago']
+const PERMITIDAS = ['/mesa', '/verificacion', '/cuenta', '/perfil', '/pago', '/estas-dentro']
 
 export type DatosPush = { tipo?: unknown; ruta?: unknown; eventoId?: unknown; mesaId?: unknown }
 
