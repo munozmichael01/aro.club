@@ -171,6 +171,19 @@ export async function GET(request: Request) {
   // por petición: se nota en cada clic, porque ahora cada filtro vuelve a
   // preguntar. Ninguna de estas consultas necesita el resultado de otra, así
   // que van juntas y el coste pasa a ser el de la más lenta.
+/**
+ * ORDEN EXPLÍCITO EN TODO LO QUE SE LEE POR TRAMOS.
+ *
+ * `todasLasFilas` pide mil filas, luego las mil siguientes, y entre una
+ * vuelta y la otra pasa tiempo. Sin `ORDER BY`, Postgres no promete el
+ * mismo orden en las dos: si alguien escribe en esa tabla en medio, el
+ * segundo tramo puede saltarse una fila o devolver otra dos veces. No
+ * falla nada, simplemente falta gente en el panel.
+ *
+ * Se ordena por la clave, no por una fecha: `created_at` se repite, y con
+ * empates el desorden vuelve a caber dentro del empate. Donde ya había un
+ * orden de pantalla, la clave va detrás como desempate.
+ */
   let perfiles, rasgos, saldos, esperas, verificados, leads, bajas, zonas, catalogo
   try {
     [perfiles, rasgos, saldos, esperas, verificados, leads, bajas, zonas, catalogo] = await Promise.all([
@@ -184,26 +197,28 @@ export async function GET(request: Request) {
         .select('id, full_name, display_name, birthdate, gender, rootedness, status, events_attended, created_at, es_prueba')
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
+        .order('id')
         .range(d, h)),
       todasLasFilas<{ profile_id: string | null; zones: string[] | null; formats: string[] | null; industry: string | null; age: number | null; gender: string | null; rootedness: string | null }>(
-        (d, h) => admin.from('profile_traits').select('profile_id, zones, formats, industry, age, gender, rootedness').range(d, h)),
+        (d, h) => admin.from('profile_traits').select('profile_id, zones, formats, industry, age, gender, rootedness').order('profile_id').range(d, h)),
       todasLasFilas<{ profile_id: string | null; balance: number | null }>(
-        (d, h) => admin.from('v_credit_balance').select('profile_id, balance').range(d, h)),
+        (d, h) => admin.from('v_credit_balance').select('profile_id, balance').order('profile_id').range(d, h)),
       todasLasFilas<{ profile_id: string | null; veces: number | null }>(
-        (d, h) => admin.from('v_espera_por_perfil').select('profile_id, veces').range(d, h)),
+        (d, h) => admin.from('v_espera_por_perfil').select('profile_id, veces').order('profile_id').range(d, h)),
       todasLasFilas<{ id: string | null }>(
-        (d, h) => admin.from('v_verified_profiles').select('id').range(d, h)),
+        (d, h) => admin.from('v_verified_profiles').select('id').order('id').range(d, h)),
       todasLasFilas<{ id: string; email: string; zones: string[] | null; rootedness: string | null; gender: string | null; birthdate: string | null; created_at: string }>(
         (d, h) => admin
           .from('waitlist')
           .select('id, email, zones, rootedness, gender, birthdate, created_at')
           .is('converted_profile_id', null)
           .order('created_at', { ascending: false })
+          .order('id')
           .range(d, h)),
       todasLasFilas<{ correo: string; deshecha_at: string | null }>(
-        (d, h) => admin.from('bajas_correo').select('correo, deshecha_at').range(d, h)),
+        (d, h) => admin.from('bajas_correo').select('correo, deshecha_at').order('correo').range(d, h)),
       todasLasFilas<{ slug: string; name: string }>(
-        (d, h) => admin.from('zones').select('slug, name').eq('city_slug', 'caracas').eq('is_active', true).range(d, h)),
+        (d, h) => admin.from('zones').select('slug, name').eq('city_slug', 'caracas').eq('is_active', true).order('slug').range(d, h)),
       // La industria se guarda por código —`tecnologia`, `otro`— y en pantalla
       // tiene que leerse como lo leyó quien contestó. El texto sale del
       // catálogo de la pregunta `sector`, que es donde vive: escribir aquí una

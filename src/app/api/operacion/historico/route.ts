@@ -210,15 +210,29 @@ export async function GET(request: Request) {
 
   // Todo de una vez: ninguna de estas consultas necesita el resultado de
   // otra, y en cadena son cinco idas y vueltas que se notan en cada tecla.
+/**
+ * ORDEN EXPLÍCITO EN TODO LO QUE SE LEE POR TRAMOS.
+ *
+ * `todasLasFilas` pide mil filas, luego las mil siguientes, y entre una
+ * vuelta y la otra pasa tiempo. Sin `ORDER BY`, Postgres no promete el
+ * mismo orden en las dos: si alguien escribe en esa tabla en medio, el
+ * segundo tramo puede saltarse una fila o devolver otra dos veces. No
+ * falla nada, simplemente falta gente en el panel.
+ *
+ * Se ordena por la clave, no por una fecha: `created_at` se repite, y con
+ * empates el desorden vuelve a caber dentro del empate. Donde ya había un
+ * orden de pantalla, la clave va detrás como desempate.
+ */
   let mesasRaw, miembros, eventos, locales, zonas, perfiles, reservas, valoraciones
   try {
     [mesasRaw, miembros, eventos, locales, zonas, perfiles, reservas, valoraciones] = await Promise.all([
       todasLasFilas<{ id: string; event_id: string; table_number: number; score: number | null; restaurant_id: string | null; notes_ops: string | null; created_at: string }>(
         (d, h) => admin.from('dinner_tables')
           .select('id, event_id, table_number, score, restaurant_id, notes_ops, created_at')
+          .order('id')
           .range(d, h)),
       todasLasFilas<{ table_id: string; profile_id: string; booking_id: string; seat_order: number | null }>(
-        (d, h) => admin.from('table_members').select('table_id, profile_id, booking_id, seat_order').range(d, h)),
+        (d, h) => admin.from('table_members').select('table_id, profile_id, booking_id, seat_order').order('table_id').order('profile_id').range(d, h)),
       todasLasFilas<{ id: string; starts_at: string; format: string; zone_slug: string | null; restaurant_id: string | null }>(
         /**
          * Nada anterior al 12/10. Michael, 21-10.
@@ -232,18 +246,20 @@ export async function GET(request: Request) {
          * mesa dejaría dentro cenas viejas armadas tarde.
          */
         (d, h) => admin.from('events').select('id, starts_at, format, zone_slug, restaurant_id')
-          .gte('starts_at', DESDE_QUE_ES_REAL).range(d, h)),
+          .gte('starts_at', DESDE_QUE_ES_REAL).order('id').range(d, h)),
       todasLasFilas<{ id: string; name: string; zone_slug: string | null }>(
-        (d, h) => admin.from('restaurants').select('id, name, zone_slug').range(d, h)),
+        (d, h) => admin.from('restaurants').select('id, name, zone_slug').order('id').range(d, h)),
       todasLasFilas<{ slug: string; name: string }>(
-        (d, h) => admin.from('zones').select('slug, name').range(d, h)),
+        (d, h) => admin.from('zones').select('slug, name').order('slug').range(d, h)),
       todasLasFilas<{ id: string; full_name: string | null; display_name: string | null; email: string | null }>(
-        (d, h) => admin.from('profiles').select('id, full_name, display_name, email').range(d, h)),
+        (d, h) => admin.from('profiles').select('id, full_name, display_name, email').order('id').range(d, h)),
       todasLasFilas<{ id: string; status: string }>(
-        (d, h) => admin.from('bookings').select('id, status').range(d, h)),
+        (d, h) => admin.from('bookings').select('id, status').order('id').range(d, h)),
       todasLasFilas<ValoracionCruda>(
         (d, h) => admin.from('table_feedback')
           .select('table_id, profile_id, conversation_rating, sitio_ambiente, sitio_servicio, sitio_conversar, sitio_comida, would_repeat, comment, gasto_usd, created_at')
+          .order('table_id')
+          .order('profile_id')
           .range(d, h)),
     ])
   } catch (e) {
