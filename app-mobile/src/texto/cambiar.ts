@@ -30,7 +30,10 @@ export const elegir = {
 export const hecho = {
   sello: 'FECHA CAMBIADA',
   titulo: (dia: string) => (dia ? `Ahora tienes puesto el ${dia}.` : 'Ya cambiaste de fecha.'),
-  cuerpo: 'Te mandamos un correo con la fecha nueva. Antes del plan te decimos dónde es y con quién.',
+  antes: 'ANTES',
+  ahora: 'AHORA',
+  /** El mismo orden que el correo `fecha_cambiada`: antes tachada arriba, ahora debajo (29-10). */
+  cuerpo: 'Lo que pagaste se vino contigo. Te mandamos un correo con el cambio, y antes del plan te decimos dónde es y con quién.',
   verMesa: 'Ver mi mesa',
 }
 

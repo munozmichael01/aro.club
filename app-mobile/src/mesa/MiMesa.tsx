@@ -192,18 +192,6 @@ function EnlaceCancelar({ ir }: { ir: (d: string) => void }) {
   )
 }
 
-/** Cambiar de fecha (29-10): solo si hay fechas abiertas a las que irse. */
-function CambiarDeFecha({ d, ir }: { d: M.DeServidor; ir: (d: string) => void }) {
-  if (!CM.enMiMesa(d.cambiarFecha)) return null
-  return (
-    <Pressable onPress={() => ir('/cambiar-fecha')} accessibilityRole="link" style={estilos.enlace}>
-      <Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia, textDecorationLine: 'underline' }}>
-        {TC.enlace}
-      </Texto>
-    </Pressable>
-  )
-}
-
 // --- Vacía ----------------------------------------------------------------------
 
 function Vacia({ d, ir }: { d: M.DeServidor; ir: (d: string) => void }) {
@@ -282,12 +270,19 @@ function Cerrada({ d, ir, alAbrirse }: { d: M.DeServidor; ir: (d: string) => voi
             {horaZona}
           </Texto>
         </View>
+        {/* Lo que se puede hacer con ESTA fecha va con ella, no suelto debajo (Michael, 29-10). */}
+        <View style={estilos.accionesFecha}>
+          {CM.enMiMesa(d.cambiarFecha) ? <Boton tipo="secundario" texto={TC.enlace} onPress={() => ir('/cambiar-fecha')} /> : null}
+          <Pressable onPress={() => ir('/cancelar')} accessibilityRole="link" style={{ minHeight: medida.toqueMinimo, justifyContent: 'center' }}>
+            <Texto variante="cuerpoChico" tono="terracota" style={{ fontFamily: fuente.textoMedia, textDecorationLine: 'underline' }}>
+              {T.cancelar}
+            </Texto>
+          </Pressable>
+        </View>
       </View>
       <Texto variante="cuerpo" style={{ marginTop: 20 }}>
         {T.cerrada.nota(M.voz(d).vasCon)}
       </Texto>
-      <CambiarDeFecha d={d} ir={ir} />
-      <EnlaceCancelar ir={ir} />
     </View>
   )
 }
@@ -803,6 +798,7 @@ const estilos = StyleSheet.create({
   otro: { flexDirection: 'row', gap: 14, alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: tinta(0.13) },
   avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   enlace: { alignSelf: 'flex-start', minHeight: medida.toqueMinimo, justifyContent: 'center', marginTop: 16 },
+  accionesFecha: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 18, rowGap: 8, marginTop: 18 },
   ficha: { borderRadius: radio.capsula, borderWidth: 1, borderColor: tinta(0.18), paddingHorizontal: 12, paddingVertical: 7 },
   acuse: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', borderRadius: 26, backgroundColor: verdeAlfa(0.1), padding: 18 },
   acuseIcono: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 1 },

@@ -3,7 +3,7 @@ import { useCallback, useState, type ReactNode } from 'react'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { AroCarga, Aviso, Boton, IconoFlecha, Marca, Opcion, Texto, color, fuente, medida, radio } from '../diseno'
+import { AroCarga, Aviso, Boton, IconoFlecha, Marca, Opcion, Texto, color, fuente, medida, radio, tinta } from '../diseno'
 import * as T from '../texto/cambiar'
 import { useUltimo } from '../util/useUltimo'
 import * as M from './maquina'
@@ -24,7 +24,7 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; a
   const [fallo, setFallo] = useState('')
   const [elegida, setElegida] = useState<string | null>(null)
   const [cambiando, setCambiando] = useState(false)
-  const [hecho, setHecho] = useState<M.Destino | null>(null)
+  const [hecho, setHecho] = useState<{ antes: M.Destino; ahora: M.Destino } | null>(null)
 
   const cargar = useCallback(async () => {
     const r = await servicio.leer()
@@ -54,11 +54,14 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; a
       setFallo(r.error)
       return cargar()
     }
-    setHecho(d.bloque.destinos.find((x) => x.eventoId === elegida) ?? null)
+    const ahora = d.bloque.destinos.find((x) => x.eventoId === elegida)
+    if (ahora) setHecho({ antes: deAhora(d), ahora })
   }
 
   let cuerpo: ReactNode
   if (hecho) {
+    const antes = M.fila(hecho.antes)
+    const ahora = M.fila(hecho.ahora)
     cuerpo = (
       <View>
         <View style={estilos.sello}>
@@ -67,18 +70,36 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; a
           </Texto>
         </View>
         <Texto variante="portada" accessibilityRole="header">
-          {T.hecho.titulo(M.diaDe(hecho))}
+          {T.hecho.titulo(M.diaDe(hecho.ahora))}
         </Texto>
-        <Texto variante="cuerpoGrande" style={{ marginTop: 14 }}>
+        <View style={[estilos.caja, { marginTop: 24 }]}>
+          <Texto variante="etiquetaChica" tono="cuerpo" style={{ marginBottom: 6 }}>
+            {T.hecho.antes}
+          </Texto>
+          <Texto variante="cuerpo" style={{ color: tinta(0.5), textDecorationLine: 'line-through' }}>
+            {[antes.titulo, antes.formato].filter(Boolean).join(' · ')}
+          </Texto>
+          <View style={{ height: 1, backgroundColor: tinta(0.12), marginVertical: 16 }} />
+          <Texto variante="etiquetaChica" tono="cuerpo" style={{ marginBottom: 6 }}>
+            {T.hecho.ahora}
+          </Texto>
+          <Texto variante="subtitulo" style={{ fontSize: 21 }}>
+            {ahora.titulo}
+          </Texto>
+          <Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia, marginTop: 4 }}>
+            {[ahora.detalle, ahora.ingles ? T.elegir.enIngles : ''].filter(Boolean).join(' · ')}
+          </Texto>
+        </View>
+        <Texto variante="cuerpoGrande" style={{ marginTop: 18 }}>
           {T.hecho.cuerpo}
         </Texto>
         <View style={estilos.acciones}>
-          <Boton texto={T.hecho.verMesa} onPress={() => p.ir('/mesa')} />
+          <Boton ancho texto={T.hecho.verMesa} onPress={() => p.ir('/mesa')} />
         </View>
       </View>
     )
   } else if (d) {
-    const actual = M.fila({ eventoId: '', empiezaEn: d.empiezaEn ?? '', zonaHoraria: d.zonaHoraria, formato: d.formato, zonas: d.zonas })
+    const actual = M.fila(deAhora(d))
     const nota = d.bloque.puede && d.bloque.destinos.length ? null : T.noSePuede(d.bloque.puede ? 'sin-destinos' : d.bloque.motivo)
     cuerpo = (
       <View>
@@ -131,8 +152,8 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; a
           </View>
         ) : null}
         <View style={estilos.acciones}>
-          {nota ? null : <Boton texto={T.elegir.boton(cambiando)} onPress={cambiar} apagado={cambiando || !elegida} />}
-          <Boton tipo="fantasma" texto={T.elegir.quedarme} onPress={() => p.ir('/mesa')} />
+          {nota ? null : <Boton ancho texto={T.elegir.boton(cambiando)} onPress={cambiar} apagado={cambiando || !elegida} />}
+          <Boton ancho tipo="secundario" texto={T.elegir.quedarme} onPress={() => p.ir('/mesa')} />
         </View>
       </View>
     )
@@ -164,10 +185,13 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; a
   )
 }
 
+/** La fecha de ahora, con la misma forma que un destino. */
+const deAhora = (d: Datos): M.Destino => ({ eventoId: '', empiezaEn: d.empiezaEn ?? '', zonaHoraria: d.zonaHoraria, formato: d.formato, zonas: d.zonas })
+
 const estilos = StyleSheet.create({
   pagina: { paddingHorizontal: medida.margenLateral, maxWidth: 620, width: '100%', alignSelf: 'center' },
   volver: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: medida.toqueMinimo, alignSelf: 'flex-start', marginBottom: 22 },
   caja: { borderRadius: 26, backgroundColor: color.cremaElevada, padding: 20 },
-  acciones: { flexDirection: 'row', flexWrap: 'wrap', gap: 13, alignItems: 'center', marginTop: 28 },
+  acciones: { gap: 12, marginTop: 28 },
   sello: { alignSelf: 'flex-start', minHeight: 36, justifyContent: 'center', paddingHorizontal: 15, borderRadius: radio.capsula, backgroundColor: color.verdeProfundo, marginBottom: 16 },
 })

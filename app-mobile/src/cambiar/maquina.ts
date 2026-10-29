@@ -40,11 +40,12 @@ const zonasEnTexto = (z: string[] | undefined) =>
   !z?.length ? '' : z.length === 1 ? z[0] : `${z.slice(0, -1).join(', ')} o ${z[z.length - 1]}`
 
 /** Una fila de la lista: «Sábado 31 de octubre · 7:00 p.m.» y «Cena · Chacao o Los Palos Grandes». */
-export function fila(x: Destino, larga = true): { titulo: string; detalle: string; ingles: boolean } {
+export function fila(x: Destino, larga = true): { titulo: string; formato: string; detalle: string; ingles: boolean } {
   const formato = (FORMATOS[x.formato ?? 'dinner'] ?? FORMATOS.dinner).singular
   return {
     // En la lista, la corta («Sábado 31 · 7:00 p.m.»): la larga no cabe junto al pie en un celular.
     titulo: larga ? F.fechaLarga(x.empiezaEn, x.zonaHoraria) : F.fechaCorta(x.empiezaEn, x.zonaHoraria),
+    formato,
     detalle: [formato, zonasEnTexto(x.zonas)].filter(Boolean).join(' · '),
     ingles: x.idioma === 'en',
   }
