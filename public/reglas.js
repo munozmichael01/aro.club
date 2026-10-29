@@ -1078,6 +1078,38 @@
      * trae de `/api/ciudades`, dejaría la app sin alta hasta que la pidiera.
      * La puerta completa es `pasosDePuerta()`.
      */
+    /**
+     * El arraigo DICHO DE OTRO, para ponerlo al lado de su nombre.
+     *
+     * Las opciones de `PUERTA.arraigo` estan en primera persona, porque son
+     * respuestas de un cuestionario: lo que esa persona contesto de si
+     * misma. Puestas al lado del nombre de otro se leen al reves. «Andrea ·
+     * Me fui del pais y volvi» suena a que lo dice quien esta mirando.
+     *
+     * Asi que la misma informacion, contada en tercera persona y corta.
+     * Michael, 29-10, pidio que salga «donde sea que se muestre el nombre de
+     * los participantes: web, correo, app», y por eso vive aqui y no en cada
+     * sitio: tres copias de esto acabarian diciendo tres cosas.
+     *
+     * Estan los SEIS codigos. Con cuatro, los dos que faltaran caerian al
+     * texto del cuestionario y volverian a salir en primera persona, que es
+     * justo lo que esto arregla.
+     */
+    ARRAIGO_EN_LA_MESA: {
+      volvio: 'Volvió al país',
+      'se-quedo': 'Se quedó en el país',
+      interior: 'Acaba de llegar a la ciudad',
+      visita: 'Está de paso',
+      mismos: 'Con la gente de siempre',
+      remoto: 'Trabaja remoto',
+    },
+
+    /** Como se lee el arraigo de alguien, o cadena vacia si no contesto. */
+    arraigoDe: function (codigo) {
+      if (!codigo) return ''
+      return this.ARRAIGO_EN_LA_MESA[codigo] || ''
+    },
+
     ORDEN_PUERTA: ['arraigo', 'zonas', 'dias', 'temas'],
 
     /**

@@ -7,7 +7,7 @@ import { enlaceDeMapa } from '@/lib/mapa'
 import { avisoDeDosHoras, FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
-import { DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
+import { arraigoDe, DIAS_GUARDA_FOTOS, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
@@ -2251,7 +2251,7 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
 
   const { data: rasgos } = await admin
     .from('profile_traits')
-    .select('profile_id, industry')
+    .select('profile_id, industry, rootedness')
     .in('profile_id', (otros ?? []).map((o) => o.profile_id))
 
   // El sector se guarda con su código estable —`construccion`, `diseno`— que
@@ -2271,6 +2271,21 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
 
   const sector = new Map(
     (rasgos ?? []).map((r) => [r.profile_id, r.industry ? (etiqueta.get(r.industry) ?? r.industry) : '']),
+  )
+
+  /**
+   * Y su arraigo, dicho de otro.
+   *
+   * Michael, 29-10: que salga «donde sea que se muestre el nombre de los
+   * participantes: web, correo, app». Este correo es uno de esos sitios: es
+   * donde mucha gente lee por primera vez con quién cena.
+   *
+   * De `AroReglas.ARRAIGO_EN_LA_MESA` y no de un mapa aquí. El sector ya
+   * aprendió esa lección —se lee de `questions` porque un mapa escrito aquí
+   * sería un tercer catálogo— y esto es lo mismo.
+   */
+  const arraigo = new Map(
+    (rasgos ?? []).map((r) => [r.profile_id, arraigoDe(r.rootedness)]),
   )
   const zonas = mesa.restaurants?.zone_slug
     ? await nombresDeZonas(admin, [mesa.restaurants.zone_slug])
@@ -2380,7 +2395,12 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
     gente: (otros ?? []).map((o) => {
       const quien = o.profiles as unknown as { display_name: string | null; full_name: string | null } | null
       const nombre = quien?.display_name || quien?.full_name?.split(' ')[0] || '—'
-      return { nombre, inicial: nombre.charAt(0), sector: sector.get(o.profile_id) ?? '' }
+      return {
+        nombre,
+        inicial: nombre.charAt(0),
+        sector: sector.get(o.profile_id) ?? '',
+        arraigo: arraigo.get(o.profile_id) ?? '',
+      }
     }),
     /**
      * Cuántos son los OTROS, en letra. Casi siempre cinco. Casi.
