@@ -169,25 +169,62 @@ export async function construirPool(
   // veto; los demás siguen contando para la novedad, que es lo que mide si
   // la mesa es gente nueva de verdad.
   /**
-   * POR TRAMOS, porque esta tabla crece al cuadrado.
+   * LAS PAREJAS DE ESTA GENTE, no la tabla entera.
    *
-   * Cada cena de seis añade quince parejas. Hoy son 398 filas y PostgREST
-   * corta en mil sin avisar: a unas sesenta y siete mesas, el veto empezaría
-   * a leer solo una parte y sentaría junta a gente que no debe coincidir,
-   * sin que fallara nada. Es el mismo corte que el 27-10 dejó a treinta y
-   * cinco hombres fuera de un envío.
+   * `pair_encounters` crece al cuadrado: cada cena de seis añade quince
+   * filas, y no se borra ninguna porque el término de novedad mira toda la
+   * historia. Leerla entera en cada reparto era pedir la historia del club
+   * completo para sentar a treinta personas, y además PostgREST corta en
+   * mil filas sin avisar: pasadas unas sesenta y siete mesas el veto habría
+   * empezado a leer solo una parte y a sentar junta a gente que no debe
+   * coincidir, sin que fallara nada.
+   *
+   * Las dos cosas se arreglan con la misma idea, y es que `vetados` y
+   * `conocidos` SOLO se preguntan entre gente de la misma mesa
+   * —`repartir.ts:263` y `:531`— y toda mesa sale de este pool. O sea que
+   * las únicas parejas que importan son las que tienen a los dos dentro.
+   *
+   * Y como la tabla guarda cada pareja una sola vez, si los dos están en el
+   * pool entonces el que esté en `profile_a` también lo está: preguntando
+   * por `profile_a` no se escapa ninguna.
+   *
+   * Así la consulta deja de depender del tamaño del club y pasa a depender
+   * del de la fecha. Por trozos de ids por la URL, y por tramos dentro de
+   * cada trozo por el tope de las mil: son dos topes distintos y hacen
+   * falta los dos.
    */
-  const todos = await todasLasFilas<{ profile_a: string; profile_b: string; last_met_at: string }>(
-    (desde, hasta) => admin
-      .from('pair_encounters')
-      .select('profile_a, profile_b, last_met_at')
-      .range(desde, hasta))
+  const enElPool = new Set(ids)
+  const POR_TROZO_DE_IDS = 150
+
+  async function parejasDe<T extends { profile_a: string; profile_b: string }>(
+    tabla: 'pair_encounters' | 'exclusions',
+    columnas: string,
+  ): Promise<T[]> {
+    const salida: T[] = []
+    for (let i = 0; i < ids.length; i += POR_TROZO_DE_IDS) {
+      const trozo = ids.slice(i, i + POR_TROZO_DE_IDS)
+      const filas = await todasLasFilas<T>((desde, hasta) => admin
+        .from(tabla)
+        .select(columnas)
+        .in('profile_a', trozo)
+        .range(desde, hasta) as never)
+      // Y de esas, las que tienen al otro también dentro.
+      salida.push(...filas.filter((f) => enElPool.has(f.profile_b)))
+    }
+    return salida
+  }
+
+  const todos = ids.length
+    ? await parejasDe<{ profile_a: string; profile_b: string; last_met_at: string }>(
+      'pair_encounters', 'profile_a, profile_b, last_met_at')
+    : []
 
   const corte = Date.now() - MESES_SIN_REPETIR * 30 * 86400_000
   const encuentros = todos.filter((e) => new Date(e.last_met_at).getTime() > corte)
 
-  const exclusiones = await todasLasFilas<{ profile_a: string; profile_b: string }>(
-    (desde, hasta) => admin.from('exclusions').select('profile_a, profile_b').range(desde, hasta))
+  const exclusiones = ids.length
+    ? await parejasDe<{ profile_a: string; profile_b: string }>('exclusions', 'profile_a, profile_b')
+    : []
 
   const emparejar = (filas: { profile_a: string; profile_b: string }[]) => {
     const m = new Map<string, Set<string>>()
