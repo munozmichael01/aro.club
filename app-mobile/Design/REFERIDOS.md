@@ -70,9 +70,12 @@ El texto que acompaña al enlace va en la sección 7.
 ## 7. Los textos (para que los apruebe Michael)
 
 **Al compartir** (WhatsApp, historias o donde sea):
-> Me apunté a una cena de Aro Club con gente que no conozco: un grupo pequeño,
-> todos verificados, y el sitio lo eligen ellos. Con mi código ANDREA7KQ tu
+> Estoy en Aro Club: cenas con gente que no conoces, en grupos pequeños y
+> todos verificados. El sitio lo eligen ellos. Con mi código ANDREA7KQ tu
 > primera fecha tiene un 20% de descuento: aro.club/i/ANDREA7KQ
+
+Vale para cualquier persona verificada, haya cenado o no, y desde cualquier
+sitio desde el que se comparta (Michael, 29-10).
 
 **Franja de la web y de la app** para quien llega con el enlace:
 > Te invitó Andrea · tu primera fecha con un 20% de descuento
