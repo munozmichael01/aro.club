@@ -92,6 +92,13 @@
     "plugins": [
       "expo-secure-store",
       [
+        "react-native-share",
+        {
+          "ios": ["instagram-stories", "instagram", "whatsapp", "tiktok"],
+          "android": ["com.instagram.android", "com.whatsapp", "com.zhiliaoapp.musically", "com.ss.android.ugc.trill"]
+        }
+      ],
+      [
         "expo-font",
         {
           "fonts": [
@@ -150,6 +157,9 @@
       "api": "https://aro.club/api",
       "supabaseUrl": "https://qdydmklrbsdemzvjsldo.supabase.co",
       "sitio": "https://aro.club",
+      "meta": {
+        "appId": "1848261726624122"
+      },
       "router": {},
       "eas": {
         "projectId": "51c36ee0-0e19-4c87-bf88-f041afc965a9"

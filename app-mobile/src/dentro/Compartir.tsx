@@ -1,4 +1,4 @@
-import * as Clipboard from 'expo-clipboard'
+import Constants from 'expo-constants'
 import * as Sharing from 'expo-sharing'
 import { useRef, useState } from 'react'
 import { Modal, PixelRatio, Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native'
@@ -14,31 +14,43 @@ const ANCHO = 200
 const ALTO = 356
 const PASO = ANCHO + 12
 
-type Con = 'guardar' | 'historias' | 'whatsapp' | 'mas'
+type Con = 'guardar' | 'historias' | 'tiktok' | 'whatsapp' | 'mas'
+// Los cuatro de la maqueta y TikTok, que pidió Michael el 30-10.
 const BOTONES: { con: Con; texto: string; fondo: string; tinta: string }[] = [
   { con: 'guardar', texto: T.compartir.guardar, fondo: color.verdeProfundo, tinta: color.crema },
   { con: 'historias', texto: T.compartir.historias, fondo: '#E39C63', tinta: color.verdeProfundo },
+  { con: 'tiktok', texto: T.compartir.tiktok, fondo: '#F6D9B4', tinta: color.verdeProfundo },
   { con: 'whatsapp', texto: T.compartir.whatsapp, fondo: '#9CBBA6', tinta: color.verdeProfundo },
   { con: 'mas', texto: T.compartir.mas, fondo: tinta(0.08), tinta: color.verdeProfundo },
 ]
+
+/** El identificador de la app de Meta: sin él, Instagram no acepta la historia ya puesta. */
+const META_APP_ID = (Constants.expoConfig?.extra as { meta?: { appId?: string } } | undefined)?.meta?.appId
+
+/** Cerrar la hoja de otra app sin compartir no es un fallo. */
+const cancelado = (e: unknown) => /did not share|cancel/i.test(String((e as Error)?.message ?? e))
 
 /**
  * «Comparte tu plan» (entrega estas-dentro, C1): la hoja con las tarjetas
  * para historias, que se deslizan de lado, y los cuatro botones.
  *
  * La imagen sale de la misma tarjeta pintada a 1080 × 1920 fuera de la
- * pantalla y capturada. Guardar e Historias abren la hoja del sistema con la
- * imagen sola: ahí están «Guardar imagen» e Instagram. Abrir Instagram con la
- * historia ya puesta pide un identificador de app de Meta que no tenemos.
- * WhatsApp y Más llevan imagen y mensaje; Android no deja mandar las dos
- * cosas juntas sin otro módulo, así que el mensaje se copia para pegarlo.
+ * pantalla y capturada. Qué hace cada botón:
+ * - Guardar imagen y TikTok: la hoja del sistema con la imagen sola; ahí
+ *   están «Guardar imagen» y TikTok. Ir directo a TikTok pide su kit de
+ *   desarrollador, con una app aprobada por ellos.
+ * - Historias: Instagram abierto con la tarjeta ya puesta de fondo (con el
+ *   App ID de Meta). Si no tiene Instagram, la hoja del sistema.
+ * - WhatsApp: en Android, directo con imagen y mensaje. En iPhone, WhatsApp
+ *   solo recibe imagen o texto por separado si se le abre directo, así que va
+ *   por la hoja del sistema, que manda los dos.
+ * - Más: la hoja del sistema con imagen y mensaje.
  */
 export function HojaCompartir(p: { h: Historia; mensaje: string; alCerrar: () => void }) {
   const insets = useSafeAreaInsets()
   const variantes = variantesDe(p.h)
   const [i, setI] = useState(0)
   const [fallo, setFallo] = useState('')
-  const [nota, setNota] = useState('')
   const [ocupado, setOcupado] = useState(false)
   const lienzo = useRef<View>(null)
   const carrusel = useRef<ScrollView>(null)
@@ -52,21 +64,33 @@ export function HojaCompartir(p: { h: Historia; mensaje: string; alCerrar: () =>
     if (ocupado) return
     setOcupado(true)
     setFallo('')
-    setNota('')
     try {
       const uri = await captureRef(lienzo, { format: 'png', quality: 1, result: 'tmpfile' })
-      const conMensaje = con === 'whatsapp' || con === 'mas'
-      if (conMensaje && Platform.OS === 'ios') {
-        await Share.share({ url: uri, message: p.mensaje })
-      } else {
-        if (conMensaje) {
-          await Clipboard.setStringAsync(p.mensaje)
-          setNota(T.compartir.copiado)
+      const imagen = () => Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png' })
+      // Se carga al tocar: en la web (el catálogo) el módulo nativo no existe y revienta al importarse.
+      const { default: RNShare, Social } = await import('react-native-share')
+      const conMensaje = () =>
+        Platform.OS === 'ios' ? Share.share({ url: uri, message: p.mensaje }) : RNShare.open({ url: uri, type: 'image/png', message: p.mensaje, failOnCancel: false })
+      if (con === 'historias') {
+        try {
+          if (!META_APP_ID) throw new Error('sin App ID')
+          await RNShare.shareSingle({ social: Social.InstagramStories, appId: META_APP_ID, backgroundImage: uri, attributionURL: 'https://aro.club' })
+        } catch (e) {
+          if (!cancelado(e)) await imagen()
         }
-        await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png' })
+      } else if (con === 'whatsapp' && Platform.OS === 'android') {
+        try {
+          await RNShare.shareSingle({ social: Social.Whatsapp, url: uri, type: 'image/png', message: p.mensaje })
+        } catch (e) {
+          if (!cancelado(e)) await conMensaje()
+        }
+      } else if (con === 'whatsapp' || con === 'mas') {
+        await conMensaje()
+      } else {
+        await imagen()
       }
-    } catch {
-      setFallo(T.compartir.fallo)
+    } catch (e) {
+      if (!cancelado(e)) setFallo(T.compartir.fallo)
     } finally {
       setOcupado(false)
     }
@@ -133,13 +157,13 @@ export function HojaCompartir(p: { h: Historia; mensaje: string; alCerrar: () =>
             {T.compartir.etiqueta[2]}
           </Texto>
 
-          {fallo || nota ? (
-            <Texto variante="cuerpoChico" tono={fallo ? 'terracota' : 'cuerpo'} style={{ textAlign: 'center', marginTop: 10 }}>
-              {fallo || nota}
+          {fallo ? (
+            <Texto variante="cuerpoChico" tono="terracota" style={{ textAlign: 'center', marginTop: 10 }}>
+              {fallo}
             </Texto>
           ) : null}
 
-          <View style={{ flexDirection: 'row', paddingHorizontal: 14, paddingTop: 18, opacity: ocupado ? 0.5 : 1 }}>
+          <View style={{ flexDirection: 'row', paddingHorizontal: 8, paddingTop: 18, opacity: ocupado ? 0.5 : 1 }}>
             {BOTONES.map((b) => (
               <Pressable key={b.con} onPress={() => mandar(b.con)} disabled={ocupado} accessibilityRole="button" accessibilityLabel={b.texto} style={{ flex: 1, alignItems: 'center', gap: 8 }}>
                 <View style={[e.redondo, { backgroundColor: b.fondo }]}>

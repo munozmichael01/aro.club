@@ -70,10 +70,10 @@ export const compartir = {
   etiqueta: ['Etiqueta a ', '@aroclub', ' en tu historia.'] as const,
   guardar: 'Guardar imagen',
   historias: 'Historias',
+  tiktok: 'TikTok',
   whatsapp: 'WhatsApp',
   mas: 'Más',
   tarjeta: (n: number, de: number) => `Tarjeta ${n} de ${de}`,
   // Casilla C: solo del celular.
   fallo: 'No pudimos preparar la imagen. Vuelve a intentarlo.',
-  copiado: 'Copiamos el mensaje: pégalo junto a la imagen.',
 }
