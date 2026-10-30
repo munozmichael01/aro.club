@@ -411,9 +411,18 @@
     -->
     <sc-if value="{{ esCupon }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 420ms ease both">
-        <div style="{{ selloListo }}">PUESTO APARTADO</div>
-        <h1 style="{{ h1 }}">Listo. Tu puesto es tuyo.</h1>
-        <p style="{{ bajada }}">Tu código cubre la plaza, así que no tienes que pagar nada ni reportar ningún pago. {{ seAbreA }} se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
+        <!--
+          Lo mismo que dice la app, palabra por palabra.
+
+          Un codigo del 100% no aparta un puesto pendiente de nada: lo
+          confirma. La entrega «estas dentro» lo pone con el credito en el
+          mismo renglon —los dos entran al instante— y la app lo arreglo hoy.
+          Con «PUESTO APARTADO · Listo, tu puesto es tuyo» aqui, la misma
+          persona leia una cosa en el telefono y otra en la web.
+        -->
+        <div style="{{ selloListo }}">RESERVA CONFIRMADA</div>
+        <h1 style="{{ h1 }}">Estás dentro.</h1>
+        <p style="{{ bajada }}">Tu código cubre la plaza. No hace falta nada más. {{ seAbreA }} se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
 
         <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:14px 16px;margin-top:clamp(20px,3vw,26px);max-width:46ch">
           <span style="{{ iconoAviso }}">!</span>
