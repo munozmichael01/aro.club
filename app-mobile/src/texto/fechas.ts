@@ -258,13 +258,10 @@ export function esFutura(ddmmaaaa: string, ahora: number, zona?: Zona): boolean 
 
 /**
  * «El día de la cena, al mediodía» o «La víspera, a las seis de la tarde»:
- * cuándo se revela un plan, para «Cómo funciona». De `reglas.revelaDe`, que
- * sabe que los planes de mañana se revelan la víspera.
+ * cuándo se revela un plan, para «Cómo funciona». De `reglas.cuandoSeRevela`
+ * (f0e8a7e), la misma frase que la web; sin fecha, «Antes del plan».
  */
 export function cuandoSeRevelaPlan(p: { formato?: string | null; empiezaEn?: string | null; revelaEn?: string | null; zonaHoraria?: string | null }): string {
-  const voz = reglas.vozDe(p.formato ?? 'dinner') as unknown as Record<string, string>
-  const r = p.empiezaEn ? reglas.revelaDe(p.empiezaEn, p.zonaHoraria ?? null, p.revelaEn ?? null) : null
-  if (!r) return 'Antes del plan'
-  const aLas = r.enLetra === 'mediodía' ? 'al mediodía' : `a ${r.enLetra}`
-  return r.mismoDia ? `El día ${voz.delPlan ?? 'del plan'}, ${aLas}` : `La víspera, ${aLas}`
+  const frase = p.empiezaEn ? reglas.cuandoSeRevela(p.empiezaEn, p.zonaHoraria ?? null, p.revelaEn ?? null, p.formato ?? 'dinner') : ''
+  return frase || 'Antes del plan'
 }

@@ -18,8 +18,9 @@ export function vista(p: Plan) {
   const esMesa = reglas.vozDe(formato).unidad !== 'grupo'
   const conFotos = reglas.DE_CENA.includes(formato)
   const voz = reglas.vozDe(formato) as unknown as Record<string, string>
-  const tipo: T.Tipo = !esMesa ? 'grupo' : conFotos ? 'cena' : 'brunch'
-  const tarjetas: Tarjeta[] = T.tarjetas(tipo, cuandoSeSabe(p)).map((t) => ({ ...t, clave: t.clave as Tarjeta['clave'], etiqueta: T.etiquetas[t.clave as Tarjeta['clave']] }))
+  // El mismo criterio que la web: `tipoDe` de reglas.js.
+  const tipo: T.Tipo = T.tipoDe(formato)
+  const tarjetas: Tarjeta[] = T.tarjetas(tipo, cuandoSeSabe(p)).map((t) => ({ clave: t.clave, titulo: t.titulo, cuerpo: t.cuerpo, etiqueta: T.etiquetas[t.clave] }))
   return { tarjetas, conFotos, esMesa, tipo, miMesa: voz.mia ?? 'Mi mesa' }
 }
 

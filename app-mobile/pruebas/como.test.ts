@@ -29,3 +29,12 @@ test('tres tarjetas; fotos solo en cena; grupo en los planes de movimiento', () 
   assert.equal(paseo.tarjetas[0].titulo, 'Llega al punto de encuentro')
   assert.equal(paseo.miMesa, 'Mi grupo')
 })
+
+test('los textos y el tipo salen de reglas.js, los mismos que la web (f0e8a7e)', () => {
+  const { reglas } = require('../src/reglas') as typeof import('../src/reglas')
+  const brunch = M.vista({ formato: 'brunch', empiezaEn: '2026-11-01T15:00:00Z', revelaEn: '2026-10-31T22:00:00Z', zonaHoraria: Z })
+  assert.equal(brunch.tipo, 'brunch')
+  const web = reglas.COMO_FUNCIONA.tarjetas('brunch', reglas.cuandoSeRevela('2026-11-01T15:00:00Z', Z, '2026-10-31T22:00:00Z', 'brunch'))
+  assert.deepEqual(brunch.tarjetas.map((t) => [t.titulo, t.cuerpo]), web.map((t) => [t.titulo, t.cuerpo]))
+  assert.equal(M.cuandoSeSabe({ formato: 'dinner' }), 'Antes del plan')
+})

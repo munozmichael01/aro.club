@@ -65,6 +65,23 @@ type Api = {
   /** Cuántas horas antes hay que avisar para cancelar con crédito o cambiar de fecha (24). No es `HORAS_DE_CIERRE`, aunque hoy valgan igual. */
   HORAS_DE_MARGEN: number
   /** Cuándo se revela un plan: el ISO de la fecha si lo trae, o el de la regla (mediodía, o la víspera a las 6 en los de mañana). */
+  /** «El día de la cena, al mediodía» / «La víspera, a las seis de la tarde»; '' sin fecha (f0e8a7e). */
+  cuandoSeRevela: (inicioIso: string, zona?: string | null, revelaIso?: string | null, formato?: string | null) => string
+  /** «Cómo funciona» en tres tarjetas: los textos de la web y la app, en un solo sitio (f0e8a7e). */
+  COMO_FUNCIONA: {
+    titulo: string
+    fila: { titulo: string; bajada: string }
+    filaMesa: { titulo: string; bajada: string }
+    siguiente: string
+    entendido: string
+    etiquetas: { antes: string; durante: string; despues: string }
+    iconos: { antes: string; durante: string; despues: string }
+    primeraVez: { sello: (plan: string) => string; titulo: string; tituloDia: string }
+    pie: (miMesa: string) => string
+    cuentaDe: (i: number, n: number) => string
+    tarjetas: (tipo: 'cena' | 'brunch' | 'grupo', cuando: string) => { clave: 'antes' | 'durante' | 'despues'; icono: string; titulo: string; cuerpo: string }[]
+    tipoDe: (formato: string | null | undefined) => 'cena' | 'brunch' | 'grupo'
+  }
   revelaDe: (inicioIso: string, zona?: string | null, revelaIso?: string | null) => { cuando: string; mismoDia: boolean; dia: string; hora: string; enLetra: string } | null
   /** El arraigo dicho de otra persona («Volvió al país»), por código (f8f4cf5). */
   ARRAIGO_EN_LA_MESA: Record<string, string>
