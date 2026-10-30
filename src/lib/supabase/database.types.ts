@@ -4216,6 +4216,7 @@ export type Database = {
         | "reembolso_pedido"
         | "reembolso_hecho"
         | "probadores_android"
+        | "te_falta_sentarte"
         | "fecha_cambiada"
       event_format_t:
         | "dinner"
@@ -4467,6 +4468,7 @@ export const Constants = {
         "reembolso_pedido",
         "reembolso_hecho",
         "probadores_android",
+        "te_falta_sentarte",
         "fecha_cambiada",
       ],
       event_format_t: [

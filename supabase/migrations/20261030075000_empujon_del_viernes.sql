@@ -1,0 +1,15 @@
+-- El empujon a quien se verifico y nunca se ha sentado.
+--
+-- Michael, 30-10 a la una de la madrugada: «manda un correo a las 8am con
+-- cenas hoy y el sabado a los 372 que nunca han reservado. Me da igual si es
+-- un formato nuevo». Y lo escribio el mismo: «Ya te verificamos. Solo te
+-- falta sentarte», las fechas con su cierre, un boton y una linea de cuanta
+-- gente ya se sento.
+--
+-- Lo intente con `resumen_semanal`, que lista las fechas de la semana, y me
+-- equivoque: ese correo es la agenda de los lunes, va a todo el club y no
+-- dice nada a quien lleva semanas verificado sin reservar. El suyo le habla
+-- a UNA persona concreta y le dice que solo le falta una cosa.
+--
+-- No es imprescindible: lleva `List-Unsubscribe`.
+alter type email_kind_t add value if not exists 'te_falta_sentarte';

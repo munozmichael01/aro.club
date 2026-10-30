@@ -226,6 +226,15 @@ export type Correo =
    */
   | 'fecha_cambiada'
   | 'probadores_android'
+  /**
+   * El empujón a quien se verificó y nunca se ha sentado.
+   *
+   * Lo escribió Michael el 30-10: «Ya te verificamos. Solo te falta
+   * sentarte», las fechas abiertas con su cierre y un botón. No es el
+   * resumen de los lunes —ese va a todo el club y es la agenda— sino un
+   * correo a quien lleva semanas verificado sin dar el paso.
+   */
+  | 'te_falta_sentarte'
 
 /**
  * Los que NO llevan correo.
@@ -486,7 +495,7 @@ export async function despacharPendientes(
      * lista» a mediodía. Es el mismo fallo del 13-10 con los empujones, con
      * cinco veces más filas.
      */
-    const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima', 'resumen_semanal', 'cena_en_ingles', 'equilibrar_mesas'] as const
+    const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima', 'resumen_semanal', 'cena_en_ingles', 'equilibrar_mesas', 'te_falta_sentarte'] as const
     const TOPE = 25
 
     /**

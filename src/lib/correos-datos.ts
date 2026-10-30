@@ -1957,6 +1957,137 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         },
       }
 
+    /**
+     * «Ya te verificamos. Solo te falta sentarte.»
+     *
+     * Lo escribió Michael el 30-10 de madrugada, para quien se verificó y
+     * nunca se ha sentado. Yo lo intenté con `resumen_semanal` y me
+     * equivoqué: ese es la agenda de los lunes, va a todo el club y no le
+     * dice nada a quien lleva semanas verificado sin dar el paso.
+     *
+     * Las fechas van como IDS en el payload y se leen al MANDAR, igual que
+     * en el resumen: entre encolar a las tres de la madrugada y salir a las
+     * ocho una fecha puede cancelarse, y lo que se manda tiene que ser lo que
+     * hay cuando sale. Si no queda ninguna, no se manda.
+     *
+     * Las de la misma hora del mismo día van en UNA línea: el sábado hay
+     * tres cenas a las siete —la de hasta 44, la de 45+ y la de inglés— y
+     * tres renglones iguales se leen como un error del correo. Es el mismo
+     * fallo que el resumen ya pagó.
+     */
+    case 'te_falta_sentarte': {
+      const ids = Array.isArray(p.fechas) ? (p.fechas as unknown[]).filter((x): x is string => typeof x === 'string') : []
+      if (!ids.length) return { error: 'sin fechas' }
+
+      const { data: evs } = await admin
+        .from('events')
+        .select('id, format, starts_at, booking_closes_at, city_slug, status, age_band_min, age_band_max, idioma')
+        .in('id', ids)
+        .eq('status', 'open')
+        .order('starts_at')
+
+      if (!evs?.length) return { error: 'no queda ninguna fecha abierta' }
+
+      const zonaDeEv = await zonaDeLaCiudad(admin, evs[0].city_slug)
+      const hoy = diaDe(new Date().toISOString(), zonaDeEv)
+      const manana = diaDe(new Date(Date.now() + 24 * 3600_000).toISOString(), zonaDeEv)
+
+      /** Cómo se llama cada fecha en su renglón: «Cena», «Cena +45», «Cena en inglés». */
+      const comoSeLlama = (e: typeof evs[number]) => {
+        const nombre = NOMBRES_DE_FORMATO[e.format ?? ''] ?? 'Plan'
+        if (e.idioma) return `${nombre} en ${nombreDeIdioma(e.idioma)}`
+        if (e.age_band_min != null) return `${nombre} +${e.age_band_min}`
+        return nombre
+      }
+
+      // Agrupadas por día y hora, que es como se leen.
+      const grupos = new Map<string, { cuando: string; planes: string[]; cierre: string }>()
+      for (const e of evs) {
+        const dia = diaDe(e.starts_at, zonaDeEv)
+        const hora = horaDe(e.starts_at, zonaDeEv) ?? ''
+        const clave = `${dia} ${hora}`
+        if (!grupos.has(clave)) {
+          const partes = partesDe(e.starts_at, zonaDeEv)
+          const nombreDia = dia === hoy ? `Hoy ${partes ? partes.dia : ''}`.trim()
+            : dia === manana ? `Mañana ${partes ? partes.dia : ''}`.trim()
+            : partes ? `${alta(partes.dia)} ${partes.numero}` : diaEnZonaAlto(e.starts_at, zonaDeEv)
+          grupos.set(clave, {
+            cuando: `${nombreDia} · ${hora}`,
+            planes: [],
+            cierre: `Cierra ${fraseDeCierre(e.booking_closes_at, zonaDeEv)}`,
+          })
+        }
+        const g = grupos.get(clave)!
+        const nombre = comoSeLlama(e)
+        if (!g.planes.includes(nombre)) g.planes.push(nombre)
+      }
+
+      const fechas = [...grupos.values()].map((g) => ({
+        cuando: g.cuando,
+        planes: unirCon(g.planes, ' o '),
+        cierre: g.cierre,
+      }))
+
+      // Las zonas de todas ellas, sin repetir.
+      const slugs: string[] = []
+      for (const e of evs) {
+        const { data: sedes } = await admin.from('event_venues').select('zone_slug').eq('event_id', e.id)
+        for (const v of sedes ?? []) if (v.zone_slug && !slugs.includes(v.zone_slug)) slugs.push(v.zone_slug)
+      }
+      const nombresZona = await nombresDeZonas(admin, slugs)
+
+      /**
+       * Cuánta gente se ha sentado ya, redondeado a la baja.
+       *
+       * Viene en el payload porque lo cuenta quien encola, una vez: hacerlo
+       * aquí serían quinientas cuentas sobre `bookings` en veinte minutos, y
+       * la cifra no cambia entre las tres de la madrugada y las ocho.
+       */
+      const sentados = typeof p.sentados === 'number' ? p.sentados : 0
+      const redondo = Math.floor(sentados / 10) * 10
+
+      const situacion = fila.profile_id ? await situacionDePerfil(fila.profile_id) : null
+      const puede = !situacion || situacion.puedeReservar
+
+      return {
+        a,
+        datos: {
+          ...base,
+          saludo: trato ? `Hola ${trato}:` : 'Hola:',
+          // Su frase, con su correccion del 30-10: «Ya estás verificado» paso
+          // a «Ya te verificamos». Habla de lo que hicimos nosotros, no de un
+          // estado suyo que el no pidio.
+          titularA: 'Ya te verificamos.',
+          titularB: 'Solo te falta sentarte.',
+          fechas,
+          donde: nombresZona.length
+            ? `Todas en ${unirCon(nombresZona, ' o ')}.`
+            : 'Todas en Caracas.',
+          /**
+           * El párrafo de qué es, con sus otras dos correcciones.
+           *
+           * «Seis personas que no se conocen» pasó a «Un grupo pequeño»: hay
+           * mesas de seis y planes de grupo, y prometer seis en un correo que
+           * ofrece un brunch y una cena es prometer un número que no siempre
+           * sale. Y «el lugar te llega al mediodía del mismo día» pasó a
+           * «antes del plan te decimos dónde es», que vale igual para el
+           * brunch, que se revela la víspera.
+           */
+          comoEs: 'Un grupo pequeño de gente que no se conoce, elegida por afinidad. '
+            + 'Nosotros reservamos y antes del plan te decimos dónde es. Tú solo llegas.',
+          boton: puede ? 'Reservar mi puesto' : (situacion?.paso === 'verificacion' ? 'Verificar mi identidad' : 'Terminar mi perfil'),
+          destino: puede ? '/cuenta?utm_source=correo&utm_medium=email&utm_campaign=te-falta-sentarte#agenda'
+            : `${situacion?.donde ?? '/cuenta'}?utm_source=correo&utm_medium=email&utm_campaign=te-falta-sentarte`,
+          // Sin «Todos dicen que volverían», que Michael quitó: es una
+          // encuesta nuestra y dicha así suena a reseña comprada.
+          prueba: redondo >= 10
+            ? `Más de ${redondo} personas ya se sentaron con desconocidos en Aro.`
+            : '',
+          adelanto: 'Hay fechas abiertas esta semana y todavía te queda sitio.',
+        },
+      }
+    }
+
     // El cupón no lleva importes a propósito: no hay ninguno. Lleva lo mismo
     // que el resto —qué fecha, dónde y cuándo se revela— y nada de banco.
     case 'puesto_con_cupon':

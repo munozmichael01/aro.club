@@ -77,6 +77,7 @@ const PLANTILLA: Partial<Record<Correo, string>> = {
   reembolso_pedido: '27-reembolso-pedido.html',
   reembolso_hecho: '28-reembolso-hecho.html',
   probadores_android: '29-probadores-android.html',
+  te_falta_sentarte: '31-te-falta-sentarte.html',
 }
 
 // Las plantillas se leen del disco una vez y se quedan: son quince ficheros
