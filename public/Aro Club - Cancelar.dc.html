@@ -285,9 +285,14 @@ class Component extends DCLogic {
           ? this.state.creditosAhora
           : ((d && d.creditos != null) ? d.creditos : 0),
       ),
+      // Tres finales, como en el correo: vuelve, espera a que cuadre el pago,
+      // o se pierde. El del medio decia «volvio entero» a quien todavia
+      // tenia el pago sin revisar, que es prometer algo que depende de otro.
       resumenHecho: tarde
         ? 'Avisaste con menos de 24 horas, así que ese crédito se pierde. Gracias por decirlo igual: preferimos una mesa de cinco a un puesto vacío.'
-        : 'Tu crédito volvió entero. Puedes apuntarte a otra fecha cuando quieras.'
+        : esperando
+          ? 'El crédito es tuyo: entra en cuanto demos por bueno tu pago. Te escribimos al confirmarlo.'
+          : 'Tu crédito volvió entero. Puedes apuntarte a otra fecha cuando quieras.'
     };
   }
 }
