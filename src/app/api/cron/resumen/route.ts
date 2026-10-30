@@ -33,6 +33,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * `?solo=correo@…` manda SOLO a esa dirección. Es para verlo antes de
  * soltarlo, y existe porque no hay forma de mirar un correo sin mandarlo: la
  * llave de Resend del entorno local es inválida a propósito.
+ *
+ * `?clave=` le pone nombre al envío para poder mandar DOS en la misma semana,
+ * `?sinReserva=1` lo acota a quien no tiene sitio en ninguna de las fechas y
+ * `?verificados=1` a quien ya puede apartar puesto hoy mismo.
+ * Los dos nacieron el 30-10 del mismo encargo: un viernes a las ocho, las
+ * cenas de esa noche y del sábado, a quien todavía puede apuntarse.
  */
 
 export const dynamic = 'force-dynamic'
@@ -197,9 +203,27 @@ async function resumir(
   hora: string | null,
   semanas = 0,
   paraLaEspera = false,
+  clave: string | null = null,
+  soloSinReserva = false,
+  soloVerificados = false,
 ) {
   const admin = createAdminClient()
-  const { desde, hasta, semana } = semanaDeHoy(new Date(), semanas)
+  const { desde, hasta, semana: laSemana } = semanaDeHoy(new Date(), semanas)
+
+  /**
+   * `?clave=` es un envío APARTE dentro de la misma semana.
+   *
+   * El candado de abajo es por la semana de la que habla el correo, y eso es
+   * lo correcto para el de los lunes: dos pasadas el mismo lunes son un
+   * repetido. Pero el 30-10, un viernes, Michael quiso mandar las cenas de
+   * esa noche y del sábado, y el resumen del lunes 26 ya había salido: con la
+   * clave de la semana el candado lo leía como repetido y encolaba cero.
+   *
+   * Así que la clave del envío se puede dar a mano. Pasa al payload, así que
+   * también es la que llega a `utm_content`: en Analytics este viernes no se
+   * mezcla con el lunes, que es justo lo que hay que poder comparar.
+   */
+  const semana = clave || laSemana
 
   const cuando = hora ? aLasDeCaracas(hora) : null
   if (hora && !cuando) {
@@ -261,6 +285,61 @@ async function resumir(
         .map((p) => ({ id: p.id, email: p.email, notificaciones: p.notificaciones })),
     )
     if (data.length < 1000) break
+  }
+
+  /**
+   * `?sinReserva=1`: solo a quien NO tiene sitio en ninguna de estas fechas.
+   *
+   * El resumen de los lunes va a todo el mundo a propósito —«al final el
+   * envío semanal debería ser para todos para despertar interés»— y quien ya
+   * reservó lo lee con un «Ya tienes puesto» en su fecha.
+   *
+   * Esto es para el otro caso, el del 30-10: un envío cuyo único objetivo es
+   * llenar las mesas de esta semana. A quien ya tiene su silla no le dice
+   * nada que no sepa, y es el correo que menos se puede permitir leerse como
+   * de más. Michael esa noche: «a los 372 que nunca han reservado», y luego
+   * los que reservaron antes y no tienen sitio ahora.
+   */
+  /**
+   * `?soloVerificados=1`: solo a quien ya puede apartar puesto.
+   *
+   * El de los lunes va también a quien no se ha verificado, y está bien: a
+   * esa persona el botón le dice «Verificar mi identidad» y la lleva ahí, que
+   * es su siguiente paso de verdad.
+   *
+   * Pero un envío cuyo objetivo es llenar las mesas de ESTA semana es otra
+   * cosa. A quien le falta la cédula no le da tiempo: la de esta noche cierra
+   * a las diez de la mañana y verificarse lo mira una persona. Invitarle a
+   * reservar algo que no va a poder reservar hoy es el correo que el 25-10 ya
+   * mandó a 348 personas, y no se repite.
+   *
+   * La misma vista que usa `/api/reservar` para decidir si deja apartar
+   * puesto. Preguntar otra cosa aquí sería invitar a quien la ruta rechaza.
+   */
+  if (soloVerificados) {
+    const ids = perfiles.map((p) => p.id)
+    const listos = new Set<string>()
+    for (let i = 0; i < ids.length; i += 300) {
+      const { data } = await admin
+        .from('v_verified_profiles')
+        .select('id')
+        .in('id', ids.slice(i, i + 300))
+      for (const v of data ?? []) if (v.id) listos.add(v.id)
+    }
+    perfiles = perfiles.filter((p) => listos.has(p.id))
+  }
+
+  if (soloSinReserva) {
+    const conSitio = new Set<string>()
+    for (const f of fechas) {
+      const { data: suyas } = await admin
+        .from('bookings')
+        .select('profile_id')
+        .eq('event_id', f.id)
+        .in('status', ['pending_payment', 'confirmed', 'attended'])
+      for (const b of suyas ?? []) if (b.profile_id) conSitio.add(b.profile_id)
+    }
+    perfiles = perfiles.filter((p) => !conSitio.has(p.id))
   }
 
   if (solo) {
@@ -412,11 +491,27 @@ export async function GET(request: Request) {
   // `?espera=1` manda el OTRO envío: el de quien dejó su correo y nunca
   // llegó a tener cuenta. Va aparte a propósito y no comparte un solo
   // filtro con el de las cuentas.
+  /**
+   * `?clave=` da nombre al envío, para poder mandar dos en una semana. Se
+   * acota a lo que cabe en una etiqueta de Analytics y en un payload: sin
+   * esto, cualquier cosa escrita en la URL acaba en `utm_content`.
+   */
+  const clave = params.get('clave')
+  if (clave !== null && !/^[a-z0-9-]{3,40}$/.test(clave)) {
+    return NextResponse.json(
+      { error: 'clave se escribe en minúsculas, números y guiones, de 3 a 40.' },
+      { status: 400 },
+    )
+  }
+
   return resumir(
     params.get('seco') === '1',
     params.get('solo'),
     params.get('hora'),
     semanas,
     params.get('espera') === '1',
+    clave,
+    params.get('sinReserva') === '1',
+    params.get('verificados') === '1',
   )
 }

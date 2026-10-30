@@ -55,6 +55,7 @@
         <div class="dia" style="font-family:'Young Serif',Georgia,'Times New Roman',serif;font-weight:700;font-size:24px;line-height:28px;color:#14342A;mso-line-height-rule:exactly;">{{ dia }}</div>
         <div style="padding-top:5px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;"><strong style="color:#14342A;">{{ plan }}</strong> · {{ hora }} · {{ zonas }}{{#si precio}} · {{ precio }} la plaza{{/si}}</div>
         {{#si nota}}<div style="padding-top:6px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#8F4515;mso-line-height-rule:exactly;">{{ nota }}</div>{{/si}}
+        {{#si cierre}}<div style="padding-top:6px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#2C4A38;mso-line-height-rule:exactly;">{{ cierre }}</div>{{/si}}
       </td></tr>{{/cada}}
       <tr><td style="padding:0 24px 8px 24px;font-size:0;line-height:0;">&nbsp;</td></tr>
     </table>
@@ -67,6 +68,7 @@
         <div style="font-family:'Young Serif',Georgia,'Times New Roman',serif;font-weight:700;font-size:19px;line-height:24px;color:#33513F;mso-line-height-rule:exactly;">{{ dia }}</div>
         <div style="padding-top:4px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#566A5D;mso-line-height-rule:exactly;">{{ plan }} · {{ hora }} · {{ zonas }}</div>
         {{#si nota}}<div style="padding-top:5px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#8F4515;mso-line-height-rule:exactly;">{{ nota }}</div>{{/si}}
+        {{#si cierre}}<div style="padding-top:5px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#2C4A38;mso-line-height-rule:exactly;">{{ cierre }}</div>{{/si}}
       </td></tr>{{/cada}}
       <tr><td style="padding:0 24px 8px 24px;font-size:0;line-height:0;">&nbsp;</td></tr>
     </table>

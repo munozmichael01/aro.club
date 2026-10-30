@@ -7,6 +7,7 @@ import { enlaceDeMapa } from '@/lib/mapa'
 import { avisoDeDosHoras, FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
+import { nombreDeIdioma } from '@/lib/idioma'
 import { arraigoDe, DIAS_GUARDA_FOTOS, HORAS_DE_MARGEN, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
@@ -104,12 +105,44 @@ function diaEnZonaAlto(iso: string | null | undefined, zona: string): string {
  * once de la noche del jueves, el cierre del viernes a las siete de la tarde
  * esta a veinte horas, pero es «mañana», no «hoy».
  */
+/**
+ * Medianoche se cuenta como la noche ANTERIOR, que es cuando se vive.
+ *
+ * Las tres cenas del sábado 31 cerraban a las 00:00 del 31, o sea el viernes
+ * a medianoche. La frase salía «hasta mañana a las 12:00 a.m.», y eso se lee
+ * como que tienes el sábado por delante cuando en realidad te queda esa
+ * noche. Es la clase de error que no se ve en una plantilla y manda a la
+ * gente a una puerta cerrada creyendo que llegaba de sobra.
+ *
+ * Un minuto antes dice lo mismo y se entiende: «hasta hoy a las 11:59 p.m.».
+ */
+function alFilo(iso: string | null | undefined, zona: string): string | null | undefined {
+  const p = partesDe(iso, zona)
+  if (!p || p.horas !== 0 || p.minutos !== 0) return iso
+  return new Date(Date.parse(iso!) - 60_000).toISOString()
+}
+
+/**
+ * «hoy a las 11:59 p.m.», el día y la hora juntos y de un solo sitio.
+ *
+ * Separados se desincronizan: al arreglar la medianoche en `cuandoCierra`,
+ * los sitios que pegaban el día de esa función con la hora cruda pasaban a
+ * decir «hasta hoy a las 12:00 a.m.», que es una hora que ya pasó. El día y
+ * la hora del cierre se calculan a la vez o no se calculan.
+ */
+function fraseDeCierre(iso: string | null | undefined, zona: string): string {
+  if (!iso) return 'pronto'
+  const cuando = cuandoCierra(iso, zona)
+  const hora = horaDe(alFilo(iso, zona), zona)
+  return hora ? `${cuando} a las ${hora}` : cuando
+}
+
 function cuandoCierra(iso: string | null | undefined, zona: string, ahora = Date.now()): string {
-  const cierre = partesDe(iso, zona)
+  const cierre = partesDe(alFilo(iso, zona), zona)
   if (!cierre) return 'pronto'
 
   const hoy = partesDe(new Date(ahora).toISOString(), zona)
-  if (!hoy) return `el ${diaEnZona(iso, zona)}`
+  if (!hoy) return `el ${diaEnZona(alFilo(iso, zona), zona)}`
 
   const clave = (p: NonNullable<ReturnType<typeof partesDe>>) =>
     Date.UTC(p.ano, p.mesNumero - 1, p.numero)
@@ -117,7 +150,7 @@ function cuandoCierra(iso: string | null | undefined, zona: string, ahora = Date
 
   if (dias <= 0) return 'hoy'
   if (dias === 1) return 'mañana'
-  return `el ${diaEnZona(iso, zona)}`
+  return `el ${diaEnZona(alFilo(iso, zona), zona)}`
 }
 
 const bs = (n: number | null | undefined) =>
@@ -1411,7 +1444,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
             // Con la hora: «hasta mañana» sin hora deja a alguien pensando
             // que tiene el día entero cuando le quedan dos horas.
             ...(conCierre
-              ? { cierra: `${cuandoCierra(ev.booking_closes_at, zonaDeEv)} a las ${horaDe(ev.booking_closes_at, zonaDeEv) ?? ''}`.trim() }
+              ? { cierra: fraseDeCierre(ev.booking_closes_at, zonaDeEv) }
               : {}),
           })
         }
@@ -1515,7 +1548,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         if (!lista.length) return []
         const { data: evs } = await admin
           .from('events')
-          .select('id, format, starts_at, price_usd, city_slug, status, age_band_min, age_band_max')
+          .select('id, format, starts_at, booking_closes_at, price_usd, city_slug, status, age_band_min, age_band_max, idioma')
           .in('id', lista)
           .eq('status', 'open')
           .order('starts_at')
@@ -1534,7 +1567,22 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
             dia: cuandoEs
               ? `${alta(cuandoEs.dia)} ${cuandoEs.numero} de ${cuandoEs.mes}`
               : diaEnZonaAlto(ev.starts_at, zonaDeEv),
-            plan: NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan',
+            /**
+             * Y en qué idioma, cuando no es el de siempre.
+             *
+             * El sábado 31 había tres cenas a las siete en las mismas dos
+             * zonas: la de hasta 44, la de 45+ y la de inglés. A quien le
+             * valían dos, este correo le ponía DOS LÍNEAS IDÉNTICAS
+             * —«Sábado 31 de octubre · Cena · 7:00 p.m. · Chacao o Los Palos
+             * Grandes»— y la única diferencia real no se veía en ningún
+             * sitio. Se lee como un error del correo, y quien pulsa se
+             * encuentra la sorpresa en la puerta.
+             *
+             * La banda de edad ya salía en `nota`; el idioma no salía.
+             */
+            plan: ev.idioma
+              ? `${NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan'} en ${nombreDeIdioma(ev.idioma)}`
+              : NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan',
             hora: horaDe(ev.starts_at, zonaDeEv) ?? '',
             // Con «o» y no con «y»: son zonas entre las que se elige, no un
             // sitio repartido entre varias. Lo de «y» es de `avisos_del_dia`,
@@ -1558,6 +1606,28 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
               : ev.age_band_min != null && ev.age_band_max != null
                 ? `Solo para ${ev.age_band_min}-${ev.age_band_max}`
                 : ev.age_band_min != null ? `Solo para +${ev.age_band_min}` : '',
+            /**
+             * Y hasta cuándo se puede apartar puesto, cuando es inminente.
+             *
+             * Faltaba, y el 30-10 se vio por qué: la cena de esa noche se
+             * dejó abierta hasta las diez de la mañana por excepción, y este
+             * correo salía a las ocho sin decirlo en ningún sitio. Enseñar
+             * una fecha reservable durante dos horas sin decir que son dos
+             * horas es enseñarla mal.
+             *
+             * Solo si cierra hoy o mañana. Más allá no es un plazo, es un
+             * dato de más en una lista que se lee de un vistazo, y quien
+             * tiene fecha dentro de dos semanas ya sabe que no corre.
+             *
+             * Y en la línea de la fecha, no en el titular: cada fecha tiene
+             * su cierre y son distintos.
+             */
+            cierre: ((): string => {
+              if (conPuesto.has(ev.id)) return ''
+              const cuando = cuandoCierra(ev.booking_closes_at, zonaDeEv)
+              if (cuando !== 'hoy' && cuando !== 'mañana') return ''
+              return `Puedes apuntarte hasta ${fraseDeCierre(ev.booking_closes_at, zonaDeEv)}`
+            })(),
           })
         }
         return salida
@@ -1999,9 +2069,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           cuandoFrase: evento?.starts_at ? `Este ${diaEnZona(evento.starts_at, zona)}` : 'Esta semana',
           diaEnMayusculas: evento?.starts_at ? diaEnZonaAlto(evento.starts_at, zona).toUpperCase() : 'ESTA SEMANA',
           horaFrase: evento?.starts_at ? `A las ${horaEnLetraDe(evento.starts_at, zona)}` : '',
-          cierreFrase: evento?.booking_closes_at
-            ? `${cuandoCierra(evento.booking_closes_at, zona)} a las ${horaTexto(evento.booking_closes_at)}`
-            : 'pronto',
+          cierreFrase: fraseDeCierre(evento?.booking_closes_at, zona),
           entradilla: `Esta vez la mesa es de ${edadMinima} para arriba. Seis desconocidos, todos de tu edad, en un restaurante que elegimos nosotros.`,
           /**
            * Y lo único que cambia de persona a persona.
