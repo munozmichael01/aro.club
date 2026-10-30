@@ -55,8 +55,8 @@ export const evento = {
  */
 export const mensaje = (codigo: string | null) =>
   codigo
-    ? `Estoy en Aro Club: cenas con gente que no conoces, en grupos pequeños y todos verificados. El sitio lo eligen ellos. Con mi código ${codigo} tu primera fecha tiene un 20% de descuento: aro.club/i/${codigo}`
-    : 'Estoy en Aro Club: cenas con gente que no conoces, en grupos pequeños y todos verificados. El sitio lo eligen ellos: aro.club'
+    ? `Estoy en Aro Club: cenas con gente que no conoces, en grupos pequeños y todos verificados. El sitio lo eligen ellos. Con mi código ${codigo} tu primera fecha tiene un 20% de descuento: https://aro.club/i/${codigo}`
+    : 'Estoy en Aro Club: cenas con gente que no conoces, en grupos pequeños y todos verificados. El sitio lo eligen ellos: https://aro.club'
 
 export const sinRespuesta = {
   cargar: 'No pudimos cargar tu plan. Revisa la conexión y vuelve a intentarlo.',
