@@ -5258,6 +5258,9 @@ class Component extends DCLogic {
     const edadMinNum = St.edadMin ? parseInt(St.edadMin, 10) : null;
     const edadMaxNum = St.edadMax ? parseInt(St.edadMax, 10) : null;
     const hayEdades = edadMinNum != null || edadMaxNum != null;
+    // Si la fecha deja fuera a parte del club, el numero de la zona ya no es
+    // a cuanta gente se escribe: el servidor quita a quien no encaja.
+    const hayFiltro = hayEdades || !!St.idiomaFecha;
     const edadesAlReves = edadMinNum != null && edadMaxNum != null && edadMinNum > edadMaxNum;
 
     /**
@@ -7323,10 +7326,10 @@ class Component extends DCLogic {
         ? 'La mínima no puede ser mayor que la máxima.'
         : (hayEdades
           ? (edadMinNum != null && edadMaxNum != null
-            ? 'Solo la ven los de ' + edadMinNum + ' a ' + edadMaxNum + '. Se abre callada.'
+            ? 'Solo la ven los de ' + edadMinNum + ' a ' + edadMaxNum + ', y el aviso sale solo a ellos.'
             : (edadMinNum != null
-              ? 'Solo la ven los de ' + edadMinNum + ' en adelante. Se abre callada.'
-              : 'Solo la ven los de hasta ' + edadMaxNum + '. Se abre callada.'))
+              ? 'Solo la ven los de ' + edadMinNum + ' en adelante, y el aviso sale solo a ellos.'
+              : 'Solo la ven los de hasta ' + edadMaxNum + ', y el aviso sale solo a ellos.'))
           : 'La ve todo el club.'),
       onDuracion: (e) => this.setState({ duracion: e.target.value.replace(/[^0-9]/g, '').slice(0, 3), abierta: false }),
       campoAct: 'width:100%;min-height:56px;padding:0 20px;border-radius:999px;border:1px solid ' + (actOk || deMesa ? 'rgba(20,52,42,.22)' : '#C0662F') + ';background:#FAF3E4;color:#1B5138;font:400 16px/1 \'Inter Tight\',sans-serif;outline:none',
@@ -7357,10 +7360,29 @@ class Component extends DCLogic {
             : (!precioOk ? 'Escribe el precio'
               : (!actOk ? 'Describe la actividad'
                 : (edadesAlReves ? 'Revisa las edades'
-                  : (hayEdades ? 'Abrir sin avisar' : 'Abrir y avisar a ' + genteTotal)))))),
+                  // Con banda de edad o con idioma no se promete un numero:
+                  // `a-quien-avisar` quita a quien no encaja, asi que serian
+                  // menos de los que suma la zona.
+                  : (hayFiltro ? 'Abrir y avisar' : 'Abrir y avisar a ' + genteTotal)))))),
       botonAbrir: 'display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:56px;margin-top:16px;padding:0 24px;border-radius:999px;border:none;background:' + (listoAbrir ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (listoAbrir ? '#FAF3E4' : '#456352') + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (listoAbrir ? 'pointer' : 'not-allowed'),
-      abrir: () => { if (listoAbrir) this.abrirFecha(cuerpoNuevaFecha(!hayEdades)); },
-      hayBotonCallada: !hayEdades,
+      /**
+       * El aviso sale SIEMPRE, tenga edades o idioma o lo que sea.
+       *
+       * Michael, 30-10: «los avisos salen sin tener que ver nada la edad o
+       * ingles o lo que sea». Una fecha con banda nacia callada y habia que
+       * acordarse de avisarla despues, en otro boton, fecha por fecha: lo
+       * normal era que no se contara.
+       *
+       * Se podia confiar en esto desde el principio y no se vio: quien
+       * recibe el aviso ya se filtra en `lib/a-quien-avisar`, que quita a
+       * quien no tiene la edad y a quien no habla el idioma de esa mesa. El
+       * silencio no protegia a nadie que el filtro no protegiera ya.
+       *
+       * «Abrir callada» se queda, para todas: dejarla montada antes de
+       * contarla es otra cosa, y esa sigue siendo una decision a proposito.
+       */
+      abrir: () => { if (listoAbrir) this.abrirFecha(cuerpoNuevaFecha(true)); },
+      hayBotonCallada: true,
       // Abrir sin contarlo todavía.
       //
       // Crear y avisar eran lo mismo, así que montar una fecha para dejarla
