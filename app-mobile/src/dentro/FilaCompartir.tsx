@@ -4,6 +4,7 @@ import { Pressable, View } from 'react-native'
 import { IconoCompartir, IconoGalon, Texto, color, fuente } from '../diseno'
 import * as T from '../texto/dentro'
 import { HojaCompartir } from './Compartir'
+import { useInvitacion } from './invitacion'
 import * as M from './maquina'
 
 /**
@@ -11,9 +12,10 @@ import * as M from './maquina'
  * cerró «Estás dentro». Va debajo de la tarjeta de la mesa y abre la misma
  * hoja de historias. Los planes de movimiento no tienen tarjeta, así que no sale.
  */
-export function FilaCompartir({ plan, codigo = null }: { plan: M.Plan; codigo?: string | null }) {
+export function FilaCompartir({ plan }: { plan: M.Plan }) {
   const [abierta, setAbierta] = useState(false)
-  const h = M.historia(plan, codigo)
+  const inv = useInvitacion()
+  const h = M.historia(plan, inv?.codigo ?? null)
   if (!h) return null
   return (
     <>
@@ -27,11 +29,11 @@ export function FilaCompartir({ plan, codigo = null }: { plan: M.Plan; codigo?: 
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Texto style={{ fontFamily: fuente.titular, fontSize: 21, lineHeight: 30, color: color.verdeProfundo }}>{T.filaCompartir.titulo}</Texto>
-          <Texto style={{ fontFamily: fuente.texto, fontSize: 13, lineHeight: 17.5, color: color.verdeProfundo, marginTop: 1 }}>{T.filaCompartir.bajada(!!codigo)}</Texto>
+          <Texto style={{ fontFamily: fuente.texto, fontSize: 13, lineHeight: 17.5, color: color.verdeProfundo, marginTop: 1 }}>{T.filaCompartir.bajada(!!inv)}</Texto>
         </View>
         <IconoGalon color={color.verdeProfundo} />
       </Pressable>
-      {abierta ? <HojaCompartir h={h} mensaje={T.mensaje(codigo)} alCerrar={() => setAbierta(false)} /> : null}
+      {abierta ? <HojaCompartir h={h} mensaje={T.mensaje(inv)} alCerrar={() => setAbierta(false)} /> : null}
     </>
   )
 }

@@ -4,6 +4,7 @@ import { Linking, Share } from 'react-native'
 
 import * as T from '../texto/dentro'
 import { HojaCompartir } from './Compartir'
+import { useInvitacion } from './invitacion'
 import * as M from './maquina'
 
 /**
@@ -13,7 +14,8 @@ import * as M from './maquina'
  * la hoja de las historias (`hoja`, que la pantalla pinta); los planes de
  * movimiento no tienen tarjeta y comparten solo el mensaje.
  */
-export function useAccionesDentro(clave: string | null, plan: M.Plan | null, codigo: string | null = null) {
+export function useAccionesDentro(clave: string | null, plan: M.Plan | null) {
+  const inv = useInvitacion()
   const [enCalendario, setEnCalendario] = useState(false)
   useEffect(() => {
     if (!clave) return
@@ -30,13 +32,13 @@ export function useAccionesDentro(clave: string | null, plan: M.Plan | null, cod
   }, [plan, clave])
 
   const [compartiendo, setCompartiendo] = useState(false)
-  const historia = plan ? M.historia(plan, codigo) : null
+  const historia = plan ? M.historia(plan, inv?.codigo ?? null) : null
   const alCompartir = useCallback(() => {
     if (historia) return setCompartiendo(true)
-    Share.share({ message: T.mensaje(codigo) }).catch(() => undefined)
-  }, [historia, codigo])
+    Share.share({ message: T.mensaje(inv) }).catch(() => undefined)
+  }, [historia, inv])
 
-  const hoja = compartiendo && historia ? createElement(HojaCompartir, { h: historia, mensaje: T.mensaje(codigo), alCerrar: () => setCompartiendo(false) }) : null
+  const hoja = compartiendo && historia ? createElement(HojaCompartir, { h: historia, mensaje: T.mensaje(inv), alCerrar: () => setCompartiendo(false) }) : null
 
   return { enCalendario, alCalendario, alCompartir, hoja }
 }

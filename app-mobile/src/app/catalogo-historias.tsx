@@ -22,8 +22,8 @@ function Pantalla() {
   const plan: M.Plan = brunch
     ? { empiezaEn: en(80), revelaEn: en(77), zonaHoraria: 'America/Caracas', formato: 'brunch', zonas: ['Altamira'] }
     : { empiezaEn: en(56), revelaEn: en(50), zonaHoraria: 'America/Caracas', formato: 'dinner', zonas: ['Chacao', 'Los Palos Grandes'] }
-  const codigo = q.codigo === '1' ? 'ANDREA7KQ' : null
-  const h = M.historia(plan, codigo)!
+  const inv = q.codigo === '1' ? { codigo: 'ANDREA7KQ', enlace: 'https://aro.club/i/ANDREA7KQ', pct: 20 } : null
+  const h = M.historia(plan, inv?.codigo ?? null)!
   const ancho = Number(q.ancho ?? 270)
   return (
     <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, padding: 16, backgroundColor: '#E9E1CE' }}>
@@ -35,7 +35,7 @@ function Pantalla() {
           <TarjetaHistoria variante={v} h={h} ancho={ancho} />
         </View>
       ))}
-      {hoja ? <HojaCompartir h={h} mensaje={T.mensaje(codigo)} alCerrar={() => setHoja(false)} /> : null}
+      {hoja ? <HojaCompartir h={h} mensaje={T.mensaje(inv)} alCerrar={() => setHoja(false)} /> : null}
     </ScrollView>
   )
 }

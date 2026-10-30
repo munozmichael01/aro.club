@@ -48,7 +48,7 @@ test('el calendario lleva la hora en UTC, dos horas, y nunca el restaurante', ()
 })
 
 test('el mensaje de compartir es el aprobado, y sin código no promete descuento', () => {
-  assert.match(T.mensaje('ANDREA7KQ'), /20% de descuento: https:\/\/aro\.club\/i\/ANDREA7KQ$/)
+  assert.match(T.mensaje({ codigo: 'ANDREA7KQ', enlace: 'https://aro.club/i/ANDREA7KQ', pct: 20 }), /Con mi código ANDREA7KQ tu primera fecha tiene un 20% de descuento: https:\/\/aro\.club\/i\/ANDREA7KQ$/)
   assert.doesNotMatch(T.mensaje(null), /descuento|código/)
 })
 
@@ -58,7 +58,8 @@ test('la push de pago confirmado abre «Estás dentro»', () => {
 
 test('compartir lleva el enlace con https, que es lo que hace a WhatsApp leer la tarjeta', () => {
   assert.match(T.mensaje(null), /https:\/\/aro\.club$/)
-  assert.match(T.mensaje('ANDREA'), /https:\/\/aro\.club\/i\/ANDREA$/)
+  // El enlace con código lo arma el servidor: se usa tal cual.
+  assert.match(T.mensaje({ codigo: 'ANDREA', enlace: 'https://aro.club/i/ANDREA', pct: 20 }), /https:\/\/aro\.club\/i\/ANDREA$/)
 })
 
 test('la historia lleva los datos de la fecha en su zona, y la revelación como la maqueta', () => {

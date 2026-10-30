@@ -32,7 +32,8 @@ let sitios = [
 function Pantalla() {
   const espera = () => new Promise((ok) => setTimeout(ok, 500))
   const servicio = useMemo((): ReturnType<typeof crearServicioPerfil> => ({
-    perfil: async () => ({ ok: true, datos: { ...REAL, base: { ...REAL.base, ciudad: 'valencia' } } }),
+    // Con «Invita a alguien» (30-10): la cuenta del banco no está verificada y el servidor la manda en null.
+    perfil: async () => ({ ok: true, datos: { ...REAL, base: { ...REAL.base, ciudad: 'valencia' }, invitar: { codigo: 'ANDREA7KQ', enlace: 'https://aro.club/i/ANDREA7KQ', pct: 20, porCada: 3, apuntados: 4, asistieron: 1, premios: 0, avance: 1 } } }),
     ciudades: async () => ({
       ok: true,
       datos: { ciudades: [{ slug: 'caracas', nombre: 'Caracas', abierta: true }, { slug: 'valencia', nombre: 'Valencia', abierta: false }, { slug: 'otra', nombre: 'Otra ciudad', abierta: false }] },

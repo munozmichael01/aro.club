@@ -36,7 +36,25 @@ export type DeServidor = {
   descuento?: Descuento | null
 }
 
-export type Descuento = { codigo: string; pct: number; nombre: string; montoPleno: number | null }
+/**
+ * `origen`: «cupon» si lo tecleó (su código viaja al reportar) o «invitacion»
+ * si llegó con el enlace de alguien (el servidor lo aplica solo al reportar,
+ * y si ya no vale cobra el pleno sin pararla: mandarlo la pararía).
+ */
+export type Descuento = { codigo: string; pct: number; nombre: string; montoPleno: number | null; origen: 'cupon' | 'invitacion' }
+
+/**
+ * El GET de quien llegó invitada (30-10) trae `descuento: { codigo, pct, nombre }`
+ * y `montoPleno` en la RAÍZ, con los importes ya rebajados. Se pasa a la forma
+ * de la app para que la fila del recibo salga igual que con el cupón.
+ */
+export function normalizar(d: DeServidor & { montoPleno?: number | null; descuento?: { codigo: string; pct: number; nombre?: string | null; montoPleno?: number | null } | null }): DeServidor {
+  const x = d.descuento
+  return {
+    ...d,
+    descuento: x ? { codigo: x.codigo, pct: x.pct, nombre: x.nombre || '', montoPleno: d.montoPleno ?? x.montoPleno ?? null, origen: 'invitacion' } : null,
+  }
+}
 
 /**
  * Lo que contesta `POST /api/cupon` cuando se le manda `acepta: ['descuento']`
@@ -74,7 +92,7 @@ export function conDescuento(d: DeServidor, x: Extract<RespuestaCupon, { estado:
     tasa: x.tasa ?? d.tasa,
     tasaDe: x.tasaDe || d.tasaDe,
     metodos: d.metodos.map((m) => (nuevos.has(m.id) ? { ...m, datos: nuevos.get(m.id)! } : m)),
-    descuento: { codigo: x.codigo, pct: x.pct, nombre: x.nombre || '', montoPleno: x.montoPleno ?? null },
+    descuento: { codigo: x.codigo, pct: x.pct, nombre: x.nombre || '', montoPleno: x.montoPleno ?? null, origen: 'cupon' },
   }
 }
 
@@ -199,7 +217,8 @@ export function cuerpoReporte(d: DeServidor, m: Metodo, rep: Record<string, stri
     // Solo en una fecha que se graba: sin él, el servidor responde 409 `falta-permiso-grabacion`.
     ...(d.evento.permisoObligatorio && permiteGrabacion ? { permiteGrabacion: true } : {}),
     // El código, no el importe: el descuento lo vuelve a calcular el servidor.
-    ...(d.descuento ? { codigo: d.descuento.codigo } : {}),
+    // El de la invitación no se manda: el servidor lo pone solo.
+    ...(d.descuento?.origen === 'cupon' ? { codigo: d.descuento.codigo } : {}),
   }
 }
 

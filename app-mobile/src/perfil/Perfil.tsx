@@ -11,6 +11,7 @@ import { MESES_CORTOS } from '../texto/fechas'
 import * as F from '../texto/fechas'
 import * as T from '../texto/perfil'
 import * as C from '../cuestionario/maquina'
+import { InvitaAlguien } from './Invitar'
 import * as M from './maquina'
 import type { crearServicioPerfil, Exclusion, SitioVetado } from './servicio'
 
@@ -309,6 +310,13 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
             </View>
           ) : null}
         </Seccion>
+
+        {/* Entre los sitios y las cenas, como en la web. Sin verificar no sale: sin verificar no se invita. */}
+        {d.invitar ? (
+          <Seccion titulo={T.invitar.titulo} nota={T.invitar.nota}>
+            <InvitaAlguien x={d.invitar} />
+          </Seccion>
+        ) : null}
 
         <Seccion titulo={T.cenas.titulo} nota={T.cenas.nota}>
           {hist.length ? (

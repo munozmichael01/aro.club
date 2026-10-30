@@ -52,12 +52,12 @@ export const evento = {
 
 /**
  * Lo que acompaña al compartir (REFERIDOS.md, aprobado por Michael el 29-10).
- * Sin código todavía (los referidos no están construidos), la frase del
- * código no va.
+ * Con código, el enlace es el que arma el servidor (`invitar.enlace`); sin
+ * él (sin verificar), la frase del código no va.
  */
-export const mensaje = (codigo: string | null) =>
-  codigo
-    ? `Estoy en Aro Club: cenas con gente que no conoces, en grupos pequeños y todos verificados. El sitio lo eligen ellos. Con mi código ${codigo} tu primera fecha tiene un 20% de descuento: https://aro.club/i/${codigo}`
+export const mensaje = (inv: { codigo: string; enlace: string; pct: number } | null) =>
+  inv
+    ? `Estoy en Aro Club: cenas con gente que no conoces, en grupos pequeños y todos verificados. El sitio lo eligen ellos. Con mi código ${inv.codigo} tu primera fecha tiene un ${inv.pct}% de descuento: ${inv.enlace}`
     : 'Estoy en Aro Club: cenas con gente que no conoces, en grupos pequeños y todos verificados. El sitio lo eligen ellos: https://aro.club'
 
 export const sinRespuesta = {

@@ -22,8 +22,22 @@ export type PreguntaPerfil = {
   valor: string | string[] | null
 }
 
+/** El código de referido (`/api/mi-perfil`, 30-10). `null` sin verificar: sin verificar no se invita. */
+export type Invitar = {
+  codigo: string
+  /** Armado en el servidor: no se monta aquí. */
+  enlace: string
+  pct: number
+  porCada: number
+  apuntados: number
+  asistieron: number
+  premios: number
+  avance: number
+}
+
 export type DeServidor = {
   verificada: boolean
+  invitar?: Invitar | null
   completo: boolean
   faltanPreguntas?: number
   faltanBase?: number

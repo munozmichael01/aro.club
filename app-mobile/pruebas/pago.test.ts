@@ -149,3 +149,12 @@ test('al reportar viaja el CÓDIGO, no el importe; sin descuento no viaja nada',
   assert.equal(M.cuerpoReporte(M.conDescuento(REAL, PARCIAL(REAL)), m, {}, null).codigo, 'ANDREA7KQ')
   assert.equal('codigo' in M.cuerpoReporte(REAL, m, {}, null), false)
 })
+
+test('quien llegó invitada: el GET trae el descuento con montoPleno en la raíz, sale la fila y al reportar NO viaja el código', () => {
+  const d = M.normalizar({ ...REAL, montoUsd: 8, montoPleno: 10, descuento: { codigo: 'ANDREA7KQ', pct: 20, nombre: 'Andrea' } } as any)
+  assert.deepEqual(M.filaDescuento(d), { texto: 'Código de Andrea · −20%', cifra: '−2,00 ref' })
+  assert.equal(M.precioPleno(d), 10)
+  const m = REAL.metodos.find((x) => x.activo)!
+  assert.equal('codigo' in M.cuerpoReporte(d, m, {}, null), false)
+  assert.equal(M.normalizar({ ...REAL, descuento: null } as any).descuento, null)
+})

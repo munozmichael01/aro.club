@@ -1,3 +1,4 @@
+import { reglas } from '../reglas'
 /**
  * El texto de Perfil, copiado de `Mi perfil.dc.html` (casilla B de
  * TEXTO-tres-superficies). Las preguntas, sus opciones y su ayuda NO están
@@ -87,6 +88,25 @@ export const sitios = {
   desde: (numero: number | string, mes: string) => `Lo marcaste el ${numero} de ${mes}`,
   quitar: (quitando: boolean) => (quitando ? 'Quitando…' : 'Quitar'),
   noQuitado: 'No pudimos quitarlo.',
+}
+
+/**
+ * «Invita a alguien» (REFERIDOS.md, aprobado por Michael el 29-10), como la
+ * web. El porcentaje y el «tres» salen del servidor (`invitar.pct`, `porCada`).
+ * Nunca QUIÉNES: es un número, no una lista.
+ */
+export const invitar = {
+  titulo: 'Invita a alguien',
+  nota: 'Tu código es solo tuyo.',
+  cuerpo: (pct: number, porCada: number) =>
+    `Con tu código, la primera fecha de quien invites tiene un ${pct}% de descuento. Cuando ${reglas.enLetra(porCada)} personas vayan a su primera cena con él, tu próxima reserva es gratis.`,
+  copiar: (copiado: boolean) => (copiado ? 'Copiado' : 'Copiar'),
+  compartir: 'Compartir el enlace',
+  avance: (avance: number, porCada: number) => `Llevas ${avance} de ${porCada} para tu próxima reserva gratis.`,
+  cuenta: (apuntados: number, asistieron: number) =>
+    apuntados === 0
+      ? 'Todavía no ha entrado nadie con tu código.'
+      : `Con tu código: ${apuntados} ${apuntados === 1 ? 'persona se apuntó' : 'personas se apuntaron'} y ${asistieron} ya ${asistieron === 1 ? 'fue' : 'fueron'} a su primera cena.`,
 }
 
 export const cenas = {

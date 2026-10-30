@@ -1,6 +1,6 @@
 import { SinSesion, type crearApi } from '../sesion/api'
 import * as T from '../texto/pago'
-import type { DeServidor, RespuestaCupon } from './maquina'
+import { normalizar, type DeServidor, type RespuestaCupon } from './maquina'
 
 /**
  * Las llamadas de Pago. Reportar APARTA un puesto de verdad y le llega a
@@ -31,8 +31,10 @@ const json = (cuerpo: object): RequestInit => ({ method: 'POST', headers: { 'Con
 
 export function crearServicioPago(api: Api) {
   return {
-    cargar: (evento: string) =>
-      intentar<DeServidor>(() => api.pedir('/pago?evento=' + encodeURIComponent(evento)), T.sinRespuesta.cargar, T.sinRespuesta.cargar),
+    cargar: async (evento: string): Promise<Resultado<DeServidor>> => {
+      const r = await intentar<DeServidor>(() => api.pedir('/pago?evento=' + encodeURIComponent(evento)), T.sinRespuesta.cargar, T.sinRespuesta.cargar)
+      return r.ok ? { ok: true, datos: normalizar(r.datos) } : r
+    },
 
     reportar: (cuerpo: object) =>
       intentar<{ estado: 'reportado' | 'confirmado'; puestoApartado?: boolean; montoUsd?: number }>(() => api.pedir('/pago', json(cuerpo)), T.reporte.noRegistrado, T.reporte.noRegistrado),

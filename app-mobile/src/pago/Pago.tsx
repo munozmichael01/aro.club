@@ -185,7 +185,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
       // Se cayó el código entre medias (caducó, se agotó, no era su primera
       // fecha): el descuento deja de valer y los importes se vuelven a pedir,
       // no se recalculan aquí. El precio lo dice el servidor.
-      if (d.descuento && r.motivo && M.MOTIVOS_DEL_CODIGO.includes(r.motivo)) {
+      if (d.descuento?.origen === 'cupon' && r.motivo && M.MOTIVOS_DEL_CODIGO.includes(r.motivo)) {
         const g = await servicio.cargar(d.evento.id)
         if (g.ok) setD(g.datos)
         else setD({ ...d, descuento: null })
