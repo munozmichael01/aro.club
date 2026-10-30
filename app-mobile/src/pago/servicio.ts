@@ -1,6 +1,6 @@
 import { SinSesion, type crearApi } from '../sesion/api'
 import * as T from '../texto/pago'
-import type { DeServidor } from './maquina'
+import type { DeServidor, RespuestaCupon } from './maquina'
 
 /**
  * Las llamadas de Pago. Reportar APARTA un puesto de verdad y le llega a
@@ -35,12 +35,16 @@ export function crearServicioPago(api: Api) {
       intentar<DeServidor>(() => api.pedir('/pago?evento=' + encodeURIComponent(evento)), T.sinRespuesta.cargar, T.sinRespuesta.cargar),
 
     reportar: (cuerpo: object) =>
-      intentar<{ estado: 'reportado' | 'confirmado'; puestoApartado?: boolean }>(() => api.pedir('/pago', json(cuerpo)), T.reporte.noRegistrado, T.reporte.noRegistrado),
+      intentar<{ estado: 'reportado' | 'confirmado'; puestoApartado?: boolean; montoUsd?: number }>(() => api.pedir('/pago', json(cuerpo)), T.reporte.noRegistrado, T.reporte.noRegistrado),
 
-    /** El cupón también aparta puesto: en una fecha con grabación requerida, sin `permiteGrabacion` responde 409 (48f5823). */
+    /**
+     * El cupón del 100% aparta puesto: en una fecha con grabación requerida,
+     * sin `permiteGrabacion` responde 409 (48f5823). `acepta: ['descuento']`
+     * dice que esta pantalla sabe leer un código parcial (98b3728).
+     */
     cupon: (eventoId: string, codigo: string, permiteGrabacion?: boolean) =>
-      intentar<{ ok?: boolean }>(
-        () => api.pedir('/cupon', json(permiteGrabacion ? { eventoId, codigo, permiteGrabacion } : { eventoId, codigo })),
+      intentar<RespuestaCupon>(
+        () => api.pedir('/cupon', json({ eventoId, codigo, acepta: ['descuento'], ...(permiteGrabacion ? { permiteGrabacion } : {}) })),
         T.cupon.noPudimos,
         T.cupon.sinRed,
       ),

@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router'
 import { useMemo } from 'react'
 
+import * as M from '../pago/maquina'
 import type { DeServidor } from '../pago/maquina'
 import { Pago } from '../pago/Pago'
 import type { crearServicioPago } from '../pago/servicio'
@@ -11,7 +12,8 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
  * /catalogo-pago?estado=elegir|sin-verificar|pendiente|listo|fallo|prueba
  * La respuesta es la REAL de GET /api/pago con la cuenta del banco, con los
  * datos de la cuenta que recibe cambiados por inventados. Reportar y el
- * código «REGALO» salen bien; cualquier otro código, no.
+ * código «REGALO» salen bien; «ANDREA7KQ» es un descuento del 20%
+ * (98b3728); cualquier otro código, no.
  * Catálogo de desarrollo: no se enlaza desde ningún sitio.
  */
 const REAL = require('../../pruebas/datos/pago.json') as DeServidor
@@ -33,7 +35,30 @@ function Pantalla() {
     return {
       cargar: async () => ({ ok: true, datos }),
       reportar: async (cuerpo) => (console.log('[catálogo] reportar', cuerpo), await espera(), { ok: true, datos: { estado: 'reportado' } }),
-      cupon: async (_e, codigo) => (await espera(), codigo === 'REGALO' ? { ok: true, datos: { ok: true } } : { ok: false, error: 'Ese código no vale.' }),
+      cupon: async (_e, codigo) => {
+        await espera()
+        if (codigo === 'REGALO') return { ok: true, datos: { estado: 'confirmado', puestoApartado: true } }
+        if (codigo !== 'ANDREA7KQ') return { ok: false, error: 'Ese código no vale.' }
+        // El 20%: los importes rebajados y los datos de cada método, solo de los encendidos.
+        const f = 0.8
+        const rebaja = (v: string) => v.replace(/[\d.]+,\d{2}/, (n) => M.dinero(Number(n.replace(/\./g, '').replace(',', '.')) * f, '').trim())
+        return {
+          ok: true,
+          datos: {
+            estado: 'descuento',
+            codigo,
+            pct: 20,
+            nombre: 'Andrea',
+            montoPleno: datos.montoUsd,
+            montoUsd: datos.montoUsd * f,
+            tasa: datos.tasa,
+            tasaDe: datos.tasaDe,
+            montoLocal: datos.montoLocal != null ? datos.montoLocal * f : null,
+            metodos: datos.metodos.filter((m) => m.activo).map((m) => ({ id: m.id, datos: m.datos.map((x) => ({ ...x, valor: rebaja(x.valor), copiar: rebaja(x.copiar) })) })),
+            puestoApartado: false,
+          },
+        }
+      },
       captura: async () => (await espera(), { ok: true, datos: { ruta: 'banco/captura.jpg' } }),
     }
   }, [estado, graba])

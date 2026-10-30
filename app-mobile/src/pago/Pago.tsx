@@ -145,6 +145,14 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
       if (r.motivo === TI.MOTIVO) return setPidiendoIdioma({ idioma: r.idioma ?? 'en', reintentar: 'cupon' })
       return setFalloCupon(r.error)
     }
+    // Parcial: no aparta puesto ni hay «listo». Se queda aquí con el total
+    // rebajado y sigue por donde sigue todo el mundo: método, banco y reporte.
+    if (r.datos.estado === 'descuento') {
+      setD(M.conDescuento(d, r.datos))
+      setCuponAbierto(false)
+      setCupon('')
+      return
+    }
     setFase('cupon')
     preguntar('reserva')
   }
@@ -170,6 +178,14 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     const r = await servicio.reportar(M.cuerpoReporte(d, m, rep, captura, permiteGrabacion))
     if (!r.ok) {
       if (M.esFechaCerrada(r)) return setFase('cerrada')
+      // Se cayó el código entre medias (caducó, se agotó, no era su primera
+      // fecha): el descuento deja de valer y los importes se vuelven a pedir,
+      // no se recalculan aquí. El precio lo dice el servidor.
+      if (d.descuento && r.motivo && M.MOTIVOS_DEL_CODIGO.includes(r.motivo)) {
+        const g = await servicio.cargar(d.evento.id)
+        if (g.ok) setD(g.datos)
+        else setD({ ...d, descuento: null })
+      }
       setFase('reportar')
       if (r.motivo === TI.MOTIVO) return setPidiendoIdioma({ idioma: r.idioma ?? 'en', reintentar: 'reportar' })
       return setFallo(r.error)
@@ -209,6 +225,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     )
   } else if (fase === 'elegir') {
     const cab = M.cabecera(d)
+    const fila = M.filaDescuento(d)
     cuerpo = (
       <View>
         <Titular>{T.elegir.titulo}</Titular>
@@ -216,7 +233,16 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
         <View style={[estilos.caja, { marginTop: 26 }]}>
           <Linea izquierda={<Texto variante="subtitulo" style={{ fontSize: 22 }}>{cab.nombre}</Texto>} derecha={<Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia }}>{cab.detalle}</Texto>} />
           <Separador />
-          <Linea izquierda={<Texto variante="cuerpo">{T.elegir.unPuesto}</Texto>} derecha={<Cifra>{M.dinero(d.montoUsd, 'ref')}</Cifra>} />
+          <Linea izquierda={<Texto variante="cuerpo">{T.elegir.unPuesto}</Texto>} derecha={<Cifra>{M.dinero(M.precioPleno(d), 'ref')}</Cifra>} />
+          {/* El descuento del código, como una línea más del recibo: es dinero, no un sello. */}
+          {fila ? (
+            <View style={{ marginTop: 9 }}>
+              <Linea
+                izquierda={<Texto variante="cuerpo" tono="verde" style={{ fontFamily: fuente.textoMedia }}>{fila.texto}</Texto>}
+                derecha={<Texto variante="cuerpo" tono="verde" style={{ fontFamily: fuente.textoSemi, fontVariant: ['tabular-nums'] }}>{fila.cifra}</Texto>}
+              />
+            </View>
+          ) : null}
           <View style={{ height: 9 }} />
           <Linea
             izquierda={<Texto variante="cuerpo">{M.etiquetaTasa(d, ahora())}</Texto>}

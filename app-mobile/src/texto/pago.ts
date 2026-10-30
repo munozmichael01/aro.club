@@ -14,6 +14,8 @@ export const elegir = {
   titulo: 'Tu puesto.',
   bajada: 'Se paga en bolívares a la tasa oficial del día. El crédito no caduca.',
   unPuesto: 'Un puesto',
+  /** La fila del código parcial (Michael, 29-10). Sin nombre (cupones de operación), «Tu código». */
+  descuento: (nombre: string, pct: number) => `${nombre ? `Código de ${nombre}` : 'Tu código'} · −${pct}%`,
   tasaBcv: 'Tasa BCV',
   tasaDeHoy: 'Tasa BCV de hoy',
   tasaDel: (dia: number, mes: string) => `Tasa BCV del ${dia} de ${mes}`,
@@ -42,7 +44,7 @@ export const cupon = {
   etiqueta: 'TU CÓDIGO',
   ejemplo: 'CÓDIGO',
   aplicar: (aplicando: boolean) => (aplicando ? 'Aplicando' : 'Aplicar'),
-  nota: 'Si el código cubre tu puesto, no tienes que pagar nada: queda confirmado aquí mismo.',
+  nota: 'Si el código cubre tu puesto, no tienes que pagar nada: queda confirmado aquí mismo. Si es un descuento, baja el total y sigues con tu pago.',
   noPudimos: 'No pudimos aplicar el código.',
   sinRed: 'No pudimos aplicar el código. Revisa tu conexión.',
 }

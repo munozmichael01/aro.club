@@ -32,7 +32,67 @@ export type DeServidor = {
   metodos: Metodo[]
   verificada: boolean
   pago: { estado: string; metodo: string; reportadoEn: string } | null
+  /** Solo de la app: el código parcial ya aplicado. El servidor lo vuelve a calcular al reportar. */
+  descuento?: Descuento | null
 }
+
+export type Descuento = { codigo: string; pct: number; nombre: string; montoPleno: number | null }
+
+/**
+ * Lo que contesta `POST /api/cupon` cuando se le manda `acepta: ['descuento']`
+ * (98b3728). Sin ese campo, un código parcial es un 409 `descuento-parcial`:
+ * así las versiones que trataban cualquier 200 como «listo» no dejan entrar
+ * a nadie sin pagar.
+ */
+export type RespuestaCupon =
+  | { estado: 'confirmado'; puestoApartado?: boolean }
+  | {
+      estado: 'descuento'
+      codigo: string
+      pct: number
+      nombre?: string | null
+      montoPleno: number
+      montoUsd: number
+      tasa?: number | null
+      tasaDe?: string | null
+      montoLocal?: number | null
+      metodos?: { id: string; datos: Metodo['datos'] }[]
+      puestoApartado: false
+    }
+
+/**
+ * El código parcial puesto: los importes rebajados y los datos para pagar de
+ * cada método, sustituidos POR ID. La lista del cupón lleva solo los métodos
+ * encendidos: emparejarla por posición pondría el monto de Pago Móvil en Zelle.
+ */
+export function conDescuento(d: DeServidor, x: Extract<RespuestaCupon, { estado: 'descuento' }>): DeServidor {
+  const nuevos = new Map((x.metodos ?? []).map((m) => [m.id, m.datos]))
+  return {
+    ...d,
+    montoUsd: x.montoUsd,
+    montoLocal: x.montoLocal ?? d.montoLocal,
+    tasa: x.tasa ?? d.tasa,
+    tasaDe: x.tasaDe || d.tasaDe,
+    metodos: d.metodos.map((m) => (nuevos.has(m.id) ? { ...m, datos: nuevos.get(m.id)! } : m)),
+    descuento: { codigo: x.codigo, pct: x.pct, nombre: x.nombre || '', montoPleno: x.montoPleno ?? null },
+  }
+}
+
+/** La fila del recibo: «Código de Andrea · −20%» y «−2,00 ref» (copy de Michael, 29-10). */
+export function filaDescuento(d: DeServidor): { texto: string; cifra: string } | null {
+  const x = d.descuento
+  if (!x) return null
+  return {
+    texto: T.elegir.descuento(x.nombre, x.pct),
+    cifra: x.montoPleno != null ? `−${dinero(x.montoPleno - d.montoUsd, 'ref')}` : '',
+  }
+}
+
+/** Los `motivo` con los que el servidor dice que el CÓDIGO dejó de valer (98b3728). */
+export const MOTIVOS_DEL_CODIGO = ['no-vale', 'caducado', 'agotado', 'otra-fecha', 'ya-usado', 'tu-propio-codigo', 'otro-referido', 'no-es-la-primera']
+
+/** «Un puesto» enseña el precio PLENO cuando hay descuento; el total, el rebajado. */
+export const precioPleno = (d: DeServidor) => (d.descuento?.montoPleno != null ? d.descuento.montoPleno : d.montoUsd)
 
 /**
  * Las fases de la web, con nombre en vez de número: elegir → datos →
@@ -138,6 +198,8 @@ export function cuerpoReporte(d: DeServidor, m: Metodo, rep: Record<string, stri
     ...(d.tasa ? { tasaVista: d.tasa } : {}),
     // Solo en una fecha que se graba: sin él, el servidor responde 409 `falta-permiso-grabacion`.
     ...(d.evento.permisoObligatorio && permiteGrabacion ? { permiteGrabacion: true } : {}),
+    // El código, no el importe: el descuento lo vuelve a calcular el servidor.
+    ...(d.descuento ? { codigo: d.descuento.codigo } : {}),
   }
 }
 

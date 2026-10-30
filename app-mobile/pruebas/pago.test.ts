@@ -108,3 +108,44 @@ test('el día del pago se puede escribir y borrar (testers, Android, 06-10-2026)
   const campo = PM.campos.find((c) => c.tipo === 'fecha')!
   assert.ok(M.cumple(campo, '5/09/2026'))
 })
+
+// --- El código parcial (98b3728) ------------------------------------------------
+
+const PARCIAL = (d: M.DeServidor) =>
+  ({
+    estado: 'descuento',
+    codigo: 'ANDREA7KQ',
+    pct: 20,
+    nombre: 'Andrea',
+    montoPleno: d.montoUsd,
+    montoUsd: d.montoUsd * 0.8,
+    tasa: d.tasa,
+    tasaDe: d.tasaDe,
+    montoLocal: d.montoLocal != null ? d.montoLocal * 0.8 : null,
+    // Solo los encendidos, y al revés: emparejarlos por posición sería el fallo.
+    metodos: d.metodos.filter((m) => m.activo).reverse().map((m) => ({ id: m.id, datos: [{ campo: 'Monto', valor: `rebajado-${m.id}`, copiar: `rebajado-${m.id}` }] })),
+    puestoApartado: false,
+  }) as const
+
+test('el descuento sustituye los datos de cada método POR ID, nunca por posición', () => {
+  const d = M.conDescuento(REAL, PARCIAL(REAL))
+  for (const m of d.metodos) {
+    if (m.activo) assert.equal(m.datos[0].valor, `rebajado-${m.id}`)
+    else assert.deepEqual(m.datos, REAL.metodos.find((x) => x.id === m.id)!.datos)
+  }
+  assert.equal(d.montoUsd, REAL.montoUsd * 0.8)
+})
+
+test('la fila del recibo dice de quién es el código y cuánto quita; «Un puesto» sigue en el precio pleno', () => {
+  const d = M.conDescuento({ ...REAL, montoUsd: 10 }, { ...PARCIAL({ ...REAL, montoUsd: 10 }) })
+  assert.deepEqual(M.filaDescuento(d), { texto: 'Código de Andrea · −20%', cifra: '−2,00 ref' })
+  assert.equal(M.precioPleno(d), 10)
+  assert.equal(M.filaDescuento(M.conDescuento(REAL, { ...PARCIAL(REAL), nombre: null }))!.texto, 'Tu código · −20%')
+  assert.equal(M.filaDescuento(REAL), null)
+})
+
+test('al reportar viaja el CÓDIGO, no el importe; sin descuento no viaja nada', () => {
+  const m = REAL.metodos.find((x) => x.activo)!
+  assert.equal(M.cuerpoReporte(M.conDescuento(REAL, PARCIAL(REAL)), m, {}, null).codigo, 'ANDREA7KQ')
+  assert.equal('codigo' in M.cuerpoReporte(REAL, m, {}, null), false)
+})
