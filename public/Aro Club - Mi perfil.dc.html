@@ -203,6 +203,38 @@
       </sc-if>
     </div>
 
+    <!--
+      Invita a alguien.
+
+      Solo sale con la cuenta verificada: sin verificar no se reserva, asi
+      que tampoco se invita, y el servidor devuelve `invitar: null`. Lo que
+      NO sale nunca es a quien invitaste: el conteo es un numero, no una
+      lista de personas.
+    -->
+    <sc-if value="{{ hayInvitar }}" hint-placeholder-val="{{ true }}">
+      <div id="invitar" style="margin-top:clamp(30px,4vw,44px)">
+        <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:14px">
+          <span style="font:400 clamp(22px,2.6vw,28px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A">Invita a alguien</span>
+          <span style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#566A5D">Tu código es solo tuyo.</span>
+        </div>
+
+        <div style="border-radius:24px;background:#FFFBF0;padding:clamp(18px,2.4vw,22px)">
+          <div style="font:400 15px/1.55 'Inter Tight',sans-serif;color:#456352;max-width:58ch;text-wrap:pretty">{{ textoInvitar }}</div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:clamp(16px,2vw,20px)">
+            <span style="flex:1 1 auto;min-width:0;font:600 clamp(22px,2.6vw,27px)/1.1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#14342A;word-break:break-all">{{ codigoInvitar }}</span>
+            <button onClick="{{ copiarCodigo }}" style="{{ botonCopiar }}">{{ textoCopiarCodigo }}</button>
+            <button onClick="{{ copiarEnlace }}" style="{{ botonCompartir }}">{{ textoCompartir }}</button>
+          </div>
+
+          <div style="height:1px;background:rgba(20,52,42,.12);margin:clamp(16px,2vw,20px) 0"></div>
+
+          <div style="font:600 15px/1.5 'Inter Tight',sans-serif;color:#14342A">{{ avanceInvitar }}</div>
+          <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:5px;text-wrap:pretty">{{ cuentaInvitar }}</div>
+        </div>
+      </div>
+    </sc-if>
+
     <div id="cenas" style="margin-top:clamp(30px,4vw,44px)">
       <div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:14px">
         <span style="font:400 clamp(22px,2.6vw,28px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A">Mis cenas</span>
@@ -312,7 +344,9 @@
 class Component extends DCLogic {
   state = { saliendo: false, abierta: null, borrador: null, datos: null, guardando: false, fallo: '',
             exclusiones: null, quitando: null, baja: false, palabraBaja: '',
-            sitios: null, quitandoSitio: null };
+            sitios: null, quitandoSitio: null,
+            // Que se acaba de copiar: 'codigo', 'enlace' o nada.
+            copiado: '' };
 
   componentDidMount() {
     // Las opciones salen del catalogo, no de una copia aqui. La copia ya
@@ -583,10 +617,75 @@ class Component extends DCLogic {
     return v;
   }
 
+  /**
+   * Copiar, y decirlo.
+   *
+   * `navigator.clipboard` no existe fuera de https ni en algunos navegadores
+   * dentro de apps, y ahi se cae con una excepcion que dejaria el boton
+   * mudo. El respaldo es el de siempre: un campo oculto y `execCommand`.
+   */
+  copiar(texto, que) {
+    if (!texto) return;
+    const listo = () => {
+      this.setState({ copiado: que });
+      clearTimeout(this._tCopia);
+      this._tCopia = setTimeout(() => this.setState({ copiado: '' }), 2200);
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(listo, () => this.copiarAPelo(texto, listo));
+        return;
+      }
+    } catch (e) { /* sin portapapeles moderno */ }
+    this.copiarAPelo(texto, listo);
+  }
+
+  copiarAPelo(texto, listo) {
+    try {
+      const campo = document.createElement('textarea');
+      campo.value = texto;
+      campo.setAttribute('readonly', '');
+      campo.style.position = 'fixed';
+      campo.style.opacity = '0';
+      document.body.appendChild(campo);
+      campo.select();
+      document.execCommand('copy');
+      document.body.removeChild(campo);
+      listo();
+    } catch (e) { /* no se pudo: el codigo esta a la vista para escribirlo */ }
+  }
+
+  /**
+   * Compartir el enlace: la hoja del sistema si la hay, y si no, copiarlo.
+   *
+   * En el celular la hoja nativa es lo que de verdad usa la gente —WhatsApp
+   * primero— y en computadora no existe: ahi copiar el enlace es lo util.
+   */
+  compartir(inv) {
+    if (!inv || !inv.enlace) return;
+    const texto = 'Estoy en Aro Club: cenas con gente que no conoces, en grupos pequeños y todos verificados. '
+      + 'El sitio lo eligen ellos. Con mi código ' + inv.codigo + ' tu primera fecha tiene un '
+      + inv.pct + '% de descuento: ' + inv.enlace;
+    try {
+      if (navigator.share) {
+        navigator.share({ text: texto }).catch(() => { /* la cerro */ });
+        return;
+      }
+    } catch (e) { /* sin hoja del sistema */ }
+    this.copiar(inv.enlace, 'enlace');
+  }
+
   renderVals() {
     // Antes vivian en el estado con indices escritos a mano.
     const R = this.valores();
+    const S = this.state;
     const D = this.state.datos || {};
+    const inv = D.invitar || null;
+    // Tres personas, no «3 personas»: es una frase, no una cifra de tabla.
+    const enLetra = (n) => ({ 1: 'una', 2: 'dos', 3: 'tres', 4: 'cuatro', 5: 'cinco', 6: 'seis' }[n] || String(n));
+    const botonChico = (hecho) => 'display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid '
+      + (hecho ? 'transparent' : 'rgba(20,52,42,.22)') + ';background:' + (hecho ? '#1B5138' : 'transparent')
+      + ';color:' + (hecho ? '#FAF3E4' : '#1B5138') + ';font:600 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease';
     const campos = this.campos();
     const abierta = this.state.abierta;
     const borrador = this.state.borrador;
@@ -922,6 +1021,34 @@ class Component extends DCLogic {
             (fuiste ? 'background:rgba(27,81,56,.11);color:#1B5138' : 'color:#566A5D')
         };
       }),
+      // ── invita a alguien ───────────────────────────────────────────
+      //
+      // El copy lo aprobo Michael el 29-10. Las dos cifras —el descuento y
+      // cada cuantas personas— salen del servidor y no escritas aqui: el
+      // dia que cambien, cambian en un sitio.
+      hayInvitar: !!inv,
+      codigoInvitar: inv ? inv.codigo : '',
+      textoInvitar: inv
+        ? 'Con tu código, la primera fecha de quien invites tiene un ' + inv.pct + '% de descuento. '
+          + 'Cuando ' + enLetra(inv.porCada) + ' personas vayan a su primera cena con él, tu próxima reserva es gratis.'
+        : '',
+      avanceInvitar: inv ? 'Llevas ' + inv.avance + ' de ' + inv.porCada + ' para tu próxima reserva gratis.' : '',
+      // «4 personas se apuntaron y 1 ya fue a su primera cena», en singular
+      // cuando toca: «1 persona se apuntó» leido en plural se nota, y esta
+      // es la frase que mas veces va a decir uno.
+      cuentaInvitar: !inv ? ''
+        // Recien estrenado el codigo, «0 personas se apuntaron y 0 ya
+        // fueron» se lee como un marcador en cero. Lo que hay que decir es
+        // que todavia no ha pasado nada.
+        : !inv.apuntados ? 'Todavía no ha entrado nadie con tu código.'
+          : 'Con tu código: ' + (inv.apuntados === 1 ? '1 persona se apuntó' : inv.apuntados + ' personas se apuntaron')
+            + ' y ' + (inv.asistieron === 1 ? '1 ya fue' : inv.asistieron + ' ya fueron') + ' a su primera cena.',
+      textoCopiarCodigo: S.copiado === 'codigo' ? 'Copiado' : 'Copiar',
+      textoCompartir: S.copiado === 'enlace' ? 'Enlace copiado' : 'Compartir el enlace',
+      botonCopiar: botonChico(S.copiado === 'codigo'),
+      botonCompartir: botonChico(S.copiado === 'enlace'),
+      copiarCodigo: () => this.copiar(inv && inv.codigo, 'codigo'),
+      copiarEnlace: () => this.compartir(inv),
       hayCenas: !!(D && D.historial && D.historial.length),
       sinCenas: !!D.historial && D.historial.length === 0,
       nav: AroNav.items('perfil', !!this.state.hayMesa, this.state.formatoMesa),

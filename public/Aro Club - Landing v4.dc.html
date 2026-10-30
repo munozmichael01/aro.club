@@ -326,6 +326,23 @@
 
 <div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;overflow-x:clip">
 
+  <!--
+    Quien llega con el enlace de alguien, antes que nada.
+
+    Encima del hero y no dentro: el hero es la foto y el titular, y meterle
+    una linea de otra persona dentro le quita el golpe. Arriba se lee en un
+    segundo, se entiende de donde viene el enlace, y debajo sigue la portada
+    de siempre, que es lo que de verdad convence.
+  -->
+  <sc-if value="{{ hayInvitacion }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#1B5138;color:#FAF3E4;padding:11px clamp(16px,4vw,36px)">
+      <div style="max-width:1240px;margin:0 auto;display:flex;gap:10px;align-items:center;justify-content:center;text-align:center">
+        <span style="flex:0 0 auto;width:7px;height:7px;border-radius:999px;background:#E39C63"></span>
+        <span style="font:500 clamp(13px,1.4vw,15px)/1.45 'Inter Tight',sans-serif;text-wrap:pretty">{{ textoInvitacion }}</span>
+      </div>
+    </div>
+  </sc-if>
+
   <div id="top" data-screen-label="Hero" style="position:relative;background:#0F2820;color:#FAF3E4;overflow:hidden">
     <div data-parallax="1" style="position:absolute;inset:-8% 0 -8% 0;background-image:url('fotos/cenas.jpg');background-size:cover;background-position:center 60%;filter:grayscale(.3) contrast(1.14) saturate(.62) brightness(.66);will-change:transform"></div>
     <div style="position:absolute;inset:0;background:linear-gradient(rgba(15,40,32,.42) 0%,rgba(15,40,32,.72) 55%,rgba(15,40,32,.94) 100%)"></div>
@@ -797,7 +814,10 @@ class Component extends DCLogic {
     faq: -1, fase: 'correo', correo: '', error: '', ahora: Date.now(),
     paso: 0, arraigo: -1, zonas: [], planes: [], temas: [], ciudadSlug: '', guardandoQuiz: false, falloQuiz: '',
     ciudadGuardando: false, ciudadGuardada: false, ciudadFallo: '',
-    sesion: null, sesionSabida: false
+    sesion: null, sesionSabida: false,
+    // Quien llego con el enlace de alguien: { codigo, nombre, pct }. Lo deja
+    // /i/<codigo> en una galleta y lo lee la franja de aqui arriba.
+    invitacion: null
   };
 
   /**
@@ -855,6 +875,39 @@ class Component extends DCLogic {
         setTimeout(alBloque, 1800);
       }
     } catch (e) { /* sin hash o sin DOM, no hay nada a donde ir */ }
+
+    /**
+     * La invitacion, si llego con el enlace de alguien.
+     *
+     * La galleta la pone `/i/<codigo>` despues de comprobar que el codigo
+     * existe y esta vivo: aqui no se comprueba nada, solo se lee lo que el
+     * servidor ya dijo. Y se lee cada vez que se abre la portada, no solo la
+     * primera: casi nadie se da de alta en el mismo minuto en que le mandan
+     * el enlace.
+     */
+    try {
+      const galleta = (document.cookie || '').split('; ').find((c) => c.indexOf('aro_invita=') === 0);
+      if (galleta) {
+        /**
+         * Se decodifica DOS veces, y no es un descuido.
+         *
+         * El valor se guarda como `codigo|nombre|pct` con el nombre ya
+         * escapado —puede traer una tilde— y encima el navegador guarda la
+         * galleta escapada otra vez, asi que las barras llegan como `%7C`.
+         * Sin la primera vuelta, partir por `|` devuelve UNA sola pieza y la
+         * franja sale sin nombre y sin el tanto por ciento. Paso.
+         */
+        const partes = decodeURIComponent(galleta.slice('aro_invita='.length)).split('|');
+        const pct = Number(partes[2]);
+        if (partes[0]) {
+          this.setState({ invitacion: {
+            codigo: decodeURIComponent(partes[0]),
+            nombre: decodeURIComponent(partes[1] || ''),
+            pct: (pct > 0 && pct <= 100) ? pct : null
+          } });
+        }
+      }
+    } catch (e) { /* sin galletas, portada de siempre */ }
 
     this._t = setInterval(() => this.setState({ ahora: Date.now() }), 30000);
 
@@ -1415,7 +1468,26 @@ class Component extends DCLogic {
     const fuera = this.esFuera();
     const nombreCiudad = this.nombreDeSuCiudad();
 
+    /**
+     * La franja de quien llega invitado.
+     *
+     * Copy aprobado por Michael el 29-10: «Te invitó Andrea · tu primera
+     * fecha con un 20% de descuento». El tanto por ciento sale de la galleta
+     * —o sea, de la fila del codigo— y no escrito aqui: lo que promete la
+     * portada tiene que ser lo que ESE codigo descuenta.
+     *
+     * Sin nombre no se dice «Te invitó» a secas, que suena a frase a medio
+     * terminar: se dice que hay una invitacion y ya.
+     */
+    const inv = this.state.invitacion;
+    const quienInvita = inv && inv.nombre ? 'Te invitó ' + inv.nombre : 'Tienes una invitación';
+    const loQueTrae = inv && inv.pct
+      ? 'tu primera fecha con un ' + inv.pct + '% de descuento'
+      : 'tu primera fecha con descuento';
+
     return {
+      hayInvitacion: !!inv,
+      textoInvitacion: quienInvita + ' · ' + loQueTrae,
       precioTexto, precioCifra,
       // Hasta que el servidor no contesta no se pinta ninguno de los dos:
       // pintar "Entrar" mientras se sabe seria enseñar la puerta a quien ya

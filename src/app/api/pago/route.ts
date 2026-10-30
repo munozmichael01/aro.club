@@ -141,7 +141,26 @@ export async function GET(request: Request) {
   const nombreZona = zona?.name ?? null
 
   const tasa = await tasaDelDia(admin)
-  const usd = Number(evento.price_usd ?? PRECIO_USD)
+  const pleno = Number(evento.price_usd ?? PRECIO_USD)
+
+  /**
+   * Si llegó con el enlace de alguien, el descuento viene PUESTO.
+   *
+   * Michael, 29-10: «sale solo en Pago, en la primera fecha, ya aplicado».
+   * Tener que acordarse del código es tener que acordarse de una cosa más
+   * justo cuando se va a pagar, y quien llegó por el enlace de un amigo no
+   * tecleó ningún código: pulsó un enlace hace dos semanas.
+   *
+   * Quién la invitó está en `profiles.invitado_por`, que lo escribe el alta.
+   * De ahí sale su código, y de `cuponParaPagar` si todavía le vale: si ya
+   * usó otro, o esta no es su primera fecha, no se aplica nada y la pantalla
+   * no promete nada.
+   *
+   * Y el importe se calcula UNA vez, aquí: lo que se enseña, lo que se copia
+   * para el banco y lo que se cobra salen todos de este número.
+   */
+  const descuento = await descuentoDeInvitacion(admin, user.id, evento.id, !!verificada)
+  const usd = descuento ? precioConDescuento(pleno, descuento.pct) : pleno
 
   // Los céntimos son un discriminador, no un capricho: hacen que monto y
   // fecha identifiquen el pago casi unívocamente contra el estado de cuenta
@@ -209,6 +228,11 @@ export async function GET(request: Request) {
       zona: nombreZona,
     },
     montoUsd: usd,
+    // El precio sin descontar, para la fila del recibo. Igual que `montoUsd`
+    // cuando no hay descuento, que es el caso de casi todo el mundo.
+    montoPleno: pleno,
+    // Qué descuento viene puesto, si viene. `null` es el caso normal.
+    descuento,
     tasa: tasa ? Number(tasa.ves_por_ref) : null,
     // De qué DÍA es la tasa. La pantalla decía «Tasa BCV de hoy» sobre la
     // fila que hubiera, que un lunes por la mañana —o cualquier día en que el
@@ -793,4 +817,58 @@ export async function POST(request: Request) {
     montoUsd: usd,
     descuento: cupon ? { codigo: cupon.code, pct: cupon.pct, nombre: cupon.nombre } : null,
   })
+}
+
+/**
+ * El descuento que le toca sin teclear nada, o `null`.
+ *
+ * Vive aparte del GET para que el cuerpo de la ruta no crezca con cuatro
+ * consultas más: lo que hace es una pregunta sola —«¿esta persona llegó
+ * invitada y el código aún le vale?»— y se responde entera aquí.
+ *
+ * Nunca revienta la pantalla: si algo falla se devuelve `null` y Pago
+ * funciona como siempre, a precio pleno. Perder un descuento se arregla
+ * tecleando el código; una pantalla de pago caída, no.
+ */
+async function descuentoDeInvitacion(
+  admin: ReturnType<typeof createAdminClient>,
+  perfilId: string,
+  eventoId: string,
+  verificada: boolean,
+): Promise<{ codigo: string; pct: number; nombre: string | null } | null> {
+  if (!verificada) return null
+  try {
+    const { data: quien } = await admin
+      .from('profiles')
+      .select('invitado_por')
+      .eq('id', perfilId)
+      .maybeSingle()
+
+    const quienInvito = (quien as { invitado_por?: string | null } | null)?.invitado_por ?? null
+    if (!quienInvito) return null
+
+    const { data: cupon } = await admin
+      .from('coupons')
+      .select('code')
+      .eq('creado_por', quienInvito)
+      .maybeSingle()
+
+    if (!cupon?.code) return null
+
+    const mirado = await cuponParaPagar(admin, {
+      codigo: cupon.code,
+      perfilId,
+      evento: { id: eventoId },
+    })
+
+    // Un código del 100% no se aplica solo: ese confirma la reserva sin
+    // cobrar, y hacerlo sin que nadie lo pida es apartar un puesto por su
+    // cuenta. Los de referido son parciales.
+    if ('no' in mirado || mirado.vale.pct === 100) return null
+
+    return { codigo: mirado.vale.code, pct: mirado.vale.pct, nombre: mirado.vale.nombre }
+  } catch (e) {
+    console.error('[pago] no se pudo mirar la invitación', perfilId, e)
+    return null
+  }
 }

@@ -57,6 +57,14 @@ async function limpiar() {
   // `coupon_redemptions.profile_id` apunta a `profiles` y lo bloquea.
   await admin.from('coupon_redemptions').delete().eq('profile_id', u.id)
   await admin.from('coupons').delete().eq('code', CODIGO_PRUEBA)
+  /**
+   * Y el codigo de referido que se creo SOLO al abrir su perfil.
+   *
+   * `coupons.creado_por` es `on delete set null`, asi que borrar la cuenta
+   * sin esto dejaria su codigo vivo y sin dueño: un cupon del 20% que
+   * cualquiera puede teclear y que no premia a nadie.
+   */
+  await admin.from('coupons').delete().eq('creado_por', u.id)
   await admin.from('verifications').delete().eq('profile_id', u.id)
   await admin.from('profiles').delete().eq('id', u.id)
   await admin.auth.admin.deleteUser(u.id)

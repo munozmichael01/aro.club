@@ -206,3 +206,103 @@ export async function cuentaDe(
 export function premiosQueFaltan(asistieron: number, yaPremiados: number): number {
   return Math.max(0, Math.floor(asistieron / POR_CADA) - yaPremiados)
 }
+
+/**
+ * El rastro que deja `aro.club/i/<código>` en el navegador.
+ *
+ * Michael, 29-10: «el código queda guardado desde ese momento». Quien llega
+ * con el enlace de alguien casi nunca se da de alta en ese mismo minuto: mira
+ * la portada, lo piensa, y vuelve. Sin esto, al volver ya no hay enlace y el
+ * descuento habría que escribirlo a mano, que es justo lo que el enlace venía
+ * a ahorrar.
+ *
+ * NO es httpOnly a propósito: la franja de la portada la pinta la pantalla,
+ * que es un fichero estático y no tiene servidor que le cuente nada. Y no
+ * hace falta que lo sea: esto no autoriza nada. Lo único que hace es
+ * proponer un código, y el código se vuelve a comprobar entero cuando se
+ * paga.
+ */
+export const COOKIE_INVITA = 'aro_invita'
+
+/** Un mes. Lo que tarda alguien en decidirse, con margen. */
+export const DIAS_INVITA = 30
+
+/**
+ * `código|nombre|descuento`, escapados: un nombre puede traer un acento.
+ *
+ * El descuento viaja dentro en vez de estar escrito en la portada. No es por
+ * ahorrarse una constante: lo que la franja promete tiene que ser lo que ESE
+ * código descuenta, y eso solo lo sabe su fila. Con un 20 escrito en la
+ * pantalla, el día que un código valga otra cosa la portada seguiría
+ * prometiendo el veinte.
+ */
+export function valorDeInvitacion(codigo: string, nombre: string | null, pct: number): string {
+  return [encodeURIComponent(codigo), encodeURIComponent(nombre ?? ''), String(pct)].join('|')
+}
+
+export function leerInvitacion(
+  valor: string | undefined | null,
+): { codigo: string; nombre: string; pct: number } | null {
+  if (!valor) return null
+  const [c, n, p] = String(valor).split('|')
+  const codigo = normalizarCodigoDeReferido(decodeURIComponent(c ?? ''))
+  if (!codigo) return null
+  const pct = Number(p)
+  return {
+    codigo,
+    nombre: decodeURIComponent(n ?? ''),
+    pct: Number.isFinite(pct) && pct > 0 && pct <= 100 ? pct : DESCUENTO_PCT,
+  }
+}
+
+/** Mayúsculas y sin nada que no sea letra o número. */
+function normalizarCodigoDeReferido(codigo: string): string {
+  return String(codigo).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 40)
+}
+
+/**
+ * Apuntar quién la invitó, una sola vez y nunca encima de lo que ya hay.
+ *
+ * Se llama al CREAR el perfil, que es el único momento en que esto es
+ * verdad: quien ya tiene cuenta no llegó con el enlace de nadie, y dejar que
+ * se sobreescriba convertiría el campo en «el último enlace que pulsó».
+ *
+ * Falla en silencio a propósito: si esto revienta, lo que se rompe es un
+ * alta. Perder la atribución de un referido es recuperable —el código sigue
+ * aplicándose a mano en Pago— y no dejar entrar a alguien, no.
+ */
+export async function apuntarQuienInvito(
+  admin: SupabaseClient<Database>,
+  perfilId: string,
+  invitacion: { codigo: string } | null,
+): Promise<string | null> {
+  if (!invitacion?.codigo) return null
+  try {
+    const { data: cupon } = await admin
+      .from('coupons')
+      .select('code, creado_por, activo')
+      .eq('code', invitacion.codigo)
+      .maybeSingle()
+
+    const dueno = (cupon as { creado_por?: string | null } | null)?.creado_por ?? null
+    // Sin dueño no es un referido, es un cupón de operación: no hay a quién
+    // atribuirle nada. Y el suyo propio tampoco, que es el mismo caso que
+    // `cuponParaPagar` rechaza al pagar.
+    if (!cupon?.activo || !dueno || dueno === perfilId) return null
+
+    const { error } = await admin
+      .from('profiles')
+      .update({ invitado_por: dueno } as never)
+      .eq('id', perfilId)
+      .is('invitado_por', null)
+
+    if (error) {
+      console.error('[referidos] no se pudo apuntar quién invitó', perfilId, error)
+      return null
+    }
+    return dueno
+  } catch (e) {
+    console.error('[referidos] no se pudo apuntar quién invitó', perfilId, e)
+    return null
+  }
+}
