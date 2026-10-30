@@ -82,3 +82,9 @@ test('sin código no sale la tarjeta 4, que es entera el código; los planes de 
   assert.equal(M.variantesDe(M.historia(CENA, 'ANDREA7KQ')!).length, 8)
   assert.equal(M.historia({ ...CENA, formato: 'walk' }, null), null)
 })
+
+test('con un código que cubre la plaza, «Estás dentro» dice que el código la cubre', () => {
+  const v = M.vista(CENA, 'B', 'cupon')
+  assert.equal(v.sello, 'RESERVA CONFIRMADA')
+  assert.match(v.bajada ?? '', /código cubre la plaza/)
+})

@@ -20,6 +20,8 @@ export const A = {
 export const B = {
   titulo: 'Estás dentro.',
   credito: { sello: 'RESERVA CONFIRMADA', bajada: 'Pagaste con crédito. No hace falta nada más.' },
+  /** Con un código que cubre la plaza (entrega estas-dentro, B1: «crédito o cupón»). */
+  cupon: { sello: 'RESERVA CONFIRMADA', bajada: 'Tu código cubre la plaza. No hace falta nada más.' },
   confirmado: { sello: 'PAGO CONFIRMADO', bajada: 'Cuadramos tu pago con el banco. Te mandamos el comprobante por correo.' },
   /**
    * Al reportar el pago, ya «Estás dentro» (Michael, 29-10: nunca se ha

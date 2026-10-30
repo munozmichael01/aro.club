@@ -19,7 +19,7 @@ export type Plan = {
 /** A: pago reportado, sin confirmar. B: confirmado (o con crédito o cupón). */
 export type Momento = 'A' | 'B'
 /** Cómo se llegó a B: con crédito al reservar, con el pago confirmado, recién reportado, o no se sabe. */
-export type Via = 'credito' | 'confirmado' | 'reportado' | null
+export type Via = 'credito' | 'cupon' | 'confirmado' | 'reportado' | null
 
 const zonasEnTexto = (z: string[] | undefined) =>
   !z?.length ? '' : z.length === 1 ? z[0] : `${z.slice(0, -1).join(', ')} o ${z[z.length - 1]}`
@@ -30,7 +30,7 @@ export function vista(p: Plan, momento: Momento, via: Via) {
   const esMesa = reglas.vozDe(p.formato ?? 'dinner').unidad !== 'grupo'
   const dia = F.diaYNumero(p.empiezaEn, z)
   const hora = reglas.horaDe(p.empiezaEn, z) ?? ''
-  const b = via === 'credito' ? T.B.credito : via === 'confirmado' ? T.B.confirmado : via === 'reportado' ? T.B.reportado : T.B.sinSaber
+  const b = via === 'credito' ? T.B.credito : via === 'cupon' ? T.B.cupon : via === 'confirmado' ? T.B.confirmado : via === 'reportado' ? T.B.reportado : T.B.sinSaber
   return {
     momento,
     plan,

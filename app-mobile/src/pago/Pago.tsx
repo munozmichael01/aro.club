@@ -153,7 +153,11 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
       setCupon('')
       return
     }
+    // El código cubre la plaza: «Estás dentro» aquí mismo, como con crédito
+    // (B1). Marcada como vista: si no, Mi mesa la volvía a abrir al llegar.
     setFase('cupon')
+    setRecien(true)
+    AsyncStorage.setItem(MD.claveVista(d.evento.empiezaEn), '1').catch(() => undefined)
     preguntar('reserva')
   }
 
@@ -562,6 +566,28 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
           <Boton texto={T.fallo.corregir} onPress={() => (setRep(M.repInicial()), setCaptura(null), setFase('reportar'))} />
           <Boton tipo="fantasma" texto={T.fallo.escribirnos} onPress={() => Linking.openURL('mailto:hola@aro.club')} />
         </Acciones>
+      </View>
+    )
+  }
+
+  // Recién canjeado un código que cubre la plaza: B, con la nota del consumo de la pantalla de antes.
+  if (recien && d && planDentro && fase === 'cupon') {
+    return (
+      <View style={{ flex: 1 }}>
+        <EstasDentro
+          v={MD.vista(planDentro, 'B', 'cupon')}
+          enCalendario={dentro.enCalendario}
+          alCalendario={dentro.alCalendario}
+          alCompartir={dentro.alCompartir}
+          ir={p.ir}
+          extra={
+            <View style={{ backgroundColor: color.crema, borderRadius: 20, padding: 12, marginTop: 8 }}>
+              <Aviso tono="ojo">{T.cuponListo.consumo}</Aviso>
+            </View>
+          }
+        />
+        {dentro.hoja}
+        {hoja}
       </View>
     )
   }
