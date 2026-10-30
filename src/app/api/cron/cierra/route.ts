@@ -189,11 +189,37 @@ async function avisar(seco: boolean, soloEste?: string | null) {
     const abiertas = (sedes ?? []).map((s) => s.zone_slug).filter(Boolean) as string[]
     if (!abiertas.length) continue
 
-    // Quien ya tiene sitio en esa fecha, sea pagando o con crédito.
+    /**
+     * Quien ya tiene sitio ESA NOCHE, sea en esta fecha o en otra.
+     *
+     * Miraba solo `ev.id`, y eso valia cuando cada noche era una fecha. El
+     * sabado 31 son tres —hasta 44, 45+ y la de ingles— y quince personas
+     * con su puesto en una de ellas entraban como candidatas a las otras
+     * dos: a las nueve les llega «mañana es tu cena» y a las diez «la cena
+     * en ingles del sabado se cierra hoy, ¿te apuntas?». Es ofrecerle a
+     * alguien una segunda mesa la noche que ya tiene plan.
+     *
+     * Nadie cena dos veces el mismo sabado. La unidad es la noche.
+     */
+    const diaDeLaCena = diaDe(new Date(ev.starts_at), await husoDe(ev.city_slug))
+
+    const { data: esaNoche } = await admin
+      .from('events')
+      .select('id, starts_at, city_slug')
+      .gte('starts_at', new Date(Date.parse(ev.starts_at) - 36 * 3600_000).toISOString())
+      .lte('starts_at', new Date(Date.parse(ev.starts_at) + 36 * 3600_000).toISOString())
+
+    const hermanas: string[] = []
+    for (const otra of esaNoche ?? []) {
+      if (diaDe(new Date(otra.starts_at), await husoDe(otra.city_slug)) === diaDeLaCena) {
+        hermanas.push(otra.id)
+      }
+    }
+
     const { data: reservas } = await admin
       .from('bookings')
       .select('profile_id')
-      .eq('event_id', ev.id)
+      .in('event_id', hermanas.length ? hermanas : [ev.id])
       .in('status', ['pending_payment', 'confirmed', 'attended'])
 
     const yaVan = new Set((reservas ?? []).map((r) => r.profile_id))
@@ -246,7 +272,6 @@ async function avisar(seco: boolean, soloEste?: string | null) {
      * verdad. Si solo se llenara al encolar, la cuenta en seco volvería a
      * decir 1.509.
      */
-    const diaDeLaCena = diaDe(new Date(ev.starts_at), await husoDe(ev.city_slug))
     if (!avisadosDelDia.has(diaDeLaCena)) avisadosDelDia.set(diaDeLaCena, new Set())
     const yaTienen = avisadosDelDia.get(diaDeLaCena)!
 
