@@ -5,6 +5,8 @@ import { enTrozos } from '@/lib/en-trozos'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 import { quienQuiereSaberDe } from '@/lib/a-quien-avisar'
+import { ZONA_POR_DEFECTO } from '@/lib/reglas'
+import { diaDe } from '@/lib/tandas'
 
 /**
  * «Esta fecha se cierra mañana».
@@ -27,8 +29,12 @@ import { quienQuiereSaberDe } from '@/lib/a-quien-avisar'
  *   apagó que le avisen de una fecha tampoco quiere que le recuerden esa
  *   misma fecha.
  *
- * Una vez por persona y fecha, por el índice único. El cron puede correr dos
- * veces sin duplicar.
+ * Una vez por persona y DÍA DE CENA, no por fecha. Dos fechas del mismo día
+ * son dos mesas y un solo aviso: el índice único mira `event_id` y no las ve
+ * como lo mismo, así que la cuenta la lleva este cron. Y a quien le sale hoy
+ * el resumen con esas fechas dentro tampoco se le escribe: ya se lo contamos.
+ *
+ * El cron puede correr dos veces sin duplicar.
  *
  * **`?seco=1` calcula sin escribir**, y no es un lujo: no hay staging, esta
  * base es la de producción y `/api/cron/correos` la recorre cada quince
@@ -62,6 +68,22 @@ async function avisar(seco: boolean, soloEste?: string | null) {
     .select('id, booking_closes_at, format, starts_at, city_slug, age_band_min, age_band_max, idioma')
     .eq('status', 'open')
     .gt('booking_closes_at', new Date(ahora).toISOString())
+    /**
+     * Orden fijo, porque ahora decide algo.
+     *
+     * Desde que el aviso es uno por persona y día, cuando dos fechas de la
+     * misma noche le valen a la misma persona GANA LA PRIMERA de este orden.
+     * Sin `order` eso lo decidía Postgres, o sea nadie, y el sábado 31 había
+     * tres fechas a la misma hora: la que se anunciaba podía cambiar entre
+     * dos pasadas. Con `starts_at` y después `id` siempre gana la misma.
+     *
+     * Quien reciba el aviso de la de español y también pudiera ir a la de
+     * inglés no se queda sin saberlo: el botón lleva a la agenda, que lista
+     * las de esa noche. Lo que no puede es recibir dos correos distintos la
+     * misma mañana diciendo lo mismo.
+     */
+    .order('starts_at')
+    .order('id')
 
   /**
    * `?evento=` mira UNA fecha, y solo en seco.
@@ -82,6 +104,78 @@ async function avisar(seco: boolean, soloEste?: string | null) {
   if (!eventos?.length) return NextResponse.json({ eventos: 0, encolados: 0, seco })
 
   let encolados = 0
+
+  /**
+   * A quién ya se le contó ESE DÍA, y no esa fecha.
+   *
+   * El 30-10 a la 1 de la mañana esto iba a mandar 1.509 correos a 508
+   * personas: 493 el mismo «el sábado se cierra hoy» TRES veces. El sábado
+   * eran tres fechas distintas —tres mesas, tres sedes, tres filas en
+   * `events`— y el antiduplicado de aquí miraba `event_id`, así que para el
+   * cron eran tres avisos distintos. Para quien los recibe es uno repetido
+   * tres veces, y es el correo que invita a reservar: el que menos se puede
+   * permitir leerse como spam.
+   *
+   * El comentario de arriba ya lo decía —«dos fechas del mismo día son dos
+   * correos a casi la misma gente»— y se quedó en comentario. Esto lo cierra:
+   * la unidad es la persona y el día de la cena, no la fila.
+   */
+  const husos = new Map<string, string>()
+  const husoDe = async (slug: string | null | undefined): Promise<string> => {
+    if (!slug) return ZONA_POR_DEFECTO
+    const guardado = husos.get(slug)
+    if (guardado) return guardado
+    const { data } = await admin.from('cities').select('timezone').eq('slug', slug).maybeSingle()
+    const huso = data?.timezone || ZONA_POR_DEFECTO
+    husos.set(slug, huso)
+    return huso
+  }
+
+  const { data: yaAvisados } = await admin
+    .from('scheduled_emails')
+    .select('profile_id, event_id')
+    .eq('kind', 'cierra_pronto')
+    .not('event_id', 'is', null)
+
+  const deEsasFechas = [...new Set((yaAvisados ?? []).map((r) => r.event_id).filter((x): x is string => !!x))]
+
+  const cuandoEran = new Map<string, { starts_at: string; city_slug: string | null }>()
+  for (const trozo of await enTrozos<{ id: string; starts_at: string; city_slug: string | null }>(
+    deEsasFechas,
+    (t) => admin.from('events').select('id, starts_at, city_slug').in('id', t),
+    'de qué día eran los avisos ya mandados',
+  )) cuandoEran.set(trozo.id, trozo)
+
+  /** Día de la cena -> quién ya tiene el aviso de ese día. */
+  const avisadosDelDia = new Map<string, Set<string>>()
+  for (const r of yaAvisados ?? []) {
+    const ev = r.event_id ? cuandoEran.get(r.event_id) : null
+    if (!ev || !r.profile_id) continue
+    const dia = diaDe(new Date(ev.starts_at), await husoDe(ev.city_slug))
+    if (!avisadosDelDia.has(dia)) avisadosDelDia.set(dia, new Set())
+    avisadosDelDia.get(dia)!.add(r.profile_id)
+  }
+
+  /**
+   * Y a quién ya le sale hoy el resumen con estas mismas fechas dentro.
+   *
+   * `resumen_semanal` lista las fechas abiertas una por una. Quien lo recibe
+   * a las ocho ya sabe lo que este cron le iba a contar a las diez, así que
+   * recibirlo sería la segunda copia de la misma noticia con otro asunto. No
+   * se mira el estado de la fila: una encolada para hoy se manda hoy.
+   */
+  const hoy = diaDe(new Date(ahora), ZONA_POR_DEFECTO)
+  const { data: resumenes } = await admin
+    .from('scheduled_emails')
+    .select('profile_id, send_at')
+    .eq('kind', 'resumen_semanal')
+    .gte('send_at', new Date(ahora - 36 * 3600_000).toISOString())
+
+  const yaLesLlegaElResumen = new Set(
+    (resumenes ?? [])
+      .filter((r) => r.profile_id && r.send_at && diaDe(new Date(r.send_at), ZONA_POR_DEFECTO) === hoy)
+      .map((r) => r.profile_id as string),
+  )
 
   for (const ev of eventos) {
     // Las zonas que ESTA fecha abrió. Están en `event_venues`, no en el
@@ -144,22 +238,28 @@ async function avisar(seco: boolean, soloEste?: string | null) {
       'a quién hay que escribir',
     )
 
-    // Quien ya lo tiene encolado para esta fecha. El índice único ya impide el
-    // duplicado, pero filtrarlo aquí es lo que hace que la cuenta que devuelve
-    // la pasada en seco sea la misma que escribiría la de verdad.
-    const { data: yaHay } = await admin
-      .from('scheduled_emails')
-      .select('profile_id')
-      .eq('event_id', ev.id)
-      .eq('kind', 'cierra_pronto')
-
-    const yaTienen = new Set((yaHay ?? []).map((r) => r.profile_id))
+    /**
+     * Quien ya tiene el aviso de ESTE DÍA, venga de la fecha que venga.
+     *
+     * El conjunto se va llenando dentro del bucle y también en seco, que es
+     * lo que hace que la pasada en seco cuente lo mismo que escribiría la de
+     * verdad. Si solo se llenara al encolar, la cuenta en seco volvería a
+     * decir 1.509.
+     */
+    const diaDeLaCena = diaDe(new Date(ev.starts_at), await husoDe(ev.city_slug))
+    if (!avisadosDelDia.has(diaDeLaCena)) avisadosDelDia.set(diaDeLaCena, new Set())
+    const yaTienen = avisadosDelDia.get(diaDeLaCena)!
 
     for (const p of perfiles ?? []) {
       // Encendido por defecto: solo se salta a quien lo apagó a propósito.
       const avisos = (p.notificaciones ?? {}) as Record<string, boolean>
       if (avisos.apertura_zona === false) continue
       if (yaTienen.has(p.id)) continue
+      if (yaLesLlegaElResumen.has(p.id)) continue
+
+      // Se apunta ANTES de encolar y también en seco: lo que hace que la
+      // segunda fecha del mismo día no vuelva a contar a esta persona.
+      yaTienen.add(p.id)
 
       if (seco) {
         encolados++

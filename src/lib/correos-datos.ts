@@ -1515,7 +1515,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         if (!lista.length) return []
         const { data: evs } = await admin
           .from('events')
-          .select('id, format, starts_at, price_usd, city_slug, status, age_band_min, age_band_max')
+          .select('id, format, starts_at, booking_closes_at, price_usd, city_slug, status, age_band_min, age_band_max')
           .in('id', lista)
           .eq('status', 'open')
           .order('starts_at')
@@ -1558,6 +1558,31 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
               : ev.age_band_min != null && ev.age_band_max != null
                 ? `Solo para ${ev.age_band_min}-${ev.age_band_max}`
                 : ev.age_band_min != null ? `Solo para +${ev.age_band_min}` : '',
+            /**
+             * Y hasta cuándo se puede apartar puesto, cuando es inminente.
+             *
+             * Faltaba, y el 30-10 se vio por qué: la cena de esa noche se
+             * dejó abierta hasta las diez de la mañana por excepción, y este
+             * correo salía a las ocho sin decirlo en ningún sitio. Enseñar
+             * una fecha reservable durante dos horas sin decir que son dos
+             * horas es enseñarla mal.
+             *
+             * Solo si cierra hoy o mañana. Más allá no es un plazo, es un
+             * dato de más en una lista que se lee de un vistazo, y quien
+             * tiene fecha dentro de dos semanas ya sabe que no corre.
+             *
+             * Y en la línea de la fecha, no en el titular: cada fecha tiene
+             * su cierre y son distintos.
+             */
+            cierre: ((): string => {
+              if (conPuesto.has(ev.id)) return ''
+              const cuando = cuandoCierra(ev.booking_closes_at, zonaDeEv)
+              if (cuando !== 'hoy' && cuando !== 'mañana') return ''
+              const hora = horaDe(ev.booking_closes_at, zonaDeEv)
+              return hora
+                ? `Puedes apuntarte hasta ${cuando} a las ${hora}`
+                : `Puedes apuntarte hasta ${cuando}`
+            })(),
           })
         }
         return salida
