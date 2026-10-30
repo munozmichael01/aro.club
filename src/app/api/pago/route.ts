@@ -531,25 +531,55 @@ export async function POST(request: Request) {
   const pleno = Number(evento.price_usd ?? PRECIO_USD)
   let cupon: Vale | null = null
 
-  if (parsed.data.codigo) {
+  /**
+   * Si no manda código pero LLEGÓ INVITADA, se aplica igual.
+   *
+   * El GET ya le enseñó el importe con el descuento puesto —y los datos del
+   * banco con ese mismo importe— así que un cliente que pinte eso y luego
+   * reporte sin el código haría transferir 8 y registrar 10: operación
+   * buscaría en el banco un movimiento que no existe, y la culpa la pagaría
+   * quien sí hizo lo que la pantalla decía.
+   *
+   * Lo decide el servidor en los dos sitios, con la misma función. Un
+   * código escrito a mano gana: puede ser otro distinto del suyo.
+   */
+  const suInvitacion = parsed.data.codigo
+    ? null
+    : await descuentoDeInvitacion(admin, user.id, evento.id, true)
+
+  const codigoAplicable = parsed.data.codigo ?? suInvitacion?.codigo ?? null
+
+  if (codigoAplicable) {
     const mirado = await cuponParaPagar(admin, {
-      codigo: parsed.data.codigo,
+      codigo: codigoAplicable,
       perfilId: user.id,
       evento: { id: evento.id },
     })
     if ('no' in mirado) {
-      return NextResponse.json(
-        {
-          error: mirado.no.error,
-          motivo: mirado.no.motivo,
-          // Con el importe sin descuento, para que la pantalla pueda enseñar
-          // lo que de verdad toca pagar en vez de quedarse con el de antes.
-          montoUsd: pleno,
-        },
-        { status: mirado.no.status },
-      )
+      /**
+       * Si el que falla es el suyo automático, NO se para el pago.
+       *
+       * Ella no tecleó nada: se quedaría sin poder pagar por un descuento
+       * que ni pidió. Se cobra el precio pleno, que es lo que el GET le
+       * enseñaría al recargar.
+       */
+      if (!parsed.data.codigo) {
+        console.info('[pago] la invitación ya no valía al reportar', user.id, mirado.no.motivo)
+      } else {
+        return NextResponse.json(
+          {
+            error: mirado.no.error,
+            motivo: mirado.no.motivo,
+            // Con el importe sin descuento, para que la pantalla pueda
+            // enseñar lo que de verdad toca pagar en vez del de antes.
+            montoUsd: pleno,
+          },
+          { status: mirado.no.status },
+        )
+      }
+    } else {
+      cupon = mirado.vale
     }
-    cupon = mirado.vale
   }
 
   const usd = cupon ? precioConDescuento(pleno, cupon.pct) : pleno
