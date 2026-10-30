@@ -1323,11 +1323,40 @@
       }
     },
 
-    textoCierre: function (inicioIso, zona) {
+    /**
+     * `cierreIso` es el cierre DE VERDAD de esa fila, si se sabe.
+     *
+     * Sin el tercer argumento esto recalcula el cierre con la regla, y eso
+     * es lo correcto casi siempre: la regla y la fila dicen lo mismo. Pero el
+     * 30-10 no. Michael dejo la cena de esa noche abierta hasta las diez de
+     * la mañana como excepcion de un dia, y esta frase siguio escribiendo «se
+     * cierra a medianoche, cuando empieza el viernes» porque la sacaba de
+     * `starts_at`: una medianoche que ya habia pasado, en la pantalla desde
+     * la que se reserva, mientras el correo de las ocho prometia las diez.
+     *
+     * Dos plazos distintos el mismo dia es peor que no dar ninguno. Asi que
+     * cuando la fila no coincide con la regla, manda la fila.
+     */
+    textoCierre: function (inicioIso, zona, cierreIso) {
       var t = Date.parse(inicioIso)
       if (!isFinite(t)) return ''
       var ccs = new Date(t - 4 * 3600000)
       var cierre = api.cierreDe(inicioIso)
+
+      // Movida a mano: se dice la hora, que es lo unico que resuelve la duda.
+      // Al minuto, porque un cierre a medianoche en punto se vive la noche
+      // anterior y decir «el sabado a las 12:00 a.m.» suena a mediodia.
+      if (cierreIso && cierre && Date.parse(cierreIso) !== Date.parse(cierre)) {
+        var alFilo = cierreIso
+        var pz = api.partesDe(cierreIso, zona)
+        if (pz && pz.horas === 0 && pz.minutos === 0) {
+          alFilo = new Date(Date.parse(cierreIso) - 60000).toISOString()
+        }
+        var diaReal = api.diaDe(alFilo, zona)
+        var horaReal = api.horaDe(alFilo, zona)
+        if (diaReal && horaReal) return 'se cierra el ' + diaReal + ' a las ' + horaReal
+      }
+
       if (ccs.getUTCHours() < 12) {
         var diaCierre = cierre ? api.diaDe(cierre, zona) : null
         return 'se cierra el ' + (diaCierre || 'dia antes') + ' a las 5:00 p.m.'

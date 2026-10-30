@@ -47,7 +47,7 @@ type Api = {
   ARRAIGO_EN_LA_MESA: Record<string, string>
   arraigoDe: (codigo: unknown) => string
   cierreDe: (inicioIso: string) => string | null
-  textoCierre: (inicioIso: string, zona?: string) => string
+  textoCierre: (inicioIso: string, zona?: string, cierreIso?: string) => string
   DIAS_GUARDA_FOTOS: number
   MAX_TEXTO: number
   precioTexto: () => string

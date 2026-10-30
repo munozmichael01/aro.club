@@ -1811,7 +1811,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
 
       const { data: evs } = await admin
         .from('events')
-        .select('id, format, starts_at, price_usd, city_slug, status, age_band_min, age_band_max')
+        .select('id, format, starts_at, booking_closes_at, price_usd, city_slug, status, age_band_min, age_band_max')
         .in('id', ids)
         .eq('status', 'open')
         .order('starts_at')
@@ -1836,7 +1836,11 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           precio: ev.price_usd != null ? `${Number(ev.price_usd)} ref` : '',
           // Cuándo se cierra cada una, con la misma frase que ve en la web y
           // en la app. El jueves sale como «se cierra hoy a medianoche».
-          nota: alta(textoCierre(ev.starts_at, zonaDeEv)),
+          //
+          // Con el cierre de la FILA, no solo con el de la regla: una fecha
+          // que se movió a mano tiene que decir su hora, o este correo
+          // promete una cosa y la pantalla de reservar otra.
+          nota: alta(textoCierre(ev.starts_at, zonaDeEv, ev.booking_closes_at ?? undefined)),
         })
       }
 

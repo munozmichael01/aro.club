@@ -1237,7 +1237,17 @@ class Component extends DCLogic {
         // Y en qué idioma se habla esa mesa, si no es español. Lo manda el
         // servidor ya escrito —«En inglés»— para que la app y la web no
         // tengan dos tablas de traducción. También al final.
-        a.etiquetaIdioma ?? null
+        a.etiquetaIdioma ?? null,
+        /**
+         * Y cuando cierra DE VERDAD esta fila. Tambien al final.
+         *
+         * `c[12]` es cuando EMPIEZA, y la frase de abajo sacaba el plazo de
+         * ahi recalculandolo con la regla. El 30-10 la cena de esa noche se
+         * dejo abierta hasta las diez de la mañana como excepcion y la
+         * pantalla siguio diciendo «se cierra a medianoche, cuando empieza el
+         * viernes»: una hora que ya habia pasado, justo donde se reserva.
+         */
+        a.cierraEn ?? null
       ];
     });
     // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato
@@ -1420,7 +1430,7 @@ class Component extends DCLogic {
          * planes de manana todavia van a 24 horas.
          */
         comoFunciona: 'Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona, y antes te decimos en cuál te tocó. La fecha '
-          + (window.AroReglas && c[12] ? AroReglas.textoCierre(c[12]) : 'se cierra a medianoche, cuando empieza su día') + '.',
+          + (window.AroReglas && c[12] ? AroReglas.textoCierre(c[12], null, c[14]) : 'se cierra a medianoche, cuando empieza su día') + '.',
         cargo: 'Tu puesto en esta fecha',
         precio: precioFecha + ' en bolívares',
         nota: 'Cubre armar tu mesa, la verificación de identidad del grupo y el restaurante reservado a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
