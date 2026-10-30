@@ -67,6 +67,21 @@ const banderas = args.filter((a) => a.startsWith('--'))
 const sueltos = args.filter((a) => !a.startsWith('--'))
 const porque = (banderas.find((b) => b.startsWith('--porque=')) ?? '').slice(9).replace(/^["']|["']$/g, '').trim()
 const forzar = banderas.includes('--forzar')
+
+/**
+ * El hueco del ejemplo no pasa de aquí.
+ *
+ * El 30-10 el comando salió con `--porque="MOTIVO"`, se pegó tal cual y el
+ * correo de un cambio de restaurante a tres horas de la cena salió con una
+ * línea que decía MOTIVO. Un marcador de posición en un correo a una persona
+ * de verdad no es un descuido que valga la pena volver a tener: si lo que
+ * llega es el hueco, no se escribe nada.
+ */
+if (/^(motivo|razon|razón|porque|porqué|\.\.\.)$/i.test(porque)) {
+  console.log('«' + porque + '» es el hueco del ejemplo, no un motivo.')
+  console.log('Escribe la frase que vas a querer leer, o quita --porque y el correo sale sin esa línea.')
+  para()
+}
 const aplicar = sueltos[2] === 'aplicar'
 
 // --- el tablero -------------------------------------------------------
