@@ -564,7 +564,11 @@ class Component extends DCLogic {
       // Con el permiso, si la fecha lo exige: canjear un código TAMBIÉN
       // aparta puesto. Sin esto, quien tiene un código choca con el 409 de
       // una pregunta que no se le hizo. Lo vio el agente de la app.
-      body: JSON.stringify({ eventoId: this._evento, codigo: codigo, permiteGrabacion: this.state.permiteGrabacion || undefined })
+      // `acepta` dice que esta pantalla sabe leer un descuento parcial. Sin
+      // el, el servidor contesta la negativa de siempre: es lo que protege a
+      // las apps que ya estan en la calle, que leen cualquier 200 como «tu
+      // plaza esta cubierta».
+      body: JSON.stringify({ eventoId: this._evento, codigo: codigo, acepta: ['descuento'], permiteGrabacion: this.state.permiteGrabacion || undefined })
     })
       .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
       .then(({ ok, x }) => {

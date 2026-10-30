@@ -57,6 +57,22 @@ const cuerpo = z.object({
    * aparta puesto?».
    */
   permiteGrabacion: z.boolean().optional(),
+  /**
+   * Qué respuestas entiende quien llama. Hoy solo `descuento`.
+   *
+   * Es lo que impide que un código parcial se lea como «estás dentro» en una
+   * app vieja. Hasta ayer cualquier 200 de aquí significaba una sola cosa
+   * —puesto apartado sin pagar— y las tres versiones que hay en la calle
+   * hacen eso con cualquier 200: pintan el «listo». Una OTA no las alcanza,
+   * porque main ya cambió de huella nativa.
+   *
+   * Así que la forma nueva solo sale si se pide. Quien no lo pida recibe la
+   * negativa de siempre, que para él es verdad: su pantalla no sabe cobrar
+   * un descuento. Lo encontró el agente de la app leyendo el contrato, y
+   * tiene razón: cambiar de forma una respuesta que ya existía no es
+   * aditivo, y aditivo es la regla con la app.
+   */
+  acepta: z.array(z.string()).optional(),
 })
 
 export async function POST(request: Request) {
@@ -161,6 +177,16 @@ export async function POST(request: Request) {
    * que alguien teclea su código para ver cuánto le queda.
    */
   if (cupon.pct !== 100) {
+    if (!(parsed.data.acepta ?? []).includes('descuento')) {
+      return NextResponse.json(
+        {
+          error: 'Ese código es de descuento parcial y todavía no podemos aplicarlo.',
+          motivo: 'descuento-parcial',
+        },
+        { status: 409 },
+      )
+    }
+
     const { data: tasa } = await admin
       .from('fx_rates')
       .select('rate_date, ves_por_ref')
