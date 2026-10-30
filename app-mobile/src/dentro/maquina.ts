@@ -74,3 +74,47 @@ export function enlaceCalendario(p: Plan): string {
  * y /estas-dentro): así quien la vio al reportar no la vuelve a ver al confirmarse.
  */
 export const claveVista = (empiezaEn: string) => `estas-dentro:${empiezaEn}`
+
+/** Lo que pinta la historia para compartir (TarjetaHistoria de la entrega estas-dentro). */
+export type Historia = {
+  plan: 'Cena' | 'Brunch'
+  /** «Viernes 30», y sus dos mitades. */
+  dia: string
+  diaSemana: string
+  numero: string
+  hora: string
+  zona: string
+  /** La hora de la revelación como la escribe la maqueta: «12:00 m.», «8:00 a.m.». */
+  revela: string
+  revelaNum: string
+  revelaSufijo: string
+  codigo: string | null
+}
+
+/**
+ * Las historias son de cena y de brunch: los planes de movimiento no tienen
+ * tarjeta (su copy habla de mesa y de silla) y comparten solo el mensaje.
+ */
+export function historia(p: Plan, codigo: string | null): Historia | null {
+  const tipo = reglas.COMO_FUNCIONA.tipoDe(p.formato ?? 'dinner')
+  if (tipo === 'grupo') return null
+  const z = p.zonaHoraria
+  const dia = F.diaYNumero(p.empiezaEn, z)
+  const [diaSemana = '', numero = ''] = dia.split(' ')
+  return {
+    plan: tipo === 'brunch' ? 'Brunch' : 'Cena',
+    dia,
+    diaSemana,
+    numero,
+    hora: reglas.horaDe(p.empiezaEn, z) ?? '',
+    zona: zonasEnTexto(p.zonas),
+    ...F.revelaDeHistoria(p.revelaEn, z),
+    codigo,
+  }
+}
+
+/**
+ * Las tarjetas que se ofrecen. La 4 («Hay una silla para ti») es entera el
+ * código: sin referidos todavía, no sale.
+ */
+export const variantesDe = (h: Historia) => (h.codigo ? [1, 2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 5, 6, 7, 8])

@@ -60,3 +60,25 @@ test('compartir lleva el enlace con https, que es lo que hace a WhatsApp leer la
   assert.match(T.mensaje(null), /https:\/\/aro\.club$/)
   assert.match(T.mensaje('ANDREA'), /https:\/\/aro\.club\/i\/ANDREA$/)
 })
+
+test('la historia lleva los datos de la fecha en su zona, y la revelación como la maqueta', () => {
+  const h = M.historia(CENA, null)!
+  assert.equal(h.plan, 'Cena')
+  assert.equal(h.dia, 'Viernes 30')
+  assert.equal(h.numero, '30')
+  assert.equal(h.hora, '7:00 p.m.')
+  assert.equal(h.zona, 'Chacao o Los Palos Grandes')
+  assert.equal(h.revela, '12:00 m.')
+  assert.equal(h.revelaSufijo, 'MEDIODÍA')
+  const b = M.historia({ ...CENA, formato: 'brunch', empiezaEn: '2026-11-01T15:00:00Z', revelaEn: '2026-11-01T12:00:00Z' }, null)!
+  assert.equal(b.plan, 'Brunch')
+  assert.equal(b.revela, '8:00 a.m.')
+  assert.equal(b.revelaNum, '8:00')
+  assert.equal(b.revelaSufijo, 'A.M.')
+})
+
+test('sin código no sale la tarjeta 4, que es entera el código; los planes de movimiento no tienen tarjeta', () => {
+  assert.deepEqual(M.variantesDe(M.historia(CENA, null)!), [1, 2, 3, 5, 6, 7, 8])
+  assert.equal(M.variantesDe(M.historia(CENA, 'ANDREA7KQ')!).length, 8)
+  assert.equal(M.historia({ ...CENA, formato: 'walk' }, null), null)
+})

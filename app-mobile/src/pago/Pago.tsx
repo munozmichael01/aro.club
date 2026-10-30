@@ -560,6 +560,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
             </View>
           }
         />
+        {dentro.hoja}
         {hoja}
       </View>
     )

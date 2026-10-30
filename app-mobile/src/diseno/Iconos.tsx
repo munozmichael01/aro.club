@@ -161,3 +161,18 @@ export function IconoReloj({ tam = 16, color }: P) {
     </Svg>
   )
 }
+
+/** Los cuatro botones de «Comparte tu plan» (entrega estas-dentro, C1): guardar, historias, WhatsApp y más. */
+const TRAZOS_COMPARTIR = {
+  guardar: 'M12 4v11M7 10l5 5 5-5M5 20h14',
+  historias: 'M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4ZM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM17 6.5h.01',
+  whatsapp: 'M21 12a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.2-4.6A8.5 8.5 0 1 1 21 12Z',
+  mas: 'M5 12h.01M12 12h.01M19 12h.01',
+} as const
+export function IconoComparteCon({ tam = 24, color, con }: P & { con: keyof typeof TRAZOS_COMPARTIR }) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d={TRAZOS_COMPARTIR[con]} stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}

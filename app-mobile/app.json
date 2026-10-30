@@ -12,7 +12,8 @@
       "supportsTablet": false,
       "usesAppleSignIn": true,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryAddUsageDescription": "Aro Club guarda en tus fotos la tarjeta de tu plan cuando eliges «Guardar imagen»."
       },
       "associatedDomains": [
         "applinks:aro.club"

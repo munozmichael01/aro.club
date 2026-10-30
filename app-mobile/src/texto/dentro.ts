@@ -62,3 +62,18 @@ export const sinRespuesta = {
   cargar: 'No pudimos cargar tu plan. Revisa la conexión y vuelve a intentarlo.',
   reintentar: 'Reintentar',
 }
+
+/** La hoja «Comparte tu plan» (C1 de «Compartir mi plan»). */
+export const compartir = {
+  titulo: 'Comparte tu plan',
+  bajada: (conCodigo: boolean) => (conCodigo ? 'Elige una. Tu código va dentro.' : 'Elige una.'),
+  etiqueta: ['Etiqueta a ', '@aroclub', ' en tu historia.'] as const,
+  guardar: 'Guardar imagen',
+  historias: 'Historias',
+  whatsapp: 'WhatsApp',
+  mas: 'Más',
+  tarjeta: (n: number, de: number) => `Tarjeta ${n} de ${de}`,
+  // Casilla C: solo del celular.
+  fallo: 'No pudimos preparar la imagen. Vuelve a intentarlo.',
+  copiado: 'Copiamos el mensaje: pégalo junto a la imagen.',
+}

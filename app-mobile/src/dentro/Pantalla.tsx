@@ -71,6 +71,7 @@ export function PantallaDentro(p: { servicio: Servicio; via: M.Via; preguntarAvi
   return (
     <>
       <EstasDentro v={v} enCalendario={acciones.enCalendario} alCalendario={acciones.alCalendario} alCompartir={acciones.alCompartir} ir={p.ir} />
+      {acciones.hoja}
       {hoja}
     </>
   )

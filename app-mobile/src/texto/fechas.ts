@@ -265,3 +265,19 @@ export function cuandoSeRevelaPlan(p: { formato?: string | null; empiezaEn?: str
   const frase = p.empiezaEn ? reglas.cuandoSeRevela(p.empiezaEn, p.zonaHoraria ?? null, p.revelaEn ?? null, p.formato ?? 'dinner') : ''
   return frase || 'Antes del plan'
 }
+
+/**
+ * La hora de la revelación como la escribe la historia para compartir
+ * (TarjetaHistoria): «12:00 m.» y «MEDIODÍA» a las doce en punto; si no,
+ * «8:00 a.m.» y «A.M.». La cifra va aparte porque la tarjeta 7 la pinta enorme.
+ */
+export function revelaDeHistoria(revelaIso: string | null | undefined, zona?: string | null) {
+  const r = revelaIso ? reglas.partesDe(revelaIso, zona) : null
+  if (!r?.hora) return { revela: '', revelaNum: '', revelaSufijo: '' }
+  const mediodia = r.horas === 12 && r.minutos === 0
+  return {
+    revela: mediodia ? '12:00 m.' : r.hora,
+    revelaNum: r.hora.split(' ')[0],
+    revelaSufijo: mediodia ? 'MEDIODÍA' : r.horas < 12 ? 'A.M.' : 'P.M.',
+  }
+}
