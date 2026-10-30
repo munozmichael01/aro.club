@@ -11,6 +11,7 @@
  *
  *   node scripts/empujon-del-viernes.mjs                      dice a quién, sin escribir
  *   node scripts/empujon-del-viernes.mjs muestra CORREO       una sola, para verla
+ *   node scripts/empujon-del-viernes.mjs aplicar ya           encola para la proxima vuelta
  *   node scripts/empujon-del-viernes.mjs aplicar 08:00        encola para esa hora de Caracas
  *
  * `aplicar` BORRA antes las filas sin enviar de `resumen_semanal` con la
@@ -137,8 +138,22 @@ if (orden !== 'aplicar') {
   process.exit(0)
 }
 
-const cuando = aLasDeCaracas(process.argv[3] ?? '08:00')
-if (!cuando) { console.log('\nLa hora se escribe como 08:00.'); process.exit(1) }
+const hora = String(process.argv[3] ?? '08:00').trim()
+const paraManana = hora.startsWith('manana-')
+const cuando = hora === 'ya'
+  ? new Date(Date.now() + 60_000)
+  : aLasDeCaracas(paraManana ? hora.slice(7) : hora)
+if (!cuando) { console.log('\nLa hora se escribe como 08:00, o `ya` para la proxima vuelta de la cola.'); process.exit(1) }
+
+// `aLasDeCaracas` salta a MAÑANA cuando la hora ya pasó, y hacerlo en silencio
+// es perder el correo: el 30-10 se pidieron las 08:00 a las 08:10, y el empujón
+// habla de fechas que cierran HOY a las diez. Si hay que saltar de día, se dice
+// y se pide a proposito con `manana-08:00`.
+if (hora !== 'ya' && !paraManana && cuando.getTime() - Date.now() > 20 * 3600_000) {
+  console.log('\nEsa hora ya pasó hoy en Caracas: ' + car(cuando.toISOString()) + ' seria MAÑANA.')
+  console.log('Para que salga ahora: `aplicar ya`. Si de verdad es para mañana: `aplicar manana-' + hora + '`.')
+  process.exit(1)
+}
 
 if (sobrantes.length) {
   const { error } = await admin.from('scheduled_emails').delete().in('id', sobrantes.map((r) => r.id)).is('sent_at', null)
