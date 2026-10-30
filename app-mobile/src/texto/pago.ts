@@ -44,7 +44,7 @@ export const cupon = {
   etiqueta: 'TU CÓDIGO',
   ejemplo: 'CÓDIGO',
   aplicar: (aplicando: boolean) => (aplicando ? 'Aplicando' : 'Aplicar'),
-  nota: 'Si el código cubre tu puesto, no tienes que pagar nada: queda confirmado aquí mismo. Si es un descuento, baja el total y sigues con tu pago.',
+  nota: 'Aplica tu cupón de descuento.',
   noPudimos: 'No pudimos aplicar el código.',
   sinRed: 'No pudimos aplicar el código. Revisa tu conexión.',
 }
