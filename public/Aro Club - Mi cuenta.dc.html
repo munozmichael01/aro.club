@@ -1429,8 +1429,22 @@ class Component extends DCLogic {
          * una caminata. Y el cierre sale de `reglas.js`, que sabe que los
          * planes de manana todavia van a 24 horas.
          */
+        /**
+         * El punto final solo si la frase no trae ya el suyo.
+         *
+         * `textoCierre` acaba en «a las 5:00 p.m.» cuando el plan es de
+         * mañana, y desde hoy tambien en «a las 10:00 a.m.» cuando la fila se
+         * movio a mano. Pegarle un punto detras daba «p.m..», y con los
+         * brunch ya salia asi. Lo vio el agente de la app, que comparte este
+         * texto y acababa de tropezar con lo mismo.
+         */
         comoFunciona: 'Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona, y antes te decimos en cuál te tocó. La fecha '
-          + (window.AroReglas && c[12] ? AroReglas.textoCierre(c[12], null, c[14]) : 'se cierra a medianoche, cuando empieza su día') + '.',
+          + (() => {
+            const frase = window.AroReglas && c[12]
+              ? AroReglas.textoCierre(c[12], null, c[14])
+              : 'se cierra a medianoche, cuando empieza su día';
+            return frase.endsWith('.') ? frase : frase + '.';
+          })(),
         cargo: 'Tu puesto en esta fecha',
         precio: precioFecha + ' en bolívares',
         nota: 'Cubre armar tu mesa, la verificación de identidad del grupo y el restaurante reservado a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
