@@ -8,8 +8,8 @@ import * as M from './maquina'
 
 /**
  * «Compartir mi plan» en Mi mesa (entrega estas-dentro, C2): para quien ya
- * cerró «Estás dentro». Va debajo de la tarjeta de la mesa y abre la misma
- * hoja de historias. Los planes de movimiento no tienen tarjeta, así que no sale.
+ * cerró «Estás dentro». Va debajo de la tarjeta de la mesa, cerrada o ya
+ * abierta, hasta que empieza la cena, y abre la misma hoja de historias. Los planes de movimiento no tienen tarjeta, así que no sale.
  */
 export function FilaCompartir({ plan, codigo = null }: { plan: M.Plan; codigo?: string | null }) {
   const [abierta, setAbierta] = useState(false)
