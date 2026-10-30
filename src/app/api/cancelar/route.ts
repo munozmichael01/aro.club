@@ -5,6 +5,7 @@ import { z } from 'zod'
 
 import { anotar } from '@/lib/auditoria'
 import { rellenarHueco } from '@/lib/reparto/rellenar'
+import { sacarDeLaPropuesta } from '@/lib/reparto/sacar'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
@@ -237,6 +238,20 @@ export async function POST(request: Request) {
   // espera, si encaja con esa mesa.
   const suMesa = ((reserva.table_members ?? []) as unknown as { table_id: string }[])[0] ?? null
   await admin.from('table_members').delete().eq('booking_id', reserva.id)
+
+  /**
+   * Y de la propuesta que todavía no se ha publicado, donde su silla no es una
+   * fila sino una foto. Sin esto se quedaba dentro, y operación no podía ni
+   * publicar la mesa ni sacarla a mano: el detalle está en `sacarDeLaPropuesta`.
+   *
+   * NO TUMBA LA CANCELACIÓN. Quien canceló ya canceló, y la foto del reparto
+   * no vale un 500 en su pantalla.
+   */
+  try {
+    await sacarDeLaPropuesta(admin, reserva.event_id, user.id)
+  } catch (e) {
+    console.error('[cancelar] no se pudo sacar de la propuesta', reserva.id, e)
+  }
 
   // Y su correo de la mesa, si todavía no ha salido. Se quedaba en cola: quien
   // cancelaba el lunes recibía «tu mesa es la 1» el jueves a mediodía.

@@ -6,6 +6,7 @@ import { anotarPagoDeEvento } from '@/lib/creditos'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { encolar } from '@/lib/correos'
+import { sacarDeLaPropuesta } from '@/lib/reparto/sacar'
 
 /**
  * Sentar o sacar a alguien de una fecha, también si ya cerró.
@@ -177,6 +178,19 @@ export async function POST(request: Request) {
     if (error) {
       console.error('[asiento] no se pudo quitar', error)
       return NextResponse.json({ error: 'No pudimos quitarle el puesto.' }, { status: 500 })
+    }
+
+    /**
+     * Y fuera de la propuesta sin publicar, igual que al cancelar.
+     *
+     * Arriba ya se niega a quitar a quien está en una mesa PUBLICADA, así que
+     * aquí lo que puede quedar es una silla de la foto del reparto. Dejarla
+     * deja la mesa sin poder publicarse ni arreglarse a mano.
+     */
+    try {
+      await sacarDeLaPropuesta(admin, d.eventoId, profileId)
+    } catch (e) {
+      console.error('[asiento] no se pudo sacar de la propuesta', reserva!.id, e)
     }
 
     // El crédito vuelve. Si no se le cobró ninguno —una cortesía, un cupón—

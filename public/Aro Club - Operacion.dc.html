@@ -3001,7 +3001,23 @@ class Component extends DCLogic {
     return this.mandar('/api/operacion/propuesta', { accion: 'mover', corridaId: c, profileId, aMesa })
       .then((r) => {
         this.setState({ recalculando: [] });
-        if (r.ok) this.cargarReparto(this.fechaElegida() && this.fechaElegida().id);
+        if (r.ok) {
+          /**
+           * A quien ya no tiene reserva no se la mueve: se la quita.
+           *
+           * Y se dice, porque si no el arrastre se lee como que la persona se
+           * fue a la espera, y a la espera no fue nadie. El servidor lo
+           * distingue con `estado: 'quitada'`.
+           */
+          const d = r.d || {};
+          if (d.estado === 'quitada') {
+            this.setState({
+              aviso: 'Ya no tenía reserva en esta fecha, así que no se movió a la espera: se quitó de la '
+                + (d.mesa ? 'mesa ' + String(d.mesa).padStart(2, '0') : 'propuesta') + '.',
+            });
+          }
+          this.cargarReparto(this.fechaElegida() && this.fechaElegida().id);
+        }
         return r;
       });
   }

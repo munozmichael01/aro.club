@@ -282,7 +282,50 @@ export async function POST(request: Request) {
     }
   } else {
     const persona = porId.get(d.profileId)
-    if (!persona) return NextResponse.json({ error: 'Esa persona no está.' }, { status: 404 })
+
+    /**
+     * Y si no está en el pool, pero SÍ en la foto: se la saca.
+     *
+     * El pool son las reservas vivas. Quien canceló después de repartir no
+     * sale ahí, y esto contestaba «esa persona no está» con un 404 — cierto
+     * para el pool, falso para la pantalla, donde operación la está viendo
+     * dentro de una mesa con su chip de «ya no está». Michael, 30-10: «le di
+     * pasar a espera y se quedó ahí, de alguna manera me debes permitir
+     * sacarla de la mesa».
+     *
+     * Desde el 30-10 sale sola al cancelar (`sacarDeLaPropuesta`), pero las
+     * fotos tomadas ANTES de eso siguen teniéndola dentro, y quitarla a mano
+     * tiene que funcionar. No se la manda a la espera: quien ya no tiene
+     * reserva no está esperando nada. Se la quita, y punto.
+     */
+    if (!persona) {
+      const suya = mesas.find(
+        (m) => !cerrada(m) && m.integrantes.some((i) => i.profileId === d.profileId),
+      )
+      const enLaEspera = espera.findIndex((e) => e.profileId === d.profileId)
+      if (!suya && enLaEspera < 0) {
+        return NextResponse.json({ error: 'Esa persona no está.' }, { status: 404 })
+      }
+      if (suya) {
+        suya.integrantes = suya.integrantes.filter((i) => i.profileId !== d.profileId)
+      }
+      if (enLaEspera >= 0) espera.splice(enLaEspera, 1)
+      const { error: errorQuitando } = await admin
+        .from('matching_runs')
+        .update({ proposal: mesas as never, unmatched: espera as never })
+        .eq('id', corrida.id)
+      if (errorQuitando) {
+        console.error('[propuesta] no se pudo quitar a quien ya no está', errorQuitando)
+        return NextResponse.json({ error: 'No pudimos guardar el cambio.' }, { status: 500 })
+      }
+      return NextResponse.json({
+        estado: 'quitada',
+        motivo: 'ya-no-esta',
+        mesa: suya?.numero ?? null,
+        mesas,
+        espera,
+      })
+    }
 
     const origen = mesas.find((m) => m.integrantes.some((i) => i.profileId === d.profileId))
     const destino = d.aMesa === 0 ? null : mesas.find((m) => m.numero === d.aMesa)
