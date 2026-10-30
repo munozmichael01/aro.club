@@ -1,6 +1,9 @@
 import 'server-only'
 
 import { type Paso, type Situacion, situacionDePerfil } from '@/lib/embudo'
+import { cookies } from 'next/headers'
+
+import { apuntarQuienInvito, COOKIE_INVITA, leerInvitacion } from '@/lib/referidos'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -154,6 +157,22 @@ export async function trasEntrar(entrada: Entrada): Promise<Salida> {
     }
 
     creado = true
+
+    /**
+     * Y de quién vino, si llegó con el enlace de alguien.
+     *
+     * Aquí y no en las tres puertas: las tres crean perfiles y las tres
+     * tienen que apuntarlo, y escrito tres veces la próxima puerta nacería
+     * sin ello. Solo al CREAR: quien ya tenía cuenta no llegó con el enlace
+     * de nadie.
+     */
+    try {
+      const galleta = (await cookies()).get(COOKIE_INVITA)?.value
+      await apuntarQuienInvito(admin, usuarioId, leerInvitacion(galleta))
+    } catch (e) {
+      // Ni el alta ni la sesión dependen de esto.
+      console.error('[entrar] no se pudo apuntar quién invitó', e)
+    }
 
     if (entrada.leadPrevio && entrada.leadPrevio !== correo) {
       otroCorreo = { registro: entrada.leadPrevio, entrada: correo }

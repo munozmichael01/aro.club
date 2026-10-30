@@ -358,6 +358,10 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     // escrita a mano en la plantilla de fecha cancelada, y bajarla de 48 a 24
     // obligaba a acertar en todos los sitios donde se promete.
     horasCierre: HORAS_DE_CIERRE,
+    // Y las que hacen que un crédito vuelva o se pierda al cancelar. Es otra
+    // cifra distinta de la de arriba —cerrar y cancelar no son lo mismo— y
+    // estaba escrita a mano en la plantilla del acuse de cancelación.
+    horasMargen: HORAS_DE_MARGEN,
     // Los días que guardamos la cédula y la selfie. Misma razón que el
     // precio y que las horas de cierre: estaba escrito a mano en la
     // plantilla, y es una promesa.
@@ -2094,8 +2098,33 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       return { a, datos: { ...base, cupon: (p.cupon as string) ?? '' } }
 
     // --- lo que se cae --------------------------------------------------
+    /**
+     * El acuse de la cancelación. Y QUÉ PASÓ CON EL CRÉDITO.
+     *
+     * La plantilla venía de la maqueta con la frase del margen escrita a
+     * mano —«Cancelaste con margen, así que tu crédito volvió entero»— y un
+     * «4 disponibles» inventado. O sea que a quien cancelaba dos horas antes
+     * de la cena, perdiendo su crédito, el correo le decía que lo tenía de
+     * vuelta, y encima con un saldo falso. La pantalla decía lo correcto; el
+     * correo, lo contrario.
+     *
+     * Lo encontró Michael el 30-10 cancelando el suyo a las seis y pico para
+     * una cena de las siete.
+     *
+     * Son TRES finales y la ruta ya los distinguía en el payload: el crédito
+     * vuelve, el crédito espera a que cuadre un pago en revisión, o el
+     * crédito se pierde por avisar tarde. El saldo se lee al ENVIAR, que es
+     * cuando el abono ya está hecho.
+     */
     case 'cancelacion': {
       const pago = await elPagoDe(admin, fila.profile_id, fila.event_id)
+      const { data: saldo } = await admin
+        .from('v_credit_balance')
+        .select('balance')
+        .eq('profile_id', fila.profile_id ?? '')
+        .maybeSingle()
+
+      const creditos = Number(saldo?.balance ?? 0)
       return {
         a,
         datos: {
@@ -2103,6 +2132,15 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           queEra: nombreDelFormato(evento?.format),
           zona: (await nombresDeZonas(admin, evento?.zone_slug ? [evento.zone_slug] : []))[0] ?? '',
           referencia: pago.referencia,
+          creditoDevuelto: p.creditoDevuelto === true,
+          creditoEnEspera: p.creditoEnEspera === true,
+          // Ni lo uno ni lo otro: avisó tarde y el crédito se pierde. Se
+          // calcula aquí y no en la plantilla porque un `{{#no}}` de dos
+          // condiciones no existe, y escribirlo al revés es justo cómo se
+          // cuela una frase que dice lo contrario de lo que pasó.
+          creditoPerdido: p.creditoDevuelto !== true && p.creditoEnEspera !== true,
+          // Texto y no número: con cero, `{{#si}}` no pintaría la fila.
+          creditosTexto: creditos === 1 ? '1 disponible' : creditos + ' disponibles',
         },
       }
     }

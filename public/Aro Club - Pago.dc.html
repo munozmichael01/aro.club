@@ -502,7 +502,12 @@ class Component extends DCLogic {
           ? (d.pago.estado === 'confirmed' ? 5 : (d.pago.estado === 'rejected' ? 6 : 4))
           : 0;
         const primero = (d.metodos || []).findIndex((m) => m.activo);
-        this.setState({ datos: d, metodo: primero < 0 ? 0 : primero, fase: fase });
+        this.setState({
+          datos: d, metodo: primero < 0 ? 0 : primero, fase: fase,
+          // Quien llego invitada lo trae puesto del servidor y no teclea
+          // nada: los importes de `d` ya vienen rebajados.
+          descuento: this.descuentoDe(d),
+        });
       })
       .catch(() => { // Al login DICIENDO a donde ibas. Sin esto, quien llega desde un correo
       // —«Ver mi reserva», «Sube tu cedula», «Ver mi mesa»— aterriza en el
@@ -541,6 +546,17 @@ class Component extends DCLogic {
         this.setState({ subiendoCaptura: false, capturaRuta: x.ruta, capturaNombre: archivo.name || '' });
       })
       .catch(() => this.setState({ subiendoCaptura: false, fallo: 'No pudimos subir la captura. Revisa tu conexión.' }));
+  }
+
+  /** Lo que el servidor dice que ya esta aplicado, en la forma del estado. */
+  descuentoDe(d) {
+    if (!d || !d.descuento) return null;
+    return {
+      codigo: d.descuento.codigo,
+      pct: d.descuento.pct,
+      nombre: d.descuento.nombre || '',
+      montoPleno: d.montoPleno,
+    };
   }
 
   /**
@@ -642,7 +658,7 @@ class Component extends DCLogic {
             this.setState({ descuento: null });
             fetch('/api/pago?evento=' + encodeURIComponent(this._evento))
               .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin datos'))))
-              .then((d) => this.setState({ datos: d }))
+              .then((d) => this.setState({ datos: d, descuento: this.descuentoDe(d) }))
               .catch(() => { /* se queda con lo que tenia; el fallo ya lo dice */ });
           }
           this.setState({ enviando: false, fase: 2, fallo: x.error || 'No pudimos registrar tu pago.' });

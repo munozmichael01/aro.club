@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/server'
 
 import { ciudadValida } from '@/lib/ciudades'
 import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
+import { cuentaDe, codigoDe, DESCUENTO_PCT, POR_CADA } from '@/lib/referidos'
 
 /**
  * Mi perfil: ver y editar lo que respondió.
@@ -242,7 +243,40 @@ export async function GET() {
     })),
     cenas,
     historial: cenasDe,
+    /**
+     * «Invita a alguien»: su código y lo que lleva traído.
+     *
+     * `null` sin verificar, y no es un olvido: sin verificar no se reserva,
+     * así que tampoco se invita. La pantalla no enseña la sección entera en
+     * vez de enseñar un código que no sirve.
+     *
+     * El código se CREA aquí si todavía no tiene, y por eso esta lectura
+     * escribe. Es idempotente —el único por persona lo garantiza aunque se
+     * abran dos pestañas— y la alternativa, un botón de «créame un código»,
+     * es un paso más para llegar al mismo sitio.
+     */
+    invitar: await invitarDe(admin, user.id, tipos.has('id_document') && tipos.has('selfie')),
   })
+}
+
+/** Su código, su cuenta y las dos cifras con las que se escribe el texto. */
+async function invitarDe(
+  admin: ReturnType<typeof createAdminClient>,
+  perfilId: string,
+  verificada: boolean,
+) {
+  if (!verificada) return null
+  const codigo = await codigoDe(admin, perfilId)
+  if (!codigo) return null
+  const cuenta = await cuentaDe(admin, perfilId)
+  return {
+    codigo,
+    /** El enlace que se comparte, armado aquí para que no haya dos formas. */
+    enlace: 'https://aro.club/i/' + codigo,
+    pct: DESCUENTO_PCT,
+    porCada: POR_CADA,
+    ...cuenta,
+  }
 }
 
 export async function POST(request: Request) {

@@ -18,7 +18,7 @@
 </style>
 </head>
 <body style="margin:0;padding:0;background:#FAF3E4;">
-<span style="display:none;font-size:1px;color:#FAF3E4;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Cancelaste tu puesto del {{ cuando }}. Tu crédito volvió entero.</span>
+<span style="display:none;font-size:1px;color:#FAF3E4;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Cancelaste tu puesto del {{ cuando }}.{{#si creditoDevuelto}} Tu crédito volvió entero.{{/si}}{{#si creditoEnEspera}} El crédito vuelve en cuanto cuadre tu pago.{{/si}}{{#si creditoPerdido}} Avisaste con menos de {{ horasMargen }} horas, así que ese crédito se pierde.{{/si}}</span>
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#FAF3E4" style="background:#FAF3E4;">
 <tr><td align="center" bgcolor="#FAF3E4" style="padding:0;">
@@ -45,13 +45,13 @@
   </td></tr>
 
   <tr><td class="p" style="padding:16px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2C4A38;mso-line-height-rule:exactly;">
-    Cancelaste con margen, así que tu crédito volvió entero. Nadie de la mesa se entera.
+    {{#si creditoDevuelto}}Cancelaste con margen, así que tu crédito volvió entero. Nadie de la mesa se entera.{{/si}}{{#si creditoEnEspera}}Cancelaste con margen, así que el crédito es tuyo: entra en cuanto demos por bueno tu pago. Nadie de la mesa se entera.{{/si}}{{#si creditoPerdido}}Avisaste con menos de {{ horasMargen }} horas, así que ese crédito se pierde. Gracias por decirlo igual: preferimos una mesa de cinco a un puesto vacío.{{/si}}
   </td></tr>
 
   <tr><td class="p" style="padding:26px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#FFFBF0;border-radius:22px;">
       <tr><td style="padding:20px 24px 13px 24px;border-bottom:1px solid #D8CFB6;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;">Lo cancelado<br /><strong style="font-size:16px;color:#14342A;">{{ queEra }} · {{ cuando }} · {{ hora }} · {{ zona }}</strong></td></tr>
-      <tr><td style="padding:13px 24px 13px 24px;border-bottom:1px solid #D8CFB6;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;">Tus créditos<br /><strong style="font-size:16px;color:#14342A;">4 disponibles · no caducan</strong></td></tr>
+      <tr><td style="padding:13px 24px 13px 24px;border-bottom:1px solid #D8CFB6;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;">Tus créditos<br /><strong style="font-size:16px;color:#14342A;">{{ creditosTexto }} · no caducan</strong></td></tr>
       <tr><td style="padding:13px 24px 20px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#33513F;mso-line-height-rule:exactly;">Referencia<br /><strong style="font-size:16px;color:#14342A;">{{ referencia }}</strong></td></tr>
     </table>
   </td></tr>
