@@ -37,8 +37,8 @@ type Api = {
   MAX_TEXTO: number
   /** Cuándo cierra una fecha (20-10): las cenas a medianoche al empezar su día; los planes de mañana, a las 5:00 p.m. del día anterior. */
   cierreDe: (inicioIso: string) => string | null
-  /** «se cierra a medianoche, cuando empieza el viernes» / «se cierra el sábado a las 5:00 p.m.»: lo mismo en web, app y correos. */
-  textoCierre: (inicioIso: string, zona?: string | null) => string
+  /** «se cierra a medianoche, cuando empieza el viernes» / «se cierra el sábado a las 5:00 p.m.»: lo mismo en web, app y correos. Con `cierreIso` (el `cierraEn` real de la fecha), si se movió a mano, dice esa hora (c29a108). */
+  textoCierre: (inicioIso: string, zona?: string | null, cierreIso?: string | null) => string
   /** El juego de la mesa (mazo aprobado por Michael, JUEGO.md). */
   JUEGO: JuegoDeMesa
   /** Las `porRonda` preguntas de una ronda, deterministas por mesa: todos los teléfonos de la mesa ven las mismas. `ronda` = índice o clave; `[]` si no existe. */

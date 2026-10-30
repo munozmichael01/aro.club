@@ -150,7 +150,7 @@ export function tarjeta(d: MiCuenta, m: MiMesa | null, ahora: number): Tarjeta {
     // El cierre se dice como en la agenda y los correos (`textoCierre`): una cena
     // cierra a las 00:00 de SU día, y «se cierra el sábado» se leía como que
     // quedaba el sábado entero.
-    const cierre = pf ? reglas.textoCierre(pf.empiezaEn, pf.zonaHoraria) : ''
+    const cierre = pf ? reglas.textoCierre(pf.empiezaEn, pf.zonaHoraria, pf.cierraEn) : ''
     cuerpo = pf ? T.cuerpoReservar(pf.apuntados, cierre ? ` y ${cierre}` : '', cuerpo) : T.sinFecha
     if (!d.proximaFecha) accion = T.verAgenda
   }
@@ -305,7 +305,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       precio: precioDe(a),
       graba: !!a.permisoObligatorio,
       idioma: a.idioma ? (a.etiquetaIdioma ?? null) : null,
-      cierre: reglas.textoCierre(a.empiezaEn, a.zonaHoraria),
+      cierre: reglas.textoCierre(a.empiezaEn, a.zonaHoraria, a.cierraEn),
       empiezaEn: a.empiezaEn,
       zonaHoraria: a.zonaHoraria ?? null,
     })
