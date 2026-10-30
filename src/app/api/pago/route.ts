@@ -4,6 +4,7 @@ import { cabeEnLaFecha, MOTIVO_EDAD, porQueNoCabe, tieneEdadMinima } from '@/lib
 import { z } from 'zod'
 
 import { anotarPagoDeEvento } from '@/lib/creditos'
+import { anotarCanje, cuponParaPagar, precioConDescuento, type Vale } from '@/lib/cupones'
 import { campoDe, valido } from '@/lib/reglas'
 import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
 import { datosDePago } from '@/lib/datos-de-pago'
@@ -54,6 +55,15 @@ const cuerpo = z.object({
    * que el pago.
    */
   permiteGrabacion: z.boolean().optional(),
+  /**
+   * El código de descuento, si lo aplicó en la pantalla.
+   *
+   * Viene el CÓDIGO y nunca el importe con el descuento ya hecho: si valiera
+   * lo que manda la pantalla, el precio lo elegiría quien paga. Aquí se
+   * vuelve a comprobar entero —que exista, que no esté gastado, que sea su
+   * primera fecha— y el importe se calcula otra vez en el servidor.
+   */
+  codigo: z.string().min(1).max(40).optional(),
 })
 
 
@@ -482,7 +492,43 @@ export async function POST(request: Request) {
     )
   }
 
-  const usd = Number(evento.price_usd ?? PRECIO_USD)
+  /**
+   * El descuento, antes de calcular cuánto se cobra.
+   *
+   * Las reglas son las mismas que `/api/cupon` usa al teclearlo, leídas del
+   * mismo sitio, y se vuelven a comprobar aquí a propósito: entre que la
+   * pantalla enseñó «−20%» y que la persona vuelve del banco pueden pasar
+   * horas, y en ese rato el código pudo agotarse o caducar.
+   *
+   * Si ya no vale, se PARA. Registrar el pleno en silencio cobraría más de lo
+   * que se le dijo, y registrar el descuento sin que el código valga regala
+   * dos ref sin que nadie lo haya decidido.
+   */
+  const pleno = Number(evento.price_usd ?? PRECIO_USD)
+  let cupon: Vale | null = null
+
+  if (parsed.data.codigo) {
+    const mirado = await cuponParaPagar(admin, {
+      codigo: parsed.data.codigo,
+      perfilId: user.id,
+      evento: { id: evento.id },
+    })
+    if ('no' in mirado) {
+      return NextResponse.json(
+        {
+          error: mirado.no.error,
+          motivo: mirado.no.motivo,
+          // Con el importe sin descuento, para que la pantalla pueda enseñar
+          // lo que de verdad toca pagar en vez de quedarse con el de antes.
+          montoUsd: pleno,
+        },
+        { status: mirado.no.status },
+      )
+    }
+    cupon = mirado.vale
+  }
+
+  const usd = cupon ? precioConDescuento(pleno, cupon.pct) : pleno
   const ahora = new Date().toISOString()
 
   // Vale la tasa que VIO, no la que hay cuando vuelve.
@@ -636,7 +682,18 @@ export async function POST(request: Request) {
     fx_rate: m.moneda === 'VES' ? tasaAplicada : null,
     fx_congelado_en: m.moneda === 'VES' ? ahora : null,
     reportado_en: ahora,
-    datos: datos as never,
+    /**
+     * Lo que escribió, y el código si hubo descuento.
+     *
+     * El código va en `cupon` y NO en `codigo`, que es un campo de verdad de
+     * Zelle y de Bizum —«Código de confirmación»— y machacarlo dejaría a
+     * operación cuadrando un pago contra un código que no es el del banco.
+     *
+     * Y va aquí además de en `coupon_redemptions` porque es lo que el panel
+     * ya pinta campo a campo: sin esto, quien cuadra el pago ve 8 ref donde
+     * la fecha vale 10 y no tiene con qué explicárselo.
+     */
+    datos: (cupon ? { ...datos, cupon: cupon.code } : datos) as never,
     captura_path: captura ?? null,
     // La referencia y el banco viven en su columna ADEMÁS de en `datos`.
     // Estaban siempre en null porque nadie las escribía, y cuadrar un pago
@@ -671,6 +728,24 @@ export async function POST(request: Request) {
     }
     console.error('[pago] no se registró el reporte', errorPago)
     return NextResponse.json({ error: 'No pudimos registrar tu pago.' }, { status: 500 })
+  }
+
+  /**
+   * Y el canje, con el pago delante.
+   *
+   * Después del pago y no antes: si se apuntara primero y el insert fallara,
+   * el código quedaría gastado sin que nadie haya pagado con él, y esa
+   * persona no puede volver a usarlo nunca. Al revés el peor caso es un pago
+   * con descuento cuyo canje no se anotó, que se ve y se arregla.
+   */
+  if (cupon) {
+    await anotarCanje(admin, {
+      code: cupon.code,
+      perfilId: user.id,
+      bookingId,
+      paymentId: pagoCreado?.id ?? null,
+      usados: cupon.usados,
+    })
   }
 
   if (!m.manual) {
@@ -713,5 +788,9 @@ export async function POST(request: Request) {
     estado: m.manual ? 'reportado' : 'confirmado',
     // Lo primero que tiene que leer: su puesto está apartado.
     puestoApartado: true,
+    // Y con cuánto se quedó registrado, que con descuento no es el precio de
+    // la fecha. La pantalla del «listo» lo enseña, y la app lo pidió así.
+    montoUsd: usd,
+    descuento: cupon ? { codigo: cupon.code, pct: cupon.pct, nombre: cupon.nombre } : null,
   })
 }

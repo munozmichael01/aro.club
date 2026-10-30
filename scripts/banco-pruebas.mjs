@@ -22,6 +22,15 @@ const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_RO
 const CORREO = 'banco-pruebas@aro.club'
 const CLAVE = claveDe('BANCO_CLAVE', { para: 'la cuenta del banco de pruebas' })
 const RASTRO = new URL('../.banco-pruebas-fechas.json', import.meta.url).pathname
+/**
+ * El codigo del 20% con el que se prueba el descuento parcial.
+ *
+ * Lleva dueño a proposito: un codigo de referido es un cupon con
+ * `creado_por`, y son esas tres reglas —no el tuyo, no dos, solo la primera
+ * fecha— las que no se pueden comprobar con un cupon de operacion. El dueño
+ * es otra cuenta de PRUEBA, nunca una de verdad.
+ */
+const CODIGO_PRUEBA = 'BANCO20'
 
 async function cuentaExistente() {
   const { data } = await admin.auth.admin.listUsers({ perPage: 200 })
@@ -44,6 +53,10 @@ async function limpiar() {
     for (const ev of ids) await admin.from('events').delete().eq('id', ev)
     fs.unlinkSync(RASTRO)
   }
+  // El codigo de prueba y lo que se canjeo con el. Antes que el perfil:
+  // `coupon_redemptions.profile_id` apunta a `profiles` y lo bloquea.
+  await admin.from('coupon_redemptions').delete().eq('profile_id', u.id)
+  await admin.from('coupons').delete().eq('code', CODIGO_PRUEBA)
   await admin.from('verifications').delete().eq('profile_id', u.id)
   await admin.from('profiles').delete().eq('id', u.id)
   await admin.auth.admin.deleteUser(u.id)
@@ -65,7 +78,7 @@ async function limpiar() {
  *
  * Y ahora un modo que no existe FALLA. Silencioso es como esto pasó.
  */
-const MODOS = ['borrar', 'verificada', 'purgada', 'cenas', 'mesa', 'revelada', 'lista']
+const MODOS = ['borrar', 'verificada', 'purgada', 'cenas', 'mesa', 'revelada', 'lista', 'cupon']
 
 /**
  * `--local <nombre o id>`: en qué sitio se sienta la mesa.
@@ -299,6 +312,65 @@ if (resto.includes('lista')) {
   }).filter((f) => f.value !== null && !(Array.isArray(f.value) && !f.value.length))
   if (filas.length) await admin.from('answers').insert(filas)
   console.log('  perfil completo, verificado, ' + filas.length + ' respuestas')
+}
+
+if (resto.includes('cupon')) {
+  // De otra cuenta de prueba, que es lo que hace que valga como referido.
+  // Si no hay ninguna, se queda sin dueño: sirve para el descuento, no para
+  // las reglas del referido, y se dice.
+  const { data: otras } = await admin
+    .from('profiles')
+    .select('id, display_name, full_name')
+    .eq('es_prueba', true)
+    .neq('id', id)
+    .limit(1)
+
+  const dueno = (otras ?? [])[0] ?? null
+  const { error: ec } = await admin.from('coupons').insert({
+    code: CODIGO_PRUEBA,
+    descuento_pct: 20,
+    creado_por: dueno?.id ?? null,
+    activo: true,
+    max_usos: null,
+    caduca_at: null,
+    nota: 'Banco de pruebas. Lo borra `borrar`.',
+  })
+  if (ec) console.log('  ! cupon:', ec.message)
+  else {
+    /**
+     * Y su propia fecha, en `draft`, para poder pagarla con el codigo.
+     *
+     * No vale la de `mesa`: esa nace `locked` y `/api/cupon` se niega a
+     * aplicar un codigo a una fecha que ya no admite gente, con razon. Y no
+     * se pone `open` porque `v_fechas_publicas` solo esconde los `draft`:
+     * una fecha de prueba en `open` se asoma por la vista publica.
+     */
+    /**
+     * DOS fechas, no una.
+     *
+     * La segunda es la que comprueba lo que de verdad protege el descuento:
+     * que el codigo de invitacion es de la PRIMERA fecha. Con una sola se
+     * prueba que la rebaja se aplica, que es la mitad facil.
+     */
+    const { data: locs } = await admin.from('restaurants').select('id').limit(1)
+    for (const cual of ['la primera', 'la segunda']) {
+      const dias = cual === 'la primera' ? 3 : 5
+      const { data: fecha, error: ef2 } = await admin.from('events').insert({
+        starts_at: new Date(Date.now() + dias * 86400_000).toISOString(),
+        booking_closes_at: new Date(Date.now() + (dias - 1) * 86400_000).toISOString(),
+        reveal_at: new Date(Date.now() + (dias - 0.5) * 86400_000).toISOString(),
+        restaurant_id: (locs ?? [])[0]?.id ?? null,
+        status: 'draft', price_usd: 10, city_slug: 'caracas', es_prueba: true,
+      }).select('id').single()
+
+      if (ef2) { console.log('  ! fecha del cupon:', ef2.message); continue }
+      const ya = fs.existsSync(RASTRO) ? JSON.parse(fs.readFileSync(RASTRO, 'utf8')) : []
+      fs.writeFileSync(RASTRO, JSON.stringify([...ya, fecha.id]))
+      console.log('  ' + cual + ': /pago?evento=' + fecha.id)
+    }
+    console.log('  codigo ' + CODIGO_PRUEBA + ' · −20%'
+      + (dueno ? ' · de ' + (dueno.display_name || dueno.full_name || 'otra cuenta de prueba') : ' · SIN DUEÑO (no prueba las reglas del referido)'))
+  }
 }
 
 console.log('lista ' + id + (resto.length ? ' · ' + resto.join(', ') : ''))

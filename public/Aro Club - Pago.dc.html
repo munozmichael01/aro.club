@@ -78,6 +78,19 @@
             <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">Un puesto</span>
             <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ precioTexto }}</span>
           </div>
+          <!--
+            El descuento del código, como una línea más del recibo.
+
+            Va aquí y no en un sello aparte porque es dinero: debajo del
+            precio, encima del total, y con la cifra que se quita a la
+            derecha. Quien no tiene código no ve esta fila.
+          -->
+          <sc-if value="{{ hayDescuento }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-top:9px">
+              <span style="flex:1 1 auto;font:500 15px/1.5 'Inter Tight',sans-serif;color:#1B5138">{{ textoDescuento }}</span>
+              <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#1B5138;font-variant-numeric:tabular-nums">{{ montoDescuento }}</span>
+            </div>
+          </sc-if>
           <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-top:9px">
             <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">{{ etiquetaTasa }}</span>
             <span style="font:500 15px/1.4 'Inter Tight',sans-serif;color:#33513F;font-variant-numeric:tabular-nums">{{ tasaTexto }}</span>
@@ -154,7 +167,7 @@
                   <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ falloCupon }}</span>
                 </div>
               </sc-if>
-              <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:11px;max-width:46ch;text-wrap:pretty">Si el código cubre tu puesto, no tienes que pagar nada: queda confirmado aquí mismo.</div>
+              <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:11px;max-width:46ch;text-wrap:pretty">Si el código cubre tu puesto, no tienes que pagar nada: queda confirmado aquí mismo. Si es un descuento, baja el total y sigues con tu pago.</div>
             </div>
           </sc-if>
         </div>
@@ -456,6 +469,11 @@ class Component extends DCLogic {
     // Qué campo de banco tiene su lista desplegada.
     bancoAbierto: null,
     cupon: '', cuponAbierto: false, aplicandoCupon: false, falloCupon: '',
+    // El descuento ya aplicado, cuando el codigo es parcial: el codigo, el
+    // tanto por ciento, de quien es y el precio sin descontar. No es el
+    // importe a pagar —ese vive en `datos`, como el de siempre— es de donde
+    // sale y por que.
+    descuento: null,
     // El permiso de grabación, cuando la fecha se graba entera. Aquí es
     // condición: esta pantalla es la que aparta el puesto.
     permiteGrabacion: false,
@@ -554,6 +572,33 @@ class Component extends DCLogic {
           this.setState({ aplicandoCupon: false, falloCupon: x.error || 'No pudimos aplicar el código.' });
           return;
         }
+        // Parcial: no hay puesto apartado ni pantalla de «listo». Se queda
+        // en la misma, con el importe nuevo y el codigo puesto, y sigue por
+        // donde sigue todo el mundo: metodo, banco y reporte.
+        if (x.estado === 'descuento') {
+          const D = this.state.datos || {};
+          // Por id y nunca por posicion: la lista de metodos que contesta el
+          // cupon lleva solo los encendidos, y emparejarlas por indice
+          // pondria el importe de Pago Movil en el de Zelle.
+          const nuevos = {};
+          (x.metodos || []).forEach(function (m) { nuevos[m.id] = m.datos; });
+          this.setState({
+            aplicandoCupon: false,
+            cuponAbierto: false,
+            falloCupon: '',
+            descuento: { codigo: x.codigo, pct: x.pct, nombre: x.nombre || '', montoPleno: x.montoPleno },
+            datos: Object.assign({}, D, {
+              montoUsd: x.montoUsd,
+              montoLocal: x.montoLocal != null ? x.montoLocal : D.montoLocal,
+              tasa: x.tasa != null ? x.tasa : D.tasa,
+              tasaDe: x.tasaDe || D.tasaDe,
+              metodos: (D.metodos || []).map(function (m) {
+                return nuevos[m.id] ? Object.assign({}, m, { datos: nuevos[m.id] }) : m;
+              })
+            })
+          });
+          return;
+        }
         this.setState({ aplicandoCupon: false, fase: 7 });
       })
       .catch(() => this.setState({ aplicandoCupon: false, falloCupon: 'No pudimos aplicar el código. Revisa tu conexión.' }));
@@ -575,12 +620,30 @@ class Component extends DCLogic {
         tasaVista: this.state.datos.tasa || undefined,
         // El permiso, cuando la fecha se graba entera. El servidor no aparta
         // puesto sin él.
-        permiteGrabacion: this.state.permiteGrabacion || undefined
+        permiteGrabacion: this.state.permiteGrabacion || undefined,
+        // El codigo, no el importe: el descuento lo vuelve a calcular el
+        // servidor. Si valiera lo que manda esta pantalla, el precio lo
+        // elegiria quien paga.
+        codigo: (this.state.descuento && this.state.descuento.codigo) || undefined
       })
     })
       .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
       .then(({ ok, x }) => {
-        if (!ok) { this.setState({ enviando: false, fase: 2, fallo: x.error || 'No pudimos registrar tu pago.' }); return; }
+        if (!ok) {
+          // Si lo que se cayo es el CODIGO —se agoto, caduco, o resulta que
+          // no era su primera fecha— el descuento deja de valer y con el los
+          // importes de toda la pantalla. Se vuelven a pedir al servidor en
+          // vez de recalcularlos aqui: el precio lo dice el, no esta pantalla.
+          if (this.state.descuento && x.montoUsd != null) {
+            this.setState({ descuento: null });
+            fetch('/api/pago?evento=' + encodeURIComponent(this._evento))
+              .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin datos'))))
+              .then((d) => this.setState({ datos: d }))
+              .catch(() => { /* se queda con lo que tenia; el fallo ya lo dice */ });
+          }
+          this.setState({ enviando: false, fase: 2, fallo: x.error || 'No pudimos registrar tu pago.' });
+          return;
+        }
         this.setState({ enviando: false, fase: x.estado === 'confirmado' ? 5 : 4 });
       })
       .catch(() => this.setState({ enviando: false, fase: 2, fallo: 'No pudimos registrar tu pago.' }));
@@ -945,7 +1008,26 @@ class Component extends DCLogic {
       totalTexto: mSel.moneda,
       // Las dos salian escritas en el marcado: «8,00 USD» y «1 USD = 62,40
       // Bs». La segunda mentia por un factor de doce.
-      precioTexto: D.montoUsd != null ? dinero(D.montoUsd, 'ref') : '—',
+      /**
+       * «Un puesto» enseña el precio PLENO cuando hay descuento.
+       *
+       * Con el importe ya descontado ahi arriba, la fila del codigo y el
+       * total dirian lo mismo tres veces y no se veria de donde sale la
+       * rebaja. Asi se lee como cualquier recibo: el precio, lo que se
+       * quita, y el total.
+       */
+      precioTexto: (S.descuento && S.descuento.montoPleno != null)
+        ? dinero(S.descuento.montoPleno, 'ref')
+        : (D.montoUsd != null ? dinero(D.montoUsd, 'ref') : '—'),
+      hayDescuento: !!S.descuento,
+      // El copy que aprobo Michael el 29-10: «Código de Andrea · −20%». Sin
+      // nombre —los cupones de operación no son de nadie— va sin el de.
+      textoDescuento: S.descuento
+        ? ((S.descuento.nombre ? 'Código de ' + S.descuento.nombre : 'Tu código') + ' · −' + S.descuento.pct + '%')
+        : '',
+      montoDescuento: (S.descuento && S.descuento.montoPleno != null && D.montoUsd != null)
+        ? '−' + dinero(S.descuento.montoPleno - D.montoUsd, 'ref')
+        : '',
       // «de hoy» solo si la fila es de hoy. El cron del BCV puede no haber
       // pasado —fin de semana, festivo, un fallo— y entonces la tasa buena es
       // la del ultimo dia publicado: se dice cual, en vez de llamarla de hoy.

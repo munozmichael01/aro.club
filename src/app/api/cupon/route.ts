@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { anotarPagoDeEvento } from '@/lib/creditos'
+import { datosDePago } from '@/lib/datos-de-pago'
+import { anotarCanje, cuponParaPagar, normalizarCodigo, precioConDescuento } from '@/lib/cupones'
 import { encolar } from '@/lib/correos'
+import { PRECIO_USD } from '@/lib/reglas'
 import { hablaElIdioma, noCabePorIdioma, pideIdioma } from '@/lib/idioma'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
@@ -21,6 +24,18 @@ import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
  * Lo que sí reutiliza es la idea del método `manual = false`, que ya estaba
  * escrita: confirmar en el acto y mandar el acuse. El cupón es un método de
  * pago que no cobra.
+ *
+ * ## Dos salidas, y solo una canjea
+ *
+ * Desde el 30-10 esta ruta también contesta a los códigos PARCIALES, que
+ * antes se rechazaban en seco. Un 20% no confirma nada: hay que transferir el
+ * resto. Así que lo único que hace con ellos es decir cuánto se paga ahora
+ * —`estado: 'descuento'`— para que la pantalla lo enseñe ANTES de que la
+ * persona salga al banco; el canje se apunta en `/api/pago`, al reportar.
+ *
+ * Por eso el permiso de grabación solo se exige en el camino del 100%: es el
+ * único que aparta puesto. Pedir permiso para ser grabado antes de poder
+ * calcular un descuento sería pedirlo por nada.
  *
  * ## El orden importa
  *
@@ -44,11 +59,6 @@ const cuerpo = z.object({
   permiteGrabacion: z.boolean().optional(),
 })
 
-/** Mayúsculas y sin espacios: nadie teclea un código como está guardado. */
-function normalizar(codigo: string): string {
-  return codigo.trim().toUpperCase().replace(/\s+/g, '')
-}
-
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -59,29 +69,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Petición inválida.' }, { status: 400 })
   }
 
-  const codigo = normalizar(parsed.data.codigo)
+  const codigo = normalizarCodigo(parsed.data.codigo)
   const admin = createAdminClient()
 
   // --- la fecha ---------------------------------------------------------
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, status, credit_cost, grabacion, grabacion_requerida, idioma')
+    .select('id, starts_at, booking_closes_at, status, credit_cost, price_usd, grabacion, grabacion_requerida, idioma')
     .eq('id', parsed.data.eventoId)
     .maybeSingle()
 
   if (!evento) return NextResponse.json({ error: 'Esa fecha no existe.' }, { status: 404 })
-
-  // El mismo candado que en las otras dos puertas: sin permiso no hay puesto
-  // en una fecha que se graba, se pague como se pague.
-  if ((evento as { grabacion_requerida?: boolean }).grabacion_requerida && parsed.data.permiteGrabacion !== true) {
-    return NextResponse.json(
-      {
-        error: 'Esta cena la grabamos, así que para apartar puesto hace falta tu permiso.',
-        motivo: 'falta-permiso-grabacion',
-      },
-      { status: 409 },
-    )
-  }
 
   /**
    * Y sin el idioma de la mesa tampoco hay puesto.
@@ -133,53 +131,106 @@ export async function POST(request: Request) {
   }
 
   // --- el cupón ---------------------------------------------------------
-  const { data: cupon } = await admin
-    .from('coupons')
-    .select('code, descuento_pct, max_usos, usados, caduca_at, event_id, activo')
-    .eq('code', codigo)
-    .maybeSingle()
+  //
+  // Las reglas enteras viven en `lib/cupones`, compartidas con `/api/pago`:
+  // dos ideas de qué código vale serían dos respuestas a la misma pregunta.
+  const mirado = await cuponParaPagar(admin, {
+    codigo,
+    perfilId: user.id,
+    evento: { id: evento.id },
+  })
 
-  // Un código que no existe y uno apagado dicen lo MISMO a quien lo teclea.
-  // Distinguirlos le contaría a un desconocido qué códigos existen.
-  if (!cupon || !cupon.activo) {
-    return NextResponse.json({ error: 'Ese código no vale.' }, { status: 404 })
-  }
-
-  if (cupon.caduca_at && new Date(cupon.caduca_at).getTime() < Date.now()) {
-    return NextResponse.json({ error: 'Ese código ya caducó.' }, { status: 409 })
-  }
-
-  if (cupon.max_usos != null && cupon.usados >= cupon.max_usos) {
-    return NextResponse.json({ error: 'Ese código ya se agotó.' }, { status: 409 })
-  }
-
-  if (cupon.event_id && cupon.event_id !== evento.id) {
-    return NextResponse.json({ error: 'Ese código no vale para esta fecha.' }, { status: 409 })
-  }
-
-  // Hoy solo existe el del 100%. La columna admite parciales para el día que
-  // hagan falta, pero cobrar el resto es otro camino —tasa, referencia,
-  // conciliación— y prometerlo a medias sería peor que no tenerlo.
-  if (cupon.descuento_pct !== 100) {
+  if ('no' in mirado) {
     return NextResponse.json(
-      { error: 'Ese código es de descuento parcial y todavía no podemos aplicarlo.' },
-      { status: 409 },
+      { error: mirado.no.error, motivo: mirado.no.motivo },
+      { status: mirado.no.status },
     )
   }
+  const cupon = mirado.vale
 
-  // --- ¿ya lo usó? ------------------------------------------------------
-  //
-  // Se pregunta antes aunque el índice único lo impida igual: el mensaje que
-  // sale de una violación de índice no se le puede enseñar a nadie.
-  const { data: yaCanjeo } = await admin
-    .from('coupon_redemptions')
-    .select('id')
-    .eq('code', codigo)
-    .eq('profile_id', user.id)
-    .maybeSingle()
+  /**
+   * Parcial: no canjea, informa.
+   *
+   * Aquí se acaba el trabajo de esta ruta. Quien tiene un 20% sigue por Pago
+   * como todo el mundo —método, tasa, referencia, captura— y el canje se
+   * apunta allí, al reportar. Lo único que se contesta es cuánto se paga
+   * ahora, para que la pantalla lo enseñe antes del banco y no después.
+   *
+   * No aparta puesto a propósito: apartarlo aquí y cobrar allí dejaría un
+   * puesto en pie a nombre de quien todavía no ha transferido nada, cada vez
+   * que alguien teclea su código para ver cuánto le queda.
+   */
+  if (cupon.pct !== 100) {
+    const { data: tasa } = await admin
+      .from('fx_rates')
+      .select('rate_date, ves_por_ref')
+      .order('rate_date', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-  if (yaCanjeo) {
-    return NextResponse.json({ error: 'Ya usaste ese código.' }, { status: 409 })
+    const pleno = Number(evento.price_usd ?? PRECIO_USD)
+    const conDescuento = precioConDescuento(pleno, cupon.pct)
+
+    /**
+     * Y los datos de cada método con el importe NUEVO para pegar.
+     *
+     * Cada método trae su lista de «esto se pinta, esto se copia», y dentro
+     * va el monto: es un dato más que hay que pegar en la app del banco. Si
+     * no se recalculan aquí, el botón de copiar sigue pegando el precio sin
+     * descuento y la transferencia llega por el importe viejo, que es justo
+     * la que luego no cuadra.
+     */
+    const { data: metodos } = await admin
+      .from('payment_methods')
+      .select('id, moneda, activo, datos_cuenta')
+      .neq('id', 'cupon')
+      .order('orden')
+
+    const conDescuentoLocal = tasa
+      ? Number((conDescuento * Number(tasa.ves_por_ref)).toFixed(2))
+      : null
+
+    return NextResponse.json({
+      estado: 'descuento',
+      codigo: cupon.code,
+      // Por método, para que la pantalla los cambie por id y no por posición.
+      metodos: (metodos ?? [])
+        .filter((m) => m.activo)
+        .map((m) => ({
+          id: m.id,
+          datos: datosDePago(
+            m.datos_cuenta as Record<string, unknown> | null,
+            m.moneda === 'VES' ? conDescuentoLocal : conDescuento,
+            m.moneda === 'VES' ? 'Bs' : m.moneda,
+          ),
+        })),
+      pct: cupon.pct,
+      // Para «Código de Andrea · −20%». `null` en los de operación, que no
+      // son de nadie, y entonces la pantalla dice solo el descuento.
+      nombre: cupon.nombre,
+      // El precio pleno viaja también: la pantalla enseña de dónde viene el
+      // importe nuevo, y sin él tendría que acordarse del que pintaba antes.
+      montoPleno: pleno,
+      montoUsd: conDescuento,
+      tasa: tasa ? Number(tasa.ves_por_ref) : null,
+      tasaDe: tasa?.rate_date ?? null,
+      montoLocal: conDescuentoLocal,
+      // Lo que NO pasó, dicho en voz alta: no hay puesto apartado todavía.
+      puestoApartado: false,
+    })
+  }
+
+  // El mismo candado que en las otras dos puertas: sin permiso no hay puesto
+  // en una fecha que se graba, se pague como se pague. Va aquí abajo porque
+  // solo este camino —el del 100%— aparta puesto.
+  if ((evento as { grabacion_requerida?: boolean }).grabacion_requerida && parsed.data.permiteGrabacion !== true) {
+    return NextResponse.json(
+      {
+        error: 'Esta cena la grabamos, así que para apartar puesto hace falta tu permiso.',
+        motivo: 'falta-permiso-grabacion',
+      },
+      { status: 409 },
+    )
   }
 
   // --- el puesto, primero -----------------------------------------------
@@ -252,25 +303,13 @@ export async function POST(request: Request) {
   }
 
   // --- y ahora sí, el cupón se da por gastado ---------------------------
-  const { error: errorCanje } = await admin.from('coupon_redemptions').insert({
-    code: codigo,
-    profile_id: user.id,
-    booking_id: bookingId,
-    payment_id: pago.id,
+  await anotarCanje(admin, {
+    code: cupon.code,
+    perfilId: user.id,
+    bookingId,
+    paymentId: pago.id,
+    usados: cupon.usados,
   })
-
-  if (errorCanje) {
-    // 23505 es el índice de un uso por persona: dos pestañas a la vez. El
-    // puesto ya está, así que no se le dice que falló nada.
-    if (errorCanje.code !== '23505') {
-      console.error('[cupon] no se anotó el canje', errorCanje)
-    }
-  } else {
-    await admin
-      .from('coupons')
-      .update({ usados: cupon.usados + 1 })
-      .eq('code', codigo)
-  }
 
   await anotarPagoDeEvento(user.id, bookingId, evento.credit_cost ?? 1, 'coupon')
 
