@@ -113,8 +113,8 @@ export const verAgenda = 'Ver la agenda'
 export const UMBRAL_APUNTADOS = 3
 export const MESA = 6
 
-export const cuerpoReservar = (apuntados: number, seCierra: string, base: string) =>
-  `${apuntados < UMBRAL_APUNTADOS ? 'Recién abierta' : `Ya van ${apuntados} apuntados`}${seCierra}. ${base}`
+export const cuerpoReservar = (apuntados: number, cierre: string, base: string) =>
+  `${apuntados < UMBRAL_APUNTADOS ? 'Recién abierta' : `Ya van ${apuntados} apuntados`}${cierre}. ${base}`
 export const sinFecha = 'Te avisamos por correo en cuanto abramos la próxima. No hay que hacer nada.'
 
 export const mesa = {

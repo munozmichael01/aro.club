@@ -54,14 +54,14 @@ test('lista para reservar: titular y cuerpo desde la próxima fecha real', () =>
   assert.equal(t.titulo, 'Hay cena el sábado en Las Mercedes.')
   assert.equal(
     t.cuerpo,
-    'Ya van 8 apuntados y se cierra el jueves. Te apuntas a la fecha, pagas en bolívares, y el sábado a mediodía sabes en qué mesa te tocó y con quién.',
+    'Ya van 8 apuntados y se cierra a medianoche, cuando empieza el sábado. Te apuntas a la fecha, pagas en bolívares, y el sábado a mediodía sabes en qué mesa te tocó y con quién.',
   )
   assert.deepEqual([t.accion, t.destino, t.oscuro], ['Elegir mi fecha', '#agenda', false])
 })
 
 test('pocos apuntados no se enseñan; sin fecha, ni día ni reloj', () => {
   const pocos = M.tarjeta(base({ proximaFecha: { ...base().proximaFecha!, apuntados: 2 } }), null, AHORA)
-  assert.match(pocos.cuerpo, /^Recién abierta y se cierra el jueves\./)
+  assert.match(pocos.cuerpo, /^Recién abierta y se cierra a medianoche, cuando empieza el sábado\./)
   const sin = M.tarjeta(base({ proximaFecha: null }), null, AHORA)
   assert.deepEqual([sin.titulo, sin.accion, sin.reloj], ['Todavía no hay fecha abierta.', 'Ver la agenda', ''])
 })

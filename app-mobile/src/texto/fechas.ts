@@ -93,12 +93,6 @@ export function tituloHayCena(f: { empiezaEn: string; zona?: string | null; zona
   return `Hay cena el ${dia}${f.zona ? ' en ' + f.zona : ''}.`
 }
 
-/** « y se cierra el jueves»: el cierre de una fecha, o nada si no se sabe. */
-export function seCierra(cierraEn: string | null | undefined, zona?: Zona): string {
-  const dia = reglas.diaDe(cierraEn, zona)
-  return dia ? ` y se cierra el ${dia}` : ''
-}
-
 /**
  * Cuándo se sabe la mesa, dicho como se habla: «el sábado a mediodía» si son
  * las doce (el caso normal: «a las 12:00 p.m.» se lee peor), la hora exacta

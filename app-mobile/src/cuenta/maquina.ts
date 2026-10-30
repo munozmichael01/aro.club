@@ -147,7 +147,11 @@ export function tarjeta(d: MiCuenta, m: MiMesa | null, ahora: number): Tarjeta {
   }
   if (d.estado === 'reservar') {
     titulo = F.tituloHayCena(pf)
-    cuerpo = pf ? T.cuerpoReservar(pf.apuntados, F.seCierra(pf.cierraEn, pf.zonaHoraria), cuerpo) : T.sinFecha
+    // El cierre se dice como en la agenda y los correos (`textoCierre`): una cena
+    // cierra a las 00:00 de SU día, y «se cierra el sábado» se leía como que
+    // quedaba el sábado entero.
+    const cierre = pf ? reglas.textoCierre(pf.empiezaEn, pf.zonaHoraria) : ''
+    cuerpo = pf ? T.cuerpoReservar(pf.apuntados, cierre ? ` y ${cierre}` : '', cuerpo) : T.sinFecha
     if (!d.proximaFecha) accion = T.verAgenda
   }
 
