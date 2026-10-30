@@ -3,7 +3,6 @@ import { useCallback, useState, type ReactNode } from 'react'
 import { Image, Platform, Pressable, StyleSheet, View, type TextStyle } from 'react-native'
 
 import Svg, { Path } from 'react-native-svg'
-import { FilaCompartir } from '../dentro/FilaCompartir'
 import { IconoCandado, Texto, fuente } from '../diseno'
 import * as G from '../juego/guardado'
 import * as J from '../juego/maquina'
@@ -103,10 +102,6 @@ export function MesaCena(p: {
       {p.ajustes}
       <TarjetaMesa d={d} momento={momento} mapa={mapa} ir={ir} alTarde={p.alTarde} />
       {p.tarde}
-      {/* «Compartir mi plan» (C2) sigue hasta que empieza la cena: el mismo día es cuando más se comparte (Michael, 30-10). */}
-      {momento === 'antes' && d.empiezaEn ? (
-        <FilaCompartir plan={{ empiezaEn: d.empiezaEn, revelaEn: d.revelaEn, zonaHoraria: d.zonaHoraria, formato: d.formato, zonas: d.zonas ?? [] }} />
-      ) : null}
 
       <Desplegable
         titulo={T.cena.conQuien.titulo(M.voz(d))}
