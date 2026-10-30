@@ -21,6 +21,27 @@
         "reel"
       ],
       "port": 4321
+    },
+    {
+      "name": "app-catalogo",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd app-mobile && CI=1 npx expo start --web --port 8090"
+      ],
+      "port": 8090
+    },
+    {
+      "name": "entrega-20",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4320",
+        "--directory",
+        "app-mobile/Entregas/entrega 20"
+      ],
+      "port": 4320
     }
   ]
 }

@@ -51,6 +51,19 @@
   @media (min-width: 1280px) {
     .carril > button { width:180px !important }
   }
+  /* «Cómo funciona»: las tres tarjetas lado a lado, y carrusel por debajo
+     de 720px. Lo pide la entrega de Design del 29-10 (estado W).
+
+     Se pintan LAS DOS y el CSS enseña una. Decidirlo en JavaScript con el
+     ancho de la ventana obliga a escuchar el `resize` y a volver a pintar,
+     y mientras tanto el primer pintado adivina: en un telefono en
+     horizontal la pantalla cambia de lado sin recargar. El CSS no adivina. */
+  .como-ancho { display:none }
+  .como-angosto { display:flex }
+  @media (min-width: 720px) {
+    .como-ancho { display:grid }
+    .como-angosto { display:none }
+  }
   @keyframes aro-latido { 0%,100% { opacity:.55 } 50% { opacity:.28 } }
   @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
   @keyframes aro-trace { from { stroke-dashoffset:96 } to { stroke-dashoffset:0 } }
@@ -266,6 +279,21 @@
                     </div>
                   </sc-if>
 
+                  <!-- La fila que abre «Cómo funciona» (C1 de la entrega del
+                       29-10). Justo encima del botón, que es donde Design la
+                       puso: se pulsa cuando ya casi has decidido y te falta
+                       saber qué pasa después de pulsar. -->
+                  <button onClick="{{ ev.verComo }}" style="width:100%;display:flex;align-items:center;gap:12px;min-height:62px;padding:10px 0;margin-bottom:16px;border:none;border-top:1px solid rgba(20,52,42,.12);border-bottom:1px solid rgba(20,52,42,.12);background:none;cursor:pointer;text-align:left">
+                    <div style="width:36px;height:36px;border-radius:18px;background:#14342A;display:flex;align-items:center;justify-content:center;flex:none">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5v.4M12 17h.01"></path></svg>
+                    </div>
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                      <div style="font:600 15px/1.2 'Inter Tight',sans-serif;color:#14342A">{{ comoFilaTitulo }}</div>
+                      <div style="font:400 13px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ comoFilaBajada }}</div>
+                    </div>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M9 5l7 7-7 7"></path></svg>
+                  </button>
+
                   <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:center">
                     <button onClick="{{ ev.confirmar }}" style="{{ ev.botonConfirmar }}">{{ ev.textoConfirmar }}</button>
                     <button onClick="{{ ev.abrir }}" style="{{ botonFantasmaOscuro }}">Cancelar</button>
@@ -409,6 +437,90 @@
   </div>
 </sc-if>
 
+<!-- «Cómo funciona», encima de la hoja de la fecha (entrega como-funciona
+     de Design, 29-10, estado W).
+
+     Las tres tarjetas lado a lado en pantalla ancha y el carrusel de C2 por
+     debajo de 720px. Se pintan LAS DOS y el CSS enseña una: ver la nota del
+     bloque `.como-ancho` arriba.
+
+     El texto no está aquí: sale de `AroReglas.COMO_FUNCIONA`, que es el
+     mismo fichero que lee la app. -->
+<sc-if value="{{ comoAbierto }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ cerrarComo }}" style="position:fixed;inset:0;z-index:97;background:rgba(20,52,42,.72);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto">
+    <div onClick="{{ tragarClic }}" style="width:100%;max-width:1040px;margin:auto;background:#FAF3E4;border-radius:30px;padding:clamp(20px,4vw,40px);box-shadow:0 18px 50px rgba(20,52,42,.35)">
+
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+        <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+          <div style="font:600 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">¿CÓMO FUNCIONA?</div>
+          <div style="font:400 clamp(28px,5.4vw,40px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.025em;color:#14342A;text-wrap:balance">{{ comoTitulo }}</div>
+        </div>
+        <button onClick="{{ cerrarComo }}" aria-label="Cerrar" style="flex:0 0 auto;width:44px;height:44px;border-radius:22px;border:none;background:rgba(20,52,42,.07);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+        </button>
+      </div>
+
+      <!-- ANCHO: las tres a la vez -->
+      <div class="como-ancho" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:28px">
+        <sc-for list="{{ comoTarjetas }}" as="t" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="height:250px;border-radius:22px;overflow:hidden;position:relative;background:{{ t.panel }}">
+              <sc-if value="{{ t.hayFoto }}" hint-placeholder-val="{{ true }}">
+                <img src="{{ t.foto }}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:{{ t.pos }};display:block;filter:grayscale(.24) contrast(1.16) saturate(.74) brightness(.9)">
+              </sc-if>
+              <div style="position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;background:#FAF3E4;border-radius:999px;padding:7px 12px 7px 8px">
+                <div style="width:24px;height:24px;border-radius:12px;background:#14342A;display:flex;align-items:center;justify-content:center">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.icono }}"></path></svg>
+                </div>
+                <span style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#14342A">{{ t.etiqueta }}</span>
+              </div>
+            </div>
+            <div style="font:400 24px/1.06 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#14342A;text-wrap:balance">{{ t.titulo }}</div>
+            <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ t.cuerpo }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- ANGOSTO: una cada vez -->
+      <div class="como-angosto" style="flex-direction:column;gap:14px;margin-top:22px">
+        <div style="height:clamp(200px,52vw,290px);border-radius:24px;overflow:hidden;position:relative;background:{{ comoUna.panel }};flex:none">
+          <sc-if value="{{ comoUna.hayFoto }}" hint-placeholder-val="{{ true }}">
+            <img src="{{ comoUna.foto }}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:{{ comoUna.pos }};display:block;filter:grayscale(.24) contrast(1.16) saturate(.74) brightness(.9)">
+          </sc-if>
+          <div style="position:absolute;left:14px;top:14px;display:flex;align-items:center;gap:8px;background:#FAF3E4;border-radius:999px;padding:8px 13px 8px 9px">
+            <div style="width:26px;height:26px;border-radius:13px;background:#14342A;display:flex;align-items:center;justify-content:center">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ comoUna.icono }}"></path></svg>
+            </div>
+            <span style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#14342A">{{ comoUna.etiqueta }}</span>
+          </div>
+          <div style="position:absolute;right:14px;top:14px;font:600 12px/1 'Inter Tight',sans-serif;color:#FAF3E4;background:rgba(20,52,42,.7);border-radius:999px;padding:8px 11px">{{ comoCuenta }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="font:400 clamp(24px,6.4vw,29px)/1.04 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A;text-wrap:balance">{{ comoUna.titulo }}</div>
+          <div style="font:400 16px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ comoUna.cuerpo }}</div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:4px">
+          <sc-for list="{{ comoPuntos }}" as="d" hint-placeholder-count="3">
+            <button onClick="{{ d.ir }}" aria-label="{{ d.rotulo }}" style="{{ d.estilo }}"></button>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button onClick="{{ comoAtras }}" aria-label="Anterior" style="{{ comoAtrasEstilo }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="{{ comoAtrasOp }}"><path d="M15 5l-7 7 7 7"></path></svg>
+          </button>
+          <button onClick="{{ comoSig }}" style="flex:1;display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:999px;border:none;background:#14342A;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;cursor:pointer">{{ comoSigTexto }}</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid rgba(20,52,42,.12);margin-top:22px;padding-top:22px">
+        <div style="flex:1 1 240px;font:400 14px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ comoPie }}</div>
+        <button onClick="{{ cerrarComo }}" style="flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 28px;border-radius:999px;border:none;background:#14342A;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;white-space:nowrap;cursor:pointer">{{ comoCerrarTexto }}</button>
+      </div>
+
+    </div>
+  </div>
+</sc-if>
+
 <!-- Preguntas nuevas, encima de Mi cuenta.
      Sale a quien ya reservó y tiene preguntas del catálogo sin contestar.
      Se contesta aquí mismo: mandarla a otra pantalla a buscarlas es perder
@@ -463,6 +575,9 @@
 const NOMBRE_IDIOMA = { en: 'inglés', pt: 'portugués', fr: 'francés', it: 'italiano' };
 class Component extends DCLogic {
   state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {}, datos: null, sinCuenta: false,
+            // «Cómo funciona»: la fecha que lo abrio y por que tarjeta va el
+            // carrusel. Nulo mientras no este abierto.
+            como: null, comoIdx: 0,
             reservandoYa: false, falloReserva: '', nExclusiones: null, saliendo: false,
             // El aviso de preguntas nuevas: lo que lleva elegido y si ya se
             // cerró en esta visita. El servidor decide si sale; esto solo
@@ -520,6 +635,31 @@ class Component extends DCLogic {
     }
     todas[q.clave] = despues;
     this.setState({ elegidas: todas });
+  }
+
+  /**
+   * «Cómo funciona», abierto desde la fila de la hoja de la fecha.
+   *
+   * Guarda el FORMATO y las dos horas de esa fecha, no las tarjetas ya
+   * armadas: la frase de «cuándo se sabe» sale de la fecha cada vez que se
+   * pinta, y congelarla aquí seria una tercera copia de la regla.
+   */
+  abrirComo(formato, empiezaEn, revelaEn) {
+    this.setState({ como: { formato: formato, empiezaEn: empiezaEn, revelaEn: revelaEn }, comoIdx: 0 });
+  }
+
+  cerrarComo() { this.setState({ como: null, comoIdx: 0 }); }
+
+  /** Por el carrusel. En la última, «Entendido» cierra. */
+  comoIr(i) {
+    const n = 3;
+    if (i >= n) { this.cerrarComo(); return; }
+    this.setState({ comoIdx: Math.max(0, Math.min(n - 1, i)) });
+  }
+
+  /** Cerrar con Escape, como el resto de las hojas de esta pantalla. */
+  comoTecla(e) {
+    if (e.key === 'Escape') this.cerrarComo();
   }
 
   /** Cerrar el aviso. Se conteste o no, no vuelve a salir por esta reserva. */
@@ -1247,7 +1387,13 @@ class Component extends DCLogic {
          * pantalla siguio diciendo «se cierra a medianoche, cuando empieza el
          * viernes»: una hora que ya habia pasado, justo donde se reserva.
          */
-        a.cierraEn ?? null
+        a.cierraEn ?? null,
+        // El formato en crudo —`dinner`, `brunch`, `walk`— y cuando se
+        // revela. Los dos para «Como funciona», que elige sus tres tarjetas
+        // por familia y empieza por la hora de la revelacion. `c[1]` es el
+        // nombre de la FAMILIA en pantalla («Cenas»), que no sirve para eso.
+        a.formato ?? null,
+        a.revelaEn ?? null
       ];
     });
     // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato
@@ -1486,6 +1632,8 @@ class Component extends DCLogic {
         botonPermiso: 'display:inline-flex;align-items:center;min-height:46px;margin-top:13px;padding:0 18px;border-radius:999px;cursor:pointer;font:500 15px/1 \'Inter Tight\',sans-serif;border:1px solid '
           + (this.state.permiteGrabacion ? '#8F4515;background:#8F4515;color:#FFF8EA' : 'rgba(20,52,42,.22);background:transparent;color:#14342A'),
         tocarPermiso: () => this.setState({ permiteGrabacion: !this.state.permiteGrabacion }),
+        // Abre «Cómo funciona» con el formato y las horas de ESTA fecha.
+        verComo: () => this.abrirComo(c[15], c[12], c[16]),
 
         textoConfirmar: this.state.reservandoYa
           ? 'Apuntándote'
@@ -1587,6 +1735,45 @@ class Component extends DCLogic {
      * quien reservó y tiene algo sin contestar. Aquí no hay ninguna pregunta
      * escrita, así que la que añadamos mañana aparece sola.
      */
+    /**
+     * «Cómo funciona»: las tres tarjetas de la fecha que lo abrió.
+     *
+     * `tipoDe` y `tarjetas` salen de `reglas.js`, igual que en la app. La
+     * frase de ANTES empieza por `cuandoSeRevela`, que mira la revelación de
+     * la FILA si la hay: una fecha con la revelación movida a mano tiene que
+     * decir su hora, no la de la regla.
+     *
+     * Las fotos solo en las cenas. El brunch y los planes de movimiento van
+     * con panel de color, como en la maqueta: no tenemos fotos propias de
+     * esos y poner una cena en un brunch es prometer otra cosa.
+     */
+    const CF = window.AroReglas && window.AroReglas.COMO_FUNCIONA;
+    const como = this.state.como;
+    const comoTipo = CF && como ? CF.tipoDe(como.formato) : 'cena';
+    const comoIdx = this.state.comoIdx || 0;
+    const FOTOS = {
+      antes: { foto: '/fotos/como-llegada.jpg', pos: '50% 40%' },
+      durante: { foto: '/fotos/como-conversacion.jpg', pos: '55% 45%' },
+      despues: { foto: '/fotos/como-brindis.jpg', pos: '50% 35%' },
+    };
+    const PANELES = { antes: '#9CBBA6', durante: '#E39C63', despues: '#F6D9B4' };
+    const comoTarjetas = (CF && como)
+      ? CF.tarjetas(comoTipo, window.AroReglas.cuandoSeRevela(como.empiezaEn, null, como.revelaEn, como.formato))
+          .map((t) => {
+            const conFoto = comoTipo === 'cena';
+            return {
+              etiqueta: CF.etiquetas[t.clave],
+              icono: t.icono,
+              titulo: t.titulo,
+              cuerpo: t.cuerpo,
+              hayFoto: conFoto,
+              foto: conFoto ? FOTOS[t.clave].foto : '',
+              pos: conFoto ? FOTOS[t.clave].pos : '50% 50%',
+              panel: conFoto ? 'rgba(20,52,42,.06)' : PANELES[t.clave],
+            };
+          })
+      : [];
+
     const nuevas = (d && d.preguntasNuevas) || [];
     const elegidas = this.state.elegidas || {};
     const CIFRA = ['', 'Una pregunta nueva', 'Dos preguntas nuevas', 'Tres preguntas nuevas',
@@ -1773,6 +1960,43 @@ class Component extends DCLogic {
       aceptarNormas: () => this.aceptarNormas(),
       hayFalloNormas: !!this.state.falloNormas,
       falloNormas: this.state.falloNormas || '',
+
+      /**
+       * «Cómo funciona»: la fila que lo abre y el panel.
+       *
+       * Todo el texto sale de `AroReglas.COMO_FUNCIONA`, el mismo fichero
+       * que lee la app desde b9ab059. Aquí no hay ni una frase escrita.
+       *
+       * Las fotos sí son de la web y solo en las cenas, como en la maqueta:
+       * el brunch y los planes de movimiento van con el panel de color. Las
+       * tres guardadas al natural y con el token de marca puesto por la
+       * página, que es la regla de `public/fotos/CREDITOS.md`.
+       */
+      comoFilaTitulo: CF ? CF.fila.titulo : '¿Cómo funciona?',
+      comoFilaBajada: CF ? CF.fila.bajada : '',
+      comoAbierto: !!como,
+      comoTitulo: comoTipo === 'cena' ? (CF ? CF.primeraVez.titulo : '') : (CF ? CF.primeraVez.tituloDia : ''),
+      comoTarjetas: comoTarjetas,
+      comoUna: comoTarjetas[comoIdx] || comoTarjetas[0] || {},
+      comoCuenta: CF ? CF.cuentaDe(comoIdx + 1, comoTarjetas.length || 3) : '',
+      comoPuntos: comoTarjetas.map((t, i) => ({
+        ir: () => this.comoIr(i),
+        rotulo: t.etiqueta,
+        estilo: 'width:' + (i === comoIdx ? 24 : 8) + 'px;height:8px;border-radius:4px;border:none;padding:0;cursor:pointer;background:'
+          + (i === comoIdx ? '#14342A' : 'rgba(20,52,42,.22)'),
+      })),
+      comoAtras: () => this.comoIr(comoIdx - 1),
+      comoAtrasOp: comoIdx === 0 ? '.3' : '1',
+      comoAtrasEstilo: 'flex:none;width:54px;height:54px;border-radius:27px;background:none;padding:0;display:flex;align-items:center;justify-content:center;cursor:'
+        + (comoIdx === 0 ? 'default' : 'pointer') + ';border:1.5px solid rgba(20,52,42,' + (comoIdx === 0 ? '.3' : '1') + ')',
+      comoSig: () => this.comoIr(comoIdx + 1),
+      comoSigTexto: CF ? (comoIdx >= comoTarjetas.length - 1 ? CF.entendido : CF.siguiente) : '',
+      comoPie: CF ? CF.pie('Mi mesa') : '',
+      comoCerrarTexto: CF ? CF.entendido : 'Entendido',
+      cerrarComo: () => this.cerrarComo(),
+      // El clic DENTRO del panel no lo cierra. Sin esto, cualquier toque en
+      // el texto se come el panel entero, porque el fondo escucha el clic.
+      tragarClic: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
 
       // El aviso de preguntas nuevas. Quién decide que sale es el servidor,
       // comparando el catálogo con lo que esa persona tiene contestado.

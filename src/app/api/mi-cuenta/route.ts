@@ -287,7 +287,7 @@ export async function GET() {
   // gente.
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, created_at, grabacion, grabacion_requerida, idioma')
+    .select('id, format, starts_at, booking_closes_at, reveal_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, created_at, grabacion, grabacion_requerida, idioma')
     // Las de prueba no son de nadie más que de quien las creó.
     .eq('es_prueba', false)
     // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
@@ -587,6 +587,16 @@ export async function GET() {
       id: f.id,
       formato: f.format,
       empiezaEn: f.starts_at,
+      /**
+       * Cuándo se sabe con quién vas, de la FILA.
+       *
+       * «Cómo funciona» empieza con esa hora —«El día de la cena, al
+       * mediodía»— y `reglas.cuandoSeRevela` la calcula de la regla cuando
+       * no se le da ninguna. Pero una fecha puede tener su revelación movida
+       * a mano, y entonces la de la columna es la verdad. Es la misma
+       * lección que el cierre: la regla es el respaldo, no la fuente.
+       */
+      revelaEn: f.reveal_at,
       /**
        * Cuándo se creó, que es el desempate de la lista.
        *
