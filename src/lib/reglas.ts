@@ -108,6 +108,31 @@ type Api = {
     zona?: string,
     revelaIso?: string | null,
   ) => { cuando: string; mismoDia: boolean; dia: string; hora: string; enLetra: string } | null
+  /** «El día de la cena, al mediodía» / «La víspera, a las seis de la tarde». */
+  cuandoSeRevela: (
+    inicioIso: string | null | undefined,
+    zona?: string,
+    revelaIso?: string | null,
+    formato?: string | null,
+  ) => string
+  /** Las tres tarjetas de «Cómo funciona», compartidas con la app. */
+  COMO_FUNCIONA: {
+    titulo: string
+    fila: { titulo: string; bajada: string }
+    filaMesa: { titulo: string; bajada: string }
+    siguiente: string
+    entendido: string
+    etiquetas: Record<'antes' | 'durante' | 'despues', string>
+    iconos: Record<'antes' | 'durante' | 'despues', string>
+    primeraVez: { sello: (plan: string) => string; titulo: string; tituloDia: string }
+    pie: (miMesa: string) => string
+    cuentaDe: (i: number, n: number) => string
+    tarjetas: (
+      tipo: 'cena' | 'brunch' | 'grupo',
+      cuando: string,
+    ) => { clave: 'antes' | 'durante' | 'despues'; icono: string; titulo: string; cuerpo: string }[]
+    tipoDe: (formato: string | null | undefined) => 'cena' | 'brunch' | 'grupo'
+  }
   DE_MESA_COMPLETA: string[]
   tieneMesaCompleta: (formato: string | null | undefined) => boolean
   DE_MANANA: string[]
@@ -194,6 +219,10 @@ export const tieneMesaCompleta = api.tieneMesaCompleta.bind(api)
 export const esDeManana = api.esDeManana.bind(api)
 /** Cuándo se sabe con quién vas: el mismo día a mediodía, o la víspera a las seis. */
 export const revelaDe = api.revelaDe.bind(api)
+/** La frase de cuándo se sabe con quién vas, de la fecha y no escrita a mano. */
+export const cuandoSeRevela = api.cuandoSeRevela.bind(api)
+/** Las tres tarjetas de «Cómo funciona». El mismo texto que lee la app. */
+export const COMO_FUNCIONA = api.COMO_FUNCIONA
 export const horaDe = api.horaDe
 export const partesDe = api.partesDe
 export const MESES = api.MESES

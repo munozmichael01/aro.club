@@ -1324,6 +1324,28 @@
     },
 
     /**
+     * «El día de la cena, al mediodía» / «La víspera, a las seis de la tarde».
+     *
+     * La frase con la que empiezan las tres tarjetas de «Cómo funciona», de
+     * la fecha y no escrita a mano. Design puso «El día del brunch, temprano»
+     * en la maqueta del 29-10 y eso no es lo que pasa: un brunch se revela la
+     * VÍSPERA a las seis, no temprano el mismo día. Escribirla a mano es
+     * prometer una hora que el producto no cumple, y el brunch es justo el
+     * caso donde se nota.
+     *
+     * `formato` solo decide cómo se nombra el plan: «de la cena», «del
+     * brunch», «del plan». Sale de `vozDe`, que es donde viven esos nombres.
+     */
+    cuandoSeRevela: function (inicioIso, zona, revelaIso, formato) {
+      var r = api.revelaDe(inicioIso, zona, revelaIso)
+      if (!r) return ''
+      var aLas = r.enLetra === 'mediodía' ? 'al mediodía' : 'a ' + r.enLetra
+      if (!r.mismoDia) return 'La víspera, ' + aLas
+      var voz = api.vozDe(formato)
+      return 'El día ' + (voz && voz.delPlan ? voz.delPlan : 'del plan') + ', ' + aLas
+    },
+
+    /**
      * `cierreIso` es el cierre DE VERDAD de esa fila, si se sabe.
      *
      * Sin el tercer argumento esto recalcula el cierre con la regla, y eso
@@ -1986,6 +2008,83 @@
      * La voz de un formato. Sin formato —o con uno que no conocemos— se
      * habla de mesa, que es lo que era el producto entero hasta ahora.
      */
+    /**
+     * «Cómo funciona» en tres tarjetas: antes, durante y después.
+     *
+     * La versión corta del paso a paso, de la entrega de Design del 29-10.
+     * Vive aquí y no en cada producto porque la app y la web la enseñan en
+     * sitios distintos —la app en la hoja de reservar y en Mi mesa, la web en
+     * la página de la fecha— y dos copias del mismo texto es como el paso a
+     * paso acabó diciendo «la fecha se cierra 24 horas antes» meses despues
+     * de que cerrara a medianoche.
+     *
+     * La hora de la revelación NO está escrita: entra como `cuando` y sale de
+     * `cuandoSeRevela`, o sea de la fecha. Ver ahí por qué.
+     */
+    COMO_FUNCIONA: {
+      titulo: '¿Cómo funciona?',
+      fila: { titulo: '¿Cómo funciona?', bajada: 'Antes, durante y después, en tres tarjetas' },
+      filaMesa: { titulo: 'Cómo funciona', bajada: 'Antes, durante y después' },
+      siguiente: 'Siguiente',
+      entendido: 'Entendido',
+      etiquetas: { antes: 'ANTES', durante: 'DURANTE', despues: 'DESPUÉS' },
+      /** Los tres glifos de la maqueta: sitio, conversación, salir. */
+      iconos: {
+        antes: 'M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 1 1 13 0C18.5 15.4 12 21 12 21zM12 12.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+        durante: 'M4 5.5h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-3.5 3v-3H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2zM18.5 9.5H20a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v2.5l-3-2.5h-3',
+        despues: 'M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M9.5 16.5 14 12 9.5 7.5M14 12H3.5',
+      },
+      primeraVez: {
+        sello: function (plan) { return 'TU PRIMERA ' + String(plan || '').toUpperCase() + ' EN ARO' },
+        titulo: 'Así va a ser tu noche.',
+        tituloDia: 'Así va a ser tu plan.',
+      },
+      pie: function (miMesa) {
+        return 'El paso a paso con sus horas aparece en ' + (miMesa || 'Mi mesa') + ' cuando se revela.'
+      },
+      cuentaDe: function (i, n) { return i + ' de ' + n },
+      /**
+       * `tipo` es 'cena', 'brunch' o 'grupo', y `cuando` la frase de
+       * `cuandoSeRevela`. En «Después» va «márcalo en la encuesta» y no el
+       * «díselo» de la maqueta: desde que existe seguir en contacto, decírselo
+       * en la mesa ya no es lo que hay que hacer.
+       */
+      tarjetas: function (tipo, cuando) {
+        var I = api.COMO_FUNCIONA.iconos
+        if (tipo === 'grupo') {
+          return [
+            { clave: 'antes', icono: I.antes, titulo: 'Llega al punto de encuentro', cuerpo: cuando + ', te decimos dónde se reúne el grupo y con quién vas. Pregunta por el grupo de Aro.' },
+            { clave: 'durante', icono: I.durante, titulo: 'Preséntense y arranquen juntos', cuerpo: 'Una vuelta rápida de nombres al empezar. El ritmo lo pone el grupo, no quien va más rápido.' },
+            { clave: 'despues', icono: I.despues, titulo: 'Si hay ganas, sigan juntos', cuerpo: 'Un café o algo de comer cerca, cada quien lo suyo. Y si alguien te cayó bien, márcalo en la encuesta.' },
+          ]
+        }
+        return [
+          { clave: 'antes', icono: I.antes, titulo: 'Llega y pregunta por la mesa de Aro', cuerpo: cuando + ', te decimos dónde es y con quién vas. Se espera a todos un cuarto de hora.' },
+          {
+            clave: 'durante',
+            icono: I.durante,
+            titulo: tipo === 'brunch' ? 'Pidan café, preséntense y dejen que fluya' : 'Pidan, preséntense y dejen que fluya',
+            cuerpo: 'Una vuelta rápida de nombres y a comer. Si se acaba el tema, el juego de la mesa está en la app.',
+          },
+          {
+            clave: 'despues',
+            icono: I.despues,
+            titulo: 'Cada quien paga lo suyo, y si hay ganas, se sigue',
+            cuerpo: tipo === 'brunch'
+              ? 'Una caminata o un café más, cerca. Y si alguien te cayó bien, márcalo en la encuesta.'
+              : 'Te sugerimos sitios cerca para seguir. Y si alguien te cayó bien, márcalo en la encuesta.',
+          },
+        ]
+      },
+      /** De qué familia es un formato, para elegir las tres de arriba. */
+      tipoDe: function (formato) {
+        var f = String(formato || '')
+        if (api.DE_MOVIMIENTO.indexOf(f) >= 0) return 'grupo'
+        if (f === 'brunch' || f === 'women_brunch') return 'brunch'
+        return 'cena'
+      },
+    },
+
     vozDe: function (formato) {
       var f = String(formato || '')
       if (api.DE_MOVIMIENTO.indexOf(f) >= 0) return api.VOZ_GRUPO
