@@ -18,6 +18,7 @@ import { AvisoAjustes, LineaGrabacion, PreguntaGrabacion, useGrabacion } from '.
 import { reglas } from '../reglas'
 import * as CM from '../cambiar/maquina'
 import { FilaComoFunciona } from '../como/Fila'
+import { FilaCompartir } from '../dentro/FilaCompartir'
 import * as TC from '../texto/cambiar'
 import type { crearServicioMesa } from './servicio'
 
@@ -281,6 +282,12 @@ function Cerrada({ d, ir, alAbrirse }: { d: M.DeServidor; ir: (d: string) => voi
           </Pressable>
         </View>
       </View>
+      {/* C2 de «Compartir mi plan»: justo debajo de la tarjeta de la mesa, hasta que se abre. */}
+      {d.empiezaEn ? (
+        <View style={{ marginTop: 14 }}>
+          <FilaCompartir plan={{ empiezaEn: d.empiezaEn, revelaEn: d.revelaEn, zonaHoraria: d.zonaHoraria, formato: d.formato, zonas: d.zonas ?? [] }} />
+        </View>
+      ) : null}
       <Texto variante="cuerpo" style={{ marginTop: 20 }}>
         {T.cerrada.nota(M.voz(d).vasCon)}
       </Texto>

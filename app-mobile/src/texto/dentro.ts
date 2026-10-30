@@ -77,3 +77,9 @@ export const compartir = {
   // Casilla C: solo del celular.
   fallo: 'No pudimos preparar la imagen. Vuelve a intentarlo.',
 }
+
+/** La tarjeta de Mi mesa (C2 de «Compartir mi plan»), hasta que se abre la mesa. */
+export const filaCompartir = {
+  titulo: 'Compartir mi plan',
+  bajada: (conCodigo: boolean) => (conCodigo ? 'Una tarjeta para tus historias, con tu código.' : 'Una tarjeta para tus historias.'),
+}
