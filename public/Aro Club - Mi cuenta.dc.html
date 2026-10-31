@@ -218,6 +218,16 @@
                       <path d="M2 13h12" stroke="{{ ev.tintaIcono }}" stroke-width="1.5" stroke-linecap="round"></path>
                     </svg>
                   </sc-if>
+                  <!-- La copa: cuenco, pie y base. Mismo tamaño y mismo
+                       trazo que la cúpula del brunch, para que la fila se
+                       lea igual de lejos. -->
+                  <sc-if value="{{ ev.esDrinks }}" hint-placeholder-val="{{ false }}">
+                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none" style="display:block">
+                      <path d="M3.3 3.2h9.4L8 8.4z" fill="{{ ev.tintaIcono }}"></path>
+                      <path d="M8 8.4V12.8" stroke="{{ ev.tintaIcono }}" stroke-width="1.5" stroke-linecap="round"></path>
+                      <path d="M5.5 12.8h5" stroke="{{ ev.tintaIcono }}" stroke-width="1.5" stroke-linecap="round"></path>
+                    </svg>
+                  </sc-if>
                   <sc-if value="{{ ev.hayGlifo }}" hint-placeholder-val="{{ true }}">{{ ev.glifo }}</sc-if>
                 </span>
                 <span style="flex:1;min-width:0">
@@ -1300,7 +1310,10 @@ class Component extends DCLogic {
     // cada tipo con su marca y su tono: la lista se escanea por el icono, no por el texto
     const marcas = {
       Cenas: ['◗', '#8F4515', 'rgba(192,102,47,.14)'],
-      Drinks: ['◇', '#1B5138', 'rgba(27,81,56,.12)'],
+      // Drinks tambien trae icono propio (Michael, 31-10, el dia que se
+      // abrieron los primeros): el rombo no decia nada. Una copa de pie se
+      // reconoce a 17 pixeles, que es lo unico que se le pide a esta fila.
+      Drinks: ['', '#1B5138', 'rgba(27,81,56,.12)'],
       Movimiento: ['◢', '#2D6A4F', 'rgba(45,106,79,.14)'],
       Coffee: ['◉', '#566A5D', 'rgba(86,106,93,.14)'],
       // El brunch trae icono de verdad, no glifo (entrega 21): la cúpula y
@@ -1540,7 +1553,8 @@ class Component extends DCLogic {
         // El brunch pinta su icono y los demás su glifo. Cuando la fecha está
         // cerrada o ya es tuya mandan el punto y el visto, que dicen más.
         esBrunch: !cerrada && !mia && c[1] === 'Brunch',
-        hayGlifo: cerrada || mia || c[1] !== 'Brunch',
+        esDrinks: !cerrada && !mia && c[1] === 'Drinks',
+        hayGlifo: cerrada || mia || (c[1] !== 'Brunch' && c[1] !== 'Drinks'),
         tintaIcono: m[1],
         enlace: '/',
         estado: cerrada

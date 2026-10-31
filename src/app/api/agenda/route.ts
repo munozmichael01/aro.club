@@ -42,6 +42,7 @@ export type FechaDeAgenda = {
   zonaHoraria: string
   zonas: string[]
   precioUsd: number | null
+  porMesa: number
   apuntados: number
   edadMinima: number | null
   edadMaxima: number | null
@@ -57,7 +58,7 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
   const { data: fechas } = await admin
     .from('events')
     .select(
-      'id, format, starts_at, booking_closes_at, reveal_at, created_at, city_slug, price_usd, age_band_min, age_band_max, idioma',
+      'id, format, starts_at, booking_closes_at, reveal_at, created_at, city_slug, price_usd, seats_per_table, age_band_min, age_band_max, idioma',
     )
     .eq('status', 'open')
     // Nunca una de prueba, aunque alguien la deje en `open` por error.
@@ -103,6 +104,14 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
     zonaHoraria: zonasHorarias.get(f.city_slug ?? CIUDAD_POR_DEFECTO) ?? 'America/Caracas',
     zonas: zonasPorFecha.get(f.id) ?? [],
     precioUsd: f.price_usd != null ? Number(f.price_usd) : null,
+    /**
+     * Cuántos son en cada grupo. No siempre seis.
+     *
+     * Unos drinks son ocho (Michael, 31-10): en una barra nadie está clavado
+     * en su silla. La agenda decía «Seis personas verificadas» en la cabecera
+     * para todo, así que la primera fecha de ocho la desmentía.
+     */
+    porMesa: f.seats_per_table ?? 6,
     apuntados: cuenta.get(f.id) ?? 0,
     edadMinima: f.age_band_min ?? null,
     edadMaxima: f.age_band_max ?? null,
