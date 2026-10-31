@@ -2277,6 +2277,15 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           // El día venía preparado desde aquí y la plantilla no lo usaba.
           cuandoCorto: evento?.starts_at ? diaCorto(evento.starts_at) : '',
           cuandoFrase: evento?.starts_at ? `El primero es el ${diaTexto(evento.starts_at)}.` : '',
+          /**
+           * El mismo día en minúscula, para mitad de frase.
+           *
+           * «Si no te sirve el 21» estaba escrito a mano en la plantilla,
+           * del ejemplo de la maqueta: el correo de una fecha del 5 decía
+           * «el 21». `cuandoCorto` no vale aquí porque va en mayúscula, que
+           * es lo que pide el bloque grande y lo que sobra en una frase.
+           */
+          cuandoDia: evento?.starts_at ? diaTexto(evento.starts_at) : '',
           horaFrase: evento?.starts_at ? `A las ${horaEnLetra(evento.starts_at)}` : '',
           /**
            * DE QUÉ PLAN es. Faltaba, y costó un brunch entero.
