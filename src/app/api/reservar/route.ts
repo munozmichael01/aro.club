@@ -7,6 +7,7 @@ import { situacionDePerfil } from '@/lib/embudo'
 import { hablaElIdioma, noCabePorIdioma, pideIdioma } from '@/lib/idioma'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+import { sumarZonasAlPerfil } from '@/lib/zonas-declaradas'
 
 /**
  * F6 · Apuntarse a una fecha.
@@ -449,6 +450,20 @@ export async function POST(request: Request) {
   if (errorZonas) {
     console.error('[reservar] zonas', errorZonas)
     return NextResponse.json({ error: 'No pudimos guardar tus zonas.' }, { status: 500 })
+  }
+
+  /**
+   * Y a su perfil, que es lo que prometía el aviso de la pantalla.
+   *
+   * Michael, 31-10: «al reservar esa zona se convierte en una de las zonas
+   * de sus preferencias». Por aquí se reserva con crédito y no se hacía: la
+   * reserva valía para esa zona, pero el perfil no se enteraba, así que no le
+   * llegaban los avisos de las fechas que abrieran ahí.
+   */
+  try {
+    await sumarZonasAlPerfil(user.id, validas)
+  } catch (e) {
+    console.error('[reservar] no se sumaron las zonas al perfil', e)
   }
 
   return NextResponse.json({ estado: 'apuntada', zonas: validas })

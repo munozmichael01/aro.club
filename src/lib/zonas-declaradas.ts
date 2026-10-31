@@ -9,16 +9,22 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * no se le impide y no se le manda a espera por eso: apuntarse a la cena del
  * martes en El Rosal ES decir «voy a El Rosal». La zona se le añade.
  *
- * ## Solo cuando la intersección está vacía
+ * ## Todas las de la fecha que no tenía, y DICHO ANTES
  *
- * Si la fecha abre El Rosal y Las Mercedes y la persona ya tiene Las
- * Mercedes, no se toca nada: no declaró El Rosal, y suponerlo sería meterle
- * en el perfil una zona que no eligió. Solo se añade cuando no hay ninguna
- * en común, porque entonces la reserva no se explica de otra forma.
+ * Hasta el 31-10 solo se añadía cuando no había ninguna en común: si la
+ * fecha abría El Rosal y Las Mercedes y la persona ya tenía Las Mercedes, no
+ * se tocaba nada, porque meterle El Rosal sin decírselo era ponerle en el
+ * perfil una zona que no había elegido.
  *
- * Cuando la fecha abre varias y no coincide ninguna, se añaden TODAS las
- * abiertas: al reservar esa fecha esa persona acepta que la sienten en
- * cualquiera de ellas, que es lo que la fecha ofrece.
+ * Michael, 31-10, lo cambió y lo cambió bien: la pantalla de reservar ahora
+ * AVISA —«al reservar, Los Palos Grandes pasa a ser una de tus zonas»— y con
+ * el aviso delante ya no es una suposición: la fecha dice «Chacao o Los
+ * Palos Grandes», quien la reserva acepta que la sienten en cualquiera de
+ * las dos, y eso es elegirlas. Lo que se quería evitar era hacerlo a
+ * escondidas, no hacerlo.
+ *
+ * El aviso y esto salen de la MISMA función, `zonasQueSeAnaden`: si la
+ * pantalla dijera una cosa y la reserva hiciera otra, el aviso mentiría.
  *
  * ## Dónde se escribe, que es lo que decide si esto funciona
  *
@@ -36,6 +42,17 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * `profile_traits.zones`, así que una fecha vieja conserva lo que se aceptó
  * entonces aunque el perfil cambie después.
  */
+
+/**
+ * Qué zonas de una fecha se le añaden a alguien al reservarla.
+ *
+ * Pura y exportada a propósito: la usan la reserva —que las escribe— y Mi
+ * cuenta —que avisa de ellas antes del botón—. Una sola cuenta para las dos,
+ * o el aviso acaba diciendo algo distinto de lo que pasa.
+ */
+export function zonasQueSeAnaden(suyas: string[], abiertas: string[]): string[] {
+  return abiertas.filter((z) => !suyas.includes(z))
+}
 
 /** Lo que pasó, para poder anotarlo y contarlo. */
 export type Declaracion = {
@@ -68,28 +85,11 @@ export async function declararZonasAlReservar(
     .maybeSingle()
 
   const suyas = Array.isArray(fila?.value) ? (fila.value as string[]) : []
-  const coincide = suyas.some((z) => abiertas.includes(z))
-
-  const anadidas = coincide ? [] : abiertas.filter((z) => !suyas.includes(z))
+  const anadidas = zonasQueSeAnaden(suyas, abiertas)
   const zonasDeLaReserva = [...new Set([...suyas, ...anadidas])]
 
-  if (anadidas.length) {
-    const { error } = await admin
-      .from('answers')
-      .upsert(
-        {
-          profile_id: perfilId,
-          version_id: version.id,
-          question_key: 'zonas',
-          value: zonasDeLaReserva as never,
-        } as never,
-        { onConflict: 'profile_id,version_id,question_key' },
-      )
-
-    if (error) {
-      console.error('[zonas] no se pudo declarar la zona de la fecha', error)
-      return { anadidas: [], zonasDeLaReserva: suyas }
-    }
+  if (anadidas.length && !(await escribirZonas(perfilId, version.id, zonasDeLaReserva))) {
+    return { anadidas: [], zonasDeLaReserva: suyas }
   }
 
   // La copia de la reserva se escribe SIEMPRE, aunque no se añada nada: es
@@ -104,4 +104,66 @@ export async function declararZonasAlReservar(
   }
 
   return { anadidas, zonasDeLaReserva }
+}
+
+/**
+ * Su respuesta de zonas, reescrita entera. En `answers` y no en
+ * `profile_traits`: ahí se recalcula desde `answers` y lo escrito se
+ * perdería en la siguiente edición (ver arriba).
+ */
+async function escribirZonas(perfilId: string, versionId: number, zonas: string[]): Promise<boolean> {
+  const { error } = await createAdminClient()
+    .from('answers')
+    .upsert(
+      {
+        profile_id: perfilId,
+        version_id: versionId,
+        question_key: 'zonas',
+        value: zonas as never,
+      } as never,
+      { onConflict: 'profile_id,version_id,question_key' },
+    )
+
+  if (error) console.error('[zonas] no se pudo declarar la zona de la fecha', error)
+  return !error
+}
+
+/**
+ * Sumar a sus zonas las de una reserva, sin tocar la reserva.
+ *
+ * Para `/api/reservar`, que es por donde se reserva con CRÉDITO: esa ruta ya
+ * escribe sus propias `booking_zones` —las de la fecha, o las que eligió—
+ * y no pasa por `declararZonasAlReservar`. Así que quien reservaba con
+ * crédito leía en la pantalla «al reservar, Los Palos Grandes pasa a ser una
+ * de tus zonas» y no pasaba: el aviso mentía justo para quien ya es del
+ * club. Encontrado el 31-10 al montar ese aviso.
+ *
+ * Nunca revienta la reserva: perder la zona en el perfil se arregla; no
+ * apartar un puesto, no.
+ */
+export async function sumarZonasAlPerfil(perfilId: string, zonas: string[]): Promise<string[]> {
+  if (!zonas.length) return []
+  const admin = createAdminClient()
+
+  const { data: version } = await admin
+    .from('questionnaire_versions')
+    .select('id')
+    .eq('is_active', true)
+    .maybeSingle()
+
+  if (!version) return []
+
+  const { data: fila } = await admin
+    .from('answers')
+    .select('value')
+    .eq('profile_id', perfilId)
+    .eq('version_id', version.id)
+    .eq('question_key', 'zonas')
+    .maybeSingle()
+
+  const suyas = Array.isArray(fila?.value) ? (fila.value as string[]) : []
+  const anadidas = zonasQueSeAnaden(suyas, zonas)
+  if (!anadidas.length) return []
+
+  return (await escribirZonas(perfilId, version.id, [...suyas, ...anadidas])) ? anadidas : []
 }

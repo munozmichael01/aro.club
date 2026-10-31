@@ -7,6 +7,7 @@ import { VERSION_LEGAL } from '@/lib/legal'
 import { bloqueDeReembolso } from '@/lib/reembolso'
 import { etiquetaDeIdioma } from '@/lib/idioma-mesa'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { zonasQueSeAnaden } from '@/lib/zonas-declaradas'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
@@ -388,11 +389,37 @@ export async function GET() {
     .in('event_id', idsFechas.length ? idsFechas : ['00000000-0000-0000-0000-000000000000'])
 
   const zonasPorFecha = new Map<string, string[]>()
+  // Lo mismo por código, para poder compararlas con las suyas.
+  const slugsPorFecha = new Map<string, { slug: string; nombre: string }[]>()
   for (const v of sedesFechas ?? []) {
     const nombre = (v.zones as unknown as { name: string } | null)?.name ?? v.zone_slug
     const ya = zonasPorFecha.get(v.event_id) ?? []
     if (!ya.includes(nombre)) zonasPorFecha.set(v.event_id, [...ya, nombre])
+    if (v.zone_slug) {
+      const s = slugsPorFecha.get(v.event_id) ?? []
+      if (!s.some((x) => x.slug === v.zone_slug)) s.push({ slug: v.zone_slug, nombre })
+      slugsPorFecha.set(v.event_id, s)
+    }
   }
+
+  /**
+   * Las zonas que ella marcó, para avisar de las que una fecha le añadiría.
+   *
+   * Michael, 31-10: si reserva una fecha en una zona que no tiene, se le dice
+   * ANTES que al reservar pasa a ser suya. La cuenta la hace la misma función
+   * que la escribe al reservar, para que el aviso diga lo que va a pasar.
+   */
+  const { data: susZonasFila } = version
+    ? await admin
+      .from('answers')
+      .select('value')
+      .eq('profile_id', user.id)
+      .eq('version_id', version.id)
+      .eq('question_key', 'zonas')
+      .maybeSingle()
+    : { data: null }
+
+  const susZonas = Array.isArray(susZonasFila?.value) ? (susZonasFila.value as string[]) : []
 
   // Sus planes: todo lo que reservó, con lo que paso. Habia tres lineas
   // escritas a mano —"Alto, mesa 02", "Malabar, cancelaste"— en la pantalla
@@ -635,6 +662,18 @@ export async function GET() {
       // suyo y el botón prometería otra cosa.
       precioUsd: f.price_usd != null ? Number(f.price_usd) : null,
       zonas: zonasPorFecha.get(f.id) ?? [],
+      /**
+       * Las zonas de ESTA fecha que se le sumarían al reservarla, por nombre.
+       *
+       * Vacío es lo normal: ya las tiene todas. Si no, Mi cuenta avisa antes
+       * del botón —«al reservar, Los Palos Grandes pasa a ser una de tus
+       * zonas»—, porque desde ahí le llegan también los avisos de esa zona.
+       */
+      zonasNuevas: (() => {
+        const deLaFecha = slugsPorFecha.get(f.id) ?? []
+        const nuevas = zonasQueSeAnaden(susZonas, deLaFecha.map((x) => x.slug))
+        return deLaFecha.filter((x) => nuevas.includes(x.slug)).map((x) => x.nombre)
+      })(),
       apuntados: cuentaPorFecha.get(f.id) ?? 0,
       // Cerrada: se ve, se cuenta, y no se puede apuntar nadie. No decimos
       // «agotada» porque no lo está: aquí no hay cupo, las mesas se arman con

@@ -277,6 +277,19 @@
                   </div>
                   <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:16px;max-width:50ch;text-wrap:pretty">{{ ev.nota }}</div>
 
+                  <!-- Zonas que se le suman al reservar (Michael, 31-10).
+                       Antes del botón, que es donde se decide: dicho después
+                       sería contarle algo que ya pasó. Solo sale si la fecha
+                       trae alguna zona que no tenía. -->
+                  <sc-if value="{{ ev.hayZonasNuevas }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(27,81,56,.08);padding:13px 15px;margin-bottom:16px;max-width:52ch">
+                      <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#1B5138;display:flex;align-items:center;justify-content:center;margin-top:1px">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.4"></circle></svg>
+                      </span>
+                      <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ ev.textoZonasNuevas }}</span>
+                    </div>
+                  </sc-if>
+
                   <!-- Esta cena se graba: se dice antes del botón, y con
                        crédito el permiso es la condición para pulsarlo. -->
                   <sc-if value="{{ ev.graba }}" hint-placeholder-val="{{ false }}">
@@ -1423,7 +1436,10 @@ class Component extends DCLogic {
          * decia a mano en dos sitios: «Una mesa son seis» y «se reparten en
          * mesas de seis». La primera fecha de ocho desmintio las dos.
          */
-        a.porMesa ?? 6
+        a.porMesa ?? 6,
+        // Las zonas de esta fecha que se le sumarían al reservar, por nombre.
+        // Al final, como todo lo que se añade: esta tupla se lee por indice.
+        a.zonasNuevas || []
       ];
     });
     // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato
@@ -1671,6 +1687,20 @@ class Component extends DCLogic {
         // todo lo que no sea brunch ni movimiento— y en la app eso además
         // cerraba la aplicación.
         hayComo: c[15] !== 'drinks' && c[15] !== 'coffee',
+        /**
+         * «Al reservar, Los Palos Grandes pasa a ser una de tus zonas.»
+         *
+         * La lista la manda el servidor, calculada con la misma función que
+         * escribe la zona al reservar: lo que dice el aviso es lo que pasa.
+         * Si ya es suya la fecha, no se avisa de nada.
+         */
+        hayZonasNuevas: !mia && !cerrada && (c[18] || []).length > 0,
+        textoZonasNuevas: (() => {
+          const z = c[18] || [];
+          if (!z.length) return '';
+          if (z.length === 1) return 'Al reservar, ' + z[0] + ' pasa a ser una de tus zonas.';
+          return 'Al reservar, ' + z.slice(0, -1).join(', ') + ' y ' + z[z.length - 1] + ' pasan a ser de tus zonas.';
+        })(),
 
         textoConfirmar: this.state.reservandoYa
           ? 'Apuntándote'
