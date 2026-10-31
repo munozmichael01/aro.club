@@ -1699,7 +1699,9 @@ class Component extends DCLogic {
           const z = c[18] || [];
           if (!z.length) return '';
           if (z.length === 1) return 'Al reservar, ' + z[0] + ' pasa a ser una de tus zonas.';
-          return 'Al reservar, ' + z.slice(0, -1).join(', ') + ' y ' + z[z.length - 1] + ' pasan a ser de tus zonas.';
+          // «parte de», que es como lo dice la app (Michael, 31-10, por el
+          // agente de la app). «pasan a ser de tus zonas» era mío y cojeaba.
+          return 'Al reservar, ' + z.slice(0, -1).join(', ') + ' y ' + z[z.length - 1] + ' pasan a ser parte de tus zonas.';
         })(),
 
         textoConfirmar: this.state.reservandoYa
