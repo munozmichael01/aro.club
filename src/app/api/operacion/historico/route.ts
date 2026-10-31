@@ -131,6 +131,8 @@ type Respuesta = {
 /** La encuesta de una mesa: la media de cada pregunta y quién dijo qué. */
 type Encuesta = {
   valoraron: number
+  /** Cuántos dijeron algo de la GENTE: el denominador de una ausencia. */
+  opinaron: number
   mesa: number | null
   ambiente: number | null
   servicio: number | null
@@ -167,6 +169,8 @@ type Comensal = {
   reservaId: string
   /** Su cara, por la ruta de operación. Vacío si no hay selfie que enseñar. */
   foto: string
+  /** Cuántos de la mesa dijeron que no vino. */
+  marcasAusente: number
 }
 
 type Mesa = {
@@ -225,9 +229,9 @@ export async function GET(request: Request) {
  * empates el desorden vuelve a caber dentro del empate. Donde ya había un
  * orden de pantalla, la clave va detrás como desempate.
  */
-  let mesasRaw, miembros, eventos, locales, zonas, perfiles, reservas, valoraciones
+  let mesasRaw, miembros, eventos, locales, zonas, perfiles, reservas, valoraciones, senales
   try {
-    [mesasRaw, miembros, eventos, locales, zonas, perfiles, reservas, valoraciones] = await Promise.all([
+    [mesasRaw, miembros, eventos, locales, zonas, perfiles, reservas, valoraciones, senales] = await Promise.all([
       todasLasFilas<{ id: string; event_id: string; table_number: number; score: number | null; restaurant_id: string | null; notes_ops: string | null; created_at: string }>(
         (d, h) => admin.from('dinner_tables')
           .select('id, event_id, table_number, score, restaurant_id, notes_ops, created_at')
@@ -262,6 +266,21 @@ export async function GET(request: Request) {
           .select('table_id, profile_id, conversation_rating, sitio_ambiente, sitio_servicio, sitio_conversar, sitio_comida, would_repeat, comment, gasto_usd, created_at')
           .order('table_id')
           .order('profile_id')
+          .range(d, h)),
+      /**
+       * Quién dijo de quién que no vino.
+       *
+       * Michael, 31-10: «también mostremos esto en las respuestas de la
+       * mesa». El panel enseñaba el resultado —vino, no vino— y no de dónde
+       * salía, así que una ausencia puesta por la encuesta y otra puesta a
+       * mano se leían igual. Y con la regla nueva importa: ahora la encuesta
+       * cierra mesas sola.
+       */
+      todasLasFilas<{ table_id: string; rater_id: string; rated_id: string; signal: string }>(
+        (d, h) => admin.from('peer_feedback')
+          .select('table_id, rater_id, rated_id, signal')
+          .order('table_id')
+          .order('rated_id')
           .range(d, h)),
     ])
   } catch (e) {
@@ -308,6 +327,25 @@ export async function GET(request: Request) {
   // entrega 16 guarda `conversation_rating`, las cuatro del sitio,
   // `would_repeat` y `comment`. El panel enseñaba «NPS» y por eso no enseñaba
   // nunca nada: la media de una columna vacía es nula siempre.
+  /**
+   * Cuántos dijeron que faltó cada quien, y cuántos opinaron en esa mesa.
+   *
+   * El denominador cuenta a quien dijo ALGO de la gente —valoró o marcó— que
+   * es el mismo que usa `lib/asistencia` para decidir. Dos cuentas distintas
+   * para el mismo número darían dos respuestas en dos pantallas.
+   */
+  const marcasPorMesa = new Map<string, Map<string, number>>()
+  const opinaronPorMesa = new Map<string, Set<string>>()
+  for (const f of senales ?? []) {
+    const quienes = opinaronPorMesa.get(f.table_id) ?? new Set<string>()
+    if (f.rater_id) quienes.add(f.rater_id)
+    opinaronPorMesa.set(f.table_id, quienes)
+    if (f.signal !== 'ausente') continue
+    const cuenta = marcasPorMesa.get(f.table_id) ?? new Map<string, number>()
+    cuenta.set(f.rated_id, (cuenta.get(f.rated_id) ?? 0) + 1)
+    marcasPorMesa.set(f.table_id, cuenta)
+  }
+
   const respuestasPorMesa = new Map<string, Respuesta[]>()
   for (const v of valoraciones) {
     const p = perfilPorId.get(v.profile_id)
@@ -369,12 +407,26 @@ export async function GET(request: Request) {
            * recuerdo de nada (Michael, 31-10).
            */
           foto: tienenSelfie.has(m.profile_id) ? '/api/operacion/cara?perfil=' + m.profile_id : '',
+          // Cuántos de su mesa dijeron que no vino. Cero es lo normal.
+          marcasAusente: (marcasPorMesa.get(t.id)?.get(m.profile_id)) ?? 0,
         } as Comensal
       })
 
     const dichas = respuestasPorMesa.get(t.id) ?? []
+    /**
+     * Quién opinó: quien marcó a alguien y quien valoró la mesa.
+     *
+     * Las valoraciones se cuentan por su número y no por sus ids porque
+     * `Respuesta` no los lleva —son de la pantalla, no de la base— y lo que
+     * hace falta aquí es el tamaño, no quiénes.
+     */
+    const opinaron = new Set(opinaronPorMesa.get(t.id) ?? [])
+
     const encuesta: Encuesta = {
       valoraron: dichas.length,
+      // Cuántos dijeron algo de la gente: es el denominador con el que la
+      // encuesta decide una ausencia.
+      opinaron: Math.max(opinaron.size, dichas.length),
       mesa: media(dichas.map((r) => r.mesa)),
       ambiente: media(dichas.map((r) => r.ambiente)),
       servicio: media(dichas.map((r) => r.servicio)),

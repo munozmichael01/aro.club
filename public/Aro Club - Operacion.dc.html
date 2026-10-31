@@ -1808,6 +1808,9 @@
                       </span>
                       <a href="{{ c.enlace }}" style="{{ c.nombreEstilo }}">{{ c.nombre }}</a>
                       <span style="flex:1 1 auto"></span>
+                      <sc-if value="{{ c.hayMarcas }}" hint-placeholder-val="{{ false }}">
+                        <span style="{{ c.estiloMarcas }}">{{ c.marcas }}</span>
+                      </sc-if>
                       <span style="display:inline-flex;flex:0 0 auto">
                         <button onClick="{{ c.ponerVino }}" aria-pressed="{{ c.pulsadoSi }}" style="{{ c.botonSi }}">Vino</button>
                         <button onClick="{{ c.ponerNoVino }}" aria-pressed="{{ c.pulsadoNo }}" style="{{ c.botonNo }}">No vino</button>
@@ -6748,6 +6751,20 @@ class Component extends DCLogic {
 
           comensales: m.comensales.map((c) => ({
             nombre: c.nombre,
+            /**
+             * De dónde sale su estado, que es lo que no se veía.
+             *
+             * Ver «no vino» sin saber si lo puso una persona o lo cerró la
+             * encuesta es media información, y desde el 31-10 la encuesta
+             * cierra mesas sola. La frase sale solo cuando alguien lo marcó:
+             * en lo demás, el botón relleno ya lo dice.
+             */
+            marcas: c.marcasAusente
+              ? (c.marcasAusente === 1 ? '1 dijo que no vino' : c.marcasAusente + ' dijeron que no vino')
+                + (m.encuesta && m.encuesta.opinaron ? ' de ' + m.encuesta.opinaron + ' que opinaron' : '')
+              : '',
+            hayMarcas: !!c.marcasAusente,
+            estiloMarcas: 'flex:0 0 auto;font:500 12px/1 \'Inter Tight\',sans-serif;color:#8F4515;white-space:nowrap',
             // La selfie, como en repartir y en Gente. Vacía si no hay.
             foto: c.foto || '',
             hayFoto: !!c.foto,
