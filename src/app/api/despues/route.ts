@@ -531,27 +531,33 @@ export async function POST(request: Request) {
       const conDos = [...cuantos.entries()].filter(([, n]) => n >= hacenFalta).map(([id]) => id)
 
       if (evento) for (const quien of conDos) {
-        /**
-         * `as never` en el select: los tipos generados son de antes de que
-         * `bookings` tuviera `asistencia_por`. Se regeneran cuando toque
-         * —`npm run types:gen`— y entonces este apaño se cae solo. Es lo
-         * mismo que se hizo con `mesa_cambiada`.
-         */
-        const { data: suyaCruda } = await admin
+        const { data: suya } = await admin
           .from('bookings')
-          .select('id, status, asistencia_por, events(starts_at)' as never)
+          .select('id, status, events(starts_at)')
           .eq('profile_id', quien)
           .eq('event_id', evento)
           .maybeSingle()
 
-        const suya = suyaCruda as unknown as {
-          id: string
-          status: string
-          asistencia_por: string | null
-          events: { starts_at: string } | null
-        } | null
-
         if (!suya) continue
+
+        /**
+         * Quién cerró esa asistencia, en una consulta aparte y que puede
+         * fallar sin consecuencias.
+         *
+         * Va suelta a propósito: `asistencia_por` es una columna nueva y
+         * mientras la migración no esté aplicada PostgREST contesta un error
+         * a cualquier select que la nombre. Metida en el de arriba, el
+         * bloque entero dejaría de marcar ausencias —que es lo que ya
+         * funcionaba— por una mejora que todavía no está. Sin ella, `firma`
+         * es nula y esto se comporta exactamente como antes.
+         */
+        const { data: firmaFila } = await admin
+          .from('bookings')
+          .select('asistencia_por' as never)
+          .eq('id', suya.id)
+          .maybeSingle()
+
+        const firma = (firmaFila as unknown as { asistencia_por?: string | null } | null)?.asistencia_por ?? null
 
         /**
          * Lo que todavía no decidió nadie, y lo que cerró LA PROPIA ENCUESTA.
@@ -565,7 +571,6 @@ export async function POST(request: Request) {
          * Lo que puso una persona en el panel no se toca jamás, en ningún
          * sentido: ahí hubo alguien mirando.
          */
-        const firma = suya.asistencia_por
         const sinDecidir = suya.status === 'confirmed' || suya.status === 'pending_payment'
         const loCerroLaEncuesta = suya.status === 'attended' && firma === 'encuesta'
         if (!sinDecidir && !loCerroLaEncuesta) continue
