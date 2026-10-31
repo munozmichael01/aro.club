@@ -90,11 +90,13 @@ test('con un código que cubre la plaza, «Estás dentro» dice que el código l
   assert.match(v.bajada ?? '', /código cubre la plaza/)
 })
 
-test('unos drinks o un café no ofrecen las tarjetas de cena: solo cena y brunch las tienen (31-10)', async () => {
+test('drinks y café: las tarjetas que no hablan de cenar, hasta que Design haga las suyas (31-10)', async () => {
   const M = await import('../src/dentro/maquina')
   const plan = (formato: string) => ({ empiezaEn: '2099-11-06T23:00:00Z', zonaHoraria: 'America/Caracas', formato, revelaEn: null, zonas: ['Chacao'] })
-  assert.equal(M.historia(plan('drinks'), null), null)
-  assert.equal(M.historia(plan('coffee'), null), null)
-  assert.ok(M.historia(plan('dinner'), null))
-  assert.ok(M.historia(plan('brunch'), null))
+  const d = M.historia(plan('drinks'), 'ANA7KQ')!
+  assert.equal(d.plan, 'Drinks')
+  assert.deepEqual(M.variantesDe(d), [2, 3, 4, 6, 7])
+  assert.deepEqual(M.variantesDe(M.historia(plan('coffee'), null)!), [2, 3, 6, 7])
+  assert.equal(M.historia(plan('dinner'), null)!.plan, 'Cena')
+  assert.equal(M.historia(plan('walk'), null), null)
 })

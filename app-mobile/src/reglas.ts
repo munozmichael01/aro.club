@@ -69,6 +69,8 @@ type Api = {
   cuandoSeRevela: (inicioIso: string, zona?: string | null, revelaIso?: string | null, formato?: string | null) => string
   /** «Estás dentro» (reglas.js, 31-10). De momento la app solo lee si un plan tiene tarjetas para historias. */
   DENTRO: { conTarjetas: (formato: string) => boolean }
+  /** La familia de un formato (cenas, brunch, drinks, coffee, movimiento), de `FAMILIAS`. */
+  familiaDe: (formato: string) => { clave: 'cenas' | 'brunch' | 'drinks' | 'coffee' | 'movimiento' | string }
   /** «Cómo funciona» en tres tarjetas: los textos de la web y la app, en un solo sitio (f0e8a7e). */
   COMO_FUNCIONA: {
     titulo: string

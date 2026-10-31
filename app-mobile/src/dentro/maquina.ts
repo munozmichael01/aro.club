@@ -77,7 +77,7 @@ export const claveVista = (empiezaEn: string) => `estas-dentro:${empiezaEn}`
 
 /** Lo que pinta la historia para compartir (TarjetaHistoria de la entrega estas-dentro). */
 export type Historia = {
-  plan: 'Cena' | 'Brunch'
+  plan: 'Cena' | 'Brunch' | 'Drinks' | 'Coffee'
   /** «Viernes 30», y sus dos mitades. */
   dia: string
   diaSemana: string
@@ -96,15 +96,15 @@ export type Historia = {
  * tarjeta (su copy habla de mesa y de silla) y comparten solo el mensaje.
  */
 export function historia(p: Plan, codigo: string | null): Historia | null {
-  // Solo cena y brunch: su copy habla de cenar y de mesa. Unos drinks salían
-  // con «ceno con gente…» porque `tipoDe` los cuenta como cena (31-10).
-  if (!reglas.DENTRO.conTarjetas(p.formato ?? 'dinner')) return null
+  // Los de movimiento no tienen tarjeta: comparten solo el mensaje.
+  if (reglas.vozDe(p.formato ?? 'dinner').unidad === 'grupo') return null
   const tipo = reglas.COMO_FUNCIONA.tipoDe(p.formato ?? 'dinner')
+  const familia = reglas.familiaDe(p.formato ?? 'dinner').clave
   const z = p.zonaHoraria
   const dia = F.diaYNumero(p.empiezaEn, z)
   const [diaSemana = '', numero = ''] = dia.split(' ')
   return {
-    plan: tipo === 'brunch' ? 'Brunch' : 'Cena',
+    plan: familia === 'drinks' ? 'Drinks' : familia === 'coffee' ? 'Coffee' : tipo === 'brunch' ? 'Brunch' : 'Cena',
     dia,
     diaSemana,
     numero,
@@ -119,4 +119,11 @@ export function historia(p: Plan, codigo: string | null): Historia | null {
  * Las tarjetas que se ofrecen. La 4 («Hay una silla para ti») es entera el
  * código: sin referidos todavía, no sale.
  */
-export const variantesDe = (h: Historia) => (h.codigo ? [1, 2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 5, 6, 7, 8])
+export function variantesDe(h: Historia): number[] {
+  // Drinks y café, mientras Design no les haga las suyas (Michael, 31-10: «no
+  // dejes de mostrar nada»): solo las que no hablan de cenar ni de mesa. La 1
+  // dice «ceno», la 5 «Mesa puesta» y la 8 «dónde es mi cena».
+  const sinCena = h.plan === 'Drinks' || h.plan === 'Coffee'
+  const todas = sinCena ? [2, 3, 4, 6, 7] : [1, 2, 3, 4, 5, 6, 7, 8]
+  return h.codigo ? todas : todas.filter((v) => v !== 4)
+}
