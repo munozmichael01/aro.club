@@ -85,6 +85,20 @@ const mover = cola.filter((r) => new Date(r.send_at).getTime() > cuando.getTime(
 console.log('\nse moverían a ' + car(cuando.toISOString()) + ': ' + mover.length
   + ' de ' + cola.length + ' (los que ya salían antes se quedan como están)')
 
+/**
+ * Y juntarlos en una hora los junta en UN correo.
+ *
+ * El cron agrupa por persona lo que le toque en la misma vuelta: quien
+ * tenga dos o tres aperturas recibe un «avisos del día» con todas las
+ * fechas dentro, no tres correos. Por eso adelantarlos no multiplica nada:
+ * al contrario, es lo que hace que la semana se cuente de una vez.
+ */
+const porPersona = new Map()
+for (const r of mover) porPersona.set(r.profile_id, (porPersona.get(r.profile_id) ?? 0) + 1)
+const conVarias = [...porPersona.values()].filter((n) => n > 1).length
+console.log('personas distintas: ' + porPersona.size
+  + (conVarias ? ' · ' + conVarias + ' reciben UN correo con varias fechas dentro' : ''))
+
 if (process.argv[3] !== 'aplicar') {
   console.log('\n(en seco: no se ha escrito nada. Añade `aplicar` al final)')
   process.exit(0)
