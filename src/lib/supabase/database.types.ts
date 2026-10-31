@@ -205,6 +205,7 @@ export type Database = {
       bookings: {
         Row: {
           after_rsvp: boolean | null
+          asistencia_por: string | null
           attended_marked_by: string | null
           cancel_reason: string | null
           cancelled_at: string | null
@@ -224,6 +225,7 @@ export type Database = {
         }
         Insert: {
           after_rsvp?: boolean | null
+          asistencia_por?: string | null
           attended_marked_by?: string | null
           cancel_reason?: string | null
           cancelled_at?: string | null
@@ -243,6 +245,7 @@ export type Database = {
         }
         Update: {
           after_rsvp?: boolean | null
+          asistencia_por?: string | null
           attended_marked_by?: string | null
           cancel_reason?: string | null
           cancelled_at?: string | null
@@ -4216,8 +4219,10 @@ export type Database = {
         | "reembolso_pedido"
         | "reembolso_hecho"
         | "probadores_android"
-        | "te_falta_sentarte"
         | "fecha_cambiada"
+        | "te_falta_sentarte"
+        | "referido_avanza"
+        | "referido_premio"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -4468,8 +4473,10 @@ export const Constants = {
         "reembolso_pedido",
         "reembolso_hecho",
         "probadores_android",
-        "te_falta_sentarte",
         "fecha_cambiada",
+        "te_falta_sentarte",
+        "referido_avanza",
+        "referido_premio",
       ],
       event_format_t: [
         "dinner",

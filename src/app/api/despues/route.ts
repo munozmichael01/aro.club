@@ -540,24 +540,13 @@ export async function POST(request: Request) {
 
         if (!suya) continue
 
-        /**
-         * Quién cerró esa asistencia, en una consulta aparte y que puede
-         * fallar sin consecuencias.
-         *
-         * Va suelta a propósito: `asistencia_por` es una columna nueva y
-         * mientras la migración no esté aplicada PostgREST contesta un error
-         * a cualquier select que la nombre. Metida en el de arriba, el
-         * bloque entero dejaría de marcar ausencias —que es lo que ya
-         * funcionaba— por una mejora que todavía no está. Sin ella, `firma`
-         * es nula y esto se comporta exactamente como antes.
-         */
         const { data: firmaFila } = await admin
           .from('bookings')
-          .select('asistencia_por' as never)
+          .select('asistencia_por')
           .eq('id', suya.id)
           .maybeSingle()
 
-        const firma = (firmaFila as unknown as { asistencia_por?: string | null } | null)?.asistencia_por ?? null
+        const firma = firmaFila?.asistencia_por ?? null
 
         /**
          * Lo que todavía no decidió nadie, y lo que cerró LA PROPIA ENCUESTA.
