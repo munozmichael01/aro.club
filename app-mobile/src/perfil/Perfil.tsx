@@ -333,6 +333,29 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
             {senal ? <Punto tam={9} /> : null}
             <IconoAbrir tam={16} color={color.verdeProfundo} />
           </Pressable>
+          {/* La lista de siempre se queda hasta que Pasadas traiga también las canceladas y
+              las que no fue (Michael, 31-10: «una cancelada debe verse aquí también»). */}
+          {hist.length ? (
+            <View style={{ marginTop: 12 }}>
+              {hist.map((c, i) => (
+                <View key={i} style={estilos.cena}>
+                  <View style={{ flexGrow: 1, flexBasis: 190, minWidth: 0 }}>
+                    <Texto variante="subtitulo" style={{ fontSize: 20 }}>
+                      {c.sitio}
+                    </Texto>
+                    <Texto variante="nota" style={{ marginTop: 3 }}>
+                      {c.cuando}
+                    </Texto>
+                  </View>
+                  <View style={[estilos.chipCena, c.fuiste ? { backgroundColor: verdeAlfa(0.11) } : null]}>
+                    <Texto variante="chip" style={{ color: c.fuiste ? color.verde : color.secundario }}>
+                      {c.estado}
+                    </Texto>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </Seccion>
 
         <Seccion titulo={T.avisos.titulo} nota={T.avisos.nota}>
