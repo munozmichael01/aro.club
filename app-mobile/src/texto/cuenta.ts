@@ -129,8 +129,8 @@ export const agenda = {
   titulo: `Lo que viene en ${CIUDAD_PRODUCTO.nombre}`,
   /** Cómo se arma la mesa. Va en la hoja de reservar, no encima de la agenda: allí empujaba la primera fecha fuera de la pantalla (entrega 19), y es al reservar cuando hace falta. */
   /** El cierre sale de `reglas.textoCierre` (20-10): a medianoche las cenas, a las 5:00 p.m. del día antes los planes de mañana. Como la web. */
-  comoFunciona: (cierre: string) =>
-    `Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona, y antes te decimos en cuál te tocó. La fecha ${(cierre || 'se cierra a medianoche, cuando empieza su día').replace(/\.$/, '')}.`,
+  comoFunciona: (cierre: string, porMesa: number = MESA) =>
+    `Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de ${reglas.enLetra(porMesa)} por toda la zona, y antes te decimos en cuál te tocó. La fecha ${(cierre || 'se cierra a medianoche, cuando empieza su día').replace(/\.$/, '')}.`,
   verTodo: 'Ver todo',
   vacia: 'Nada de ese tipo abierto ahora mismo. Abrimos según lo que pida la gente: marca ese plan en tu perfil y cuentas para que salga.',
   eligeHora: 'ELIGE LA HORA',
@@ -169,18 +169,16 @@ export const conEdad = (singular: string, edad: number) => `${singular} +${edad}
 
 export const ORDEN_FORMATOS = ['dinner', 'drinks', 'movement', 'coffee', 'brunch'] as const
 
-/** Lo que dice cada fecha de la agenda debajo de su barra. */
-export function estadoDeFecha(n: number, mia: boolean, cerrada: boolean): string {
+/**
+ * Lo que dice cada fecha de la agenda debajo de su barra. Abierta y sin
+ * puesto, la frase es la de `reglas.js` (`fraseDeApuntados`), con cuántos se
+ * sientan juntos en ESA fecha: ya no siempre son seis (31-10).
+ */
+export function estadoDeFecha(n: number, mia: boolean, cerrada: boolean, porMesa: number = MESA): string {
   const apuntados = `${n} ${n === 1 ? 'apuntado' : 'apuntados'}`
   if (cerrada) return mia ? 'Ya tienes puesto · cerrada' : `Cerrada · ${apuntados}`
   if (mia) return 'Ya tienes puesto'
-  if (n < UMBRAL_APUNTADOS) return 'Una mesa son seis'
-  if (n >= MESA) {
-    const mesas = Math.ceil(n / MESA)
-    return `${apuntados} · ${mesas} ${mesas === 1 ? 'mesa' : 'mesas'}`
-  }
-  const faltan = MESA - n
-  return `${apuntados} · ${faltan === 1 ? 'falta 1' : `faltan ${faltan}`} para la primera mesa`
+  return reglas.fraseDeApuntados(n, porMesa)
 }
 
 export const valorar = {

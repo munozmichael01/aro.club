@@ -20,6 +20,8 @@ export type FechaAgenda = {
   creditos: number
   zonas: string[]
   apuntados: number
+  /** Cuántos se sientan juntos en ESTA fecha (31-10: unos drinks son ocho). Sin el campo, seis. */
+  porMesa?: number | null
   cerrada: boolean
   mia: boolean
   /** La zona de la ciudad de ESTA fecha: el día y la hora se dicen en ella. */
@@ -266,6 +268,8 @@ export type FilaAgenda = {
   idioma: string | null
   /** «se cierra a medianoche, cuando empieza el viernes», de `reglas.textoCierre`. */
   cierre: string
+  /** Cuántos van juntos en esta fecha, para la frase de la hoja. */
+  porMesa: number
   /** La fecha en crudo, para «Cómo funciona» (cuándo se revela, en su zona). */
   empiezaEn: string
   zonaHoraria: string | null
@@ -297,11 +301,12 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       // Las zonas ABIERTAS de esa fecha, no un sitio: el sitio se decide al
       // armar la mesa y nadie lo sabe hasta la revelación.
       zona: a.zonas.join(' o ') || T.agenda.zonaPorConfirmar,
-      estado: T.estadoDeFecha(a.apuntados, a.mia, cerrada),
+      estado: T.estadoDeFecha(a.apuntados, a.mia, cerrada, a.porMesa ?? T.MESA),
       mia: a.mia,
       cerrada,
-      llenado: Math.min(1, a.apuntados / T.MESA),
-      va: a.apuntados >= T.MESA,
+      llenado: Math.min(1, a.apuntados / (a.porMesa || T.MESA)),
+      va: a.apuntados >= (a.porMesa || T.MESA),
+      porMesa: a.porMesa || T.MESA,
       precio: precioDe(a),
       graba: !!a.permisoObligatorio,
       idioma: a.idioma ? (a.etiquetaIdioma ?? null) : null,

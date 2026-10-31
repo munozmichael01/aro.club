@@ -273,3 +273,11 @@ test('los días que se guardan las fotos salen de la regla, no a mano (23-10: la
   assert.ok(V.intro.explicacion.some(([, t]) => t.includes(`${dias} días`)))
   assert.match(C.ESTADOS.verificar.cuerpo(''), new RegExp(`${dias} días`))
 })
+
+test('unos drinks de ocho dicen ocho, no seis: la frase y la hoja van con porMesa (31-10)', async () => {
+  const T = await import('../src/texto/cuenta')
+  assert.equal(T.estadoDeFecha(1, false, false, 8), 'Una mesa son ocho')
+  assert.equal(T.estadoDeFecha(5, false, false, 8), '5 apuntados · faltan 3 para la primera mesa')
+  assert.equal(T.estadoDeFecha(1, false, false), 'Una mesa son seis')
+  assert.match(T.agenda.comoFunciona('', 8), /mesas de ocho/)
+})

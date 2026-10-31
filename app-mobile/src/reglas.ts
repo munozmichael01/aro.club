@@ -82,6 +82,10 @@ type Api = {
     tarjetas: (tipo: 'cena' | 'brunch' | 'grupo', cuando: string) => { clave: 'antes' | 'durante' | 'despues'; icono: string; titulo: string; cuerpo: string }[]
     tipoDe: (formato: string | null | undefined) => 'cena' | 'brunch' | 'grupo'
   }
+  /** «una», «dos», «tres»… en femenino (personas, cenas). */
+  enLetra: (n: number) => string
+  /** «Una mesa son seis», «4 apuntados · faltan 2 para la primera mesa»… con cuántos van juntos en ESA fecha (31-10). */
+  fraseDeApuntados: (n: number, porMesa?: number | null) => string
   revelaDe: (inicioIso: string, zona?: string | null, revelaIso?: string | null) => { cuando: string; mismoDia: boolean; dia: string; hora: string; enLetra: string } | null
   /** El arraigo dicho de otra persona («Volvió al país»), por código (f8f4cf5). */
   ARRAIGO_EN_LA_MESA: Record<string, string>
