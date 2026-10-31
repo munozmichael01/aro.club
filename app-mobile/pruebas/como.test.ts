@@ -38,3 +38,9 @@ test('los textos y el tipo salen de reglas.js, los mismos que la web (f0e8a7e)',
   assert.deepEqual(brunch.tarjetas.map((t) => [t.titulo, t.cuerpo]), web.map((t) => [t.titulo, t.cuerpo]))
   assert.equal(M.cuandoSeSabe({ formato: 'dinner' }), 'Antes del plan')
 })
+
+test('drinks y café no tienen «Cómo funciona» todavía: abrían las tarjetas de cena y la app se cerraba (31-10)', () => {
+  assert.equal(M.tieneComoFunciona('drinks'), false)
+  assert.equal(M.tieneComoFunciona('coffee'), false)
+  for (const f of ['dinner', 'women_dinner', 'brunch', 'walk', null]) assert.equal(M.tieneComoFunciona(f), true, String(f))
+})

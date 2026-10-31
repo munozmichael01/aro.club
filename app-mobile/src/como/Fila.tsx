@@ -13,7 +13,12 @@ import * as M from './maquina'
  * (C1) y «Cómo funciona» en Mi mesa hasta la revelación (C3b). En Mi mesa,
  * además, se abre sola una vez con las tres juntas (C3).
  */
-export function FilaComoFunciona({ plan, enMiMesa }: { plan: M.Plan; enMiMesa?: boolean }) {
+export function FilaComoFunciona(p: { plan: M.Plan; enMiMesa?: boolean }) {
+  if (!M.tieneComoFunciona(p.plan.formato)) return null
+  return <Fila {...p} />
+}
+
+function Fila({ plan, enMiMesa }: { plan: M.Plan; enMiMesa?: boolean }) {
   const [abierta, setAbierta] = useState(false)
   const [todas, setTodas] = useState(false)
   const t = enMiMesa ? T.filaMesa : T.fila

@@ -18,11 +18,12 @@ export function IconoCenas({ tam = 15, color }: P) {
   )
 }
 
-/** Drinks (◇). */
+/** Drinks: la copa, con el trazo de la cúpula del brunch (como la web, 31-10). Era un rombo que no decía nada. */
 export function IconoDrinks({ tam = 15, color }: P) {
   return (
     <Svg width={tam} height={tam} viewBox="0 0 16 16">
-      <Path d="M8 2.2 13.8 8 8 13.8 2.2 8z" fill="none" stroke={color} strokeWidth={1.5} strokeLinejoin="round" />
+      <Path d="M3.3 3.2h9.4L8 8.4z" fill={color} />
+      <Path d="M8 8.4V12.8M5.5 12.8h5" fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" />
     </Svg>
   )
 }
