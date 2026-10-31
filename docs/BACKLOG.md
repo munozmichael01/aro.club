@@ -215,3 +215,27 @@ sería escribir ciudades donde todavía no hay nada, que es peor.
 
 El texto que lee una persona ya NO menciona la ciudad —dice «en tu ciudad»—,
 así que esto es solo el dato para máquinas.
+
+---
+
+## 8 · La encuesta de después pregunta por «la comida», también en unos drinks
+
+**Michael, 31-10, revisando qué falta para abrir Drinks.** Es una línea y no
+corre prisa, pero se nota el día que haya drinks de verdad.
+
+**El problema.** La encuesta puntúa el sitio en cuatro filas, y una es
+`comida` (`FILAS_DEL_SITIO` en `src/lib/encuesta.ts`). En una cena es la
+pregunta obvia. En unos drinks, donde puede que nadie haya comido nada, pedir
+que puntúen «la comida» se lee como que el correo no sabe a qué fuiste.
+
+**Lo que hay que hacer.** O la fila se salta cuando el formato no es de
+comer, o cambia de nombre por formato: «la comida» en cena y brunch, «la
+barra» o «lo que tomamos» en drinks. Lo segundo da un dato comparable entre
+formatos; lo primero es una línea.
+
+Y mirar de paso las otras tres —`ambiente`, `servicio`, `conversar`—, que en
+drinks sí valen tal cual.
+
+**Por qué espera.** Hasta que no haya una fecha de drinks hecha, nadie
+recibe esa encuesta. No es un fallo que esté corriendo: es uno que empieza a
+correr el día que se abra el formato.
