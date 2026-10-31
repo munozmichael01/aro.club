@@ -271,3 +271,27 @@ es más que cenas.
 
 Es el mismo animal que el «Si no te sirve el 21» del correo de apertura: un
 dato escrito a mano que envejece solo mientras lo de al lado se actualiza.
+
+---
+
+## 10 · «Cómo funciona» no sabe contar unos drinks
+
+**Michael, 31-10, viéndolo en la app.** La fila se quitó de las fechas de
+drinks ese mismo día, en la web y en la app. Lo que falta es lo otro: que
+tenga algo que contar.
+
+**El problema.** `AroReglas.COMO_FUNCIONA.tipoDe(formato)` reparte en tres
+cajas: movimiento → `grupo`, brunch → `brunch`, y **todo lo demás → `cena`**.
+Unos drinks caían en `cena`, así que las tres tarjetas le explicaban a quien
+iba a un bar cómo funciona una cena: la mesa reservada, el sitio que elegimos,
+las dos horas.
+
+**Lo que hay que hacer.** Las tres tarjetas de drinks —antes, durante y
+después— y su caja en `tipoDe`. Mientras no existan, la fila no sale: es
+mejor no contar nada que contar otra cosa.
+
+Y de paso mirar los otros formatos que caen en `cena` sin serlo: `coffee`
+hace lo mismo.
+
+**Por qué espera.** Design tiene que escribir esas tres tarjetas. El texto
+vive en `reglas.js` (`COMO_FUNCIONA`), que lo leen la web y la app.

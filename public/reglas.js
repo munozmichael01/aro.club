@@ -2197,15 +2197,34 @@
      * Mi cuenta: dos copias de la misma frase son dos frases en cuanto
      * alguien toque una.
      */
-    fraseDeApuntados: function (n) {
+    fraseDeApuntados: function (n, porMesa) {
       var x = Number(n) || 0
-      if (x < api.UMBRAL_APUNTADOS) return 'Una mesa son seis'
-      if (x >= 6) {
-        var mesas = Math.ceil(x / 6)
+      /**
+       * Cuantos son en ESA fecha, que ya no siempre son seis.
+       *
+       * Unos drinks son ocho (Michael, 31-10). Opcional y con seis por
+       * defecto para que la app siga diciendo lo de siempre hasta que lo
+       * pase: cambiar de forma una funcion compartida rompe la otra punta.
+       */
+      var cuantos = Number(porMesa) || 6
+      if (x < api.UMBRAL_APUNTADOS) return 'Una mesa son ' + api.enLetra(cuantos)
+      if (x >= cuantos) {
+        var mesas = Math.ceil(x / cuantos)
         return x + ' apuntados · ' + mesas + (mesas === 1 ? ' mesa' : ' mesas')
       }
-      var faltan = 6 - x
+      var faltan = cuantos - x
       return x + ' apuntados · ' + (faltan === 1 ? 'falta 1' : 'faltan ' + faltan) + ' para la primera mesa'
+    },
+
+    /**
+     * Los numeros que se dicen, en letra. Del dos al doce, que es lo que
+     * cabe en una mesa o en un grupo; de ahi para arriba, la cifra.
+     */
+    enLetra: function (n) {
+      var palabras = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete',
+                      'ocho', 'nueve', 'diez', 'once', 'doce']
+      var x = Number(n)
+      return palabras[x] || String(n)
     },
 
     /** Valida un conjunto. Devuelve el primer campo que falla, o null. */

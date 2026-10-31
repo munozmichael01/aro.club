@@ -292,7 +292,14 @@
                   <!-- La fila que abre «Cómo funciona» (C1 de la entrega del
                        29-10). Justo encima del botón, que es donde Design la
                        puso: se pulsa cuando ya casi has decidido y te falta
-                       saber qué pasa después de pulsar. -->
+                       saber qué pasa después de pulsar.
+
+                       En los drinks NO sale. `COMO_FUNCIONA.tipoDe` solo
+                       sabe de cenas, brunch y movimiento, así que unos
+                       drinks caían en «cena» y las tres tarjetas hablaban de
+                       una cena que no es. Michael, 31-10: quitarlo hasta que
+                       tengan las suyas. -->
+                  <sc-if value="{{ ev.hayComo }}" hint-placeholder-val="{{ true }}">
                   <button onClick="{{ ev.verComo }}" style="width:100%;display:flex;align-items:center;gap:12px;min-height:62px;padding:10px 0;margin-bottom:16px;border:none;border-top:1px solid rgba(20,52,42,.12);border-bottom:1px solid rgba(20,52,42,.12);background:none;cursor:pointer;text-align:left">
                     <div style="width:36px;height:36px;border-radius:18px;background:#14342A;display:flex;align-items:center;justify-content:center;flex:none">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5v.4M12 17h.01"></path></svg>
@@ -303,6 +310,7 @@
                     </div>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M9 5l7 7-7 7"></path></svg>
                   </button>
+                  </sc-if>
 
                   <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:center">
                     <button onClick="{{ ev.confirmar }}" style="{{ ev.botonConfirmar }}">{{ ev.textoConfirmar }}</button>
@@ -1406,7 +1414,16 @@ class Component extends DCLogic {
         // por familia y empieza por la hora de la revelacion. `c[1]` es el
         // nombre de la FAMILIA en pantalla («Cenas»), que no sirve para eso.
         a.formato ?? null,
-        a.revelaEn ?? null
+        a.revelaEn ?? null,
+        /**
+         * Cuantos son en ESTA fecha. Al final, como todo lo que se añade:
+         * la tupla se lee por indice.
+         *
+         * Ya no siempre son seis —unos drinks son ocho— y la pantalla lo
+         * decia a mano en dos sitios: «Una mesa son seis» y «se reparten en
+         * mesas de seis». La primera fecha de ocho desmintio las dos.
+         */
+        a.porMesa ?? 6
       ];
     });
     // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato
@@ -1561,11 +1578,10 @@ class Component extends DCLogic {
           ? (mia ? 'Ya tienes puesto · cerrada' : 'Cerrada · ' + n + (n === 1 ? ' apuntado' : ' apuntados'))
           : mia
           ? 'Ya tienes puesto'
-          : (n < UMBRAL_APUNTADOS
-            ? 'Una mesa son seis'
-            : (n >= 6
-              ? n + ' apuntados · ' + Math.ceil(n / 6) + (Math.ceil(n / 6) === 1 ? ' mesa' : ' mesas')
-              : n + ' apuntados · ' + ((6 - n) === 1 ? 'falta 1' : 'faltan ' + (6 - n)) + ' para la primera mesa')),
+          // De `reglas.js`, que es donde vive esa frase desde que la pidio
+          // tambien la agenda publica. Aqui estaba escrita por segunda vez
+          // con el seis dentro, asi que los drinks de ocho decian seis.
+          : AroReglas.fraseDeApuntados(n, c[17]),
         estadoEstilo: 'font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (cerrada ? '#566A5D' : (mia ? '#1B5138' : (va ? '#1B5138' : '#8F4515'))) + ';white-space:nowrap',
         caja: 'display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;border-radius:22px;padding:clamp(15px,2vw,18px);opacity:' + (cerrada ? '.58' : '1') + ';cursor:' + (mia || cerrada ? 'default' : 'pointer') + ';background:' + (mia ? 'transparent' : (abierta ? '#F2E9D5' : '#FFFBF0')) + ';border:1px solid ' + (mia ? '#1B5138' : 'transparent'),
         icono: 'flex:0 0 auto;width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 15px/1 \'Inter Tight\',sans-serif;background:' + (mia ? '#1B5138' : m[2]) + ';color:' + (mia ? '#FAF3E4' : m[1]),
@@ -1598,7 +1614,8 @@ class Component extends DCLogic {
          * brunch ya salia asi. Lo vio el agente de la app, que comparte este
          * texto y acababa de tropezar con lo mismo.
          */
-        comoFunciona: 'Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de seis por toda la zona, y antes te decimos en cuál te tocó. La fecha '
+        comoFunciona: 'Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de '
+          + AroReglas.enLetra(c[17] || 6) + ' por toda la zona, y antes te decimos en cuál te tocó. La fecha '
           + (() => {
             const frase = window.AroReglas && c[12]
               ? AroReglas.textoCierre(c[12], null, c[14])
@@ -1648,6 +1665,9 @@ class Component extends DCLogic {
         tocarPermiso: () => this.setState({ permiteGrabacion: !this.state.permiteGrabacion }),
         // Abre «Cómo funciona» con el formato y las horas de ESTA fecha.
         verComo: () => this.abrirComo(c[15], c[12], c[16]),
+        // Drinks todavía no tiene sus tres tarjetas: hasta que las tenga, la
+        // fila no se enseña en vez de contar una cena.
+        hayComo: c[15] !== 'drinks',
 
         textoConfirmar: this.state.reservandoYa
           ? 'Apuntándote'

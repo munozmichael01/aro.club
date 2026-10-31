@@ -287,7 +287,7 @@ export async function GET() {
   // gente.
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, reveal_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, created_at, grabacion, grabacion_requerida, idioma')
+    .select('id, format, starts_at, booking_closes_at, reveal_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, seats_per_table, created_at, grabacion, grabacion_requerida, idioma')
     // Las de prueba no son de nadie más que de quien las creó.
     .eq('es_prueba', false)
     // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
@@ -607,6 +607,14 @@ export async function GET() {
        * criterio. Lo pidió el agente de la app, 18-10.
        */
       creadaEn: f.created_at,
+      /**
+       * Cuántos son en esta fecha. Ya no siempre seis: unos drinks son ocho.
+       *
+       * Lo piden las dos pantallas —la web y la app— para no escribir el
+       * seis a mano: «Una mesa son seis» y «se reparten en mesas de seis»
+       * estaban las dos con el número dentro.
+       */
+      porMesa: f.seats_per_table ?? 6,
       /**
        * Si esta fecha se graba ENTERA.
        *
