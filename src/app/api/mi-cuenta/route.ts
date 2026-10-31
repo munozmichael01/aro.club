@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { dentroPorVer } from '@/lib/estas-dentro'
+import { cenasPasadas, hayQueMirar } from '@/lib/pasadas'
 import { cabeEnLaFecha } from '@/lib/edad'
 
 import { respuestasDePerfil, situacionDePerfil } from '@/lib/embudo'
@@ -754,6 +755,16 @@ export async function GET() {
      * va directo allí ANTES de pintarse (entrega estas-dentro, B3).
      */
     estasDentro: await dentroPorVer(admin, user.id),
+    /**
+     * Pasadas (entrega mi-mesa-pasadas): cuántas cenas tiene y si hay algo
+     * pendiente o nuevo en alguna. Enciende el punto de «Mi mesa» en el menú
+     * de las tres pantallas, y con cenas pasadas «Mi mesa» existe aunque no
+     * haya reserva.
+     */
+    ...(await (async () => {
+      const pasadas = await cenasPasadas(admin, user.id)
+      return { senalPasadas: hayQueMirar(pasadas), cuantasPasadas: pasadas.length }
+    })()),
     reserva: reserva
       ? {
           id: reserva.id,

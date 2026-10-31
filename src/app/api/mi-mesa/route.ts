@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { dentroPorVer } from '@/lib/estas-dentro'
+import { cenasPasadas, hayQueMirar, lineaDePendientes } from '@/lib/pasadas'
 import { minutosAPie } from '@/lib/distancia'
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
@@ -156,7 +157,7 @@ async function bloqueDeCambiarFecha(
  * rompe, y una API que lo suelta antes hace inútil el candado de la
  * pantalla.
  */
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -271,27 +272,56 @@ export async function GET() {
   const ultima = (reservas ?? []).filter(tieneMesa).sort((a, b) => empiezaDe(b) - empiezaDe(a))[0]
 
   /**
-   * LA ENCUESTA TAPA LA MESA NUEVA, PERO NUNCA EL SITIO Y LA DIRECCIÓN.
+   * LA RESERVA ACTIVA MANDA SIEMPRE.
    *
-   * Michael, 29-10: «si hace una reserva nueva, debe responder primero para
-   * poder ver la mesa nueva». Eso ya pasaba, porque lo que está por valorar
-   * va delante de lo próximo; lo que faltaba es el freno.
+   * Michael, 31-10, cambiando su regla del 29-10 («la encuesta tapa la mesa
+   * nueva»): con una cena hoy y otra ayer, eso dejaba a alguien sin ver su
+   * mesa. Ahora lo pendiente de una cena pasada —la encuesta o el contacto—
+   * va en una LÍNEA encima, que no tapa nada y lleva a esa cena en Pasadas
+   * (entrega mi-mesa-pasadas, P1 y P2).
    *
-   * Una vez REVELADA, su cena manda. Taparle una mesa ya abierta por una
-   * encuesta pendiente es dejar a alguien sin saber a qué restaurante ir ni
-   * en qué dirección, la noche que tiene que ir. Un bloqueo que se cobra eso
-   * no es un bloqueo, es un fallo.
-   *
-   * Antes de la revelación no hay nada urgente que ver —ni sitio, ni
-   * acompañantes— así que ahí el bloqueo no le quita nada a nadie.
+   * Sin reserva activa, se enseña la cena pasada con lo que falta, como
+   * antes (P3). Y entre las pendientes, la de contacto antes que la de la
+   * encuesta, porque caduca; con varias, la más reciente.
    */
-  const yaAbierta = (r: Reserva) => {
-    const e = r.events as { reveal_at?: string | null } | null
-    return !!e?.reveal_at && Date.parse(e.reveal_at) <= ahora
-  }
-  const urge = proxima && yaAbierta(proxima) ? proxima : undefined
+  const pasadas = await cenasPasadas(admin, user.id)
+  const linea = lineaDePendientes(pasadas)
+  const conPendiente = linea
+    ? (reservas ?? []).find((r) => mesaDeReserva.get(r.id) === linea.mesaId)
+    : undefined
 
-  const reserva = urge ?? porValorar ?? proxima ?? (ultima && !yaLaConto(ultima) ? ultima : undefined)
+  /**
+   * `?mesa=<id>`: ESA cena pasada, con la forma de siempre (fase 'pasada').
+   *
+   * La vista de una cena en Pasadas (entrega mi-mesa-pasadas, C1 a C5) lleva
+   * lo mismo que la Mi mesa pasada de hoy —con quién cenaste, bloquear,
+   * reportar, la encuesta o «ya contaste»—, así que app y web la pintan con
+   * la MISMA pieza en vez de duplicarla. Lo pidió el agente de la app el 31-10.
+   *
+   * Solo una cena suya y ya pasada: si no estuvo en esa mesa, o todavía no ha
+   * terminado, 404.
+   */
+  const pedida = new URL(request.url).searchParams.get('mesa')
+  let laPedida: Reserva | undefined
+  if (pedida) {
+    laPedida = (reservas ?? []).find((r) => mesaDeReserva.get(r.id) === pedida)
+    if (!laPedida || empiezaDe(laPedida) + FIN_CENA > ahora) {
+      return NextResponse.json({ error: 'Esa cena no es tuya o todavía no ha pasado.' }, { status: 404 })
+    }
+  }
+
+  const reserva = laPedida ?? proxima ?? conPendiente ?? porValorar ?? (ultima && !yaLaConto(ultima) ? ultima : undefined)
+
+  /**
+   * Lo que viaja en TODAS las respuestas: la línea de pendientes (solo con
+   * una reserva activa; sin ella, la cena pendiente ya es la pantalla) y el
+   * punto de «hay algo nuevo» de la barra y de la pestaña Pasadas.
+   */
+  const deLasPasadas = {
+    pendiente: proxima ? linea : null,
+    senalPasadas: hayQueMirar(pasadas),
+    cuantasPasadas: pasadas.length,
+  }
 
   const evento = reserva?.events as
     | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string; grabacion: boolean; seats_per_table: number | null }
@@ -310,7 +340,7 @@ export async function GET() {
       .eq('id', user.id)
       .maybeSingle()
 
-    return NextResponse.json({ fase: 'sin-reserva', estado: perfil?.status ?? null })
+    return NextResponse.json({ fase: 'sin-reserva', estado: perfil?.status ?? null, ...deLasPasadas })
   }
 
   const revelaEn = new Date(evento.reveal_at).getTime()
@@ -360,6 +390,7 @@ export async function GET() {
       .order('sort_order')
 
     return NextResponse.json({
+      ...deLasPasadas,
       fase: 'cerrada',
       eventoId: reserva.event_id,
       // Confirmada y sin haber visto «Estás dentro»: la pantalla va allí
@@ -409,6 +440,7 @@ export async function GET() {
       .maybeSingle()
 
     return NextResponse.json({
+      ...deLasPasadas,
       fase: 'sin-mesa',
       formato: evento.format,
       empiezaEn: evento.starts_at,
@@ -646,6 +678,7 @@ export async function GET() {
       })()
 
   return NextResponse.json({
+    ...deLasPasadas,
     // Pasada: la cena ya ocurrió, toca F11.
     fase: ahora > empiezaEn + 5 * 3600 * 1000 ? 'pasada' : 'abierta',
     // El id de la mesa y los de sus companeros: hacen falta para valorar,

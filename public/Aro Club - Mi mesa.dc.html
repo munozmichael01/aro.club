@@ -34,13 +34,27 @@
   ::selection { background:#14342A; color:#FAF3E4; }
   @keyframes aro-open { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:none } }
   @keyframes aro-spin { to { transform: rotate(360deg) } }
+  /* Próxima y Pasadas (entrega mi-mesa-pasadas): la columna de siempre, y
+     ancha en Pasadas, con la lista a la izquierda desde 720 px. Por debajo,
+     o la lista o la cena, como la app. */
+  .aro-ancho { max-width:560px; }
+  .aro-ancho.aro-amplio { max-width:1120px; }
+  .aro-grid-pasadas { display:block; }
+  @media (min-width:720px) {
+    .aro-grid-pasadas { display:grid; grid-template-columns:340px minmax(0,1fr); gap:32px; align-items:start; }
+    .aro-solo-movil { display:none !important; }
+  }
+  @media (max-width:719px) {
+    .aro-con-cena .aro-lista { display:none !important; }
+    .aro-sin-cena .aro-cena { display:none !important; }
+  }
   @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
 </style>
 </helmet>
 
 <div style="background:#FAF3E4;color:#14342A;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh">
 
-  <div style="max-width:560px;margin:0 auto;padding:clamp(16px,4vw,26px) clamp(16px,4vw,24px) 0;display:flex;align-items:center;justify-content:space-between;gap:12px">
+  <div class="{{ claseAncho }}" style="margin:0 auto;padding:clamp(16px,4vw,26px) clamp(16px,4vw,24px) 0;display:flex;align-items:center;justify-content:space-between;gap:12px">
     <a href="/cuenta" style="display:inline-flex;align-items:center;gap:10px;min-height:44px;margin:-10px 0">
       <span style="font:500 19px/1 'Inter Tight',sans-serif;color:#33513F">←</span>
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="3.4" cy="12" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#14342A"></circle></svg>
@@ -49,14 +63,229 @@
 
   </div>
 
-  <div style="max-width:560px;margin:0 auto;padding:6px clamp(16px,4vw,24px) 0;display:flex;gap:clamp(18px,4vw,28px);border-bottom:1px solid rgba(20,52,42,.1)">
+  <div class="{{ claseAncho }}" style="margin:0 auto;padding:6px clamp(16px,4vw,24px) 0;display:flex;gap:clamp(18px,4vw,28px);border-bottom:1px solid rgba(20,52,42,.1)">
     <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
-      <a href="{{ n.enlace }}" aria-current="{{ n.actual }}" style="{{ n.estilo }}">{{ n.texto }}</a>
+      <a href="{{ n.enlace }}" aria-current="{{ n.actual }}" style="{{ n.estilo }}">{{ n.texto }}<sc-if value="{{ n.punto }}" hint-placeholder-val="{{ false }}"><span style="{{ n.estiloPunto }}" aria-label="Hay algo nuevo"></span></sc-if></a>
     </sc-for>
     <button onClick="{{ salir }}" style="{{ estiloSalir }}">{{ textoSalir }}</button>
   </div>
 
-  <div style="max-width:560px;margin:0 auto;padding:clamp(22px,4vw,34px) clamp(16px,4vw,24px) clamp(40px,7vw,64px)">
+  <!-- Mi mesa con Próxima y Pasadas (entrega mi-mesa-pasadas, 31-10).
+       Próxima es la de siempre. Pasadas: en escritorio la lista a la
+       izquierda y la cena a la derecha; por debajo de 720 px la lista, y la
+       cena en pantalla propia. La cena abierta es la Mi mesa pasada de
+       siempre (/api/mi-mesa?mesa=), con «Seguir en contacto» encima. -->
+  <div class="{{ claseMarco }}" style="margin:0 auto;padding:clamp(22px,4vw,34px) clamp(16px,4vw,24px) clamp(40px,7vw,64px)">
+
+    <sc-if value="{{ hayPestanas }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:clamp(20px,3vw,28px)">
+        <div style="font:400 clamp(30px,4vw,36px)/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">{{ tituloMiMesa }}</div>
+        <div role="tablist" style="display:grid;grid-template-columns:1fr 1fr;background:#E8DEC8;border-radius:999px;padding:4px;max-width:340px">
+          <button role="tab" aria-selected="{{ selProxima }}" onClick="{{ irProxima }}" style="{{ estiloProxima }}">{{ textoProxima }}</button>
+          <button role="tab" aria-selected="{{ selPasadas }}" onClick="{{ irPasadas }}" style="{{ estiloPasadas }}">{{ textoPasadas }}<sc-if value="{{ senalPasadas }}" hint-placeholder-val="{{ false }}"><span style="width:8px;height:8px;border-radius:4px;background:#E39C63;margin-left:7px;flex:none" aria-label="Hay algo nuevo"></span></sc-if></button>
+        </div>
+      </div>
+    </sc-if>
+
+    <div class="{{ claseGrid }}">
+
+      <sc-if value="{{ enPasadas }}" hint-placeholder-val="{{ false }}">
+        <div class="aro-lista" style="display:flex;flex-direction:column;gap:12px;min-width:0">
+          <sc-if value="{{ cargandoPasadas }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;justify-content:center;padding:40px 0"><div style="width:28px;height:28px;border-radius:50%;border:3px solid rgba(20,52,42,.15);border-top-color:#14342A;animation:aro-spin 800ms linear infinite"></div></div>
+          </sc-if>
+          <sc-if value="{{ pasadasVacia }}" hint-placeholder-val="{{ false }}">
+            <div style="border-radius:26px;background:#FFFBF0;padding:clamp(22px,3vw,28px);display:flex;flex-direction:column;gap:12px">
+              <div style="font:400 26px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em">{{ vaciaTitulo }}</div>
+              <div style="font:400 15px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ vaciaBajada }}</div>
+              <a href="/agenda" style="align-self:flex-start;display:inline-flex;align-items:center;min-height:52px;padding:0 24px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;margin-top:4px">{{ vaciaBoton }}</a>
+            </div>
+          </sc-if>
+          <sc-for list="{{ filasPasadas }}" as="f" hint-placeholder-count="3">
+            <button onClick="{{ f.abrir }}" aria-current="{{ f.actual }}" style="{{ f.estilo }}">
+              <span style="{{ f.estiloFecha }}"><span style="font:400 21px/1 'Young Serif',Georgia,serif">{{ f.d }}</span><span style="font:700 9.5px/1 'Inter Tight',sans-serif;letter-spacing:.12em">{{ f.m }}</span></span>
+              <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;text-align:left">
+                <span style="font:400 18px/1.1 'Young Serif',Georgia,serif">{{ f.plan }}</span>
+                <span style="font:400 13px/1.3 'Inter Tight',sans-serif;opacity:.8">{{ f.sitio }}</span>
+                <sc-if value="{{ f.pend }}" hint-placeholder-val="{{ false }}"><span style="font:700 10px/1.2 'Inter Tight',sans-serif;letter-spacing:.12em;color:{{ f.colorPend }}">{{ f.pend }}</span></sc-if>
+                <sc-if value="{{ f.nuevo }}" hint-placeholder-val="{{ false }}"><span style="font:500 13px/1.3 'Inter Tight',sans-serif;color:{{ f.colorNuevo }}">{{ f.nuevo }}</span></sc-if>
+              </span>
+              <sc-if value="{{ f.punto }}" hint-placeholder-val="{{ false }}"><span style="width:10px;height:10px;border-radius:5px;background:#E39C63;flex:none" aria-label="Hay algo nuevo"></span></sc-if>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div class="aro-cena" style="min-width:0">
+
+        <!-- La línea de Próxima: lo pendiente de una cena pasada, encima de
+             la reserva activa y sin taparla (P1, P2). -->
+        <sc-if value="{{ hayLinea }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ abrirLinea }}" style="display:flex;align-items:center;gap:12px;width:100%;border:none;border-radius:18px;background:#14342A;color:#FAF3E4;padding:12px 16px;min-height:52px;margin-bottom:clamp(18px,3vw,24px);text-align:left;cursor:pointer">
+            <span style="width:9px;height:9px;border-radius:5px;background:#E39C63;flex:none"></span>
+            <span style="flex:1;min-width:0;font:500 14px/1.35 'Inter Tight',sans-serif">{{ textoLinea }}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+          </button>
+        </sc-if>
+
+        <sc-if value="{{ hayCena }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:clamp(20px,3vw,28px)">
+            <button onClick="{{ volverALista }}" class="aro-solo-movil" style="align-self:flex-start;display:inline-flex;align-items:center;gap:8px;min-height:44px;border:none;background:transparent;padding:0;cursor:pointer;font:500 15px/1 'Inter Tight',sans-serif;color:#33513F"><span aria-hidden="true">←</span>{{ textoPasadas }}</button>
+            <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">{{ cenaSello }}</div>
+            <div style="font:400 clamp(30px,4vw,38px)/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">{{ cenaSitio }}</div>
+            <sc-if value="{{ cenaDetalle }}" hint-placeholder-val="{{ true }}">
+              <div style="font:400 14px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:-4px">{{ cenaDetalle }}</div>
+            </sc-if>
+            <sc-if value="{{ hayContacto }}" hint-placeholder-val="{{ false }}">
+              <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#456352;margin-top:10px">{{ textoSeguir }}</div>
+              <div style="border-radius:24px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:18px 20px">
+                <!-- «Seguir en contacto», el panel de la entrega (A a E y
+                     varias personas). Textos de AroReglas.CONTACTO; estados,
+                     del servidor (/api/contacto). -->
+                <div style="display:flex;flex-direction:column;gap:16px;color:#14342A">
+                  <sc-if value="{{ cFormulario }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                      <div style="font:400 30px/1.04 'Young Serif',Georgia,serif;letter-spacing:-.025em;text-wrap:balance">{{ cTituloA }}</div>
+                      <div style="align-self:flex-start;display:flex;align-items:center;gap:8px;background:#F6D9B4;border-radius:999px;padding:7px 12px 7px 10px;font:600 13px/1.2 'Inter Tight',sans-serif"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>{{ cQuedan }}</div>
+                      <div style="border-radius:20px;background:#FFF8EA;border:1.5px solid {{ cBordeTel }};padding:12px;display:flex;flex-direction:column;gap:8px">
+                        <div style="display:flex;align-items:flex-start;gap:12px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="1.8" stroke-linejoin="round" style="flex:none" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.2 6.2l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2z"></path></svg><div style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:600 16px/1.25 'Inter Tight',sans-serif">{{ cTelTitulo }}</span><span style="font:400 12.5px/1.3 'Inter Tight',sans-serif;color:#456352">{{ cTelNota }}</span></div></div>
+                        <div style="display:flex;align-items:center;border-radius:12px;background:#FAF3E4;border:1px solid rgba(20,52,42,.2);padding:0 14px;min-height:44px"><input type="tel" autocomplete="tel" aria-label="Tu número de teléfono" value="{{ cTel }}" onChange="{{ onTel }}" style="flex:1;min-width:0;border:0;background:transparent;outline:none;font:500 16px/1 'Inter Tight',sans-serif;color:#14342A;padding:14px 0"></input></div>
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:8px">
+                        <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#456352;padding:2px 2px 0">{{ cRedes }}</div>
+                        <div style="display:flex;align-items:center;gap:10px;border-radius:16px;background:#FFF8EA;border:1.5px solid {{ cBordeIg }};padding:0 14px;min-height:46px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="1.8" style="flex:none" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.2" cy="6.8" r=".9" fill="#14342A" stroke="none"></circle></svg><span style="font:500 16px/1 'Inter Tight',sans-serif;color:#456352">@</span><input aria-label="Instagram" value="{{ cIg }}" onChange="{{ onIg }}" placeholder="Instagram" autocapitalize="off" style="flex:1;min-width:0;border:0;background:transparent;outline:none;font:500 16px/1 'Inter Tight',sans-serif;color:#14342A;padding:12px 0"></input><span style="font:500 12px/1 'Inter Tight',sans-serif;color:#7C8A80">{{ cOpcional }}</span></div>
+                        <div style="display:flex;align-items:center;gap:10px;border-radius:16px;background:#FFF8EA;border:1.5px solid {{ cBordeTt }};padding:0 14px;min-height:46px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none" aria-hidden="true"><path d="M14 3.5v11a3.5 3.5 0 1 1-3.5-3.5"></path><path d="M14 3.5c.4 2.6 2.3 4.4 5 4.6"></path></svg><span style="font:500 16px/1 'Inter Tight',sans-serif;color:#456352">@</span><input aria-label="TikTok" value="{{ cTt }}" onChange="{{ onTt }}" placeholder="TikTok" autocapitalize="off" style="flex:1;min-width:0;border:0;background:transparent;outline:none;font:500 16px/1 'Inter Tight',sans-serif;color:#14342A;padding:12px 0"></input><span style="font:500 12px/1 'Inter Tight',sans-serif;color:#7C8A80">{{ cOpcional }}</span></div>
+                      </div>
+                      <sc-if value="{{ cVarios }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;flex-direction:column;gap:6px">
+                          <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#456352;padding:0 2px">{{ cSeLoMandamos }}</div>
+                          <sc-for list="{{ cGenteA }}" as="p" hint-placeholder-count="2">
+                            <button onClick="{{ p.toggle }}" aria-pressed="{{ p.on }}" style="display:flex;align-items:center;gap:12px;border-radius:16px;background:#FFF8EA;border:1.5px solid {{ p.borde }};padding:0 14px;min-height:44px;cursor:pointer;text-align:left">
+                              <span style="width:30px;height:30px;border-radius:15px;background:{{ p.bg }};display:flex;align-items:center;justify-content:center;font:400 15px/1 'Young Serif',Georgia,serif;flex:none">{{ p.ini }}</span>
+                              <span style="flex:1;font:600 16px/1.2 'Inter Tight',sans-serif;opacity:{{ p.op }}">{{ p.n }}</span>
+                              <span style="width:26px;height:26px;border-radius:8px;border:2px solid #14342A;background:{{ p.caja }};display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span>
+                            </button>
+                          </sc-for>
+                          <div style="display:flex;gap:8px;align-items:flex-start;font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F;padding:2px 2px 0;text-wrap:pretty"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#33513F" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"></rect><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"></path></svg>{{ cSoloAQuien }}</div>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{ cUno }}" hint-placeholder-val="{{ true }}">
+                        <div style="display:flex;gap:12px;align-items:flex-start;border-radius:16px;background:#E4ECE4;padding:10px 14px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"></rect><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"></path></svg><div style="font:400 13.5px/1.4 'Inter Tight',sans-serif;text-wrap:pretty">{{ cSoloSi }}</div></div>
+                      </sc-if>
+                      <sc-if value="{{ cHayFallo }}" hint-placeholder-val="{{ false }}">
+                        <div role="alert" style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#8F4515">{{ cFallo }}</div>
+                      </sc-if>
+                      <div style="display:flex;flex-direction:column;gap:2px">
+                        <button onClick="{{ cCompartir }}" disabled="{{ cNoSePuede }}" style="{{ cEstiloCompartir }}">{{ cTextoCompartir }}</button>
+                        <button onClick="{{ cPrefieroNo }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;border:none;background:transparent;font:600 15px/1 'Inter Tight',sans-serif;color:#14342A;text-decoration:underline;text-underline-offset:4px;cursor:pointer">{{ cTextoNo }}</button>
+                        <sc-if value="{{ cUno }}" hint-placeholder-val="{{ true }}">
+                          <div style="text-align:center;font:400 12.5px/1.4 'Inter Tight',sans-serif;color:#456352">{{ cNoSeEntera }}</div>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ cB }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:14px">
+                      <div style="display:flex;flex-direction:column;gap:10px">
+                        <div style="font:400 30px/1.04 'Young Serif',Georgia,serif;letter-spacing:-.025em;text-wrap:balance">{{ cTituloB }}</div>
+                        <div style="font:400 16px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ cBajadaB }}</div>
+                      </div>
+                      <div style="border-radius:20px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:16px;display:flex;flex-direction:column;gap:12px">
+                        <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#456352">{{ cLoQueVas }}</div>
+                        <sc-for list="{{ cMios }}" as="m" hint-placeholder-count="2">
+                          <div style="font:500 16px/1.2 'Inter Tight',sans-serif">{{ m.v }}</div>
+                        </sc-for>
+                        <div style="height:1px;background:rgba(20,52,42,.1)"></div>
+                        <button onClick="{{ cCambiar }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;border:none;background:transparent;font:600 15px/1 'Inter Tight',sans-serif;color:#1B5138;cursor:pointer">{{ cTextoCambiar }}</button>
+                      </div>
+                      <div style="align-self:flex-start;display:flex;align-items:center;gap:8px;background:#E4ECE4;border-radius:16px;padding:9px 14px 9px 11px;font:600 13px/1.35 'Inter Tight',sans-serif;text-wrap:pretty">{{ cPlazoOtra }}</div>
+                      <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#33513F">{{ cEnCualquierCaso }}</div>
+                      <button onClick="{{ cPrefieroNo }}" style="display:flex;align-items:center;justify-content:center;min-height:48px;border:none;background:transparent;font:600 15px/1 'Inter Tight',sans-serif;color:#14342A;text-decoration:underline;text-underline-offset:4px;cursor:pointer">{{ cTextoNoB }}</button>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ cC }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:14px">
+                      <div style="display:flex;flex-direction:column;gap:10px">
+                        <div style="font:400 30px/1.04 'Young Serif',Georgia,serif;letter-spacing:-.025em;text-wrap:balance">{{ cTituloC }}</div>
+                        <div style="font:400 16px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ cBajadaC }}</div>
+                      </div>
+                      <div style="border-radius:22px;background:#14342A;color:#FAF3E4;padding:18px;display:flex;flex-direction:column;gap:12px">
+                        <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">{{ cTeDejo }}</div>
+                        <div style="font:400 22px/1.1 'Young Serif',Georgia,serif">{{ cSuTel }}</div>
+                        <a href="{{ cSuWa }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:999px;background:#E39C63;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif">{{ cTextoWa }}</a>
+                        <sc-for list="{{ cSusRedes }}" as="r" hint-placeholder-count="1">
+                          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(250,243,228,.14);padding-top:12px"><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font:500 12px/1 'Inter Tight',sans-serif;color:#9CBBA6">{{ r.red }}</span><span style="font:400 19px/1.1 'Young Serif',Georgia,serif">{{ r.usuario }}</span></div><a href="{{ r.enlace }}" target="_blank" rel="noopener" style="display:flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid #FAF3E4;color:#FAF3E4;font:600 14px/1 'Inter Tight',sans-serif">{{ r.abrir }}</a></div>
+                        </sc-for>
+                      </div>
+                      <div style="border-radius:20px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+                        <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#456352">{{ cLeDejaste }}</div>
+                        <sc-for list="{{ cMios }}" as="m" hint-placeholder-count="2">
+                          <div style="font:500 16px/1.2 'Inter Tight',sans-serif">{{ m.v }}</div>
+                        </sc-for>
+                      </div>
+                      <div style="font:400 13.5px/1.45 'Inter Tight',sans-serif;color:#33513F">{{ cNotaC }}</div>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ cD }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:14px">
+                      <svg viewBox="0 0 120 60" width="120" height="60" aria-hidden="true"><circle cx="34" cy="30" r="24" fill="none" stroke="#9CBBA6" stroke-width="5"></circle><circle cx="86" cy="30" r="24" fill="none" stroke="#E39C63" stroke-width="5"></circle></svg>
+                      <div style="font:400 30px/1.04 'Young Serif',Georgia,serif;letter-spacing:-.025em;text-wrap:balance">{{ cTituloD }}</div>
+                      <div style="font:400 16px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ cBajadaD }}</div>
+                      <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ cAgendaD }}</div>
+                      <a href="/agenda" style="display:flex;align-items:center;justify-content:center;min-height:56px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 17px/1 'Inter Tight',sans-serif">{{ cVerAgenda }}</a>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ cE }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:14px">
+                      <div style="font:400 30px/1.04 'Young Serif',Georgia,serif;letter-spacing:-.025em;text-wrap:balance">{{ cTituloE }}</div>
+                      <div style="font:400 16px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ cBajadaE }}</div>
+                      <div style="align-self:flex-start;display:flex;align-items:center;gap:8px;background:#F6D9B4;border-radius:999px;padding:9px 14px 9px 11px;font:600 13px/1.2 'Inter Tight',sans-serif">{{ cPuedesCambiar }}</div>
+                      <button onClick="{{ cReabrir }}" style="display:flex;align-items:center;justify-content:center;min-height:56px;border-radius:999px;border:1.5px solid #14342A;background:transparent;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif;cursor:pointer">{{ cTextoElegir }}</button>
+                    </div>
+                  </sc-if>
+
+                  <!-- Varias personas, cuando ya no hay nada por confirmar: el
+                       estado de cada una (V5). -->
+                  <sc-if value="{{ cM }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                      <div style="font:400 30px/1.04 'Young Serif',Georgia,serif;letter-spacing:-.025em;margin-top:4px;text-wrap:balance">{{ cTituloM }}</div>
+                      <div style="font:400 15px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ cBajadaM }}</div>
+                      <sc-for list="{{ cTarjetas }}" as="t" hint-placeholder-count="2">
+                        <div style="{{ t.estilo }}">
+                          <div style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:15px;background:{{ t.bg }};color:#14342A;display:flex;align-items:center;justify-content:center;font:400 15px/1 'Young Serif',Georgia,serif;flex:none">{{ t.ini }}</span><span style="flex:1;font:400 19px/1 'Young Serif',Georgia,serif">{{ t.n }}</span><span style="{{ t.estiloSello }}">{{ t.sello }}</span></div>
+                          <sc-if value="{{ t.esC }}" hint-placeholder-val="{{ false }}">
+                            <div style="display:flex;align-items:center;gap:10px;border-top:1px solid rgba(250,243,228,.14);padding-top:10px"><div style="flex:1;font:500 15px/1.2 'Inter Tight',sans-serif">{{ t.tel }}</div><a href="{{ t.wa }}" target="_blank" rel="noopener" style="display:flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;background:#E39C63;color:#14342A;font:600 13.5px/1 'Inter Tight',sans-serif">WhatsApp</a></div>
+                            <sc-for list="{{ t.redes }}" as="r" hint-placeholder-count="1">
+                              <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font:500 15px/1.2 'Inter Tight',sans-serif">{{ r.usuario }}</div><a href="{{ r.enlace }}" target="_blank" rel="noopener" style="display:flex;align-items:center;min-height:40px;padding:0 14px;border-radius:999px;border:1.5px solid #FAF3E4;color:#FAF3E4;font:600 13.5px/1 'Inter Tight',sans-serif">{{ r.abrir }}</a></div>
+                            </sc-for>
+                          </sc-if>
+                          <sc-if value="{{ t.esB }}" hint-placeholder-val="{{ false }}">
+                            <div style="font:400 13.5px/1.4 'Inter Tight',sans-serif;color:#33513F;padding-left:40px">{{ t.plazo }}</div>
+                          </sc-if>
+                          <sc-if value="{{ t.esE }}" hint-placeholder-val="{{ false }}">
+                            <button onClick="{{ t.tambien }}" style="align-self:flex-start;display:flex;align-items:center;min-height:40px;margin-left:40px;border:none;background:transparent;padding:0;font:600 14px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:4px;cursor:pointer">{{ t.textoTambien }}</button>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                      <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(20,52,42,.12);padding:12px 2px 0">
+                        <div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#456352">{{ cLoQueCompartes }}</span><span style="font:500 14.5px/1.3 'Inter Tight',sans-serif">{{ cResumen }}</span></div>
+                        <sc-if value="{{ cPuedeCambiarM }}" hint-placeholder-val="{{ true }}">
+                          <button onClick="{{ cCambiar }}" style="display:flex;align-items:center;min-height:44px;border:none;background:transparent;font:600 14px/1 'Inter Tight',sans-serif;color:#1B5138;cursor:pointer">{{ cTextoCambiarCorto }}</button>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ verFases }}" hint-placeholder-val="{{ true }}">
 
     <sc-if value="{{ esVacia }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 380ms ease both">
@@ -714,6 +943,9 @@
         </sc-if>
       </div>
     </sc-if>
+          </sc-if>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -950,7 +1182,17 @@ class Component extends DCLogic {
      * la pantalla. No se guarda: al volver a entrar manda otra vez la hora,
      * que es lo que pide la entrega 20.
      */
-    abierta: null
+    abierta: null,
+    /**
+     * Próxima y Pasadas (entrega mi-mesa-pasadas, 31-10). `pasadas` es lo de
+     * /api/pasadas; `cenaSel`, la cena abierta en Pasadas, que se pinta con
+     * la Mi mesa pasada de siempre (/api/mi-mesa?mesa=). `seguir` es el panel
+     * de «Seguir en contacto» de esa cena (/api/contacto): se llama así y no
+     * `contacto`, que ya son las marcas de la encuesta.
+     */
+    pestana: 'proxima', pasadas: null, cargandoPasadas: false, cenaSel: null,
+    seguir: null, formSeguir: { tel: '', ig: '', tt: '' }, marcadosSeguir: {},
+    editandoSeguir: false, guardandoSeguir: false, falloSeguir: null
   };
 
   componentDidMount() {
@@ -969,13 +1211,48 @@ class Component extends DCLogic {
     // Antes se recorrían las tres por hash: eso servía para enseñar el diseño,
     // pero con datos reales significaría que cualquiera puede pedir "abierta"
     // el lunes. Quien decide cuándo se abre es la fecha de revelación.
-    fetch('/api/mi-mesa')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
+    // Pasadas: `?cena=` (los correos y las push de «Seguir en contacto»),
+    // `?mesa=` o `?pasadas=1` (Mis cenas, en Perfil) abren esa pestaña.
+    let pedida = null;
+    let enPasadas = false;
+    try {
+      const q = new URLSearchParams(location.search);
+      pedida = q.get('cena') || q.get('mesa');
+      enPasadas = !!pedida || q.get('pasadas') === '1';
+    } catch (e) { /* sin query: Próxima */ }
+    if (enPasadas) {
+      this.setState({ pestana: 'pasadas' });
+      this.cargarPasadas(pedida);
+    } else {
+      this.cargarMesa(null, true);
+    }
+  }
+
+  /**
+   * La Mi mesa de siempre (`mesa` vacío) o ESA cena pasada (`?mesa=`). Las
+   * dos se pintan con la misma pantalla: la cena abierta en Pasadas es la Mi
+   * mesa pasada de siempre, con lo de esa cena.
+   */
+  cargarMesa(mesa, inicial) {
+    if (mesa) {
+      // Lo que se iba contestando era de OTRA cena.
+      this.setState({ mesaVal: -1, sitio: {}, volveria: -1, comentario: '', gasto: -1, noRepetirSitio: false,
+        faltaron: null, contacto: [], errorF11: '', enviando: false, reporte: false, motivo: -1, saltando: false, avisoSitio: '' });
+    }
+    return fetch('/api/mi-mesa' + (mesa ? '?mesa=' + encodeURIComponent(mesa) : ''))
+      .then((r) => {
+        // Una cena que no es suya, o que no ha pasado: se queda en la lista.
+        if (mesa && r.status === 404) return null;
+        return r.ok ? r.json() : Promise.reject(new Error('sin sesion'));
+      })
       .then((d) => {
+        if (!d) { this.setState({ cenaSel: null, datos: null }); return; }
+        // Si mientras llegaba se cambió de cena o de pestaña, esto ya no toca.
+        if ((mesa || null) !== (this.state.pestana === 'pasadas' ? this.state.cenaSel : null)) return;
         // Confirmada y sin haber visto «Estás dentro»: allí, antes de pintar
         // nada (B3 de la entrega estas-dentro). El botón del correo de «pago
         // confirmado» y la primera vuelta a la mesa llegan por aquí.
-        if (d.estasDentro) {
+        if (inicial && d.estasDentro) {
           window.location.replace('/estas-dentro?evento=' + encodeURIComponent(d.estasDentro));
           return;
         }
@@ -1033,6 +1310,91 @@ class Component extends DCLogic {
   }
   componentWillUnmount() {
     clearInterval(this._t);
+  }
+
+  // --- Próxima y Pasadas (entrega mi-mesa-pasadas) ----------------------
+
+  /** La lista de Pasadas. Con `abrir`, abre esa cena al llegar. */
+  cargarPasadas(abrir) {
+    if (!this.state.pasadas) this.setState({ cargandoPasadas: true });
+    return fetch('/api/pasadas')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin pasadas'))))
+      .then((p) => {
+        this.setState({ pasadas: p, cargandoPasadas: false });
+        if (abrir) return this.abrirCena(abrir);
+        // En escritorio la cena va a la derecha de la lista: se abre la más
+        // reciente para que la columna no quede vacía. En el teléfono, la
+        // lista sola, como la app.
+        let ancho = false;
+        try { ancho = window.matchMedia('(min-width: 720px)').matches; } catch (e) { /* sin matchMedia */ }
+        if (ancho && !this.state.cenaSel && this.state.pestana === 'pasadas' && (p.cenas || []).length) {
+          this.abrirCena(p.cenas[0].mesaId);
+        }
+      })
+      .catch(() => this.setState({ cargandoPasadas: false }));
+  }
+
+  irPestana(t) {
+    if (t === this.state.pestana) return;
+    if (t === 'pasadas') {
+      this.setState({ pestana: 'pasadas', cenaSel: null, datos: null });
+      try { history.replaceState(null, '', '/mesa?pasadas=1'); } catch (e) { /* sin historial */ }
+      this.cargarPasadas(null);
+    } else {
+      this.setState({ pestana: 'proxima', cenaSel: null, seguir: null, datos: null });
+      try { history.replaceState(null, '', '/mesa'); } catch (e) { /* sin historial */ }
+      this.cargarMesa(null, false);
+    }
+  }
+
+  /** Abre una cena de Pasadas: su Mi mesa pasada y su «Seguir en contacto». */
+  abrirCena(mesaId) {
+    this.setState({ pestana: 'pasadas', cenaSel: mesaId, datos: null, seguir: null, editandoSeguir: false, falloSeguir: null, marcadosSeguir: {} });
+    try { history.replaceState(null, '', '/mesa?cena=' + encodeURIComponent(mesaId)); } catch (e) { /* sin historial */ }
+    try { window.scrollTo(0, 0); } catch (e) { /* sin scroll */ }
+    this.cargarMesa(mesaId, false);
+    fetch('/api/contacto?mesa=' + encodeURIComponent(mesaId))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((c) => {
+        if (!c || this.state.cenaSel !== mesaId) return;
+        this.ponerSeguir(c);
+        // El punto se apaga al abrir esa cena (entrega, N).
+        if ((c.personas || []).some((x) => x.nuevo)) {
+          fetch('/api/contacto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mesa: mesaId, accion: 'visto' }) })
+            .then(() => this.cargarPasadas(null))
+            .catch(() => { /* se apagará la próxima vez */ });
+        }
+      })
+      .catch(() => { /* sin panel: el resto de la cena se ve igual */ });
+  }
+
+  volverALista() {
+    this.setState({ cenaSel: null, datos: null, seguir: null });
+    try { history.replaceState(null, '', '/mesa?pasadas=1'); } catch (e) { /* sin historial */ }
+  }
+
+  ponerSeguir(c) {
+    this.setState({
+      seguir: c,
+      formSeguir: { tel: (c.misDatos && c.misDatos.telefono) || '', ig: (c.misDatos && c.misDatos.instagram) || '', tt: (c.misDatos && c.misDatos.tiktok) || '' },
+      editandoSeguir: false,
+    });
+  }
+
+  /** Lo que decide en el panel. Se pinta lo que devuelve el servidor. */
+  accionSeguir(cuerpo) {
+    const mesa = this.state.cenaSel;
+    if (!mesa || this.state.guardandoSeguir) return;
+    this.setState({ guardandoSeguir: true, falloSeguir: null });
+    fetch('/api/contacto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ mesa: mesa }, cuerpo)) })
+      .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
+      .then(({ ok, j }) => {
+        if (!ok) { this.setState({ guardandoSeguir: false, falloSeguir: { texto: j.error || 'No pudimos guardarlo. Inténtalo otra vez.', campo: j.campo || null } }); return; }
+        this.setState({ guardandoSeguir: false });
+        this.ponerSeguir(j);
+        this.cargarPasadas(null);
+      })
+      .catch(() => this.setState({ guardandoSeguir: false, falloSeguir: { texto: 'No pudimos guardarlo. Revisa tu conexión.', campo: null } }));
   }
 
   // --- F11 --------------------------------------------------------------
@@ -2141,9 +2503,69 @@ class Component extends DCLogic {
 
     const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
 
-    return Object.assign(jVals, {
+    // --- Próxima y Pasadas -------------------------------------------
+    const R = AroReglas;
+    const CT = R.CONTACTO;
+    const enPasadas = this.state.pestana === 'pasadas';
+    const PS = this.state.pasadas;
+    const cenas = (PS && PS.cenas) || [];
+    const cenaSel = this.state.cenaSel;
+    const laCena = cenaSel ? cenas.find((c) => c.mesaId === cenaSel) : null;
+    const lineaP = !enPasadas && dt && dt.pendiente;
+    const filasPasadas = cenas.map((c) => {
+      const pt = R.partesDe(c.empiezaEn, c.zonaHoraria);
+      const sel = c.mesaId === cenaSel;
+      const n = c.contacto && c.contacto.nuevo;
+      const nuevo = !n ? '' : n.tipo === 'cruce' ? CT.pasadas.nuevo.cruce(n.nombres[0]) : n.tipo === 'sinCruce' ? CT.pasadas.nuevo.sinCruce : CT.pasadas.nuevo.coincidencia(n.nombres);
+      const fuerte = !!(c.pendiente || n);
+      return {
+        d: pt ? String(pt.numero) : '', m: pt ? pt.mes.slice(0, 3).toUpperCase() : '',
+        plan: R.DENTRO.planDe(c.formato) + (pt ? ' · ' + pt.dia : ''),
+        sitio: [c.sitio, c.zona].filter(Boolean).join(' · '),
+        pend: c.pendiente === 'contacto' ? CT.pasadas.contacto.toUpperCase() : c.pendiente === 'encuesta' ? CT.pasadas.encuesta.toUpperCase() : '',
+        nuevo: nuevo, punto: !!n, actual: sel ? 'true' : 'false',
+        colorPend: sel ? '#E39C63' : '#8F4515', colorNuevo: sel ? '#FAF3E4' : '#8F4515',
+        estilo: 'display:flex;align-items:center;gap:14px;width:100%;border-radius:20px;cursor:pointer;padding:12px 14px 12px 12px;min-height:72px;text-align:left;'
+          + 'background:' + (sel ? '#14342A' : '#FFFBF0') + ';color:' + (sel ? '#FAF3E4' : '#14342A') + ';border:1px solid ' + (n && !sel ? '#8F4515' : 'rgba(20,52,42,.12)'),
+        estiloFecha: 'width:48px;flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;border-radius:14px;padding:8px 0;'
+          + (sel ? 'background:#E39C63;color:#14342A' : fuerte ? 'background:#14342A;color:#FAF3E4' : 'background:#EFE6D2;color:#14342A'),
+        abrir: () => this.abrirCena(c.mesaId),
+      };
+    });
+    const ptSel = laCena ? R.partesDe(laCena.empiezaEn, laCena.zonaHoraria) : null;
+    const pestanaEstilo = (on) => 'min-height:40px;border:none;border-radius:999px;display:flex;align-items:center;justify-content:center;cursor:pointer;'
+      + "font:600 15px/1 'Inter Tight',sans-serif;background:" + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#14342A');
+    const textoLinea = !lineaP ? '' : lineaP.tipo === 'contacto'
+      ? CT.linea.porConfirmar(lineaP.nombres, CT.quedanCorto(lineaP.cierraEn, lineaP.zonaHoraria))
+      : CT.linea.encuesta(R.diaDe(lineaP.empiezaEn, lineaP.zonaHoraria) || '');
+
+    return Object.assign(jVals, this.valsSeguir(), {
+      hayPestanas: true,
+      tituloMiMesa: R.vozDe(dt && dt.formato).mia,
+      selProxima: enPasadas ? 'false' : 'true', selPasadas: enPasadas ? 'true' : 'false',
+      estiloProxima: pestanaEstilo(!enPasadas), estiloPasadas: pestanaEstilo(enPasadas),
+      irProxima: () => this.irPestana('proxima'), irPasadas: () => this.irPestana('pasadas'),
+      senalPasadas: !!((PS && PS.senal) || (dt && dt.senalPasadas)),
+      enPasadas: enPasadas,
+      claseAncho: 'aro-ancho' + (enPasadas ? ' aro-amplio' : ''),
+      claseMarco: 'aro-ancho' + (enPasadas ? ' aro-amplio' : ''),
+      claseGrid: enPasadas ? 'aro-grid-pasadas ' + (cenaSel ? 'aro-con-cena' : 'aro-sin-cena') : '',
+      cargandoPasadas: enPasadas && !!this.state.cargandoPasadas,
+      pasadasVacia: enPasadas && !!PS && !cenas.length,
+      vaciaTitulo: CT.pasadas.vacia.titulo, vaciaBajada: CT.pasadas.vacia.bajada, vaciaBoton: CT.pasadas.vacia.boton,
+      filasPasadas: enPasadas ? filasPasadas : [],
+      hayLinea: !!lineaP, textoLinea: textoLinea,
+      abrirLinea: () => { if (lineaP) { this.setState({ pestana: 'pasadas' }); this.cargarPasadas(lineaP.mesaId); } },
+      hayCena: enPasadas && !!cenaSel,
+      volverALista: () => this.volverALista(),
+      cenaSello: ptSel ? (ptSel.dia + ' ' + ptSel.numero + ' de ' + ptSel.mes + ' · ' + R.DENTRO.planDe(laCena.formato)).toUpperCase() : '',
+      cenaSitio: laCena ? (laCena.sitio || R.DENTRO.planDe(laCena.formato)) : '',
+      cenaDetalle: laCena ? [laCena.zona, R.horaDe(laCena.empiezaEn, laCena.zonaHoraria), CT.cena.mesa(laCena.numeroMesa)].filter(Boolean).join(' · ') : '',
+      textoProxima: CT.cena.pestanas.proxima, textoPasadas: CT.cena.pestanas.pasadas, textoSeguir: CT.cena.seguir,
+      // Las fases de siempre: en Próxima, y en Pasadas solo con una cena abierta.
+      verFases: !enPasadas || !!cenaSel,
       // Estas aqui, asi que mesa hay.
-      nav: AroNav.items('mesa', true, dt && dt.formato),
+      nav: AroNav.items('mesa', true, dt && dt.formato, !!((dt && dt.senalPasadas) || (this.state.pasadas && this.state.pasadas.senal))),
       textoSalir: AroNav.salida(this.state.saliendo).texto,
       estiloSalir: AroNav.salida(this.state.saliendo).estilo,
       salir: () => {
@@ -2630,6 +3052,113 @@ class Component extends DCLogic {
       botonBordeSuelto: btn('transparent', '#14342A', '1px solid rgba(20,52,42,.26)', 'margin-top:16px'),
       botonFantasma: btn('transparent', '#33513F', 'none', 'font-weight:500;padding:0 10px;text-decoration:underline;text-underline-offset:6px')
     });
+  }
+
+  /** Lo de «Seguir en contacto» que pinta la pantalla. */
+  valsSeguir() {
+    const S = this.state;
+    const C = AroReglas.CONTACTO;
+    const sg = S.seguir;
+    const personas = (sg && sg.personas) || [];
+    const zona = sg && sg.cena && sg.cena.zonaHoraria;
+    const uno = personas.length === 1;
+    const varios = personas.length > 1;
+    const p0 = personas[0] || null;
+    const editando = !!S.editandoSeguir;
+    const enA = personas.filter((x) => x.estado === 'A');
+    const formulario = !!sg && ((uno && (p0.estado === 'A' || (editando && p0.estado === 'B'))) || (varios && (enA.length > 0 || editando)));
+    const aQuienes = varios ? (editando ? personas.filter((x) => x.estado === 'A' || x.estado === 'B') : enA) : (p0 ? [p0] : []);
+    const on = (x) => S.marcadosSeguir[x.id] !== false;
+    const marcadas = aQuienes.filter(on);
+    const cierra = aQuienes.map((x) => x.cierraEn).sort()[0] || (p0 && p0.cierraEn) || null;
+    const F = S.formSeguir;
+    const legible = (t) => { const m = /^\+58(\d{3})(\d{3})(\d{4})$/.exec(t || ''); return m ? '+58 ' + m[1] + ' ' + m[2] + ' ' + m[3] : (t || ''); };
+    const md = (sg && sg.misDatos) || {};
+    const mios = [legible(md.telefono), md.instagram ? '@' + md.instagram : '', md.tiktok ? '@' + md.tiktok : ''].filter(Boolean).map((v) => ({ v }));
+    const redesDe = (d) => [
+      d && d.instagram ? { red: 'Instagram', usuario: '@' + d.instagram, enlace: C.enlaces.instagram(d.instagram), abrir: C.C.abrir } : null,
+      d && d.tiktok ? { red: 'TikTok', usuario: '@' + d.tiktok, enlace: C.enlaces.tiktok(d.tiktok), abrir: C.C.abrir } : null,
+    ].filter(Boolean);
+    const fondos = ['#DCE6DD', '#F6D9B4', '#C5D8CA', '#E8DEC8', '#F2D2C0'];
+    const falloCampo = S.falloSeguir && S.falloSeguir.campo;
+    const borde = (v, campo) => (falloCampo === campo ? '#8F4515' : (v || '').trim() ? '#14342A' : 'rgba(20,52,42,.14)');
+    const compartir = (con, sin) => this.accionSeguir({ accion: 'compartir', con: con, sin: sin, telefono: F.tel, instagram: F.ig, tiktok: F.tt });
+    const nombre0 = p0 ? p0.nombre : '';
+    const estilos = {
+      C: ['border-radius:22px;background:#14342A;color:#FAF3E4;padding:14px 16px;display:flex;flex-direction:column;gap:10px', 'background:#9CBBA6;color:#14342A'],
+      B: ['border-radius:20px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:14px 16px;display:flex;flex-direction:column;gap:6px', 'background:#F6D9B4;color:#14342A'],
+      E: ['border-radius:20px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:14px 16px;display:flex;flex-direction:column;gap:6px', 'background:#ECE3CF;color:#456352'],
+      D: ['border-radius:20px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:14px 16px;display:flex;flex-direction:column;gap:6px', 'background:#ECE3CF;color:#456352'],
+    };
+    const noSePuede = !!S.guardandoSeguir || (varios && !marcadas.length);
+    return {
+      hayContacto: personas.length > 0,
+      cUno: uno, cVarios: varios,
+      cFormulario: formulario,
+      cB: !!sg && uno && p0.estado === 'B' && !editando,
+      cC: !!sg && uno && p0.estado === 'C',
+      cD: !!sg && uno && p0.estado === 'D',
+      cE: !!sg && uno && p0.estado === 'E',
+      cM: !!sg && varios && !formulario,
+      // A
+      cTituloA: varios ? C.A.tituloVarios : C.A.titulo(nombre0),
+      cQuedan: cierra ? C.quedan(cierra, zona) : '',
+      cTelTitulo: C.A.telefono(varios), cTelNota: C.A.telefonoNota, cRedes: C.A.redes, cOpcional: C.A.opcional,
+      cTel: F.tel, cIg: F.ig, cTt: F.tt,
+      onTel: (ev) => this.setState({ formSeguir: Object.assign({}, this.state.formSeguir, { tel: ev.target.value }) }),
+      onIg: (ev) => this.setState({ formSeguir: Object.assign({}, this.state.formSeguir, { ig: ev.target.value.replace(/^@/, '') }) }),
+      onTt: (ev) => this.setState({ formSeguir: Object.assign({}, this.state.formSeguir, { tt: ev.target.value.replace(/^@/, '') }) }),
+      cBordeTel: falloCampo === 'telefono' ? '#8F4515' : '#14342A', cBordeIg: borde(F.ig, 'instagram'), cBordeTt: borde(F.tt, 'tiktok'),
+      cSeLoMandamos: C.A.seLoMandamos, cSoloAQuien: C.A.soloAQuien, cSoloSi: C.A.soloSi(nombre0),
+      cGenteA: aQuienes.map((x, i) => {
+        const si = on(x);
+        return { n: x.nombre, ini: x.nombre.charAt(0).toUpperCase(), bg: fondos[i % fondos.length], on: si ? 'true' : 'false',
+          borde: si ? '#14342A' : 'rgba(20,52,42,.12)', op: si ? 1 : 0.55, caja: si ? '#14342A' : 'transparent',
+          toggle: () => this.setState({ marcadosSeguir: Object.assign({}, this.state.marcadosSeguir, { [x.id]: !on(x) }) }) };
+      }),
+      cHayFallo: !!S.falloSeguir, cFallo: S.falloSeguir ? S.falloSeguir.texto : '',
+      cNoSePuede: noSePuede,
+      cEstiloCompartir: 'display:flex;align-items:center;justify-content:center;min-height:56px;border:none;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 17px/1 \'Inter Tight\',sans-serif;cursor:' + (noSePuede ? 'default' : 'pointer') + ';opacity:' + (noSePuede ? '.5' : '1'),
+      cTextoCompartir: S.guardandoSeguir ? 'Guardando…' : varios ? C.A.compartirCon(marcadas.map((x) => x.nombre), aQuienes.length) : C.A.compartir,
+      cCompartir: () => { if (!noSePuede) compartir(marcadas.map((x) => x.id), varios ? aQuienes.filter((x) => !on(x)).map((x) => x.id) : undefined); },
+      cTextoNo: varios ? C.A.prefieroNoNadie : C.A.prefieroNo,
+      cPrefieroNo: () => this.accionSeguir({ accion: 'no', con: (varios ? aQuienes : p0 ? [p0] : []).map((x) => x.id) }),
+      cNoSeEntera: C.A.noSeEntera(nombre0),
+      // B
+      cTituloB: C.B.titulo(nombre0), cBajadaB: C.B.bajada, cLoQueVas: C.B.loQueVas, cMios: mios,
+      cTextoCambiar: C.B.cambiar, cCambiar: () => this.setState({ editandoSeguir: true }),
+      cPlazoOtra: p0 && p0.cierraEn ? C.plazoDeOtra(nombre0, p0.cierraEn, zona) : '',
+      cEnCualquierCaso: C.B.enCualquierCaso, cTextoNoB: C.B.prefieroNo,
+      // C
+      cTituloC: C.C.titulo(nombre0), cBajadaC: C.C.bajada, cTeDejo: C.C.teDejo(nombre0),
+      cSuTel: p0 && p0.suyos ? legible(p0.suyos.telefono) : '',
+      cSuWa: p0 && p0.suyos ? C.enlaces.whatsapp(p0.suyos.telefono) : '#',
+      cTextoWa: C.C.whatsapp, cSusRedes: redesDe(p0 && p0.suyos), cLeDejaste: C.C.leDejaste, cNotaC: C.C.nota,
+      // D
+      cTituloD: C.D.titulo, cBajadaD: C.D.bajada, cAgendaD: C.D.agenda, cVerAgenda: C.D.verAgenda,
+      // E
+      cTituloE: C.E.titulo, cBajadaE: C.E.bajada(nombre0),
+      cPuedesCambiar: p0 && p0.cierraEn ? C.E.puedesCambiar(p0.cierraEn, zona) : '',
+      cTextoElegir: C.E.elegir, cReabrir: () => this.accionSeguir({ accion: 'reabrir', con: p0 ? [p0.id] : [] }),
+      // Varias, cada una con su estado (V5)
+      cTituloM: C.B.aSuRitmo, cBajadaM: C.B.teAvisamos,
+      cTarjetas: personas.filter((x) => x.estado !== 'A').map((x, i) => {
+        const e = estilos[x.estado] || estilos.D;
+        return {
+          n: x.nombre, ini: x.nombre.charAt(0).toUpperCase(), bg: fondos[i % fondos.length],
+          estilo: e[0], estiloSello: 'display:flex;align-items:center;border-radius:999px;padding:6px 10px;font:700 10.5px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;white-space:nowrap;' + e[1],
+          sello: C.sellos[x.estado] || '',
+          esC: x.estado === 'C', esB: x.estado === 'B', esE: x.estado === 'E',
+          tel: x.suyos ? legible(x.suyos.telefono) : '', wa: x.suyos ? C.enlaces.whatsapp(x.suyos.telefono) : '#',
+          redes: redesDe(x.suyos),
+          plazo: x.cierraEn ? C.plazoDeOtra(x.nombre, x.cierraEn, zona) : '',
+          textoTambien: C.compartirTambien(x.nombre),
+          tambien: () => this.accionSeguir({ accion: 'compartir', con: [x.id], telefono: md.telefono, instagram: md.instagram || '', tiktok: md.tiktok || '' }),
+        };
+      }),
+      cLoQueCompartes: C.loQueCompartes, cResumen: mios.map((m) => m.v).join(' · '),
+      cPuedeCambiarM: personas.some((x) => x.estado === 'B'), cTextoCambiarCorto: C.cambiar,
+    };
   }
 }
 </script>

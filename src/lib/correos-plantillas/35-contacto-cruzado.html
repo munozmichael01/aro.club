@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<title>{{#si varios}}{{ nombres }} te dejan sus datos{{/si}}{{#no varios}}{{ otra }} te deja {{ queDeja }}{{/no}} · Aro Club</title>
+<style>
+  @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 400; font-display: swap; src: url(https://fonts.gstatic.com/s/intertight/v7/NGSwv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjDw.woff2) format('woff2'); }
+    @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 600; font-display: swap; src: url(https://fonts.gstatic.com/s/intertight/v7/NGSwv5HMAFg6IuGlBNMjxJEL2VmU3NS7Z2mjDw.woff2) format('woff2'); }
+    @font-face {
+    font-family: 'Young Serif';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(https://fonts.gstatic.com/s/youngserif/v2/3qTpojO2nS2VtkB3KtkQZ2t6.ttf) format('truetype');
+  }
+  @media (max-width:620px){ .w{width:100% !important} .p{padding-left:22px !important;padding-right:22px !important} .cinta{font-size:15px !important} h1,.h1{font-size:34px !important;line-height:36px !important} }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#FAF3E4;">
+<span style="display:none;font-size:1px;color:#FAF3E4;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Las dos personas confirmaron. Ya pueden escribirse.</span>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#FAF3E4" style="background:#FAF3E4;">
+<tr><td align="center" bgcolor="#FAF3E4" style="padding:0;">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="w" style="width:600px;max-width:600px;background:#FAF3E4;">
+  <tr><td class="p" style="padding:24px 24px 0 24px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#9CBBA6" style="width:100%;background:#9CBBA6;border-radius:24px;">
+      <tr><td style="padding:28px 32px 30px 32px;color:#14342A;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td style="padding-right:10px;" valign="middle"><img src="{{{ sitioWeb }}}/correo/aro-verde.png" width="24" height="24" alt="" style="display:block;width:24px;height:24px;border:0;" /></td>
+          <td valign="middle" style="font-family:'Young Serif',Georgia,'Times New Roman',serif;font-weight:700;font-size:18px;line-height:18px;color:#14342A;mso-line-height-rule:exactly;">Aro&nbsp;Club</td>
+        </tr></table>
+        <div style="font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:12px;line-height:12px;letter-spacing:1.7px;color:#14342A;margin-top:20px;mso-line-height-rule:exactly;"><strong>{{ sello }}</strong></div>
+        <div class="h1" style="font-family:'Young Serif',Georgia,'Times New Roman',serif;font-size:38px;line-height:40px;letter-spacing:-.5px;color:#14342A;margin-top:20px;mso-line-height-rule:exactly;">{{ conTu }} ya pueden escribirse.</div>
+      </td></tr>
+    </table>
+  </td></tr>
+  {{#cada personas}}
+  <tr><td class="p" style="padding:26px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:1.6px;color:#456352;mso-line-height-rule:exactly;"><strong>{{ otraMayus }} TE DEJA</strong></td></tr>
+  <tr><td class="p" style="padding:10px 40px 0 40px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#FFF8EA" style="width:100%;background:#FFF8EA;border:1px solid #DCD3BE;border-radius:18px;">
+      <tr>
+        <td style="padding:16px 18px;">
+          <div style="font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:12px;line-height:14px;color:#456352;mso-line-height-rule:exactly;">Teléfono</div>
+          <div style="font-family:'Young Serif',Georgia,'Times New Roman',serif;font-size:21px;line-height:26px;color:#14342A;margin-top:3px;mso-line-height-rule:exactly;">{{ suTelefono }}</div>
+        </td>
+        <td align="right" valign="middle" style="padding:16px 18px 16px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#14342A" style="border-radius:999px;background:#14342A;"><a href="{{{ suWhatsapp }}}" style="display:block;padding:14px 18px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:14px;color:#FAF3E4;text-decoration:none;mso-line-height-rule:exactly;"><strong>WhatsApp</strong></a></td></tr></table>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+  {{#si suInstagram}}
+  <tr><td class="p" style="padding:10px 40px 0 40px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#FFF8EA" style="width:100%;background:#FFF8EA;border:1px solid #DCD3BE;border-radius:18px;">
+      <tr>
+        <td style="padding:16px 18px;">
+          <div style="font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:12px;line-height:14px;color:#456352;mso-line-height-rule:exactly;">Instagram</div>
+          <div style="font-family:'Young Serif',Georgia,'Times New Roman',serif;font-size:21px;line-height:26px;color:#14342A;margin-top:3px;mso-line-height-rule:exactly;">@{{ suInstagram }}</div>
+        </td>
+        <td align="right" valign="middle" style="padding:16px 18px 16px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#14342A" style="border-radius:999px;background:#14342A;"><a href="{{{ suInstagramEnlace }}}" style="display:block;padding:14px 18px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:14px;color:#FAF3E4;text-decoration:none;mso-line-height-rule:exactly;"><strong>Abrir</strong></a></td></tr></table>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+  {{/si}}
+  {{#si suTiktok}}
+  <tr><td class="p" style="padding:10px 40px 0 40px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="#FFF8EA" style="width:100%;background:#FFF8EA;border:1px solid #DCD3BE;border-radius:18px;">
+      <tr>
+        <td style="padding:16px 18px;">
+          <div style="font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:12px;line-height:14px;color:#456352;mso-line-height-rule:exactly;">TikTok</div>
+          <div style="font-family:'Young Serif',Georgia,'Times New Roman',serif;font-size:21px;line-height:26px;color:#14342A;margin-top:3px;mso-line-height-rule:exactly;">@{{ suTiktok }}</div>
+        </td>
+        <td align="right" valign="middle" style="padding:16px 18px 16px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="#14342A" style="border-radius:999px;background:#14342A;"><a href="{{{ suTiktokEnlace }}}" style="display:block;padding:14px 18px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:14px;color:#FAF3E4;text-decoration:none;mso-line-height-rule:exactly;"><strong>Abrir</strong></a></td></tr></table>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+  {{/si}}
+  {{/cada}}
+  <tr><td class="p" style="padding:28px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:1.6px;color:#456352;mso-line-height-rule:exactly;"><strong>TÚ LE DEJASTE</strong></td></tr>
+  <tr><td class="p" style="padding:12px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:15px;line-height:23px;color:#33513F;mso-line-height-rule:exactly;">{{ loQueDejaste }}</td></tr>
+  <tr><td class="p" style="padding:18px 40px 0 40px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:16px;line-height:25px;color:#33513F;mso-line-height-rule:exactly;">Lo que sigue ya es entre ustedes. Esto también queda en Mi mesa, en Pasadas.</td></tr>
+  <tr><td class="p" style="padding:34px 40px 40px 40px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td height="1" bgcolor="#D8CFB6" style="height:1px;line-height:1px;font-size:0;">&nbsp;</td></tr></table>
+    <p style="margin:20px 0 0 0;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#566A5D;mso-line-height-rule:exactly;">
+      Estos datos solo se los mandamos a ustedes dos. Te escribimos porque cenaste con Aro Club.<br />
+      Aro Club · Caracas, Venezuela<br />
+      <a href="{{{ enlaceAjustes }}}" style="color:#566A5D;text-decoration:underline;">Ajustes de correo</a> · <a href="{{{ sitioWeb }}}/legal" style="color:#566A5D;text-decoration:underline;">Términos y privacidad</a>
+    </p>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>

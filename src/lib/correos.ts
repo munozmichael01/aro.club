@@ -52,6 +52,12 @@ const IMPRESCINDIBLES: ReadonlySet<string> = new Set([
   // Que tu cena sea otro día no es algo de lo que se pueda dar de baja: si
   // no llega, la persona se presenta la noche que no es.
   'fecha_cambiada',
+  // Contestan a algo que la persona HIZO: confirmó qué compartir. El cruce
+  // trae los datos que pidió, y «No se cruzaron» es la promesa del panel,
+  // «te avisamos por correo en cualquier caso». La coincidencia no está: es
+  // una novedad, y quien apagó los correos pidió no recibirlas.
+  'contacto_cruzado',
+  'contacto_sin_cruce',
 ])
 
 export type Correo =
@@ -247,6 +253,15 @@ export type Correo =
    */
   | 'referido_avanza'
   | 'referido_premio'
+  /**
+   * «Seguir en contacto» (entrega seguir-en-contacto, Michael 31-10). Tres
+   * momentos y no uno: la coincidencia («Andrea también quiere…»), el cruce
+   * («Andrea te deja su número…», uno por pareja) y el cierre sin cruce
+   * («No se cruzaron», solo a quien confirmó). Los arma `src/lib/contacto.ts`.
+   */
+  | 'contacto_coincidencia'
+  | 'contacto_cruzado'
+  | 'contacto_sin_cruce'
 
 /**
  * Los que NO llevan correo.

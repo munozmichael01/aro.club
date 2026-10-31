@@ -79,8 +79,14 @@ function sirve(tipo, clave) {
 
   const i = datos.indexOf(`case '${tipo}':`)
   if (i < 0) return null
-  // Hasta el siguiente `case` de primer nivel.
-  const j = datos.indexOf("\n    case '", i + 10)
+  // Hasta el siguiente `case` de primer nivel. Pero un `case` seguido de
+  // otro no tiene cuerpo propio: cae al de abajo, como en JavaScript. Con
+  // tres tipos que comparten composición (los de «seguir en contacto»),
+  // cortar en el primero daba por vacíos a los dos de arriba.
+  let j = datos.indexOf("\n    case '", i + 10)
+  while (j >= 0 && !datos.slice(i, j).replace(/\s*case '[^']+':\s*/g, '').trim()) {
+    j = datos.indexOf("\n    case '", j + 10)
+  }
   const cuerpo = datos.slice(i, j < 0 ? datos.length : j)
   return new RegExp(`\\b${clave}\\s*:`).test(cuerpo)
     // Los `...mesa`, `...pago`: la clave la trae un pedazo entero.

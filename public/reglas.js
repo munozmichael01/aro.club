@@ -2180,6 +2180,222 @@
     },
 
     /**
+     * «SEGUIR EN CONTACTO»: el texto de todo el flujo, en un solo sitio.
+     *
+     * Entrega seguir-en-contacto de Design, con los cambios de Michael del
+     * 31-10 (app-mobile/Design/BRIEF-mi-mesa-pasadas.md):
+     *
+     *  · «las dos» pasa a «las dos personas»: la otra persona puede ser un
+     *    hombre. Por lo mismo, la E ya no dice «para ella»;
+     *  · la frase del plazo es UNA, igual en la app, la web y los correos
+     *    (`plazoDeOtra`);
+     *  · «Te avisamos por correo en cualquier caso» se queda, porque ahora es
+     *    verdad: quien confirmó y no hubo cruce recibe «No se cruzaron».
+     *
+     * Los estados son los de la entrega: A por confirmar, B esperando, C las
+     * dos personas confirmaron, D no se cruzaron, E elegiste no. Los decide el
+     * servidor (`src/lib/contacto.ts`); aquí solo se dicen.
+     */
+    CONTACTO: {
+      /** Días que dura el plazo, desde la coincidencia. */
+      DIAS: 7,
+
+      /** «Andrea», «Andrea y Luis», «Andrea, Luis y Carla». */
+      nombres: function (lista) {
+        var l = (lista || []).filter(Boolean)
+        if (l.length < 2) return l[0] || ''
+        return l.slice(0, -1).join(', ') + ' y ' + l[l.length - 1]
+      },
+
+      /** «el viernes 7 de noviembre», en la zona de la cena. */
+      hasta: function (cierraIso, zona) {
+        var p = api.partesDe(cierraIso, zona)
+        return p ? 'el ' + p.dia + ' ' + p.numero + ' de ' + p.mes : ''
+      },
+
+      /** Cuántos días quedan, contados en días de la ciudad: 0 es «hoy es el último». */
+      diasQuedan: function (cierraIso, zona, ahora) {
+        var fin = api.partesDe(cierraIso, zona)
+        var hoy = api.partesDe(new Date(ahora == null ? Date.now() : ahora).toISOString(), zona)
+        if (!fin || !hoy) return 0
+        var d = Date.UTC(fin.ano, fin.mesNumero, fin.numero) - Date.UTC(hoy.ano, hoy.mesNumero, hoy.numero)
+        return Math.max(0, Math.round(d / 86400000))
+      },
+
+      /** «Te quedan 6 días · hasta el viernes 7 de noviembre», o «Hoy es el último día». */
+      quedan: function (cierraIso, zona, ahora) {
+        var C = api.CONTACTO
+        var n = C.diasQuedan(cierraIso, zona, ahora)
+        if (n <= 0) return 'Hoy es el último día'
+        return (n === 1 ? 'Te queda 1 día' : 'Te quedan ' + n + ' días') + ' · hasta ' + C.hasta(cierraIso, zona)
+      },
+
+      /** «quedan 6 días», para la línea de Próxima y la tarjeta. */
+      quedanCorto: function (cierraIso, zona, ahora) {
+        var n = api.CONTACTO.diasQuedan(cierraIso, zona, ahora)
+        if (n <= 0) return 'hoy es el último día'
+        return n === 1 ? 'queda 1 día' : 'quedan ' + n + ' días'
+      },
+
+      /**
+       * LA frase del plazo de la otra persona. Igual en app, web y correos
+       * (Michael, 31-10).
+       */
+      plazoDeOtra: function (nombre, cierraIso, zona) {
+        return nombre + ' tiene hasta ' + api.CONTACTO.hasta(cierraIso, zona)
+          + '. Si no confirma, no se comparte nada de ninguna de las dos personas.'
+      },
+
+      /** Las push. La de «te dejó su número» sale siempre (Michael, 31-10). */
+      push: {
+        coincidencia: function (lista) {
+          var n = (lista || []).length
+          return {
+            titulo: api.CONTACTO.nombres(lista) + (n > 1 ? ' también quieren' : ' también quiere') + ' seguir en contacto contigo',
+            cuerpo: 'Tienes ' + api.CONTACTO.DIAS + ' días para elegir qué compartir.',
+          }
+        },
+        // Con varios cruces a la vez, una sola (Michael, 31-10).
+        cruzado: function (lista) {
+          var l = Array.isArray(lista) ? lista : [lista]
+          return {
+            titulo: api.CONTACTO.nombres(l) + (l.length > 1 ? ' te dejaron su número' : ' te dejó su número') + ' para seguir en contacto',
+            cuerpo: 'Toca para verlo.',
+          }
+        },
+      },
+
+      /** La línea de Próxima y la tarjeta de la cena (brief del 31-10, punto 2). */
+      linea: {
+        encuesta: function (dia) { return 'Te falta contar cómo estuvo el ' + dia },
+        porConfirmar: function (lista, cuanto) {
+          return api.CONTACTO.nombres(lista) + ((lista || []).length > 1 ? ' también quieren' : ' también quiere') + ' seguir en contacto · ' + cuanto
+        },
+        coincidiste: function (lista) { return 'Coincidiste con ' + api.CONTACTO.nombres(lista) },
+        verLoQueDejo: function (n) { return n > 1 ? 'Ver lo que te dejaron' : 'Ver lo que te dejó' },
+        elige: function (cuanto) { return 'Elige qué compartir · ' + cuanto },
+      },
+
+      /** El panel «¿Qué le compartimos?», estado por estado. */
+      A: {
+        titulo: function (nombre) { return '¿Qué le compartimos a ' + nombre + '?' },
+        tituloVarios: '¿Qué les compartimos?',
+        telefono: function (varios) { return (varios ? 'Les' : 'Le') + ' compartiremos tu número de teléfono' },
+        telefonoNota: 'Viene de tu perfil. Puedes cambiarlo, no quitarlo.',
+        telefonoFalta: 'Escribe un número para compartir.',
+        redes: 'TUS REDES, SI QUIERES',
+        opcional: 'Opcional',
+        soloSi: function (nombre) { return 'Solo se lo mandamos si ' + nombre + ' también confirma. Si no, no se comparte nada de ninguna de las dos personas.' },
+        compartir: 'Compartir',
+        prefieroNo: 'Prefiero no',
+        noSeEntera: function (nombre) { return 'Si eliges no compartir, ' + nombre + ' no se entera.' },
+        // Varias personas (V3 a V5).
+        seLoMandamos: 'SE LO MANDAMOS A',
+        soloAQuien: 'Solo le llega a quien también confirme. A quien desmarques no se le dice.',
+        /** El botón del panel de varias, según cuántas siguen marcadas (V3 y V4). */
+        compartirCon: function (marcadas, total) {
+          var n = (marcadas || []).length
+          if (!n) return 'Marca al menos a una persona'
+          if (n === total) return n === 2 ? 'Compartir con las dos personas' : 'Compartir con todas'
+          return 'Compartir con ' + api.CONTACTO.nombres(marcadas)
+        },
+        prefieroNoNadie: 'Prefiero no compartir con nadie',
+      },
+      B: {
+        titulo: function (nombre) { return 'Listo. Ahora falta ' + nombre + '.' },
+        bajada: 'Si confirma, les mandamos a las dos personas lo que eligió cada una. Hasta entonces, no sale nada.',
+        loQueVas: 'LO QUE LE VAS A COMPARTIR',
+        cambiar: 'Cambiar lo que comparto',
+        enCualquierCaso: 'Te avisamos por correo en cualquier caso.',
+        prefieroNo: 'Prefiero no compartir',
+        // Varias personas.
+        aSuRitmo: 'Cada quien a su ritmo.',
+        teAvisamos: 'Te avisamos cada vez que alguien confirme.',
+      },
+      C: {
+        titulo: function (nombre) { return nombre + ' y tú ya pueden escribirse.' },
+        bajada: 'Las dos personas confirmaron. Esto es lo que se compartieron.',
+        teDejo: function (nombre) { return nombre.toUpperCase() + ' TE DEJÓ' },
+        whatsapp: 'Escribir por WhatsApp',
+        abrir: 'Abrir',
+        leDejaste: 'TÚ LE DEJASTE',
+        nota: 'Estos datos solo los ven ustedes dos. También te los mandamos por correo.',
+      },
+      D: {
+        titulo: 'Esta vez no se cruzaron los datos.',
+        bajada: 'Se cerró el plazo para compartir. No se compartió nada de ninguna de las dos personas.',
+        agenda: 'Cada semana hay mesas nuevas, con gente que todavía no conoces.',
+        verAgenda: 'Ver la agenda',
+      },
+      E: {
+        titulo: 'No compartiste nada.',
+        bajada: function (nombre) { return nombre + ' no se entera. Es como si no hubiera habido coincidencia.' },
+        puedesCambiar: function (cierraIso, zona) { return 'Puedes cambiar de idea hasta ' + api.CONTACTO.hasta(cierraIso, zona) },
+        elegir: 'Elegir qué compartir',
+      },
+      /** Las etiquetas de cada persona en la versión de varias (V5). */
+      sellos: { C: 'CONFIRMÓ', B: 'ESPERANDO', E: 'NO LE COMPARTES', D: 'NO SE CRUZARON' },
+      compartirTambien: function (nombre) { return 'Compartir también con ' + nombre },
+      loQueCompartes: 'LO QUE COMPARTES',
+      cambiar: 'Cambiar',
+
+      /**
+       * Pasadas (entrega mi-mesa-pasadas, 31-10): la etiqueta de lo pendiente
+       * y la línea de lo nuevo de cada fila.
+       */
+      pasadas: {
+        encuesta: 'Encuesta por responder',
+        contacto: 'Contacto por confirmar',
+        nuevo: {
+          coincidencia: function (lista) { return api.CONTACTO.nombres(lista) + ((lista || []).length > 1 ? ' también quieren' : ' también quiere') + ' seguir en contacto' },
+          cruce: function (nombre) { return nombre + ' te dejó su número' },
+          sinCruce: 'Esta vez no se cruzaron los datos',
+        },
+        vacia: { titulo: 'Aquí van a quedar tus cenas.', bajada: 'Con quién cenaste, lo que contaste y lo que se compartieron. Todo se queda aquí.', boton: 'Elegir mi primera fecha' },
+        // Mis cenas en Perfil: un acceso directo a Pasadas.
+        misCenas: function (n) { return n ? (n === 1 ? '1 cena' : n + ' cenas') + ' · se ven en Mi mesa, Pasadas' : 'Todavía no has cenado con Aro' },
+      },
+
+      /**
+       * La vista de una cena pasada y las pestañas de Mi mesa (entrega
+       * mi-mesa-pasadas). Los pidió el agente de la app el 31-10 para no
+       * tener una copia en `texto/pasadas.ts`.
+       */
+      cena: {
+        pestanas: { proxima: 'Próxima', pasadas: 'Pasadas' },
+        seguir: 'SEGUIR EN CONTACTO',
+        conQuien: 'CON QUIÉN CENASTE',
+        verAgenda: 'Ver la agenda',
+        // La encuesta dentro de la cena (C5)…
+        encuesta: { titulo: '¿Cómo estuvo la cena?', bajada: 'Son dos minutos. Al final puedes marcar a quién te gustaría volver a ver.' },
+        // …y en Próxima, sin reserva activa (P3).
+        encuestaProxima: {
+          titulo: function (dia) { return '¿Cómo estuvo el ' + dia + '?' },
+          bajada: 'Son dos minutos. Lo que nos cuentas arma las próximas mesas.',
+        },
+        contar: 'Contar cómo estuvo',
+        contada: {
+          titulo: 'Ya contaste cómo estuvo',
+          // «El viernes 30. Gracias.»: el día en que la contó, en la zona de la cena.
+          cuando: function (iso, zona) {
+            var p = api.partesDe(iso, zona)
+            return p ? 'El ' + p.dia + ' ' + p.numero + '. Gracias.' : 'Gracias.'
+          },
+          ver: 'Ver',
+        },
+        /** «Mesa 04». Sin número —la única mesa de Aro esa noche— no se dice nada. */
+        mesa: function (n) { return n ? 'Mesa ' + (n < 10 ? '0' + n : String(n)) : '' },
+      },
+
+      /** Los enlaces de C: WhatsApp con el número en E.164, y los perfiles. */
+      enlaces: {
+        whatsapp: function (e164) { return 'https://wa.me/' + String(e164 || '').replace(/\D/g, '') },
+        instagram: function (u) { return 'https://instagram.com/' + u },
+        tiktok: function (u) { return 'https://tiktok.com/@' + u },
+      },
+    },
+
+    /**
      * «ESTÁS DENTRO»: lo que se dice después de reservar, y lo que se comparte.
      *
      * Entrega estas-dentro de Design (29-10). Lo estrenó la app en

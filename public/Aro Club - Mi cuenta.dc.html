@@ -87,7 +87,7 @@
     <div style="border-top:1px solid rgba(20,52,42,.08)">
       <div style="max-width:720px;margin:0 auto;padding:0 clamp(16px,4vw,28px);display:flex;gap:clamp(18px,4vw,28px)">
         <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
-          <a href="{{ n.enlace }}" aria-current="{{ n.actual }}" style="{{ n.estilo }}">{{ n.texto }}</a>
+          <a href="{{ n.enlace }}" aria-current="{{ n.actual }}" style="{{ n.estilo }}">{{ n.texto }}<sc-if value="{{ n.punto }}" hint-placeholder-val="{{ false }}"><span style="{{ n.estiloPunto }}" aria-label="Hay algo nuevo"></span></sc-if></a>
         </sc-for>
         <button onClick="{{ salir }}" style="{{ estiloSalir }}">{{ textoSalir }}</button>
       </div>
@@ -2010,7 +2010,8 @@ class Component extends DCLogic {
       // cadena esta, y quien tiene reserva pero el perfil a medias —o
       // cualquier estado que no sea reservada/abierta— tiene mesa y no veia
       // la pestaña. La pregunta es "¿hay mesa?", no "¿en que paso vas?".
-      nav: AroNav.items('inicio', !!(d && d.reserva), d && d.reserva && d.reserva.formato),
+      // Con cenas pasadas «Mi mesa» existe aunque no haya reserva: ahí viven Pasadas.
+      nav: AroNav.items('inicio', !!(d && (d.reserva || d.cuantasPasadas)), d && d.reserva && d.reserva.formato, !!(d && d.senalPasadas)),
       hayMios: mios.length > 0,
       sinMios: mios.length === 0,
 
