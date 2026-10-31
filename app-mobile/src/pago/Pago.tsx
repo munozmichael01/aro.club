@@ -34,7 +34,6 @@ import { PreguntaIdioma } from '../idioma/PreguntaIdioma'
 import * as TI from '../texto/idioma'
 import * as T from '../texto/pago'
 import { useUltimo } from '../util/useUltimo'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAccionesDentro } from '../dentro/acciones'
 import { EstasDentro } from '../dentro/EstasDentro'
 import * as MD from '../dentro/maquina'
@@ -154,10 +153,10 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
       return
     }
     // El código cubre la plaza: «Estás dentro» aquí mismo, como con crédito
-    // (B1). Marcada como vista: si no, Mi mesa la volvía a abrir al llegar.
+    // (B1). Marcada como vista en el servidor: si no, el Inicio la volvía a abrir.
     setFase('cupon')
     setRecien(true)
-    AsyncStorage.setItem(MD.claveVista(d.evento.empiezaEn), '1').catch(() => undefined)
+    servicio.marcarDentro(d.evento.id)
     preguntar('reserva')
   }
 
@@ -196,8 +195,10 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     }
     setFase(r.datos.estado === 'confirmado' ? 'listo' : 'pendiente')
     setRecien(true)
-    // Ya vio «Estás dentro»: que no se abra otra vez al confirmarse el pago.
-    if (d) AsyncStorage.setItem(MD.claveVista(d.evento.empiezaEn), '1').catch(() => undefined)
+    // Confirmado al instante: ya vio la B. Con el pago en revisión NO se marca:
+    // la B tiene que volver a salir cuando se confirme (se marcaba al
+    // reportar y por eso no salía nunca, 31-10).
+    if (r.datos.estado === 'confirmado') servicio.marcarDentro(d.evento.id)
     // Reportar el pago aparta el puesto: lo siguiente que pasa es la mesa.
     // Tercer momento de la pregunta previa.
     preguntar('reserva')

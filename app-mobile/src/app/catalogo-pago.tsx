@@ -34,6 +34,7 @@ function Pantalla() {
     }
     return {
       cargar: async () => ({ ok: true, datos }),
+      marcarDentro: async () => undefined,
       reportar: async (cuerpo) => (console.log('[catálogo] reportar', cuerpo), await espera(), { ok: true, datos: { estado: 'reportado' } }),
       cupon: async (_e, codigo) => {
         await espera()

@@ -148,9 +148,20 @@ export function Inicio(p: {
 
   // La primera vez que entra con la reserva ya confirmada, se abre «Estás
   // dentro» una vez (B3 de la entrega): la push o el correo pudieron no tocarse.
+  //
+  // Lo decide el servidor (`estasDentro`, 31-10), y se decide ANTES de pintar
+  // el Inicio: pintarlo y saltar después era el «redirect raro» que vio Michael.
   const dentroMirado = useRef(false)
+  const saltaADentro = !!datos?.estasDentro && !dentroMirado.current
   useEffect(() => {
     if (!datos || dentroMirado.current) return
+    if (datos.estasDentro !== undefined) {
+      if (!datos.estasDentro) return
+      dentroMirado.current = true
+      p.ir('/estas-dentro', { evento: datos.estasDentro })
+      return
+    }
+    // Servidor viejo, sin el campo: la marca local de antes.
     const r = datos.reserva
     const plan = r?.empiezaEn ? datos.planes.find((x) => x.empiezaEn === r.empiezaEn && !x.cancelada) : null
     if (!r?.empiezaEn || r.revelado || !plan || plan.estado !== 'confirmed') return
@@ -197,7 +208,7 @@ export function Inicio(p: {
   }
 
   let cuerpo
-  if (!datos) {
+  if (!datos || saltaADentro) {
     cuerpo = fallo ? (
       <View style={{ gap: 16 }}>
         <Aviso tono="ojo">{fallo}</Aviso>

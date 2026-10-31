@@ -57,6 +57,20 @@ export function crearServicioPago(api: Api) {
      * expo-file-system, no `{ uri, name, type }`: el fetch de Expo 57 lo
      * rechaza); aquí no, para que este servicio corra también en las pruebas.
      */
+    /**
+     * Ya vio «Estás dentro» aquí mismo (cupón o pago confirmado al instante):
+     * se le dice al servidor, para que el Inicio no la vuelva a abrir (31-10).
+     */
+    marcarDentro: async (eventoId: string) => {
+      try {
+        const r = await api.pedir('/estas-dentro?evento=' + encodeURIComponent(eventoId))
+        const j = await r.json().catch(() => null)
+        if (r.ok && j?.reserva?.id && !j.reserva.pendiente) await api.pedir('/estas-dentro', json({ reservaId: j.reserva.id }))
+      } catch {
+        // Si no se pudo, el Inicio la enseña una vez más: no es grave.
+      }
+    },
+
     captura: (archivo: Blob, nombre: string) => {
       const cuerpo = new FormData()
       cuerpo.append('archivo', archivo, nombre)

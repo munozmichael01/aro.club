@@ -1,14 +1,17 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
-
 import { SinSesion, type crearApi } from '../sesion/api'
 import * as T from '../texto/dentro'
 import * as M from './maquina'
 
-/** «Estás dentro» solo LEE: la reserva viva de /api/mi-cuenta y las zonas y la revelación de /api/mi-mesa. */
+/**
+ * «Estás dentro» lee `GET /api/estas-dentro` (31-10), lo mismo que la web. Si
+ * el servidor aún no lo tiene, como antes: /api/mi-cuenta y /api/mi-mesa.
+ */
 type Api = ReturnType<typeof crearApi>
 export type Resultado<D> = { ok: true; datos: D } | { ok: false; error: string; status?: number }
 
 export type Datos = { reservaId: string; plan: M.Plan; pendiente: boolean }
+
+const json = (cuerpo: object): RequestInit => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) })
 
 async function leerJson(api: Api, ruta: string): Promise<Resultado<any>> {
   try {
@@ -23,7 +26,14 @@ async function leerJson(api: Api, ruta: string): Promise<Resultado<any>> {
 
 export function crearServicioDentro(api: Api) {
   return {
-    leer: async (): Promise<Resultado<Datos | null>> => {
+    leer: async (evento?: string | null): Promise<Resultado<Datos | null>> => {
+      const e = await leerJson(api, '/estas-dentro' + (evento ? '?evento=' + encodeURIComponent(evento) : ''))
+      if (e.ok) {
+        const r = e.datos.reserva
+        if (!r?.id || !e.datos.plan?.empiezaEn) return { ok: true, datos: null }
+        return { ok: true, datos: { reservaId: r.id, pendiente: !!r.pendiente, plan: e.datos.plan } }
+      }
+      if (e.status === 401) return e
       const c = await leerJson(api, '/mi-cuenta')
       if (!c.ok) return c
       const reserva = c.datos.reserva
@@ -47,8 +57,11 @@ export function crearServicioDentro(api: Api) {
         },
       }
     },
-    /** Si ya se vio la B de esta reserva: se ve una vez (HANDOFF). */
-    yaVista: async (empiezaEn: string) => (await AsyncStorage.getItem(M.claveVista(empiezaEn)).catch(() => null)) === '1',
-    marcarVista: (empiezaEn: string) => AsyncStorage.setItem(M.claveVista(empiezaEn), '1').catch(() => undefined),
+    /**
+     * La B se ve una vez, y «ya la vio» lo guarda el SERVIDOR (31-10), el
+     * mismo para la app y la web. Solo cuenta con el pago confirmado: vista
+     * con el pago en revisión, tiene que volver a salir al confirmarse.
+     */
+    marcarVista: (reservaId: string) => api.pedir('/estas-dentro', json({ reservaId })).catch(() => undefined),
   }
 }

@@ -96,8 +96,10 @@ export type Historia = {
  * tarjeta (su copy habla de mesa y de silla) y comparten solo el mensaje.
  */
 export function historia(p: Plan, codigo: string | null): Historia | null {
+  // Solo cena y brunch: su copy habla de cenar y de mesa. Unos drinks salían
+  // con «ceno con gente…» porque `tipoDe` los cuenta como cena (31-10).
+  if (!reglas.DENTRO.conTarjetas(p.formato ?? 'dinner')) return null
   const tipo = reglas.COMO_FUNCIONA.tipoDe(p.formato ?? 'dinner')
-  if (tipo === 'grupo') return null
   const z = p.zonaHoraria
   const dia = F.diaYNumero(p.empiezaEn, z)
   const [diaSemana = '', numero = ''] = dia.split(' ')

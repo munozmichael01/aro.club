@@ -65,6 +65,11 @@ export type Plan = {
 }
 
 export type MiCuenta = {
+  /**
+   * La fecha cuya «Estás dentro» toca enseñar: confirmada, sin revelar y que
+   * aún no vio (31-10, lo decide el servidor). `undefined`: servidor viejo.
+   */
+  estasDentro?: string | null
   nombre: string | null
   esOps: boolean
   porValorar: { cuando: string; sitio: string | null } | null

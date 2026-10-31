@@ -67,6 +67,8 @@ type Api = {
   /** Cuándo se revela un plan: el ISO de la fecha si lo trae, o el de la regla (mediodía, o la víspera a las 6 en los de mañana). */
   /** «El día de la cena, al mediodía» / «La víspera, a las seis de la tarde»; '' sin fecha (f0e8a7e). */
   cuandoSeRevela: (inicioIso: string, zona?: string | null, revelaIso?: string | null, formato?: string | null) => string
+  /** «Estás dentro» (reglas.js, 31-10). De momento la app solo lee si un plan tiene tarjetas para historias. */
+  DENTRO: { conTarjetas: (formato: string) => boolean }
   /** «Cómo funciona» en tres tarjetas: los textos de la web y la app, en un solo sitio (f0e8a7e). */
   COMO_FUNCIONA: {
     titulo: string

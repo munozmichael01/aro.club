@@ -18,7 +18,7 @@ type Servicio = ReturnType<typeof crearServicioDentro>
  * el sello «Puesto apartado». Llegan aquí la reserva con crédito, la push y el correo de «pago
  * confirmado», y la primera apertura después de confirmar. La B se marca vista.
  */
-export function PantallaDentro(p: { servicio: Servicio; via: M.Via; preguntarAvisos?: boolean; ir: (d: string) => void; alEntrar: () => void }) {
+export function PantallaDentro(p: { servicio: Servicio; via: M.Via; evento?: string | null; preguntarAvisos?: boolean; ir: (d: string) => void; alEntrar: () => void }) {
   const { servicio } = p
   const alEntrar = useUltimo(p.alEntrar)
   const ir = useUltimo(p.ir)
@@ -27,7 +27,7 @@ export function PantallaDentro(p: { servicio: Servicio; via: M.Via; preguntarAvi
   const { preguntar, hoja } = usePreguntaAvisos()
 
   const cargar = useCallback(async () => {
-    const r = await servicio.leer()
+    const r = await servicio.leer(p.evento)
     if (!r.ok) {
       if (r.status === 401) return alEntrar.current()
       return setFallo(r.error)
@@ -36,8 +36,8 @@ export function PantallaDentro(p: { servicio: Servicio; via: M.Via; preguntarAvi
     // Sin reserva viva no hay nada que celebrar: al Inicio.
     if (!r.datos) return ir.current('/cuenta')
     setD(r.datos)
-    servicio.marcarVista(r.datos.plan.empiezaEn)
-  }, [servicio, alEntrar, ir])
+    if (!r.datos.pendiente) servicio.marcarVista(r.datos.reservaId)
+  }, [servicio, p.evento, alEntrar, ir])
 
   useFocusEffect(
     useCallback(() => {
