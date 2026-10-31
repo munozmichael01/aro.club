@@ -531,21 +531,50 @@ export async function POST(request: Request) {
       const conDos = [...cuantos.entries()].filter(([, n]) => n >= hacenFalta).map(([id]) => id)
 
       if (evento) for (const quien of conDos) {
-        const { data: suya } = await admin
+        /**
+         * `as never` en el select: los tipos generados son de antes de que
+         * `bookings` tuviera `asistencia_por`. Se regeneran cuando toque
+         * —`npm run types:gen`— y entonces este apaño se cae solo. Es lo
+         * mismo que se hizo con `mesa_cambiada`.
+         */
+        const { data: suyaCruda } = await admin
           .from('bookings')
-          .select('id, status, events(starts_at)')
+          .select('id, status, asistencia_por, events(starts_at)' as never)
           .eq('profile_id', quien)
           .eq('event_id', evento)
           .maybeSingle()
 
+        const suya = suyaCruda as unknown as {
+          id: string
+          status: string
+          asistencia_por: string | null
+          events: { starts_at: string } | null
+        } | null
+
         if (!suya) continue
-        if (suya.status !== 'confirmed' && suya.status !== 'pending_payment') continue
+
+        /**
+         * Lo que todavía no decidió nadie, y lo que cerró LA PROPIA ENCUESTA.
+         *
+         * Michael, 31-10: la encuesta se contesta cuando se contesta, así
+         * que una respuesta del quinto día tiene que valer igual. La
+         * asistencia se cierra a los tres —si no, no se cierra nunca— pero
+         * ese cierre es una suposición: «nadie dijo que faltara». Cuando
+         * alguien lo dice después, la suposición se corrige.
+         *
+         * Lo que puso una persona en el panel no se toca jamás, en ningún
+         * sentido: ahí hubo alguien mirando.
+         */
+        const firma = suya.asistencia_por
+        const sinDecidir = suya.status === 'confirmed' || suya.status === 'pending_payment'
+        const loCerroLaEncuesta = suya.status === 'attended' && firma === 'encuesta'
+        if (!sinDecidir && !loCerroLaEncuesta) continue
         const empieza = (suya.events as unknown as { starts_at: string } | null)?.starts_at
         if (empieza && Date.parse(empieza) > Date.now()) continue
 
         const { error } = await admin
           .from('bookings')
-          .update({ status: 'no_show' } as never)
+          .update({ status: 'no_show', asistencia_por: 'encuesta' } as never)
           .eq('id', suya.id)
         if (error) console.error('[despues] no se pudo marcar la ausencia', suya.id, error)
       }

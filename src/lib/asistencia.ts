@@ -159,7 +159,9 @@ export async function cerrarAsistenciaDeMesa(
       if (!ids.length) continue
       const { error } = await admin
         .from('bookings')
-        .update({ status: estado } as never)
+        // Firmado: lo que cierra el automático se puede corregir después con
+        // una respuesta tardía; lo que pone una persona, no.
+        .update({ status: estado, asistencia_por: 'encuesta' } as never)
         .in('id', ids)
         // Otra vez el candado, por si algo cambió entre leer y escribir: lo
         // que ya decidió una persona no se pisa.

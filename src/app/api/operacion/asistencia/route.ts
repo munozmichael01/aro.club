@@ -85,7 +85,11 @@ export async function POST(request: Request) {
 
   const { error } = await admin
     .from('bookings')
-    .update({ status: nuevo } as never)
+    // Con la firma: a partir de aquí ninguna respuesta tardía de la encuesta
+    // lo toca. Lo que decide una persona manda.
+    // Al volver a «sin decidir» se borra la firma: deja de ser una decisión
+    // de nadie y la encuesta puede volver a cerrarla.
+    .update({ status: nuevo, asistencia_por: nuevo === 'confirmed' ? null : 'operacion' } as never)
     .eq('id', reservaId)
 
   if (error) {
