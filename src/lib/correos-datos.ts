@@ -1368,7 +1368,9 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
     case 'pago_confirmado':
     case 'pago_no_cuadra': {
       const pago = await elPagoDe(admin, fila.profile_id, fila.event_id)
-      return { a, datos: { ...base, ...pago, motivo: (p.motivo as string) ?? '' } }
+      // El botón de «pago confirmado» abre «Estás dentro» de ESA fecha (B3 de
+      // la entrega estas-dentro): la celebración, el calendario y compartir.
+      return { a, datos: { ...base, ...pago, eventoId: fila.event_id ?? '', motivo: (p.motivo as string) ?? '' } }
     }
 
     /**
