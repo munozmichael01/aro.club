@@ -13,6 +13,7 @@ import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
 import { situacionDePerfil } from '@/lib/embudo'
+import { codigoDe, cuentaDe, POR_CADA } from '@/lib/referidos'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
@@ -1979,6 +1980,61 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
      * tres renglones iguales se leen como un error del correo. Es el mismo
      * fallo que el resumen ya pagó.
      */
+    /**
+     * Los dos de los referidos. Todo se lee AL MANDAR, nada del payload.
+     *
+     * El payload solo trae quién acaba de ir; las cifras se vuelven a contar
+     * aquí porque entre encolar y mandar pueden pasar minutos y otra persona
+     * puede haber asistido. Un correo que dice «llevas 2 de 3» cuando ya van
+     * tres es peor que uno que tarda.
+     */
+    case 'referido_avanza':
+    case 'referido_premio': {
+      if (!fila.profile_id) return { error: 'sin persona' }
+      const cuenta = await cuentaDe(admin, fila.profile_id)
+      const codigo = await codigoDe(admin, fila.profile_id)
+
+      // Quién acaba de ir. Su nombre de pila y nada más: a quien invita no
+      // le hace falta el apellido de nadie.
+      let quien = 'Alguien'
+      if (typeof p.porQuien === 'string') {
+        const { data: esa } = await admin
+          .from('profiles')
+          .select('display_name, full_name')
+          .eq('id', p.porQuien)
+          .maybeSingle()
+        quien = esa?.display_name || esa?.full_name?.split(' ')[0] || 'Alguien'
+      }
+
+      const saldo = await admin
+        .from('v_credit_balance')
+        .select('balance')
+        .eq('profile_id', fila.profile_id)
+        .maybeSingle()
+
+      const creditos = Number(saldo.data?.balance ?? 0)
+      const falta = POR_CADA - cuenta.avance
+
+      return {
+        a,
+        datos: {
+          ...base,
+          quien,
+          codigo: codigo ?? '',
+          enlaceInvitar: codigo ? `${SITIO}/i/${codigo}` : `${SITIO}/perfil`,
+          apuntadosFrase: cuenta.apuntados === 1 ? '1 persona' : `${cuenta.apuntados} personas`,
+          asistieronFrase: cuenta.asistieron === 1 ? '1 persona' : `${cuenta.asistieron} personas`,
+          avanceCorto: `${cuenta.avance} de ${POR_CADA}`,
+          avanceFrase: cuenta.avance === 0
+            ? `Vas por ${cuenta.asistieron}. La próxima empieza otra cuenta.`
+            : `Llevas ${cuenta.avance} de ${POR_CADA}. ${falta === 1 ? 'A la siguiente' : `A las ${falta}`}, tu próxima reserva es gratis.`,
+          porCadaLetra: 'tres',
+          porCadaLetraAlta: 'Tres',
+          creditosTexto: creditos === 1 ? '1 disponible' : `${creditos} disponibles`,
+        },
+      }
+    }
+
     case 'te_falta_sentarte': {
       const ids = Array.isArray(p.fechas) ? (p.fechas as unknown[]).filter((x): x is string => typeof x === 'string') : []
       if (!ids.length) return { error: 'sin fechas' }

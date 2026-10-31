@@ -306,3 +306,119 @@ export async function apuntarQuienInvito(
     return null
   }
 }
+
+/**
+ * El premio: una reserva gratis por cada tres que fueron a su primera cena.
+ *
+ * Se llama cuando alguien pasa a `attended`, desde los DOS sitios que lo
+ * escriben —el panel y el cierre automático de la mesa— y no desde uno:
+ * premiar solo cuando lo marca una persona dejaría el premio colgando de que
+ * esa semana alguien se acordara.
+ *
+ * Michael, 31-10: «no basta con que reserven». Por eso cuenta `attended` y
+ * no las reservas, y por eso vive aquí al lado de `cuentaDe`, que es quien
+ * sabe contar.
+ *
+ * Devuelve qué pasó para que quien llama escriba el correo que toca: el de
+ * «llevas 2 de 3» o el de «ya es tuya». Nunca manda correos él: esta pieza
+ * toca el saldo, y mezclar las dos cosas hace que un fallo escribiendo deje
+ * un crédito sin contar o al revés.
+ */
+export type Premio = {
+  /** A cuántas personas suyas se les ha marcado la primera cena. */
+  asistieron: number
+  /** Cuántas reservas gratis tiene ya, contando lo que se acaba de dar. */
+  premios: number
+  /** Cuántas se le han dado AHORA. Cero es lo normal. */
+  nuevos: number
+  /** Lo que le falta para la siguiente, de 0 a POR_CADA - 1. */
+  avance: number
+}
+
+export async function premiarSiToca(
+  admin: SupabaseClient<Database>,
+  quienInvitaId: string,
+): Promise<Premio> {
+  const cuenta = await cuentaDe(admin, quienInvitaId)
+  const faltan = premiosQueFaltan(cuenta.asistieron, cuenta.premios)
+
+  if (faltan <= 0) {
+    return { asistieron: cuenta.asistieron, premios: cuenta.premios, nuevos: 0, avance: cuenta.avance }
+  }
+
+  /**
+   * El crédito, al libro mayor, y UNO POR PREMIO.
+   *
+   * `referral_bonus` existe en `credit_reason_t` desde el esquema inicial y
+   * no lo escribía nadie. Se anota como cualquier otro movimiento: el saldo
+   * de una persona tiene que poder explicarse fila a fila.
+   */
+  const { error } = await admin.from('credit_ledger').insert(
+    Array.from({ length: faltan }, () => ({
+      profile_id: quienInvitaId,
+      delta: 1,
+      reason: 'referral_bonus',
+      note: 'Tres personas fueron a su primera cena con su código',
+    })) as never,
+  )
+
+  if (error) {
+    console.error('[referidos] no se pudo abonar el premio', quienInvitaId, error)
+    return { asistieron: cuenta.asistieron, premios: cuenta.premios, nuevos: 0, avance: cuenta.avance }
+  }
+
+  /**
+   * Y la cuenta de lo premiado, DESPUÉS del abono.
+   *
+   * Es lo que impide premiar dos veces: `premiosQueFaltan` compara contra
+   * esta columna, no contra «tres o más». Si el abono entra y esto falla, la
+   * siguiente pasada premiaría otra vez, así que se grita.
+   */
+  const premios = cuenta.premios + faltan
+  const { error: errorCuenta } = await admin
+    .from('profiles')
+    .update({ premios_referido: premios } as never)
+    .eq('id', quienInvitaId)
+
+  if (errorCuenta) {
+    console.error('[referidos] PREMIO ABONADO SIN APUNTAR', quienInvitaId, errorCuenta)
+  }
+
+  return {
+    asistieron: cuenta.asistieron,
+    premios,
+    nuevos: faltan,
+    avance: cuenta.asistieron % POR_CADA,
+  }
+}
+
+/**
+ * Lo que pasa cuando a alguien se le marca que fue a una cena.
+ *
+ * Si llegó con el código de otra persona, esa persona avanza. Y si con esta
+ * llega a tres, se lleva su reserva gratis.
+ *
+ * Falla en silencio a propósito: marcar la asistencia es lo que importa, y
+ * que el premio de un tercero no salga no puede impedirlo. Queda en el log.
+ */
+export async function trasMarcarAsistencia(
+  admin: SupabaseClient<Database>,
+  perfilId: string,
+): Promise<{ quienInvita: string; premio: Premio } | null> {
+  try {
+    const { data: quien } = await admin
+      .from('profiles')
+      .select('invitado_por')
+      .eq('id', perfilId)
+      .maybeSingle()
+
+    const quienInvita = (quien as { invitado_por?: string | null } | null)?.invitado_por ?? null
+    if (!quienInvita) return null
+
+    const premio = await premiarSiToca(admin, quienInvita)
+    return { quienInvita, premio }
+  } catch (e) {
+    console.error('[referidos] no se pudo mirar el premio', perfilId, e)
+    return null
+  }
+}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { marcasNecesarias } from '@/lib/asistencia'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notaDesdeIndice, notasDelSitio } from '@/lib/encuesta'
 import { createClient } from '@/lib/supabase/server'
@@ -510,7 +511,24 @@ export async function POST(request: Request) {
         cuantos.set(x.rated_id, (cuantos.get(x.rated_id) ?? 0) + 1)
       }
 
-      const conDos = [...cuantos.entries()].filter(([, n]) => n >= 2).map(([id]) => id)
+      /**
+       * El listón ya no es dos a secas: es la mitad de quienes respondieron,
+       * con dos de suelo (Michael, 31-10). Vive en `lib/asistencia` con el
+       * cierre de la mesa, que aplica la misma cuenta cuando pasan los dos
+       * días: dos reglas distintas para la misma pregunta darían dos
+       * respuestas según quién llegara antes.
+       */
+      const { data: quienesRespondieron } = await admin
+        .from('peer_feedback')
+        .select('rater_id')
+        .eq('table_id', d.mesaId)
+
+      const respondieron = new Set(
+        (quienesRespondieron ?? []).map((r) => r.rater_id).filter(Boolean),
+      ).size
+
+      const hacenFalta = marcasNecesarias(respondieron)
+      const conDos = [...cuantos.entries()].filter(([, n]) => n >= hacenFalta).map(([id]) => id)
 
       if (evento) for (const quien of conDos) {
         const { data: suya } = await admin

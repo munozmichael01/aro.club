@@ -235,6 +235,18 @@ export type Correo =
    * correo a quien lleva semanas verificado sin dar el paso.
    */
   | 'te_falta_sentarte'
+  /**
+   * Los dos de los referidos (Michael, 29-10, cifras; 31-10, construirlo).
+   *
+   * `referido_avanza` sale cada vez que alguien que llegó con tu código va a
+   * su primera cena: es una cuenta que avanza. `referido_premio` sale cuando
+   * llegan a tres y la siguiente reserva ya es gratis: es algo que ya
+   * tienes. Dos tipos y no uno porque el segundo se perdería dentro del
+   * primero, y porque el índice de «uno por persona y fecha» no los separa:
+   * estos no cuelgan de ninguna fecha.
+   */
+  | 'referido_avanza'
+  | 'referido_premio'
 
 /**
  * Los que NO llevan correo.

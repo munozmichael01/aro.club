@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { premiarAQuienInvito } from '@/lib/asistencia'
 import { anotar } from '@/lib/auditoria'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -90,6 +91,18 @@ export async function POST(request: Request) {
   if (error) {
     console.error('[asistencia] no se pudo marcar', error)
     return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+  }
+
+  /**
+   * Y si llegó con el código de alguien, esa persona avanza.
+   *
+   * Aquí y en el cierre automático de la mesa, con la misma pieza: el premio
+   * de los referidos se gana cuando tres invitados van a su PRIMERA cena, y
+   * «fue» se escribe en estos dos sitios. Colgarlo solo de uno dejaría el
+   * premio dependiendo de por dónde se marcara.
+   */
+  if (nuevo === 'attended') {
+    await premiarAQuienInvito(admin, reserva.profile_id)
   }
 
   // Queda quién lo marcó: es el dato que decide vetos, y un veto sin firma no

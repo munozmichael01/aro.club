@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { cerrarAsistenciaDeMesa } from '@/lib/asistencia'
 import { encolar } from '@/lib/correos'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { FIN_CENA, VENTANA_VALORAR } from '@/lib/ventana-mesa'
@@ -96,7 +97,54 @@ async function preguntar(seco: boolean) {
     }
   }
 
-  return NextResponse.json({ eventos: eventos.length, encolados, seco })
+  const asistencia = await cerrarAsistencias(admin, seco)
+
+  return NextResponse.json({ eventos: eventos.length, encolados, asistencia, seco })
+}
+
+/**
+ * Y el segundo trabajo del mismo cron: cerrar quién vino.
+ *
+ * Va aquí y no en un cron propio porque es la misma pregunta con dos días de
+ * diferencia: este manda la encuesta cuando la cena acaba de pasar, y cierra
+ * la asistencia de las que ya tuvieron sus dos días para contestarla. Un
+ * cron nuevo serían dos ideas de cuándo una cena deja de estar abierta.
+ *
+ * El plazo es `VENTANA_VALORAR` —las mismas 48 horas que se deja para
+ * responder— más un día de margen, para no cerrar una mesa el mismo minuto
+ * en que deja de escribirse.
+ *
+ * Idempotente: `cerrarAsistenciaDeMesa` solo toca reservas sin decidir, así
+ * que pasar dos veces no cambia nada.
+ */
+async function cerrarAsistencias(admin: ReturnType<typeof createAdminClient>, seco: boolean) {
+  const limite = new Date(Date.now() - VENTANA_VALORAR - 24 * 3600_000).toISOString()
+  // Una semana hacia atrás y no más: lo viejo ya se cerró, y si algo quedó
+  // suelto de hace un mes se decide a mano, no de madrugada.
+  const desdeCuando = new Date(Date.now() - 8 * 24 * 3600_000).toISOString()
+
+  const { data: fechas } = await admin
+    .from('events')
+    .select('id')
+    .lte('starts_at', limite)
+    .gte('starts_at', desdeCuando)
+
+  if (!fechas?.length) return { mesas: 0, vinieron: 0, faltaron: 0 }
+
+  const { data: mesas } = await admin
+    .from('dinner_tables')
+    .select('id')
+    .in('event_id', fechas.map((f) => f.id))
+
+  let vinieron = 0
+  let faltaron = 0
+  for (const m of mesas ?? []) {
+    const r = await cerrarAsistenciaDeMesa(admin, m.id, seco)
+    vinieron += r.vinieron.length
+    faltaron += r.faltaron.length
+  }
+
+  return { mesas: (mesas ?? []).length, vinieron, faltaron }
 }
 
 /**
