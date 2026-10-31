@@ -48,8 +48,9 @@ export async function GET(request: Request) {
 }
 
 /**
- * «Ya la vi». Lo manda la pantalla al abrirse con la reserva confirmada: desde
- * ese momento Mi cuenta, Mi mesa y Pago dejan de llevar aquí.
+ * «Ya la vi». Lo manda la pantalla al abrirse, también con el pago solo
+ * reportado (Michael, 31-10): desde ese momento Mi cuenta, Mi mesa y Pago
+ * dejan de llevar aquí, y al confirmarse no vuelve a salir.
  */
 export async function POST(request: Request) {
   const supabase = await createClient()

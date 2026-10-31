@@ -3291,6 +3291,7 @@ export type Database = {
           attended_after: boolean | null
           comment: string | null
           connections_made: number | null
+          contacto_respondido_en: string | null
           conversation_rating: number | null
           created_at: string
           gasto_usd: number | null
@@ -3311,6 +3312,7 @@ export type Database = {
           attended_after?: boolean | null
           comment?: string | null
           connections_made?: number | null
+          contacto_respondido_en?: string | null
           conversation_rating?: number | null
           created_at?: string
           gasto_usd?: number | null
@@ -3331,6 +3333,7 @@ export type Database = {
           attended_after?: boolean | null
           comment?: string | null
           connections_made?: number | null
+          contacto_respondido_en?: string | null
           conversation_rating?: number | null
           created_at?: string
           gasto_usd?: number | null

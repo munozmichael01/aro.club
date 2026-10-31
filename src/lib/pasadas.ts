@@ -41,7 +41,20 @@ export type Pasada = {
   pendiente: Pendiente
   /** Hay algo que no ha visto (brief, punto 5). */
   nuevo: boolean
+  /**
+   * La tarjeta «¿Con quién de esta mesa te gustaría seguir en contacto?»: su
+   * encuesta es de antes de que existiera la pregunta y todavía no la ha
+   * contestado aparte (Michael, 31-10: solo aquí, sin correo ni push).
+   */
+  preguntarContacto: boolean
 }
+
+/**
+ * Desde cuándo la encuesta trae «¿seguir en contacto?» (0c09467, 29-10 a las
+ * 3:23 a.m. de Caracas, y su despliegue). Una encuesta contada antes de esto
+ * no la tuvo delante.
+ */
+export const PREGUNTA_CONTACTO_DESDE = '2026-10-29T07:30:00Z'
 
 export async function cenasPasadas(admin: Admin, yo: string): Promise<Pasada[]> {
   const ahora = Date.now()
@@ -76,6 +89,18 @@ export async function cenasPasadas(admin: Admin, yo: string): Promise<Pasada[]> 
     contactoPorMesa(admin, yo),
   ])
   const nombres = await nombresDe(admin, [...new Set((gente ?? []).map((g) => g.profile_id))])
+
+  // Lo que hace falta para la tarjeta de las cenas de antes del 29-10: si ya
+  // la contestó aparte, y si ya marcó a alguien de esa mesa. Consulta aparte
+  // y tolerante: si falla, la tarjeta no sale, que es lo prudente.
+  const [{ data: respondidas, error: eResp }, { data: misMarcas }] = await Promise.all([
+    admin.from('table_feedback').select('table_id, contacto_respondido_en').eq('profile_id', yo).in('table_id', mesas),
+    admin.from('peer_feedback').select('table_id').eq('rater_id', yo).eq('signal', 'connect').in('table_id', mesas),
+  ])
+  const yaRespondio = new Set(
+    eResp ? mesas : (respondidas ?? []).filter((r) => r.contacto_respondido_en).map((r) => r.table_id),
+  )
+  const yaMarco = new Set((misMarcas ?? []).map((m) => m.table_id))
   const contadaEn = new Map((contadas ?? []).filter((c) => !c.saltada_at).map((c) => [c.table_id, c.created_at]))
 
   /**
@@ -120,6 +145,13 @@ export async function cenasPasadas(admin: Admin, yo: string): Promise<Pasada[]> 
         contacto: c,
         pendiente,
         nuevo: !!c?.nuevo,
+        preguntarContacto:
+          !!contadaEn.get(f.table_id) &&
+          Date.parse(contadaEn.get(f.table_id)!) < Date.parse(PREGUNTA_CONTACTO_DESDE) &&
+          !yaRespondio.has(f.table_id) &&
+          !yaMarco.has(f.table_id) &&
+          !c &&
+          (gente ?? []).some((g) => g.table_id === f.table_id),
       }
     })
     .sort((a, b) => Date.parse(b.empiezaEn) - Date.parse(a.empiezaEn))

@@ -2383,6 +2383,17 @@
           },
           ver: 'Ver',
         },
+        /**
+         * La tarjeta de las cenas de antes del 29-10, cuya encuesta no traía la
+         * pregunta (Michael, 31-10): solo en Pasadas, sin correo ni push. La
+         * nota es la misma promesa que en la encuesta.
+         */
+        preguntaAnterior: {
+          titulo: function (esMesa) { return '¿Con quién de ' + (esMesa === false ? 'este grupo' : 'esta mesa') + ' te gustaría seguir en contacto?' },
+          nota: 'Solo se lo decimos si esa persona también te marcó a ti.',
+          guardar: 'Guardar',
+          nadie: 'Con nadie',
+        },
         /** «Mesa 04». Sin número —la única mesa de Aro esa noche— no se dice nada. */
         mesa: function (n) { return n ? 'Mesa ' + (n < 10 ? '0' + n : String(n)) : '' },
       },

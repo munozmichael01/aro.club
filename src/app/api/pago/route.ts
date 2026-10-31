@@ -308,10 +308,10 @@ export async function GET(request: Request) {
         }
       : null,
     /**
-     * Confirmada y sin haber visto «Estás dentro»: la pantalla va allí en
-     * vez de enseñar el «pago confirmado» de siempre (entrega estas-dentro).
+     * Sin haber visto «Estás dentro» (reportada o confirmada): la pantalla va
+     * allí en vez de enseñar el pago de siempre (entrega estas-dentro).
      */
-    estasDentro: dentroDeEsta && !dentroDeEsta.pendiente && !dentroDeEsta.visto && !dentroDeEsta.revelado,
+    estasDentro: !!dentroDeEsta && !dentroDeEsta.visto && !dentroDeEsta.revelado,
   })
 }
 

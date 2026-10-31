@@ -495,6 +495,21 @@ export async function POST(request: Request) {
       await avisarCoincidencias(admin, await crearCoincidencias(admin, d.mesaId))
     }
 
+    /**
+     * Que la contestó, aunque no marcara a nadie: es lo que quita la tarjeta
+     * de las cenas de antes del 29-10 en Pasadas (Michael, 31-10). Sin fila de
+     * encuesta no hay nada que apuntar: quien no la contestó tiene la
+     * encuesta entera, y esa ya lleva la pregunta.
+     */
+    if (d.accion === 'contacto') {
+      const { error } = await admin
+        .from('table_feedback')
+        .update({ contacto_respondido_en: new Date().toISOString() })
+        .eq('table_id', d.mesaId)
+        .eq('profile_id', user.id)
+      if (error) console.error('[despues] no se apuntó que contestó contacto', d.mesaId, error)
+    }
+
 
     /**
      * Y EL CRUCE, que es lo que convierte dos opiniones en un hecho.

@@ -136,6 +136,24 @@
             <sc-if value="{{ cenaDetalle }}" hint-placeholder-val="{{ true }}">
               <div style="font:400 14px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:-4px">{{ cenaDetalle }}</div>
             </sc-if>
+            <!-- La pregunta que su encuesta no traía (cenas de antes del 29-10).
+                 Solo aquí, sin correo ni push (Michael, 31-10). -->
+            <sc-if value="{{ hayPreguntaAnterior }}" hint-placeholder-val="{{ false }}">
+              <div style="border-radius:24px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:18px 20px;display:flex;flex-direction:column;gap:10px;margin-top:6px">
+                <div style="font:400 22px/1.15 'Young Serif',Georgia,serif;letter-spacing:-.015em;text-wrap:balance">{{ tituloPreguntaAnterior }}</div>
+                <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D">{{ notaPreguntaAnterior }}</div>
+                <sc-for list="{{ genteAnterior }}" as="g" hint-placeholder-count="4">
+                  <button onClick="{{ g.toggle }}" aria-pressed="{{ g.on }}" style="{{ g.estilo }}">
+                    <span style="{{ g.caja }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span>
+                    <span style="flex:1;min-width:0;font:500 15px/1.2 'Inter Tight',sans-serif;text-align:left">{{ g.nombre }}</span>
+                  </button>
+                </sc-for>
+                <sc-if value="{{ hayFalloAnterior }}" hint-placeholder-val="{{ false }}">
+                  <div role="alert" style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#8F4515">{{ falloAnterior }}</div>
+                </sc-if>
+                <button onClick="{{ guardarAnterior }}" style="{{ estiloGuardarAnterior }}">{{ textoGuardarAnterior }}</button>
+              </div>
+            </sc-if>
             <sc-if value="{{ hayContacto }}" hint-placeholder-val="{{ false }}">
               <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#456352;margin-top:10px">{{ textoSeguir }}</div>
               <div style="border-radius:24px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:18px 20px">
@@ -1192,7 +1210,9 @@ class Component extends DCLogic {
      */
     pestana: 'proxima', pasadas: null, cargandoPasadas: false, cenaSel: null,
     seguir: null, formSeguir: { tel: '', ig: '', tt: '' }, marcadosSeguir: {},
-    editandoSeguir: false, guardandoSeguir: false, falloSeguir: null
+    editandoSeguir: false, guardandoSeguir: false, falloSeguir: null,
+    // La tarjeta de las cenas de antes del 29-10: a quién marca, y si guarda.
+    marcasAnterior: {}, guardandoAnterior: false, falloAnterior: ''
   };
 
   componentDidMount() {
@@ -1349,7 +1369,7 @@ class Component extends DCLogic {
 
   /** Abre una cena de Pasadas: su Mi mesa pasada y su «Seguir en contacto». */
   abrirCena(mesaId) {
-    this.setState({ pestana: 'pasadas', cenaSel: mesaId, datos: null, seguir: null, editandoSeguir: false, falloSeguir: null, marcadosSeguir: {} });
+    this.setState({ pestana: 'pasadas', cenaSel: mesaId, datos: null, seguir: null, editandoSeguir: false, falloSeguir: null, marcadosSeguir: {}, marcasAnterior: {}, falloAnterior: '' });
     try { history.replaceState(null, '', '/mesa?cena=' + encodeURIComponent(mesaId)); } catch (e) { /* sin historial */ }
     try { window.scrollTo(0, 0); } catch (e) { /* sin scroll */ }
     this.cargarMesa(mesaId, false);
@@ -1379,6 +1399,24 @@ class Component extends DCLogic {
       formSeguir: { tel: (c.misDatos && c.misDatos.telefono) || '', ig: (c.misDatos && c.misDatos.instagram) || '', tt: (c.misDatos && c.misDatos.tiktok) || '' },
       editandoSeguir: false,
     });
+  }
+
+  /**
+   * La pregunta que la encuesta de esa cena no traía. Va por la MISMA puerta
+   * que la encuesta (/api/despues, `contacto`), así que si sale una
+   * coincidencia se crea y se avisa como siempre.
+   */
+  guardarAnterior(mesaId, aQuien) {
+    if (this.state.guardandoAnterior) return;
+    this.setState({ guardandoAnterior: true, falloAnterior: '' });
+    fetch('/api/despues', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mesaId: mesaId, accion: 'contacto', aQuien: aQuien }) })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no se guardó'))))
+      .then(() => {
+        this.setState({ guardandoAnterior: false, marcasAnterior: {} });
+        this.cargarPasadas(null);
+        fetch('/api/contacto?mesa=' + encodeURIComponent(mesaId)).then((r) => (r.ok ? r.json() : null)).then((c) => { if (c && this.state.cenaSel === mesaId) this.ponerSeguir(c); }).catch(() => {});
+      })
+      .catch(() => this.setState({ guardandoAnterior: false, falloAnterior: 'No pudimos guardarlo. Inténtalo otra vez.' }));
   }
 
   /** Lo que decide en el panel. Se pinta lo que devuelve el servidor. */
@@ -2562,6 +2600,24 @@ class Component extends DCLogic {
       cenaSitio: laCena ? (laCena.sitio || R.DENTRO.planDe(laCena.formato)) : '',
       cenaDetalle: laCena ? [laCena.zona, R.horaDe(laCena.empiezaEn, laCena.zonaHoraria), CT.cena.mesa(laCena.numeroMesa)].filter(Boolean).join(' · ') : '',
       textoProxima: CT.cena.pestanas.proxima, textoPasadas: CT.cena.pestanas.pasadas, textoSeguir: CT.cena.seguir,
+      // La tarjeta de las cenas de antes del 29-10.
+      hayPreguntaAnterior: !!(laCena && laCena.preguntarContacto),
+      tituloPreguntaAnterior: CT.cena.preguntaAnterior.titulo(!laCena || R.vozDe(laCena.formato).unidad !== 'grupo'),
+      notaPreguntaAnterior: CT.cena.preguntaAnterior.nota,
+      genteAnterior: ((laCena && laCena.companeros) || []).map((g) => {
+        const on = !!this.state.marcasAnterior[g.id];
+        return {
+          nombre: g.nombre, on: on ? 'true' : 'false',
+          estilo: 'display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:0 14px;border-radius:16px;cursor:pointer;background:' + (on ? '#F2F7F3' : 'transparent') + ';border:1.5px solid ' + (on ? '#1B5138' : 'rgba(20,52,42,.16)') + ';color:#14342A',
+          caja: 'width:24px;height:24px;flex:none;border-radius:7px;border:2px solid #14342A;display:flex;align-items:center;justify-content:center;background:' + (on ? '#14342A' : 'transparent'),
+          toggle: () => this.setState({ marcasAnterior: Object.assign({}, this.state.marcasAnterior, { [g.id]: !on }) }),
+        };
+      }),
+      hayFalloAnterior: !!this.state.falloAnterior, falloAnterior: this.state.falloAnterior,
+      textoGuardarAnterior: this.state.guardandoAnterior ? 'Guardando…'
+        : Object.keys(this.state.marcasAnterior).some((k) => this.state.marcasAnterior[k]) ? CT.cena.preguntaAnterior.guardar : CT.cena.preguntaAnterior.nadie,
+      estiloGuardarAnterior: 'display:flex;align-items:center;justify-content:center;min-height:52px;border:none;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;margin-top:4px',
+      guardarAnterior: () => { if (laCena) this.guardarAnterior(laCena.mesaId, Object.keys(this.state.marcasAnterior).filter((k) => this.state.marcasAnterior[k])); },
       // Las fases de siempre: en Próxima, y en Pasadas solo con una cena abierta.
       verFases: !enPasadas || !!cenaSel,
       // Estas aqui, asi que mesa hay.

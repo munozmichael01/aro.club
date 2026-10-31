@@ -30,8 +30,9 @@
 
   Llegan aquí: Pago al reportar o al canjear un código del 100 %, Mi cuenta al
   reservar con crédito, y Mi cuenta, Mi mesa y Pago la primera vez que se
-  entra con la reserva ya confirmada (B3). Con la reserva confirmada se marca
-  como vista en el servidor, y desde ahí ya no se abre sola.
+  entra sin haberla visto (B3). Se marca como vista en el servidor al
+  abrirse, también con el pago solo reportado (Michael, 31-10): se ve una
+  vez, y al confirmarse no vuelve a salir sola.
 
   Los textos salen de `AroReglas.DENTRO`, los mismos que la app y que las
   tarjetas para historias.
@@ -194,13 +195,15 @@ class Component extends DCLogic {
         if (!d) return;
         // Sin reserva viva no hay nada que celebrar.
         if (!d.reserva) { window.location.replace('/cuenta'); return; }
-        const antes = this.state.datos;
         this.setState({ datos: d, fallo: '' });
         try {
           this.setState({ enCalendario: localStorage.getItem('calendario:' + d.reserva.id) === '1' });
         } catch (e) { /* sin almacenamiento: se queda en «Añadir» */ }
-        // Confirmada: vista. Desde aquí Mi cuenta, Mi mesa y Pago ya no traen.
-        if (!d.reserva.pendiente && !d.reserva.visto && !(antes && antes.reserva && !antes.reserva.pendiente)) {
+        // Vista, también con el pago solo reportado (Michael, 31-10: se ve UNA
+        // vez, al reportar). Desde aquí Mi cuenta, Mi mesa y Pago ya no traen,
+        // y al confirmarse no vuelve a salir sola.
+        if (!d.reserva.visto && !this._marcada) {
+          this._marcada = true;
           fetch('/api/estas-dentro', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ reservaId: d.reserva.id })

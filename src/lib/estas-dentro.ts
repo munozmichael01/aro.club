@@ -26,7 +26,7 @@ export type Dentro = {
   /** Con el pago reportado y sin cuadrar: el sello dice «Puesto apartado». */
   pendiente: boolean
   revelado: boolean
-  /** Ya vio «Estás dentro» con la reserva confirmada. */
+  /** Ya vio «Estás dentro», al reportar o al confirmarse. */
   visto: boolean
   plan: PlanDentro
 }
@@ -93,12 +93,17 @@ export async function invitacionDe(admin: Admin, perfilId: string) {
 }
 
 /**
- * La reserva confirmada que todavía no ha visto «Estás dentro», si hay.
+ * La reserva viva que todavía no ha visto «Estás dentro», si hay.
  *
  * Es la tercera puerta de la entrega (B3): si no tocó la push ni el correo,
- * se abre sola la primera vez que entra después de confirmarse. La miran Mi
- * cuenta, Mi mesa y Pago ANTES de pintar nada, para llevarla directo y no
- * enseñar una pantalla y saltar a otra.
+ * se abre sola la primera vez que entra. La miran Mi cuenta, Mi mesa y Pago
+ * ANTES de pintar nada, para llevarla directo y no enseñar una pantalla y
+ * saltar a otra.
+ *
+ * SE VE UNA SOLA VEZ, Y AL REPORTAR CUENTA (Michael, 31-10: «solo al
+ * reportarse, que en la app sea igual»). Reportar el pago ya es estar dentro:
+ * quien la vio con «Puesto apartado» no la vuelve a ver al confirmarse. Por
+ * eso vale una reserva apartada (`pending_payment`) igual que una confirmada.
  *
  * Solo hasta la revelación: con la mesa abierta, lo que le importa es el
  * sitio, no celebrar que entró.
@@ -108,7 +113,7 @@ export async function dentroPorVer(admin: Admin, perfilId: string): Promise<stri
     .from('bookings')
     .select('event_id, events!inner(starts_at, reveal_at)')
     .eq('profile_id', perfilId)
-    .eq('status', 'confirmed')
+    .in('status', ['pending_payment', 'confirmed'])
     .is('cancelled_at', null)
     .is('dentro_visto_en', null)
   const ahora = Date.now()
@@ -119,13 +124,13 @@ export async function dentroPorVer(admin: Admin, perfilId: string): Promise<stri
   return porVer?.id ?? null
 }
 
-/** Ya la vio. Solo cuenta con la reserva confirmada: antes no es «dentro». */
+/** Ya la vio: con el pago reportado o confirmado, las dos cuentan. */
 export async function marcarVisto(admin: Admin, perfilId: string, reservaId: string) {
   await admin
     .from('bookings')
     .update({ dentro_visto_en: new Date().toISOString() })
     .eq('id', reservaId)
     .eq('profile_id', perfilId)
-    .eq('status', 'confirmed')
+    .in('status', ['pending_payment', 'confirmed'])
     .is('dentro_visto_en', null)
 }
