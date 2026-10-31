@@ -26,6 +26,9 @@ const POR_TIPO: Record<string, string> = {
   fecha_cancelada: '/cuenta',
   cierra_manana: '/cuenta',
   pago_no_cuadra: '/pago',
+  // Seguir en contacto (31-10): abren esa cena en Pasadas (`/mesa?cena=<mesaId>`).
+  contacto_coincidencia: '/mesa',
+  contacto_cruzado: '/mesa',
 }
 
 /** Las rutas que una push puede abrir. `/pago` solo con su `evento`. */
@@ -53,6 +56,11 @@ export function destinoDe(data: DatosPush | null | undefined): string | null {
 
   // Pago sin fecha no sabe qué cobrar: mejor el Inicio, que lo tiene.
   if (elegida === '/pago') return evento ? `/pago?evento=${evento}` : '/cuenta'
+  // Una cena pasada (las push de contacto, 31-10): solo con un id de mesa válido.
+  if (elegida === '/mesa' && ruta) {
+    const cena = /[?&]cena=([0-9a-f-]{36})(?:&|$)/i.exec(ruta)?.[1]
+    if (cena) return `/mesa?cena=${cena}`
+  }
   return elegida
 }
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { AppState, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Svg, { Circle, Path } from 'react-native-svg'
 import { useUltimo } from '../util/useUltimo'
 import { useFocusEffect } from 'expo-router'
 
@@ -21,8 +22,16 @@ import { FilaComoFunciona } from '../como/Fila'
 import { FilaCompartir } from '../dentro/FilaCompartir'
 import * as TC from '../texto/cambiar'
 import type { crearServicioMesa } from './servicio'
+import { useNombreMesa } from '../cuenta/voz'
+import { CenaPasada } from '../pasadas/CenaPasada'
+import { ListaPasadas, Punto } from '../pasadas/Lista'
+import * as PM from '../pasadas/maquina'
+import { ponerSenal, useSenal } from '../pasadas/senal'
+import type { crearServicioPasadas } from '../pasadas/servicio'
+import * as TP from '../texto/pasadas'
 
 type Servicio = ReturnType<typeof crearServicioMesa>
+type ServicioPasadas = ReturnType<typeof crearServicioPasadas>
 
 /**
  * Mi mesa (`/mesa`), calcada de `Mi mesa.dc.html`: vacía (tres casos),
@@ -33,7 +42,17 @@ type Servicio = ReturnType<typeof crearServicioMesa>
  * `ir`: rutas de la app («/cancelar», «/cuenta#agenda») o enlaces externos
  * («externo:<url>», el mapa). Quien la monta decide cómo abrir cada uno.
  */
-export function MiMesa(p: { servicio: Servicio; ir: (destino: string) => void; alEntrar: () => void; alSalir: () => Promise<void> }) {
+export function MiMesa(p: {
+  servicio: Servicio
+  /** Pasadas y «Seguir en contacto» (entrega mi-mesa-pasadas, 31-10). */
+  pasadas: ServicioPasadas
+  /** `?cena=<mesaId>` (la push, el correo, Mis cenas): abre esa cena en Pasadas. `?pestana=pasadas`: la lista. */
+  cena?: string | null
+  pestana?: string | null
+  ir: (destino: string) => void
+  alEntrar: () => void
+  alSalir: () => Promise<void>
+}) {
   const insets = useSafeAreaInsets()
   const [d, setD] = useState<M.DeServidor | null>(null)
   const [fallo, setFallo] = useState('')
@@ -42,14 +61,55 @@ export function MiMesa(p: { servicio: Servicio; ir: (destino: string) => void; a
   const { servicio } = p
   const alEntrar = useUltimo(p.alEntrar)
 
+  // Próxima y Pasadas (31-10). La cena abierta tapa las pestañas, como en la maqueta (C1 a C5).
+  const [pestana, setPestana] = useState<'proxima' | 'pasadas'>(p.cena || p.pestana === 'pasadas' ? 'pasadas' : 'proxima')
+  const [cenaAbierta, setCenaAbierta] = useState<string | null>(p.cena ?? null)
+  const [lista, setLista] = useState<PM.DePasadas | null>(null)
+  const [falloLista, setFalloLista] = useState('')
+  const senal = useSenal()
+  const nombreMesa = useNombreMesa()
+  const scroll = useRef<ScrollView>(null)
+
+  // Una push o un enlace con otra cena, con la pantalla ya montada.
+  useEffect(() => {
+    if (p.cena) {
+      setPestana('pasadas')
+      setCenaAbierta(p.cena)
+    } else if (p.pestana === 'pasadas') {
+      setPestana('pasadas')
+      setCenaAbierta(null)
+    }
+  }, [p.cena, p.pestana])
+
+  const cargarLista = useCallback(async () => {
+    const r = await p.pasadas.lista()
+    if (r.ok) {
+      setLista(r.datos)
+      setFalloLista('')
+      ponerSenal(r.datos.senal)
+    } else if (r.status === 401) alEntrar.current()
+    else setFalloLista(r.error)
+  }, [p.pasadas, alEntrar])
+
   const cargar = useCallback(async () => {
     const r = await servicio.mesa()
     if (r.ok) {
       setD(r.datos)
       setFallo('')
+      ponerSenal(r.datos.senalPasadas)
     } else if (r.status === 401) alEntrar.current()
     else setFallo(r.error)
   }, [servicio, alEntrar])
+
+  useEffect(() => {
+    if (pestana === 'pasadas') cargarLista()
+  }, [pestana, cargarLista])
+
+  const abrirCena = (mesaId: string) => {
+    setPestana('pasadas')
+    setCenaAbierta(mesaId)
+    scroll.current?.scrollTo({ y: 0, animated: false })
+  }
 
   // Al entrar en la pestaña, al volver a ella y al volver a la app: la mesa
   // se abre a una hora, y quien espera vuelve a mirar.
@@ -78,10 +138,61 @@ export function MiMesa(p: { servicio: Servicio; ir: (destino: string) => void; a
         <Cerrada d={d} ir={p.ir} alAbrirse={cargar} />
       ) : f === 'abierta' ? (
         <Abierta d={d} servicio={servicio} ir={p.ir} />
+      ) : d.mesaId ? (
+        // Sin reserva activa, la cena pasada con lo que falta (P3).
+        <CenaPasada mesaId={d.mesaId} mesa={d} enProxima pasadas={p.pasadas} servicioMesa={servicio} ir={p.ir} alCambiar={cargar} />
       ) : (
         <Pasada d={d} servicio={servicio} ir={p.ir} />
       )
   }
+
+  // Con reserva activa, lo pendiente de una cena pasada en una línea arriba (P1, P2).
+  const linea = d?.pendiente ?? null
+  const proxima = (
+    <>
+      {linea ? (
+        <Pressable onPress={() => abrirCena(linea.mesaId)} accessibilityRole="link" style={estilos.linea}>
+          {linea.tipo === 'contacto' ? <IconoAros /> : <IconoEncuesta />}
+          <Texto style={{ flex: 1, fontFamily: fuente.textoSemi, fontSize: 13.5, lineHeight: 18, color: color.verdeProfundo }}>{PM.textoLinea(linea, Date.now())}</Texto>
+          <IconoFlechaAbrir />
+        </Pressable>
+      ) : null}
+      {cuerpo}
+    </>
+  )
+
+  const contenido = cenaAbierta ? (
+    <CenaPasada
+      key={cenaAbierta}
+      mesaId={cenaAbierta}
+      pasadas={p.pasadas}
+      servicioMesa={servicio}
+      ir={p.ir}
+      contadaEn={lista?.cenas.find((c) => c.mesaId === cenaAbierta)?.encuesta.contadaEn ?? null}
+      alVolver={() => setCenaAbierta(null)}
+      alCambiar={cargarLista}
+    />
+  ) : (
+    <>
+      <Texto variante="titularGrande" accessibilityRole="header" style={{ marginBottom: 14 }}>
+        {nombreMesa}
+      </Texto>
+      <View style={estilos.pestanas} accessibilityRole="tablist">
+        {(['proxima', 'pasadas'] as const).map((k) => {
+          const on = pestana === k
+          return (
+            <Pressable key={k} onPress={() => setPestana(k)} accessibilityRole="tab" aria-selected={on} style={[estilos.pestana, on ? { backgroundColor: color.verdeProfundo } : null]}>
+              <Texto style={{ fontFamily: fuente.textoSemi, fontSize: 15, color: on ? color.crema : color.verdeProfundo }}>{TP.pestanas[k]}</Texto>
+              {k === 'pasadas' && senal ? <Punto /> : null}
+            </Pressable>
+          )
+        })}
+      </View>
+      <View style={{ marginTop: 14 }}>
+        {pestana === 'pasadas' ? <ListaPasadas d={lista} fallo={falloLista} alReintentar={cargarLista} alAbrir={abrirCena} ir={p.ir} /> : proxima}
+      </View>
+    </>
+  )
 
   return (
     <View style={{ flex: 1, backgroundColor: color.crema }}>
@@ -95,6 +206,7 @@ export function MiMesa(p: { servicio: Servicio; ir: (destino: string) => void; a
         }}
       />
       <ScrollView
+        ref={scroll}
         contentContainerStyle={estilos.pagina}
         keyboardShouldPersistTaps="handled"
         refreshControl={
@@ -103,19 +215,45 @@ export function MiMesa(p: { servicio: Servicio; ir: (destino: string) => void; a
             tintColor={color.verde}
             onRefresh={async () => {
               setRefrescando(true)
-              await cargar()
+              await Promise.all([cargar(), pestana === 'pasadas' ? cargarLista() : null])
               setRefrescando(false)
             }}
           />
         }
       >
-        {cuerpo}
+        {contenido}
       </ScrollView>
     </View>
   )
 }
 
 // --- Piezas comunes -------------------------------------------------------------
+
+/** La línea de Próxima: dos aros (contacto) o una hoja (encuesta), y la flecha. */
+function IconoAros() {
+  return (
+    <Svg width={28} height={18} viewBox="0 0 28 18" fill="none">
+      <Circle cx={9} cy={9} r={6.5} stroke={color.verdeProfundo} strokeWidth={1.8} />
+      <Circle cx={19} cy={9} r={6.5} stroke={color.terracota} strokeWidth={1.8} />
+    </Svg>
+  )
+}
+
+function IconoEncuesta() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path d="M6 3.5h12a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 19V5A1.5 1.5 0 0 1 6 3.5ZM8.5 8.5h7M8.5 12h7M8.5 15.5h4" stroke={color.verdeProfundo} strokeWidth={1.8} strokeLinecap="round" />
+    </Svg>
+  )
+}
+
+function IconoFlechaAbrir() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 5l7 7-7 7" stroke={color.verdeProfundo} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}
 
 function SelloBorde({ texto }: { texto: string }) {
   return (
@@ -502,7 +640,12 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
 
 // --- Pasada: lo de después ---------------------------------------------------
 
-function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: (d: string) => void }) {
+/**
+ * Lo de después de una cena: la encuesta, bloquear y reportar. `sinCabecera`
+ * dentro de la vista de una cena pasada (entrega mi-mesa-pasadas), que ya
+ * lleva su propia cabecera.
+ */
+export function Pasada({ d, servicio, ir, sinCabecera }: { d: M.DeServidor; servicio: Servicio; ir: (d: string) => void; sinCabecera?: boolean }) {
   const ya = M.yaHecho(d)
   const [v, setV] = useState<M.Valoracion>(() => ({ ...M.valoracionVacia(), bloqueados: ya.bloqueados }))
   const [contado, setContado] = useState(ya.contado)
@@ -571,9 +714,13 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
 
   return (
     <View>
-      <SelloBorde texto={M.selloPasada(d, Date.now())} />
-      <Titular>{T.pasada.titulo}</Titular>
-      <Bajada>{T.pasada.bajada(voz.estuviste, d.restaurante || '—', voz.unidad, M.conNumero(d) ? M.numero(d) : '')}</Bajada>
+      {sinCabecera ? null : (
+        <>
+          <SelloBorde texto={M.selloPasada(d, Date.now())} />
+          <Titular>{T.pasada.titulo}</Titular>
+          <Bajada>{T.pasada.bajada(voz.estuviste, d.restaurante || '—', voz.unidad, M.conNumero(d) ? M.numero(d) : '')}</Bajada>
+        </>
+      )}
       {/* Solo en las cenas: el brunch se pregunta igual y la nota sobraría (24-10). */}
       {reglas.DE_CENA.includes(d.formato ?? 'dinner') ? (
         <Texto variante="nota" style={{ marginTop: 8 }}>
@@ -796,6 +943,9 @@ function Pasada({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: 
 }
 
 const estilos = StyleSheet.create({
+  pestanas: { flexDirection: 'row', borderRadius: 999, backgroundColor: '#ECE3CF', padding: 4 },
+  pestana: { flex: 1, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', minHeight: 40, borderRadius: 999 },
+  linea: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, backgroundColor: '#F6D9B4', paddingVertical: 12, paddingHorizontal: 16, marginBottom: 14 },
   pagina: { paddingHorizontal: medida.margenLateral, paddingTop: 24, paddingBottom: 48, maxWidth: 560, width: '100%', alignSelf: 'center' },
   selloBorde: {
     alignSelf: 'flex-start',

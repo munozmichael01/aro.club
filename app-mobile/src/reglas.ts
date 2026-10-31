@@ -67,6 +67,8 @@ type Api = {
   /** Cuándo se revela un plan: el ISO de la fecha si lo trae, o el de la regla (mediodía, o la víspera a las 6 en los de mañana). */
   /** «El día de la cena, al mediodía» / «La víspera, a las seis de la tarde»; '' sin fecha (f0e8a7e). */
   cuandoSeRevela: (inicioIso: string, zona?: string | null, revelaIso?: string | null, formato?: string | null) => string
+  /** «Seguir en contacto» y Pasadas (reglas.js, 31-10): todo su copy, el mismo de la web y los correos. */
+  CONTACTO: Contacto
   /** «Estás dentro» (reglas.js, 31-10). De momento la app solo lee si un plan tiene tarjetas para historias. */
   DENTRO: { conTarjetas: (formato: string) => boolean }
   /** «Cómo funciona» en tres tarjetas: los textos de la web y la app, en un solo sitio (f0e8a7e). */
@@ -194,4 +196,48 @@ export type TematicaDeJuego = { clave: string; nombre: string; linea: string; pr
 
 // JavaScript sin tipos a propósito: se declara la forma que la app usa y se
 // fía de ella. Si `reglas.js` cambiara esa forma, lo cazan las pruebas.
+type Nombres = (lista: string[]) => string
+type Contacto = {
+  DIAS: number
+  nombres: Nombres
+  hasta: (cierraIso: string, zona?: string | null) => string
+  quedan: (cierraIso: string, zona?: string | null, ahora?: number) => string
+  quedanCorto: (cierraIso: string, zona?: string | null, ahora?: number) => string
+  plazoDeOtra: (nombre: string, cierraIso: string, zona?: string | null) => string
+  linea: { encuesta: (dia: string) => string; porConfirmar: (lista: string[], cuanto: string) => string; coincidiste: Nombres; verLoQueDejo: (n: number) => string; elige: (cuanto: string) => string }
+  A: {
+    titulo: (nombre: string) => string
+    tituloVarios: string
+    telefono: (varios: boolean) => string
+    telefonoNota: string
+    telefonoFalta: string
+    redes: string
+    opcional: string
+    soloSi: (nombre: string) => string
+    compartir: string
+    prefieroNo: string
+    noSeEntera: (nombre: string) => string
+    seLoMandamos: string
+    soloAQuien: string
+    compartirCon: (marcadas: string[], total: number) => string
+    prefieroNoNadie: string
+  }
+  B: { titulo: (nombre: string) => string; bajada: string; loQueVas: string; cambiar: string; enCualquierCaso: string; prefieroNo: string; aSuRitmo: string; teAvisamos: string }
+  C: { titulo: (nombre: string) => string; bajada: string; teDejo: (nombre: string) => string; whatsapp: string; abrir: string; leDejaste: string; nota: string }
+  D: { titulo: string; bajada: string; agenda: string; verAgenda: string }
+  E: { titulo: string; bajada: (nombre: string) => string; puedesCambiar: (cierraIso: string, zona?: string | null) => string; elegir: string }
+  sellos: Record<'B' | 'C' | 'D' | 'E', string>
+  compartirTambien: (nombre: string) => string
+  loQueCompartes: string
+  cambiar: string
+  pasadas: {
+    encuesta: string
+    contacto: string
+    nuevo: { coincidencia: Nombres; cruce: (nombre: string) => string; sinCruce: string }
+    vacia: { titulo: string; bajada: string; boton: string }
+    misCenas: (n: number) => string
+  }
+  enlaces: { whatsapp: (e164: string) => string; instagram: (u: string) => string; tiktok: (u: string) => string }
+}
+
 export const reglas = crudo as unknown as Api

@@ -197,3 +197,64 @@ export function IconoGalon({ tam = 18, color }: P) {
     </Svg>
   )
 }
+
+/** Seguir en contacto (entrega mi-mesa-pasadas, 31-10): teléfono, Instagram, TikTok, candado, flecha que sale y lápiz. */
+export function IconoTelefono({ tam = 22, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M6.5 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.2 6.2l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2z" stroke={color} strokeWidth={1.8} strokeLinejoin="round" />
+    </Svg>
+  )
+}
+
+export function IconoInstagram({ tam = 22, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M8.5 3.5h7a5 5 0 0 1 5 5v7a5 5 0 0 1-5 5h-7a5 5 0 0 1-5-5v-7a5 5 0 0 1 5-5Z" stroke={color} strokeWidth={1.8} />
+      <Circle cx={12} cy={12} r={4} stroke={color} strokeWidth={1.8} />
+      <Circle cx={17.2} cy={6.8} r={0.9} fill={color} />
+    </Svg>
+  )
+}
+
+export function IconoTiktok({ tam = 22, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M14 3.5v11a3.5 3.5 0 1 1-3.5-3.5M14 3.5c.4 2.6 2.3 4.4 5 4.6" stroke={color} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}
+
+export function IconoCerrado({ tam = 18, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M7 10.5h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2ZM8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  )
+}
+
+export function IconoSale({ tam = 15, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M7 17L17 7M9 7h8v8" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}
+
+export function IconoLapiz({ tam = 16, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 20h4L19 9l-4-4L4 16z" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}
+
+/** Los dos aros que no se cruzan (D, «No se cruzaron»). */
+export function IconoSinCruce({ tam = 120 }: { tam?: number }) {
+  return (
+    <Svg width={tam} height={tam / 2} viewBox="0 0 120 60" fill="none">
+      <Circle cx={34} cy={30} r={24} stroke="#9CBBA6" strokeWidth={5} />
+      <Circle cx={86} cy={30} r={24} stroke="#E39C63" strokeWidth={5} />
+    </Svg>
+  )
+}

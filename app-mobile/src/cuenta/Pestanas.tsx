@@ -4,6 +4,7 @@ import Svg, { Circle, Path } from 'react-native-svg'
 
 import { Texto, color, fuente, medida, tinta } from '../diseno'
 import * as T from '../texto/cuenta'
+import { useSenal } from '../pasadas/senal'
 import { useNombreMesa } from './voz'
 
 /**
@@ -47,6 +48,8 @@ function IconoPerfil({ c }: { c: string }) {
 
 export function Pestanas({ state, navigation, insets }: BottomTabBarProps) {
   const mesa = useNombreMesa()
+  // El punto de Pasadas (entrega mi-mesa-pasadas, N): también en la barra, sobre el aro.
+  const senal = useSenal()
   const nombres: Record<string, string> = { cuenta: T.nav.inicio, mesa, perfil: T.nav.perfil }
   return (
     <View style={[estilos.barra, { paddingBottom: Math.max(insets.bottom, 8) }]} accessibilityRole="tablist">
@@ -59,7 +62,16 @@ export function Pestanas({ state, navigation, insets }: BottomTabBarProps) {
         }
         return (
           <Pressable key={r.key} onPress={pulsar} accessibilityRole="tab" aria-selected={on} style={estilos.pestana}>
-            {r.name === 'cuenta' ? <IconoInicio c={c} /> : r.name === 'mesa' ? <IconoMesa c={c} tuyo={on ? color.terracota : c} /> : <IconoPerfil c={c} />}
+            {r.name === 'cuenta' ? (
+              <IconoInicio c={c} />
+            ) : r.name === 'mesa' ? (
+              <View>
+                <IconoMesa c={c} tuyo={on ? color.terracota : c} />
+                {senal ? <View style={estilos.punto} accessibilityLabel="Hay algo nuevo" /> : null}
+              </View>
+            ) : (
+              <IconoPerfil c={c} />
+            )}
             <Texto variante="etiqueta" style={{ color: c, letterSpacing: 0, fontFamily: on ? fuente.textoSemi : fuente.textoMedia }}>
               {nombres[r.name] ?? r.name}
             </Texto>
@@ -72,5 +84,6 @@ export function Pestanas({ state, navigation, insets }: BottomTabBarProps) {
 
 const estilos = StyleSheet.create({
   barra: { flexDirection: 'row', backgroundColor: color.crema, borderTopWidth: 1, borderTopColor: tinta(0.1), paddingTop: 6 },
+  punto: { position: 'absolute', top: -2, right: -4, width: 9, height: 9, borderRadius: 2.5, backgroundColor: color.terracota },
   pestana: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, minHeight: medida.toqueMinimo + 8 },
 })

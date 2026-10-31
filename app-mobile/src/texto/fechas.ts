@@ -281,3 +281,20 @@ export function revelaDeHistoria(revelaIso: string | null | undefined, zona?: st
     revelaSufijo: mediodia ? 'MEDIODÍA' : r.horas < 12 ? 'A.M.' : 'P.M.',
   }
 }
+
+/**
+ * Las piezas de fecha de Pasadas (entrega mi-mesa-pasadas, 31-10): la ficha
+ * de la fila («29» / «OCT»), «jueves» para el título, «JUEVES 29 DE OCTUBRE»
+ * para la cabecera de la cena y «el jueves» para «Te falta contar…».
+ */
+export function piezasDePasada(iso: string | null | undefined, zona?: Zona) {
+  const p = reglas.partesDe(iso, zona)
+  if (!p) return { numero: '', mesCorto: '', dia: '', cabecera: '', elDia: '' }
+  return {
+    numero: String(p.numero),
+    mesCorto: (MESES_CORTOS[p.mesNumero] ?? '').toUpperCase(),
+    dia: p.dia,
+    cabecera: `${p.dia} ${p.numero} de ${p.mes}`.toUpperCase(),
+    elDia: p.dia,
+  }
+}

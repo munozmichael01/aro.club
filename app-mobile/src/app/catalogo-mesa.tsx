@@ -7,6 +7,9 @@ import { sabado } from '../util/sabados'
 import { MiMesa } from '../mesa/MiMesa'
 import type { DeServidor } from '../mesa/maquina'
 import type { crearServicioMesa } from '../mesa/servicio'
+import type { DeContacto, Persona } from '../contacto/maquina'
+import type { DePasadas } from '../pasadas/maquina'
+import type { crearServicioPasadas } from '../pasadas/servicio'
 import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
@@ -14,6 +17,8 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
  * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|sin-abono|cerrada|cerrada-tarde|abierta|antes|en-curso|sin-foto|terminada|unica|guion|movimiento|pasada|valorada|fallo
  * Lo del 16-10: graba|grabado|grabado-movimiento (la grabación) y ajuste-cancelo|ajuste-suma|ajuste-ambos|ajuste-movido.
  * ?tope=1 en `pasada`: el veto del sitio no cabe (ya tiene dos).
+ * Pasadas (31-10): ?linea=contacto|encuesta (la línea de Próxima), ?pestana=pasadas[&vacia=1],
+ * ?cena=c1&contacto=A|B|C|D|E|varias|varias-m|nada (la vista de una cena, con su panel).
  * Catálogo de desarrollo: no se enlaza desde ningún sitio. La forma imita la
  * real (pruebas/mesa-contra-la-api.mjs); las fechas se cuentan desde ahora.
  */
@@ -81,13 +86,40 @@ const ESTADOS: Record<string, DeServidor> = {
   'brunch-pasada': { ...ABIERTA, formato: 'brunch', fase: 'pasada', empiezaEn: en(-20) },
 }
 
+const DIA = 24 * 3600_000
+const cierra = new Date(Date.now() + 6 * DIA + 3600_000).toISOString()
+const persona = (id: string, nombre: string, estado: Persona['estado'], extra: Partial<Persona> = {}): Persona => ({ id, coincidencia: 'k' + id, nombre, estado, cierraEn: cierra, suyos: null, nuevo: false, ...extra })
+const SUYOS = { telefono: '+58 414 555 0188', instagram: 'andrea.mv', tiktok: 'andreamv' }
+const CONTACTOS: Record<string, Persona[]> = {
+  nada: [],
+  A: [persona('11111111-1111-1111-1111-111111111111', 'Andrea', 'A', { nuevo: true })],
+  B: [persona('11111111-1111-1111-1111-111111111111', 'Andrea', 'B')],
+  C: [persona('11111111-1111-1111-1111-111111111111', 'Andrea', 'C', { suyos: SUYOS })],
+  D: [persona('11111111-1111-1111-1111-111111111111', 'Andrea', 'D')],
+  E: [persona('11111111-1111-1111-1111-111111111111', 'Andrea', 'E')],
+  varias: [persona('1', 'Andrea', 'A'), persona('2', 'Luis', 'A')],
+  'varias-m': [persona('1', 'Andrea', 'C', { suyos: { telefono: '+58 414 555 0188', instagram: 'andrea.mv', tiktok: null } }), persona('2', 'Luis', 'B'), persona('3', 'Carla', 'E')],
+}
+const PASADAS: DePasadas = {
+  senal: true,
+  linea: null,
+  cenas: [
+    { mesaId: 'c1', eventoId: 'e1', empiezaEn: en(-2 * 24 - 4), zonaHoraria: 'America/Caracas', formato: 'dinner', sitio: 'Cardenal', zona: 'Chacao', numeroMesa: 4, companeros: [], encuesta: { pendiente: false, contadaEn: en(-24) }, contacto: { porConfirmar: ['Andrea'], cierraEn: cierra, cruzadas: [], nuevo: null }, pendiente: 'contacto', nuevo: false },
+    { mesaId: 'c2', eventoId: 'e2', empiezaEn: en(-6 * 24 - 20), zonaHoraria: 'America/Caracas', formato: 'brunch', sitio: 'Bruma', zona: 'Los Palos Grandes', numeroMesa: 2, companeros: [], encuesta: { pendiente: false, contadaEn: en(-5 * 24) }, contacto: { porConfirmar: [], cierraEn: cierra, cruzadas: ['Luis'], nuevo: { tipo: 'cruce', nombres: ['Luis'] } }, pendiente: null, nuevo: true },
+    { mesaId: 'c3', eventoId: 'e3', empiezaEn: en(-15 * 24), zonaHoraria: 'America/Caracas', formato: 'dinner', sitio: 'Olivo', zona: 'Altamira', numeroMesa: 1, companeros: [], encuesta: { pendiente: false, contadaEn: en(-14 * 24) }, contacto: null, pendiente: null, nuevo: false },
+  ],
+}
+
 function Pantalla() {
-  const { estado = 'abierta', captura, tope } = useLocalSearchParams<{ estado?: string; captura?: string; tope?: string }>()
+  const { estado = 'abierta', captura, tope, linea, pestana, vacia, cena, contacto = 'A' } = useLocalSearchParams<{ estado?: string; captura?: string; tope?: string; linea?: string; pestana?: string; vacia?: string; cena?: string; contacto?: string }>()
   const espera = () => new Promise((ok) => setTimeout(ok, 600))
   const servicio = useMemo((): ReturnType<typeof crearServicioMesa> => ({
     async mesa() {
       if (estado === 'fallo') return { ok: false, error: 'No pudimos cargar tu mesa. Revisa tu conexión e inténtalo otra vez.' }
-      const d = ESTADOS[estado] ?? ABIERTA
+      const base = ESTADOS[estado] ?? ABIERTA
+      const d: DeServidor = linea
+        ? { ...base, senalPasadas: true, pendiente: { tipo: linea === 'encuesta' ? 'encuesta' : 'contacto', mesaId: 'c1', empiezaEn: en(-2 * 24 - 4), zonaHoraria: 'America/Caracas', nombres: ['Andrea'], cierraEn: cierra } }
+        : base
       // ?captura=1: el sábado a las 7 p.m., y los cinco con su sector, para las capturas de las tiendas.
       return { ok: true, datos: captura ? { ...d, empiezaEn: sabado(0), companeros: CINCO.map((c) => ({ ...c, sector: c.sector ?? 'Educación' })) } : d }
     },
@@ -114,11 +146,43 @@ function Pantalla() {
       await espera()
       return { ok: true, datos: { ok: true } }
     },
-  }), [estado, captura, tope]) // estable: si no, la carga se relanzaría en cada render
+  }), [estado, captura, tope, linea]) // estable: si no, la carga se relanzaría en cada render
+  const pasadas = useMemo((): ReturnType<typeof crearServicioPasadas> => {
+    let personas = CONTACTOS[contacto] ?? CONTACTOS.A
+    const misDatos = { telefono: '+58 412 555 0123', instagram: personas.some((x) => x.estado !== 'A') ? 'vale.gm' : null, tiktok: null, guardados: personas.some((x) => x.estado !== 'A') }
+    const objeto = (): DeContacto => ({ mesaId: 'c1', eventoId: 'e1', cena: { empiezaEn: en(-2 * 24 - 4), zonaHoraria: 'America/Caracas', formato: 'dinner', zona: 'Chacao' }, misDatos, personas })
+    return {
+      async lista() {
+        await espera()
+        return { ok: true, datos: vacia ? { cenas: [], linea: null, senal: false } : PASADAS }
+      },
+      async cena() {
+        await espera()
+        return { ok: true, datos: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-2 * 24 - 4), restaurante: 'Cardenal', zonas: ['Chacao'], yaValoro: contacto !== 'nada' } }
+      },
+      async contacto() {
+        await espera()
+        return { ok: true, datos: objeto() }
+      },
+      async accion(_mesa, a) {
+        await espera()
+        console.log('[catálogo] contacto', a)
+        // Lo que haría el servidor, a grandes rasgos, para ver el siguiente estado.
+        if (a.accion === 'compartir') personas = personas.map((x) => (a.con.includes(x.id) ? { ...x, estado: 'B' } : a.sin?.includes(x.id) ? { ...x, estado: 'E' } : x))
+        if (a.accion === 'no') personas = personas.map((x) => (!a.con || a.con.includes(x.id) ? { ...x, estado: 'E' } : x))
+        if (a.accion === 'reabrir') personas = personas.map((x) => (a.con.includes(x.id) ? { ...x, estado: 'A' } : x))
+        if (a.accion === 'compartir') Object.assign(misDatos, { telefono: a.telefono, instagram: a.instagram ?? null, tiktok: a.tiktok ?? null, guardados: true })
+        return { ok: true, datos: objeto() }
+      },
+    }
+  }, [contacto, vacia])
   return (
     <MiMesa
-      key={estado}
+      key={estado + (cena ?? '') + (pestana ?? '')}
       servicio={servicio}
+      pasadas={pasadas}
+      cena={cena ?? null}
+      pestana={pestana ?? null}
       // El juego se abre de verdad (entrega 20); lo demás solo se anota.
       ir={(d) => (d.startsWith('/juego') ? router.push(d.replace('/juego', '/catalogo-juego') as never) : console.log('[catálogo] ir a', d))}
       alEntrar={() => router.push('/entrar')}

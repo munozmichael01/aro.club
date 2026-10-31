@@ -11,6 +11,8 @@ import { MESES_CORTOS } from '../texto/fechas'
 import * as F from '../texto/fechas'
 import * as T from '../texto/perfil'
 import * as C from '../cuestionario/maquina'
+import { Punto } from '../pasadas/Lista'
+import { useSenal } from '../pasadas/senal'
 import { InvitaAlguien } from './Invitar'
 import * as M from './maquina'
 import type { crearServicioPerfil, Exclusion, SitioVetado } from './servicio'
@@ -27,6 +29,7 @@ type Servicio = ReturnType<typeof crearServicioPerfil>
  */
 export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntrar: () => void; alSalir: () => Promise<void>; alBaja: () => Promise<void> }) {
   const insets = useSafeAreaInsets()
+  const senal = useSenal()
   const { servicio } = p
   const alEntrar = useUltimo(p.alEntrar)
   const [d, setD] = useState<M.DeServidor | null>(null)
@@ -318,35 +321,18 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
           </Seccion>
         ) : null}
 
+        {/* Mis cenas (entrega mi-mesa-pasadas, 4): un acceso directo a Mi mesa, Pasadas, con el punto si hay algo nuevo. */}
         <Seccion titulo={T.cenas.titulo} nota={T.cenas.nota}>
-          {hist.length ? (
-            <>
-              {hist.map((c, i) => (
-                <View key={i} style={estilos.cena}>
-                  <View style={{ flexGrow: 1, flexBasis: 190, minWidth: 0 }}>
-                    <Texto variante="subtitulo" style={{ fontSize: 20 }}>
-                      {c.sitio}
-                    </Texto>
-                    <Texto variante="nota" style={{ marginTop: 3 }}>
-                      {c.cuando}
-                    </Texto>
-                  </View>
-                  <View style={[estilos.chipCena, c.fuiste ? { backgroundColor: verdeAlfa(0.11) } : null]}>
-                    <Texto variante="chip" style={{ color: c.fuiste ? color.verde : color.secundario }}>
-                      {c.estado}
-                    </Texto>
-                  </View>
-                </View>
-              ))}
-              <Texto variante="nota" style={{ marginTop: 10 }}>
-                {T.cenas.noAgenda}
+          <Pressable onPress={() => p.ir('/mesa?pestana=pasadas')} accessibilityRole="link" style={estilos.misCenas}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Texto variante="subtitulo" style={{ fontSize: 20 }}>
+                {T.cenas.titulo}
               </Texto>
-            </>
-          ) : (
-            <View style={[estilos.caja, { padding: 18 }]}>
-              <Texto variante="cuerpo">{T.cenas.vacio}</Texto>
+              <Texto variante="nota">{reglas.CONTACTO.pasadas.misCenas(hist.filter((c) => c.fuiste).length)}</Texto>
             </View>
-          )}
+            {senal ? <Punto tam={9} /> : null}
+            <IconoAbrir tam={16} color={color.verdeProfundo} />
+          </Pressable>
         </Seccion>
 
         <Seccion titulo={T.avisos.titulo} nota={T.avisos.nota}>
@@ -582,6 +568,7 @@ function FilaCampo(p: {
 }
 
 const estilos = StyleSheet.create({
+  misCenas: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: radio.bloque, backgroundColor: color.cremaElevada, borderWidth: 1.5, borderColor: color.verdeProfundo, paddingVertical: 14, paddingHorizontal: 18 },
   pagina: { paddingHorizontal: medida.margenLateral, paddingTop: 26, paddingBottom: 48, maxWidth: 680, width: '100%', alignSelf: 'center' },
   credencial: { minHeight: 36, justifyContent: 'center', paddingHorizontal: 14, borderRadius: radio.capsula, borderWidth: 1, borderColor: tinta(0.18) },
   caja: { borderRadius: 24, backgroundColor: color.cremaElevada, overflow: 'hidden' },

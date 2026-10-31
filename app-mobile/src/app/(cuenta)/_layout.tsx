@@ -1,9 +1,17 @@
 import { Tabs } from 'expo-router/js-tabs'
 import { useEffect } from 'react'
+import { AppState } from 'react-native'
 
 import { refrescarAvisos } from '../../avisos/push'
 import { Pestanas } from '../../cuenta/Pestanas'
 import { PuertaNormas } from '../../normas/PuertaNormas'
+import { ponerSenal } from '../../pasadas/senal'
+import { crearServicioPasadas } from '../../pasadas/servicio'
+import { api } from '../../sesion'
+
+/** El punto de Pasadas en la barra, desde que se entra a la cuenta, no solo al abrir Mi mesa. */
+const pasadas = crearServicioPasadas(api)
+const mirarSenal = () => pasadas.lista().then((r) => r.ok && ponerSenal(r.datos.senal)).catch(() => undefined)
 
 /** La cuenta: tres pestañas abajo, las mismas siempre. Las rutas no cambian: /cuenta, /mesa, /perfil. */
 export default function Cuenta() {
@@ -13,6 +21,9 @@ export default function Cuenta() {
   // el día de la primera cena: «sin_token» en la cuenta de la mesa).
   useEffect(() => {
     refrescarAvisos()
+    mirarSenal()
+    const s = AppState.addEventListener('change', (e) => e === 'active' && mirarSenal())
+    return () => s.remove()
   }, [])
   return (
     <PuertaNormas>

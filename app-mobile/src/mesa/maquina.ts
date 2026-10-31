@@ -66,6 +66,11 @@ export type DeServidor = {
   mesaCorta?: string | null
   /** A dónde puede cambiarse (29-10, `bloqueDeCambiarFecha`). Sin él, no se enseña nada. */
   cambiarFecha?: import('../cambiar/maquina').Bloque | null
+  /** Lo pendiente de una cena pasada, con una reserva activa delante (31-10): la línea de Próxima. */
+  pendiente?: import('../pasadas/maquina').Linea | null
+  /** El punto de Pasadas: hay algo pendiente o nuevo en alguna cena pasada. */
+  senalPasadas?: boolean
+  cuantasPasadas?: number
 }
 
 export type Ajustes = { alguienCancelo?: boolean; sonCuantos?: number; caben?: number; teMovimos?: boolean; seSumoAlguien?: boolean }
