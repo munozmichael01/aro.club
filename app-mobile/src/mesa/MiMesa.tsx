@@ -168,6 +168,7 @@ export function MiMesa(p: {
       servicioMesa={servicio}
       ir={p.ir}
       contadaEn={lista?.cenas.find((c) => c.mesaId === cenaAbierta)?.encuesta.contadaEn ?? null}
+      preguntarContacto={!!lista?.cenas.find((c) => c.mesaId === cenaAbierta)?.preguntarContacto}
       alVolver={() => setCenaAbierta(null)}
       alCambiar={cargarLista}
     />

@@ -58,6 +58,9 @@ export function crearServicioMesa(api: Api) {
      * la valoración SÍ se guardó: vuelve el texto para enseñarlo dentro del
      * acuse, no como error (15a918c).
      */
+    /** «¿Con quién te gustaría seguir en contacto?» suelta (las cenas de antes del 29-10). La lista vacía también se manda: es «con nadie». */
+    contacto: (mesaId: string, aQuien: string[]) => despues({ accion: 'contacto', mesaId, aQuien }, T.pasada.noGuardado),
+
     async valorar(mesaId: string, v: Valoracion): Promise<Resultado<{ avisoSitio: string | null }>> {
       const r = await despues(cuerpoValorar(mesaId, v), T.pasada.noGuardado)
       if (!r.ok) return r

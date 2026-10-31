@@ -31,6 +31,8 @@ export type Pasada = {
   contacto: { porConfirmar: string[]; cierraEn: string | null; cruzadas: string[]; nuevo: Nuevo | null } | null
   pendiente: 'contacto' | 'encuesta' | null
   nuevo: boolean
+  /** Contó la encuesta antes del 29-10, sin «¿seguir en contacto?»: se le pregunta aquí, solo aquí. */
+  preguntarContacto?: boolean
 }
 
 /** La línea de Próxima: lo pendiente de una cena pasada, cuando hay una reserva activa delante. */

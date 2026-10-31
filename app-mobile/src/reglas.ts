@@ -249,6 +249,7 @@ type Contacto = {
     contar: string
     contada: { titulo: string; cuando: (iso: string | null | undefined, zona?: string | null) => string; ver: string }
     mesa: (n: number | null | undefined) => string
+    preguntaAnterior: { titulo: (esMesa: boolean) => string; nota: string; guardar: string; nadie: string }
   }
   enlaces: { whatsapp: (e164: string) => string; instagram: (u: string) => string; tiktok: (u: string) => string }
 }

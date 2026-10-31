@@ -106,7 +106,7 @@ const PASADAS: DePasadas = {
   cenas: [
     { mesaId: 'c1', eventoId: 'e1', empiezaEn: en(-2 * 24 - 4), zonaHoraria: 'America/Caracas', formato: 'dinner', sitio: 'Cardenal', zona: 'Chacao', numeroMesa: 4, companeros: [], encuesta: { pendiente: false, contadaEn: en(-24) }, contacto: { porConfirmar: ['Andrea'], cierraEn: cierra, cruzadas: [], nuevo: null }, pendiente: 'contacto', nuevo: false },
     { mesaId: 'c2', eventoId: 'e2', empiezaEn: en(-6 * 24 - 20), zonaHoraria: 'America/Caracas', formato: 'brunch', sitio: 'Bruma', zona: 'Los Palos Grandes', numeroMesa: 2, companeros: [], encuesta: { pendiente: false, contadaEn: en(-5 * 24) }, contacto: { porConfirmar: [], cierraEn: cierra, cruzadas: ['Luis'], nuevo: { tipo: 'cruce', nombres: ['Luis'] } }, pendiente: null, nuevo: true },
-    { mesaId: 'c3', eventoId: 'e3', empiezaEn: en(-15 * 24), zonaHoraria: 'America/Caracas', formato: 'dinner', sitio: 'Olivo', zona: 'Altamira', numeroMesa: 1, companeros: [], encuesta: { pendiente: false, contadaEn: en(-14 * 24) }, contacto: null, pendiente: null, nuevo: false },
+    { mesaId: 'c3', eventoId: 'e3', empiezaEn: en(-15 * 24), zonaHoraria: 'America/Caracas', formato: 'dinner', sitio: 'Olivo', zona: 'Altamira', numeroMesa: 1, companeros: [], encuesta: { pendiente: false, contadaEn: en(-14 * 24) }, contacto: null, pendiente: null, nuevo: false, preguntarContacto: true },
   ],
 }
 
@@ -132,6 +132,11 @@ function Pantalla() {
       console.log('[catálogo] valorar', v)
       const avisoSitio = tope && v.noRepetirSitio ? 'Ya tienes 2 sitios marcados: La Ventana y Madre. Tu valoración sí quedó guardada. Si quieres marcar este, quita uno en tu perfil.' : null
       return { ok: true, datos: { avisoSitio } }
+    },
+    async contacto(_mesa, aQuien) {
+      await espera()
+      console.log('[catálogo] contacto suelto', aQuien)
+      return { ok: true, datos: { ok: true } }
     },
     async saltar() {
       await espera()

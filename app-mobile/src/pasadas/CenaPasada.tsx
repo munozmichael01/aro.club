@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native'
 
 import * as CM from '../contacto/maquina'
 import { Inicial, PanelContacto } from '../contacto/Panel'
-import { AroCarga, Aviso, Boton, IconoAbrir, IconoAtras, IconoCheck, Texto, color, fuente, medida, tinta } from '../diseno'
+import { AroCarga, Aviso, Boton, IconoAbrir, IconoAtras, IconoCheck, Opcion, Texto, color, fuente, medida, tinta } from '../diseno'
 import * as MM from '../mesa/maquina'
 import { Pasada } from '../mesa/MiMesa'
 import type { crearServicioMesa } from '../mesa/servicio'
@@ -39,6 +39,8 @@ export function CenaPasada(p: {
   servicioMesa: ServicioMesa
   ir: (destino: string) => void
   alVolver?: () => void
+  /** Contó la encuesta antes de que existiera «¿seguir en contacto?» (31-10): se le pregunta aquí. */
+  preguntarContacto?: boolean
   /** Cuándo contestó la encuesta (de /api/pasadas), para «El viernes 30. Gracias.». */
   contadaEn?: string | null
   /** Algo cambió (se confirmó, se marcó visto): quien la abrió relee la lista y el punto. */
@@ -138,6 +140,18 @@ export function CenaPasada(p: {
         </View>
       ) : null}
 
+      {p.preguntarContacto && !conCoincidencia && otros.length ? (
+        <PreguntaContacto
+          titulo={T.preguntaAnterior.titulo(MM.esMesa(mesa))}
+          otros={otros}
+          alGuardar={async (ids) => {
+            const r = await p.servicioMesa.contacto(mesaId, ids)
+            if (r.ok) alCambiar?.()
+            return r.ok ? null : r.error
+          }}
+        />
+      ) : null}
+
       {/* P3: en Próxima sin reserva, la encuesta va antes de con quién (como hoy). */}
       {p.enProxima && !contado ? <Encuesta titulo={dia ? T.encuestaProxima.titulo(dia.dia) : T.encuesta.titulo} bajada={T.encuestaProxima.bajada} abierta={encuestaAbierta} alAbrir={() => setEncuestaAbierta(true)} /> : null}
 
@@ -181,6 +195,50 @@ export function CenaPasada(p: {
           <IconoAbrir tam={14} color={color.verde} />
         </Pressable>
       ) : null}
+    </View>
+  )
+}
+
+/** «¿Con quién de esta mesa te gustaría seguir en contacto?»: las cenas cuya encuesta no la traía. Se va al guardar. */
+function PreguntaContacto(p: { titulo: string; otros: { id: string; nombre: string }[]; alGuardar: (ids: string[]) => Promise<string | null> }) {
+  const [marcadas, setMarcadas] = useState<string[]>([])
+  const [enviando, setEnviando] = useState(false)
+  const [fallo, setFallo] = useState('')
+  const [hecho, setHecho] = useState(false)
+  if (hecho) return null
+  const P = T.preguntaAnterior
+  return (
+    <View style={e.panel}>
+      <Texto style={{ fontFamily: fuente.titular, fontSize: 20, lineHeight: 29, color: color.verdeProfundo }}>{p.titulo}</Texto>
+      <Texto variante="nota" style={{ marginTop: 6, marginBottom: 12 }}>
+        {P.nota}
+      </Texto>
+      <View style={{ gap: 8 }}>
+        {p.otros.map((o) => (
+          <Opcion key={o.id} texto={o.nombre} marcada={marcadas.includes(o.id)} onPress={() => setMarcadas((m) => (m.includes(o.id) ? m.filter((x) => x !== o.id) : [...m, o.id]))} />
+        ))}
+      </View>
+      {fallo ? (
+        <View style={{ marginTop: 12 }}>
+          <Aviso tono="ojo">{fallo}</Aviso>
+        </View>
+      ) : null}
+      <View style={{ marginTop: 14 }}>
+        <Boton
+          texto={marcadas.length ? P.guardar : P.nadie}
+          tipo={marcadas.length ? 'primario' : 'secundario'}
+          apagado={enviando}
+          onPress={async () => {
+            if (enviando) return
+            setEnviando(true)
+            setFallo('')
+            const error = await p.alGuardar(marcadas)
+            setEnviando(false)
+            if (error) setFallo(error)
+            else setHecho(true)
+          }}
+        />
+      </View>
     </View>
   )
 }
