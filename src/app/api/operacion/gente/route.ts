@@ -68,6 +68,8 @@ const TAM_MAX = 200
 /** Lo que la pantalla pinta de cada fila. */
 type Fila = {
   id: string
+  /** Si tiene una selfie aprobada que se pueda enseñar. */
+  tieneFoto: boolean
   nombre: string
   trato: string
   edad: number
@@ -260,6 +262,30 @@ export async function GET(request: Request) {
     (esperando ?? []).map((v) => v.profile_id).filter(Boolean) as string[],
   )
 
+  /**
+   * Quién tiene una selfie que de verdad se puede enseñar.
+   *
+   * La pantalla pintaba la foto de todo el mundo y dejaba que la ruta
+   * contestara 404 a quien no la tiene. El navegador pinta entonces el icono
+   * de imagen rota encima del círculo, y eso se lee como un fallo nuestro
+   * (Michael, 31-10, con la captura delante). Con esto la pantalla sabe a
+   * quién pedírsela y a quién no.
+   *
+   * Es la MISMA condición que sirve `/api/operacion/cara`: selfie aprobada y
+   * con fichero. Quien la subió y espera revisión no sale, y quien ya pasó
+   * los 120 días de guarda tampoco: su foto ya no existe.
+   */
+  const { data: conSelfie } = await admin
+    .from('verifications')
+    .select('profile_id')
+    .eq('kind', 'selfie')
+    .eq('status', 'approved')
+    .not('storage_path', 'is', null)
+
+  const tienenSelfie = new Set(
+    (conSelfie ?? []).map((v) => v.profile_id).filter(Boolean) as string[],
+  )
+
   const filasPerfiles: Fila[] = perfiles.map((p) => {
     const r = rasgoDe.get(p.id)
     // El estado que pinta la pantalla no es el `status` crudo: lo que importa
@@ -278,6 +304,8 @@ export async function GET(request: Request) {
 
     return {
       id: p.id,
+      // Si hay selfie que enseñar. La pantalla no pide la que no existe.
+      tieneFoto: tienenSelfie.has(p.id),
       nombre: p.full_name ?? '—',
       trato: p.display_name ?? (p.full_name ?? '—').split(' ')[0],
       edad: r?.age ?? edadDe(p.birthdate),
@@ -307,6 +335,8 @@ export async function GET(request: Request) {
 
   const filasLeads: Fila[] = leads.map((l) => ({
     id: l.id,
+    // Un lead no tiene cuenta, así que no tiene selfie que enseñar.
+    tieneFoto: false,
     nombre: enmascarar(l.email),
     trato: String(l.email || '').split('@')[0],
     edad: edadDe(l.birthdate),

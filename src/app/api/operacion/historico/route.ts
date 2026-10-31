@@ -165,7 +165,7 @@ type Comensal = {
   /** La reserva, que es lo que se marca. Sin esto el interruptor no sabe a
    * qué fila escribir: la asistencia vive en `bookings`, no en la mesa. */
   reservaId: string
-  /** Su cara, por la ruta de operación. Nunca una URL firmada. */
+  /** Su cara, por la ruta de operación. Vacío si no hay selfie que enseñar. */
   foto: string
 }
 
@@ -273,6 +273,26 @@ export async function GET(request: Request) {
   const localPorId = new Map(locales.map((r) => [r.id, r]))
   const zonaPorSlug = new Map(zonas.map((z) => [z.slug, z.name]))
   const perfilPorId = new Map(perfiles.map((p) => [p.id, p]))
+
+  /**
+   * Quién tiene una selfie que enseñar, con la MISMA condición que la sirve.
+   *
+   * Sin esto la pantalla pedía la foto de todos y el navegador pintaba el
+   * icono de imagen rota encima del círculo de quien no la tiene, que se lee
+   * como un fallo nuestro (Michael, 31-10). Y aquí pasa más que en Gente: las
+   * fotos se borran a los 120 días, así que de una mesa vieja no queda
+   * ninguna.
+   */
+  const { data: selfiesVivas } = await admin
+    .from('verifications')
+    .select('profile_id')
+    .eq('kind', 'selfie')
+    .eq('status', 'approved')
+    .not('storage_path', 'is', null)
+
+  const tienenSelfie = new Set(
+    (selfiesVivas ?? []).map((v) => v.profile_id).filter(Boolean) as string[],
+  )
   const reservaPorId = new Map(reservas.map((b) => [b.id, b.status]))
 
   const miembrosPorMesa = new Map<string, typeof miembros>()
@@ -348,7 +368,7 @@ export async function GET(request: Request) {
            * mesa —quién estaba, cómo fue— y seis nombres sin cara no son un
            * recuerdo de nada (Michael, 31-10).
            */
-          foto: '/api/operacion/cara?perfil=' + m.profile_id,
+          foto: tienenSelfie.has(m.profile_id) ? '/api/operacion/cara?perfil=' + m.profile_id : '',
         } as Comensal
       })
 
