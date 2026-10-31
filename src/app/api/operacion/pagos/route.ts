@@ -60,13 +60,16 @@ export async function GET() {
     .select('id, nombre, moneda, activo, manual, orden, datos_cuenta')
     .order('orden')
 
-  // La captura, con URL firmada de cinco minutos: el tiempo de mirarla.
+  /**
+   * La captura, con URL firmada de cinco minutos: el tiempo de mirarla.
+   *
+   * Se firman TODAS DE UNA, la cola y el histórico juntos. Una llamada por
+   * pago eran doscientas al abrir la pestaña, en serie, y el histórico se
+   * quedaba sin fotos porque ni se pedían: Michael las echó en falta el
+   * 31-10 —«en historial muestra la foto»—, que es justo donde se mira
+   * cuando alguien pregunta por un pago de hace días.
+   */
   const firmadas = new Map<string, string>()
-  for (const p of pagos ?? []) {
-    if (!p.captura_path) continue
-    const { data } = await admin.storage.from('comprobantes').createSignedUrl(p.captura_path, 300)
-    if (data?.signedUrl) firmadas.set(p.id, data.signedUrl)
-  }
 
   // El resumen del dia. Estaba escrito a mano en la pantalla —"14.976 Bs",
   // "12 puestos", "tasa 62,40"— justo donde se mira cuanto ha entrado.
@@ -163,7 +166,7 @@ export async function GET() {
   // inventados y seis veces el mismo importe.
   const { data: yaDecididos } = await admin
     .from('payments')
-    .select('id, metodo, moneda, amount_usd, amount_local, status, datos, reference_code, created_at, profiles!payments_profile_id_fkey(display_name, full_name)')
+    .select('id, metodo, moneda, amount_usd, amount_local, status, datos, reference_code, captura_path, created_at, profiles!payments_profile_id_fkey(display_name, full_name)')
     .in('status', ['confirmed', 'refunded', 'rejected'])
     /**
      * DESDE EL 12/10 Y NADA ANTES.
@@ -186,6 +189,19 @@ export async function GET() {
      * verdad, no un número más grande.
      */
     .limit(200)
+
+  const conCaptura = [...(pagos ?? []), ...(yaDecididos ?? [])]
+    .filter((p): p is typeof p & { captura_path: string } => !!p.captura_path)
+
+  if (conCaptura.length) {
+    const rutas = [...new Set(conCaptura.map((p) => p.captura_path))]
+    const { data: urls } = await admin.storage.from('comprobantes').createSignedUrls(rutas, 300)
+    const porRuta = new Map((urls ?? []).map((u) => [u.path ?? '', u.signedUrl]))
+    for (const p of conCaptura) {
+      const u = porRuta.get(p.captura_path)
+      if (u) firmadas.set(p.id, u)
+    }
+  }
 
   const ESTADO: Record<string, string> = {
     confirmed: 'confirmado',
@@ -214,10 +230,21 @@ export async function GET() {
       montoUsd: p.amount_usd != null ? Number(p.amount_usd) : null,
       montoLocal: p.amount_local != null ? Number(p.amount_local) : null,
       estado: ESTADO[p.status] ?? 'pendiente',
+      // Cuándo entró, para poder filtrar por fechas sin volver a pedirlo.
+      cuando: p.created_at,
+      captura: firmadas.get(p.id) ?? null,
     }
   })
 
   return NextResponse.json({
+    /**
+     * Desde cuándo hay datos de verdad, en día de Caracas.
+     *
+     * Lo pide el selector de fechas de la pantalla, que no puede dejar
+     * elegir antes del 12-10: lo de antes son pagos de ensayo. Escribir esa
+     * fecha en la pantalla sería tenerla en dos sitios.
+     */
+    desdeQueEsReal: DESDE_QUE_ES_REAL.slice(0, 10),
     // Lo cobrado por día y el total de siempre, para la gráfica.
     serie,
     todo: {

@@ -283,7 +283,9 @@ class Component extends DCLogic {
     const fechas = lista.map((f) => {
       const p = AroReglas.partesDe(f.empiezaEn, f.zonaHoraria);
       const n = f.apuntados || 0;
-      const llena = n >= 6;
+      // «Llena» es cuando ya hay para un grupo entero, y un grupo no siempre
+      // son seis: unos drinks son ocho. El color de la cifra colgaba de esto.
+      const llena = n >= (f.porMesa || 6);
       /**
        * UN TOPE NO SE ANUNCIA; UN MÍNIMO SÍ.
        *
@@ -359,7 +361,10 @@ class Component extends DCLogic {
         // Cuánta gente va, NO cuántos puestos quedan. Aquí no hay cupo: las
         // mesas se arman con quien haya, y un contador de escasez sería lo
         // primero que contamos que no es verdad.
-        gente: AroReglas.fraseDeApuntados(n),
+        // Con cuantos son en ESTA fecha: sin el segundo argumento la frase
+        // dice «Una mesa son seis» debajo de unos drinks de ocho. Mi cuenta
+        // ya lo pasaba y aqui se quedo sin pasar; lo vio el agente de la app.
+        gente: AroReglas.fraseDeApuntados(n, f.porMesa),
         colorGente: llena ? '#1B5138' : '#8F4515',
         puntoGente: llena ? '#9CBBA6' : '#E39C63',
         boton: 'Reservar mi puesto',

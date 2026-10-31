@@ -1385,6 +1385,14 @@
               </sc-for>
             </span>
           </div>
+          <sc-if value="{{ grafico.hayFechas }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px">
+              <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#33513F">DEL</span>
+              <input type="date" value="{{ grafico.desdeValor }}" min="{{ grafico.minFecha }}" max="{{ grafico.maxFecha }}" onChange="{{ grafico.onDesde }}" style="{{ grafico.campoFecha }}" />
+              <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#33513F">AL</span>
+              <input type="date" value="{{ grafico.hastaValor }}" min="{{ grafico.minFecha }}" max="{{ grafico.maxFecha }}" onChange="{{ grafico.onHasta }}" style="{{ grafico.campoFecha }}" />
+            </div>
+          </sc-if>
 
           <div style="display:flex;flex-wrap:wrap;gap:18px 28px;margin-top:16px">
             <span>
@@ -1504,6 +1512,17 @@
               </span>
               <span style="flex:1 1 90px;text-align:right;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ p.monto }}</span>
               <span style="flex:0 0 120px;display:flex;justify-content:flex-end"><span style="{{ p.chip }}">{{ p.estado }}</span></span>
+              <!-- La captura, al final de la fila. Mismo sitio y mismo peso
+                   que en la cola: un cuadro pequeño que se abre aparte. -->
+              <sc-if value="{{ p.hayCaptura }}" hint-placeholder-val="{{ false }}">
+                <a href="{{ p.captura }}" target="_blank" rel="noopener" style="flex:0 0 auto;display:flex;align-items:center;gap:7px;border-radius:12px;border:1px solid rgba(20,52,42,.16);padding:7px 11px;text-decoration:none">
+                  <span style="flex:0 0 auto;width:22px;height:22px;border-radius:7px;background:#E8DFC6"></span>
+                  <span style="font:500 12px/1 'Inter Tight',sans-serif;color:#1B5138">Ver</span>
+                </a>
+              </sc-if>
+              <sc-if value="{{ p.sinCaptura }}" hint-placeholder-val="{{ true }}">
+                <span style="flex:0 0 auto;font:400 12px/1 'Inter Tight',sans-serif;color:#7E9A8B">Sin captura</span>
+              </sc-if>
             </div>
           </sc-for>
         </div>
@@ -2043,7 +2062,9 @@ class Component extends DCLogic {
     pagosSerie: [], pagosTodo: null,
     // Qué tramo de la gráfica de pagos se mira. Semana por defecto: es la
     // pregunta de todos los días; el mes se pide cuando se quiere la forma.
-    rangoPagos: 'semana',
+    rangoPagos: 'dias7',
+    // El rango a mano de la grafica de pagos, cuando se elige «Fechas».
+    pagosDesde: '', pagosHasta: '', pagosDesdeReal: '',
     incidencias: null, accionesIncidencia: [],
     locales: null, zonasCatalogo: [], resumenLocales: null,
     equipo: null, esAdmin: false, avisosEq: {},
@@ -2452,9 +2473,12 @@ class Component extends DCLogic {
   }
 
   cargarPagos(deFondo) {
-    if (deFondo) return this.repedir('/api/operacion/pagos', (d) => ({ pagosCola: d.cola, metodosPago: d.metodos, pagosResumen: d.resumen, pagosSerie: d.serie || [], pagosTodo: d.todo || null }));
+    // `desdeQueEsReal` viaja con los pagos: es el suelo del selector de
+    // fechas, y lo decide el servidor (12-10). Escrito en la pantalla serian
+    // dos fechas que se pueden separar.
+    if (deFondo) return this.repedir('/api/operacion/pagos', (d) => ({ pagosCola: d.cola, metodosPago: d.metodos, pagosResumen: d.resumen, pagosSerie: d.serie || [], pagosTodo: d.todo || null, pagosDesdeReal: d.desdeQueEsReal || '' }));
     return this.pedir('/api/operacion/pagos',
-      (d) => ({ pagosCola: d.cola, metodosPago: d.metodos, pagosResumen: d.resumen, pagosSerie: d.serie || [], pagosTodo: d.todo || null }),
+      (d) => ({ pagosCola: d.cola, metodosPago: d.metodos, pagosResumen: d.resumen, pagosSerie: d.serie || [], pagosTodo: d.todo || null, pagosDesdeReal: d.desdeQueEsReal || '' }),
       { pagosCola: [], metodosPago: [], pagosResumen: {} });
   }
 
@@ -5381,12 +5405,29 @@ class Component extends DCLogic {
     // escrita a mano, quien cancela elige la segunda de la pantalla y el
     // servidor cancela otra: son correos a gente real diciéndole que su
     // cena no sale.
-    const ABIERTAS = FECHAS_REP.map((f) => {
+    /**
+     * Y solo las que siguen vivas.
+     *
+     * Michael, 31-10: «en cancelar fechas, que no me muestre las que ya no
+     * están activas», y de paso vio ahí la fecha del revisor de Google —«Cena
+     * · domingo 1 · sin zonas», con su apuntado— que es de PRUEBA y no se
+     * cancela nunca. Las pasadas tampoco: cancelar una cena que ya ocurrió
+     * manda correos diciendo que no se hace algo que sí se hizo.
+     */
+    const ABIERTAS = FECHAS_REP.filter((f) => !f.esPrueba && !f.pasada).map((f) => {
       const zonas = zonasUnicas(f.zonas).map((z) => z[0]).join(' y ') || 'sin zonas';
       const voz = f.fam !== 'movimiento' ? 'mesas' : 'grupos';
       return [
         f.titulo + ' · ' + zonas,
-        f.apuntados + ' apuntados · ' + (FECHAS[FECHAS_REP.indexOf(f)] || {}).publicadas + ' ' + voz + ' publicadas',
+        // En singular cuando toca: «1 apuntados · 1 mesas publicadas» se lee
+        // como un contador roto justo antes de pulsar «cancelar».
+        (function () {
+          const n = f.apuntados;
+          const m = (FECHAS[FECHAS_REP.indexOf(f)] || {}).publicadas || 0;
+          const unidad = voz === 'mesas' ? 'mesa' : 'grupo';
+          return n + (n === 1 ? ' apuntado' : ' apuntados')
+            + ' · ' + m + ' ' + (m === 1 ? unidad + ' publicada' : unidad + 's publicadas');
+        })(),
         f.id, f.apuntados
       ];
     });
@@ -5787,17 +5828,47 @@ class Component extends DCLogic {
      */
     const SERIE = St.pagosSerie || [];
     const TODO = St.pagosTodo || { bolivares: 0, puestos: 0, desde: null };
-    const RANGOS = { semana: 7, mes: 30, todo: 0 };
-    const rangoPagos = RANGOS[St.rangoPagos] === undefined ? 'semana' : St.rangoPagos;
+    /**
+     * Los rangos de la grafica.
+     *
+     * «Semana» decia «ULTIMOS 7 DIAS» y era verdad, pero el boton no: quien
+     * lo pulsa un miercoles espera lo que va de semana. Michael, 31-10. Asi
+     * que son dos cosas distintas y ahora estan las dos, con su nombre.
+     *
+     * `fechas` es el rango a mano, que no puede empezar antes del 12-10: lo
+     * de antes son pagos de ensayo. Ese limite lo manda el servidor.
+     */
+    const RANGOS = { dias7: 7, semana: 'actual', mes: 30, todo: 0, fechas: 'aMano' };
+    const rangoPagos = RANGOS[St.rangoPagos] === undefined ? 'dias7' : St.rangoPagos;
+    const DESDE_REAL = (St.pagosDesdeReal || '2026-10-12');
+    const hoyCcs = new Date(Date.now() - 4 * 3600000).toISOString().slice(0, 10);
+    // El lunes de la semana en curso, en dia de Caracas.
+    const lunesDeEstaSemana = (function () {
+      const d = new Date(hoyCcs + 'T12:00:00Z');
+      const dow = (d.getUTCDay() + 6) % 7;   // lunes = 0
+      d.setUTCDate(d.getUTCDate() - dow);
+      return d.toISOString().slice(0, 10);
+    })();
+    const desdeMano = St.pagosDesde && St.pagosDesde >= DESDE_REAL ? St.pagosDesde : DESDE_REAL;
+    const hastaMano = St.pagosHasta && St.pagosHasta <= hoyCcs ? St.pagosHasta : hoyCcs;
 
     const grafico = (function () {
       const porDia = {};
       SERIE.forEach((d) => { porDia[d.dia] = d; });
 
       // El día de hoy en Caracas, con la misma cuenta que el servidor.
-      const hoyCaracas = new Date(Date.now() - 4 * 3600000).toISOString().slice(0, 10);
+      const hoyCaracas = hoyCcs;
       const dias = [];
-      if (rangoPagos === 'todo') {
+      const entreDos = (desde, hasta) => {
+        for (let d = new Date(desde + 'T12:00:00Z'); d.toISOString().slice(0, 10) <= hasta; d.setUTCDate(d.getUTCDate() + 1)) {
+          dias.push(d.toISOString().slice(0, 10));
+        }
+      };
+      if (rangoPagos === 'semana') {
+        entreDos(lunesDeEstaSemana, hoyCaracas);
+      } else if (rangoPagos === 'fechas') {
+        entreDos(desdeMano, hastaMano < desdeMano ? desdeMano : hastaMano);
+      } else if (rangoPagos === 'todo') {
         // Desde el primer pago hasta hoy, sin huecos.
         const desde = SERIE.length ? SERIE[0].dia : hoyCaracas;
         for (let d = new Date(desde + 'T12:00:00Z'); d.toISOString().slice(0, 10) <= hoyCaracas; d.setUTCDate(d.getUTCDate() + 1)) {
@@ -5825,13 +5896,17 @@ class Component extends DCLogic {
 
       return {
         nota: 'Solo lo confirmado, por el día de Caracas en que entró.',
-        etiquetaRango: rangoPagos === 'semana' ? 'ÚLTIMOS 7 DÍAS' : (rangoPagos === 'mes' ? 'ÚLTIMOS 30 DÍAS' : 'TODO'),
+        etiquetaRango: rangoPagos === 'dias7' ? 'ÚLTIMOS 7 DÍAS'
+          : rangoPagos === 'semana' ? 'ESTA SEMANA'
+          : rangoPagos === 'mes' ? 'ÚLTIMOS 30 DÍAS'
+          : rangoPagos === 'fechas' ? 'DEL ' + comoDia(desdeMano).toUpperCase() + ' AL ' + comoDia(hastaMano).toUpperCase()
+          : 'TODO',
         totalRango: dinero(sumaBs, 'VES'),
         puestosRango: sumaPuestos + (sumaPuestos === 1 ? ' puesto' : ' puestos'),
         totalTodo: dinero(TODO.bolivares, 'VES'),
         puestosTodo: TODO.puestos + (TODO.puestos === 1 ? ' puesto' : ' puestos')
           + (TODO.desde ? ' · desde el ' + comoDia(TODO.desde) : ''),
-        rangos: [['Semana', 'semana'], ['Mes', 'mes'], ['Todo', 'todo']].map((r) => {
+        rangos: [['7 días', 'dias7'], ['Esta semana', 'semana'], ['Mes', 'mes'], ['Todo', 'todo'], ['Fechas', 'fechas']].map((r) => {
           const on = rangoPagos === r[1];
           return {
             nombre: r[0],
@@ -5839,6 +5914,16 @@ class Component extends DCLogic {
             btn: 'display:inline-flex;align-items:center;min-height:34px;padding:0 13px;border-radius:999px;font:' + (on ? '600' : '500') + ' 12px/1 \'Inter Tight\',sans-serif;white-space:nowrap;cursor:pointer;transition:all 180ms ease;background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#2C4A38') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.22)')
           };
         }),
+        // Los dos campos, solo con «Fechas» elegido. `min` sale del servidor:
+        // antes del 12-10 son pagos de ensayo y no se pueden elegir.
+        hayFechas: rangoPagos === 'fechas',
+        desdeValor: desdeMano,
+        hastaValor: hastaMano,
+        minFecha: DESDE_REAL,
+        maxFecha: hoyCaracas,
+        onDesde: (e) => this.setState({ pagosDesde: e.target.value }),
+        onHasta: (e) => this.setState({ pagosHasta: e.target.value }),
+        campoFecha: 'min-height:38px;padding:0 12px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:500 13px/1 \'Inter Tight\',sans-serif;outline:none',
         hayBarras: techo > 0,
         sinBarras: techo === 0,
         primerDia: filas.length ? comoDia(filas[0].dia) : '',
@@ -5894,7 +5979,12 @@ class Component extends DCLogic {
       metodo: (NOMBRE_METODO[p.metodo] || p.metodo) + (p.referencia ? ' · ' + p.referencia : ''),
       monto: dinero(p.montoLocal != null ? p.montoLocal : p.montoUsd, p.moneda || 'VES'),
       estado: ESTADO_PAGO[p.estado] || 'Pendiente',
-      chip: chipPago(ESTADO_PAGO[p.estado] || 'Pendiente')
+      chip: chipPago(ESTADO_PAGO[p.estado] || 'Pendiente'),
+      // La captura, que es lo que se mira cuando alguien pregunta por un
+      // pago de hace dias. Estaba solo en la cola (Michael, 31-10).
+      captura: p.captura || '',
+      hayCaptura: !!p.captura,
+      sinCaptura: !p.captura
     }));
 
     // Porcentaje de un {subieron, total}, para la cifra del empujon.
