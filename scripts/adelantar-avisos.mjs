@@ -15,6 +15,7 @@
  *   node scripts/adelantar-avisos.mjs                 qué hay en cola para hoy
  *   node scripts/adelantar-avisos.mjs 10:00           en seco, dice a cuántos
  *   node scripts/adelantar-avisos.mjs 10:00 aplicar   lo mueve
+ *   node scripts/adelantar-avisos.mjs 12:00 aplazar aplicar   lo FRENA hasta esa hora
  *
  * LO QUE NO HACE: encolar nada. Si una fecha se abrió callada, aquí no hay
  * nada suyo que mover; eso se avisa desde el panel, en la fecha.
@@ -79,7 +80,8 @@ console.log('en cola sin enviar, por hora de Caracas:')
 for (const [h, n] of Object.entries(porHora)) console.log('  ' + h + '  ' + n)
 console.log('fechas distintas:', new Set(cola.map((r) => r.event_id)).size)
 
-const hora = (process.argv[2] ?? '').trim()
+const args = process.argv.slice(2)
+const hora = (args[0] ?? '').trim()
 if (!hora) {
   console.log('\n(en seco: `node scripts/adelantar-avisos.mjs 10:00` para moverlos)')
   process.exit(0)
@@ -93,11 +95,24 @@ if (cuando.getTime() <= Date.now()) {
   process.exit(1)
 }
 
-// Solo los que saldrían DESPUÉS. Adelantar uno que ya iba a salir antes
-// sería retrasarlo sin querer, y lo que se pidió es lo contrario.
-const mover = cola.filter((r) => new Date(r.send_at).getTime() > cuando.getTime())
-console.log('\nse moverían a ' + car(cuando.toISOString()) + ': ' + mover.length
-  + ' de ' + cola.length + ' (los que ya salían antes se quedan como están)')
+/**
+ * Adelantar mueve solo lo que saldría DESPUÉS; con `aplazar`, al revés.
+ *
+ * Son dos cosas distintas y conviene decir cuál: adelantar sin querer un
+ * aviso que ya iba a salir antes lo retrasa, y retrasar sin querer uno que
+ * ya salía después lo adelanta. Aplazar es lo que se usa para FRENAR un
+ * envío que está a punto de salir: el 31-10, con los correos de las seis
+ * fechas a diecinueve minutos de las diez, Michael pidió revisar una cosa
+ * antes. Frenar se deshace; mandar, no.
+ */
+const aplazar = args.includes('aplazar')
+const mover = aplazar
+  ? cola.filter((r) => new Date(r.send_at).getTime() < cuando.getTime())
+  : cola.filter((r) => new Date(r.send_at).getTime() > cuando.getTime())
+console.log('\nse ' + (aplazar ? 'aplazarían' : 'moverían') + ' a ' + car(cuando.toISOString()) + ': ' + mover.length
+  + ' de ' + cola.length + (aplazar
+    ? ' (los que ya salían después se quedan como están)'
+    : ' (los que ya salían antes se quedan como están)'))
 
 /**
  * Y juntarlos en una hora los junta en UN correo.
@@ -113,7 +128,7 @@ const conVarias = [...porPersona.values()].filter((n) => n > 1).length
 console.log('personas distintas: ' + porPersona.size
   + (conVarias ? ' · ' + conVarias + ' reciben UN correo con varias fechas dentro' : ''))
 
-if (process.argv[3] !== 'aplicar') {
+if (!args.includes('aplicar')) {
   console.log('\n(en seco: no se ha escrito nada. Añade `aplicar` al final)')
   process.exit(0)
 }
@@ -128,5 +143,5 @@ for (let i = 0; i < mover.length; i += 200) {
   if (e) { console.log('ERROR al mover: ' + e.message); process.exit(1) }
 }
 
-console.log('movidos ' + mover.length + ' para ' + car(cuando.toISOString()) + ' de Caracas')
+console.log((aplazar ? 'aplazados ' : 'movidos ') + mover.length + ' para ' + car(cuando.toISOString()) + ' de Caracas')
 console.log('salen en la vuelta del cron siguiente a esa hora, dentro de los quince minutos.')
