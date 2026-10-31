@@ -165,6 +165,8 @@ type Comensal = {
   /** La reserva, que es lo que se marca. Sin esto el interruptor no sabe a
    * qué fila escribir: la asistencia vive en `bookings`, no en la mesa. */
   reservaId: string
+  /** Su cara, por la ruta de operación. Nunca una URL firmada. */
+  foto: string
 }
 
 type Mesa = {
@@ -337,6 +339,16 @@ export async function GET(request: Request) {
           estado,
           vino: VINO.has(estado) ? 'si' : NO_VINO.has(estado) ? 'no' : 'pendiente',
           reservaId: m.booking_id,
+          /**
+           * Su cara, por la misma ruta que usa repartir.
+           *
+           * No es una URL firmada: `/api/operacion/cara` sirve la foto con
+           * la sesión de operación delante, y por eso no caduca mientras la
+           * pestaña está abierta. El histórico se mira para acordarse de una
+           * mesa —quién estaba, cómo fue— y seis nombres sin cara no son un
+           * recuerdo de nada (Michael, 31-10).
+           */
+          foto: '/api/operacion/cara?perfil=' + m.profile_id,
         } as Comensal
       })
 
