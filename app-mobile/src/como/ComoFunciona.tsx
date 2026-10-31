@@ -123,7 +123,7 @@ export function ComoFunciona(p: { plan: M.Plan | null; abierta: boolean; todas?:
               <IconoCruz tam={16} color={color.verdeProfundo} />
             </Pressable>
           </View>
-          <View style={[e.foto, { backgroundColor: v.conFotos ? color.verdeProfundo : PANEL[v.tipo as Exclude<Tipo, 'cena'>][t.clave][0] }]}>
+          <View style={[e.foto, { backgroundColor: v.conFotos ? color.verdeProfundo : PANEL[v.tipo === 'cena' ? 'brunch' : v.tipo][t.clave][0] }]}>
             {v.conFotos ? <Image source={FOTOS[t.clave]} style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]} resizeMode="cover" /> : <Panel tipo={v.tipo} clave={t.clave} />}
             <View style={[e.chip, { left: 14, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 9, paddingRight: 13 }]}>
               <View style={e.chipIcono}>

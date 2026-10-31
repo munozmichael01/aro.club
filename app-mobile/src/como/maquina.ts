@@ -24,5 +24,16 @@ export function vista(p: Plan) {
   return { tarjetas, conFotos, esMesa, tipo, miMesa: voz.mia ?? 'Mi mesa' }
 }
 
+/**
+ * Si el plan tiene tarjetas propias. `tipoDe` manda «todo lo demás» a cena, y
+ * unos drinks o un café abrían las tarjetas de una cena sin fotos: buscaban un
+ * dibujo que no existe y la app se cerraba (Michael, 31-10). Hasta que tengan
+ * las suyas, la fila no sale (BACKLOG §10, como la web en 2889d9a).
+ */
+export function tieneComoFunciona(formato: string | null | undefined): boolean {
+  const f = formato ?? 'dinner'
+  return T.tipoDe(f) !== 'cena' || reglas.DE_CENA.includes(f)
+}
+
 /** Se abre sola una vez (HANDOFF). En el teléfono hasta que el servidor lo guarde en la cuenta. */
 export const CLAVE_VISTA = 'como-funciona:visto'
