@@ -59,8 +59,8 @@ export function crearServicioDentro(api: Api) {
     },
     /**
      * La B se ve una vez, y «ya la vio» lo guarda el SERVIDOR (31-10), el
-     * mismo para la app y la web. Solo cuenta con el pago confirmado: vista
-     * con el pago en revisión, tiene que volver a salir al confirmarse.
+     * mismo para la app y la web. También con el pago en revisión: reportar
+     * es estar dentro (Michael, 31-10).
      */
     marcarVista: (reservaId: string) => api.pedir('/estas-dentro', json({ reservaId })).catch(() => undefined),
   }

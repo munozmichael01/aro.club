@@ -29,8 +29,12 @@
    * Y `formato` decide cómo se llama. Para la caminata del domingo no hay
    * ninguna mesa: la pestaña dice «Mi grupo». La tabla está en reglas.js,
    * que es de donde la leen también la pantalla, el panel y los correos.
+   *
+   * `punto` enciende el punto terracota de «Mi mesa»: algo nuevo o algo
+   * pendiente en una cena pasada (entrega mi-mesa-pasadas, N). Va en las tres
+   * pantallas a la vez, como la barra de abajo de la app.
    */
-  function items(activa, hayMesa, formato) {
+  function items(activa, hayMesa, formato, punto) {
     var voz = (raiz.AroReglas && raiz.AroReglas.vozDe) ? raiz.AroReglas.vozDe(formato) : { mia: 'Mi mesa' }
     var todos = [
       { id: 'inicio', texto: 'Inicio', enlace: '/cuenta' },
@@ -46,6 +50,8 @@
           // La que ya estás mirando no se enlaza a sí misma.
           enlace: on ? '#top' : t.enlace,
           actual: on ? 'page' : 'false',
+          punto: !!punto && t.id === 'mesa',
+          estiloPunto: 'display:inline-block;width:8px;height:8px;border-radius:4px;background:#8F4515;margin-left:7px;flex:none',
           estilo:
             'display:inline-flex;align-items:center;min-height:44px;padding:0 2px;' +
             'font:' + (on ? '600' : '500') + " 15px/1 'Inter Tight',sans-serif;" +

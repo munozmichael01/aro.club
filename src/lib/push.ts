@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { CONTACTO } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -76,6 +77,24 @@ export function copyDe(
      * cuerpo con lo único que la arregla: el crédito volvió y sirve para la
      * siguiente. Lleva a `/mesa`, que es donde la pantalla lo cuenta entero.
      */
+    /**
+     * «Seguir en contacto» (entrega seguir-en-contacto). La de coincidencia,
+     * agrupada como el correo; la de «te dejó su número», una por pareja y
+     * SIEMPRE (Michael, 31-10: ya no es opcional). Las dos llevan a esa cena.
+     * El «No se cruzaron» va solo por correo: una push para decir que no pasó
+     * nada es justo la que enseña a apagarlas todas.
+     */
+    case 'contacto_coincidencia': {
+      const lista = Array.isArray(datos.nombresLista) ? (datos.nombresLista as string[]) : []
+      if (!lista.length) return null
+      return { ...CONTACTO.push.coincidencia(lista), ruta: '/mesa?cena=' + t('mesaId') }
+    }
+    case 'contacto_cruzado': {
+      const lista = Array.isArray(datos.nombresLista) ? (datos.nombresLista as string[]) : []
+      if (!lista.length) return null
+      return { ...CONTACTO.push.cruzado(lista), ruta: '/mesa?cena=' + t('mesaId') }
+    }
+
     case 'sin_mesa':
       return {
         titulo: 'Esta vez no entraste',

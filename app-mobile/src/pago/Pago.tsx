@@ -195,10 +195,9 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     }
     setFase(r.datos.estado === 'confirmado' ? 'listo' : 'pendiente')
     setRecien(true)
-    // Confirmado al instante: ya vio la B. Con el pago en revisión NO se marca:
-    // la B tiene que volver a salir cuando se confirme (se marcaba al
-    // reportar y por eso no salía nunca, 31-10).
-    if (r.datos.estado === 'confirmado') servicio.marcarDentro(d.evento.id)
+    // Ya vio la B. Reportar es estar dentro (Michael, 31-10): al confirmarse
+    // el pago no vuelve a salir.
+    servicio.marcarDentro(d.evento.id)
     // Reportar el pago aparta el puesto: lo siguiente que pasa es la mesa.
     // Tercer momento de la pregunta previa.
     preguntar('reserva')

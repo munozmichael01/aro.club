@@ -80,6 +80,9 @@ const PLANTILLA: Partial<Record<Correo, string>> = {
   te_falta_sentarte: '31-te-falta-sentarte.html',
   referido_avanza: '32-referido-avanza.html',
   referido_premio: '33-referido-premio.html',
+  contacto_coincidencia: '34-contacto-coincidencia.html',
+  contacto_cruzado: '35-contacto-cruzado.html',
+  contacto_sin_cruce: '36-contacto-sin-cruce.html',
 }
 
 // Las plantillas se leen del disco una vez y se quedan: son quince ficheros

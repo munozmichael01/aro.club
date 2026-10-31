@@ -275,7 +275,8 @@ De ahí hereda lo que costó construir: el índice de «uno por persona y fecha�
 las preferencias ya miradas al encolar, y los imprescindibles. Quien se dio de
 baja de los correos tampoco recibe push: pidió que dejáramos de escribirle.
 
-Solo **siete tipos** tienen copy (`copyDe` en `src/lib/push.ts`); el resto no
+Solo los tipos con un `case` en `copyDe` (`src/lib/push.ts`) tienen push
+—diecisiete el 31-10; el número se mira ahí, no aquí—; el resto no
 vibra ningún teléfono, a propósito — una push que no aporta es la que hace que
 se apaguen todas.
 

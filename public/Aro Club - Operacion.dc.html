@@ -1808,6 +1808,47 @@
       </div>
     </sc-if>
 
+    <!-- Seguir en contacto: cómo vamos (Michael, 31-10). Los datos que se
+         compartieron no salen aquí: son de las dos personas. -->
+    <sc-if value="{{ esContacto }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <h1 style="{{ h1 }}">Seguir en contacto</h1>
+        <p style="{{ bajada }}">Dos personas de una mesa que se marcan en la encuesta son una coincidencia, con siete días para elegir qué compartir. Solo se comparte si confirman las dos.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:clamp(24px,3vw,32px)">
+          <sc-for list="{{ totalContacto }}" as="t" hint-placeholder-count="6">
+            <div style="{{ t.caja }}">
+              <div style="font:500 11px/1.3 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F;text-transform:uppercase">{{ t.etiqueta }}</div>
+              <div style="{{ t.valor }}">{{ t.cifra }}</div>
+              <div style="font:400 12px/1.45 'Inter Tight',sans-serif;color:#566A5D;margin-top:5px;text-wrap:pretty">{{ t.nota }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ cargandoContacto }}" hint-placeholder-val="{{ true }}">
+          <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:clamp(22px,3vw,30px)">Contando coincidencias.</div>
+        </sc-if>
+        <sc-if value="{{ sinContacto }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:24px;background:#FFFBF0;padding:clamp(18px,2.4vw,22px);margin-top:clamp(22px,3vw,30px);font:400 15px/1.55 'Inter Tight',sans-serif;color:#456352;text-wrap:pretty">Todavía no hay ninguna coincidencia. Nacen cuando dos personas de la misma mesa se marcan en la encuesta.</div>
+        </sc-if>
+        <sc-if value="{{ hayContacto }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:24px;background:#FFFBF0;overflow:hidden;margin-top:clamp(22px,3vw,30px)">
+            <sc-for list="{{ listaContacto }}" as="c" hint-placeholder-count="4">
+              <div style="display:flex;flex-direction:column;gap:6px;padding:14px 18px;border-bottom:1px solid rgba(20,52,42,.09)">
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px">
+                  <span style="font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ c.pareja }}</span>
+                  <span style="font:400 12px/1.4 'Inter Tight',sans-serif;color:#566A5D">{{ c.cena }}</span>
+                  <span style="{{ c.chip }}">{{ c.estado }}</span>
+                </div>
+                <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F">{{ c.ladoA }}</div>
+                <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F">{{ c.ladoB }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ esHistorico }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 300ms ease both">
         <h1 style="{{ h1 }}">Historial de mesas</h1>
@@ -2140,6 +2181,8 @@ class Component extends DCLogic {
     pruebaGente: null, verPruebaGente: false,
     perfilesGente: 0, leadsGente: null, pidiendoGente: false,
     referidos: null,
+    // «Seguir en contacto»: se pide al abrir su pestaña.
+    seguirOps: null,
     reembolsos: null, refRee: {}, compRee: {}, pegaRee: {}, pagandoRee: '',
     avisos: null, bajas: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
     // Mover a una persona a mano en la fecha elegida. Vive en Reparto y
@@ -2278,7 +2321,7 @@ class Component extends DCLogic {
     const admin = esAdmin === undefined ? this.state.esAdmin : esAdmin;
     return ['mesas', 'verificaciones', 'pagos', 'reportes', 'avisos', 'fechas', 'locales']
       .concat(admin ? ['equipo'] : [])
-      .concat(['gente', 'historico', 'referidos']);
+      .concat(['gente', 'historico', 'referidos', 'contacto']);
   }
 
   /**
@@ -2310,6 +2353,13 @@ class Component extends DCLogic {
     // Los referidos, por lo mismo que los avisos: una consulta que cruza
     // cuatro tablas y que no sirve para nada en Reparto.
     if (clave === 'referidos' && this.state.referidos === null) this.cargarReferidos();
+    if (clave === 'contacto' && this.state.seguirOps === null) this.cargarSeguir();
+  }
+
+  cargarSeguir() {
+    return this.pedir('/api/operacion/contacto',
+      (d) => ({ seguirOps: d }),
+      { seguirOps: { lista: [], total: {} } });
   }
 
   cargarReferidos() {
@@ -5211,7 +5261,9 @@ class Component extends DCLogic {
                // Los referidos: el contador es cuánta gente ha ENTRADO con un
                // código, que es lo que dice si esto funciona. Tener código no
                // es invitar.
-               ['Referidos', String((St.referidos && St.referidos.total.apuntados) || 0)]]).map((p, i) => {
+               ['Referidos', String((St.referidos && St.referidos.total.apuntados) || 0)],
+               // Cuántas coincidencias se han cruzado: que se pasen el contacto es lo que cuenta.
+               ['Contacto', String((St.seguirOps && St.seguirOps.total.cruzadas) || 0)]]).map((p, i) => {
       const on = v === i;
       return {
         nombre: p[0], n: p[1],
@@ -6728,6 +6780,45 @@ class Component extends DCLogic {
       // está eligiendo entre buscar por zona o por local. El filtrado lo hace
       // la ruta; esto solo pinta.
       esHistorico: esta('historico'),
+      // ── seguir en contacto ──────────────────────────────────────────
+      esContacto: esta('contacto'),
+      cargandoContacto: St.seguirOps === null,
+      hayContacto: !!(St.seguirOps && St.seguirOps.lista.length),
+      sinContacto: !!(St.seguirOps && !St.seguirOps.lista.length),
+      totalContacto: (() => {
+        const t = (St.seguirOps && St.seguirOps.total) || {};
+        return [
+          ['Marcas', String(t.marcas || 0), (t.quienesMarcaron || 0) + ' personas marcaron a alguien'],
+          ['Coincidencias', String(t.coincidencias || 0), 'Las dos personas se marcaron'],
+          ['Abiertas', String(t.abiertas || 0), 'Dentro de sus siete días'],
+          ['Confirmaron', String(t.confirmaron || 0), 'Personas que eligieron compartir'],
+          ['Se cruzaron', String(t.cruzadas || 0), 'Ya tienen el contacto'],
+          ['Sin cruce', String(t.sinCruce || 0), 'Se cerró el plazo sin las dos']
+        ].map((x) => ({
+          etiqueta: x[0], cifra: x[1], nota: x[2],
+          caja: 'border-radius:22px;background:#FAF3E4;padding:16px 18px',
+          valor: 'font:700 clamp(24px,3vw,32px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#14342A;margin-top:6px'
+        }));
+      })(),
+      listaContacto: ((St.seguirOps && St.seguirOps.lista) || []).map((c) => {
+        const Z = 'America/Caracas';
+        const cuando = (iso) => { const p = iso ? AroReglas.partesDe(iso, Z) : null; return p ? p.dia + ' ' + p.numero + ', ' + p.hora : ''; };
+        const decide = { pendiente: 'sin decidir', confirmado: 'confirmó', no: 'prefirió no' };
+        const lado = (x) => x.nombre + ': ' + (decide[x.estado] || x.estado)
+          + ' · ' + (x.avisadoEn ? 'aviso enviado ' + cuando(x.avisadoEn) : 'aviso sin enviar')
+          + ' · ' + (x.vioEn ? 'lo vio ' + cuando(x.vioEn) : 'no lo ha visto');
+        const vencida = !c.cruzadaEn && (c.cerradaEn || Date.parse(c.cierraEn) <= Date.now());
+        const estado = c.cruzadaEn ? 'SE CRUZARON' : vencida ? 'SIN CRUCE' : 'ABIERTA HASTA EL ' + String((AroReglas.partesDe(c.cierraEn, Z) || {}).numero || '');
+        return {
+          pareja: c.a.nombre + ' y ' + c.b.nombre,
+          cena: [c.sitio, c.cena ? cuando(c.cena) : ''].filter(Boolean).join(' · '),
+          estado: estado,
+          chip: 'display:inline-flex;align-items:center;min-height:24px;padding:0 10px;border-radius:999px;font:700 10.5px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;'
+            + (c.cruzadaEn ? 'background:rgba(27,81,56,.12);color:#1B5138' : vencida ? 'background:rgba(20,52,42,.08);color:#566A5D' : 'background:#F6D9B4;color:#14342A'),
+          ladoA: lado(c.a),
+          ladoB: lado(c.b),
+        };
+      }),
       // ── referidos ───────────────────────────────────────────────────
       esReferidos: esta('referidos'),
       cargandoReferidos: St.referidos === null,

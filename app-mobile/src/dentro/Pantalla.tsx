@@ -36,7 +36,7 @@ export function PantallaDentro(p: { servicio: Servicio; via: M.Via; evento?: str
     // Sin reserva viva no hay nada que celebrar: al Inicio.
     if (!r.datos) return ir.current('/cuenta')
     setD(r.datos)
-    if (!r.datos.pendiente) servicio.marcarVista(r.datos.reservaId)
+    servicio.marcarVista(r.datos.reservaId)
   }, [servicio, p.evento, alEntrar, ir])
 
   useFocusEffect(

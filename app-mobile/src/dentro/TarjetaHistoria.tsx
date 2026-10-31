@@ -119,7 +119,7 @@ export function TarjetaHistoria({ variante, h, ancho }: { variante: number; h: H
           <View style={abs({ left: 130, right: 130, top: 160, bottom: 160 })}>
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: n(16) }}>
               <T f={fuente.textoNegrita} s={24} lh={1} ls={0.18} c={SALVIA}>TENGO PLAN</T>
-              <T f={fuente.titular} s={brunch ? 100 : 128} lh={0.95} ls={-0.03} lineas={1}>{h.plan}</T>
+              <T f={fuente.titular} s={h.plan === 'Cena' ? 128 : 100} lh={0.95} ls={-0.03} lineas={1}>{h.plan}</T>
               <T f={fuente.textoMedia} s={40} lineas={1}>{h.dia}</T>
               <T f={fuente.textoMedia} s={40} lineas={1}>{h.hora}</T>
               <T f={fuente.textoMedia} s={30} c={SALVIA} lineas={1}>{h.zona}</T>

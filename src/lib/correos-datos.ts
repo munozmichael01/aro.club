@@ -14,6 +14,7 @@ import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
 import { situacionDePerfil } from '@/lib/embudo'
 import { codigoDe, cuentaDe, POR_CADA } from '@/lib/referidos'
+import { datosDeCorreo } from '@/lib/contacto'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
@@ -1990,6 +1991,20 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
      * puede haber asistido. Un correo que dice «llevas 2 de 3» cuando ya van
      * tres es peor que uno que tarda.
      */
+    /**
+     * «Seguir en contacto». Los datos los compone `lib/contacto`, la misma
+     * pieza que pinta el panel: lo que dice el correo y lo que ve la persona
+     * al abrir la cena salen del mismo sitio.
+     */
+    case 'contacto_coincidencia':
+    case 'contacto_cruzado':
+    case 'contacto_sin_cruce': {
+      if (!fila.profile_id) return { error: 'sin persona' }
+      const r = await datosDeCorreo(admin, fila.kind, fila.profile_id, p)
+      if ('error' in r) return { error: String(r.error) }
+      return { a, datos: { ...base, ...r } }
+    }
+
     case 'referido_avanza':
     case 'referido_premio': {
       if (!fila.profile_id) return { error: 'sin persona' }

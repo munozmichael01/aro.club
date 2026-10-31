@@ -398,6 +398,178 @@ export type Database = {
         }
         Relationships: []
       }
+      contacto_coincidencias: {
+        Row: {
+          cerrada_en: string | null
+          cierra_en: string
+          creada_en: string
+          cruzada_en: string | null
+          estado_a: string
+          estado_b: string
+          id: string
+          persona_a: string
+          persona_b: string
+          table_id: string
+          visto_a_en: string | null
+          visto_b_en: string | null
+        }
+        Insert: {
+          cerrada_en?: string | null
+          cierra_en: string
+          creada_en?: string
+          cruzada_en?: string | null
+          estado_a?: string
+          estado_b?: string
+          id?: string
+          persona_a: string
+          persona_b: string
+          table_id: string
+          visto_a_en?: string | null
+          visto_b_en?: string | null
+        }
+        Update: {
+          cerrada_en?: string | null
+          cierra_en?: string
+          creada_en?: string
+          cruzada_en?: string | null
+          estado_a?: string
+          estado_b?: string
+          id?: string
+          persona_a?: string
+          persona_b?: string
+          table_id?: string
+          visto_a_en?: string | null
+          visto_b_en?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacto_coincidencias_persona_a_fkey"
+            columns: ["persona_a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacto_coincidencias_persona_a_fkey"
+            columns: ["persona_a"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "contacto_coincidencias_persona_a_fkey"
+            columns: ["persona_a"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "contacto_coincidencias_persona_a_fkey"
+            columns: ["persona_a"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacto_coincidencias_persona_b_fkey"
+            columns: ["persona_b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacto_coincidencias_persona_b_fkey"
+            columns: ["persona_b"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "contacto_coincidencias_persona_b_fkey"
+            columns: ["persona_b"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "contacto_coincidencias_persona_b_fkey"
+            columns: ["persona_b"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacto_coincidencias_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "dinner_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacto_datos: {
+        Row: {
+          actualizado_en: string
+          instagram: string | null
+          profile_id: string
+          table_id: string
+          telefono: string
+          tiktok: string | null
+        }
+        Insert: {
+          actualizado_en?: string
+          instagram?: string | null
+          profile_id: string
+          table_id: string
+          telefono: string
+          tiktok?: string | null
+        }
+        Update: {
+          actualizado_en?: string
+          instagram?: string | null
+          profile_id?: string
+          table_id?: string
+          telefono?: string
+          tiktok?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacto_datos_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacto_datos_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "contacto_datos_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "contacto_datos_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacto_datos_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "dinner_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       correos_entrantes: {
         Row: {
           asunto: string | null
@@ -4226,6 +4398,9 @@ export type Database = {
         | "te_falta_sentarte"
         | "referido_avanza"
         | "referido_premio"
+        | "contacto_coincidencia"
+        | "contacto_cruzado"
+        | "contacto_sin_cruce"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -4480,6 +4655,9 @@ export const Constants = {
         "te_falta_sentarte",
         "referido_avanza",
         "referido_premio",
+        "contacto_coincidencia",
+        "contacto_cruzado",
+        "contacto_sin_cruce",
       ],
       event_format_t: [
         "dinner",

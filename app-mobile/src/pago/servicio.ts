@@ -58,14 +58,15 @@ export function crearServicioPago(api: Api) {
      * rechaza); aquí no, para que este servicio corra también en las pruebas.
      */
     /**
-     * Ya vio «Estás dentro» aquí mismo (cupón o pago confirmado al instante):
-     * se le dice al servidor, para que el Inicio no la vuelva a abrir (31-10).
+     * Ya vio «Estás dentro» aquí mismo (al reportar, con cupón o confirmado al
+     * instante): se le dice al servidor, para que el Inicio no la vuelva a
+     * abrir. Reportar ES estar dentro (Michael, 31-10): no se repite al confirmarse.
      */
     marcarDentro: async (eventoId: string) => {
       try {
         const r = await api.pedir('/estas-dentro?evento=' + encodeURIComponent(eventoId))
         const j = await r.json().catch(() => null)
-        if (r.ok && j?.reserva?.id && !j.reserva.pendiente) await api.pedir('/estas-dentro', json({ reservaId: j.reserva.id }))
+        if (r.ok && j?.reserva?.id) await api.pedir('/estas-dentro', json({ reservaId: j.reserva.id }))
       } catch {
         // Si no se pudo, el Inicio la enseña una vez más: no es grave.
       }

@@ -137,6 +137,22 @@ type Api = {
   tieneMesaCompleta: (formato: string | null | undefined) => boolean
   DE_MANANA: string[]
   esDeManana: (formato: string | null | undefined) => boolean
+  /** «Seguir en contacto»: el texto del flujo entero (entrega seguir-en-contacto). */
+  CONTACTO: {
+    DIAS: number
+    nombres: (lista: string[]) => string
+    hasta: (cierraIso: string, zona?: string) => string
+    quedan: (cierraIso: string, zona?: string, ahora?: number) => string
+    quedanCorto: (cierraIso: string, zona?: string, ahora?: number) => string
+    plazoDeOtra: (nombre: string, cierraIso: string, zona?: string) => string
+    push: {
+      coincidencia: (lista: string[]) => { titulo: string; cuerpo: string }
+      cruzado: (lista: string[] | string) => { titulo: string; cuerpo: string }
+    }
+    A: { telefonoFalta: string }
+    D: { titulo: string; bajada: string; agenda: string }
+    enlaces: { whatsapp: (e164: string) => string; instagram: (u: string) => string; tiktok: (u: string) => string }
+  }
   /** «Estás dentro» y lo que se comparte (entrega estas-dentro). */
   DENTRO: {
     titulo: string
@@ -198,6 +214,8 @@ const api = reglas as Api
 
 /** «Estás dentro», el mismo texto que la pantalla y la app. */
 export const DENTRO = api.DENTRO
+/** «Seguir en contacto», el mismo texto en app, web y correos. */
+export const CONTACTO = api.CONTACTO
 
 export const filtrar = api.filtrar
 export const valido = api.valido

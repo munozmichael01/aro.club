@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { marcasNecesarias } from '@/lib/asistencia'
+import { avisarCoincidencias, crearCoincidencias, reflejarDesmarcas } from '@/lib/contacto'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notaDesdeIndice, notasDelSitio } from '@/lib/encuesta'
 import { createClient } from '@/lib/supabase/server'
@@ -470,6 +471,28 @@ export async function POST(request: Request) {
         console.error('[despues] no se guardó', d.accion, d.mesaId, error)
         return NextResponse.json({ error: 'no se pudo guardar' }, { status: 500 })
       }
+    }
+
+    /**
+     * Y «SEGUIR EN CONTACTO», con lo que acaba de quedar escrito.
+     *
+     * Después de las dos acciones y no solo de `contacto`: marcar a alguien
+     * de ausente le quita la marca de contacto (arriba), y eso también es
+     * dejar de compartir con esa persona.
+     *
+     * Primero lo que dejó de marcar —su E, sin decírselo a nadie— y luego las
+     * coincidencias nuevas, que se avisan a las dos personas. Si dos contestan
+     * en el mismo segundo y ninguna ve la del otro, el repaso del cron la crea.
+     */
+    {
+      const { data: marcadas } = await admin
+        .from('peer_feedback')
+        .select('rated_id')
+        .eq('table_id', d.mesaId)
+        .eq('rater_id', user.id)
+        .eq('signal', 'connect')
+      await reflejarDesmarcas(admin, d.mesaId, user.id, (marcadas ?? []).map((m) => m.rated_id))
+      await avisarCoincidencias(admin, await crearCoincidencias(admin, d.mesaId))
     }
 
 
