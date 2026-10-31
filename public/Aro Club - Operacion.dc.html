@@ -1762,6 +1762,52 @@
       </div>
     </sc-if>
 
+    <!-- Referidos: quién ha traído a quién. A quién invitó cada quien, por
+         nombre, no sale: el miembro lo ve como un número en su perfil y
+         operación no decide nada con eso. -->
+    <sc-if value="{{ esReferidos }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 300ms ease both">
+        <h1 style="{{ h1 }}">Referidos</h1>
+        <p style="{{ bajada }}">Cada persona verificada tiene su código. El descuento es para quien llega; la reserva gratis, para quien lo repartió, cuando tres de los suyos van a su primera cena.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:clamp(24px,3vw,32px)">
+          <sc-for list="{{ totalReferidos }}" as="t" hint-placeholder-count="5">
+            <div style="{{ t.caja }}">
+              <div style="font:500 11px/1.3 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F;text-transform:uppercase">{{ t.etiqueta }}</div>
+              <div style="{{ t.valor }}">{{ t.cifra }}</div>
+              <div style="font:400 12px/1.45 'Inter Tight',sans-serif;color:#566A5D;margin-top:5px;text-wrap:pretty">{{ t.nota }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ cargandoReferidos }}" hint-placeholder-val="{{ true }}">
+          <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:clamp(22px,3vw,30px)">Contando quién ha traído a quién.</div>
+        </sc-if>
+
+        <sc-if value="{{ sinReferidos }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:24px;background:#FFFBF0;padding:clamp(18px,2.4vw,22px);margin-top:clamp(22px,3vw,30px);font:400 15px/1.55 'Inter Tight',sans-serif;color:#456352;text-wrap:pretty">Todavía no hay ningún código. Se crean solos: el primero aparece cuando una persona verificada abre su perfil.</div>
+        </sc-if>
+
+        <sc-if value="{{ hayReferidos }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:24px;background:#FFFBF0;overflow:hidden;margin-top:clamp(22px,3vw,30px)">
+            <sc-for list="{{ listaReferidos }}" as="r" hint-placeholder-count="6">
+              <a href="{{ r.enlace }}" style="{{ r.fila }}">
+                <span style="{{ r.avatar }}">{{ r.inicial }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font:500 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ r.nombre }} · {{ r.codigo }}</span>
+                  <span style="display:block;font:400 12px/1.4 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ r.linea }}</span>
+                </span>
+                <sc-if value="{{ r.hayDebe }}" hint-placeholder-val="{{ false }}">
+                  <span style="flex:0 0 auto;font:600 12px/1 'Inter Tight',sans-serif;color:#8F4515;white-space:nowrap">{{ r.debe }}</span>
+                </sc-if>
+                <span style="{{ r.chip }}">{{ r.avance }}</span>
+              </a>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ esHistorico }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 300ms ease both">
         <h1 style="{{ h1 }}">Historial de mesas</h1>
@@ -2093,6 +2139,7 @@ class Component extends DCLogic {
     paginaGente: null, resultadoGente: null, cuentasGente: {}, atajosGente: {}, empujon: null,
     pruebaGente: null, verPruebaGente: false,
     perfilesGente: 0, leadsGente: null, pidiendoGente: false,
+    referidos: null,
     reembolsos: null, refRee: {}, compRee: {}, pegaRee: {}, pagandoRee: '',
     avisos: null, bajas: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
     // Mover a una persona a mano en la fecha elegida. Vive en Reparto y
@@ -2231,7 +2278,7 @@ class Component extends DCLogic {
     const admin = esAdmin === undefined ? this.state.esAdmin : esAdmin;
     return ['mesas', 'verificaciones', 'pagos', 'reportes', 'avisos', 'fechas', 'locales']
       .concat(admin ? ['equipo'] : [])
-      .concat(['gente', 'historico']);
+      .concat(['gente', 'historico', 'referidos']);
   }
 
   /**
@@ -2260,6 +2307,15 @@ class Component extends DCLogic {
    */
   alEntrarEn(clave) {
     if (clave === 'avisos' && this.state.avisos === null) this.cargarAvisos();
+    // Los referidos, por lo mismo que los avisos: una consulta que cruza
+    // cuatro tablas y que no sirve para nada en Reparto.
+    if (clave === 'referidos' && this.state.referidos === null) this.cargarReferidos();
+  }
+
+  cargarReferidos() {
+    return this.pedir('/api/operacion/referidos',
+      (d) => ({ referidos: d }),
+      { referidos: { lista: [], total: { codigos: 0, conGente: 0, apuntados: 0, asistieron: 0, premios: 0, debiendo: 0 }, porCada: 3 } });
   }
 
   // --- carga -----------------------------------------------------------
@@ -5151,7 +5207,11 @@ class Component extends DCLogic {
       ['Locales', String(locales.length)]
     ].concat(St.esAdmin ? [['Equipo', String(conAcceso)]] : [])
       .concat([['Gente', String(St.totalGente || 0)],
-               ['Historial', String(St.todasHistorico || 0)]]).map((p, i) => {
+               ['Historial', String(St.todasHistorico || 0)],
+               // Los referidos: el contador es cuánta gente ha ENTRADO con un
+               // código, que es lo que dice si esto funciona. Tener código no
+               // es invitar.
+               ['Referidos', String((St.referidos && St.referidos.total.apuntados) || 0)]]).map((p, i) => {
       const on = v === i;
       return {
         nombre: p[0], n: p[1],
@@ -6668,6 +6728,43 @@ class Component extends DCLogic {
       // está eligiendo entre buscar por zona o por local. El filtrado lo hace
       // la ruta; esto solo pinta.
       esHistorico: esta('historico'),
+      // ── referidos ───────────────────────────────────────────────────
+      esReferidos: esta('referidos'),
+      cargandoReferidos: St.referidos === null,
+      hayReferidos: !!(St.referidos && St.referidos.lista.length),
+      sinReferidos: !!(St.referidos && !St.referidos.lista.length),
+      totalReferidos: (() => {
+        const t = (St.referidos && St.referidos.total) || {};
+        return [
+          ['Códigos', String(t.codigos || 0), 'Uno por persona verificada que abrió su perfil'],
+          ['Han traído gente', String(t.conGente || 0), 'Tener código no es invitar'],
+          ['Entraron con un código', String(t.apuntados || 0), 'Altas con `invitado_por`'],
+          ['Ya cenaron', String(t.asistieron || 0), 'Lo que cuenta para el premio'],
+          ['Reservas gratis dadas', String(t.premios || 0), (t.debiendo ? t.debiendo + ' sin dar: míralo' : 'Al día')]
+        ].map((x) => ({
+          etiqueta: x[0], cifra: x[1], nota: x[2],
+          caja: 'border-radius:22px;background:#FAF3E4;padding:16px 18px',
+          valor: 'font:700 clamp(24px,3vw,32px)/1 \'Inter Tight\',sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#14342A;margin-top:6px'
+        }));
+      })(),
+      listaReferidos: ((St.referidos && St.referidos.lista) || []).map((r, i) => ({
+        nombre: r.nombre,
+        codigo: r.codigo,
+        enlace: '/miembro?id=' + r.id + '&desde=referidos',
+        // «4 entraron · 2 ya cenaron», en singular cuando toca.
+        linea: (r.apuntados === 1 ? '1 entró' : r.apuntados + ' entraron')
+          + ' · ' + (r.asistieron === 1 ? '1 ya cenó' : r.asistieron + ' ya cenaron'),
+        avance: r.premios
+          ? (r.premios === 1 ? '1 gratis · ' : r.premios + ' gratis · ') + r.avance + ' de ' + ((St.referidos && St.referidos.porCada) || 3)
+          : r.avance + ' de ' + ((St.referidos && St.referidos.porCada) || 3),
+        // Si le toca una y no se le ha dado. No debería pasar nunca: se ve.
+        debe: r.debiendo ? (r.debiendo === 1 ? 'Le falta 1 gratis' : 'Le faltan ' + r.debiendo) : '',
+        hayDebe: !!r.debiendo,
+        avatar: 'position:relative;overflow:hidden;flex:0 0 auto;width:34px;height:34px;border-radius:999px;background:' + (i % 2 ? '#1B5138' : '#8F4515') + ';color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 14px/1 \'Inter Tight\',sans-serif',
+        inicial: String(r.nombre || '·').charAt(0).toUpperCase(),
+        chip: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;font:600 11px/1 \'Inter Tight\',sans-serif;background:' + (r.asistieron ? 'rgba(27,81,56,.12)' : 'transparent') + ';border:1px solid ' + (r.asistieron ? 'transparent' : 'rgba(20,52,42,.2)') + ';color:' + (r.asistieron ? '#1B5138' : '#33513F'),
+        fila: 'display:flex;align-items:center;gap:12px;padding:13px 18px;min-height:64px;text-decoration:none;border-bottom:1px solid rgba(20,52,42,.09)'
+      })),
       qHistorico: St.qHistorico || '',
       hayQHistorico: !!String(St.qHistorico || '').trim(),
       onQHistorico: (e) => this.buscarHistorico(e.target.value),
