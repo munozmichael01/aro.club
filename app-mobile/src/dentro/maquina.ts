@@ -121,9 +121,9 @@ export function historia(p: Plan, codigo: string | null): Historia | null {
  */
 export function variantesDe(h: Historia): number[] {
   // Drinks y café, mientras Design no les haga las suyas (Michael, 31-10: «no
-  // dejes de mostrar nada»): solo las que no hablan de cenar ni de mesa. La 1
-  // dice «ceno», la 5 «Mesa puesta» y la 8 «dónde es mi cena».
+  // dejes de mostrar nada»): solo las que no hablan de cenar ni de mesa. Las
+  // demás dicen «ceno», «mi cena», «Mesa puesta» o «dónde es mi cena».
   const sinCena = h.plan === 'Drinks' || h.plan === 'Coffee'
-  const todas = sinCena ? [2, 3, 4, 6, 7] : [1, 2, 3, 4, 5, 6, 7, 8]
+  const todas = sinCena ? [2, 4] : [1, 2, 3, 4, 5, 6, 7, 8]
   return h.codigo ? todas : todas.filter((v) => v !== 4)
 }

@@ -95,8 +95,8 @@ test('drinks y café: las tarjetas que no hablan de cenar, hasta que Design haga
   const plan = (formato: string) => ({ empiezaEn: '2099-11-06T23:00:00Z', zonaHoraria: 'America/Caracas', formato, revelaEn: null, zonas: ['Chacao'] })
   const d = M.historia(plan('drinks'), 'ANA7KQ')!
   assert.equal(d.plan, 'Drinks')
-  assert.deepEqual(M.variantesDe(d), [2, 3, 4, 6, 7])
-  assert.deepEqual(M.variantesDe(M.historia(plan('coffee'), null)!), [2, 3, 6, 7])
+  assert.deepEqual(M.variantesDe(d), [2, 4])
+  assert.deepEqual(M.variantesDe(M.historia(plan('coffee'), null)!), [2])
   assert.equal(M.historia(plan('dinner'), null)!.plan, 'Cena')
   assert.equal(M.historia(plan('walk'), null), null)
 })

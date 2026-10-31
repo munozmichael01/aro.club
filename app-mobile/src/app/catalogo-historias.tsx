@@ -21,7 +21,9 @@ function Pantalla() {
   const brunch = q.plan === 'brunch'
   const plan: M.Plan = brunch
     ? { empiezaEn: en(80), revelaEn: en(77), zonaHoraria: 'America/Caracas', formato: 'brunch', zonas: ['Altamira'] }
-    : { empiezaEn: en(56), revelaEn: en(50), zonaHoraria: 'America/Caracas', formato: 'dinner', zonas: ['Chacao', 'Los Palos Grandes'] }
+    : q.plan === 'drinks' || q.plan === 'coffee'
+      ? { empiezaEn: en(56), revelaEn: en(50), zonaHoraria: 'America/Caracas', formato: q.plan, zonas: ['Chacao', 'Los Palos Grandes'] }
+      : { empiezaEn: en(56), revelaEn: en(50), zonaHoraria: 'America/Caracas', formato: 'dinner', zonas: ['Chacao', 'Los Palos Grandes'] }
   const inv = q.codigo === '1' ? { codigo: 'ANDREA7KQ', enlace: 'https://aro.club/i/ANDREA7KQ', pct: 20 } : null
   const h = M.historia(plan, inv?.codigo ?? null)!
   const ancho = Number(q.ancho ?? 270)
