@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { dentroPorVer } from '@/lib/estas-dentro'
 import { cabeEnLaFecha } from '@/lib/edad'
 
 import { respuestasDePerfil, situacionDePerfil } from '@/lib/embudo'
@@ -748,9 +749,15 @@ export async function GET() {
     respuestas: { faltan, total: totalPreguntas },
     creditos,
     reembolso: await bloqueDeReembolso(admin, user.id),
+    /**
+     * La fecha confirmada que aún no vio «Estás dentro», o null. La pantalla
+     * va directo allí ANTES de pintarse (entrega estas-dentro, B3).
+     */
+    estasDentro: await dentroPorVer(admin, user.id),
     reserva: reserva
       ? {
           id: reserva.id,
+          eventoId: reserva.event_id,
           // De qué es: decide si su cuenta dice mesa o grupo, y si la
           // pestaña se llama «Mi mesa» o «Mi grupo».
           formato: evento?.format ?? null,

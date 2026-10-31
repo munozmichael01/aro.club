@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { dentroPorVer } from '@/lib/estas-dentro'
 import { minutosAPie } from '@/lib/distancia'
 import { enlaceApple, enlaceDeMapa } from '@/lib/mapa'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
@@ -360,6 +361,10 @@ export async function GET() {
 
     return NextResponse.json({
       fase: 'cerrada',
+      eventoId: reserva.event_id,
+      // Confirmada y sin haber visto «Estás dentro»: la pantalla va allí
+      // antes de pintarse (entrega estas-dentro, B3).
+      estasDentro: await dentroPorVer(admin, user.id),
       formato: evento.format,
       revelaEn: evento.reveal_at,
       zonaHoraria,

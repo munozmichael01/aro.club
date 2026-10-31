@@ -211,6 +211,7 @@ export type Database = {
           cancelled_at: string | null
           confirmed_at: string | null
           created_at: string
+          dentro_visto_en: string | null
           event_id: string
           held_until: string | null
           hold_until: string | null
@@ -231,6 +232,7 @@ export type Database = {
           cancelled_at?: string | null
           confirmed_at?: string | null
           created_at?: string
+          dentro_visto_en?: string | null
           event_id: string
           held_until?: string | null
           hold_until?: string | null
@@ -251,6 +253,7 @@ export type Database = {
           cancelled_at?: string | null
           confirmed_at?: string | null
           created_at?: string
+          dentro_visto_en?: string | null
           event_id?: string
           held_until?: string | null
           hold_until?: string | null

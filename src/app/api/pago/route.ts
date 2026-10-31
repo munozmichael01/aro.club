@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { comprobanteDe } from '@/lib/comprobante'
+import { reservaDentro } from '@/lib/estas-dentro'
 import { cabeEnLaFecha, MOTIVO_EDAD, porQueNoCabe, tieneEdadMinima } from '@/lib/edad'
 import { z } from 'zod'
 
@@ -188,6 +190,10 @@ export async function GET(request: Request) {
         .maybeSingle()
     : { data: null }
 
+  // La reserva de esta fecha tal como la cuenta «Estás dentro»: su plan, para
+  // el comprobante, y si ya vio la pantalla.
+  const dentroDeEsta = pagoVivo ? await reservaDentro(admin, user.id, evento.id) : null
+
   return NextResponse.json({
     // La zona por nombre. La pantalla la sacaba de un parametro de la URL y,
     // sin el, caia en «Jueves 14 · Las Mercedes» de la maqueta: una fecha y
@@ -291,8 +297,21 @@ export async function GET(request: Request) {
     // dejar llegar hasta el final.
     verificada: !!verificada,
     pago: pagoVivo
-      ? { estado: pagoVivo.status, metodo: pagoVivo.metodo, reportadoEn: pagoVivo.reportado_en }
+      ? {
+          estado: pagoVivo.status,
+          metodo: pagoVivo.metodo,
+          reportadoEn: pagoVivo.reportado_en,
+          // Lo que REPORTÓ: método, tasa congelada e importe. La pantalla lo
+          // armaba con el método elegido ahora —el primero de la lista— y el
+          // precio de hoy; al volver otro día el comprobante mentía.
+          comprobante: dentroDeEsta ? (await comprobanteDe(admin, dentroDeEsta.reservaId, dentroDeEsta.plan))?.filas ?? null : null,
+        }
       : null,
+    /**
+     * Confirmada y sin haber visto «Estás dentro»: la pantalla va allí en
+     * vez de enseñar el «pago confirmado» de siempre (entrega estas-dentro).
+     */
+    estasDentro: dentroDeEsta && !dentroDeEsta.pendiente && !dentroDeEsta.visto && !dentroDeEsta.revelado,
   })
 }
 

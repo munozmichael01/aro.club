@@ -69,6 +69,8 @@ const PANTALLAS: Array<[string, string]> = [
   ['/mi-mesa', '/Aro Club - Mi mesa.dc.html'],
   // Entrega 4 · la transacción y la operación
   ['/pago', '/Aro Club - Pago.dc.html'],
+  // Entrega estas-dentro · después de reservar. La misma URL que la app.
+  ['/estas-dentro', '/Aro Club - Estas dentro.dc.html'],
   ['/cancelar', '/Aro Club - Cancelar.dc.html'],
   // La misma URL que la app: dos caminos distintos para pedir lo mismo es
   // el principio de que digan cosas distintas.
@@ -133,6 +135,8 @@ const nextConfig: NextConfig = {
    */
   outputFileTracingIncludes: {
     '/agenda': ['./public/Aro Club - Agenda.dc.html'],
+    // Las fuentes de las tarjetas para historias, por lo mismo: `readFile` en tiempo de ejecución.
+    '/api/historia': ['./src/lib/historia/fuentes/*.ttf'],
   },
   async redirects() {
     // 308 y no 307: es permanente. Un temporal deja que el buscador siga

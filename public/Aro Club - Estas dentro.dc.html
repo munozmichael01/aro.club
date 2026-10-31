@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Estás dentro · Aro Club</title>
+<meta name="apple-itunes-app" content="app-id=6818022672">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icono-512.png">
+<script src="./errores.js"></script>
+<script src="./gtm.js"></script>
+<script src="./vendor.js"></script>
+<script src="./support.js"></script>
+<script src="./reglas.js"></script>
+<script src="./compartir.js"></script>
+</head>
+<body>
+<noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
+<!--
+  «Estás dentro», después de reservar. Entrega estas-dentro de Design (29-10),
+  la B: la misma pantalla que la app (`app-mobile/src/dentro/EstasDentro.tsx`),
+  en una columna de 440 px como pide la W de la entrega.
+
+  Siempre en verde. Con el pago reportado también —Michael, 29-10: nunca se ha
+  rechazado un pago—, con el sello «Puesto apartado» y sin decir confirmado.
+  Si la confirmación llega con la pantalla abierta, cambia sola.
+
+  Llegan aquí: Pago al reportar o al canjear un código del 100 %, Mi cuenta al
+  reservar con crédito, y Mi cuenta, Mi mesa y Pago la primera vez que se
+  entra con la reserva ya confirmada (B3). Con la reserva confirmada se marca
+  como vista en el servidor, y desde ahí ya no se abre sola.
+
+  Los textos salen de `AroReglas.DENTRO`, los mismos que la app y que las
+  tarjetas para historias.
+-->
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#14342A; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  a { text-decoration:none; }
+  button { font: inherit; }
+  ::selection { background:#E39C63; color:#14342A; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+  @keyframes aro-spin { to { transform: rotate(360deg) } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="position:relative;min-height:100vh;background:#14342A;color:#FAF3E4;font-family:'Inter Tight',system-ui,sans-serif;overflow:hidden">
+  <svg viewBox="0 0 240 240" width="520" height="520" aria-hidden="true" style="position:absolute;right:max(-250px, calc(50% - 470px));top:-120px;opacity:.07;pointer-events:none"><circle cx="120" cy="120" r="86" fill="none" stroke="#9CBBA6" stroke-width="16"></circle></svg>
+
+  <div style="position:relative;max-width:484px;margin:0 auto;padding:max(16px, env(safe-area-inset-top)) 22px calc(40px + env(safe-area-inset-bottom))">
+
+    <sc-if value="{{ cargando }}" hint-placeholder-val="{{ false }}">
+      <div style="min-height:80vh;display:flex;align-items:center;justify-content:center">
+        <div style="width:32px;height:32px;border-radius:50%;border:3px solid rgba(250,243,228,.18);border-top-color:#E39C63;animation:aro-spin 800ms linear infinite"></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
+      <div style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center">
+        <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#C5D8CA;max-width:32ch">{{ fallo }}</div>
+        <button onClick="{{ reintentar }}" style="min-height:48px;padding:0 24px;border-radius:999px;border:1.5px solid rgba(250,243,228,.5);background:transparent;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">Reintentar</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ listo }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:18px;animation:aro-open 420ms ease both">
+        <div style="display:flex;justify-content:flex-end">
+          <a href="/cuenta" aria-label="Cerrar" style="width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;background:rgba(250,243,228,.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+        </div>
+
+        <!-- El isotipo cuenta la historia: tu punto, lleno. -->
+        <svg viewBox="0 0 240 240" width="64" height="64" aria-hidden="true" style="display:block"><circle cx="120" cy="120" r="86" fill="none" stroke="#FAF3E4" stroke-width="20"></circle><circle cx="206" cy="120" r="25" fill="#E39C63"></circle><circle cx="163" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="34" cy="120" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="45.5" r="25" fill="#FAF3E4"></circle><circle cx="163" cy="45.5" r="25" fill="#FAF3E4"></circle></svg>
+
+        <span style="align-self:flex-start;display:inline-flex;align-items:center;min-height:26px;padding:0 11px;border-radius:999px;white-space:nowrap;background:#E39C63;color:#14342A;font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em">{{ v.sello }}</span>
+        <h1 style="margin:0;font:400 52px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em">{{ titulo }}</h1>
+
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font:500 19px/1.3 'Inter Tight',sans-serif">{{ lineaPlan }}</div>
+          <sc-if value="{{ v.zona }}" hint-placeholder-val="{{ true }}">
+            <div style="font:400 15px/1.35 'Inter Tight',sans-serif;color:#9CBBA6">{{ v.zona }}</div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ v.bajada }}" hint-placeholder-val="{{ true }}">
+          <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ v.bajada }}</div>
+        </sc-if>
+
+        <div style="border-radius:20px;background:#1B5138;padding:16px 18px;display:flex;flex-direction:column;gap:7px">
+          <sc-if value="{{ v.seAbre }}" hint-placeholder-val="{{ true }}">
+            <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">{{ v.seAbre }}</div>
+          </sc-if>
+          <div style="font:400 15px/1.45 'Inter Tight',sans-serif;color:#FAF3E4;text-wrap:pretty">{{ v.revela }}</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+          <button onClick="{{ compartir }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;border-radius:999px;border:none;background:#E39C63;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg>{{ textoCompartir }}</button>
+
+          <sc-if value="{{ calNo }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ calendario }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;border-radius:999px;border:none;background:#FAF3E4;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>{{ textoCalendario }}</button>
+          </sc-if>
+          <sc-if value="{{ calSi }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ calendario }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;border-radius:999px;border:1.5px solid rgba(250,243,228,.5);background:transparent;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CBBA6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>{{ textoEnCalendario }}</button>
+          </sc-if>
+
+          <a href="/mesa" style="display:flex;align-items:center;justify-content:center;min-height:44px;font:600 15px/1 'Inter Tight',sans-serif;color:#FAF3E4">{{ textoVerMesa }}</a>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:flex-start;border-top:1px solid rgba(250,243,228,.15);padding-top:14px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CBBA6" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+          <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ v.cancela }}</div>
+        </div>
+
+        <!-- Con un código del 100 %: lo que se consume va aparte (lo mismo que decía Pago). -->
+        <sc-if value="{{ esCupon }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:#FAF3E4;color:#14342A;padding:14px 16px;margin-top:8px">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:999px;background:#8F4515;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:600 12px/1 'Inter Tight',sans-serif;margin-top:1px" aria-hidden="true">!</span>
+            <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ consumo }}</span>
+          </div>
+        </sc-if>
+
+        <!-- Lo que reportó, debajo, como en la app: no se pierde nada de lo que enseñaba Pago. -->
+        <sc-if value="{{ hayComprobante }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:20px;background:#FAF3E4;color:#14342A;padding:18px 18px 12px;margin-top:8px">
+            <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F;margin-bottom:8px">{{ tituloComprobante }}</div>
+            <sc-for list="{{ comprobante }}" as="c" hint-placeholder-count="5">
+              <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:10px 0;border-bottom:1px solid rgba(20,52,42,.12)">
+                <span style="flex:1 1 120px;font:400 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ c.campo }}</span>
+                <span style="{{ c.estilo }}">{{ c.valor }}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ pendiente }}" hint-placeholder-val="{{ false }}">
+              <a href="mailto:hola@aro.club" style="display:flex;align-items:center;justify-content:center;min-height:44px;margin-top:6px;font:600 15px/1 'Inter Tight',sans-serif;color:#14342A">Algo no cuadra</a>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { datos: null, fallo: '', enCalendario: false, via: '' };
+
+  componentDidMount() {
+    let evento = '';
+    let via = '';
+    try {
+      const q = new URLSearchParams(window.location.search);
+      evento = q.get('evento') || '';
+      via = q.get('via') || '';
+    } catch (e) { /* sin query: la próxima reserva */ }
+    this._evento = evento;
+    this.setState({ via });
+    this.cargar();
+
+    // Con el pago en revisión, la confirmación puede llegar con la pantalla
+    // abierta. Se mira al volver a la pestaña y cada veinte segundos mientras
+    // siga pendiente; en cuanto se confirma, cambia sola y se apaga.
+    this._alVolver = () => { if (!document.hidden && this.pendiente()) this.cargar(); };
+    document.addEventListener('visibilitychange', this._alVolver);
+    this._espera = setInterval(() => { if (!document.hidden && this.pendiente()) this.cargar(); }, 20000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this._espera);
+    document.removeEventListener('visibilitychange', this._alVolver);
+  }
+
+  pendiente() {
+    const d = this.state.datos;
+    return !!(d && d.reserva && d.reserva.pendiente);
+  }
+
+  cargar() {
+    fetch('/api/estas-dentro' + (this._evento ? '?evento=' + encodeURIComponent(this._evento) : ''))
+      .then((r) => {
+        if (r.status === 401) {
+          window.location.replace('/entrar?volver=' + encodeURIComponent(location.pathname + location.search));
+          return null;
+        }
+        return r.ok ? r.json() : Promise.reject(new Error('sin datos'));
+      })
+      .then((d) => {
+        if (!d) return;
+        // Sin reserva viva no hay nada que celebrar.
+        if (!d.reserva) { window.location.replace('/cuenta'); return; }
+        const antes = this.state.datos;
+        this.setState({ datos: d, fallo: '' });
+        try {
+          this.setState({ enCalendario: localStorage.getItem('calendario:' + d.reserva.id) === '1' });
+        } catch (e) { /* sin almacenamiento: se queda en «Añadir» */ }
+        // Confirmada: vista. Desde aquí Mi cuenta, Mi mesa y Pago ya no traen.
+        if (!d.reserva.pendiente && !d.reserva.visto && !(antes && antes.reserva && !antes.reserva.pendiente)) {
+          fetch('/api/estas-dentro', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reservaId: d.reserva.id })
+          }).catch(() => { /* si falla, se volverá a abrir una vez más: no es grave */ });
+        }
+      })
+      .catch(() => {
+        // Si ya estaba pintada, un fallo al volver a mirar no la tapa.
+        if (!this.state.datos) this.setState({ fallo: 'No pudimos cargar tu plan. Revisa la conexión y vuelve a intentarlo.' });
+      });
+  }
+
+  /** Cómo se llegó, para el sello. Lo que diga el servidor manda sobre la URL. */
+  viaDe(d) {
+    if (d.reserva.pendiente) return 'reportado';
+    const v = this.state.via;
+    if (v === 'credito' || v === 'cupon') return v;
+    return d.comprobante ? 'confirmado' : 'sinSaber';
+  }
+
+  /**
+   * El calendario. En iPhone, iPad y Mac, el .ics: Safari lo abre con el
+   * «Añadir» del calendario de siempre, y el enlace de Google abriría una web
+   * que pide entrar. En lo demás, Google Calendar con el evento escrito, como
+   * la app.
+   */
+  abrirCalendario() {
+    const d = this.state.datos;
+    if (!d) return;
+    const D = AroReglas.DENTRO;
+    const apple = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+    if (apple) {
+      window.location.href = '/api/calendario?evento=' + encodeURIComponent(d.reserva.eventoId);
+    } else {
+      const utc = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      const inicio = Date.parse(d.plan.empiezaEn);
+      const q = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: D.evento.titulo(D.planDe(d.plan.formato)),
+        dates: utc(inicio) + '/' + utc(inicio + 2 * 3600000),
+        details: D.evento.descripcion(D.cuandoSeSabe(d.plan.revelaEn, d.plan.zonaHoraria)),
+        location: D.zonasEnTexto(d.plan.zonas)
+      });
+      if (d.plan.zonaHoraria) q.set('ctz', d.plan.zonaHoraria);
+      window.open('https://calendar.google.com/calendar/render?' + q.toString(), '_blank', 'noopener');
+    }
+    this.setState({ enCalendario: true });
+    try { localStorage.setItem('calendario:' + d.reserva.id, '1'); } catch (e) { /* sin almacenamiento */ }
+  }
+
+  renderVals() {
+    const S = this.state;
+    const d = S.datos;
+    const D = AroReglas.DENTRO;
+    const vacia = { sello: '', bajada: '', plan: '', dia: '', hora: '', zona: '', seAbre: '', revela: '', cancela: '' };
+    const via = d ? this.viaDe(d) : 'sinSaber';
+    const v = d ? D.vista(d.plan, via) : vacia;
+    const pendiente = !!(d && d.reserva.pendiente);
+    const comprobante = (d && d.comprobante ? d.comprobante.filas : []).map((c) => ({
+      campo: c.campo, valor: c.valor,
+      estilo: 'flex:2 1 160px;font:' + (c.fuerte ? '600' : '500') + ' 15px/1.4 \'Inter Tight\',sans-serif;color:#14342A;font-variant-numeric:tabular-nums'
+    }));
+
+    return {
+      cargando: !d && !S.fallo,
+      hayFallo: !d && !!S.fallo,
+      fallo: S.fallo,
+      listo: !!d,
+      v,
+      titulo: D.titulo,
+      lineaPlan: [v.plan, v.dia, v.hora].filter(Boolean).join(' · '),
+      textoCompartir: D.compartir,
+      textoCalendario: D.calendario.anadir,
+      textoEnCalendario: D.calendario.yaEsta,
+      textoVerMesa: D.verMesa,
+      calSi: !!S.enCalendario,
+      calNo: !S.enCalendario,
+      esCupon: via === 'cupon',
+      consumo: D.consumo,
+      pendiente,
+      hayComprobante: comprobante.length > 0,
+      tituloComprobante: pendiente ? 'LO QUE REPORTASTE' : 'COMPROBANTE',
+      comprobante,
+      compartir: () => { if (d) AroCompartir.abrir({ evento: d.reserva.eventoId }); },
+      calendario: () => this.abrirCalendario(),
+      reintentar: () => { this.setState({ fallo: '' }); this.cargar(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

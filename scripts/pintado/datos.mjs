@@ -114,7 +114,8 @@ export const PANTALLAS = {
       caso: 'cerrada',
       rutas: {
         '/api/mi-mesa': {
-          fase: 'cerrada', formato: 'dinner', revelaEn: en(3), empiezaEn: en(10),
+          fase: 'cerrada', eventoId: '22222222-2222-4222-8222-222222222222', estasDentro: null,
+          formato: 'dinner', revelaEn: en(3), empiezaEn: en(10),
           zonaHoraria: 'America/Caracas', zonas: ['Chacao'], faltanSegundos: 10800,
         },
       },
@@ -274,4 +275,35 @@ export const PANTALLAS = {
     caso: 'pendiente',
     rutas: { '/api/verificacion': { estado: 'pending', nombre: 'Ana', documento: null, selfie: null } },
   }],
+
+  /**
+   * «Estás dentro», en sus dos ramas con datos: recién reportado (sello
+   * «Puesto apartado», con lo que reportó debajo) y confirmado con crédito.
+   */
+  'Aro Club - Estas dentro.dc.html': [
+    {
+      caso: 'reportado',
+      rutas: {
+        '/api/estas-dentro': {
+          reserva: { id: 'r1', eventoId: '22222222-2222-4222-8222-222222222222', pendiente: true, revelado: false, visto: false },
+          plan: { empiezaEn: en(30), revelaEn: en(23), zonaHoraria: 'America/Caracas', formato: 'dinner', zonas: ['Chacao', 'Los Palos Grandes'] },
+          invitar: { codigo: 'ANA7KQ', enlace: 'https://aro.club/i/ANA7KQ', pct: 20 },
+          comprobante: { confirmado: false, filas: [{ campo: 'Método', valor: 'Pago Móvil', fuerte: false }, { campo: 'Reportaste', valor: '1.400,00 Bs · 10,00 ref', fuerte: true }] },
+          variantes: [1, 2, 3, 4, 5, 6, 7, 8],
+        },
+      },
+    },
+    {
+      caso: 'con crédito',
+      rutas: {
+        '/api/estas-dentro': {
+          reserva: { id: 'r1', eventoId: '22222222-2222-4222-8222-222222222222', pendiente: false, revelado: false, visto: true },
+          plan: { empiezaEn: en(30), revelaEn: en(23), zonaHoraria: 'America/Caracas', formato: 'brunch', zonas: ['Chacao'] },
+          invitar: null,
+          comprobante: null,
+          variantes: [1, 2, 3, 5, 6, 7, 8],
+        },
+      },
+    },
+  ],
 }

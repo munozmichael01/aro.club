@@ -137,6 +137,20 @@ type Api = {
   tieneMesaCompleta: (formato: string | null | undefined) => boolean
   DE_MANANA: string[]
   esDeManana: (formato: string | null | undefined) => boolean
+  /** «Estás dentro» y lo que se comparte (entrega estas-dentro). */
+  DENTRO: {
+    titulo: string
+    vias: Record<ViaDentro, { sello: string; bajada: string }>
+    evento: { titulo: (plan: string) => string; descripcion: (cuando: string) => string }
+    mensaje: (inv: { codigo: string; enlace: string; pct: number } | null) => string
+    planDe: (formato: string | null | undefined) => string
+    conTarjetas: (formato: string | null | undefined) => boolean
+    variantes: (conCodigo: boolean) => number[]
+    zonasEnTexto: (z: string[] | null | undefined) => string
+    cuandoSeSabe: (revelaIso: string | null | undefined, zona?: string) => string
+    diaYNumero: (iso: string | null | undefined, zona?: string) => string
+    historia: (plan: PlanDentro, codigo: string | null) => Historia | null
+  }
   horaDe: (iso: string | null | undefined, zona?: string) => string | null
   partesDe: (
     iso: string | null | undefined,
@@ -149,7 +163,41 @@ type Api = {
   } | null
 }
 
+/** Cómo se llegó a «Estás dentro». */
+export type ViaDentro = 'credito' | 'cupon' | 'confirmado' | 'reportado' | 'sinSaber'
+
+/** La fecha de una reserva, con lo que hace falta para contarla. */
+export type PlanDentro = {
+  empiezaEn: string
+  revelaEn: string | null
+  zonaHoraria: string
+  formato: string | null
+  zonas: string[]
+}
+
+/** Lo que lleva la tarjeta para historias (TarjetaHistoria de la entrega). */
+export type Historia = {
+  plan: 'Cena' | 'Brunch'
+  brunch: boolean
+  dia: string
+  diaSemana: string
+  numero: string
+  hora: string
+  zona: string
+  codigo: string | null
+  revela: string
+  revelaNum: string
+  revelaSufijo: string
+  sello: string
+  frase1: string
+  frase3: string
+  frase6: string
+}
+
 const api = reglas as Api
+
+/** «Estás dentro», el mismo texto que la pantalla y la app. */
+export const DENTRO = api.DENTRO
 
 export const filtrar = api.filtrar
 export const valido = api.valido

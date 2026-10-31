@@ -402,40 +402,6 @@
       </div>
     </sc-if>
 
-    <!--
-      El «listo» del cupón es OTRA pantalla, no la del pago.
-
-      La de pagar dice «cuadramos tu pago con el banco» y enseña un
-      comprobante con importes. A quien canjeó un código eso le cuenta una
-      transacción que no ocurrió, y con ceros dentro.
-    -->
-    <sc-if value="{{ esCupon }}" hint-placeholder-val="{{ false }}">
-      <div style="animation:aro-open 420ms ease both">
-        <!--
-          Lo mismo que dice la app, palabra por palabra.
-
-          Un codigo del 100% no aparta un puesto pendiente de nada: lo
-          confirma. La entrega «estas dentro» lo pone con el credito en el
-          mismo renglon —los dos entran al instante— y la app lo arreglo hoy.
-          Con «PUESTO APARTADO · Listo, tu puesto es tuyo» aqui, la misma
-          persona leia una cosa en el telefono y otra en la web.
-        -->
-        <div style="{{ selloListo }}">RESERVA CONFIRMADA</div>
-        <h1 style="{{ h1 }}">Estás dentro.</h1>
-        <p style="{{ bajada }}">Tu código cubre la plaza. No hace falta nada más. {{ seAbreA }} se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
-
-        <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:14px 16px;margin-top:clamp(20px,3vw,26px);max-width:46ch">
-          <span style="{{ iconoAviso }}">!</span>
-          <span style="flex:1;min-width:0;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">Lo que consumas en la mesa va aparte y lo pagas en el restaurante, como en cualquier salida.</span>
-        </div>
-
-        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,32px)">
-          <a href="/cuenta" style="{{ botonPrimario }}">Ir a mi cuenta</a>
-          <a href="/mesa#cerrada" style="{{ botonFantasma }}">Ver mi reserva</a>
-        </div>
-      </div>
-    </sc-if>
-
     <sc-if value="{{ esFallo }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 380ms ease both">
         <div style="{{ selloFallo }}">EL PAGO NO CUADRA</div>
@@ -506,6 +472,14 @@ class Component extends DCLogic {
     fetch('/api/pago?evento=' + encodeURIComponent(this._evento))
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin datos'))))
       .then((d) => {
+        // Confirmada y sin haber visto «Estás dentro»: allí, antes de pintar
+        // nada. Es la primera vez que entra después de confirmarse (B3 de la
+        // entrega estas-dentro), y enseñarle esta pantalla para saltar a la
+        // otra es el redirect raro que Michael vio en la app.
+        if (d.estasDentro) {
+          window.location.replace('/estas-dentro?evento=' + encodeURIComponent(this._evento) + '&via=confirmado');
+          return;
+        }
         // Si ya reporto, no se le vuelve a pedir: se le enseña en que va.
         const fase = d.pago
           ? (d.pago.estado === 'confirmed' ? 5 : (d.pago.estado === 'rejected' ? 6 : 4))
@@ -628,7 +602,9 @@ class Component extends DCLogic {
           });
           return;
         }
-        this.setState({ aplicandoCupon: false, fase: 7 });
+        // El código cubre la plaza: está dentro, al instante (B1 de la
+        // entrega estas-dentro). `replace`: volver atrás no es volver al pago.
+        window.location.replace('/estas-dentro?evento=' + encodeURIComponent(this._evento) + '&via=cupon');
       })
       .catch(() => this.setState({ aplicandoCupon: false, falloCupon: 'No pudimos aplicar el código. Revisa tu conexión.' }));
   }
@@ -673,7 +649,9 @@ class Component extends DCLogic {
           this.setState({ enviando: false, fase: 2, fallo: x.error || 'No pudimos registrar tu pago.' });
           return;
         }
-        this.setState({ enviando: false, fase: x.estado === 'confirmado' ? 5 : 4 });
+        // Reportado: ya está dentro, con el sello «Puesto apartado» mientras se
+        // cuadra (Michael, 29-10). Lo que reportó va debajo, como en la app.
+        window.location.replace('/estas-dentro?evento=' + encodeURIComponent(this._evento) + '&via=' + (x.estado === 'confirmado' ? 'confirmado' : 'reportado'));
       })
       .catch(() => this.setState({ enviando: false, fase: 2, fallo: 'No pudimos registrar tu pago.' }));
   }
@@ -684,8 +662,9 @@ class Component extends DCLogic {
     const S = this.state;
     const f = S.fase;
     // El pago manual no termina en «pagado»: termina en «pendiente de
-    // confirmar». Siete fases, y la etiqueta DEMO que las recorria en la
-    // cabecera se fue: es cromo de maqueta, como los anteriores.
+    // confirmar». Las fases van de 0 a 6 (la del código del 100 % se fue a «Estás
+    // dentro»), y la etiqueta DEMO que las recorria en la cabecera se fue:
+    // es cromo de maqueta, como los anteriores.
 
     const D = S.datos || {};
     const dinero = (n, moneda) => n == null ? '—'
@@ -967,7 +946,14 @@ class Component extends DCLogic {
     const idiomaNombre = (D.evento && D.evento.idiomaNombre) || '';
     const repOk = camposOk && (!capturaObligatoria || conCaptura) && permisoOk && !faltaIdioma;
 
-    const comprobante = [
+    // Con el pago ya reportado, el comprobante es el del SERVIDOR: lo que se
+    // reportó de verdad. Armado aquí salía con el método elegido ahora —el
+    // primero de la lista— y el precio de hoy.
+    const delServidor = D.pago && D.pago.comprobante;
+    const comprobante = delServidor ? delServidor.map((c) => ({
+      campo: c.campo, valor: c.valor,
+      valorEstilo: 'flex:2 1 170px;font:' + (c.fuerte ? '600' : '500') + ' 15px/1.4 \'Inter Tight\',sans-serif;color:#14342A;font-variant-numeric:tabular-nums'
+    })) : [
       [titulos[ev.tipo] || 'Cena', [cuandoEv ? DIAS[cuandoEv.getDay()] + ' ' + cuandoEv.getDate() : null, horaEv].filter(Boolean).join(', '), false],
       ['Zona', (D.evento && D.evento.zona) || 'Se sabe al abrirse', false],
       ['Método', mSel.nombre, false],
@@ -1007,10 +993,6 @@ class Component extends DCLogic {
       esReportar: f === 2 && puedePagar !== false && !cerrada,
       esEnviando: f === 3,
       esPendiente: f === 4, esListo: f === 5, esFallo: f === 6,
-      // 7 y no un estado aparte: la pantalla ya lleva las fases en un número
-      // y meter una bandera en paralelo es la forma de que un día se
-      // enciendan dos a la vez.
-      esCupon: f === 7,
       cuponPlegado: !this.state.cuponAbierto,
       cuponAbierto: !!this.state.cuponAbierto,
       cupon: this.state.cupon,

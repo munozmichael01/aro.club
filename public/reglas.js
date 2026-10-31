@@ -2180,6 +2180,192 @@
     },
 
     /**
+     * «ESTÁS DENTRO»: lo que se dice después de reservar, y lo que se comparte.
+     *
+     * Entrega estas-dentro de Design (29-10). Lo estrenó la app en
+     * `app-mobile/src/texto/dentro.ts`; sube aquí el 31-10 porque la web lo
+     * necesita igual, y el servidor también: las tarjetas para historias las
+     * pinta `/api/historia`, y una frase escrita en tres sitios es una frase
+     * que dice tres cosas en cuanto alguien toque una.
+     *
+     * Siempre es la B de la entrega, en verde. Al reportar el pago también
+     * (Michael, 29-10: nunca se ha rechazado un pago y, si algo falla, escribe
+     * él), con el sello «Puesto apartado» y sin decir «confirmado», que
+     * todavía no lo es.
+     */
+    DENTRO: {
+      titulo: 'Estás dentro.',
+      /** El sello y la bajada, según cómo se llegó. */
+      vias: {
+        credito: { sello: 'RESERVA CONFIRMADA', bajada: 'Pagaste con crédito. No hace falta nada más.' },
+        cupon: { sello: 'RESERVA CONFIRMADA', bajada: 'Tu código cubre la plaza. No hace falta nada más.' },
+        confirmado: { sello: 'PAGO CONFIRMADO', bajada: 'Cuadramos tu pago con el banco. Te mandamos el comprobante por correo.' },
+        reportado: { sello: 'PUESTO APARTADO', bajada: 'Reportaste tu pago. Lo cuadramos con el banco y, si algo no cuadra, te escribimos.' },
+        // La primera vez que entra después de confirmarse: no sabemos cómo pagó.
+        sinSaber: { sello: 'RESERVA CONFIRMADA', bajada: '' },
+      },
+      compartir: 'Compartir mi plan',
+      calendario: { anadir: 'Añadir al calendario', yaEsta: 'Ya está en tu calendario' },
+      verMesa: 'Ver mi mesa',
+      /** Lo que se consume va aparte: con un código del 100 % es lo único que queda por decir. */
+      consumo: 'Lo que consumas en la mesa va aparte y lo pagas en el restaurante, como en cualquier salida.',
+
+      /** Qué se abre en la revelación, según haya mesa o grupo (V de la entrega). */
+      revela: function (esMesa) {
+        return esMesa
+          ? 'Se abre todo: el sitio, la dirección, tu número de mesa y quiénes van.'
+          : 'Se abre todo: el punto de encuentro y quiénes van.'
+      },
+      cancela: function (esMesa) {
+        return 'Cancelas con más de ' + api.HORAS_DE_MARGEN + ' horas y recuperas el crédito completo. Con menos, se pierde: '
+          + (esMesa ? 'la mesa ya está armada' : 'el grupo ya está armado') + '.'
+      },
+
+      /** El evento de calendario (HANDOFF de la entrega): «Aro Club · Cena». */
+      evento: {
+        titulo: function (plan) { return 'Aro Club · ' + plan },
+        // «a las 6:00 p.m.» ya trae su punto: sin mirarlo salía «p.m..».
+        descripcion: function (cuando) { return 'El sitio se abre ' + cuando + (/\.$/.test(cuando) ? '' : '.') + ' Los detalles están en Mi mesa.' },
+      },
+
+      /**
+       * Lo que acompaña al compartir (REFERIDOS.md, aprobado por Michael el
+       * 29-10). Con código, el enlace es el que arma el servidor; sin él, la
+       * frase del código no va.
+       */
+      mensaje: function (inv) {
+        var base = 'Estoy en Aro Club: cenas con gente que no conoces, en grupos pequeños y todos verificados. El sitio lo eligen ellos'
+        return inv && inv.codigo && inv.enlace
+          ? base + '. Con mi código ' + inv.codigo + ' tu primera fecha tiene un ' + (inv.pct || 20) + '% de descuento: ' + inv.enlace
+          : base + ': https://aro.club'
+      },
+
+      /** La hoja «Comparte tu plan» (C1 de «Compartir mi plan»). */
+      hoja: {
+        titulo: 'Comparte tu plan',
+        bajada: function (conCodigo) { return conCodigo ? 'Elige una. Tu código va dentro.' : 'Elige una.' },
+        etiqueta: ['Etiqueta a ', '@aroclub', ' en tu historia.'],
+        // En la web: Instagram no recibe historias desde el navegador (W de la entrega).
+        descargar: 'Descargar imagen',
+        whatsapp: 'WhatsApp',
+        copiar: 'Copiar enlace',
+        copiado: 'Copiado',
+        mas: 'Más',
+        tarjeta: function (n, de) { return 'Tarjeta ' + n + ' de ' + de },
+        fallo: 'No pudimos preparar la imagen. Vuelve a intentarlo.',
+      },
+
+      /** La fila de Mi mesa (C2), hasta que se abre la mesa. */
+      fila: {
+        titulo: 'Compartir mi plan',
+        bajada: function (conCodigo) { return conCodigo ? 'Una tarjeta para tus historias, con tu código.' : 'Una tarjeta para tus historias.' },
+      },
+
+      /** «Cena», «Brunch», «Drinks»: el plan en singular, por su familia. */
+      planDe: function (formato) {
+        var f = api.familiaDe(formato).clave
+        return { cenas: 'Cena', brunch: 'Brunch', drinks: 'Drinks', movimiento: 'Movimiento', coffee: 'Coffee' }[f] || 'Cena'
+      },
+
+      /**
+       * Si hay tarjetas para historias. Solo de cena y de brunch: su copy
+       * habla de cenar, de mesa y de silla. Los demás comparten el mensaje.
+       */
+      conTarjetas: function (formato) {
+        var f = api.familiaDe(formato).clave
+        return f === 'cenas' || f === 'brunch'
+      },
+
+      /** La 4 («Hay una silla para ti») es entera el código: sin él, no sale. */
+      variantes: function (conCodigo) {
+        return conCodigo ? [1, 2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 5, 6, 7, 8]
+      },
+
+      /** «Chacao», «Chacao o Los Palos Grandes», «Chacao, Altamira o Los Palos Grandes». */
+      zonasEnTexto: function (z) {
+        if (!z || !z.length) return ''
+        if (z.length === 1) return z[0]
+        return z.slice(0, -1).join(', ') + ' o ' + z[z.length - 1]
+      },
+
+      /** «Viernes 30», en la zona de la fecha. */
+      diaYNumero: function (iso, zona) {
+        var p = api.partesDe(iso, zona)
+        return p ? p.dia.charAt(0).toUpperCase() + p.dia.slice(1) + ' ' + p.numero : ''
+      },
+
+      /** «el viernes a mediodía», «el domingo a las 8:00 a.m.»: cuándo se sabe el sitio. */
+      cuandoSeSabe: function (revelaIso, zona) {
+        var dia = api.diaDe(revelaIso, zona)
+        var hora = api.horaDe(revelaIso, zona)
+        if (!dia) return 'cuando se abra la mesa'
+        if (!hora) return 'el ' + dia
+        return /^12:00\s*p\.m\./i.test(hora) ? 'el ' + dia + ' a mediodía' : 'el ' + dia + ' a las ' + hora
+      },
+
+      /**
+       * Todo lo que pinta la pantalla, de una fecha y de cómo se llegó.
+       * `plan`: { empiezaEn, revelaEn, zonaHoraria, formato, zonas }.
+       */
+      vista: function (plan, via) {
+        var D = api.DENTRO
+        var z = plan.zonaHoraria
+        var esMesa = api.vozDe(plan.formato || 'dinner').unidad !== 'grupo'
+        var v = D.vias[via] || D.vias.sinSaber
+        return {
+          sello: v.sello,
+          bajada: v.bajada,
+          plan: D.planDe(plan.formato),
+          dia: D.diaYNumero(plan.empiezaEn, z),
+          hora: api.horaDe(plan.empiezaEn, z) || '',
+          zona: D.zonasEnTexto(plan.zonas),
+          // «EL VIERNES A MEDIODÍA»: la misma frase que el resto, en mayúsculas.
+          seAbre: plan.revelaEn ? D.cuandoSeSabe(plan.revelaEn, z).toUpperCase() : '',
+          revela: D.revela(esMesa),
+          cancela: D.cancela(esMesa),
+        }
+      },
+
+      /**
+       * Lo que lleva la tarjeta para historias (TarjetaHistoria de la
+       * entrega): plan, día, hora, zona, código, aro.club y @aroclub. Nunca el
+       * restaurante ni cuántas personas. Null si el plan no tiene tarjetas.
+       */
+      historia: function (plan, codigo) {
+        var D = api.DENTRO
+        if (!D.conTarjetas(plan.formato)) return null
+        var z = plan.zonaHoraria
+        var brunch = api.familiaDe(plan.formato).clave === 'brunch'
+        var nombre = brunch ? 'Brunch' : 'Cena'
+        var dia = D.diaYNumero(plan.empiezaEn, z)
+        var partes = dia.split(' ')
+        var dd = (partes[0] || '').toLowerCase()
+        var hora = api.horaDe(plan.empiezaEn, z) || ''
+        var r = plan.revelaEn ? api.partesDe(plan.revelaEn, z) : null
+        var mediodia = !!r && r.horas === 12 && r.minutos === 0
+        var zona = D.zonasEnTexto(plan.zonas)
+        return {
+          plan: nombre,
+          brunch: brunch,
+          dia: dia,
+          diaSemana: partes[0] || '',
+          numero: partes[1] || '',
+          hora: hora,
+          zona: zona,
+          codigo: codigo || null,
+          // La hora de la revelación como la escribe la maqueta: «12:00 m.», «8:00 a.m.».
+          revela: r ? (mediodia ? '12:00 m.' : r.hora) : '',
+          revelaNum: r && r.hora ? r.hora.split(' ')[0] : '',
+          revelaSufijo: !r ? '' : mediodia ? 'MEDIODÍA' : r.horas < 12 ? 'A.M.' : 'P.M.',
+          sello: (nombre + ' · ' + dia + ' · ' + hora).toUpperCase(),
+          frase1: brunch ? 'El ' + dd + ' voy de brunch con gente que no conozco.' : 'El ' + dd + ' ceno con gente que no conozco.',
+          frase3: brunch ? 'Lo que sé de mi brunch.' : 'Lo que sé de mi cena.',
+          frase6: brunch ? 'Mi brunch del ' + dd + ' viene en sobre cerrado.' : 'Mi cena del ' + dd + ' viene en sobre cerrado.',
+        }
+      },
+    },
+
+    /**
      * Por debajo de esto no se enseña el número de apuntados.
      *
      * «0 apuntados · faltan 6 para la primera mesa» es verdad y desanima:

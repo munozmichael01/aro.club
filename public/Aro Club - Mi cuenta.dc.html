@@ -820,7 +820,17 @@ class Component extends DCLogic {
     // sobre en qué punto está la misma persona.
     fetch('/api/mi-cuenta')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
-      .then((datos) => this.setState({ datos: datos }))
+      .then((datos) => {
+        // Confirmada y sin haber visto «Estás dentro»: allí, ANTES de pintar
+        // esta pantalla (B3 de la entrega estas-dentro). Solo al entrar: si
+        // la confirmación llega con la pantalla abierta, saltar de una a otra
+        // es el redirect raro que Michael vio en la app.
+        if (datos && datos.estasDentro) {
+          window.location.replace('/estas-dentro?evento=' + encodeURIComponent(datos.estasDentro));
+          return;
+        }
+        this.setState({ datos: datos });
+      })
       // Se va al login DICIENDO a donde ibas. Sin eso, quien llega desde el
       // correo —«Ver mi reserva»— aterriza en el login y ahi se acaba el
       // camino: entra, y el login le manda a donde el servidor decida, que
@@ -1780,9 +1790,9 @@ class Component extends DCLogic {
                 this.setState({ reservandoYa: false, falloReserva: x.error || 'No pudimos apuntarte.' });
                 return;
               }
-              this.setState({ reservandoYa: false, reservando: null });
-              // Se relee: el estado de la cuenta cambia con la reserva.
-              fetch('/api/mi-cuenta').then((r) => r.json()).then((d2) => this.setState({ datos: d2 }));
+              // Con crédito ya está dentro, al instante (B1 de la entrega
+              // estas-dentro): la celebración, el calendario y compartir.
+              window.location.href = '/estas-dentro?evento=' + encodeURIComponent(c[5]) + '&via=credito';
             })
             .catch(() => this.setState({ reservandoYa: false, falloReserva: 'No pudimos apuntarte.' }));
         }
@@ -1923,8 +1933,8 @@ class Component extends DCLogic {
           .then(({ ok, x }) => {
             this.setState({ guardandoIdioma: false, idiomaQueFalta: null, eventoDelIdioma: null });
             if (!ok) { this.setState({ falloReserva: x.error || 'No pudimos apuntarte.' }); return; }
-            this.setState({ reservando: null });
-            fetch('/api/mi-cuenta').then((r) => r.json()).then((d2) => this.setState({ datos: d2 }));
+            // La misma reserva con crédito de arriba: dentro, al instante.
+            window.location.href = '/estas-dentro?evento=' + encodeURIComponent(evento) + '&via=credito';
           })
           .catch(() => this.setState({ guardandoIdioma: false, falloReserva: 'No pudimos guardarlo. Inténtalo otra vez.' }));
       },
