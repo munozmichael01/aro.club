@@ -49,14 +49,28 @@ function hoyALas(hhmm) {
   return new Date(hoy + CARACAS * 3600e3)
 }
 
-const { data: cola, error } = await admin
-  .from('scheduled_emails')
-  .select('id, kind, email, profile_id, event_id, send_at')
-  .eq('kind', 'abrimos_zona')
-  .is('sent_at', null)
-  .order('send_at')
+/**
+ * De mil en mil, que es lo que devuelve PostgREST.
+ *
+ * Sin esto la cuenta se queda clavada en 1000 y —peor— se moverían solo
+ * mil: el resto saldría a su hora original y el aviso de una apertura
+ * llegaría en dos tandas distintas. Un envío a medio club pasa de mil
+ * filas con facilidad; este empezó con mil cuatrocientas.
+ */
+const cola = []
+for (let desde = 0; ; desde += 1000) {
+  const { data, error } = await admin
+    .from('scheduled_emails')
+    .select('id, kind, email, profile_id, event_id, send_at')
+    .eq('kind', 'abrimos_zona')
+    .is('sent_at', null)
+    .order('id')
+    .range(desde, desde + 999)
 
-if (error) { console.log('No se pudo leer la cola: ' + error.message); process.exit(1) }
+  if (error) { console.log('No se pudo leer la cola: ' + error.message); process.exit(1) }
+  cola.push(...data)
+  if (data.length < 1000) break
+}
 if (!cola.length) { console.log('No hay ningún «abrimos zona» en cola sin enviar.'); process.exit(0) }
 
 const porHora = {}
