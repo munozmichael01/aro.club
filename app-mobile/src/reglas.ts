@@ -237,6 +237,17 @@ type Contacto = {
     vacia: { titulo: string; bajada: string; boton: string }
     misCenas: (n: number) => string
   }
+  cena: {
+    pestanas: { proxima: string; pasadas: string }
+    seguir: string
+    conQuien: string
+    verAgenda: string
+    encuesta: { titulo: string; bajada: string }
+    encuestaProxima: { titulo: (dia: string) => string; bajada: string }
+    contar: string
+    contada: { titulo: string; cuando: (iso: string | null | undefined, zona?: string | null) => string; ver: string }
+    mesa: (n: number | null | undefined) => string
+  }
   enlaces: { whatsapp: (e164: string) => string; instagram: (u: string) => string; tiktok: (u: string) => string }
 }
 

@@ -8,9 +8,11 @@ import * as MM from '../mesa/maquina'
 import { Pasada } from '../mesa/MiMesa'
 import type { crearServicioMesa } from '../mesa/servicio'
 import * as F from '../texto/fechas'
-import * as T from '../texto/pasadas'
+import { reglas } from '../reglas'
 import * as M from './maquina'
 import type { crearServicioPasadas } from './servicio'
+
+const T = reglas.CONTACTO.cena
 
 type ServicioPasadas = ReturnType<typeof crearServicioPasadas>
 type ServicioMesa = ReturnType<typeof crearServicioMesa>
@@ -100,14 +102,13 @@ export function CenaPasada(p: {
   const otros = MM.otros(mesa)
   const dia = F.diaMinusculaYNumero(mesa.empiezaEn, mesa.zonaHoraria)
   const conCoincidencia = !!contacto?.personas.length
-  const contada = p.contadaEn ? F.diaMinusculaYNumero(p.contadaEn, mesa.zonaHoraria) : null
 
   return (
     <View style={{ gap: 14 }}>
       {p.alVolver ? (
         <Pressable onPress={p.alVolver} accessibilityRole="link" style={e.volver}>
           <IconoAtras tam={18} color={color.verdeProfundo} />
-          <Texto style={[e.semi, { fontSize: 15 }]}>{T.volver}</Texto>
+          <Texto style={[e.semi, { fontSize: 15 }]}>{T.pestanas.pasadas}</Texto>
         </Pressable>
       ) : null}
 
@@ -119,7 +120,7 @@ export function CenaPasada(p: {
 
       {conCoincidencia && contacto ? (
         <View style={{ gap: 8 }}>
-          <Texto style={[e.etiqueta, { color: color.secundario, paddingHorizontal: 4 }]}>{T.seguirEnContacto}</Texto>
+          <Texto style={[e.etiqueta, { color: color.secundario, paddingHorizontal: 4 }]}>{T.seguir}</Texto>
           <View style={e.panel}>
             <PanelContacto
               d={contacto}
@@ -138,7 +139,7 @@ export function CenaPasada(p: {
       ) : null}
 
       {/* P3: en Próxima sin reserva, la encuesta va antes de con quién (como hoy). */}
-      {p.enProxima && !contado ? <Encuesta titulo={dia ? T.encuesta.tituloDia(dia.dia) : T.encuesta.titulo} bajada={T.encuesta.bajadaProxima} abierta={encuestaAbierta} alAbrir={() => setEncuestaAbierta(true)} /> : null}
+      {p.enProxima && !contado ? <Encuesta titulo={dia ? T.encuestaProxima.titulo(dia.dia) : T.encuesta.titulo} bajada={T.encuestaProxima.bajada} abierta={encuestaAbierta} alAbrir={() => setEncuestaAbierta(true)} /> : null}
 
       {otros.length ? (
         <View style={{ gap: 8 }}>
@@ -160,10 +161,10 @@ export function CenaPasada(p: {
         <Pressable onPress={() => setEncuestaAbierta(true)} accessibilityRole="button" style={e.yaConto}>
           <IconoCheck tam={18} color={color.verdeProfundo} />
           <View style={{ flex: 1, gap: 2 }}>
-            <Texto style={[e.semi, { fontSize: 14.5, lineHeight: 19 }]}>{T.encuesta.ya}</Texto>
-            <Texto style={{ fontSize: 13, lineHeight: 17, color: color.cuerpo }}>{T.encuesta.gracias(contada ? `El ${contada.dia} ${contada.numero}` : '')}</Texto>
+            <Texto style={[e.semi, { fontSize: 14.5, lineHeight: 19 }]}>{T.contada.titulo}</Texto>
+            <Texto style={{ fontSize: 13, lineHeight: 17, color: color.cuerpo }}>{T.contada.cuando(p.contadaEn, mesa.zonaHoraria)}</Texto>
           </View>
-          <Texto style={[e.semi, { fontSize: 14.5 }]}>{T.encuesta.ver}</Texto>
+          <Texto style={[e.semi, { fontSize: 14.5 }]}>{T.contada.ver}</Texto>
         </Pressable>
       ) : null}
 
@@ -191,7 +192,7 @@ function Encuesta(p: { titulo: string; bajada: string; abierta: boolean; alAbrir
       <Texto style={{ fontFamily: fuente.titular, fontSize: 24, lineHeight: 35, color: color.crema }}>{p.titulo}</Texto>
       <Texto style={{ fontSize: 14, lineHeight: 20, color: '#F6D9B4' }}>{p.bajada}</Texto>
       <Pressable onPress={p.alAbrir} accessibilityRole="button" style={e.botonClaro}>
-        <Texto style={[e.semi, { fontSize: 16 }]}>{T.encuesta.boton}</Texto>
+        <Texto style={[e.semi, { fontSize: 16 }]}>{T.contar}</Texto>
       </Pressable>
     </View>
   )

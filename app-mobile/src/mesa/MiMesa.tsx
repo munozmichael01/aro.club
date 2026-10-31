@@ -28,7 +28,6 @@ import { ListaPasadas, Punto } from '../pasadas/Lista'
 import * as PM from '../pasadas/maquina'
 import { ponerSenal, useSenal } from '../pasadas/senal'
 import type { crearServicioPasadas } from '../pasadas/servicio'
-import * as TP from '../texto/pasadas'
 
 type Servicio = ReturnType<typeof crearServicioMesa>
 type ServicioPasadas = ReturnType<typeof crearServicioPasadas>
@@ -182,7 +181,7 @@ export function MiMesa(p: {
           const on = pestana === k
           return (
             <Pressable key={k} onPress={() => setPestana(k)} accessibilityRole="tab" aria-selected={on} style={[estilos.pestana, on ? { backgroundColor: color.verdeProfundo } : null]}>
-              <Texto style={{ fontFamily: fuente.textoSemi, fontSize: 15, color: on ? color.crema : color.verdeProfundo }}>{TP.pestanas[k]}</Texto>
+              <Texto style={{ fontFamily: fuente.textoSemi, fontSize: 15, color: on ? color.crema : color.verdeProfundo }}>{reglas.CONTACTO.cena.pestanas[k]}</Texto>
               {k === 'pasadas' && senal ? <Punto /> : null}
             </Pressable>
           )

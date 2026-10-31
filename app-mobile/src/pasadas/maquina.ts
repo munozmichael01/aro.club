@@ -85,6 +85,6 @@ export function cabeceraDe(p: { empiezaEn: string | null; zonaHoraria: string | 
   return {
     sello: [f.cabecera, plan(p.formato).toUpperCase()].filter(Boolean).join(' · '),
     sitio: p.sitio ?? '',
-    sub: [p.zona, hora, p.numeroMesa ? `Mesa ${String(p.numeroMesa).padStart(2, '0')}` : null].filter(Boolean).join(' · '),
+    sub: [p.zona, hora, C.cena.mesa(p.numeroMesa)].filter(Boolean).join(' · '),
   }
 }
