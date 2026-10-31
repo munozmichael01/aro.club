@@ -12,6 +12,7 @@
  *   node scripts/abrir-fechas.mjs aplicar
  *   node scripts/abrir-fechas.mjs --dias=2026-11-05,2026-11-06 aplicar
  *   node scripts/abrir-fechas.mjs --hora=20:00 --precio=12 aplicar
+ *   node scripts/abrir-fechas.mjs --formato=drinks --local="Vista Bar" aplicar
  *
  * Por defecto abre, para cada día, DOS cenas: una de hasta 44 en Chacao y
  * Los Palos Grandes y otra de +45 en Los Naranjos y El Hatillo, que es lo
@@ -61,6 +62,15 @@ const dias = bandera('dias', '2026-11-05,2026-11-06,2026-11-07').split(',').map(
 const [horaN, minN] = bandera('hora', '19:00').split(':').map(Number)
 const precio = Number(bandera('precio', '10'))
 const porMesa = Number(bandera('mesa', '6'))
+const formato = bandera('formato', 'dinner')
+/**
+ * El local, por su nombre, si ya se sabe.
+ *
+ * Normalmente se deja para antes de publicar —elegirlo al abrir es elegirlo
+ * a ciegas— pero cuando la fecha ES el sitio, como unos drinks en un bar
+ * concreto, ponerlo desde el principio ahorra el paso.
+ */
+const local = bandera('local', '')
 
 /** `-44:zona,zona|45+:zona,zona|todos:zona` */
 const planes = bandera('planes', '-44:chacao,palos-grandes|45+:naranjos,hatillo')
@@ -93,6 +103,28 @@ for (const p of planes) {
   }
 }
 
+let localId = null
+if (local) {
+  const { data: sitios } = await admin
+    .from('restaurants')
+    .select('id, name, zone_slug, formats, deactivated_at')
+    .ilike('name', '%' + local + '%')
+
+  const vivos = (sitios ?? []).filter((x) => !x.deactivated_at)
+  if (vivos.length !== 1) {
+    console.log('«' + local + '» cuadra con ' + vivos.length + ' sitios activos'
+      + (vivos.length ? ': ' + vivos.map((x) => x.name).join(', ') : '') + '.')
+    process.exit(1)
+  }
+  localId = vivos[0].id
+  // Que el sitio HAGA ese formato: publicar en uno que no lo hace se niega
+  // después, cuando ya hay gente apuntada.
+  if (!((vivos[0].formats ?? []).includes(formato))) {
+    console.log('OJO: «' + vivos[0].name + '» no tiene el formato «' + formato + '» marcado.')
+    console.log('Se abre igual, pero no se podrá publicar la mesa hasta que lo tenga.')
+  }
+}
+
 const abiertas = []
 for (const dia of dias) {
   for (const plan of planes) {
@@ -107,14 +139,14 @@ for (const dia of dias) {
       continue
     }
 
-    console.log(car(empieza.toISOString()), '· cena ·', plan.etiqueta.padEnd(6),
+    console.log(car(empieza.toISOString()), '·', formato.padEnd(7), '·', plan.etiqueta.padEnd(6),
       '· cierra', car(cierra.toISOString()), '· revela', car(revela.toISOString()),
       '·', plan.zonas.join(', '))
 
     if (!aplicar) continue
 
     const { data: evento, error } = await admin.from('events').insert({
-      format: 'dinner',
+      format: formato,
       starts_at: empieza.toISOString(),
       booking_closes_at: cierra.toISOString(),
       reveal_at: revela.toISOString(),
@@ -130,7 +162,7 @@ for (const dia of dias) {
     if (error) { console.log('  ERROR: ' + error.message); continue }
 
     const { error: eZonas } = await admin.from('event_venues').insert(
-      plan.zonas.map((z) => ({ event_id: evento.id, zone_slug: z, restaurant_id: null, max_tables: null })),
+      plan.zonas.map((z) => ({ event_id: evento.id, zone_slug: z, restaurant_id: localId, max_tables: null })),
     )
     // Sin zonas es un evento al que nadie puede apuntarse: se deshace, como
     // hace la ruta.

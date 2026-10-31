@@ -239,3 +239,35 @@ drinks sí valen tal cual.
 **Por qué espera.** Hasta que no haya una fecha de drinks hecha, nadie
 recibe esa encuesta. No es un fallo que esté corriendo: es uno que empieza a
 correr el día que se abra el formato.
+
+---
+
+## 9 · La portada: el sello «PRÓXIMAMENTE» y el titular de los planes
+
+**Michael, 31-10, el día que se abrieron los primeros drinks.** Lo apuntó
+para después a propósito: lo urgente era hablarle a quien ya marcó ese
+interés, y la portada es para quien todavía no ha entrado.
+
+**El problema.** En `public/Aro Club - Landing v4.dc.html`, la sección de
+planes pinta cuatro polaroids —Cenas, Drinks, En movimiento, Coffee— y el
+sello de «PRÓXIMAMENTE» sale de un booleano escrito a mano en `planDefs`.
+El día que se abrió Drinks, la portada siguió diciendo que estaba por venir.
+
+Y el titular de esa sección dice «Hoy son cenas. Después, lo que pida la
+gente», que deja de ser verdad en cuanto hay otra cosa abierta.
+
+**Lo que hay que hacer.** Que el sello salga de si ESE formato tiene alguna
+fecha abierta, no de una lista a mano: una llamada pública que devuelva las
+familias con fecha abierta, y la portada pinta el sello a partir de eso. Así
+se le cae solo el día que se abre y vuelve el día que no queda ninguna.
+
+Y el titular, uno que sea verdad en los dos casos. Michael aprobó:
+**«Cenas cada semana. Y lo que pida la gente.»**
+
+**Por qué espera.** No rompe nada hoy: Drinks ya sale en la agenda y en el
+correo de apertura, que es por donde se enteran los que ya están dentro. Lo
+que se pierde mientras tanto es a quien llega de fuera y no sabe que el club
+es más que cenas.
+
+Es el mismo animal que el «Si no te sirve el 21» del correo de apertura: un
+dato escrito a mano que envejece solo mientras lo de al lado se actualiza.
