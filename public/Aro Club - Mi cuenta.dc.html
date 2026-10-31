@@ -1665,9 +1665,12 @@ class Component extends DCLogic {
         tocarPermiso: () => this.setState({ permiteGrabacion: !this.state.permiteGrabacion }),
         // Abre «Cómo funciona» con el formato y las horas de ESTA fecha.
         verComo: () => this.abrirComo(c[15], c[12], c[16]),
-        // Drinks todavía no tiene sus tres tarjetas: hasta que las tenga, la
-        // fila no se enseña en vez de contar una cena.
-        hayComo: c[15] !== 'drinks',
+        // Drinks y café todavía no tienen sus tres tarjetas: hasta que las
+        // tengan, la fila no se enseña en vez de contar una cena. El café
+        // cae en el mismo agujero que los drinks —`tipoDe` manda a «cena»
+        // todo lo que no sea brunch ni movimiento— y en la app eso además
+        // cerraba la aplicación.
+        hayComo: c[15] !== 'drinks' && c[15] !== 'coffee',
 
         textoConfirmar: this.state.reservandoYa
           ? 'Apuntándote'
