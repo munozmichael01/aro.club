@@ -41,9 +41,19 @@
  * formato no está aquí, la cena es la hora por defecto.
  */
 export const HORA_DE: Record<string, string> = {
-  // Las cenas, a las 7:30 (Michael, 06-10). Con minutos: la hora de una cena
-  // la manda el sitio, y media hora importa.
-  dinner: '19:30', foodie_dinner: '19:30', women_dinner: '19:30',
+  /**
+   * Las cenas, a las 7:00 (Michael, 31-10).
+   *
+   * Eran las 7:30 desde el 06-10 y la realidad decia otra cosa: de las
+   * ultimas veinte cenas, catorce se abrieron a las 7:00 y seis a las 7:30,
+   * o sea que esta hora se corregia a mano casi siempre. Un valor por
+   * defecto que se reescribe en el 70% de los casos no es un valor por
+   * defecto, es un paso mas.
+   *
+   * Se sigue pudiendo cambiar por fecha: la hora de una cena la manda el
+   * sitio, y media hora importa.
+   */
+  dinner: '19:00', foodie_dinner: '19:00', women_dinner: '19:00',
   drinks: '20:00', coffee: '10:00',
   // El brunch del domingo, a las once (Michael, 14-10). No es la hora del
   // café: un café es a media mañana y un brunch se come, así que empieza
