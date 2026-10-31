@@ -153,6 +153,16 @@ export function IconoCompartir({ tam = 18, color }: P) {
   )
 }
 
+/** Pin: una zona de la ciudad (el aviso de zonas al reservar, como la web). */
+export function IconoPin({ tam = 12, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" stroke={color} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx={12} cy={9.5} r={2.4} stroke={color} strokeWidth={2.6} />
+    </Svg>
+  )
+}
+
 /** Reloj: la nota de cancelar (entrega estas-dentro). */
 export function IconoReloj({ tam = 16, color }: P) {
   return (

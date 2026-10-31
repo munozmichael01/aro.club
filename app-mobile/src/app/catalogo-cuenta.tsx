@@ -27,7 +27,7 @@ function deCaptura(d: MiCuenta, varios = false): MiCuenta {
     ...d,
     porValorar: null,
     agenda: [
-      { id: 'a', formato: 'dinner', empiezaEn: s0, cierraEn: cierre(s0), creditos: 1, zonas: ['Chacao', 'Los Palos Grandes'], apuntados: 9, cerrada: false, mia: false },
+      { id: 'a', formato: 'dinner', empiezaEn: s0, cierraEn: cierre(s0), creditos: 1, zonas: ['Chacao', 'Los Palos Grandes'], apuntados: 9, cerrada: false, mia: false, zonasNuevas: ['Los Palos Grandes'] },
       { id: 'b', formato: 'dinner', empiezaEn: sabado(1), cierraEn: cierre(sabado(1)), creditos: 1, zonas: ['Las Mercedes', 'Altamira'], apuntados: 4, cerrada: false, mia: false },
       { id: 'c', formato: 'dinner', empiezaEn: sabado(2), cierraEn: cierre(sabado(2)), creditos: 1, zonas: ['La Castellana'], apuntados: 2, cerrada: false, mia: false },
       // ?varios=1: también drinks, para ver el filtro con «Todos» (entrega 19, 2a).
@@ -51,7 +51,7 @@ function simulada(estado: EstadoCuenta): MiCuenta {
       { empiezaEn: en(-24 * 30), formato: 'dinner', estado: 'attended', cancelada: false, pasada: true, restaurante: 'Lima', numeroMesa: 2 },
     ],
     agenda: [
-      { id: 'a', formato: 'dinner', empiezaEn: en(5 * 24 + 8), cierraEn: en(3 * 24), creditos: 1, zonas: ['Las Mercedes', 'Chacao'], apuntados: 8, cerrada: false, mia: conReserva && estado !== 'abierta' },
+      { id: 'a', formato: 'dinner', empiezaEn: en(5 * 24 + 8), cierraEn: en(3 * 24), creditos: 1, zonas: ['Las Mercedes', 'Chacao'], apuntados: 8, cerrada: false, zonasNuevas: ['Chacao'], mia: conReserva && estado !== 'abierta' },
       { id: 'b', formato: 'dinner', empiezaEn: en(11 * 24 + 8), cierraEn: en(9 * 24), creditos: 1, zonas: ['Altamira'], apuntados: 4, cerrada: false, mia: false },
       { id: 'c', formato: 'drinks', empiezaEn: en(12 * 24 + 6), cierraEn: en(10 * 24), creditos: 1, zonas: [], apuntados: 1, cerrada: false, mia: false },
       { id: 'd', formato: 'dinner', empiezaEn: en(20), cierraEn: en(-28), creditos: 1, zonas: ['Chacao'], apuntados: 14, cerrada: true, mia: false },

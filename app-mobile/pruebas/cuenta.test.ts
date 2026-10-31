@@ -281,3 +281,16 @@ test('unos drinks de ocho dicen ocho, no seis: la frase y la hoja van con porMes
   assert.equal(T.estadoDeFecha(1, false, false), 'Una mesa son seis')
   assert.match(T.agenda.comoFunciona('', 8), /mesas de ocho/)
 })
+
+test('el aviso de zonas al reservar dice lo mismo que la web, y calla en una fecha suya o cerrada (31-10)', async () => {
+  const T = await import('../src/texto/cuenta')
+  const M = await import('../src/cuenta/maquina')
+  assert.equal(T.agenda.zonasNuevas(['Los Palos Grandes']), 'Al reservar, Los Palos Grandes pasa a ser una de tus zonas.')
+  assert.equal(T.agenda.zonasNuevas(['Altamira', 'Chacao', 'Los Palos Grandes']), 'Al reservar, Altamira, Chacao y Los Palos Grandes pasan a ser de tus zonas.')
+  const base = { id: 'f', formato: 'dinner', empiezaEn: '2099-11-06T23:00:00Z', cierraEn: null, creditos: 0, zonas: ['Chacao', 'Los Palos Grandes'], apuntados: 0, cerrada: false, mia: false, zonasNuevas: ['Los Palos Grandes'] }
+  const fila = (x: object) => M.agenda([{ ...base, ...x }], null, Date.parse('2099-11-01T00:00:00Z'))[0].filas[0]
+  assert.deepEqual(fila({}).zonasNuevas, ['Los Palos Grandes'])
+  assert.deepEqual(fila({ mia: true }).zonasNuevas, [])
+  assert.deepEqual(fila({ cerrada: true }).zonasNuevas, [])
+  assert.deepEqual(fila({ zonasNuevas: undefined }).zonasNuevas, [])
+})

@@ -10,6 +10,7 @@ import {
   IconoCheck,
   IconoCruz,
   IconoFlecha,
+  IconoPin,
   IconoPunto,
   Marca,
   Texto,
@@ -355,6 +356,17 @@ function FilaFecha(p: {
           <View style={{ marginBottom: 16 }}>
             <FilaComoFunciona plan={{ formato: f.formato, empiezaEn: f.empiezaEn, zonaHoraria: f.zonaHoraria }} />
           </View>
+          {/* Las zonas que reservar le suma (31-10): antes del botón, que es donde se decide. Como la web. */}
+          {f.zonasNuevas.length ? (
+            <View style={estilos.zonas}>
+              <View style={estilos.zonasIcono}>
+                <IconoPin color={color.crema} />
+              </View>
+              <Texto variante="cuerpoChico" tono="tinta" style={{ flex: 1 }}>
+                {T.agenda.zonasNuevas(f.zonasNuevas)}
+              </Texto>
+            </View>
+          ) : null}
           {/* Esta cena se graba: se dice antes del botón (18-10). */}
           {f.graba ? (
             <View style={estilos.graba}>
@@ -592,6 +604,8 @@ export function Seccion({ children, arriba = 40, onLayout }: { children: ReactNo
 
 const estilos = StyleSheet.create({
   idioma: { height: 22, paddingHorizontal: 10, borderRadius: 999, backgroundColor: color.verde, justifyContent: 'center', alignSelf: 'center' },
+  zonas: { flexDirection: 'row', gap: 11, alignItems: 'flex-start', borderRadius: 20, backgroundColor: verdeAlfa(0.08), paddingVertical: 13, paddingHorizontal: 15, marginBottom: 16 },
+  zonasIcono: { width: 22, height: 22, borderRadius: 11, backgroundColor: color.verde, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
   graba: { borderRadius: 20, backgroundColor: '#FFF8EA', borderWidth: 1, borderColor: 'rgba(143,69,21,.28)', paddingVertical: 16, paddingHorizontal: 18, marginBottom: 16 },
   permiso: { alignSelf: 'flex-start', minHeight: 46, marginTop: 13, paddingHorizontal: 18, borderRadius: radio.capsula, borderWidth: 1, borderColor: 'rgba(20,52,42,.22)', justifyContent: 'center' },
   bloque: { borderRadius: 30, padding: 22 },

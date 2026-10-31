@@ -40,6 +40,8 @@ export type FechaAgenda = {
   idioma?: string | null
   /** «En inglés»: el texto lo manda el servidor. */
   etiquetaIdioma?: string | null
+  /** Las zonas de la fecha que se le sumarían al reservar, por nombre (31-10). Sin el campo, ninguna. */
+  zonasNuevas?: string[] | null
 }
 
 /** «10 ref», «12,50 ref»: el precio de una fecha. Sin precio en la fecha, el del club (`reglas.precioTexto`). */
@@ -273,6 +275,8 @@ export type FilaAgenda = {
   /** La fecha en crudo, para «Cómo funciona» (cuándo se revela, en su zona). */
   empiezaEn: string
   zonaHoraria: string | null
+  /** Las zonas que reservar le suma. Vacío si la fecha ya es suya o está cerrada: no hay nada que avisar. */
+  zonasNuevas: string[]
 }
 
 export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: number): { semana: string; filas: FilaAgenda[] }[] {
@@ -313,6 +317,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       cierre: reglas.textoCierre(a.empiezaEn, a.zonaHoraria, a.cierraEn),
       empiezaEn: a.empiezaEn,
       zonaHoraria: a.zonaHoraria ?? null,
+      zonasNuevas: a.mia || cerrada ? [] : (a.zonasNuevas ?? []),
     })
   }
   return grupos
