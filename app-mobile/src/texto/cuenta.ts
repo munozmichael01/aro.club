@@ -133,7 +133,7 @@ export const agenda = {
     `Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de ${reglas.enLetra(porMesa)} por toda la zona, y antes te decimos en cuál te tocó. La fecha ${(cierre || 'se cierra a medianoche, cuando empieza su día').replace(/\.$/, '')}.`,
   /** Las zonas de la fecha que se le suman al reservar (31-10). El mismo texto que la web. */
   zonasNuevas: (z: string[]) =>
-    z.length === 1 ? `Al reservar, ${z[0]} pasa a ser una de tus zonas.` : `Al reservar, ${z.slice(0, -1).join(', ')} y ${z[z.length - 1]} pasan a ser de tus zonas.`,
+    z.length === 1 ? `Al reservar, ${z[0]} pasa a ser una de tus zonas.` : `Al reservar, ${z.slice(0, -1).join(', ')} y ${z[z.length - 1]} pasan a ser parte de tus zonas.`,
   verTodo: 'Ver todo',
   vacia: 'Nada de ese tipo abierto ahora mismo. Abrimos según lo que pida la gente: marca ese plan en tu perfil y cuentas para que salga.',
   eligeHora: 'ELIGE LA HORA',

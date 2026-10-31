@@ -286,7 +286,7 @@ test('el aviso de zonas al reservar dice lo mismo que la web, y calla en una fec
   const T = await import('../src/texto/cuenta')
   const M = await import('../src/cuenta/maquina')
   assert.equal(T.agenda.zonasNuevas(['Los Palos Grandes']), 'Al reservar, Los Palos Grandes pasa a ser una de tus zonas.')
-  assert.equal(T.agenda.zonasNuevas(['Altamira', 'Chacao', 'Los Palos Grandes']), 'Al reservar, Altamira, Chacao y Los Palos Grandes pasan a ser de tus zonas.')
+  assert.equal(T.agenda.zonasNuevas(['Altamira', 'Chacao', 'Los Palos Grandes']), 'Al reservar, Altamira, Chacao y Los Palos Grandes pasan a ser parte de tus zonas.')
   const base = { id: 'f', formato: 'dinner', empiezaEn: '2099-11-06T23:00:00Z', cierraEn: null, creditos: 0, zonas: ['Chacao', 'Los Palos Grandes'], apuntados: 0, cerrada: false, mia: false, zonasNuevas: ['Los Palos Grandes'] }
   const fila = (x: object) => M.agenda([{ ...base, ...x }], null, Date.parse('2099-11-01T00:00:00Z'))[0].filas[0]
   assert.deepEqual(fila({}).zonasNuevas, ['Los Palos Grandes'])
