@@ -69,7 +69,7 @@ export const sinRespuesta = {
 export const compartir = {
   titulo: 'Comparte tu plan',
   bajada: (conCodigo: boolean) => (conCodigo ? 'Elige una. Tu código va dentro.' : 'Elige una.'),
-  etiqueta: ['Etiqueta a ', '@somos.aroclub', ' en tu historia.'] as const,
+  etiqueta: ['Etiqueta a ', reglas.REDES.arroba, ' en tu historia.'] as const,
   guardar: 'Guardar imagen',
   historias: 'Historias',
   tiktok: 'TikTok',

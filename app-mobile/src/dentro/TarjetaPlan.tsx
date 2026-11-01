@@ -3,7 +3,7 @@ import { Text, View } from 'react-native'
 import Svg, { Circle, Line } from 'react-native-svg'
 
 import { fuente } from '../diseno'
-import type { DatosPlan } from '../reglas'
+import { reglas, type DatosPlan } from '../reglas'
 import { lienzo } from './lienzo'
 
 /**
@@ -243,7 +243,7 @@ export function TarjetaPlan({ variante, d, ancho }: { variante: number; d: Datos
         ) : null}
         <View style={{ marginLeft: 'auto', alignItems: 'flex-end', gap: n(12) }}>
           <T f={fuente.titular} s={50} lh={1}>aro.club</T>
-          <T f={fuente.textoSemi} s={30} lh={1}>@somos.aroclub</T>
+          <T f={fuente.textoSemi} s={30} lh={1}>{reglas.REDES.arroba}</T>
         </View>
       </View>
     </View>

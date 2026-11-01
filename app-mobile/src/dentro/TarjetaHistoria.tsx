@@ -3,6 +3,7 @@ import { Text, View } from 'react-native'
 import Svg, { Circle, Line, Path, Rect, Text as SvgText } from 'react-native-svg'
 
 import { fuente } from '../diseno'
+import { reglas } from '../reglas'
 import { lienzo } from './lienzo'
 import type { Historia } from './maquina'
 
@@ -290,7 +291,7 @@ export function TarjetaHistoria({ variante, h, ancho }: { variante: number; h: H
         ) : null}
         <View style={{ marginLeft: 'auto', alignItems: 'flex-end', gap: n(12) }}>
           <T f={fuente.titular} s={50} lh={1}>aro.club</T>
-          <T f={fuente.textoSemi} s={30} lh={1} o={0.8}>@somos.aroclub</T>
+          <T f={fuente.textoSemi} s={30} lh={1} o={0.8}>{reglas.REDES.arroba}</T>
         </View>
       </View>
     </View>

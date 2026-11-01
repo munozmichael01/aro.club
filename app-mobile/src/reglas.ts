@@ -71,6 +71,8 @@ type Api = {
   CONTACTO: Contacto
   /** +1 acompañante (entrega mas-uno, 01-11): todo su copy, el mismo de la web. */
   MAS_UNO: MasUno
+  /** Las cuentas de Aro en redes (400f5f8): la firma de las historias y «Etiqueta a…». */
+  REDES: { instagram: string; tiktok: string; arroba: string }
   /** «Estás dentro» (reglas.js, 31-10). De momento la app solo lee si un plan tiene tarjetas para historias. */
   DENTRO: {
     conTarjetas: (formato: string) => boolean
