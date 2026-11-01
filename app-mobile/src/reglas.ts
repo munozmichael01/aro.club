@@ -70,7 +70,17 @@ type Api = {
   /** «Seguir en contacto» y Pasadas (reglas.js, 31-10): todo su copy, el mismo de la web y los correos. */
   CONTACTO: Contacto
   /** «Estás dentro» (reglas.js, 31-10). De momento la app solo lee si un plan tiene tarjetas para historias. */
-  DENTRO: { conTarjetas: (formato: string) => boolean }
+  DENTRO: {
+    conTarjetas: (formato: string) => boolean
+    /** 'historia' (cena, brunch: TarjetaHistoria), 'plan' (drinks, café: TarjetaPlan) o null (movimiento). */
+    tarjetaDe: (formato: string) => 'historia' | 'plan' | null
+    variantes: (conCodigo: boolean, formato?: string) => number[]
+    /** Todo lo que pinta TarjetaPlan (entrega drinks-cafe, aprobada el 31-10). Null fuera de drinks y café. */
+    tarjetaPlan: (
+      plan: { empiezaEn: string; revelaEn?: string | null; zonaHoraria?: string | null; formato?: string | null; zonas?: string[] },
+      codigo: string | null,
+    ) => DatosPlan | null
+  }
   /** La familia de un formato (cenas, brunch, drinks, coffee, movimiento), de `FAMILIAS`. */
   familiaDe: (formato: string) => { clave: 'cenas' | 'brunch' | 'drinks' | 'coffee' | 'movimiento' | string }
   /** «Cómo funciona» en tres tarjetas: los textos de la web y la app, en un solo sitio (f0e8a7e). */
@@ -253,6 +263,30 @@ type Contacto = {
     preguntaAnterior: { titulo: (esMesa: boolean) => string; nota: string; guardar: string; nadie: string }
   }
   enlaces: { whatsapp: (e164: string) => string; instagram: (u: string) => string; tiktok: (u: string) => string }
+}
+
+/** Lo de `DENTRO.tarjetaPlan`. `revelaDia` vacío: se sabe el mismo día. */
+export type DatosPlan = {
+  plan: 'Drinks' | 'Café'
+  cafe: boolean
+  dia: string
+  diaSemana: string
+  numero: string
+  hora: string
+  zona: string
+  codigo: string | null
+  revelaDia: string
+  revelaNum: string
+  revelaSufijo: string
+  sello: string
+  sitioMayus: string
+  frase1: string
+  frase3: string
+  cierre3: string
+  titulo4: string
+  cuerpo4: string
+  frase5: string
+  pregunta6: string
 }
 
 export const reglas = crudo as unknown as Api

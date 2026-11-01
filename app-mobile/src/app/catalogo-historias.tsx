@@ -4,13 +4,13 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 
 import { HojaCompartir } from '../dentro/Compartir'
 import * as M from '../dentro/maquina'
-import { TarjetaHistoria } from '../dentro/TarjetaHistoria'
+import { Tarjeta } from '../dentro/Tarjeta'
 import * as T from '../texto/dentro'
 import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Las historias para compartir, todas a la vez, y la hoja «Comparte tu plan»:
- * /catalogo-historias?plan=cena|brunch&codigo=1&ancho=270&hoja=1
+ * /catalogo-historias?plan=cena|brunch|drinks|coffee&codigo=1&ancho=270&hoja=1
  * Catálogo de desarrollo: no se enlaza desde ningún sitio.
  */
 const en = (h: number) => new Date(Date.now() + h * 3600_000).toISOString()
@@ -34,7 +34,7 @@ function Pantalla() {
       </Pressable>
       {M.variantesDe(h).map((v) => (
         <View key={v} testID={`historia-${v}`}>
-          <TarjetaHistoria variante={v} h={h} ancho={ancho} />
+          <Tarjeta variante={v} h={h} ancho={ancho} />
         </View>
       ))}
       {hoja ? <HojaCompartir h={h} mensaje={T.mensaje(inv)} alCerrar={() => setHoja(false)} /> : null}

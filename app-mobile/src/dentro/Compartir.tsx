@@ -8,7 +8,7 @@ import { captureRef } from 'react-native-view-shot'
 import { IconoComparteCon, IconoCruz, Texto, color, fuente, tinta } from '../diseno'
 import * as T from '../texto/dentro'
 import { variantesDe, type Historia } from './maquina'
-import { TarjetaHistoria } from './TarjetaHistoria'
+import { Tarjeta } from './Tarjeta'
 
 const ANCHO = 200
 const ALTO = 356
@@ -103,7 +103,7 @@ export function HojaCompartir(p: { h: Historia; mensaje: string; alCerrar: () =>
         {/* La que se captura: la tarjeta elegida a 1080 px reales, fuera de la vista. */}
         <View style={{ position: 'absolute', left: -real - 100, top: 0 }} pointerEvents="none" collapsable={false}>
           <View ref={lienzo} collapsable={false}>
-            <TarjetaHistoria variante={variantes[i]} h={p.h} ancho={real} />
+            <Tarjeta variante={variantes[i]} h={p.h} ancho={real} />
           </View>
         </View>
         <Pressable style={StyleSheet.absoluteFill} onPress={p.alCerrar} accessibilityLabel="Cerrar" />
@@ -140,7 +140,7 @@ export function HojaCompartir(p: { h: Historia; mensaje: string; alCerrar: () =>
                 style={[e.miniatura, k === i && e.elegida]}
               >
                 <View style={e.carta} pointerEvents="none">
-                  <TarjetaHistoria variante={v} h={p.h} ancho={ANCHO} />
+                  <Tarjeta variante={v} h={p.h} ancho={ANCHO} />
                 </View>
               </Pressable>
             ))}

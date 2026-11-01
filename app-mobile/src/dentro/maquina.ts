@@ -3,7 +3,7 @@
  * calendario. Los días salen de `texto/fechas.ts`, en la zona de la fecha.
  */
 
-import { reglas } from '../reglas'
+import { reglas, type DatosPlan } from '../reglas'
 import { FORMATOS } from '../texto/cuenta'
 import * as T from '../texto/dentro'
 import * as F from '../texto/fechas'
@@ -89,15 +89,18 @@ export type Historia = {
   revelaNum: string
   revelaSufijo: string
   codigo: string | null
+  /** Drinks y café: lo de TarjetaPlan (entrega drinks-cafe). Null en cena y brunch, que van con TarjetaHistoria. */
+  dePlan: DatosPlan | null
 }
 
 /**
- * Las historias son de cena y de brunch: los planes de movimiento no tienen
- * tarjeta (su copy habla de mesa y de silla) y comparten solo el mensaje.
+ * Cena y brunch, TarjetaHistoria; drinks y café, TarjetaPlan
+ * (`AroReglas.DENTRO.tarjetaDe`). Los de movimiento no tienen tarjeta y
+ * comparten solo el mensaje.
  */
 export function historia(p: Plan, codigo: string | null): Historia | null {
-  // Los de movimiento no tienen tarjeta: comparten solo el mensaje.
-  if (reglas.vozDe(p.formato ?? 'dinner').unidad === 'grupo') return null
+  const cual = reglas.DENTRO.tarjetaDe(p.formato ?? 'dinner')
+  if (!cual) return null
   const tipo = reglas.COMO_FUNCIONA.tipoDe(p.formato ?? 'dinner')
   const familia = reglas.familiaDe(p.formato ?? 'dinner').clave
   const z = p.zonaHoraria
@@ -112,18 +115,12 @@ export function historia(p: Plan, codigo: string | null): Historia | null {
     zona: zonasEnTexto(p.zonas),
     ...F.revelaDeHistoria(p.revelaEn, z),
     codigo,
+    dePlan: cual === 'plan' ? reglas.DENTRO.tarjetaPlan(p, codigo) : null,
   }
 }
 
-/**
- * Las tarjetas que se ofrecen. La 4 («Hay una silla para ti») es entera el
- * código: sin referidos todavía, no sale.
- */
+/** Las tarjetas que se ofrecen. La 4 es entera el código: sin él, no sale. */
 export function variantesDe(h: Historia): number[] {
-  // Drinks y café, mientras Design no les haga las suyas (Michael, 31-10: «no
-  // dejes de mostrar nada»): solo las que no hablan de cenar ni de mesa. Las
-  // demás dicen «ceno», «mi cena», «Mesa puesta» o «dónde es mi cena».
-  const sinCena = h.plan === 'Drinks' || h.plan === 'Coffee'
-  const todas = sinCena ? [2, 4] : [1, 2, 3, 4, 5, 6, 7, 8]
-  return h.codigo ? todas : todas.filter((v) => v !== 4)
+  if (h.dePlan) return reglas.DENTRO.variantes(!!h.codigo, h.dePlan.cafe ? 'coffee' : 'drinks')
+  return h.codigo ? [1, 2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 5, 6, 7, 8]
 }

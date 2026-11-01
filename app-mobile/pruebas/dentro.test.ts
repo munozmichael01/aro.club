@@ -90,13 +90,18 @@ test('con un código que cubre la plaza, «Estás dentro» dice que el código l
   assert.match(v.bajada ?? '', /código cubre la plaza/)
 })
 
-test('drinks y café: las tarjetas que no hablan de cenar, hasta que Design haga las suyas (31-10)', async () => {
+test('drinks y café: las seis de TarjetaPlan, la 4 solo con código (entrega drinks-cafe, 31-10)', async () => {
   const M = await import('../src/dentro/maquina')
-  const plan = (formato: string) => ({ empiezaEn: '2099-11-06T23:00:00Z', zonaHoraria: 'America/Caracas', formato, revelaEn: null, zonas: ['Chacao'] })
+  const plan = (formato: string) => ({ empiezaEn: '2099-11-06T23:00:00Z', zonaHoraria: 'America/Caracas', formato, revelaEn: '2099-11-06T16:00:00Z', zonas: ['Chacao'] })
   const d = M.historia(plan('drinks'), 'ANA7KQ')!
-  assert.equal(d.plan, 'Drinks')
-  assert.deepEqual(M.variantesDe(d), [2, 4])
-  assert.deepEqual(M.variantesDe(M.historia(plan('coffee'), null)!), [2])
-  assert.equal(M.historia(plan('dinner'), null)!.plan, 'Cena')
+  assert.equal(d.dePlan?.plan, 'Drinks')
+  assert.equal(d.dePlan?.frase1, 'El viernes salgo a tomar algo con gente que no conozco.')
+  assert.equal(d.dePlan?.frase3, 'Lo que sé de los drinks.')
+  assert.equal(d.dePlan?.revelaDia, '')
+  assert.deepEqual(M.variantesDe(d), [1, 2, 3, 4, 5, 6])
+  const c = M.historia(plan('coffee'), null)!
+  assert.equal(c.dePlan?.titulo4, 'Hay un café para ti.')
+  assert.deepEqual(M.variantesDe(c), [1, 2, 3, 5, 6])
+  assert.equal(M.historia(plan('dinner'), null)!.dePlan, null)
   assert.equal(M.historia(plan('walk'), null), null)
 })

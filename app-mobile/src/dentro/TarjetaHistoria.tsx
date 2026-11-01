@@ -1,20 +1,14 @@
 import type { ReactNode } from 'react'
-import { Text, View, type TextStyle, type ViewStyle } from 'react-native'
+import { Text, View } from 'react-native'
 import Svg, { Circle, Line, Path, Rect, Text as SvgText } from 'react-native-svg'
 
-import { SUELO_INTERLINEADO, fuente } from '../diseno'
+import { fuente } from '../diseno'
+import { lienzo } from './lienzo'
 import type { Historia } from './maquina'
 
 /**
  * La historia para compartir (entrega estas-dentro, `TarjetaHistoria.dc.html`).
- * Se dibuja en las medidas de la maqueta, 1080 × 1920, multiplicadas por
- * `k = ancho / 1080`: la misma tarjeta sirve de miniatura en el selector y,
- * a 1080 px reales, de imagen para la captura.
- *
- * El interlineado de la maqueta baja de lo que aguantan las fuentes (la cifra
- * de la 2 va a 0,78). En React Native eso recorta tildes, así que cada texto
- * lleva el suelo de su familia y devuelve la diferencia con márgenes
- * negativos: la caja ocupa lo mismo que en la maqueta y nada se corta.
+ * Las medidas y el interlineado, de `lienzo` (lo mismo que TarjetaPlan).
  */
 
 const VERDE = '#14342A'
@@ -49,42 +43,8 @@ function Isotipo({ tam, anillo, grosor, r, tuyo, otros }: { tam: number; anillo:
 }
 
 export function TarjetaHistoria({ variante, h, ancho }: { variante: number; h: Historia; ancho: number }) {
-  const k = ancho / 1080
-  const n = (x: number) => x * k
   const [bg, ink] = TEMAS[variante] ?? TEMAS[1]
-
-  /** Un texto con las medidas de la maqueta: familia, tamaño, interlineado y espaciado en em. */
-  function T(p: { f: string; s: number; lh?: number; ls?: number; c?: string; o?: number; style?: TextStyle; lineas?: number; children: ReactNode }) {
-    const lh = p.lh ?? 1.2
-    const suelo = Math.max(lh, SUELO_INTERLINEADO[p.f] ?? 1.21)
-    const sobra = ((suelo - lh) * p.s) / 2
-    return (
-      <Text
-        allowFontScaling={false}
-        numberOfLines={p.lineas}
-        ellipsizeMode="clip"
-        style={[
-          {
-            fontFamily: p.f,
-            fontSize: n(p.s),
-            lineHeight: n(p.s * suelo),
-            letterSpacing: n((p.ls ?? 0) * p.s),
-            color: p.c ?? ink,
-            opacity: p.o,
-            marginVertical: n(-sobra),
-          },
-          p.style,
-        ]}
-      >
-        {p.children}
-      </Text>
-    )
-  }
-  const abs = (s: ViewStyle): ViewStyle => {
-    const o: ViewStyle = { position: 'absolute' }
-    for (const [key, val] of Object.entries(s)) (o as Record<string, unknown>)[key] = typeof val === 'number' ? n(val) : val
-    return o
-  }
+  const { n, T, abs } = lienzo(ancho, ink)
 
   const brunch = h.plan === 'Brunch'
   const dd = h.diaSemana.toLowerCase()
