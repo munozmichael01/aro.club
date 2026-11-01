@@ -894,7 +894,7 @@ if (relojes.length) {
     }
     const bloque = texto.match(patron)
     if (!bloque) { fallos.push(`no encuentro la lista en ${nombre}`); return null }
-    return [...bloque[1].matchAll(/'(\/[a-z-]*)'/g)].map((m) => m[1])
+    return [...bloque[1].matchAll(/'(\/[a-z-]*(?:\/\*)?)'/g)].map((m) => m[1])
   }
 
   const web = leer('../src/lib/enlaces-app.ts',
@@ -918,10 +918,25 @@ if (relojes.length) {
     return [...bloque[1].matchAll(/^\s*'(\/[a-z-]*)':/gm)].map((m) => m[1])
   })()
 
+  // Los PREFIJOS (`/i/*`, `/m/*`): los enlaces que se comparten. La app no los
+  // tiene en RUTAS_DE_LA_WEB sino en `deEnlace()` de `src/sesion/traido.ts`,
+  // así que ahí se mira que los reconozca.
+  const prefijos = (web || []).filter((r) => r.endsWith('/*'))
+  if (prefijos.length && app) {
+    let traido = ''
+    try {
+      traido = fs.readFileSync(fileURLToPath(new URL('../app-mobile/src/sesion/traido.ts', import.meta.url)), 'utf8')
+    } catch { fallos.push('no encuentro app-mobile/src/sesion/traido.ts') }
+    for (const r of prefijos) {
+      const base = r.slice(1, -2)
+      if (traido && !traido.includes('^\\/' + base + '\\/')) fallos.push(`la web publica «${r}» y la app no lo abre en deEnlace()`)
+    }
+  }
+
   if (web && app) {
     // Este sentido sí es siempre un fallo: el teléfono abre la app y la app no
     // sabe qué enseñar.
-    for (const r of web) if (!app.includes(r)) fallos.push(`la web publica «${r}» y la app no la reparte`)
+    for (const r of web) if (!r.endsWith('/*') && !app.includes(r)) fallos.push(`la web publica «${r}» y la app no la reparte`)
     for (const r of app) {
       if (web.includes(r)) continue
       if (pendientes.includes(r)) avisosRutas.push(r)

@@ -17,16 +17,12 @@
  * canjea, y mandarlo a la app es perderlo.
  */
 /**
- * Y `/i/<código>` NO VA AQUÍ, aunque sea del área de miembro.
- *
- * Es el enlace que se comparte, y lo pulsa gente que todavía no tiene la
- * app. Con la ruta declarada, en un iPhone que SÍ la tiene el enlace abriría
- * la app —que no conoce esa pantalla— en vez de la portada con la franja de
- * «te invitó Andrea». Justo al revés de para lo que existe.
- *
- * Lo avisó el agente de la app el 30-10, cuando los referidos ya estaban
- * vivos. El día que la app sepa abrirlo, se añade aquí y allí a la vez, y en
- * Android pide build.
+ * Y los dos enlaces que se comparten, `/i/<código>` y `/m/<token>`, como
+ * PREFIJOS (`/i/*`): desde el 01-11 la app los abre —el referido con su
+ * franja, el +1 con su invitación— y guarda el código o el token para el alta
+ * (`deEnlace` en `app-mobile/src/sesion/traido.ts`). Antes se quedaban fuera
+ * porque una app que no conocía esas pantallas habría perdido el enlace.
+ * Michael, 01-11: entran ya, sin esperar un día a que todos tengan la OTA.
  */
 export const RUTAS_QUE_ABREN_LA_APP = [
   '/cuenta',
@@ -38,6 +34,11 @@ export const RUTAS_QUE_ABREN_LA_APP = [
   '/verificacion',
   '/datos',
   '/cuestionario',
+  '/estas-dentro',
+  '/agenda',
+  '/reembolso',
+  '/i/*',
+  '/m/*',
 ] as const
 
 /** El identificador de la app en Apple: equipo + bundle. */
