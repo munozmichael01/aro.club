@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 
-import type { Historia } from '@/lib/reglas'
+import { REDES, type Historia } from '@/lib/reglas'
 
 import { anchoEquilibrado, type Medida } from './medir'
 
@@ -308,7 +308,7 @@ export function Tarjeta({ v, h, m }: { v: number; h: Historia; m: Medidas }) {
         ) : null}
         <div style={caja({ marginLeft: 'auto', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' })}>
           <div style={caja({ fontFamily: SERIF, fontSize: 50, lineHeight: 1, marginBottom: 12 })}>aro.club</div>
-          <div style={caja({ fontFamily: SANS, fontWeight: 600, fontSize: 30, lineHeight: 1, opacity: 0.8 })}>@aroclub</div>
+          <div style={caja({ fontFamily: SANS, fontWeight: 600, fontSize: 30, lineHeight: 1, opacity: 0.8 })}>{REDES.arroba}</div>
         </div>
       </div>
     </div>

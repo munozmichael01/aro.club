@@ -169,6 +169,8 @@ type Api = {
     diaYNumero: (iso: string | null | undefined, zona?: string) => string
     historia: (plan: PlanDentro, codigo: string | null) => Historia | null
   }
+  /** Las cuentas de Aro en redes (@somos.aroclub). */
+  REDES: { instagram: string; tiktok: string; arroba: string }
   /** «+1 acompañante» (entrega mas-uno). Los textos, pendientes de que Michael los apruebe. */
   MAS_UNO: {
     nombre: string
@@ -278,6 +280,8 @@ const api = reglas as Api
 export const DENTRO = api.DENTRO
 /** «Seguir en contacto», el mismo texto en app, web y correos. */
 export const CONTACTO = api.CONTACTO
+/** Las cuentas de Aro en redes: lo que firma las tarjetas para historias. */
+export const REDES = api.REDES
 /** «+1 acompañante», el mismo texto en app, web y correos. */
 export const MAS_UNO = api.MAS_UNO
 

@@ -262,9 +262,22 @@
     },
   }
 
+  /**
+   * Las cuentas de Aro en redes. La de verdad es @somos.aroclub, la que
+   * enlazan la landing y los correos; las tarjetas para historias decían
+   * «@aroclub», que no es nuestra (lo vio Michael el 01-11). Un solo sitio,
+   * para la web, el servidor, las tarjetas y la app.
+   */
+  var REDES = {
+    instagram: 'somos.aroclub',
+    tiktok: 'somos.aroclub',
+    arroba: '@somos.aroclub',
+  }
+
   var api = {
     REGLAS: REGLAS,
     LARGO_POR_PREFIJO: LARGO_POR_PREFIJO,
+    REDES: REDES,
 
     /** Lo que se puede teclear en ese campo. */
     filtrar: function (campo, valor) {
@@ -2475,7 +2488,7 @@
       hoja: {
         titulo: 'Comparte tu plan',
         bajada: function (conCodigo) { return conCodigo ? 'Elige una. Tu código va dentro.' : 'Elige una.' },
-        etiqueta: ['Etiqueta a ', '@aroclub', ' en tu historia.'],
+        etiqueta: ['Etiqueta a ', REDES.arroba, ' en tu historia.'],
         // En la web: Instagram no recibe historias desde el navegador (W de la entrega).
         descargar: 'Descargar imagen',
         // En el celular: la hoja del sistema con la imagen, que es donde sale
@@ -2580,7 +2593,7 @@
 
       /**
        * Lo que lleva la tarjeta para historias (TarjetaHistoria de la
-       * entrega): plan, día, hora, zona, código, aro.club y @aroclub. Nunca el
+       * entrega): plan, día, hora, zona, código, aro.club y la cuenta de Instagram (`REDES.arroba`). Nunca el
        * restaurante ni cuántas personas. Null si el plan no tiene tarjetas.
        */
       historia: function (plan, codigo) {

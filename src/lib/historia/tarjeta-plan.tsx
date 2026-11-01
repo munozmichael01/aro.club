@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 
-import type { TarjetaPlanDatos } from '@/lib/reglas'
+import { REDES, type TarjetaPlanDatos } from '@/lib/reglas'
 
 import { CREMA, Frase, Isotipo, SALVIA, SANS, SERIF, TERRACOTA, VERDE, caja, em, type Medidas } from './tarjeta'
 
@@ -194,7 +194,7 @@ export function TarjetaPlan({ v, h, m }: { v: number; h: TarjetaPlanDatos; m: Me
         ) : null}
         <div style={caja({ marginLeft: 'auto', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' })}>
           <div style={caja({ fontFamily: SERIF, fontSize: 50, lineHeight: 1, marginBottom: 12 })}>aro.club</div>
-          <div style={caja({ fontFamily: SANS, fontWeight: 600, fontSize: 30, lineHeight: 1 })}>@aroclub</div>
+          <div style={caja({ fontFamily: SANS, fontWeight: 600, fontSize: 30, lineHeight: 1 })}>{REDES.arroba}</div>
         </div>
       </div>
     </div>
