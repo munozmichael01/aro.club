@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Te invitan · Aro Club</title>
+<meta name="apple-itunes-app" content="app-id=6818022672">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icono-512.png">
+<script src="./errores.js"></script>
+<script src="./gtm.js"></script>
+<script src="./vendor.js"></script>
+<script src="./support.js"></script>
+<script src="./reglas.js"></script>
+</head>
+<body>
+<noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
+<!--
+  La invitación de un «+1 acompañante»: lo que ve quien abre el enlace que le
+  mandó quien reservó. Entrega mas-uno de Design (01-11): 5A sin cuenta, 5B
+  con cuenta, 5C usada o cambiada, y W1, la misma en la columna de 440 px.
+
+  Llega aquí desde aro.club/m/<token>, que guarda el token para quien todavía
+  no tiene sesión (lo recoge el alta, entre por donde entre) y pone la vista
+  previa con el nombre de quien invita.
+
+  Los textos salen de `AroReglas.MAS_UNO.invitado`, los mismos que la app.
+-->
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#FAF3E4; color:#14342A; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  a { text-decoration:none; }
+  button { font: inherit; }
+  ::selection { background:#E39C63; color:#14342A; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+<div style="min-height:100vh;background:#FAF3E4;font-family:'Inter Tight',sans-serif">
+  <div style="max-width:440px;margin:0 auto;padding:clamp(28px,6vw,48px) 16px 56px;box-sizing:border-box">
+
+    <sc-if value="{{ cargando }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="width:60px;height:60px;border-radius:30px;background:rgba(20,52,42,.08)"></div>
+        <div style="height:40px;border-radius:14px;background:rgba(20,52,42,.08)"></div>
+        <div style="height:120px;border-radius:22px;background:rgba(20,52,42,.06)"></div>
+      </div>
+    </sc-if>
+
+    <!-- 5A, 5B y W1: la invitación vale. -->
+    <sc-if value="{{ valida }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:16px;animation:aro-open 380ms ease both">
+        <svg viewBox="0 0 240 240" width="60" height="60" aria-hidden="true"><circle cx="120" cy="120" r="86" fill="none" stroke="#14342A" stroke-width="20"></circle><circle cx="206" cy="120" r="25" fill="#C0662F"></circle><circle cx="163" cy="194.5" r="23" fill="#FAF3E4" stroke="#C0662F" stroke-width="8" stroke-dasharray="12 9"></circle><circle cx="77" cy="194.5" r="25" fill="#14342A"></circle><circle cx="34" cy="120" r="25" fill="#14342A"></circle><circle cx="77" cy="45.5" r="25" fill="#14342A"></circle><circle cx="163" cy="45.5" r="25" fill="#14342A"></circle></svg>
+        <span style="align-self:flex-start;display:inline-flex;align-items:center;min-height:26px;padding:0 11px;border-radius:999px;background:rgba(192,102,47,.14);color:#8F4515;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em">{{ sello }}</span>
+        <h1 style="margin:0;font:400 clamp(36px,9vw,46px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.03em;text-wrap:balance">{{ titulo }}</h1>
+
+        <div style="border-radius:22px;background:#FFFBF0;border:1px solid rgba(20,52,42,.1);padding:18px;display:flex;flex-direction:column;gap:6px">
+          <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">{{ fechaSello }}</div>
+          <div style="font:400 24px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em">{{ fechaLinea }}</div>
+          <div style="font:400 14.5px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ donde }}</div>
+        </div>
+
+        <div style="font:400 16px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ cuerpo0 }}<b style="font-weight:600;color:#14342A">{{ cuerpo1 }}</b></div>
+
+        <!-- 5B · Con cuenta: lo que ya tiene y lo que falta. -->
+        <sc-if value="{{ conCuenta }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:20px;background:#F2E9D5;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+            <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">{{ faltaTitulo }}</div>
+            <sc-for list="{{ pasos }}" as="p" hint-placeholder-count="2">
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                <sc-if value="{{ p.hecho }}" hint-placeholder-val="{{ true }}"><span style="{{ p.marca }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span></sc-if>
+                <sc-if value="{{ p.falta }}" hint-placeholder-val="{{ false }}"><span style="{{ p.marca }}">{{ p.n }}</span></sc-if>
+                <div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 15px/1.3 'Inter Tight',sans-serif">{{ p.t }}</span><span style="font:400 13.5px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ p.d }}</span></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hayAceptada }}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="border-radius:20px;background:rgba(27,81,56,.1);padding:14px 16px;font:500 15px/1.5 'Inter Tight',sans-serif;color:#14342A;text-wrap:pretty">{{ textoAceptada }}</div>
+        </sc-if>
+        <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="border-radius:20px;background:rgba(110,52,15,.09);padding:14px 16px;font:500 15px/1.5 'Inter Tight',sans-serif;color:#6E340F;text-wrap:pretty">{{ fallo }}</div>
+        </sc-if>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+          <sc-if value="{{ sinCuenta }}" hint-placeholder-val="{{ true }}">
+            <a href="{{ enlaceAlta }}" style="display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;text-decoration:none">{{ textoAlta }}</a>
+            <a href="{{ enlaceEntrar }}" style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;border:1.5px solid #14342A;color:#14342A;font:600 16px/1 'Inter Tight',sans-serif;text-decoration:none">{{ textoEntrar }}</a>
+            <div style="font:400 13.5px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ notaWeb }}</div>
+          </sc-if>
+          <sc-if value="{{ puedeAceptar }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ aceptar }}" style="display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;cursor:pointer">{{ textoAceptar }}</button>
+            <a href="/agenda" style="display:flex;align-items:center;justify-content:center;min-height:44px;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif">{{ textoNoPuedo }}</a>
+          </sc-if>
+          <sc-if value="{{ hayIrA }}" hint-placeholder-val="{{ false }}">
+            <a href="{{ enlaceIrA }}" style="display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;text-decoration:none">{{ textoIrA }}</a>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 5C · Ya no vale: se usó, se cambió, cerró o es tuya. Sin culpas y con salida. -->
+    <sc-if value="{{ noVale }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:16px;align-items:flex-start;animation:aro-open 380ms ease both">
+        <svg viewBox="0 0 240 240" width="80" height="80" aria-hidden="true"><circle cx="120" cy="120" r="86" fill="none" stroke="#1B5138" stroke-width="22"></circle><circle cx="206" cy="120" r="25" fill="#C0662F"></circle><circle cx="163" cy="194.5" r="25" fill="#1B5138"></circle><circle cx="77" cy="194.5" r="25" fill="#1B5138"></circle><circle cx="34" cy="120" r="25" fill="#1B5138"></circle><circle cx="77" cy="45.5" r="25" fill="#1B5138"></circle><circle cx="163" cy="45.5" r="25" fill="#1B5138"></circle></svg>
+        <h1 style="margin:0;font:400 clamp(32px,8vw,40px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.025em;text-wrap:balance">{{ tituloNoVale }}</h1>
+        <div style="font:400 16px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ lineaNoVale }}</div>
+        <sc-if value="{{ haySocio }}" hint-placeholder-val="{{ true }}">
+          <div style="font:400 16px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ socio }}</div>
+        </sc-if>
+        <a href="{{ enlaceNoVale }}" style="display:flex;align-items:center;justify-content:center;align-self:stretch;min-height:54px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;text-decoration:none;margin-top:4px">{{ botonNoVale }}</a>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = { datos: null, noExiste: false, aceptando: false, resultado: '', fallo: '' };
+
+  componentDidMount() {
+    let t = '';
+    try { t = new URLSearchParams(window.location.search).get('t') || ''; } catch (e) { /* sin enlace */ }
+    this._token = t;
+    if (!t) { this.setState({ noExiste: true }); return; }
+    this.cargar();
+  }
+
+  cargar() {
+    fetch('/api/mas-uno?token=' + encodeURIComponent(this._token))
+      .then((r) => (r.status === 404 ? null : r.json()))
+      .then((d) => {
+        if (!d) { this.setState({ noExiste: true }); return; }
+        // Ya es suya: su puesto está en Mi mesa.
+        if (d.estado === 'tuya') { window.location.replace('/mesa'); return; }
+        this.setState({ datos: d });
+      })
+      .catch(() => this.setState({ fallo: 'No pudimos abrir la invitación. Revisa la conexión y vuelve a intentarlo.' }));
+  }
+
+  aceptar() {
+    if (this.state.aceptando) return;
+    this.setState({ aceptando: true, fallo: '' });
+    fetch('/api/mas-uno', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accion: 'aceptar', token: this._token })
+    })
+      .then((r) => r.json())
+      .then((x) => {
+        // Ya estaba lista: el puesto es suyo, y su Mi mesa lo cuenta.
+        if (x.estado === 'confirmada') { window.location.replace('/mesa'); return; }
+        if (x.estado === 'aceptada') { this.setState({ aceptando: false, resultado: 'aceptada' }); return; }
+        if (x.estado === 'ya-va') { this.setState({ aceptando: false, fallo: 'Ya tienes puesto en esta fecha.' }); return; }
+        // Usada, anulada, cerrada o propia: se vuelve a leer y la pantalla
+        // cuenta lo que es.
+        this.setState({ aceptando: false });
+        this.cargar();
+      })
+      .catch(() => this.setState({ aceptando: false, fallo: 'No pudimos aceptarla. Revisa la conexión y vuelve a intentarlo.' }));
+  }
+
+  renderVals() {
+    const S = this.state;
+    const d = S.datos;
+    const R = window.AroReglas;
+    const M = R.MAS_UNO;
+    const I = M.invitado;
+    const estado = S.noExiste ? 'no-existe' : (d ? d.estado : null);
+    const valida = estado === 'valida' || estado === 'aceptada';
+    const yo = d && d.yo;
+    const f = d && d.fecha;
+    const zona = (d && d.zonaHoraria) || 'America/Caracas';
+    const pt = f ? R.partesDe(f.empiezaEn, zona) : null;
+    const cuerpo = I.cuerpo(d && d.invita);
+    const aceptada = estado === 'aceptada' || S.resultado === 'aceptada';
+    const volver = encodeURIComponent('/acompanante?t=' + (this._token || ''));
+
+    // Lo que tiene y lo que le falta (5B): la cuenta ya está; la verificación,
+    // según esté.
+    const hecho = 'flex:none;width:26px;height:26px;border-radius:13px;background:#14342A;color:#FAF3E4;display:flex;align-items:center;justify-content:center;font:700 12px/1 \'Inter Tight\',sans-serif';
+    const falta = 'flex:none;width:26px;height:26px;border-radius:13px;border:1.5px solid rgba(20,52,42,.35);box-sizing:border-box;color:#14342A;display:flex;align-items:center;justify-content:center;font:700 12px/1 \'Inter Tight\',sans-serif';
+    const pasos = yo ? [
+      { hecho: true, falta: false, n: '', t: I.tienesCuenta[0], d: I.tienesCuenta[1](yo.nombre), marca: hecho },
+      yo.lista
+        ? { hecho: true, falta: false, n: '', t: I.verificada[0], d: I.verificada[1], marca: hecho }
+        : { hecho: false, falta: true, n: '2', t: I.porVerificar[0], d: I.porVerificar[1], marca: falta },
+    ] : [];
+
+    // Por qué ya no vale, en sus palabras (5C).
+    const noVale = {
+      usada: [I.usada.titulo, I.usada.linea, true],
+      anulada: [I.anulada.titulo, I.anulada.linea(d && d.invita), true],
+      cerrada: [I.cerrada.titulo, I.cerrada.linea, true],
+      propia: [I.propia.titulo, I.propia.linea, false],
+      'no-existe': [I.anulada.titulo, '', true],
+    }[estado];
+
+    return {
+      cargando: !d && !S.noExiste && !S.fallo,
+      valida,
+      sello: I.sello,
+      titulo: I.titulo(d && d.invita),
+      fechaSello: I.fechaSello,
+      fechaLinea: pt ? R.DENTRO.diaYNumero(f.empiezaEn, zona) + ' · ' + pt.hora : '',
+      donde: f ? I.donde(R.DENTRO.zonasEnTexto(f.zonas), f.revelaEn ? R.DENTRO.cuandoSeSabe(f.revelaEn, zona) : '') : '',
+      cuerpo0: cuerpo[0], cuerpo1: cuerpo[1],
+      conCuenta: valida && !!yo,
+      faltaTitulo: I.faltaTitulo(''),
+      pasos,
+      sinCuenta: valida && !yo,
+      textoAlta: I.alta,
+      // Al alta de siempre: la cookie del enlace ya está puesta y el alta la
+      // recoge, entre por donde entre.
+      enlaceAlta: '/#registro',
+      textoEntrar: I.entrarCorto,
+      enlaceEntrar: '/entrar?volver=' + volver,
+      notaWeb: d ? I.notaWeb(d.plazo) : '',
+      puedeAceptar: valida && !!yo && !aceptada,
+      textoAceptar: S.aceptando ? 'Aceptando' : I.aceptar,
+      aceptar: () => this.aceptar(),
+      textoNoPuedo: I.noPuedo,
+      hayAceptada: valida && !!yo && aceptada,
+      textoAceptada: I.aceptada,
+      // Aceptada y le falta lo suyo: al paso que le toque del embudo.
+      hayIrA: valida && !!yo && aceptada && !yo.lista,
+      enlaceIrA: (yo && yo.donde) || '/verificacion',
+      textoIrA: I.porVerificar[0],
+      hayFallo: !!S.fallo,
+      fallo: S.fallo,
+      noVale: !!noVale,
+      tituloNoVale: noVale ? noVale[0] : '',
+      lineaNoVale: noVale ? noVale[1] : '',
+      haySocio: !!(noVale && noVale[2] && yo),
+      socio: I.socio,
+      enlaceNoVale: estado === 'propia' ? '/mesa' : '/agenda',
+      botonNoVale: estado === 'propia' ? 'Ver mi mesa' : I.agenda,
+    };
+  }
+}
+</script>
+</body>
+</html>

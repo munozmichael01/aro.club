@@ -305,6 +305,44 @@
 
         <sc-if value="{{ verFases }}" hint-placeholder-val="{{ true }}">
 
+    <!-- 4E · La fecha +1 que el cierre canceló porque el acompañante no se
+         verificó: sustituye a la reserva en Próxima hasta el día de la cena. -->
+    <sc-if value="{{ hayCanceladaMasUno }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 380ms ease both">
+        <div style="{{ selloEspera }}">{{ muCanceladaSello }}</div>
+        <h1 style="{{ h1 }}">{{ muCanceladaTitulo }}</h1>
+        <p style="{{ bajada }}">{{ muCanceladaBajada }}</p>
+        <div style="display:flex;align-items:center;gap:14px;border-radius:22px;background:#FFFBF0;padding:16px 18px;margin-top:clamp(20px,3vw,26px);max-width:440px">
+          <span style="flex:none;font:400 34px/1 'Young Serif',Georgia,serif;color:#1B5138">{{ muCanceladaCreditos }}</span>
+          <div style="display:flex;flex-direction:column;gap:3px"><span style="font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ muCanceladaCreditosTexto }}</span><span style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ muCanceladaCreditosNota }}</span></div>
+        </div>
+        <a href="/agenda" style="{{ botonVacia }}">{{ muCanceladaBoton }}</a>
+      </div>
+    </sc-if>
+
+    <!-- 5D · Entró por el enlace de un +1 y le falta verificarse: su puesto
+         le espera. La línea de arriba lleva a la verificación. -->
+    <sc-if value="{{ hayPendienteMasUno }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:aro-open 380ms ease both;max-width:520px">
+        <a href="/verificacion" style="display:flex;align-items:center;gap:12px;border-radius:18px;background:#F6D9B4;padding:14px 16px;text-decoration:none;color:#14342A">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"></rect><circle cx="9" cy="12" r="2.2"></circle><path d="M14 10.5h3.5M14 13.5h2.5"></path></svg>
+          <span style="flex:1;min-width:0;font:600 15px/1.35 'Inter Tight',sans-serif">{{ pdLinea0 }}<span style="font-weight:400">{{ pdLinea1 }}</span></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
+        </a>
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,26px);margin-top:14px;display:flex;flex-direction:column;gap:8px">
+          <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">{{ pdFechaSello }}</div>
+          <div style="font:400 clamp(22px,2.6vw,26px)/1.1 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ pdTitulo }}</div>
+          <div style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ pdHoraZona }}</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(20,52,42,.1)">
+            <span style="flex:none;width:32px;height:32px;border-radius:16px;background:#F2D2C0;display:flex;align-items:center;justify-content:center;font:400 15px/1 'Young Serif',Georgia,serif;color:#14342A">{{ pdInicial }}</span>
+            <span style="flex:1;min-width:0;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ pdVienesCon }}</span>
+            <span style="flex:none;display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;background:#F6D9B4;color:#14342A;font:700 10.5px/1 'Inter Tight',sans-serif;letter-spacing:.09em">{{ pdSello }}</span>
+          </div>
+        </div>
+        <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;margin-top:14px;text-wrap:pretty">{{ pdPie }}</div>
+      </div>
+    </sc-if>
+
     <sc-if value="{{ esVacia }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 380ms ease both">
         <div style="{{ selloEspera }}">{{ selloVacia }}</div>
@@ -324,7 +362,7 @@
       <div id="cerrada" style="animation:aro-open 380ms ease both">
         <div style="{{ selloEspera }}">{{ textoEspera }}</div>
         <h1 style="{{ h1 }}">{{ tituloEspera }}</h1>
-        <p style="{{ bajada }}">{{ seAbreA }} se abre todo: el sitio, la dirección, tu número de mesa y quiénes son los otros cinco.</p>
+        <p style="{{ bajada }}">{{ seAbreA }} se abre todo: el sitio, la dirección, tu número de mesa y {{ quienesSon }}.</p>
 
         <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(24px,3.4vw,32px)">
           <div style="font:700 clamp(38px,10vw,54px)/1 'Inter Tight',sans-serif;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:#14342A">{{ cuenta }}</div>
@@ -334,7 +372,68 @@
             <span style="font:400 clamp(20px,2.4vw,24px)/1.15 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ textoCena }}</span>
             <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ textoHoraZona }}</span>
           </div>
+          <!-- 5E · El acompañante: «Vienes con Ana», dentro de la tarjeta. -->
+          <sc-if value="{{ hayVienesCon }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(20,52,42,.1)">
+              <span style="flex:none;width:32px;height:32px;border-radius:16px;background:#F2D2C0;display:flex;align-items:center;justify-content:center;font:400 15px/1 'Young Serif',Georgia,serif;color:#14342A">{{ inicialVienesCon }}</span>
+              <span style="flex:1;min-width:0;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ textoVienesCon }}</span>
+              <span style="flex:none;display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;background:#9CBBA6;color:#14342A;font:700 10.5px/1 'Inter Tight',sans-serif;letter-spacing:.09em">{{ selloVienesCon }}</span>
+            </div>
+          </sc-if>
         </div>
+
+
+        <!-- 4 · «Tu +1 acompañante» (entrega mas-uno): debajo de la tarjeta de
+             la reserva, en Próxima, hasta que pasa la fecha. La cabecera es
+             siempre la misma y el sello dice el estado. -->
+        <sc-if value="{{ hayTarjetaMasUno }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:24px;background:#FFFBF0;border:1px solid rgba(20,52,42,.12);padding:clamp(18px,2.6vw,22px);margin-top:14px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <span style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">{{ muCabecera }}</span>
+              <span style="{{ muSelloEstilo }}">{{ muSello }}</span>
+            </div>
+            <sc-if value="{{ muSinUsar }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="font:400 22px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#14342A">{{ muTituloSinUsar }}</div>
+                <div style="font:400 14.5px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ muBajada0 }}<b style="font-weight:600;color:#14342A">{{ muBajada1 }}</b>{{ muBajada2 }}</div>
+                <div style="display:flex;align-items:center;gap:10px;border-radius:16px;background:#F2E9D5;padding:0 6px 0 14px;min-height:50px">
+                  <span style="flex:1;min-width:0;font:500 14px/1.2 'Inter Tight',sans-serif;color:#14342A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ muEnlaceTexto }}</span>
+                  <button onClick="{{ muCopiar }}" style="flex:none;min-height:40px;padding:0 14px;border-radius:999px;border:1.5px solid #14342A;background:transparent;color:#14342A;font:600 14px/1 'Inter Tight',sans-serif;cursor:pointer">{{ muTextoCopiar }}</button>
+                </div>
+                <button onClick="{{ muCompartir }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg>{{ muTextoCompartir }}</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ muRegistrado }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="flex:none;width:40px;height:40px;border-radius:20px;background:#F2D2C0;display:flex;align-items:center;justify-content:center;font:400 18px/1 'Young Serif',Georgia,serif;color:#14342A">{{ muInicial }}</span>
+                  <span style="flex:1;min-width:0;font:400 20px/1.15 'Young Serif',Georgia,serif;color:#14342A">{{ muTituloRegistrado }}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:10px;padding:12px 0;border-top:1px solid rgba(20,52,42,.1);border-bottom:1px solid rgba(20,52,42,.1)">
+                  <div style="display:flex;align-items:center;gap:10px"><span style="flex:none;width:22px;height:22px;border-radius:11px;background:#14342A;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg></span><span style="font:500 14.5px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ muCreo }}</span></div>
+                  <div style="display:flex;align-items:flex-start;gap:10px"><span style="flex:none;width:22px;height:22px;border-radius:11px;border:1.5px solid rgba(20,52,42,.35);box-sizing:border-box"></span><div style="display:flex;flex-direction:column;gap:2px"><span style="font:600 14.5px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ muFalta }}</span><span style="font:400 13px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ muFaltaDetalle }}</span></div></div>
+                </div>
+                <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ muNotaRegistrado }}</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ muConfirmado }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="display:flex;flex:none"><span style="width:40px;height:40px;border-radius:20px;background:#DCE6DD;border:2px solid #FFFBF0;display:flex;align-items:center;justify-content:center;font:400 18px/1 'Young Serif',Georgia,serif;color:#14342A">{{ muInicialYo }}</span><span style="width:40px;height:40px;border-radius:20px;background:#F2D2C0;border:2px solid #FFFBF0;margin-left:-10px;display:flex;align-items:center;justify-content:center;font:400 18px/1 'Young Serif',Georgia,serif;color:#14342A">{{ muInicial }}</span></span>
+                  <span style="flex:1;min-width:0;font:400 20px/1.15 'Young Serif',Georgia,serif;color:#14342A">{{ muTituloConfirmado }}</span>
+                </div>
+                <div style="font:400 14.5px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ muBajadaConfirmado }}</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ muPuedeCambiar }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ muAbrirCambio }}" style="align-self:flex-start;min-height:44px;padding:0;border:none;background:none;color:#1B5138;font:600 15px/1 'Inter Tight',sans-serif;text-decoration:underline;text-underline-offset:5px;cursor:pointer">{{ muTextoCambiar }}</button>
+            </sc-if>
+            <sc-if value="{{ muHayFallo }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="font:500 14px/1.5 'Inter Tight',sans-serif;color:#8F4515">{{ muFallo }}</div>
+            </sc-if>
+          </div>
+        </sc-if>
+
 
         <!-- «Compartir mi plan» (C2 de la entrega estas-dentro): justo debajo de
            la tarjeta de la mesa, para quien cerró «Estás dentro». Solo con la
@@ -349,6 +448,10 @@
             </span>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
           </button>
+        </sc-if>
+
+        <sc-if value="{{ hayCompartirSecundario }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ compartirPlan }}" style="display:flex;align-items:center;gap:8px;min-height:44px;margin-top:10px;padding:0;border:none;background:none;color:#1B5138;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B5138" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="3"></rect><path d="M10 7h4"></path></svg>{{ textoHistorias }}</button>
         </sc-if>
 
         <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:20px;max-width:46ch;text-wrap:pretty">{{ vasCon }} Te avisamos por correo en cuanto se abra.</div>
@@ -501,7 +604,28 @@
           <sc-if value="{{ hayMesaCorta }}" hint-placeholder-val="{{ false }}">
             <div style="padding:0 18px 15px;margin-top:-6px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ mesaCorta }}</div>
           </sc-if>
-          <sc-if value="{{ oGente }}" hint-placeholder-val="{{ true }}">
+          <!-- 6B · En una fecha +1, los nombres por dúos: el tuyo primero y con
+               borde terracota. Se nota quién viene con quién sin decir qué son. -->
+          <sc-if value="{{ oGenteDuos }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 18px 14px;display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ duosMesa }}" as="u" hint-placeholder-count="3">
+                <div style="border-radius:18px;border:{{ u.borde }};padding:6px 12px">
+                  <sc-if value="{{ u.tuyo }}" hint-placeholder-val="{{ false }}">
+                    <div style="font:700 10.5px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#8F4515;padding:8px 0 2px">{{ tuDuo }}</div>
+                  </sc-if>
+                  <sc-for list="{{ u.gente }}" as="c" hint-placeholder-count="2">
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
+                      <span style="flex:0 0 auto;width:36px;height:36px;border-radius:999px;background:{{ c.fondo }};display:flex;align-items:center;justify-content:center;font:400 16px/1 'Young Serif',Georgia,serif;color:#14342A">{{ c.inicial }}</span>
+                      <span style="flex:1;min-width:0;font:400 18px/1.15 'Young Serif',Georgia,serif;color:#14342A">{{ c.nombre }}</span>
+                      <span style="font:400 13px/1 'Inter Tight',sans-serif;color:#33513F">{{ c.sectorYNota }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+              <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ notaCompaneros }}</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ oGenteLista }}" hint-placeholder-val="{{ true }}">
             <div style="padding:0 18px 12px">
               <sc-for list="{{ comensales }}" as="c" hint-placeholder-count="5">
                 <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(20,52,42,.1)">
@@ -1150,6 +1274,19 @@
     </div>
   </div>
 </sc-if>
+
+  <!-- 4D · ¿Cambiar de acompañante? -->
+  <sc-if value="{{ muCambioAbierto }}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-modal="true" style="position:fixed;inset:0;z-index:96;background:rgba(11,26,21,.55);display:flex;align-items:flex-end;justify-content:center;padding:16px">
+      <div style="width:100%;max-width:440px;border-radius:26px;background:#FAF3E4;padding:22px;display:flex;flex-direction:column;gap:12px;animation:aro-open 260ms ease both">
+        <div style="font:400 26px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ muCambioTitulo }}</div>
+        <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ muCambioCuerpo }}</div>
+        <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.08);padding:12px 14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8F4515" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#14342A;text-wrap:pretty">{{ muCambioPlazo }}</span></div>
+        <button onClick="{{ muCambiarSi }}" style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;border:none;background:#6E340F;color:#FFF8EA;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">{{ muCambioSi }}</button>
+        <button onClick="{{ muCambiarNo }}" style="display:flex;align-items:center;justify-content:center;min-height:48px;border:none;background:none;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">{{ muCambioNo }}</button>
+      </div>
+    </div>
+  </sc-if>
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
@@ -2590,7 +2727,7 @@ class Component extends DCLogic {
       ? CT.linea.porConfirmar(lineaP.nombres, CT.quedanCorto(lineaP.cierraEn, lineaP.zonaHoraria))
       : CT.linea.encuesta(R.diaDe(lineaP.empiezaEn, lineaP.zonaHoraria) || '');
 
-    return Object.assign(jVals, this.valsSeguir(), {
+    return Object.assign(jVals, this.valsSeguir(), this.valsMasUno(), {
       hayPestanas: true,
       tituloMiMesa: R.vozDe(dt && dt.formato).mia,
       selProxima: enPasadas ? 'false' : 'true', selPasadas: enPasadas ? 'true' : 'false',
@@ -2646,7 +2783,15 @@ class Component extends DCLogic {
       // no son de nadie, y el primer golpe de vista es justo el que cuenta.
       esCerrada: !!dt && f === 0, esAbierta: !!dt && f === 1, esPasada: !!dt && f === 2,
       // La fila de «Compartir mi plan»: con la mesa cerrada, de un plan con tarjetas.
-      hayCompartir: !!dt && f === 0 && !!dt.eventoId && AroReglas.DENTRO.conTarjetas(dt.formato),
+      // En una fecha +1 la acción principal es invitar (3A): «Compartir mi
+      // plan» baja a enlace secundario, y sin «con tu código», que esa tarjeta
+      // no sale en una +1.
+      hayCompartir: !!dt && f === 0 && !!dt.eventoId && AroReglas.DENTRO.conTarjetas(dt.formato) && !(dt.masUno || dt.vienesCon),
+      // Y solo cuando ya viene alguien: antes, la invitación es lo único que
+      // hay que hacer (como en la app).
+      hayCompartirSecundario: !!dt && f === 0 && !!dt.eventoId && AroReglas.DENTRO.conTarjetas(dt.formato)
+        && (!!dt.vienesCon || !!(dt.masUno && dt.masUno.estado === 'confirmado')),
+      textoHistorias: AroReglas.MAS_UNO.dentro.historias,
       filaCompartir: AroReglas.DENTRO.fila.titulo,
       // «con tu código»: lo tiene quien puede reservar, que es quien tiene mesa.
       filaCompartirBajada: AroReglas.DENTRO.fila.bajada(true),
@@ -2726,6 +2871,37 @@ class Component extends DCLogic {
           // No pasa en una mesa de verdad —son seis— pero «0 personas ·
           // todas verificadas» es lo que se vería si alguna vez pasara.
           : 'Todavía no hay nadie más',
+      // Por dúos en una fecha +1 (6B): la lista, agrupada; el resumen, «Tres
+      // dúos. Cada uno viene junto.». Después de `resumenGente`, que pisa.
+      ...(() => {
+        const cs = (dt && dt.companeros) || [];
+        const ids = new Set(cs.map((c) => c.id));
+        const porDuos = cs.some((c) => c.vieneCon);
+        if (!porDuos) return { oGenteDuos: false, oGenteLista: cualAbierta === 'gente', duosMesa: [], tuDuo: '' };
+        const deIndice = (c) => comensales[cs.indexOf(c)];
+        const grupos = [];
+        const mio = cs.find((c) => c.vieneCon && !ids.has(c.vieneCon));
+        const usados = new Set();
+        if (mio) {
+          grupos.push({ tuyo: true, gente: [{ nombre: 'Tú', inicial: 'T', sectorYNota: '', fondo: '#DCE6DD' }, Object.assign({}, deIndice(mio), { fondo: '#F2D2C0' })] });
+          usados.add(mio.id);
+        }
+        const fondos = ['#F6D9B4', '#E8DEC8', '#C5D8CA'];
+        cs.forEach((c) => {
+          if (usados.has(c.id)) return;
+          const otra = cs.find((o) => o.id === c.vieneCon && !usados.has(o.id));
+          usados.add(c.id);
+          if (otra) usados.add(otra.id);
+          grupos.push({ tuyo: false, gente: [c, otra].filter(Boolean).map((x, i) => Object.assign({}, deIndice(x), { fondo: fondos[(grupos.length + i) % fondos.length] })) });
+        });
+        return {
+          oGenteDuos: cualAbierta === 'gente',
+          oGenteLista: false,
+          tuDuo: AroReglas.MAS_UNO.mesa.tuDuo,
+          duosMesa: grupos.map((g) => Object.assign(g, { borde: g.tuyo ? '1.5px solid #8F4515' : '1px solid rgba(20,52,42,.12)' })),
+          resumenGente: AroReglas.MAS_UNO.mesa.bajada(grupos.length),
+        };
+      })(),
 
       oPaso: cualAbierta === 'paso', oPasoAria: cualAbierta === 'paso' ? 'true' : 'false',
       fPaso: cualAbierta === 'paso' ? '−' : '+', sPaso: chevron(cualAbierta === 'paso', false),
@@ -2809,7 +2985,8 @@ class Component extends DCLogic {
       // Las tres acaban aqui, pero lo que le toca hacer a la persona es
       // distinto en cada una, y meterlas en un mismo texto seria decirle a
       // alguien que espere cuando lo que hace falta es que reserve.
-      esVacia: !!dt && f === -1,
+      // Salvo que el +1 tenga algo que contar en su lugar (4E y 5D).
+      esVacia: !!dt && f === -1 && !(dt.masUno && dt.masUno.estado === 'cancelada') && !dt.masUnoPendiente,
       /**
        * `sin-mesa` es DESPUÉS de la revelación y sin mesa, no antes.
        *
@@ -2900,7 +3077,9 @@ class Component extends DCLogic {
       TU: VOZ.TU,
       // La mesa cerrada decía «Cenas con cinco personas» también para una
       // caminata del domingo. Es la misma frase de siempre cuando se cena.
-      vasCon: VOZ.vasCon,
+      vasCon: dt && (dt.masUno || dt.vienesCon)
+        ? AroReglas.MAS_UNO.vasCon(dt.vienesCon || (dt.masUno && dt.masUno.estado === 'confirmado' ? dt.masUno.nombre : null))
+        : VOZ.vasCon,
       // De la voz, no de «¿hay mesa?»: un café y un brunch tienen mesa y no
       // son una cena.
       conQuien: VOZ.conQuien,
@@ -3064,7 +3243,11 @@ class Component extends DCLogic {
       tituloEspera: empieza
         ? 'Tienes puesto el ' + DIAS[empieza.getDay()] + '.'
         : 'Tienes puesto.',
-      textoCena: empieza ? NOMBRE_PLAN + ' · ' + DIAS[empieza.getDay()] + ' ' + empieza.getDate() : NOMBRE_PLAN,
+      // «Cena +1 · viernes 6» en una fecha +1 (4A).
+      textoCena: (() => {
+        const plan = dt && (dt.masUno || dt.vienesCon) ? NOMBRE_PLAN + ' +1' : NOMBRE_PLAN;
+        return empieza ? plan + ' · ' + DIAS[empieza.getDay()] + ' ' + empieza.getDate() : plan;
+      })(),
       // Las zonas que ella acepto, no la del restaurante: "Chacao o Las
       // Mercedes" es una respuesta a medias, pero es la verdad, y es el
       // precio de poder llenar mesas con poca gente.
@@ -3124,6 +3307,130 @@ class Component extends DCLogic {
   }
 
   /** Lo de «Seguir en contacto» que pinta la pantalla. */
+  /**
+   * «+1 acompañante» (entrega mas-uno): la tarjeta de quien reserva (4A-4E),
+   * la confirmación de cambiar (4D) y lo que ve el acompañante (5D, 5E). Va
+   * en su método, como «Seguir en contacto»: la vista ya es larga y esto
+   * solo existe en las fechas +1.
+   */
+  valsMasUno() {
+    const dt = this.state.datos;
+    const M = AroReglas.MAS_UNO;
+    const mu = dt && dt.masUno;
+    const pd = dt && dt.masUnoPendiente;
+    const fase = dt && dt.fase;
+    const estado = mu ? mu.estado : null;
+    const zona = (dt && dt.zonaHoraria) || 'America/Caracas';
+    const inicial = (n) => String(n || '?').trim().charAt(0).toUpperCase();
+    const tarjeta = !!mu && fase === 'cerrada' && estado !== 'cancelada';
+    const bajada = mu ? M.tarjeta.sinUsar.bajada(mu.plazo) : ['', '', ''];
+    const seSabe = dt && dt.revelaEn ? AroReglas.DENTRO.cuandoSeSabe(dt.revelaEn, zona) : '';
+    const sellos = {
+      'sin-usar': 'background:rgba(143,69,21,.12);color:#8F4515',
+      registrado: 'background:#F6D9B4;color:#14342A',
+      confirmado: 'background:#9CBBA6;color:#14342A',
+    };
+    const pt = pd ? AroReglas.partesDe(pd.empiezaEn, pd.zonaHoraria) : null;
+    const pdHora = pt ? pt.hora : '';
+    const pdZonas = pd ? AroReglas.DENTRO.zonasEnTexto(pd.zonas) : '';
+    const linea = pd ? M.acompanante.verificate(pd.plazo) : ['', ''];
+    const nombreYo = (dt && dt.miNombre) || '';
+    return {
+      hayTarjetaMasUno: tarjeta,
+      muCabecera: M.tarjeta.cabecera,
+      muSello: estado ? (M.tarjeta.sellos[estado] || '') : '',
+      muSelloEstilo: 'display:inline-flex;align-items:center;gap:5px;min-height:24px;padding:0 10px;border-radius:999px;font:700 10.5px/1 \'Inter Tight\',sans-serif;letter-spacing:.09em;white-space:nowrap;' + (sellos[estado] || ''),
+      muSinUsar: tarjeta && estado === 'sin-usar',
+      muRegistrado: tarjeta && estado === 'registrado',
+      muConfirmado: tarjeta && estado === 'confirmado',
+      muTituloSinUsar: M.tarjeta.sinUsar.titulo,
+      muBajada0: bajada[0], muBajada1: bajada[1], muBajada2: bajada[2],
+      muEnlaceTexto: mu && mu.enlace ? mu.enlace.replace(/^https?:\/\//, '') : '',
+      muTextoCopiar: this.state.muCopiado ? M.tarjeta.copiado : M.tarjeta.copiar,
+      muCopiar: () => {
+        if (!mu || !mu.enlace) return;
+        const listo = () => this.setState({ muCopiado: true });
+        if (navigator.clipboard) navigator.clipboard.writeText(mu.enlace).then(listo, listo); else listo();
+      },
+      muTextoCompartir: M.tarjeta.compartir,
+      // En el celular, la hoja del sistema con el mensaje; en la computadora,
+      // WhatsApp con el mensaje escrito (no hay hoja).
+      muCompartir: () => {
+        if (!mu || !mu.enlace) return;
+        const texto = mu.mensaje || mu.enlace;
+        const tactil = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        if (navigator.share && tactil) {
+          navigator.share({ title: M.tituloDelEnlace(null), text: texto }).catch(() => {});
+          return;
+        }
+        window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank', 'noopener');
+      },
+      muInicial: inicial(mu && mu.nombre),
+      muInicialYo: inicial(nombreYo || 'Tú'),
+      muTituloRegistrado: mu ? M.tarjeta.registrado.titulo(mu.nombre) : '',
+      muCreo: M.tarjeta.registrado.creo,
+      muFalta: M.tarjeta.registrado.falta,
+      muFaltaDetalle: mu ? M.tarjeta.registrado.faltaDetalle(mu.plazo) : '',
+      muNotaRegistrado: M.tarjeta.registrado.nota,
+      muTituloConfirmado: mu ? M.tarjeta.confirmado.titulo(mu.nombre) : '',
+      muBajadaConfirmado: M.tarjeta.confirmado.bajada(seSabe),
+      muPuedeCambiar: tarjeta,
+      muTextoCambiar: M.tarjeta.cambiar,
+      muAbrirCambio: () => this.setState({ muCambio: true, muFallo: '' }),
+      muHayFallo: !!this.state.muFallo,
+      muFallo: this.state.muFallo || '',
+      muCambioAbierto: tarjeta && !!this.state.muCambio,
+      muCambioTitulo: M.tarjeta.cambio.titulo,
+      muCambioCuerpo: M.tarjeta.cambio.cuerpo(estado === 'sin-usar' ? null : (mu && mu.nombre)),
+      muCambioPlazo: mu ? M.tarjeta.cambio.plazo(mu.plazo) : '',
+      muCambioSi: this.state.muCambiando ? 'Cambiando' : M.tarjeta.cambio.si,
+      muCambioNo: M.tarjeta.cambio.no,
+      muCambiarNo: () => this.setState({ muCambio: false }),
+      muCambiarSi: () => {
+        if (!mu || this.state.muCambiando) return;
+        this.setState({ muCambiando: true });
+        fetch('/api/mas-uno', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accion: 'cambiar', reservaId: mu.reservaId })
+        })
+          .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
+          .then(({ ok, x }) => {
+            if (!ok) { this.setState({ muCambiando: false, muCambio: false, muFallo: x.error || 'No pudimos cambiarlo.' }); return; }
+            const datos = Object.assign({}, this.state.datos, { masUno: x.masUno });
+            this.setState({ muCambiando: false, muCambio: false, muCopiado: false, datos });
+          })
+          .catch(() => this.setState({ muCambiando: false, muCambio: false, muFallo: 'No pudimos cambiarlo. Revisa la conexión.' }));
+      },
+      // 4E
+      hayCanceladaMasUno: fase === 'sin-reserva' && estado === 'cancelada',
+      muCanceladaSello: mu ? M.tarjeta.cancelada.sello(AroReglas.DENTRO.diaYNumero(mu.empiezaEn, mu.zonaHoraria).toLowerCase()) : '',
+      muCanceladaTitulo: M.tarjeta.cancelada.titulo,
+      muCanceladaBajada: mu ? M.tarjeta.cancelada.bajada('el ' + mu.plazo) : '',
+      muCanceladaCreditos: M.tarjeta.cancelada.creditos,
+      muCanceladaCreditosTexto: M.tarjeta.cancelada.creditosTexto,
+      muCanceladaCreditosNota: M.tarjeta.cancelada.creditosNota,
+      muCanceladaBoton: M.tarjeta.cancelada.boton,
+      // 5D
+      hayPendienteMasUno: fase === 'sin-reserva' && !!pd,
+      pdLinea0: linea[0], pdLinea1: linea[1],
+      pdFechaSello: pt ? (pt.dia + ' ' + pt.numero + ' de ' + pt.mes + ' · ' + AroReglas.DENTRO.planDe(pd.formato) + ' +1').toUpperCase() : '',
+      pdTitulo: M.acompanante.esperando,
+      pdHoraZona: [pdHora, pdZonas].filter(Boolean).join(' · '),
+      pdInicial: inicial(pd && pd.invita),
+      pdVienesCon: pd ? M.vienesCon(pd.invita) : '',
+      pdSello: M.acompanante.selloPendiente,
+      pdPie: pd ? M.acompanante.pie(pd.invita) : '',
+      // 5E
+      hayVienesCon: fase === 'cerrada' && !!(dt && dt.vienesCon),
+      // En una fecha +1 no son «los otros cinco»: la mesa es de dos a cuatro
+      // dúos y una de las personas es tu acompañante.
+      quienesSon: (mu || (dt && dt.vienesCon)) ? 'quiénes van' : 'quiénes son los otros cinco',
+      inicialVienesCon: inicial(dt && dt.vienesCon),
+      textoVienesCon: dt && dt.vienesCon ? M.vienesCon(dt.vienesCon) : '',
+      selloVienesCon: M.acompanante.selloDentro,
+    };
+  }
+
   valsSeguir() {
     const S = this.state;
     const C = AroReglas.CONTACTO;

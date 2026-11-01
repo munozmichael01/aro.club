@@ -43,6 +43,11 @@ export type EstadoMasUno = 'sin-usar' | 'registrado' | 'confirmado' | 'cancelada
 
 /** Lo que va en `/api/mi-mesa`, `/api/mi-cuenta` y «Estás dentro» de quien reserva. */
 export type MasUno = {
+  /** La reserva de quien invita: la que se manda para cambiar de acompañante. */
+  reservaId: string
+  /** El día de la fecha y su zona horaria: la tarjeta cancelada (4E) los dice sin otra reserva a mano. */
+  empiezaEn: string
+  zonaHoraria: string
   enlace: string | null
   estado: EstadoMasUno
   /** El nombre de pila de quien se registró o viene. */
@@ -144,7 +149,7 @@ export async function masUnoDe(admin: Admin, bookingId: string): Promise<MasUno 
   const { reserva, evento } = r
   const zona = await zonaDeCiudad(evento.city_slug)
   const plazo = MAS_UNO.plazo(evento.booking_closes_at, zona)
-  const base = { cierraEn: evento.booking_closes_at, plazo }
+  const base = { reservaId: bookingId, empiezaEn: evento.starts_at, zonaHoraria: zona, cierraEn: evento.booking_closes_at, plazo }
 
   if (reserva.status === 'cancelled_by_ops' && reserva.cancel_reason === MOTIVO_SIN_ACOMPANANTE) {
     return { ...base, enlace: null, estado: 'cancelada', nombre: null, mensaje: null }
@@ -220,7 +225,7 @@ export async function vienesConDe(admin: Admin, bookingId: string): Promise<stri
 export type Invitacion = {
   estado: 'valida' | 'propia' | 'usada' | 'anulada' | 'cerrada' | 'aceptada' | 'tuya'
   invita: string | null
-  fecha: { id: string; empiezaEn: string; cierraEn: string; formato: string; zonas: string[] } | null
+  fecha: { id: string; empiezaEn: string; cierraEn: string; revelaEn: string | null; formato: string; zonas: string[] } | null
   plazo: string
   zonaHoraria: string
 }
@@ -253,12 +258,13 @@ export async function leerInvitacion(
     .select('zone_slug, zones(name)')
     .eq('event_id', reserva.event_id)
 
-  const { data: ev } = await admin.from('events').select('format').eq('id', reserva.event_id).maybeSingle()
+  const { data: ev } = await admin.from('events').select('format, reveal_at').eq('id', reserva.event_id).maybeSingle()
 
   const fecha = {
     id: reserva.event_id,
     empiezaEn: evento.starts_at,
     cierraEn: evento.booking_closes_at,
+    revelaEn: ev?.reveal_at ?? null,
     formato: ev?.format ?? 'dinner',
     zonas: [...new Set((zonas ?? []).map((z) => (z.zones as unknown as { name: string } | null)?.name ?? z.zone_slug))],
   }
@@ -769,9 +775,18 @@ export const COOKIE_MAS_UNO = 'aro_mas_uno'
 export async function masUnoDeLaReserva(
   admin: Admin,
   bookingId: string,
-): Promise<{ masUno: MasUno | null; vienesCon: string | null }> {
+): Promise<{ masUno: MasUno | null; vienesCon: string | null; miNombre?: string | null }> {
   const [masUno, vienesCon] = await Promise.all([masUnoDe(admin, bookingId), vienesConDe(admin, bookingId)])
-  return { masUno, vienesCon }
+  if (!masUno && !vienesCon) return { masUno, vienesCon }
+  // Y el nombre de pila de quien mira: las dos iniciales de «Laura viene
+  // contigo» (4C). Solo en una +1, que es donde se pinta.
+  const { data: r } = await admin
+    .from('bookings')
+    .select('profiles!bookings_profile_id_fkey(display_name, full_name)')
+    .eq('id', bookingId)
+    .maybeSingle()
+  const miNombre = nombreDePila((r as unknown as { profiles: { display_name: string | null; full_name: string | null } | null } | null)?.profiles)
+  return { masUno, vienesCon, miNombre }
 }
 
 /**

@@ -71,6 +71,8 @@ const PANTALLAS: Array<[string, string]> = [
   ['/pago', '/Aro Club - Pago.dc.html'],
   // Entrega estas-dentro · después de reservar. La misma URL que la app.
   ['/estas-dentro', '/Aro Club - Estas dentro.dc.html'],
+  // La invitación de un «+1 acompañante». Se llega desde aro.club/m/<token>.
+  ['/acompanante', '/Aro Club - Acompanante.dc.html'],
   ['/cancelar', '/Aro Club - Cancelar.dc.html'],
   // La misma URL que la app: dos caminos distintos para pedir lo mismo es
   // el principio de que digan cosas distintas.

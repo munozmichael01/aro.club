@@ -180,10 +180,12 @@ type Api = {
     avanceDeDuos: (puestos: number) => number
     /** «viernes 6 a medianoche», sin «el». */
     plazo: (cierreIso: string, zona?: string) => string
+    conPunto: (t: string) => string
     aviso: { titulo: string; lineas: (plazo: string) => string[]; casilla: string; falta: string }
     mensaje: (inv: { dia: string; hora: string; zonas: string; plazo: string; enlace: string }) => string
     tituloDelEnlace: (nombre: string | null) => string
     vienesCon: (nombre: string | null) => string
+    mesa: { tuDuo: string; bajada: (duos: number) => string; pareja: (a: string, b: string) => string }
     correos: Record<CorreoMasUno, (d: DatosCorreoMasUno) => {
       asunto: string; sello: string; bajada: string; boton: string; ruta: string
       push: { titulo: string; cuerpo: string }

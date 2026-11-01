@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { aceptarInvitacion, cambiarAcompanante, leerInvitacion, masUnoDe } from '@/lib/mas-uno'
+import { situacionDePerfil } from '@/lib/embudo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -35,9 +36,26 @@ export async function GET(request: Request) {
   const token = TOKEN.safeParse(new URL(request.url).searchParams.get('token'))
   if (!token.success) return NextResponse.json({ error: 'Ese enlace no existe.' }, { status: 404 })
 
-  const inv = await leerInvitacion(createAdminClient(), token.data, await quienMira())
+  const admin = createAdminClient()
+  const yo = await quienMira()
+  const inv = await leerInvitacion(admin, token.data, yo)
   if (!inv) return NextResponse.json({ error: 'Ese enlace no existe.' }, { status: 404 })
-  return NextResponse.json(inv)
+
+  // Quién mira, para 5B: «Entraste como Laura» y si ya está lista para que
+  // el puesto quede al aceptar. Sin sesión, null.
+  let quien: { nombre: string | null; lista: boolean; donde: string } | null = null
+  if (yo) {
+    const [{ data: perfil }, situacion] = await Promise.all([
+      admin.from('profiles').select('display_name, full_name').eq('id', yo).maybeSingle(),
+      situacionDePerfil(yo),
+    ])
+    quien = {
+      nombre: (perfil?.display_name || perfil?.full_name?.split(' ')[0] || '').trim() || null,
+      lista: situacion.puedeReservar,
+      donde: situacion.donde,
+    }
+  }
+  return NextResponse.json({ ...inv, yo: quien })
 }
 
 export async function POST(request: Request) {

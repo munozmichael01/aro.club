@@ -121,6 +121,16 @@
   </td></tr>
   {{/si}}
 
+  <!-- Fecha +1 (6A de la entrega mas-uno): quién viene con quién, el tuyo
+       primero. La lista de abajo sigue con cada persona y su sector. -->
+  {{#si porDuos}}
+  <tr><td class="p" style="padding:16px 40px 0 40px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;">{{#cada duos}}
+      <tr><td style="padding:9px 0;border-bottom:1px solid #3C5A48;font-family:'Young Serif',Georgia,'Times New Roman',serif;font-weight:700;font-size:20px;line-height:26px;color:#FAF3E4;mso-line-height-rule:exactly;">{{#si tuyo}}<span style="color:#E39C63;">{{ texto }}</span>{{/si}}{{#no tuyo}}{{ texto }}{{/no}}</td></tr>{{/cada}}
+    </table>
+  </td></tr>
+  {{/si}}
+
   <!-- Los cinco. Cada persona es UNA fila completa: el bucle NO puede abrir
        ni cerrar a caballo de la tabla. El porque, en el commit. -->
   <tr><td class="p" style="padding:16px 40px 0 40px;">
@@ -199,7 +209,7 @@
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:#FAF3E4;border-radius:22px;">
       <tr><td style="padding:20px 24px 9px 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.4px;color:#8F4515;mso-line-height-rule:exactly;"><strong>RECUERDA</strong></td></tr>
       <tr><td style="padding:0 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#33513F;mso-line-height-rule:exactly;">
-        Los {{ precio }} de tu plaza cubren armar la mesa <span style="color:#C0662F;">·</span> la verificación de identidad de los seis <span style="color:#C0662F;">·</span> el sitio y la reserva a tu nombre.
+        Los {{ precio }} {{ deTuPlaza }} cubren armar la mesa <span style="color:#C0662F;">·</span> la verificación de identidad {{ deLosSeis }} <span style="color:#C0662F;">·</span> el sitio y la reserva a tu nombre.
       </td></tr>
       <tr><td style="padding:10px 24px 0 24px;font-family:'Inter Tight',Arial,Helvetica,sans-serif;font-size:14px;line-height:21px;color:#2C4A38;mso-line-height-rule:exactly;">
         <strong style="color:#14342A;">Tu consumo va aparte:</strong> lo pagas en el restaurante, como en cualquier salida.

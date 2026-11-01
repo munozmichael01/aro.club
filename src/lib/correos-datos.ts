@@ -8,14 +8,14 @@ import { avisoDeDosHoras, FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { nombreDeIdioma } from '@/lib/idioma'
-import { arraigoDe, DIAS_GUARDA_FOTOS, HORAS_DE_MARGEN, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
+import { arraigoDe, MAS_UNO, DIAS_GUARDA_FOTOS, HORAS_DE_MARGEN, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
 import { situacionDePerfil } from '@/lib/embudo'
 import { codigoDe, cuentaDe, POR_CADA } from '@/lib/referidos'
 import { datosDeCorreo } from '@/lib/contacto'
-import { datosDeCorreoMasUno } from '@/lib/mas-uno'
+import { datosDeCorreoMasUno, duosDeLaMesa, ordenarPorDuos } from '@/lib/mas-uno'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
@@ -2757,6 +2757,48 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   const unica = (await mesasUnicas([{ eventoId, sitioId: mesa.restaurant_id }]))
     .has(claveDeMesa(eventoId, mesa.restaurant_id))
 
+  const nombreDe = (o: { profiles: unknown }) => {
+    const quien = o.profiles as { display_name: string | null; full_name: string | null } | null
+    return quien?.display_name || quien?.full_name?.split(' ')[0] || '—'
+  }
+  /**
+   * En una fecha +1, la gente por dúos: tu acompañante primero y cada dúo
+   * junto, y las líneas «Tú y Laura», «Daniel y Luis». En una mesa normal
+   * se queda como venía, por orden de asiento.
+   */
+  const duos = (deLaFecha as { mas_uno?: boolean } | null)?.mas_uno ? await duosDeLaMesa(admin, fila.table_id) : new Map<string, string>()
+  const conQuienVengo = duos.get(perfilId) ?? null
+  const ordenados = duos.size
+    ? ordenarPorDuos((otros ?? []).map((o) => ({ ...o, id: o.profile_id, vieneCon: duos.get(o.profile_id) ?? null })), perfilId)
+    : (otros ?? [])
+  const genteDeLaMesa = ordenados.map((o) => {
+    const nombre = nombreDe(o)
+    return {
+      nombre,
+      inicial: nombre.charAt(0),
+      sector: sector.get(o.profile_id) ?? '',
+      arraigo: arraigo.get(o.profile_id) ?? '',
+    }
+  })
+  const duosTexto: string[] = []
+  if (duos.size) {
+    const vistos = new Set<string>()
+    const porId = new Map(ordenados.map((o) => [o.profile_id, nombreDe(o)]))
+    if (conQuienVengo) {
+      duosTexto.push(MAS_UNO.mesa.pareja('Tú', porId.get(conQuienVengo) ?? '—'))
+      vistos.add(conQuienVengo)
+    }
+    for (const o of ordenados) {
+      if (vistos.has(o.profile_id)) continue
+      const otra = duos.get(o.profile_id)
+      vistos.add(o.profile_id)
+      if (otra && porId.has(otra)) {
+        vistos.add(otra)
+        duosTexto.push(MAS_UNO.mesa.pareja(porId.get(o.profile_id) ?? '—', porId.get(otra) ?? '—'))
+      }
+    }
+  }
+
   return {
     numero,
     sitio: mesa.restaurants?.name ?? '',
@@ -2788,16 +2830,13 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
     fotoEntrada: urlDeFotoDeLocal(mesa.restaurants?.id, mesa.restaurants?.facade_photo_path) ?? '',
     mesaUnica: unica,
     comoLlegar: unica ? 'la mesa de Aro' : `la mesa de Aro, la ${numero}`,
-    gente: (otros ?? []).map((o) => {
-      const quien = o.profiles as unknown as { display_name: string | null; full_name: string | null } | null
-      const nombre = quien?.display_name || quien?.full_name?.split(' ')[0] || '—'
-      return {
-        nombre,
-        inicial: nombre.charAt(0),
-        sector: sector.get(o.profile_id) ?? '',
-        arraigo: arraigo.get(o.profile_id) ?? '',
-      }
-    }),
+    gente: genteDeLaMesa,
+    // Fecha +1 (6A de la entrega mas-uno): «Tú y Laura · Daniel y Luis».
+    porDuos: duosTexto.length > 0,
+    // Una +1 son dos puestos y la mesa no siempre son seis.
+    deTuPlaza: duos.size ? 'de tus dos puestos' : 'de tu plaza',
+    deLosSeis: duos.size ? 'de toda la mesa' : 'de los seis',
+    duos: duosTexto.map((texto, i) => ({ texto, tuyo: i === 0 && !!conQuienVengo })),
     /**
      * Cuántos son los OTROS, en letra. Casi siempre cinco. Casi.
      *

@@ -65,7 +65,7 @@
 
     <sc-if value="{{ esElegir }}" hint-placeholder-val="{{ true }}">
       <div style="animation:aro-open 340ms ease both">
-        <h1 style="{{ h1 }}">Tu puesto.</h1>
+        <h1 style="{{ h1 }}">{{ tituloPago }}</h1>
         <p style="{{ bajada }}">Se paga en bolívares a la tasa oficial del día. El crédito no caduca.</p>
 
         <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,26px);margin-top:clamp(24px,3.4vw,32px)">
@@ -74,10 +74,23 @@
             <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#33513F">{{ detalleEv }}</span>
           </div>
           <div style="height:1px;background:rgba(20,52,42,.12);margin:16px 0"></div>
+          <sc-if value="{{ normal }}" hint-placeholder-val="{{ true }}">
           <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline">
             <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">Un puesto</span>
             <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ precioTexto }}</span>
           </div>
+          </sc-if>
+          <!-- 2B · Fecha +1: los dos puestos, cada uno con su precio. -->
+          <sc-if value="{{ masUno }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline">
+            <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ tuPuesto }}</span>
+            <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ precioPuesto }}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-top:9px">
+            <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">{{ suPuesto }}</span>
+            <span style="font:600 15px/1.4 'Inter Tight',sans-serif;color:#14342A;font-variant-numeric:tabular-nums">{{ precioPuesto }}</span>
+          </div>
+          </sc-if>
           <!--
             El descuento del código, como una línea más del recibo.
 
@@ -101,6 +114,24 @@
             <span style="{{ totalEstilo }}">{{ totalTexto }}</span>
           </div>
         </div>
+
+        <!-- 2B · El aviso con casilla de una fecha +1, entre el total y el
+             método. Borde terracota: lo único en la pantalla con ese borde. -->
+        <sc-if value="{{ masUno }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:20px;background:#FFF8EA;border:1.5px solid #8F4515;display:flex;flex-direction:column;margin-top:14px">
+            <div style="padding:18px 18px 14px;display:flex;flex-direction:column;gap:12px">
+              <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">{{ avisoSello }}</div>
+              <div style="font:400 24px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#14342A">{{ avisoTitulo }}</div>
+              <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8F4515" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><div style="font:400 14.5px/1.45 'Inter Tight',sans-serif;color:#14342A;text-wrap:pretty">{{ avisoPlazo }}<b style="font-weight:600">{{ avisoPlazoNegrita }}</b></div></div>
+              <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8F4515" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"></path></svg><div style="font:400 14.5px/1.45 'Inter Tight',sans-serif;color:#14342A;text-wrap:pretty">{{ avisoCancela }}<b style="font-weight:600">{{ avisoCancelaNegrita }}</b></div></div>
+            </div>
+            <button onClick="{{ tocarAviso }}" role="checkbox" aria-checked="{{ avisoMarcado }}" style="display:flex;align-items:center;gap:12px;min-height:54px;padding:0 18px;border:none;border-top:1px solid rgba(143,69,21,.25);background:none;cursor:pointer;text-align:left">
+              <sc-if value="{{ avisoMarcado }}" hint-placeholder-val="{{ false }}"><span style="width:24px;height:24px;border-radius:7px;background:#A0511F;border:2px solid #A0511F;box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFF8EA" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg></span></sc-if>
+              <sc-if value="{{ avisoSinMarcar }}" hint-placeholder-val="{{ true }}"><span style="width:24px;height:24px;border-radius:7px;border:2px solid rgba(20,52,42,.4);box-sizing:border-box;flex:none"></span></sc-if>
+              <span style="font:600 15.5px/1.2 'Inter Tight',sans-serif;color:#14342A">{{ avisoCasilla }}</span>
+            </button>
+          </div>
+        </sc-if>
 
         <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.09);padding:14px 16px;margin-top:14px">
           <span style="{{ iconoAviso }}">!</span>
@@ -172,8 +203,8 @@
           </sc-if>
         </div>
 
-        <button onClick="{{ irDatos }}" style="{{ botonPagar }}">{{ textoIrDatos }}</button>
-        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;max-width:48ch;text-wrap:pretty">Cancelas con más de 24 horas y recuperas el crédito completo. Con menos, se pierde: la mesa ya está armada.</div>
+        <button onClick="{{ irDatos }}" aria-disabled="{{ inerteDatos }}" style="{{ botonIrDatos }}">{{ textoIrDatos }}</button>
+        <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:12px;max-width:48ch;text-wrap:pretty">{{ notaCancelar }}</div>
 
       </div>
     </sc-if>
@@ -452,6 +483,9 @@ class Component extends DCLogic {
     // El permiso de grabación, cuando la fecha se graba entera. Aquí es
     // condición: esta pantalla es la que aparta el puesto.
     permiteGrabacion: false,
+    // La casilla del aviso de una fecha +1. Sin ella no se ven los datos
+    // para pagar, y el servidor no aparta los dos puestos.
+    aceptaMasUno: false,
             datos: null, enviando: false, fallo: '' };
 
   componentDidMount() {
@@ -567,7 +601,7 @@ class Component extends DCLogic {
       // el, el servidor contesta la negativa de siempre: es lo que protege a
       // las apps que ya estan en la calle, que leen cualquier 200 como «tu
       // plaza esta cubierta».
-      body: JSON.stringify({ eventoId: this._evento, codigo: codigo, acepta: ['descuento'], permiteGrabacion: this.state.permiteGrabacion || undefined })
+      body: JSON.stringify({ eventoId: this._evento, codigo: codigo, acepta: ['descuento'], permiteGrabacion: this.state.permiteGrabacion || undefined, aceptaCondiciones: this.state.aceptaMasUno || undefined })
     })
       .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
       .then(({ ok, x }) => {
@@ -626,6 +660,8 @@ class Component extends DCLogic {
         // El permiso, cuando la fecha se graba entera. El servidor no aparta
         // puesto sin él.
         permiteGrabacion: this.state.permiteGrabacion || undefined,
+        // La casilla de una fecha +1: sin ella `/api/pago` no aparta nada.
+        aceptaCondiciones: this.state.aceptaMasUno || undefined,
         // El codigo, no el importe: el descuento lo vuelve a calcular el
         // servidor. Si valiera lo que manda esta pantalla, el precio lo
         // elegiria quien paga.
@@ -944,7 +980,12 @@ class Component extends DCLogic {
     // banco a quien la puerta va a rechazar después.
     const faltaIdioma = !!(D.evento && D.evento.faltaIdioma) && !this.state.idiomaPuesto;
     const idiomaNombre = (D.evento && D.evento.idiomaNombre) || '';
-    const repOk = camposOk && (!capturaObligatoria || conCaptura) && permisoOk && !faltaIdioma;
+    // Fecha +1: la casilla del aviso es condición, como el permiso.
+    const masUno = !!(D.evento && D.evento.masUno);
+    const M = window.AroReglas && AroReglas.MAS_UNO;
+    const masUnoOk = !masUno || !!this.state.aceptaMasUno;
+    const repOk = camposOk && (!capturaObligatoria || conCaptura) && permisoOk && !faltaIdioma && masUnoOk;
+    const plazoMasUno = masUno && M && D.evento.cierraEn ? M.plazo(D.evento.cierraEn, D.evento.zonaHoraria) : '';
 
     // Con el pago ya reportado, el comprobante es el del SERVIDOR: lo que se
     // reportó de verdad. Armado aquí salía con el método elegido ahora —el
@@ -1077,7 +1118,10 @@ class Component extends DCLogic {
       botonPrimario: btn('#14342A', '#FAF3E4'),
       botonFantasma: btn('transparent', '#33513F', 'font-weight:500;padding:0 8px;text-decoration:underline;text-underline-offset:6px'),
 
-      textoIrDatos: mSel.manual ? 'Ver los datos para pagar' : 'Pagar con ' + mSel.nombre.toLowerCase(),
+      // Sin la casilla de una fecha +1, el botón dice lo que falta (2B).
+      textoIrDatos: !masUnoOk && M
+        ? M.aviso.falta
+        : (mSel.manual ? 'Ver los datos para pagar' : 'Pagar con ' + mSel.nombre.toLowerCase()),
       tituloDatos: mSel.manual ? 'Paga y vuelve aquí.' : 'Paga sin salir de aquí.',
       bajadaDatos: mSel.manual
         ? (mSel.id === 'pm'
@@ -1191,7 +1235,35 @@ class Component extends DCLogic {
         + (this.state.permiteGrabacion ? '#8F4515;background:#8F4515;color:#FFF8EA' : 'rgba(20,52,42,.22);background:transparent;color:#14342A'),
       tocarPermiso: () => this.setState({ permiteGrabacion: !this.state.permiteGrabacion }),
 
-      irDatos: () => this.setState({ fase: 1, copiado: -1 }),
+      irDatos: () => { if (masUnoOk) this.setState({ fase: 1, copiado: -1 }); },
+      inerteDatos: masUnoOk ? null : 'true',
+      botonIrDatos: masUnoOk
+        ? btn('#1B5138', '#FAF3E4', 'width:100%;margin-top:clamp(24px,3vw,30px)')
+        : btn('rgba(20,52,42,.08)', '#9DAEA2', 'width:100%;margin-top:clamp(24px,3vw,30px);cursor:not-allowed'),
+      masUno,
+      normal: !masUno,
+      tituloPago: masUno && M ? M.pago.titulo : 'Tu puesto.',
+      tuPuesto: M ? M.hoja.tuPuesto : '',
+      suPuesto: M ? M.hoja.suPuesto : '',
+      // Cada puesto vale la mitad de lo que cobra la fecha. Con un código, el
+      // precio pleno: la rebaja va en su propia fila, como siempre.
+      precioPuesto: (() => {
+        const pleno = (this.state.descuento && this.state.descuento.montoPleno != null) ? this.state.descuento.montoPleno : D.montoUsd;
+        return pleno != null && M ? dinero(pleno / M.puestos, 'ref') : '—';
+      })(),
+      avisoSello: M ? M.aviso.sello : '',
+      avisoTitulo: M ? M.aviso.titulo : '',
+      avisoPlazo: M ? M.aviso.plazo(plazoMasUno)[0] : '',
+      avisoPlazoNegrita: M ? M.conPunto(M.aviso.plazo(plazoMasUno)[1]) : '',
+      avisoCancela: M ? M.aviso.cancela[0] : '',
+      avisoCancelaNegrita: M ? M.aviso.cancela[1] : '',
+      avisoCasilla: M ? M.aviso.casilla : '',
+      avisoMarcado: !!this.state.aceptaMasUno,
+      avisoSinMarcar: !this.state.aceptaMasUno,
+      tocarAviso: () => this.setState({ aceptaMasUno: !this.state.aceptaMasUno }),
+      notaCancelar: masUno && M
+        ? M.dentro.cancela()
+        : 'Cancelas con más de 24 horas y recuperas el crédito completo. Con menos, se pierde: la mesa ya está armada.',
       volverElegir: () => this.setState({ fase: 0 }),
       irReportar: () => this.setState({ fase: 2 }),
       volverDatos: () => this.setState({ fase: 1, copiado: -1 }),

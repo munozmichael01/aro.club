@@ -236,6 +236,11 @@
                     <sc-if value="{{ ev.hayEdad }}" hint-placeholder-val="{{ false }}">
                       <span style="{{ ev.estiloEdad }}">{{ ev.etiquetaEdad }}</span>
                     </sc-if>
+                    <!-- «+1 ACOMPAÑANTE» (1A): cápsula de contorno con los dos
+                         puntos juntos. No compite con la de idioma, que es maciza. -->
+                    <sc-if value="{{ ev.masUno }}" hint-placeholder-val="{{ false }}">
+                      <span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px 0 6px;border-radius:999px;border:1.5px solid #14342A;font:700 10.5px/1 'Inter Tight',sans-serif;letter-spacing:.09em;color:#14342A;white-space:nowrap;align-self:center"><svg width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="#8F4515"></circle><circle cx="20" cy="10" r="6.5" fill="none" stroke="#14342A" stroke-width="2.4"></circle></svg>{{ ev.marcaMasUno }}</span>
+                    </sc-if>
                     <sc-if value="{{ ev.hayIdioma }}" hint-placeholder-val="{{ false }}">
                       <span style="{{ ev.estiloIdioma }}">{{ ev.etiquetaIdioma }}</span>
                     </sc-if>
@@ -269,6 +274,7 @@
                        primera fecha, y empujaban la primera fecha fuera de la
                        pantalla en un telefono. Aqui llega cuando hace falta:
                        justo antes de decir lo que se paga. -->
+                  <sc-if value="{{ ev.normal }}" hint-placeholder-val="{{ true }}">
                   <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:16px;max-width:50ch;text-wrap:pretty">{{ ev.comoFunciona }}</div>
 
                   <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:14px 0;border-top:1px solid rgba(20,52,42,.12);border-bottom:1px solid rgba(20,52,42,.12);margin-bottom:16px">
@@ -276,6 +282,25 @@
                     <span style="font:600 14px/1.4 'Inter Tight',sans-serif;color:#1B5138;white-space:nowrap">{{ ev.precio }}</span>
                   </div>
                   <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:16px;max-width:50ch;text-wrap:pretty">{{ ev.nota }}</div>
+                  </sc-if>
+
+                  <!-- 1B · Fecha +1: el bloque verde en lugar de «Te apuntas a
+                       una fecha», el cargo en dos y su nota. -->
+                  <sc-if value="{{ ev.masUno }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:12px;align-items:flex-start;border-radius:20px;background:#14342A;color:#FAF3E4;padding:16px;margin-bottom:16px;max-width:52ch">
+                      <svg viewBox="0 0 240 240" width="40" height="40" style="flex:none" aria-hidden="true"><circle cx="120" cy="120" r="86" fill="none" stroke="#FAF3E4" stroke-width="18"></circle><circle cx="206" cy="120" r="25" fill="#E39C63"></circle><circle cx="163" cy="194.5" r="25" fill="#E39C63"></circle><circle cx="77" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="34" cy="120" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="45.5" r="25" fill="#FAF3E4"></circle><circle cx="163" cy="45.5" r="25" fill="#FAF3E4"></circle></svg>
+                      <div style="display:flex;flex-direction:column;gap:6px">
+                        <div style="font:400 19px/1.15 'Young Serif',Georgia,serif">{{ ev.hojaTitulo }}</div>
+                        <div style="font:400 13.5px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ ev.hojaBajada }}</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px;padding:14px 0;border-top:1px solid rgba(20,52,42,.12);border-bottom:1px solid rgba(20,52,42,.12);margin-bottom:14px;max-width:52ch">
+                      <div style="display:flex;gap:14px;align-items:baseline"><span style="flex:1;font:500 14.5px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ ev.tuPuesto }}</span><span style="font:600 14.5px/1.3 'Inter Tight',sans-serif;color:#1B5138">{{ ev.unPuesto }}</span></div>
+                      <div style="display:flex;gap:14px;align-items:baseline"><span style="flex:1;font:500 14.5px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ ev.suPuesto }}</span><span style="font:600 14.5px/1.3 'Inter Tight',sans-serif;color:#1B5138">{{ ev.unPuesto }}</span></div>
+                      <div style="display:flex;gap:14px;align-items:baseline;padding-top:8px;border-top:1px dashed rgba(20,52,42,.18)"><span style="flex:1;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ ev.dosPuestos }}</span><span style="font:400 19px/1.1 'Young Serif',Georgia,serif;color:#1B5138">{{ ev.dosPuestosValor }}</span></div>
+                    </div>
+                    <div style="font:400 12.5px/1.45 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:16px;max-width:52ch;text-wrap:pretty">{{ ev.hojaNota }}</div>
+                  </sc-if>
 
                   <!-- Zonas que se le suman al reservar (Michael, 31-10).
                        Antes del botón, que es donde se decide: dicho después
@@ -323,6 +348,24 @@
                     </div>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M9 5l7 7-7 7"></path></svg>
                   </button>
+                  </sc-if>
+
+                  <!-- 2A · Con crédito, el aviso sale aquí al tocar «Reservar dos
+                       puestos». Borde terracota: lo único con ese borde. -->
+                  <sc-if value="{{ ev.verAviso }}" hint-placeholder-val="{{ false }}">
+                    <div style="border-radius:20px;background:#FFF8EA;border:1.5px solid #8F4515;display:flex;flex-direction:column;margin-bottom:14px;max-width:52ch">
+                      <div style="padding:18px 18px 14px;display:flex;flex-direction:column;gap:12px">
+                        <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">{{ ev.avisoSello }}</div>
+                        <div style="font:400 24px/1.05 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#14342A">{{ ev.avisoTitulo }}</div>
+                        <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8F4515" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><div style="font:400 14.5px/1.45 'Inter Tight',sans-serif;color:#14342A;text-wrap:pretty">{{ ev.avisoPlazo }}<b style="font-weight:600">{{ ev.avisoPlazoNegrita }}</b></div></div>
+                        <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8F4515" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"></path></svg><div style="font:400 14.5px/1.45 'Inter Tight',sans-serif;color:#14342A;text-wrap:pretty">{{ ev.avisoCancela }}<b style="font-weight:600">{{ ev.avisoCancelaNegrita }}</b></div></div>
+                      </div>
+                      <button onClick="{{ ev.tocarAviso }}" role="checkbox" aria-checked="{{ ev.avisoMarcado }}" style="display:flex;align-items:center;gap:12px;min-height:54px;padding:0 18px;border:none;border-top:1px solid rgba(143,69,21,.25);background:none;cursor:pointer;text-align:left">
+                        <sc-if value="{{ ev.avisoMarcado }}" hint-placeholder-val="{{ false }}"><span style="width:24px;height:24px;border-radius:7px;background:#A0511F;border:2px solid #A0511F;box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFF8EA" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg></span></sc-if>
+                        <sc-if value="{{ ev.avisoSinMarcar }}" hint-placeholder-val="{{ true }}"><span style="width:24px;height:24px;border-radius:7px;border:2px solid rgba(20,52,42,.4);box-sizing:border-box;flex:none"></span></sc-if>
+                        <span style="font:600 15.5px/1.2 'Inter Tight',sans-serif;color:#14342A">{{ ev.avisoCasilla }}</span>
+                      </button>
+                    </div>
                   </sc-if>
 
                   <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:center">
@@ -605,7 +648,7 @@
 <script type="text/x-dc" data-dc-script data-props="{}">
 const NOMBRE_IDIOMA = { en: 'inglés', pt: 'portugués', fr: 'francés', it: 'italiano' };
 class Component extends DCLogic {
-  state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {}, datos: null, sinCuenta: false,
+  state = { i: 0, ahora: Date.now(), filtro: 0, reservando: null, hora: 0, hechas: {}, datos: null, sinCuenta: false, avisoMasUno: null, aceptaMasUno: false,
             // «Cómo funciona»: la fecha que lo abrio y por que tarjeta va el
             // carrusel. Nulo mientras no este abierto.
             como: null, comoIdx: 0,
@@ -1449,7 +1492,12 @@ class Component extends DCLogic {
         a.porMesa ?? 6,
         // Las zonas de esta fecha que se le sumarían al reservar, por nombre.
         // Al final, como todo lo que se añade: esta tupla se lee por indice.
-        a.zonasNuevas || []
+        a.zonasNuevas || [],
+        // `c[19]`: fecha «+1 acompañante» (entrega mas-uno). La reserva son
+        // dos puestos y la mesa cuenta en dúos. Al final, por lo mismo.
+        !!a.masUno,
+        // `c[20]`: la zona horaria de la fecha, para decir su plazo en su hora.
+        a.zonaHoraria || 'America/Caracas'
       ];
     });
     // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato
@@ -1569,7 +1617,38 @@ class Component extends DCLogic {
         ? '+' + eMin
         : '';
 
+      // «+1 acompañante» (entrega mas-uno): el bloque, el cargo en dos y,
+      // con crédito, el aviso con casilla antes de apartar los dos puestos.
+      const masUno = !!c[19];
+      const M = AroReglas.MAS_UNO;
+      const conCredito = !!(d && d.creditos > 0);
+      const plazoMasUno = masUno && c[14] ? M.plazo(c[14], c[20]) : '';
+      const verAviso = masUno && conCredito && this.state.avisoMasUno === clave;
+      const avisoMarcado = verAviso && !!this.state.aceptaMasUno;
+
       g.eventos.push({
+        masUno,
+        normal: !masUno,
+        marcaMasUno: M.marca,
+        hojaTitulo: M.hoja.titulo,
+        hojaBajada: M.hoja.bajada,
+        tuPuesto: M.hoja.tuPuesto,
+        suPuesto: M.hoja.suPuesto,
+        dosPuestos: conCredito ? M.hoja.total : M.pago.total,
+        unPuesto: conCredito ? '1 encuentro' : (c[10] != null ? (c[10] / M.puestos) + ' ref' : ''),
+        dosPuestosValor: conCredito ? M.puestos + ' encuentros' : precioFecha,
+        hojaNota: M.hoja.nota,
+        verAviso,
+        avisoMarcado,
+        avisoSinMarcar: verAviso && !avisoMarcado,
+        avisoSello: M.aviso.sello,
+        avisoTitulo: M.aviso.titulo,
+        avisoPlazo: M.aviso.plazo(plazoMasUno)[0],
+        avisoPlazoNegrita: M.conPunto(M.aviso.plazo(plazoMasUno)[1]),
+        avisoCancela: M.aviso.cancela[0],
+        avisoCancelaNegrita: M.aviso.cancela[1],
+        avisoCasilla: M.aviso.casilla,
+        tocarAviso: () => this.setState({ aceptaMasUno: !this.state.aceptaMasUno }),
         hayEdad: !!etiquetaEdad,
         etiquetaEdad,
         // El idioma, con el MISMO tratamiento que la edad: no es un detalle
@@ -1607,12 +1686,12 @@ class Component extends DCLogic {
           // De `reglas.js`, que es donde vive esa frase desde que la pidio
           // tambien la agenda publica. Aqui estaba escrita por segunda vez
           // con el seis dentro, asi que los drinks de ocho decian seis.
-          : AroReglas.fraseDeApuntados(n, c[17]),
+          : (masUno ? M.fraseDeDuos(n) : AroReglas.fraseDeApuntados(n, c[17])),
         estadoEstilo: 'font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (cerrada ? '#566A5D' : (mia ? '#1B5138' : (va ? '#1B5138' : '#8F4515'))) + ';white-space:nowrap',
         caja: 'display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;border-radius:22px;padding:clamp(15px,2vw,18px);opacity:' + (cerrada ? '.58' : '1') + ';cursor:' + (mia || cerrada ? 'default' : 'pointer') + ';background:' + (mia ? 'transparent' : (abierta ? '#F2E9D5' : '#FFFBF0')) + ';border:1px solid ' + (mia ? '#1B5138' : 'transparent'),
         icono: 'flex:0 0 auto;width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 15px/1 \'Inter Tight\',sans-serif;background:' + (mia ? '#1B5138' : m[2]) + ';color:' + (mia ? '#FAF3E4' : m[1]),
         barraFondo: 'position:relative;display:' + (mia || cerrada ? 'none' : 'block') + ';flex:1;max-width:132px;height:5px;border-radius:999px;background:rgba(20,52,42,.13);overflow:hidden',
-        barra: 'position:absolute;left:0;top:0;bottom:0;width:' + Math.min(100, Math.round((n / 6) * 100)) + '%;border-radius:999px;background:' + (va ? '#1B5138' : '#8F4515'),
+        barra: 'position:absolute;left:0;top:0;bottom:0;width:' + (masUno ? Math.round(M.avanceDeDuos(n) * 100) : Math.min(100, Math.round((n / 6) * 100))) + '%;border-radius:999px;background:' + (va ? '#1B5138' : '#8F4515'),
         flecha: 'flex:0 0 auto;width:34px;height:34px;border-radius:999px;display:' + (mia || cerrada ? 'none' : 'flex') + ';background:' + (abierta ? '#8F4515' : '#14342A') + ';color:#FAF3E4;align-items:center;justify-content:center;font:500 14px/1 \'Inter Tight\',sans-serif;margin-top:2px;transition:background 180ms ease',
         iconoFlecha: abierta ? '×' : '→',
         envoltorio: 'border-radius:22px;overflow:hidden;background:' + (abierta ? '#F2E9D5' : 'transparent'),
@@ -1696,7 +1775,9 @@ class Component extends DCLogic {
         // cae en el mismo agujero que los drinks —`tipoDe` manda a «cena»
         // todo lo que no sea brunch ni movimiento— y en la app eso además
         // cerraba la aplicación.
-        hayComo: c[15] !== 'drinks' && c[15] !== 'coffee',
+        // Ni en una fecha +1, que no tiene sus tarjetas: la hoja ya cuenta
+        // qué es con su bloque verde (1B).
+        hayComo: c[15] !== 'drinks' && c[15] !== 'coffee' && !masUno,
         /**
          * «Al reservar, Los Palos Grandes pasa a ser una de tus zonas.»
          *
@@ -1734,9 +1815,15 @@ class Component extends DCLogic {
                           ? 'Verifica tu identidad primero'
                           : ((c[11] && d && d.creditos > 0 && !this.state.permiteGrabacion)
                               ? 'Marca el permiso para seguir'
+                              : (verAviso && !avisoMarcado)
+                              ? M.aviso.falta
+                              : masUno
+                              ? (conCredito ? M.hoja.boton(M.puestos) : M.hoja.botonPrecio(precioFecha))
                               : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : precioFecha)))))),
-        botonConfirmar: 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
-        abrir: cerrada ? (() => {}) : (() => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0 }))),
+        botonConfirmar: (verAviso && !avisoMarcado)
+          ? 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:rgba(20,52,42,.08);color:#9DAEA2;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:default'
+          : 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+        abrir: cerrada ? (() => {}) : (() => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0, avisoMasUno: null, aceptaMasUno: false }))),
         // Reservar de verdad. Antes solo se marcaba en la pantalla: al
         // recargar desaparecia, y en la base no habia nada.
         confirmar: () => {
@@ -1769,13 +1856,23 @@ class Component extends DCLogic {
             window.location.href = '/pago?' + q.toString();
             return;
           }
+          // Fecha +1 con crédito: el primer toque abre el aviso, y sin la
+          // casilla no se aparta nada (el candado de verdad está en
+          // `/api/reservar`, que exige `aceptaCondiciones`).
+          if (masUno && this.state.avisoMasUno !== clave) {
+            this.setState({ avisoMasUno: clave, aceptaMasUno: false });
+            return;
+          }
+          if (masUno && !this.state.aceptaMasUno) return;
           if (this.state.reservandoYa) return;
           this.setState({ reservandoYa: true, falloReserva: '' });
           fetch('/api/reservar', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(c[11]
-              ? { eventoId: c[5], permiteGrabacion: true }
-              : { eventoId: c[5] })
+            body: JSON.stringify(Object.assign(
+              { eventoId: c[5] },
+              c[11] ? { permiteGrabacion: true } : {},
+              masUno ? { aceptaCondiciones: true } : {}
+            ))
           })
             .then((r) => r.json().then((x) => ({ ok: r.ok, x })))
             .then(({ ok, x }) => {

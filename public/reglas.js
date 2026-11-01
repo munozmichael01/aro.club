@@ -2733,6 +2733,9 @@
        * cada frase («antes del», «hasta el»). Un cierre a las 00:00 se vive
        * la noche anterior, así que se dice de esa noche.
        */
+      /** Un punto al final, salvo que ya lo traiga («p.m.»). */
+      conPunto: function (t) { t = String(t || ''); return /\.$/.test(t) ? t : t + '.' },
+
       plazo: function (cierreIso, zona) {
         var t = Date.parse(cierreIso)
         if (!isFinite(t)) return ''
@@ -2753,6 +2756,8 @@
         total: 'Dos puestos',
         nota: 'Sin créditos, se paga el doble del precio de la fecha. Tu acompañante no paga nada. El consumo lo paga cada quien en el sitio.',
         boton: function (creditos) { return 'Reservar dos puestos · ' + creditos + ' encuentros' },
+        // Sin créditos, con el precio de los dos (lo cobra la fecha).
+        botonPrecio: function (precio) { return 'Reservar dos puestos · ' + precio },
       },
 
       /** 2 · El aviso con casilla, en la hoja (con crédito) y en Pago (sin él). */
@@ -2767,7 +2772,7 @@
         /** El texto entero, para quien no pinta los trozos (el 409 del servidor). */
         lineas: function (plazo) {
           var A = api.MAS_UNO.aviso
-          return [A.titulo, A.plazo(plazo).join('') + '.', A.cancela.join('')]
+          return [A.titulo, api.MAS_UNO.conPunto(A.plazo(plazo).join('')), A.cancela.join('')]
         },
       },
 
@@ -2778,7 +2783,7 @@
       dentro: {
         sello: 'FALTA TU +1',
         titulo: 'Invita a quien vas a traer.',
-        bajada: function (plazo) { return ['Le mandas un enlace. No paga nada: se registra, se verifica y queda en tu mesa. Tiene hasta el ', plazo, '.'] },
+        bajada: function (plazo) { return ['Le mandas un enlace. No paga nada: se registra, se verifica y queda en tu mesa. Tiene hasta el ', plazo, /\.$/.test(plazo) ? '' : '.'] },
         invitar: 'Invitar a mi acompañante',
         historias: 'Compartir mi plan en historias',
         cancela: function () { return 'Cancelas con más de ' + api.HORAS_DE_MARGEN + ' horas y recuperas los dos créditos.' },
@@ -2792,7 +2797,7 @@
       mensaje: function (inv) {
         return 'Te invito a una cena de Aro Club el ' + inv.dia + ' a las ' + inv.hora + ', por ' + inv.zonas
           + '. Vamos tú y yo, y otros dúos que no conocemos. Tu puesto ya está pagado: solo tienes que registrarte y verificarte antes del '
-          + inv.plazo + '. ' + inv.enlace
+          + api.MAS_UNO.conPunto(inv.plazo) + ' ' + inv.enlace
       },
       /** El título de la vista previa del enlace (las etiquetas de la invitación). */
       tituloDelEnlace: function (nombre) { return (nombre || 'Alguien') + ' te invita a una cena de Aro Club' },
@@ -2814,7 +2819,7 @@
           titulo: function (nombre) { return (nombre || 'Alguien') + ' se registró con tu enlace.' },
           creo: 'Creó su cuenta',
           falta: 'Falta que se verifique',
-          faltaDetalle: function (plazo) { return 'Cédula y selfie. Tiene hasta el ' + plazo + '.' },
+          faltaDetalle: function (plazo) { return api.MAS_UNO.conPunto('Cédula y selfie. Tiene hasta el ' + plazo) },
           nota: 'El enlace sigue valiendo hasta que alguien se verifique con él.',
         },
         // 4C. Sin «las dos»: no sabemos el género de nadie.
@@ -2830,7 +2835,7 @@
             return (nombre ? nombre + ' deja de tener puesto en esta cena y el enlace que compartiste deja de valer.' : 'El enlace que compartiste deja de valer.')
               + ' Te damos uno nuevo para invitar a otra persona.'
           },
-          plazo: function (plazo) { return 'El plazo no se mueve: tu nueva o nuevo +1 tiene hasta el ' + plazo + '.' },
+          plazo: function (plazo) { return api.MAS_UNO.conPunto('El plazo no se mueve: tu nueva o nuevo +1 tiene hasta el ' + plazo) },
           si: 'Sí, darme un enlace nuevo',
           no: 'No, dejarlo así',
         },
@@ -2851,7 +2856,7 @@
         sello: 'TE INVITAN · +1 ACOMPAÑANTE',
         titulo: function (nombre) { return (nombre || 'Alguien') + ' te invita a cenar.' },
         fechaSello: 'CENA +1 ACOMPAÑANTE',
-        donde: function (zonas, revela) { return zonas + '. El sitio se revela ' + (revela || 'ese día') + '.' },
+        donde: function (zonas, revela) { return zonas + '. ' + api.MAS_UNO.conPunto('El sitio se revela ' + (revela || 'ese día')) },
         cuerpo: function (nombre) { return ['Una mesa de dúos: tú y ' + (nombre || 'quien te invita') + ', y de uno a tres dúos más que no conocen. ', 'Tu puesto ya está pagado. No pagas nada.'] },
         faltaTitulo: function (plazo) { return plazo ? ('Para sentarte, antes del ' + plazo).toUpperCase() : 'PARA SENTARTE' },
         pasosSinCuenta: [
@@ -2867,7 +2872,7 @@
         aceptar: 'Aceptar la invitación',
         noPuedo: 'No puedo ir',
         // W1, debajo de los botones.
-        notaWeb: function (plazo) { return 'Para sentarte: crear tu cuenta y verificarte con cédula y selfie antes del ' + plazo + '.' },
+        notaWeb: function (plazo) { return api.MAS_UNO.conPunto('Para sentarte: crear tu cuenta y verificarte con cédula y selfie antes del ' + plazo) },
         aceptada: 'Listo. En cuanto se apruebe tu verificación, tu puesto queda confirmado.',
         // 5C
         usada: {
@@ -2893,8 +2898,15 @@
         selloDentro: 'DENTRO',
         // En segunda persona: lo lee el acompañante.
         pie: function (invita) { return 'Si no te verificas a tiempo, ' + (invita || 'quien te invitó') + ' recibe sus dos créditos y a ti no se te cobra nada.' },
+        // No está en la maqueta: el acompañante no pagó, así que no recupera
+        // nada al cancelar, y lo que pasa es que el puesto vuelve a quien le
+        // invitó (Michael, 01-11).
+        cancela: function (invita) { return 'Si cancelas, tu puesto vuelve a ' + (invita || 'quien te invitó') + ' para que invite a otra persona. No se te cobra nada.' },
       },
       vienesCon: function (nombre) { return 'Vienes con ' + (nombre || 'quien te invitó') },
+      // La línea «Vas con cinco personas.» de Mi mesa cerrada, en una +1. No
+      // está en la maqueta: la de siempre diría cinco donde no son cinco.
+      vasCon: function (nombre) { return 'Vas con ' + (nombre || 'tu +1') + ' y otros dúos que no conocen.' },
 
       /** 6 · La mesa: «Con quién cenas» por dúos. */
       mesa: {
@@ -2912,8 +2924,8 @@
           var registrado = d.estado === 'registrado'
           var titulo = registrado ? 'Tu +1 todavía no se ha verificado.' : 'Tu +1 todavía no se ha registrado.'
           var cuerpo = registrado
-            ? (d.nombre || 'Tu acompañante') + ' tiene hasta el ' + d.plazo + '. Si no, cancelamos los dos puestos y te devolvemos dos créditos.'
-            : 'Quien invites tiene hasta el ' + d.plazo + '. Si no, cancelamos los dos puestos y te devolvemos dos créditos.'
+            ? api.MAS_UNO.conPunto((d.nombre || 'Tu acompañante') + ' tiene hasta el ' + d.plazo) + ' Si no, cancelamos los dos puestos y te devolvemos dos créditos.'
+            : api.MAS_UNO.conPunto('Quien invites tiene hasta el ' + d.plazo) + ' Si no, cancelamos los dos puestos y te devolvemos dos créditos.'
           return { asunto: titulo.replace(/\.$/, ''), sello: 'TU +1 ACOMPAÑANTE', bajada: cuerpo, boton: 'Ver mi +1', ruta: '/mesa', push: { titulo: titulo, cuerpo: cuerpo } }
         },
         mas_uno_confirmado: function (d) {
@@ -2928,9 +2940,9 @@
         mas_uno_se_bajo: function (d) {
           return {
             asunto: 'Tu +1 canceló', sello: 'TU +1 ACOMPAÑANTE',
-            bajada: (d.nombre || 'Tu acompañante') + ' canceló su puesto. El enlace que compartiste ya no vale: en Mi mesa tienes uno nuevo para invitar a otra persona antes del ' + d.plazo + '.',
+            bajada: api.MAS_UNO.conPunto((d.nombre || 'Tu acompañante') + ' canceló su puesto. El enlace que compartiste ya no vale: en Mi mesa tienes uno nuevo para invitar a otra persona antes del ' + d.plazo),
             boton: 'Ver mi +1', ruta: '/mesa',
-            push: { titulo: 'Tu +1 canceló.', cuerpo: 'Tienes un enlace nuevo para invitar a otra persona antes del ' + d.plazo + '.' },
+            push: { titulo: 'Tu +1 canceló.', cuerpo: api.MAS_UNO.conPunto('Tienes un enlace nuevo para invitar a otra persona antes del ' + d.plazo) },
           }
         },
         mas_uno_cancelada: function (d) {

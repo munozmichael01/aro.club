@@ -78,8 +78,17 @@
           <a href="/cuenta" aria-label="Cerrar" style="width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;background:rgba(250,243,228,.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
         </div>
 
-        <!-- El isotipo cuenta la historia: tu punto, lleno. -->
+        <!-- El isotipo cuenta la historia: tu punto, lleno. En una fecha +1
+             sin acompañante todavía, el de al lado va punteado (3A). -->
+        <sc-if value="{{ isotipoNormal }}" hint-placeholder-val="{{ true }}">
         <svg viewBox="0 0 240 240" width="64" height="64" aria-hidden="true" style="display:block"><circle cx="120" cy="120" r="86" fill="none" stroke="#FAF3E4" stroke-width="20"></circle><circle cx="206" cy="120" r="25" fill="#E39C63"></circle><circle cx="163" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="34" cy="120" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="45.5" r="25" fill="#FAF3E4"></circle><circle cx="163" cy="45.5" r="25" fill="#FAF3E4"></circle></svg>
+        </sc-if>
+        <sc-if value="{{ isotipoFalta }}" hint-placeholder-val="{{ false }}">
+        <svg viewBox="0 0 240 240" width="64" height="64" aria-hidden="true" style="display:block"><circle cx="120" cy="120" r="86" fill="none" stroke="#FAF3E4" stroke-width="20"></circle><circle cx="206" cy="120" r="25" fill="#E39C63"></circle><circle cx="163" cy="194.5" r="23" fill="#14342A" stroke="#E39C63" stroke-width="8" stroke-dasharray="12 9"></circle><circle cx="77" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="34" cy="120" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="45.5" r="25" fill="#FAF3E4"></circle><circle cx="163" cy="45.5" r="25" fill="#FAF3E4"></circle></svg>
+        </sc-if>
+        <sc-if value="{{ isotipoDuo }}" hint-placeholder-val="{{ false }}">
+        <svg viewBox="0 0 240 240" width="64" height="64" aria-hidden="true" style="display:block"><circle cx="120" cy="120" r="86" fill="none" stroke="#FAF3E4" stroke-width="20"></circle><circle cx="206" cy="120" r="25" fill="#E39C63"></circle><circle cx="163" cy="194.5" r="25" fill="#E39C63"></circle><circle cx="77" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="34" cy="120" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="45.5" r="25" fill="#FAF3E4"></circle><circle cx="163" cy="45.5" r="25" fill="#FAF3E4"></circle></svg>
+        </sc-if>
 
         <span style="align-self:flex-start;display:inline-flex;align-items:center;min-height:26px;padding:0 11px;border-radius:999px;white-space:nowrap;background:#E39C63;color:#14342A;font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em">{{ v.sello }}</span>
         <h1 style="margin:0;font:400 52px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em">{{ titulo }}</h1>
@@ -89,7 +98,37 @@
           <sc-if value="{{ v.zona }}" hint-placeholder-val="{{ true }}">
             <div style="font:400 15px/1.35 'Inter Tight',sans-serif;color:#9CBBA6">{{ v.zona }}</div>
           </sc-if>
+          <!-- El acompañante: con quién viene. -->
+          <sc-if value="{{ hayVienesCon }}" hint-placeholder-val="{{ false }}">
+            <div style="font:600 15px/1.35 'Inter Tight',sans-serif;color:#E39C63">{{ vienesCon }}</div>
+          </sc-if>
         </div>
+
+        <!-- 3A · La invitación, en su propia tarjeta crema dentro de la
+             pantalla verde y con el único botón naranja. Va primero: en una
+             fecha +1 es lo que hay que hacer, y el reloj corre. -->
+        <sc-if value="{{ hayInvitar }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:22px;background:#FAF3E4;color:#14342A;padding:18px;display:flex;flex-direction:column;gap:10px">
+            <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">{{ invitarSello }}</div>
+            <div style="font:400 22px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em">{{ invitarTitulo }}</div>
+            <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ invitarBajada }}<b style="font-weight:600;color:#14342A">{{ invitarPlazo }}</b>{{ invitarFin }}</div>
+            <button onClick="{{ invitar }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;margin-top:4px;border-radius:999px;border:none;background:#E39C63;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer"><svg width="20" height="14" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="#14342A"></circle><circle cx="20" cy="10" r="7" fill="none" stroke="#14342A" stroke-width="2.4" stroke-dasharray="3.5 2.6"></circle></svg>{{ textoInvitar }}</button>
+            <!-- W · En la computadora no hay hoja del sistema: Copiar enlace
+                 y WhatsApp, aquí mismo. -->
+            <sc-if value="{{ opcionesInvitar }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button onClick="{{ copiarEnlace }}" style="flex:1 1 140px;display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:999px;border:1.5px solid #14342A;background:transparent;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">{{ textoCopiar }}</button>
+                <a href="{{ enlaceWhatsapp }}" target="_blank" rel="noopener" style="flex:1 1 140px;display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:999px;background:#9CBBA6;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;text-decoration:none">WhatsApp</a>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hayAcompanante }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:22px;background:#FAF3E4;color:#14342A;padding:18px;display:flex;flex-direction:column;gap:8px">
+            <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#1B5138">{{ acompananteSello }}</div>
+            <div style="font:400 22px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em">{{ acompananteTitulo }}</div>
+          </div>
+        </sc-if>
 
         <sc-if value="{{ v.bajada }}" hint-placeholder-val="{{ true }}">
           <div style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ v.bajada }}</div>
@@ -103,8 +142,15 @@
         </div>
 
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+          <sc-if value="{{ compartirPrincipal }}" hint-placeholder-val="{{ true }}">
           <button onClick="{{ compartir }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;border-radius:999px;border:none;background:#E39C63;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"></path></svg>{{ textoCompartir }}</button>
+          </sc-if>
 
+          <!-- En una fecha +1 el calendario va en contorno: el naranja es
+               de la invitación. -->
+          <sc-if value="{{ calNoMasUno }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ calendario }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;border-radius:999px;border:1.5px solid rgba(250,243,228,.5);background:transparent;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>{{ textoCalendario }}</button>
+          </sc-if>
           <sc-if value="{{ calNo }}" hint-placeholder-val="{{ true }}">
             <button onClick="{{ calendario }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;border-radius:999px;border:none;background:#FAF3E4;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>{{ textoCalendario }}</button>
           </sc-if>
@@ -112,12 +158,18 @@
             <button onClick="{{ calendario }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;border-radius:999px;border:1.5px solid rgba(250,243,228,.5);background:transparent;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CBBA6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>{{ textoEnCalendario }}</button>
           </sc-if>
 
+          <!-- «Compartir mi plan», como enlace con su icono de historia: se lee
+               como otra cosa que la invitación (3A). -->
+          <sc-if value="{{ compartirSecundario }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ compartir }}" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border:none;background:none;color:#C5D8CA;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C5D8CA" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="3"></rect><path d="M10 7h4"></path></svg>{{ textoHistorias }}</button>
+          </sc-if>
+
           <a href="/mesa" style="display:flex;align-items:center;justify-content:center;min-height:44px;font:600 15px/1 'Inter Tight',sans-serif;color:#FAF3E4">{{ textoVerMesa }}</a>
         </div>
 
         <div style="display:flex;gap:10px;align-items:flex-start;border-top:1px solid rgba(250,243,228,.15);padding-top:14px">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CBBA6" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
-          <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ v.cancela }}</div>
+          <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ cancela }}</div>
         </div>
 
         <!-- Con un código del 100 %: lo que se consume va aparte (lo mismo que decía Pago). -->
@@ -150,7 +202,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { datos: null, fallo: '', enCalendario: false, via: '' };
+  state = { datos: null, fallo: '', enCalendario: false, via: '', opcionesInvitar: false, copiado: false };
 
   componentDidMount() {
     let evento = '';
@@ -254,6 +306,32 @@ class Component extends DCLogic {
     try { localStorage.setItem('calendario:' + d.reserva.id, '1'); } catch (e) { /* sin almacenamiento */ }
   }
 
+  /**
+   * «Invitar a mi acompañante» (3A/3B). En el celular, la hoja del sistema con
+   * el mensaje y el enlace; en la computadora no hay hoja (W): Copiar enlace y
+   * WhatsApp, ahí mismo.
+   */
+  invitar() {
+    const d = this.state.datos;
+    const m = d && d.masUno;
+    if (!m || !m.enlace) return;
+    const tactil = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    if (navigator.share && tactil) {
+      navigator.share({ title: AroReglas.MAS_UNO.tituloDelEnlace(null), text: m.mensaje || m.enlace })
+        .catch(() => { /* cerrarla sin compartir no es un fallo */ });
+      return;
+    }
+    this.setState({ opcionesInvitar: !this.state.opcionesInvitar, copiado: false });
+  }
+
+  copiarEnlace() {
+    const m = this.state.datos && this.state.datos.masUno;
+    if (!m || !m.enlace) return;
+    const listo = () => this.setState({ copiado: true });
+    if (navigator.clipboard) navigator.clipboard.writeText(m.enlace).then(listo, listo);
+    else listo();
+  }
+
   renderVals() {
     const S = this.state;
     const d = S.datos;
@@ -267,20 +345,54 @@ class Component extends DCLogic {
       estilo: 'flex:2 1 160px;font:' + (c.fuerte ? '600' : '500') + ' 15px/1.4 \'Inter Tight\',sans-serif;color:#14342A;font-variant-numeric:tabular-nums'
     }));
 
+    // «+1 acompañante» (entrega mas-uno, 3A).
+    const M = AroReglas.MAS_UNO;
+    const mu = d && d.masUno;
+    const hayInvitar = !!(mu && (mu.estado === 'sin-usar' || mu.estado === 'registrado'));
+    const confirmado = !!(mu && mu.estado === 'confirmado');
+    const bajadaInvitar = mu ? M.dentro.bajada(mu.plazo) : ['', '', ''];
+    const esMasUno = !!(d && d.plan && d.plan.masUno);
+
     return {
+      isotipoNormal: !hayInvitar && !confirmado,
+      isotipoFalta: hayInvitar,
+      isotipoDuo: confirmado,
+      hayInvitar,
+      invitarSello: mu && mu.estado === 'registrado' ? M.tarjeta.sellos.registrado : M.dentro.sello,
+      invitarTitulo: mu && mu.estado === 'registrado' ? M.tarjeta.registrado.titulo(mu.nombre) : M.dentro.titulo,
+      invitarBajada: bajadaInvitar[0],
+      invitarPlazo: bajadaInvitar[1],
+      invitarFin: bajadaInvitar[2],
+      textoInvitar: M.dentro.invitar,
+      invitar: () => this.invitar(),
+      opcionesInvitar: hayInvitar && !!S.opcionesInvitar,
+      copiarEnlace: () => this.copiarEnlace(),
+      textoCopiar: S.copiado ? M.tarjeta.copiado : 'Copiar enlace',
+      enlaceWhatsapp: mu && mu.mensaje ? 'https://wa.me/?text=' + encodeURIComponent(mu.mensaje) : 'https://wa.me/',
+      hayAcompanante: confirmado,
+      acompananteSello: M.tarjeta.sellos.confirmado,
+      acompananteTitulo: confirmado ? M.tarjeta.confirmado.titulo(mu.nombre) : '',
+      hayVienesCon: !!(d && d.vienesCon),
+      vienesCon: d && d.vienesCon ? M.vienesCon(d.vienesCon) : '',
+      compartirPrincipal: !esMasUno,
+      compartirSecundario: esMasUno,
+      textoHistorias: M.dentro.historias,
+      calNoMasUno: esMasUno && !S.enCalendario,
+      cancela: d && d.vienesCon ? M.acompanante.cancela(d.vienesCon) : (esMasUno ? M.dentro.cancela() : v.cancela),
       cargando: !d && !S.fallo,
       hayFallo: !d && !!S.fallo,
       fallo: S.fallo,
       listo: !!d,
       v,
       titulo: D.titulo,
-      lineaPlan: [v.plan, v.dia, v.hora].filter(Boolean).join(' · '),
+      // «Cena +1 acompañante · Viernes 6 · 7:00 p.m.» (3A).
+      lineaPlan: [esMasUno ? v.plan + ' ' + M.nombre : v.plan, v.dia, v.hora].filter(Boolean).join(' · '),
       textoCompartir: D.compartir,
       textoCalendario: D.calendario.anadir,
       textoEnCalendario: D.calendario.yaEsta,
       textoVerMesa: D.verMesa,
       calSi: !!S.enCalendario,
-      calNo: !S.enCalendario,
+      calNo: !S.enCalendario && !esMasUno,
       esCupon: via === 'cupon',
       consumo: D.consumo,
       pendiente,
