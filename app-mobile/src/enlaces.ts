@@ -23,10 +23,26 @@ export const RUTAS_DE_LA_WEB: Record<string, string> = {
   // tiene su propio orden y un correo viejo no sabe por dónde vas.
   '/datos': '/',
   '/cuestionario': '/',
+  // Los de los correos que abrían el navegador (Michael, 01-11: la app primero).
+  // «Ver mi plan y compartirlo», del pago confirmado.
+  '/estas-dentro': '/estas-dentro',
+  // La agenda de la app está en Inicio.
+  '/agenda': '/cuenta',
+  // «¿Prefieres el dinero?», de quien se quedó sin mesa.
+  '/reembolso': '/reembolso',
 }
 
-/** Solo estos parámetros pasan del enlace a la pantalla. */
-const PARAMETROS = ['evento', 'mesa']
+/**
+ * Las que la app ya sabe abrir pero Android todavía no reclama: los
+ * `intentFilters` de `app.json` son nativos, y tocarlos cambia la huella de
+ * Android (la OTA dejaría de llegar a la build que hay en la tienda). En iPhone
+ * basta con que la web las publique en su `apple-app-site-association`. Van a
+ * `app.json` en la próxima build, y entonces se vacía esta lista.
+ */
+export const PENDIENTES_DE_BUILD = ['/estas-dentro', '/agenda', '/reembolso']
+
+/** Solo estos parámetros pasan del enlace a la pantalla. `cena`: los correos de «seguir en contacto». */
+const PARAMETROS = ['evento', 'mesa', 'cena']
 
 /**
  * La ruta de la app para un enlace que la abre. `https://aro.club/mi-mesa?evento=…`

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 
-import { RUTAS_DE_LA_WEB, rutaDeEnlace } from '../src/enlaces'
+import { PENDIENTES_DE_BUILD, RUTAS_DE_LA_WEB, rutaDeEnlace } from '../src/enlaces'
 
 const EV = '3f2a1c9e-1111-4222-8333-944455556666'
 
@@ -15,6 +15,13 @@ test('cada ruta de la web va a su pantalla', () => {
   assert.equal(rutaDeEnlace('https://aro.club/mi-mesa'), '/mesa')
   assert.equal(rutaDeEnlace('https://www.aro.club/perfil/'), '/perfil')
   assert.equal(rutaDeEnlace('https://aro.club/cuestionario'), '/')
+  assert.equal(rutaDeEnlace(`https://aro.club/estas-dentro?evento=${EV}`), `/estas-dentro?evento=${EV}`)
+  assert.equal(rutaDeEnlace('https://aro.club/agenda?utm_source=correo'), '/cuenta')
+  assert.equal(rutaDeEnlace('https://aro.club/reembolso'), '/reembolso')
+})
+
+test('los correos de «seguir en contacto» abren esa cena (01-11)', () => {
+  assert.equal(rutaDeEnlace(`https://aro.club/mesa?cena=${EV}`), `/mesa?cena=${EV}`)
 })
 
 test('solo pasan los parámetros conocidos, y con un id válido', () => {
@@ -36,5 +43,6 @@ test('app.json reclama exactamente las rutas que la app sabe abrir', () => {
   const app = JSON.parse(readFileSync(new URL('../app.json', import.meta.url), 'utf8')).expo
   assert.deepEqual(app.ios.associatedDomains, ['applinks:aro.club'])
   const rutas = app.android.intentFilters[0].data.map((d: { path: string }) => d.path).sort()
-  assert.deepEqual(rutas, Object.keys(RUTAS_DE_LA_WEB).sort())
+  // Menos las que esperan la próxima build (PENDIENTES_DE_BUILD): solo iPhone de momento.
+  assert.deepEqual(rutas, Object.keys(RUTAS_DE_LA_WEB).filter((r) => !PENDIENTES_DE_BUILD.includes(r)).sort())
 })
