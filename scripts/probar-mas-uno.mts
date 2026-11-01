@@ -149,7 +149,7 @@ try {
   const deAna = await reservar(ana)
   const m0 = await M.masUnoDe(admin, deAna)
   ver('Ana: sin usar, con enlace y mensaje', m0?.estado === 'sin-usar' && !!m0.enlace && !!m0.mensaje?.includes(m0.enlace), m0)
-  ver('el plazo se dice en palabras', !!m0?.plazo && /^el /.test(m0.plazo), m0?.plazo)
+  ver('el plazo se dice en palabras', !!m0?.plazo && /\d a (las|medianoche)/.test(m0.plazo), m0?.plazo)
   const i0 = await M.invitacionViva(admin, deAna)
   ver('pedirlo otra vez da el mismo enlace', !!i0 && m0?.enlace === M.enlaceDe(i0.token))
   const token1 = i0!.token

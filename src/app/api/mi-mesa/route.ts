@@ -16,7 +16,7 @@ import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
 import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
-import { duosDeLaMesa, masUnoCanceladoDe, masUnoDeLaReserva } from '@/lib/mas-uno'
+import { duosDeLaMesa, invitacionPendienteDe, masUnoCanceladoDe, masUnoDeLaReserva, ordenarPorDuos } from '@/lib/mas-uno'
 
 /**
  * ¿PUEDE CAMBIARSE DE FECHA, Y A CUÁLES?
@@ -170,7 +170,7 @@ export async function GET(request: Request) {
 
   const { data: reservas } = await admin
     .from('bookings')
-    .select('id, event_id, permiso_grabacion, events(starts_at, reveal_at, status, format, activity, city_slug, grabacion, seats_per_table)')
+    .select('id, event_id, permiso_grabacion, events(starts_at, reveal_at, status, format, activity, city_slug, grabacion, seats_per_table, mas_uno)')
     .eq('profile_id', user.id)
     .in('status', ['confirmed', 'attended'])
 
@@ -325,7 +325,7 @@ export async function GET(request: Request) {
   }
 
   const evento = reserva?.events as
-    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string; grabacion: boolean; seats_per_table: number | null }
+    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string; grabacion: boolean; seats_per_table: number | null; mas_uno?: boolean }
     | null
     | undefined
 
@@ -348,6 +348,9 @@ export async function GET(request: Request) {
       // Si el cierre le canceló una fecha +1 porque su acompañante no se
       // verificó: qué pasó y los dos créditos, hasta que pase esa fecha.
       masUno: await masUnoCanceladoDe(admin, user.id),
+      // Y si entró por el enlace de un +1 y le falta verificarse: su puesto
+      // le espera (5D de la entrega mas-uno).
+      masUnoPendiente: await invitacionPendienteDe(admin, user.id),
     })
   }
 
@@ -794,7 +797,7 @@ export async function GET(request: Request) {
      * a cenar contigo, y eso es lo que hay que contar.
      */
     cambiarFecha: await bloqueDeCambiarFecha(admin, user.id, reserva, evento),
-    companeros: (companeros ?? []).map((c) => {
+    companeros: ordenarPorDuos((companeros ?? []).map((c) => {
       const p = c.profiles as unknown as { display_name: string | null; full_name: string | null } | null
       const nombre = p?.display_name || p?.full_name?.split(' ')[0] || null
       return {
@@ -827,7 +830,7 @@ export async function GET(request: Request) {
           && new Date(c.sentado_en as string).getTime()
             > new Date(primerAsiento).getTime() + MARGEN_PUBLICACION,
       }
-    }),
+    }), user.id),
     /**
      * Lo que cambió en esta mesa DESPUÉS de contársela a la gente.
      *
@@ -879,6 +882,7 @@ export async function GET(request: Request) {
       (companeros ?? []).length + 1,
       evento.seats_per_table ?? 6,
       seCayoAlguienDeAqui,
+      !!evento.mas_uno,
     ) || null,
     ajustes: {
       /**

@@ -86,7 +86,13 @@ export function fraseDeTamano(
   enLaMesa: number,
   porMesa: number,
   cancelaronDeEstaMesa: boolean,
+  /**
+   * Una mesa +1, que es de dos a cuatro dúos a propósito (Michael, 01-11):
+   * su tamaño no es «la de seis que no completamos», así que no se explica.
+   */
+  deDuos = false,
 ): string {
+  if (deDuos) return ''
   if (enLaMesa <= 0 || enLaMesa === porMesa) return ''
 
   // --- hacia arriba: siete u ocho donde caben seis ----------------------

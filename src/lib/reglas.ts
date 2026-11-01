@@ -169,16 +169,20 @@ type Api = {
     diaYNumero: (iso: string | null | undefined, zona?: string) => string
     historia: (plan: PlanDentro, codigo: string | null) => Historia | null
   }
-  /** «+1 acompañante» (brief del 01-11). Los textos, borrador hasta que Michael los apruebe. */
+  /** «+1 acompañante» (entrega mas-uno). Los textos, pendientes de que Michael los apruebe. */
   MAS_UNO: {
     nombre: string
     marca: string
     puestos: number
+    DUOS: { minimo: number; maximo: number; bueno: number }
+    tamanosDeMesas: (n: number) => number[]
+    fraseDeDuos: (puestos: number) => string
+    avanceDeDuos: (puestos: number) => number
+    /** «viernes 6 a medianoche», sin «el». */
     plazo: (cierreIso: string, zona?: string) => string
     aviso: { titulo: string; lineas: (plazo: string) => string[]; casilla: string; falta: string }
-    mensaje: (inv: { nombre: string | null; plazo: string; enlace: string }) => string
-    tarjeta: { titulo: string; cancelada: string }
-    invitado: { usada: string; anulada: string; cerrada: string; propia: string }
+    mensaje: (inv: { dia: string; hora: string; zonas: string; plazo: string; enlace: string }) => string
+    tituloDelEnlace: (nombre: string | null) => string
     vienesCon: (nombre: string | null) => string
     correos: Record<CorreoMasUno, (d: DatosCorreoMasUno) => {
       asunto: string; sello: string; bajada: string; boton: string; ruta: string

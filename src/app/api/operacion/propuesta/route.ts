@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { desglose, evaluacion, puntuar, resumen, roturas, zonasDe, PESOS } from '@/lib/reparto/repartir'
+import { desglose, DUOS_POR_MESA, evaluacion, puntuar, resumen, roturas, zonasDe, PESOS } from '@/lib/reparto/repartir'
 import { exigirOps } from '@/lib/ops'
 import { renumerar } from '@/lib/reparto/numeros'
 import { construirPool, type Pool } from '@/lib/reparto/pool'
@@ -433,11 +433,22 @@ export async function POST(request: Request) {
       ]
     }
 
-    // Una mesa que se queda corta o se pasa tampoco puede publicarse.
-    if (m.integrantes.length !== pool.porMesa) {
+    // Una mesa que se queda corta o se pasa tampoco puede publicarse. En una
+    // fecha +1 el tamaño bueno es de dos a cuatro dúos (Michael, 01-11).
+    const tamanoBueno = pool.masUno
+      ? m.integrantes.length % 2 === 0
+        && m.integrantes.length >= DUOS_POR_MESA.minimo * 2
+        && m.integrantes.length <= DUOS_POR_MESA.maximo * 2
+      : m.integrantes.length === pool.porMesa
+    if (!tamanoBueno) {
       m.roturas = [
         ...m.roturas,
-        { regla: 'tamaño', detalle: `${m.integrantes.length} en vez de ${pool.porMesa}` },
+        {
+          regla: 'tamaño',
+          detalle: pool.masUno
+            ? `${m.integrantes.length}: una mesa +1 es de ${DUOS_POR_MESA.minimo * 2} a ${DUOS_POR_MESA.maximo * 2}, de dos en dos`
+            : `${m.integrantes.length} en vez de ${pool.porMesa}`,
+        },
       ]
     }
   }

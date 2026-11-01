@@ -2707,7 +2707,7 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   // cuatro a propósito esto no puede llamarla corta.
   const { data: deLaFecha } = await admin
     .from('events')
-    .select('seats_per_table, reveal_at, starts_at, city_slug')
+    .select('seats_per_table, mas_uno, reveal_at, starts_at, city_slug')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -2831,7 +2831,7 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
      * fila entera. Lo normal es que esté completa.
      */
     // La misma frase que Mi mesa, de `fraseDeTamano`.
-    mesaCorta: fraseDeTamano(enLaMesa, porMesa, cancelaronDeEstaMesa),
+    mesaCorta: fraseDeTamano(enLaMesa, porMesa, cancelaronDeEstaMesa, !!(deLaFecha as { mas_uno?: boolean } | null)?.mas_uno),
     /**
      * Si esa noche grabamos en ESTA mesa.
      *

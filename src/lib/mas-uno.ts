@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto'
 
 import { encolar } from '@/lib/correos'
 import { situacionDePerfil } from '@/lib/embudo'
-import { MAS_UNO, partesDe, type CorreoMasUno } from '@/lib/reglas'
+import { DENTRO, MAS_UNO, partesDe, type CorreoMasUno } from '@/lib/reglas'
 import { SITIO } from '@/lib/remitente'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
@@ -173,18 +173,23 @@ export async function masUnoDe(admin: Admin, bookingId: string): Promise<MasUno 
 
   const ultimo = (unidos ?? [])[0] as unknown as { profiles: { display_name: string | null; full_name: string | null } | null } | undefined
 
-  const { data: quien } = await admin
-    .from('profiles')
-    .select('display_name, full_name')
-    .eq('id', reserva.profile_id)
-    .maybeSingle()
+  // El mensaje dice el día, la hora y las zonas de la fecha (3B).
+  const partes = partesDe(evento.starts_at, zona)
+  const { data: sedes } = await admin.from('event_venues').select('zone_slug, zones(name)').eq('event_id', reserva.event_id)
+  const zonas = [...new Set((sedes ?? []).map((v) => (v.zones as unknown as { name: string } | null)?.name ?? v.zone_slug))]
 
   return {
     ...base,
     enlace,
     estado: ultimo ? 'registrado' : 'sin-usar',
     nombre: ultimo ? nombreDePila(ultimo.profiles) : null,
-    mensaje: MAS_UNO.mensaje({ nombre: nombreDePila(quien), plazo, enlace }),
+    mensaje: MAS_UNO.mensaje({
+      dia: partes ? partes.dia + ' ' + partes.numero : '',
+      hora: partes?.hora ?? '',
+      zonas: DENTRO.zonasEnTexto(zonas),
+      plazo,
+      enlace,
+    }),
   }
 }
 
@@ -903,4 +908,77 @@ export function puestosPorFecha(
     cuenta.set(b.event_id, (cuenta.get(b.event_id) ?? 0) + (fechasMasUno.has(b.event_id) ? 2 : 1))
   }
   return cuenta
+}
+
+/**
+ * 5D · Quien entró por un enlace y todavía no se ha verificado: su puesto
+ * le espera. No tiene reserva todavía —el puesto es de la primera persona
+ * cuya verificación se aprueba—, así que Mi mesa lo enseña desde aquí.
+ *
+ * La invitación más próxima que siga libre, con la fecha y quién invita.
+ */
+export type InvitacionPendiente = {
+  invita: string | null
+  eventoId: string
+  formato: string
+  empiezaEn: string
+  revelaEn: string | null
+  cierraEn: string
+  plazo: string
+  zonaHoraria: string
+  zonas: string[]
+}
+
+export async function invitacionPendienteDe(admin: Admin, perfilId: string): Promise<InvitacionPendiente | null> {
+  const { data: unidas } = await admin
+    .from('mas_uno_candidatos')
+    .select('mas_uno_invitaciones!inner(booking_id, anulada_en, usada_por)')
+    .eq('profile_id', perfilId)
+
+  let mejor: InvitacionPendiente | null = null
+  for (const u of unidas ?? []) {
+    const inv = u.mas_uno_invitaciones as unknown as { booking_id: string; anulada_en: string | null; usada_por: string | null }
+    if (inv.anulada_en || inv.usada_por) continue
+    const r = await reservaDeQuienInvita(admin, inv.booking_id)
+    if (!r || !(VIVAS as readonly string[]).includes(r.reserva.status)) continue
+    if (Date.parse(r.evento.booking_closes_at) <= Date.now()) continue
+    if (mejor && mejor.empiezaEn <= r.evento.starts_at) continue
+
+    const zona = await zonaDeCiudad(r.evento.city_slug)
+    const [{ data: quien }, { data: ev }, { data: sedes }] = await Promise.all([
+      admin.from('profiles').select('display_name, full_name').eq('id', r.reserva.profile_id).maybeSingle(),
+      admin.from('events').select('format, reveal_at').eq('id', r.reserva.event_id).maybeSingle(),
+      admin.from('event_venues').select('zone_slug, zones(name)').eq('event_id', r.reserva.event_id),
+    ])
+    mejor = {
+      invita: nombreDePila(quien),
+      eventoId: r.reserva.event_id,
+      formato: ev?.format ?? 'dinner',
+      empiezaEn: r.evento.starts_at,
+      revelaEn: ev?.reveal_at ?? null,
+      cierraEn: r.evento.booking_closes_at,
+      plazo: MAS_UNO.plazo(r.evento.booking_closes_at, zona),
+      zonaHoraria: zona,
+      zonas: [...new Set((sedes ?? []).map((v) => (v.zones as unknown as { name: string } | null)?.name ?? v.zone_slug))],
+    }
+  }
+  return mejor
+}
+
+/**
+ * «Con quién cenas» por dúos (6B): el tuyo primero, y cada dúo junto. Una
+ * mesa normal se queda como venía.
+ */
+export function ordenarPorDuos<T extends { id: string; vieneCon: string | null }>(companeros: T[], yo: string): T[] {
+  if (!companeros.some((c) => c.vieneCon)) return companeros
+  const salida: T[] = []
+  const mio = companeros.find((c) => c.vieneCon === yo)
+  if (mio) salida.push(mio)
+  for (const c of companeros) {
+    if (salida.includes(c)) continue
+    salida.push(c)
+    const suya = companeros.find((o) => o.id === c.vieneCon)
+    if (suya && !salida.includes(suya)) salida.push(suya)
+  }
+  return salida
 }

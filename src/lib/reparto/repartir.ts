@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { MAS_UNO } from '@/lib/reglas'
+
 import { DIAS_SIN_REPETIR_LOCAL } from './historial'
 
 /**
@@ -927,9 +929,11 @@ export function repartir(
 /**
  * El reparto de una fecha +1: lo mismo, pero moviendo DÚOS.
  *
- * Michael, 01-11: tres dúos por mesa; dos dúos, cuatro personas, también
- * forman mesa; y el dúo que sobra se queda sin mesa con sus dos créditos. Las
- * reglas y la puntuación son las de siempre, sobre las seis personas: lo
+ * Michael, 01-11: una mesa es de DOS A CUATRO dúos (de 4 a 8 personas), con
+ * tres como medida buena (entrega mas-uno de Design, que Michael eligió sobre
+ * los tres fijos que habíamos hablado). Así, con cuatro dúos sale una mesa de
+ * ocho en vez de dejar uno fuera; solo se queda sin mesa un dúo suelto. Las
+ * reglas y la puntuación son las de siempre, sobre todas las personas: lo
  * único que cambia es la pieza que se mueve.
  *
  * Quien llega sin su pareja en el pool —el acompañante no está verificado,
@@ -957,13 +961,8 @@ function repartirDuos(pool: Persona[], porMesa: number, pesos: Pesos): Resultado
   const sentables = duos.filter((d) => zonasDelDuo(d).length > 0)
   const sinZona = duos.filter((d) => zonasDelDuo(d).length === 0).flat()
 
-  const porMesaDuos = Math.max(1, Math.floor(porMesa / 2))
-  const MINIMO_DUOS = 2
-  let cuantas = Math.floor(sentables.length / porMesaDuos)
-  const sobran = sentables.length - cuantas * porMesaDuos
-  // Dos dúos sueltos también son mesa (cuatro personas).
-  const conCorta = sobran >= MINIMO_DUOS
-  if (conCorta) cuantas += 1
+  const tamanos = tamanosDeMesasDeDuos(sentables.length)
+  const cuantas = tamanos.length
 
   if (cuantas === 0) {
     return { mesas: [], espera: [...pool], puntuaciones: [], media: 0 }
@@ -978,12 +977,14 @@ function repartirDuos(pool: Persona[], porMesa: number, pesos: Pesos): Resultado
   )
 
   const personas = sentables.flat()
-  const cupo = cupoDeGenero(personas, porMesa)
+  // El cupo de género se mide sobre el tamaño de CADA mesa: una de ocho admite
+  // más de cada uno que una de cuatro.
+  const cupos = tamanos.map((t) => cupoDeGenero(personas, t * 2))
+  const cupoDeMesa = (m: Persona[][]) => cupoDeGenero(personas, Math.max(2, m.length * 2))
   const mesas: Persona[][][] = Array.from({ length: cuantas }, () => [])
   const libres = [...orden]
   const plana = (m: Persona[][]) => m.flat()
-  // La corta es la última: se llena con lo que quede.
-  const capacidad = (m: number) => (conCorta && m === cuantas - 1 ? sobran : porMesaDuos)
+  const capacidad = (m: number) => tamanos[m]
 
   for (let m = 0; m < cuantas; m++) {
     if (!libres.length) break
@@ -996,7 +997,7 @@ function repartirDuos(pool: Persona[], porMesa: number, pesos: Pesos): Resultado
       let punto = -Infinity
       for (let i = 0; i < libres.length; i++) {
         const tentativa = [...plana(mesas[m]), ...libres[i]]
-        const cabe = cabeEnElCupo(tentativa, cupo)
+        const cabe = cabeEnElCupo(tentativa, cupos[m])
         const n = roturas(tentativa).length
         const g = gravedad(tentativa)
         const p = puntuar(tentativa, pesos)
@@ -1038,8 +1039,8 @@ function repartirDuos(pool: Persona[], porMesa: number, pesos: Pesos): Resultado
             const gravesDespues = gravedad(pa) + gravedad(pb)
             const puntosAntes = puntuar(antesA, pesos) + puntuar(antesB, pesos)
             const puntosDespues = puntuar(pa, pesos) + puntuar(pb, pesos)
-            const cupoAntes = Number(cabeEnElCupo(antesA, cupo)) + Number(cabeEnElCupo(antesB, cupo))
-            const cupoDespues = Number(cabeEnElCupo(pa, cupo)) + Number(cabeEnElCupo(pb, cupo))
+            const cupoAntes = Number(cabeEnElCupo(antesA, cupoDeMesa(mesas[a]))) + Number(cabeEnElCupo(antesB, cupoDeMesa(mesas[b])))
+            const cupoDespues = Number(cabeEnElCupo(pa, cupoDeMesa(na))) + Number(cabeEnElCupo(pb, cupoDeMesa(nb)))
             if (cupoDespues < cupoAntes && rotasDespues >= rotasAntes) continue
             const gana =
               rotasDespues < rotasAntes ||
@@ -1066,4 +1067,15 @@ function repartirDuos(pool: Persona[], porMesa: number, pesos: Pesos): Resultado
     puntuaciones,
     media: puntuaciones.reduce((t, p) => t + p, 0) / (puntuaciones.length || 1),
   }
+}
+
+/**
+ * Una mesa +1: de dos a cuatro dúos (Michael, 01-11). La regla y el reparto
+ * en tamaños viven en `AroReglas.MAS_UNO`, que también lee la agenda.
+ */
+export const DUOS_POR_MESA = { minimo: MAS_UNO.DUOS.minimo, maximo: MAS_UNO.DUOS.maximo } as const
+
+/** Cuántos dúos lleva cada mesa, para N dúos (`AroReglas.MAS_UNO.tamanosDeMesas`). */
+export function tamanosDeMesasDeDuos(n: number): number[] {
+  return MAS_UNO.tamanosDeMesas(n)
 }
