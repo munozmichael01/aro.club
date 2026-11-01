@@ -71,6 +71,8 @@ type Api = {
   CONTACTO: Contacto
   /** +1 acompañante (entrega mas-uno, 01-11): todo su copy, el mismo de la web. */
   MAS_UNO: MasUno
+  /** «Segundo acto» (63ba982): después de la cena todas las mesas de la fecha se juntan en un bar. Solo la etiqueta; el bar se revela ese día. */
+  SEGUNDO_ACTO: { marca: string }
   /** Las cuentas de Aro en redes (400f5f8): la firma de las historias y «Etiqueta a…». */
   REDES: { instagram: string; tiktok: string; arroba: string }
   /** «Estás dentro» (reglas.js, 31-10). De momento la app solo lee si un plan tiene tarjetas para historias. */

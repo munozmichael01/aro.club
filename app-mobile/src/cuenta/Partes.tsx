@@ -310,6 +310,12 @@ function FilaFecha(p: {
             <Texto variante="rotulo">{f.tipo}</Texto>
             {/* +1 acompañante: cápsula de contorno, para no competir con la de idioma (entrega mas-uno, 1A). */}
             {f.masUno ? <Capsula /> : null}
+            {/* Segundo acto (63ba982): maciza como la de idioma, el mismo orden que la web. */}
+            {f.segundoActo ? (
+              <View style={[estilos.idioma, { backgroundColor: color.verdeProfundo }]}>
+                <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 11, lineHeight: 14, letterSpacing: 0.88, color: color.crema }}>{reglas.SEGUNDO_ACTO.marca.toUpperCase()}</Texto>
+              </View>
+            ) : null}
             {/* Maciza, como la web: no es un detalle, es en otro idioma (20-10). */}
             {f.idioma ? (
               <View style={estilos.idioma}>

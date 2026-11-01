@@ -44,6 +44,8 @@ export type FechaAgenda = {
   zonasNuevas?: string[] | null
   /** Fecha +1 acompañante (01-11): mesas de dúos, dos puestos por reserva. `apuntados` cuenta puestos. */
   masUno?: boolean
+  /** Hay segundo acto (63ba982): solo la etiqueta. El bar no viaja. */
+  segundoActo?: boolean
 }
 
 /** «10 ref», «12,50 ref»: el precio de una fecha. Sin precio en la fecha, el del club (`reglas.precioTexto`). */
@@ -286,6 +288,8 @@ export type FilaAgenda = {
   zonasNuevas: string[]
   /** +1 acompañante: la cápsula, el bloque de la hoja, el cargo en dos y el aviso con casilla. */
   masUno: boolean
+  /** La cápsula maciza «SEGUNDO ACTO», junto al tipo. */
+  segundoActo: boolean
   /** Lo que cuesta en créditos (dos en una +1). */
   creditos: number
   /** El plazo del acompañante, «jueves 5 a las 7:00 p.m.» (el cierre). Vacío fuera de una +1. */
@@ -333,6 +337,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       zonaHoraria: a.zonaHoraria ?? null,
       zonasNuevas: a.mia || cerrada ? [] : (a.zonasNuevas ?? []),
       masUno: !!a.masUno,
+      segundoActo: !!a.segundoActo,
       creditos: a.creditos || 1,
       plazo: a.masUno && a.cierraEn ? reglas.MAS_UNO.plazo(a.cierraEn, a.zonaHoraria) : '',
     })

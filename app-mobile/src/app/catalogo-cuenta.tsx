@@ -28,7 +28,7 @@ function deCaptura(d: MiCuenta, varios = false): MiCuenta {
     porValorar: null,
     agenda: [
       { id: 'a', formato: 'dinner', empiezaEn: s0, cierraEn: cierre(s0), creditos: 1, zonas: ['Chacao', 'Los Palos Grandes'], apuntados: 9, cerrada: false, mia: false, zonasNuevas: ['Los Palos Grandes'] },
-      { id: 'b', formato: 'dinner', empiezaEn: sabado(1), cierraEn: cierre(sabado(1)), creditos: 1, zonas: ['Las Mercedes', 'Altamira'], apuntados: 4, cerrada: false, mia: false },
+      { id: 'b', formato: 'dinner', empiezaEn: sabado(1), cierraEn: cierre(sabado(1)), creditos: 1, zonas: ['Las Mercedes', 'Altamira'], apuntados: 4, cerrada: false, mia: false, edadMinima: 45, segundoActo: true },
       { id: 'c', formato: 'dinner', empiezaEn: sabado(2), cierraEn: cierre(sabado(2)), creditos: 1, zonas: ['La Castellana'], apuntados: 2, cerrada: false, mia: false },
       // ?varios=1: también drinks, para ver el filtro con «Todos» (entrega 19, 2a).
       ...(varios ? [{ id: 'd', formato: 'drinks', empiezaEn: menos(sabado(0), 47), cierraEn: menos(sabado(0), 71), creditos: 1, zonas: ['Altamira'], apuntados: 5, porMesa: 8, cerrada: false, mia: false }] : []),
@@ -52,7 +52,7 @@ function simulada(estado: EstadoCuenta): MiCuenta {
     ],
     agenda: [
       { id: 'a', formato: 'dinner', empiezaEn: en(5 * 24 + 8), cierraEn: en(3 * 24), creditos: 1, zonas: ['Las Mercedes', 'Chacao'], apuntados: 8, cerrada: false, zonasNuevas: ['Chacao'], mia: conReserva && estado !== 'abierta' },
-      { id: 'b', formato: 'dinner', empiezaEn: en(11 * 24 + 8), cierraEn: en(9 * 24), creditos: 1, zonas: ['Altamira'], apuntados: 4, cerrada: false, mia: false },
+      { id: 'b', formato: 'dinner', empiezaEn: en(11 * 24 + 8), cierraEn: en(9 * 24), creditos: 1, zonas: ['Altamira'], apuntados: 4, cerrada: false, mia: false, edadMinima: 45, segundoActo: true },
       // +1 acompañante (entrega mas-uno): dos dúos apuntados, cuesta dos créditos (precio doble).
       { id: 'm', formato: 'dinner', empiezaEn: en(6 * 24 + 8), cierraEn: en(5 * 24 + 8), creditos: 2, precioUsd: 20, zonas: ['Chacao', 'Los Palos Grandes'], apuntados: 4, cerrada: false, mia: false, masUno: true },
       { id: 'c', formato: 'drinks', empiezaEn: en(12 * 24 + 6), cierraEn: en(10 * 24), creditos: 1, zonas: [], apuntados: 1, cerrada: false, mia: false },
