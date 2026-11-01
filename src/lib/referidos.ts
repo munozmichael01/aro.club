@@ -256,7 +256,7 @@ export function leerInvitacion(
 }
 
 /** Mayúsculas y sin nada que no sea letra o número. */
-function normalizarCodigoDeReferido(codigo: string): string {
+export function normalizarCodigoDeReferido(codigo: string): string {
   return String(codigo).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 40)
 }
 

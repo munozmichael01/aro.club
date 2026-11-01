@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { situacionDeLead } from '@/lib/embudo'
 import { VERSION_LEGAL } from '@/lib/legal'
 import { verificar } from '@/lib/lead-token'
-import { trasEntrar } from '@/lib/tras-entrar'
+import { loQueTraia, trasEntrar } from '@/lib/tras-entrar'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -74,6 +74,12 @@ const cuerpo = z.object({
    * zonas.
    */
   ciudad: z.string().regex(/^[a-z-]+$/).max(40).nullish(),
+  /**
+   * El código de referido y el enlace de un +1 con los que llegó, cuando los
+   * trae la app (en la web viajan en cookies). Los recoge `loQueTraia`.
+   */
+  codigoReferido: z.string().trim().min(1).max(40).nullish(),
+  tokenMasUno: z.string().regex(/^[A-Za-z0-9_-]{10,64}$/).nullish(),
   // Ocho es el mínimo del contrato. El máximo es de bcrypt, que trunca a 72.
   clave: z.string().min(8).max(72),
 })
@@ -221,6 +227,8 @@ export async function POST(request: Request) {
         correo,
         origen: origen ?? 'app',
         ciudad: ciudadFinal,
+        codigoReferido: parsed.data.codigoReferido,
+        tokenMasUno: parsed.data.tokenMasUno,
       })
     : null
 
@@ -259,6 +267,18 @@ export async function POST(request: Request) {
   await admin
     .from('profile_identities')
     .insert({ profile_id: creado.user.id, provider: 'password', provider_email: correo })
+
+  // Con lead el perfil lo creó `convertir_lead` y no `trasEntrar`, así que lo
+  // que traía —el enlace de un amigo, el de un +1— se recoge aquí. Sin esto
+  // quien dejaba su correo en la landing y se daba de alta con contraseña
+  // perdía al amigo que la invitó.
+  if (!altaDirecta) {
+    await loQueTraia(creado.user.id, {
+      creado: true,
+      codigoReferido: parsed.data.codigoReferido,
+      tokenMasUno: parsed.data.tokenMasUno,
+    })
+  }
 
   // La aceptacion de los terminos, con fecha y version. Se guarda AQUI y no
   // en la pantalla: el boton de la pantalla es lo que ella ve, esta fila es

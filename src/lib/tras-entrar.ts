@@ -4,7 +4,7 @@ import { type Paso, type Situacion, situacionDePerfil } from '@/lib/embudo'
 import { cookies } from 'next/headers'
 
 import { aceptarInvitacion, COOKIE_MAS_UNO } from '@/lib/mas-uno'
-import { apuntarQuienInvito, COOKIE_INVITA, leerInvitacion } from '@/lib/referidos'
+import { apuntarQuienInvito, COOKIE_INVITA, leerInvitacion, normalizarCodigoDeReferido } from '@/lib/referidos'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -65,6 +65,16 @@ export type Entrada = {
    * dónde contarlo y el servidor no tenía dónde guardarlo.
    */
   ciudad?: string | null
+  /**
+   * El código de referido con el que llegó, cuando lo trae la app.
+   *
+   * En la web viaja en la cookie que pone `/i/<código>`; la app no tiene esa
+   * cookie, así que lo manda aquí. Si vienen los dos, manda este: es el que
+   * la persona acaba de abrir.
+   */
+  codigoReferido?: string | null
+  /** Lo mismo para el enlace de un +1 (`/m/<token>`), que en la web es otra cookie. */
+  tokenMasUno?: string | null
 }
 
 export type Salida =
@@ -167,35 +177,68 @@ export async function trasEntrar(entrada: Entrada): Promise<Salida> {
      * sin ello. Solo al CREAR: quien ya tenía cuenta no llegó con el enlace
      * de nadie.
      */
-    try {
-      const galleta = (await cookies()).get(COOKIE_INVITA)?.value
-      await apuntarQuienInvito(admin, usuarioId, leerInvitacion(galleta))
-    } catch (e) {
-      // Ni el alta ni la sesión dependen de esto.
-      console.error('[entrar] no se pudo apuntar quién invitó', e)
-    }
-
     if (entrada.leadPrevio && entrada.leadPrevio !== correo) {
       otroCorreo = { registro: entrada.leadPrevio, entrada: correo }
     }
   }
 
+  await loQueTraia(usuarioId, { creado, codigoReferido: entrada.codigoReferido, tokenMasUno: entrada.tokenMasUno })
+
   // En qué paso está. La MISMA pieza que decide qué le falta a cualquiera: si
   // aquí se decidiera aparte, el proveedor mandaría a un sitio y el resto del
   // embudo a otro.
-  /**
-   * Y si abrió el enlace de un +1 antes de tener sesión, se une ahora. En
-   * cada entrada y no solo al crear el perfil: quien ya era socia abre el
-   * enlace, entra con su cuenta y acepta. Si ya está verificada, el puesto
-   * queda al instante (Michael, 01-11).
-   */
+  const situacion = await situacionDePerfil(usuarioId)
+
+  return { ok: true, paso: situacion.paso, situacion, creado, otroCorreo }
+}
+
+/**
+ * Los dos enlaces con los que pudo llegar: el de un referido y el de un +1.
+ *
+ * Vive aparte de `trasEntrar` porque hay una puerta que no pasa por ahí: el
+ * alta con correo y contraseña de quien ya era lead, que convierte el lead
+ * con `convertir_lead` y no crea el perfil aquí. Por ese hueco, quien llegaba
+ * por el enlace de un amigo, dejaba su correo en la landing y se daba de alta
+ * con contraseña perdía al amigo: ni descuento ni cuenta para el premio. Las
+ * puertas que crean perfil llaman a esto, y así ninguna lo olvida.
+ *
+ *  · El referido, solo al CREAR el perfil: quien ya tenía cuenta no llegó con
+ *    el enlace de nadie.
+ *  · El +1, en cada entrada: quien ya era socia abre el enlace, entra con su
+ *    cuenta y acepta. Si ya está verificada, el puesto queda al instante.
+ *
+ * Lo que traiga quien llama (la app) manda sobre la cookie (la web). Nada de
+ * esto tumba el alta ni la sesión.
+ */
+export async function loQueTraia(
+  usuarioId: string,
+  o: { creado: boolean; codigoReferido?: string | null; tokenMasUno?: string | null },
+): Promise<void> {
+  const admin = createAdminClient()
+  let galletas: Awaited<ReturnType<typeof cookies>> | null = null
   try {
-    const galletas = await cookies()
-    const token = galletas.get(COOKIE_MAS_UNO)?.value
+    galletas = await cookies()
+  } catch {
+    // Fuera de una petición no hay cookies: vale lo que traiga quien llama.
+  }
+
+  if (o.creado) {
+    try {
+      const invitacion = o.codigoReferido
+        ? { codigo: normalizarCodigoDeReferido(o.codigoReferido) }
+        : leerInvitacion(galletas?.get(COOKIE_INVITA)?.value)
+      await apuntarQuienInvito(admin, usuarioId, invitacion?.codigo ? invitacion : null)
+    } catch (e) {
+      console.error('[entrar] no se pudo apuntar quién invitó', e)
+    }
+  }
+
+  try {
+    const token = o.tokenMasUno || galletas?.get(COOKIE_MAS_UNO)?.value
     if (token) {
       await aceptarInvitacion(admin, token, usuarioId)
       try {
-        galletas.delete(COOKIE_MAS_UNO)
+        galletas?.delete(COOKIE_MAS_UNO)
       } catch {
         // Fuera de una ruta no se puede borrar; caduca sola en una semana y
         // aceptar dos veces no repite nada.
@@ -204,8 +247,4 @@ export async function trasEntrar(entrada: Entrada): Promise<Salida> {
   } catch (e) {
     console.error('[entrar] no se pudo unir al enlace del +1', e)
   }
-
-  const situacion = await situacionDePerfil(usuarioId)
-
-  return { ok: true, paso: situacion.paso, situacion, creado, otroCorreo }
 }

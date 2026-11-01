@@ -45,6 +45,12 @@ const cuerpo = z.object({
    * lead: con lead manda lo que se eligió en la landing.
    */
   ciudad: z.string().regex(/^[a-z-]+$/).max(40).nullish(),
+  /**
+   * El código de referido y el enlace de un +1 con los que abrió la app.
+   * En la web viajan en cookies; la app los manda aquí.
+   */
+  codigoReferido: z.string().trim().min(1).max(40).nullish(),
+  tokenMasUno: z.string().regex(/^[A-Za-z0-9_-]{10,64}$/).nullish(),
 })
 
 export async function POST(request: Request) {
@@ -100,6 +106,8 @@ export async function POST(request: Request) {
     leadPrevio,
     origen: `app-${proveedor}`,
     ciudad: ciudadFinal,
+    codigoReferido: parsed.success ? (parsed.data.codigoReferido ?? null) : null,
+    tokenMasUno: parsed.success ? (parsed.data.tokenMasUno ?? null) : null,
   })
 
   if (!r.ok) {
