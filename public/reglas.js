@@ -2678,6 +2678,16 @@
     },
 
     /**
+     * «Segundo acto»: después de la cena, todas las mesas de la fecha se
+     * juntan en un mismo bar (Michael, 01-11). Es de la FECHA —el bar va en
+     * `events.after_venue_id`— y por ahora solo se enseña la etiqueta, junto
+     * al tipo, como «+45»; el bar se revela ese día.
+     */
+    SEGUNDO_ACTO: {
+      marca: 'SEGUNDO ACTO',
+    },
+
+    /**
      * «+1 acompañante»: fechas donde toda la mesa llega de dos en dos.
      *
      * Michael, 01-11 (app-mobile/Design/BRIEF-mas-uno-acompanante.md). Quien
@@ -2767,7 +2777,9 @@
         tuPuesto: 'Tu puesto',
         suPuesto: 'El puesto de tu +1',
         total: 'Dos puestos',
-        nota: 'Sin créditos, se paga el doble del precio de la fecha. Tu acompañante no paga nada. El consumo lo paga cada quien en el sitio.',
+        // Michael, 01-11: «el doble» suena a castigo; lo que pasa es que pagas
+        // los dos puestos.
+        nota: 'Sin créditos, pagas los dos puestos. Tu acompañante no paga nada. El consumo lo paga cada quien en el sitio.',
         boton: function (creditos) { return 'Reservar dos puestos · ' + creditos + ' encuentros' },
         // Sin créditos, con el precio de los dos (lo cobra la fecha).
         botonPrecio: function (precio) { return 'Reservar dos puestos · ' + precio },

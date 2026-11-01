@@ -51,6 +51,8 @@ export type FechaDeAgenda = {
   etiquetaIdioma: string | null
   /** «+1 acompañante»: la marca junto al día, como «+45» (`AroReglas.MAS_UNO.marca`). */
   masUno: boolean
+  /** Hay segundo acto: la etiqueta `AroReglas.SEGUNDO_ACTO.marca`. Nunca el bar: se revela ese día. */
+  segundoActo: boolean
 }
 
 /** Las fechas abiertas de la ciudad, ya listas para pintar. */
@@ -61,7 +63,7 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
   const { data: fechas } = await admin
     .from('events')
     .select(
-      'id, format, starts_at, booking_closes_at, reveal_at, created_at, city_slug, price_usd, seats_per_table, age_band_min, age_band_max, idioma, mas_uno',
+      'id, format, starts_at, booking_closes_at, reveal_at, created_at, city_slug, price_usd, seats_per_table, age_band_min, age_band_max, idioma, mas_uno, after_venue_id',
     )
     .eq('status', 'open')
     // Nunca una de prueba, aunque alguien la deje en `open` por error.
@@ -121,6 +123,7 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
     idioma: f.idioma ?? null,
     etiquetaIdioma: etiquetaDeIdioma(f.idioma),
     masUno: !!f.mas_uno,
+    segundoActo: !!f.after_venue_id,
   }))
 }
 
