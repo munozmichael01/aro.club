@@ -68,6 +68,16 @@ export type DeServidor = {
   mesaCorta?: string | null
   /** A dónde puede cambiarse (29-10, `bloqueDeCambiarFecha`). Sin él, no se enseña nada. */
   cambiarFecha?: import('../cambiar/maquina').Bloque | null
+  /** +1 acompañante (01-11): la tarjeta «Tu +1 acompañante» de quien reserva; en 'sin-reserva', la cancelada (4E). */
+  masUno?: import('../masuno/maquina').MasUno | null
+  /** El acompañante: con quién viene (5E). */
+  vienesCon?: string | null
+  /** El acompañante que entró por un enlace y aún no se ha verificado (5D), en 'sin-reserva'. */
+  masUnoPendiente?: import('../masuno/maquina').Pendiente | null
+  /** Su nombre de pila, para la inicial de «Laura viene contigo» (4C). Sin él, solo la de su +1. */
+  miNombre?: string | null
+  /** Para «Cambiar de acompañante» (POST /api/mas-uno). */
+  reservaId?: string | null
   /** Lo pendiente de una cena pasada, con una reserva activa delante (31-10): la línea de Próxima. */
   pendiente?: import('../pasadas/maquina').Linea | null
   /** El punto de Pasadas: hay algo pendiente o nuevo en alguna cena pasada. */
@@ -145,7 +155,7 @@ export function mapa<D extends { mapa?: string | null; mapaApple?: string | null
   return d.mapa || d.mapaApple || null
 }
 
-export type Otro = { id: string; nombre: string; inicial: string; sector: string; seUnio: boolean; arraigo: string | null; esMiDuo: boolean }
+export type Otro = { id: string; nombre: string; inicial: string; sector: string; seUnio: boolean; arraigo: string | null; esMiDuo: boolean; vieneCon: string | null }
 
 export function otros(d: DeServidor): Otro[] {
   const ids = new Set((d.companeros ?? []).map((c) => c.id))
@@ -158,6 +168,7 @@ export function otros(d: DeServidor): Otro[] {
     arraigo: arraigoDe(c.arraigo),
     // Los otros dúos se apuntan entre sí; el mío apunta a alguien que no está en la lista: yo.
     esMiDuo: !!c.vieneCon && !ids.has(c.vieneCon),
+    vieneCon: c.vieneCon ?? null,
   }))
 }
 

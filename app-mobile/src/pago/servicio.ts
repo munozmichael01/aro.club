@@ -1,3 +1,4 @@
+import type { MasUno } from '../masuno/maquina'
 import { SinSesion, type crearApi } from '../sesion/api'
 import * as T from '../texto/pago'
 import { normalizar, type DeServidor, type RespuestaCupon } from './maquina'
@@ -44,9 +45,9 @@ export function crearServicioPago(api: Api) {
      * sin `permiteGrabacion` responde 409 (48f5823). `acepta: ['descuento']`
      * dice que esta pantalla sabe leer un código parcial (98b3728).
      */
-    cupon: (eventoId: string, codigo: string, permiteGrabacion?: boolean) =>
+    cupon: (eventoId: string, codigo: string, permiteGrabacion?: boolean, aceptaCondiciones?: boolean) =>
       intentar<RespuestaCupon>(
-        () => api.pedir('/cupon', json({ eventoId, codigo, acepta: ['descuento'], ...(permiteGrabacion ? { permiteGrabacion } : {}) })),
+        () => api.pedir('/cupon', json({ eventoId, codigo, acepta: ['descuento'], ...(permiteGrabacion ? { permiteGrabacion } : {}), ...(aceptaCondiciones ? { aceptaCondiciones } : {}) })),
         T.cupon.noPudimos,
         T.cupon.sinRed,
       ),
@@ -62,13 +63,16 @@ export function crearServicioPago(api: Api) {
      * instante): se le dice al servidor, para que el Inicio no la vuelva a
      * abrir. Reportar ES estar dentro (Michael, 31-10): no se repite al confirmarse.
      */
-    marcarDentro: async (eventoId: string) => {
+    /** Devuelve el +1 de esa reserva, si es una fecha +1: «Estás dentro» enseña la invitación. */
+    marcarDentro: async (eventoId: string): Promise<MasUno | null> => {
       try {
         const r = await api.pedir('/estas-dentro?evento=' + encodeURIComponent(eventoId))
         const j = await r.json().catch(() => null)
         if (r.ok && j?.reserva?.id) await api.pedir('/estas-dentro', json({ reservaId: j.reserva.id }))
+        return (j?.masUno as MasUno | undefined) ?? null
       } catch {
         // Si no se pudo, el Inicio la enseña una vez más: no es grave.
+        return null
       }
     },
 

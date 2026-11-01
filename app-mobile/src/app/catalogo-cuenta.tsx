@@ -53,6 +53,8 @@ function simulada(estado: EstadoCuenta): MiCuenta {
     agenda: [
       { id: 'a', formato: 'dinner', empiezaEn: en(5 * 24 + 8), cierraEn: en(3 * 24), creditos: 1, zonas: ['Las Mercedes', 'Chacao'], apuntados: 8, cerrada: false, zonasNuevas: ['Chacao'], mia: conReserva && estado !== 'abierta' },
       { id: 'b', formato: 'dinner', empiezaEn: en(11 * 24 + 8), cierraEn: en(9 * 24), creditos: 1, zonas: ['Altamira'], apuntados: 4, cerrada: false, mia: false },
+      // +1 acompañante (entrega mas-uno): dos dúos apuntados, cuesta dos créditos (precio doble).
+      { id: 'm', formato: 'dinner', empiezaEn: en(6 * 24 + 8), cierraEn: en(5 * 24 + 8), creditos: 2, precioUsd: 20, zonas: ['Chacao', 'Los Palos Grandes'], apuntados: 4, cerrada: false, mia: false, masUno: true },
       { id: 'c', formato: 'drinks', empiezaEn: en(12 * 24 + 6), cierraEn: en(10 * 24), creditos: 1, zonas: [], apuntados: 1, cerrada: false, mia: false },
       { id: 'd', formato: 'dinner', empiezaEn: en(20), cierraEn: en(-28), creditos: 1, zonas: ['Chacao'], apuntados: 14, cerrada: true, mia: false },
     ],

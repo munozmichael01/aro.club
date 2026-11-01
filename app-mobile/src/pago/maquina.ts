@@ -24,7 +24,7 @@ export type Metodo = {
 }
 
 export type DeServidor = {
-  evento: { id: string; empiezaEn: string; cierraEn: string | null; zona: string | null; revelaEn?: string | null; zonaHoraria?: string | null; formato?: string | null; /** La fecha se graba (18-10). */ grabamos?: boolean; /** Requerida: el permiso es condición para apartar puesto (48f5823). */ permisoObligatorio?: boolean }
+  evento: { id: string; empiezaEn: string; cierraEn: string | null; zona: string | null; revelaEn?: string | null; zonaHoraria?: string | null; formato?: string | null; /** La fecha se graba (18-10). */ grabamos?: boolean; /** Requerida: el permiso es condición para apartar puesto (48f5823). */ permisoObligatorio?: boolean; /** +1 acompañante (01-11): el precio ya es el de los dos puestos. */ masUno?: boolean }
   montoUsd: number
   tasa: number | null
   tasaDe: string | null
@@ -203,7 +203,7 @@ export function estadoReporte(m: Metodo, rep: Record<string, string>, conCaptura
 }
 
 /** Lo que viaja a `POST /api/pago`: solo los campos del método (y la letra si la pide). */
-export function cuerpoReporte(d: DeServidor, m: Metodo, rep: Record<string, string>, captura: string | null, permiteGrabacion = false) {
+export function cuerpoReporte(d: DeServidor, m: Metodo, rep: Record<string, string>, captura: string | null, permiteGrabacion = false, aceptaCondiciones = false) {
   const datos: Record<string, string> = {}
   for (const c of m.campos) datos[c.campo] = c.tipo === 'fecha' ? conCeros((rep[c.campo] ?? '').trim()) : (rep[c.campo] ?? '').trim()
   if (m.campos.some((c) => c.conTipo)) datos.doc_tipo = rep.doc_tipo ?? 'V'
@@ -216,6 +216,8 @@ export function cuerpoReporte(d: DeServidor, m: Metodo, rep: Record<string, stri
     ...(d.tasa ? { tasaVista: d.tasa } : {}),
     // Solo en una fecha que se graba: sin él, el servidor responde 409 `falta-permiso-grabacion`.
     ...(d.evento.permisoObligatorio && permiteGrabacion ? { permiteGrabacion: true } : {}),
+    // +1: la casilla del aviso (sin ella, 409 `falta-aceptar-condiciones`).
+    ...(d.evento.masUno && aceptaCondiciones ? { aceptaCondiciones: true } : {}),
     // El código, no el importe: el descuento lo vuelve a calcular el servidor.
     // El de la invitación no se manda: el servidor lo pone solo.
     ...(d.descuento?.origen === 'cupon' ? { codigo: d.descuento.codigo } : {}),

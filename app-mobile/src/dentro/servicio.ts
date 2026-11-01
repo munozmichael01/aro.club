@@ -1,5 +1,6 @@
 import { SinSesion, type crearApi } from '../sesion/api'
 import * as T from '../texto/dentro'
+import type { MasUno } from '../masuno/maquina'
 import * as M from './maquina'
 
 /**
@@ -9,7 +10,7 @@ import * as M from './maquina'
 type Api = ReturnType<typeof crearApi>
 export type Resultado<D> = { ok: true; datos: D } | { ok: false; error: string; status?: number }
 
-export type Datos = { reservaId: string; plan: M.Plan; pendiente: boolean }
+export type Datos = { reservaId: string; plan: M.Plan; pendiente: boolean; masUno?: MasUno | null }
 
 const json = (cuerpo: object): RequestInit => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) })
 
@@ -31,7 +32,7 @@ export function crearServicioDentro(api: Api) {
       if (e.ok) {
         const r = e.datos.reserva
         if (!r?.id || !e.datos.plan?.empiezaEn) return { ok: true, datos: null }
-        return { ok: true, datos: { reservaId: r.id, pendiente: !!r.pendiente, plan: e.datos.plan } }
+        return { ok: true, datos: { reservaId: r.id, pendiente: !!r.pendiente, plan: e.datos.plan, masUno: e.datos.masUno ?? null } }
       }
       if (e.status === 401) return e
       const c = await leerJson(api, '/mi-cuenta')

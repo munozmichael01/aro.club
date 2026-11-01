@@ -258,3 +258,45 @@ export function IconoSinCruce({ tam = 120 }: { tam?: number }) {
     </Svg>
   )
 }
+
+/**
+ * El dibujo propio del +1 (entrega mas-uno): dos puntos juntos, el tuyo
+ * macizo y el de tu acompañante en contorno. `punteado`: todavía no viene
+ * (el botón de invitar).
+ */
+export function IconoDuo({ tam = 18, color, lleno, punteado }: P & { lleno?: string; punteado?: boolean }) {
+  return (
+    <Svg width={tam} height={(tam * 2) / 3} viewBox="0 0 30 20">
+      <Circle cx={10} cy={10} r={punteado ? 7 : 6.5} fill={lleno ?? color} />
+      <Circle cx={20} cy={10} r={punteado ? 7 : 6.5} fill="none" stroke={color} strokeWidth={2.4} strokeDasharray={punteado ? [3.5, 2.6] : undefined} />
+    </Svg>
+  )
+}
+
+/** La flecha que vuelve: «te devolvemos dos créditos» (el aviso del +1). */
+export function IconoDevolver({ tam = 20, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}
+
+/** Un teléfono: «Compartir mi plan en historias» (entrega mas-uno, 3A). */
+export function IconoHistoria({ tam = 16, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M9 3h6a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zM10 7h4" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  )
+}
+
+/** La cédula: «Verifícate para sentarte» (entrega mas-uno, 5D). */
+export function IconoCedula({ tam = 22, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M6 5.5h12a2.5 2.5 0 0 1 2.5 2.5v8a2.5 2.5 0 0 1-2.5 2.5H6A2.5 2.5 0 0 1 3.5 16V8A2.5 2.5 0 0 1 6 5.5zM14 10.5h3.5M14 13.5h2.5" stroke={color} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx={9} cy={12} r={2.2} stroke={color} strokeWidth={1.9} />
+    </Svg>
+  )
+}

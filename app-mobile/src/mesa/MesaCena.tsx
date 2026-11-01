@@ -6,6 +6,7 @@ import Svg, { Path } from 'react-native-svg'
 import { IconoCandado, Texto, fuente } from '../diseno'
 import * as G from '../juego/guardado'
 import * as J from '../juego/maquina'
+import { DuosLista } from '../masuno/Partes'
 import { reglas } from '../reglas'
 import * as F from '../texto/fechas'
 import * as TJ from '../texto/juego'
@@ -110,6 +111,12 @@ export function MesaCena(p: {
         abierta={abiertas.gente}
         alTocar={() => poner('gente', !abiertas.gente)}
       >
+        {/* +1 acompañante: en dúos, el tuyo primero con borde terracota (entrega mas-uno, 6B). */}
+        {otros.some((c) => c.vieneCon) ? (
+          <View style={{ paddingHorizontal: 18, paddingBottom: 14 }}>
+            <DuosLista gente={otros} />
+          </View>
+        ) : (
         <View style={{ paddingHorizontal: 18, paddingBottom: 12 }}>
           {otros.map((c) => (
             <View key={c.id} style={e.persona}>
@@ -128,6 +135,7 @@ export function MesaCena(p: {
           {/* La nota de antes de la entrega 20: Michael la quiso de vuelta (15-10). */}
           <Texto style={[texto(13, 1.4), e.nota]}>{T.abierta.notaCompaneros(true)}</Texto>
         </View>
+        )}
       </Desplegable>
 
       {p.grabacion}

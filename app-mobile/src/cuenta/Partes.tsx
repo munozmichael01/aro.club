@@ -26,6 +26,8 @@ import {
 import * as F from '../texto/fechas'
 import * as T from '../texto/cuenta'
 import type { Atajo, FilaAgenda, Filtro, Proximo, Tarjeta } from './maquina'
+import { AvisoCasilla, BloqueHoja, BotonConCasilla, Capsula, CargoDos } from '../masuno/Partes'
+import { reglas } from '../reglas'
 
 /**
  * Las piezas del Inicio, calcadas de `Mi cuenta.dc.html`. Solo pintan: los
@@ -258,7 +260,10 @@ function FilaFecha(p: {
   abierta: boolean
   textoReservar: (precio: string) => string
   alAbrir: () => void
-  alConfirmar: () => void
+  /** `aceptaCondiciones`: la casilla del aviso de una +1 (01-11). */
+  alConfirmar: (aceptaCondiciones?: boolean) => void
+  /** Le alcanzan los créditos para ESTA fecha (dos en una +1). */
+  conCredito: boolean
   fallo: string
   /** Con crédito se pide aquí el permiso de grabación; sin crédito, en el pago. */
   pidePermiso: boolean
@@ -267,6 +272,18 @@ function FilaFecha(p: {
 }) {
   const { f, abierta } = p
   const m = MARCAS[f.formato]
+  // +1 con créditos: «Reservar dos puestos» no aparta todavía, cambia el botón por el aviso (2A).
+  const [aviso, setAviso] = useState(false)
+  const [entendido, setEntendido] = useState(false)
+  useEffect(() => {
+    if (!abierta) (setAviso(false), setEntendido(false))
+  }, [abierta])
+  const H = reglas.MAS_UNO.hoja
+  // El precio de una +1 ya es el de los dos puestos (5b29bfd): cada uno, la mitad.
+  const mitad = (precio: string) => precio.replace(/^([\d.,]+)/, (n) => {
+    const x = Number(n.replace(',', '.')) / 2
+    return Number.isInteger(x) ? String(x) : x.toFixed(2).replace('.', ',')
+  })
   const Icono = ICONO_FORMATO[f.formato as keyof typeof ICONO_FORMATO]
   const quieta = f.mia || f.cerrada
   return (
@@ -291,6 +308,8 @@ function FilaFecha(p: {
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 9, rowGap: 2, alignItems: 'baseline' }}>
             <Texto variante="rotulo">{f.tipo}</Texto>
+            {/* +1 acompañante: cápsula de contorno, para no competir con la de idioma (entrega mas-uno, 1A). */}
+            {f.masUno ? <Capsula /> : null}
             {/* Maciza, como la web: no es un detalle, es en otro idioma (20-10). */}
             {f.idioma ? (
               <View style={estilos.idioma}>
@@ -328,6 +347,12 @@ function FilaFecha(p: {
       {abierta ? (
         <View style={{ paddingHorizontal: 15, paddingBottom: 16 }}>
           <View style={{ height: 1, backgroundColor: tinta(0.12), marginBottom: 16 }} />
+          {/* +1: «Vienes con alguien.», en lugar de «Te apuntas a una fecha» (1B). */}
+          {f.masUno ? (
+            <View style={{ marginBottom: 14 }}>
+              <BloqueHoja />
+            </View>
+          ) : null}
           <Texto variante="etiquetaChica" style={{ marginBottom: 11 }}>
             {T.agenda.eligeHora}
           </Texto>
@@ -338,20 +363,37 @@ function FilaFecha(p: {
             </View>
             <Texto variante="rotulo">{f.hora}</Texto>
           </View>
-          <Texto variante="cuerpoChico" tono="secundario" style={{ marginBottom: 14 }}>
-            {T.agenda.comoFunciona(f.cierre, f.porMesa)}
-          </Texto>
-          <View style={estilos.cargo}>
-            <Texto variante="cuerpoChico" tono="tinta" style={{ flex: 1, fontFamily: fuente.textoMedia }}>
-              {T.agenda.cargo}
-            </Texto>
-            <Texto variante="cuerpoChico" tono="verde" style={{ fontFamily: fuente.textoSemi }}>
-              {T.agenda.precio(f.precio)}
-            </Texto>
-          </View>
-          <Texto variante="nota" style={{ marginBottom: 16 }}>
-            {T.agenda.nota}
-          </Texto>
+          {f.masUno ? (
+            <>
+              {/* El cargo en dos (1B): en encuentros si le alcanzan los créditos, si no en ref. */}
+              <View style={{ marginBottom: 12 }}>
+                <CargoDos
+                  uno={p.conCredito ? T.agenda.encuentros(1) : mitad(f.precio)}
+                  total={p.conCredito ? T.agenda.encuentros(f.creditos) : f.precio}
+                />
+              </View>
+              <Texto variante="nota" style={{ marginBottom: 16 }}>
+                {H.nota}
+              </Texto>
+            </>
+          ) : (
+            <>
+              <Texto variante="cuerpoChico" tono="secundario" style={{ marginBottom: 14 }}>
+                {T.agenda.comoFunciona(f.cierre, f.porMesa)}
+              </Texto>
+              <View style={estilos.cargo}>
+                <Texto variante="cuerpoChico" tono="tinta" style={{ flex: 1, fontFamily: fuente.textoMedia }}>
+                  {T.agenda.cargo}
+                </Texto>
+                <Texto variante="cuerpoChico" tono="verde" style={{ fontFamily: fuente.textoSemi }}>
+                  {T.agenda.precio(f.precio)}
+                </Texto>
+              </View>
+              <Texto variante="nota" style={{ marginBottom: 16 }}>
+                {T.agenda.nota}
+              </Texto>
+            </>
+          )}
           {/* «¿Cómo funciona?» (entrega como-funciona, C1): entre los datos de la fecha y el botón. */}
           <View style={{ marginBottom: 16 }}>
             <FilaComoFunciona plan={{ formato: f.formato, empiezaEn: f.empiezaEn, zonaHoraria: f.zonaHoraria }} />
@@ -390,10 +432,24 @@ function FilaFecha(p: {
               ) : null}
             </View>
           ) : null}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 11, alignItems: 'center' }}>
-            <Boton texto={p.textoReservar(f.precio)} onPress={p.alConfirmar} apagado={f.graba && p.pidePermiso && !p.permiso} />
-            <Boton tipo="fantasma" texto={T.agenda.cancelar} onPress={p.alAbrir} />
-          </View>
+          {f.masUno && aviso ? (
+            // 2A · Con créditos, el aviso con casilla en la hoja; el botón se enciende al marcarla.
+            <View style={{ gap: 12 }}>
+              <AvisoCasilla plazo={f.plazo} marcado={entendido} alMarcar={() => setEntendido((x) => !x)} />
+              <BotonConCasilla texto={H.boton(f.creditos)} marcado={entendido} onPress={() => p.alConfirmar(true)} />
+              <Boton tipo="fantasma" texto={T.agenda.cancelar} ancho onPress={p.alAbrir} />
+            </View>
+          ) : (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 11, alignItems: 'center' }}>
+              <Boton
+                texto={f.masUno ? (p.conCredito ? H.boton(f.creditos) : T.agenda.reservarDos(f.precio)) : p.textoReservar(f.precio)}
+                // Sin créditos, el aviso sale en Pago (2B): allí se aparta.
+                onPress={() => (f.masUno && p.conCredito ? setAviso(true) : p.alConfirmar())}
+                apagado={f.graba && p.pidePermiso && !p.permiso}
+              />
+              <Boton tipo="fantasma" texto={T.agenda.cancelar} onPress={p.alAbrir} />
+            </View>
+          )}
           {/* El «no» del servidor, JUNTO al botón: debajo de la agenda (como la web) quedaba fuera de la pantalla. */}
           {p.fallo ? (
             <View style={{ marginTop: 12 }}>
@@ -418,7 +474,9 @@ export function Agenda(p: {
   alPermiso: () => void
   alFiltro: (formato: string) => void
   alAbrir: (id: string) => void
-  alConfirmar: (id: string) => void
+  alConfirmar: (id: string, aceptaCondiciones?: boolean) => void
+  /** Sus créditos: alcanzan o no según la fecha (dos en una +1). */
+  misCreditos: number
   /** Vive en una ciudad que aún no abre: su nombre. Sin polaroids ni fechas de otra ciudad. */
   ciudadCerrada?: string | null
 }) {
@@ -472,7 +530,8 @@ export function Agenda(p: {
                 permiso={p.permiso}
                 alPermiso={p.alPermiso}
                 alAbrir={() => p.alAbrir(f.id)}
-                alConfirmar={() => p.alConfirmar(f.id)}
+                alConfirmar={(acepta) => p.alConfirmar(f.id, acepta)}
+                conCredito={p.misCreditos >= f.creditos}
               />
             ))}
           </View>

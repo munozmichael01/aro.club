@@ -3,7 +3,10 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle } from 'react-native-svg'
 
-import { IconoCalendario, IconoCheck, IconoCompartir, IconoCruz, IconoReloj, Texto, color, cremaAlfa, fuente, medida, radio, tinta } from '../diseno'
+import { IconoCalendario, IconoCheck, IconoCompartir, IconoCruz, IconoHistoria, IconoReloj, Texto, color, cremaAlfa, fuente, medida, radio, tinta } from '../diseno'
+import type { MasUno } from '../masuno/maquina'
+import { AroDuo, InvitarTarjeta } from '../masuno/Partes'
+import { reglas } from '../reglas'
 import * as T from '../texto/dentro'
 import type { vista } from './maquina'
 
@@ -23,17 +26,31 @@ export function EstasDentro(p: {
   ir: (d: string) => void
   /** Lo que va debajo (en Pago, el comprobante de siempre). */
   extra?: ReactNode
+  /**
+   * Fecha +1 acompañante (entrega mas-uno, 3A): la invitación en su tarjeta
+   * crema con el único botón naranja; el calendario en contorno y «Compartir
+   * mi plan» como enlace, para que se lea como otra cosa. Sale también en A:
+   * el puesto está apartado y el reloj corre.
+   */
+  masUno?: MasUno | null
 }) {
   const insets = useSafeAreaInsets()
   const { v } = p
   const b = v.momento === 'B'
   const tinta1 = b ? color.crema : color.verdeProfundo
   const tinta2 = b ? color.cuerpoSobreVerde : color.cuerpo
+  const invitar = !!p.masUno && (p.masUno.estado === 'sin-usar' || p.masUno.estado === 'registrado')
+  const plan = p.masUno ? `${v.plan} ${reglas.MAS_UNO.nombre}` : v.plan
 
   const calendario = p.enCalendario ? (
     <Pressable onPress={p.alCalendario} accessibilityRole="button" style={[e.boton, { borderWidth: 1.5, borderColor: b ? cremaAlfa(0.5) : color.verdeProfundo }]}>
       <IconoCheck tam={16} color={b ? color.sobreVerdeSecundario : color.verdeProfundo} />
       <Texto style={[e.textoBoton, { color: tinta1 }]}>{T.calendario.yaEsta}</Texto>
+    </Pressable>
+  ) : invitar && b ? (
+    <Pressable onPress={p.alCalendario} accessibilityRole="button" style={[e.boton, { borderWidth: 1.5, borderColor: cremaAlfa(0.5) }]}>
+      <IconoCalendario color={color.crema} />
+      <Texto style={[e.textoBoton, { color: color.crema }]}>{T.calendario.anadir}</Texto>
     </Pressable>
   ) : (
     <Pressable onPress={p.alCalendario} accessibilityRole="button" style={[e.boton, { backgroundColor: b ? color.crema : color.verdeProfundo }]}>
@@ -59,7 +76,12 @@ export function EstasDentro(p: {
           </Pressable>
         </View>
         <View style={{ gap: 18 }}>
-          <Isotipo lleno={b} />
+          {/* +1: tu punto y, punteado, el de tu acompañante, que todavía no viene (3A). */}
+          {invitar && b ? (
+            <AroDuo tam={56} anillo={color.crema} resto={color.crema} naranjas={color.terracotaSobreVerde} punteado={{ relleno: color.verdeProfundo }} />
+          ) : (
+            <Isotipo lleno={b} />
+          )}
           <View style={[e.sello, { backgroundColor: b ? color.terracotaSobreVerde : '#C5D8CA' }]}>
             <Texto style={e.textoSello}>{v.sello}</Texto>
           </View>
@@ -69,7 +91,7 @@ export function EstasDentro(p: {
           {b ? (
             <>
               <View style={{ gap: 6 }}>
-                <Texto style={{ fontFamily: fuente.textoMedia, fontSize: 19, lineHeight: 25, color: tinta1 }}>{[v.plan, v.dia, v.hora].filter(Boolean).join(' · ')}</Texto>
+                <Texto style={{ fontFamily: fuente.textoMedia, fontSize: 19, lineHeight: 25, color: tinta1 }}>{[plan, v.dia, v.hora].filter(Boolean).join(' · ')}</Texto>
                 {v.zona ? <Texto style={{ fontSize: 15, lineHeight: 20, color: color.sobreVerdeSecundario }}>{v.zona}</Texto> : null}
               </View>
               {v.bajada ? <Texto style={{ fontSize: 14, lineHeight: 20, color: tinta2 }}>{v.bajada}</Texto> : null}
@@ -104,14 +126,23 @@ export function EstasDentro(p: {
             </>
           )}
 
+          {invitar && p.masUno ? <InvitarTarjeta m={p.masUno} /> : null}
+
           <View style={{ gap: 10, marginTop: 6 }}>
-            {b ? (
+            {b && !invitar ? (
               <Pressable onPress={p.alCompartir} accessibilityRole="button" style={[e.boton, { backgroundColor: color.terracotaSobreVerde }]}>
                 <IconoCompartir color={color.verdeProfundo} />
                 <Texto style={[e.textoBoton, { color: color.verdeProfundo }]}>{T.B.compartir}</Texto>
               </Pressable>
             ) : null}
             {calendario}
+            {/* +1: «Compartir mi plan en historias» como enlace, debajo del calendario (3A). */}
+            {b && invitar ? (
+              <Pressable onPress={p.alCompartir} accessibilityRole="button" style={[e.boton, { minHeight: 44 }]}>
+                <IconoHistoria color="#C5D8CA" />
+                <Texto style={[e.textoBoton, { fontSize: 14.5, color: '#C5D8CA' }]}>{reglas.MAS_UNO.dentro.historias}</Texto>
+              </Pressable>
+            ) : null}
             <Pressable onPress={() => p.ir('/mesa')} accessibilityRole="link" style={[e.boton, { minHeight: 44 }]}>
               <Texto style={[e.textoBoton, { color: tinta1 }]}>{T.verMesa}</Texto>
             </Pressable>
@@ -122,7 +153,7 @@ export function EstasDentro(p: {
             <View style={{ marginTop: 2 }}>
               <IconoReloj color={b ? color.sobreVerdeSecundario : color.cuerpo} />
             </View>
-            <Texto style={{ flex: 1, fontSize: 13, lineHeight: 19, color: tinta2 }}>{v.cancela}</Texto>
+            <Texto style={{ flex: 1, fontSize: 13, lineHeight: 19, color: tinta2 }}>{p.masUno ? reglas.MAS_UNO.dentro.cancela() : v.cancela}</Texto>
           </View>
           {p.extra}
         </View>

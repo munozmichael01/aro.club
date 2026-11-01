@@ -173,17 +173,18 @@ export function Inicio(p: {
       .catch(() => undefined)
   }, [datos, p])
 
-  const confirmar = async (id: string) => {
+  const confirmar = async (id: string, aceptaCondiciones?: boolean) => {
     if (!datos || !vista) return
-    const graba = !!datos.agenda.find((a) => a.id === id)?.permisoObligatorio
-    const r = M.botonReservar(datos, reservando, undefined, { graba, permiso: permiteGrabacion })
+    const fecha = datos.agenda.find((a) => a.id === id)
+    const graba = !!fecha?.permisoObligatorio
+    const r = M.botonReservar(datos, reservando, undefined, { graba, permiso: permiteGrabacion }, fecha?.creditos ?? 1)
     if (r.accion === 'nada') return
     if (r.accion === 'completar' && r.destino) return p.ir(r.destino)
     if (r.accion === 'verificar') return p.ir('/verificacion')
     if (r.accion === 'pagar') return p.ir('/pago', { evento: id })
     setReservando(true)
     setFalloReserva('')
-    const res = await servicio.reservar(id, graba ? true : undefined)
+    const res = await servicio.reservar(id, graba ? true : undefined, aceptaCondiciones)
     setReservando(false)
     if (!res.ok) {
       // El candado del servidor: si falta algo del embudo, se lleva allí.
@@ -266,6 +267,7 @@ export function Inicio(p: {
               setPermiteGrabacion(false)
             }}
             alConfirmar={confirmar}
+            misCreditos={datos.creditos}
           />
         </Seccion>
 

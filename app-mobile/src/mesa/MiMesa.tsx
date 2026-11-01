@@ -19,6 +19,7 @@ import { AvisoAjustes, LineaGrabacion, PreguntaGrabacion, useGrabacion } from '.
 import { reglas } from '../reglas'
 import * as CM from '../cambiar/maquina'
 import { FilaComoFunciona } from '../como/Fila'
+import { Cancelada, HojaCambio, PendienteAcompanante, TarjetaAcompanante, VienesCon } from '../masuno/Partes'
 import { FilaCompartir } from '../dentro/FilaCompartir'
 import * as TC from '../texto/cambiar'
 import type { crearServicioMesa } from './servicio'
@@ -134,7 +135,7 @@ export function MiMesa(p: {
       f === 'vacia' ? (
         <Vacia d={d} ir={p.ir} />
       ) : f === 'cerrada' ? (
-        <Cerrada d={d} ir={p.ir} alAbrirse={cargar} />
+        <Cerrada d={d} ir={p.ir} alAbrirse={cargar} servicio={servicio} />
       ) : f === 'abierta' ? (
         <Abierta d={d} servicio={servicio} ir={p.ir} />
       ) : d.mesaId ? (
@@ -336,6 +337,15 @@ function EnlaceCancelar({ ir }: { ir: (d: string) => void }) {
 
 function Vacia({ d, ir }: { d: M.DeServidor; ir: (d: string) => void }) {
   const v = M.vacia(d)
+  // +1 (entrega mas-uno): la cancelada porque su +1 no se verificó (4E) y quien
+  // entró por un enlace y aún no se ha verificado (5D) sustituyen a la vacía.
+  if (d.masUno?.estado === 'cancelada') {
+    const z = d.zonaHoraria
+    const dia = d.empiezaEn ? F.diaYNumero(d.empiezaEn, z).toLowerCase() : ''
+    const c = d.masUno.cierraEn ? reglas.partesDe(d.masUno.cierraEn, z) : null
+    return <Cancelada dia={dia} cierre={c ? `el ${c.dia} a las ${c.hora}` : null} alAgenda={() => ir('/cuenta#agenda')} />
+  }
+  if (d.masUnoPendiente) return <PendienteAcompanante p={d.masUnoPendiente} alVerificar={() => ir('/verificacion')} />
   return (
     <View>
       <SelloBorde texto={v.sello} />
@@ -370,8 +380,22 @@ function Vacia({ d, ir }: { d: M.DeServidor; ir: (d: string) => void }) {
 
 // --- Cerrada --------------------------------------------------------------------
 
-function Cerrada({ d, ir, alAbrirse }: { d: M.DeServidor; ir: (d: string) => void; alAbrirse: () => void }) {
+function Cerrada({ d, ir, alAbrirse, servicio }: { d: M.DeServidor; ir: (d: string) => void; alAbrirse: () => void; servicio: Servicio }) {
   const [ahora, setAhora] = useState(Date.now())
+  // +1: el estado de la tarjeta vive aquí para que «Cambiar» se vea al instante, sin esperar a recargar.
+  const [masUno, setMasUno] = useState(d.masUno ?? null)
+  useEffect(() => setMasUno(d.masUno ?? null), [d.masUno])
+  const [cambiando, setCambiando] = useState(false)
+  const [enviando, setEnviando] = useState(false)
+  const reservaId = d.reservaId ?? d.cambiarFecha?.reservaId ?? null
+  const cambiar = async () => {
+    if (!reservaId || enviando) return
+    setEnviando(true)
+    const r = await servicio.cambiarAcompanante(reservaId)
+    setEnviando(false)
+    setCambiando(false)
+    if (r.ok && r.datos.masUno) setMasUno(r.datos.masUno)
+  }
   const avisado = useRef(false)
   useEffect(() => {
     const t = setInterval(() => setAhora(Date.now()), 1000)
@@ -393,7 +417,8 @@ function Cerrada({ d, ir, alAbrirse }: { d: M.DeServidor; ir: (d: string) => voi
     <View>
       <SelloBorde texto={F.selloSeAbre(d.revelaEn, z, ahora)} />
       <Titular>{F.tienesPuesto(d.empiezaEn, z)}</Titular>
-      <Bajada>{T.cerrada.bajada(F.cuandoSeSabe(d.revelaEn, z))}</Bajada>
+      {/* En una +1 no son «los otros cinco»: la mesa es de dos a cuatro dúos. «Quiénes van», como «Estás dentro». */}
+      <Bajada>{masUno || d.vienesCon ? T.cerrada.bajada(F.cuandoSeSabe(d.revelaEn, z)).replace('quiénes son los otros cinco', 'quiénes van') : T.cerrada.bajada(F.cuandoSeSabe(d.revelaEn, z))}</Bajada>
       <View style={[estilos.caja, { marginTop: 26 }]}>
         <Texto variante="cifra" style={{ fontSize: 44, lineHeight: 54 }} accessibilityRole="timer">
           {F.cuentaMesa(d.revelaEn, ahora)}
@@ -410,6 +435,12 @@ function Cerrada({ d, ir, alAbrirse }: { d: M.DeServidor; ir: (d: string) => voi
             {horaZona}
           </Texto>
         </View>
+        {/* El acompañante: con quién viene, dentro de la tarjeta de la reserva (5E). */}
+        {d.vienesCon ? (
+          <View style={{ marginTop: 16 }}>
+            <VienesCon invita={d.vienesCon} claro />
+          </View>
+        ) : null}
         {/* Lo que se puede hacer con ESTA fecha va con ella, no suelto debajo (Michael, 29-10). */}
         <View style={estilos.accionesFecha}>
           {CM.enMiMesa(d.cambiarFecha) ? <Boton tipo="secundario" texto={TC.enlace} onPress={() => ir('/cambiar-fecha')} /> : null}
@@ -420,15 +451,26 @@ function Cerrada({ d, ir, alAbrirse }: { d: M.DeServidor; ir: (d: string) => voi
           </Pressable>
         </View>
       </View>
-      {/* C2 de «Compartir mi plan»: justo debajo de la tarjeta de la mesa, hasta que se abre. */}
-      {d.empiezaEn ? (
+      {/* +1: «Tu +1 acompañante», debajo de la tarjeta de la reserva, hasta que pasa la fecha (4A–4C). */}
+      {masUno && masUno.estado !== 'cancelada' ? (
+        <View style={{ marginTop: 14 }}>
+          <TarjetaAcompanante m={masUno} yo={d.miNombre ?? ''} revela={d.revelaEn ? F.cuandoSeSabe(d.revelaEn, z) : null} alCambiar={() => setCambiando(true)} />
+        </View>
+      ) : null}
+      {cambiando && masUno ? <HojaCambio m={masUno} ocupado={enviando} alSi={cambiar} alNo={() => setCambiando(false)} /> : null}
+      {/* C2 de «Compartir mi plan»: justo debajo de la tarjeta de la mesa, hasta que se abre. En una
+          +1, cuando su acompañante ya viene: antes competiría con la invitación (Michael, 01-11). */}
+      {d.empiezaEn && (!masUno || masUno.estado === 'confirmado') ? (
         <View style={{ marginTop: 14 }}>
           <FilaCompartir plan={{ empiezaEn: d.empiezaEn, revelaEn: d.revelaEn, zonaHoraria: d.zonaHoraria, formato: d.formato, zonas: d.zonas ?? [] }} />
         </View>
       ) : null}
-      <Texto variante="cuerpo" style={{ marginTop: 20 }}>
-        {T.cerrada.nota(M.voz(d).vasCon)}
-      </Texto>
+      {/* «Cenas con cinco personas» no vale en una +1: la mesa es de dos a cuatro dúos. */}
+      {masUno || d.vienesCon ? null : (
+        <Texto variante="cuerpo" style={{ marginTop: 20 }}>
+          {T.cerrada.nota(M.voz(d).vasCon)}
+        </Texto>
+      )}
       {/* Hasta la revelación (C3b); después lo reemplaza el paso a paso. La primera vez, se abre sola con las tres. */}
       <View style={{ marginTop: 18 }}>
         <FilaComoFunciona enMiMesa plan={{ formato: d.formato, empiezaEn: d.empiezaEn, revelaEn: d.revelaEn, zonaHoraria: d.zonaHoraria }} />

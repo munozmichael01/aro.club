@@ -14,6 +14,8 @@ export type Plan = {
   formato?: string | null
   revelaEn?: string | null
   zonas?: string[]
+  /** Fecha +1 acompañante: las historias van sin la 4 ni el pie «Mi código» (se confundirían con la invitación). */
+  masUno?: boolean
 }
 
 /** A: pago reportado, sin confirmar. B: confirmado (o con crédito o cupón). */
@@ -99,6 +101,8 @@ export type Historia = {
  * comparten solo el mensaje.
  */
 export function historia(p: Plan, codigo: string | null): Historia | null {
+  // +1: sin código en ninguna tarjeta (entrega mas-uno, 3C). Sin código, la 4 tampoco sale.
+  if (p.masUno) codigo = null
   const cual = reglas.DENTRO.tarjetaDe(p.formato ?? 'dinner')
   if (!cual) return null
   const tipo = reglas.COMO_FUNCIONA.tipoDe(p.formato ?? 'dinner')

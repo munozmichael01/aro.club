@@ -147,6 +147,9 @@ export const agenda = {
   preguntasPrimero: (_n: number) => 'Termina tu perfil para reservar',
   datosPrimero: 'Completa tus datos para reservar',
   reservar: (conCredito: boolean, precioTexto: string) => `Reservar mi puesto · ${conCredito ? '1 encuentro' : precioTexto}`,
+  /** +1 sin créditos: el precio ya es el de los dos (el botón con créditos es `MAS_UNO.hoja.boton`). */
+  reservarDos: (precioTexto: string) => `Reservar dos puestos · ${precioTexto}`,
+  encuentros: (n: number) => (n === 1 ? '1 encuentro' : `${n} encuentros`),
   proximamente: 'Próximamente',
   todos: 'Todos',
   todoLoQueViene: 'Todo lo que viene',

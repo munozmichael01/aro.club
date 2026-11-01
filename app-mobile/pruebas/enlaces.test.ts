@@ -55,4 +55,5 @@ test('/i/<código> y /m/<token>: se reconocen para guardarlos, y la app sigue po
   assert.equal(deEnlace('/i/../x'), null)
   assert.equal(deEnlace('/mesa'), null)
   assert.equal(rutaDeEnlace('https://aro.club/i/ANDREA7KQ'), '/')
+  assert.equal(rutaDeEnlace('https://aro.club/m/abcdefghij_KLMNOPQRS-tu'), '/acompanante?t=abcdefghij_KLMNOPQRS-tu')
 })

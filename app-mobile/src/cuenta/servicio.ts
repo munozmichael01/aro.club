@@ -51,13 +51,14 @@ export function crearServicioCuenta(api: Api) {
         T.sinRespuesta.cargar,
       ),
     /** `permiteGrabacion` solo en una fecha que se graba: sin él, el servidor responde 409 `falta-permiso-grabacion`. */
-    reservar: (eventoId: string, permiteGrabacion?: boolean) =>
+    /** `aceptaCondiciones`: la casilla del aviso de una fecha +1 (sin ella, 409 `falta-aceptar-condiciones`). */
+    reservar: (eventoId: string, permiteGrabacion?: boolean, aceptaCondiciones?: boolean) =>
       intentar<{ ok?: boolean }>(
         () =>
           api.pedir('/reservar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(permiteGrabacion ? { eventoId, permiteGrabacion } : { eventoId }),
+            body: JSON.stringify({ eventoId, ...(permiteGrabacion ? { permiteGrabacion } : {}), ...(aceptaCondiciones ? { aceptaCondiciones } : {}) }),
           }),
         T.agenda.noPudimos,
       ),

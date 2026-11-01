@@ -69,12 +69,15 @@ type Api = {
   cuandoSeRevela: (inicioIso: string, zona?: string | null, revelaIso?: string | null, formato?: string | null) => string
   /** «Seguir en contacto» y Pasadas (reglas.js, 31-10): todo su copy, el mismo de la web y los correos. */
   CONTACTO: Contacto
+  /** +1 acompañante (entrega mas-uno, 01-11): todo su copy, el mismo de la web. */
+  MAS_UNO: MasUno
   /** «Estás dentro» (reglas.js, 31-10). De momento la app solo lee si un plan tiene tarjetas para historias. */
   DENTRO: {
     conTarjetas: (formato: string) => boolean
     /** 'historia' (cena, brunch: TarjetaHistoria), 'plan' (drinks, café: TarjetaPlan) o null (movimiento). */
     tarjetaDe: (formato: string) => 'historia' | 'plan' | null
-    variantes: (conCodigo: boolean, formato?: string) => number[]
+    variantes: (conCodigo: boolean, formato?: string, masUno?: boolean) => number[]
+    cuandoSeSabe: (revelaIso: string | null | undefined, zona?: string | null) => string
     /** Todo lo que pinta TarjetaPlan (entrega drinks-cafe, aprobada el 31-10). Null fuera de drinks y café. */
     tarjetaPlan: (
       plan: { empiezaEn: string; revelaEn?: string | null; zonaHoraria?: string | null; formato?: string | null; zonas?: string[] },
@@ -263,6 +266,63 @@ type Contacto = {
     preguntaAnterior: { titulo: (esMesa: boolean) => string; nota: string; guardar: string; nadie: string }
   }
   enlaces: { whatsapp: (e164: string) => string; instagram: (u: string) => string; tiktok: (u: string) => string }
+}
+
+type Trozos = [string, string] | string[]
+
+/** `AroReglas.MAS_UNO` (5b29bfd). Los trozos de dos: el segundo va en negrita. */
+export type MasUno = {
+  nombre: string
+  marca: string
+  DUOS: { minimo: number; maximo: number; bueno: number }
+  fraseDeDuos: (puestos: number) => string
+  avanceDeDuos: (puestos: number) => number
+  plazo: (cierreIso: string, zona?: string | null) => string
+  hoja: { titulo: string; bajada: string; tuPuesto: string; suPuesto: string; total: string; nota: string; boton: (creditos: number) => string }
+  aviso: { sello: string; titulo: string; plazo: (plazo: string) => Trozos; cancela: Trozos; casilla: string; falta: string }
+  pago: { titulo: string; total: string }
+  dentro: { sello: string; titulo: string; bajada: (plazo: string) => string[]; invitar: string; historias: string; cancela: () => string }
+  mensaje: (inv: { dia: string; hora: string; zonas: string; plazo: string; enlace: string }) => string
+  tituloDelEnlace: (nombre: string | null) => string
+  tarjeta: {
+    cabecera: string
+    sellos: Record<'sin-usar' | 'registrado' | 'confirmado', string>
+    sinUsar: { titulo: string; bajada: (plazo: string) => string[] }
+    copiar: string
+    copiado: string
+    compartir: string
+    registrado: { titulo: (nombre: string | null) => string; creo: string; falta: string; faltaDetalle: (plazo: string) => string; nota: string }
+    confirmado: { titulo: (nombre: string | null) => string; bajada: (revela: string | null) => string }
+    cambiar: string
+    cambio: { titulo: string; cuerpo: (nombre: string | null) => string; plazo: (plazo: string) => string; si: string; no: string }
+    cancelada: { sello: (dia: string) => string; titulo: string; bajada: (cierre: string | null) => string; creditos: string; creditosTexto: string; creditosNota: string; boton: string }
+  }
+  invitado: {
+    sello: string
+    titulo: (nombre: string | null) => string
+    fechaSello: string
+    donde: (zonas: string, revela: string | null) => string
+    cuerpo: (nombre: string | null) => Trozos
+    faltaTitulo: (plazo: string) => string
+    pasosSinCuenta: [string, string][]
+    tienesCuenta: [string, (nombre: string | null) => string]
+    verificada: [string, string]
+    porVerificar: [string, string]
+    alta: string
+    entrar: string
+    aceptar: string
+    noPuedo: string
+    aceptada: string
+    usada: { titulo: string; linea: string }
+    anulada: { titulo: string; linea: (nombre: string | null) => string }
+    cerrada: { titulo: string; linea: string }
+    propia: { titulo: string; linea: string }
+    socio: string
+    agenda: string
+  }
+  acompanante: { verificate: (plazo: string) => Trozos; esperando: string; selloPendiente: string; selloDentro: string; pie: (invita: string | null) => string }
+  vienesCon: (nombre: string | null) => string
+  mesa: { tuDuo: string; bajada: (duos: number) => string; pareja: (a: string, b: string) => string }
 }
 
 /** Lo de `DENTRO.tarjetaPlan`. `revelaDia` vacío: se sabe el mismo día. */

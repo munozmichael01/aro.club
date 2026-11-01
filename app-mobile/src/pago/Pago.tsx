@@ -35,6 +35,8 @@ import * as TI from '../texto/idioma'
 import * as T from '../texto/pago'
 import { useUltimo } from '../util/useUltimo'
 import { useAccionesDentro } from '../dentro/acciones'
+import type { MasUno } from '../masuno/maquina'
+import { AvisoCasilla, BotonConCasilla } from '../masuno/Partes'
 import { EstasDentro } from '../dentro/EstasDentro'
 import * as MD from '../dentro/maquina'
 import { encoger } from '../verificacion/foto'
@@ -67,6 +69,10 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   const [rep, setRep] = useState<Record<string, string>>(M.repInicial)
   // El permiso de grabación: en una fecha que se graba, condición para apartar puesto (18-10).
   const [permiteGrabacion, setPermiteGrabacion] = useState(false)
+  // +1 acompañante: la casilla del aviso, entre el total y el método (entrega mas-uno, 2B).
+  const [entendido, setEntendido] = useState(false)
+  /** El +1 de la reserva recién hecha, para la invitación de «Estás dentro». */
+  const [masUnoDentro, setMasUnoDentro] = useState<MasUno | null>(null)
   // La mesa en otro idioma (20-10): el 409 `falta-idioma` pregunta, y al decir que sí se reintenta lo que estaba haciendo.
   const [pidiendoIdioma, setPidiendoIdioma] = useState<{ idioma: string; reintentar: 'cupon' | 'reportar' } | null>(null)
   const [captura, setCaptura] = useState<string | null>(null)
@@ -78,7 +84,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
 
   const { preguntar, hoja } = usePreguntaAvisos()
   const planDentro: MD.Plan | null = d
-    ? { empiezaEn: d.evento.empiezaEn, zonaHoraria: d.evento.zonaHoraria, formato: d.evento.formato, revelaEn: d.evento.revelaEn, zonas: d.evento.zona ? [d.evento.zona] : [] }
+    ? { empiezaEn: d.evento.empiezaEn, zonaHoraria: d.evento.zonaHoraria, formato: d.evento.formato, revelaEn: d.evento.revelaEn, zonas: d.evento.zona ? [d.evento.zona] : [], masUno: !!d.evento.masUno }
     : null
   const dentro = useAccionesDentro(d ? d.evento.id : null, planDentro)
 
@@ -109,7 +115,8 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   const m: M.Metodo | null = d ? (d.metodos[metodo] ?? d.metodos[0] ?? null) : null
   const estado = m ? M.estadoReporte(m, rep, !!captura, ahora()) : null
   const graba = !!d?.evento.permisoObligatorio
-  const permisoOk = !graba || permiteGrabacion
+  const masUno = !!d?.evento.masUno
+  const permisoOk = (!graba || permiteGrabacion) && (!masUno || entendido)
   // El mismo bloque en las dos puertas que apartan puesto aquí: reportar el pago y el código de invitación.
   const permiso = (
     <View style={estilos.graba}>
@@ -137,7 +144,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     if (!d || !codigo || aplicando || !permisoOk) return
     setAplicando(true)
     setFalloCupon('')
-    const r = await servicio.cupon(d.evento.id, codigo, graba ? permiteGrabacion : undefined)
+    const r = await servicio.cupon(d.evento.id, codigo, graba ? permiteGrabacion : undefined, masUno ? entendido : undefined)
     setAplicando(false)
     // El fallo se enseña junto al campo: un código mal tecleado se corrige donde se escribió.
     if (!r.ok) {
@@ -156,7 +163,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     // (B1). Marcada como vista en el servidor: si no, el Inicio la volvía a abrir.
     setFase('cupon')
     setRecien(true)
-    servicio.marcarDentro(d.evento.id)
+    servicio.marcarDentro(d.evento.id).then(setMasUnoDentro)
     preguntar('reserva')
   }
 
@@ -178,7 +185,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     if (!d || !m || !estado?.ok || !permisoOk || fase === 'enviando') return
     setFallo('')
     setFase('enviando')
-    const r = await servicio.reportar(M.cuerpoReporte(d, m, rep, captura, permiteGrabacion))
+    const r = await servicio.reportar(M.cuerpoReporte(d, m, rep, captura, permiteGrabacion, entendido))
     if (!r.ok) {
       if (M.esFechaCerrada(r)) return setFase('cerrada')
       // Se cayó el código entre medias (caducó, se agotó, no era su primera
@@ -197,7 +204,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     setRecien(true)
     // Ya vio la B. Reportar es estar dentro (Michael, 31-10): al confirmarse
     // el pago no vuelve a salir.
-    servicio.marcarDentro(d.evento.id)
+    servicio.marcarDentro(d.evento.id).then(setMasUnoDentro)
     // Reportar el pago aparta el puesto: lo siguiente que pasa es la mesa.
     // Tercer momento de la pregunta previa.
     preguntar('reserva')
@@ -232,12 +239,21 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     const fila = M.filaDescuento(d)
     cuerpo = (
       <View>
-        <Titular>{T.elegir.titulo}</Titular>
+        <Titular>{masUno ? reglas.MAS_UNO.pago.titulo : T.elegir.titulo}</Titular>
         <Bajada>{T.elegir.bajada}</Bajada>
         <View style={[estilos.caja, { marginTop: 26 }]}>
           <Linea izquierda={<Texto variante="subtitulo" style={{ fontSize: 22 }}>{cab.nombre}</Texto>} derecha={<Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia }}>{cab.detalle}</Texto>} />
           <Separador />
-          <Linea izquierda={<Texto variante="cuerpo">{T.elegir.unPuesto}</Texto>} derecha={<Cifra>{M.dinero(M.precioPleno(d), 'ref')}</Cifra>} />
+          {masUno ? (
+            // +1: tu puesto y el de tu +1, cada uno la mitad del precio de la fecha (2B).
+            <>
+              <Linea izquierda={<Texto variante="cuerpo">{reglas.MAS_UNO.hoja.tuPuesto}</Texto>} derecha={<Cifra>{M.dinero(M.precioPleno(d) / 2, 'ref')}</Cifra>} />
+              <View style={{ height: 9 }} />
+              <Linea izquierda={<Texto variante="cuerpo">{reglas.MAS_UNO.hoja.suPuesto}</Texto>} derecha={<Cifra>{M.dinero(M.precioPleno(d) / 2, 'ref')}</Cifra>} />
+            </>
+          ) : (
+            <Linea izquierda={<Texto variante="cuerpo">{T.elegir.unPuesto}</Texto>} derecha={<Cifra>{M.dinero(M.precioPleno(d), 'ref')}</Cifra>} />
+          )}
           {/* El descuento del código, como una línea más del recibo: es dinero, no un sello. */}
           {fila ? (
             <View style={{ marginTop: 9 }}>
@@ -254,13 +270,18 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
           />
           <Separador />
           <Linea
-            izquierda={<Texto variante="rotulo" style={{ fontSize: 16 }}>{T.elegir.total}</Texto>}
+            izquierda={<Texto variante="rotulo" style={{ fontSize: 16 }}>{masUno ? reglas.MAS_UNO.pago.total : T.elegir.total}</Texto>}
             derecha={<Texto variante="cifra" style={{ fontSize: 26, lineHeight: 32 }}>{M.montoDe(d, m)}</Texto>}
           />
         </View>
         <View style={{ marginTop: 14 }}>
           <Aviso tono="ojo">{T.elegir.consumo}</Aviso>
         </View>
+        {masUno ? (
+          <View style={{ marginTop: 14 }}>
+            <AvisoCasilla plazo={d.evento.cierraEn ? reglas.MAS_UNO.plazo(d.evento.cierraEn, d.evento.zonaHoraria) : ''} marcado={entendido} alMarcar={() => setEntendido((x) => !x)} />
+          </View>
+        ) : null}
 
         <Texto variante="etiqueta" tono="cuerpo" style={{ letterSpacing: 1.9, marginTop: 30, marginBottom: 12 }}>
           {T.elegir.comoPagas}
@@ -308,7 +329,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
                     accessibilityLabel={T.cupon.etiqueta}
                   />
                 </View>
-                <Boton texto={permisoOk ? T.cupon.aplicar(aplicando) : T.cupon.marcaPermiso} onPress={aplicarCupon} apagado={aplicando || !cupon.trim() || !permisoOk} />
+                <Boton texto={permisoOk ? T.cupon.aplicar(aplicando) : masUno && !entendido ? reglas.MAS_UNO.aviso.falta : T.cupon.marcaPermiso} onPress={aplicarCupon} apagado={aplicando || !cupon.trim() || !permisoOk} />
               </View>
 
               {falloCupon ? (
@@ -324,7 +345,11 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
         </View>
 
         <View style={{ marginTop: 26 }}>
-          <Boton ancho texto={T.elegir.irDatos(m.manual, m.nombre)} onPress={() => (setFase('datos'), setCopiado(-1))} />
+          {masUno ? (
+            <BotonConCasilla texto={T.elegir.irDatos(m.manual, m.nombre)} marcado={entendido} onPress={() => (setFase('datos'), setCopiado(-1))} />
+          ) : (
+            <Boton ancho texto={T.elegir.irDatos(m.manual, m.nombre)} onPress={() => (setFase('datos'), setCopiado(-1))} />
+          )}
         </View>
         <Texto variante="nota" style={{ marginTop: 12 }}>
           {T.elegir.cancelas}
@@ -580,6 +605,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
           alCalendario={dentro.alCalendario}
           alCompartir={dentro.alCompartir}
           ir={p.ir}
+          masUno={masUnoDentro}
           extra={
             <View style={{ backgroundColor: color.crema, borderRadius: 20, padding: 12, marginTop: 8 }}>
               <Aviso tono="ojo">{T.cuponListo.consumo}</Aviso>
@@ -605,6 +631,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
           alCalendario={dentro.alCalendario}
           alCompartir={dentro.alCompartir}
           ir={p.ir}
+          masUno={masUnoDentro}
           extra={
             <View style={{ backgroundColor: color.crema, borderRadius: 20, padding: 16, marginTop: 8 }}>
               <Comprobante titulo={momento === 'A' ? T.pendiente.loQueReportaste : T.listo.comprobante} filas={M.comprobante(d, m, fase)} />

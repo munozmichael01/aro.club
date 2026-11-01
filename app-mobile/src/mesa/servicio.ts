@@ -59,6 +59,16 @@ export function crearServicioMesa(api: Api) {
      * acuse, no como error (15a918c).
      */
     /** «¿Con quién te gustaría seguir en contacto?» suelta (las cenas de antes del 29-10). La lista vacía también se manda: es «con nadie». */
+    /** «Cambiar de acompañante» (4D): el enlace viejo deja de valer y sale uno nuevo. 409 `fecha-cerrada` pasado el cierre. */
+    async cambiarAcompanante(reservaId: string): Promise<Resultado<{ masUno: import('../masuno/maquina').MasUno | null }>> {
+      try {
+        const r = await api.pedir('/mas-uno', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accion: 'cambiar', reservaId }) })
+        const j = await r.json().catch(() => null)
+        return r.ok ? { ok: true, datos: { masUno: j?.masUno ?? null } } : { ok: false, error: j?.error || T.sinRespuesta.cargar }
+      } catch {
+        return { ok: false, error: T.sinRespuesta.cargar }
+      }
+    },
     contacto: (mesaId: string, aQuien: string[]) => despues({ accion: 'contacto', mesaId, aQuien }, T.pasada.noGuardado),
 
     async valorar(mesaId: string, v: Valoracion): Promise<Resultado<{ avisoSitio: string | null }>> {

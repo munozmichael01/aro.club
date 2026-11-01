@@ -59,9 +59,12 @@ export function rutaDeEnlace(enlace: string): string {
     return enlace
   }
   if (url.protocol !== 'https:' || (url.hostname !== 'aro.club' && url.hostname !== 'www.aro.club')) return enlace
-  // `/i/<código>` y `/m/<token>`: se guardan para el alta y se sigue por el embudo.
+  // `/i/<código>`: se guarda para el alta y se sigue por el embudo.
+  // `/m/<token>`: la invitación de un +1, en su pantalla. El token se guarda
+  // ahí, cuando la persona elige crear su cuenta o entrar: no al abrir.
   const traido = deEnlace(url.pathname)
   if (traido) {
+    if ('token' in traido) return `/acompanante?t=${traido.token}`
     guardar(traido).catch(() => undefined)
     return '/'
   }

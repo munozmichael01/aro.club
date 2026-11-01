@@ -10,6 +10,7 @@ import type { crearServicioMesa } from '../mesa/servicio'
 import type { DeContacto, Persona } from '../contacto/maquina'
 import type { DePasadas } from '../pasadas/maquina'
 import type { crearServicioPasadas } from '../pasadas/servicio'
+import { reglas } from '../reglas'
 import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
@@ -17,6 +18,7 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
  * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|sin-abono|cerrada|cerrada-tarde|abierta|antes|en-curso|sin-foto|terminada|unica|guion|movimiento|pasada|valorada|fallo
  * Lo del 16-10: graba|grabado|grabado-movimiento (la grabación) y ajuste-cancelo|ajuste-suma|ajuste-ambos|ajuste-movido.
  * ?tope=1 en `pasada`: el veto del sitio no cabe (ya tiene dos).
+ * +1 (01-11): ?estado=mas-uno|mas-uno-registrado|mas-uno-confirmado|mas-uno-cancelada|mas-uno-pendiente|mas-uno-dentro|mas-uno-abierta.
  * Pasadas (31-10): ?linea=contacto|encuesta (la línea de Próxima), ?pestana=pasadas[&vacia=1],
  * ?cena=c1&contacto=A|B|C|D|E|varias|varias-a|varias-m|nada (la vista de una cena, con su panel).
  * Catálogo de desarrollo: no se enlaza desde ningún sitio. La forma imita la
@@ -44,8 +46,28 @@ const ABIERTA: DeServidor = {
   mapa: 'https://www.google.com/maps/search/?api=1&query=Las+Mercedes+Caracas', mapaApple: 'https://maps.apple.com/?q=Las+Mercedes+Caracas',
   companeros: CINCO, yaValoro: false, yaBloqueados: [], yaReporto: null,
 }
+// +1 acompañante (entrega mas-uno, 01-11): la cerrada de quien reserva, con su tarjeta en cada estado.
+const CERRADA_MAS_UNO: DeServidor = { fase: 'cerrada', formato: 'dinner', zonaHoraria: 'America/Caracas', revelaEn: en(26), empiezaEn: en(34), zonas: ['Chacao', 'Los Palos Grandes'], reservaId: 'r' }
+const masUno = (estado: 'sin-usar' | 'registrado' | 'confirmado' | 'cancelada', nombre: string | null = null) => ({
+  enlace: 'https://aro.club/m/K7Q2MabcdefghijKLMNOp', estado, nombre, cierraEn: en(10), plazo: reglas.MAS_UNO.plazo(en(32), 'America/Caracas'),
+  mensaje: 'Te invito a una cena de Aro Club el viernes 6 a las 7:00 p.m., por Chacao o Los Palos Grandes. Vamos tú y yo, y otros dúos que no conocemos. Tu puesto ya está pagado: solo tienes que registrarte y verificarte antes del jueves 5 a las 7:00 p.m. https://aro.club/m/K7Q2MabcdefghijKLMNOp',
+})
+const DUOS = [
+  { id: 'laura', nombre: 'Laura', sector: 'Diseño gráfico', vieneCon: 'yo' },
+  { id: 'daniel', nombre: 'Daniel', sector: 'Música', vieneCon: 'luis' },
+  { id: 'luis', nombre: 'Luis', sector: 'Ingeniería', vieneCon: 'daniel' },
+  { id: 'sofia', nombre: 'Sofía', sector: 'Medicina', vieneCon: 'gabriela' },
+  { id: 'gabriela', nombre: 'Gabriela', sector: 'Derecho', vieneCon: 'sofia' },
+]
 const ESTADOS: Record<string, DeServidor> = {
   revision: { fase: 'sin-reserva', estado: 'pending_verification' },
+  'mas-uno': { ...CERRADA_MAS_UNO, masUno: masUno('sin-usar') },
+  'mas-uno-registrado': { ...CERRADA_MAS_UNO, masUno: masUno('registrado', 'Laura') },
+  'mas-uno-confirmado': { ...CERRADA_MAS_UNO, masUno: masUno('confirmado', 'Laura') },
+  'mas-uno-cancelada': { fase: 'sin-reserva', estado: 'active', masUno: { ...masUno('cancelada', 'Laura'), cierraEn: en(-2), plazo: reglas.MAS_UNO.plazo(en(32), 'America/Caracas') }, empiezaEn: en(22), zonaHoraria: 'America/Caracas', formato: 'dinner' },
+  'mas-uno-pendiente': { fase: 'sin-reserva', estado: 'pending_verification', masUnoPendiente: { invita: 'Ana', eventoId: 'e', formato: 'dinner', empiezaEn: en(34), revelaEn: en(26), cierraEn: en(10), plazo: reglas.MAS_UNO.plazo(en(32), 'America/Caracas'), zonaHoraria: 'America/Caracas', zonas: ['Chacao', 'Los Palos Grandes'] } },
+  'mas-uno-dentro': { ...CERRADA_MAS_UNO, vienesCon: 'Ana' },
+  'mas-uno-abierta': { ...ABIERTA, companeros: DUOS },
   'sin-reserva': { fase: 'sin-reserva', estado: 'active' },
   'sin-mesa': { fase: 'sin-mesa', formato: 'dinner', empiezaEn: en(4), zonaHoraria: 'America/Caracas', creditoDevuelto: true },
   'sin-abono': { fase: 'sin-mesa', formato: 'dinner', empiezaEn: en(4), zonaHoraria: 'America/Caracas', creditoDevuelto: false },
@@ -155,6 +177,10 @@ function Pantalla() {
     async reportar() {
       await espera()
       return { ok: true, datos: { ok: true } }
+    },
+    async cambiarAcompanante() {
+      await espera()
+      return { ok: true, datos: { masUno: masUno('sin-usar') } }
     },
   }), [estado, captura, tope, linea]) // estable: si no, la carga se relanzaría en cada render
   const pasadas = useMemo((): ReturnType<typeof crearServicioPasadas> => {

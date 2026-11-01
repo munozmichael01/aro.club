@@ -42,6 +42,8 @@ export type FechaAgenda = {
   etiquetaIdioma?: string | null
   /** Las zonas de la fecha que se le sumarían al reservar, por nombre (31-10). Sin el campo, ninguna. */
   zonasNuevas?: string[] | null
+  /** Fecha +1 acompañante (01-11): mesas de dúos, dos puestos por reserva. `apuntados` cuenta puestos. */
+  masUno?: boolean
 }
 
 /** «10 ref», «12,50 ref»: el precio de una fecha. Sin precio en la fecha, el del club (`reglas.precioTexto`). */
@@ -282,6 +284,12 @@ export type FilaAgenda = {
   zonaHoraria: string | null
   /** Las zonas que reservar le suma. Vacío si la fecha ya es suya o está cerrada: no hay nada que avisar. */
   zonasNuevas: string[]
+  /** +1 acompañante: la cápsula, el bloque de la hoja, el cargo en dos y el aviso con casilla. */
+  masUno: boolean
+  /** Lo que cuesta en créditos (dos en una +1). */
+  creditos: number
+  /** El plazo del acompañante, «jueves 5 a las 7:00 p.m.» (el cierre). Vacío fuera de una +1. */
+  plazo: string
 }
 
 export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: number): { semana: string; filas: FilaAgenda[] }[] {
@@ -310,11 +318,12 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       // Las zonas ABIERTAS de esa fecha, no un sitio: el sitio se decide al
       // armar la mesa y nadie lo sabe hasta la revelación.
       zona: a.zonas.join(' o ') || T.agenda.zonaPorConfirmar,
-      estado: T.estadoDeFecha(a.apuntados, a.mia, cerrada, a.porMesa ?? T.MESA),
+      // En una +1 la línea cuenta dúos («Falta un dúo para la primera mesa»), salvo si ya es suya o cerró.
+      estado: a.masUno && !a.mia && !cerrada ? reglas.MAS_UNO.fraseDeDuos(a.apuntados) : T.estadoDeFecha(a.apuntados, a.mia, cerrada, a.porMesa ?? T.MESA),
       mia: a.mia,
       cerrada,
-      llenado: Math.min(1, a.apuntados / (a.porMesa || T.MESA)),
-      va: a.apuntados >= (a.porMesa || T.MESA),
+      llenado: a.masUno ? reglas.MAS_UNO.avanceDeDuos(a.apuntados) : Math.min(1, a.apuntados / (a.porMesa || T.MESA)),
+      va: a.masUno ? reglas.MAS_UNO.avanceDeDuos(a.apuntados) >= 1 : a.apuntados >= (a.porMesa || T.MESA),
       porMesa: a.porMesa || T.MESA,
       precio: precioDe(a),
       graba: !!a.permisoObligatorio,
@@ -323,6 +332,9 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       empiezaEn: a.empiezaEn,
       zonaHoraria: a.zonaHoraria ?? null,
       zonasNuevas: a.mia || cerrada ? [] : (a.zonasNuevas ?? []),
+      masUno: !!a.masUno,
+      creditos: a.creditos || 1,
+      plazo: a.masUno && a.cierraEn ? reglas.MAS_UNO.plazo(a.cierraEn, a.zonaHoraria) : '',
     })
   }
   return grupos
@@ -337,6 +349,8 @@ export function botonReservar(
   precio: string = reglas.precioTexto(),
   /** Si la fecha se graba y si ya marcó el permiso (18-10). */
   grabacion: { graba: boolean; permiso: boolean } = { graba: false, permiso: false },
+  /** Créditos que cuesta la fecha: dos en una +1 (01-11). Con menos, se paga. */
+  costo = 1,
 ): Reserva {
   if (reservando) return { accion: 'nada', texto: T.agenda.apuntandote }
   // Sin las preguntas o los datos no se reserva (decidido el 01-10-2026): el
@@ -351,7 +365,7 @@ export function botonReservar(
   // Quien YA subió la verificación no va a repetirla: ya hizo su parte.
   if (d.verif === 'revision') return { accion: 'nada', texto: T.agenda.enRevision }
   if (d.verif !== 'ok') return { accion: 'verificar', texto: T.agenda.verificaPrimero }
-  const conCredito = d.creditos > 0
+  const conCredito = d.creditos >= Math.max(1, costo)
   // Con crédito se aparta aquí, así que aquí se pide el permiso. Sin crédito
   // se pide en la pantalla de pago, que es donde se aparta: dos veces en
   // treinta segundos se lee como que la primera no contó.
