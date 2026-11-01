@@ -161,7 +161,9 @@ type Api = {
     mensaje: (inv: { codigo: string; enlace: string; pct: number } | null) => string
     planDe: (formato: string | null | undefined) => string
     conTarjetas: (formato: string | null | undefined) => boolean
-    variantes: (conCodigo: boolean) => number[]
+    variantes: (conCodigo: boolean, formato?: string | null) => number[]
+    tarjetaDe: (formato: string | null | undefined) => 'historia' | 'plan' | null
+    tarjetaPlan: (plan: PlanDentro, codigo: string | null) => TarjetaPlanDatos | null
     zonasEnTexto: (z: string[] | null | undefined) => string
     cuandoSeSabe: (revelaIso: string | null | undefined, zona?: string) => string
     diaYNumero: (iso: string | null | undefined, zona?: string) => string
@@ -189,6 +191,30 @@ export type PlanDentro = {
   zonaHoraria: string
   formato: string | null
   zonas: string[]
+}
+
+/** Lo que lleva la tarjeta de drinks y café (TarjetaPlan, entrega drinks-cafe). */
+export type TarjetaPlanDatos = {
+  plan: 'Drinks' | 'Café'
+  cafe: boolean
+  dia: string
+  diaSemana: string
+  numero: string
+  hora: string
+  zona: string
+  codigo: string | null
+  revelaDia: string
+  revelaNum: string
+  revelaSufijo: string
+  sello: string
+  sitioMayus: string
+  frase1: string
+  frase3: string
+  cierre3: string
+  titulo4: string
+  cuerpo4: string
+  frase5: string
+  pregunta6: string
 }
 
 /** Lo que lleva la tarjeta para historias (TarjetaHistoria de la entrega). */

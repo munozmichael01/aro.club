@@ -8,7 +8,8 @@ import sharp from 'sharp'
 import { invitacionDe, reservaDentro } from '@/lib/estas-dentro'
 import { medidor } from '@/lib/historia/medir'
 import { Tarjeta, type Medidas } from '@/lib/historia/tarjeta'
-import { DENTRO, type Historia } from '@/lib/reglas'
+import { TarjetaPlan } from '@/lib/historia/tarjeta-plan'
+import { DENTRO, type Historia, type PlanDentro, type TarjetaPlanDatos } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -49,16 +50,16 @@ function cargarFuentes() {
 }
 
 /**
- * Los datos de ejemplo de la entrega (Andrea, viernes 30), SOLO en local:
- * para comparar con los PNG de Design sin tener una reserva.
+ * Los datos de ejemplo de las entregas, SOLO en local: para comparar con los
+ * PNG de Design sin tener una reserva. `cena` y `brunch` (estas-dentro, Andrea,
+ * viernes 30), `drinks` y `cafe` (drinks-cafe).
  */
-const EJEMPLO = (brunch: boolean): Historia =>
-  DENTRO.historia(
-    brunch
-      ? { empiezaEn: '2026-11-01T15:00:00Z', revelaEn: '2026-11-01T12:00:00Z', zonaHoraria: 'America/Caracas', formato: 'brunch', zonas: ['Chacao'] }
-      : { empiezaEn: '2026-10-30T23:00:00Z', revelaEn: '2026-10-30T16:00:00Z', zonaHoraria: 'America/Caracas', formato: 'dinner', zonas: ['Chacao'] },
-    'ANDREA7KQ',
-  )!
+const EJEMPLOS: Record<string, PlanDentro> = {
+  cena: { empiezaEn: '2026-10-30T23:00:00Z', revelaEn: '2026-10-30T16:00:00Z', zonaHoraria: 'America/Caracas', formato: 'dinner', zonas: ['Chacao'] },
+  brunch: { empiezaEn: '2026-11-01T15:00:00Z', revelaEn: '2026-11-01T12:00:00Z', zonaHoraria: 'America/Caracas', formato: 'brunch', zonas: ['Chacao'] },
+  drinks: { empiezaEn: '2026-11-07T00:00:00Z', revelaEn: '2026-11-06T16:00:00Z', zonaHoraria: 'America/Caracas', formato: 'drinks', zonas: ['Chacao'] },
+  cafe: { empiezaEn: '2026-11-07T14:00:00Z', revelaEn: '2026-11-06T16:00:00Z', zonaHoraria: 'America/Caracas', formato: 'coffee', zonas: ['Chacao'] },
+}
 
 let medidas: Medidas | null = null
 async function cargarMedidas(): Promise<Medidas> {
@@ -75,9 +76,11 @@ export async function GET(request: Request) {
   if (!Number.isInteger(v) || v < 1 || v > 8) return NextResponse.json({ error: 'Esa tarjeta no existe.' }, { status: 400 })
   const ancho = Math.round(Math.min(ANCHO, Math.max(200, Number(q.get('ancho') ?? ANCHO) || ANCHO)))
 
-  let h: Historia | null = null
+  let plan: PlanDentro | null = null
+  let codigo: string | null = null
   if (q.get('ejemplo') && process.env.NODE_ENV !== 'production') {
-    h = EJEMPLO(q.get('ejemplo') === 'brunch')
+    plan = EJEMPLOS[q.get('ejemplo') as string] ?? EJEMPLOS.cena
+    codigo = q.get('sinCodigo') ? null : 'ANDREA7KQ'
   } else {
     const supabase = await createClient()
     const {
@@ -87,16 +90,24 @@ export async function GET(request: Request) {
     const admin = createAdminClient()
     const d = await reservaDentro(admin, user.id, q.get('evento'))
     if (!d) return NextResponse.json({ error: 'No tienes esa reserva.' }, { status: 404 })
-    const inv = await invitacionDe(admin, user.id)
-    h = DENTRO.historia(d.plan, inv?.codigo ?? null)
-    if (!h) return NextResponse.json({ error: 'Este plan no tiene tarjetas.' }, { status: 404 })
-    // La 4 es entera el código: sin código no se ofrece, y tampoco se pinta.
-    if (!DENTRO.variantes(!!h.codigo).includes(v)) return NextResponse.json({ error: 'Esa tarjeta no existe.' }, { status: 404 })
+    plan = d.plan
+    codigo = (await invitacionDe(admin, user.id))?.codigo ?? null
   }
+
+  // Cena y brunch, TarjetaHistoria; drinks y café, TarjetaPlan. Movimiento,
+  // ninguna: comparte solo el mensaje.
+  const tipo = DENTRO.tarjetaDe(plan.formato)
+  if (!tipo) return NextResponse.json({ error: 'Este plan no tiene tarjetas.' }, { status: 404 })
+  // La 4 es entera el código: sin código no se ofrece, y tampoco se pinta.
+  if (!DENTRO.variantes(!!codigo, plan.formato).includes(v)) return NextResponse.json({ error: 'Esa tarjeta no existe.' }, { status: 404 })
+  const m = await cargarMedidas()
+  const dibujo = tipo === 'historia'
+    ? <Tarjeta v={v} h={DENTRO.historia(plan, codigo) as Historia} m={m} />
+    : <TarjetaPlan v={v} h={DENTRO.tarjetaPlan(plan, codigo) as TarjetaPlanDatos} m={m} />
 
   // Se pinta SIEMPRE a 1080 y se reduce después. Satori escala desde el
   // centro y no hace caso a `transformOrigin`: la vista previa salía recortada.
-  const imagen = new ImageResponse(<Tarjeta v={v} h={h} m={await cargarMedidas()} />, { width: ANCHO, height: ALTO, fonts: await cargarFuentes() })
+  const imagen = new ImageResponse(dibujo, { width: ANCHO, height: ALTO, fonts: await cargarFuentes() })
   let png: Buffer = Buffer.from(await imagen.arrayBuffer())
   if (ancho < ANCHO) png = await sharp(png).resize({ width: ancho }).png().toBuffer()
 

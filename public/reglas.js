@@ -2503,16 +2503,29 @@
       },
 
       /**
-       * Si hay tarjetas para historias. Solo de cena y de brunch: su copy
-       * habla de cenar, de mesa y de silla. Los demás comparten el mensaje.
+       * Qué tarjetas para historias lleva un plan. Cena y brunch, las ocho de
+       * TarjetaHistoria (su copy habla de cenar, de mesa y de silla). Drinks
+       * y café, las seis de TarjetaPlan (entrega drinks-cafe, aprobada por
+       * Michael el 31-10): copas y tazas, sin mesa ni silla. Movimiento, ninguna:
+       * comparte solo el mensaje.
        */
-      conTarjetas: function (formato) {
+      tarjetaDe: function (formato) {
         var f = api.familiaDe(formato).clave
-        return f === 'cenas' || f === 'brunch'
+        if (f === 'cenas' || f === 'brunch') return 'historia'
+        if (f === 'drinks' || f === 'coffee') return 'plan'
+        return null
+      },
+      conTarjetas: function (formato) {
+        return !!api.DENTRO.tarjetaDe(formato)
       },
 
-      /** La 4 («Hay una silla para ti») es entera el código: sin él, no sale. */
-      variantes: function (conCodigo) {
+      /**
+       * Las que se ofrecen, en orden. La 4 es entera el código («Hay una silla
+       * / una copa / un café para ti»): sin él, no sale. Sin `formato`, las de
+       * cena, como antes.
+       */
+      variantes: function (conCodigo, formato) {
+        if (formato && api.DENTRO.tarjetaDe(formato) === 'plan') return conCodigo ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 5, 6]
         return conCodigo ? [1, 2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 5, 6, 7, 8]
       },
 
@@ -2568,7 +2581,8 @@
        */
       historia: function (plan, codigo) {
         var D = api.DENTRO
-        if (!D.conTarjetas(plan.formato)) return null
+        // Solo cena y brunch: drinks y café van con `tarjetaPlan`.
+        if (D.tarjetaDe(plan.formato) !== 'historia') return null
         var z = plan.zonaHoraria
         var brunch = api.familiaDe(plan.formato).clave === 'brunch'
         var nombre = brunch ? 'Brunch' : 'Cena'
@@ -2596,6 +2610,52 @@
           frase1: brunch ? 'El ' + dd + ' voy de brunch con gente que no conozco.' : 'El ' + dd + ' ceno con gente que no conozco.',
           frase3: brunch ? 'Lo que sé de mi brunch.' : 'Lo que sé de mi cena.',
           frase6: brunch ? 'Mi brunch del ' + dd + ' viene en sobre cerrado.' : 'Mi cena del ' + dd + ' viene en sobre cerrado.',
+        }
+      },
+
+      /**
+       * Lo que lleva TarjetaPlan, la de drinks y café (entrega drinks-cafe).
+       * `revelaDia` vacío: se revela el mismo día; con valor («Viernes 6»), el
+       * día antes, y cambian la 3 y la 5. Null si el plan no es de esos.
+       */
+      tarjetaPlan: function (plan, codigo) {
+        var D = api.DENTRO
+        if (D.tarjetaDe(plan.formato) !== 'plan') return null
+        var z = plan.zonaHoraria
+        var cafe = api.familiaDe(plan.formato).clave === 'coffee'
+        var nombre = cafe ? 'Café' : 'Drinks'
+        var sitio = cafe ? 'cafetería' : 'bar'
+        var dia = D.diaYNumero(plan.empiezaEn, z)
+        var partes = dia.split(' ')
+        var dd = (partes[0] || '').toLowerCase()
+        var hora = api.horaDe(plan.empiezaEn, z) || ''
+        var r = plan.revelaEn ? api.partesDe(plan.revelaEn, z) : null
+        var e = api.partesDe(plan.empiezaEn, z)
+        var mediodia = !!r && r.horas === 12 && r.minutos === 0
+        var diaAntes = !!r && !!e && (r.numero !== e.numero || r.mesNumero !== e.mesNumero)
+        var revelaDia = diaAntes ? D.diaYNumero(plan.revelaEn, z) : ''
+        var zona = D.zonasEnTexto(plan.zonas)
+        return {
+          plan: nombre,
+          cafe: cafe,
+          dia: dia,
+          diaSemana: partes[0] || '',
+          numero: partes[1] || '',
+          hora: hora,
+          zona: zona,
+          codigo: codigo || null,
+          revelaDia: revelaDia,
+          revelaNum: r && r.hora ? r.hora.split(' ')[0] : '',
+          revelaSufijo: !r ? '' : mediodia ? 'MEDIODÍA' : r.horas < 12 ? 'A.M.' : 'P.M.',
+          sello: (nombre + ' · ' + dia + ' · ' + hora).toUpperCase(),
+          sitioMayus: cafe ? 'LA CAFETERÍA' : 'EL BAR',
+          frase1: cafe ? 'El ' + dd + ' me tomo un café con gente que no conozco.' : 'El ' + dd + ' salgo a tomar algo con gente que no conozco.',
+          frase3: cafe ? 'Lo que sé de mi café.' : 'Lo que sé de los drinks.',
+          cierre3: diaAntes ? 'El resto me lo dicen el día antes.' : 'El resto me lo dicen el mismo día.',
+          titulo4: cafe ? 'Hay un café para ti.' : 'Hay una copa para ti.',
+          cuerpo4: 'Yo tampoco sé en qué ' + sitio + ' ni con quién. Con mi código, tu primera fecha en Aro te sale mejor.',
+          frase5: diaAntes ? 'Un día antes, a esta hora, me dicen en qué ' + sitio + ' es y con quién.' : 'A esta hora me dicen en qué ' + sitio + ' es y con quién.',
+          pregunta6: cafe ? '¿Dónde?' : '¿Qué bar?',
         }
       },
     },

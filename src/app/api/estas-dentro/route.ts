@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     /** Lo que reportó, como en la app debajo de «Estás dentro». Null con crédito o cupón. */
     comprobante,
     /** Las tarjetas que se ofrecen, en orden; vacío si el plan no tiene. */
-    variantes: conTarjetas ? DENTRO.variantes(!!invitar) : [],
+    variantes: conTarjetas ? DENTRO.variantes(!!invitar, d.plan.formato) : [],
   })
 }
 

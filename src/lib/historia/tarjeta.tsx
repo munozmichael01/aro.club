@@ -22,23 +22,23 @@ import { anchoEquilibrado, type Medida } from './medir'
  * Los textos salen de `AroReglas.DENTRO.historia`; aquí no hay ni una frase.
  */
 
-const VERDE = '#14342A'
-const CREMA = '#FAF3E4'
-const TERRACOTA = '#E39C63'
-const SALVIA = '#9CBBA6'
+export const VERDE = '#14342A'
+export const CREMA = '#FAF3E4'
+export const TERRACOTA = '#E39C63'
+export const SALVIA = '#9CBBA6'
 
 const TEMAS: Record<number, [string, string]> = {
   1: [VERDE, CREMA], 2: [CREMA, VERDE], 3: [SALVIA, VERDE], 4: [TERRACOTA, VERDE],
   5: ['#F6D9B4', VERDE], 6: [VERDE, CREMA], 7: [TERRACOTA, VERDE], 8: [VERDE, CREMA],
 }
 
-const SERIF = 'Young Serif'
-const SANS = 'Inter Tight'
+export const SERIF = 'Young Serif'
+export const SANS = 'Inter Tight'
 
 /** El `letter-spacing` de la maqueta va en em; Satori lo quiere en píxeles. */
-const em = (n: number, tam: number) => n * tam
+export const em = (n: number, tam: number) => n * tam
 
-const caja = (s: CSSProperties): CSSProperties => ({ display: 'flex', ...s })
+export const caja = (s: CSSProperties): CSSProperties => ({ display: 'flex', ...s })
 
 /**
  * Una frase que fluye como texto, con trozos de otro color. Cada palabra es
@@ -48,7 +48,7 @@ const caja = (s: CSSProperties): CSSProperties => ({ display: 'flex', ...s })
  * estrecho con las mismas líneas. Sin él, «El viernes ceno con / gente que no
  * conozco. / Todavía.» corta donde no corta Design.
  */
-function Frase(p: { partes: { t: string; color?: string }[]; estilo: CSSProperties; centrada?: boolean; medida?: Medida; maximo?: number }) {
+export function Frase(p: { partes: { t: string; color?: string }[]; estilo: CSSProperties; centrada?: boolean; medida?: Medida; maximo?: number }) {
   const tam = Number(p.estilo.fontSize ?? 40)
   const ls = Number(p.estilo.letterSpacing ?? 0)
   const palabras = p.partes.flatMap((x) => x.t.split(/\s+/).filter(Boolean).map((w) => ({ w, color: x.color })))
@@ -66,7 +66,7 @@ function Frase(p: { partes: { t: string; color?: string }[]; estilo: CSSProperti
 }
 
 /** El isotipo: el aro y los seis puntos, el tuyo en otro color. */
-function Isotipo(p: { tam: number; aro: string; tuyo: string; otros: string }) {
+export function Isotipo(p: { tam: number; aro: string; tuyo: string; otros: string }) {
   const otros: [number, number][] = [[163, 194.5], [77, 194.5], [34, 120], [77, 45.5], [163, 45.5]]
   return (
     <svg viewBox="0 0 240 240" width={p.tam} height={p.tam}>
