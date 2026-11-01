@@ -15,6 +15,11 @@ export type MasUno = {
   plazo: string | null
   /** El mensaje entero que acompaña al enlace (MAS_UNO.mensaje). */
   mensaje: string | null
+  /** Para «Cambiar de acompañante» (POST /api/mas-uno). */
+  reservaId?: string | null
+  /** En la cancelada (4E): la fecha, para el sello «CENA +1 · VIERNES 6 · CANCELADA». */
+  empiezaEn?: string | null
+  zonaHoraria?: string | null
 }
 
 /** Quien entró por un enlace y aún no se ha verificado (5D), en /api/mi-mesa fase 'sin-reserva'. */

@@ -70,7 +70,7 @@ export function PantallaDentro(p: { servicio: Servicio; via: M.Via; evento?: str
   const v = M.vista(d.plan, 'B', d.pendiente ? 'reportado' : p.via)
   return (
     <>
-      <EstasDentro v={v} enCalendario={acciones.enCalendario} alCalendario={acciones.alCalendario} alCompartir={acciones.alCompartir} ir={p.ir} masUno={d.masUno} />
+      <EstasDentro v={v} enCalendario={acciones.enCalendario} alCalendario={acciones.alCalendario} alCompartir={acciones.alCompartir} ir={p.ir} masUno={d.masUno} vienesCon={d.vienesCon} />
       {acciones.hoja}
       {hoja}
     </>

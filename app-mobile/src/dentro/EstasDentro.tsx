@@ -33,6 +33,8 @@ export function EstasDentro(p: {
    * el puesto está apartado y el reloj corre.
    */
   masUno?: MasUno | null
+  /** El acompañante de una +1: si cancela, su puesto vuelve a quien le invitó. */
+  vienesCon?: string | null
 }) {
   const insets = useSafeAreaInsets()
   const { v } = p
@@ -153,7 +155,7 @@ export function EstasDentro(p: {
             <View style={{ marginTop: 2 }}>
               <IconoReloj color={b ? color.sobreVerdeSecundario : color.cuerpo} />
             </View>
-            <Texto style={{ flex: 1, fontSize: 13, lineHeight: 19, color: tinta2 }}>{p.masUno ? reglas.MAS_UNO.dentro.cancela() : v.cancela}</Texto>
+            <Texto style={{ flex: 1, fontSize: 13, lineHeight: 19, color: tinta2 }}>{p.vienesCon ? reglas.MAS_UNO.acompanante.cancela(p.vienesCon) : p.masUno ? reglas.MAS_UNO.dentro.cancela() : v.cancela}</Texto>
           </View>
           {p.extra}
         </View>

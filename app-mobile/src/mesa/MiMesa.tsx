@@ -340,8 +340,9 @@ function Vacia({ d, ir }: { d: M.DeServidor; ir: (d: string) => void }) {
   // +1 (entrega mas-uno): la cancelada porque su +1 no se verificó (4E) y quien
   // entró por un enlace y aún no se ha verificado (5D) sustituyen a la vacía.
   if (d.masUno?.estado === 'cancelada') {
-    const z = d.zonaHoraria
-    const dia = d.empiezaEn ? F.diaYNumero(d.empiezaEn, z).toLowerCase() : ''
+    const z = d.masUno.zonaHoraria ?? d.zonaHoraria
+    const cuando = d.masUno.empiezaEn ?? d.empiezaEn
+    const dia = cuando ? F.diaYNumero(cuando, z).toLowerCase() : ''
     const c = d.masUno.cierraEn ? reglas.partesDe(d.masUno.cierraEn, z) : null
     return <Cancelada dia={dia} cierre={c ? `el ${c.dia} a las ${c.hora}` : null} alAgenda={() => ir('/cuenta#agenda')} />
   }
@@ -387,7 +388,7 @@ function Cerrada({ d, ir, alAbrirse, servicio }: { d: M.DeServidor; ir: (d: stri
   useEffect(() => setMasUno(d.masUno ?? null), [d.masUno])
   const [cambiando, setCambiando] = useState(false)
   const [enviando, setEnviando] = useState(false)
-  const reservaId = d.reservaId ?? d.cambiarFecha?.reservaId ?? null
+  const reservaId = masUno?.reservaId ?? d.reservaId ?? d.cambiarFecha?.reservaId ?? null
   const cambiar = async () => {
     if (!reservaId || enviando) return
     setEnviando(true)
@@ -465,12 +466,12 @@ function Cerrada({ d, ir, alAbrirse, servicio }: { d: M.DeServidor; ir: (d: stri
           <FilaCompartir plan={{ empiezaEn: d.empiezaEn, revelaEn: d.revelaEn, zonaHoraria: d.zonaHoraria, formato: d.formato, zonas: d.zonas ?? [] }} />
         </View>
       ) : null}
-      {/* «Cenas con cinco personas» no vale en una +1: la mesa es de dos a cuatro dúos. */}
-      {masUno || d.vienesCon ? null : (
-        <Texto variante="cuerpo" style={{ marginTop: 20 }}>
-          {T.cerrada.nota(M.voz(d).vasCon)}
-        </Texto>
-      )}
+      {/* En una +1, «Vas con Laura y otros dúos que no conocen.» en vez de «Vas con cinco personas.». */}
+      <Texto variante="cuerpo" style={{ marginTop: 20 }}>
+        {T.cerrada.nota(
+          masUno || d.vienesCon ? reglas.MAS_UNO.vasCon(d.vienesCon ?? (masUno?.estado === 'confirmado' ? masUno.nombre : null)) : M.voz(d).vasCon,
+        )}
+      </Texto>
       {/* Hasta la revelación (C3b); después lo reemplaza el paso a paso. La primera vez, se abre sola con las tres. */}
       <View style={{ marginTop: 18 }}>
         <FilaComoFunciona enMiMesa plan={{ formato: d.formato, empiezaEn: d.empiezaEn, revelaEn: d.revelaEn, zonaHoraria: d.zonaHoraria }} />

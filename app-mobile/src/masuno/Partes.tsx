@@ -23,16 +23,11 @@ const ARENA = '#F2E9D5'
 const PAPEL = '#FFFBF0'
 const PAPEL_AVISO = '#FFF8EA'
 
-/** «…a las 7:00 p.m..»: el plazo ya acaba en punto, la frase no lo repite. */
-const punto = (s: string) => s.replace(/\.\.(\s|$)/g, '.$1')
-
 /** «texto **negrita**»: los trozos de dos de MAS_UNO, el segundo en negrita. */
 function Trozos({ t, estilo, negrita = color.verdeProfundo }: { t: string[]; estilo?: object; negrita?: string }) {
-  // «…hasta el jueves 5 a las 7:00 p.m.» + «.»: el plazo ya acaba en punto, no se repite.
-  const limpio = t.map((x, i) => (i > 0 && t[i - 1].endsWith('.') && x.startsWith('.') ? x.slice(1) : x))
   return (
     <Texto style={estilo}>
-      {limpio.map((x, i) => (i % 2 === 1 ? <Texto key={i} style={[estilo, { fontFamily: fuente.textoSemi, color: negrita }]}>{x}</Texto> : x))}
+      {t.map((x, i) => (i % 2 === 1 ? <Texto key={i} style={[estilo, { fontFamily: fuente.textoSemi, color: negrita }]}>{x}</Texto> : x))}
     </Texto>
   )
 }
@@ -237,7 +232,7 @@ export function TarjetaAcompanante({ m, yo, revela, alCambiar }: { m: MasUno; yo
               <View style={[e.puntoPaso, { backgroundColor: NARANJA }]} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Texto style={e.pasoTitulo}>{t.registrado.falta}</Texto>
-                <Texto style={{ fontSize: 13, lineHeight: 18, color: color.cuerpo }}>{punto(t.registrado.faltaDetalle(plazo))}</Texto>
+                <Texto style={{ fontSize: 13, lineHeight: 18, color: color.cuerpo }}>{t.registrado.faltaDetalle(plazo)}</Texto>
               </View>
             </View>
           </View>
@@ -285,7 +280,7 @@ export function HojaCambio({ m, alSi, alNo, ocupado }: { m: MasUno; alSi: () => 
             <View style={{ marginTop: 1 }}>
               <IconoReloj tam={18} color={TERRACOTA} />
             </View>
-            <Texto style={{ flex: 1, fontSize: 13.5, lineHeight: 19.5, color: color.verdeProfundo }}>{punto(c.plazo(m.plazo ?? ''))}</Texto>
+            <Texto style={{ flex: 1, fontSize: 13.5, lineHeight: 19.5, color: color.verdeProfundo }}>{c.plazo(m.plazo ?? '')}</Texto>
           </View>
           <Boton tipo="grave" texto={c.si} ancho onPress={alSi} disabled={ocupado} />
           <Boton tipo="fantasma" texto={c.no} ancho onPress={alNo} />

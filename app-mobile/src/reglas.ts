@@ -278,7 +278,7 @@ export type MasUno = {
   fraseDeDuos: (puestos: number) => string
   avanceDeDuos: (puestos: number) => number
   plazo: (cierreIso: string, zona?: string | null) => string
-  hoja: { titulo: string; bajada: string; tuPuesto: string; suPuesto: string; total: string; nota: string; boton: (creditos: number) => string }
+  hoja: { titulo: string; bajada: string; tuPuesto: string; suPuesto: string; total: string; nota: string; boton: (creditos: number) => string; botonPrecio: (precio: string) => string }
   aviso: { sello: string; titulo: string; plazo: (plazo: string) => Trozos; cancela: Trozos; casilla: string; falta: string }
   pago: { titulo: string; total: string }
   dentro: { sello: string; titulo: string; bajada: (plazo: string) => string[]; invitar: string; historias: string; cancela: () => string }
@@ -320,8 +320,9 @@ export type MasUno = {
     socio: string
     agenda: string
   }
-  acompanante: { verificate: (plazo: string) => Trozos; esperando: string; selloPendiente: string; selloDentro: string; pie: (invita: string | null) => string }
+  acompanante: { verificate: (plazo: string) => Trozos; esperando: string; selloPendiente: string; selloDentro: string; pie: (invita: string | null) => string; cancela: (invita: string | null) => string }
   vienesCon: (nombre: string | null) => string
+  vasCon: (nombre: string | null) => string
   mesa: { tuDuo: string; bajada: (duos: number) => string; pareja: (a: string, b: string) => string }
 }
 

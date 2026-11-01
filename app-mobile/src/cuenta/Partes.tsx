@@ -442,7 +442,7 @@ function FilaFecha(p: {
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 11, alignItems: 'center' }}>
               <Boton
-                texto={f.masUno ? (p.conCredito ? H.boton(f.creditos) : T.agenda.reservarDos(f.precio)) : p.textoReservar(f.precio)}
+                texto={f.masUno ? (p.conCredito ? H.boton(f.creditos) : H.botonPrecio(f.precio)) : p.textoReservar(f.precio)}
                 // Sin créditos, el aviso sale en Pago (2B): allí se aparta.
                 onPress={() => (f.masUno && p.conCredito ? setAviso(true) : p.alConfirmar())}
                 apagado={f.graba && p.pidePermiso && !p.permiso}
