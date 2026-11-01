@@ -24,8 +24,17 @@ type Admin = ReturnType<typeof createAdminClient>
  */
 export type Pendiente = 'contacto' | 'encuesta' | null
 
+/**
+ * Qué pasó con esa fecha. Las canceladas y las que no fueron también van en
+ * Pasadas (Michael, 31-10: «una cancelada debe verse aquí también»), en su
+ * fecha, en gris y sin abrirse: no hay mesa que enseñar.
+ */
+export type EstadoPasada = 'fue' | 'cancelada' | 'no-fue' | 'sin-mesa'
+
 export type Pasada = {
-  mesaId: string
+  estado: EstadoPasada
+  /** Null cuando no hubo mesa que abrir (todo lo que no es «fue»). */
+  mesaId: string | null
   eventoId: string
   empiezaEn: string
   zonaHoraria: string
@@ -80,9 +89,9 @@ export async function cenasPasadas(admin: Admin, yo: string): Promise<Pasada[]> 
       !f.bookings.cancelled_at &&
       Date.parse(f.dinner_tables.events.starts_at) + FIN_CENA < ahora,
   )
-  if (!filas.length) return []
-
   const mesas = filas.map((f) => f.table_id)
+  const otras = await sinMesa(admin, yo, new Set(((suyas ?? []) as unknown as { booking_id: string }[]).map((m) => m.booking_id)), ahora)
+  if (!filas.length) return otras
   const [{ data: gente }, { data: contadas }, contacto] = await Promise.all([
     admin.from('table_members').select('table_id, profile_id, seat_order').in('table_id', mesas).neq('profile_id', yo).order('seat_order'),
     admin.from('table_feedback').select('table_id, created_at, saltada_at').eq('profile_id', yo).in('table_id', mesas),
@@ -127,6 +136,7 @@ export async function cenasPasadas(admin: Admin, yo: string): Promise<Pasada[]> 
       const encuestaPendiente = sePuedeValorar(ev.starts_at, ahora) && !contadaEn.has(f.table_id)
       const pendiente: Pendiente = c?.porConfirmar.length ? 'contacto' : encuestaPendiente ? 'encuesta' : null
       return {
+        estado: 'fue' as const,
         mesaId: f.table_id,
         eventoId: f.dinner_tables.event_id,
         empiezaEn: ev.starts_at,
@@ -154,7 +164,52 @@ export async function cenasPasadas(admin: Admin, yo: string): Promise<Pasada[]> 
           (gente ?? []).some((g) => g.table_id === f.table_id),
       }
     })
+    .concat(otras)
     .sort((a, b) => Date.parse(b.empiezaEn) - Date.parse(a.empiezaEn))
+}
+
+/**
+ * Las fechas pasadas en las que no hubo cena: canceló, no fue, o se quedó sin
+ * mesa. Las que canceló operación (`cancelled_by_ops`) no van: «CANCELASTE»
+ * sería falso, y no hay texto todavía para «la cancelamos nosotros».
+ */
+async function sinMesa(admin: Admin, yo: string, conMesa: Set<string>, ahora: number): Promise<Pasada[]> {
+  const { data } = await admin
+    .from('bookings')
+    .select('id, status, event_id, events!inner(starts_at, format, city_slug)')
+    .eq('profile_id', yo)
+    .in('status', ['cancelled_by_user', 'no_show', 'confirmed', 'attended', 'waitlisted'])
+  const filas = (data ?? [])
+    .map((b) => ({ b, ev: b.events as unknown as { starts_at: string; format: string | null; city_slug: string } }))
+    .filter((x) => x.ev && Date.parse(x.ev.starts_at) + FIN_CENA < ahora)
+    .map((x): [typeof x, EstadoPasada | null] => [
+      x,
+      x.b.status === 'cancelled_by_user' ? 'cancelada'
+        : x.b.status === 'no_show' ? 'no-fue'
+        // Confirmada o en espera y sin asiento: esa vez no hubo mesa.
+        : !conMesa.has(x.b.id) ? 'sin-mesa'
+        : null,
+    ])
+    .filter(([, e]) => e !== null)
+  const zonas = new Map<string, string>()
+  for (const slug of new Set(filas.map(([x]) => x.ev.city_slug))) zonas.set(slug, await zonaDeCiudad(slug))
+  return filas.map(([x, estado]) => ({
+    estado: estado as EstadoPasada,
+    mesaId: null,
+    eventoId: x.b.event_id,
+    empiezaEn: x.ev.starts_at,
+    zonaHoraria: zonas.get(x.ev.city_slug) ?? '',
+    formato: x.ev.format,
+    sitio: null,
+    zona: null,
+    numeroMesa: null,
+    companeros: [],
+    encuesta: { pendiente: false, contadaEn: null },
+    contacto: null,
+    pendiente: null,
+    nuevo: false,
+    preguntarContacto: false,
+  }))
 }
 
 /**

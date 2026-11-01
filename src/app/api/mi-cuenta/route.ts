@@ -763,7 +763,13 @@ export async function GET() {
      */
     ...(await (async () => {
       const pasadas = await cenasPasadas(admin, user.id)
-      return { senalPasadas: hayQueMirar(pasadas), cuantasPasadas: pasadas.length }
+      return {
+        senalPasadas: hayQueMirar(pasadas),
+        // Las cenas a las que fue: es lo que cuenta «4 cenas» en Perfil.
+        cuantasPasadas: pasadas.filter((x) => x.estado === 'fue').length,
+        // Cualquier fecha pasada, también cancelada: con ella Pasadas ya tiene algo.
+        hayPasadas: pasadas.length > 0,
+      }
     })()),
     reserva: reserva
       ? {

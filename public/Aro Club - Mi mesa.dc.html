@@ -1348,7 +1348,8 @@ class Component extends DCLogic {
         let ancho = false;
         try { ancho = window.matchMedia('(min-width: 720px)').matches; } catch (e) { /* sin matchMedia */ }
         if (ancho && !this.state.cenaSel && this.state.pestana === 'pasadas' && (p.cenas || []).length) {
-          this.abrirCena(p.cenas[0].mesaId);
+          const primera = p.cenas.find((c) => c.mesaId);
+          if (primera) this.abrirCena(primera.mesaId);
         }
       })
       .catch(() => this.setState({ cargandoPasadas: false }));
@@ -2552,6 +2553,18 @@ class Component extends DCLogic {
     const lineaP = !enPasadas && dt && dt.pendiente;
     const filasPasadas = cenas.map((c) => {
       const pt = R.partesDe(c.empiezaEn, c.zonaHoraria);
+      // Canceladas, a las que no fue o sin mesa: en gris y sin abrirse (Michael, 31-10).
+      if (c.estado && c.estado !== 'fue') {
+        return {
+          d: pt ? String(pt.numero) : '', m: pt ? pt.mes.slice(0, 3).toUpperCase() : '',
+          plan: R.DENTRO.planDe(c.formato) + (pt ? ' · ' + pt.dia : ''),
+          sitio: '', pend: CT.pasadas.estado[c.estado] || '', nuevo: '', punto: false, actual: 'false',
+          colorPend: '#566A5D', colorNuevo: '#566A5D',
+          estilo: 'display:flex;align-items:center;gap:14px;width:100%;border-radius:20px;padding:12px 14px 12px 12px;min-height:72px;text-align:left;cursor:default;background:#F2ECDD;color:#566A5D;border:1px solid rgba(20,52,42,.08)',
+          estiloFecha: 'width:48px;flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;border-radius:14px;padding:8px 0;background:#E6DFCD;color:#566A5D',
+          abrir: () => {},
+        };
+      }
       const sel = c.mesaId === cenaSel;
       const n = c.contacto && c.contacto.nuevo;
       const nuevo = !n ? '' : n.tipo === 'cruce' ? CT.pasadas.nuevo.cruce(n.nombres[0]) : n.tipo === 'sinCruce' ? CT.pasadas.nuevo.sinCruce : CT.pasadas.nuevo.coincidencia(n.nombres);
@@ -3122,7 +3135,10 @@ class Component extends DCLogic {
     const p0 = personas[0] || null;
     const editando = !!S.editandoSeguir;
     const enA = personas.filter((x) => x.estado === 'A');
-    const formulario = !!sg && ((uno && (p0.estado === 'A' || (editando && p0.estado === 'B'))) || (varios && (enA.length > 0 || editando)));
+    // Varias: el formulario cuando TODAS están por confirmar (la primera vez,
+    // V3 y V4) o al cambiar lo que comparte. Si ya compartió con alguna, cada
+    // una con su estado (V5), y la que falta, «POR CONFIRMAR».
+    const formulario = !!sg && ((uno && (p0.estado === 'A' || (editando && p0.estado === 'B'))) || (varios && ((enA.length > 0 && enA.length === personas.length) || editando)));
     const aQuienes = varios ? (editando ? personas.filter((x) => x.estado === 'A' || x.estado === 'B') : enA) : (p0 ? [p0] : []);
     const on = (x) => S.marcadosSeguir[x.id] !== false;
     const marcadas = aQuienes.filter(on);
@@ -3143,6 +3159,7 @@ class Component extends DCLogic {
     const estilos = {
       C: ['border-radius:22px;background:#14342A;color:#FAF3E4;padding:14px 16px;display:flex;flex-direction:column;gap:10px', 'background:#9CBBA6;color:#14342A'],
       B: ['border-radius:20px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:14px 16px;display:flex;flex-direction:column;gap:6px', 'background:#F6D9B4;color:#14342A'],
+      A: ['border-radius:20px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:14px 16px;display:flex;flex-direction:column;gap:6px', 'background:#F6D9B4;color:#14342A'],
       E: ['border-radius:20px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:14px 16px;display:flex;flex-direction:column;gap:6px', 'background:#ECE3CF;color:#456352'],
       D: ['border-radius:20px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);padding:14px 16px;display:flex;flex-direction:column;gap:6px', 'background:#ECE3CF;color:#456352'],
     };
@@ -3198,13 +3215,13 @@ class Component extends DCLogic {
       cTextoElegir: C.E.elegir, cReabrir: () => this.accionSeguir({ accion: 'reabrir', con: p0 ? [p0.id] : [] }),
       // Varias, cada una con su estado (V5)
       cTituloM: C.B.aSuRitmo, cBajadaM: C.B.teAvisamos,
-      cTarjetas: personas.filter((x) => x.estado !== 'A').map((x, i) => {
+      cTarjetas: personas.map((x, i) => {
         const e = estilos[x.estado] || estilos.D;
         return {
           n: x.nombre, ini: x.nombre.charAt(0).toUpperCase(), bg: fondos[i % fondos.length],
           estilo: e[0], estiloSello: 'display:flex;align-items:center;border-radius:999px;padding:6px 10px;font:700 10.5px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;white-space:nowrap;' + e[1],
           sello: C.sellos[x.estado] || '',
-          esC: x.estado === 'C', esB: x.estado === 'B', esE: x.estado === 'E',
+          esC: x.estado === 'C', esB: x.estado === 'B', esE: x.estado === 'E' || x.estado === 'A',
           tel: x.suyos ? legible(x.suyos.telefono) : '', wa: x.suyos ? C.enlaces.whatsapp(x.suyos.telefono) : '#',
           redes: redesDe(x.suyos),
           plazo: x.cierraEn ? C.plazoDeOtra(x.nombre, x.cierraEn, zona) : '',

@@ -2334,7 +2334,9 @@
         elegir: 'Elegir qué compartir',
       },
       /** Las etiquetas de cada persona en la versión de varias (V5). */
-      sellos: { C: 'CONFIRMÓ', B: 'ESPERANDO', E: 'NO LE COMPARTES', D: 'NO SE CRUZARON' },
+      // A: alguien a quien te toca responder mientras ya compartiste con otras
+      // personas (panel de varias). Sale en melocotón, como ESPERANDO.
+      sellos: { A: 'POR CONFIRMAR', C: 'CONFIRMÓ', B: 'ESPERANDO', E: 'NO LE COMPARTES', D: 'NO SE CRUZARON' },
       compartirTambien: function (nombre) { return 'Compartir también con ' + nombre },
       loQueCompartes: 'LO QUE COMPARTES',
       cambiar: 'Cambiar',
@@ -2351,6 +2353,8 @@
           cruce: function (nombre) { return nombre + ' te dejó su número' },
           sinCruce: 'Esta vez no se cruzaron los datos',
         },
+        // Las fechas en las que no hubo cena (Michael, 31-10): en gris y sin abrirse.
+        estado: { cancelada: 'CANCELASTE', 'no-fue': 'NO FUISTE', 'sin-mesa': 'NO HUBO MESA' },
         vacia: { titulo: 'Aquí van a quedar tus cenas.', bajada: 'Con quién cenaste, lo que contaste y lo que se compartieron. Todo se queda aquí.', boton: 'Elegir mi primera fecha' },
         // Mis cenas en Perfil: un acceso directo a Pasadas.
         misCenas: function (n) { return n ? (n === 1 ? '1 cena' : n + ' cenas') + ' · se ven en Mi mesa, Pasadas' : 'Todavía no has cenado con Aro' },
@@ -2474,6 +2478,10 @@
         etiqueta: ['Etiqueta a ', '@aroclub', ' en tu historia.'],
         // En la web: Instagram no recibe historias desde el navegador (W de la entrega).
         descargar: 'Descargar imagen',
+        // En el celular: la hoja del sistema con la imagen, que es donde sale
+        // Instagram con «Historia» (Michael, 31-10). En la computadora no hay
+        // historias: se queda «Descargar imagen».
+        historias: 'Historias',
         whatsapp: 'WhatsApp',
         copiar: 'Copiar enlace',
         copiado: 'Copiado',

@@ -320,7 +320,7 @@ export async function GET(request: Request) {
   const deLasPasadas = {
     pendiente: proxima ? linea : null,
     senalPasadas: hayQueMirar(pasadas),
-    cuantasPasadas: pasadas.length,
+    cuantasPasadas: pasadas.filter((x) => x.estado === 'fue').length,
   }
 
   const evento = reserva?.events as

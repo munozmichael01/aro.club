@@ -2011,7 +2011,7 @@ class Component extends DCLogic {
       // cualquier estado que no sea reservada/abierta— tiene mesa y no veia
       // la pestaña. La pregunta es "¿hay mesa?", no "¿en que paso vas?".
       // Con cenas pasadas «Mi mesa» existe aunque no haya reserva: ahí viven Pasadas.
-      nav: AroNav.items('inicio', !!(d && (d.reserva || d.cuantasPasadas)), d && d.reserva && d.reserva.formato, !!(d && d.senalPasadas)),
+      nav: AroNav.items('inicio', !!(d && (d.reserva || d.hayPasadas)), d && d.reserva && d.reserva.formato, !!(d && d.senalPasadas)),
       hayMios: mios.length > 0,
       sinMios: mios.length === 0,
 

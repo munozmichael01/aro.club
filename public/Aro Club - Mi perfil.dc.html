@@ -414,7 +414,7 @@ class Component extends DCLogic {
     // "Mi mesa" a quien no tiene ninguna.
     fetch('/api/mi-cuenta')
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => this.setState({ hayMesa: !!(d && (d.reserva || d.cuantasPasadas)), formatoMesa: d && d.reserva ? d.reserva.formato : null, senalPasadas: !!(d && d.senalPasadas), cuantasPasadas: (d && d.cuantasPasadas) || 0 }))
+      .then((d) => this.setState({ hayMesa: !!(d && (d.reserva || d.hayPasadas)), formatoMesa: d && d.reserva ? d.reserva.formato : null, senalPasadas: !!(d && d.senalPasadas), cuantasPasadas: (d && d.cuantasPasadas) || 0 }))
       .catch(() => {});
   }
 

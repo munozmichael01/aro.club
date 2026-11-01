@@ -15,8 +15,8 @@
  *
  * En el navegador, Instagram no recibe historias (W de la entrega): los
  * botones son Descargar imagen, WhatsApp y Copiar enlace. Y donde el sistema
- * sabe compartir ficheros —el navegador del teléfono— se añade «Más», la hoja
- * del sistema con la imagen y el mensaje, que es por donde se llega a
+ * sabe compartir ficheros —el navegador del teléfono— el primero es
+ * «Historias», la hoja del sistema con la imagen, que es por donde se llega a
  * Instagram desde la web.
  */
 ;(function (raiz) {
@@ -33,7 +33,7 @@
     descargar: 'M12 4v11M7 10l5 5 5-5M5 20h14',
     whatsapp: 'M21 12a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.2-4.6A8.5 8.5 0 1 1 21 12Z',
     copiar: 'M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1',
-    mas: 'M5 12h.01M12 12h.01M19 12h.01',
+    historias: 'M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4ZM12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM17 6.5h.01',
     cerrar: 'M6 6l12 12M18 6L6 18',
   }
 
@@ -231,11 +231,19 @@
       var enlace = d.invitar ? d.invitar.enlace : 'https://aro.club'
       var conFichero = compartePng()
 
+      /**
+       * En el celular (donde el navegador comparte ficheros), «Historias»: la
+       * hoja del sistema con la imagen, que es donde sale Instagram con
+       * «Historia» (Michael, 31-10). Ahí también está «Guardar imagen», así
+       * que no hace falta un botón aparte. En la computadora no hay historias:
+       * «Descargar imagen», como pide la W de la entrega.
+       */
       var lista = []
-      if (variantes.length) lista.push({ id: 'descargar', texto: T.descargar, fondo: VERDE, tinta: CREMA, hacer: descargar })
+      var enCelular = conFichero && variantes.length
+      if (enCelular) lista.push({ id: 'historias', texto: T.historias, fondo: TERRACOTA, tinta: VERDE, hacer: mas })
+      else if (variantes.length) lista.push({ id: 'descargar', texto: T.descargar, fondo: VERDE, tinta: CREMA, hacer: descargar })
       lista.push({ id: 'whatsapp', texto: T.whatsapp, fondo: SALVIA, tinta: VERDE, hacer: whatsapp })
-      lista.push({ id: 'copiar', texto: T.copiar, fondo: TERRACOTA, tinta: VERDE, hacer: copiar })
-      if (conFichero && variantes.length) lista.push({ id: 'mas', texto: T.mas, fondo: 'rgba(20,52,42,.08)', tinta: VERDE, hacer: mas })
+      lista.push({ id: 'copiar', texto: T.copiar, fondo: enCelular ? 'rgba(20,52,42,.08)' : TERRACOTA, tinta: VERDE, hacer: copiar })
 
       lista.forEach(function (b) {
         var nombre = el('span', "font:500 12px/1.2 'Inter Tight',sans-serif;text-align:center;color:" + VERDE, [b.texto])
