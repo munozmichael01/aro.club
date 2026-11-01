@@ -882,6 +882,8 @@ if (relojes.length) {
 // enlace abre el navegador y nadie se entera de que debia abrir la app.
 {
   const fallos = []
+  let pendientes = []
+  const avisosRutas = []
   const leer = (ruta, patron, nombre) => {
     let texto
     try {
@@ -906,12 +908,25 @@ if (relojes.length) {
     } catch { return null }   // sin la app al lado, no se comprueba y no se falla
     const bloque = texto.match(/RUTAS_DE_LA_WEB: Record<string, string> = \{([\s\S]*?)\n\}/)
     if (!bloque) { fallos.push('no encuentro RUTAS_DE_LA_WEB en la app'); return null }
+    // Y las que la app ya sabe abrir pero todavía no reclama el teléfono
+    // (`PENDIENTES_DE_BUILD`). Mientras estén ahí, que la web aún no las
+    // publique es a propósito, no un descuadre: el agente de la app pide que
+    // entren en el AASA un día después de la OTA, cuando el JS nuevo ya está
+    // en los teléfonos. Sin esto, el CI se ponía rojo el día de la OTA.
+    const pend = texto.match(/PENDIENTES_DE_BUILD\s*=\s*\[([^\]]*)\]/)
+    pendientes = pend ? [...pend[1].matchAll(/'(\/[a-z-]*)'/g)].map((m) => m[1]) : []
     return [...bloque[1].matchAll(/^\s*'(\/[a-z-]*)':/gm)].map((m) => m[1])
   })()
 
   if (web && app) {
+    // Este sentido sí es siempre un fallo: el teléfono abre la app y la app no
+    // sabe qué enseñar.
     for (const r of web) if (!app.includes(r)) fallos.push(`la web publica «${r}» y la app no la reparte`)
-    for (const r of app) if (!web.includes(r)) fallos.push(`la app reparte «${r}» y la web no la publica`)
+    for (const r of app) {
+      if (web.includes(r)) continue
+      if (pendientes.includes(r)) avisosRutas.push(r)
+      else fallos.push(`la app reparte «${r}» y la web no la publica`)
+    }
   }
 
   if (fallos.length) {
@@ -919,6 +934,8 @@ if (relojes.length) {
     console.error('\n✗ rutas que abren la app')
     fallos.forEach((x) => console.error('    ' + x))
     console.error('  → `/.well-known/` y `app-mobile/src/enlaces.ts` no dicen lo mismo')
+  } else if (app && avisosRutas.length) {
+    console.log(`✓ rutas que abren la app (${web.length} publicadas; la app ya abre ${avisosRutas.join(', ')}, que la web publica cuando su OTA esté en los teléfonos)`)
   } else if (app) {
     console.log(`✓ rutas que abren la app (${web.length}, web y app iguales)`)
   } else {
