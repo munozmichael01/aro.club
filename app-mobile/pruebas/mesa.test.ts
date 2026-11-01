@@ -105,6 +105,17 @@ test('quien se sumó después y el detalle de un sitio para seguir (16-10, como 
   assert.equal(M.detalleSitio({ nombre: 'X' }, aPie), '')
 })
 
+test('+1 acompañante: mi dúo es quien apunta a alguien que no está en la lista (01-11)', async () => {
+  const M = await import('../src/mesa/maquina')
+  const o = M.otros({ fase: 'pasada', companeros: [
+    { id: 'a', nombre: 'Ana', sector: null, vieneCon: 'yo' },
+    { id: 'b', nombre: 'Beto', sector: null, vieneCon: 'c' },
+    { id: 'c', nombre: 'Cata', sector: null, vieneCon: 'b' },
+    { id: 'd', nombre: 'Dani', sector: null },
+  ] } as M.DeServidor)
+  assert.deepEqual(o.map((x) => x.esMiDuo), [true, false, false, false])
+})
+
 test('la encuesta del 17-10: gasto por su punto medio, texto libre y el veto solo tras mala nota', () => {
   const v = M.valoracionVacia()
   assert.equal(M.cuerpoValorar('m', { ...v, gasto: 0 }).gasto, 10)

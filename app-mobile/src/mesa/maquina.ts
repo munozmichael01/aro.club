@@ -15,6 +15,8 @@ export type Companero = {
   seUnioDespues?: boolean
   /** Su arraigo, código de `AroReglas.PUERTA.arraigo` (ac3aedb). `null`: no contestó. */
   arraigo?: string | null
+  /** +1 acompañante (01-11): el id de la persona con la que viene. Puede ser el tuyo: entonces es tu dúo. */
+  vieneCon?: string | null
 }
 
 export type DeServidor = {
@@ -143,9 +145,10 @@ export function mapa<D extends { mapa?: string | null; mapaApple?: string | null
   return d.mapa || d.mapaApple || null
 }
 
-export type Otro = { id: string; nombre: string; inicial: string; sector: string; seUnio: boolean; arraigo: string | null }
+export type Otro = { id: string; nombre: string; inicial: string; sector: string; seUnio: boolean; arraigo: string | null; esMiDuo: boolean }
 
 export function otros(d: DeServidor): Otro[] {
+  const ids = new Set((d.companeros ?? []).map((c) => c.id))
   return (d.companeros ?? []).map((c) => ({
     id: c.id,
     nombre: c.nombre || '—',
@@ -153,6 +156,8 @@ export function otros(d: DeServidor): Otro[] {
     sector: c.sector || T.abierta.sinSector,
     seUnio: !!c.seUnioDespues,
     arraigo: arraigoDe(c.arraigo),
+    // Los otros dúos se apuntan entre sí; el mío apunta a alguien que no está en la lista: yo.
+    esMiDuo: !!c.vieneCon && !ids.has(c.vieneCon),
   }))
 }
 
