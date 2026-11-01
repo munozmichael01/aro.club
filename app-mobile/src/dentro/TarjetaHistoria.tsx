@@ -290,7 +290,7 @@ export function TarjetaHistoria({ variante, h, ancho }: { variante: number; h: H
         ) : null}
         <View style={{ marginLeft: 'auto', alignItems: 'flex-end', gap: n(12) }}>
           <T f={fuente.titular} s={50} lh={1}>aro.club</T>
-          <T f={fuente.textoSemi} s={30} lh={1} o={0.8}>@aroclub</T>
+          <T f={fuente.textoSemi} s={30} lh={1} o={0.8}>@somos.aroclub</T>
         </View>
       </View>
     </View>

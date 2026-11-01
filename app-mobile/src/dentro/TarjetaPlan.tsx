@@ -243,7 +243,7 @@ export function TarjetaPlan({ variante, d, ancho }: { variante: number; d: Datos
         ) : null}
         <View style={{ marginLeft: 'auto', alignItems: 'flex-end', gap: n(12) }}>
           <T f={fuente.titular} s={50} lh={1}>aro.club</T>
-          <T f={fuente.textoSemi} s={30} lh={1}>@aroclub</T>
+          <T f={fuente.textoSemi} s={30} lh={1}>@somos.aroclub</T>
         </View>
       </View>
     </View>
