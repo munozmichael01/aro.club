@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import {
   COOKIE_INVITA,
   DIAS_INVITA,
+  referidoDeCodigo,
   valorDeInvitacion,
 } from '@/lib/referidos'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -33,55 +34,19 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ codigo: string }> },
 ) {
-  const { codigo: crudo } = await params
+  const { codigo } = await params
   const portada = new URL('/', request.url)
 
-  const codigo = decodeURIComponent(crudo ?? '')
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '')
-    .slice(0, 40)
-
-  if (!codigo) return NextResponse.redirect(portada, 302)
-
-  const admin = createAdminClient()
-  const { data: cupon } = await admin
-    .from('coupons')
-    .select('code, activo, caduca_at, max_usos, usados, creado_por, descuento_pct')
-    .eq('code', codigo)
-    .maybeSingle()
-
-  const dueno = (cupon as { creado_por?: string | null } | null)?.creado_por ?? null
-
-  // Sin dueño no es una invitación: es un cupón de operación, y esos no se
-  // reparten por enlace ni premian a nadie.
-  const vale = !!cupon
-    && cupon.activo
-    && !!dueno
-    && (!cupon.caduca_at || new Date(cupon.caduca_at).getTime() > Date.now())
-    && (cupon.max_usos == null || cupon.usados < cupon.max_usos)
-
-  if (!vale) return NextResponse.redirect(portada, 302)
-
-  // El nombre de pila de quien invita, para la franja. Solo el de pila: el
-  // apellido de quien te invitó no hace falta para decidir si vienes.
-  const { data: quien } = await admin
-    .from('profiles')
-    .select('display_name, full_name')
-    .eq('id', dueno!)
-    .maybeSingle()
-
-  const nombre = (quien?.display_name || quien?.full_name?.split(' ')[0] || '').trim()
+  const referido = await referidoDeCodigo(createAdminClient(), codigo)
+  if (!referido) return NextResponse.redirect(portada, 302)
 
   const r = NextResponse.redirect(portada, 302)
   r.cookies.set({
     name: COOKIE_INVITA,
-    value: valorDeInvitacion(cupon!.code, nombre, cupon!.descuento_pct),
+    value: valorDeInvitacion(referido.codigo, referido.nombre ?? '', referido.pct),
     path: '/',
     maxAge: DIAS_INVITA * 24 * 3600,
     sameSite: 'lax',
-    // La pinta la portada, que es un fichero estático: tiene que poder
-    // leerla desde el navegador. No autoriza nada; el código se comprueba
-    // entero otra vez al pagar.
     httpOnly: false,
     secure: new URL(request.url).protocol === 'https:',
   })

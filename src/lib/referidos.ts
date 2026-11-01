@@ -422,3 +422,46 @@ export async function trasMarcarAsistencia(
     return null
   }
 }
+
+/**
+ * Qué es un código de referido, para enseñarlo ANTES del alta: «Te invitó
+ * Andrea · 20 % en tu primera fecha». Null si no vale —apagado, caducado,
+ * agotado, sin dueño o mal escrito—, y entonces no se enseña nada.
+ *
+ * Es la comprobación de `/i/<código>`, y la usan ese enlace y la app
+ * (`/api/referido`): dos copias decidirían distinto si un código vale.
+ *
+ * No mira si el descuento le TOCA a quien mira (su primera fecha, otro
+ * código ya usado): aquí todavía no hay nadie con cuenta. Eso lo decide
+ * `cuponParaPagar` al pagar.
+ */
+export async function referidoDeCodigo(
+  admin: SupabaseClient<Database>,
+  crudo: string | null | undefined,
+): Promise<{ codigo: string; nombre: string | null; pct: number } | null> {
+  const codigo = normalizarCodigoDeReferido(decodeURIComponent(String(crudo ?? '')))
+  if (!codigo) return null
+
+  const { data: cupon } = await admin
+    .from('coupons')
+    .select('code, activo, caduca_at, max_usos, usados, creado_por, descuento_pct')
+    .eq('code', codigo)
+    .maybeSingle()
+
+  const dueno = (cupon as { creado_por?: string | null } | null)?.creado_por ?? null
+  const vale = !!cupon
+    && cupon.activo
+    && !!dueno
+    && (!cupon.caduca_at || new Date(cupon.caduca_at).getTime() > Date.now())
+    && (cupon.max_usos == null || cupon.usados < cupon.max_usos)
+  if (!vale) return null
+
+  const { data: quien } = await admin
+    .from('profiles')
+    .select('display_name, full_name')
+    .eq('id', dueno!)
+    .maybeSingle()
+
+  const nombre = (quien?.display_name || quien?.full_name?.split(' ')[0] || '').trim() || null
+  return { codigo: cupon!.code, nombre, pct: cupon!.descuento_pct ?? DESCUENTO_PCT }
+}
