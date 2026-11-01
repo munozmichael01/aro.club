@@ -211,10 +211,13 @@ export function TarjetaPlan({ variante, d, ancho }: { variante: number; d: Datos
     const [a, b, c] = d.cafe ? [VERDE, OXIDO, '#1B5138'] : [CREMA, TERRACOTA, SALVIA]
     cuerpo = (
       <>
-        {/* Sin el margen derecho de la maqueta: «¿Qué bar?» va en una línea, como «¿Dónde?», y con
-            la fuente embebida mide 985 de los 970 que deja. En dos líneas tapaba la franja. */}
-        <View style={abs({ left: 70, right: 0, top: 300 })}>
-          <T f={fuente.titular} s={fs} lh={0.9} ls={-0.05} c={a} lineas={1}>{d.pregunta6}</T>
+        {/* «¿Qué bar?» se parte en dos en la maqueta («¿Qué / bar?»). Cada palabra va en su línea, como
+            «¿Con / quién?»: así cada caja mide lo de la maqueta y el interlineado mínimo del teléfono
+            no empuja «Ni idea» encima de la franja. «¿Dónde?» es una sola. */}
+        <View style={abs({ left: 70, right: 40, top: 300 })}>
+          {d.pregunta6.split(' ').map((w) => (
+            <T key={w} f={fuente.titular} s={fs} lh={0.9} ls={-0.05} c={a} lineas={1}>{w}</T>
+          ))}
           <T f={fuente.titular} s={fs} lh={0.9} ls={-0.05} c={b} arriba={10}>¿Con</T>
           <T f={fuente.titular} s={fs} lh={0.9} ls={-0.05} c={b}>quién?</T>
           <T f={fuente.titular} s={84} lh={1.05} ls={-0.02} c={c} arriba={56}>Ni idea. Y así me gusta.</T>
