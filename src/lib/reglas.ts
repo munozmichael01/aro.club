@@ -161,13 +161,29 @@ type Api = {
     mensaje: (inv: { codigo: string; enlace: string; pct: number } | null) => string
     planDe: (formato: string | null | undefined) => string
     conTarjetas: (formato: string | null | undefined) => boolean
-    variantes: (conCodigo: boolean, formato?: string | null) => number[]
+    variantes: (conCodigo: boolean, formato?: string | null, masUno?: boolean) => number[]
     tarjetaDe: (formato: string | null | undefined) => 'historia' | 'plan' | null
     tarjetaPlan: (plan: PlanDentro, codigo: string | null) => TarjetaPlanDatos | null
     zonasEnTexto: (z: string[] | null | undefined) => string
     cuandoSeSabe: (revelaIso: string | null | undefined, zona?: string) => string
     diaYNumero: (iso: string | null | undefined, zona?: string) => string
     historia: (plan: PlanDentro, codigo: string | null) => Historia | null
+  }
+  /** «+1 acompañante» (brief del 01-11). Los textos, borrador hasta que Michael los apruebe. */
+  MAS_UNO: {
+    nombre: string
+    marca: string
+    puestos: number
+    plazo: (cierreIso: string, zona?: string) => string
+    aviso: { titulo: string; lineas: (plazo: string) => string[]; casilla: string; falta: string }
+    mensaje: (inv: { nombre: string | null; plazo: string; enlace: string }) => string
+    tarjeta: { titulo: string; cancelada: string }
+    invitado: { usada: string; anulada: string; cerrada: string; propia: string }
+    vienesCon: (nombre: string | null) => string
+    correos: Record<CorreoMasUno, (d: DatosCorreoMasUno) => {
+      asunto: string; sello: string; bajada: string; boton: string; ruta: string
+      push: { titulo: string; cuerpo: string }
+    }>
   }
   horaDe: (iso: string | null | undefined, zona?: string) => string | null
   partesDe: (
@@ -181,6 +197,18 @@ type Api = {
   } | null
 }
 
+/** Los avisos del +1. */
+export type CorreoMasUno = 'mas_uno_recordatorio' | 'mas_uno_confirmado' | 'mas_uno_se_bajo' | 'mas_uno_cancelada' | 'mas_uno_sin_puesto'
+export type DatosCorreoMasUno = {
+  nombre: string | null
+  invita: string | null
+  plazo: string
+  dia: string
+  estado: string | null
+  enRevision: boolean
+  motivo: string | null
+}
+
 /** Cómo se llegó a «Estás dentro». */
 export type ViaDentro = 'credito' | 'cupon' | 'confirmado' | 'reportado' | 'sinSaber'
 
@@ -191,6 +219,8 @@ export type PlanDentro = {
   zonaHoraria: string
   formato: string | null
   zonas: string[]
+  /** Fecha +1: las historias no llevan la tarjeta del código. */
+  masUno?: boolean
 }
 
 /** Lo que lleva la tarjeta de drinks y café (TarjetaPlan, entrega drinks-cafe). */
@@ -242,6 +272,8 @@ const api = reglas as Api
 export const DENTRO = api.DENTRO
 /** «Seguir en contacto», el mismo texto en app, web y correos. */
 export const CONTACTO = api.CONTACTO
+/** «+1 acompañante», el mismo texto en app, web y correos. */
+export const MAS_UNO = api.MAS_UNO
 
 export const filtrar = api.filtrar
 export const valido = api.valido

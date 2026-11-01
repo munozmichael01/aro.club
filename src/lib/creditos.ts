@@ -24,7 +24,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export async function anotarPagoDeEvento(
   perfilId: string,
   bookingId: string | null,
-  coste = 1,
+  /**
+   * Cuántos puestos compra. Sin decirlo, los que vale SU fecha: una reserva
+   * +1 son dos (Michael, 01-11), y anotar uno dejaba el libro diciendo que
+   * se pagó media reserva.
+   */
+  coste?: number,
   // De dónde salió la silla. Por defecto es una compra; con un cupón, un
   // cupón. Anotar un puesto regalado como `pack_purchase` sería mentir en el
   // único sitio del producto que tiene que cuadrar, y dentro de dos meses
@@ -46,6 +51,11 @@ export async function anotarPagoDeEvento(
     .maybeSingle()
 
   if (yaEsta) return
+
+  if (coste == null) {
+    const { data: r } = await admin.from('bookings').select('events(credit_cost)').eq('id', bookingId).maybeSingle()
+    coste = (r as unknown as { events: { credit_cost: number | null } | null } | null)?.events?.credit_cost ?? 1
+  }
 
   const { error } = await admin.from('credit_ledger').insert([
     {
@@ -112,17 +122,20 @@ export async function abonarSinMesa(perfilId: string, eventoId: string): Promise
   // dinero.
   const { data: cargo } = await admin
     .from('credit_ledger')
-    .select('id')
+    .select('id, delta')
     .eq('booking_id', reserva.id)
     .eq('reason', 'event_charge')
+    .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle()
 
   if (!cargo) return
 
+  // Lo que se le cobró, no uno: el dúo que sobra en una fecha +1 recibe sus
+  // dos créditos (Michael, 01-11).
   const { error } = await admin.from('credit_ledger').insert({
     profile_id: perfilId,
-    delta: 1,
+    delta: Math.abs(cargo.delta),
     reason: 'refund',
     booking_id: reserva.id,
     note: 'No entró en mesa esta fecha',
@@ -162,7 +175,7 @@ export async function retirarAbonoSinMesa(perfilId: string, eventoId: string): P
 
   const { data: abono } = await admin
     .from('credit_ledger')
-    .select('id')
+    .select('id, delta')
     .eq('booking_id', reserva.id)
     .eq('reason', 'refund')
     .limit(1)
@@ -188,7 +201,7 @@ export async function retirarAbonoSinMesa(perfilId: string, eventoId: string): P
 
   const { error } = await admin.from('credit_ledger').insert({
     profile_id: perfilId,
-    delta: -1,
+    delta: -Math.abs(abono.delta),
     reason: 'event_charge',
     booking_id: reserva.id,
     note: NOTA,

@@ -58,6 +58,13 @@ const IMPRESCINDIBLES: ReadonlySet<string> = new Set([
   // una novedad, y quien apagó los correos pidió no recibirlas.
   'contacto_cruzado',
   'contacto_sin_cruce',
+  // Los del +1 hablan de dos puestos pagados: si se apagan, alguien pierde
+  // los dos sin enterarse de que su acompañante no se verificó.
+  'mas_uno_recordatorio',
+  'mas_uno_confirmado',
+  'mas_uno_se_bajo',
+  'mas_uno_cancelada',
+  'mas_uno_sin_puesto',
 ])
 
 export type Correo =
@@ -262,6 +269,17 @@ export type Correo =
   | 'contacto_coincidencia'
   | 'contacto_cruzado'
   | 'contacto_sin_cruce'
+  /**
+   * «+1 acompañante» (Michael, 01-11). A quien reserva: el aviso del día
+   * antes del cierre, que su acompañante quedó confirmado, que se bajó, y
+   * que el cierre canceló los dos puestos. Al acompañante: que ya no tiene
+   * puesto porque quien le invitó canceló o cambió de acompañante.
+   */
+  | 'mas_uno_recordatorio'
+  | 'mas_uno_confirmado'
+  | 'mas_uno_se_bajo'
+  | 'mas_uno_cancelada'
+  | 'mas_uno_sin_puesto'
 
 /**
  * Los que NO llevan correo.

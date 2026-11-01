@@ -4,6 +4,7 @@ import { DESCUENTO_PCT, codigoDe } from '@/lib/referidos'
 import type { PlanDentro } from '@/lib/reglas'
 import type { createAdminClient } from '@/lib/supabase/admin'
 import { FIN_CENA } from '@/lib/ventana-mesa'
+import { masUnoDeLaReserva, type MasUno } from '@/lib/mas-uno'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 
 type Admin = ReturnType<typeof createAdminClient>
@@ -29,12 +30,19 @@ export type Dentro = {
   /** Ya vio «Estás dentro», al reportar o al confirmarse. */
   visto: boolean
   plan: PlanDentro
+  /**
+   * Fecha +1 (Michael, 01-11): la invitación es la acción principal de
+   * «Estás dentro» para quien reserva, y el acompañante ve con quién viene.
+   * Nulos en una fecha normal.
+   */
+  masUno: MasUno | null
+  vienesCon: string | null
 }
 
 export async function reservaDentro(admin: Admin, perfilId: string, eventoId?: string | null): Promise<Dentro | null> {
   let q = admin
     .from('bookings')
-    .select('id, event_id, status, cancelled_at, dentro_visto_en, events!inner(starts_at, reveal_at, format, city_slug)')
+    .select('id, event_id, status, cancelled_at, dentro_visto_en, events!inner(starts_at, reveal_at, format, city_slug, mas_uno)')
     .eq('profile_id', perfilId)
     .in('status', ['pending_payment', 'confirmed'])
     .is('cancelled_at', null)
@@ -43,7 +51,7 @@ export async function reservaDentro(admin: Admin, perfilId: string, eventoId?: s
 
   const ahora = Date.now()
   const vivas = (data ?? [])
-    .map((b) => ({ b, ev: b.events as unknown as { starts_at: string; reveal_at: string | null; format: string | null; city_slug: string } }))
+    .map((b) => ({ b, ev: b.events as unknown as { starts_at: string; reveal_at: string | null; format: string | null; city_slug: string; mas_uno: boolean } }))
     .filter((x) => x.ev && Date.parse(x.ev.starts_at) + FIN_CENA > ahora)
     .sort((a, c) => Date.parse(a.ev.starts_at) - Date.parse(c.ev.starts_at))
   const viva = vivas[0]
@@ -77,7 +85,10 @@ export async function reservaDentro(admin: Admin, perfilId: string, eventoId?: s
       zonaHoraria: await zonaDeCiudad(viva.ev.city_slug),
       formato: viva.ev.format,
       zonas: (nombres ?? []).map((z) => z.name),
+      // Sin la tarjeta 4 en las historias: `DENTRO.variantes(…, masUno)`.
+      masUno: !!viva.ev.mas_uno,
     },
+    ...(await masUnoDeLaReserva(admin, viva.b.id)),
   }
 }
 

@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { anotar } from '@/lib/auditoria'
 import { encolar } from '@/lib/correos'
+import { creditosDeLaReserva } from '@/lib/mas-uno'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -112,17 +113,20 @@ export async function POST(request: Request) {
   await admin.from('dinner_tables').delete().eq('event_id', eventoId)
 
   for (const r of reservas ?? []) {
-    const apuntes: Record<string, unknown>[] = [
+    // Lo que costó: una reserva +1 son dos puestos, y la del acompañante no
+    // costó nada. Él recibe el correo igual; crédito, no.
+    const creditos = await creditosDeLaReserva(admin, r.id)
+    const apuntes: Record<string, unknown>[] = creditos > 0 ? [
       {
         profile_id: r.profile_id,
-        delta: 1,
+        delta: creditos,
         reason: 'refund',
         booking_id: r.id,
         note: 'Cancelamos la fecha: ' + motivo,
       },
-    ]
+    ] : []
 
-    if (conCortesia) {
+    if (conCortesia && creditos > 0) {
       apuntes.push({
         profile_id: r.profile_id,
         delta: 1,
@@ -132,7 +136,7 @@ export async function POST(request: Request) {
       })
     }
 
-    await admin.from('credit_ledger').insert(apuntes as never)
+    if (apuntes.length) await admin.from('credit_ledger').insert(apuntes as never)
 
     // El caso va en el correo: no se le cuenta lo mismo a quien se queda sin
     // mesa porque no se junto gente que a quien se la quitamos nosotros.

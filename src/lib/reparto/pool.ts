@@ -51,6 +51,8 @@ export type Pool = {
    */
   zonas: { slug: string; nombre: string }[]
   porMesa: number
+  /** Fecha +1: el reparto mueve dúos. */
+  masUno: boolean
 }
 
 export async function construirPool(
@@ -59,7 +61,7 @@ export async function construirPool(
 ): Promise<Pool> {
   const { data: evento } = await admin
     .from('events')
-    .select('seats_per_table, format, starts_at')
+    .select('seats_per_table, format, starts_at, mas_uno')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -258,6 +260,22 @@ export async function construirPool(
     evento?.starts_at ? Date.parse(evento.starts_at) : Date.now(),
   )
 
+  /**
+   * Quién viene con quién, en una fecha +1. La reserva del acompañante
+   * apunta a la de quien le invitó (`mas_uno_de`), y la pareja se marca en
+   * las dos personas. Si una de las dos no está en el pool —sin verificar, o
+   * se bajó—, la otra no tiene pareja aquí y el reparto de dúos la deja fuera.
+   */
+  const perfilDeReserva = new Map((pool ?? []).map((p) => [p.booking_id as string, p.profile_id as string]))
+  const parejaDe = new Map<string, string>()
+  for (const p of pool ?? []) {
+    const de = (p as { mas_uno_de?: string | null }).mas_uno_de
+    const quienInvita = de ? perfilDeReserva.get(de) : undefined
+    if (!quienInvita) continue
+    parejaDe.set(p.profile_id as string, quienInvita)
+    parejaDe.set(quienInvita, p.profile_id as string)
+  }
+
   const personas: Persona[] = (pool ?? []).map((p) => ({
     profileId: p.profile_id as string,
     bookingId: p.booking_id as string,
@@ -306,7 +324,14 @@ export async function construirPool(
     conocidos: yaSeConocen.get(p.profile_id as string) ?? new Set<string>(),
     localesRecientes: localesRecientesDe.get(p.profile_id as string) ?? new Set<string>(),
     cenas: cenasDe.get(p.profile_id as string) ?? 0,
+    pareja: parejaDe.get(p.profile_id as string) ?? null,
   }))
 
-  return { personas, sedes, zonas, porMesa: evento?.seats_per_table ?? 6 }
+  return {
+    personas,
+    sedes,
+    zonas,
+    porMesa: evento?.seats_per_table ?? 6,
+    masUno: !!(evento as { mas_uno?: boolean } | null)?.mas_uno,
+  }
 }

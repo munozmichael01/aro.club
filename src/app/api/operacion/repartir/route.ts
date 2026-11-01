@@ -1105,7 +1105,7 @@ export async function POST(request: Request) {
   // la última mesa salga con menos de las que caben. Sin ella, cinco
   // apuntados devuelven cero mesas y la pantalla se queda sin nada que
   // decidir.
-  const r = repartir(personas, pool.porMesa, pesos, parsed.data.conCorta)
+  const r = repartir(personas, pool.porMesa, pesos, parsed.data.conCorta, pool.masUno)
 
   // Cada mesa cae en una de las zonas que aceptan los seis, y ahí se le da
   // sitio. El aforo se respeta: si Cardenal aguanta dos mesas, la tercera

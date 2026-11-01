@@ -42,8 +42,15 @@ export async function GET(request: Request) {
     invitar,
     /** Lo que reportó, como en la app debajo de «Estás dentro». Null con crédito o cupón. */
     comprobante,
-    /** Las tarjetas que se ofrecen, en orden; vacío si el plan no tiene. */
-    variantes: conTarjetas ? DENTRO.variantes(!!invitar, d.plan.formato) : [],
+    /** Las tarjetas que se ofrecen, en orden; vacío si el plan no tiene. En una fecha +1, sin la 4. */
+    variantes: conTarjetas ? DENTRO.variantes(!!invitar, d.plan.formato, !!d.plan.masUno) : [],
+    /**
+     * Fecha +1: para quien reserva, la invitación —«Invitar a mi
+     * acompañante» va primero, y «Compartir mi plan» queda como secundario—;
+     * para el acompañante, con quién viene. Nulos en una fecha normal.
+     */
+    masUno: d.masUno,
+    vienesCon: d.vienesCon,
   })
 }
 

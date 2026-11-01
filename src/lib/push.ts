@@ -95,6 +95,20 @@ export function copyDe(
       return { ...CONTACTO.push.cruzado(lista), ruta: '/mesa?cena=' + t('mesaId') }
     }
 
+    /**
+     * «+1 acompañante»: la misma frase que el correo, de
+     * `AroReglas.MAS_UNO.correos`. Los cinco hablan de dos puestos pagados.
+     */
+    case 'mas_uno_recordatorio':
+    case 'mas_uno_confirmado':
+    case 'mas_uno_se_bajo':
+    case 'mas_uno_cancelada':
+    case 'mas_uno_sin_puesto': {
+      const push = datos.push as { titulo?: string; cuerpo?: string } | undefined
+      if (!push?.titulo || !push.cuerpo) return null
+      return { titulo: push.titulo, cuerpo: push.cuerpo, ruta: t('ruta', '/mesa') }
+    }
+
     case 'sin_mesa':
       return {
         titulo: 'Esta vez no entraste',

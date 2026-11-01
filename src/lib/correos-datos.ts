@@ -15,6 +15,7 @@ import { DIAS_DE_PLAZO } from '@/lib/reembolso'
 import { situacionDePerfil } from '@/lib/embudo'
 import { codigoDe, cuentaDe, POR_CADA } from '@/lib/referidos'
 import { datosDeCorreo } from '@/lib/contacto'
+import { datosDeCorreoMasUno } from '@/lib/mas-uno'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Valores } from '@/lib/plantillas'
 import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
@@ -2002,6 +2003,21 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       if (!fila.profile_id) return { error: 'sin persona' }
       const r = await datosDeCorreo(admin, fila.kind, fila.profile_id, p)
       if ('error' in r) return { error: String(r.error) }
+      return { a, datos: { ...base, ...r } }
+    }
+
+    /**
+     * «+1 acompañante». El texto entero sale de `AroReglas.MAS_UNO.correos`
+     * y los datos de `lib/mas-uno`, armados al mandar: si el acompañante se
+     * verificó entre medias, el recordatorio ya no sale.
+     */
+    case 'mas_uno_recordatorio':
+    case 'mas_uno_confirmado':
+    case 'mas_uno_se_bajo':
+    case 'mas_uno_cancelada':
+    case 'mas_uno_sin_puesto': {
+      const r = await datosDeCorreoMasUno(admin, fila.kind, fila.event_id, p)
+      if ('error' in r) return { error: r.error }
       return { a, datos: { ...base, ...r } }
     }
 

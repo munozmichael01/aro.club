@@ -81,7 +81,20 @@ export type Persona = {
    * es contarle mal su propia historia a quien reparte.
    */
   cenas: number
+  /**
+   * En una fecha +1: el `profileId` de la persona con la que viene.
+   *
+   * La mesa son tres dúos (Michael, 01-11) y un dúo no se separa nunca. Las
+   * reglas siguen mirando a las seis personas —el género de las dos cuenta,
+   * que es la razón de que esto exista: tres mujeres que traen a tres
+   * mujeres serían una mesa de seis mujeres—, pero dentro de un dúo no se
+   * mide nada: se conocen, pueden trabajar juntas y vienen a propósito.
+   */
+  pareja?: string | null
 }
+
+/** Si dos personas de la misma mesa vienen juntas a una fecha +1. */
+const vienenJuntas = (a: Persona, b: Persona) => !!a.pareja && a.pareja === b.profileId
 
 export type Pesos = {
   cohesion: number
@@ -243,7 +256,12 @@ export function roturas(mesa: Persona[], sede?: string | null): Rotura[] {
     fallos.push({ regla: 'genero', detalle: `${mujeres} mujeres y ${hombres} hombres` })
   }
 
-  const empresas = mesa.map(empresaDe).filter((e): e is string => e != null)
+  // Dos de la misma empresa que vienen juntas a un +1 no son un choque:
+  // vienen a propósito. Se cuenta una vez por dúo.
+  const empresas = mesa
+    .filter((p, i) => !mesa.slice(0, i).some((o) => vienenJuntas(o, p)))
+    .map(empresaDe)
+    .filter((e): e is string => e != null)
   const repetida = empresas.find((e, i) => empresas.indexOf(e) !== i)
   if (repetida) {
     // Con nombres. "dos de banesco" obligaba a mirar uno por uno quiénes
@@ -260,6 +278,7 @@ export function roturas(mesa: Persona[], sede?: string | null): Rotura[] {
     for (let j = i + 1; j < mesa.length; j++) {
       const a = mesa[i]
       const b = mesa[j]
+      if (vienenJuntas(a, b)) continue
       if (!a.vetados.has(b.profileId) && !b.vetados.has(a.profileId)) continue
       const clave = [a.profileId, b.profileId].sort().join(':')
       if (vistos.has(clave)) continue
@@ -313,6 +332,7 @@ export function roturas(mesa: Persona[], sede?: string | null): Rotura[] {
     for (let j = i + 1; j < mesa.length; j++) {
       const a = mesa[i]
       const b = mesa[j]
+      if (vienenJuntas(a, b)) continue
       const comun =
         a.intereses.filter((x) => b.intereses.includes(x)).length +
         a.temas.filter((x) => b.temas.includes(x)).length
@@ -347,6 +367,16 @@ export function roturas(mesa: Persona[], sede?: string | null): Rotura[] {
     fallos.push({
       regla: 'idioma',
       detalle: mesa.map((p) => `${p.nombre}: ${p.idiomas.join('/')}`).join(' · '),
+    })
+  }
+
+  // Y el dúo, entero o nada. Solo puede pasar al retocar a mano: el reparto
+  // los mueve siempre de dos en dos.
+  const sueltas = mesa.filter((p) => p.pareja && !mesa.some((o) => o.profileId === p.pareja))
+  if (sueltas.length) {
+    fallos.push({
+      regla: 'pareja',
+      detalle: sueltas.map((p) => `${p.nombre} sin quien viene`).join(' · '),
     })
   }
 
@@ -477,6 +507,8 @@ export function evaluacion(
     di('gasto', 'Gasto compatible'),
     di('idioma', 'Idioma común'),
     { regla: 'zona', ok: zonaOk, texto: textoZona },
+    // Solo en una fecha +1, que es donde hay dúos.
+    ...(mesa.some((p) => p.pareja) ? [di('pareja', 'Cada dúo junto')] : []),
     // La novena, y solo cuando hay sitio del que hablar. Michael, 28-10.
     ...(sede ? [di('local', `Nadie ha cenado aquí en ${DIAS_SIN_REPETIR_LOCAL} días`)] : []),
   ]
@@ -528,6 +560,7 @@ export function desglose(mesa: Persona[]): Record<keyof Pesos, number> {
   let conocidos = 0
   for (let i = 0; i < mesa.length; i++) {
     for (let j = i + 1; j < mesa.length; j++) {
+      if (vienenJuntas(mesa[i], mesa[j])) continue
       if (mesa[i].conocidos.has(mesa[j].profileId)) conocidos++
     }
   }
@@ -669,7 +702,16 @@ export function repartir(
    * marcada para que el panel la enseñe por lo que es.
    */
   permitirCorta = false,
+  /**
+   * Fecha +1: se reparte de dos en dos. Lo dice la FECHA, no el pool: con
+   * todas las reservas sin acompañante el pool no tiene ningún dúo, y sin
+   * esto se repartiría como una cena normal, sentando sola a gente que
+   * reservó para ir con alguien.
+   */
+  deDos = false,
 ): Resultado {
+  if (deDos || pool.some((p) => p.pareja)) return repartirDuos(pool, porMesa, pesos)
+
   // Quien no acepta NINGUNA de las zonas abiertas no se puede sentar en
   // ningun sitio, y ordenar por "menos zonas primero" lo hacia justo lo
   // contrario: entraba el primero a sembrar mesas —cero es el minimo— y
@@ -877,6 +919,150 @@ export function repartir(
     // Los que sobran del reparto MAS los que no tienen zona abierta: la
     // espera es "quien no se sienta esta fecha", venga de donde venga.
     espera: [...libres, ...sinZona],
+    puntuaciones,
+    media: puntuaciones.reduce((t, p) => t + p, 0) / (puntuaciones.length || 1),
+  }
+}
+
+/**
+ * El reparto de una fecha +1: lo mismo, pero moviendo DÚOS.
+ *
+ * Michael, 01-11: tres dúos por mesa; dos dúos, cuatro personas, también
+ * forman mesa; y el dúo que sobra se queda sin mesa con sus dos créditos. Las
+ * reglas y la puntuación son las de siempre, sobre las seis personas: lo
+ * único que cambia es la pieza que se mueve.
+ *
+ * Quien llega sin su pareja en el pool —el acompañante no está verificado,
+ * o se bajó— no se sienta: sola o solo no va, que es la regla del cierre.
+ */
+function repartirDuos(pool: Persona[], porMesa: number, pesos: Pesos): Resultado {
+  const porId = new Map(pool.map((p) => [p.profileId, p]))
+  const duos: Persona[][] = []
+  const sueltas: Persona[] = []
+  const vistos = new Set<string>()
+  for (const p of pool) {
+    if (vistos.has(p.profileId)) continue
+    const otra = p.pareja ? porId.get(p.pareja) : undefined
+    if (!otra || otra.pareja !== p.profileId) {
+      sueltas.push(p)
+      vistos.add(p.profileId)
+      continue
+    }
+    vistos.add(p.profileId)
+    vistos.add(otra.profileId)
+    duos.push([p, otra])
+  }
+
+  const zonasDelDuo = (d: Persona[]) => zonasDe(d)
+  const sentables = duos.filter((d) => zonasDelDuo(d).length > 0)
+  const sinZona = duos.filter((d) => zonasDelDuo(d).length === 0).flat()
+
+  const porMesaDuos = Math.max(1, Math.floor(porMesa / 2))
+  const MINIMO_DUOS = 2
+  let cuantas = Math.floor(sentables.length / porMesaDuos)
+  const sobran = sentables.length - cuantas * porMesaDuos
+  // Dos dúos sueltos también son mesa (cuatro personas).
+  const conCorta = sobran >= MINIMO_DUOS
+  if (conCorta) cuantas += 1
+
+  if (cuantas === 0) {
+    return { mesas: [], espera: [...pool], puntuaciones: [], media: 0 }
+  }
+
+  const edadDe = (d: Persona[]) => Math.min(...d.map((p) => p.edad ?? 999))
+  const orden = [...sentables].sort(
+    (a, b) =>
+      zonasDelDuo(a).length - zonasDelDuo(b).length ||
+      edadDe(a) - edadDe(b) ||
+      a[0].profileId.localeCompare(b[0].profileId),
+  )
+
+  const personas = sentables.flat()
+  const cupo = cupoDeGenero(personas, porMesa)
+  const mesas: Persona[][][] = Array.from({ length: cuantas }, () => [])
+  const libres = [...orden]
+  const plana = (m: Persona[][]) => m.flat()
+  // La corta es la última: se llena con lo que quede.
+  const capacidad = (m: number) => (conCorta && m === cuantas - 1 ? sobran : porMesaDuos)
+
+  for (let m = 0; m < cuantas; m++) {
+    if (!libres.length) break
+    mesas[m].push(libres.shift() as Persona[])
+    while (mesas[m].length < capacidad(m) && libres.length) {
+      let mejor = -1
+      let mejorCabe = false
+      let menos = Infinity
+      let mejorGrave = Infinity
+      let punto = -Infinity
+      for (let i = 0; i < libres.length; i++) {
+        const tentativa = [...plana(mesas[m]), ...libres[i]]
+        const cabe = cabeEnElCupo(tentativa, cupo)
+        const n = roturas(tentativa).length
+        const g = gravedad(tentativa)
+        const p = puntuar(tentativa, pesos)
+        const gana =
+          mejor < 0 ||
+          (cabe && !mejorCabe) ||
+          (cabe === mejorCabe &&
+            (n < menos || (n === menos && (g < mejorGrave || (g === mejorGrave && p > punto)))))
+        if (gana) {
+          mejor = i
+          mejorCabe = cabe
+          menos = n
+          mejorGrave = g
+          punto = p
+        }
+      }
+      mesas[m].push(libres.splice(mejor, 1)[0])
+    }
+  }
+
+  // Intercambios de dúo por dúo, con el mismo orden de siempre: menos
+  // roturas, luego menos gravedad, luego más puntuación.
+  for (let vuelta = 0; vuelta < 60; vuelta++) {
+    let mejoro = false
+    for (let a = 0; a < mesas.length; a++) {
+      for (let b = a + 1; b < mesas.length; b++) {
+        for (let i = 0; i < mesas[a].length; i++) {
+          for (let j = 0; j < mesas[b].length; j++) {
+            const antesA = plana(mesas[a])
+            const antesB = plana(mesas[b])
+            const na = [...mesas[a]]
+            const nb = [...mesas[b]]
+            ;[na[i], nb[j]] = [nb[j], na[i]]
+            const pa = plana(na)
+            const pb = plana(nb)
+            const rotasAntes = roturas(antesA).length + roturas(antesB).length
+            const rotasDespues = roturas(pa).length + roturas(pb).length
+            const gravesAntes = gravedad(antesA) + gravedad(antesB)
+            const gravesDespues = gravedad(pa) + gravedad(pb)
+            const puntosAntes = puntuar(antesA, pesos) + puntuar(antesB, pesos)
+            const puntosDespues = puntuar(pa, pesos) + puntuar(pb, pesos)
+            const cupoAntes = Number(cabeEnElCupo(antesA, cupo)) + Number(cabeEnElCupo(antesB, cupo))
+            const cupoDespues = Number(cabeEnElCupo(pa, cupo)) + Number(cabeEnElCupo(pb, cupo))
+            if (cupoDespues < cupoAntes && rotasDespues >= rotasAntes) continue
+            const gana =
+              rotasDespues < rotasAntes ||
+              (rotasDespues === rotasAntes &&
+                (gravesDespues < gravesAntes ||
+                  (gravesDespues === gravesAntes && puntosDespues > puntosAntes + 1e-9)))
+            if (gana) {
+              mesas[a] = na
+              mesas[b] = nb
+              mejoro = true
+            }
+          }
+        }
+      }
+    }
+    if (!mejoro) break
+  }
+
+  const llenas = mesas.map(plana).filter((m) => m.length)
+  const puntuaciones = llenas.map((m) => puntuar(m, pesos))
+  return {
+    mesas: llenas,
+    espera: [...libres.flat(), ...sinZona, ...sueltas],
     puntuaciones,
     media: puntuaciones.reduce((t, p) => t + p, 0) / (puntuaciones.length || 1),
   }

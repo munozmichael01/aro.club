@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { anotarPagoDeEvento } from '@/lib/creditos'
+import { creditosDeLaReserva } from '@/lib/mas-uno'
 import { DESDE_QUE_ES_REAL, exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
@@ -406,9 +407,10 @@ export async function POST(request: Request) {
         .maybeSingle()
 
       if (!yaAbonado) {
+        // Lo que vale su reserva: una +1 son dos puestos.
         await admin.from('credit_ledger').insert({
           profile_id: pago.profile_id,
-          delta: 1,
+          delta: pago.booking_id ? await creditosDeLaReserva(admin, pago.booking_id) : 1,
           reason: 'refund',
           booking_id: pago.booking_id,
           note: 'Pago confirmado después de cancelar: el crédito que estaba esperando',

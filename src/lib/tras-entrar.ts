@@ -3,6 +3,7 @@ import 'server-only'
 import { type Paso, type Situacion, situacionDePerfil } from '@/lib/embudo'
 import { cookies } from 'next/headers'
 
+import { aceptarInvitacion, COOKIE_MAS_UNO } from '@/lib/mas-uno'
 import { apuntarQuienInvito, COOKIE_INVITA, leerInvitacion } from '@/lib/referidos'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -182,6 +183,28 @@ export async function trasEntrar(entrada: Entrada): Promise<Salida> {
   // En qué paso está. La MISMA pieza que decide qué le falta a cualquiera: si
   // aquí se decidiera aparte, el proveedor mandaría a un sitio y el resto del
   // embudo a otro.
+  /**
+   * Y si abrió el enlace de un +1 antes de tener sesión, se une ahora. En
+   * cada entrada y no solo al crear el perfil: quien ya era socia abre el
+   * enlace, entra con su cuenta y acepta. Si ya está verificada, el puesto
+   * queda al instante (Michael, 01-11).
+   */
+  try {
+    const galletas = await cookies()
+    const token = galletas.get(COOKIE_MAS_UNO)?.value
+    if (token) {
+      await aceptarInvitacion(admin, token, usuarioId)
+      try {
+        galletas.delete(COOKIE_MAS_UNO)
+      } catch {
+        // Fuera de una ruta no se puede borrar; caduca sola en una semana y
+        // aceptar dos veces no repite nada.
+      }
+    }
+  } catch (e) {
+    console.error('[entrar] no se pudo unir al enlace del +1', e)
+  }
+
   const situacion = await situacionDePerfil(usuarioId)
 
   return { ok: true, paso: situacion.paso, situacion, creado, otroCorreo }

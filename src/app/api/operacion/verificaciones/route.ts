@@ -5,6 +5,7 @@ import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
 import { encolar } from '@/lib/correos'
+import { masUnoEnLaCola, reclamarPuesto } from '@/lib/mas-uno'
 
 /**
  * La cola de verificación (HANDOFF-4 §4.4).
@@ -171,6 +172,12 @@ export async function GET() {
     if (!previa || f.created_at > previa) ultimaFoto.set(f.profile_id, f.created_at)
   }
 
+  /**
+   * Quién de la cola entró por un enlace +1 que sigue libre, y cuándo cierra
+   * esa fecha. Es lo que el equipo tiene que mirar antes (Michael, 01-11).
+   */
+  const masUnoDe = await masUnoEnLaCola(admin, ids)
+
   const { data: motivos } = await admin
     .from('verification_rejection_reasons')
     .select('code, label, allows_retry, message')
@@ -254,12 +261,19 @@ export async function GET() {
         // suponemos: `incompleta` sin rechazo es que nunca llegó.
         falta: doc && self ? null : !self ? 'selfie' : 'id_document',
         vistoHasta: ultimaFoto.get(id) ?? null,
+        // Entró por el enlace de un +1 y su puesto depende de esta
+        // verificación: va primero, con el cierre a la vista.
+        masUno: masUnoDe.get(id) ?? null,
       }
     })
     .filter((f): f is NonNullable<typeof f> => f != null)
     // Quien lleva más esperando, primero. Para un rechazo eso es desde que
     // lo rechazamos: es el reloj de lo que lleva sin volver.
     .sort((a, b) => {
+      // Los +1, delante de todo y por cierre: si no se aprueban a tiempo se
+      // cancelan dos puestos.
+      if (!!a.masUno !== !!b.masUno) return a.masUno ? -1 : 1
+      if (a.masUno && b.masUno) return a.masUno.cierraEn < b.masUno.cierraEn ? -1 : 1
       const reloj = (f: typeof a) => f.rechazo?.el ?? f.esperaDesde ?? ''
       return reloj(a) < reloj(b) ? -1 : reloj(a) > reloj(b) ? 1 : 0
     })
@@ -272,6 +286,7 @@ export async function GET() {
       pendiente: filas.filter((f) => f.estado === 'pendiente').length,
       incompleta: filas.filter((f) => f.estado === 'incompleta').length,
       rechazada: filas.filter((f) => f.estado === 'rechazada').length,
+      masUno: filas.filter((f) => f.masUno).length,
     },
     motivos: (motivos ?? []).map((m) => ({
       codigo: m.code,
@@ -395,6 +410,14 @@ export async function POST(request: Request) {
     // seguiria diciendole que espere.
     if (tipos.has('id_document') && tipos.has('selfie')) {
       await encolar({ perfil: d.profileId }, 'verificacion', {})
+
+      // Si entró por el enlace de un +1, el puesto es suyo ahora: el de la
+      // primera persona cuya verificación se aprueba (Michael, 01-11).
+      try {
+        await reclamarPuesto(admin, d.profileId)
+      } catch (e) {
+        console.error('[verificaciones] no se pudo sentar al +1', d.profileId, e)
+      }
     }
     return NextResponse.json({ estado: 'aprobada' })
   }

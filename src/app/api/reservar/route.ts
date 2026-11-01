@@ -5,6 +5,7 @@ import { z } from 'zod'
 
 import { situacionDePerfil } from '@/lib/embudo'
 import { hablaElIdioma, noCabePorIdioma, pideIdioma } from '@/lib/idioma'
+import { faltanCondiciones } from '@/lib/mas-uno'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { sumarZonasAlPerfil } from '@/lib/zonas-declaradas'
@@ -45,6 +46,11 @@ const cuerpo = z.object({
    *    opcional, y lo que conteste la mesa decide si se graba ahí.
    */
   permiteGrabacion: z.boolean().optional(),
+  /**
+   * La casilla del aviso de una fecha +1 («pagas los dos puestos…»). Sin
+   * ella no se aparta puesto en esa fecha (Michael, 01-11).
+   */
+  aceptaCondiciones: z.boolean().optional(),
   // Opcional a propósito. Por defecto valen las zonas que ya declaró en el
   // cuestionario: no se le vuelve a preguntar.
   zonas: z.array(z.string().regex(/^[a-z-]+$/)).optional(),
@@ -62,7 +68,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma')
+    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma, mas_uno')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -115,6 +121,9 @@ export async function GET(request: Request) {
       // por un 409.
       grabamos: !!(evento as { grabacion?: boolean }).grabacion,
       permisoObligatorio: !!(evento as { grabacion_requerida?: boolean }).grabacion_requerida,
+      // Fecha +1: la reserva son dos puestos y antes de apartarlos va el
+      // aviso con casilla. El texto vive en `AroReglas.MAS_UNO.aviso`.
+      masUno: !!(evento as { mas_uno?: boolean }).mas_uno,
     },
     // Solo las que abrimos. Las demás no se enseñan apagadas: una opción
     // que no se puede elegir es ruido, no información.
@@ -148,7 +157,7 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma')
+    .select('id, starts_at, booking_closes_at, credit_cost, status, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma, mas_uno')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -173,6 +182,11 @@ export async function POST(request: Request) {
       },
       { status: 409 },
     )
+  }
+
+  {
+    const sinCondiciones = faltanCondiciones(evento as { mas_uno?: boolean }, parsed.data.aceptaCondiciones)
+    if (sinCondiciones) return NextResponse.json(sinCondiciones, { status: 409 })
   }
 
   /**

@@ -683,6 +683,14 @@
                   <span style="display:inline-flex;align-items:center;min-height:30px;padding:0 11px;border-radius:999px;background:rgba(20,52,42,.07);font:500 12px/1 'Inter Tight',sans-serif;color:#2C4A38">{{ d.texto }}</span>
                 </sc-for>
               </div>
+              <!-- Entró por el enlace de un +1: si no se aprueba antes del
+                   cierre, se cancelan dos puestos. Va primero en la cola. -->
+              <sc-if value="{{ c.hayMasUno }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:#14342A;padding:11px 13px;margin-top:12px">
+                  <span style="flex:0 0 auto;display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;background:#FAF3E4;color:#14342A;font:700 10px/1 'Inter Tight',sans-serif;letter-spacing:.07em;margin-top:1px">+1</span>
+                  <span style="flex:1;min-width:0;font:500 13px/1.5 'Inter Tight',sans-serif;color:#FAF3E4">{{ c.masUno }}</span>
+                </div>
+              </sc-if>
               <sc-if value="{{ c.hayAviso }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.1);padding:11px 13px;margin-top:12px">
                   <span style="flex:0 0 auto;width:20px;height:20px;border-radius:999px;background:#6E340F;color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 'Inter Tight',sans-serif;margin-top:1px">!</span>
@@ -1062,6 +1070,18 @@
                   <div style="display:flex;flex-wrap:wrap;gap:9px">
                     <sc-for list="{{ idiomas }}" as="i" hint-placeholder-count="3">
                       <button onClick="{{ i.pick }}" style="{{ i.btn }}">{{ i.nombre }}</button>
+                    </sc-for>
+                  </div>
+
+                  <!-- «+1 acompañante» (Michael, 01-11): toda la mesa llega
+                       de dos en dos. La reserva son dos puestos: el precio
+                       de arriba sigue siendo por puesto y la fecha cobra el
+                       doble y dos créditos. No se avisa sola al abrirla. -->
+                  <div style="{{ etiqueta }};margin-top:clamp(20px,2.4vw,26px)">DE DOS EN DOS</div>
+                  <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin:-4px 0 12px;max-width:52ch;text-wrap:pretty">{{ notaMasUno }}</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:9px">
+                    <sc-for list="{{ masUnoOpciones }}" as="o" hint-placeholder-count="2">
+                      <button onClick="{{ o.pick }}" style="{{ o.btn }}">{{ o.nombre }}</button>
                     </sc-for>
                   </div>
                 </div>
@@ -3816,6 +3836,7 @@ class Component extends DCLogic {
       edadMinima: f.edadMinima != null ? f.edadMinima : null,
       edadMaxima: f.edadMaxima != null ? f.edadMaxima : null,
       idioma: f.idioma || null,
+      masUno: !!f.masUno,
       hora: horaTexto(f.empiezaEn),
       cierra: cuantoQueda(f.cierraEn),
       // El estado de la fecha, que no es lo mismo que el reloj: una fecha se
@@ -3978,8 +3999,11 @@ class Component extends DCLogic {
         ? f.edadMinima + ' a ' + f.edadMaxima
         : (f.edadMinima != null ? '+' + f.edadMinima : 'hasta ' + f.edadMaxima))
       : null;
-    const origenDeFecha = (banda, idioma) => {
+    const origenDeFecha = (banda, idioma, masUno) => {
       const etiquetas = [];
+      // «+1 acompañante», como la marca de la agenda: va delante de todo
+      // porque cambia cómo se reparte la fecha entera.
+      if (masUno) etiquetas.push({ texto: '+1 acompañante', estilo: pastillaOrigen('#14342A', '#FAF3E4') });
       if (banda) etiquetas.push({ texto: banda + ' años', estilo: pastillaOrigen('#8F4515', '#FAF3E4') });
       if (idioma) etiquetas.push({ texto: IDIOMA_FECHA[idioma] || idioma, estilo: pastillaOrigen('#1B5138', '#FAF3E4') });
       if (!etiquetas.length) etiquetas.push({ texto: 'Abierta a todos', estilo: pastillaOrigen('rgba(20,52,42,.09)', '#33513F') });
@@ -3999,10 +4023,10 @@ class Component extends DCLogic {
      * una noche con una sola fecha no distingue nada y es ruido.
      */
     const rotuloDeFecha = (f, delDia) => {
-      const base = origenDeFecha(bandaDe(f), f.idioma);
+      const base = origenDeFecha(bandaDe(f), f.idioma, f.masUno);
       const texto = (xs) => xs.map((x) => x.texto).join(' · ');
       const choca = (delDia || []).some((o) => o.id !== f.id
-        && texto(origenDeFecha(bandaDe(o), o.idioma)) === texto(base));
+        && texto(origenDeFecha(bandaDe(o), o.idioma, o.masUno)) === texto(base));
       if (!choca) return base;
       const zonas = zonasUnicas(f.zonas || []).map((z) => z[0]).join(' · ');
       return zonas
@@ -5008,6 +5032,12 @@ class Component extends DCLogic {
          * dos.
          */
         etiquetas: [
+          f.masUno
+            ? {
+                texto: '+1 acompañante',
+                estilo: 'display:inline-flex;align-items:center;height:20px;padding:0 9px;border-radius:999px;background:#14342A;font:700 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.07em;color:#FAF3E4;white-space:nowrap;text-transform:uppercase'
+              }
+            : null,
           (f.edadMinima != null || f.edadMaxima != null)
             ? {
                 texto: f.edadMinima != null && f.edadMaxima != null
@@ -5034,7 +5064,7 @@ class Component extends DCLogic {
            * Es el MISMO rótulo que llevan sus mesas: el riel y el tablero
            * tienen que llamar igual a la misma fecha o marcar no sirve.
            */
-          (bandaDe(f) == null && !f.idioma && lasDelDiaDe(f).length > 1)
+          (bandaDe(f) == null && !f.idioma && !f.masUno && lasDelDiaDe(f).length > 1)
             ? rotuloDeFecha(f, lasDelDiaDe(f))
             : []
         ),
@@ -5443,6 +5473,8 @@ class Component extends DCLogic {
         edadMaxima: edadMaxNum,
         // El idioma de la mesa. Nulo es español, que es lo de siempre.
         idioma: St.idiomaFecha || null,
+        // «+1 acompañante»: el precio va por puesto y el servidor cobra dos.
+        masUno: !!St.masUno,
         precioUsd: precioNum,
         zonas: idxZonas.map((i) => ({
           zona: ZONAS_OP[i][3],
@@ -5518,7 +5550,8 @@ class Component extends DCLogic {
       ['Se revela', revela ? fmt(revela) + ' a las ' + (mananero ? '6:00 p.m.' : '12:00') + (mananero ? ' · el día antes' : '') : 'a las 12:00', !!revela],
       ['Idioma', St.idiomaFecha ? ({ en: 'Inglés · solo la ve quien lo marcó', pt: 'Portugués · solo la ve quien lo marcó', fr: 'Francés · solo la ve quien lo marcó' }[St.idiomaFecha] || St.idiomaFecha) : 'Español', !!St.idiomaFecha],
       ['Cupo', 'Abierto · quien no entre queda en espera', true],
-      ['Precio', precioOk ? precioNum.toFixed(2).replace('.', ',') + ' ref por plaza' : 'Falta el precio', precioOk],
+      ['Precio', precioOk ? precioNum.toFixed(2).replace('.', ',') + ' ref por plaza' + (St.masUno ? ' · la reserva son dos: ' + (precioNum * 2).toFixed(2).replace('.', ',') + ' ref' : '') : 'Falta el precio', precioOk],
+      ...(St.masUno ? [['+1 acompañante', 'De dos en dos · dos créditos por reserva · no se avisa sola', true]] : []),
       ['Zonas', idxZonas.length ? idxZonas.map((i) => ZONAS_OP[i][0]).join(', ') : 'Ninguna', idxZonas.length > 0],
       ['Sitios', idxZonas.length
         ? (conLocal === idxZonas.length ? 'Los ' + idxZonas.length + ' elegidos' : conLocal + ' de ' + idxZonas.length + ' · el resto se elige antes de publicar')
@@ -5719,6 +5752,12 @@ class Component extends DCLogic {
               ? 'Rechazada ' + desdeHace(c.rechazo.el)
               : haceCuanto(c.esperaDesde))),
         datos: [c.nombre, edad != null ? edad + ' años' : null].filter(Boolean).map((texto) => ({ texto })),
+        hayMasUno: !!c.masUno,
+        masUno: c.masUno
+          ? 'Acompañante de ' + (c.masUno.invita || 'alguien') + '. Tiene que quedar aprobada antes '
+            + (window.AroReglas && AroReglas.MAS_UNO ? 'del ' + AroReglas.MAS_UNO.plazo(c.masUno.cierraEn, c.masUno.zonaHoraria).replace(/^el /, '') : 'del cierre')
+            + ': si no, se cancelan los dos puestos.'
+          : '',
         // El aviso que cambia la decisión: si ya la rechazamos antes, esta
         // no es la primera vez que sube la foto.
         // Y solo en lo pendiente: en la pestaña de rechazados, «ya se le
@@ -7639,6 +7678,15 @@ class Component extends DCLogic {
       edadMax: St.edadMax || '',
       onEdadMin: (e) => this.setState({ edadMin: e.target.value.replace(/[^0-9]/g, '').slice(0, 2), abierta: false }),
       onEdadMax: (e) => this.setState({ edadMax: e.target.value.replace(/[^0-9]/g, '').slice(0, 2), abierta: false }),
+      notaMasUno: 'Toda la mesa llega de dos en dos: quien reserva paga los dos puestos y comparte un enlace con su acompañante, que se verifica antes del cierre. El precio de arriba es por puesto. No se avisa sola al abrirla: su anuncio va aparte.',
+      masUnoOpciones: [['Normal', false], ['+1 acompañante', true]].map((x) => {
+        const on = !!St.masUno === x[1];
+        return {
+          nombre: x[0],
+          pick: () => this.setState({ masUno: x[1], abierta: false }),
+          btn: 'display:inline-flex;align-items:center;min-height:38px;padding:0 15px;border-radius:999px;font:' + (on ? '600' : '500') + ' 13px/1 \'Inter Tight\',sans-serif;white-space:nowrap;cursor:pointer;transition:all 180ms ease;background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#2C4A38') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.22)')
+        };
+      }),
       notaIdioma: 'En español salvo que digas otra cosa. Una mesa en otro idioma solo la ve, y solo la puede reservar, quien lo marcó en sus respuestas: no compite con la del mismo día ni le quita gente.',
       idiomas: [['Español', null], ['Inglés', 'en'], ['Portugués', 'pt'], ['Francés', 'fr']].map((x) => {
         const on = (St.idiomaFecha || null) === x[1];

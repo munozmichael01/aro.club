@@ -16,6 +16,7 @@ import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
 import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
+import { duosDeLaMesa, masUnoCanceladoDe, masUnoDeLaReserva } from '@/lib/mas-uno'
 
 /**
  * ¿PUEDE CAMBIARSE DE FECHA, Y A CUÁLES?
@@ -340,7 +341,14 @@ export async function GET(request: Request) {
       .eq('id', user.id)
       .maybeSingle()
 
-    return NextResponse.json({ fase: 'sin-reserva', estado: perfil?.status ?? null, ...deLasPasadas })
+    return NextResponse.json({
+      fase: 'sin-reserva',
+      estado: perfil?.status ?? null,
+      ...deLasPasadas,
+      // Si el cierre le canceló una fecha +1 porque su acompañante no se
+      // verificó: qué pasó y los dos créditos, hasta que pase esa fecha.
+      masUno: await masUnoCanceladoDe(admin, user.id),
+    })
   }
 
   const revelaEn = new Date(evento.reveal_at).getTime()
@@ -392,6 +400,9 @@ export async function GET(request: Request) {
     return NextResponse.json({
       ...deLasPasadas,
       fase: 'cerrada',
+      // Fecha +1 (Michael, 01-11): la tarjeta «Tu +1 acompañante» de quien
+      // reserva, y con quién viene el acompañante. Nulos en una fecha normal.
+      ...(await masUnoDeLaReserva(admin, reserva.id)),
       eventoId: reserva.event_id,
       // Confirmada y sin haber visto «Estás dentro»: la pantalla va allí
       // antes de pintarse (entrega estas-dentro, B3).
@@ -442,6 +453,9 @@ export async function GET(request: Request) {
     return NextResponse.json({
       ...deLasPasadas,
       fase: 'sin-mesa',
+      // Fecha +1 (Michael, 01-11): la tarjeta «Tu +1 acompañante» de quien
+      // reserva, y con quién viene el acompañante. Nulos en una fecha normal.
+      ...(await masUnoDeLaReserva(admin, reserva.id)),
       formato: evento.format,
       empiezaEn: evento.starts_at,
       zonaHoraria,
@@ -568,6 +582,8 @@ export async function GET(request: Request) {
     .limit(1)
 
   const primerAsiento = primeros?.[0]?.sentado_en ?? null
+  // En una fecha +1, quién viene con quién (perfil → perfil). Vacío si no.
+  const duos = await duosDeLaMesa(admin, miembro.table_id)
   const MARGEN_PUBLICACION = 15 * 60_000
 
   const { data: traits } = await admin
@@ -679,6 +695,9 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     ...deLasPasadas,
+    // Fecha +1 (Michael, 01-11): la tarjeta «Tu +1 acompañante» de quien
+    // reserva, y con quién viene el acompañante. Nulos en una fecha normal.
+    ...(await masUnoDeLaReserva(admin, reserva.id)),
     // Pasada: la cena ya ocurrió, toca F11.
     fase: ahora > empiezaEn + 5 * 3600 * 1000 ? 'pasada' : 'abierta',
     // El id de la mesa y los de sus companeros: hacen falta para valorar,
@@ -785,6 +804,9 @@ export async function GET(request: Request) {
         // Su arraigo, en código. La etiqueta la pone quien pinta, desde
         // `AroReglas.PUERTA.arraigo`. Nulo es que no lo contestó.
         arraigo: arraigoDe.get(c.profile_id) ?? null,
+        // Fecha +1: el id de la persona con la que viene (puede ser quien
+        // mira). Nulo en una mesa normal.
+        vieneCon: duos.get(c.profile_id) ?? null,
         /**
          * Si entró DESPUÉS de que se contara la mesa.
          *

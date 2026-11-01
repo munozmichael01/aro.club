@@ -11,6 +11,7 @@ import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { encolar } from '@/lib/correos'
 import { mandarAviso } from '@/lib/avisos-equipo'
+import { creditosDeLaReserva, seBajoElAcompanante, soltarAcompanante } from '@/lib/mas-uno'
 
 /**
  * Cancelar un puesto.
@@ -177,7 +178,7 @@ export async function POST(request: Request) {
      * quería el nombre para el aviso al equipo. Lo encontró el agente de la
      * app porque Michael no podía cancelar la suya.
      */
-    .select('id, status, event_id, profile_id, events(starts_at, reveal_at), table_members(table_id), profiles!bookings_profile_id_fkey(display_name, full_name)')
+    .select('id, status, event_id, profile_id, mas_uno_de, events(starts_at, reveal_at, mas_uno), table_members(table_id), profiles!bookings_profile_id_fkey(display_name, full_name)')
     .eq('id', parsed.data.reservaId)
     .maybeSingle()
 
@@ -209,7 +210,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Esa reserva ya está cancelada.' }, { status: 409 })
   }
 
-  const evento = reserva.events as unknown as { starts_at: string; reveal_at: string | null } | null
+  const evento = reserva.events as unknown as { starts_at: string; reveal_at: string | null; mas_uno?: boolean } | null
+  /**
+   * En una fecha +1 hay dos clases de reserva (Michael, 01-11):
+   *
+   *  · la de QUIEN RESERVA, que pagó los dos puestos: al cancelar se caen los
+   *    dos, con la regla de créditos de siempre por dos;
+   *  · la del ACOMPAÑANTE, que no pagó nada: no se le devuelve nada, y el
+   *    puesto vuelve a «sin usar» con un enlace nuevo para quien reservó.
+   */
+  const esAcompanante = !!reserva.mas_uno_de
+  const invitaAUnMasUno = !!evento?.mas_uno && !esAcompanante
   // Si ya se le conto la mesa a la gente: lo que decide si esta cancelacion
   // es rutina o algo que operacion tiene que mirar.
   const revelado = !!evento?.reveal_at && Date.now() >= new Date(evento.reveal_at).getTime()
@@ -238,6 +249,34 @@ export async function POST(request: Request) {
   // espera, si encaja con esa mesa.
   const suMesa = ((reserva.table_members ?? []) as unknown as { table_id: string }[])[0] ?? null
   await admin.from('table_members').delete().eq('booking_id', reserva.id)
+
+  // Quien reserva se lleva a su acompañante: los dos puestos eran suyos.
+  // El acompañante sale también de su mesa y de sus correos pendientes.
+  if (invitaAUnMasUno) {
+    const { data: viene } = await admin
+      .from('bookings')
+      .select('id, profile_id')
+      .eq('mas_uno_de', reserva.id)
+      .in('status', ['pending_payment', 'confirmed'])
+      .maybeSingle()
+    await soltarAcompanante(admin, reserva.id, 'cancelo-quien-invito')
+    if (viene) {
+      await admin.from('table_members').delete().eq('booking_id', viene.id)
+      try {
+        await sacarDeLaPropuesta(admin, reserva.event_id, viene.profile_id)
+      } catch (e) {
+        console.error('[cancelar] no se pudo sacar al acompañante de la propuesta', viene.id, e)
+      }
+      await admin
+        .from('scheduled_emails')
+        .delete()
+        .eq('event_id', reserva.event_id)
+        .eq('profile_id', viene.profile_id)
+        .in('kind', ['mesa_asignada', 'mesa_cambiada', 'recordatorio', 'juego'] as never[])
+        .is('sent_at', null)
+      await encolar({ perfil: viene.profile_id }, 'mas_uno_sin_puesto', { motivo: 'cancelo', deReserva: reserva.id }, { eventoId: reserva.event_id })
+    }
+  }
 
   /**
    * Y de la propuesta que todavía no se ha publicado, donde su silla no es una
@@ -291,7 +330,9 @@ export async function POST(request: Request) {
    * mesa se queda en cinco y el panel ya la enseña corta.
    */
   let relleno: Awaited<ReturnType<typeof rellenarHueco>> = null
-  if (suMesa) {
+  // En una fecha +1 no se rellena: la espera son dúos, y meter a una persona
+  // suelta en el hueco de otra rompería justo lo que la fecha promete.
+  if (suMesa && !evento?.mas_uno) {
     try {
       relleno = await rellenarHueco(reserva.event_id, suMesa.table_id)
     } catch (e) {
@@ -391,14 +432,17 @@ export async function POST(request: Request) {
 
   const enRevision =
     pagoDeLaReserva?.status === 'under_review' || pagoDeLaReserva?.status === 'awaiting_proof'
-  const creditoVuelveYa = conMargen && !enRevision
+  // Lo que costó, no uno: una reserva +1 son dos puestos. Y la del
+  // acompañante no costó nada, así que no hay nada que devolver.
+  const creditos = await creditosDeLaReserva(admin, reserva.id)
+  const creditoVuelveYa = conMargen && !enRevision && creditos > 0
 
   if (creditoVuelveYa) {
     // El crédito vuelve al libro mayor. No se "suma un crédito": se anota
     // una devolución, que es lo que permite auditar el saldo después.
     await admin.from('credit_ledger').insert({
       profile_id: user.id,
-      delta: 1,
+      delta: creditos,
       reason: 'refund',
       booking_id: reserva.id,
       note: 'Cancelación con más de 24 horas',
@@ -421,9 +465,25 @@ export async function POST(request: Request) {
   await encolar(
     { perfil: user.id },
     'cancelacion',
-    { conMargen, creditoDevuelto: creditoVuelveYa, creditoEnEspera: conMargen && enRevision },
+    {
+      conMargen,
+      creditoDevuelto: creditoVuelveYa,
+      creditoEnEspera: conMargen && enRevision && creditos > 0,
+      creditos,
+      sinCargo: esAcompanante,
+    },
     { eventoId: reserva.event_id },
   )
+
+  // Y quien le invitó se entera: su puesto vuelve a «sin usar» con un enlace
+  // nuevo, y tiene hasta el cierre para invitar a otra persona.
+  if (esAcompanante) {
+    try {
+      await seBajoElAcompanante(admin, reserva.id)
+    } catch (e) {
+      console.error('[cancelar] no se pudo reabrir el enlace del +1', reserva.id, e)
+    }
+  }
 
   /**
    * Y CUÁNTOS CRÉDITOS LE QUEDAN AHORA, con el abono ya hecho.
@@ -452,7 +512,7 @@ export async function POST(request: Request) {
     creditoDevuelto: creditoVuelveYa,
     // Para que la pantalla pueda decir la verdad en vez de prometer un
     // crédito que todavía no existe.
-    creditoEnEspera: conMargen && enRevision,
+    creditoEnEspera: conMargen && enRevision && creditos > 0,
     horasQueFaltaban: Math.max(0, Math.round(faltan)),
     creditos: saldoAhora?.balance ?? 0,
   })

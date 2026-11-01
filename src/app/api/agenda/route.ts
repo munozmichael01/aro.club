@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { CIUDAD_POR_DEFECTO } from '@/lib/ciudades'
 import { etiquetaDeIdioma } from '@/lib/idioma-mesa'
 import { NOMBRES_DE_FORMATO } from '@/lib/reglas'
+import { puestosPorFecha } from '@/lib/mas-uno'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
 
@@ -48,6 +49,8 @@ export type FechaDeAgenda = {
   edadMaxima: number | null
   idioma: string | null
   etiquetaIdioma: string | null
+  /** «+1 acompañante»: la marca junto al día, como «+45» (`AroReglas.MAS_UNO.marca`). */
+  masUno: boolean
 }
 
 /** Las fechas abiertas de la ciudad, ya listas para pintar. */
@@ -58,7 +61,7 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
   const { data: fechas } = await admin
     .from('events')
     .select(
-      'id, format, starts_at, booking_closes_at, reveal_at, created_at, city_slug, price_usd, seats_per_table, age_band_min, age_band_max, idioma',
+      'id, format, starts_at, booking_closes_at, reveal_at, created_at, city_slug, price_usd, seats_per_table, age_band_min, age_band_max, idioma, mas_uno',
     )
     .eq('status', 'open')
     // Nunca una de prueba, aunque alguien la deje en `open` por error.
@@ -78,13 +81,13 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
   const vacio = ['00000000-0000-0000-0000-000000000000']
 
   const [{ data: apuntados }, { data: sedes }, zonasHorarias] = await Promise.all([
-    admin.from('bookings').select('event_id').in('event_id', ids.length ? ids : vacio).eq('status', 'confirmed'),
+    admin.from('bookings').select('event_id, mas_uno_de').in('event_id', ids.length ? ids : vacio).eq('status', 'confirmed'),
     admin.from('event_venues').select('event_id, zone_slug, zones(name)').in('event_id', ids.length ? ids : vacio),
     zonasDeCiudades((fechas ?? []).map((f) => f.city_slug)),
   ])
 
-  const cuenta = new Map<string, number>()
-  for (const b of apuntados ?? []) cuenta.set(b.event_id, (cuenta.get(b.event_id) ?? 0) + 1)
+  // Puestos, no reservas: en una fecha +1 cada reserva son dos.
+  const cuenta = puestosPorFecha(apuntados ?? [], new Set((fechas ?? []).filter((f) => f.mas_uno).map((f) => f.id)))
 
   const zonasPorFecha = new Map<string, string[]>()
   for (const v of sedes ?? []) {
@@ -117,6 +120,7 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
     edadMaxima: f.age_band_max ?? null,
     idioma: f.idioma ?? null,
     etiquetaIdioma: etiquetaDeIdioma(f.idioma),
+    masUno: !!f.mas_uno,
   }))
 }
 

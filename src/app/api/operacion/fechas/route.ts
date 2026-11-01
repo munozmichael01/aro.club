@@ -216,6 +216,13 @@ const cuerpo = z.object({
    * tres puertas.
    */
   idioma: z.enum(['en', 'pt', 'fr', 'it']).nullable().optional(),
+  /**
+   * «+1 acompañante» (Michael, 01-11): toda la mesa llega de dos en dos.
+   * La reserva son dos puestos: dos créditos y el doble del precio, que se
+   * guardan en la fecha para que reservar, pagar y canjear un cupón cobren
+   * lo que toca sin saber nada del +1. `precioUsd` sigue siendo por puesto.
+   */
+  masUno: z.boolean().default(false),
   // Dónde puede caer. El local es OPCIONAL aquí a propósito.
   //
   // Elegirlo al abrir es elegirlo a ciegas: la decisión buena depende de
@@ -262,7 +269,7 @@ export async function GET() {
 
   const { data: eventos } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug, es_prueba, age_band_min, age_band_max, idioma')
+    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug, es_prueba, age_band_min, age_band_max, idioma, mas_uno')
     .in('status', ['draft', 'open', 'locked', 'matched'])
     .order('starts_at', { ascending: true })
 
@@ -390,6 +397,9 @@ export async function GET() {
       // esquema inicial, sin cablear: `age_band_min` / `age_band_max`.
       edadMinima: e.age_band_min ?? null,
       edadMaxima: e.age_band_max ?? null,
+      // «+1 acompañante»: la mesa llega de dos en dos y `precioUsd` es el de
+      // los dos puestos.
+      masUno: !!(e as { mas_uno?: boolean }).mas_uno,
       /**
        * Y en qué idioma se habla, si no es español.
        *
@@ -656,7 +666,7 @@ export async function POST(request: Request) {
    */
   const { data: mismasDelDia } = await admin
     .from('events')
-    .select('id, age_band_min, age_band_max, idioma')
+    .select('id, age_band_min, age_band_max, idioma, mas_uno')
     .eq('city_slug', d.ciudad)
     .eq('format', d.formato)
     .neq('status', 'cancelled')
@@ -674,7 +684,9 @@ export async function POST(request: Request) {
    * Sin esto, la cena «Dinner in English» del sábado 24 no se puede abrir
    * desde el panel: comparte Chacao con la que ya existe.
    */
-  const nuevaSegmenta = d.edadMinima != null || d.edadMaxima != null || !!d.idioma
+  // Y una fecha +1 tampoco le quita gente a la de al lado: es otro público,
+  // gente que no sale sola (Michael, 01-11).
+  const nuevaSegmenta = d.edadMinima != null || d.edadMaxima != null || !!d.idioma || d.masUno
 
   /**
    * NI CUANDO SON DE OTRA ZONA (18-10).
@@ -708,7 +720,7 @@ export async function POST(request: Request) {
   const zonasNuevas = new Set(d.zonas.map((z) => z.zona))
 
   const choca = (mismasDelDia ?? []).some((e) => {
-    if (nuevaSegmenta || e.age_band_min != null || e.age_band_max != null || e.idioma) return false
+    if (nuevaSegmenta || e.age_band_min != null || e.age_band_max != null || e.idioma || (e as { mas_uno?: boolean }).mas_uno) return false
     const suyas = zonasPorEvento.get(e.id) ?? new Set<string>()
     return [...suyas].some((z) => zonasNuevas.has(z))
   })
@@ -746,6 +758,12 @@ export async function POST(request: Request) {
     }
   }
 
+  // De dos en dos: una mesa con número impar de sillas dejaría a alguien
+  // sin su acompañante.
+  if (d.masUno && d.porMesa % 2 !== 0) {
+    return NextResponse.json({ error: 'Una fecha +1 va de dos en dos: la mesa tiene que ser par.' }, { status: 400 })
+  }
+
   const { data: evento, error } = await admin
     .from('events')
     .insert({
@@ -754,7 +772,9 @@ export async function POST(request: Request) {
       booking_closes_at: cierra.toISOString(),
       reveal_at: revela.toISOString(),
       city_slug: d.ciudad,
-      price_usd: d.precioUsd,
+      price_usd: d.masUno ? d.precioUsd * 2 : d.precioUsd,
+      credit_cost: d.masUno ? 2 : 1,
+      mas_uno: d.masUno,
       seats_per_table: d.porMesa,
       activity: d.actividad ?? null,
       age_band_min: d.edadMinima ?? null,
@@ -801,7 +821,13 @@ export async function POST(request: Request) {
   })
 
   // --- el aviso, a quien le sirva ---------------------------------------
-  const avisados = d.avisar ? await avisarDeLaApertura(evento.id, d.zonas.map((z) => z.zona), d.dia) : 0
+  /**
+   * Una fecha +1 NO se avisa sola al abrirla: el «abrimos fecha en tu zona»
+   * cuenta una cena para ir solo, y decirle eso a quien no sabe que esta va
+   * de dos en dos es contarle otra cosa. Su aviso es una decisión de Michael
+   * y sale aparte, con su propio texto.
+   */
+  const avisados = d.avisar && !d.masUno ? await avisarDeLaApertura(evento.id, d.zonas.map((z) => z.zona), d.dia) : 0
 
   return NextResponse.json({
     estado: 'abierta',

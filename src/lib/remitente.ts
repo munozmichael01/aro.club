@@ -83,6 +83,13 @@ const PLANTILLA: Partial<Record<Correo, string>> = {
   contacto_coincidencia: '34-contacto-coincidencia.html',
   contacto_cruzado: '35-contacto-cruzado.html',
   contacto_sin_cruce: '36-contacto-sin-cruce.html',
+  // Los cinco avisos del +1 comparten plantilla: el texto entero viene de
+  // `AroReglas.MAS_UNO.correos`, que es también el de la push.
+  mas_uno_recordatorio: '37-mas-uno.html',
+  mas_uno_confirmado: '37-mas-uno.html',
+  mas_uno_se_bajo: '37-mas-uno.html',
+  mas_uno_cancelada: '37-mas-uno.html',
+  mas_uno_sin_puesto: '37-mas-uno.html',
 }
 
 // Las plantillas se leen del disco una vez y se quedan: son quince ficheros

@@ -96,6 +96,9 @@ export async function rellenarHueco(
   if (enLaMesa.size >= porMesa) return null
 
   const pool = await construirPool(admin, eventoId)
+  // En una fecha +1 la espera son dúos: una persona suelta en el hueco de
+  // otra rompería la mesa que la fecha promete. Se queda corta y se dice.
+  if (pool.masUno) return null
   const quedan = pool.personas.filter((p) => enLaMesa.has(p.profileId))
   const espera = pool.personas.filter((p) => !conSitio.has(p.profileId))
 

@@ -99,7 +99,7 @@ export async function GET(request: Request) {
   const tipo = DENTRO.tarjetaDe(plan.formato)
   if (!tipo) return NextResponse.json({ error: 'Este plan no tiene tarjetas.' }, { status: 404 })
   // La 4 es entera el código: sin código no se ofrece, y tampoco se pinta.
-  if (!DENTRO.variantes(!!codigo, plan.formato).includes(v)) return NextResponse.json({ error: 'Esa tarjeta no existe.' }, { status: 404 })
+  if (!DENTRO.variantes(!!codigo, plan.formato, !!plan.masUno).includes(v)) return NextResponse.json({ error: 'Esa tarjeta no existe.' }, { status: 404 })
   const m = await cargarMedidas()
   const dibujo = tipo === 'historia'
     ? <Tarjeta v={v} h={DENTRO.historia(plan, codigo) as Historia} m={m} />

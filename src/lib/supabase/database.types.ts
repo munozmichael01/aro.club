@@ -216,6 +216,7 @@ export type Database = {
           held_until: string | null
           hold_until: string | null
           id: string
+          mas_uno_de: string | null
           movida_at: string | null
           movida_de: string | null
           movida_por: string | null
@@ -237,6 +238,7 @@ export type Database = {
           held_until?: string | null
           hold_until?: string | null
           id?: string
+          mas_uno_de?: string | null
           movida_at?: string | null
           movida_de?: string | null
           movida_por?: string | null
@@ -258,6 +260,7 @@ export type Database = {
           held_until?: string | null
           hold_until?: string | null
           id?: string
+          mas_uno_de?: string | null
           movida_at?: string | null
           movida_de?: string | null
           movida_por?: string | null
@@ -315,6 +318,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_matching_signal"
             referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "bookings_mas_uno_de_fkey"
+            columns: ["mas_uno_de"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_mas_uno_de_fkey"
+            columns: ["mas_uno_de"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["booking_id"]
           },
           {
             foreignKeyName: "bookings_movida_por_fkey"
@@ -1216,6 +1233,7 @@ export type Database = {
           grabacion_requerida: boolean
           id: string
           idioma: string | null
+          mas_uno: boolean
           max_seats: number | null
           min_tables: number
           price_usd: number | null
@@ -1244,6 +1262,7 @@ export type Database = {
           grabacion_requerida?: boolean
           id?: string
           idioma?: string | null
+          mas_uno?: boolean
           max_seats?: number | null
           min_tables?: number
           price_usd?: number | null
@@ -1272,6 +1291,7 @@ export type Database = {
           grabacion_requerida?: boolean
           id?: string
           idioma?: string | null
+          mas_uno?: boolean
           max_seats?: number | null
           min_tables?: number
           price_usd?: number | null
@@ -1686,6 +1706,133 @@ export type Database = {
             columns: ["table_id"]
             isOneToOne: false
             referencedRelation: "dinner_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mas_uno_candidatos: {
+        Row: {
+          invitacion_id: string
+          profile_id: string
+          unido_en: string
+        }
+        Insert: {
+          invitacion_id: string
+          profile_id: string
+          unido_en?: string
+        }
+        Update: {
+          invitacion_id?: string
+          profile_id?: string
+          unido_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mas_uno_candidatos_invitacion_id_fkey"
+            columns: ["invitacion_id"]
+            isOneToOne: false
+            referencedRelation: "mas_uno_invitaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mas_uno_candidatos_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mas_uno_candidatos_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "mas_uno_candidatos_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "mas_uno_candidatos_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mas_uno_invitaciones: {
+        Row: {
+          anulada_en: string | null
+          booking_id: string
+          creada_en: string
+          id: string
+          token: string
+          usada_en: string | null
+          usada_por: string | null
+        }
+        Insert: {
+          anulada_en?: string | null
+          booking_id: string
+          creada_en?: string
+          id?: string
+          token: string
+          usada_en?: string | null
+          usada_por?: string | null
+        }
+        Update: {
+          anulada_en?: string | null
+          booking_id?: string
+          creada_en?: string
+          id?: string
+          token?: string
+          usada_en?: string | null
+          usada_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mas_uno_invitaciones_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mas_uno_invitaciones_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["booking_id"]
+          },
+          {
+            foreignKeyName: "mas_uno_invitaciones_usada_por_fkey"
+            columns: ["usada_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mas_uno_invitaciones_usada_por_fkey"
+            columns: ["usada_por"]
+            isOneToOne: false
+            referencedRelation: "v_cola_verificacion"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "mas_uno_invitaciones_usada_por_fkey"
+            columns: ["usada_por"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "mas_uno_invitaciones_usada_por_fkey"
+            columns: ["usada_por"]
+            isOneToOne: false
+            referencedRelation: "v_verified_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -4151,6 +4298,7 @@ export type Database = {
           interests: string[] | null
           languages: string[] | null
           life_stage: string | null
+          mas_uno_de: string | null
           profile_id: string | null
           romantic_openness: string | null
           rootedness: Database["public"]["Enums"]["rootedness_t"] | null
@@ -4178,6 +4326,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_matching_signal"
             referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "bookings_mas_uno_de_fkey"
+            columns: ["mas_uno_de"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_mas_uno_de_fkey"
+            columns: ["mas_uno_de"]
+            isOneToOne: false
+            referencedRelation: "v_matching_pool"
+            referencedColumns: ["booking_id"]
           },
         ]
       }
@@ -4410,6 +4572,11 @@ export type Database = {
         | "contacto_coincidencia"
         | "contacto_cruzado"
         | "contacto_sin_cruce"
+        | "mas_uno_recordatorio"
+        | "mas_uno_confirmado"
+        | "mas_uno_se_bajo"
+        | "mas_uno_cancelada"
+        | "mas_uno_sin_puesto"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -4667,6 +4834,11 @@ export const Constants = {
         "contacto_coincidencia",
         "contacto_cruzado",
         "contacto_sin_cruce",
+        "mas_uno_recordatorio",
+        "mas_uno_confirmado",
+        "mas_uno_se_bajo",
+        "mas_uno_cancelada",
+        "mas_uno_sin_puesto",
       ],
       event_format_t: [
         "dinner",

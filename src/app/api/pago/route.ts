@@ -12,6 +12,7 @@ import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
 import { datosDePago } from '@/lib/datos-de-pago'
 import { PRECIO_USD } from '@/lib/reglas'
 import { hablaElIdioma, nombreDeIdioma, noCabePorIdioma, pideIdioma } from '@/lib/idioma'
+import { faltanCondiciones } from '@/lib/mas-uno'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
@@ -58,6 +59,11 @@ const cuerpo = z.object({
    */
   permiteGrabacion: z.boolean().optional(),
   /**
+   * La casilla del aviso de una fecha +1 («pagas los dos puestos…»). Sin
+   * ella no se aparta puesto en esa fecha (Michael, 01-11).
+   */
+  aceptaCondiciones: z.boolean().optional(),
+  /**
    * El código de descuento, si lo aplicó en la pantalla.
    *
    * Viene el CÓDIGO y nunca el importe con el descuento ya hecho: si valiera
@@ -102,7 +108,7 @@ export async function GET(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, price_usd, booking_closes_at, zone_slug, reveal_at, city_slug, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma')
+    .select('id, starts_at, price_usd, booking_closes_at, zone_slug, reveal_at, city_slug, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma, mas_uno')
     .eq('id', eventoId ?? '')
     .maybeSingle()
 
@@ -232,6 +238,9 @@ export async function GET(request: Request) {
       revelaEn: evento.reveal_at,
       zonaHoraria: await zonaDeCiudad(evento.city_slug),
       zona: nombreZona,
+      // Fecha +1: el precio ya es el de los dos puestos y antes de pagar va
+      // el aviso con casilla (`AroReglas.MAS_UNO.aviso`).
+      masUno: !!(evento as { mas_uno?: boolean }).mas_uno,
     },
     montoUsd: usd,
     // El precio sin descontar, para la fila del recibo. Igual que `montoUsd`
@@ -428,7 +437,7 @@ export async function POST(request: Request) {
 
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, price_usd, booking_closes_at, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma')
+    .select('id, starts_at, price_usd, booking_closes_at, age_band_min, age_band_max, grabacion, grabacion_requerida, idioma, mas_uno')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -450,6 +459,11 @@ export async function POST(request: Request) {
       },
       { status: 409 },
     )
+  }
+
+  {
+    const sinCondiciones = faltanCondiciones(evento as { mas_uno?: boolean }, parsed.data.aceptaCondiciones)
+    if (sinCondiciones) return NextResponse.json(sinCondiciones, { status: 409 })
   }
 
   /**

@@ -7,6 +7,7 @@ import { anotarCanje, cuponParaPagar, normalizarCodigo, precioConDescuento } fro
 import { encolar } from '@/lib/correos'
 import { PRECIO_USD } from '@/lib/reglas'
 import { hablaElIdioma, noCabePorIdioma, pideIdioma } from '@/lib/idioma'
+import { faltanCondiciones } from '@/lib/mas-uno'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { declararZonasAlReservar } from '@/lib/zonas-declaradas'
@@ -58,6 +59,11 @@ const cuerpo = z.object({
    */
   permiteGrabacion: z.boolean().optional(),
   /**
+   * La casilla del aviso de una fecha +1 («pagas los dos puestos…»). Sin
+   * ella no se aparta puesto en esa fecha (Michael, 01-11).
+   */
+  aceptaCondiciones: z.boolean().optional(),
+  /**
    * Qué respuestas entiende quien llama. Hoy solo `descuento`.
    *
    * Es lo que impide que un código parcial se lea como «estás dentro» en una
@@ -91,7 +97,7 @@ export async function POST(request: Request) {
   // --- la fecha ---------------------------------------------------------
   const { data: evento } = await admin
     .from('events')
-    .select('id, starts_at, booking_closes_at, status, credit_cost, price_usd, grabacion, grabacion_requerida, idioma')
+    .select('id, starts_at, booking_closes_at, status, credit_cost, price_usd, grabacion, grabacion_requerida, idioma, mas_uno')
     .eq('id', parsed.data.eventoId)
     .maybeSingle()
 
@@ -257,6 +263,11 @@ export async function POST(request: Request) {
       },
       { status: 409 },
     )
+  }
+
+  {
+    const sinCondiciones = faltanCondiciones(evento as { mas_uno?: boolean }, parsed.data.aceptaCondiciones)
+    if (sinCondiciones) return NextResponse.json(sinCondiciones, { status: 409 })
   }
 
   // --- el puesto, primero -----------------------------------------------

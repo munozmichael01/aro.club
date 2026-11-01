@@ -35,6 +35,10 @@
     {
       "path": "/api/cron/contacto",
       "schedule": "20 * * * *"
+    },
+    {
+      "path": "/api/cron/mas-uno",
+      "schedule": "5,35 * * * *"
     }
   ]
 }

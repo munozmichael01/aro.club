@@ -13,6 +13,11 @@
  *   node scripts/abrir-fechas.mjs --dias=2026-11-05,2026-11-06 aplicar
  *   node scripts/abrir-fechas.mjs --hora=20:00 --precio=12 aplicar
  *   node scripts/abrir-fechas.mjs --formato=drinks --local="Vista Bar" aplicar
+ *   node scripts/abrir-fechas.mjs --dias=2026-11-07 --mas-uno --planes="todos:chacao,palos-grandes" aplicar
+ *
+ * `--mas-uno` abre una fecha «+1 acompañante» (Michael, 01-11): la reserva
+ * son dos puestos, así que se guardan dos créditos y el doble de `--precio`,
+ * que sigue siendo por puesto. La mesa tiene que ser par.
  *
  * Por defecto abre, para cada día, DOS cenas: una de hasta 44 en Chacao y
  * Los Palos Grandes y otra de +45 en Los Naranjos y El Hatillo, que es lo
@@ -63,6 +68,11 @@ const [horaN, minN] = bandera('hora', '19:00').split(':').map(Number)
 const precio = Number(bandera('precio', '10'))
 const porMesa = Number(bandera('mesa', '6'))
 const formato = bandera('formato', 'dinner')
+const masUno = args.includes('--mas-uno')
+if (masUno && porMesa % 2 !== 0) {
+  console.log('Una fecha +1 va de dos en dos: la mesa tiene que ser par.')
+  process.exit(1)
+}
 /**
  * El local, por su nombre, si ya se sabe.
  *
@@ -139,7 +149,7 @@ for (const dia of dias) {
       continue
     }
 
-    console.log(car(empieza.toISOString()), '·', formato.padEnd(7), '·', plan.etiqueta.padEnd(6),
+    console.log(car(empieza.toISOString()), '·', formato.padEnd(7), '·', (masUno ? '+1 ' : '') + plan.etiqueta.padEnd(6),
       '· cierra', car(cierra.toISOString()), '· revela', car(revela.toISOString()),
       '·', plan.zonas.join(', '))
 
@@ -151,7 +161,9 @@ for (const dia of dias) {
       booking_closes_at: cierra.toISOString(),
       reveal_at: revela.toISOString(),
       city_slug: 'caracas',
-      price_usd: precio,
+      price_usd: masUno ? precio * 2 : precio,
+      credit_cost: masUno ? 2 : 1,
+      mas_uno: masUno,
       seats_per_table: porMesa,
       age_band_min: plan.edadMinima,
       age_band_max: plan.edadMaxima,
@@ -174,7 +186,7 @@ for (const dia of dias) {
 
     await admin.from('ops_audit_log').insert({
       actor_id: null, action: 'fecha_abierta', entity: 'evento', entity_id: evento.id,
-      payload: { aMano: 'scripts/abrir-fechas.mjs', dia, zonas: plan.zonas, porMesa, precioUsd: precio },
+      payload: { aMano: 'scripts/abrir-fechas.mjs', dia, zonas: plan.zonas, porMesa, precioUsd: masUno ? precio * 2 : precio, masUno },
     })
 
     abiertas.push({ id: evento.id, dia, zonas: plan.zonas })

@@ -8,6 +8,7 @@ import { respuestasDePerfil, situacionDePerfil } from '@/lib/embudo'
 import { VERSION_LEGAL } from '@/lib/legal'
 import { bloqueDeReembolso } from '@/lib/reembolso'
 import { etiquetaDeIdioma } from '@/lib/idioma-mesa'
+import { masUnoDeLaReserva, puestosPorFecha } from '@/lib/mas-uno'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonasQueSeAnaden } from '@/lib/zonas-declaradas'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
@@ -256,7 +257,7 @@ export async function GET() {
     ? await admin
         .from('events')
         .select(
-          'id, starts_at, booking_closes_at, reveal_at, city_slug, restaurants!events_restaurant_id_fkey(name, zone_slug)',
+          'id, starts_at, booking_closes_at, reveal_at, city_slug, mas_uno, restaurants!events_restaurant_id_fkey(name, zone_slug)',
         )
         .eq('es_prueba', false)
         .eq('city_slug', ciudad.slug)
@@ -270,12 +271,15 @@ export async function GET() {
   let apuntadosProxima = 0
   let zonaProxima: string | null = null
   if (proxima) {
+    // Puestos, no reservas: en una fecha +1 cada reserva son dos y la del
+    // acompañante no suma otra vez.
     const { count } = await admin
       .from('bookings')
       .select('*', { count: 'exact', head: true })
       .eq('event_id', proxima.id)
       .eq('status', 'confirmed')
-    apuntadosProxima = count ?? 0
+      .is('mas_uno_de', null)
+    apuntadosProxima = (count ?? 0) * ((proxima as { mas_uno?: boolean }).mas_uno ? 2 : 1)
 
     const slug = (proxima.restaurants as unknown as { zone_slug: string | null } | null)?.zone_slug
     if (slug) {
@@ -290,7 +294,7 @@ export async function GET() {
   // gente.
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, reveal_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, seats_per_table, created_at, grabacion, grabacion_requerida, idioma')
+    .select('id, format, starts_at, booking_closes_at, reveal_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, seats_per_table, created_at, grabacion, grabacion_requerida, idioma, mas_uno')
     // Las de prueba no son de nadie más que de quien las creó.
     .eq('es_prueba', false)
     // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
@@ -375,14 +379,15 @@ export async function GET() {
 
   const { data: apuntadosPorFecha } = await admin
     .from('bookings')
-    .select('event_id')
+    .select('event_id, mas_uno_de')
     .in('event_id', idsFechas.length ? idsFechas : ['00000000-0000-0000-0000-000000000000'])
     .eq('status', 'confirmed')
 
-  const cuentaPorFecha = new Map<string, number>()
-  for (const b of apuntadosPorFecha ?? []) {
-    cuentaPorFecha.set(b.event_id, (cuentaPorFecha.get(b.event_id) ?? 0) + 1)
-  }
+  // Puestos, no reservas: en una fecha +1 cada reserva son dos.
+  const cuentaPorFecha = puestosPorFecha(
+    apuntadosPorFecha ?? [],
+    new Set(fechasVisibles.filter((f) => (f as { mas_uno?: boolean }).mas_uno).map((f) => f.id)),
+  )
 
   // Las zonas de cada fecha, para decir dónde es sin prometer un sitio.
   const { data: sedesFechas } = await admin
@@ -677,6 +682,9 @@ export async function GET() {
         return deLaFecha.filter((x) => nuevas.includes(x.slug)).map((x) => x.nombre)
       })(),
       apuntados: cuentaPorFecha.get(f.id) ?? 0,
+      // «+1 acompañante»: la marca junto al día, como «+45», y la reserva son
+      // dos puestos (`creditos` y `precioUsd` ya son los de los dos).
+      masUno: !!(f as { mas_uno?: boolean }).mas_uno,
       // Cerrada: se ve, se cuenta, y no se puede apuntar nadie. No decimos
       // «agotada» porque no lo está: aquí no hay cupo, las mesas se arman con
       // quien haya. Decir agotada sería lo primero que contamos que no es
@@ -784,6 +792,9 @@ export async function GET() {
           revelado,
           restaurante: revelado ? (evento?.restaurants?.name ?? null) : null,
           direccion: revelado ? (evento?.restaurants?.address ?? null) : null,
+          // Fecha +1 (Michael, 01-11): el estado del acompañante para quien
+          // reserva, y con quién viene para el acompañante. Nulos si no.
+          ...(await masUnoDeLaReserva(admin, reserva.id)),
         }
       : null,
   })

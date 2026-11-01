@@ -2524,9 +2524,13 @@
        * / una copa / un café para ti»): sin él, no sale. Sin `formato`, las de
        * cena, como antes.
        */
-      variantes: function (conCodigo, formato) {
-        if (formato && api.DENTRO.tarjetaDe(formato) === 'plan') return conCodigo ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 5, 6]
-        return conCodigo ? [1, 2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 5, 6, 7, 8]
+      variantes: function (conCodigo, formato, masUno) {
+        // En una fecha +1 la 4 no sale nunca: «Hay una silla para ti» con un
+        // código se confunde con la invitación al acompañante, que es otra
+        // cosa y va primero (brief del +1, 01-11).
+        var con = conCodigo && !masUno
+        if (formato && api.DENTRO.tarjetaDe(formato) === 'plan') return con ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 5, 6]
+        return con ? [1, 2, 3, 4, 5, 6, 7, 8] : [1, 2, 3, 5, 6, 7, 8]
       },
 
       /** «Chacao», «Chacao o Los Palos Grandes», «Chacao, Altamira o Los Palos Grandes». */
@@ -2657,6 +2661,155 @@
           frase5: diaAntes ? 'Un día antes, a esta hora, me dicen en qué ' + sitio + ' es y con quién.' : 'A esta hora me dicen en qué ' + sitio + ' es y con quién.',
           pregunta6: cafe ? '¿Dónde?' : '¿Qué bar?',
         }
+      },
+    },
+
+    /**
+     * «+1 acompañante»: fechas donde toda la mesa llega de dos en dos.
+     *
+     * Michael, 01-11 (app-mobile/Design/BRIEF-mas-uno-acompanante.md). Quien
+     * reserva paga los dos puestos y recibe un enlace; su acompañante se da
+     * de alta y se verifica como cualquiera, y el puesto es de la primera
+     * persona cuya verificación se aprueba. Si al cierre no hay nadie
+     * aprobado, se cancelan los dos puestos y se abonan dos créditos.
+     *
+     * LOS TEXTOS SON BORRADOR hasta que Michael los apruebe: ninguno llega a
+     * nadie antes de que exista la primera fecha +1.
+     */
+    MAS_UNO: {
+      nombre: '+1 acompañante',
+      /** La marca junto al día, como «+45». */
+      marca: '+1 ACOMPAÑANTE',
+      /** Cuántos puestos es una reserva. El precio y los créditos salen de la fecha. */
+      puestos: 2,
+
+      /**
+       * «el viernes 6 a medianoche», «el viernes 6 a las 5:00 p.m.»: el plazo
+       * del acompañante, que es el cierre de la fecha. Un cierre a las 00:00
+       * se vive la noche anterior, así que se dice de esa noche.
+       */
+      plazo: function (cierreIso, zona) {
+        var t = Date.parse(cierreIso)
+        if (!isFinite(t)) return ''
+        var p = api.partesDe(cierreIso, zona)
+        if (p && p.horas === 0 && p.minutos === 0) {
+          var antes = new Date(t - 60000).toISOString()
+          var q = api.partesDe(antes, zona)
+          return q ? 'el ' + q.dia + ' ' + q.numero + ' a medianoche' : ''
+        }
+        return p ? 'el ' + p.dia + ' ' + p.numero + ' a las ' + p.hora : ''
+      },
+
+      /** El aviso con casilla antes de pagar. Sin marcarla no se paga. */
+      aviso: {
+        titulo: 'Antes de pagar',
+        lineas: function (plazo) {
+          return [
+            'Pagas los dos puestos: el tuyo y el de tu acompañante.',
+            'Tu acompañante tiene que registrarse y verificarse antes ' + (plazo ? 'del ' + plazo.replace(/^el /, '') : 'del cierre') + '.',
+            'Si no lo hace, cancelamos los dos puestos y te devolvemos dos créditos. Créditos, no dinero.',
+          ]
+        },
+        casilla: 'Entendido',
+        falta: 'Marca «Entendido» para seguir.',
+      },
+
+      /** Lo que acompaña al enlace cuando se comparte. */
+      mensaje: function (inv) {
+        return (inv.nombre ? inv.nombre + ' te invita' : 'Te invitan') + ' a una cena de Aro Club, con cuatro personas que ninguno de los dos conoce. '
+          + 'Tu puesto ya está pagado. Regístrate y verifícate antes ' + (inv.plazo ? 'del ' + inv.plazo.replace(/^el /, '') : 'del cierre') + ': ' + inv.enlace
+      },
+
+      /** La tarjeta «Tu +1 acompañante» de Mi mesa, por estado. */
+      tarjeta: {
+        titulo: 'Tu +1 acompañante',
+        invitar: 'Invitar a mi acompañante',
+        compartir: 'Compartir enlace',
+        copiar: 'Copiar',
+        copiado: 'Copiado',
+        'sin-usar': function (plazo) { return 'Comparte el enlace con quien viene contigo. Tiene hasta ' + plazo + ' para registrarse y verificarse.' },
+        registrado: function (nombre) { return (nombre || 'Alguien') + ' se registró con tu enlace. Falta que se verifique.' },
+        confirmado: function (nombre) { return (nombre || 'Tu acompañante') + ' viene contigo.' },
+        cancelada: 'Tu acompañante no se verificó a tiempo. Cancelamos los dos puestos y te devolvimos dos créditos.',
+        cambiar: 'Cambiar de acompañante',
+        cambiarConfirma: 'El enlace de ahora deja de valer y te damos uno nuevo. Si alguien ya se registró con él, queda fuera de esta cena.',
+      },
+
+      /** Lo que ve quien abre el enlace. */
+      invitado: {
+        titulo: function (nombre) { return (nombre || 'Alguien') + ' te invita a Aro Club' },
+        noPagas: 'Tu puesto ya está pagado.',
+        falta: function (plazo) { return 'Para sentarte, regístrate y verifícate antes ' + (plazo ? 'del ' + plazo.replace(/^el /, '') : 'del cierre') + '.' },
+        alta: 'Crear mi cuenta',
+        entrar: 'Ya tengo cuenta',
+        aceptar: 'Aceptar la invitación',
+        aceptada: 'Listo. En cuanto se apruebe tu verificación, tu puesto queda confirmado.',
+        usada: 'Esta invitación ya se usó.',
+        anulada: 'Esta invitación ya no vale.',
+        cerrada: 'Esta fecha ya cerró.',
+        // Sin culpas, y con algo que hacer: la agenda.
+        seguir: 'Mira las próximas fechas en la agenda.',
+        propia: 'Esta invitación es tuya: compártela con quien venga contigo.',
+      },
+
+      /** El acompañante, en su Mi mesa. */
+      vienesCon: function (nombre) { return 'Vienes con ' + (nombre || 'quien te invitó') },
+
+      /**
+       * Los cinco avisos, correo y push con el mismo texto. `d`: { nombre,
+       * invita, plazo, dia, estado, enRevision, motivo }.
+       */
+      correos: {
+        mas_uno_recordatorio: function (d) {
+          return {
+            asunto: 'Tu +1 todavía no se ha verificado',
+            sello: 'TU +1 ACOMPAÑANTE',
+            bajada: (d.estado === 'registrado'
+              ? (d.nombre || 'Tu acompañante') + ' se registró con tu enlace y falta que se verifique. Tiene hasta ' + d.plazo + '.'
+              : 'Nadie ha usado tu enlace todavía. Compártelo: tu acompañante tiene hasta ' + d.plazo + ' para registrarse y verificarse.')
+              + ' Si no lo hace, cancelamos los dos puestos y te devolvemos dos créditos.',
+            boton: 'Ver mi +1', ruta: '/mesa',
+            push: { titulo: 'Tu +1 todavía no se ha verificado', cuerpo: 'Tiene hasta ' + d.plazo + '. Si no, se cancelan los dos puestos.' },
+          }
+        },
+        mas_uno_confirmado: function (d) {
+          return {
+            asunto: (d.nombre || 'Tu acompañante') + ' viene contigo',
+            sello: 'TU +1 ACOMPAÑANTE',
+            bajada: (d.nombre || 'Tu acompañante') + ' se verificó y su puesto quedó confirmado. El ' + d.dia + ' se sientan los dos con cuatro personas nuevas.',
+            boton: 'Ver mi mesa', ruta: '/mesa',
+            push: { titulo: (d.nombre || 'Tu acompañante') + ' viene contigo', cuerpo: 'Su puesto del ' + d.dia + ' quedó confirmado.' },
+          }
+        },
+        mas_uno_se_bajo: function (d) {
+          return {
+            asunto: 'Tu +1 canceló',
+            sello: 'TU +1 ACOMPAÑANTE',
+            bajada: (d.nombre || 'Tu acompañante') + ' canceló su puesto. El enlace de antes ya no vale: en Mi mesa tienes uno nuevo para invitar a otra persona antes ' + (d.plazo ? 'del ' + d.plazo.replace(/^el /, '') : 'del cierre') + '.',
+            boton: 'Invitar a otra persona', ruta: '/mesa',
+            push: { titulo: 'Tu +1 canceló', cuerpo: 'Tienes un enlace nuevo para invitar a otra persona.' },
+          }
+        },
+        mas_uno_cancelada: function (d) {
+          return {
+            asunto: 'Cancelamos tu +1 acompañante',
+            sello: 'FECHA +1 CANCELADA',
+            bajada: 'Tu acompañante no se verificó antes del cierre, así que cancelamos los dos puestos del ' + d.dia + '. '
+              + (d.enRevision ? 'Los dos créditos entran en cuanto cuadremos tu pago.' : 'Te devolvimos dos créditos: ya los tienes para la próxima fecha.'),
+            boton: 'Ver otras fechas', ruta: '/agenda',
+            push: { titulo: 'Cancelamos tu +1', cuerpo: 'Tu acompañante no se verificó a tiempo. Te devolvemos dos créditos.' },
+          }
+        },
+        mas_uno_sin_puesto: function (d) {
+          return {
+            asunto: 'Ya no tienes puesto el ' + d.dia,
+            sello: 'FECHA +1',
+            bajada: (d.invita || 'Quien te invitó') + (d.motivo === 'cambio' ? ' cambió de acompañante' : ' canceló la reserva')
+              + ', así que tu puesto del ' + d.dia + ' ya no está. Tu cuenta sigue lista para reservar cuando quieras.',
+            boton: 'Ver la agenda', ruta: '/agenda',
+            push: { titulo: 'Ya no tienes puesto el ' + d.dia, cuerpo: (d.invita || 'Quien te invitó') + (d.motivo === 'cambio' ? ' cambió de acompañante.' : ' canceló la reserva.') },
+          }
+        },
       },
     },
 
