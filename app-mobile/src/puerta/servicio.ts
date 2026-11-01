@@ -1,4 +1,5 @@
 import { SinSesion, type crearApi } from '../sesion/api'
+import { olvidarCodigo, paraElAlta } from '../sesion/traido'
 
 /**
  * Las llamadas del alta de la app. Las respuestas van con la sesión de
@@ -40,8 +41,12 @@ export function crearServicioPuerta(api: Api) {
       return { ok: true, datos: true }
     },
     /** `estado`: `creada`, `creada_sin_sesion` o `ya_existe` (un 200 también). */
-    crearCuenta: (correo: string, clave: string, porDefecto: string) =>
-      intentar<{ estado?: 'creada' | 'creada_sin_sesion' | 'ya_existe' }>(() => api.pedir('/cuenta', json({ correo, clave, origen: 'app' })), porDefecto),
+    // Con el código de quien la invitó y el +1, si llegó por un enlace (26485ff).
+    async crearCuenta(correo: string, clave: string, porDefecto: string) {
+      const r = await intentar<{ estado?: 'creada' | 'creada_sin_sesion' | 'ya_existe' }>(async () => api.pedir('/cuenta', json({ correo, clave, origen: 'app', ...(await paraElAlta()) })), porDefecto)
+      if (r.ok) await olvidarCodigo()
+      return r
+    },
     /** Las ciudades, de la tabla `cities` (agente de la web, 07-10-2026). */
     ciudades: () => intentar<{ ciudades: { slug: string; nombre: string; abierta: boolean }[] }>(() => api.pedir('/ciudades'), ''),
     /** Su ciudad, en el perfil. Con la sesión ya abierta, sea cual sea la puerta (correo, Apple o Google). */

@@ -1,4 +1,5 @@
 import type { crearApi } from './api'
+import { olvidarCodigo, paraElAlta } from './traido'
 
 /**
  * Lo que pasa DESPUÉS de entrar con Apple o Google: `POST /api/auth/nativo`,
@@ -51,7 +52,8 @@ export async function terminarEntrada(api: Api, almacen: Almacen, textoFallo: st
   await almacen.setItem(MARCA, String(Date.now())).catch(() => {})
   let r: Response
   try {
-    r = await api.pedir('/auth/nativo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    // El código de quien la invitó y el +1, si llegó por un enlace (26485ff).
+    r = await api.pedir('/auth/nativo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(await paraElAlta()) })
   } catch {
     // Sin red: la marca se queda, y al próximo arranque se reintenta.
     return { ok: false, error: textoFallo }
@@ -64,6 +66,7 @@ export async function terminarEntrada(api: Api, almacen: Almacen, textoFallo: st
   }
   if (r.ok && j?.paso) {
     await almacen.removeItem(MARCA).catch(() => {})
+    await olvidarCodigo()
     return { ok: true, datos: { paso: j.paso, otroCorreo: j.otroCorreo ?? null, relay: !!j.relay } }
   }
   // 401: la sesión no vale; no hay nada que reintentar con ella.

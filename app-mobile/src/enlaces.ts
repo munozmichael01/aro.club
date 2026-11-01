@@ -1,3 +1,5 @@
+import { deEnlace, guardar } from './sesion/traido'
+
 /**
  * Los enlaces de aro.club que abren la app (los de los correos).
  *
@@ -57,6 +59,12 @@ export function rutaDeEnlace(enlace: string): string {
     return enlace
   }
   if (url.protocol !== 'https:' || (url.hostname !== 'aro.club' && url.hostname !== 'www.aro.club')) return enlace
+  // `/i/<código>` y `/m/<token>`: se guardan para el alta y se sigue por el embudo.
+  const traido = deEnlace(url.pathname)
+  if (traido) {
+    guardar(traido).catch(() => undefined)
+    return '/'
+  }
   const ruta = RUTAS_DE_LA_WEB[url.pathname.replace(/\/+$/, '') || '/']
   if (!ruta) return '/'
   const q = new URLSearchParams()

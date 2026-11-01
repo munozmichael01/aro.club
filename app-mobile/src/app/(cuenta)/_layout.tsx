@@ -8,6 +8,7 @@ import { PuertaNormas } from '../../normas/PuertaNormas'
 import { ponerSenal } from '../../pasadas/senal'
 import { crearServicioPasadas } from '../../pasadas/servicio'
 import { api } from '../../sesion'
+import { aceptarMasUno } from '../../sesion/traido'
 
 /** El punto de Pasadas en la barra, desde que se entra a la cuenta, no solo al abrir Mi mesa. */
 const pasadas = crearServicioPasadas(api)
@@ -22,6 +23,8 @@ export default function Cuenta() {
   useEffect(() => {
     refrescarAvisos()
     mirarSenal()
+    // Si llegó por la invitación de un +1 y entró con una cuenta que ya tenía.
+    aceptarMasUno(api)
     const s = AppState.addEventListener('change', (e) => e === 'active' && mirarSenal())
     return () => s.remove()
   }, [])

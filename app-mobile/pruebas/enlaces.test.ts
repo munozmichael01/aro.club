@@ -46,3 +46,13 @@ test('app.json reclama exactamente las rutas que la app sabe abrir', () => {
   // Menos las que esperan la próxima build (PENDIENTES_DE_BUILD): solo iPhone de momento.
   assert.deepEqual(rutas, Object.keys(RUTAS_DE_LA_WEB).filter((r) => !PENDIENTES_DE_BUILD.includes(r)).sort())
 })
+
+test('/i/<código> y /m/<token>: se reconocen para guardarlos, y la app sigue por el embudo (01-11)', async () => {
+  const { deEnlace } = await import('../src/sesion/traido')
+  assert.deepEqual(deEnlace('/i/ANDREA7KQ'), { codigo: 'ANDREA7KQ' })
+  assert.deepEqual(deEnlace('/m/abcdefghij_KLMNOPQRS-tu'), { token: 'abcdefghij_KLMNOPQRS-tu' })
+  assert.equal(deEnlace('/m/corto'), null)
+  assert.equal(deEnlace('/i/../x'), null)
+  assert.equal(deEnlace('/mesa'), null)
+  assert.equal(rutaDeEnlace('https://aro.club/i/ANDREA7KQ'), '/')
+})
