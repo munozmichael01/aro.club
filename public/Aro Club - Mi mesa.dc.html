@@ -3146,7 +3146,12 @@ class Component extends DCLogic {
     const F = S.formSeguir;
     const legible = (t) => { const m = /^\+58(\d{3})(\d{3})(\d{4})$/.exec(t || ''); return m ? '+58 ' + m[1] + ' ' + m[2] + ' ' + m[3] : (t || ''); };
     const md = (sg && sg.misDatos) || {};
-    const mios = [legible(md.telefono), md.instagram ? '@' + md.instagram : '', md.tiktok ? '@' + md.tiktok : ''].filter(Boolean).map((v) => ({ v }));
+    const lista = (d) => [legible(d.telefono), d.instagram ? '@' + d.instagram : '', d.tiktok ? '@' + d.tiktok : ''].filter(Boolean).map((v) => ({ v }));
+    // Con una persona, lo que le diste A ELLA, congelado al confirmar: no lo
+    // último que guardaste para otra (agente de la app, 31-10). En el resumen
+    // de varias, lo que compartes de aquí en adelante.
+    const mios = lista((uno && p0 && p0.mios) || md);
+    const resumenMios = lista(md);
     const redesDe = (d) => [
       d && d.instagram ? { red: 'Instagram', usuario: '@' + d.instagram, enlace: C.enlaces.instagram(d.instagram), abrir: C.C.abrir } : null,
       d && d.tiktok ? { red: 'TikTok', usuario: '@' + d.tiktok, enlace: C.enlaces.tiktok(d.tiktok), abrir: C.C.abrir } : null,
@@ -3229,7 +3234,7 @@ class Component extends DCLogic {
           tambien: () => this.accionSeguir({ accion: 'compartir', con: [x.id], telefono: md.telefono, instagram: md.instagram || '', tiktok: md.tiktok || '' }),
         };
       }),
-      cLoQueCompartes: C.loQueCompartes, cResumen: mios.map((m) => m.v).join(' · '),
+      cLoQueCompartes: C.loQueCompartes, cResumen: resumenMios.map((m) => m.v).join(' · '),
       cPuedeCambiarM: personas.some((x) => x.estado === 'B'), cTextoCambiarCorto: C.cambiar,
     };
   }

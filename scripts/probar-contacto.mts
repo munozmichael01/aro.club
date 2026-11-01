@@ -128,6 +128,16 @@ try {
   ver('a Ana, UN correo con Beto y Cata a la vez', cruceAna.length === 1 && ((cruceAna[0].payload as { otras: string[] }).otras.length === 2), cruceAna)
   ver('a Beto y a Cata, uno cada una; a Dani, nada', cruces.length === 3 && !cruces.some((x) => x.profile_id === dani), cruces)
 
+  // EL HUECO del 31-10: Ana ya se cruzó con Beto; ahora cambia lo que
+  // comparte SOLO con Dani y añade TikTok. Beto no puede verlo.
+  ver('Ana añade TikTok solo para Dani', (await C.decidir(admin, ana, mesaId, { accion: 'compartir', con: [dani], telefono: '0412 555 0123', instagram: 'ana.prueba', tiktok: 'ana.tt' })) === null)
+  const deBeto = (await C.contactoDeMesa(admin, beto, mesaId))!.personas.find((p) => p.id === ana)!
+  ver('Beto sigue viendo de Ana lo que le dio a él, sin el TikTok', deBeto.suyos?.instagram === 'ana.prueba' && !deBeto.suyos?.tiktok, deBeto.suyos)
+  const anaConBeto = (await C.contactoDeMesa(admin, ana, mesaId))!.personas.find((p) => p.id === beto)!
+  ver('para Ana, con Beto «Tú le dejaste» sigue sin TikTok', !anaConBeto.mios?.tiktok, anaConBeto.mios)
+  const anaConDani = (await C.contactoDeMesa(admin, ana, mesaId))!.personas.find((p) => p.id === dani)!
+  ver('con Dani queda el TikTok, y Dani no ve nada antes del cruce', anaConDani.mios?.tiktok === 'ana.tt' && (await C.contactoDeMesa(admin, dani, mesaId))!.personas[0].suyos === null)
+
   await C.decidir(admin, dani, mesaId, { accion: 'no' })
   ver('para Ana, Dani sigue en B: no se entera de que dijo que no', (await estadoDe(ana, dani)) === 'B')
 

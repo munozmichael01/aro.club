@@ -43,9 +43,16 @@ type Coincidencia = {
   cerrada_en: string | null
   visto_a_en: string | null
   visto_b_en: string | null
+  /** Lo que cada lado dejó a la otra persona, congelado al confirmar. */
+  datos_a: DatosContacto | null
+  datos_b: DatosContacto | null
 }
 
-const COLUMNAS = 'id, table_id, persona_a, persona_b, creada_en, cierra_en, estado_a, estado_b, cruzada_en, cerrada_en, visto_a_en, visto_b_en'
+const COLUMNAS = 'id, table_id, persona_a, persona_b, creada_en, cierra_en, estado_a, estado_b, cruzada_en, cerrada_en, visto_a_en, visto_b_en, datos_a, datos_b'
+
+/** Lo que YO dejé a la otra persona de esta pareja, y lo que ella me dejó a mí. */
+const misDatosEn = (c: Coincidencia, yo: string) => (soyA(c, yo) ? c.datos_a : c.datos_b)
+const susDatosEn = (c: Coincidencia, yo: string) => (soyA(c, yo) ? c.datos_b : c.datos_a)
 
 const soyA = (c: Coincidencia, yo: string) => c.persona_a === yo
 const otraDe = (c: Coincidencia, yo: string) => (soyA(c, yo) ? c.persona_b : c.persona_a)
@@ -109,7 +116,7 @@ export async function crearCoincidencias(admin: Admin, mesaId: string): Promise<
     console.error('[contacto] no se crearon las coincidencias', mesaId, error)
     return []
   }
-  return (nuevas ?? []) as Coincidencia[]
+  return (nuevas ?? []) as unknown as Coincidencia[]
 }
 
 /**
@@ -146,7 +153,7 @@ export async function reflejarDesmarcas(admin: Admin, mesaId: string, yo: string
     .eq('table_id', mesaId)
     .or(`persona_a.eq.${yo},persona_b.eq.${yo}`)
   const ahora = Date.now()
-  for (const c of (data ?? []) as Coincidencia[]) {
+  for (const c of (data ?? []) as unknown as Coincidencia[]) {
     if (!abierta(c, ahora) || sigue.has(otraDe(c, yo))) continue
     await admin
       .from('contacto_coincidencias')
@@ -205,13 +212,14 @@ export async function contactoDeMesa(admin: Admin, yo: string, mesaId: string) {
     .eq('table_id', mesaId)
     .or(`persona_a.eq.${yo},persona_b.eq.${yo}`)
     .order('creada_en')
-  const lista = (data ?? []) as Coincidencia[]
+  const lista = (data ?? []) as unknown as Coincidencia[]
   const ahora = Date.now()
 
   const otras = lista.map((c) => otraDe(c, yo))
   const [nombres, datos, { data: perfil }, { data: mesa }] = await Promise.all([
     nombresDe(admin, otras),
-    datosDe(admin, mesaId, [yo, ...otras]),
+    // Solo lo MÍO: lo último que usé, para rellenar el formulario.
+    datosDe(admin, mesaId, [yo]),
     admin.from('profiles').select('phone_e164').eq('id', yo).maybeSingle(),
     admin
       .from('dinner_tables')
@@ -251,8 +259,14 @@ export async function contactoDeMesa(admin: Admin, yo: string, mesaId: string) {
         nombre: nombres.get(otra) ?? 'Alguien',
         estado,
         cierraEn: c.cierra_en,
-        // Solo con el cruce: antes, lo de la otra persona no sale de aquí.
-        suyos: estado === 'C' ? (datos.get(otra) ?? null) : null,
+        /**
+         * Lo que la otra persona me dio A MÍ, congelado cuando confirmó, y
+         * solo con el cruce. Nunca su fila de la cena en vivo: lo que añadió
+         * después para otra persona no es para mí (agente de la app, 31-10).
+         */
+        suyos: estado === 'C' ? susDatosEn(c, yo) : null,
+        /** Lo que yo le di a ESTA persona: «Lo que le vas a compartir», «Tú le dejaste». */
+        mios: misDatosEn(c, yo),
         nuevo: hayNuevoPara(c, yo),
       }
     }),
@@ -291,7 +305,7 @@ export async function decidir(admin: Admin, yo: string, mesaId: string, d: Decis
     .select(COLUMNAS)
     .eq('table_id', mesaId)
     .or(`persona_a.eq.${yo},persona_b.eq.${yo}`)
-  const mias = (data ?? []) as Coincidencia[]
+  const mias = (data ?? []) as unknown as Coincidencia[]
   const ahora = Date.now()
 
   if (d.accion === 'visto') {
@@ -341,7 +355,16 @@ export async function decidir(admin: Admin, yo: string, mesaId: string, d: Decis
     return { error: 'No pudimos guardarlo. Inténtalo otra vez.' }
   }
 
-  await poner(a, 'confirmado')
+  // Confirma y CONGELA lo que da, en cada pareja del formulario y solo en
+  // esas. Lo ya cruzado no está en `a` (solo hay abiertas), así que cambiar
+  // lo que comparto nunca le enseña nada nuevo a quien ya lo tiene.
+  const datos: DatosContacto = { telefono, instagram, tiktok }
+  for (const c of a) {
+    await admin
+      .from('contacto_coincidencias')
+      .update(soyA(c, yo) ? { estado_a: 'confirmado', datos_a: datos } : { estado_b: 'confirmado', datos_b: datos })
+      .eq('id', c.id)
+  }
   // Desmarcar a alguien en el panel de varias es su E: no se le dice.
   if (d.sin?.length) await poner(conOtra(d.sin), 'no')
 
@@ -368,7 +391,7 @@ async function cruzarLasQueToquen(admin: Admin, ids: string[]) {
     .eq('estado_b', 'confirmado')
     .is('cruzada_en', null)
   const porPersona = new Map<string, { mesa: string; otras: string[] }>()
-  for (const c of (data ?? []) as Coincidencia[]) {
+  for (const c of (data ?? []) as unknown as Coincidencia[]) {
     const { data: hecha } = await admin
       .from('contacto_coincidencias')
       .update({ cruzada_en: new Date().toISOString() })
@@ -441,7 +464,7 @@ export async function repasoDeContacto(admin: Admin, seco: boolean, soloMesa?: s
 
   let cerradas = 0
   let avisos = 0
-  for (const c of (vencidas ?? []) as Coincidencia[]) {
+  for (const c of (vencidas ?? []) as unknown as Coincidencia[]) {
     const quienes = [c.estado_a === 'confirmado' ? c.persona_a : null, c.estado_b === 'confirmado' ? c.persona_b : null].filter(
       (x): x is string => !!x,
     )
@@ -494,7 +517,7 @@ export async function contactoPorMesa(admin: Admin, yo: string) {
     .from('contacto_coincidencias')
     .select(COLUMNAS)
     .or(`persona_a.eq.${yo},persona_b.eq.${yo}`)
-  const lista = (data ?? []) as Coincidencia[]
+  const lista = (data ?? []) as unknown as Coincidencia[]
   const nombres = await nombresDe(admin, [...new Set(lista.map((c) => otraDe(c, yo)))])
   const ahora = Date.now()
   // Si en una cena hay varias novedades, la fila dice la que más importa:
@@ -594,9 +617,11 @@ export async function datosDeCorreo(
   // antes del 31-10, por si queda alguna fila en la cola con ella.
   const pedidas = Array.isArray(p.otras) ? (p.otras as string[]) : typeof p.otra === 'string' ? [p.otra] : []
   const cruzadas = d.personas.filter((x) => pedidas.includes(x.id) && x.estado === 'C' && x.suyos)
-  if (!cruzadas.length || !d.misDatos.guardados) return { error: 'todavía no se cruzaron' }
+  if (!cruzadas.length) return { error: 'todavía no se cruzaron' }
   const lista = cruzadas.map((x) => x.nombre)
-  const mios = { telefono: d.misDatos.telefono, instagram: d.misDatos.instagram, tiktok: d.misDatos.tiktok }
+  // Lo que dejé en ESTA pareja (las que se cruzan a la vez lo comparten:
+  // se confirmaron en el mismo toque).
+  const mios = cruzadas[0].mios ?? { telefono: d.misDatos.telefono, instagram: null, tiktok: null }
   const misRedes = [mios.instagram ? `tu Instagram, @${mios.instagram}` : null, mios.tiktok ? `tu TikTok, @${mios.tiktok}` : null].filter(Boolean)
   return {
     ...comun,

@@ -404,6 +404,8 @@ export type Database = {
           cierra_en: string
           creada_en: string
           cruzada_en: string | null
+          datos_a: Json | null
+          datos_b: Json | null
           estado_a: string
           estado_b: string
           id: string
@@ -418,6 +420,8 @@ export type Database = {
           cierra_en: string
           creada_en?: string
           cruzada_en?: string | null
+          datos_a?: Json | null
+          datos_b?: Json | null
           estado_a?: string
           estado_b?: string
           id?: string
@@ -432,6 +436,8 @@ export type Database = {
           cierra_en?: string
           creada_en?: string
           cruzada_en?: string | null
+          datos_a?: Json | null
+          datos_b?: Json | null
           estado_a?: string
           estado_b?: string
           id?: string
