@@ -4,6 +4,7 @@ import { encolar } from '@/lib/correos'
 import { CONTACTO, DENTRO, aE164, partesDe, valido } from '@/lib/reglas'
 import type { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
+import { duosDeLaMesa } from '@/lib/mas-uno'
 
 type Admin = ReturnType<typeof createAdminClient>
 
@@ -99,7 +100,11 @@ export async function crearCoincidencias(admin: Admin, mesaId: string): Promise<
     .eq('table_id', mesaId)
     .eq('signal', 'connect')
   const hay = new Set((marcas ?? []).map((m) => m.rater_id + ':' + m.rated_id))
+  // Un dúo de una fecha +1 no coincide entre sí: vinieron juntos. La
+  // encuesta ya no guarda esa marca; esto es por las de antes y por si acaso.
+  const duos = await duosDeLaMesa(admin, mesaId)
   const parejas = (marcas ?? [])
+    .filter((m) => duos.get(m.rater_id) !== m.rated_id)
     .filter((m) => m.rater_id < m.rated_id && hay.has(m.rated_id + ':' + m.rater_id))
     .map((m) => ({ a: m.rater_id, b: m.rated_id }))
   if (!parejas.length) return []

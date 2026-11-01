@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { marcasNecesarias } from '@/lib/asistencia'
 import { avisarCoincidencias, crearCoincidencias, reflejarDesmarcas } from '@/lib/contacto'
+import { duosDeLaMesa } from '@/lib/mas-uno'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notaDesdeIndice, notasDelSitio } from '@/lib/encuesta'
 import { createClient } from '@/lib/supabase/server'
@@ -419,6 +420,18 @@ export async function POST(request: Request) {
       for (let i = suyos.length - 1; i >= 0; i--) {
         if (noVinieron.has(suyos[i])) suyos.splice(i, 1)
       }
+    }
+
+    /**
+     * Ni con quien vino contigo a una fecha +1: ya tienes su contacto, y una
+     * coincidencia entre los dos les mandaría un «también quiere seguir en
+     * contacto contigo» sobre alguien con quien llegaron. Lo filtran también
+     * las pantallas con `vieneCon`; aquí es la regla. «¿Faltó alguien?» sí
+     * lo deja: quien vino con alguien es quien mejor sabe si llegó.
+     */
+    if (d.accion === 'contacto' && suyos.length) {
+      const conQuien = (await duosDeLaMesa(admin, d.mesaId)).get(user.id)
+      if (conQuien) suyos.splice(0, suyos.length, ...suyos.filter((x) => x !== conQuien))
     }
 
     /**
