@@ -59,3 +59,6 @@ export async function aceptarMasUno(api: Api): Promise<string | null> {
     return null
   }
 }
+
+/** El código guardado, si llegó por `/i/<código>`. */
+export const codigoGuardado = () => AsyncStorage.getItem(CODIGO).catch(() => null)

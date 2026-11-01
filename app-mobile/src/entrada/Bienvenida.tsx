@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Boton, Enfasis, Texto, color, fuente, medida } from '../diseno'
 import * as T from '../texto/entrada'
+import { FranjaInvitacion, useInvitacion, type Invitacion } from './FranjaInvitacion'
 
 /**
  * Lo primero que se ve al abrir la app sin sesión: 1b de
@@ -69,17 +70,25 @@ function Polaroids({ ancho }: { ancho: number }) {
   )
 }
 
-export function Bienvenida({ onEmpezar, onEntrar }: { onEmpezar: () => void; onEntrar: () => void }) {
+/** `invitacion`: solo el catálogo, para verla sin servidor. */
+export function Bienvenida({ onEmpezar, onEntrar, invitacion }: { onEmpezar: () => void; onEntrar: () => void; invitacion?: Invitacion | null }) {
   const insets = useSafeAreaInsets()
   const { width } = useWindowDimensions()
   const ancho = Math.min(width, 560) - 44
   const t = T.titular
   const b = T.bienvenida
+  // Quien llegó con el enlace de alguien: la franja de la portada de la web, arriba.
+  const inv = useInvitacion(invitacion)
   return (
     <View style={{ flex: 1, backgroundColor: color.verdeProfundo }}>
       <StatusBar style="light" />
+      {inv ? (
+        <View style={{ paddingTop: insets.top, backgroundColor: '#1B5138' }}>
+          <FranjaInvitacion inv={inv} />
+        </View>
+      ) : null}
       <ScrollView
-        contentContainerStyle={[estilos.pagina, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 24 }]}
+        contentContainerStyle={[estilos.pagina, { paddingTop: (inv ? 0 : insets.top) + 18, paddingBottom: insets.bottom + 24 }]}
         bounces={false}
       >
         <Polaroids ancho={ancho} />

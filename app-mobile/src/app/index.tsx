@@ -11,6 +11,7 @@ import { destinoDePaso, hayPendiente, terminarEntrada } from '../sesion/nativo'
 import * as T from '../texto/entrar'
 
 import { destinoAlAbrir, refrescarAvisos } from '../avisos/push'
+import { codigoGuardado } from '../sesion/traido'
 import { BIENVENIDA_VISTA as VISTA } from '../entrada/bienvenida-vista'
 
 /**
@@ -48,7 +49,9 @@ export default function Inicio() {
         return setDestino(push ? { ruta: push } : 'cuenta')
       }
       const vista = await AsyncStorage.getItem(VISTA).catch(() => null)
-      setDestino(vista ? 'entrar' : 'bienvenida')
+      // Quien llega con el enlace de alguien es nueva: la bienvenida, con su franja, aunque ya la viera.
+      const invitada = !!(await codigoGuardado())
+      setDestino(vista && !invitada ? 'entrar' : 'bienvenida')
       if (!vista) AsyncStorage.setItem(VISTA, '1').catch(() => {})
     })()
   }, [intento])
