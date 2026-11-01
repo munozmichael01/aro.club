@@ -18,6 +18,11 @@ export type Persona = {
   cierraEn: string | null
   /** Lo que dejó la otra persona: solo en C. */
   suyos: Datos | null
+  /**
+   * Lo que YO le di a esta persona, congelado al confirmar (desde el 01-11): un
+   * cambio posterior para otra no le llega. Sin él (servidor de antes), `misDatos`.
+   */
+  mios?: Datos | null
   nuevo: boolean
 }
 

@@ -81,7 +81,7 @@ export function PanelContacto(p: {
         <Titulo bajada={C.B.bajada}>{C.B.titulo(q.nombre)}</Titulo>
         <View style={e.tarjeta}>
           <Etiqueta>{C.B.loQueVas}</Etiqueta>
-          <MisDatos d={p.d.misDatos} />
+          <MisDatos d={q.mios ?? p.d.misDatos} />
           <View style={{ height: 1, backgroundColor: tinta(0.1) }} />
           <Pressable onPress={() => setEditando(true)} accessibilityRole="button" style={e.enlaceCentro}>
             <Texto style={[e.semi, { fontSize: 15, color: color.verde }]}>{C.B.cambiar}</Texto>
@@ -93,7 +93,7 @@ export function PanelContacto(p: {
       </View>
     )
 
-  if (q.estado === 'C') return <Cruzados p={q} misDatos={p.d.misDatos} />
+  if (q.estado === 'C') return <Cruzados p={q} misDatos={q.mios ?? p.d.misDatos} />
 
   if (q.estado === 'D')
     return (
