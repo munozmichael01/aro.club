@@ -228,7 +228,7 @@ type Contacto = {
   C: { titulo: (nombre: string) => string; bajada: string; teDejo: (nombre: string) => string; whatsapp: string; abrir: string; leDejaste: string; nota: string }
   D: { titulo: string; bajada: string; agenda: string; verAgenda: string }
   E: { titulo: string; bajada: (nombre: string) => string; puedesCambiar: (cierraIso: string, zona?: string | null) => string; elegir: string }
-  sellos: Record<'B' | 'C' | 'D' | 'E', string>
+  sellos: Record<'A' | 'B' | 'C' | 'D' | 'E', string>
   compartirTambien: (nombre: string) => string
   loQueCompartes: string
   cambiar: string
@@ -236,6 +236,7 @@ type Contacto = {
     encuesta: string
     contacto: string
     nuevo: { coincidencia: Nombres; cruce: (nombre: string) => string; sinCruce: string }
+    estado: Partial<Record<string, string>>
     vacia: { titulo: string; bajada: string; boton: string }
     misCenas: (n: number) => string
   }

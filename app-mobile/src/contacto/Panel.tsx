@@ -337,8 +337,9 @@ function Varias(p: { d: M.DeContacto; alCambiar: () => void; alAccion: (a: M.Acc
             <Cabeza
               nombre={x.nombre}
               fondo={fondo}
-              sello={x.estado === 'B' ? C.sellos.B : x.estado === 'D' ? C.sellos.D : C.sellos.E}
-              selloFondo={x.estado === 'B' ? MELOCOTON : '#ECE3CF'}
+              sello={x.estado === 'A' ? C.sellos.A : x.estado === 'B' ? C.sellos.B : x.estado === 'D' ? C.sellos.D : C.sellos.E}
+              // A: te toca responder mientras ya compartiste con otras. En melocotón, como ESPERANDO.
+              selloFondo={x.estado === 'A' || x.estado === 'B' ? MELOCOTON : '#ECE3CF'}
               conReloj={x.estado === 'B'}
             />
             {x.estado === 'B' && x.cierraEn ? (

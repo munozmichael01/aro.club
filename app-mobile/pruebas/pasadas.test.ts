@@ -18,6 +18,13 @@ test('la fila de Pasadas: ficha, título, etiqueta y la línea de lo nuevo solo 
   assert.deepEqual([f.numero, f.mes, f.titulo, f.sub, f.etiqueta, f.nuevo, f.punto], ['29', 'OCT', 'Cena · jueves', 'Cardenal · Chacao', null, 'Luis te dejó su número', true])
   assert.equal(M.filaDe({ ...p, nuevo: false }).nuevo, null)
   assert.equal(M.filaDe({ ...p, pendiente: 'encuesta' }).etiqueta, 'Encuesta por responder')
+  assert.equal(f.sinCena, null)
+  assert.equal(M.filaDe({ ...p, estado: 'fue' }).sinCena, null)
+  // Las fechas sin cena (31-10): gris, sin abrirse, con lo que pasó.
+  const sin = { ...p, mesaId: null, sitio: null, zona: null, contacto: null, nuevo: false }
+  assert.equal(M.filaDe({ ...sin, estado: 'cancelada' }).sinCena, 'CANCELASTE')
+  assert.equal(M.filaDe({ ...sin, estado: 'no-fue' }).sinCena, 'NO FUISTE')
+  assert.equal(M.filaDe({ ...sin, estado: 'sin-mesa' }).sinCena, 'NO HUBO MESA')
   assert.deepEqual(M.cabeceraDe(p), { sello: 'JUEVES 29 DE OCTUBRE · CENA', sitio: 'Cardenal', sub: 'Chacao · 7:00 p.m. · Mesa 04' })
 })
 

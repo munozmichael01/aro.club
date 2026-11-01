@@ -18,7 +18,7 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
  * Lo del 16-10: graba|grabado|grabado-movimiento (la grabación) y ajuste-cancelo|ajuste-suma|ajuste-ambos|ajuste-movido.
  * ?tope=1 en `pasada`: el veto del sitio no cabe (ya tiene dos).
  * Pasadas (31-10): ?linea=contacto|encuesta (la línea de Próxima), ?pestana=pasadas[&vacia=1],
- * ?cena=c1&contacto=A|B|C|D|E|varias|varias-m|nada (la vista de una cena, con su panel).
+ * ?cena=c1&contacto=A|B|C|D|E|varias|varias-a|varias-m|nada (la vista de una cena, con su panel).
  * Catálogo de desarrollo: no se enlaza desde ningún sitio. La forma imita la
  * real (pruebas/mesa-contra-la-api.mjs); las fechas se cuentan desde ahora.
  */
@@ -98,6 +98,8 @@ const CONTACTOS: Record<string, Persona[]> = {
   D: [persona('11111111-1111-1111-1111-111111111111', 'Andrea', 'D')],
   E: [persona('11111111-1111-1111-1111-111111111111', 'Andrea', 'E')],
   varias: [persona('1', 'Andrea', 'A'), persona('2', 'Luis', 'A')],
+  // Ya compartió con Andrea y a Luis le falta responder: «POR CONFIRMAR».
+  'varias-a': [persona('1', 'Andrea', 'C', { suyos: { telefono: '+58 414 555 0188', instagram: 'andrea.mv', tiktok: null } }), persona('2', 'Luis', 'A')],
   'varias-m': [persona('1', 'Andrea', 'C', { suyos: { telefono: '+58 414 555 0188', instagram: 'andrea.mv', tiktok: null } }), persona('2', 'Luis', 'B'), persona('3', 'Carla', 'E')],
 }
 const PASADAS: DePasadas = {
@@ -106,7 +108,10 @@ const PASADAS: DePasadas = {
   cenas: [
     { mesaId: 'c1', eventoId: 'e1', empiezaEn: en(-2 * 24 - 4), zonaHoraria: 'America/Caracas', formato: 'dinner', sitio: 'Cardenal', zona: 'Chacao', numeroMesa: 4, companeros: [], encuesta: { pendiente: false, contadaEn: en(-24) }, contacto: { porConfirmar: ['Andrea'], cierraEn: cierra, cruzadas: [], nuevo: null }, pendiente: 'contacto', nuevo: false },
     { mesaId: 'c2', eventoId: 'e2', empiezaEn: en(-6 * 24 - 20), zonaHoraria: 'America/Caracas', formato: 'brunch', sitio: 'Bruma', zona: 'Los Palos Grandes', numeroMesa: 2, companeros: [], encuesta: { pendiente: false, contadaEn: en(-5 * 24) }, contacto: { porConfirmar: [], cierraEn: cierra, cruzadas: ['Luis'], nuevo: { tipo: 'cruce', nombres: ['Luis'] } }, pendiente: null, nuevo: true },
+    { estado: 'cancelada', mesaId: null, eventoId: 'e9', empiezaEn: en(-10 * 24), zonaHoraria: 'America/Caracas', formato: 'dinner', sitio: null, zona: null, numeroMesa: null, companeros: [], encuesta: { pendiente: false, contadaEn: null }, contacto: null, pendiente: null, nuevo: false },
     { mesaId: 'c3', eventoId: 'e3', empiezaEn: en(-15 * 24), zonaHoraria: 'America/Caracas', formato: 'dinner', sitio: 'Olivo', zona: 'Altamira', numeroMesa: 1, companeros: [], encuesta: { pendiente: false, contadaEn: en(-14 * 24) }, contacto: null, pendiente: null, nuevo: false, preguntarContacto: true },
+    { estado: 'sin-mesa', mesaId: null, eventoId: 'e8', empiezaEn: en(-22 * 24), zonaHoraria: 'America/Caracas', formato: 'drinks', sitio: null, zona: null, numeroMesa: null, companeros: [], encuesta: { pendiente: false, contadaEn: null }, contacto: null, pendiente: null, nuevo: false },
+    { estado: 'no-fue', mesaId: null, eventoId: 'e7', empiezaEn: en(-30 * 24), zonaHoraria: 'America/Caracas', formato: 'dinner', sitio: null, zona: null, numeroMesa: null, companeros: [], encuesta: { pendiente: false, contadaEn: null }, contacto: null, pendiente: null, nuevo: false },
   ],
 }
 

@@ -17,8 +17,14 @@ export type Companero = { id: string; nombre: string; inicial: string }
 
 export type Nuevo = { tipo: 'coincidencia' | 'cruce' | 'sinCruce'; nombres: string[] }
 
+/** Qué pasó con esa fecha. Lo que no es «fue» va en gris y sin abrirse (Michael, 31-10). */
+export type EstadoPasada = 'fue' | 'cancelada' | 'no-fue' | 'sin-mesa'
+
 export type Pasada = {
-  mesaId: string
+  /** Sin él (servidor de antes del 31-10), «fue». */
+  estado?: EstadoPasada
+  /** Null cuando no hubo mesa que abrir. */
+  mesaId: string | null
   eventoId: string
   empiezaEn: string
   zonaHoraria: string | null
@@ -75,6 +81,8 @@ export function filaDe(p: Pasada) {
             : C.pasadas.nuevo.sinCruce
         : null,
     punto: p.nuevo,
+    // CANCELASTE, NO FUISTE, NO HUBO MESA: la fila no se abre.
+    sinCena: p.estado && p.estado !== 'fue' ? (C.pasadas.estado[p.estado] ?? '') : null,
     // La ficha de la fecha va en verde cuando hay algo que mirar.
     resaltada: p.nuevo || !!p.pendiente,
   }

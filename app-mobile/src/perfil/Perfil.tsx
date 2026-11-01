@@ -333,8 +333,8 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
             {senal ? <Punto tam={9} /> : null}
             <IconoAbrir tam={16} color={color.verdeProfundo} />
           </Pressable>
-          {/* La lista de siempre se queda hasta que Pasadas traiga también las canceladas y
-              las que no fue (Michael, 31-10: «una cancelada debe verse aquí también»). */}
+          {/* La lista de siempre se queda, como en la web: Pasadas ya trae las canceladas y las que
+              no fue (31-10), pero no las que canceló operación, que aquí sí salen. */}
           {hist.length ? (
             <View style={{ marginTop: 12 }}>
               {hist.map((c, i) => (
