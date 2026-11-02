@@ -290,6 +290,8 @@ export type FilaAgenda = {
   masUno: boolean
   /** La cápsula maciza «SEGUNDO ACTO», junto al tipo. */
   segundoActo: boolean
+  /** «de 4 a 8» o «de seis», para «Cómo funciona» de la hoja (`reglas.mesasDe`). */
+  mesas: string
   /** Lo que cuesta en créditos (dos en una +1). */
   creditos: number
   /** El plazo del acompañante, «jueves 5 a las 7:00 p.m.» (el cierre). Vacío fuera de una +1. */
@@ -311,6 +313,8 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
     // Cerrada por estado O porque ya pasó su cierre: el estado de la fecha no
     // cambia solo al llegar la hora, y se veía abierta (01-10-2026).
     const cerrada = a.cerrada || (a.cierraEn != null && Date.parse(a.cierraEn) <= ahora)
+    // Cenas, brunch y drinks: la primera mesa existe desde cuatro (de 4 a 8, d3ea935).
+    const minimoMesa = reglas.DE_4_A_8.includes(reglas.familiaDe(a.formato).clave) ? 4 : a.porMesa || T.MESA
     let g = grupos.find((x) => x.semana === semana)
     if (!g) grupos.push((g = { semana, filas: [] }))
     g.filas.push({
@@ -323,11 +327,11 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       // armar la mesa y nadie lo sabe hasta la revelación.
       zona: a.zonas.join(' o ') || T.agenda.zonaPorConfirmar,
       // En una +1 la línea cuenta dúos («Falta un dúo para la primera mesa»), salvo si ya es suya o cerró.
-      estado: a.masUno && !a.mia && !cerrada ? reglas.MAS_UNO.fraseDeDuos(a.apuntados) : T.estadoDeFecha(a.apuntados, a.mia, cerrada, a.porMesa ?? T.MESA),
+      estado: a.masUno && !a.mia && !cerrada ? reglas.MAS_UNO.fraseDeDuos(a.apuntados) : T.estadoDeFecha(a.apuntados, a.mia, cerrada, a.porMesa ?? T.MESA, a.formato),
       mia: a.mia,
       cerrada,
-      llenado: a.masUno ? reglas.MAS_UNO.avanceDeDuos(a.apuntados) : Math.min(1, a.apuntados / (a.porMesa || T.MESA)),
-      va: a.masUno ? reglas.MAS_UNO.avanceDeDuos(a.apuntados) >= 1 : a.apuntados >= (a.porMesa || T.MESA),
+      llenado: a.masUno ? reglas.MAS_UNO.avanceDeDuos(a.apuntados) : Math.min(1, a.apuntados / minimoMesa),
+      va: a.masUno ? reglas.MAS_UNO.avanceDeDuos(a.apuntados) >= 1 : a.apuntados >= minimoMesa,
       porMesa: a.porMesa || T.MESA,
       precio: precioDe(a),
       graba: !!a.permisoObligatorio,
@@ -336,6 +340,7 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       empiezaEn: a.empiezaEn,
       zonaHoraria: a.zonaHoraria ?? null,
       zonasNuevas: a.mia || cerrada ? [] : (a.zonasNuevas ?? []),
+      mesas: reglas.mesasDe(a.formato, a.porMesa),
       masUno: !!a.masUno,
       segundoActo: !!a.segundoActo,
       creditos: a.creditos || 1,

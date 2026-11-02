@@ -129,8 +129,9 @@ export const agenda = {
   titulo: `Lo que viene en ${CIUDAD_PRODUCTO.nombre}`,
   /** Cómo se arma la mesa. Va en la hoja de reservar, no encima de la agenda: allí empujaba la primera fecha fuera de la pantalla (entrega 19), y es al reservar cuando hace falta. */
   /** El cierre sale de `reglas.textoCierre` (20-10): a medianoche las cenas, a las 5:00 p.m. del día antes los planes de mañana. Como la web. */
-  comoFunciona: (cierre: string, porMesa: number = MESA) =>
-    `Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de ${reglas.enLetra(porMesa)} por toda la zona, y antes te decimos en cuál te tocó. La fecha ${(cierre || 'se cierra a medianoche, cuando empieza su día').replace(/\.$/, '')}.`,
+  /** `mesas` es `reglas.mesasDe(formato, porMesa)`: «de 4 a 8» o «de seis» (d3ea935). */
+  comoFunciona: (cierre: string, mesas: string = `de ${reglas.enLetra(MESA)}`) =>
+    `Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas ${mesas} por toda la zona, y antes te decimos en cuál te tocó. La fecha ${(cierre || 'se cierra a medianoche, cuando empieza su día').replace(/\.$/, '')}.`,
   /** Las zonas de la fecha que se le suman al reservar (31-10). El mismo texto que la web. */
   zonasNuevas: (z: string[]) =>
     z.length === 1 ? `Al reservar, ${z[0]} pasa a ser una de tus zonas.` : `Al reservar, ${z.slice(0, -1).join(', ')} y ${z[z.length - 1]} pasan a ser parte de tus zonas.`,
@@ -178,11 +179,11 @@ export const ORDEN_FORMATOS = ['dinner', 'drinks', 'movement', 'coffee', 'brunch
  * puesto, la frase es la de `reglas.js` (`fraseDeApuntados`), con cuántos se
  * sientan juntos en ESA fecha: ya no siempre son seis (31-10).
  */
-export function estadoDeFecha(n: number, mia: boolean, cerrada: boolean, porMesa: number = MESA): string {
+export function estadoDeFecha(n: number, mia: boolean, cerrada: boolean, porMesa: number = MESA, formato?: string): string {
   const apuntados = `${n} ${n === 1 ? 'apuntado' : 'apuntados'}`
   if (cerrada) return mia ? 'Ya tienes puesto · cerrada' : `Cerrada · ${apuntados}`
   if (mia) return 'Ya tienes puesto'
-  return reglas.fraseDeApuntados(n, porMesa)
+  return reglas.fraseDeApuntados(n, porMesa, formato)
 }
 
 export const valorar = {

@@ -104,14 +104,16 @@ test('la agenda: polaroids derivadas, grupos por semana y el estado de cada fech
   })
   const ag = [fecha('a', {}), fecha('b', { empiezaEn: '2026-10-10T00:00:00Z', apuntados: 13 }), fecha('c', { mia: true }), fecha('d', { cerrada: true, apuntados: 1 })]
   const fl = M.filtros(ag, null)
+  // Cenas: la primera mesa existe desde cuatro y las mesas son de hasta ocho (d3ea935).
+  assert.equal(M.agenda(ag, null, AHORA)[0].filas[0].va, true)
   // Un solo formato con fechas: escaparate, sin «Todos» ni filtro, y cenas solo con su nombre.
   assert.deepEqual(fl.map((f) => [f.nombre, f.detalle, f.hay, f.toca]), [
     ['Cenas', '', true, false], ['Drinks', 'Próximamente', false, false], ['Movimiento', 'Próximamente', false, false], ['Coffee', 'Próximamente', false, false], ['Brunch', 'Próximamente', false, false],
   ])
   const g = M.agenda(ag, null, AHORA)
   assert.deepEqual(g.map((x) => x.semana), ['Esta semana', 'La semana que viene'])
-  assert.deepEqual(g[0].filas.map((f) => f.estado), ['4 apuntados · faltan 2 para la primera mesa', 'Ya tienes puesto', 'Cerrada · 1 apuntado'])
-  assert.equal(g[1].filas[0].estado, '13 apuntados · 3 mesas')
+  assert.deepEqual(g[0].filas.map((f) => f.estado), ['4 apuntados · 1 mesa', 'Ya tienes puesto', 'Cerrada · 1 apuntado'])
+  assert.equal(g[1].filas[0].estado, '13 apuntados · 2 mesas')
   assert.equal(g[0].filas[0].zona, 'Chacao o Altamira')
   assert.deepEqual(M.agenda(ag, 'drinks', AHORA), [])
 })
@@ -279,7 +281,12 @@ test('unos drinks de ocho dicen ocho, no seis: la frase y la hoja van con porMes
   assert.equal(T.estadoDeFecha(1, false, false, 8), 'Una mesa son ocho')
   assert.equal(T.estadoDeFecha(5, false, false, 8), '5 apuntados · faltan 3 para la primera mesa')
   assert.equal(T.estadoDeFecha(1, false, false), 'Una mesa son seis')
-  assert.match(T.agenda.comoFunciona('', 8), /mesas de ocho/)
+  assert.match(T.agenda.comoFunciona('', reglas.mesasDe('walk', 8)), /mesas de ocho/)
+  // Cenas, brunch y drinks: de 4 a 8, y la primera mesa desde cuatro (Michael, 01-11, d3ea935).
+  assert.match(T.agenda.comoFunciona('', reglas.mesasDe('dinner', 6)), /mesas de 4 a 8 por/)
+  assert.equal(T.estadoDeFecha(1, false, false, 6, 'dinner'), 'Una mesa es de 4 a 8 personas')
+  assert.equal(T.estadoDeFecha(3, false, false, 6, 'drinks'), '3 apuntados · falta 1 para la primera mesa')
+  assert.equal(T.estadoDeFecha(9, false, false, 6, 'brunch'), '9 apuntados · 2 mesas')
 })
 
 test('el aviso de zonas al reservar dice lo mismo que la web, y calla en una fecha suya o cerrada (31-10)', async () => {
