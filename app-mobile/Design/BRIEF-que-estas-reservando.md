@@ -3,9 +3,15 @@
 **De:** Michael, con el agente de la app
 **Para:** Design
 **Fecha:** 01-11-2026
-**Va junto a:** `BRIEF-como-funciona.md` (29-10, las tres tarjetas Antes,
-Durante, Después), que aún no está entregado. Pedimos que salgan como UNA
-sola propuesta: las dos responden a lo mismo, «qué me estoy apuntando».
+**Parte de:** «Cómo funciona», las tres tarjetas Antes, Durante, Después
+(entrega del 29-10). Ya está en producción: en la app sale en la hoja de
+reservar y en Mi mesa, y en la web en la página de la fecha. El texto vive en
+`AroReglas.COMO_FUNCIONA`.
+
+**El fallo:** solo tiene tres versiones, cena, brunch y grupo (movimiento).
+**Drinks y coffee caen en la de cena**, que les dice «Pidan, preséntense…» y
+«Una vuelta rápida de nombres y a comer». Y no dice nada de las marcas de la
+fecha.
 
 ## El problema
 
@@ -20,9 +26,9 @@ Ya no hay un solo plan. En la misma agenda conviven:
   - **Segundo acto** (nuevo, 01-11): después de la cena, todas las mesas de
     la fecha se juntan en un mismo bar. El bar no se dice hasta ese día.
 
-Hoy cada marca es solo una cápsula junto al día. Nadie explica qué
-significa. Michael teme que la gente reserve sin tener claro qué está
-reservando.
+Hoy cada marca es solo una cápsula junto al día, y «Cómo funciona» cuenta
+la misma noche para todas. Nadie explica qué significa cada una. Michael teme que la gente reserve
+sin tener claro qué está reservando.
 
 Timeleft enseña una descripción del plan antes de pasar a reservar
 (capturas en `Product features & Content Ideas/TIMELEFT APP/Reserva Dinner
@@ -30,42 +36,44 @@ Timeleft | Antes - Durante - Después/`).
 
 ## Dónde se ve hoy
 
-- **App, hoja de reservar** (se abre al tocar una fecha de la agenda en
-  Inicio), de arriba abajo:
-  1. ELIGE LA HORA;
-  2. «Te apuntas a una fecha, no a una mesa…»;
-  3. tu puesto y el precio;
-  4. la nota de qué cubre;
-  5. si toca, las zonas nuevas, el aviso de grabación o el bloque del +1.
+- **App, hoja de reservar** (al tocar una fecha de la agenda en Inicio):
+  - la hora;
+  - «Te apuntas a una fecha, no a una mesa…»;
+  - la fila «¿Cómo funciona?», que abre las tres tarjetas;
+  - el precio y lo que cubre;
+  - si toca, las zonas nuevas, la grabación o el bloque del +1.
 
-  No hay nada sobre el formato ni sobre las marcas. Se ve en
-  `/catalogo-cuenta?estado=reservar`.
-- **Web, Mi cuenta:** la misma hoja.
+  Se ve en `/catalogo-cuenta?estado=reservar`. «Cómo funciona» sale también
+  en Mi mesa y la primera vez que alguien tiene puesto.
+- **Web:** la página de la fecha, con las mismas tarjetas.
 - **Web, `/agenda` pública:** la lista de fechas, sin ningún contexto.
 
 ## Lo que pedimos
 
-1. **Dónde va.** Hay dos caminos y Michael quiere ver su propuesta:
-   - **A.** Un bloque «Qué incluye» dentro de la hoja de reservar que ya
-     existe, arriba del precio.
-   - **B.** Una pantalla propia del plan antes de reservar, como Timeleft,
-     con el botón de reservar al final.
-
-   Si ven otro camino, también.
-2. **Cómo se cuenta una fecha con varias marcas.** Por ejemplo, una «Cena
-   +45 · Segundo acto» o una «+1 acompañante en inglés». Que se lea como un
-   plan y no como una lista de condiciones.
-3. **Una propuesta de texto** por formato y por marca, corta. **Los aprueba
-   Michael** antes de construir nada. Viven en `reglas.js` para que la app y
-   la web digan lo mismo.
-4. **Cómo encaja con las tres tarjetas** de `BRIEF-como-funciona.md`. ¿Son
-   la misma pieza, o una va dentro de la otra?
-5. **La versión web**, también en `/agenda` pública: quien llega de una
-   historia de Instagram tiene que entender qué es cada fecha antes de
-   crearse una cuenta.
+1. **Las tres tarjetas de drinks y de coffee**, que hoy no existen. ¿Qué
+   pasa antes, durante y después en un drinks? ¿Y en un coffee?
+2. **Las marcas dentro de «Cómo funciona».** ¿Cómo cuentan las tarjetas una
+   +45, una +1 acompañante, una en inglés o una con segundo acto? El
+   segundo acto, por ejemplo, cambia el «Después»: ya no es «te sugerimos
+   sitios cerca» sino «todas las mesas se juntan en un bar».
+3. **Cómo se lee una fecha con varias marcas.** Por ejemplo, una «Cena +45
+   · Segundo acto» o una «+1 acompañante en inglés». Que se lea como un plan
+   y no como una lista de condiciones.
+4. **Si hace falta algo más visible antes de reservar.** Hoy «Cómo funciona»
+   es una fila que hay que tocar dentro de la hoja. Timeleft enseña el plan
+   sin que lo pidas. Ustedes dicen si basta con la fila o si las marcas
+   necesitan una línea a la vista en la hoja.
+5. **Una propuesta de texto** para cada versión y cada marca. **Los aprueba
+   Michael** antes de construir nada. Van a `AroReglas.COMO_FUNCIONA`, que es
+   de donde ya leen la app y la web.
+6. **La `/agenda` pública de la web**, que hoy no explica nada: quien llega
+   de una historia de Instagram tiene que entender qué es cada fecha antes
+   de crearse una cuenta.
 
 ## Lo que ya existe y no se pierde
 
+- Las tres versiones de «Cómo funciona» que ya están: cena, brunch y grupo.
+  Se amplían, no se rehacen.
 - La hoja de reservar con todo lo que lleva hoy: precio, nota, zonas
   nuevas, grabación, el bloque del +1 y el aviso con casilla. Lo nuevo se
   suma, no reemplaza.
