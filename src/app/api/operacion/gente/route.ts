@@ -196,7 +196,7 @@ export async function GET(request: Request) {
         es_prueba: boolean | null
       }>((d, h) => admin
         .from('profiles')
-        .select('id, full_name, display_name, birthdate, gender, rootedness, status, events_attended, created_at, es_prueba')
+        .select('id, full_name, display_name, birthdate, gender, rootedness, status, phone_e164, events_attended, created_at, es_prueba')
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .order('id')
@@ -292,9 +292,19 @@ export async function GET(request: Request) {
     // aquí es si entra o no entra al reparto. Verificada es 'ok'; con
     // documentos subidos esperando a una persona es 'revision'; el resto es
     // 'sin', que es lo mismo que decir que hoy no puede sentarse.
+    /**
+     * Y SIN SUS DATOS, «perfil», diga lo que diga `status`.
+     *
+     * Michael, 02-11: «hay muchos que no tienen teléfono y tú los tienes
+     * marcado como verificación pendiente». `status` es una columna que no
+     * se entera de que falta el teléfono: el embudo (`embudo.ts`) pone los
+     * datos —nombre, nacimiento y teléfono— antes de la verificación, y esta
+     * lista tiene que decir lo mismo que él.
+     */
+    const sinDatos = !p.full_name || !p.birthdate || !(p as { phone_e164?: string | null }).phone_e164
     const estado: Fila['estado'] = estanVerificados.has(p.id)
       ? 'ok'
-      : p.status !== 'pending_verification'
+      : sinDatos || p.status !== 'pending_verification'
         ? 'perfil'
         // `revision` es haber subido algo que espera a una persona. Sin eso,
         // le toca verificarse y no lo ha hecho, que es otra cosa y se
