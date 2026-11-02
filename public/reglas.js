@@ -523,10 +523,12 @@
      * El precio POR DEFECTO de una fecha nueva, por plan. Lo que cobra una
      * fecha ya abierta es su `price_usd`; esto es solo con lo que nace.
      *
-     * Michael, 31-10: drinks a 7 ref. Michael, 01-11: «desde hoy ajustamos el
-     * brunch a 7 ref». Lo demás, `PRECIO_USD`.
+     * Hoy todos nacen a `PRECIO_USD`. Michael, 01-11, después de probar 7 ref
+     * en brunch y drinks: «los 10 se sostienen mejor, porque el valor está en
+     * nuestro trabajo y no en el plato». El hueco por plan se queda por si
+     * algún día un plan cuesta otra cosa de verdad.
      */
-    PRECIO_POR_FAMILIA: { brunch: 7, drinks: 7 },
+    PRECIO_POR_FAMILIA: {},
     precioDe: function (formato) {
       var f = api.familiaDe(formato).clave
       return api.PRECIO_POR_FAMILIA[f] != null ? api.PRECIO_POR_FAMILIA[f] : api.PRECIO_USD

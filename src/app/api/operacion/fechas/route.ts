@@ -177,8 +177,7 @@ const cuerpo = z.object({
    * «7 USD la plaza». Dos fechas se abrieron prometiendo siete y cobrando
    * ocho, y eso no falla en ningún sitio hasta que alguien paga.
    */
-  // Sin precio, el del plan (`precioDe`: brunch y drinks a 7, lo demás
-  // `PRECIO_USD`). Michael, 01-11.
+  // Sin precio, el del plan (`precioDe`; hoy todos `PRECIO_USD`).
   precioUsd: z.number().positive().max(500).optional(),
   // Cuántos por mesa. Seis en una cena, pero una caminata de seis no es lo
   // mismo que una de doce, y el reparto ya lee esta columna.

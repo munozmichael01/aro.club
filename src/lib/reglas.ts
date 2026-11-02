@@ -282,7 +282,7 @@ const api = reglas as Api
 export const DENTRO = api.DENTRO
 /** «Seguir en contacto», el mismo texto en app, web y correos. */
 export const CONTACTO = api.CONTACTO
-/** El precio con el que nace una fecha nueva, por plan (brunch y drinks, 7). */
+/** El precio con el que nace una fecha nueva, por plan (hoy todos `PRECIO_USD`). */
 export const precioDe = api.precioDe
 /** Las cuentas de Aro en redes: lo que firma las tarjetas para historias. */
 export const REDES = api.REDES
