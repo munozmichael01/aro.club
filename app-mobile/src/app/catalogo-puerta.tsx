@@ -23,6 +23,7 @@ function Pantalla() {
   const servicio = useMemo(
     (): ReturnType<typeof crearServicioPuerta> => ({
       guardar: async (envios) => (console.log('[catálogo] guardar', JSON.stringify(envios)), { ok: true, datos: true }),
+      cerrarMenor: async () => true,
       crearCuenta: async () => ({ ok: false, status: 409, error: 'Ese correo ya tiene cuenta.' }),
       estado: async () => ({ ok: true, datos: { estado: 'datos' } }),
       ciudades: async () => ({
@@ -50,6 +51,7 @@ function Pantalla() {
       entrarConClave={async () => false}
       alTerminar={(d) => console.log('[catálogo] a', d)}
       alEntrar={() => console.log('[catálogo] entrar')}
+      alCerrarMenor={async () => console.log('[catálogo] sesión borrada')}
       // ?fase=cuenta: directo a crear la cuenta, con la casilla de las normas.
       faseInicial={fase === 'cuenta' ? 'cuenta' : undefined}
     />

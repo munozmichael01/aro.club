@@ -26,7 +26,7 @@ import { FranjaInvitacion, useInvitacion, type Invitacion } from './FranjaInvita
 const FOTOS: Record<string, number> = {
   dinner: require('../../assets/fotos/filtro-cenas.jpg'),
   drinks: require('../../assets/fotos/filtro-drinks.jpg'),
-  coffee: require('../../assets/fotos/filtro-coffee.jpg'),
+  brunch: require('../../assets/fotos/filtro-brunch.jpg'),
   movement: require('../../assets/fotos/filtro-movimiento.jpg'),
 }
 

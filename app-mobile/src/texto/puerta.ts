@@ -7,6 +7,8 @@
  */
 
 export { nacimiento } from './datos'
+import { reglas } from '../reglas'
+
 export { quiz } from './entrada'
 
 export const titulos = {
@@ -15,7 +17,10 @@ export const titulos = {
 }
 
 export const cuenta = {
-  bajada: 'Tus respuestas ya están guardadas. Solo falta cómo vas a entrar.',
+  /** De `AroReglas.ALTA` (02-11): la cuenta va antes de las preguntas, así que ya no hay «respuestas guardadas». */
+  get bajada() {
+    return reglas.ALTA.cuenta.bajada
+  },
   /** Con Apple o Google la casilla llega después, en la puerta de normas (entrega «acceso»). */
   notaProveedores: (cuales: string) => `Con ${cuales}, la casilla de las normas te la pedimos justo después.`,
   claveEjemplo: 'Mínimo 8 caracteres',

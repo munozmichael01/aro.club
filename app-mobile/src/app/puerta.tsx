@@ -8,13 +8,14 @@ import { Puerta } from '../puerta/Puerta'
 import { crearServicioPuerta } from '../puerta/servicio'
 import { reglas } from '../reglas'
 import { api, supabase } from '../sesion'
+import { borrarLead } from '../sesion/lead'
 import { terminarEntrada } from '../sesion/nativo'
 import { disponible, entrarCon } from '../sesion/proveedores'
 import * as TE from '../texto/entrar'
 
 const NOMBRE = { apple: 'Apple', google: 'Google' } as const
 
-/** /puerta: el alta de la app (preguntas → nacimiento → cuenta). Ver `src/puerta/Puerta.tsx`. */
+/** /puerta: el alta de la app (nacimiento → cuenta → preguntas). Ver `src/puerta/Puerta.tsx`. */
 export default function Pantalla() {
   const servicio = useMemo(() => crearServicioPuerta(api), [])
   const entrada = useMemo(() => crearServicio(api), [])
@@ -35,6 +36,11 @@ export default function Pantalla() {
       }}
       entrarConClave={async (correo, clave) => !(await supabase.auth.signInWithPassword({ email: correo, password: clave })).error}
       alTerminar={(destino) => router.replace(destino as never)}
+      // La cuenta del menor ya está dada de baja en el servidor: solo queda la sesión de este celular.
+      alCerrarMenor={async () => {
+        await supabase.auth.signOut({ scope: 'local' })
+        await borrarLead()
+      }}
       alEntrar={(correo) => router.push({ pathname: '/entrar', params: correo ? { correo, yaTiene: '1' } : {} })}
     />
   )

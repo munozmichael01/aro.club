@@ -40,6 +40,15 @@ export function crearServicioPuerta(api: Api) {
       }
       return { ok: true, datos: true }
     },
+    /**
+     * Menor de 18 con sesión, tras «Sí, es mi fecha» (contrato 35ff9bc): el
+     * servidor da de baja la cuenta y responde 403 `motivo: 'menor'`. `true` si
+     * quedó cerrada.
+     */
+    async cerrarMenor(valor: string): Promise<boolean> {
+      const r = await intentar(() => api.pedir('/cuestionario', json({ clave: 'nacimiento', valor, confirmaMenor: true })), '')
+      return !r.ok && r.status === 403
+    },
     /** `estado`: `creada`, `creada_sin_sesion` o `ya_existe` (un 200 también). */
     // Con el código de quien la invitó y el +1, si llegó por un enlace (26485ff).
     async crearCuenta(correo: string, clave: string, porDefecto: string) {
@@ -52,6 +61,7 @@ export function crearServicioPuerta(api: Api) {
     /** Su ciudad, en el perfil. Con la sesión ya abierta, sea cual sea la puerta (correo, Apple o Google). */
     ponerCiudad: (slug: string, porDefecto: string) => intentar<{ ok?: boolean }>(() => api.pedir('/mi-perfil', json({ clave: 'ciudad', valor: slug })), porDefecto),
     /** En qué punto está: lo decide el embudo del servidor. */
-    estado: () => intentar<{ estado: string }>(() => api.pedir('/mi-cuenta'), ''),
+    /** `paso` lo decide `embudo.ts`: con `preguntas`, le faltan las de la puerta. */
+    estado: () => intentar<{ estado: string; paso?: string }>(() => api.pedir('/mi-cuenta'), ''),
   }
 }

@@ -172,7 +172,8 @@ export const FORMATOS: Record<string, { plural: string; singular: string }> = {
 /** «Cena +40»: una fecha con edad mínima. */
 export const conEdad = (singular: string, edad: number) => `${singular} +${edad}`
 
-export const ORDEN_FORMATOS = ['dinner', 'drinks', 'movement', 'coffee', 'brunch'] as const
+/** Brunch antes que coffee (Michael, 02-11): el mosaico de «Todos» enseña las cuatro primeras. */
+export const ORDEN_FORMATOS = ['dinner', 'drinks', 'movement', 'brunch', 'coffee'] as const
 
 /**
  * Lo que dice cada fecha de la agenda debajo de su barra. Abierta y sin

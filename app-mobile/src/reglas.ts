@@ -71,6 +71,12 @@ type Api = {
   CONTACTO: Contacto
   /** +1 acompañante (entrega mas-uno, 01-11): todo su copy, el mismo de la web. */
   MAS_UNO: MasUno
+  /** El alta, igual en la web y la app (02-11): nacimiento → cuenta → preguntas. */
+  ALTA: {
+    cuenta: { bajada: string }
+    /** Menor de 18 CON sesión (35ff9bc): se confirma y el servidor cierra la cuenta. */
+    menor: { confirmar: { titulo: string; cuerpo: string; si: string; no: string }; cerrada: { titulo: string; cuerpo: string } }
+  }
   /** «Segundo acto» (63ba982): después de la cena todas las mesas de la fecha se juntan en un bar. Solo la etiqueta; el bar se revela ese día. */
   SEGUNDO_ACTO: { marca: string }
   /** Las cuentas de Aro en redes (400f5f8): la firma de las historias y «Etiqueta a…». */

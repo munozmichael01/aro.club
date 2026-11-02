@@ -141,20 +141,23 @@ export function FaseQuiz(p: {
   onAtras: () => void
   /** Pasos que vienen DESPUÉS de estas preguntas (el alta de la app pide luego el nacimiento): cuentan en el progreso, y la última ya no dice «Terminar». */
   pasosDespues?: number
+  /** Pasos que van ANTES (el alta de la app pide primero el nacimiento y la cuenta, 02-11): cuentan en el progreso. */
+  pasosAntes?: number
   /** Algo debajo de las opciones de esta pregunta (en las zonas del alta: «¿No vives en Caracas?»). */
   pie?: ReactNode
 }) {
   const { estado: e, pregunta: q } = p
   const lista = completa(e, q)
   const despues = p.pasosDespues ?? 0
+  const antes = p.pasosAntes ?? 0
   const ultimo = e.paso >= p.total - 1 && despues === 0
   const sel = marcadas(e, q.clave)
   return (
     <View>
       <View style={estilos.progreso}>
-        <Puntos total={p.total + despues} actual={e.paso} />
+        <Puntos total={antes + p.total + despues} actual={antes + e.paso} />
         <Texto variante="etiqueta" tono="sobreVerdeSecundario">
-          {T.quiz.progreso(e.paso, p.total + despues)}
+          {T.quiz.progreso(antes + e.paso, antes + p.total + despues)}
         </Texto>
       </View>
       <Texto variante="etiqueta" tono="terracotaSobreVerde" style={{ marginBottom: 16 }}>

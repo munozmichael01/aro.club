@@ -33,7 +33,8 @@ export const bienvenida = {
   polaroids: [
     { formato: 'dinner', nombre: 'Cenas' },
     { formato: 'drinks', nombre: 'Drinks' },
-    { formato: 'coffee', nombre: 'Coffee' },
+    // Brunch en lugar de Coffee (Michael, 02-11: «hoy es más brunch que coffee»), como la portada de la web.
+    { formato: 'brunch', nombre: 'Brunch' },
     { formato: 'movement', nombre: 'En movimiento' },
   ] as const,
 }

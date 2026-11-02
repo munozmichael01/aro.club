@@ -26,16 +26,19 @@ type Servicio = ReturnType<typeof crearServicioPuerta>
 /** El `error` literal del 409 de `/api/cuenta` cuando el correo ya tiene cuenta (contrato del 29-09). */
 const YA_TIENE_CUENTA = 'Ese correo ya tiene cuenta. Entra con tu contraseña.'
 
-type Fase = 'quiz' | 'nacimiento' | 'cuenta' | 'guardando' | 'fallo' | 'fuera'
+type Fase = 'quiz' | 'nacimiento' | 'cuenta' | 'guardando' | 'fallo' | 'fuera' | 'menor'
 
 /**
- * El alta de la app (`/puerta`), acordada el 29-09: las cuatro preguntas de
- * la puerta → la fecha de nacimiento (la puerta de los 18, ANTES de crear
- * nada) → «crea tu cuenta» con Apple, Google o correo y contraseña → las
- * respuestas a `/api/cuestionario` con la sesión → a donde diga el embudo.
+ * El alta de la app (`/puerta`), igual que la web desde el 02-11 (propuesta
+ * de los dos agentes, aprobada por Michael): la fecha de nacimiento (la
+ * puerta de los 18, ANTES de crear nada) → «crea tu cuenta» con Apple,
+ * Google o correo y contraseña → las preguntas de la puerta, cada una a
+ * `/api/cuestionario` al pasar a la siguiente → a donde diga el embudo.
+ * Antes la cuenta iba al final, y quien dejaba las preguntas a mitad se
+ * perdía sin rastro.
  *
  * Quien ya tiene sesión (entró con Google desde Entrar y le faltan las
- * cuatro) se salta la cuenta: responde y se guarda.
+ * cuatro) se salta la cuenta: nacimiento, preguntas y se guarda.
  *
  * Todo lo respondido queda en un borrador del celular hasta que se guarda:
  * cerrar la app a mitad no lo pierde.
@@ -50,6 +53,8 @@ export function Puerta(p: {
   entrarConClave: (correo: string, clave: string) => Promise<boolean>
   alTerminar: (destino: string) => void
   alEntrar: (correo?: string) => void
+  /** La cuenta de un menor ya cerrada en el servidor: borrar la sesión del celular (su refresh ya no vale). */
+  alCerrarMenor: () => Promise<void>
   /** Solo el catálogo: empezar en otra fase para verla sin contestar el quiz. */
   faseInicial?: Fase
 }) {
@@ -58,7 +63,7 @@ export function Puerta(p: {
   const alTerminar = useUltimo(p.alTerminar)
   const [preguntas, setPreguntas] = useState<Pregunta[] | null | undefined>(undefined)
   const [conSesion, setConSesion] = useState<boolean | null>(null)
-  const [fase, setFase] = useState<Fase>(p.faseInicial ?? 'quiz')
+  const [fase, setFase] = useState<Fase>(p.faseInicial ?? 'nacimiento')
   const [e, despachar] = useReducer(reducir, undefined, () => ({ ...inicial(), fase: 'quiz' }) as Estado)
   const [nac, setNac] = useState(M.vacio().nacimiento)
   // La lista de `/api/ciudades`. La ciudad elegida es la respuesta de la primera pregunta (`e.respuestas.ciudad`).
@@ -167,7 +172,42 @@ export function Puerta(p: {
     alTerminar.current(destino)
   }
 
-  const trasNacimiento = () => (conSesion ? guardarYSeguir() : setFase('cuenta'))
+  const trasNacimiento = () => setFase(conSesion ? 'quiz' : 'cuenta')
+
+  /** «Sí, es mi fecha»: con sesión, el servidor cierra la cuenta (35ff9bc). Sin sesión no se llega aquí: la puerta local no deja seguir. */
+  const cerrarMenor = async () => {
+    if (trabajando) return
+    setTrabajando(true)
+    setAviso('')
+    const cerrada = await servicio.cerrarMenor(M.nacimientoISO({ respuestas: {}, nacimiento: nac }, hoy))
+    setTrabajando(false)
+    if (!cerrada) return setAviso(T.guardando.fallo)
+    await AsyncStorage.removeItem(M.CLAVE_BORRADOR).catch(() => {})
+    await p.alCerrarMenor()
+    setFase('menor')
+  }
+
+  /**
+   * Con la cuenta recién abierta. Quien ya tenía las preguntas hechas (eligió
+   * «Crear cuenta» pero ya era socia o socio) no las repite: va a donde diga
+   * el embudo. Los demás dejan ya el nacimiento en el servidor y siguen con
+   * las preguntas.
+   */
+  const trasCuenta = async () => {
+    setConSesion(true)
+    const est = await servicio.estado()
+    if (est.ok && est.datos.paso && est.datos.paso !== 'preguntas') return guardarYSeguir()
+    servicio.guardar(M.envios({ respuestas: {}, nacimiento: nac }, hoy), '').catch(() => {})
+    setFase('quiz')
+  }
+
+  /** La respuesta de esa pregunta, al pasar a la siguiente: si deja el alta a mitad, lo contestado queda. Al final se manda todo otra vez. */
+  const guardarPregunta = (clave: string) => {
+    // La ciudad va por su sitio (como en `guardarYSeguir`): con ella le llegan los avisos de su ciudad.
+    if (clave === 'ciudad') return ciudad ? void servicio.ponerCiudad(ciudad, '').catch(() => {}) : undefined
+    const una = M.envios(borrador, hoy, ciudades).filter((x) => x.clave === clave)
+    if (una.length) servicio.guardar(una, '').catch(() => {})
+  }
 
   const conProveedor = async (x: 'apple' | 'google') => {
     if (trabajando) return
@@ -177,7 +217,7 @@ export function Puerta(p: {
     setTrabajando(false)
     if (r === 'cancelado') return
     if (r) return setAviso(r)
-    guardarYSeguir()
+    trasCuenta()
   }
 
   const conClave = async () => {
@@ -201,7 +241,7 @@ export function Puerta(p: {
     const dentro = await p.entrarConClave(c, clave)
     setTrabajando(false)
     if (!dentro) return setAviso(T.cuenta.noCreada)
-    guardarYSeguir()
+    trasCuenta()
   }
 
   if (preguntas === undefined || conSesion === null) return <Velo sobreVerde />
@@ -214,7 +254,7 @@ export function Puerta(p: {
         pregunta={preguntas[e.paso]}
         total={totalPasos}
         guardando={false}
-        pasosDespues={1}
+        pasosAntes={1}
         pie={
           // Una ciudad cerrada: la frase de `reglas.js`, igual que la web, y la puerta termina aquí.
           preguntas[e.paso]?.clave === 'ciudad' && ciudad && borradorFuera ? (
@@ -229,18 +269,26 @@ export function Puerta(p: {
           ) : null
         }
         onMarcar={(valor) => despachar({ tipo: 'marcar', pregunta: preguntas[e.paso], valor })}
-        onSiguiente={() => (e.paso >= totalPasos - 1 ? setFase('nacimiento') : despachar({ tipo: 'siguiente', total: preguntas.length }))}
-        onAtras={() => despachar({ tipo: 'atras' })}
+        onSiguiente={() => {
+          guardarPregunta(preguntas[e.paso].clave)
+          if (e.paso >= totalPasos - 1) return guardarYSeguir()
+          despachar({ tipo: 'siguiente', total: preguntas.length })
+        }}
+        // En la primera, Atrás vuelve al nacimiento (la cuenta ya está hecha: no se vuelve a ella).
+        onAtras={() => (e.paso === 0 ? setFase('nacimiento') : despachar({ tipo: 'atras' }))}
       />
     ) : (
       <FaseSinPreguntas onReintentar={cargar} />
     )
   } else if (fase === 'nacimiento') {
     const est = M.estadoFecha(borrador, hoy)
-    const nota = est === 'menor' ? T.nacimiento.menor : est === 'rara' ? T.nacimiento.rara : null
+    // Con sesión (entró con Apple o Google desde Entrar) ya hay cuenta: un menor la confirma y se cierra (35ff9bc).
+    const confirmarMenor = est === 'menor' && !!conSesion
+    const MC = reglas.ALTA.menor.confirmar
+    const nota = est === 'menor' && !confirmarMenor ? T.nacimiento.menor : est === 'rara' ? T.nacimiento.rara : null
     cuerpo = (
       <View>
-        {preguntas ? <Progreso paso={totalPasos} total={totalPasos + 1} /> : null}
+        {preguntas ? <Progreso paso={0} total={totalPasos + 1} /> : null}
         <Texto variante="display" tono="crema" accessibilityRole="header" style={{ marginBottom: 12 }}>
           {T.titulos.nacimiento}
         </Texto>
@@ -263,6 +311,21 @@ export function Puerta(p: {
             {nota}
           </Texto>
         ) : null}
+        {confirmarMenor ? (
+          <View style={{ marginTop: 22, gap: 8 }} accessibilityLiveRegion="polite">
+            <Texto variante="subtitulo" tono="crema">
+              {MC.titulo}
+            </Texto>
+            <Texto variante="cuerpoChico" tono="sobreVerdeSecundario">
+              {MC.cuerpo}
+            </Texto>
+            {aviso ? <AvisoAcceso texto={aviso} /> : null}
+            <View style={estilos.acciones}>
+              <Boton tipo="sobreVerde" texto={MC.no} onPress={() => setNac((x) => ({ ...x, anio: '' }))} />
+              <Boton tipo="fantasmaSobreVerde" texto={MC.si} apagado={trabajando} onPress={cerrarMenor} />
+            </View>
+          </View>
+        ) : (
         <View style={estilos.acciones}>
           <Boton
             tipo="sobreVerde"
@@ -270,8 +333,8 @@ export function Puerta(p: {
             disabled={est !== 'ok'}
             onPress={trasNacimiento}
           />
-          <Boton tipo="fantasmaSobreVerde" texto={T.quiz.atras} onPress={() => setFase('quiz')} />
         </View>
+        )}
       </View>
     )
   } else if (fase === 'cuenta') {
@@ -366,6 +429,18 @@ export function Puerta(p: {
         <Boton tipo="fantasmaSobreVerde" texto={T.quiz.atras} onPress={() => setFase('nacimiento')} />
       </View>
     )
+  } else if (fase === 'menor') {
+    // Sin botón de vuelta: la cuenta ya no existe (35ff9bc).
+    cuerpo = (
+      <View style={{ gap: 18 }} accessibilityLiveRegion="polite">
+        <Texto variante="display" tono="crema" accessibilityRole="header">
+          {reglas.ALTA.menor.cerrada.titulo}
+        </Texto>
+        <Texto variante="cuerpoGrande" tono="cuerpoSobreVerde">
+          {reglas.ALTA.menor.cerrada.cuerpo}
+        </Texto>
+      </View>
+    )
   } else if (fase === 'fuera') {
     cuerpo = (
       <View style={{ gap: 18 }}>
@@ -403,7 +478,7 @@ export function Puerta(p: {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: color.verdeProfundo }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[estilos.pagina, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 40 }]}>
-        <Cabecera onEntrar={fase === 'quiz' && e.paso === 0 && !conSesion ? () => p.alEntrar() : undefined} />
+        <Cabecera onEntrar={fase === 'nacimiento' && !conSesion ? () => p.alEntrar() : undefined} />
         {cuerpo}
       </ScrollView>
       {hoja}
