@@ -53,14 +53,21 @@ export async function updateSession(request: NextRequest) {
   // Empezó en dos y medio y se subió el mismo día: con el servidor frío la
   // primera entrada al panel se pasaba de ese tope y rebotaba a /entrar. Un
   // freno que salta cuando no hay nada que frenar enseña a desconfiar de él.
+  //
+  // Y el reloj se APAGA cuando auth contesta. No se apagaba: el aviso salía
+  // cuatro segundos después de CADA petición, aunque auth hubiera contestado
+  // en medio segundo, y como Vercel reutiliza la instancia caía en los
+  // registros de la petición siguiente, con otra ruta. El 02-11 eran cientos
+  // por hora y parecía que auth estaba caído: no lo estaba.
+  let reloj: ReturnType<typeof setTimeout> | undefined
   const { data: { user } } = await Promise.race([
-    supabase.auth.getUser(),
-    new Promise<{ data: { user: null } }>((listo) =>
-      setTimeout(() => {
+    supabase.auth.getUser().finally(() => clearTimeout(reloj)),
+    new Promise<{ data: { user: null } }>((listo) => {
+      reloj = setTimeout(() => {
         console.warn('[middleware] auth no contestó en 4 s:', request.nextUrl.pathname)
         listo({ data: { user: null } })
-      }, 4000),
-    ),
+      }, 4000)
+    }),
   ])
 
   // El panel no puede quedar detrás de una URL difícil de adivinar: eso no
