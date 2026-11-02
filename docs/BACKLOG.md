@@ -298,3 +298,22 @@ hace lo mismo.
 
 **Por qué espera.** Design tiene que escribir esas tres tarjetas. El texto
 vive en `reglas.js` (`COMO_FUNCIONA`), que lo leen la web y la app.
+
+---
+
+## 11 · Las 77 que completaron todo y no crearon la cuenta
+
+**Michael, 02-11.** Anotado como pendiente, sin fecha.
+
+**El dato.** De 913 personas que terminaron los datos y el cuestionario en la
+web, 77 nunca crearon la cuenta (70 de octubre, 47 en las dos últimas
+semanas). Tenemos su correo porque en la web es lo primero que se pide.
+
+**Lo que hay que hacer.** Un correo que las lleve directo a crear la cuenta,
+sin repetir nada de lo que ya contestaron. El texto se le enseña a Michael
+antes de que salga, y se prueba en seco (`?seco=1` o el guion equivalente):
+encolarlo es mandarlo.
+
+**Ojo.** Depende de cómo quede el alta nueva (nacimiento → «Crea tu cuenta» →
+preguntas): el enlace del correo tiene que llevar a la pantalla de crear la
+cuenta que exista ese día, con su lead ya cruzado por correo (`trasEntrar`).
