@@ -33,7 +33,7 @@ export type Novedades = {
 
 export const NOVEDADES: Record<string, Novedades> = {
   '2026-11-02': {
-    asunto: 'Novedades y agenda de esta semana en Aro Club',
+    asunto: 'Esta semana en Aro: cena de dúos, segundo acto y brunch',
     items: [
       {
         titulo: '+1 acompañante',
