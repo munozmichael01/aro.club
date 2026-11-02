@@ -37,6 +37,9 @@ export const RUTAS_QUE_ABREN_LA_APP = [
   '/estas-dentro',
   '/agenda',
   '/reembolso',
+  // El alta (02-11). La app la lleva a su `/puerta`, no a su `/empezar`
+  // vieja, que era el alta con lead y ya no la enlaza nadie.
+  '/empezar',
   '/i/*',
   '/m/*',
 ] as const
