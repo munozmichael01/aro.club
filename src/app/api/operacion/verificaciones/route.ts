@@ -152,14 +152,22 @@ export async function GET() {
     if (!previa || f.created_at > previa.created_at) vigente.set(k, f)
   }
 
-  // Una firma por foto, cinco minutos.
+  // Una firma por foto, cinco minutos. Todas en UNA llamada a Storage: eran
+  // una por foto y una detrás de otra, y el panel vuelve a pedir esta lista
+  // después de cada aprobación. Con trece personas en cola, veintiséis
+  // viajes seguidos antes de poder pulsar la siguiente (02-11).
   const firmadas = new Map<string, string>()
-  for (const [k, f] of vigente) {
-    if (!f.storage_path) continue
+  const conFoto = [...vigente].filter(([, f]) => !!f.storage_path)
+  if (conFoto.length) {
     const { data } = await admin.storage
       .from('verificaciones')
-      .createSignedUrl(f.storage_path, 300)
-    if (data?.signedUrl) firmadas.set(k, data.signedUrl)
+      .createSignedUrls(conFoto.map(([, f]) => f.storage_path as string), 300)
+    // Por la ruta y no por la posición: cada firma vuelve con la suya.
+    const porRuta = new Map((data ?? []).map((d) => [d.path, d.signedUrl]))
+    for (const [k, f] of conFoto) {
+      const url = porRuta.get(f.storage_path as string)
+      if (url) firmadas.set(k, url)
+    }
   }
 
   // La foto más nueva de cada persona, que es «hasta dónde se miró». Vuelve

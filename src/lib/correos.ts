@@ -301,6 +301,13 @@ type AQuien = { perfil: string } | { correo: string }
  */
 export type Resultado = 'encolado' | 'repetido' | 'fallo'
 
+/**
+ * Los envíos en bulto: no contestan a algo que alguien acaba de hacer.
+ * La pasada los deja para después de los acuses, y `encolar` no los manda
+ * al momento.
+ */
+const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima', 'resumen_semanal', 'cena_en_ingles', 'equilibrar_mesas', 'te_falta_sentarte'] as const
+
 export async function encolar(
   aQuien: AQuien,
   tipo: Correo,
@@ -308,7 +315,7 @@ export async function encolar(
   opciones: { eventoId?: string | null; cuando?: Date } = {},
 ): Promise<Resultado> {
   try {
-    const { error } = await createAdminClient()
+    const { data: fila, error } = await createAdminClient()
       .from('scheduled_emails')
       .insert({
         profile_id: 'perfil' in aQuien ? aQuien.perfil : null,
@@ -320,6 +327,8 @@ export async function encolar(
         send_at: (opciones.cuando ?? new Date()).toISOString(),
         payload: detalle as never,
       } as never)
+      .select('id')
+      .maybeSingle()
 
     // 23505 es un índice de «uno por persona»: el de la bienvenida, el del
     // empujón. Encolar dos veces no es un error, es la respuesta correcta a
@@ -368,8 +377,20 @@ export async function encolar(
     // El cron no sobra: sigue siendo la red que recoge lo que falle aquí
     // —un corte de red, un límite de la cuenta— y lo que va programado para
     // más tarde. Esto solo adelanta lo inmediato.
-    if (!opciones.cuando || opciones.cuando.getTime() <= Date.now()) {
-      await despacharPendientes()
+    //
+    // Y SOLO ESTA FILA (02-11). Llamaba a la pasada entera: hasta 25 acuses
+    // y 100 del bulto, más los recibos de las push, y quien había pulsado
+    // «Aprobar» esperaba a todo eso. Con el resumen de los lunes en la cola
+    // (977 filas a las seis), cada aprobación preparaba cien resúmenes antes
+    // de contestar, y una subida de cédula llegó al tope de cinco minutos.
+    // Lo demás es del cron, que pasa cada cuarto de hora.
+    //
+    // Los del bulto no salen aquí nunca: no contestan a nadie, y encolarlos
+    // de mil en mil no puede convertirse en mil envíos uno detrás de otro.
+    const id = (fila as { id?: string } | null)?.id
+    if (id && !(DE_BULTO as readonly string[]).includes(tipo)
+      && (!opciones.cuando || opciones.cuando.getTime() <= Date.now())) {
+      await despacharPendientes(false, undefined, id)
     }
     return 'encolado'
   } catch (e) {
@@ -445,6 +466,11 @@ export async function despacharPendientes(
    * antes de su hora.
    */
   filaId?: string,
+  /**
+   * La fila que `encolar` acaba de crear, para mandarla YA y nada más.
+   * Fuera de seco y solo si ya le toca: no adelanta nada programado.
+   */
+  soloFila?: string,
 ): Promise<{
   mandados: number
   pushes: number
@@ -469,7 +495,7 @@ export async function despacharPendientes(
     // Aquí y no en un cron propio: este ya pasa cada cuarto de hora, que es
     // justo el retraso que Expo pide para tener el recibo listo. En seco no:
     // leer un recibo escribe en la fila.
-    const recibos = seco ? 0 : await leerRecibos()
+    const recibos = seco || soloFila ? 0 : await leerRecibos()
 
     /**
      * La cabecera de baja, para los que NO son imprescindibles.
@@ -509,6 +535,7 @@ export async function despacharPendientes(
     // que interesa una fila que todavia no toca.
     if (seco && filaId) consulta = consulta.eq('id', filaId)
     else consulta = consulta.lte('send_at', new Date().toISOString())
+    if (soloFila) consulta = consulta.eq('id', soloFila)
 
     /**
      * Veinticinco por pasada, y los ACUSES primero.
@@ -540,7 +567,6 @@ export async function despacharPendientes(
      * lista» a mediodía. Es el mismo fallo del 13-10 con los empujones, con
      * cinco veces más filas.
      */
-    const DE_BULTO = ['empujon', 'abrimos_zona', 'cena_edad_minima', 'resumen_semanal', 'cena_en_ingles', 'equilibrar_mesas', 'te_falta_sentarte'] as const
     const TOPE = 25
 
     /**
@@ -570,7 +596,7 @@ export async function despacharPendientes(
 
     let pendientes = acuses ?? []
 
-    if (pendientes.length < TOPE) {
+    if (pendientes.length < TOPE && !soloFila) {
       // `consulta` ya se consumió arriba, así que el bulto se pide aparte
       // con los mismos filtros.
       let delBulto = admin
@@ -625,7 +651,7 @@ export async function despacharPendientes(
      * que esto venía a evitar. Se traen aquí, y al cerrarse con su grupo ya
      * no vuelven a salir.
      */
-    if (grupos.size && !(seco && filaId)) {
+    if (grupos.size && !(seco && filaId) && !soloFila) {
       const deLaVuelta = [...grupos.values()].flat()
       const { data: hermanos } = await admin
         .from('scheduled_emails')
