@@ -3012,6 +3012,12 @@
      * En una +1, en dúos. Lo demás, lo de la fecha, como estaba.
      */
     DE_4_A_8: ['cenas', 'brunch', 'drinks'],
+    /** «de 4 a 8» o «de seis»: el tamaño de mesa dicho dentro de una frase. */
+    mesasDe: function (formato, porMesa) {
+      return api.DE_4_A_8.indexOf(api.familiaDe(formato).clave) >= 0
+        ? 'de 4 a 8'
+        : 'de ' + api.enLetra(Number(porMesa) || 6)
+    },
     cuantosEnTexto: function (formato, porMesa, masUno) {
       if (masUno) return 'De dos a cuatro dúos'
       if (api.DE_4_A_8.indexOf(api.familiaDe(formato).clave) >= 0) return 'De 4 a 8 personas'
@@ -3036,8 +3042,21 @@
      * Mi cuenta: dos copias de la misma frase son dos frases en cuanto
      * alguien toque una.
      */
-    fraseDeApuntados: function (n, porMesa) {
+    fraseDeApuntados: function (n, porMesa, formato) {
       var x = Number(n) || 0
+      /**
+       * Cenas, brunch y drinks: las mesas se arman de 4 a 8 personas, y eso
+       * es lo que se dice (Michael, 01-11: «eso es lo que quiero que
+       * realmente digamos, para ir acorde a la realidad»). La primera mesa
+       * existe desde cuatro. `formato` es opcional: sin él, la frase de
+       * siempre, para quien todavía no lo pase.
+       */
+      if (formato && api.DE_4_A_8.indexOf(api.familiaDe(formato).clave) >= 0) {
+        if (x < api.UMBRAL_APUNTADOS) return 'Una mesa es de 4 a 8 personas'
+        if (x < 4) return x + ' apuntados · falta 1 para la primera mesa'
+        var m = Math.ceil(x / 8)
+        return x + ' apuntados · ' + m + (m === 1 ? ' mesa' : ' mesas')
+      }
       /**
        * Cuantos son en ESA fecha, que ya no siempre son seis.
        *

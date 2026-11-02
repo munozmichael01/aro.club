@@ -1515,7 +1515,9 @@ class Component extends DCLogic {
     const semanas = [];
     filtrados.forEach((c) => {
       const n = c[4];
-      const va = n >= 6;
+      // Desde cuatro ya hay mesa en cenas, brunch y drinks (de 4 a 8).
+      const minimoMesa = AroReglas.DE_4_A_8.indexOf(AroReglas.familiaDe(c[15]).clave) >= 0 ? 4 : 6;
+      const va = n >= minimoMesa;
       /**
        * La clave de la tarjeta es el ID de la fecha, no «tipo + cuándo».
        *
@@ -1694,12 +1696,12 @@ class Component extends DCLogic {
           // De `reglas.js`, que es donde vive esa frase desde que la pidio
           // tambien la agenda publica. Aqui estaba escrita por segunda vez
           // con el seis dentro, asi que los drinks de ocho decian seis.
-          : (masUno ? M.fraseDeDuos(n) : AroReglas.fraseDeApuntados(n, c[17])),
+          : (masUno ? M.fraseDeDuos(n) : AroReglas.fraseDeApuntados(n, c[17], c[15])),
         estadoEstilo: 'font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (cerrada ? '#566A5D' : (mia ? '#1B5138' : (va ? '#1B5138' : '#8F4515'))) + ';white-space:nowrap',
         caja: 'display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;border-radius:22px;padding:clamp(15px,2vw,18px);opacity:' + (cerrada ? '.58' : '1') + ';cursor:' + (mia || cerrada ? 'default' : 'pointer') + ';background:' + (mia ? 'transparent' : (abierta ? '#F2E9D5' : '#FFFBF0')) + ';border:1px solid ' + (mia ? '#1B5138' : 'transparent'),
         icono: 'flex:0 0 auto;width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 15px/1 \'Inter Tight\',sans-serif;background:' + (mia ? '#1B5138' : m[2]) + ';color:' + (mia ? '#FAF3E4' : m[1]),
         barraFondo: 'position:relative;display:' + (mia || cerrada ? 'none' : 'block') + ';flex:1;max-width:132px;height:5px;border-radius:999px;background:rgba(20,52,42,.13);overflow:hidden',
-        barra: 'position:absolute;left:0;top:0;bottom:0;width:' + (masUno ? Math.round(M.avanceDeDuos(n) * 100) : Math.min(100, Math.round((n / 6) * 100))) + '%;border-radius:999px;background:' + (va ? '#1B5138' : '#8F4515'),
+        barra: 'position:absolute;left:0;top:0;bottom:0;width:' + (masUno ? Math.round(M.avanceDeDuos(n) * 100) : Math.min(100, Math.round((n / minimoMesa) * 100))) + '%;border-radius:999px;background:' + (va ? '#1B5138' : '#8F4515'),
         flecha: 'flex:0 0 auto;width:34px;height:34px;border-radius:999px;display:' + (mia || cerrada ? 'none' : 'flex') + ';background:' + (abierta ? '#8F4515' : '#14342A') + ';color:#FAF3E4;align-items:center;justify-content:center;font:500 14px/1 \'Inter Tight\',sans-serif;margin-top:2px;transition:background 180ms ease',
         iconoFlecha: abierta ? '×' : '→',
         envoltorio: 'border-radius:22px;overflow:hidden;background:' + (abierta ? '#F2E9D5' : 'transparent'),
@@ -1727,8 +1729,9 @@ class Component extends DCLogic {
          * brunch ya salia asi. Lo vio el agente de la app, que comparte este
          * texto y acababa de tropezar con lo mismo.
          */
-        comoFunciona: 'Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas de '
-          + AroReglas.enLetra(c[17] || 6) + ' por toda la zona, y antes te decimos en cuál te tocó. La fecha '
+        // «de 4 a 8» en cenas, brunch y drinks (Michael, 01-11).
+        comoFunciona: 'Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas '
+          + AroReglas.mesasDe(c[15], c[17]) + ' por toda la zona, y antes te decimos en cuál te tocó. La fecha '
           + (() => {
             const frase = window.AroReglas && c[12]
               ? AroReglas.textoCierre(c[12], null, c[14])

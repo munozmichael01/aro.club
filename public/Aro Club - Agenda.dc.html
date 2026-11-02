@@ -295,7 +295,8 @@ class Component extends DCLogic {
       const n = f.apuntados || 0;
       // «Llena» es cuando ya hay para un grupo entero, y un grupo no siempre
       // son seis: unos drinks son ocho. El color de la cifra colgaba de esto.
-      const llena = n >= (f.porMesa || 6);
+      // Desde cuatro ya hay mesa en cenas, brunch y drinks (de 4 a 8).
+      const llena = n >= (AroReglas.DE_4_A_8.indexOf(AroReglas.familiaDe(f.formato).clave) >= 0 ? 4 : (f.porMesa || 6));
       /**
        * UN TOPE NO SE ANUNCIA; UN MÍNIMO SÍ.
        *
@@ -384,7 +385,7 @@ class Component extends DCLogic {
         // Con cuantos son en ESTA fecha: sin el segundo argumento la frase
         // dice «Una mesa son seis» debajo de unos drinks de ocho. Mi cuenta
         // ya lo pasaba y aqui se quedo sin pasar; lo vio el agente de la app.
-        gente: masUno ? M.fraseDeDuos(n) : AroReglas.fraseDeApuntados(n, f.porMesa),
+        gente: masUno ? M.fraseDeDuos(n) : AroReglas.fraseDeApuntados(n, f.porMesa, f.formato),
         colorGente: (masUno ? M.avanceDeDuos(n) >= 1 : llena) ? '#1B5138' : '#8F4515',
         puntoGente: (masUno ? M.avanceDeDuos(n) >= 1 : llena) ? '#9CBBA6' : '#E39C63',
         boton: masUno ? 'Reservar dos puestos' : 'Reservar mi puesto',
