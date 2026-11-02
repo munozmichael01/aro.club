@@ -522,7 +522,7 @@
           <!-- Michael, 31-10: un titular que sea verdad con un solo plan abierto y
                con varios (docs/BACKLOG.md, 9). -->
           <h2 data-reveal="0" style="{{ h2 }}">Cenas cada semana. Y lo que pida la gente.</h2>
-          <p data-reveal="1" style="{{ intro }}">Empezamos por la cena porque es lo más fácil de decir que sí. Los demás formatos abren cuando haya suficiente gente que los quiera.</p>
+          <p data-reveal="1" style="{{ intro }}">La cena es el corazón del club. También hay drinks y brunch, y vienen más planes en camino.</p>
         </div>
         <a class="agenda-esc" href="/agenda" data-reveal="2" style="flex:none;display:inline-flex;align-items:center;gap:8px;min-height:56px;padding:0 28px;border-radius:999px;border:1.5px solid #1B5138;color:#1B5138;font:600 16px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:all 220ms ease" style-hover="background:#1B5138;color:#FAF3E4">Ver la agenda <span style="color:#C0662F">→</span></a>
       </div>
@@ -1333,7 +1333,9 @@ class Component extends DCLogic {
       ['Cenas', 'Cada semana', 'fotos/cenas.jpg', '-1.8deg', true, 'cenas'],
       ['Drinks', 'Una copa y conversación', 'fotos/drinks.jpg', '1.5deg', false, 'drinks'],
       ['En movimiento', 'Correr, caminar el cerro, entrenar', 'fotos/movimiento.jpg', '-1.3deg', false, 'movimiento'],
-      ['Coffee', 'Café de fin de semana', 'fotos/coffee.jpg', '1.6deg', false, 'coffee']
+      // Brunch en lugar de Coffee (Michael, 02-11: «hoy es más brunch que
+      // coffee»). El café sigue existiendo como plan; aquí no se enseña.
+      ['Brunch', 'Brunch de fin de semana', 'fotos/brunch.jpg', '1.6deg', false, 'brunch']
     ];
     const planes = planDefs.map((f) => ({
       titulo: f[0], dias: f[1], tinte: TINTE, pronto: abiertas ? !abiertas.includes(f[5]) : !f[4],
