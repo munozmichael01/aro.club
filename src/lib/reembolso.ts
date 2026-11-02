@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { NOTA_SIN_MESA } from '@/lib/creditos'
 import { BANCOS } from '@/lib/reglas'
 import type { createAdminClient } from '@/lib/supabase/admin'
 
@@ -49,19 +50,60 @@ export async function reembolsable(
 ) {
   const desde = new Date(Date.now() - DIAS_DE_PLAZO * 86400_000).toISOString()
 
-  // El abono de quedarse sin mesa, el más reciente que siga en plazo.
+  /**
+   * El abono de quedarse sin mesa, el más reciente que siga en plazo.
+   *
+   * SOLO ese (02-11). Se miraba cualquier devolución, y la de cancelar con
+   * más de 24 horas también abría el botón: la regla de Michael es devolver
+   * dinero a quien se quedó sin mesa, no a quien canceló.
+   */
   const { data: abonos } = await admin
     .from('credit_ledger')
     .select('id, created_at, booking_id')
     .eq('profile_id', perfilId)
     .eq('reason', 'refund')
+    .eq('note', NOTA_SIN_MESA)
     .gt('delta', 0)
     .gte('created_at', desde)
     .order('created_at', { ascending: false })
     .limit(1)
 
   const abono = (abonos ?? [])[0]
-  if (!abono) return null
+  if (!abono?.booking_id) return null
+
+  // Y que no se haya retirado: si después entró en una mesa, el abono se
+  // deshace con un cargo a la misma reserva, y ya no hay nada que devolver.
+  const { data: retirado } = await admin
+    .from('credit_ledger')
+    .select('id')
+    .eq('booking_id', abono.booking_id)
+    .lt('delta', 0)
+    .gt('created_at', abono.created_at)
+    .limit(1)
+    .maybeSingle()
+  if (retirado) return null
+
+  /**
+   * Y solo si esa reserva se pagó con DINERO, y lo que se pagó.
+   *
+   * Se devolvía el precio de la fecha pasara lo que pasara. El 31-10 una
+   * reserva con un cupón del 100% (0 ref) se quedó sin mesa y se pidió y
+   * pagó en dinero (Michael, 02-11). Con un cupón, con una cortesía o con un
+   * crédito anterior no entró dinero por esta reserva: se queda en crédito.
+   * Y con un descuento, se devuelve lo pagado, no la tarifa entera. Los
+   * bolívares se calculan en la ruta, con la tasa del día de la solicitud.
+   */
+  const { data: pago } = await admin
+    .from('payments')
+    .select('amount_usd')
+    .eq('booking_id', abono.booking_id)
+    .eq('status', 'confirmed')
+    .neq('metodo', 'cupon')
+    .gt('amount_usd', 0)
+    .order('reportado_en', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (!pago) return null
 
   // ¿Ya se pidió? Una solicitud por crédito, lo garantiza también el índice.
   const { data: yaPedido } = await admin
@@ -82,17 +124,7 @@ export async function reembolsable(
     .eq('profile_id', perfilId)
     .maybeSingle()
 
-  // Cuánto costó esa plaza: de la fecha de SU reserva, no de una constante.
-  let precio = 0
-  if (abono.booking_id) {
-    const { data: r } = await admin
-      .from('bookings')
-      .select('events!bookings_event_id_fkey(price_usd)')
-      .eq('id', abono.booking_id)
-      .maybeSingle()
-    const ev = r?.events as unknown as { price_usd: number | null } | null
-    precio = Number(ev?.price_usd ?? 0)
-  }
+  const precio = Number(pago.amount_usd)
 
   return {
     abono,

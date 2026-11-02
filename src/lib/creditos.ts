@@ -92,6 +92,13 @@ export async function anotarPagoDeEvento(
  * —compró, se le cobró, no entró, se le devolvió— y el saldo queda en uno,
  * listo para la próxima fecha sin volver a pagar.
  */
+/**
+ * La nota del abono por quedarse sin mesa. Es lo que lo distingue de las
+ * otras devoluciones (cancelar con margen, fecha cancelada), y lo lee
+ * `reembolso.ts`: solo este crédito se puede pedir en dinero.
+ */
+export const NOTA_SIN_MESA = 'No entró en mesa esta fecha'
+
 export async function abonarSinMesa(perfilId: string, eventoId: string): Promise<void> {
   const admin = createAdminClient()
 
@@ -138,7 +145,7 @@ export async function abonarSinMesa(perfilId: string, eventoId: string): Promise
     delta: Math.abs(cargo.delta),
     reason: 'refund',
     booking_id: reserva.id,
-    note: 'No entró en mesa esta fecha',
+    note: NOTA_SIN_MESA,
   } as never)
 
   if (error) console.error('[creditos] no se abonó la mesa no conseguida', reserva.id, error)
