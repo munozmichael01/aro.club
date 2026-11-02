@@ -519,7 +519,9 @@
     <div style="max-width:1240px;margin:0 auto;padding:clamp(52px,7vw,100px) clamp(16px,4vw,36px)">
       <div style="display:flex;flex-wrap:wrap;gap:clamp(16px,3vw,40px);align-items:flex-end;justify-content:space-between">
         <div style="max-width:840px">
-          <h2 data-reveal="0" style="{{ h2 }}">Hoy son cenas. Después, lo que pida la gente.</h2>
+          <!-- Michael, 31-10: un titular que sea verdad con un solo plan abierto y
+               con varios (docs/BACKLOG.md, 9). -->
+          <h2 data-reveal="0" style="{{ h2 }}">Cenas cada semana. Y lo que pida la gente.</h2>
           <p data-reveal="1" style="{{ intro }}">Empezamos por la cena porque es lo más fácil de decir que sí. Los demás formatos abren cuando haya suficiente gente que los quiera.</p>
         </div>
         <a class="agenda-esc" href="/agenda" data-reveal="2" style="flex:none;display:inline-flex;align-items:center;gap:8px;min-height:56px;padding:0 28px;border-radius:999px;border:1.5px solid #1B5138;color:#1B5138;font:600 16px/1 'Inter Tight',sans-serif;white-space:nowrap;transition:all 220ms ease" style-hover="background:#1B5138;color:#FAF3E4">Ver la agenda <span style="color:#C0662F">→</span></a>
@@ -812,6 +814,9 @@
 class Component extends DCLogic {
   state = {
     faq: -1, fase: 'correo', correo: '', error: '', ahora: Date.now(),
+    // Los planes con alguna fecha abierta (`familiaDe(...).clave`). Null hasta
+    // que llega la agenda.
+    familiasAbiertas: null,
     paso: 0, arraigo: -1, zonas: [], planes: [], temas: [], ciudadSlug: '', guardandoQuiz: false, falloQuiz: '',
     ciudadGuardando: false, ciudadGuardada: false, ciudadFallo: '',
     sesion: null, sesionSabida: false,
@@ -953,6 +958,16 @@ class Component extends DCLogic {
     fetch('/api/proxima')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d) this.setState({ proxima: d }); })
+      .catch(() => {});
+
+    // Qué planes tienen fecha abierta, para el sello de «PRÓXIMAMENTE».
+    fetch('/api/agenda')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const fechas = (d && (d.fechas || d)) || [];
+        if (!Array.isArray(fechas) || !window.AroReglas) return;
+        this.setState({ familiasAbiertas: [...new Set(fechas.map((f) => AroReglas.familiaDe(f.formato).clave))] });
+      })
       .catch(() => {});
   }
 
@@ -1307,14 +1322,21 @@ class Component extends DCLogic {
       foto: foto(r[1], '4/3')
     }));
 
+    /**
+     * «PRÓXIMAMENTE» sale de si ESE plan tiene alguna fecha abierta, no de
+     * una lista a mano (docs/BACKLOG.md, 9; Michael, 31-10). Se le cae solo el
+     * día que se abre y vuelve el día que no queda ninguna. Hasta que llega la
+     * agenda vale el quinto campo, que es lo que había: las cenas, abiertas.
+     */
+    const abiertas = this.state.familiasAbiertas;
     const planDefs = [
-      ['Cenas', 'Cada semana', 'fotos/cenas.jpg', '-1.8deg', true],
-      ['Drinks', 'Una copa y conversación', 'fotos/drinks.jpg', '1.5deg', false],
-      ['En movimiento', 'Correr, caminar el cerro, entrenar', 'fotos/movimiento.jpg', '-1.3deg', false],
-      ['Coffee', 'Café de fin de semana', 'fotos/coffee.jpg', '1.6deg', false]
+      ['Cenas', 'Cada semana', 'fotos/cenas.jpg', '-1.8deg', true, 'cenas'],
+      ['Drinks', 'Una copa y conversación', 'fotos/drinks.jpg', '1.5deg', false, 'drinks'],
+      ['En movimiento', 'Correr, caminar el cerro, entrenar', 'fotos/movimiento.jpg', '-1.3deg', false, 'movimiento'],
+      ['Coffee', 'Café de fin de semana', 'fotos/coffee.jpg', '1.6deg', false, 'coffee']
     ];
     const planes = planDefs.map((f) => ({
-      titulo: f[0], dias: f[1], tinte: TINTE, pronto: !f[4],
+      titulo: f[0], dias: f[1], tinte: TINTE, pronto: abiertas ? !abiertas.includes(f[5]) : !f[4],
       marco: marco(f[3]), foto: foto(f[2], '4/5'),
       selloPronto: 'position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;min-height:28px;padding:0 11px;border-radius:999px;background:rgba(20,52,42,.86);color:#FAF3E4;font:600 10px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em'
     }));

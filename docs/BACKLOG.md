@@ -244,6 +244,9 @@ correr el día que se abra el formato.
 
 ## 9 · La portada: el sello «PRÓXIMAMENTE» y el titular de los planes
 
+**Hecho el 01-11** (sello y titular). Falta la entradilla de debajo, que
+sigue diciendo «Empezamos por la cena…»: el texto lo decide Michael.
+
 **Michael, 31-10, el día que se abrieron los primeros drinks.** Lo apuntó
 para después a propósito: lo urgente era hablarle a quien ya marcó ese
 interés, y la portada es para quien todavía no ha entrado.
