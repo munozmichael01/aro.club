@@ -34,7 +34,7 @@ const CARACAS = 4
 /** Cuánto antes cierra: el reparto necesita el pool cerrado dos días antes. */
 // La cifra vive en `reglas.js`: la comparten el panel, el copy que la promete
 // y la app. Escrita aquí, bajarla de 48 a 24 dejaba cuatro textos mintiendo.
-import { HORAS_DE_CIERRE, PRECIO_USD, cierreDe } from '@/lib/reglas'
+import { HORAS_DE_CIERRE, PRECIO_USD, cierreDe, precioDe } from '@/lib/reglas'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 
 import { avisarDeLaApertura } from '@/lib/avisar-apertura'
@@ -177,7 +177,9 @@ const cuerpo = z.object({
    * «7 USD la plaza». Dos fechas se abrieron prometiendo siete y cobrando
    * ocho, y eso no falla en ningún sitio hasta que alguien paga.
    */
-  precioUsd: z.number().positive().max(500).default(PRECIO_USD),
+  // Sin precio, el del plan (`precioDe`: brunch y drinks a 7, lo demás
+  // `PRECIO_USD`). Michael, 01-11.
+  precioUsd: z.number().positive().max(500).optional(),
   // Cuántos por mesa. Seis en una cena, pero una caminata de seis no es lo
   // mismo que una de doce, y el reparto ya lee esta columna.
   porMesa: z.number().int().min(2).max(20).default(6),
@@ -758,6 +760,8 @@ export async function POST(request: Request) {
     }
   }
 
+  const precioPlaza = d.precioUsd ?? precioDe(d.formato)
+
   // De dos en dos: una mesa con número impar de sillas dejaría a alguien
   // sin su acompañante.
   if (d.masUno && d.porMesa % 2 !== 0) {
@@ -772,7 +776,7 @@ export async function POST(request: Request) {
       booking_closes_at: cierra.toISOString(),
       reveal_at: revela.toISOString(),
       city_slug: d.ciudad,
-      price_usd: d.masUno ? d.precioUsd * 2 : d.precioUsd,
+      price_usd: d.masUno ? precioPlaza * 2 : precioPlaza,
       credit_cost: d.masUno ? 2 : 1,
       mas_uno: d.masUno,
       seats_per_table: d.porMesa,
@@ -817,7 +821,7 @@ export async function POST(request: Request) {
     formato: d.formato,
     zonas: d.zonas.map((z) => z.zona),
     porMesa: d.porMesa,
-    precioUsd: d.precioUsd,
+    precioUsd: precioPlaza,
   })
 
   // --- el aviso, a quien le sirva ---------------------------------------

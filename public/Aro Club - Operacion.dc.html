@@ -5528,7 +5528,10 @@ class Component extends DCLogic {
     // que es lo mismo que promete el correo de «abrimos fecha en tu zona».
     // Estaba escrito «8» aquí y otra vez abajo, y la regla dice siete: se
     // abrieron dos fechas prometiendo siete y cobrando ocho.
-    const precioPorDefecto = String(St.precioPorDefecto == null ? '' : St.precioPorDefecto);
+    // Y por plan: un brunch y unos drinks nacen a 7 ref (`AroReglas.precioDe`).
+    const precioPorDefecto = String(window.AroReglas && AroReglas.precioDe
+      ? AroReglas.precioDe(CODIGO_FORMATO[fSel[0]] || 'dinner')
+      : (St.precioPorDefecto == null ? '' : St.precioPorDefecto));
     const precioNum = parseFloat(String(St.precio === undefined ? precioPorDefecto : St.precio).replace(',', '.')) || 0;
     const cupoOk = true;
     const precioOk = precioNum > 0;

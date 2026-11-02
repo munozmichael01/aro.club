@@ -171,6 +171,8 @@ type Api = {
   }
   /** Las cuentas de Aro en redes (@somos.aroclub). */
   REDES: { instagram: string; tiktok: string; arroba: string }
+  /** El precio con el que nace una fecha nueva de ese formato. */
+  precioDe: (formato: string | null | undefined) => number
   /** «+1 acompañante» (entrega mas-uno). Los textos, pendientes de que Michael los apruebe. */
   MAS_UNO: {
     nombre: string
@@ -280,6 +282,8 @@ const api = reglas as Api
 export const DENTRO = api.DENTRO
 /** «Seguir en contacto», el mismo texto en app, web y correos. */
 export const CONTACTO = api.CONTACTO
+/** El precio con el que nace una fecha nueva, por plan (brunch y drinks, 7). */
+export const precioDe = api.precioDe
 /** Las cuentas de Aro en redes: lo que firma las tarjetas para historias. */
 export const REDES = api.REDES
 /** «+1 acompañante», el mismo texto en app, web y correos. */

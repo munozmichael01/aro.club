@@ -357,7 +357,7 @@ class Component extends DCLogic {
         zona: (f.zonas || []).join(' o ') || 'Zona por confirmar',
         // Cuantos son en ESTA, que ya no siempre son seis: unos drinks son
         // ocho. Sale del servidor, que lee la columna de la fecha.
-        cuantos: masUno ? 'De dos a cuatro dúos' : (f.porMesa || 6) + ' personas',
+        cuantos: AroReglas.cuantosEnTexto(f.formato, f.porMesa, masUno),
         /**
          * Cuándo se sabe el sitio y con quién va, de ESTA fecha.
          *

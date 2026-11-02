@@ -65,7 +65,8 @@ const aplicar = args.includes('aplicar')
 
 const dias = bandera('dias', '2026-11-05,2026-11-06,2026-11-07').split(',').map((d) => d.trim()).filter(Boolean)
 const [horaN, minN] = bandera('hora', '19:00').split(':').map(Number)
-const precio = Number(bandera('precio', '10'))
+// Sin `--precio`, el del plan (`AroReglas.precioDe`: brunch y drinks a 7).
+const precio = Number(bandera('precio', String(reglas.precioDe(bandera('formato', 'dinner')))))
 const porMesa = Number(bandera('mesa', '6'))
 const formato = bandera('formato', 'dinner')
 const masUno = args.includes('--mas-uno')

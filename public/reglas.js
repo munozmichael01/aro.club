@@ -519,6 +519,19 @@
       return this.PRECIO_USD + ' ref'
     },
 
+    /**
+     * El precio POR DEFECTO de una fecha nueva, por plan. Lo que cobra una
+     * fecha ya abierta es su `price_usd`; esto es solo con lo que nace.
+     *
+     * Michael, 31-10: drinks a 7 ref. Michael, 01-11: «desde hoy ajustamos el
+     * brunch a 7 ref». Lo demás, `PRECIO_USD`.
+     */
+    PRECIO_POR_FAMILIA: { brunch: 7, drinks: 7 },
+    precioDe: function (formato) {
+      var f = api.familiaDe(formato).clave
+      return api.PRECIO_POR_FAMILIA[f] != null ? api.PRECIO_POR_FAMILIA[f] : api.PRECIO_USD
+    },
+
     aE164: function (valor) {
       var v = String(valor == null ? '' : valor).trim()
       var digitos = v.replace(/\D/g, '')
@@ -2989,6 +3002,20 @@
           }
         },
       },
+    },
+
+    /**
+     * Cuánta gente va en una fecha, dicho en la agenda («6 personas»).
+     *
+     * Michael, 01-11: en cenas, brunch y drinks, «De 4 a 8 personas», que es
+     * lo que puede salir de verdad (una mesa corta, o estirada dos sillas).
+     * En una +1, en dúos. Lo demás, lo de la fecha, como estaba.
+     */
+    DE_4_A_8: ['cenas', 'brunch', 'drinks'],
+    cuantosEnTexto: function (formato, porMesa, masUno) {
+      if (masUno) return 'De dos a cuatro dúos'
+      if (api.DE_4_A_8.indexOf(api.familiaDe(formato).clave) >= 0) return 'De 4 a 8 personas'
+      return (Number(porMesa) || 6) + ' personas'
     },
 
     /**
