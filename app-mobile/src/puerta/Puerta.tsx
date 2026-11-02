@@ -88,6 +88,11 @@ export function Puerta(p: {
   const cargar = useCallback(async () => {
     setPreguntas(undefined)
     const [q, s, b, cs] = await Promise.all([p.preguntas(), p.haySesion(), AsyncStorage.getItem(M.CLAVE_BORRADOR).catch(() => null), servicio.ciudades()])
+    // Con sesión y sin nada de la puerta pendiente (llegó por un «Empezar» de un correo, 02-11): no repite el alta.
+    if (s) {
+      const est = await servicio.estado()
+      if (est.ok && est.datos.paso && est.datos.paso !== 'preguntas') return alTerminar.current(M.destinoDeEstado(est.datos.estado))
+    }
     setConSesion(s)
     // La ciudad va primero (`reglas.pasosDePuerta`). Sin la lista (sin red) no
     // sale: mejor que una lista vieja, y quien no la contesta cuenta en Caracas.

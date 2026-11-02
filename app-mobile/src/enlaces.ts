@@ -32,6 +32,9 @@ export const RUTAS_DE_LA_WEB: Record<string, string> = {
   '/agenda': '/cuenta',
   // «¿Prefieres el dinero?», de quien se quedó sin mesa.
   '/reembolso': '/reembolso',
+  // El alta de la web (14a9473) es la misma que la de la app, así que un
+  // «Empezar» de un correo abre /puerta. Nunca la /empezar vieja de la app (el alta con lead).
+  '/empezar': '/puerta',
 }
 
 /**
@@ -41,7 +44,7 @@ export const RUTAS_DE_LA_WEB: Record<string, string> = {
  * basta con que la web las publique en su `apple-app-site-association`. Van a
  * `app.json` en la próxima build, y entonces se vacía esta lista.
  */
-export const PENDIENTES_DE_BUILD = ['/estas-dentro', '/agenda', '/reembolso']
+export const PENDIENTES_DE_BUILD = ['/estas-dentro', '/agenda', '/reembolso', '/empezar']
 
 /** Solo estos parámetros pasan del enlace a la pantalla. `cena`: los correos de «seguir en contacto». */
 const PARAMETROS = ['evento', 'mesa', 'cena']

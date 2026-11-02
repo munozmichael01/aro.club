@@ -18,6 +18,8 @@ test('cada ruta de la web va a su pantalla', () => {
   assert.equal(rutaDeEnlace(`https://aro.club/estas-dentro?evento=${EV}`), `/estas-dentro?evento=${EV}`)
   assert.equal(rutaDeEnlace('https://aro.club/agenda?utm_source=correo'), '/cuenta')
   assert.equal(rutaDeEnlace('https://aro.club/reembolso'), '/reembolso')
+  // El alta de la web abre la nueva de la app, no la /empezar vieja (02-11).
+  assert.equal(rutaDeEnlace('https://aro.club/empezar?utm_source=correo'), '/puerta')
 })
 
 test('los correos de «seguir en contacto» abren esa cena (01-11)', () => {
