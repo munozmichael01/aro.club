@@ -12,6 +12,7 @@ import { arraigoDe, MAS_UNO, DIAS_GUARDA_FOTOS, HORAS_DE_MARGEN, HORAS_DE_CIERRE
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
+import { NOVEDADES } from '@/lib/novedades'
 import { situacionDePerfil } from '@/lib/embudo'
 import { codigoDe, cuentaDe, POR_CADA } from '@/lib/referidos'
 import { datosDeCorreo } from '@/lib/contacto'
@@ -1557,7 +1558,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         if (!lista.length) return []
         const { data: evs } = await admin
           .from('events')
-          .select('id, format, starts_at, booking_closes_at, price_usd, city_slug, status, age_band_min, age_band_max, idioma')
+          .select('id, format, starts_at, booking_closes_at, price_usd, city_slug, status, age_band_min, age_band_max, idioma, mas_uno, after_venue_id')
           .in('id', lista)
           .eq('status', 'open')
           .order('starts_at')
@@ -1589,15 +1590,23 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
              *
              * La banda de edad ya salía en `nota`; el idioma no salía.
              */
-            plan: ev.idioma
+            //
+            // Y lo mismo con el +1 (02-11): tres cenas el sábado 7 a las siete,
+            // y la de dúos solo se distinguía por el precio.
+            plan: (ev.idioma
               ? `${NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan'} en ${nombreDeIdioma(ev.idioma)}`
-              : NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan',
+              : NOMBRES_DE_FORMATO[ev.format ?? ''] ?? 'Plan')
+              + (ev.mas_uno ? ` ${MAS_UNO.nombre}` : ''),
             hora: horaDe(ev.starts_at, zonaDeEv) ?? '',
             // Con «o» y no con «y»: son zonas entre las que se elige, no un
             // sitio repartido entre varias. Lo de «y» es de `avisos_del_dia`,
             // que anuncia la apertura de las zonas, no la elección.
             zonas: unirCon(nombres, ' o '),
-            precio: ev.price_usd != null ? `${Number(ev.price_usd)} ref` : '',
+            // La plantilla dice «la plaza». En una de dúos `price_usd` es lo
+            // de los DOS puestos, y «20 ref la plaza» era falso.
+            precio: ev.price_usd != null
+              ? `${Number(ev.price_usd) / (ev.mas_uno ? 2 : 1)} ref`
+              : '',
             /**
              * Una nota, y la que más cambia lo que hay que hacer manda.
              *
@@ -1612,9 +1621,14 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
               // tres formas es no tener ninguna. Y con las dos puntas, el
               // rango entero: «+30» en una de 30 a 39 dejaría fuera lo que
               // de verdad la distingue, que es el techo.
-              : ev.age_band_min != null && ev.age_band_max != null
-                ? `Solo para ${ev.age_band_min}-${ev.age_band_max}`
-                : ev.age_band_min != null ? `Solo para +${ev.age_band_min}` : '',
+              // Y el segundo acto detrás de la edad, que es la que decide si
+              // puedes ir; el bar no se dice, se revela ese día.
+              : [
+                  ev.age_band_min != null && ev.age_band_max != null
+                    ? `Solo para ${ev.age_band_min}-${ev.age_band_max}`
+                    : ev.age_band_min != null ? `Solo para +${ev.age_band_min}` : '',
+                  ev.after_venue_id ? 'Con segundo acto en un bar' : '',
+                ].filter(Boolean).join(' · '),
             /**
              * Y hasta cuándo se puede apartar puesto, cuando es inminente.
              *
@@ -1647,18 +1661,50 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       if (!tuyas.length && !otras.length) return { error: 'esa semana se quedó sin fechas abiertas' }
 
       const total = tuyas.length + otras.length
-      const titular = tuyas.length
-        ? { titular: 'Esta semana', acento: `hay ${enLetra(tuyas.length)} para ti.` }
-        : { titular: 'Esta semana', acento: `${enLetra(total)} ${total === 1 ? 'plan' : 'planes'} en Aro.` }
+
+      /**
+       * Las novedades, si el envío las pidió (`?novedades=`, 02-11). El texto
+       * vive en `novedades.ts`; el payload solo lleva la clave. La de invitar
+       * no sale sin cuenta: ese enlace no existe para quien no la tiene.
+       */
+      const nov = typeof p.novedades === 'string' ? NOVEDADES[p.novedades] : undefined
+      const novedades = (nov?.items ?? [])
+        .filter((n) => !n.soloConCuenta || !!fila.profile_id)
+        .map((n) => ({
+          titulo: n.titulo,
+          texto: n.texto,
+          enlaceTexto: n.enlace?.texto ?? '',
+          enlace: n.enlace
+            ? `${n.enlace.ruta}?utm_source=correo&utm_medium=email&utm_campaign=resumen-semanal-novedades&utm_content=${encodeURIComponent(String(p.semana ?? ''))}`
+            : '',
+        }))
+
+      // Con novedades, el titular las anuncia y dice que la agenda sigue
+      // debajo (Michael, 02-11): si no, el correo abre prometiendo «tres
+      // para ti» y lo primero que se lee es otra cosa.
+      const titular = novedades.length
+        ? (tuyas.length
+            ? { titular: 'Esta semana hay novedades.', acento: `Y ${enLetra(tuyas.length)} para ti.` }
+            : { titular: 'Esta semana hay novedades.', acento: `Y ${enLetra(total)} ${total === 1 ? 'plan' : 'planes'} en Aro.` })
+        : tuyas.length
+          ? { titular: 'Esta semana', acento: `hay ${enLetra(tuyas.length)} para ti.` }
+          : { titular: 'Esta semana', acento: `${enLetra(total)} ${total === 1 ? 'plan' : 'planes'} en Aro.` }
 
       return {
         a,
         datos: {
           ...base,
+          asunto: nov?.asunto ?? 'Esta semana en Aro Club',
+          hayNovedades: novedades.length ? 'si' : '',
+          novedades,
           titular: titular.titular,
           titularAcento: titular.acento,
           resumen: `${titular.titular} ${titular.acento}`,
-          bajada: tuyas.length
+          bajada: novedades.length
+            ? (tuyas.length
+                ? 'Primero lo nuevo. Más abajo, la agenda de la semana, empezando por lo que encaja con lo que nos dijiste.'
+                : 'Primero lo nuevo. Más abajo, la agenda de la semana.')
+            : tuyas.length
             ? 'Esto es lo que abrimos, empezando por lo que encaja con lo que nos dijiste.'
             : 'Esto es lo que abrimos. Nada encaja del todo con lo que nos dijiste, pero ahí está por si te animas.',
           hayTuyas: tuyas.length ? 'si' : '',

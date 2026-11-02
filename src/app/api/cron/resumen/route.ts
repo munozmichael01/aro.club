@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { encolar } from '@/lib/correos'
 import { quienQuiereSaberDe } from '@/lib/a-quien-avisar'
+import { NOVEDADES } from '@/lib/novedades'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -37,6 +38,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * `?clave=` le pone nombre al envío para poder mandar DOS en la misma semana,
  * `?sinReserva=1` lo acota a quien no tiene sitio en ninguna de las fechas y
  * `?verificados=1` a quien ya puede apartar puesto hoy mismo.
+ *
+ * `?novedades=<clave>` le añade el bloque de novedades de `novedades.ts` y
+ * su asunto. Solo una clave que exista allí: el texto no viaja en la URL.
  * Los dos nacieron el 30-10 del mismo encargo: un viernes a las ocho, las
  * cenas de esa noche y del sábado, a quien todavía puede apuntarse.
  */
@@ -206,6 +210,7 @@ async function resumir(
   clave: string | null = null,
   soloSinReserva = false,
   soloVerificados = false,
+  novedades: string | null = null,
 ) {
   const admin = createAdminClient()
   const { desde, hasta, semana: laSemana } = semanaDeHoy(new Date(), semanas)
@@ -448,7 +453,7 @@ async function resumir(
     const r = await encolar(
       { perfil: p.id },
       'resumen_semanal',
-      { semana, tuyas, otras },
+      { semana, tuyas, otras, ...(novedades ? { novedades } : {}) },
       cuando ? { cuando } : {},
     )
     if (r === 'encolado') encolados++
@@ -466,6 +471,7 @@ async function resumir(
     ...(cuando ? { salen: cuando.toISOString() } : { salen: 'ahora' }),
     ...(seco ? { seco: true } : {}),
     ...(solo ? { solo } : {}),
+    ...(novedades ? { novedades } : {}),
   })
 }
 
@@ -504,6 +510,14 @@ export async function GET(request: Request) {
     )
   }
 
+  const novedades = params.get('novedades')
+  if (novedades !== null && !NOVEDADES[novedades]) {
+    return NextResponse.json(
+      { error: 'Esas novedades no existen. Las que hay: ' + Object.keys(NOVEDADES).join(', ') },
+      { status: 400 },
+    )
+  }
+
   return resumir(
     params.get('seco') === '1',
     params.get('solo'),
@@ -513,5 +527,6 @@ export async function GET(request: Request) {
     clave,
     params.get('sinReserva') === '1',
     params.get('verificados') === '1',
+    novedades,
   )
 }
