@@ -25,6 +25,13 @@ Ya no hay un solo plan. En la misma agenda conviven:
   - **Idioma** («En inglés»): la mesa habla ese idioma.
   - **Segundo acto** (nuevo, 01-11): después de la cena, todas las mesas de
     la fecha se juntan en un mismo bar. El bar no se dice hasta ese día.
+    **No lo llevan todas las cenas**, solo las fechas que lo tengan (hoy, la
+    +45 del sábado 7). Una cena sin segundo acto sigue con su «Después» de
+    siempre, y nada de lo que se diseñe puede dar a entender que toda cena
+    termina en un bar.
+
+Ninguna marca es de todas las fechas: cada una la lleva solo la fecha que la
+tiene, y una misma semana puede tener dos cenas que se cuentan distinto.
 
 Hoy cada marca es solo una cápsula junto al día, y «Cómo funciona» cuenta
 la misma noche para todas. Nadie explica qué significa cada una. Michael teme que la gente reserve
@@ -54,8 +61,9 @@ Timeleft | Antes - Durante - Después/`).
    pasa antes, durante y después en un drinks? ¿Y en un coffee?
 2. **Las marcas dentro de «Cómo funciona».** ¿Cómo cuentan las tarjetas una
    +45, una +1 acompañante, una en inglés o una con segundo acto? El
-   segundo acto, por ejemplo, cambia el «Después»: ya no es «te sugerimos
-   sitios cerca» sino «todas las mesas se juntan en un bar».
+   segundo acto, por ejemplo, cambia el «Después» de ESA fecha: ya no es
+   «te sugerimos sitios cerca» sino «todas las mesas se juntan en un bar».
+   En las cenas sin segundo acto, el «Después» no cambia.
 3. **Cómo se lee una fecha con varias marcas.** Por ejemplo, una «Cena +45
    · Segundo acto» o una «+1 acompañante en inglés». Que se lea como un plan
    y no como una lista de condiciones.
