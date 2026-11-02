@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crea tu cuenta · Aro Club</title>
+<meta name="apple-itunes-app" content="app-id=6818022672">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icono-512.png">
+<script src="./errores.js"></script>
+<script src="./gtm.js"></script>
+<script src="./vendor.js"></script>
+<script src="./support.js"></script>
+<script src="./reglas.js"></script>
+</head>
+<body>
+<noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
+<!--
+  EL ALTA DE LA WEB, en su propia página (02-11-2026).
+
+  Era un formulario a mitad de la portada —correo, cuatro preguntas— y la
+  cuenta al final, en Datos base. Michael aprobó el orden que ya tenía la
+  app: nacimiento → cuenta → preguntas. El nacimiento primero porque es la
+  puerta de los 18 y no se le hace invertir nada a quien va a quedarse fuera;
+  la cuenta después, porque quien abandona en las preguntas se queda con
+  cuenta y con su correo, y no se pierde sin rastro.
+
+  El marco es el de la entrega «acceso» (1040 en computadora, foto y panel):
+  Michael lo dejó en nuestras manos («decídanlo ustedes»). «Crea tu cuenta»
+  es el de esa entrega, con su selector, sus errores al salir del campo y
+  «Crear mi cuenta» como secundario con borde. Apple sigue escondido en la
+  web, igual que en Entrar.
+
+  Lo que NO vive aquí: el cuestionario, los datos y la verificación. Al
+  terminar las cuatro manda el embudo (`donde`), como en todas partes.
+-->
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#14342A; -webkit-font-smoothing:antialiased; }
+  * { box-sizing: border-box; }
+  em { font-style: normal; }
+  a { color:#FAF3E4; text-decoration:none; }
+  a:hover { color:#E39C63; }
+  input, button { font: inherit; color: inherit; }
+  ::selection { background:#FAF3E4; color:#14342A; }
+  ::placeholder { color:#7E9A8B; }
+  @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+  @keyframes aro-spin { to { transform: rotate(360deg) } }
+  @media (prefers-reduced-motion: reduce) { * { animation-duration:.001ms !important; transition-duration:.001ms !important; } }
+</style>
+</helmet>
+
+<div style="background:#14342A;color:#FAF3E4;font-family:'Inter Tight',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column">
+
+  <div style="max-width:1040px;width:100%;margin:0 auto;padding:clamp(20px,4vw,32px) clamp(16px,4vw,28px) 0;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <a href="/" style="display:inline-flex;align-items:center;gap:9px;min-height:44px;margin:-10px 0">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#FAF3E4" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#E39C63"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#FAF3E4"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#FAF3E4"></circle><circle cx="3.4" cy="12" r="2.5" fill="#FAF3E4"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#FAF3E4"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#FAF3E4"></circle></svg>
+      <span style="font:400 21px/1 'Young Serif',Georgia,serif;letter-spacing:-.02em">Aro Club</span>
+    </a>
+  </div>
+
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,52px) clamp(16px,4vw,28px)">
+    <div style="max-width:1040px;width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(28px,4vw,56px);align-items:center">
+
+      <div style="min-width:0">
+
+        <sc-if value="{{ esCargando }}" hint-placeholder-val="{{ false }}">
+          <div style="display:inline-flex;align-items:center;gap:15px;min-height:58px">
+            <span style="flex:0 0 auto;width:17px;height:17px;border:2px solid rgba(250,243,228,.24);border-top-color:#FAF3E4;border-radius:999px;animation:aro-spin 800ms linear infinite"></span>
+          </div>
+        </sc-if>
+
+        <!-- El selector de la entrega «acceso». Sale mientras no hay cuenta:
+             en el nacimiento y en «Crea tu cuenta», que son las dos caras de
+             «Crear cuenta». «Entrar» conserva la fecha para cuando vuelva. -->
+        <sc-if value="{{ haySelector }}" hint-placeholder-val="{{ true }}">
+          <div role="tablist" style="{{ selectorCaja }}">
+            <a role="tab" href="/entrar" style="{{ selectorOtro }}">Entrar</a>
+            <div role="tab" aria-selected="true" style="{{ selectorAqui }}">Crear cuenta</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ esNacimiento }}" hint-placeholder-val="{{ true }}">
+          <div style="animation:aro-open 380ms ease both;max-width:440px">
+            <h1 style="{{ h1 }}">¿Cuándo naciste?</h1>
+            <p style="{{ bajada }}">{{ pistaNacimiento }}</p>
+
+            <div style="margin-top:clamp(24px,3vw,30px)">
+              <label for="dia" style="{{ etiqueta }}">DÍA</label>
+              <input id="dia" type="text" value="{{ dia }}" onChange="{{ onDia }}" onFocus="{{ alEnfocarCifra }}" placeholder="DD" inputmode="numeric" maxlength="2" autocomplete="bday-day" style="{{ campoCifra }}" />
+
+              <div style="{{ etiqueta }}">MES</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(30%,92px),1fr));gap:8px">
+                <sc-for list="{{ meses }}" as="m" hint-placeholder-count="12">
+                  <button onClick="{{ m.pick }}" style="{{ m.btn }}">
+                    <span style="{{ m.aro }}">{{ m.icono }}</span>
+                    <span style="{{ m.txt }}">{{ m.nombre }}</span>
+                  </button>
+                </sc-for>
+              </div>
+
+              <label for="anio" style="{{ etiqueta }}">AÑO</label>
+              <input id="anio" type="text" value="{{ anio }}" onChange="{{ onAnio }}" onFocus="{{ alEnfocarCifra }}" placeholder="AAAA" inputmode="numeric" maxlength="4" autocomplete="bday-year" style="{{ campoCifra }}" />
+              <sc-if value="{{ hayEdad }}" hint-placeholder-val="{{ false }}">
+                <div style="{{ chipEdad }}">{{ textoEdad }}</div>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{ hayAvisoEdad }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="{{ avisoCaja }}">{{ avisoEdad }}</div>
+            </sc-if>
+            <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="{{ avisoCaja }}">{{ fallo }}</div>
+            </sc-if>
+
+            <button onClick="{{ seguirNacimiento }}" style="{{ botonNacimiento }}">{{ textoNacimiento }}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ esCuenta }}" hint-placeholder-val="{{ false }}">
+          <div style="animation:aro-open 340ms ease both;max-width:440px">
+            <h1 style="{{ h1 }}">Crea tu cuenta.</h1>
+            <p style="{{ bajada }}">{{ bajadaCuenta }}</p>
+
+            <sc-if value="{{ hayAviso }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="{{ avisoCaja }}">
+                <span>{{ aviso }}</span>
+                <sc-if value="{{ hayAvisoEnlace }}" hint-placeholder-val="{{ false }}">
+                  <a href="{{ avisoEnlace }}" style="display:inline-block;margin-top:8px;font:600 15px/1.4 'Inter Tight',sans-serif;color:#FAF3E4;text-decoration:underline;text-underline-offset:5px">Entrar con ese correo</a>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <div style="margin-top:clamp(22px,3vw,28px);display:flex;flex-direction:column;gap:10px">
+              <!-- Apple, escondido en la web igual que en Entrar: el markup
+                   no se borra, se enciende quitando el `display:none`. -->
+              <div style="display:none">
+                <button style="{{ botonProveedor }}">
+                  <svg width="19" height="22" viewBox="0 0 17 20" fill="currentColor" aria-hidden="true"><path d="M14.1 10.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.7 0-1.9-.9-3.2-.8-1.6 0-3.1 1-3.9 2.4C.2 10.4 1.4 14.7 3 17c.8 1.1 1.7 2.4 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.1-1.2 2.9-2.3.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-3.8zM11.7 3.3c.7-.8 1.1-1.9 1-3.1-1 0-2.2.7-2.9 1.5-.6.7-1.2 1.9-1 3 1.1.1 2.2-.6 2.9-1.4z"></path></svg>
+                  <span>Continuar con Apple</span>
+                </button>
+              </div>
+              <button onClick="{{ conGoogle }}" style="{{ botonProveedor }}">
+                <svg width="19" height="19" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.3-.2-1.8H9v3.5h4.8c-.2 1.1-.8 2-1.8 2.6v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"></path><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3C2.4 15.9 5.5 18 9 18z"></path><path fill="#FBBC05" d="M3.9 10.7c-.2-.5-.3-1.1-.3-1.7s.1-1.2.3-1.7V5H.9C.3 6.2 0 7.5 0 9s.3 2.8.9 4l3-2.3z"></path><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6C13.5.9 11.4 0 9 0 5.5 0 2.4 2.1.9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"></path></svg>
+                <span>Continuar con Google</span>
+              </button>
+              <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#9CBBA6;margin:4px 6px 0;text-wrap:pretty">Con Google, la casilla de las normas te la pedimos justo después.</div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:14px;margin:18px 0 4px">
+              <span style="flex:1;height:1px;background:rgba(250,243,228,.22)"></span>
+              <span style="font:400 16px/1 'Inter Tight',sans-serif;color:#9CBBA6">o</span>
+              <span style="flex:1;height:1px;background:rgba(250,243,228,.22)"></span>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label for="correo" style="{{ etiquetaCampo }}">Correo</label>
+                <input id="correo" type="email" placeholder="tu@correo.com" value="{{ correo }}" onChange="{{ onCorreo }}" onBlur="{{ alSalirCorreo }}" autocomplete="email" style="{{ campoCorreo }}" />
+                <sc-if value="{{ hayErrorCorreo }}" hint-placeholder-val="{{ false }}"><span style="{{ errorCampo }}">Ese correo no se ve completo. Revisa que tenga arroba y punto.</span></sc-if>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label for="clave" style="{{ etiquetaCampo }}">Contraseña</label>
+                <div style="position:relative;display:flex">
+                  <input id="clave" type="{{ tipoClave }}" placeholder="Mínimo 8 caracteres" value="{{ clave }}" onChange="{{ onClave }}" onBlur="{{ alSalirClave }}" autocomplete="new-password" style="{{ campoClave }}" />
+                  <button onClick="{{ verClave }}" aria-label="{{ etiquetaVer }}" style="{{ botonVer }}">{{ textoVer }}</button>
+                </div>
+                <sc-if value="{{ hayClaveCorta }}" hint-placeholder-val="{{ false }}"><span style="{{ errorCampo }}">Tiene que tener al menos 8 caracteres.</span></sc-if>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label for="clave2" style="{{ etiquetaCampo }}">Repite la contraseña</label>
+                <div style="position:relative;display:flex">
+                  <input id="clave2" type="{{ tipoClave }}" placeholder="La misma otra vez" value="{{ clave2 }}" onChange="{{ onClave2 }}" onBlur="{{ alSalirClave2 }}" onKeyDown="{{ onKey }}" autocomplete="new-password" style="{{ campoClave2 }}" />
+                  <button onClick="{{ verClave }}" aria-label="{{ etiquetaVer }}" style="{{ botonVer }}">{{ textoVer }}</button>
+                </div>
+                <sc-if value="{{ hayClaveDispar }}" hint-placeholder-val="{{ false }}"><span style="{{ errorCampo }}">No coincide con la de arriba.</span></sc-if>
+              </div>
+            </div>
+
+            <button onClick="{{ tocarCasilla }}" style="display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;margin-top:18px;padding:0;border:none;background:transparent;cursor:pointer">
+              <span style="{{ casillaCaja }}">
+                <sc-if value="{{ casillaMarcada }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+              </span>
+              <span style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                <span style="font:400 15px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty"><sc-for list="{{ casillaTrozos }}" as="t" hint-placeholder-count="3"><sc-if value="{{ t.suelto }}" hint-placeholder-val="{{ true }}">{{ t.texto }}</sc-if><sc-if value="{{ t.hayEnlace }}" hint-placeholder-val="{{ false }}"><a href="{{ t.enlace }}" target="_blank" rel="noopener" onClick="{{ t.soloAbrir }}" style="color:#FAF3E4;text-decoration:underline;text-underline-offset:4px">{{ t.texto }}</a></sc-if></sc-for></span>
+                <sc-if value="{{ hayErrorCasilla }}" hint-placeholder-val="{{ false }}"><span style="{{ errorCampo }}">Marca la casilla para crear tu cuenta.</span></sc-if>
+              </span>
+            </button>
+
+            <button onClick="{{ crear }}" style="{{ botonCrear }}">{{ textoCrear }}</button>
+            <button onClick="{{ atrasNacimiento }}" style="{{ botonAtras }}">Atrás</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ esEspera }}" hint-placeholder-val="{{ false }}">
+          <div style="animation:aro-open 320ms ease both">
+            <h1 style="{{ h1 }}">{{ tituloEspera }}</h1>
+            <div style="display:inline-flex;align-items:center;gap:15px;border-radius:999px;border:1px solid rgba(250,243,228,.3);min-height:58px;padding:0 25px;max-width:100%;margin-top:22px">
+              <span style="flex:0 0 auto;width:17px;height:17px;border:2px solid rgba(250,243,228,.24);border-top-color:#FAF3E4;border-radius:999px;animation:aro-spin 800ms linear infinite"></span>
+              <span style="font:500 16px/1 'Inter Tight',sans-serif;color:#C5D8CA;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ textoEspera }}</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- Las normas, para quien vuelve de Google: la casilla que con
+             correo va en la pantalla de la cuenta. El texto es el mismo
+             `AroReglas.NORMAS` que lee Mi cuenta: dos copias de lo que alguien
+             acepta serían dos cosas aceptadas. -->
+        <sc-if value="{{ esNormas }}" hint-placeholder-val="{{ false }}">
+          <div style="animation:aro-open 340ms ease both;max-width:460px">
+            <div style="font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#E39C63">{{ cintaNormas }}</div>
+            <h1 style="{{ h1 }};margin-top:14px">{{ tituloNormas }}</h1>
+            <p style="{{ bajada }}">{{ bajadaNormas }}</p>
+            <sc-for list="{{ puntosNormas }}" as="p" hint-placeholder-count="3">
+              <div style="margin-top:20px;padding-top:18px;border-top:1px solid rgba(250,243,228,.16)">
+                <div style="font:600 15px/1.35 'Inter Tight',sans-serif;color:#FAF3E4">{{ p.titulo }}</div>
+                <div style="margin-top:6px;font:400 15px/1.5 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ p.texto }}</div>
+              </div>
+            </sc-for>
+            <div style="margin-top:20px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#9CBBA6;text-wrap:pretty">{{ pieNormas }}</div>
+            <button onClick="{{ tocarCasilla }}" style="display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;margin-top:20px;padding:0;border:none;background:transparent;cursor:pointer">
+              <span style="{{ casillaCaja }}">
+                <sc-if value="{{ casillaMarcada }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+              </span>
+              <span style="font:400 15px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty"><sc-for list="{{ casillaTrozos }}" as="t" hint-placeholder-count="3"><sc-if value="{{ t.suelto }}" hint-placeholder-val="{{ true }}">{{ t.texto }}</sc-if><sc-if value="{{ t.hayEnlace }}" hint-placeholder-val="{{ false }}"><a href="{{ t.enlace }}" target="_blank" rel="noopener" onClick="{{ t.soloAbrir }}" style="color:#FAF3E4;text-decoration:underline;text-underline-offset:4px">{{ t.texto }}</a></sc-if></sc-for></span>
+            </button>
+            <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="{{ avisoCaja }}">{{ fallo }}</div>
+            </sc-if>
+            <button onClick="{{ aceptarNormas }}" style="{{ botonNormas }}">{{ textoNormas }}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ esPregunta }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:560px">
+            <sc-if value="{{ hayProgreso }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(22px,3vw,30px)">
+                <div style="display:flex;gap:6px">
+                  <sc-for list="{{ progreso }}" as="p" hint-placeholder-count="5">
+                    <span style="{{ p.punto }}"></span>
+                  </sc-for>
+                </div>
+                <span style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.1em;color:#9CBBA6">{{ textoProgreso }}</span>
+              </div>
+            </sc-if>
+            <div style="animation:aro-open 420ms ease both">
+              <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#E39C63;margin-bottom:16px">{{ quizEtiqueta }}</div>
+              <h1 style="{{ h1 }};max-width:20ch">{{ quizPregunta }}</h1>
+              <p style="font:400 15px/1.55 'Inter Tight',sans-serif;color:#9CBBA6;margin:12px 0 clamp(22px,3vw,30px);max-width:44ch;text-wrap:pretty">{{ quizAyuda }}</p>
+              <div style="{{ quizContenedor }}">
+                <sc-for list="{{ quizOpciones }}" as="o" hint-placeholder-count="6">
+                  <button onClick="{{ o.pick }}" style="{{ o.btn }}">
+                    <span style="{{ o.marca }}">{{ o.icono }}</span>
+                    <span style="{{ o.txt }}">{{ o.label }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ hayQuizNota }}" hint-placeholder-val="{{ false }}">
+                <div style="border-radius:20px;border:1px solid rgba(250,243,228,.26);padding:15px 17px;margin-top:22px;max-width:46ch">
+                  <span style="display:block;font:400 clamp(19px,1.9vw,23px)/1.2 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#FAF3E4">{{ quizNotaTitulo }}</span>
+                  <span style="display:block;font:400 14px/1.55 'Inter Tight',sans-serif;color:#9CBBA6;margin-top:7px;text-wrap:pretty">{{ quizNotaBajada }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
+                <div role="alert" style="{{ avisoCaja }}">{{ fallo }}</div>
+              </sc-if>
+              <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:clamp(26px,3.2vw,36px)">
+                <button onClick="{{ siguiente }}" style="{{ botonSiguiente }}">{{ textoSiguiente }}</button>
+                <sc-if value="{{ puedeAtras }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ atras }}" style="{{ botonAtras }}">Atrás</button>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ esFuera }}" hint-placeholder-val="{{ false }}">
+          <div style="animation:aro-open 420ms ease both;max-width:460px">
+            <div style="display:inline-flex;align-items:center;font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#14342A;background:#FAF3E4;border-radius:999px;padding:12px 18px;margin-bottom:22px">ANOTADO</div>
+            <h1 style="{{ h1 }}">{{ tituloFuera }}</h1>
+            <p style="{{ bajada }}">{{ bajadaFuera }}</p>
+            <button onClick="{{ terminar }}" style="{{ botonClaro }}">Completar mi perfil igual</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ esMenorConfirmar }}" hint-placeholder-val="{{ false }}">
+          <div style="animation:aro-open 340ms ease both;max-width:440px">
+            <h1 style="{{ h1 }}">{{ menorConfirmarTitulo }}</h1>
+            <p style="{{ bajada }}">{{ menorConfirmarCuerpo }}</p>
+            <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="{{ avisoCaja }}">{{ fallo }}</div>
+            </sc-if>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:26px">
+              <button onClick="{{ corregirFecha }}" style="{{ botonClaroAncho }}">{{ menorConfirmarNo }}</button>
+              <button onClick="{{ confirmarMenor }}" style="{{ botonBorde }}">{{ menorConfirmarSi }}</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ esMenorCerrada }}" hint-placeholder-val="{{ false }}">
+          <div style="animation:aro-open 340ms ease both;max-width:440px">
+            <h1 style="{{ h1 }}">{{ menorCerradaTitulo }}</h1>
+            <p style="{{ bajada }}">{{ menorCerradaCuerpo }}</p>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="position:relative;width:100%;aspect-ratio:4/5;max-height:min(58vh,470px);border-radius:28px;overflow:hidden;background:#0F2820;background-image:url('fotos/cenas.jpg');background-size:cover;background-position:center;filter:grayscale(.24) contrast(1.16) saturate(.74) brightness(.9)"></div>
+    </div>
+  </div>
+
+  <div style="max-width:1040px;width:100%;margin:0 auto;padding:0 clamp(16px,4vw,28px) clamp(24px,4vw,36px);display:flex;flex-wrap:wrap;gap:10px">
+    <a href="/por-que" style="{{ enlacePie }}">Por qué existe Aro Club</a>
+    <a href="/privacidad" style="{{ enlacePie }}">Privacidad</a>
+    <a href="/terminos" style="{{ enlacePie }}">Términos</a>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  state = {
+    fase: 'cargando', sesion: false,
+    dia: '', mes: '', anio: '',
+    correo: '', clave: '', clave2: '', ver: false, casilla: false,
+    tocadoCorreo: false, tocadaClave: false, tocadaClave2: false, intento: false,
+    aviso: '', avisoEnlace: '',
+    paso: 0, ciudadSlug: '', arraigo: -1, zonas: [], dias: [], temas: [],
+    guardando: false, fallo: '', espera: ''
+  };
+
+  /**
+   * La fecha viaja en el navegador hasta que hay cuenta.
+   *
+   * Sin cuenta no hay dónde guardarla —y no se crea un lead para eso, que
+   * sería volver al alta de antes por la puerta de atrás—. Se recuerda aquí
+   * para que «Entrar» del selector, o la ida y vuelta de Google, no obliguen
+   * a escribirla otra vez. En cuanto hay sesión se manda y se olvida.
+   */
+  LLAVE = 'aro-alta-nacimiento';
+
+  // Respaldo, como en la portada: el servidor las reescribe enteras.
+  ZONAS = [['Las Mercedes', 'mercedes'], ['Los Palos Grandes', 'palos-grandes'], ['Altamira', 'altamira'],
+           ['Chacao', 'chacao'], ['El Rosal', 'rosal'], ['La Castellana', 'castellana'],
+           ['El Hatillo', 'hatillo'], ['La Trinidad y La Tahona', 'trinidad'], ['Chuao', 'chuao'],
+           ['Bello Monte', 'bello-monte']];
+  CIUDADES = [['Caracas', 'caracas'], ['Valencia', 'valencia'], ['Maracaibo', 'maracaibo'],
+              ['Margarita', 'margarita'], ['Barquisimeto', 'barquisimeto'], ['Mérida', 'merida'],
+              ['Puerto La Cruz', 'puerto-la-cruz'], ['Otra ciudad', 'otra']];
+  ABIERTAS = { caracas: true };
+
+  /** Lo que el servidor sabe de esta cuenta, cuando la hay. */
+  respuestas = {};
+  faltan = [];
+  normasAceptadas = true;
+
+  componentDidMount() {
+    fetch('/api/zonas')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin zonas'))))
+      .then((d) => {
+        if (!d.zonas || !d.zonas.length) return;
+        this.ZONAS = d.zonas.map((z) => [z.nombre, z.slug]);
+        this.marcarGuardadas();
+        this.forceUpdate();
+      })
+      .catch(() => {});
+    fetch('/api/ciudades')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin ciudades'))))
+      .then((d) => {
+        if (!d.ciudades || !d.ciudades.length) return;
+        this.CIUDADES = d.ciudades.map((c) => [c.nombre, c.slug]);
+        this.ABIERTAS = {};
+        d.ciudades.forEach((c) => { this.ABIERTAS[c.slug] = !!c.abierta; });
+        this.forceUpdate();
+      })
+      .catch(() => {});
+
+    // La fecha que ya escribió, si la escribió.
+    const guardada = this.fechaGuardada();
+    if (guardada) {
+      const p = guardada.split('-');
+      this.setState({ anio: p[0], mes: String(parseInt(p[1], 10)), dia: String(parseInt(p[2], 10)) });
+    }
+
+    // El correo de quien ya lo dejó en la portada: escrito ya en su casilla.
+    // Solo el correo. La llave de lead NO se manda a `/api/cuenta`: pide el
+    // alta de antes (cuestionario completo antes de la cuenta), y quien llega
+    // aquí la hace en el orden nuevo. El lead se cruza por correo al crear la
+    // cuenta, que es lo que hace `trasEntrar`.
+    try {
+      const s = JSON.parse(window.localStorage.getItem('aro-sesion') || 'null');
+      if (s && s.correo) this.setState({ correo: s.correo });
+    } catch (e) { /* modo privado */ }
+
+    this.leer().then((hay) => {
+      if (hay) { this.continuar(); return; }
+      this.setState({ fase: guardada ? 'cuenta' : 'nacimiento' });
+    });
+  }
+
+  /**
+   * Cada paso empieza arriba. El nacimiento es largo en el celular, y al
+   * pulsar Continuar la cuenta aparecía a media pantalla, con el título
+   * fuera de la vista.
+   */
+  componentDidUpdate() {
+    const aqui = this.state.fase + ':' + this.state.paso;
+    if (this._visto && this._visto !== aqui) {
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+    }
+    this._visto = aqui;
+  }
+
+  fechaGuardada() {
+    try {
+      const v = window.sessionStorage.getItem(this.LLAVE) || window.localStorage.getItem(this.LLAVE) || '';
+      return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '';
+    } catch (e) { return ''; }
+  }
+
+  guardarFecha(v) {
+    try {
+      if (v) { window.localStorage.setItem(this.LLAVE, v); }
+      else { window.localStorage.removeItem(this.LLAVE); window.sessionStorage.removeItem(this.LLAVE); }
+    } catch (e) { /* modo privado: se pedirá otra vez si hace falta */ }
+  }
+
+  /**
+   * Quién es, si es alguien. Lo dice `/api/cuestionario`, que acepta la
+   * sesión de la cuenta y devuelve lo contestado, lo que falta y a dónde va.
+   */
+  leer() {
+    return fetch('/api/cuestionario', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!j) return false;
+        this.respuestas = j.respuestas || {};
+        this.faltan = j.faltan || [];
+        this.donde = j.donde || '/cuestionario';
+        return fetch('/api/mi-cuenta', { cache: 'no-store' })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            this.normasAceptadas = !(d && d.normasAceptadas === false);
+            const slug = d && d.ciudad && d.ciudad.slug;
+            this.setState({ sesion: true, ciudadSlug: slug || this.state.ciudadSlug });
+            this.marcarGuardadas();
+            return true;
+          })
+          .catch(() => { this.setState({ sesion: true }); return true; });
+      })
+      .catch(() => false);
+  }
+
+  /** Lo ya contestado, marcado: quien vuelve no empieza en blanco. */
+  marcarGuardadas() {
+    const r = this.respuestas || {};
+    const idx = (pares, cods) => (Array.isArray(cods) ? cods : [])
+      .map((c) => pares.map((p) => p[1]).indexOf(c)).filter((i) => i >= 0);
+    const P = AroReglas.PUERTA;
+    const cambios = {};
+    if (r.arraigo) cambios.arraigo = P.arraigo.opciones.map((p) => p[1]).indexOf(r.arraigo);
+    if (r.zonas) cambios.zonas = idx(this.ZONAS, r.zonas);
+    if (r.dias) cambios.dias = idx(P.dias.opciones, r.dias);
+    if (r.temas) cambios.temas = idx(P.temas.opciones, r.temas);
+    if (Object.keys(cambios).length) this.setState(cambios);
+  }
+
+  /**
+   * El siguiente paso de quien YA tiene cuenta. Un solo sitio que lo decide,
+   * para que llegar de Google, crear la cuenta aquí o recargar a medias
+   * aterricen igual.
+   */
+  continuar() {
+    if (!this.respuestas.nacimiento) {
+      const f = this.fechaGuardada();
+      if (f) { this.mandarFecha(f, false); return; }
+      this.setState({ fase: 'nacimiento', fallo: '' });
+      return;
+    }
+    if (!this.normasAceptadas) { this.setState({ fase: 'normas', casilla: false, fallo: '' }); return; }
+    const puerta = AroReglas.ORDEN_PUERTA.filter((c) => this.faltan.indexOf(c) >= 0);
+    if (puerta.length) { this.setState({ fase: 'pregunta', paso: 0, fallo: '' }); return; }
+    this.terminar();
+  }
+
+  /** Al terminar manda el embudo, como en todas partes. */
+  terminar = () => {
+    this.setState({ fase: 'espera', espera: 'seguir' });
+    this.leer().then(() => { window.location.href = this.donde || '/cuestionario'; });
+  };
+
+  /**
+   * La fecha, con cuenta. El servidor es quien pone la puerta de los 18:
+   * con menos, la primera vez contesta 409 `menor-confirmar` sin tocar nada,
+   * y solo con `confirmaMenor` cierra la cuenta (403 `menor`). Un año mal
+   * tecleado no cierra la cuenta de un adulto.
+   */
+  mandarFecha(valor, confirma) {
+    this.setState({ fase: 'espera', espera: 'fecha', fallo: '' });
+    const cuerpo = { clave: 'nacimiento', valor: valor };
+    if (confirma) cuerpo.confirmaMenor = true;
+    fetch('/api/cuestionario', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo)
+    }).then((r) => r.json().catch(() => ({})).then((j) => ({ r, j }))).then(({ r, j }) => {
+      if (r.status === 409 && j.motivo === 'menor-confirmar') { this.setState({ fase: 'menorConfirmar' }); return; }
+      if (r.status === 403 && j.motivo === 'menor') {
+        this.guardarFecha('');
+        try { window.localStorage.removeItem('aro-sesion'); } catch (e) { /* modo privado */ }
+        this.setState({ fase: 'menorCerrada', sesion: false });
+        return;
+      }
+      if (!r.ok) {
+        this.setState({ fase: 'nacimiento', fallo: j.detalle ? 'Esa fecha no parece correcta. Revísala.' : (j.error || 'No pudimos guardar tu fecha. Inténtalo otra vez.') });
+        return;
+      }
+      this.respuestas.nacimiento = valor;
+      this.guardarFecha('');
+      this.continuar();
+    }).catch(() => this.setState({ fase: 'nacimiento', fallo: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.' }));
+  }
+
+  edad() {
+    const d = parseInt(this.state.dia, 10);
+    const m = parseInt(this.state.mes, 10);
+    const a = parseInt(this.state.anio, 10);
+    if (!d || !m || !a || String(this.state.anio).length !== 4) return null;
+    if (d < 1 || d > 31 || m < 1 || m > 12) return null;
+    // Una fecha de nacimiento no lleva hora ni zona: aquí el `Date` vale.
+    const n = new Date(a, m - 1, d);
+    if (isNaN(n.getTime()) || n.getDate() !== d || n.getMonth() !== m - 1) return null;
+    const h = new Date();
+    let e = h.getFullYear() - n.getFullYear();
+    const dm = h.getMonth() - n.getMonth();
+    if (dm < 0 || (dm === 0 && h.getDate() < n.getDate())) e--;
+    return e;
+  }
+
+  fecha() {
+    const p2 = (x) => String(x).padStart(2, '0');
+    return this.state.anio + '-' + p2(this.state.mes) + '-' + p2(this.state.dia);
+  }
+
+  seguirNacimiento = () => {
+    const e = this.edad();
+    if (e === null || e > 99) return;
+    // Sin cuenta, la puerta es aquí y no se crea nada. Con cuenta (quien
+    // entró con Google sin tenerla), la pone el servidor, que pregunta antes
+    // de cerrar.
+    if (!this.state.sesion) {
+      if (e < 18) return;
+      this.guardarFecha(this.fecha());
+      this.setState({ fase: 'cuenta', fallo: '' });
+      return;
+    }
+    this.mandarFecha(this.fecha(), false);
+  };
+
+  correoOk() { return AroReglas.valido('correo', (this.state.correo || '').trim()); }
+
+  crear = () => {
+    const listo = this.correoOk() && this.state.clave.length >= 8
+      && this.state.clave2 === this.state.clave && this.state.casilla;
+    if (!listo) { this.setState({ intento: true }); return; }
+    if (this.state.guardando) return;
+    const correo = this.state.correo.trim().toLowerCase();
+    this.setState({ guardando: true, aviso: '', avisoEnlace: '', fase: 'espera', espera: 'cuenta' });
+    fetch('/api/cuenta', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ correo: correo, clave: this.state.clave, origen: 'empezar' })
+    }).then((r) => r.json().catch(() => ({})).then((j) => ({ r, j }))).then(({ r, j }) => {
+      if (j.estado === 'creada') {
+        try { window.localStorage.removeItem('aro-sesion'); } catch (e) { /* modo privado */ }
+        this.leer().then((hay) => {
+          if (hay) { this.setState({ guardando: false }); this.continuar(); return; }
+          window.location.href = '/entrar?correo=' + encodeURIComponent(correo);
+        });
+        return;
+      }
+      if (j.estado === 'creada_sin_sesion') {
+        window.location.href = '/entrar?correo=' + encodeURIComponent(correo) + '&volver=/empezar';
+        return;
+      }
+      const yaTiene = j.estado === 'ya_existe' || j.motivo === 'ya_tiene_cuenta';
+      this.setState({
+        guardando: false, fase: 'cuenta',
+        aviso: yaTiene ? 'Ese correo ya tiene cuenta. Entra con él y seguimos donde lo dejaste.'
+          : (j.error || 'No pudimos crear tu cuenta. Es cosa nuestra: inténtalo otra vez.'),
+        avisoEnlace: yaTiene ? '/entrar?correo=' + encodeURIComponent(correo) + '&volver=/empezar' : ''
+      });
+    }).catch(() => this.setState({
+      guardando: false, fase: 'cuenta', aviso: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
+    }));
+  };
+
+  aceptarNormas = () => {
+    if (!this.state.casilla || this.state.guardando) { this.setState({ intento: true }); return; }
+    this.setState({ guardando: true, fallo: '' });
+    fetch('/api/normas', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ acepto: true })
+    }).then((r) => {
+      if (!r.ok) throw new Error('normas');
+      this.normasAceptadas = true;
+      this.setState({ guardando: false, casilla: false, intento: false });
+      this.continuar();
+    }).catch(() => this.setState({ guardando: false, fallo: 'No pudimos guardarlo. Inténtalo otra vez.' }));
+  };
+
+  ciudadCerrada() { return !!this.state.ciudadSlug && this.ABIERTAS[this.state.ciudadSlug] !== true; }
+
+  nombreDeSuCiudad() {
+    const par = this.CIUDADES.filter((c) => c[1] === this.state.ciudadSlug)[0];
+    return par ? par[0] : 'tu ciudad';
+  }
+
+  alterna(clave, i, max) {
+    this.setState((s) => {
+      const a = s[clave];
+      const o = {};
+      if (a.indexOf(i) >= 0) { o[clave] = a.filter((x) => x !== i); return o; }
+      if (max && a.length >= max) return {};
+      o[clave] = a.concat([i]);
+      return o;
+    });
+  }
+
+  /**
+   * Cada respuesta se guarda al pasar de pregunta, no todas al final: quien
+   * se va en la tercera ya tiene las dos primeras. La ciudad va a su
+   * columna del perfil; las cuatro, al cuestionario.
+   */
+  guardarPaso(clave) {
+    const P = AroReglas.PUERTA;
+    const cod = (pares, i) => (pares[i] ? pares[i][1] : null);
+    let peticion;
+    if (clave === 'ciudad') {
+      peticion = fetch('/api/mi-perfil', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clave: 'ciudad', valor: this.state.ciudadSlug })
+      });
+    } else {
+      const valor = clave === 'arraigo' ? cod(P.arraigo.opciones, this.state.arraigo)
+        : clave === 'zonas' ? this.state.zonas.map((i) => cod(this.ZONAS, i))
+        : this.state[clave].map((i) => cod(P[clave].opciones, i));
+      peticion = fetch('/api/cuestionario', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clave: clave, valor: valor })
+      });
+    }
+    return peticion.then((r) => r.json().catch(() => ({})).then((j) => {
+      if (!r.ok) throw new Error(j.error || 'No pudimos guardar tu respuesta. Inténtalo otra vez.');
+    }));
+  }
+
+  renderVals() {
+    const f = this.state.fase;
+    const R = window.AroReglas;
+    const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:58px;padding:0 26px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
+    const campoBase = 'width:100%;min-height:56px;padding:0 22px;border-radius:999px;background:rgba(250,243,228,.06);color:#FAF3E4;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none;border:1.5px solid ';
+    const borde = (mal) => (mal ? '#E39C63' : 'rgba(197,216,202,.45)');
+    const aroDe = (on) => 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#FAF3E4' : 'rgba(250,243,228,.4)') + ';background:' + (on ? '#E39C63' : 'transparent') + ';color:#14342A;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease';
+
+    // --- nacimiento -----------------------------------------------------
+    const edad = this.edad();
+    const fechaRara = edad !== null && edad > 99;
+    const menorSinCuenta = edad !== null && edad < 18 && !this.state.sesion;
+    const fechaLista = edad !== null && !fechaRara && !menorSinCuenta;
+
+    // --- cuenta ---------------------------------------------------------
+    // Los errores salen al salir del campo o al intentar crear, no mientras
+    // se escribe (entrega «acceso», punto 7).
+    const st = this.state;
+    const errCorreo = (st.tocadoCorreo || st.intento) && !this.correoOk();
+    const errClave = (st.tocadaClave || st.intento) && st.clave.length < 8;
+    const errClave2 = (st.tocadaClave2 || st.intento) && st.clave2 !== st.clave;
+    const errCasilla = st.intento && !st.casilla;
+    const cuentaLista = this.correoOk() && st.clave.length >= 8 && st.clave2 === st.clave && st.casilla;
+
+    // La frase de la casilla, partida para enlazar lo que se acepta. El texto
+    // es UNO, el de `reglas.js`, igual que en Datos base.
+    const casillaTrozos = (() => {
+      const enlazables = [['normas de seguridad', '/reglas'], ['Términos', '/terminos']];
+      const trozos = [];
+      let resto = R.NORMAS.casilla;
+      for (const [palabra, enlace] of enlazables) {
+        const i = resto.indexOf(palabra);
+        if (i < 0) continue;
+        if (i > 0) trozos.push({ texto: resto.slice(0, i), suelto: true, hayEnlace: false, enlace: '' });
+        trozos.push({ texto: palabra, suelto: false, hayEnlace: true, enlace,
+          soloAbrir: (e) => { if (e && e.stopPropagation) e.stopPropagation(); } });
+        resto = resto.slice(i + palabra.length);
+      }
+      if (resto) trozos.push({ texto: resto, suelto: true, hayEnlace: false, enlace: '' });
+      return trozos;
+    })();
+
+    // --- preguntas ------------------------------------------------------
+    const P = R.PUERTA;
+    const pasos = R.pasosDePuerta(!this.ciudadCerrada());
+    const paso = Math.min(st.paso, pasos.length - 1);
+    const clave = pasos[paso];
+    const d = P[clave];
+    const pares = clave === 'zonas' ? this.ZONAS : (clave === 'ciudad' ? this.CIUDADES : d.opciones);
+    const esUnica = d.tipo === 'unica';
+    const esCiudad = clave === 'ciudad';
+    const sel = esCiudad ? pares.map((p) => p[1]).indexOf(st.ciudadSlug)
+      : (esUnica ? st.arraigo : st[clave]);
+    const quizOpciones = pares.map((par, i) => {
+      const on = esUnica ? sel === i : sel.indexOf(i) >= 0;
+      const tope = !esUnica && d.max && sel.length >= d.max && !on;
+      return {
+        label: par[0], icono: on ? '✓' : '',
+        pick: esCiudad ? () => this.setState({ ciudadSlug: par[1], fallo: '' })
+          : (esUnica ? () => this.setState({ arraigo: i, fallo: '' }) : () => this.alterna(clave, i, d.max)),
+        btn: esUnica
+          ? 'display:flex;align-items:center;gap:14px;width:100%;padding:16px 20px;border-radius:999px;background:' + (on ? '#FAF3E4' : 'rgba(250,243,228,.06)') + ';border:1px solid ' + (on ? '#FAF3E4' : 'rgba(250,243,228,.22)') + ';cursor:pointer;text-align:left;min-height:58px;transition:all 200ms ease'
+          : 'display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 20px 0 16px;border-radius:999px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#FAF3E4' : 'rgba(250,243,228,.24)') + ';cursor:pointer;transition:all 200ms ease;opacity:' + (tope ? '.45' : '1'),
+        marca: 'flex:0 0 auto;width:20px;height:20px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(250,243,228,.42)') + ';background:' + (on ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 11px/1 \'Inter Tight\',sans-serif;transition:all 180ms ease',
+        txt: 'font:' + (on ? '600' : '400') + ' ' + (esUnica ? '16px' : '15px') + '/1.3 \'Inter Tight\',sans-serif;letter-spacing:-.01em;color:' + (on ? '#14342A' : '#E8F0E9')
+      };
+    });
+    const completa = esUnica ? sel >= 0 : sel.length >= (d.min || 1);
+    const ultimo = paso >= pasos.length - 1;
+    const cerrada = R.CIUDAD_CERRADA(this.nombreDeSuCiudad(), st.ciudadSlug);
+
+    const ALTA = R.ALTA;
+    const N = R.NORMAS;
+
+    return {
+      esCargando: f === 'cargando',
+      haySelector: !st.sesion && (f === 'nacimiento' || f === 'cuenta'),
+      esNacimiento: f === 'nacimiento', esCuenta: f === 'cuenta', esEspera: f === 'espera',
+      esNormas: f === 'normas', esPregunta: f === 'pregunta', esFuera: f === 'fuera',
+      esMenorConfirmar: f === 'menorConfirmar', esMenorCerrada: f === 'menorCerrada',
+
+      h1: 'font:400 clamp(32px,6vw,48px)/1.04 \'Young Serif\',Georgia,serif;letter-spacing:-.03em;color:#FAF3E4;margin:0;max-width:15ch;text-wrap:balance',
+      bajada: 'font:400 17px/1.5 \'Inter Tight\',sans-serif;color:#C5D8CA;max-width:46ch;margin:12px 0 0;text-wrap:pretty',
+      etiqueta: 'display:block;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.14em;color:#9CBBA6;margin:22px 0 10px 4px',
+      etiquetaCampo: 'font:600 14px/1 \'Inter Tight\',sans-serif;color:#C5D8CA;padding-left:6px',
+      errorCampo: 'font:500 14px/1.4 \'Inter Tight\',sans-serif;color:#E39C63;padding-left:6px',
+      avisoCaja: 'display:flex;flex-direction:column;margin-top:22px;border-radius:16px;background:rgba(227,156,99,.14);border:1px solid rgba(227,156,99,.55);padding:14px 16px;font:500 16px/1.45 \'Inter Tight\',sans-serif;color:#FAF3E4;text-wrap:pretty',
+      selectorCaja: 'display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:999px;background:rgba(156,187,166,.14);border:1px solid rgba(156,187,166,.32);max-width:440px;margin-bottom:clamp(22px,3vw,30px)',
+      selectorAqui: 'min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif',
+      selectorOtro: 'min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:999px;color:#C5D8CA;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:none',
+      enlacePie: 'display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid rgba(250,243,228,.2);font:500 14px/1 \'Inter Tight\',sans-serif;color:#9CBBA6',
+      botonProveedor: btn('#FAF3E4', '#14342A', 'none', 'width:100%;font-size:17px;min-height:56px'),
+      botonClaro: btn('#FAF3E4', '#14342A', 'none', 'margin-top:26px'),
+      botonClaroAncho: btn('#FAF3E4', '#14342A', 'none', 'width:100%;min-height:56px'),
+      botonBorde: btn('transparent', '#FAF3E4', '1.5px solid rgba(250,243,228,.5)', 'width:100%;min-height:56px'),
+      botonAtras: 'min-height:48px;margin-top:10px;padding:0 6px;background:transparent;border:none;color:#9CBBA6;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:6px',
+
+      // nacimiento
+      pistaNacimiento: 'Nadie ve tu edad exacta. La usamos para que en tu mesa no haya más de diez años de diferencia entre la persona más joven y la mayor: es lo que hace que la conversación fluya.',
+      dia: st.dia, anio: st.anio,
+      onDia: (e) => this.setState({ dia: R.filtrar('dia', e.target.value), fallo: '' }),
+      onAnio: (e) => this.setState({ anio: R.filtrar('anio', e.target.value), fallo: '' }),
+      alEnfocarCifra: (e) => { const el = e.target; requestAnimationFrame(() => { try { el.select(); } catch (err) { /* nada */ } }); },
+      campoCifra: campoBase + borde(false) + ';width:136px;text-align:center;font:600 20px/1 \'Inter Tight\',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.02em',
+      meses: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'].map((nombre, i) => {
+        const on = String(i + 1) === String(st.mes);
+        return {
+          nombre, icono: on ? '✓' : '', aro: aroDe(on),
+          pick: () => this.setState({ mes: String(i + 1), fallo: '' }),
+          btn: 'display:flex;align-items:center;gap:8px;min-height:50px;padding:0 10px 0 9px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.12)' : 'transparent') + ';border:1px solid ' + (on ? '#FAF3E4' : 'rgba(250,243,228,.24)') + ';cursor:pointer;transition:all 180ms ease',
+          txt: 'flex:1;min-width:0;text-align:left;font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#FAF3E4'
+        };
+      }),
+      hayEdad: edad !== null && edad >= 18 && edad <= 99,
+      textoEdad: edad + ' años',
+      chipEdad: 'display:inline-flex;align-items:center;min-height:32px;padding:0 14px;border-radius:999px;background:rgba(250,243,228,.1);font:600 13px/1 \'Inter Tight\',sans-serif;color:#FAF3E4;margin-top:12px',
+      hayAvisoEdad: fechaRara || menorSinCuenta,
+      avisoEdad: menorSinCuenta
+        ? 'Aro es solo para mayores de 18 años. Si te equivocaste al escribir la fecha, corrígela.'
+        : 'Esa fecha no parece correcta. Revísala.',
+      seguirNacimiento: this.seguirNacimiento,
+      // Con cuenta, una fecha de menor sí se puede mandar: el servidor
+      // pregunta antes de cerrar nada.
+      botonNacimiento: btn((fechaLista || (st.sesion && edad !== null && edad < 18)) ? '#FAF3E4' : 'rgba(250,243,228,.16)',
+        (fechaLista || (st.sesion && edad !== null && edad < 18)) ? '#14342A' : '#C5D8CA', 'none', 'margin-top:26px'
+        + ((fechaLista || (st.sesion && edad !== null && edad < 18)) ? '' : ';cursor:not-allowed')),
+      textoNacimiento: edad === null ? 'Completa día, mes y año'
+        : (menorSinCuenta ? 'Aro es para mayores de 18' : (fechaRara ? 'Revisa la fecha' : 'Continuar')),
+
+      // cuenta
+      bajadaCuenta: ALTA.cuenta.bajada,
+      hayAviso: !!st.aviso, aviso: st.aviso,
+      hayAvisoEnlace: !!st.avisoEnlace, avisoEnlace: st.avisoEnlace,
+      conGoogle: () => {
+        // La fecha ya está guardada en el navegador: vuelve con la cuenta y
+        // se manda al llegar. Y la llave del lead, si la hay, para que el
+        // callback cruce a quien se apuntó con un correo y entra con otro.
+        const q = new URLSearchParams({ destino: '/empezar' });
+        try {
+          const s = JSON.parse(window.localStorage.getItem('aro-sesion') || 'null');
+          if (s && s.token && s.correo) { q.set('t', s.token); q.set('correo', s.correo); }
+        } catch (e) { /* modo privado */ }
+        window.location.href = '/api/auth/google?' + q.toString();
+      },
+      correo: st.correo, clave: st.clave, clave2: st.clave2,
+      onCorreo: (e) => this.setState({ correo: e.target.value, aviso: '', avisoEnlace: '' }),
+      onClave: (e) => this.setState({ clave: e.target.value }),
+      onClave2: (e) => this.setState({ clave2: e.target.value }),
+      alSalirCorreo: () => this.setState({ tocadoCorreo: !!st.correo.trim() }),
+      alSalirClave: () => this.setState({ tocadaClave: st.clave.length > 0 }),
+      alSalirClave2: () => this.setState({ tocadaClave2: st.clave2.length > 0 }),
+      onKey: (e) => { if (e.key === 'Enter') this.crear(); },
+      campoCorreo: campoBase + borde(errCorreo),
+      campoClave: campoBase + borde(errClave) + ';padding-right:76px',
+      campoClave2: campoBase + borde(errClave2) + ';padding-right:76px',
+      hayErrorCorreo: errCorreo, hayClaveCorta: errClave, hayClaveDispar: errClave2, hayErrorCasilla: errCasilla,
+      tipoClave: st.ver ? 'text' : 'password',
+      textoVer: st.ver ? 'Ocultar' : 'Ver',
+      etiquetaVer: st.ver ? 'Ocultar la contraseña' : 'Ver la contraseña',
+      verClave: () => this.setState((s) => ({ ver: !s.ver })),
+      botonVer: 'position:absolute;right:6px;top:6px;bottom:6px;display:inline-flex;align-items:center;padding:0 16px;border-radius:999px;border:none;background:transparent;color:#C5D8CA;font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      tocarCasilla: () => this.setState((s) => ({ casilla: !s.casilla })),
+      casillaMarcada: st.casilla,
+      casillaCaja: 'flex:0 0 auto;width:26px;height:26px;margin-top:1px;border-radius:8px;display:flex;align-items:center;justify-content:center;'
+        + (st.casilla ? 'background:#FAF3E4;border:1.5px solid #FAF3E4' : 'border:1.5px solid ' + (errCasilla ? '#E39C63' : 'rgba(197,216,202,.6)')),
+      casillaTrozos,
+      crear: this.crear,
+      // Secundario con borde: Google ya es el botón crema de esta vista, y
+      // tres primarios juntos no dicen cuál es cuál (entrega «acceso», 6).
+      botonCrear: btn('transparent', cuentaLista ? '#FAF3E4' : '#C5D8CA',
+        '1.5px solid ' + (cuentaLista ? '#FAF3E4' : 'rgba(250,243,228,.16)'), 'width:100%;min-height:56px;margin-top:18px'),
+      textoCrear: cuentaLista || st.intento ? 'Crear mi cuenta' : 'Completa los datos',
+      atrasNacimiento: () => this.setState({ fase: 'nacimiento', aviso: '', avisoEnlace: '' }),
+
+      // espera
+      tituloEspera: st.espera === 'cuenta' ? 'Creando tu cuenta.' : (st.espera === 'fecha' ? 'Un momento.' : 'Seguimos.'),
+      textoEspera: st.espera === 'cuenta' ? st.correo.trim() : 'Guardando',
+
+      // normas
+      cintaNormas: N.cinta, tituloNormas: N.titulo, bajadaNormas: N.bajada,
+      puntosNormas: N.puntos.map((x) => ({ titulo: x[0], texto: x[1] })),
+      pieNormas: N.pie,
+      aceptarNormas: this.aceptarNormas,
+      botonNormas: btn(st.casilla ? '#FAF3E4' : 'rgba(250,243,228,.16)', st.casilla ? '#14342A' : '#C5D8CA', 'none',
+        'width:100%;min-height:56px;margin-top:18px' + (st.casilla ? '' : ';cursor:not-allowed')),
+      textoNormas: st.guardando ? 'Guardando' : (st.casilla ? 'Continuar' : 'Marca la casilla para seguir'),
+
+      // preguntas
+      progreso: pasos.map((_, i) => ({
+        punto: 'width:' + (i === paso ? '26px' : '8px') + ';height:8px;border-radius:999px;background:' + (i <= paso ? '#E39C63' : 'rgba(250,243,228,.24)') + ';transition:all 260ms ease'
+      })),
+      hayProgreso: pasos.length > 1,
+      textoProgreso: 'PREGUNTA ' + (paso + 1) + ' DE ' + pasos.length,
+      quizEtiqueta: d.etiqueta, quizPregunta: d.pregunta, quizAyuda: d.ayuda,
+      quizOpciones,
+      quizContenedor: esUnica ? 'display:flex;flex-direction:column;gap:9px;max-width:540px' : 'display:flex;flex-wrap:wrap;gap:9px',
+      hayQuizNota: esCiudad && this.ciudadCerrada(),
+      quizNotaTitulo: cerrada.titulo, quizNotaBajada: cerrada.bajada,
+      botonSiguiente: btn(completa ? '#FAF3E4' : 'rgba(250,243,228,.14)', completa ? '#14342A' : '#C5D8CA', 'none', completa ? '' : 'cursor:not-allowed'),
+      textoSiguiente: st.guardando ? 'Guardando' : (completa ? (ultimo ? 'Terminar' : 'Siguiente') : 'Elige para seguir'),
+      puedeAtras: paso > 0,
+      atras: () => this.setState({ paso: Math.max(0, paso - 1), fallo: '' }),
+      siguiente: () => {
+        if (!completa || st.guardando) return;
+        this.setState({ guardando: true, fallo: '' });
+        this.guardarPaso(clave).then(() => {
+          this.setState({ guardando: false });
+          if (esCiudad && this.ciudadCerrada()) { this.setState({ fase: 'fuera' }); return; }
+          if (ultimo) { this.terminar(); return; }
+          this.setState({ paso: paso + 1 });
+        }).catch((e) => this.setState({
+          guardando: false,
+          fallo: (e && e.message && e.message !== 'Failed to fetch') ? e.message : 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
+        }));
+      },
+
+      // fuera
+      tituloFuera: cerrada.titulo,
+      bajadaFuera: cerrada.bajada + ' Abrimos ciudad cuando hay suficiente gente que pueda llegar a la misma mesa el mismo día, así que no te damos fecha.',
+      terminar: this.terminar,
+
+      // menor
+      menorConfirmarTitulo: ALTA.menor.confirmar.titulo,
+      menorConfirmarCuerpo: ALTA.menor.confirmar.cuerpo,
+      menorConfirmarSi: ALTA.menor.confirmar.si,
+      menorConfirmarNo: ALTA.menor.confirmar.no,
+      corregirFecha: () => this.setState({ fase: 'nacimiento', fallo: '' }),
+      confirmarMenor: () => this.mandarFecha(this.fecha(), true),
+      menorCerradaTitulo: ALTA.menor.cerrada.titulo,
+      menorCerradaCuerpo: ALTA.menor.cerrada.cuerpo,
+
+      hayFallo: !!st.fallo, fallo: st.fallo
+    };
+  }
+}
+</script>
+</body>
+</html>

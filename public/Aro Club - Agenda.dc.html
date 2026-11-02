@@ -181,7 +181,7 @@
         <svg width="44" height="44" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#FAF3E4" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#E39C63"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#FAF3E4"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#FAF3E4"></circle><circle cx="3.4" cy="12" r="2.5" fill="#FAF3E4"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#FAF3E4"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#FAF3E4"></circle></svg>
         <div style="font:400 36px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em;max-width:16ch">Ahora mismo no hay fechas abiertas.</div>
         <p style="font:400 17px/1.5 'Inter Tight',sans-serif;color:#E4EDE6;margin:0;max-width:40ch">Apúntate y te avisamos en cuanto abramos las próximas fechas.</p>
-        <a href="/#registro" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 16px/1 'Inter Tight',sans-serif;margin-top:6px" style-hover="background:#E39C63;color:#14342A">Apúntate para la próxima</a>
+        <a href="/empezar" style="display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 16px/1 'Inter Tight',sans-serif;margin-top:6px" style-hover="background:#E39C63;color:#14342A">Apúntate para la próxima</a>
       </div>
     </div>
   </sc-if>
@@ -203,7 +203,7 @@
   <div style="background:#14342A;color:#FAF3E4">
     <div style="max-width:1240px;margin:0 auto;padding:56px clamp(16px,4vw,36px);display:flex;flex-wrap:wrap;gap:24px 40px;align-items:center;justify-content:space-between">
       <div style="font:400 40px/1 'Young Serif',Georgia,serif;letter-spacing:-.03em;max-width:15ch">Seis desconocidos. <span style="color:#E39C63">Un plan.</span></div>
-      <a href="/#registro" style="display:inline-flex;align-items:center;min-height:60px;padding:0 32px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif" style-hover="background:#E39C63;color:#14342A">Encuentra tu mesa</a>
+      <a href="/empezar" style="display:inline-flex;align-items:center;min-height:60px;padding:0 32px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 17px/1 'Inter Tight',sans-serif" style-hover="background:#E39C63;color:#14342A">Encuentra tu mesa</a>
     </div>
   </div>
 </div>
@@ -391,7 +391,7 @@ class Component extends DCLogic {
         boton: masUno ? 'Reservar dos puestos' : 'Reservar mi puesto',
         // Con sesión, a su tarjeta de esa fecha en Mi cuenta. Sin ella, al
         // alta: ahí es donde se decide si puede sentarse.
-        enlace: sesion ? '/cuenta?fecha=' + f.id : '/#registro',
+        enlace: sesion ? '/cuenta?fecha=' + f.id : '/empezar',
       };
     });
 

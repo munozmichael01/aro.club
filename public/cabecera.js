@@ -86,7 +86,7 @@
     }
     return html +
       '<a href="/entrar" style="' + ESTILO_ENLACE + 'color:' + VERDE + '">Entrar</a>' +
-      '<a href="' + aRegistro(actual) + '" style="' + ESTILO_BOTON + '">Empezar</a>'
+      '<a href="' + aRegistro() + '" style="' + ESTILO_BOTON + '">Empezar</a>'
   }
 
   /**
@@ -97,9 +97,13 @@
     return s && s.estado === 'abierta' ? 'Mi mesa' : 'Mi cuenta'
   }
 
-  /** En la portada el alta está en la misma página; fuera, hay que ir. */
-  function aRegistro(actual) {
-    return actual === 'portada' ? '#registro' : '/#registro'
+  /**
+   * El alta tiene su propia página desde el 02-11: `/empezar` (nacimiento →
+   * cuenta → las cuatro). Antes era un bloque a mitad de la portada y desde
+   * fuera se llegaba con `/#registro`, que aterrizaba arriba del todo.
+   */
+  function aRegistro() {
+    return '/empezar'
   }
 
   function menu(actual, sesion, sabida) {
@@ -118,7 +122,7 @@
       '<a href="/" style="' + ESTILO_MENU_ITEM + 'color:' +
       (actual === 'portada' ? TERRACOTA : TINTA) + '">Cómo funciona</a>' +
       '<a href="/entrar" style="' + ESTILO_MENU_ITEM + 'color:' + TINTA + '">Entrar</a>' +
-      '<a href="' + aRegistro(actual) + '" style="display:flex;align-items:center;justify-content:center;min-height:56px;margin-top:22px;border-radius:999px;background:' +
+      '<a href="' + aRegistro() + '" style="display:flex;align-items:center;justify-content:center;min-height:56px;margin-top:22px;border-radius:999px;background:' +
       VERDE + ';color:' + CREMA + ";font:600 16px/1 'Inter Tight',sans-serif\">Encuentra tu mesa</a>"
   }
 
@@ -155,7 +159,7 @@
           '<div class="aro-cab-esc" style="display:flex;align-items:center;gap:4px">' + derecha(actual, estado.sesion, estado.sabida) + '</div>' +
           '<div class="aro-cab-mov" style="display:flex;align-items:center;gap:6px">' +
             (estado.sabida && !estado.sesion
-              ? '<a href="' + aRegistro(actual) + '" style="' + ESTILO_BOTON.replace('padding:0 20px', 'padding:0 18px') + '">Empezar</a>'
+              ? '<a href="' + aRegistro() + '" style="' + ESTILO_BOTON.replace('padding:0 20px', 'padding:0 18px') + '">Empezar</a>'
               : '') +
             '<button data-menu aria-label="' + (abierto ? 'Cerrar menú' : 'Abrir menú') + '" aria-expanded="' + (abierto ? 'true' : 'false') + '" style="width:44px;height:44px;border-radius:999px;border:1.5px solid rgba(20,52,42,.2);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">' +
               (abierto

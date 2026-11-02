@@ -136,8 +136,14 @@ export async function GET(request: Request) {
 
   // A dónde. El paso lo decide la MISMA pieza que se lo dice a todos; lo que
   // decide esta ruta es a qué URL lleva cada paso, que es lo suyo.
-  const porDefecto =
-    r.paso === 'preguntas' || r.paso === 'contacto' ? '/cuestionario' : estado.destino
+  //
+  // Quien sale de `/empezar` vuelve a `/empezar`, esté en el paso que esté:
+  // trae la fecha de nacimiento guardada en el navegador, y es esa página la
+  // que la manda y pide la casilla de las normas antes de seguir. Si ya
+  // tenía todo, la propia página lo manda a donde diga el embudo.
+  const porDefecto = estado.destino === '/empezar'
+    ? '/empezar'
+    : (r.paso === 'preguntas' || r.paso === 'contacto' ? '/cuestionario' : estado.destino)
 
   return conCookieBorrada(NextResponse.redirect(`${SITIO}${porDefecto}`, 302))
 }

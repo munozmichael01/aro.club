@@ -61,9 +61,8 @@
                  al final y después de los botones de Apple y Google.
 
                  «Crear cuenta» lleva al PRINCIPIO del alta y no a un
-                 formulario suelto: en la web la cuenta se crea al final del
-                 alta, en Datos base, no en una pantalla propia como en la
-                 app. -->
+                 formulario suelto: `/empezar`, nacimiento → cuenta →
+                 preguntas, el mismo orden que la app desde el 02-11. -->
             <div role="tablist" style="{{ selectorCaja }}">
               <div role="tab" aria-selected="true" style="{{ selectorAqui }}">Entrar</div>
               <a role="tab" href="{{ alAlta }}" style="{{ selectorOtro }}">Crear cuenta</a>
@@ -119,9 +118,8 @@
                  al final y después de los botones de Apple y Google.
 
                  «Crear cuenta» lleva al PRINCIPIO del alta y no a un
-                 formulario suelto: en la web la cuenta se crea al final del
-                 alta, en Datos base, no en una pantalla propia como en la
-                 app. -->
+                 formulario suelto: `/empezar`, nacimiento → cuenta →
+                 preguntas, el mismo orden que la app desde el 02-11. -->
             <div role="tablist" style="{{ selectorCaja }}">
               <div role="tab" aria-selected="true" style="{{ selectorAqui }}">Entrar</div>
               <a role="tab" href="{{ alAlta }}" style="{{ selectorOtro }}">Crear cuenta</a>
@@ -370,14 +368,15 @@ class Component extends DCLogic {
       selectorAqui: 'min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif',
       selectorOtro: 'min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:999px;color:#C5D8CA;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;text-decoration:none',
       /**
-       * Al PRINCIPIO del alta, que en la web es la landing.
+       * Al PRINCIPIO del alta: `/empezar`, que abre con el nacimiento.
        *
        * Antes el pie mandaba a `/datos`, que es el tercer paso: quien no
        * tiene nada se saltaba el correo y las cuatro preguntas, y la puerta
        * de los 18 es justo una de ellas. Design lo dice igual: «al principio
-       * del alta, no a un formulario suelto».
+       * del alta, no a un formulario suelto». Hasta el 02-11 ese principio
+       * era un bloque de la portada (`/#registro`).
        */
-      alAlta: '/#registro',
+      alAlta: '/empezar',
       botonClaro: btn('#FAF3E4', '#14342A', 'none'),
       botonClaroSuelto: btn('#FAF3E4', '#14342A', 'none', 'margin-top:22px'),
       botonFantasma: btn('transparent', '#9CBBA6', 'none', 'min-height:48px;padding:0 4px;font-weight:500;font-size:15px;text-decoration:underline;text-underline-offset:6px'),

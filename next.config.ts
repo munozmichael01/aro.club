@@ -29,6 +29,8 @@ import type { NextConfig } from 'next'
 const PANTALLAS: Array<[string, string]> = [
   // Entrega 1 · captación
   ['/', '/Aro Club - Landing v4.dc.html'],
+  // El alta de la web desde el 02-11: nacimiento → cuenta → las cuatro.
+  ['/empezar', '/Aro Club - Empezar.dc.html'],
   ['/cuestionario', '/Aro Club - Cuestionario.dc.html'],
   ['/gracias', '/Aro Club - Agradecimiento.dc.html'],
   ['/sistema', '/Aro Club - Sistema v3.dc.html'],

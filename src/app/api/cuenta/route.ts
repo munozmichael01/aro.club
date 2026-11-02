@@ -61,7 +61,8 @@ const cuerpo = z.object({
    */
   token: z.string().min(1).nullish(),
   /** De dónde sale el alta, para no perder la atribución. */
-  origen: z.enum(['landing', 'datos', 'app']).nullish(),
+  // `empezar`: el alta de la web desde el 02-11 (`/empezar`), sin lead.
+  origen: z.enum(['landing', 'datos', 'app', 'empezar']).nullish(),
   /**
    * Su ciudad. Solo sirve en el alta SIN lead, que es la de la app.
    *
