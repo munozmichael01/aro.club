@@ -1341,20 +1341,17 @@
         </div>
         <p style="{{ bajada }}">Todo se cobra en bolívares. La tasa se congela al confirmar el pago, no al reservar.</p>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:clamp(20px,2.6vw,26px) 0">
-          <sc-for list="{{ metricasPago }}" as="m" hint-placeholder-count="4">
-            <div style="border-radius:20px;background:#FAF3E4;padding:16px 18px">
-              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">{{ m.etiqueta }}</div>
-              <div style="{{ m.cifraEstilo }}">{{ m.cifra }}</div>
-              <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:4px">{{ m.nota }}</div>
-            </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:clamp(16px,2vw,20px)">
+          <sc-for list="{{ vistasPagos }}" as="v" hint-placeholder-count="2">
+            <button onClick="{{ v.pick }}" style="{{ v.btn }}">{{ v.nombre }}</button>
           </sc-for>
         </div>
 
-        <!-- LO QUE HAY QUE DEVOLVER. Va arriba del todo porque es lo único
-             de esta pantalla que tiene a alguien esperando su dinero, y
-             porque prometimos un día hábil. -->
-        <sc-if value="{{ hayReembolsos }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ enDevoluciones }}" hint-placeholder-val="{{ false }}">
+          <!-- LO QUE HAY QUE DEVOLVER, en su propia vista dentro de Pagos
+               (Michael, 02-11: «no me la pongas atravesada en pagos»). Desde
+               la vista de pagos queda una línea que avisa y trae aquí. -->
+          <sc-if value="{{ hayReembolsos }}" hint-placeholder-val="{{ false }}">
           <div style="border:1px solid #8F4515;border-radius:24px;padding:clamp(18px,2.4vw,24px);margin:clamp(20px,2.6vw,26px) 0;background:#FAF3E4">
             <div style="font:500 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515;margin-bottom:6px">REEMBOLSOS POR PAGAR</div>
             <div style="font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-bottom:16px;max-width:60ch;text-wrap:pretty">{{ notaReembolsos }}</div>
@@ -1389,6 +1386,26 @@
             </div>
           </div>
         </sc-if>
+          <sc-if value="{{ sinReembolsos }}" hint-placeholder-val="{{ false }}">
+            <p style="{{ bajada }};margin-top:clamp(20px,2.6vw,26px)">No hay devoluciones. Cuando alguien se quede sin mesa y pida su dinero, sale aquí.</p>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{ enListaPagos }}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{ hayDevolucionPendiente }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ irADevoluciones }}" style="{{ avisoDevoluciones }}">{{ textoAvisoDevoluciones }}</button>
+          </sc-if>
+
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px;margin:clamp(20px,2.6vw,26px) 0">
+          <sc-for list="{{ metricasPago }}" as="m" hint-placeholder-count="4">
+            <div style="border-radius:20px;background:#FAF3E4;padding:16px 18px">
+              <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#33513F">{{ m.etiqueta }}</div>
+              <div style="{{ m.cifraEstilo }}">{{ m.cifra }}</div>
+              <div style="font:400 13px/1.45 'Inter Tight',sans-serif;color:#33513F;margin-top:4px">{{ m.nota }}</div>
+            </div>
+          </sc-for>
+        </div>
 
         <!-- Cuánto ha entrado, día a día. La pregunta que se hace mirando
              pagos no es solo «qué falta por conciliar» sino «cómo venimos», y
@@ -1546,6 +1563,8 @@
             </div>
           </sc-for>
         </div>
+
+        </sc-if>
       </div>
     </sc-if>
 
@@ -2204,6 +2223,7 @@ class Component extends DCLogic {
     // «Seguir en contacto»: se pide al abrir su pestaña.
     seguirOps: null,
     reembolsos: null, refRee: {}, compRee: {}, pegaRee: {}, pagandoRee: '',
+    vistaPagos: 'pagos',
     avisos: null, bajas: null, pidiendoAvisos: false, filtroPersona: '', filtroFecha: '', filtroTipo: '',
     // Mover a una persona a mano en la fecha elegida. Vive en Reparto y
     // cerrado por defecto: es la única acción del panel que se salta el
@@ -6590,13 +6610,36 @@ class Component extends DCLogic {
             : ''),
       cola, hayCola: porConciliar > 0, sinCola: porConciliar === 0,
       /**
-       * Los reembolsos por pagar, arriba de todo en Pagos.
+       * Los reembolsos por pagar, en su vista de Pagos («Devoluciones»).
        *
        * Es lo único de esa pantalla donde hay alguien esperando su dinero, y
        * le prometimos un día hábil. Los ya pagados siguen en la lista un
        * rato: sirve para contestar «¿me lo mandaron?» sin buscar en la base.
        */
       hayReembolsos: !!(REEMBOLSOS && REEMBOLSOS.length),
+      sinReembolsos: !!REEMBOLSOS && !REEMBOLSOS.length,
+      // Pagos y Devoluciones, dentro de Pagos. El número va en la pestaña
+      // solo si alguien espera su dinero.
+      vistasPagos: (() => {
+        const n = (REEMBOLSOS || []).filter((r) => r.estado === 'pendiente').length;
+        return [['Pagos', 'pagos'], [n ? 'Devoluciones (' + n + ')' : 'Devoluciones', 'devoluciones']].map(([nombre, clave]) => {
+          const on = (St.vistaPagos || 'pagos') === clave;
+          return {
+            nombre,
+            pick: () => this.setState({ vistaPagos: clave }),
+            btn: 'display:inline-flex;align-items:center;min-height:38px;padding:0 16px;border-radius:999px;font:' + (on ? '600' : '500') + ' 13px/1 \'Inter Tight\',sans-serif;white-space:nowrap;cursor:pointer;transition:all 180ms ease;background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#2C4A38') + ';border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.22)')
+          };
+        });
+      })(),
+      enDevoluciones: St.vistaPagos === 'devoluciones',
+      enListaPagos: St.vistaPagos !== 'devoluciones',
+      hayDevolucionPendiente: (REEMBOLSOS || []).some((r) => r.estado === 'pendiente'),
+      irADevoluciones: () => this.setState({ vistaPagos: 'devoluciones' }),
+      textoAvisoDevoluciones: (() => {
+        const n = (REEMBOLSOS || []).filter((r) => r.estado === 'pendiente').length;
+        return (n === 1 ? 'Una devolución por pagar' : n + ' devoluciones por pagar') + ' · Ver';
+      })(),
+      avisoDevoluciones: 'display:inline-flex;align-items:center;min-height:40px;margin-top:clamp(16px,2vw,20px);padding:0 16px;border-radius:999px;border:1px solid #8F4515;background:transparent;color:#8F4515;font:600 13px/1 \'Inter Tight\',sans-serif;cursor:pointer',
       notaReembolsos: (() => {
         if (!REEMBOLSOS) return '';
         const porPagar = REEMBOLSOS.filter((r) => r.estado === 'pendiente');
