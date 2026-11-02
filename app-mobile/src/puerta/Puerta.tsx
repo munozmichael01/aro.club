@@ -234,19 +234,33 @@ export function Puerta(p: {
     setAviso('')
     const r = await servicio.crearCuenta(c, clave, T.cuenta.noCreada)
     // «Ya tiene cuenta» llega de dos formas: un 409 con ese texto literal, o
-    // un 200 con `ya_existe` (quien ya convirtió su lead). Las dos, a Entrar
-    // con el correo puesto: las respuestas siguen en el borrador y se mandan
-    // al entrar. No vale mirar solo el 409: también sale si el teléfono ya
-    // está en otra cuenta, y ese se enseña tal cual.
+    // un 200 con `ya_existe` (quien ya convirtió su lead). No vale mirar solo
+    // el 409: también sale si el teléfono ya está en otra cuenta, y ese se
+    // enseña tal cual.
     const yaTiene = (!r.ok && r.status === 409 && r.error === YA_TIENE_CUENTA) || (r.ok && r.datos.estado === 'ya_existe')
+    // Sin respuesta (la red se cortó): la cuenta puede haberse creado igual.
+    const sinRespuesta = !r.ok && r.status === undefined
+    if (!r.ok && !yaTiene && !sinRespuesta) {
+      setTrabajando(false)
+      return setAviso(r.error)
+    }
+    // En los tres casos se prueba a entrar con lo que acaba de escribir
+    // (02-11: a Michael le salió «No pudimos crear tu cuenta» con la cuenta
+    // ya creada en el servidor, y al reintentar le esperaba el «ya tiene
+    // cuenta»). Si entra, es su cuenta y sigue; si no, a Entrar con el correo
+    // puesto, nunca «no pudimos crearla» de una cuenta que existe.
+    const dentro = await entrarConReintento(c, clave)
     setTrabajando(false)
-    if (yaTiene) return p.alEntrar(c)
-    if (!r.ok) return setAviso(r.error)
-    setTrabajando(true)
-    const dentro = await p.entrarConClave(c, clave)
-    setTrabajando(false)
-    if (!dentro) return setAviso(T.cuenta.noCreada)
-    trasCuenta()
+    if (dentro) return trasCuenta()
+    if (yaTiene || r.ok) return p.alEntrar(c)
+    return setAviso(T.cuenta.noCreada)
+  }
+
+  /** El inicio de sesión del SDK, con un segundo intento: justo después de crearla, la cuenta puede tardar un instante. */
+  const entrarConReintento = async (c: string, k: string) => {
+    if (await p.entrarConClave(c, k)) return true
+    await new Promise((x) => setTimeout(x, 1200))
+    return p.entrarConClave(c, k)
   }
 
   if (preguntas === undefined || conSesion === null) return <Velo sobreVerde />
