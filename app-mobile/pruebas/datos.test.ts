@@ -89,3 +89,14 @@ test('el nacimiento que ya dio en el alta no se vuelve a preguntar', async () =>
   const sin = desdeServidor(inicial(), {})
   assert.deepEqual(pasosVisibles(sin), [0, 1, 2, 3], 'sin nacimiento, se pregunta')
 })
+
+test('con la fecha ya dada en el alta, Datos cuenta tres pasos y el género no dice «La otra» (b5b92cb)', async () => {
+  const T = await import('../src/texto/datos')
+  const M = await import('../src/datos/maquina')
+  const e = M.desdeServidor(M.inicial(), { nacimiento: '1990-05-10', correo: 'ana@correo.com' })
+  assert.deepEqual(M.pasosVisibles(e), [0, 2, 3])
+  assert.equal(e.correoGuardado, 'ana@correo.com')
+  assert.equal(T.eyebrowPaso(T.pasos[2].eyebrow, M.pasosVisibles(e).indexOf(2) + 1, M.pasosVisibles(e).length), 'DATOS PERSONALES · 2 DE 3')
+  assert.match(T.pasos[2].bajada(false, true), /^Pesa al armar el grupo/)
+  assert.match(T.pasos[2].bajada(false, false), /^La otra/)
+})

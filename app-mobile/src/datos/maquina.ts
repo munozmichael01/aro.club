@@ -35,10 +35,13 @@ export type Estado = {
    * veces lo mismo. Sigue en el resumen, para editarlo.
    */
   nacimientoDado: boolean
+  /** El correo que ya tiene el servidor, para «Lo que guardamos». */
+  correoGuardado: string
 }
 
 export const inicial = (): Estado => ({
   nacimientoDado: false,
+  correoGuardado: '',
   paso: 0,
   correo: '',
   nombre: '',
@@ -132,6 +135,8 @@ export type DeServidor = {
   genero?: string | null
   telefono?: string | null
   puedeCuenta?: boolean
+  /** El de contacto o, sin él, el de la cuenta (b5b92cb). Para el resumen de quien llega con cuenta y sin lead. */
+  correo?: string | null
 }
 
 /**
@@ -157,6 +162,7 @@ export function desdeServidor(e: Estado, d: DeServidor): Estado {
     telefono: tel.resto,
     puedeCuenta: !!d.puedeCuenta,
     nacimientoDado: !!fecha,
+    correoGuardado: d.correo || '',
     paso: completo && e.paso === 0 ? PASO_FIN : e.paso,
   }
 }

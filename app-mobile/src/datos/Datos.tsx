@@ -199,9 +199,10 @@ export function Datos(p: {
   const conLead = !!lead
   const faltaCuenta = conLead && e.paso === PASO_FIN && e.puedeCuenta
   const paso = e.paso === PASO_CORREO ? null : e.paso < PASO_FIN ? T.pasos[e.paso] : null
-  const eyebrow = e.paso === PASO_CORREO ? T.correo.eyebrow : paso ? paso.eyebrow : T.fin.eyebrow
+  const visibles = pasosVisibles(e)
+  const eyebrow = e.paso === PASO_CORREO ? T.correo.eyebrow : paso ? T.eyebrowPaso(paso.eyebrow, visibles.indexOf(e.paso) + 1, visibles.length) : T.fin.eyebrow
   const titulo = e.paso === PASO_CORREO ? T.correo.titulo : paso ? paso.titulo : T.fin.titulo(conLead, e.puedeCuenta)
-  const bajada = e.paso === PASO_CORREO ? T.correo.bajada : paso ? paso.bajada(conLead) : T.fin.bajada(conLead, e.puedeCuenta, cuando)
+  const bajada = e.paso === PASO_CORREO ? T.correo.bajada : paso ? paso.bajada(conLead, e.nacimientoDado) : T.fin.bajada(conLead, e.puedeCuenta, cuando)
   const etiquetaPaso =
     e.paso === PASO_CORREO ? T.nav.etiquetaCorreo : e.paso < PASO_FIN ? T.nav.etiquetaPaso(pasosVisibles(e).indexOf(e.paso) + 1, pasosVisibles(e).length) : T.nav.etiquetaCompleto
   const textoBoton = guardando
@@ -407,7 +408,7 @@ export function Datos(p: {
                 <Texto variante="etiquetaChica" tono="cuerpo" style={{ marginBottom: 12 }}>
                   {T.fin.guardamos}
                 </Texto>
-                {resumen(e, lead?.correo ?? e.correo, generoTexto, hoy).map((f) => (
+                {resumen(e, lead?.correo || e.correo || e.correoGuardado, generoTexto, hoy).map((f) => (
                   <View key={f.campo} style={estilos.fila}>
                     <View style={{ flex: 1, gap: 4 }}>
                       <Texto variante="cuerpoChico">{f.campo}</Texto>
@@ -416,7 +417,8 @@ export function Datos(p: {
                     </View>
                     {f.editar !== null ? (
                       <Pressable
-                        onPress={() => poner({ paso: f.editar! })}
+                        // «Editar edad» vuelve a enseñar la fecha, con la cuenta de cuatro (como la web, b5b92cb).
+                        onPress={() => poner(f.editar === 1 ? { paso: 1, nacimientoDado: false } : { paso: f.editar! })}
                         accessibilityRole="button"
                         accessibilityLabel={T.fin.editarEtiqueta(f.campo)}
                         style={estilos.editar}

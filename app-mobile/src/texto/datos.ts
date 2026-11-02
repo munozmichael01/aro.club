@@ -20,9 +20,12 @@ export const correo = {
   revisar: 'Revisa el correo',
 }
 
+/** «DATOS PERSONALES · 2 DE 3»: la cuenta, de los pasos que se preguntan (sin la fecha si ya la dio). */
+export const eyebrowPaso = (base: string, n: number, de: number) => `${base} · ${n} DE ${de}`
+
 export const pasos = [
   {
-    eyebrow: 'DATOS PERSONALES · 1 DE 4',
+    eyebrow: 'DATOS PERSONALES',
     titulo: '¿Cómo te llamas?',
     bajada: (conLead: boolean) =>
       conLead
@@ -30,17 +33,21 @@ export const pasos = [
         : 'Los datos con los que te escribimos. Puedes cambiarlos cuando quieras.',
   },
   {
-    eyebrow: 'DATOS PERSONALES · 2 DE 4',
+    eyebrow: 'DATOS PERSONALES',
     titulo: '¿Cuándo naciste?',
     bajada: () => 'Es una de las dos cosas que más pesan al armar el grupo. Si ya la contestaste en las preguntas, aquí solo la confirmas.',
   },
   {
-    eyebrow: 'DATOS PERSONALES · 3 DE 4',
+    eyebrow: 'DATOS PERSONALES',
     titulo: '¿Con qué género te identificas?',
-    bajada: () => 'La otra. Va aparte del resto del perfil porque no se comparte con nadie.',
+    // «La otra» sigue a la fecha («una de las dos cosas que más pesan»). Sin la fecha delante (ya la dio en el alta), no tiene a qué referirse (b5b92cb).
+    bajada: (_conLead: boolean, sinFecha?: boolean) =>
+      sinFecha
+        ? 'Pesa al armar el grupo. Va aparte del resto del perfil porque no se comparte con nadie.'
+        : 'La otra. Va aparte del resto del perfil porque no se comparte con nadie.',
   },
   {
-    eyebrow: 'DATOS PERSONALES · 4 DE 4',
+    eyebrow: 'DATOS PERSONALES',
     titulo: '¿A qué número te escribimos?',
     bajada: () => 'Solo el día del encuentro, y solo si hace falta.',
   },
