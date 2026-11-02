@@ -2693,6 +2693,33 @@
     },
 
     /**
+     * El alta, igual en web y app (Michael, 02-11): nacimiento → «Crea tu
+     * cuenta» → las cuatro preguntas → lo demás. Los textos los cerraron el
+     * agente de la app y el de la web por encargo de Michael («decídanlo
+     * ustedes»).
+     */
+    ALTA: {
+      cuenta: {
+        // Era «Tus respuestas ya están guardadas. Solo falta cómo vas a
+        // entrar.», que deja de ser verdad con la cuenta antes de las preguntas.
+        bajada: 'Con tu cuenta guardamos lo que contestes y te avisamos cuando haya mesa para ti.',
+      },
+      // Quien ya tiene cuenta y pone una fecha de menos de 18.
+      menor: {
+        confirmar: {
+          titulo: '¿Esa es tu fecha de nacimiento?',
+          cuerpo: 'Aro es para mayores de 18. Si es tu fecha, cerramos tu cuenta y no guardamos nada más. Si te equivocaste, corrígela.',
+          si: 'Sí, es mi fecha',
+          no: 'Corregirla',
+        },
+        cerrada: {
+          titulo: 'Aro es para mayores de 18.',
+          cuerpo: 'Cerramos tu cuenta y no guardamos tus datos. Te esperamos cuando cumplas 18.',
+        },
+      },
+    },
+
+    /**
      * «Segundo acto»: después de la cena, todas las mesas de la fecha se
      * juntan en un mismo bar (Michael, 01-11). Es de la FECHA —el bar va en
      * `events.after_venue_id`— y por ahora solo se enseña la etiqueta, junto

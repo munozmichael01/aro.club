@@ -169,6 +169,14 @@ type Api = {
     diaYNumero: (iso: string | null | undefined, zona?: string) => string
     historia: (plan: PlanDentro, codigo: string | null) => Historia | null
   }
+  /** El alta (nacimiento → cuenta → preguntas) y el cierre de la cuenta de un menor. */
+  ALTA: {
+    cuenta: { bajada: string }
+    menor: {
+      confirmar: { titulo: string; cuerpo: string; si: string; no: string }
+      cerrada: { titulo: string; cuerpo: string }
+    }
+  }
   /** Las cuentas de Aro en redes (@somos.aroclub). */
   REDES: { instagram: string; tiktok: string; arroba: string }
   /** El precio con el que nace una fecha nueva de ese formato. */
@@ -284,6 +292,8 @@ export const DENTRO = api.DENTRO
 export const CONTACTO = api.CONTACTO
 /** El precio con el que nace una fecha nueva, por plan (hoy todos `PRECIO_USD`). */
 export const precioDe = api.precioDe
+/** El alta: textos de «Crea tu cuenta» y del cierre de la cuenta de un menor. */
+export const ALTA = api.ALTA
 /** Las cuentas de Aro en redes: lo que firma las tarjetas para historias. */
 export const REDES = api.REDES
 /** «+1 acompañante», el mismo texto en app, web y correos. */

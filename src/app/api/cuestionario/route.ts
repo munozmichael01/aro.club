@@ -3,7 +3,9 @@ import { z } from 'zod'
 
 import { respuestasDePerfil, situacionDeLead, situacionDePerfil } from '@/lib/embudo'
 import { verificar } from '@/lib/lead-token'
-import { leerCatalogo, validar } from '@/lib/questionnaire/catalogo'
+import { leerCatalogo, MENOR_DE_EDAD, validar } from '@/lib/questionnaire/catalogo'
+import { darDeBaja } from '@/lib/baja'
+import { ALTA } from '@/lib/reglas'
 import { atarBebida } from '@/lib/questionnaire/atar'
 import { MAX_TEXTO } from '@/lib/reglas'
 import { createClient } from '@/lib/supabase/server'
@@ -191,6 +193,11 @@ const cuerpo = z.object({
   pantalla: z.number().int().min(0).max(4).optional(),
   /** Marca el final; a partir de ahí el cuestionario está completo. */
   fin: z.boolean().optional(),
+  /**
+   * Quien tiene cuenta y pone una fecha de menos de 18 lo confirma con esto
+   * antes de que se le cierre la cuenta (ver más abajo).
+   */
+  confirmaMenor: z.boolean().optional(),
 })
 
 export async function POST(request: Request) {
@@ -263,6 +270,36 @@ export async function POST(request: Request) {
     // pide `actividades` tiene una respuesta a medias, no una invalida. El
     // minimo se exige al cerrar, y de eso se encarga el embudo.
     const problema = validar(pregunta, valor, { exigirMinimo: false })
+    /**
+     * UN MENOR CON CUENTA: se le cierra (Michael, 02-11).
+     *
+     * Con el alta nueva (nacimiento → cuenta → preguntas) nadie crea una
+     * cuenta sin pasar la puerta de los 18, salvo quien entra con Apple o
+     * Google desde «Entrar» sin tenerla. A esa persona se le pide la fecha
+     * después, y si no tiene 18 no guardamos sus datos: se da de baja como
+     * cualquier baja (`darDeBaja`).
+     *
+     * Pero NO al primer envío: un año mal tecleado —2015 por 1995— cerraría
+     * la cuenta de un adulto. La primera vez se contesta 409
+     * `motivo: 'menor-confirmar'` y no se toca nada; la pantalla pregunta
+     * «¿esa es tu fecha?», y solo con `confirmaMenor: true` se cierra
+     * (403 `motivo: 'menor'`). Sin cuenta, un lead, sigue el 400 de siempre.
+     */
+    // `validar` antepone la clave: «nacimiento: Aro es para mayores de 18».
+    if (problema?.endsWith(MENOR_DE_EDAD) && quien.tipo === 'perfil') {
+      if (parsed.data.confirmaMenor !== true) {
+        return NextResponse.json(
+          { error: ALTA.menor.confirmar.cuerpo, motivo: 'menor-confirmar', pregunta: clave },
+          { status: 409 },
+        )
+      }
+      const supabase = await createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const fallo = await darDeBaja(createAdminClient(), quien.id, session?.access_token ?? null)
+      if (fallo) return NextResponse.json({ error: fallo }, { status: 500 })
+      await supabase.auth.signOut()
+      return NextResponse.json({ error: ALTA.menor.cerrada.cuerpo, motivo: 'menor' }, { status: 403 })
+    }
     if (problema) {
       console.error('[cuestionario] respuesta inválida', problema)
       // CON LA CLAVE DENTRO. «Esa respuesta no cuadra» a secas obligaba a

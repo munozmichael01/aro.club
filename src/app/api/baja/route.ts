@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { darDeBaja } from '@/lib/baja'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -68,63 +69,9 @@ export async function POST(request: Request) {
   }
 
   // --- 1 · las rutas de las fotos, antes de que la transaccion las borre --
-  const { data: verificaciones } = await admin
-    .from('verifications')
-    .select('storage_path')
-    .eq('profile_id', user.id)
+  const fallo = await darDeBaja(admin, user.id, session?.access_token ?? null)
+  if (fallo) return NextResponse.json({ error: fallo }, { status: 500 })
 
-  const rutas = (verificaciones ?? [])
-    .map((v) => v.storage_path)
-    .filter((r): r is string => !!r)
-
-  // --- 2 · la baja, en UNA transaccion ----------------------------------
-  // La primera version hacia esto en seis pasos desde aqui y el ultimo
-  // reventó: los datos quedaron borrados y la cuenta viva. Una operacion
-  // destructiva de varios pasos no puede vivir en la aplicacion.
-  const { error: errorBaja } = await admin.rpc('dar_de_baja', {
-    p_profile_id: user.id,
-  })
-
-  if (errorBaja) {
-    console.error('[baja] la transaccion no paso', errorBaja)
-    return NextResponse.json(
-      { error: 'No pudimos completar la baja. No hemos tocado nada.' },
-      { status: 500 },
-    )
-  }
-
-  // --- 3 · las fotos del almacen ----------------------------------------
-  // Va DESPUES: el almacen no entra en la transaccion. Si falla, la cuenta
-  // ya esta cerrada —que es lo que pidio— y los ficheros los recoge la
-  // purga de los 90 dias. Se registra fuerte porque es una promesa a
-  // medias hasta entonces.
-  if (rutas.length) {
-    const { error } = await admin.storage.from('verificaciones').remove(rutas)
-    if (error) {
-      console.error('[baja] LA CUENTA SE CERRO PERO LAS CAPTURAS SIGUEN AHI', user.id, error)
-    }
-  }
-
-  // --- 4 · cortar el acceso y liberar su correo -------------------------
-  // El correo se cambia por uno de lápida en vez de borrar el usuario:
-  // borrarlo arrastraría la facturación. Y liberarlo le deja volver.
-  await admin.auth.admin.updateUserById(user.id, {
-    email: `baja+${user.id}@aro.club`,
-    email_confirm: true,
-    password: crypto.randomUUID() + crypto.randomUUID(),
-    user_metadata: {},
-  })
-
-  // Y se cierran todas las sesiones abiertas, no solo esta.
-  //
-  // Con el id de la persona esto no cerraba ninguna: `signOut` quiere el JWT
-  // de una sesión viva y los dos son `string`, así que no fallaba al compilar
-  // —fallaba en cada llamada, sin que nadie mirase el error—. Una cuenta dada
-  // de baja seguía abierta en el móvil donde ya lo estaba.
-  if (session?.access_token) {
-    const { error } = await admin.auth.admin.signOut(session.access_token, 'global')
-    if (error) console.error('[baja] LA CUENTA SE CERRO PERO LAS SESIONES SIGUEN ABIERTAS', user.id, error)
-  }
   await supabase.auth.signOut()
 
   return NextResponse.json({ estado: 'baja' })

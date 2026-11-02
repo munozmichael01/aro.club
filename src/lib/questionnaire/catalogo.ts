@@ -92,6 +92,9 @@ export async function leerCatalogo(): Promise<Catalogo | null> {
   return dato
 }
 
+/** El problema de una fecha de alguien con menos de 18. Lo reconoce `/api/cuestionario`. */
+export const MENOR_DE_EDAD = 'Aro es para mayores de 18'
+
 /** Devuelve el problema encontrado, o null si la respuesta es válida. */
 /**
  * Los 18 años, contados de verdad.
@@ -116,7 +119,7 @@ function problemaDeFecha(valor: unknown): string | null {
   const m = hoy.getUTCMonth() - d.getUTCMonth()
   if (m < 0 || (m === 0 && hoy.getUTCDate() < d.getUTCDate())) anos--
 
-  if (anos < 18) return 'Aro es para mayores de 18'
+  if (anos < 18) return MENOR_DE_EDAD
   if (anos > 120) return 'revisa el año'
   return null
 }
