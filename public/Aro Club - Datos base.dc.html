@@ -507,9 +507,16 @@ class Component extends DCLogic {
         // selector y el numero por separado.
         const p = AroReglas.partirTelefono(d.telefono || '');
         const est = { nombre: d.nombre || '', trato: d.trato || '', prefijo: p.prefijo, telefono: p.resto };
+        // Para el resumen de quien llega con cuenta, que no trae lead.
+        if (d.correo && !this._lead) est.correo = d.correo;
         if (d.nacimiento) {
           const p = String(d.nacimiento).split('-');
           est.anio = p[0]; est.mes = String(parseInt(p[1], 10)); est.dia = String(parseInt(p[2], 10));
+          // Ya contestada (el alta de /empezar la pide lo primero, 02-11): no
+          // se vuelve a preguntar. Repetirla en pleno alta se leía como que
+          // no habíamos guardado lo que acababa de contestar. Se corrige desde
+          // el resumen, o desde Mi perfil.
+          est.saltaFecha = true;
         }
         if (d.genero) est.genero = this.GENEROS.indexOf(d.genero);
         est.puedeCuenta = !!d.puedeCuenta;
@@ -646,9 +653,14 @@ class Component extends DCLogic {
     // otra regla distinta para el mismo dato.
     const telOk = AroReglas.valido('telefonoPerfil', this.state.prefijo + this.state.telefono);
 
+    // Los pasos que se enseñan. Sin la fecha, si ya estaba: tres, no cuatro.
+    const salta = !!this.state.saltaFecha;
+    const visibles = salta ? [0, 2, 3] : [0, 1, 2, 3];
+    const deTotal = (i) => 'DATOS PERSONALES · ' + (visibles.indexOf(i) + 1) + ' DE ' + visibles.length;
+
     const pasos = [
       {
-        eyebrow: 'DATOS PERSONALES · 1 DE 4',
+        eyebrow: deTotal(0),
         titulo: '¿Cómo te llamas?',
         // El orden cambió: las preguntas van antes y esto es lo último del
         // alta. Decir «después vienen las preguntas» mandaba a la persona a
@@ -660,7 +672,7 @@ class Component extends DCLogic {
         falla: this.state.nombre.trim().length === 0 ? 'Escribe tu nombre' : 'Escribe tu nombre completo'
       },
       {
-        eyebrow: 'DATOS PERSONALES · 2 DE 4',
+        eyebrow: deTotal(1),
         titulo: '¿Cuándo naciste?',
         bajada: 'Es una de las dos cosas que más pesan al armar el grupo. Si ya la contestaste en las preguntas, aquí solo la confirmas.',
         listo: edad !== null && edad >= 18 && edad <= 99,
@@ -675,14 +687,18 @@ class Component extends DCLogic {
           : (edad !== null && edad < 18 ? 'Aro es para mayores de 18' : 'Revisa la fecha')
       },
       {
-        eyebrow: 'DATOS PERSONALES · 3 DE 4',
+        eyebrow: deTotal(2),
         titulo: '¿Con qué género te identificas?',
-        bajada: 'La otra. Va aparte del resto del perfil porque no se comparte con nadie.',
+        // «La otra» sigue a la fecha («una de las dos cosas que más pesan»).
+        // Sin la fecha delante, esa frase no tiene a qué referirse.
+        bajada: salta
+          ? 'Pesa al armar el grupo. Va aparte del resto del perfil porque no se comparte con nadie.'
+          : 'La otra. Va aparte del resto del perfil porque no se comparte con nadie.',
         listo: this.state.genero >= 0,
         falla: 'Elige una opción'
       },
       {
-        eyebrow: 'DATOS PERSONALES · 4 DE 4',
+        eyebrow: deTotal(3),
         titulo: '¿A qué número te escribimos?',
         bajada: 'Solo el día del encuentro, y solo si hace falta.',
         listo: telOk,
@@ -740,7 +756,8 @@ class Component extends DCLogic {
       };
     });
 
-    const barras = [0, 1, 2, 3].map((i) => ({
+    // Una barra por paso que se enseña. En el resumen (4), todas hechas.
+    const barras = visibles.map((i) => ({
       estilo: 'flex:1;height:4px;border-radius:999px;background:' + (i < p ? '#1B5138' : (i === p ? '#8F4515' : 'rgba(20,52,42,.13)')) + ';transition:background 260ms ease'
     }));
 
@@ -783,7 +800,9 @@ class Component extends DCLogic {
       ['Teléfono', telBonito, 'Solo ese día', false, 3]
     ].map((r) => ({
       campo: r[0], valor: r[1], visible: r[2], chip: chip(r[3]),
-      corregir: r[4] === null ? null : () => this.setState({ paso: r[4] }),
+      // Corregir la fecha la vuelve a enseñar: quien la pidió la ve, y la
+      // cuenta vuelve a ser de cuatro para que los números cuadren.
+      corregir: r[4] === null ? null : () => this.setState(r[4] === 1 ? { paso: 1, saltaFecha: false } : { paso: r[4] }),
       hayCorregir: r[4] !== null,
       etiquetaCorregir: 'Editar ' + r[0].toLowerCase()
     }));
@@ -819,7 +838,7 @@ class Component extends DCLogic {
       // acaba de aterrizar sin nada— eso es otra puerta cerrada.
       enlaceCabecera: (p === this.PASO_CORREO || this._lead) ? '/' : '/cuenta',
       textoSiguiente5: this._lead ? 'Seguir con las preguntas' : 'Volver a mi cuenta',
-      etiquetaPaso: p === this.PASO_CORREO ? 'TU CORREO' : (p < 4 ? 'PASO ' + (p + 1) + ' DE 4' : 'COMPLETO'),
+      etiquetaPaso: p === this.PASO_CORREO ? 'TU CORREO' : (p < 4 ? 'PASO ' + (visibles.indexOf(p) + 1) + ' DE ' + visibles.length : 'COMPLETO'),
 
       cargando: !!this.state.cargando,
       pintar: !this.state.cargando,
@@ -1070,12 +1089,12 @@ class Component extends DCLogic {
         if (!q.listo || this.state.guardando) return;
         if (p === this.PASO_CORREO) { this.entrar(); return; }
         if (p === 3) { this.guardar(); return; }
-        this.setState((s) => ({ paso: Math.min(4, s.paso + 1) }));
+        this.setState((s) => ({ paso: s.paso === 0 && s.saltaFecha ? 2 : Math.min(4, s.paso + 1) }));
       },
       fallo: this.state.fallo,
       hayFallo: !!this.state.fallo,
       puedeAtras: p > 0,
-      atras: () => this.setState((s) => ({ paso: Math.max(0, s.paso - 1) })),
+      atras: () => this.setState((s) => ({ paso: s.paso === 2 && s.saltaFecha ? 0 : Math.max(0, s.paso - 1) })),
       botonFantasma: btn('transparent', '#33513F', 'font-weight:500;padding:0 10px;text-decoration:underline;text-underline-offset:6px'),
       botonPrimarioSuelto: btn('#14342A', '#FAF3E4', 'margin-top:20px')
     };

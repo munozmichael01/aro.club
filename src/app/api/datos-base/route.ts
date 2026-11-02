@@ -86,7 +86,8 @@ export async function GET(request: Request) {
   const quien = await deQuien(new URL(request.url))
   if (!quien) return NextResponse.json({ error: 'Sin sesión.' }, { status: 401 })
 
-  const consulta = createAdminClient()
+  const admin = createAdminClient()
+  const consulta = admin
     .from(quien.tabla)
     .select('full_name, display_name, birthdate, gender, phone_e164')
 
@@ -95,7 +96,20 @@ export async function GET(request: Request) {
       ? await consulta.eq('id', quien.id).maybeSingle()
       : await consulta.eq('email', quien.correo).maybeSingle()
 
+  // El correo, para el resumen («Tu correo»). Quien tenía lead lo traía en
+  // la URL; quien llega con cuenta —el alta de /empezar, desde el 02-11— no,
+  // y el resumen decía «—». El de contacto si lo hay: es al que escribimos.
+  const correo = quien.tabla === 'waitlist'
+    ? quien.correo
+    : await admin
+        .from('profiles')
+        .select('email, contact_email')
+        .eq('id', quien.id)
+        .maybeSingle()
+        .then(({ data: p }) => p?.contact_email || p?.email || '')
+
   return NextResponse.json({
+    correo,
     nombre: data?.full_name ?? '',
     trato: data?.display_name ?? '',
     nacimiento: data?.birthdate ?? '',
