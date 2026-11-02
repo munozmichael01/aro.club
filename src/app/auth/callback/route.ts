@@ -82,8 +82,16 @@ export async function GET(request: Request) {
   const estado = leerEstado(cruda ? decodeURIComponent(cruda.slice(COOKIE_ESTADO.length + 1)) : null)
     ?? { destino: '/cuenta' }
 
+  /**
+   * Cuánto tarda cada tramo (02-11). Michael notó Google más lento que
+   * antes y no se puede medir sin una cuenta de Google de verdad: esto deja
+   * una línea por entrada con el canje en Supabase, lo nuestro y el total
+   * desde que pulsó el botón (que incluye la pantalla de Google).
+   */
+  const t0 = Date.now()
   const supabase = await createClient()
   const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+  const tCanje = Date.now() - t0
 
   if (error || !data.user) {
     console.error('[google] no se pudo canjear el código', error)
@@ -124,6 +132,14 @@ export async function GET(request: Request) {
     leadPrevio: estado.lead ?? null,
     origen: 'google',
   })
+
+  const tNuestro = Date.now() - t0 - tCanje
+  console.info('[google] vuelta', JSON.stringify({
+    canjeMs: tCanje,
+    nuestroMs: tNuestro,
+    desdeQuePulsoMs: estado.salioEn ? Date.now() - estado.salioEn : null,
+    paso: r.ok ? r.paso : 'fallo',
+  }))
 
   if (!r.ok) return alFallo('no-se-pudo')
 

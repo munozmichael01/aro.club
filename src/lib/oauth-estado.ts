@@ -44,6 +44,8 @@ export type Estado = {
   destino: string
   /** El correo con el que se apuntó, si lo sabemos. */
   lead?: string
+  /** Cuándo pulsó el botón: solo para medir la vuelta, no decide nada. */
+  salioEn?: number
 }
 
 /**
@@ -85,7 +87,7 @@ export function leerEstado(state: string | null | undefined): Estado | null {
       x?: number
     }
     if (!c.x || Date.now() > c.x) return null
-    return { destino: destinoLimpio(c.d), lead: c.l }
+    return { destino: destinoLimpio(c.d), lead: c.l, salioEn: c.x - VENTANA }
   } catch {
     return null
   }
