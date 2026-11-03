@@ -16,6 +16,39 @@ import reglas from '../../public/reglas.js'
  * exigía diez—.
  */
 
+/** Las cinco familias de «Cómo funciona» (entrega «Qué estás reservando», 02-11). */
+type PlanComo = 'cena' | 'brunch' | 'grupo' | 'drinks' | 'coffee'
+type Marca = 'edad' | 'masUno' | 'idioma' | 'segundoActo'
+type TarjetaComo = {
+  clave: 'antes' | 'durante' | 'despues'
+  icono: string
+  titulo: string
+  cuerpo: string
+  panel: string
+  colorIcono: string
+  iconoPlan: string
+}
+type ColoresCapsula = { fondo: string; color: string; borde: string }
+type CapsulaBase = ColoresCapsula & { texto: string; corto: string; icono: string; sobreVerde: ColoresCapsula }
+/** La de una fecha: con su texto de verdad («+40») y su clave. */
+type Capsula = CapsulaBase & { clave: Marca }
+/** Lo que traen la agenda y Mi cuenta de cada fecha; también vale una fila de `events`. */
+type FechaConMarcas = {
+  formato?: string | null
+  format?: string | null
+  edadMinima?: number | null
+  age_band_min?: number | null
+  masUno?: boolean | null
+  mas_uno?: boolean | null
+  idioma?: string | null
+  segundoActo?: boolean | null
+  after_venue_id?: string | null
+  porMesa?: number | null
+  seats_per_table?: number | null
+  precioUsd?: number | null
+  price_usd?: number | string | null
+}
+
 type Campo =
   | 'telefonoPerfil'
   | 'telefonoPagoMovil'
@@ -127,12 +160,28 @@ type Api = {
     primeraVez: { sello: (plan: string) => string; titulo: string; tituloDia: string }
     pie: (miMesa: string) => string
     cuentaDe: (i: number, n: number) => string
-    tarjetas: (
-      tipo: 'cena' | 'brunch' | 'grupo',
-      cuando: string,
-    ) => { clave: 'antes' | 'durante' | 'despues'; icono: string; titulo: string; cuerpo: string }[]
+    tarjetas: (tipo: PlanComo, cuando: string) => TarjetaComo[]
+    /** Las tres de UNA fecha, con lo que cambian sus marcas (02-11). */
+    tarjetasDe: (fecha: FechaConMarcas, cuando: string) => (TarjetaComo & { marca: string })[]
     tipoDe: (formato: string | null | undefined) => 'cena' | 'brunch' | 'grupo'
+    /** `tipoDe` con drinks y coffee. */
+    planDe: (formato: string | null | undefined) => PlanComo
   }
+  ICONOS_PLAN: Record<PlanComo, string>
+  ORDEN_MARCAS: Marca[]
+  MARCAS: Record<Marca, { capsula: CapsulaBase; que: string; hoja: string; web: string }>
+  IDIOMAS_DE_MESA: Record<string, { frase: string; capsula: string }>
+  marcasDe: (fecha: FechaConMarcas) => Marca[]
+  capsulaDe: (clave: Marca, fecha?: FechaConMarcas) => Capsula | null
+  capsulasDe: (fecha: FechaConMarcas) => Capsula[]
+  lineasDeHoja: (fecha: FechaConMarcas) => { clave: Marca; capsula: Capsula | null; texto: string }[]
+  /** «Una cena en inglés a la que vienes con alguien, y toda la mesa llega de dos en dos.» */
+  fraseDelPlan: (fecha: FechaConMarcas) => string
+  /** «Mesa de 4 a 8 personas» · «Grupo de 4 a 8 personas» · «De dos a cuatro dúos». */
+  tamanoDelPlan: (fecha: FechaConMarcas) => string
+  /** «10 ref» · «10 ref c/u». */
+  precioDelPlan: (fecha: FechaConMarcas) => string
+  botonDelPlan: (fecha: FechaConMarcas) => string
   DE_MESA_COMPLETA: string[]
   tieneMesaCompleta: (formato: string | null | undefined) => boolean
   DE_MANANA: string[]

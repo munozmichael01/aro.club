@@ -2072,38 +2072,118 @@
       },
       cuentaDe: function (i, n) { return i + ' de ' + n },
       /**
-       * `tipo` es 'cena', 'brunch' o 'grupo', y `cuando` la frase de
-       * `cuandoSeRevela`. En «Después» va «márcalo en la encuesta» y no el
-       * «díselo» de la maqueta: desde que existe seguir en contacto, decírselo
-       * en la mesa ya no es lo que hay que hacer.
+       * `tipo` es 'cena', 'brunch', 'grupo', 'drinks' o 'coffee' (`planDe`),
+       * y `cuando` la frase de `cuandoSeRevela`.
+       *
+       * Textos de la entrega «Qué estás reservando», aprobados por Michael el
+       * 02-11. Todos los «Después» cierran con seguir en contacto, que existe
+       * para cualquier formato: la encuesta sale a toda fecha con gente
+       * sentada, sea cual sea.
+       *
+       * Cada tarjeta trae además su `panel` y su `colorIcono`, y el icono
+       * grande del plan (`iconoPlan`): las fotos de «Cómo funciona» pasan a
+       * iconos sobre paneles de color (Michael, 02-11).
+       *
+       * Sin marcas. Con ellas, `tarjetasDe`.
        */
       tarjetas: function (tipo, cuando) {
         var I = api.COMO_FUNCIONA.iconos
+        var P = api.ICONOS_PLAN
+        var contacto = 'Al día siguiente nos dices con quién te gustaría seguir en contacto.'
+        var espera = 'Se espera un cuarto de hora a que llegue todo el grupo.'
+        var t = function (clave, titulo, cuerpo, panel, colorIcono, plan) {
+          return { clave: clave, icono: I[clave], titulo: titulo, cuerpo: cuerpo, panel: panel, colorIcono: colorIcono, iconoPlan: P[plan] }
+        }
+        // Los paneles de día: el brunch y el grupo ya iban así en la web
+        // desde el 29-10, y el coffee los toma de la entrega.
+        var DIA = [['#9CBBA6', '#14342A'], ['#E39C63', '#14342A'], ['#F6D9B4', '#8F4515']]
+        var NOCHE = [['#14342A', '#E39C63'], ['#1B5138', '#FAF3E4'], ['#8F4515', '#FAF3E4']]
         if (tipo === 'grupo') {
           return [
-            { clave: 'antes', icono: I.antes, titulo: 'Llega al punto de encuentro', cuerpo: cuando + ', te decimos dónde se reúne el grupo y con quién vas. Pregunta por el grupo de Aro.' },
-            { clave: 'durante', icono: I.durante, titulo: 'Preséntense y arranquen juntos', cuerpo: 'Una vuelta rápida de nombres al empezar. El ritmo lo pone el grupo, no quien va más rápido.' },
-            { clave: 'despues', icono: I.despues, titulo: 'Si hay ganas, sigan juntos', cuerpo: 'Un café o algo de comer cerca, cada quien lo suyo. Y si alguien te cayó bien, márcalo en la encuesta.' },
+            t('antes', 'Llega al punto de encuentro', cuando + ', te decimos dónde se reúne el grupo y con quién vas. Pregunta por el grupo de Aro.', DIA[0][0], DIA[0][1], 'grupo'),
+            t('durante', 'Preséntense y arranquen juntos', 'Una vuelta rápida de nombres al empezar. El ritmo lo pone el grupo, no quien va más rápido.', DIA[1][0], DIA[1][1], 'grupo'),
+            t('despues', 'Si hay ganas, sigan juntos', 'Un café o algo de comer cerca, cada quien lo suyo. ' + contacto, DIA[2][0], DIA[2][1], 'grupo'),
           ]
         }
+        if (tipo === 'drinks') {
+          return [
+            t('antes', 'Llega a la barra y pregunta por el grupo de Aro', 'El grupo se arma por afinidad. ' + cuando + ', te decimos qué bar es y quiénes van. ' + espera, NOCHE[0][0], NOCHE[0][1], 'drinks'),
+            t('durante', 'Pide algo, preséntense y muévanse', 'Una vuelta rápida de nombres con el primer trago. No hay mesa fija: se conversa en la barra o de pie, y el grupo se mezcla solo.', NOCHE[1][0], NOCHE[1][1], 'drinks'),
+            t('despues', 'Cada quien paga lo suyo, y la noche es tuya', 'Es más corto que una cena: si hay ganas, sigan donde quieran. ' + contacto, NOCHE[2][0], NOCHE[2][1], 'drinks'),
+          ]
+        }
+        if (tipo === 'coffee') {
+          return [
+            t('antes', 'Llega y pregunta por la mesa de Aro', 'El grupo se arma por afinidad. ' + cuando + ', te decimos qué cafetería es y con quién vas. ' + espera, DIA[0][0], DIA[0][1], 'coffee'),
+            t('durante', 'Pidan un café, preséntense y conversen', 'Una vuelta rápida de nombres con el primer café. Es de día y corto: un buen rato para conocer gente sin trasnochar.', DIA[1][0], DIA[1][1], 'coffee'),
+            t('despues', 'Cada quien paga lo suyo, y sigue su día', 'Si hay ganas, una vuelta cerca. ' + contacto, DIA[2][0], DIA[2][1], 'coffee'),
+          ]
+        }
+        var brunch = tipo === 'brunch'
+        var C = brunch ? DIA : NOCHE
+        var plan = brunch ? 'brunch' : 'cena'
         return [
-          { clave: 'antes', icono: I.antes, titulo: 'Llega y pregunta por la mesa de Aro', cuerpo: cuando + ', te decimos dónde es y con quién vas. Se espera a todos un cuarto de hora.' },
-          {
-            clave: 'durante',
-            icono: I.durante,
-            titulo: tipo === 'brunch' ? 'Pidan café, preséntense y dejen que fluya' : 'Pidan, preséntense y dejen que fluya',
-            cuerpo: 'Una vuelta rápida de nombres y a comer. Si se acaba el tema, el juego de la mesa está en la app.',
-          },
-          {
-            clave: 'despues',
-            icono: I.despues,
-            titulo: 'Cada quien paga lo suyo, y si hay ganas, se sigue',
-            cuerpo: tipo === 'brunch'
-              ? 'Una caminata o un café más, cerca. Y si alguien te cayó bien, márcalo en la encuesta.'
-              : 'Te sugerimos sitios cerca para seguir. Y si alguien te cayó bien, márcalo en la encuesta.',
-          },
+          t('antes', 'Llega y pregunta por la mesa de Aro', cuando + ', te decimos dónde es y con quién vas. ' + espera, C[0][0], C[0][1], plan),
+          t('durante', brunch ? 'Pidan café, preséntense y dejen que fluya' : 'Pidan, preséntense y dejen que fluya',
+            'Una vuelta rápida de nombres y a comer. Si se acaba el tema, el juego de la mesa está en la app.', C[1][0], C[1][1], plan),
+          t('despues', 'Cada quien paga lo suyo, y si hay ganas, se sigue',
+            (brunch ? 'Una caminata o un café más, cerca. ' : 'Te sugerimos sitios cerca para seguir. ') + contacto, C[2][0], C[2][1], plan),
         ]
       },
+
+      /**
+       * Las tres tarjetas de UNA fecha, con sus marcas.
+       *
+       * La marca no se explica en un recuadro aparte (eso va en la hoja): si
+       * cambia lo que haces ese día, cambia el texto de la tarjeta, y la
+       * tarjeta lleva la cápsula en `marca`. Con una marca, su nombre entero
+       * («+1 ACOMPAÑANTE»); con dos en la misma tarjeta, los cortos
+       * («+1 · EN INGLÉS»), como en la maqueta.
+       *
+       * `fecha` es lo que traen la agenda y Mi cuenta: `formato`, `masUno`,
+       * `idioma`, `segundoActo`, `edadMinima` (ver `marcasDe`).
+       */
+      tarjetasDe: function (fecha, cuando) {
+        var f = fecha || {}
+        var marcas = api.marcasDe(f)
+        var plan = api.COMO_FUNCIONA.planDe(f.formato || f.format)
+        return api.COMO_FUNCIONA.tarjetas(plan, cuando).map(function (c) {
+          var carta = { clave: c.clave, icono: c.icono, titulo: c.titulo, cuerpo: c.cuerpo, panel: c.panel, colorIcono: c.colorIcono, iconoPlan: c.iconoPlan, marca: '' }
+          var cuales = []
+          marcas.forEach(function (clave) {
+            var cambios = api.MARCAS[clave].tarjetas
+            var cambio = cambios && cambios[c.clave]
+            if (!cambio) return
+            var r = cambio(carta, cuando, cuales.length > 0)
+            if (r.titulo) carta.titulo = r.titulo
+            if (r.cuerpo) carta.cuerpo = r.cuerpo
+            if (r.iconoPlan) carta.iconoPlan = r.iconoPlan
+            cuales.push(clave)
+          })
+          carta.marca = cuales.length === 1
+            ? api.capsulaDe(cuales[0], f).texto
+            : cuales.map(function (k) { return api.capsulaDe(k, f).corto }).join(' · ')
+          return carta
+        })
+      },
+
+      /**
+       * El plan de un formato, para elegir tarjetas, frase e icono: cena,
+       * brunch, grupo, drinks o coffee.
+       *
+       * Es `tipoDe` con drinks y coffee, que no tenían tarjetas propias y por
+       * eso la web escondía «Cómo funciona» en los drinks (31-10). `tipoDe`
+       * se queda como estaba: la app lo usa para nombrar el plan en las
+       * historias, y que devuelva valores nuevos no sería aditivo.
+       */
+      planDe: function (formato) {
+        var f = String(formato || '')
+        var familia = api.familiaDe(f).clave
+        if (familia === 'drinks') return 'drinks'
+        if (familia === 'coffee') return 'coffee'
+        return api.COMO_FUNCIONA.tipoDe(f)
+      },
+
       /** De qué familia es un formato, para elegir las tres de arriba. */
       tipoDe: function (formato) {
         var f = String(formato || '')
@@ -2111,6 +2191,262 @@
         if (f === 'brunch' || f === 'women_brunch') return 'brunch'
         return 'cena'
       },
+    },
+
+    /**
+     * Un icono por plan, en el trazo de los demás (entrega «Qué estás
+     * reservando», 02-11): junto al nombre del formato en la agenda, y en
+     * grande sobre los paneles de «Cómo funciona», donde sustituye a las
+     * fotos.
+     */
+    ICONOS_PLAN: {
+      cena: 'M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 1-3 3-3 6v3h3v9',
+      drinks: 'M7 3h10l-1 7a4 4 0 0 1-8 0L7 3zM12 14v6M8 21h8',
+      coffee: 'M4 8h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V8zM16 10h2a2 2 0 0 1 0 4h-2M8 3v2M12 3v2',
+      brunch: 'M7.5 5.5c2.5-2.5 6.5-2 8.5.5 1.5 1.8 4.5 2.5 4.5 6s-3 6.5-7 6.5c-2 0-3-.8-5-.8-3 0-5-2.2-5-5s2.4-4.6 4-7.2zM12.5 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 1 0 0-5z',
+      grupo: 'M3 20l6-10 4 6 3-4 5 8H3z',
+    },
+
+    /**
+     * Las cuatro marcas de una fecha, en el orden en que se pintan.
+     *
+     * Cada una lleva su cápsula, su línea para la hoja de reservar (`hoja`),
+     * la de la web (`web`) y, si cambia lo que haces ese día, cómo cambia
+     * cada tarjeta de «Cómo funciona» (`tarjetas`). Textos aprobados por
+     * Michael el 02-11.
+     *
+     * La cápsula: `fondo`, `color` y `borde` sobre crema, y `sobreVerde`
+     * para cuando va encima de un fondo verde.
+     */
+    ORDEN_MARCAS: ['edad', 'masUno', 'idioma', 'segundoActo'],
+
+    MARCAS: {
+      edad: {
+        capsula: {
+          texto: '+45', corto: '+45',
+          icono: 'M3 6h18v12H3zM7 10h5M7 14h7M16.5 10v4',
+          fondo: '#8F4515', color: '#FAF3E4', borde: '#8F4515',
+          sobreVerde: { fondo: '#8F4515', color: '#FAF3E4', borde: '#8F4515' },
+        },
+        que: 'Solo gente desde esa edad',
+        hoja: 'La edad la comprobamos con la cédula al verificar.',
+        web: 'Solo gente desde esa edad. La edad la comprobamos con la cédula.',
+        // Esa noche haces lo mismo: no toca ninguna tarjeta.
+        tarjetas: null,
+      },
+      masUno: {
+        capsula: {
+          texto: '+1 ACOMPAÑANTE', corto: '+1',
+          icono: 'M8.5 12a3.5 3.5 0 1 0-7 0 3.5 3.5 0 1 0 7 0zM22.5 12a3.5 3.5 0 1 0-7 0 3.5 3.5 0 1 0 7 0zM8.5 12h7',
+          fondo: 'transparent', color: '#14342A', borde: '#14342A',
+          sobreVerde: { fondo: 'transparent', color: '#FAF3E4', borde: '#FAF3E4' },
+        },
+        que: 'Vienes con alguien, y toda la mesa también',
+        hoja: 'Reservas dos puestos, y tu acompañante también se registra y se verifica.',
+        web: 'Vienes con tu amiga, tu hermano o tu pareja, y toda la mesa llega de dos en dos.',
+        tarjetas: {
+          antes: function (c, cuando) {
+            return {
+              titulo: 'Lleguen y pregunten por la mesa de Aro',
+              cuerpo: cuando + ', les decimos a ustedes dos dónde es y con quién van. Se espera un cuarto de hora a que llegue todo el grupo.',
+            }
+          },
+          durante: function () {
+            return {
+              titulo: 'Siéntense en sitios distintos, preséntense y dejen que fluya',
+              cuerpo: 'Toda la mesa llega de dos en dos: lo bueno es mezclarse.',
+            }
+          },
+        },
+      },
+      idioma: {
+        capsula: {
+          texto: 'EN INGLÉS', corto: 'EN INGLÉS',
+          icono: 'M4 5h16v11H9l-4 3v-3H4zM8 9h8M8 12h5',
+          fondo: '#1B5138', color: '#FAF3E4', borde: '#1B5138',
+          sobreVerde: { fondo: '#1B5138', color: '#FAF3E4', borde: '#9CBBA6' },
+        },
+        que: 'La mesa habla ese idioma',
+        hoja: 'De principio a fin. No tiene que ser perfecto: basta con que puedas conversar.',
+        web: 'La conversación va en ese idioma. Basta con poder conversar.',
+        tarjetas: {
+          // Se SUMA al «Durante», no lo sustituye. Si el +1 ya lo cambió, la
+          // frase corta de la maqueta B4; si no, la entera.
+          durante: function (c, cuando, yaCambiada) {
+            return {
+              cuerpo: c.cuerpo + (yaCambiada
+                ? ' La vuelta de nombres y el juego de la mesa van en inglés.'
+                : ' Todo va en inglés, también la vuelta de nombres y el juego de la mesa.'),
+            }
+          },
+        },
+      },
+      segundoActo: {
+        capsula: {
+          texto: 'SEGUNDO ACTO', corto: 'SEGUNDO ACTO',
+          icono: 'M4 4h8l-1 6a3 3 0 0 1-6 0L4 4zM8 13v5M5 18h6M14 12h7M18 9l3 3-3 3',
+          fondo: '#14342A', color: '#FAF3E4', borde: '#14342A',
+          sobreVerde: { fondo: '#FAF3E4', color: '#14342A', borde: '#FAF3E4' },
+        },
+        que: 'Al terminar, todas las mesas se juntan en un bar',
+        /**
+         * PENDIENTE DE MICHAEL (02-11): cuándo se sabe el bar y cuándo se
+         * dice. Design proponía «El bar te lo decimos en la mesa», y hasta
+         * que lo decida no va ninguna de las dos frases. La hoja no pinta
+         * esta línea mientras esté vacía.
+         */
+        hoja: '',
+        web: 'Al terminar, todas las mesas de esa fecha siguen la noche en un mismo bar.',
+        tarjetas: {
+          despues: function () {
+            return {
+              titulo: 'Cada quien paga lo suyo, y todas las mesas siguen en un bar',
+              cuerpo: 'Al terminar, las mesas de esta fecha se juntan en un mismo bar. Si quieres seguir, sigues.',
+              iconoPlan: api.ICONOS_PLAN.drinks,
+            }
+          },
+        },
+      },
+    },
+
+    /**
+     * Qué marcas lleva una fecha, en orden. Lee los campos de la agenda y de
+     * Mi cuenta (`edadMinima`, `masUno`, `idioma`, `segundoActo`) y, por si
+     * llega una fila de la base, los de la tabla.
+     *
+     * Solo la edad MÍNIMA es marca. Una fecha «hasta 45» no lleva cápsula:
+     * Design no la dibujó, y «+45» encima de una cena para menores de 45
+     * diría lo contrario de lo que es.
+     */
+    marcasDe: function (fecha) {
+      var f = fecha || {}
+      var edad = f.edadMinima != null ? f.edadMinima : f.age_band_min
+      var idioma = f.idioma
+      var hay = {
+        edad: edad != null && Number(edad) > 0,
+        masUno: !!(f.masUno || f.mas_uno),
+        idioma: !!idioma && idioma !== 'es' && !!api.IDIOMAS_DE_MESA[idioma],
+        segundoActo: !!(f.segundoActo || f.after_venue_id),
+      }
+      return api.ORDEN_MARCAS.filter(function (k) { return hay[k] })
+    },
+
+    /** Cómo se dice el idioma de una mesa dentro de la frase y en su cápsula. */
+    IDIOMAS_DE_MESA: {
+      en: { frase: 'en inglés', capsula: 'EN INGLÉS' },
+    },
+
+    /**
+     * La cápsula de una marca para ESA fecha. La de edad dice la edad de
+     * verdad («+45», «+40»): la de la maqueta era la del sábado 7.
+     */
+    capsulaDe: function (clave, fecha) {
+      var m = api.MARCAS[clave]
+      if (!m) return null
+      var o = m.capsula
+      var c = { texto: o.texto, corto: o.corto, icono: o.icono, fondo: o.fondo, color: o.color, borde: o.borde, sobreVerde: o.sobreVerde, clave: clave }
+      var f = fecha || {}
+      if (clave === 'edad') {
+        var edad = f.edadMinima != null ? f.edadMinima : f.age_band_min
+        if (edad) { c.texto = '+' + edad; c.corto = '+' + edad }
+      }
+      if (clave === 'idioma' && api.IDIOMAS_DE_MESA[f.idioma]) {
+        c.texto = api.IDIOMAS_DE_MESA[f.idioma].capsula
+        c.corto = c.texto
+      }
+      return c
+    },
+
+    /** Las cápsulas de una fecha, en orden y ya con su texto. */
+    capsulasDe: function (fecha) {
+      return api.marcasDe(fecha).map(function (k) { return api.capsulaDe(k, fecha) })
+    },
+
+    /**
+     * Las líneas del bloque «Esta fecha» de la hoja: una por marca, con su
+     * cápsula. Sin marcas, ninguna (el bloque lleva solo la frase). Una
+     * marca con la línea vacía no se pinta.
+     */
+    lineasDeHoja: function (fecha) {
+      return api.marcasDe(fecha)
+        .filter(function (k) { return !!api.MARCAS[k].hoja })
+        .map(function (k) { return { clave: k, capsula: api.capsulaDe(k, fecha), texto: api.MARCAS[k].hoja } })
+    },
+
+    /**
+     * La frase del plan, armada por gramática (sección C de la entrega).
+     *
+     *   formato · [en inglés] · quién va · cómo cierra
+     *
+     * «Una cena en inglés a la que vienes con alguien, y toda la mesa llega
+     * de dos en dos.» No se escribe a mano por fecha: sale del formato y de
+     * las marcas, así que una combinación nueva tiene frase el día que
+     * existe. Es el algoritmo de `frasesAll` de la maqueta.
+     */
+    FRASE_PLAN: {
+      cena: { cabeza: 'Una cena', relativo: 'a la que', cola: 'en una mesa que armamos por afinidad' },
+      brunch: { cabeza: 'Un brunch de domingo', relativo: 'al que', cola: 'en una mesa que armamos por afinidad' },
+      coffee: { cabeza: 'Un café de día', relativo: 'al que', cola: 'en una mesa que armamos por afinidad' },
+      drinks: { cabeza: 'Unos tragos en una barra', cabezaIdioma: function (i) { return 'Unos tragos ' + i + ' en una barra' }, relativo: 'a los que', cola: 'y el grupo se arma por afinidad' },
+      grupo: { cabeza: 'Un plan en movimiento', relativo: 'al que', cola: 'en un grupo que armamos por afinidad' },
+    },
+
+    fraseDelPlan: function (fecha) {
+      var f = fecha || {}
+      var plan = api.COMO_FUNCIONA.planDe(f.formato || f.format)
+      var G = api.FRASE_PLAN[plan] || api.FRASE_PLAN.cena
+      var m = api.marcasDe(f)
+      var tiene = function (k) { return m.indexOf(k) >= 0 }
+      var edad = f.edadMinima != null ? f.edadMinima : f.age_band_min
+      var desde = 'para gente desde los ' + edad
+
+      var t = G.cabeza
+      if (tiene('idioma')) {
+        var i = api.IDIOMAS_DE_MESA[f.idioma].frase
+        t = G.cabezaIdioma ? G.cabezaIdioma(i) : G.cabeza + ' ' + i
+      }
+      if (tiene('masUno')) t += ' ' + G.relativo + ' vienes con alguien' + (tiene('edad') ? ', ' + desde : '')
+      else t += tiene('edad') ? ' ' + desde : ' con gente que no conoces'
+
+      if (tiene('segundoActo')) return t + ', y al terminar, todas las mesas siguen la noche en un mismo bar.'
+      if (tiene('masUno')) return t + ', y toda la mesa llega de dos en dos.'
+      return t + ', ' + G.cola + '.'
+    },
+
+    /**
+     * El tamaño, en UNA línea (sección D): «Mesa de 4 a 8 personas»,
+     * «Grupo de 4 a 8 personas» en drinks, «De dos a cuatro dúos» en el +1.
+     * Sustituye a «Una mesa es de 4 a 8 personas», que repetía lo mismo dos
+     * líneas más abajo y Michael quitó el 02-11.
+     */
+    tamanoDelPlan: function (fecha) {
+      var f = fecha || {}
+      var formato = f.formato || f.format
+      var plan = api.COMO_FUNCIONA.planDe(formato)
+      var masUno = !!(f.masUno || f.mas_uno)
+      if (masUno) return 'De dos a cuatro dúos'
+      var unidad = plan === 'drinks' || plan === 'grupo' ? 'Grupo' : 'Mesa'
+      return unidad + ' ' + api.mesasDe(formato, f.porMesa || f.seats_per_table) + ' personas'
+    },
+
+    /**
+     * El precio por puesto: «10 ref», y «10 ref c/u» en el +1. El total de
+     * los dos puestos sale solo en el resumen del pago (Michael, 02-11).
+     * `precioUsd` es el de la fecha, que en el +1 ya viene por los dos.
+     */
+    precioDelPlan: function (fecha) {
+      var f = fecha || {}
+      var masUno = !!(f.masUno || f.mas_uno)
+      var total = Number(f.precioUsd != null ? f.precioUsd : f.price_usd)
+      var puesto = isFinite(total) && total > 0
+        ? (masUno ? total / api.MAS_UNO.puestos : total)
+        : api.PRECIO_USD
+      return puesto + ' ref' + (masUno ? ' c/u' : '')
+    },
+
+    botonDelPlan: function (fecha) {
+      var f = fecha || {}
+      return (f.masUno || f.mas_uno) ? 'Reservar dos puestos' : 'Reservar mi puesto'
     },
 
     vozDe: function (formato) {
