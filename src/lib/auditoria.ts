@@ -66,6 +66,9 @@ export type Accion =
   // quién lo abre ni qué se manda desde él. Por eso deja rastro aunque no
   // cambie nada en la base.
   | 'leads_exportados'
+  // Lo mismo con la lista de Gente, que además lleva teléfonos: lo que se
+  // filtró en pantalla, con correo y teléfono enteros (Michael, 02-11).
+  | 'gente_exportada'
   // Entrega 16. Quién vino lo marca operación, no la persona que cenó, y
   // decide `events_attended`, las reincidencias y el veto de tres meses. Un
   // dato que decide eso tiene que llevar firma: un veto sin firma no se puede
@@ -73,7 +76,7 @@ export type Accion =
   | 'asistencia_marcada'
 
 type Entidad =
-  | 'verificacion' | 'pago' | 'evento' | 'local' | 'incidencia' | 'equipo' | 'leads'
+  | 'verificacion' | 'pago' | 'evento' | 'local' | 'incidencia' | 'equipo' | 'leads' | 'gente'
   | 'reserva' | 'perfil'
 
 export async function anotar(

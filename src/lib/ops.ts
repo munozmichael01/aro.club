@@ -56,3 +56,21 @@ export async function exigirOps(): Promise<string | null> {
   if (data?.role !== 'ops' && data?.role !== 'admin') return null
   return user.id
 }
+
+/**
+ * Lo mismo, pero solo admin: lo que se va del producto (exportar) o cambia
+ * quién tiene acceso. Estaba copiado en `equipo` y en `leads`, y la tercera
+ * copia, la de exportar Gente, era la que tocaba escribir mal.
+ */
+export async function exigirAdmin(): Promise<string | null> {
+  const actor = await exigirOps()
+  if (!actor) return null
+
+  const { data } = await createAdminClient()
+    .from('profiles')
+    .select('role')
+    .eq('id', actor)
+    .maybeSingle()
+
+  return data?.role === 'admin' ? actor : null
+}

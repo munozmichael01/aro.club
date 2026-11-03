@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 
+import { anotar } from '@/lib/auditoria'
+import { csv } from '@/lib/csv'
 import { familiasDe, planesDe } from '@/lib/formatos'
-import { exigirOps } from '@/lib/ops'
+import { exigirAdmin, exigirOps } from '@/lib/ops'
 import { leerCatalogo } from '@/lib/questionnaire/catalogo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { todasLasFilas } from '@/lib/todas-las-filas'
@@ -104,7 +106,8 @@ type Fila = {
   industria: string
   espera: number
   /**
-   * Solo de los leads: si pidió no recibir correos.
+   * Si pidió no recibir correos. De leads y, desde que Gente se descarga
+   * entera (02-11), también de perfiles.
    *
    * Está aquí para que el botón de exportar pueda decir cuántos van a salir
    * de verdad. Sin esto la pantalla ofrecía «bajar los 3 correos» y el
@@ -193,10 +196,10 @@ export async function GET(request: Request) {
         id: string; full_name: string | null; display_name: string | null
         birthdate: string | null; gender: string | null; rootedness: string | null
         status: string | null; events_attended: number | null; created_at: string
-        es_prueba: boolean | null
+        es_prueba: boolean | null; email: string | null; phone_e164: string | null
       }>((d, h) => admin
         .from('profiles')
-        .select('id, full_name, display_name, birthdate, gender, rootedness, status, phone_e164, events_attended, created_at, es_prueba')
+        .select('id, full_name, display_name, birthdate, gender, rootedness, status, phone_e164, email, events_attended, created_at, es_prueba')
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .order('id')
@@ -209,10 +212,10 @@ export async function GET(request: Request) {
         (d, h) => admin.from('v_espera_por_perfil').select('profile_id, veces').order('profile_id').range(d, h)),
       todasLasFilas<{ id: string | null }>(
         (d, h) => admin.from('v_verified_profiles').select('id').order('id').range(d, h)),
-      todasLasFilas<{ id: string; email: string; zones: string[] | null; rootedness: string | null; gender: string | null; birthdate: string | null; created_at: string }>(
+      todasLasFilas<{ id: string; email: string; full_name: string | null; phone_e164: string | null; zones: string[] | null; rootedness: string | null; gender: string | null; birthdate: string | null; created_at: string }>(
         (d, h) => admin
           .from('waitlist')
-          .select('id, email, zones, rootedness, gender, birthdate, created_at')
+          .select('id, email, full_name, phone_e164, zones, rootedness, gender, birthdate, created_at')
           .is('converted_profile_id', null)
           .order('created_at', { ascending: false })
           .order('id')
@@ -301,7 +304,7 @@ export async function GET(request: Request) {
      * datos —nombre, nacimiento y teléfono— antes de la verificación, y esta
      * lista tiene que decir lo mismo que él.
      */
-    const sinDatos = !p.full_name || !p.birthdate || !(p as { phone_e164?: string | null }).phone_e164
+    const sinDatos = !p.full_name || !p.birthdate || !p.phone_e164
     const estado: Fila['estado'] = estanVerificados.has(p.id)
       ? 'ok'
       : sinDatos || p.status !== 'pending_verification'
@@ -332,9 +335,9 @@ export async function GET(request: Request) {
       esPrueba: !!p.es_prueba,
       industria: r?.industry ? (sectores.get(r.industry) ?? r.industry) : '',
       espera: esperaDe.get(p.id)?.veces ?? 0,
-      // La baja de correos va por dirección y la exportación es solo de
-      // leads, así que de un perfil no se pregunta.
-      deBaja: false,
+      // La baja va por dirección. Desde que Gente se descarga entera (02-11)
+      // también se pregunta del perfil: la descarga dice cuántos salen.
+      deBaja: deBaja.has(String(p.email ?? '').trim().toLowerCase()),
     }
   })
 
@@ -561,6 +564,19 @@ export async function GET(request: Request) {
   }
 
   const filtrada = todos.filter((p) => pasa(p))
+  const conTelefono = new Set([
+    ...perfiles.filter((p) => p.phone_e164).map((p) => p.id),
+    ...leads.filter((l) => l.phone_e164).map((l) => l.id),
+  ])
+
+  if (url.searchParams.get('csv') === '1') {
+    return exportar(filtrada, url, {
+      perfiles: new Map(perfiles.map((p) => [p.id, p])),
+      leads: new Map(leads.map((l) => [l.id, l])),
+      deBaja,
+      nombreZona: new Map(zonas.map((z) => [z.slug, z.name])),
+    })
+  }
 
   // --- cuánta gente deja dentro cada opción ------------------------------
   //
@@ -612,6 +628,9 @@ export async function GET(request: Request) {
     resultado: {
       total: filtrada.length,
       verificados: filtrada.filter((p) => p.estado === 'ok').length,
+      // Para el botón de descargar, que promete cuántos salen y con teléfono.
+      deBaja: filtrada.filter((p) => p.deBaja).length,
+      conTelefono: filtrada.filter((p) => !p.deBaja && conTelefono.has(p.id)).length,
     },
     pagina: { desde, tam, hayMas: desde + tam < filtrada.length },
     cuentas,
@@ -627,5 +646,94 @@ export async function GET(request: Request) {
     perfiles: todos.length - leadsVivos.length,
     // Para el botón de exportar, que promete un número de correos.
     leads: { total: leadsVivos.length, deBaja: leadsVivos.filter((p) => p.deBaja).length },
+  })
+}
+
+/**
+ * La lista de Gente en un CSV: LO FILTRADO, o la base entera si no hay filtro.
+ *
+ * Michael, 02-11: «debe descargar todos o según lo filtrado, no solo los
+ * leads». La de leads (`/api/operacion/leads`) se queda; esta es la otra
+ * mitad, la de las cuentas, que son las que tienen teléfono.
+ *
+ * Se calcula con los MISMOS filtros que la pantalla, en la misma pasada: una
+ * ruta aparte tendría su propia idea de «mujeres de Chacao» y el fichero
+ * traería otro número que el que se acababa de leer.
+ *
+ * Igual que la de leads: **solo admin, deja rastro y quien se dio de baja de
+ * los correos no sale.** La baja no viaja dentro del fichero, y si este acaba
+ * en una herramienta de campañas, le escribiría igual.
+ */
+async function exportar(
+  filas: Fila[],
+  url: URL,
+  de: {
+    perfiles: Map<string, { full_name: string | null; email: string | null; phone_e164: string | null }>
+    leads: Map<string, { email: string; full_name: string | null; phone_e164: string | null }>
+    deBaja: Set<string>
+    nombreZona: Map<string, string>
+  },
+) {
+  const actor = await exigirAdmin()
+  if (!actor) return new NextResponse(null, { status: 404 })
+
+  /**
+   * En qué paso se quedó, en palabras. `perfil` junta dos cosas que se
+   * arreglan distinto: a quien le faltan nombre o teléfono se le piden sus
+   * datos, y a quien los tiene le faltan preguntas.
+   */
+  const pasoDe = (f: Fila, telefono: string, nombre: string): string => {
+    switch (f.estado) {
+      case 'ok': return 'Verificada'
+      case 'revision': return 'Subió su cédula, espera revisión'
+      case 'sin': return 'Contestó todo, le falta verificarse'
+      case 'perfil': return !telefono || !nombre ? 'Le faltan sus datos' : 'Le faltan preguntas'
+      default: return 'Solo dejó el correo'
+    }
+  }
+
+  let fuera = 0
+  const salida: string[][] = []
+  for (const f of filas) {
+    const c = f.estado === 'lead' ? de.leads.get(f.id) : de.perfiles.get(f.id)
+    const correo = String(c?.email ?? '').trim().toLowerCase()
+    if (correo && de.deBaja.has(correo)) { fuera++; continue }
+    const telefono = c?.phone_e164 ?? ''
+    const nombre = c?.full_name ?? ''
+    salida.push([
+      nombre,
+      correo,
+      telefono,
+      // El enlace que abre el chat de WhatsApp: el número sin el «+».
+      telefono ? 'https://wa.me/' + telefono.replace(/\D/g, '') : '',
+      pasoDe(f, telefono, nombre),
+      f.edad ? String(f.edad) : '',
+      f.genero,
+      f.zonas.map((z) => de.nombreZona.get(z) ?? z).join(' · '),
+      String(f.cenas),
+      String(f.creditos),
+      f.alta ? f.alta.slice(0, 10) : '',
+    ])
+  }
+
+  // Qué filtros llevaba, para poder responder «¿qué lista era esa?».
+  const filtros = Object.fromEntries(
+    [...url.searchParams.entries()].filter(([k]) => !['csv', 'desde', 'tam'].includes(k)),
+  )
+  await anotar(actor, 'gente_exportada', 'gente', null, {
+    exportados: salida.length,
+    con_telefono: salida.filter((r) => r[2]).length,
+    excluidos_por_baja: fuera,
+    filtros,
+  })
+
+  const cabecera = ['nombre', 'correo', 'telefono', 'whatsapp', 'paso', 'edad', 'genero', 'zonas', 'cenas', 'creditos', 'alta']
+  const hoy = new Date().toISOString().slice(0, 10)
+  return new NextResponse(csv([cabecera, ...salida]), {
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="aro-gente-${hoy}.csv"`,
+      'Cache-Control': 'no-store, private',
+    },
   })
 }

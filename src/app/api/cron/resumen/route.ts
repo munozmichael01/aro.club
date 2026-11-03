@@ -131,6 +131,12 @@ async function espera(
   cuando: Date | null,
   seco: boolean,
   solo: string | null,
+  /**
+   * Las mismas novedades que el envío de las cuentas, si se piden. Michael,
+   * 02-11: «hoy había que mandarle el email también a los leads». Sin esto
+   * la espera recibía la agenda sola y el asunto genérico.
+   */
+  novedades: string | null = null,
 ) {
   // Las ciudades de ESTAS fechas, como arriba: quien dejó su correo para
   // otra ciudad no tiene nada que leer en esta agenda.
@@ -183,7 +189,7 @@ async function espera(
     const r = await encolar(
       { correo },
       'resumen_semanal',
-      { tuyas: [], otras: todas, semana },
+      { tuyas: [], otras: todas, semana, ...(novedades ? { novedades } : {}) },
       cuando ? { cuando } : {},
     )
     if (r === 'encolado') encolados++
@@ -270,7 +276,7 @@ async function resumir(
 
   // Y aquí se bifurca: o las cuentas, o la espera. Nunca las dos en la
   // misma pasada, para que cada envío se cuente por separado.
-  if (paraLaEspera) return espera(admin, fechas, ciudades, semana, cuando, seco, solo)
+  if (paraLaEspera) return espera(admin, fechas, ciudades, semana, cuando, seco, solo, novedades)
 
   let perfiles: { id: string; email: string | null; notificaciones: unknown }[] = []
   for (let desdeFila = 0; ; desdeFila += 1000) {

@@ -1791,10 +1791,16 @@
               <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloExportar }}</span>
               <span style="display:block;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px;text-wrap:pretty">{{ notaExportar }}</span>
             </span>
-            <a href="/api/operacion/leads" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:52px;padding:0 22px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;text-decoration:none;white-space:nowrap">
+            <a href="{{ enlaceExportar }}" style="display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:52px;padding:0 22px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;text-decoration:none;white-space:nowrap">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12" stroke="#FAF3E4" stroke-width="1.9" stroke-linecap="round"></path><path d="M7.5 10.5 12 15l4.5-4.5" stroke="#FAF3E4" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.5 19.5h15" stroke="#FAF3E4" stroke-width="1.9" stroke-linecap="round"></path></svg>
-              Bajar los correos
+              Bajar esta lista
             </a>
+          </div>
+          <!-- La de solo leads se queda: es la que lleva de dónde vino cada
+               uno y por dónde va, para las campañas de correo. -->
+          <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:12px clamp(16px,2vw,20px) 0;font:400 13px/1.5 'Inter Tight',sans-serif;color:#2C4A38">
+            <span style="flex:1 1 300px;min-width:0;text-wrap:pretty">{{ notaLeads }}</span>
+            <a href="/api/operacion/leads" style="font:600 13px/1.5 'Inter Tight',sans-serif;color:#14342A;text-decoration:underline;text-underline-offset:3px">Bajar solo los leads</a>
           </div>
         </sc-if>
         <div style="font:400 13px/1.6 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;max-width:60ch;text-wrap:pretty">{{ notaPieGente }}</div>
@@ -2746,16 +2752,12 @@ class Component extends DCLogic {
    * Se manda la FAMILIA —cenas, drinks, movimiento, coffee—, que es lo que
    * enseña la pantalla; la ruta la traduce a los formatos de la base.
    */
-  cargarGente(cambios) {
-    // Cada filtro vuelve a preguntar, y preguntar tarda. Sin decirlo, pulsar
-    // un chip y ver la lista de antes durante un segundo se lee como que el
-    // filtro no hizo nada.
-    this.setState({ pidiendoGente: true });
-    // El estado que se va a consultar es el de ahora más lo que acaba de
-    // cambiar: `setState` no promete haberlo aplicado todavía cuando esto
-    // corre, y pedir con el filtro anterior enseña la respuesta de la
-    // pregunta de antes.
-    const St = Object.assign({}, this.state, cambios || {});
+  /**
+   * Los filtros de Gente como parámetros. Los usan la lista y la descarga:
+   * el fichero tiene que traer exactamente lo que se acaba de leer en
+   * pantalla, y dos copias de esta lista acabarían diciendo otra cosa.
+   */
+  consultaGente(St) {
     const f = St.filtros || {};
     const q = {
       formato: ['', 'cenas', 'drinks', 'movimiento', 'coffee', 'brunch'][St.fmtZona || 0] || '',
@@ -2772,6 +2774,21 @@ class Component extends DCLogic {
     };
     const partes = Object.keys(q).filter((k) => q[k] !== '')
       .map((k) => k + '=' + encodeURIComponent(q[k]));
+
+    return partes;
+  }
+
+  cargarGente(cambios) {
+    // Cada filtro vuelve a preguntar, y preguntar tarda. Sin decirlo, pulsar
+    // un chip y ver la lista de antes durante un segundo se lee como que el
+    // filtro no hizo nada.
+    this.setState({ pidiendoGente: true });
+    // El estado que se va a consultar es el de ahora más lo que acaba de
+    // cambiar: `setState` no promete haberlo aplicado todavía cuando esto
+    // corre, y pedir con el filtro anterior enseña la respuesta de la
+    // pregunta de antes.
+    const St = Object.assign({}, this.state, cambios || {});
+    const partes = this.consultaGente(St);
 
     return this.pedir('/api/operacion/gente' + (partes.length ? '?' + partes.join('&') : ''),
       (d) => ({
@@ -6845,18 +6862,30 @@ class Component extends DCLogic {
       // anotada. El pie ya no puede decir «sin exportar»: lo diría mientras
       // hay un botón debajo.
       puedeExportar: !!St.esAdmin,
-      tituloExportar: 'Bajar los leads con su correo entero',
+      // La descarga es LO QUE SE ESTÁ VIENDO: los mismos filtros que la
+      // lista, sin página. Michael, 02-11: «debe descargar todos o según lo
+      // filtrado, no solo los leads».
+      enlaceExportar: '/api/operacion/gente?' + this.consultaGente(Object.assign({}, St, { desde: 0 }))
+        .filter((x) => x.indexOf('desde=') !== 0).concat('csv=1').join('&'),
+      tituloExportar: (Object.keys(St.filtros || {}).some((k) => St.filtros[k]) || !!St.fZona || !!St.atajo || !!(St.busca || '').trim() || St.escalon >= 0)
+        ? 'Bajar lo que tienes filtrado' : 'Bajar la base entera',
       notaExportar: (function () {
-        const bajas = LEADS.deBaja || 0;
-        const salen = LEADS.total - bajas;
-        if (!LEADS.total) return 'Todavía no hay ningún correo apuntado sin cuenta.';
-        // El número dice cuántos salen DE VERDAD. Decir «los 3 correos» y que
-        // el fichero traiga 2 es la clase de descuadre que hace desconfiar de
-        // los demás números de la pantalla.
-        return 'Salen ' + salen + (salen === 1 ? ' correo' : ' correos') + ' en un CSV'
+        const R = St.resultadoGente || { total: 0, deBaja: 0, conTelefono: 0 };
+        const bajas = R.deBaja || 0;
+        const salen = (R.total || 0) - bajas;
+        if (!R.total) return 'Con estos filtros no sale nadie.';
+        // El número dice cuántos salen DE VERDAD, como en la de leads.
+        return 'Salen ' + salen + (salen === 1 ? ' persona' : ' personas') + ' en un CSV, '
+          + (R.conTelefono || 0) + ' con teléfono, con su correo, en qué paso va y un enlace para escribirle por WhatsApp.'
           + (bajas
-            ? ', de ' + LEADS.total + ' apuntados: ' + bajas + (bajas === 1 ? ' se dio de baja y no va dentro' : ' se dieron de baja y no van dentro') + '. Esa baja no viaja con el fichero, así que se quita aquí.'
-            : '. Quien se dé de baja deja de aparecer aquí automáticamente: esa baja no viaja con el fichero.');
+            ? ' ' + bajas + (bajas === 1 ? ' se dio de baja de los correos y no va dentro.' : ' se dieron de baja de los correos y no van dentro.')
+            : '');
+      }).call(this),
+      notaLeads: (function () {
+        const salen = LEADS.total - (LEADS.deBaja || 0);
+        return LEADS.total
+          ? 'Solo los ' + salen + ' que dejaron el correo y no tienen cuenta, con de dónde vinieron y hasta dónde llegaron.'
+          : 'Todavía no hay ningún correo apuntado sin cuenta.';
       }).call(this),
       // ── el histórico: dónde se ha sentado quién ───────────────────
       //

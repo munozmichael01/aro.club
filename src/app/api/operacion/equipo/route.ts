@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { anotar } from '@/lib/auditoria'
-import { exigirOps } from '@/lib/ops'
+import { exigirAdmin } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -26,18 +26,6 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * registro de operación. Un auditoría con actores borrados no es auditoría.
  */
 
-async function exigirAdmin(): Promise<string | null> {
-  const actor = await exigirOps()
-  if (!actor) return null
-
-  const { data } = await createAdminClient()
-    .from('profiles')
-    .select('role')
-    .eq('id', actor)
-    .maybeSingle()
-
-  return data?.role === 'admin' ? actor : null
-}
 
 /** Qué ve el panel: quién tiene acceso hoy. */
 export async function GET() {

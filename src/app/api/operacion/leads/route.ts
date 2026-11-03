@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 
 import { anotar } from '@/lib/auditoria'
-import { exigirOps } from '@/lib/ops'
+import { csv } from '@/lib/csv'
+import { exigirAdmin } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -39,30 +40,7 @@ const COLUMNAS = [
   'se_apunto', 'de_donde_vino', 'por_donde_va',
 ] as const
 
-/**
- * Punto y coma, que es lo que abre bien un Excel en español sin pedir nada.
- * Y BOM delante, o los acentos salen rotos.
- */
-function csv(filas: string[][]): string {
-  const escapar = (v: string) => {
-    const t = String(v ?? '')
-    return /[";\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t
-  }
-  return '﻿' + filas.map((f) => f.map(escapar).join(';')).join('\r\n') + '\r\n'
-}
 
-async function exigirAdmin(): Promise<string | null> {
-  const actor = await exigirOps()
-  if (!actor) return null
-
-  const { data } = await createAdminClient()
-    .from('profiles')
-    .select('role')
-    .eq('id', actor)
-    .maybeSingle()
-
-  return data?.role === 'admin' ? actor : null
-}
 
 export async function GET(request: Request) {
   const actor = await exigirAdmin()
