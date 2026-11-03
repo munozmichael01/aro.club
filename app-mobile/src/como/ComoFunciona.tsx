@@ -80,7 +80,7 @@ export function ComoFunciona(p: { plan: M.Plan | null; abierta: boolean; todas?:
   }
 
   return (
-    <HojaAbajo alCerrar={cerrar} cabecera={(c) => <CabeceraComo alCerrar={c} />}>
+    <HojaAbajo alCerrar={cerrar} cabecera={<CabeceraComo />}>
       {(c) => <CarruselComo plan={p.plan!} alTerminar={c} />}
     </HojaAbajo>
   )
@@ -93,7 +93,7 @@ export function ComoFunciona(p: { plan: M.Plan | null; abierta: boolean; todas?:
  */
 export function CabeceraComo(p: { alCerrar?: () => void; alVolver?: () => void }) {
   return (
-    <View style={[e.cabecera, { paddingHorizontal: 20, marginTop: 14 }]}>
+    <View style={[e.cabecera, { paddingLeft: 20, paddingRight: p.alCerrar ? 20 : 72, marginTop: 14 }]}>
       {p.alVolver ? (
         <Pressable onPress={p.alVolver} accessibilityRole="button" accessibilityLabel={T.volver} style={[e.cerrar, { marginRight: 10 }]}>
           <Chevron tam={18} color={color.verdeProfundo} atras />

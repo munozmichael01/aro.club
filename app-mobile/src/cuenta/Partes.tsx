@@ -358,7 +358,7 @@ function HojaFecha(p: PropsFecha & { alCerrar: () => void }) {
     <CabeceraComo alVolver={() => setViendo('fecha')} />
   ) : (
     <View style={{ paddingBottom: 10, paddingHorizontal: 20 }}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 14 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 14, marginRight: 52 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <CuadroPlan formato={f.plan.formato} />
           <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 12, lineHeight: 15, letterSpacing: 1.4, color: color.cuerpo }}>{formato}</Texto>

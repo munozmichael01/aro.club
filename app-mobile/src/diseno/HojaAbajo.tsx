@@ -1,87 +1,52 @@
-import { useEffect, useRef, type ReactNode } from 'react'
-import { Animated, Dimensions, Easing, Modal, PanResponder, Pressable, StyleSheet, View } from 'react-native'
+import { type ReactNode } from 'react'
+import { Modal, Platform, Pressable, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { IconoCruz } from './Iconos'
 import { color, tinta } from './tokens'
 
 /**
  * Una hoja que sube desde abajo (la de reservar, «Cómo funciona»).
  *
- * El fondo oscuro aparece con un fundido y solo la hoja se desliza: con
- * `animationType="slide"` del Modal subía también el velo, y se veía un
- * bloque verde detrás de la hoja (Michael, 03-11). La cabecera se arrastra y
- * la hoja sigue al dedo; al soltar, se cierra si bajó lo bastante o se lanzó
- * hacia abajo, y si no, vuelve a su sitio. Tocar fuera y atrás también cierran.
+ * En iPhone es la hoja NATIVA del sistema (`presentationStyle="pageSheet"`),
+ * la de Mapas o Mensajes: se cierra deslizando hacia abajo desde cualquier
+ * parte, la pantalla de atrás se encoge y el gesto lo lleva iOS. La que
+ * armamos a mano solo respondía desde la franja de arriba y se sentía torpe,
+ * y antes de eso el velo subía con la hoja como un bloque verde (Michael,
+ * 03-11). En Android se abre a pantalla completa y se cierra con la X o con
+ * atrás: el gesto de arrastrar llegará con una librería nativa, en una build.
  *
- * `cabecera` es la zona que se arrastra (con el asa ya puesta); `children`,
- * lo que se desplaza; `pie`, lo que queda fijo abajo. Cada una puede ser una
- * función que recibe `cerrar`, para cerrar con la animación desde un botón.
+ * La X va en las dos, arriba a la derecha: siempre hay una forma clara de
+ * cerrar. `cabecera` queda fija arriba, `children` se desplaza y `pie` queda
+ * fijo abajo. Cada una puede ser una función que recibe `cerrar`.
  */
 type Pieza = ReactNode | ((cerrar: () => void) => ReactNode)
 
 export function HojaAbajo(p: { alCerrar: () => void; cabecera?: Pieza; children: Pieza; pie?: Pieza; etiquetaCerrar?: string }) {
   const insets = useSafeAreaInsets()
-  const alto = Dimensions.get('window').height
-  const y = useRef(new Animated.Value(alto)).current
-  const velo = useRef(new Animated.Value(0)).current
-  const cerrando = useRef(false)
-  const alCerrar = useRef(p.alCerrar)
-  alCerrar.current = p.alCerrar
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(velo, { toValue: 1, duration: 220, useNativeDriver: true }),
-      Animated.spring(y, { toValue: 0, damping: 26, stiffness: 260, mass: 0.9, useNativeDriver: true }),
-    ]).start()
-  }, [velo, y])
-
-  const cerrar = useRef(() => {
-    if (cerrando.current) return
-    cerrando.current = true
-    Animated.parallel([
-      Animated.timing(velo, { toValue: 0, duration: 200, useNativeDriver: true }),
-      Animated.timing(y, { toValue: alto, duration: 230, easing: Easing.in(Easing.quad), useNativeDriver: true }),
-    ]).start(() => alCerrar.current())
-  }).current
-
-  const arrastre = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, g) => g.dy > 4 && Math.abs(g.dy) > Math.abs(g.dx),
-      onPanResponderMove: (_, g) => y.setValue(Math.max(0, g.dy)),
-      onPanResponderRelease: (_, g) => {
-        if (g.dy > 110 || g.vy > 0.9) cerrar()
-        else Animated.spring(y, { toValue: 0, damping: 24, stiffness: 300, useNativeDriver: true }).start()
-      },
-      onPanResponderTerminate: () => Animated.spring(y, { toValue: 0, useNativeDriver: true }).start(),
-    }),
-  ).current
-
+  const ios = Platform.OS === 'ios'
+  const cerrar = () => p.alCerrar()
   const pintar = (x: Pieza | undefined) => (typeof x === 'function' ? x(cerrar) : x)
 
   return (
-    <Modal visible transparent animationType="none" onRequestClose={cerrar} statusBarTranslucent>
-      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(20,52,42,0.45)', opacity: velo }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={cerrar} accessibilityLabel={p.etiquetaCerrar ?? 'Cerrar'} />
-        </Animated.View>
-        <Animated.View
-          style={[e.hoja, { marginTop: insets.top + 24, paddingBottom: insets.bottom + 14, transform: [{ translateY: y }] }]}
-          accessibilityViewIsModal
-        >
-          <View {...arrastre.panHandlers} style={{ paddingTop: 12 }}>
-            <View style={e.asa} />
-            {pintar(p.cabecera)}
-          </View>
-          {pintar(p.children)}
-          {pintar(p.pie)}
-        </Animated.View>
+    <Modal visible animationType="slide" presentationStyle={ios ? 'pageSheet' : 'fullScreen'} onRequestClose={cerrar} statusBarTranslucent={!ios}>
+      <View style={[e.hoja, { paddingTop: ios ? 8 : insets.top + 8, paddingBottom: insets.bottom + 14 }]}>
+        {/* El asa: en iPhone dice que se puede bajar; en Android no hay gesto, así que no se pinta. */}
+        {ios ? <View style={e.asa} /> : null}
+        {/* La cabecera deja sitio a la X en su primera fila (`marginRight: 52`), no en todas. */}
+        {pintar(p.cabecera)}
+        <Pressable onPress={cerrar} accessibilityRole="button" accessibilityLabel={p.etiquetaCerrar ?? 'Cerrar'} hitSlop={8} style={[e.cerrar, { top: ios ? 22 : insets.top + 20 }]}>
+          <IconoCruz tam={16} color={color.verdeProfundo} />
+        </Pressable>
+        <View style={{ flex: 1 }}>{pintar(p.children)}</View>
+        {pintar(p.pie)}
       </View>
     </Modal>
   )
 }
 
 const e = StyleSheet.create({
-  hoja: { backgroundColor: color.crema, borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: '100%', flexShrink: 1, overflow: 'hidden' },
-  asa: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: tinta(0.2) },
+  hoja: { flex: 1, backgroundColor: color.crema },
+  asa: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: tinta(0.2), marginTop: 4 },
+  cerrar: { position: 'absolute', right: 16, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: tinta(0.07) },
 })
