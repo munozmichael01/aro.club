@@ -29,7 +29,7 @@ agenda se ve junto al día.
    usó» y queda como socia o socio normal.
 6. Quien reserva puede **cambiar de acompañante**: el enlace viejo deja de
    valer y sale uno nuevo.
-7. Si al cierre (24 h antes de la cena) su acompañante no está verificado,
+7. Si al cierre (a medianoche, al empezar el día de la cena, como el resto de las cenas) su acompañante no está verificado,
    **se cancelan los dos puestos y se le abonan dos créditos**. No se le
    manda a una mesa normal: si quería ir con alguien, sola o solo no va.
 8. Como mínimo el día antes del cierre le avisamos: «Tu +1 todavía no se ha
