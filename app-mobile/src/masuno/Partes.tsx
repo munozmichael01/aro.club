@@ -1,4 +1,5 @@
 import * as Clipboard from 'expo-clipboard'
+import { HojaCorta } from '../diseno/HojaCorta'
 import { useState } from 'react'
 import { Modal, Pressable, Share, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -266,11 +267,11 @@ export function TarjetaAcompanante({ m, yo, revela, alCambiar }: { m: MasUno; yo
 export function HojaCambio({ m, alSi, alNo, ocupado }: { m: MasUno; alSi: () => void; alNo: () => void; ocupado: boolean }) {
   const c = M().tarjeta.cambio
   const insets = useSafeAreaInsets()
+  // Hoja corta: el velo se funde y solo sube la hoja (Michael, 03-11).
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={alNo} statusBarTranslucent>
-      <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(11,26,21,0.55)' }}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={alNo} accessibilityLabel={c.no} />
-        <View style={[e.hoja, { paddingBottom: insets.bottom + 26 }]} accessibilityViewIsModal>
+    <HojaCorta alCerrar={alNo} velo="rgba(11,26,21,0.55)" etiquetaCerrar={c.no} estilo={[e.hoja, { paddingBottom: insets.bottom + 26 }]}>
+      {(cerrar) => (
+        <>
           <View style={{ alignSelf: 'center', width: 38, height: 5, borderRadius: 3, backgroundColor: tinta(0.2) }} />
           <Texto accessibilityRole="header" style={{ fontFamily: fuente.titular, fontSize: 26, lineHeight: 37, letterSpacing: -0.52, color: color.verdeProfundo }}>
             {c.titulo}
@@ -283,10 +284,10 @@ export function HojaCambio({ m, alSi, alNo, ocupado }: { m: MasUno; alSi: () => 
             <Texto style={{ flex: 1, fontSize: 13.5, lineHeight: 19.5, color: color.verdeProfundo }}>{c.plazo(m.plazo ?? '')}</Texto>
           </View>
           <Boton tipo="grave" texto={c.si} ancho onPress={alSi} disabled={ocupado} />
-          <Boton tipo="fantasma" texto={c.no} ancho onPress={alNo} />
-        </View>
-      </View>
-    </Modal>
+          <Boton tipo="fantasma" texto={c.no} ancho onPress={cerrar} />
+        </>
+      )}
+    </HojaCorta>
   )
 }
 

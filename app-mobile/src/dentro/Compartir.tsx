@@ -1,5 +1,6 @@
 import Constants from 'expo-constants'
 import * as Sharing from 'expo-sharing'
+import { HojaAbajo } from '../diseno'
 import { useRef, useState } from 'react'
 import { Modal, PixelRatio, Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -98,28 +99,28 @@ export function HojaCompartir(p: { h: Historia; mensaje: string; alCerrar: () =>
 
   const real = 1080 / PixelRatio.get()
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={p.alCerrar} statusBarTranslucent>
-      <View style={e.fondo}>
+    // La hoja nativa de iPhone, como la de reservar (Michael, 03-11): se desliza para cerrar y no sube un velo detrás.
+    <HojaAbajo
+      alCerrar={p.alCerrar}
+      cabecera={
+        <View style={[e.cabecera, { marginTop: 12, marginRight: 52 }]}>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Texto style={{ fontFamily: fuente.titular, fontSize: 26, lineHeight: 37, letterSpacing: -0.5, color: color.verdeProfundo }} accessibilityRole="header">
+              {T.compartir.titulo}
+            </Texto>
+            <Texto variante="cuerpoChico" tono="cuerpo">{T.compartir.bajada(!!p.h.codigo)}</Texto>
+          </View>
+        </View>
+      }
+    >
+      <View style={{ flex: 1 }}>
         {/* La que se captura: la tarjeta elegida a 1080 px reales, fuera de la vista. */}
         <View style={{ position: 'absolute', left: -real - 100, top: 0 }} pointerEvents="none" collapsable={false}>
           <View ref={lienzo} collapsable={false}>
             <Tarjeta variante={variantes[i]} h={p.h} ancho={real} />
           </View>
         </View>
-        <Pressable style={StyleSheet.absoluteFill} onPress={p.alCerrar} accessibilityLabel="Cerrar" />
-        <View style={[e.hoja, { paddingBottom: insets.bottom + 26 }]} accessibilityViewIsModal>
-          <View style={e.asa} />
-          <View style={e.cabecera}>
-            <View style={{ flex: 1, gap: 4 }}>
-              <Texto style={{ fontFamily: fuente.titular, fontSize: 26, lineHeight: 37, letterSpacing: -0.5, color: color.verdeProfundo }} accessibilityRole="header">
-                {T.compartir.titulo}
-              </Texto>
-              <Texto variante="cuerpoChico" tono="cuerpo">{T.compartir.bajada(!!p.h.codigo)}</Texto>
-            </View>
-            <Pressable onPress={p.alCerrar} accessibilityRole="button" accessibilityLabel="Cerrar" style={e.cerrar}>
-              <IconoCruz tam={16} color={color.verdeProfundo} />
-            </Pressable>
-          </View>
+        <View style={{ paddingTop: 12 }}>
 
           <ScrollView
             ref={carrusel}
@@ -175,7 +176,7 @@ export function HojaCompartir(p: { h: Historia; mensaje: string; alCerrar: () =>
           </View>
         </View>
       </View>
-    </Modal>
+    </HojaAbajo>
   )
 }
 

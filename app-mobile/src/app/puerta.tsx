@@ -41,6 +41,7 @@ export default function Pantalla() {
         await supabase.auth.signOut({ scope: 'local' })
         await borrarLead()
       }}
+      alVolver={router.canGoBack() ? () => router.back() : undefined}
       alEntrar={(correo) => router.push({ pathname: '/entrar', params: correo ? { correo, yaTiene: '1' } : {} })}
     />
   )

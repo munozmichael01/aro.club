@@ -55,6 +55,8 @@ export function Puerta(p: {
   alEntrar: (correo?: string) => void
   /** La cuenta de un menor ya cerrada en el servidor: borrar la sesión del celular (su refresh ya no vale). */
   alCerrarMenor: () => Promise<void>
+  /** Volver a donde estaba (la Bienvenida): el nacimiento es la primera pantalla y no tenía «Atrás» (03-11). */
+  alVolver?: () => void
   /** Solo el catálogo: empezar en otra fase para verla sin contestar el quiz. */
   faseInicial?: Fase
 }) {
@@ -352,6 +354,7 @@ export function Puerta(p: {
             disabled={est !== 'ok'}
             onPress={trasNacimiento}
           />
+          {p.alVolver && !conSesion ? <Boton tipo="fantasmaSobreVerde" texto={T.quiz.atras} onPress={p.alVolver} /> : null}
         </View>
         )}
       </View>

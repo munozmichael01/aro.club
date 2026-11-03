@@ -18,6 +18,7 @@ export default function Pantalla() {
       evento={evento ?? null}
       servicio={servicio}
       ir={(destino) => (destino === '/cuenta' || destino === '/mesa' ? router.navigate(destino) : router.push(destino as never))}
+      alVolver={router.canGoBack() ? () => router.back() : undefined}
       alEntrar={() => router.replace('/entrar')}
     />
   )

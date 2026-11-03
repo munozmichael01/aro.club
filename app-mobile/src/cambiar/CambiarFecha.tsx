@@ -16,7 +16,7 @@ type Servicio = ReturnType<typeof crearServicioCambiar>
  * Fuera de las pestañas, como Cancelar: es un flujo con principio y final.
  * Sin maqueta de Design todavía: usa las piezas de Cancelar.
  */
-export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; alEntrar: () => void }) {
+export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; /** La flecha de arriba: a donde estaba, no a una pantalla fija (03-11). */ alVolver?: () => void; alEntrar: () => void }) {
   const insets = useSafeAreaInsets()
   const { servicio } = p
   const alEntrar = useUltimo(p.alEntrar)
@@ -172,7 +172,7 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; a
   return (
     <View style={{ flex: 1, backgroundColor: color.crema }}>
       <ScrollView contentContainerStyle={[estilos.pagina, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 48 }]}>
-        <Pressable onPress={() => p.ir('/mesa')} accessibilityRole="link" accessibilityLabel={T.sinRespuesta.volver} style={estilos.volver}>
+        <Pressable onPress={() => (p.alVolver ? p.alVolver() : p.ir('/mesa'))} accessibilityRole="link" accessibilityLabel={T.sinRespuesta.volver} style={estilos.volver}>
           <View style={{ transform: [{ rotate: '180deg' }] }}>
             <IconoFlecha tam={16} color={color.cuerpo} />
           </View>

@@ -1,3 +1,4 @@
+import { HojaCorta } from '../diseno/HojaCorta'
 import { useCallback, useRef, useState } from 'react'
 import { Modal, Pressable, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -21,17 +22,17 @@ export function PreguntaAvisos(p: { momento: Momento | null; zona?: string | nul
   const m = p.momento
   if (!m) return null
   const titulo = m === 'alta' ? T.pregunta.alta.titulo(p.zona ?? null) : T.pregunta[m].titulo
-  const si = async () => {
+  const si = async (cerrar: () => void) => {
     setPidiendo(true)
     await pedirAvisos()
     setPidiendo(false)
-    p.alCerrar()
+    cerrar()
   }
+  // Hoja corta: el velo se funde y solo sube la hoja (Michael, 03-11).
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={p.alCerrar} statusBarTranslucent>
-      <View style={estilos.fondo}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={p.alCerrar} accessibilityLabel={T.pregunta.no} />
-        <View style={[estilos.hoja, { paddingBottom: insets.bottom + 22 }]} accessibilityViewIsModal>
+    <HojaCorta alCerrar={p.alCerrar} etiquetaCerrar={T.pregunta.no} estilo={[estilos.hoja, { paddingBottom: insets.bottom + 22 }]}>
+      {(cerrar) => (
+        <>
           <View style={estilos.campana}>
             <IconoCampana color={color.verde} />
           </View>
@@ -42,12 +43,12 @@ export function PreguntaAvisos(p: { momento: Momento | null; zona?: string | nul
             {T.pregunta[m].cuerpo}
           </Texto>
           <View style={estilos.botones}>
-            <Boton ancho texto={T.pregunta.si} onPress={si} disabled={pidiendo} />
-            <Boton ancho tipo="fantasma" texto={T.pregunta.no} onPress={p.alCerrar} disabled={pidiendo} />
+            <Boton ancho texto={T.pregunta.si} onPress={() => si(cerrar)} disabled={pidiendo} />
+            <Boton ancho tipo="fantasma" texto={T.pregunta.no} onPress={cerrar} disabled={pidiendo} />
           </View>
-        </View>
-      </View>
-    </Modal>
+        </>
+      )}
+    </HojaCorta>
   )
 }
 

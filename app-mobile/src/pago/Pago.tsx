@@ -53,7 +53,7 @@ type Servicio = ReturnType<typeof crearServicioPago>
  *
  * `ir`: rutas de la app («/cuenta», «/mesa», «/verificacion»).
  */
-export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: string) => void; alEntrar: () => void; ahora?: () => number }) {
+export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: string) => void; /** La flecha de arriba: a donde estaba, no a una pantalla fija (03-11). */ alVolver?: () => void; alEntrar: () => void; ahora?: () => number }) {
   const insets = useSafeAreaInsets()
   const ahora = p.ahora ?? Date.now
   const { servicio, evento } = p
@@ -648,7 +648,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   return (
     <View style={{ flex: 1, backgroundColor: color.crema }}>
       <ScrollView ref={scroll} contentContainerStyle={[estilos.pagina, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 48 }]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
-        <Pressable onPress={() => p.ir('/cuenta')} accessibilityRole="link" accessibilityLabel={T.faltaVerificar.volver} style={estilos.volver}>
+        <Pressable onPress={() => (p.alVolver ? p.alVolver() : p.ir('/cuenta'))} accessibilityRole="link" accessibilityLabel={T.faltaVerificar.volver} style={estilos.volver}>
           <View style={{ transform: [{ rotate: '180deg' }] }}>
             <IconoFlecha tam={16} color={color.cuerpo} />
           </View>

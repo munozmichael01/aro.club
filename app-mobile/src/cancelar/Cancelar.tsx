@@ -16,7 +16,7 @@ type Servicio = ReturnType<typeof crearServicioCancelar>
  * menos de 24 h (lo decide el servidor), el porqué opcional, y el hecho con
  * los créditos de verdad.
  */
-export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (d: string) => void; alEntrar: () => void }) {
+export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (d: string) => void; /** La flecha de arriba: a donde estaba, no a una pantalla fija (03-11). */ alVolver?: () => void; alEntrar: () => void }) {
   const insets = useSafeAreaInsets()
   const { servicio, reserva } = p
   const alEntrar = useUltimo(p.alEntrar)
@@ -167,7 +167,7 @@ export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (
   return (
     <View style={{ flex: 1, backgroundColor: color.crema }}>
       <ScrollView contentContainerStyle={[estilos.pagina, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 48 }]}>
-        <Pressable onPress={() => p.ir('/cuenta')} accessibilityRole="link" accessibilityLabel={T.sinRespuesta.volver} style={estilos.volver}>
+        <Pressable onPress={() => (p.alVolver ? p.alVolver() : p.ir('/cuenta'))} accessibilityRole="link" accessibilityLabel={T.sinRespuesta.volver} style={estilos.volver}>
           <View style={{ transform: [{ rotate: '180deg' }] }}>
             <IconoFlecha tam={16} color={color.cuerpo} />
           </View>

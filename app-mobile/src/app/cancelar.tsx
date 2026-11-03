@@ -9,5 +9,5 @@ import { api } from '../sesion'
 export default function Pantalla() {
   const { reserva } = useLocalSearchParams<{ reserva?: string }>()
   const servicio = useMemo(() => crearServicioCancelar(api), [])
-  return <Cancelar reserva={reserva ?? null} servicio={servicio} ir={(d) => router.navigate(d as never)} alEntrar={() => router.replace('/entrar')} />
+  return <Cancelar reserva={reserva ?? null} servicio={servicio} ir={(d) => router.navigate(d as never)} alVolver={router.canGoBack() ? () => router.back() : undefined} alEntrar={() => router.replace('/entrar')} />
 }

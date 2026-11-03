@@ -8,5 +8,5 @@ import { api } from '../sesion'
 /** /cambiar-fecha: mover la reserva viva a otra fecha abierta, con lo pagado dentro. */
 export default function Pantalla() {
   const servicio = useMemo(() => crearServicioCambiar(api), [])
-  return <CambiarFecha servicio={servicio} ir={(d) => router.navigate(d as never)} alEntrar={() => router.replace('/entrar')} />
+  return <CambiarFecha servicio={servicio} ir={(d) => router.navigate(d as never)} alVolver={router.canGoBack() ? () => router.back() : undefined} alEntrar={() => router.replace('/entrar')} />
 }
