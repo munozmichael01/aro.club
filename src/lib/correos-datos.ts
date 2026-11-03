@@ -741,12 +741,28 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
        */
       voces.verificacion_semana = voces.verificacion
 
+      /**
+       * Y lo mismo con la foto que falta, el 03-11.
+       *
+       * Trece personas subieron la cédula y se quedaron sin la selfie, doce
+       * de ellas ya con su `media_foto` gastado. Michael: «diles qué les
+       * falta y motívalos». Es la misma voz con otra clave de índice, como
+       * `verificacion_semana`, y el paso de «Qué hay esta semana» de esa
+       * misma voz: lo que motiva es la mesa, no el trámite. Una vez y solo
+       * una, porque `(profile_id, 'media_foto_semana')` también es única.
+       */
+      voces.media_foto_semana = {
+        ...voces.media_foto,
+        paso2Titulo: voces.verificacion.paso2Titulo,
+        paso2: voces.verificacion.paso2,
+      }
+
       const voz = { ...(voces[fila.kind === 'bienvenida' ? 'bienvenida' : falta] ?? voces.perfil) }
 
       // «Te falta la selfie» o «te falta la foto de tu cédula», con el
       // nombre delante. La entradilla de `media_foto` se arma aquí porque
       // depende de cuál sea, y el resto de la tarjeta no.
-      if (falta === 'media_foto') {
+      if (falta === 'media_foto' || falta === 'media_foto_semana') {
         const cual = (p.cual as string) === 'cedula' ? 'la foto de tu cédula' : 'tu selfie'
         voz.titularC = (p.cual as string) === 'cedula' ? 'cédula' : 'selfie'
         voz.titularA = 'Te falta'
@@ -754,6 +770,9 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         voz.entradilla = `Subiste una de las dos${coma}, y nos falta ${cual}. Es lo único que queda para que puedas apartar puesto, y se hace en un minuto.`
         voz.boton = (p.cual as string) === 'cedula' ? 'Subir mi cédula' : 'Hacerme la selfie'
         voz.anticipo = `Subiste una de las dos. Nos falta ${cual}.`
+        // La segunda vez, el asunto nombra la mesa: «Te falta una foto» ya
+        // lo recibieron y no movió a nadie.
+        if (falta === 'media_foto_semana') voz.asuntoCorreo = `Te falta ${cual} para tu primera mesa`
       }
 
       return {
