@@ -251,7 +251,8 @@ export function copyDe(
       // encima de la pantalla bloqueada.
       return {
         titulo: '¿Qué tal estuvo?',
-        cuerpo: 'Cuéntanos de la cena y del sitio. Tarda un minuto.',
+        // De la cena, del brunch, de los drinks: la misma palabra que el correo.
+        cuerpo: `Cuéntanos ${t('delPlanFue', 'de la cena')} y del sitio. Tarda un minuto.`,
         ruta: '/mesa',
       }
     case 'cierra_pronto': {

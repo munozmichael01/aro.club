@@ -3,7 +3,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
-<title>¿Cómo estuvo anoche? · Aro Club</title>
+<title>¿Cómo estuvo {{ cuandoFueMin }}? · Aro Club</title>
 <style>
   @font-face {
     font-family: 'Young Serif';
@@ -16,7 +16,7 @@
 </style>
 </head>
 <body style="margin:0;padding:0;background:#F2E9D5;">
-<span style="display:none;font-size:1px;color:#F2E9D5;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Unos toques sobre anoche, mientras todavía lo tienes fresco.</span>
+<span style="display:none;font-size:1px;color:#F2E9D5;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">Unos toques sobre {{ cuandoFueMin }}, mientras todavía lo tienes fresco.</span>
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F2E9D5;">
 <tr><td align="center" style="padding:0;">
@@ -34,7 +34,7 @@
 
   <tr><td class="p" style="padding:30px 40px 0 40px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-      <td bgcolor="#1B5138" style="border-radius:999px;padding:10px 17px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.2px;color:#FAF3E4;mso-line-height-rule:exactly;"><strong>ANOCHE FUE LA CENA</strong></td>
+      <td bgcolor="#1B5138" style="border-radius:999px;padding:10px 17px;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:11px;letter-spacing:2.2px;color:#FAF3E4;mso-line-height-rule:exactly;"><strong>{{ selloFue }}</strong></td>
     </tr></table>
   </td></tr>
 
@@ -43,7 +43,7 @@
   </td></tr>
 
   <tr><td class="p" style="padding:16px 40px 0 40px;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:26px;color:#2C4A38;mso-line-height-rule:exactly;">
-    {{#si trato}}{{ trato }}, anoche{{/si}}{{#no trato}}Anoche{{/no}} cenaste con {{ otros }}{{#si sitio}} en {{ sitio }}{{/si}}. Unos toques, nada más. Nos ayudan a armar tu próxima mesa mejor que esta.
+    {{#si trato}}{{ trato }}, {{ cuandoFueMin }}{{/si}}{{#no trato}}{{ cuandoFue }}{{/no}} {{ verboFue }} con {{ otros }}{{#si sitio}} en {{ sitio }}{{/si}}. Unos toques, nada más. Nos ayudan a armar tu próxima mesa mejor que esta.
   </td></tr>
 
   <tr><td class="p" style="padding:26px 40px 0 40px;">
@@ -82,7 +82,7 @@
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td height="1" bgcolor="#D8CFB6" style="height:1px;line-height:1px;font-size:0;">&nbsp;</td></tr></table>
     <p style="margin:20px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:21px;color:#566A5D;mso-line-height-rule:exactly;">
       Aro Club · Caracas, Venezuela<br />
-      Te escribimos porque cenaste anoche con nosotros.<br />
+      Te escribimos porque {{ verboFue }} {{ cuandoFueMin }} con nosotros.<br />
       <a href="{{{ enlaceAjustes }}}" style="color:#566A5D;text-decoration:underline;">Ajustes de correo</a> · <a href="{{{ sitioWeb }}}/legal" style="color:#566A5D;text-decoration:underline;">Términos y privacidad</a>
     </p>
   </td></tr>

@@ -2444,6 +2444,31 @@
       return puesto + ' ref' + (masUno ? ' c/u' : '')
     },
 
+    /**
+     * Cómo se nombra un plan que ya pasó, en la encuesta y en seguir en
+     * contacto: «Anoche cenaste con…», «Ayer estuviste con…».
+     *
+     * Esos correos decían «cena» escrito a mano, y desde el 12-10 cuatro
+     * brunch recibieron «ANOCHE FUE LA CENA» un domingo por la tarde. La
+     * encuesta y el contacto salen para cualquier formato, así que su texto
+     * también (Michael, 02-11).
+     *
+     * No es `vozDe`: allí drinks y coffee hablan de «el plan» a propósito,
+     * porque «los drinks» no concuerda con frases que ya existen («el plan
+     * es igual»). Aquí cada frase está escrita para su plan.
+     */
+    PLAN_PASADO: {
+      cena: { cuando: 'anoche', fue: 'fue', verbo: 'cenaste', el: 'la cena', del: 'de la cena', ese: 'esa cena', porque: 'cenaste con Aro Club' },
+      brunch: { cuando: 'ayer', fue: 'fue', verbo: 'estuviste', el: 'el brunch', del: 'del brunch', ese: 'ese brunch', porque: 'fuiste a un brunch de Aro Club' },
+      drinks: { cuando: 'anoche', fue: 'fueron', verbo: 'estuviste', el: 'los drinks', del: 'de los drinks', ese: 'esos drinks', porque: 'fuiste a unos drinks de Aro Club' },
+      coffee: { cuando: 'ayer', fue: 'fue', verbo: 'estuviste', el: 'el café', del: 'del café', ese: 'ese café', porque: 'fuiste a un café de Aro Club' },
+      grupo: { cuando: 'ayer', fue: 'fue', verbo: 'estuviste', el: 'el plan', del: 'del plan', ese: 'ese plan', porque: 'fuiste a un plan de Aro Club' },
+    },
+
+    pasadoDe: function (formato) {
+      return api.PLAN_PASADO[api.COMO_FUNCIONA.planDe(formato)] || api.PLAN_PASADO.cena
+    },
+
     botonDelPlan: function (fecha) {
       var f = fecha || {}
       return (f.masUno || f.mas_uno) ? 'Reservar dos puestos' : 'Reservar mi puesto'

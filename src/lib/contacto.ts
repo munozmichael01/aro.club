@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { encolar } from '@/lib/correos'
-import { CONTACTO, DENTRO, aE164, partesDe, valido } from '@/lib/reglas'
+import { CONTACTO, DENTRO, aE164, partesDe, pasadoDe, valido } from '@/lib/reglas'
 import type { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { duosDeLaMesa } from '@/lib/mas-uno'
@@ -592,6 +592,11 @@ export async function datosDeCorreo(
     // «CENA DEL JUEVES 29 · CHACAO»
     sello: [`${DENTRO.planDe(d.cena.formato)} del ${cenaDia}`.toUpperCase(), (d.cena.zona ?? '').toUpperCase()].filter(Boolean).join(' · '),
     plan: DENTRO.planDe(d.cena.formato).toLowerCase(),
+    // «en la cena del», «en el brunch del», «esos drinks»: decía cena
+    // siempre (`pasadoDe`, 02-11).
+    elPlanFue: pasadoDe(d.cena.formato).el,
+    esePlan: pasadoDe(d.cena.formato).ese,
+    porqueFue: pasadoDe(d.cena.formato).porque,
   }
 
   if (tipo === 'contacto_coincidencia') {

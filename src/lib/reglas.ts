@@ -18,6 +18,7 @@ import reglas from '../../public/reglas.js'
 
 /** Las cinco familias de «Cómo funciona» (entrega «Qué estás reservando», 02-11). */
 type PlanComo = 'cena' | 'brunch' | 'grupo' | 'drinks' | 'coffee'
+type PlanPasado = { cuando: string; fue: string; verbo: string; el: string; del: string; ese: string; porque: string }
 type Marca = 'edad' | 'masUno' | 'idioma' | 'segundoActo'
 type TarjetaComo = {
   clave: 'antes' | 'durante' | 'despues'
@@ -182,6 +183,8 @@ type Api = {
   /** «10 ref» · «10 ref c/u». */
   precioDelPlan: (fecha: FechaConMarcas) => string
   botonDelPlan: (fecha: FechaConMarcas) => string
+  /** Cómo se nombra un plan que ya pasó (encuesta y seguir en contacto). */
+  pasadoDe: (formato: string | null | undefined) => PlanPasado
   DE_MESA_COMPLETA: string[]
   tieneMesaCompleta: (formato: string | null | undefined) => boolean
   DE_MANANA: string[]
@@ -357,6 +360,7 @@ export const aE164 = api.aE164
 export const REGLAS = api.REGLAS
 /** Mesa o grupo, según el formato. La tabla vive en public/reglas.js. */
 export const vozDe = api.vozDe
+export const pasadoDe = api.pasadoDe
 
 /** Cómo se llama cada formato. Misma tabla para los correos, el panel y la app. */
 export const NOMBRES_DE_FORMATO = api.NOMBRES_DE_FORMATO

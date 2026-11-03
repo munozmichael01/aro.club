@@ -8,7 +8,7 @@ import { avisoDeDosHoras, FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { nombreDeIdioma } from '@/lib/idioma'
-import { arraigoDe, MAS_UNO, DIAS_GUARDA_FOTOS, HORAS_DE_MARGEN, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
+import { arraigoDe, MAS_UNO, pasadoDe, DIAS_GUARDA_FOTOS, HORAS_DE_MARGEN, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
@@ -817,7 +817,24 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       // Con cuántos cenó de verdad: decía «cinco personas» siempre, y una
       // mesa puede salir de cinco. Sin mesa que leer, una frase que vale
       // para cualquier número antes que un número inventado.
-      return { a, datos: { ...base, sitio: mesa?.sitio ?? '', otros: mesa?.otros ?? 'el resto de la mesa' } }
+      // Cómo se dice que ya pasó: «ANOCHE FUE LA CENA», «AYER FUE EL
+      // BRUNCH». Decía cena siempre (`pasadoDe`, 02-11).
+      const fue = pasadoDe(evento?.format ?? null)
+      const alta = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
+      return {
+        a,
+        datos: {
+          ...base,
+          sitio: mesa?.sitio ?? '',
+          otros: mesa?.otros ?? 'el resto de la mesa',
+          selloFue: `${fue.cuando} ${fue.fue} ${fue.el}`.toUpperCase(),
+          cuandoFue: alta(fue.cuando),
+          cuandoFueMin: fue.cuando,
+          verboFue: fue.verbo,
+          elPlanFue: fue.el,
+          delPlanFue: fue.del,
+        },
+      }
     }
 
     /**
