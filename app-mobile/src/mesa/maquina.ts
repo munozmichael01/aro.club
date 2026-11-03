@@ -70,6 +70,10 @@ export type DeServidor = {
   cambiarFecha?: import('../cambiar/maquina').Bloque | null
   /** +1 acompañante (01-11): la tarjeta «Tu +1 acompañante» de quien reserva; en 'sin-reserva', la cancelada (4E). */
   masUno?: import('../masuno/maquina').MasUno | null
+  /** Las marcas de la fecha (c2a504e), los mismos nombres que /api/mi-cuenta: «Cómo funciona» las lee. */
+  edadMinima?: number | null
+  idioma?: string | null
+  segundoActo?: boolean
   /** El acompañante: con quién viene (5E). */
   vienesCon?: string | null
   /** El acompañante que entró por un enlace y aún no se ha verificado (5D), en 'sin-reserva'. */

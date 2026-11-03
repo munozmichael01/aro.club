@@ -18,7 +18,7 @@ import { crearApi } from '../src/sesion/api.ts'
 const app = JSON.parse(fs.readFileSync(new URL('../app.json', import.meta.url), 'utf8')).expo.extra
 const ANON = fs.readFileSync(new URL('../.env.local', import.meta.url), 'utf8').match(/EXPO_PUBLIC_SUPABASE_ANON_KEY=(.*)/)[1].trim()
 const sdk = createClient(app.supabaseUrl, ANON, { auth: { persistSession: false } })
-const { data, error } = await sdk.auth.signInWithPassword({ email: 'banco-pruebas@aro.club', password: 'Prueba-8x1' })
+const { data, error } = await sdk.auth.signInWithPassword({ email: 'banco-pruebas@aro.club', password: process.env.BANCO_CLAVE ?? 'Prueba-8x1' })
 if (error || data.user.email !== 'banco-pruebas@aro.club') { console.log('✗ no se pudo entrar con la cuenta del banco'); process.exit(1) }
 const api = crearApi({ base: app.api, urlSupabase: app.supabaseUrl, version: 'prueba/0', obtenerSesion: async () => data.session, refrescar: async () => null })
 const s = crearServicioPago(api)

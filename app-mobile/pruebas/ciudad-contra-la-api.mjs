@@ -13,7 +13,7 @@ import { crearServicioPuerta } from '../src/puerta/servicio.ts'
 import { crearApi } from '../src/sesion/api.ts'
 
 const CORREO = 'banco-pruebas@aro.club'
-const CLAVE = 'Prueba-8x1'
+const CLAVE = process.env.BANCO_CLAVE ?? 'Prueba-8x1'
 const app = JSON.parse(fs.readFileSync(new URL('../app.json', import.meta.url), 'utf8')).expo.extra
 const ANON = fs.readFileSync(new URL('../.env.local', import.meta.url), 'utf8').match(/EXPO_PUBLIC_SUPABASE_ANON_KEY=(.*)/)[1].trim()
 const sdk = createClient(app.supabaseUrl, ANON, { auth: { persistSession: false } })

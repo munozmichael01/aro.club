@@ -29,7 +29,7 @@ const sdk = createClient(app.supabaseUrl, ANON, { auth: { persistSession: false 
 const IMAGEN = process.env.IMAGEN
 if (!IMAGEN || !fs.existsSync(IMAGEN)) { console.log('✗ falta IMAGEN=<ruta a un jpg generado>'); process.exit(1) }
 
-const { data, error } = await sdk.auth.signInWithPassword({ email: 'banco-pruebas@aro.club', password: 'Prueba-8x1' })
+const { data, error } = await sdk.auth.signInWithPassword({ email: 'banco-pruebas@aro.club', password: process.env.BANCO_CLAVE ?? 'Prueba-8x1' })
 if (error) { console.log('✗ no se pudo entrar. ¿Está creada la cuenta del banco?', error.message); process.exit(1) }
 const userId = data.user.id
 const api = crearApi({ base: app.api, urlSupabase: app.supabaseUrl, version: 'prueba/0', obtenerSesion: async () => data.session, refrescar: async () => null })
