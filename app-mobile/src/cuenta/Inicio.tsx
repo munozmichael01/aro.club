@@ -179,6 +179,8 @@ export function Inicio(p: {
     const graba = !!fecha?.permisoObligatorio
     const r = M.botonReservar(datos, reservando, undefined, { graba, permiso: permiteGrabacion }, fecha?.creditos ?? 1)
     if (r.accion === 'nada') return
+    // La hoja es un modal: se cierra antes de irse, o se quedaría encima de la pantalla nueva.
+    if (r.accion !== 'reservar') setAbierta(null)
     if (r.accion === 'completar' && r.destino) return p.ir(r.destino)
     if (r.accion === 'verificar') return p.ir('/verificacion')
     if (r.accion === 'pagar') return p.ir('/pago', { evento: id })
@@ -188,8 +190,12 @@ export function Inicio(p: {
     setReservando(false)
     if (!res.ok) {
       // El candado del servidor: si falta algo del embudo, se lleva allí.
-      if (res.motivo === 'perfil-incompleto' && res.donde) return p.ir(res.donde)
-      if (res.motivo === TI.MOTIVO) return setPidiendoIdioma({ id, idioma: res.idioma ?? 'en' })
+      if (res.motivo === 'perfil-incompleto' && res.donde) return setAbierta(null), p.ir(res.donde)
+      // La pregunta del idioma es otro modal: primero se va la hoja (iOS no abre uno mientras otro se cierra).
+      if (res.motivo === TI.MOTIVO) {
+        setAbierta(null)
+        return void setTimeout(() => setPidiendoIdioma({ id, idioma: res.idioma ?? 'en' }), 450)
+      }
       return setFalloReserva(res.error)
     }
     setAbierta(null)

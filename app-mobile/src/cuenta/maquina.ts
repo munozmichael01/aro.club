@@ -7,7 +7,7 @@
  */
 
 import * as C from '../cuestionario/maquina'
-import { reglas } from '../reglas'
+import { reglas, type CapsulaMarca, type FechaPlan } from '../reglas'
 import * as F from '../texto/fechas'
 import * as T from '../texto/cuenta'
 import type { EstadoCuenta } from '../texto/cuenta'
@@ -17,6 +17,8 @@ export type FechaAgenda = {
   formato: string
   empiezaEn: string
   cierraEn: string | null
+  /** Cuándo se revela, si la fecha lo trae (mi-cuenta lo manda): la nota de la hoja sale de aquí. */
+  revelaEn?: string | null
   creditos: number
   zonas: string[]
   apuntados: number
@@ -290,6 +292,16 @@ export type FilaAgenda = {
   masUno: boolean
   /** La cápsula maciza «SEGUNDO ACTO», junto al tipo. */
   segundoActo: boolean
+  /** Lo de la fecha que leen la frase, las cápsulas y la hoja (entrega «Qué estás reservando»). */
+  plan: FechaPlan
+  /** El cierre de verdad de la fila, para la línea de cierre de la hoja. */
+  cierraEn: string | null
+  /** Las marcas de la fecha, en orden: +45, +1, idioma, segundo acto (`reglas.capsulasDe`). */
+  capsulas: CapsulaMarca[]
+  /** «Chacao o Los Palos Grandes · Mesa de 4 a 8 personas»: zona y tamaño, una sola vez. */
+  zonaYTamano: string
+  /** Hay prueba social que enseñar (por encima del umbral, o es suya, o cerró). Si no, ni barra ni frase. */
+  conPrueba: boolean
   /** «de 4 a 8» o «de seis», para «Cómo funciona» de la hoja (`reglas.mesasDe`). */
   mesas: string
   /** Lo que cuesta en créditos (dos en una +1). */
@@ -315,12 +327,14 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
     const cerrada = a.cerrada || (a.cierraEn != null && Date.parse(a.cierraEn) <= ahora)
     // Cenas, brunch y drinks: la primera mesa existe desde cuatro (de 4 a 8, d3ea935).
     const minimoMesa = reglas.DE_4_A_8.includes(reglas.familiaDe(a.formato).clave) ? 4 : a.porMesa || T.MESA
+    const plan: FechaPlan = { empiezaEn: a.empiezaEn, revelaEn: a.revelaEn ?? null, zonaHoraria: a.zonaHoraria ?? null, formato: a.formato, edadMinima: a.edadMinima ?? null, masUno: !!a.masUno, idioma: a.idioma ?? null, segundoActo: !!a.segundoActo, porMesa: a.porMesa ?? null, precioUsd: a.precioUsd ?? null }
     let g = grupos.find((x) => x.semana === semana)
     if (!g) grupos.push((g = { semana, filas: [] }))
     g.filas.push({
       id: a.id,
       formato,
-      tipo: a.edadMinima ? T.conEdad(T.FORMATOS[formato].singular, a.edadMinima) : T.FORMATOS[formato].plural,
+      // La edad va en su cápsula («+45»), con las demás marcas (entrega «Qué estás reservando»).
+      tipo: T.FORMATOS[formato].plural,
       cuando: F.fechaCorta(a.empiezaEn, a.zonaHoraria),
       hora: reglas.horaDe(a.empiezaEn, a.zonaHoraria) ?? '',
       // Las zonas ABIERTAS de esa fecha, no un sitio: el sitio se decide al
@@ -341,6 +355,12 @@ export function agenda(fechas: FechaAgenda[], filtro: string | null, ahora: numb
       zonaHoraria: a.zonaHoraria ?? null,
       zonasNuevas: a.mia || cerrada ? [] : (a.zonasNuevas ?? []),
       mesas: reglas.mesasDe(a.formato, a.porMesa),
+      plan,
+      cierraEn: a.cierraEn,
+      capsulas: reglas.capsulasDe(plan),
+      zonaYTamano: `${a.zonas.join(' o ') || T.agenda.zonaPorConfirmar} · ${reglas.tamanoDelPlan(plan)}`,
+      // «Una mesa es de 4 a 8 personas» se va (Michael, 02-11): el tamaño ya va con la zona.
+      conPrueba: a.mia || cerrada || !!reglas.pruebaSocial(a.apuntados, plan),
       masUno: !!a.masUno,
       segundoActo: !!a.segundoActo,
       creditos: a.creditos || 1,

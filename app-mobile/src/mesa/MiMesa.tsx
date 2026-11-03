@@ -474,7 +474,11 @@ function Cerrada({ d, ir, alAbrirse, servicio }: { d: M.DeServidor; ir: (d: stri
       </Texto>
       {/* Hasta la revelación (C3b); después lo reemplaza el paso a paso. La primera vez, se abre sola con las tres. */}
       <View style={{ marginTop: 18 }}>
-        <FilaComoFunciona enMiMesa plan={{ formato: d.formato, empiezaEn: d.empiezaEn, revelaEn: d.revelaEn, zonaHoraria: d.zonaHoraria }} />
+        {/* Con las marcas que manda Mi mesa: hoy el +1; edad, idioma y segundo acto cuando viajen (pedidos al agente, 03-11). */}
+        <FilaComoFunciona
+          enMiMesa
+          plan={{ formato: d.formato, empiezaEn: d.empiezaEn, revelaEn: d.revelaEn, zonaHoraria: d.zonaHoraria, masUno: !!(masUno || d.vienesCon) }}
+        />
       </View>
     </View>
   )

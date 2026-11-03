@@ -6,6 +6,14 @@
  */
 import crudo from '../../public/reglas.js'
 
+/** Plan de «Cómo funciona» (2f07b97): cinco, con drinks y coffee. */
+export type PlanCF = 'cena' | 'brunch' | 'grupo' | 'drinks' | 'coffee'
+export type TarjetaCF = { clave: 'antes' | 'durante' | 'despues'; icono: string; titulo: string; cuerpo: string; panel?: string; colorIcono?: string; iconoPlan?: string }
+/** Lo de una fecha que leen la frase, las cápsulas y la hoja: los campos de /api/agenda y /api/mi-cuenta. */
+export type FechaPlan = { empiezaEn?: string | null; revelaEn?: string | null; zonaHoraria?: string | null; formato?: string | null; edadMinima?: number | null; masUno?: boolean; idioma?: string | null; segundoActo?: boolean; porMesa?: number | null; precioUsd?: number | null }
+type Colores = { fondo: string; color: string; borde: string }
+export type CapsulaMarca = Colores & { clave: string; texto: string; corto: string; icono: string; sobreVerde: Colores }
+
 export type Campo =
   | 'correo'
   | 'clave'
@@ -108,9 +116,37 @@ type Api = {
     primeraVez: { sello: (plan: string) => string; titulo: string; tituloDia: string }
     pie: (miMesa: string) => string
     cuentaDe: (i: number, n: number) => string
-    tarjetas: (tipo: 'cena' | 'brunch' | 'grupo', cuando: string) => { clave: 'antes' | 'durante' | 'despues'; icono: string; titulo: string; cuerpo: string }[]
+    tarjetas: (tipo: PlanCF, cuando: string) => TarjetaCF[]
+    /** Las tres de UNA fecha, con lo que cambian sus marcas (entrega «Qué estás reservando», 2f07b97). */
+    tarjetasDe: (fecha: FechaPlan, cuando: string) => (TarjetaCF & { marca: string })[]
+    /** cena, brunch, grupo, drinks o coffee: elige tarjetas, frase e icono. */
+    planDe: (formato: string | null | undefined) => PlanCF
     tipoDe: (formato: string | null | undefined) => 'cena' | 'brunch' | 'grupo'
   }
+  /** Un icono por plan (2f07b97): junto al formato y, en grande, sobre los paneles de «Cómo funciona». */
+  ICONOS_PLAN: Record<PlanCF, string>
+  ORDEN_MARCAS: string[]
+  /** Las cápsulas de una fecha, en orden y con su texto («+40», «EN INGLÉS»). */
+  capsulasDe: (fecha: FechaPlan) => CapsulaMarca[]
+  /** Las líneas del bloque «Esta fecha»: una por marca con línea. */
+  lineasDeHoja: (fecha: FechaPlan) => { clave: string; capsula: CapsulaMarca; texto: string }[]
+  /** «Una cena para gente desde los 45, y al terminar…»: la frase del plan, por gramática. */
+  fraseDelPlan: (fecha: FechaPlan) => string
+  /** «Mesa de 4 a 8 personas», «Grupo de…», «De dos a cuatro dúos». */
+  tamanoDelPlan: (fecha: FechaPlan) => string
+  /** «10 ref», «10 ref c/u» en el +1. */
+  precioDelPlan: (fecha: FechaPlan) => string
+  botonDelPlan: (fecha: FechaPlan) => string
+  /** La línea de encima de «¿Cómo funciona?»: cuándo se sabe el sitio, de la fecha (d475209). */
+  notaDelPlan: (fecha: FechaPlan, zona?: string | null) => string
+  /** Qué cubre lo que pagas. */
+  cubreDelPlan: (fecha: FechaPlan) => string
+  /** «Cierra a medianoche, cuando empieza el sábado.» / «Cierra hoy…» / «Reservas cerradas». */
+  lineaDeCierre: (inicioIso: string, zona?: string | null, cierreIso?: string | null, ahora?: number) => { texto: string; cerrada: boolean }
+  /** La prueba social de la agenda: '' por debajo del umbral (en el +1, de dos dúos). */
+  pruebaSocial: (n: number, fecha: FechaPlan) => string
+  /** Cómo se nombra un plan que ya pasó (074bb28): «anoche», «cenaste», «el brunch»… */
+  pasadoDe: (formato: string | null | undefined) => { cuando: string; fue: string; verbo: string; el: string; del: string; ese: string; porque: string }
   /** «una», «dos», «tres»… en femenino (personas, cenas). */
   enLetra: (n: number) => string
   /** «Una mesa son seis», «4 apuntados · faltan 2 para la primera mesa»… con cuántos van juntos en ESA fecha (31-10). */
@@ -118,6 +154,8 @@ type Api = {
   fraseDeApuntados: (n: number, porMesa?: number | null, formato?: string) => string
   /** Las familias cuyas mesas se arman de 4 a 8 (Michael, 01-11). */
   DE_4_A_8: string[]
+  /** Por debajo, no se enseña el número de apuntados. */
+  UMBRAL_APUNTADOS: number
   /** «de 4 a 8» o «de seis»: cómo se dice el tamaño de las mesas de un formato. */
   mesasDe: (formato: string, porMesa?: number | null) => string
   revelaDe: (inicioIso: string, zona?: string | null, revelaIso?: string | null) => { cuando: string; mismoDia: boolean; dia: string; hora: string; enLetra: string } | null

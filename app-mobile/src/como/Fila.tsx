@@ -1,11 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useEffect, useState } from 'react'
-import { Image, Pressable, StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import Svg, { Circle, Path } from 'react-native-svg'
 
 import { Texto, color, fuente, radio, tinta } from '../diseno'
 import * as T from '../texto/como'
-import { ComoFunciona, FOTOS, Panel } from './ComoFunciona'
+import { ComoFunciona, Panel } from './ComoFunciona'
 import * as M from './maquina'
 
 /**
@@ -52,15 +52,11 @@ function Fila({ plan, enMiMesa }: { plan: M.Plan; enMiMesa?: boolean }) {
         // C3b: tarjeta con las tres fotos superpuestas, el título en serif y el chevron.
         <Pressable onPress={() => (setTodas(false), setAbierta(true))} accessibilityRole="button" style={e.tarjeta}>
           <View style={{ flexDirection: 'row' }}>
-            {vista.tarjetas.map((x) =>
-              vista.conFotos ? (
-                <Image key={x.clave} source={FOTOS[x.clave]} style={e.redonda} />
-              ) : (
-                <View key={x.clave} style={[e.redonda, { overflow: 'hidden' }]}>
-                  <Panel tipo={vista.tipo} clave={x.clave} ancho={30} redondo />
-                </View>
-              ),
-            )}
+            {vista.tarjetas.map((x) => (
+              <View key={x.clave} style={[e.redonda, { overflow: 'hidden' }]}>
+                <Panel t={x} ancho={30} redondo />
+              </View>
+            ))}
           </View>
           <View style={{ flex: 1, minWidth: 0, marginLeft: 14 }}>
             <Texto style={{ fontFamily: fuente.titular, fontSize: 19, lineHeight: 27, color: color.verdeProfundo }}>{t.titulo}</Texto>

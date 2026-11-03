@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { FilaComoFunciona } from '../como/Fila'
-import { AccessibilityInfo, Animated, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { AccessibilityInfo, Animated, Image, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Svg, { Circle, Path } from 'react-native-svg'
 
 import {
   Aviso,
   Boton,
   EnlacePie,
-  ICONO_FORMATO,
   IconoCheck,
-  IconoCruz,
   IconoFlecha,
   IconoPin,
   IconoPunto,
@@ -26,8 +26,9 @@ import {
 import * as F from '../texto/fechas'
 import * as T from '../texto/cuenta'
 import type { Atajo, FilaAgenda, Filtro, Proximo, Tarjeta } from './maquina'
-import { AvisoCasilla, BloqueHoja, BotonConCasilla, Capsula, CargoDos } from '../masuno/Partes'
+import { AvisoCasilla, BloqueHoja, BotonConCasilla, CargoDos } from '../masuno/Partes'
 import { reglas } from '../reglas'
+import { Capsulas, CuadroPlan, EstaFecha, IconoPlan } from '../plan/Marcas'
 
 /**
  * Las piezas del Inicio, calcadas de `Mi cuenta.dc.html`. Solo pintan: los
@@ -255,11 +256,9 @@ const MARCAS: Record<string, { tinta: string; fondo: string }> = {
   brunch: { tinta: color.terracota, fondo: 'rgba(227,156,99,.24)' },
 }
 
-function FilaFecha(p: {
+type PropsFecha = {
   f: FilaAgenda
-  abierta: boolean
   textoReservar: (precio: string) => string
-  alAbrir: () => void
   /** `aceptaCondiciones`: la casilla del aviso de una +1 (01-11). */
   alConfirmar: (aceptaCondiciones?: boolean) => void
   /** Le alcanzan los créditos para ESTA fecha (dos en una +1). */
@@ -269,66 +268,48 @@ function FilaFecha(p: {
   pidePermiso: boolean
   permiso: boolean
   alPermiso: () => void
-}) {
-  const { f, abierta } = p
+}
+
+/**
+ * Una fecha de la agenda. Tocarla abre su hoja de reservar, que sube desde
+ * abajo (entrega «Qué estás reservando», A): antes se desplegaba aquí mismo.
+ */
+function FilaFecha(p: { f: FilaAgenda; alAbrir: () => void }) {
+  const { f } = p
   const m = MARCAS[f.formato]
-  // +1 con créditos: «Reservar dos puestos» no aparta todavía, cambia el botón por el aviso (2A).
-  const [aviso, setAviso] = useState(false)
-  const [entendido, setEntendido] = useState(false)
-  useEffect(() => {
-    if (!abierta) (setAviso(false), setEntendido(false))
-  }, [abierta])
-  const H = reglas.MAS_UNO.hoja
-  // El precio de una +1 ya es el de los dos puestos (5b29bfd): cada uno, la mitad.
-  const mitad = (precio: string) => precio.replace(/^([\d.,]+)/, (n) => {
-    const x = Number(n.replace(',', '.')) / 2
-    return Number.isInteger(x) ? String(x) : x.toFixed(2).replace('.', ',')
-  })
-  const Icono = ICONO_FORMATO[f.formato as keyof typeof ICONO_FORMATO]
   const quieta = f.mia || f.cerrada
   return (
-    <View style={{ borderRadius: radio.tarjeta, overflow: 'hidden', backgroundColor: abierta ? color.cremaFria : 'transparent' }}>
-      <Pressable
-        onPress={quieta ? undefined : p.alAbrir}
-        accessibilityRole="button"
-        aria-expanded={abierta}
-        aria-disabled={quieta}
-        style={[
-          estilos.fecha,
-          {
-            opacity: f.cerrada ? 0.58 : 1,
-            backgroundColor: f.mia ? 'transparent' : abierta ? color.cremaFria : color.cremaElevada,
-            borderColor: f.mia ? color.verde : 'transparent',
-          },
-        ]}
-      >
-        <View style={[estilos.fechaIcono, { backgroundColor: f.mia ? color.verde : m.fondo }]}>
-          {f.cerrada ? <IconoPunto color={m.tinta} /> : f.mia ? <IconoCheck color={color.crema} /> : <Icono color={m.tinta} />}
+    <Pressable
+      onPress={quieta ? undefined : p.alAbrir}
+      accessibilityRole="button"
+      aria-disabled={quieta}
+      style={[
+        estilos.fecha,
+        {
+          opacity: f.cerrada ? 0.58 : 1,
+          backgroundColor: f.mia ? 'transparent' : color.cremaElevada,
+          borderColor: f.mia ? color.verde : 'transparent',
+        },
+      ]}
+    >
+      {/* El icono del plan sobre crema tostado (E · Iconografía); suya, el check; cerrada, el punto. */}
+      <View style={[estilos.fechaIcono, { backgroundColor: f.mia ? color.verde : f.cerrada ? m.fondo : '#F3E3C7' }]}>
+        {f.cerrada ? <IconoPunto color={m.tinta} /> : f.mia ? <IconoCheck color={color.crema} /> : <IconoPlan formato={f.plan.formato} tam={19} />}
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 4, alignItems: 'center' }}>
+          <Texto variante="rotulo">{f.tipo}</Texto>
+          {/* Todas las marcas de la fecha, en su orden: +45, +1, idioma, segundo acto (E · Etiquetas). */}
+          <Capsulas capsulas={f.capsulas} />
         </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 9, rowGap: 2, alignItems: 'baseline' }}>
-            <Texto variante="rotulo">{f.tipo}</Texto>
-            {/* +1 acompañante: cápsula de contorno, para no competir con la de idioma (entrega mas-uno, 1A). */}
-            {f.masUno ? <Capsula /> : null}
-            {/* Segundo acto (63ba982): maciza como la de idioma, el mismo orden que la web. */}
-            {f.segundoActo ? (
-              <View style={[estilos.idioma, { backgroundColor: color.verdeProfundo }]}>
-                <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 11, lineHeight: 14, letterSpacing: 0.88, color: color.crema }}>{reglas.SEGUNDO_ACTO.marca.toUpperCase()}</Texto>
-              </View>
-            ) : null}
-            {/* Maciza, como la web: no es un detalle, es en otro idioma (20-10). */}
-            {f.idioma ? (
-              <View style={estilos.idioma}>
-                <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 11, lineHeight: 14, letterSpacing: 0.9, color: color.crema }}>{f.idioma.toUpperCase()}</Texto>
-              </View>
-            ) : null}
-            <Texto variante="cuerpoChico" tono="secundario">
-              {f.cuando}
-            </Texto>
-          </View>
-          <Texto variante="nota" style={{ marginTop: 3 }}>
-            {f.zona}
-          </Texto>
+        <Texto variante="cuerpoChico" tono="secundario" style={{ marginTop: 3 }}>
+          {f.cuando}
+        </Texto>
+        <Texto variante="nota" style={{ marginTop: 2 }}>
+          {f.zonaYTamano}
+        </Texto>
+        {/* La prueba social solo con datos: «Una mesa es de 4 a 8 personas» ya no sale (Michael, 02-11). */}
+        {f.conPrueba ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 9 }}>
             {quieta ? null : (
               <View style={estilos.barraFondo}>
@@ -342,129 +323,164 @@ function FilaFecha(p: {
               {f.estado}
             </Texto>
           </View>
+        ) : null}
+      </View>
+      {quieta ? null : (
+        <View style={[estilos.flecha, { backgroundColor: color.verdeProfundo }]}>
+          <IconoFlecha color={color.crema} />
         </View>
-        {quieta ? null : (
-          <View style={[estilos.flecha, { backgroundColor: abierta ? color.terracota : color.verdeProfundo }]}>
-            {abierta ? <IconoCruz color={color.crema} /> : <IconoFlecha color={color.crema} />}
-          </View>
-        )}
-      </Pressable>
+      )}
+    </Pressable>
+  )
+}
 
-      {abierta ? (
-        <View style={{ paddingHorizontal: 15, paddingBottom: 16 }}>
-          <View style={{ height: 1, backgroundColor: tinta(0.12), marginBottom: 16 }} />
-          {/* +1: «Vienes con alguien.», en lugar de «Te apuntas a una fecha» (1B). */}
-          {f.masUno ? (
-            <View style={{ marginBottom: 14 }}>
-              <BloqueHoja />
+/**
+ * La hoja de reservar de una fecha (entrega «Qué estás reservando», A): sube
+ * desde abajo, se cierra arrastrando hacia abajo, tocando fuera o con atrás.
+ * Arriba, el plan: formato, marcas, día y «Esta fecha». Debajo, todo lo de
+ * antes. El precio, el cierre y el botón, fijos al pie (F).
+ */
+function HojaFecha(p: PropsFecha & { alCerrar: () => void }) {
+  const { f } = p
+  const insets = useSafeAreaInsets()
+  // +1 con créditos: «Reservar dos puestos» no aparta todavía, cambia el botón por el aviso (2A).
+  const [aviso, setAviso] = useState(false)
+  const [entendido, setEntendido] = useState(false)
+  const H = reglas.MAS_UNO.hoja
+  const alCerrar = useRef(p.alCerrar)
+  alCerrar.current = p.alCerrar
+  const arrastre = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => g.dy > 8 && Math.abs(g.dy) > Math.abs(g.dx),
+      onPanResponderRelease: (_, g) => {
+        if (g.dy > 70 || g.vy > 0.8) alCerrar.current()
+      },
+    }),
+  ).current
+  const nota = reglas.notaDelPlan(f.plan)
+  const cubre = reglas.cubreDelPlan(f.plan)
+  const cierre = reglas.lineaDeCierre(f.empiezaEn, f.zonaHoraria, f.cierraEn)
+  const formato = (T.FORMATOS[f.formato]?.singular ?? '').toUpperCase()
+
+  return (
+    <Modal visible transparent animationType="slide" onRequestClose={p.alCerrar} statusBarTranslucent>
+      <View style={estilos.hojaFondo}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={p.alCerrar} accessibilityLabel={T.agenda.cancelar} />
+        <View style={[estilos.hojaFecha, { paddingBottom: insets.bottom + 14, marginTop: insets.top + 24 }]} accessibilityViewIsModal>
+          <View {...arrastre.panHandlers} style={{ paddingTop: 12, paddingBottom: 10, paddingHorizontal: 20 }}>
+            <View style={estilos.asa} />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 14 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <CuadroPlan formato={f.plan.formato} />
+                <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 12, lineHeight: 15, letterSpacing: 1.4, color: color.cuerpo }}>{formato}</Texto>
+              </View>
+              <Capsulas capsulas={f.capsulas} />
             </View>
-          ) : null}
-          <Texto variante="etiquetaChica" style={{ marginBottom: 11 }}>
-            {T.agenda.eligeHora}
-          </Texto>
-          {/* Una hora: la de la fecha. Nadie elige turno; si un día hay dos, serán dos fechas. */}
-          <View style={estilos.hora} aria-checked accessibilityRole="radio">
-            <View style={estilos.horaAro}>
-              <IconoCheck tam={11} color={color.sobreTerracota} />
-            </View>
-            <Texto variante="rotulo">{f.hora}</Texto>
+            <Texto style={{ fontFamily: fuente.titular, fontSize: 28, lineHeight: 40, color: color.verdeProfundo, marginTop: 6 }} accessibilityRole="header">
+              {f.cuando}
+            </Texto>
+            <Texto variante="cuerpoChico" tono="secundario" style={{ fontFamily: fuente.textoMedia }}>
+              {f.zonaYTamano}
+            </Texto>
           </View>
-          {f.masUno ? (
-            <>
-              {/* El cargo en dos (1B): en encuentros si le alcanzan los créditos, si no en ref. */}
-              <View style={{ marginBottom: 12 }}>
-                <CargoDos
-                  uno={p.conCredito ? T.agenda.encuentros(1) : mitad(f.precio)}
-                  total={p.conCredito ? T.agenda.encuentros(f.creditos) : f.precio}
-                />
+
+          <ScrollView style={{ flexGrow: 0, flexShrink: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, gap: 14 }}>
+            <EstaFecha fecha={f.plan} />
+            <View style={{ borderTopWidth: 1, borderTopColor: tinta(0.12) }}>
+              <Texto variante="cuerpoChico" tono="secundario" style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: tinta(0.12) }}>
+                {nota}
+              </Texto>
+              {/* «¿Cómo funciona?» (C1): el carrusel de ESTE plan, con lo que cambian sus marcas. */}
+              <View style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: tinta(0.12) }}>
+                <FilaComoFunciona plan={{ ...f.plan, empiezaEn: f.empiezaEn, zonaHoraria: f.zonaHoraria }} />
               </View>
-              <Texto variante="nota" style={{ marginBottom: 16 }}>
-                {H.nota}
-              </Texto>
-            </>
-          ) : (
-            <>
-              <Texto variante="cuerpoChico" tono="secundario" style={{ marginBottom: 14 }}>
-                {T.agenda.comoFunciona(f.cierre, f.mesas)}
-              </Texto>
-              <View style={estilos.cargo}>
-                <Texto variante="cuerpoChico" tono="tinta" style={{ flex: 1, fontFamily: fuente.textoMedia }}>
-                  {T.agenda.cargo}
+            </View>
+            {/* +1: el bloque y el cargo en dos (entrega mas-uno, 1B). */}
+            {f.masUno ? (
+              <View style={{ gap: 12 }}>
+                <BloqueHoja />
+                {/* En ref se dice por puesto («10 ref c/u»); el total de los dos, solo en el pago (Michael, 02-11). En encuentros sí: gasta dos. */}
+                {p.conCredito ? <CargoDos uno={T.agenda.encuentros(1)} total={T.agenda.encuentros(f.creditos)} /> : null}
+                <Texto variante="nota">{H.nota}</Texto>
+              </View>
+            ) : null}
+            {/* Las zonas que reservar le suma (31-10). Como la web. */}
+            {f.zonasNuevas.length ? (
+              <View style={[estilos.zonas, { marginBottom: 0 }]}>
+                <View style={estilos.zonasIcono}>
+                  <IconoPin color={color.crema} />
+                </View>
+                <Texto variante="cuerpoChico" tono="tinta" style={{ flex: 1 }}>
+                  {T.agenda.zonasNuevas(f.zonasNuevas)}
                 </Texto>
-                <Texto variante="cuerpoChico" tono="verde" style={{ fontFamily: fuente.textoSemi }}>
-                  {T.agenda.precio(f.precio)}
+              </View>
+            ) : null}
+            {/* Esta cena se graba: se dice antes del botón (18-10). */}
+            {f.graba ? (
+              <View style={[estilos.graba, { marginBottom: 0 }]}>
+                <Texto variante="cuerpoChico" tono="terracota" style={{ fontFamily: fuente.textoSemi }}>
+                  {T.grabacionFecha.titulo}
                 </Texto>
+                <Texto variante="cuerpoChico" style={{ marginTop: 6 }}>
+                  {T.grabacionFecha.cuerpo}
+                </Texto>
+                {p.pidePermiso ? (
+                  <Pressable
+                    onPress={p.alPermiso}
+                    accessibilityRole="checkbox"
+                    aria-checked={p.permiso}
+                    style={[estilos.permiso, p.permiso ? { backgroundColor: color.terracota, borderColor: color.terracota } : null]}
+                  >
+                    <Texto variante="cuerpo" style={{ fontFamily: fuente.textoMedia, color: p.permiso ? '#FFF8EA' : color.verdeProfundo }}>
+                      {T.grabacionFecha.permiso(p.permiso)}
+                    </Texto>
+                  </Pressable>
+                ) : null}
               </View>
-              <Texto variante="nota" style={{ marginBottom: 16 }}>
-                {T.agenda.nota}
+            ) : null}
+            {f.masUno && aviso ? <AvisoCasilla plazo={f.plazo} marcado={entendido} alMarcar={() => setEntendido((x) => !x)} /> : null}
+          </ScrollView>
+
+          {/* El pie, fijo: lo que cubre y el precio, el cierre y el botón. */}
+          <View style={estilos.hojaPie}>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
+              <Texto variante="cuerpoChico" tono="secundario" style={{ flex: 1 }}>
+                {cubre}
               </Texto>
-            </>
-          )}
-          {/* «¿Cómo funciona?» (entrega como-funciona, C1): entre los datos de la fecha y el botón. */}
-          <View style={{ marginBottom: 16 }}>
-            <FilaComoFunciona plan={{ formato: f.formato, empiezaEn: f.empiezaEn, zonaHoraria: f.zonaHoraria }} />
-          </View>
-          {/* Las zonas que reservar le suma (31-10): antes del botón, que es donde se decide. Como la web. */}
-          {f.zonasNuevas.length ? (
-            <View style={estilos.zonas}>
-              <View style={estilos.zonasIcono}>
-                <IconoPin color={color.crema} />
-              </View>
-              <Texto variante="cuerpoChico" tono="tinta" style={{ flex: 1 }}>
-                {T.agenda.zonasNuevas(f.zonasNuevas)}
+              <Texto style={{ fontFamily: fuente.titular, fontSize: 22, lineHeight: 31, color: color.verdeProfundo }}>{reglas.precioDelPlan(f.plan)}</Texto>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <IconoReloj />
+              <Texto variante="cuerpoChico" tono="secundario" style={{ flex: 1 }}>
+                {cierre.texto}
               </Texto>
             </View>
-          ) : null}
-          {/* Esta cena se graba: se dice antes del botón (18-10). */}
-          {f.graba ? (
-            <View style={estilos.graba}>
-              <Texto variante="cuerpoChico" tono="terracota" style={{ fontFamily: fuente.textoSemi }}>
-                {T.grabacionFecha.titulo}
-              </Texto>
-              <Texto variante="cuerpoChico" style={{ marginTop: 6 }}>
-                {T.grabacionFecha.cuerpo}
-              </Texto>
-              {p.pidePermiso ? (
-                <Pressable
-                  onPress={p.alPermiso}
-                  accessibilityRole="checkbox"
-                  aria-checked={p.permiso}
-                  style={[estilos.permiso, p.permiso ? { backgroundColor: color.terracota, borderColor: color.terracota } : null]}
-                >
-                  <Texto variante="cuerpo" style={{ fontFamily: fuente.textoMedia, color: p.permiso ? '#FFF8EA' : color.verdeProfundo }}>
-                    {T.grabacionFecha.permiso(p.permiso)}
-                  </Texto>
-                </Pressable>
-              ) : null}
-            </View>
-          ) : null}
-          {f.masUno && aviso ? (
-            // 2A · Con créditos, el aviso con casilla en la hoja; el botón se enciende al marcarla.
-            <View style={{ gap: 12 }}>
-              <AvisoCasilla plazo={f.plazo} marcado={entendido} alMarcar={() => setEntendido((x) => !x)} />
+            {/* El «no» del servidor, junto al botón. */}
+            {p.fallo ? <Aviso tono="ojo">{p.fallo}</Aviso> : null}
+            {f.masUno && aviso ? (
               <BotonConCasilla texto={H.boton(f.creditos)} marcado={entendido} onPress={() => p.alConfirmar(true)} />
-              <Boton tipo="fantasma" texto={T.agenda.cancelar} ancho onPress={p.alAbrir} />
-            </View>
-          ) : (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 11, alignItems: 'center' }}>
+            ) : (
               <Boton
-                texto={f.masUno ? (p.conCredito ? H.boton(f.creditos) : H.botonPrecio(f.precio)) : p.textoReservar(f.precio)}
-                // Sin créditos, el aviso sale en Pago (2B): allí se aparta.
+                ancho
+                texto={f.masUno ? (p.conCredito ? H.boton(f.creditos) : reglas.botonDelPlan(f.plan)) : p.textoReservar(f.precio)}
+                // Sin créditos, el aviso del +1 sale en Pago (2B): allí se aparta.
                 onPress={() => (f.masUno && p.conCredito ? setAviso(true) : p.alConfirmar())}
-                apagado={f.graba && p.pidePermiso && !p.permiso}
+                apagado={cierre.cerrada || (f.graba && p.pidePermiso && !p.permiso)}
               />
-              <Boton tipo="fantasma" texto={T.agenda.cancelar} onPress={p.alAbrir} />
-            </View>
-          )}
-          {/* El «no» del servidor, JUNTO al botón: debajo de la agenda (como la web) quedaba fuera de la pantalla. */}
-          {p.fallo ? (
-            <View style={{ marginTop: 12 }}>
-              <Aviso tono="ojo">{p.fallo}</Aviso>
-            </View>
-          ) : null}
+            )}
+          </View>
         </View>
-      ) : null}
-    </View>
+      </View>
+    </Modal>
+  )
+}
+
+function IconoReloj() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={9} stroke={color.terracota} strokeWidth={2} />
+      <Path d="M12 7v5l3 2" stroke={color.terracota} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
   )
 }
 
@@ -499,6 +515,7 @@ export function Agenda(p: {
         </View>
       </View>
     )
+  const abierta = p.abierta ? p.grupos.flatMap((g) => g.filas).find((x) => x.id === p.abierta) ?? null : null
   return (
     <View>
       <Texto variante="titulo" accessibilityRole="header" style={{ marginBottom: 12 }}>
@@ -526,24 +543,27 @@ export function Agenda(p: {
           </Texto>
           <View style={{ gap: 9 }}>
             {g.filas.map((f) => (
-              <FilaFecha
-                key={f.id}
-                f={f}
-                abierta={p.abierta === f.id}
-                textoReservar={(precio) => p.textoReservar(precio, f.graba)}
-                fallo={p.abierta === f.id ? p.fallo : ''}
-                pidePermiso={p.pidePermiso}
-                permiso={p.permiso}
-                alPermiso={p.alPermiso}
-                alAbrir={() => p.alAbrir(f.id)}
-                alConfirmar={(acepta) => p.alConfirmar(f.id, acepta)}
-                conCredito={p.misCreditos >= f.creditos}
-              />
+              <FilaFecha key={f.id} f={f} alAbrir={() => p.alAbrir(f.id)} />
             ))}
           </View>
         </View>
       ))}
 
+
+      {abierta ? (
+        <HojaFecha
+          key={abierta.id}
+          f={abierta}
+          textoReservar={(precio) => p.textoReservar(precio, abierta.graba)}
+          fallo={p.fallo}
+          pidePermiso={p.pidePermiso}
+          permiso={p.permiso}
+          alPermiso={p.alPermiso}
+          alCerrar={() => p.alAbrir(abierta.id)}
+          alConfirmar={(acepta) => p.alConfirmar(abierta.id, acepta)}
+          conCredito={p.misCreditos >= abierta.creditos}
+        />
+      ) : null}
 
       {p.grupos.length === 0 ? (
         <View style={estilos.vacia}>
@@ -720,6 +740,10 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderColor: tinta(0.2),
   },
+  hojaFondo: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(20,52,42,0.45)' },
+  hojaFecha: { backgroundColor: color.crema, borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: '100%', flexShrink: 1 },
+  asa: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: tinta(0.2) },
+  hojaPie: { gap: 10, paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: tinta(0.12), backgroundColor: color.crema },
   fecha: { flexDirection: 'row', gap: 13, alignItems: 'flex-start', borderRadius: radio.tarjeta, padding: 15, borderWidth: 1 },
   fechaIcono: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   barraFondo: { flex: 1, minWidth: 56, maxWidth: 132, height: 5, borderRadius: 3, backgroundColor: tinta(0.13), overflow: 'hidden' },

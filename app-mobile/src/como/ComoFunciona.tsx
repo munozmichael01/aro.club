@@ -1,30 +1,17 @@
 import { useMemo, useState } from 'react'
-import { Image, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Modal, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Path } from 'react-native-svg'
 
 import { IconoCruz, Texto, color, fuente, medida, radio, tinta } from '../diseno'
-import type { Tipo } from '../texto/como'
 import * as T from '../texto/como'
 import * as M from './maquina'
-
-export const FOTOS = {
-  antes: require('../../assets/fotos/como-funciona/llegada.jpg'),
-  durante: require('../../assets/fotos/como-funciona/conversacion.jpg'),
-  despues: require('../../assets/fotos/como-funciona/brindis.jpg'),
-}
 
 /** Los iconos de cada tramo (pin, conversación, salida), de la maqueta. */
 const ICONO: Record<M.Tarjeta['clave'], string> = {
   antes: 'M12 21s-6.5-5.6-6.5-10.5a6.5 6.5 0 1 1 13 0C18.5 15.4 12 21 12 21zM12 12.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
   durante: 'M4 5.5h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-3.5 3v-3H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2zM18.5 9.5H20a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v2.5l-3-2.5h-3',
   despues: 'M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M9.5 16.5 14 12 9.5 7.5M14 12H3.5',
-}
-
-/** El panel de color de cada tramo cuando no hay fotos (C4 brunch, C5 movimiento): fondo, trazo y tu punto. */
-const PANEL: Record<Exclude<Tipo, 'cena'>, Record<M.Tarjeta['clave'], [string, string, string]>> = {
-  brunch: { antes: ['#9CBBA6', '#14342A', '#FAF3E4'], durante: ['#E39C63', '#14342A', '#FAF3E4'], despues: ['#F6D9B4', '#14342A', '#8F4515'] },
-  grupo: { antes: ['#14342A', '#9CBBA6', '#E39C63'], durante: ['#1B5138', '#FAF3E4', '#E39C63'], despues: ['#8F4515', '#FAF3E4', '#E39C63'] },
 }
 
 export function IconoTramo({ clave, tam, color: c }: { clave: M.Tarjeta['clave']; tam: number; color: string }) {
@@ -83,7 +70,7 @@ export function ComoFunciona(p: { plan: M.Plan | null; abierta: boolean; todas?:
             <View style={{ gap: 10, marginTop: 4 }}>
               {v.tarjetas.map((t) => (
                 <View key={t.clave} style={e.filaTodas}>
-                  {v.conFotos ? <Image source={FOTOS[t.clave]} style={e.miniatura} /> : <Panel tipo={v.tipo} clave={t.clave} ancho={96} alto={108} />}
+                  <Panel t={t} ancho={96} alto={108} />
                   <View style={{ flex: 1, gap: 6, paddingVertical: 4, paddingRight: 4 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
                       <IconoTramo clave={t.clave} tam={14} color={color.terracotaSobreVerde} />
@@ -123,15 +110,21 @@ export function ComoFunciona(p: { plan: M.Plan | null; abierta: boolean; todas?:
               <IconoCruz tam={16} color={color.verdeProfundo} />
             </Pressable>
           </View>
-          <View style={[e.foto, { backgroundColor: v.conFotos ? color.verdeProfundo : PANEL[v.tipo === 'cena' ? 'brunch' : v.tipo][t.clave][0] }]}>
-            {v.conFotos ? <Image source={FOTOS[t.clave]} style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]} resizeMode="cover" /> : <Panel tipo={v.tipo} clave={t.clave} />}
+          <View style={[e.foto, { backgroundColor: t.panel }]}>
+            <Panel t={t} />
             <View style={[e.chip, { left: 14, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 9, paddingRight: 13 }]}>
               <View style={e.chipIcono}>
                 <IconoTramo clave={t.clave} tam={15} color={color.crema} />
               </View>
               <Texto style={[e.etiqueta, { fontFamily: fuente.textoNegrita, letterSpacing: 1.8, color: color.verdeProfundo }]}>{t.etiqueta}</Texto>
             </View>
-            <View style={[e.chip, { right: 14, backgroundColor: 'rgba(20,52,42,.7)', paddingHorizontal: 11 }]}>
+            {/* Si una marca cambió esta tarjeta, su cápsula lo señala (B). La cuenta baja a la esquina de abajo. */}
+            {t.marca ? (
+              <View style={[e.chip, { right: 14, backgroundColor: color.verdeProfundo, borderWidth: 1.5, borderColor: color.crema, paddingHorizontal: 10 }]}>
+                <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 10.5, lineHeight: 14, letterSpacing: 0.7, color: color.crema }}>{t.marca}</Texto>
+              </View>
+            ) : null}
+            <View style={[e.chip, t.marca ? { top: 'auto', bottom: 14 } : null, { right: 14, backgroundColor: 'rgba(20,52,42,.7)', paddingHorizontal: 11 }]}>
               <Texto style={{ fontFamily: fuente.textoSemi, fontSize: 12, lineHeight: 15, color: color.crema }}>{T.cuentaDe(i + 1, v.tarjetas.length)}</Texto>
             </View>
           </View>
@@ -163,33 +156,21 @@ export function ComoFunciona(p: { plan: M.Plan | null; abierta: boolean; todas?:
 }
 
 /**
- * Sin fotos (brunch y planes de movimiento): el panel de color con el isotipo
- * en el estado de cada tramo (C4, C5). Antes: tu punto y los demás por llegar.
- * Durante: el aro completo. Después: el aro punteado y cada quien hacia fuera.
+ * El panel de una tarjeta (entrega «Qué estás reservando», B): el color del
+ * tramo y el icono del plan en grande. Sustituye a las fotos y al isotipo.
  */
-export function Panel({ tipo, clave, ancho, alto, redondo }: { tipo: Tipo; clave: M.Tarjeta['clave']; ancho?: number; alto?: number; redondo?: boolean }) {
-  const [fondo, trazo, tuyo] = PANEL[tipo === 'cena' ? 'brunch' : tipo][clave]
-  const R = clave === 'despues' ? 104 : 86
+export function Panel({ t, ancho, alto, redondo }: { t: Pick<M.Tarjeta, 'panel' | 'colorIcono' | 'iconoPlan'>; ancho?: number; alto?: number; redondo?: boolean }) {
   const mini = ancho != null
-  const lado = mini ? Math.min(ancho!, alto ?? ancho!) * 0.8 : 210
+  const lado = mini ? Math.min(ancho!, alto ?? ancho!) * 0.55 : 120
   return (
     <View
       style={[
-        mini ? { width: ancho, height: alto ?? ancho, borderRadius: redondo ? (ancho! / 2) : 14 } : StyleSheet.absoluteFill,
-        { backgroundColor: fondo, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+        mini ? { width: ancho, height: alto ?? ancho, borderRadius: redondo ? ancho! / 2 : 14 } : StyleSheet.absoluteFill,
+        { backgroundColor: t.panel, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
       ]}
     >
-      <Svg width={lado} height={lado} viewBox="-20 -20 280 280">
-        <Circle cx={120} cy={120} r={86} fill="none" stroke={trazo} strokeWidth={14} strokeLinecap="round" strokeDasharray={clave === 'despues' ? '3 16' : undefined} opacity={clave === 'despues' ? 0.55 : 1} />
-        {[0, 60, 120, 180, 240, 300].map((a, k) => {
-          const r = (a * Math.PI) / 180
-          const x = 120 + R * Math.cos(r)
-          const y = 120 + R * Math.sin(r)
-          const vacio = clave === 'antes' && k > 0
-          return (
-            <Circle key={k} cx={x} cy={y} r={22} fill={k === 0 ? tuyo : vacio ? 'none' : trazo} stroke={vacio ? trazo : undefined} strokeWidth={vacio ? 5 : 0} strokeDasharray={vacio ? '9 7' : undefined} />
-          )
-        })}
+      <Svg width={lado} height={lado} viewBox="0 0 24 24" fill="none">
+        <Path d={t.iconoPlan} stroke={t.colorIcono} strokeWidth={mini && lado < 30 ? 2 : 1.4} strokeLinecap="round" strokeLinejoin="round" />
       </Svg>
     </View>
   )

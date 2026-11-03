@@ -193,13 +193,19 @@ test('la hora en letra no se come los minutos', () => {
   assert.equal(F.titularDeReserva('2026-10-10T23:30:00Z', 'America/Caracas'), 'Sábado 10, siete y media de la noche.')
 })
 
-test('una fecha con edad mínima se llama «Cena +40»', async () => {
+test('la edad va en su cápsula, con las demás marcas, y el tamaño con la zona (entrega «Qué estás reservando»)', async () => {
   const M = await import('../src/cuenta/maquina')
   const base = { id: 'x', formato: 'dinner', empiezaEn: '2026-10-17T23:30:00Z', cierraEn: null, creditos: 1, zonas: ['Chacao'], apuntados: 0, cerrada: false, mia: false, zonaHoraria: 'America/Caracas' }
-  const [g] = M.agenda([{ ...base, edadMinima: 40 }], null, Date.parse('2026-10-13T12:00:00Z'))
-  assert.equal(g.filas[0].tipo, 'Cena +40')
-  const [h] = M.agenda([base], null, Date.parse('2026-10-13T12:00:00Z'))
+  const [g] = M.agenda([{ ...base, edadMinima: 40, segundoActo: true }], null, Date.parse('2026-10-13T12:00:00Z'))
+  assert.equal(g.filas[0].tipo, 'Cenas')
+  assert.deepEqual(g.filas[0].capsulas.map((c) => c.texto), ['+40', 'SEGUNDO ACTO'])
+  assert.equal(g.filas[0].zonaYTamano, 'Chacao · Mesa de 4 a 8 personas')
+  // Sin apuntados no hay prueba social: «Una mesa es de 4 a 8 personas» ya no sale (02-11).
+  assert.equal(g.filas[0].conPrueba, false)
+  const [h] = M.agenda([{ ...base, apuntados: 4 }], null, Date.parse('2026-10-13T12:00:00Z'))
   assert.equal(h.filas[0].tipo, 'Cenas')
+  assert.deepEqual(h.filas[0].capsulas, [])
+  assert.equal(h.filas[0].conPrueba, true)
 })
 
 test('el precio de cada fecha sale del evento, en ref', async () => {
