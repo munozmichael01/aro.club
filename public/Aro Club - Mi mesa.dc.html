@@ -674,8 +674,10 @@
                   <sc-for list="{{ u.gente }}" as="c" hint-placeholder-count="2">
                     <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
                       <span style="flex:0 0 auto;width:36px;height:36px;border-radius:999px;background:{{ c.fondo }};display:flex;align-items:center;justify-content:center;font:400 16px/1 'Young Serif',Georgia,serif;color:#14342A">{{ c.inicial }}</span>
-                      <span style="flex:1;min-width:0;font:400 18px/1.15 'Young Serif',Georgia,serif;color:#14342A">{{ c.nombre }}</span>
-                      <span style="font:400 13px/1 'Inter Tight',sans-serif;color:#33513F">{{ c.sectorYNota }}</span>
+                      <span style="flex:1;min-width:0">
+                        <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:400 18px/1.15 'Young Serif',Georgia,serif;color:#14342A">{{ c.nombre }}</span>
+                        <span style="display:block;margin-top:2px;font:400 13px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ c.sectorYNota }}</span>
+                      </span>
                     </div>
                   </sc-for>
                 </div>
@@ -688,8 +690,14 @@
               <sc-for list="{{ comensales }}" as="c" hint-placeholder-count="5">
                 <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(20,52,42,.1)">
                   <span style="flex:0 0 auto;width:36px;height:36px;border-radius:999px;background:#C5D8CA;display:flex;align-items:center;justify-content:center;font:400 16px/1 'Young Serif',Georgia,serif;color:#14342A">{{ c.inicial }}</span>
-                  <span style="flex:1;min-width:0;font:400 18px/1.15 'Young Serif',Georgia,serif;color:#14342A">{{ c.nombre }}</span>
-                  <span style="font:400 13px/1 'Inter Tight',sans-serif;color:#33513F">{{ c.sectorYNota }}</span>
+                  <!-- El nombre arriba y lo demás debajo, como en la app (29-10).
+                       En la misma línea, una nota larga —sector, arraigo y «se
+                       sumó después»— dejaba el nombre en cero de ancho y se
+                       pintaban uno encima del otro. -->
+                  <span style="flex:1;min-width:0">
+                    <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:400 18px/1.15 'Young Serif',Georgia,serif;color:#14342A">{{ c.nombre }}</span>
+                    <span style="display:block;margin-top:2px;font:400 13px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ c.sectorYNota }}</span>
+                  </span>
                 </div>
               </sc-for>
               <div style="border-top:1px solid rgba(20,52,42,.1);margin-top:10px;padding-top:10px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ notaCompaneros }}</div>
@@ -2420,7 +2428,7 @@ class Component extends DCLogic {
       seUnio: !!c.seUnioDespues,
       notaUnio: 'se sumó después',
       estiloUnio: 'display:block;font:500 13px/1.4 \'Inter Tight\',sans-serif;color:#8F4515;margin-top:2px',
-      // Una sola línea donde no caben dos: sector, arraigo y la nota.
+      // Una sola línea, debajo del nombre: sector, arraigo y la nota.
       sectorYNota: [
         c.sector || 'Sin sector',
         AroReglas.arraigoDe(c.arraigo),
