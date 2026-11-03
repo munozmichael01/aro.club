@@ -55,11 +55,19 @@ export function metrosEntre(a: Punto | null | undefined, b: Punto | null | undef
  * Por encima de media hora devuelve `null`: a esa distancia ya no es «un
  * sitio cerca» y decirlo en la despedida sería mandar a seis personas a
  * cruzar Caracas. Si alguien quiere ofrecerlo igual, pone el número a mano.
+ *
+ * `sinTope` para el bar del segundo acto: ahí no se ofrece un sitio, se dice
+ * a dónde va toda la fecha, y Michael quiere los minutos siempre (03-11).
+ * Sin coordenadas sigue siendo `null`: eso no se adivina.
  */
-export function minutosAPie(a: Punto | null | undefined, b: Punto | null | undefined): number | null {
+export function minutosAPie(
+  a: Punto | null | undefined,
+  b: Punto | null | undefined,
+  { sinTope = false }: { sinTope?: boolean } = {},
+): number | null {
   const metros = metrosEntre(a, b)
   if (metros == null) return null
   const minutos = Math.ceil((metros * FACTOR_CALLE) / METROS_POR_MINUTO)
-  if (minutos > 30) return null
+  if (minutos > 30 && !sinTope) return null
   return Math.max(1, minutos)
 }

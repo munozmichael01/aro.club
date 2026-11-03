@@ -616,7 +616,9 @@ export async function GET(request: Request) {
         // Lo tecleado en la ficha del local manda, como en `paraSeguir`.
         minutosAPie:
           (seguires ?? []).find((x) => x.after_id === evento.after_venue_id)?.minutos_a_pie
-          ?? minutosAPie(mesa.restaurants, sitio),
+          // Sin el tope de media hora: el bar no es «un sitio cerca» que se
+          // ofrece, es a donde va toda la fecha, y los minutos salen siempre.
+          ?? minutosAPie(mesa.restaurants, sitio, { sinTope: true }),
       }
     }
   }

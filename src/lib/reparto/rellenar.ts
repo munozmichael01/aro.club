@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { encolarAvisosDeLaCena } from '@/lib/avisos-de-la-cena'
 import { encolar } from '@/lib/correos'
 import { retirarAbonoSinMesa } from '@/lib/creditos'
 import { construirPool } from '@/lib/reparto/pool'
@@ -71,7 +72,7 @@ export async function rellenarHueco(
 
   const { data: evento } = await admin
     .from('events')
-    .select('reveal_at, seats_per_table, format')
+    .select('reveal_at, starts_at, seats_per_table, format, after_venue_id')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -177,6 +178,16 @@ export async function rellenarHueco(
     'mesa_asignada',
     { mesa: mesa.table_number, formato: evento.format, sitio: null },
     { eventoId, cuando: revela > Date.now() ? new Date(evento.reveal_at) : undefined },
+  )
+
+  // Y los avisos con hora, que hasta el 03-11 solo encolaba `publicar`: quien
+  // entraba en un hueco se quedaba sin el juego y sin el bar del segundo
+  // acto. Michael: quien entra tarde recibe TODO. La revelación ya va arriba,
+  // y su línea del segundo acto se arma al enviar, como para los demás.
+  await encolarAvisosDeLaCena(
+    admin,
+    { id: eventoId, starts_at: evento.starts_at, after_venue_id: evento.after_venue_id },
+    [{ mesaId: tableId, perfiles: [elegido.profileId] }],
   )
 
   return { profileId: elegido.profileId, nombre: elegido.nombre, mesa: mesa.table_number }

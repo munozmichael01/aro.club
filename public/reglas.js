@@ -3410,6 +3410,14 @@
         return /\.$/.test(h) ? texto.replace('{hora}.', h).replace('{hora}', h) : texto.replace('{hora}', h)
       },
 
+      /**
+       * Pone los minutos en un texto de aquí, con «1 minuto» en singular.
+       * Hay locales a una cuadra del bar, y «A 1 minutos» es lo que salía.
+       */
+      conMinutos: function (texto, n) {
+        return n === 1 ? texto.replace('{n} minutos', '1 minuto') : texto.replace('{n}', String(n))
+      },
+
       /** El momento que suma al final de Paso a paso. */
       paso: {
         nombre: 'Sale el bar',
@@ -3422,7 +3430,7 @@
       /** La línea de la revelación del mediodía, en el correo y en la push. */
       revelacion: 'Esta fecha tiene segundo acto. El bar te lo decimos en la mesa, a las {hora}.',
 
-      /** El aviso a la hora del bar: push y, sin teléfono vivo, correo. */
+      /** El aviso a la hora del bar: push y correo. */
       aviso: {
         titulo: 'El segundo acto es en {bar}',
         cuerpo: 'A {n} minutos a pie de tu mesa. Cuando terminen, ahí siguen todas las mesas. Si quieres seguir, sigues.',

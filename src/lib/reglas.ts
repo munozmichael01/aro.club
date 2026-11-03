@@ -254,6 +254,7 @@ type Api = {
     }
     /** `{hora}` con la hora de `horaDe`, sin «p.m..». */
     conHora: (texto: string, hora: string | null | undefined) => string
+    conMinutos: (texto: string, n: number) => string
     paso: { nombre: string; texto: string }
     despedida: string
     revelacion: string

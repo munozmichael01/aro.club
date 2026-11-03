@@ -2939,7 +2939,7 @@ class Component extends DCLogic {
       barNombre: (barYa && dt.bar.nombre) || '',
       barDireccion: (barYa && dt.bar.direccion) || '',
       hayBarDireccion: !!(barYa && dt.bar.direccion),
-      barAPie: (barYa && dt.bar.minutosAPie != null) ? SA.caja.ahora.aPie.replace('{n}', dt.bar.minutosAPie) : '',
+      barAPie: (barYa && dt.bar.minutosAPie != null) ? SA.conMinutos(SA.caja.ahora.aPie, dt.bar.minutosAPie) : '',
       hayBarAPie: !!(barYa && dt.bar.minutosAPie != null),
       barTexto: SA.caja.ahora.texto,
       barBoton: SA.caja.ahora.boton,

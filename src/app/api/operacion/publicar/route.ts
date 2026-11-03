@@ -4,9 +4,9 @@ import { z } from 'zod'
 import { abonarSinMesa, retirarAbonoSinMesa } from '@/lib/creditos'
 import { DE_MAS } from '@/lib/mesa-corta'
 import { exigirOps } from '@/lib/ops'
-import { SEGUNDO_ACTO } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
+import { encolarAvisosDeLaCena } from '@/lib/avisos-de-la-cena'
 
 /**
  * Publicar la propuesta: aquí es donde las mesas empiezan a existir.
@@ -280,27 +280,6 @@ export async function POST(request: Request) {
     sentados.push({ mesaId: fila.id, perfiles: mesa.integrantes.map((p) => p.profileId) })
   }
 
-  /**
-   * «¿Ya pidieron?», veinte minutos después de sentarse.
-   *
-   * Se encola AQUÍ y no en un cron propio: la hora se sabe desde que se
-   * publica la mesa —`starts_at` más veinte minutos— y la cola ya sabe
-   * esperar. Un cron más sería otra idea de cuándo se avisa a alguien.
-   *
-   * Solo push: no hay correo. Un correo diciendo «abran el juego» llegaría
-   * cuando ya están cenando, y en una mesa nadie mira el correo.
-   */
-  const alJuego = new Date(new Date(evento.starts_at).getTime() + 20 * 60_000).toISOString()
-  const juego = sentados.flatMap((m) =>
-    m.perfiles.map((perfilId) => ({
-      profile_id: perfilId,
-      kind: 'juego' as const,
-      event_id: corrida.event_id,
-      send_at: alJuego,
-      payload: { mesaId: m.mesaId },
-    })),
-  )
-
   // Los correos quedan EN COLA para la hora de la revelación. No salen.
   const aviso = mesas.flatMap((mesa) =>
     mesa.integrantes.map((p) => ({
@@ -438,77 +417,16 @@ export async function POST(request: Request) {
     ? await admin.from('scheduled_emails').insert(porEncolar as never).select('id')
     : { data: [], error: null }
 
-  // La push del juego, con su propia hora. `upsert` y no `insert`: republicar
-  // una mesa no puede dejar dos avisos al mismo teléfono, y el índice de
-  // «uno por persona y fecha» ya existe para eso.
-  if (juego.length) {
-    // NO es un `upsert`, y no puede serlo.
-    //
-    // `scheduled_emails_una_por_persona` es un índice PARCIAL —solo cubre los
-    // tipos que anuncian algo una vez— y Postgres solo acepta un índice
-    // parcial como árbitro de un ON CONFLICT si la sentencia repite su
-    // WHERE. Ni PostgREST ni supabase-js lo emiten, así que el `upsert`
-    // fallaba entero con 42P10 y el juego no se encolaba NUNCA. No se vio
-    // porque el error aquí solo se registra: publicar devolvía 200 y el
-    // panel decía PUBLICADA con la cola sin una sola fila de juego.
-    //
-    // Se lee primero y se inserta lo que falta, que es lo que ya hace el
-    // aviso de la mesa unas líneas más arriba. El índice sigue haciendo
-    // falta: es lo que impide dos avisos al mismo teléfono si dos pestañas
-    // publican a la vez, y ahí el 23505 es la red, no el camino.
-    const { data: yaTienen } = await admin
-      .from('scheduled_emails')
-      .select('profile_id')
-      .eq('event_id', corrida.event_id)
-      .eq('kind', 'juego' as never)
-
-    const conJuego = new Set((yaTienen ?? []).map((f) => f.profile_id))
-    const nuevas = juego.filter((f) => !conJuego.has(f.profile_id))
-
-    const { error } = nuevas.length
-      ? await admin.from('scheduled_emails').insert(nuevas as never)
-      : { error: null }
-    // No tumba la publicación: las mesas ya están puestas y el aviso del
-    // juego es lo último que debe impedir que alguien sepa dónde cena.
-    if (error) console.error('[publicar] no se encoló el juego', error)
-  }
-
   /**
-   * El bar del segundo acto, a su hora (entrega segundo-acto, 03-11).
+   * Los avisos con hora: «¿Ya pidieron?» veinte minutos después de sentarse,
+   * y el bar del segundo acto a `barEn` si la fecha lo tiene.
    *
-   * Como el juego: la hora se sabe al publicar —`barEn`, dos horas después
-   * de la fecha— y la cola ya sabe esperar. Push, y correo solo si la push
-   * no llega (`PUSH_O_CORREO` en correos.ts). Lo que dice se lee al enviar,
-   * así que la fila no lleva nada: ni el bar ni la mesa.
-   *
-   * Leer y luego insertar, no `upsert`, por lo mismo que el juego: el índice
-   * es parcial y supabase-js no sabe usarlo de árbitro.
+   * Se encolan AQUÍ y no en un cron propio: la hora se sabe desde que se
+   * publica la mesa y la cola ya sabe esperar. Un cron más sería otra idea
+   * de cuándo se avisa a alguien. Viven en `encolarAvisosDeLaCena` porque
+   * `rellenarHueco` tiene que encolar lo mismo a quien entra después.
    */
-  const barEn = (evento as { after_venue_id?: string | null }).after_venue_id
-    ? SEGUNDO_ACTO.barEn(evento.starts_at)
-    : null
-  if (barEn) {
-    const { data: yaTienen } = await admin
-      .from('scheduled_emails')
-      .select('profile_id')
-      .eq('event_id', corrida.event_id)
-      .eq('kind', 'segundo_acto' as never)
-    const conAviso = new Set((yaTienen ?? []).map((f) => f.profile_id))
-    const nuevas = sentados
-      .flatMap((m) => m.perfiles)
-      .filter((perfilId) => !conAviso.has(perfilId))
-      .map((perfilId) => ({
-        profile_id: perfilId,
-        kind: 'segundo_acto',
-        event_id: corrida.event_id,
-        send_at: barEn,
-        payload: {},
-      }))
-    const { error } = nuevas.length
-      ? await admin.from('scheduled_emails').insert(nuevas as never)
-      : { error: null }
-    if (error) console.error('[publicar] no se encoló el segundo acto', error)
-  }
+  await encolarAvisosDeLaCena(admin, evento, sentados)
 
   // Los avisos de cambio. Van en su propio `upsert` y no con los de arriba
   // porque aquí SÍ hay que reescribir: si ya había uno en cola sin enviar y

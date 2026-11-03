@@ -891,9 +891,25 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
      *
      * Lleva el id de la mesa: la app abre el juego DE ESA mesa, y es lo que
      * hace que los seis teléfonos vean las mismas preguntas.
+     *
+     * La mesa se mira AL ENVIAR, no la del payload. El payload es la foto de
+     * cuando se publicó, y entre medias se puede despublicar y volver a
+     * publicar —la mesa nueva tiene otro id— o la persona puede dejar de
+     * estar sentada. Con la foto, la app abría el juego de una mesa que ya no
+     * existe, o le llegaba a quien ya no cena (Michael, 03-11: quien entra
+     * tarde a una mesa tiene que recibirlo todo, y bien).
      */
-    case 'juego':
-      return { a, datos: { ...base, mesaId: (p.mesaId as string) ?? '' } }
+    case 'juego': {
+      if (!fila.event_id || !fila.profile_id) return { error: 'sin fecha' }
+      const { data: suMesa } = await admin
+        .from('table_members')
+        .select('table_id, dinner_tables!inner(event_id)')
+        .eq('profile_id', fila.profile_id)
+        .eq('dinner_tables.event_id', fila.event_id)
+        .maybeSingle()
+      if (!suMesa) return { error: 'ya no tiene puesto en esa fecha' }
+      return { a, datos: { ...base, mesaId: suMesa.table_id } }
+    }
 
     /**
      * El bar del segundo acto, a su hora (entrega segundo-acto, 03-11).
@@ -945,7 +961,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         .eq('restaurant_id', mesaSA.restaurant_id ?? '')
         .eq('after_id', evSA.after_venue_id)
         .maybeSingle()
-      const minutos = tecleado?.minutos_a_pie ?? minutosAPie(mesaSA.restaurants, barSA)
+      const minutos = tecleado?.minutos_a_pie ?? minutosAPie(mesaSA.restaurants, barSA, { sinTope: true })
 
       const A = SEGUNDO_ACTO.aviso
       return {
@@ -955,7 +971,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           asunto: A.titulo.replace('{bar}', barSA.name),
           bar: barSA.name,
           direccion: barSA.address ?? '',
-          cuerpo: minutos != null ? A.cuerpo.replace('{n}', String(minutos)) : A.cuerpoSinMinutos,
+          cuerpo: minutos != null ? SEGUNDO_ACTO.conMinutos(A.cuerpo, minutos) : A.cuerpoSinMinutos,
           sello: SEGUNDO_ACTO.marca,
           ahora: SEGUNDO_ACTO.caja.ahora.sello,
           boton: A.boton,

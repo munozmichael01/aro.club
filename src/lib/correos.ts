@@ -281,8 +281,8 @@ export type Correo =
   | 'mas_uno_cancelada'
   | 'mas_uno_sin_puesto'
   /**
-   * El bar del segundo acto, a su hora (entrega segundo-acto, 03-11). Push, y
-   * correo solo si la push no llegó a ningún teléfono vivo: `PUSH_O_CORREO`.
+   * El bar del segundo acto, a su hora (entrega segundo-acto, 03-11). Push y
+   * correo, los dos, como el resto (Michael, 03-11).
    */
   | 'segundo_acto'
 
@@ -301,16 +301,19 @@ const SOLO_PUSH: ReadonlySet<string> = new Set(['juego'])
  * Los que llevan push O correo, nunca los dos.
  *
  * La regla de la casa es que la push viaja con el correo, en la misma fila.
- * El segundo acto la cambia a propósito: «si alguien tiene la app y el
- * correo, recibe solo la notificación» (entrega segundo-acto, 03-11). Llega a
- * las nueve de la noche, en mitad de la cena, y dos avisos iguales a la vez
- * es el que enseña a apagarlos.
+ * La entrega del segundo acto (03-11) pedía cambiarla para su aviso: «si
+ * alguien tiene la app y el correo, recibe solo la notificación», porque
+ * llega a las nueve de la noche en mitad de la cena.
  *
- * Si la push llegó a un teléfono vivo (`q.ok`, o un `push_at` de una pasada
- * anterior), la fila se cierra como `solo_push`. Si no —sin app, token
- * muerto, Expo caído—, sale el correo, que es para lo que está.
+ * Michael lo rechazó el mismo día, «por ahora»: el aviso del bar lleva push
+ * Y correo, como todos. Por eso la lista está vacía y no borrada: si vuelve
+ * la regla, es meter el tipo aquí.
+ *
+ * Con un tipo dentro: si la push llegó a un teléfono vivo (`q.ok`, o un
+ * `push_at` de una pasada anterior), la fila se cierra como `solo_push`. Si
+ * no —sin app, token muerto, Expo caído—, sale el correo.
  */
-const PUSH_O_CORREO: ReadonlySet<string> = new Set(['segundo_acto'])
+const PUSH_O_CORREO: ReadonlySet<string> = new Set<string>([])
 
 type AQuien = { perfil: string } | { correo: string }
 
