@@ -2290,18 +2290,20 @@
           fondo: '#14342A', color: '#FAF3E4', borde: '#14342A',
           sobreVerde: { fondo: '#FAF3E4', color: '#14342A', borde: '#FAF3E4' },
         },
-        que: 'Al terminar, todas las mesas se juntan en un bar',
+        // OPCIONAL, y que se note (Michael, 03-11): «todas las mesas siguen»
+        // sonaba a que había que ir.
+        que: 'Al terminar, quien quiera sigue con las otras mesas en un bar',
         /**
          * El bar se dice al terminar la cena, en la mesa (Michael, 03-11). Al
          * mediodía, con el sitio, solo que esa fecha tiene segundo acto.
          */
-        hoja: 'El bar te lo decimos en la mesa. Si quieres seguir, sigues.',
-        web: 'Al terminar, todas las mesas de esa fecha siguen la noche en un mismo bar.',
+        hoja: 'Es opcional: si te provoca seguir, el bar te lo decimos en la mesa.',
+        web: 'Al terminar, quien quiera sigue la noche con las otras mesas en un mismo bar.',
         tarjetas: {
           despues: function () {
             return {
-              titulo: 'Cada quien paga lo suyo, y todas las mesas siguen en un bar',
-              cuerpo: 'Al terminar, las mesas de esta fecha se juntan en un mismo bar. El bar te lo decimos en la mesa. Si quieres seguir, sigues.',
+              titulo: 'Cada quien paga lo suyo, y quien quiera sigue en un bar',
+              cuerpo: 'Al terminar, quien quiera sigue la noche con las otras mesas en un mismo bar. Es opcional: el bar te lo decimos en la mesa.',
               iconoPlan: api.ICONOS_PLAN.drinks,
             }
           },
@@ -2408,7 +2410,7 @@
       if (tiene('masUno')) t += ' ' + G.relativo + ' vienes con alguien' + (tiene('edad') ? ', ' + desde : '')
       else t += tiene('edad') ? ' ' + desde : ' con gente que no conoces'
 
-      if (tiene('segundoActo')) return t + ', y al terminar, todas las mesas siguen la noche en un mismo bar.'
+      if (tiene('segundoActo')) return t + ', y al terminar, quien quiera sigue la noche en un bar con las otras mesas.'
       if (tiene('masUno')) return t + ', y toda la mesa llega de dos en dos.'
       return t + ', ' + G.cola + '.'
     },
@@ -3178,8 +3180,8 @@
     },
 
     /**
-     * «Segundo acto»: después de la cena, todas las mesas de la fecha se
-     * juntan en un mismo bar (Michael, 01-11). Es de la FECHA —el bar va en
+     * «Segundo acto»: después de la cena, quien quiera sigue con las otras
+     * mesas de la fecha en un mismo bar (Michael, 01-11; opcional, 03-11). Es de la FECHA —el bar va en
      * `events.after_venue_id`— y por ahora solo se enseña la etiqueta, junto
      * al tipo, como «+45»; el bar se revela ese día.
      */

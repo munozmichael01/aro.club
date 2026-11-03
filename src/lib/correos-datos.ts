@@ -1644,7 +1644,8 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
                   ev.age_band_min != null && ev.age_band_max != null
                     ? `Solo para ${ev.age_band_min}-${ev.age_band_max}`
                     : ev.age_band_min != null ? `Solo para +${ev.age_band_min}` : '',
-                  ev.after_venue_id ? 'Con segundo acto en un bar' : '',
+                  // Opcional, y que se note (Michael, 03-11).
+                  ev.after_venue_id ? 'Al terminar, quien quiera sigue en un bar' : '',
                 ].filter(Boolean).join(' · '),
             /**
              * Y hasta cuándo se puede apartar puesto, cuando es inminente.
