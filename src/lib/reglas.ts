@@ -33,6 +33,7 @@ type ColoresCapsula = { fondo: string; color: string; borde: string }
 type CapsulaBase = ColoresCapsula & { texto: string; corto: string; icono: string; sobreVerde: ColoresCapsula }
 /** La de una fecha: con su texto de verdad («+40») y su clave. */
 type Capsula = CapsulaBase & { clave: Marca }
+type FechaConHoras = { empiezaEn?: string | null; starts_at?: string | null; revelaEn?: string | null; reveal_at?: string | null; zonaHoraria?: string | null }
 /** Lo que traen la agenda y Mi cuenta de cada fecha; también vale una fila de `events`. */
 type FechaConMarcas = {
   formato?: string | null
@@ -183,6 +184,10 @@ type Api = {
   /** «10 ref» · «10 ref c/u». */
   precioDelPlan: (fecha: FechaConMarcas) => string
   botonDelPlan: (fecha: FechaConMarcas) => string
+  notaDelPlan: (fecha: FechaConMarcas & FechaConHoras, zona?: string) => string
+  cubreDelPlan: (fecha: FechaConMarcas) => string
+  lineaDeCierre: (inicioIso: string, zona?: string, cierreIso?: string | null, ahora?: number) => { texto: string; cerrada: boolean }
+  pruebaSocial: (n: number, fecha: FechaConMarcas) => string
   /** Cómo se nombra un plan que ya pasó (encuesta y seguir en contacto). */
   pasadoDe: (formato: string | null | undefined) => PlanPasado
   DE_MESA_COMPLETA: string[]

@@ -2051,7 +2051,9 @@
      */
     COMO_FUNCIONA: {
       titulo: '¿Cómo funciona?',
-      fila: { titulo: '¿Cómo funciona?', bajada: 'Antes, durante y después, en tres tarjetas' },
+      // «de esta fecha»: desde el 02-11 las tarjetas cambian con las marcas
+      // de cada fecha, así que ya no son las mismas tres para todas.
+      fila: { titulo: '¿Cómo funciona?', bajada: 'Antes, durante y después de esta fecha' },
       filaMesa: { titulo: 'Cómo funciona', bajada: 'Antes, durante y después' },
       siguiente: 'Siguiente',
       entendido: 'Entendido',
@@ -2290,18 +2292,16 @@
         },
         que: 'Al terminar, todas las mesas se juntan en un bar',
         /**
-         * PENDIENTE DE MICHAEL (02-11): cuándo se sabe el bar y cuándo se
-         * dice. Design proponía «El bar te lo decimos en la mesa», y hasta
-         * que lo decida no va ninguna de las dos frases. La hoja no pinta
-         * esta línea mientras esté vacía.
+         * El bar se dice al terminar la cena, en la mesa (Michael, 03-11). Al
+         * mediodía, con el sitio, solo que esa fecha tiene segundo acto.
          */
-        hoja: '',
+        hoja: 'El bar te lo decimos en la mesa. Si quieres seguir, sigues.',
         web: 'Al terminar, todas las mesas de esa fecha siguen la noche en un mismo bar.',
         tarjetas: {
           despues: function () {
             return {
               titulo: 'Cada quien paga lo suyo, y todas las mesas siguen en un bar',
-              cuerpo: 'Al terminar, las mesas de esta fecha se juntan en un mismo bar. Si quieres seguir, sigues.',
+              cuerpo: 'Al terminar, las mesas de esta fecha se juntan en un mismo bar. El bar te lo decimos en la mesa. Si quieres seguir, sigues.',
               iconoPlan: api.ICONOS_PLAN.drinks,
             }
           },
@@ -2467,6 +2467,92 @@
 
     pasadoDe: function (formato) {
       return api.PLAN_PASADO[api.COMO_FUNCIONA.planDe(formato)] || api.PLAN_PASADO.cena
+    },
+
+    /**
+     * La línea de encima de «¿Cómo funciona?», en la hoja de reservar.
+     *
+     * Cuándo se sabe sale de la fecha (`revelaDe`), nunca escrito: «ese día
+     * al mediodía» en una cena, «el día anterior, a las 6:00 p.m.» en un
+     * brunch. En el +1 va en plural, porque reservan dos.
+     */
+    notaDelPlan: function (fecha, zona) {
+      var f = fecha || {}
+      var plan = api.COMO_FUNCIONA.planDe(f.formato || f.format)
+      var masUno = !!(f.masUno || f.mas_uno)
+      var r = api.revelaDe(f.empiezaEn || f.starts_at, zona || f.zonaHoraria, f.revelaEn || f.reveal_at)
+      var cuando = !r
+        ? 'ese día'
+        : r.mismoDia
+          ? 'ese día ' + (r.enLetra === 'mediodía' ? 'al mediodía' : 'a ' + r.enLetra)
+          : 'el día anterior, a las ' + r.hora
+      var P = api.MAS_UNO.conPunto
+      if (masUno) return P('Se apuntan a una fecha, no a una mesa. El sitio y con quién van, ' + cuando)
+      if (plan === 'drinks') return P('Te apuntas a una fecha, no a un grupo. El bar y quiénes van, ' + cuando)
+      if (plan === 'grupo') return P('Te apuntas a una fecha, no a un grupo. El punto de encuentro y quiénes van, ' + cuando)
+      return P('Te apuntas a una fecha, no a una mesa. El sitio y con quién vas, ' + cuando)
+    },
+
+    /**
+     * Qué cubre lo que pagas. Brunch y coffee no están dibujados y van como
+     * la cena: se come y se toma. El grupo en movimiento no consume en un
+     * sitio, así que solo el puesto.
+     */
+    cubreDelPlan: function (fecha) {
+      var f = fecha || {}
+      var plan = api.COMO_FUNCIONA.planDe(f.formato || f.format)
+      if (f.masUno || f.mas_uno) return 'Dos puestos, el tuyo y el de tu acompañante.'
+      if (plan === 'drinks') return 'Tu puesto. Lo que tomes, cada quien lo suyo.'
+      if (plan === 'grupo') return 'Tu puesto en el grupo.'
+      return 'Tu puesto. Lo que comas y tomes, cada quien lo suyo.'
+    },
+
+    /**
+     * La línea de cierre de la hoja (sección F): «Cierra a medianoche,
+     * cuando empieza el sábado.», «Cierra hoy a medianoche.» el día del
+     * cierre, y «Reservas cerradas» cuando ya cerró, que es también el texto
+     * del botón apagado (`cerrada: true`).
+     *
+     * Es `textoCierre` con mayúscula y punto, y con lo que solo se sabe
+     * mirando el reloj: si hoy es el día y si ya pasó. `ahora` es opcional,
+     * para poder probarla.
+     */
+    lineaDeCierre: function (inicioIso, zona, cierreIso, ahora) {
+      var t = Date.parse(cierreIso || api.cierreDe(inicioIso) || '')
+      var ya = typeof ahora === 'number' ? ahora : Date.now()
+      if (isFinite(t) && t <= ya) return { texto: 'Reservas cerradas', cerrada: true }
+      var base = api.textoCierre(inicioIso, zona, cierreIso)
+      if (!base) return { texto: '', cerrada: false }
+      // El día del cierre: «hoy». A medianoche, el último minuto abierto es
+      // el de hoy; si no, la hora de verdad (los de mañana, a las 5:00 p.m.).
+      if (isFinite(t) && t - ya < 24 * 3600000) {
+        var ultimo = new Date(t - 60000).toISOString()
+        if (api.diaDe(ultimo, zona) === api.diaDe(new Date(ya).toISOString(), zona)) {
+          var pc = api.partesDe(new Date(t).toISOString(), zona)
+          var aMedianoche = pc && pc.horas === 0 && pc.minutos === 0
+          return { texto: api.MAS_UNO.conPunto('Cierra hoy a ' + (aMedianoche ? 'medianoche' : 'las ' + api.horaDe(new Date(t).toISOString(), zona))), cerrada: false }
+        }
+      }
+      return { texto: api.MAS_UNO.conPunto('C' + base.replace(/^se c/, '')), cerrada: false }
+    },
+
+    /**
+     * La prueba social de la agenda: «4 apuntados · 1 mesa». Por debajo del
+     * umbral, NADA, en vez de «Una mesa es de 4 a 8 personas», que repetía
+     * la línea del tamaño (Michael, 02-11).
+     *
+     * Es aparte de `fraseDeApuntados`, que no cambia de forma: la usa la app
+     * en su fila de la agenda.
+     */
+    pruebaSocial: function (n, fecha) {
+      var f = fecha || {}
+      var x = Number(n) || 0
+      if (f.masUno || f.mas_uno) {
+        if (Math.floor(x / 2) < api.MAS_UNO.DUOS.minimo) return ''
+        return api.MAS_UNO.fraseDeDuos(x)
+      }
+      if (x < api.UMBRAL_APUNTADOS) return ''
+      return api.fraseDeApuntados(x, f.porMesa || f.seats_per_table, f.formato || f.format)
     },
 
     botonDelPlan: function (fecha) {
