@@ -74,6 +74,10 @@ export type DeServidor = {
   edadMinima?: number | null
   idioma?: string | null
   segundoActo?: boolean
+  /** Segundo acto (entrega 03-11): a qué hora sale el bar en Mi mesa. Sin él, dos horas después de la cena. */
+  barEn?: string | null
+  /** El bar: el servidor lo manda solo desde `barEn`. Antes no viaja, para que nadie se salte la cena. */
+  bar?: (SitioParaSeguir & { direccion?: string | null }) | null
   /** El acompañante: con quién viene (5E). */
   vienesCon?: string | null
   /** El acompañante que entró por un enlace y aún no se ha verificado (5D), en 'sin-reserva'. */
@@ -141,6 +145,18 @@ export type SitioParaSeguir = {
   precio?: string | null
   mapa?: string | null
   mapaApple?: string | null
+}
+
+/**
+ * La hora del bar del segundo acto: la que mande el servidor, o la de la cena
+ * más la duración de la mesa (dos horas, la misma para todas las mesas de la
+ * fecha). Null si la fecha no tiene segundo acto.
+ */
+export function horaDelBar(d: DeServidor): string | null {
+  if (!d.segundoActo) return null
+  if (d.barEn && !Number.isNaN(Date.parse(d.barEn))) return d.barEn
+  const t = Date.parse(d.empiezaEn ?? '')
+  return Number.isNaN(t) ? null : new Date(t + reglas.GUION.duracionDeLaMesa * 60_000).toISOString()
 }
 
 /** «3 min a pie · $$»: con lo que haya, como la web. Vacío si no hay nada. */

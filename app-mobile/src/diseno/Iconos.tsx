@@ -233,6 +233,16 @@ export function IconoCerrado({ tam = 18, color }: P) {
   )
 }
 
+/** A pie (entrega segundo-acto, 03-11): «A 6 minutos a pie de tu mesa». */
+export function IconoAPie({ tam = 17, color }: P) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Circle cx={13} cy={4.5} r={1.5} stroke={color} strokeWidth={2} />
+      <Path d="M9 21l2-6 3 2v4M8 10l3-2 3 3 3 1M11 8l-1 5" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
+}
+
 export function IconoSale({ tam = 15, color }: P) {
   return (
     <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">

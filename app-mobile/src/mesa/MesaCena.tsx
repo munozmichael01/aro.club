@@ -3,7 +3,7 @@ import { useCallback, useState, type ReactNode } from 'react'
 import { Image, Platform, Pressable, StyleSheet, View, type TextStyle } from 'react-native'
 
 import Svg, { Path } from 'react-native-svg'
-import { IconoCandado, Texto, fuente } from '../diseno'
+import { IconoAPie, IconoCandado, IconoReloj, Texto, fuente } from '../diseno'
 import * as G from '../juego/guardado'
 import * as J from '../juego/maquina'
 import { DuosLista } from '../masuno/Partes'
@@ -29,7 +29,7 @@ import * as M from './maquina'
  * El espejo en la web es `Aro Club - Mi mesa.dc.html` (lo monta el agente):
  * mismo orden, mismo copy, mismas reglas.
  */
-type Clave = 'gente' | 'paso' | 'juego'
+type Clave = 'gente' | 'paso' | 'juego' | 'segundo'
 
 export function MesaCena(p: {
   d: M.DeServidor
@@ -49,7 +49,7 @@ export function MesaCena(p: {
   const pasos = Gu.pasos(d.empiezaEn, zona, d.formato)
   const momento = Gu.momentoDeCena(pasos, ahora)
   const [abiertas, setAbiertas] = useState<Record<Clave, boolean>>(() =>
-    momento === 'antes' ? { gente: true, paso: false, juego: false } : { gente: false, paso: true, juego: false },
+    momento === 'antes' ? { gente: true, paso: false, juego: false, segundo: false } : { gente: false, paso: true, juego: false, segundo: false },
   )
   const poner = (k: Clave, v: boolean) => setAbiertas((a) => ({ ...a, [k]: v }))
 
@@ -70,14 +70,19 @@ export function MesaCena(p: {
     useCallback(() => {
       if (d.mesaId) G.cargar(d.mesaId).then(setGuardado)
       // «Volver al paso a paso» (fin de la ronda 1).
-      if (G.tomarPedidoPaso()) setAbiertas({ gente: false, paso: true, juego: false })
+      if (G.tomarPedidoPaso()) setAbiertas({ gente: false, paso: true, juego: false, segundo: false })
     }, [d.mesaId]),
   )
 
   const jugar = (como: string) => d.mesaId && ir(`/juego?mesa=${d.mesaId}&ir=${como}`)
   const otros = M.otros(d)
   const mapa = M.mapa(d, Platform.OS)
-  const sitios = (d.paraSeguir ?? []).filter((x) => x.nombre).slice(0, 3)
+  // Segundo acto (entrega 03-11): el bar es el sitio para seguir, así que la despedida no sugiere otros.
+  const sitios = d.segundoActo ? [] : (d.paraSeguir ?? []).filter((x) => x.nombre).slice(0, 3)
+  const barEn = M.horaDelBar(d)
+  const horaBar = barEn ? F.horaEn(barEn, zona) : ''
+  // Desde su hora y solo si el servidor ya mandó el bar: sin el bar, la caja sigue diciendo a qué hora sale.
+  const barYa = !!(barEn && d.bar?.nombre && ahora >= Date.parse(barEn))
 
   const actual = Gu.enCurso(pasos, ahora)
   const enCursoPaso = momento === 'antes' ? null : actual
@@ -85,7 +90,9 @@ export function MesaCena(p: {
   const ultimoAhora = ahoraPaso[ahoraPaso.length - 1]
   const resumenPaso = !pasos.length
     ? ''
-    : momento === 'antes'
+    : barYa
+      ? T.cena.segundo.resumenPaso
+      : momento === 'antes'
       ? T.cena.paso.resumenAntes(pasos.length, Gu.sinSufijo(F.horaEn(pasos[0].en, zona)), F.horaEn(pasos[pasos.length - 1].en, zona))
       : ultimoAhora?.momento === 'despedida' && sitios.length
         ? T.cena.paso.resumenSitios(ultimoAhora.nombre, sitios.length)
@@ -101,8 +108,21 @@ export function MesaCena(p: {
   return (
     <View style={{ gap: 12 }}>
       {p.ajustes}
-      <TarjetaMesa d={d} momento={momento} mapa={mapa} ir={ir} alTarde={p.alTarde} />
+      {/* 4: desde la hora del bar, lo que toca ahora va arriba; el restaurante sigue debajo para quien no ha salido. */}
+      {barYa && d.bar ? <CajaBar bar={d.bar} ir={ir} /> : null}
+      <TarjetaMesa d={d} momento={momento} mapa={mapa} ir={ir} alTarde={p.alTarde} fotoBaja={barYa} />
       {p.tarde}
+
+      {/* 1: antes de la cena, abierta y con la hora. 2: durante, plegada como las demás. Nunca dice cuál es el bar. */}
+      {barEn && !barYa ? (
+        momento === 'antes' ? (
+          <CajaSegundo hora={horaBar} />
+        ) : (
+          <Desplegable titulo={T.cena.segundo.titulo} resumen={T.cena.segundo.resumen(horaBar)} abierta={abiertas.segundo} alTocar={() => poner('segundo', !abiertas.segundo)}>
+            <Texto style={[texto(14.5, 1.45), { color: C.cuerpo, paddingHorizontal: 18, paddingBottom: 16 }]}>{T.cena.segundo.bajada(horaBar)}</Texto>
+          </Desplegable>
+        )
+      ) : null}
 
       <Desplegable
         titulo={T.cena.conQuien.titulo(M.voz(d))}
@@ -145,8 +165,9 @@ export function MesaCena(p: {
           <View style={{ paddingHorizontal: 18, paddingBottom: 10 }}>
             <Texto style={[texto(14, 1.45), { color: C.cuerpo, paddingBottom: 6 }]}>{T.guion.bajada}</Texto>
             {pasos.map((x) => {
-              const ahoraEs = enCursoPaso !== null && x.en === enCursoPaso
-              const pasado = enCursoPaso !== null && Date.parse(x.en) < Date.parse(enCursoPaso)
+              // Desde la hora del bar, lo que está pasando es el segundo acto: el resto del guion ya pasó.
+              const ahoraEs = !barYa && enCursoPaso !== null && x.en === enCursoPaso
+              const pasado = barYa || (enCursoPaso !== null && Date.parse(x.en) < Date.parse(enCursoPaso))
               const enlace = x.botonJuego || null
               return (
                 <View key={x.momento} style={[e.fila, ahoraEs ? e.filaAhora : null]}>
@@ -196,6 +217,26 @@ export function MesaCena(p: {
                 </View>
               )
             })}
+            {barEn && !pasos.some((x) => (x.momento as string) === 'segundoActo') ? (
+              // El último momento: a qué hora sale el bar, sin decir cuál (entrega segundo-acto, 2).
+              <View style={[e.fila, barYa ? e.filaAhora : null]}>
+                <Texto style={[e.hora, { color: C.terracota }]}>{Gu.sinSufijo(horaBar)}</Texto>
+                <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
+                  <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+                    <View style={[e.capsula, { backgroundColor: C.tinta }]}>
+                      <Texto style={[e.capsulaTexto, { color: C.crema }]}>{T.cena.segundo.marca}</Texto>
+                    </View>
+                    {barYa ? (
+                      <View style={e.ahora}>
+                        <Texto style={e.ahoraTexto}>{T.guion.ahora}</Texto>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Texto style={serif(barYa ? 22 : 19, 1.15, -0.015)}>{T.cena.segundo.paso.nombre}</Texto>
+                  <Texto style={[texto(15, 1.45), { color: C.cuerpo }]}>{T.cena.segundo.paso.texto}</Texto>
+                </View>
+              </View>
+            ) : null}
           </View>
         </Desplegable>
       ) : null}
@@ -240,7 +281,7 @@ export function MesaCena(p: {
 
 // --- La tarjeta de la mesa ----------------------------------------------------
 
-function TarjetaMesa(p: { d: M.DeServidor; momento: Gu.MomentoCena; mapa: string | null; ir: (d: string) => void; alTarde: () => void }) {
+function TarjetaMesa(p: { d: M.DeServidor; momento: Gu.MomentoCena; mapa: string | null; ir: (d: string) => void; alTarde: () => void; fotoBaja?: boolean }) {
   const { d } = p
   const zona = d.zonaHoraria ?? null
   const num = M.conNumero(d) ? M.numero(d) : ''
@@ -270,7 +311,8 @@ function TarjetaMesa(p: { d: M.DeServidor; momento: Gu.MomentoCena; mapa: string
           <Image
             source={{ uri: d.fotoEntrada }}
             // La foto llega ya encuadrada a 16:9 desde el panel (1600 × 900): se enseña entera, como en la web y los correos.
-            style={{ width: '100%', aspectRatio: 16 / 9 }}
+            // Con el bar arriba, la foto baja a 120 (entrega segundo-acto, 4): sigue ahí para quien no ha salido.
+            style={p.fotoBaja ? { width: '100%', height: 120 } : { width: '100%', aspectRatio: 16 / 9 }}
             resizeMode="cover"
             accessibilityLabel={T.cena.fotoEntrada(d.restaurante || '')}
           />
@@ -292,6 +334,61 @@ function TarjetaMesa(p: { d: M.DeServidor; momento: Gu.MomentoCena; mapa: string
       </View>
       {/* Cuánto dura la mesa (Michael, 22-10): en gris y dentro de la tarjeta, como «Al llegar». No es una alarma. */}
       {d.avisoDosHoras ? <Texto style={[texto(13, 1.5), { color: C.secundarioVerde, marginTop: 14 }]}>{d.avisoDosHoras}</Texto> : null}
+    </View>
+  )
+}
+
+// --- El segundo acto (entrega segundo-acto, 03-11) ------------------------------
+
+/** 1: al mediodía, abierta, con la hora a la que sale el bar. No dice cuál es. */
+function CajaSegundo({ hora }: { hora: string }) {
+  return (
+    <View style={e.segundo}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <View style={[e.capsula, { height: 26, paddingHorizontal: 11, backgroundColor: C.tinta }]}>
+          <Texto style={[e.capsulaTexto, { fontSize: 11.5, color: C.crema }]}>{T.cena.segundo.marca}</Texto>
+        </View>
+        {hora ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <IconoReloj tam={16} color={C.terracota} />
+            <Texto style={[semi(14), { color: C.terracota }]}>{hora}</Texto>
+          </View>
+        ) : null}
+      </View>
+      <Texto style={serif(21, 1.12, -0.015)}>{T.cena.segundo.abierta}</Texto>
+      <Texto style={[texto(14.5, 1.45), { color: C.cuerpo }]}>{T.cena.segundo.bajada(hora)}</Texto>
+    </View>
+  )
+}
+
+/** 4: desde la hora, el bar en terracota, encima del restaurante. */
+function CajaBar({ bar, ir }: { bar: NonNullable<M.DeServidor['bar']>; ir: (d: string) => void }) {
+  const mapa = M.mapa(bar, Platform.OS)
+  return (
+    <View style={e.bar}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <View style={[e.capsula, { height: 26, paddingHorizontal: 11, backgroundColor: C.crema }]}>
+          <Texto style={[e.capsulaTexto, { fontSize: 11.5, color: C.tinta }]}>{T.cena.segundo.marca}</Texto>
+        </View>
+        <View style={[e.ahora, { minHeight: 24, paddingHorizontal: 10 }]}>
+          <Texto style={[e.ahoraTexto, { fontSize: 10.5 }]}>{T.cena.segundo.ahora}</Texto>
+        </View>
+      </View>
+      <Texto style={[serif(34, 1.02, -0.025), { color: C.crema }]}>{bar.nombre}</Texto>
+      {bar.direccion ? <Texto style={[texto(15, 1.45), { color: C.crema }]}>{bar.direccion}</Texto> : null}
+      {bar.minutosAPie != null ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <IconoAPie tam={17} color={C.crema} />
+          <Texto style={[semi(15), { color: C.crema }]}>{T.cena.segundo.aPie(bar.minutosAPie)}</Texto>
+        </View>
+      ) : null}
+      <View style={{ height: 1, backgroundColor: 'rgba(250,243,228,.25)' }} />
+      <Texto style={[texto(15, 1.45), { color: C.crema }]}>{T.cena.segundo.nota}</Texto>
+      {mapa ? (
+        <Pressable onPress={() => ir('externo:' + mapa)} accessibilityRole="button" style={({ pressed }) => [e.botonBar, pressed && { backgroundColor: C.acento }]}>
+          <Texto style={[semi(15), { color: C.tinta }]}>{T.cena.segundo.comoLlegar}</Texto>
+        </Pressable>
+      ) : null}
     </View>
   )
 }
@@ -567,5 +664,10 @@ const e = StyleSheet.create({
   candado: { marginTop: 8, minHeight: 48, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(250,243,228,.25)', paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 12 },
   hecho: { minHeight: 30, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(156,187,166,.5)', justifyContent: 'center' },
   jugado: { paddingTop: 6, paddingHorizontal: 18, paddingBottom: 18, gap: 14, borderTopWidth: 1, borderTopColor: 'rgba(250,243,228,.15)' },
+  segundo: { borderRadius: 22, backgroundColor: C.papel, borderWidth: 1.5, borderColor: C.tinta, paddingVertical: 16, paddingHorizontal: 18, gap: 10 },
+  bar: { borderRadius: 26, backgroundColor: C.terracota, paddingTop: 20, paddingHorizontal: 18, paddingBottom: 18, gap: 12 },
+  botonBar: { minHeight: 50, borderRadius: 999, backgroundColor: C.crema, alignItems: 'center', justifyContent: 'center', marginTop: 2, paddingHorizontal: 16 },
+  capsula: { alignSelf: 'flex-start', height: 24, paddingHorizontal: 10, borderRadius: 999, justifyContent: 'center' },
+  capsulaTexto: { fontFamily: fuente.textoNegrita, fontSize: 11, lineHeight: 14, letterSpacing: 0.8 },
   cancelar: { marginTop: 12, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
 })

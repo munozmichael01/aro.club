@@ -243,6 +243,25 @@ export const guion = {
  * despliegan.
  */
 export const cena = {
+  /**
+   * El segundo acto en Mi mesa (entrega segundo-acto de Design, 03-11),
+   * calcado. Nada nombra el bar antes de su hora. Pasa a `reglas.js` si el
+   * agente de la web lo sube ahí, para que las dos lo lean de un sitio.
+   */
+  segundo: {
+    marca: reglas.SEGUNDO_ACTO.marca,
+    titulo: 'Segundo acto',
+    abierta: 'Al terminar, todas las mesas siguen la noche en un mismo bar',
+    bajada: (hora: string) => `El bar te lo decimos en la mesa: sale aquí a las ${hora}. Si quieres seguir, sigues.`,
+    // «p.m.» ya cierra con punto: no se pone otro.
+    resumen: (hora: string) => `El bar sale aquí a las ${hora}${hora.endsWith('.') ? '' : '.'}`,
+    ahora: 'AHORA',
+    aPie: (n: number) => `A ${n} ${n === 1 ? 'minuto' : 'minutos'} a pie de tu mesa`,
+    nota: 'Cuando terminen, ahí se juntan todas las mesas. Cada quien paga lo suyo. Si quieres seguir, sigues.',
+    comoLlegar: 'Cómo llegar al bar',
+    paso: { nombre: 'Sale el bar', texto: 'Aparece arriba en Mi mesa, el de todas las mesas.' },
+    resumenPaso: 'Ahora: segundo acto',
+  },
   sello: { antes: 'ABIERTO', curso: 'EN CURSO', terminada: 'TERMINADA' } as Record<'antes' | 'curso' | 'terminada', string>,
   mesa: 'MESA',
   alLlegarFoto: 'AL LLEGAR · BUSCA ESTA ENTRADA',

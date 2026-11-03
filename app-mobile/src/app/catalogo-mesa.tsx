@@ -15,7 +15,7 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Mi mesa con un servidor SIMULADO, para ver cada fase en el navegador:
- * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|sin-abono|cerrada|cerrada-tarde|abierta|antes|en-curso|sin-foto|terminada|unica|guion|movimiento|pasada|valorada|fallo
+ * /catalogo-mesa?estado=revision|sin-reserva|sin-mesa|sin-abono|cerrada|cerrada-tarde|abierta|antes|en-curso|sin-foto|terminada|segundo-antes|segundo-curso|segundo-sin-bar|segundo-bar|unica|guion|movimiento|pasada|valorada|fallo
  * Lo del 16-10: graba|grabado|grabado-movimiento (la grabación) y ajuste-cancelo|ajuste-suma|ajuste-ambos|ajuste-movido.
  * ?tope=1 en `pasada`: el veto del sitio no cabe (ya tiene dos).
  * +1 (01-11): ?estado=mas-uno|mas-uno-registrado|mas-uno-confirmado|mas-uno-cancelada|mas-uno-pendiente|mas-uno-dentro|mas-uno-abierta.
@@ -86,6 +86,14 @@ const ESTADOS: Record<string, DeServidor> = {
   'en-curso': { ...ABIERTA, empiezaEn: en(-37 / 60), fotoEntrada: FACHADA, paraSeguir: SITIOS },
   'sin-foto': { ...ABIERTA, empiezaEn: en(-37 / 60), paraSeguir: [] },
   terminada: { ...ABIERTA, empiezaEn: en(-125 / 60), fotoEntrada: FACHADA, paraSeguir: SITIOS },
+  // Segundo acto (entrega 03-11): al mediodía, durante la cena y desde la hora del bar (sin bar aún, y con él).
+  'segundo-antes': { ...ABIERTA, fotoEntrada: FACHADA, paraSeguir: SITIOS, segundoActo: true },
+  'segundo-curso': { ...ABIERTA, empiezaEn: en(-72 / 60), fotoEntrada: FACHADA, paraSeguir: SITIOS, segundoActo: true },
+  'segundo-sin-bar': { ...ABIERTA, empiezaEn: en(-125 / 60), fotoEntrada: FACHADA, segundoActo: true },
+  'segundo-bar': {
+    ...ABIERTA, empiezaEn: en(-125 / 60), fotoEntrada: FACHADA, paraSeguir: SITIOS, segundoActo: true,
+    bar: { nombre: 'El Patio', direccion: 'Avenida Francisco de Miranda con calle Páez, Chacao', minutosAPie: 6, mapa: 'https://www.google.com/maps/search/?api=1&query=El+Patio' },
+  },
   unica: { ...ABIERTA, mesaUnica: true, fotoEntrada: FACHADA },
   // La grabación: sin contestar (sale a los 6 s), y ya contestada.
   graba: { ...ABIERTA, fotoEntrada: FACHADA, eventoId: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', grabamos: true, permisoGrabacion: null },
