@@ -62,6 +62,8 @@ export function Inicio(p: {
   const scroll = useRef<ScrollView>(null)
   const yAgenda = useRef(0)
   const actual = useRef<M.MiCuenta | null>(null)
+  /** La fecha cuya hoja se cerró para ir a pagar: al volver, se abre otra vez. */
+  const volverAHoja = useRef<string | null>(null)
   actual.current = datos
 
   const { servicio } = p
@@ -91,6 +93,11 @@ export function Inicio(p: {
   // montadas, y lo hecho en Mi mesa o en Perfil cambia lo que dice el Inicio.
   useFocusEffect(
     useCallback(() => {
+      // Volvió del pago sin pagar: la hoja de esa fecha, en el acto y como la dejó, no el Inicio pelado (Michael, 03-11).
+      const id = volverAHoja.current
+      volverAHoja.current = null
+      if (id && actual.current?.agenda.some((a) => a.id === id && !a.mia)) setAbierta(id)
+      // Y se relee por detrás, sin esqueleto: lo que había se queda en pantalla hasta que llega lo nuevo.
       cargarTodo()
     }, [cargarTodo]),
   )
@@ -181,6 +188,7 @@ export function Inicio(p: {
     if (r.accion === 'nada') return
     // La hoja es un modal: se cierra antes de irse, o se quedaría encima de la pantalla nueva.
     if (r.accion !== 'reservar') setAbierta(null)
+    if (r.accion === 'pagar') volverAHoja.current = id
     if (r.accion === 'completar' && r.destino) return p.ir(r.destino)
     if (r.accion === 'verificar') return p.ir('/verificacion')
     if (r.accion === 'pagar') return p.ir('/pago', { evento: id })
