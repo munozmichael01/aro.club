@@ -9,6 +9,7 @@ import { crearServicioPuerta } from '../puerta/servicio'
 import { reglas } from '../reglas'
 import { api, supabase } from '../sesion'
 import { borrarLead } from '../sesion/lead'
+import { olvidarRecuerdos } from '../util/recuerdo'
 import { terminarEntrada } from '../sesion/nativo'
 import { disponible, entrarCon } from '../sesion/proveedores'
 import * as TE from '../texto/entrar'
@@ -39,6 +40,7 @@ export default function Pantalla() {
       // La cuenta del menor ya está dada de baja en el servidor: solo queda la sesión de este celular.
       alCerrarMenor={async () => {
         await supabase.auth.signOut({ scope: 'local' })
+        await olvidarRecuerdos()
         await borrarLead()
       }}
       alVolver={router.canGoBack() ? () => router.back() : undefined}

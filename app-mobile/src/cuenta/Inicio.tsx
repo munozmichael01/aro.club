@@ -22,6 +22,7 @@ import * as TI from '../texto/idioma'
 import { Agenda, Atajos, Esqueleto, LoProximo, Pie, Seccion, TarjetaEstado, Valorar } from './Partes'
 import type { crearServicioCuenta } from './servicio'
 import { contarFormato } from './voz'
+import { recordar, recuerdo } from '../util/recuerdo'
 
 type Servicio = ReturnType<typeof crearServicioCuenta>
 
@@ -73,6 +74,8 @@ export function Inicio(p: {
   const releer = useCallback(async () => {
     const r = await servicio.cuenta()
     if (r.ok) {
+      // Sin «Estás dentro»: el salto lo decide la respuesta de AHORA, nunca un recuerdo (null, no undefined: undefined es «servidor viejo»).
+      recordar('mi-cuenta', { ...r.datos, estasDentro: null })
       setDatos(r.datos)
       setFallo('')
     } else if (r.status === 401) alEntrar.current()
@@ -83,7 +86,7 @@ export function Inicio(p: {
   const cargarTodo = useCallback(async () => {
     const [ok] = await Promise.all([
       releer(),
-      servicio.mesa().then((r) => setMesa(r.ok && r.datos.mesaId ? r.datos : null)),
+      servicio.mesa().then((r) => (r.ok && recordar('mi-mesa', r.datos), setMesa(r.ok && r.datos.mesaId ? r.datos : null))),
       servicio.exclusiones().then((r) => r.ok && setNExcl(r.datos.exclusiones.length)),
     ])
     return ok
@@ -101,6 +104,12 @@ export function Inicio(p: {
       cargarTodo()
     }, [cargarTodo]),
   )
+
+  // Lo último que se vio, al instante, mientras llega lo nuevo (03-11): el esqueleto, solo la primera vez.
+  useEffect(() => {
+    recuerdo<M.MiCuenta>('mi-cuenta').then((x) => x && !actual.current && setDatos(x))
+    recuerdo<NonNullable<typeof mesa>>('mi-mesa').then((x) => x && x.mesaId && setMesa((m) => m ?? x))
+  }, [])
 
   // La pestaña de abajo dice «Mi mesa» o «Mi grupo» según lo reservado.
   useEffect(() => contarFormato(datos?.reserva?.formato), [datos])

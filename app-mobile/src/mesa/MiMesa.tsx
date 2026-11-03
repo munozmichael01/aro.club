@@ -28,6 +28,7 @@ import { CenaPasada } from '../pasadas/CenaPasada'
 import { ListaPasadas, Punto } from '../pasadas/Lista'
 import * as PM from '../pasadas/maquina'
 import { ponerSenal, useSenal } from '../pasadas/senal'
+import { recordar, recuerdo } from '../util/recuerdo'
 import type { crearServicioPasadas } from '../pasadas/servicio'
 
 type Servicio = ReturnType<typeof crearServicioMesa>
@@ -94,6 +95,7 @@ export function MiMesa(p: {
   const cargar = useCallback(async () => {
     const r = await servicio.mesa()
     if (r.ok) {
+      recordar('mi-mesa', r.datos)
       setD(r.datos)
       setFallo('')
       ponerSenal(r.datos.senalPasadas)
@@ -113,6 +115,11 @@ export function MiMesa(p: {
 
   // Al entrar en la pestaña, al volver a ella y al volver a la app: la mesa
   // se abre a una hora, y quien espera vuelve a mirar.
+  // Lo último que se vio, al instante, mientras llega lo nuevo (03-11). Solo si aún no hay nada.
+  useEffect(() => {
+    recuerdo<M.DeServidor>('mi-mesa').then((x) => x && setD((d) => d ?? x))
+  }, [])
+
   useFocusEffect(
     useCallback(() => {
       cargar()
