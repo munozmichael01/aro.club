@@ -233,21 +233,11 @@
                 <span style="flex:1;min-width:0">
                   <span style="display:flex;flex-wrap:wrap;gap:4px 9px;align-items:baseline">
                     <span style="font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ ev.tipo }}</span>
-                    <sc-if value="{{ ev.hayEdad }}" hint-placeholder-val="{{ false }}">
-                      <span style="{{ ev.estiloEdad }}">{{ ev.etiquetaEdad }}</span>
-                    </sc-if>
-                    <!-- «+1 ACOMPAÑANTE» (1A): cápsula de contorno con los dos
-                         puntos juntos. No compite con la de idioma, que es maciza. -->
-                    <sc-if value="{{ ev.masUno }}" hint-placeholder-val="{{ false }}">
-                      <span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px 0 6px;border-radius:999px;border:1.5px solid #14342A;font:700 10.5px/1 'Inter Tight',sans-serif;letter-spacing:.09em;color:#14342A;white-space:nowrap;align-self:center"><svg width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="#8F4515"></circle><circle cx="20" cy="10" r="6.5" fill="none" stroke="#14342A" stroke-width="2.4"></circle></svg>{{ ev.marcaMasUno }}</span>
-                    </sc-if>
-                    <!-- Segundo acto: todas las mesas se juntan en un bar después. -->
-                    <sc-if value="{{ ev.segundoActo }}" hint-placeholder-val="{{ false }}">
-                      <span style="display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:#14342A;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;color:#FAF3E4;white-space:nowrap;text-transform:uppercase">{{ ev.marcaSegundoActo }}</span>
-                    </sc-if>
-                    <sc-if value="{{ ev.hayIdioma }}" hint-placeholder-val="{{ false }}">
-                      <span style="{{ ev.estiloIdioma }}">{{ ev.etiquetaIdioma }}</span>
-                    </sc-if>
+                    <!-- Todas las marcas con el mismo dibujo y en el mismo orden
+                         que la agenda y la app (`AroReglas.capsulasDe`, 02-11). -->
+                    <sc-for list="{{ ev.capsulas }}" as="k" hint-placeholder-count="1">
+                      <span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:{{ k.fondo }};color:{{ k.color }};border:1.5px solid {{ k.borde }};font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.07em;white-space:nowrap;align-self:center">{{ k.texto }}</span>
+                    </sc-for>
                     <span style="font:400 14px/1.3 'Inter Tight',sans-serif;color:#566A5D">{{ ev.cuando }}</span>
                   </span>
                   <span style="display:block;font:400 13px/1.4 'Inter Tight',sans-serif;color:#566A5D;margin-top:3px">{{ ev.zona }}</span>
@@ -273,20 +263,39 @@
                     </sc-for>
                   </div>
 
-                  <!-- Como funciona, aqui y no encima de la agenda.
-                       Arriba eran 120px de explicacion entre el titulo y la
-                       primera fecha, y empujaban la primera fecha fuera de la
-                       pantalla en un telefono. Aqui llega cuando hace falta:
-                       justo antes de decir lo que se paga. -->
-                  <sc-if value="{{ ev.normal }}" hint-placeholder-val="{{ true }}">
-                  <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:16px;max-width:50ch;text-wrap:pretty">{{ ev.comoFunciona }}</div>
-
-                  <div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:14px 0;border-top:1px solid rgba(20,52,42,.12);border-bottom:1px solid rgba(20,52,42,.12);margin-bottom:16px">
-                    <span style="flex:1 1 auto;font:500 14px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ ev.cargo }}</span>
-                    <span style="font:600 14px/1.4 'Inter Tight',sans-serif;color:#1B5138;white-space:nowrap">{{ ev.precio }}</span>
+                  <!-- «Esta fecha» (entrega «Qué estás reservando», sección A,
+                       02-11): la frase del plan y una línea por marca, con su
+                       cápsula sobre verde. Solo lectura. Es lo mismo que la
+                       hoja de la app, de las mismas funciones de reglas.js. -->
+                  <div style="border-radius:22px;background:#14342A;color:#FAF3E4;padding:clamp(16px,2vw,20px);margin-bottom:16px;max-width:60ch">
+                    <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">ESTA FECHA</div>
+                    <div style="font:400 clamp(20px,2.4vw,24px)/1.25 'Young Serif',Georgia,serif;letter-spacing:-.01em;margin-top:12px;text-wrap:pretty">{{ ev.frase }}</div>
+                    <sc-for list="{{ ev.lineas }}" as="l" hint-placeholder-count="1">
+                      <div style="border-top:1px solid rgba(250,243,228,.16);margin-top:14px;padding-top:14px;display:flex;flex-direction:column;align-items:flex-start;gap:8px">
+                        <span style="display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:{{ l.fondo }};color:{{ l.color }};border:1.5px solid {{ l.borde }};font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.07em;white-space:nowrap">{{ l.capsula }}</span>
+                        <span style="font:400 14.5px/1.5 'Inter Tight',sans-serif;color:#E4EDE6;text-wrap:pretty">{{ l.texto }}</span>
+                      </div>
+                    </sc-for>
                   </div>
-                  <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:16px;max-width:50ch;text-wrap:pretty">{{ ev.nota }}</div>
-                  </sc-if>
+
+                  <!-- La nota, entre filetes: a qué te apuntas y cuándo se sabe
+                       (de la fecha, nunca escrito). -->
+                  <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;padding:14px 0;border-top:1px solid rgba(20,52,42,.12);margin-bottom:0;max-width:60ch;text-wrap:pretty">{{ ev.notaPlan }}</div>
+
+                  <!-- La fila que abre «Cómo funciona» (C1 de la entrega del
+                       29-10). Ya sale en todas: desde el 02-11 drinks, coffee
+                       y el +1 tienen sus tarjetas (`tarjetasDe`), que cambian
+                       con las marcas de esta fecha. -->
+                  <button onClick="{{ ev.verComo }}" style="width:100%;display:flex;align-items:center;gap:12px;min-height:62px;padding:10px 0;margin-bottom:16px;border:none;border-top:1px solid rgba(20,52,42,.12);border-bottom:1px solid rgba(20,52,42,.12);background:none;cursor:pointer;text-align:left">
+                    <div style="width:36px;height:36px;border-radius:18px;background:#14342A;display:flex;align-items:center;justify-content:center;flex:none">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5v.4M12 17h.01"></path></svg>
+                    </div>
+                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                      <div style="font:600 15px/1.2 'Inter Tight',sans-serif;color:#14342A">{{ comoFilaTitulo }}</div>
+                      <div style="font:400 13px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ comoFilaBajada }}</div>
+                    </div>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M9 5l7 7-7 7"></path></svg>
+                  </button>
 
                   <!-- 1B · Fecha +1: el bloque verde en lugar de «Te apuntas a
                        una fecha», el cargo en dos y su nota. -->
@@ -298,11 +307,15 @@
                         <div style="font:400 13.5px/1.45 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">{{ ev.hojaBajada }}</div>
                       </div>
                     </div>
+                    <!-- El desglose en encuentros, solo con créditos. Sin ellos,
+                         el precio por puesto al pie y el total en el pago (Michael, 02-11). -->
+                    <sc-if value="{{ ev.hayDesglose }}" hint-placeholder-val="{{ false }}">
                     <div style="display:flex;flex-direction:column;gap:8px;padding:14px 0;border-top:1px solid rgba(20,52,42,.12);border-bottom:1px solid rgba(20,52,42,.12);margin-bottom:14px;max-width:52ch">
                       <div style="display:flex;gap:14px;align-items:baseline"><span style="flex:1;font:500 14.5px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ ev.tuPuesto }}</span><span style="font:600 14.5px/1.3 'Inter Tight',sans-serif;color:#1B5138">{{ ev.unPuesto }}</span></div>
                       <div style="display:flex;gap:14px;align-items:baseline"><span style="flex:1;font:500 14.5px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ ev.suPuesto }}</span><span style="font:600 14.5px/1.3 'Inter Tight',sans-serif;color:#1B5138">{{ ev.unPuesto }}</span></div>
                       <div style="display:flex;gap:14px;align-items:baseline;padding-top:8px;border-top:1px dashed rgba(20,52,42,.18)"><span style="flex:1;font:600 15px/1.3 'Inter Tight',sans-serif;color:#14342A">{{ ev.dosPuestos }}</span><span style="font:400 19px/1.1 'Young Serif',Georgia,serif;color:#1B5138">{{ ev.dosPuestosValor }}</span></div>
                     </div>
+                    </sc-if>
                     <div style="font:400 12.5px/1.45 'Inter Tight',sans-serif;color:#566A5D;margin-bottom:16px;max-width:52ch;text-wrap:pretty">{{ ev.hojaNota }}</div>
                   </sc-if>
 
@@ -331,28 +344,6 @@
                     </div>
                   </sc-if>
 
-                  <!-- La fila que abre «Cómo funciona» (C1 de la entrega del
-                       29-10). Justo encima del botón, que es donde Design la
-                       puso: se pulsa cuando ya casi has decidido y te falta
-                       saber qué pasa después de pulsar.
-
-                       En los drinks NO sale. `COMO_FUNCIONA.tipoDe` solo
-                       sabe de cenas, brunch y movimiento, así que unos
-                       drinks caían en «cena» y las tres tarjetas hablaban de
-                       una cena que no es. Michael, 31-10: quitarlo hasta que
-                       tengan las suyas. -->
-                  <sc-if value="{{ ev.hayComo }}" hint-placeholder-val="{{ true }}">
-                  <button onClick="{{ ev.verComo }}" style="width:100%;display:flex;align-items:center;gap:12px;min-height:62px;padding:10px 0;margin-bottom:16px;border:none;border-top:1px solid rgba(20,52,42,.12);border-bottom:1px solid rgba(20,52,42,.12);background:none;cursor:pointer;text-align:left">
-                    <div style="width:36px;height:36px;border-radius:18px;background:#14342A;display:flex;align-items:center;justify-content:center;flex:none">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5v.4M12 17h.01"></path></svg>
-                    </div>
-                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-                      <div style="font:600 15px/1.2 'Inter Tight',sans-serif;color:#14342A">{{ comoFilaTitulo }}</div>
-                      <div style="font:400 13px/1.3 'Inter Tight',sans-serif;color:#33513F">{{ comoFilaBajada }}</div>
-                    </div>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M9 5l7 7-7 7"></path></svg>
-                  </button>
-                  </sc-if>
 
                   <!-- 2A · Con crédito, el aviso sale aquí al tocar «Reservar dos
                        puestos». Borde terracota: lo único con ese borde. -->
@@ -372,10 +363,23 @@
                     </div>
                   </sc-if>
 
+                  <!-- El pie (sección F): qué cubre y el precio, la línea de
+                       cierre con su reloj, y el botón. -->
+                  <div style="display:flex;gap:16px;align-items:flex-start;padding-top:16px;border-top:1px solid rgba(20,52,42,.12);max-width:60ch">
+                    <span style="flex:1;min-width:0;font:400 14.5px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ ev.cubre }}</span>
+                    <span style="font:400 22px/1.1 'Young Serif',Georgia,serif;color:#14342A;white-space:nowrap">{{ ev.precioPlan }}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;margin:10px 0 16px;font:400 14px/1.4 'Inter Tight',sans-serif;color:#33513F">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F4515" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                    <span>{{ ev.cierre }}</span>
+                  </div>
                   <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:center">
                     <button onClick="{{ ev.confirmar }}" style="{{ ev.botonConfirmar }}">{{ ev.textoConfirmar }}</button>
                     <button onClick="{{ ev.abrir }}" style="{{ botonFantasmaOscuro }}">Cancelar</button>
                   </div>
+                  <!-- Lo que pasa si cancelas. Vivía en la nota de debajo del
+                       precio, que la entrega quitó; no se pierde. -->
+                  <div style="font:400 12.5px/1.45 'Inter Tight',sans-serif;color:#566A5D;margin-top:12px;max-width:60ch;text-wrap:pretty">{{ ev.cancela }}</div>
                 </div>
               </sc-if>
               </div>
@@ -543,8 +547,11 @@
         <sc-for list="{{ comoTarjetas }}" as="t" hint-placeholder-count="3">
           <div style="display:flex;flex-direction:column;gap:14px">
             <div style="height:250px;border-radius:22px;overflow:hidden;position:relative;background:{{ t.panel }}">
-              <sc-if value="{{ t.hayFoto }}" hint-placeholder-val="{{ true }}">
-                <img src="{{ t.foto }}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:{{ t.pos }};display:block;filter:grayscale(.24) contrast(1.16) saturate(.74) brightness(.9)">
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+                <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="{{ t.colorIcono }}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ t.iconoPlan }}"></path></svg>
+              </div>
+              <sc-if value="{{ t.hayMarca }}" hint-placeholder-val="{{ false }}">
+                <span style="position:absolute;left:12px;bottom:12px;display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:999px;background:#FAF3E4;color:#14342A;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;white-space:nowrap">{{ t.marca }}</span>
               </sc-if>
               <div style="position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;background:#FAF3E4;border-radius:999px;padding:7px 12px 7px 8px">
                 <div style="width:24px;height:24px;border-radius:12px;background:#14342A;display:flex;align-items:center;justify-content:center">
@@ -562,8 +569,11 @@
       <!-- ANGOSTO: una cada vez -->
       <div class="como-angosto" style="flex-direction:column;gap:14px;margin-top:22px">
         <div style="height:clamp(200px,52vw,290px);border-radius:24px;overflow:hidden;position:relative;background:{{ comoUna.panel }};flex:none">
-          <sc-if value="{{ comoUna.hayFoto }}" hint-placeholder-val="{{ true }}">
-            <img src="{{ comoUna.foto }}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:{{ comoUna.pos }};display:block;filter:grayscale(.24) contrast(1.16) saturate(.74) brightness(.9)">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="{{ comoUna.colorIcono }}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ comoUna.iconoPlan }}"></path></svg>
+          </div>
+          <sc-if value="{{ comoUna.hayMarca }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute;left:14px;bottom:14px;display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:999px;background:#FAF3E4;color:#14342A;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;white-space:nowrap">{{ comoUna.marca }}</span>
           </sc-if>
           <div style="position:absolute;left:14px;top:14px;display:flex;align-items:center;gap:8px;background:#FAF3E4;border-radius:999px;padding:8px 13px 8px 9px">
             <div style="width:26px;height:26px;border-radius:13px;background:#14342A;display:flex;align-items:center;justify-content:center">
@@ -722,8 +732,10 @@ class Component extends DCLogic {
    * armadas: la frase de «cuándo se sabe» sale de la fecha cada vez que se
    * pinta, y congelarla aquí seria una tercera copia de la regla.
    */
-  abrirComo(formato, empiezaEn, revelaEn) {
-    this.setState({ como: { formato: formato, empiezaEn: empiezaEn, revelaEn: revelaEn }, comoIdx: 0 });
+  abrirComo(formato, empiezaEn, revelaEn, fecha) {
+    // `fecha` trae las marcas (+1, idioma, segundo acto): con ellas cambian
+    // las tarjetas que tocan, como en la app.
+    this.setState({ como: { formato: formato, empiezaEn: empiezaEn, revelaEn: revelaEn, fecha: fecha || null }, comoIdx: 0 });
   }
 
   cerrarComo() { this.setState({ como: null, comoIdx: 0 }); }
@@ -1503,7 +1515,12 @@ class Component extends DCLogic {
         // `c[20]`: la zona horaria de la fecha, para decir su plazo en su hora.
         a.zonaHoraria || 'America/Caracas',
         // `c[21]`: hay segundo acto (solo la etiqueta). Al final, por lo mismo.
-        !!a.segundoActo
+        !!a.segundoActo,
+        // `c[22]`: la fecha entera, tal cual llega. Las funciones de la hoja
+        // de reservar (`AroReglas.fraseDelPlan`, `capsulasDe`, `notaDelPlan`…)
+        // leen sus campos por nombre, igual que en la app, y así esta tupla
+        // deja de crecer por cada dato nuevo.
+        a
       ];
     });
     // `sel` y no `this.state.filtro`: cuando deja de haber mas de un formato
@@ -1634,11 +1651,33 @@ class Component extends DCLogic {
       const verAviso = masUno && conCredito && this.state.avisoMasUno === clave;
       const avisoMarcado = verAviso && !!this.state.aceptaMasUno;
 
+      // La fecha por nombre, para las funciones de la hoja (`c[22]`).
+      const fecha = c[22] || {};
+      const cierre = AroReglas.lineaDeCierre(c[12], c[20], c[14]);
       g.eventos.push({
+        // La hoja de reservar de la entrega «Qué estás reservando» (02-11),
+        // con las MISMAS funciones que la app.
+        capsulas: AroReglas.capsulasDe(fecha),
+        frase: AroReglas.fraseDelPlan(fecha),
+        lineas: AroReglas.lineasDeHoja(fecha).map((l) => ({
+          texto: l.texto,
+          capsula: l.capsula.texto,
+          fondo: l.capsula.sobreVerde.fondo,
+          color: l.capsula.sobreVerde.color,
+          borde: l.capsula.sobreVerde.borde,
+        })),
+        notaPlan: AroReglas.notaDelPlan(fecha, c[20]),
+        cubre: AroReglas.cubreDelPlan(fecha),
+        // Por puesto («c/u» en el +1). Con créditos, en encuentros.
+        precioPlan: conCredito ? (masUno ? M.puestos + ' encuentros' : '1 encuentro') : AroReglas.precioDelPlan(fecha),
+        cierre: cierre.texto,
+        cancela: masUno
+          ? M.dentro.cancela()
+          : 'Cancelas con más de ' + AroReglas.HORAS_DE_MARGEN + ' horas y recuperas el crédito. Tu consumo lo pagas en el sitio.',
+        hayDesglose: masUno && conCredito,
         segundoActo: !!c[21],
         marcaSegundoActo: AroReglas.SEGUNDO_ACTO.marca,
         masUno,
-        normal: !masUno,
         marcaMasUno: M.marca,
         hojaTitulo: M.hoja.titulo,
         hojaBajada: M.hoja.bajada,
@@ -1696,7 +1735,9 @@ class Component extends DCLogic {
           // De `reglas.js`, que es donde vive esa frase desde que la pidio
           // tambien la agenda publica. Aqui estaba escrita por segunda vez
           // con el seis dentro, asi que los drinks de ocho decian seis.
-          : (masUno ? M.fraseDeDuos(n) : AroReglas.fraseDeApuntados(n, c[17], c[15])),
+          // Los apuntados si los hay; si no, el tamaño en una línea («Mesa de
+          // 4 a 8 personas»), nunca «Una mesa es de 4 a 8 personas» (02-11).
+          : (AroReglas.pruebaSocial(n, fecha) || AroReglas.tamanoDelPlan(fecha)),
         estadoEstilo: 'font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (cerrada ? '#566A5D' : (mia ? '#1B5138' : (va ? '#1B5138' : '#8F4515'))) + ';white-space:nowrap',
         caja: 'display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;border-radius:22px;padding:clamp(15px,2vw,18px);opacity:' + (cerrada ? '.58' : '1') + ';cursor:' + (mia || cerrada ? 'default' : 'pointer') + ';background:' + (mia ? 'transparent' : (abierta ? '#F2E9D5' : '#FFFBF0')) + ';border:1px solid ' + (mia ? '#1B5138' : 'transparent'),
         icono: 'flex:0 0 auto;width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 15px/1 \'Inter Tight\',sans-serif;background:' + (mia ? '#1B5138' : m[2]) + ';color:' + (mia ? '#FAF3E4' : m[1]),
@@ -1729,18 +1770,6 @@ class Component extends DCLogic {
          * brunch ya salia asi. Lo vio el agente de la app, que comparte este
          * texto y acababa de tropezar con lo mismo.
          */
-        // «de 4 a 8» en cenas, brunch y drinks (Michael, 01-11).
-        comoFunciona: 'Te apuntas a una fecha, no a una mesa. Los apuntados se reparten en mesas '
-          + AroReglas.mesasDe(c[15], c[17]) + ' por toda la zona, y antes te decimos en cuál te tocó. La fecha '
-          + (() => {
-            const frase = window.AroReglas && c[12]
-              ? AroReglas.textoCierre(c[12], null, c[14])
-              : 'se cierra a medianoche, cuando empieza su día';
-            return frase.endsWith('.') ? frase : frase + '.';
-          })(),
-        cargo: 'Tu puesto en esta fecha',
-        precio: precioFecha + ' en bolívares',
-        nota: 'Cubre armar tu mesa, la verificación de identidad del grupo y el restaurante reservado a tu nombre. Tu consumo lo pagas en el sitio. Cancelas con más de 24 h y recuperas el crédito.',
         // Lo que de verdad falta, en el orden del embudo.
         //
         // Esto solo miraba `d.verif`, o sea solo la identidad. Con el
@@ -1780,15 +1809,7 @@ class Component extends DCLogic {
           + (this.state.permiteGrabacion ? '#8F4515;background:#8F4515;color:#FFF8EA' : 'rgba(20,52,42,.22);background:transparent;color:#14342A'),
         tocarPermiso: () => this.setState({ permiteGrabacion: !this.state.permiteGrabacion }),
         // Abre «Cómo funciona» con el formato y las horas de ESTA fecha.
-        verComo: () => this.abrirComo(c[15], c[12], c[16]),
-        // Drinks y café todavía no tienen sus tres tarjetas: hasta que las
-        // tengan, la fila no se enseña en vez de contar una cena. El café
-        // cae en el mismo agujero que los drinks —`tipoDe` manda a «cena»
-        // todo lo que no sea brunch ni movimiento— y en la app eso además
-        // cerraba la aplicación.
-        // Ni en una fecha +1, que no tiene sus tarjetas: la hoja ya cuenta
-        // qué es con su bloque verde (1B).
-        hayComo: c[15] !== 'drinks' && c[15] !== 'coffee' && !masUno,
+        verComo: () => this.abrirComo(c[15], c[12], c[16], fecha),
         /**
          * «Al reservar, Los Palos Grandes pasa a ser una de tus zonas.»
          *
@@ -1829,7 +1850,8 @@ class Component extends DCLogic {
                               : (verAviso && !avisoMarcado)
                               ? M.aviso.falta
                               : masUno
-                              ? (conCredito ? M.hoja.boton(M.puestos) : M.hoja.botonPrecio(precioFecha))
+                              // Sin créditos, sin el total: va solo en el pago (02-11).
+                              ? (conCredito ? M.hoja.boton(M.puestos) : AroReglas.botonDelPlan(fecha))
                               : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : precioFecha)))))),
         botonConfirmar: (verAviso && !avisoMarcado)
           ? 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:rgba(20,52,42,.08);color:#9DAEA2;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:default'
@@ -1936,29 +1958,30 @@ class Component extends DCLogic {
      */
     const CF = window.AroReglas && window.AroReglas.COMO_FUNCIONA;
     const como = this.state.como;
-    const comoTipo = CF && como ? CF.tipoDe(como.formato) : 'cena';
+    // `planDe` y no `tipoDe`: un café de las diez no es «tu noche».
+    const comoPlan = CF && como ? CF.planDe(como.formato) : 'cena';
     const comoIdx = this.state.comoIdx || 0;
-    const FOTOS = {
-      antes: { foto: '/fotos/como-llegada.jpg', pos: '50% 40%' },
-      durante: { foto: '/fotos/como-conversacion.jpg', pos: '55% 45%' },
-      despues: { foto: '/fotos/como-brindis.jpg', pos: '50% 35%' },
-    };
-    const PANELES = { antes: '#9CBBA6', durante: '#E39C63', despues: '#F6D9B4' };
+    /**
+     * Iconos sobre paneles de color, sin fotos (entrega «Qué estás
+     * reservando», 02-11: «dentro del flujo de reserva van iconos y paneles
+     * de color»). Las tarjetas son las de ESTA fecha: `tarjetasDe` cambia
+     * la que toque una marca y le pone su cápsula.
+     */
     const comoTarjetas = (CF && como)
-      ? CF.tarjetas(comoTipo, window.AroReglas.cuandoSeRevela(como.empiezaEn, null, como.revelaEn, como.formato))
-          .map((t) => {
-            const conFoto = comoTipo === 'cena';
-            return {
-              etiqueta: CF.etiquetas[t.clave],
-              icono: t.icono,
-              titulo: t.titulo,
-              cuerpo: t.cuerpo,
-              hayFoto: conFoto,
-              foto: conFoto ? FOTOS[t.clave].foto : '',
-              pos: conFoto ? FOTOS[t.clave].pos : '50% 50%',
-              panel: conFoto ? 'rgba(20,52,42,.06)' : PANELES[t.clave],
-            };
-          })
+      ? CF.tarjetasDe(
+          Object.assign({ formato: como.formato }, como.fecha || {}),
+          window.AroReglas.cuandoSeRevela(como.empiezaEn, null, como.revelaEn, como.formato),
+        ).map((t) => ({
+          etiqueta: CF.etiquetas[t.clave],
+          icono: t.icono,
+          titulo: t.titulo,
+          cuerpo: t.cuerpo,
+          panel: t.panel,
+          colorIcono: t.colorIcono,
+          iconoPlan: t.iconoPlan,
+          hayMarca: !!t.marca,
+          marca: t.marca,
+        }))
       : [];
 
     const nuevas = (d && d.preguntasNuevas) || [];
@@ -2163,7 +2186,7 @@ class Component extends DCLogic {
       comoFilaTitulo: CF ? CF.fila.titulo : '¿Cómo funciona?',
       comoFilaBajada: CF ? CF.fila.bajada : '',
       comoAbierto: !!como,
-      comoTitulo: comoTipo === 'cena' ? (CF ? CF.primeraVez.titulo : '') : (CF ? CF.primeraVez.tituloDia : ''),
+      comoTitulo: (comoPlan === 'cena' || comoPlan === 'drinks') ? (CF ? CF.primeraVez.titulo : '') : (CF ? CF.primeraVez.tituloDia : ''),
       comoTarjetas: comoTarjetas,
       comoUna: comoTarjetas[comoIdx] || comoTarjetas[0] || {},
       comoCuenta: CF ? CF.cuentaDe(comoIdx + 1, comoTarjetas.length || 3) : '',
