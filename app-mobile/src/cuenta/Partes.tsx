@@ -447,7 +447,9 @@ function HojaFecha(p: PropsFecha & { alCerrar: () => void }) {
               <Texto variante="cuerpoChico" tono="secundario" style={{ flex: 1 }}>
                 {cubre}
               </Texto>
-              <Texto style={{ fontFamily: fuente.titular, fontSize: 22, lineHeight: 31, color: color.verdeProfundo }}>{reglas.precioDelPlan(f.plan)}</Texto>
+              <Texto style={{ fontFamily: fuente.titular, fontSize: 22, lineHeight: 31, color: color.verdeProfundo }}>{/* Con créditos se dice en encuentros, como la web (9170ac4); sin ellos, «10 ref» o «10 ref c/u». */}
+                {p.conCredito ? T.agenda.encuentros(f.creditos) : reglas.precioDelPlan(f.plan)}
+              </Texto>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <IconoReloj />
