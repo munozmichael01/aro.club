@@ -244,23 +244,23 @@ export const guion = {
  */
 export const cena = {
   /**
-   * El segundo acto en Mi mesa (entrega segundo-acto de Design, 03-11),
-   * calcado. Nada nombra el bar antes de su hora. Pasa a `reglas.js` si el
-   * agente de la web lo sube ahí, para que las dos lo lean de un sitio.
+   * El segundo acto en Mi mesa (entrega segundo-acto de Design, 03-11). El
+   * copy vive en `reglas.js` (`SEGUNDO_ACTO.caja`), el mismo que pinta la
+   * web; aquí solo se le pone la hora con `conHora`, que no duplica el punto
+   * de «p.m.». Nada nombra el bar antes de su hora.
    */
   segundo: {
     marca: reglas.SEGUNDO_ACTO.marca,
-    titulo: 'Segundo acto',
-    abierta: 'Al terminar, todas las mesas siguen la noche en un mismo bar',
-    bajada: (hora: string) => `El bar te lo decimos en la mesa: sale aquí a las ${hora}. Si quieres seguir, sigues.`,
-    // «p.m.» ya cierra con punto: no se pone otro.
-    resumen: (hora: string) => `El bar sale aquí a las ${hora}${hora.endsWith('.') ? '' : '.'}`,
-    ahora: 'AHORA',
-    aPie: (n: number) => `A ${n} ${n === 1 ? 'minuto' : 'minutos'} a pie de tu mesa`,
-    nota: 'Cuando terminen, ahí se juntan todas las mesas. Cada quien paga lo suyo. Si quieres seguir, sigues.',
-    comoLlegar: 'Cómo llegar al bar',
-    paso: { nombre: 'Sale el bar', texto: 'Aparece arriba en Mi mesa, el de todas las mesas.' },
-    resumenPaso: 'Ahora: segundo acto',
+    titulo: reglas.SEGUNDO_ACTO.caja.plegada.titulo,
+    abierta: reglas.SEGUNDO_ACTO.caja.abierta.titulo,
+    bajada: (hora: string) => reglas.SEGUNDO_ACTO.conHora(reglas.SEGUNDO_ACTO.caja.abierta.texto, hora),
+    resumen: (hora: string) => reglas.SEGUNDO_ACTO.conHora(reglas.SEGUNDO_ACTO.caja.plegada.texto, hora),
+    ahora: reglas.SEGUNDO_ACTO.caja.ahora.sello,
+    aPie: (n: number) => reglas.SEGUNDO_ACTO.caja.ahora.aPie.replace('{n}', String(n)),
+    nota: reglas.SEGUNDO_ACTO.caja.ahora.texto,
+    comoLlegar: reglas.SEGUNDO_ACTO.caja.ahora.boton,
+    resumenPaso: reglas.SEGUNDO_ACTO.caja.resumenPaso,
+    resumenPasoAntes: reglas.SEGUNDO_ACTO.caja.resumenPasoAntes,
   },
   sello: { antes: 'ABIERTO', curso: 'EN CURSO', terminada: 'TERMINADA' } as Record<'antes' | 'curso' | 'terminada', string>,
   mesa: 'MESA',

@@ -11,13 +11,14 @@ import { reglas, type PasoDeLaMesa } from '../reglas'
 
 export const DURACION_POR_DEFECTO = reglas.GUION.duracionDeLaMesa
 
-export type Momento = 'llegada' | 'pedir' | 'vuelta' | 'hielo' | 'tema' | 'cuenta' | 'despedida'
+export type Momento = 'llegada' | 'pedir' | 'vuelta' | 'hielo' | 'tema' | 'cuenta' | 'despedida' | 'segundoActo'
 export type Paso = PasoDeLaMesa & { momento: Momento }
 
 /** Los momentos de la mesa con su hora y su texto ya puestos. Sin `empiezaEn` válido, no hay guion. */
-export function pasos(empiezaEn: string | null | undefined, zona?: string | null, formato?: string | null): Paso[] {
+export function pasos(empiezaEn: string | null | undefined, zona?: string | null, formato?: string | null, segundoActo?: boolean): Paso[] {
   // El formato cambia dos textos: en el brunch se llega a un café y se despide sin bares (24-10).
-  return reglas.pasosDeLaMesa(empiezaEn, zona ?? null, formato ?? null).map((p) => ({ ...p, momento: p.clave as Momento }))
+  // Con segundo acto, el último momento es «Sale el bar» y la despedida no busca otro sitio (03-11).
+  return reglas.pasosDeLaMesa(empiezaEn, zona ?? null, formato ?? null, { segundoActo: !!segundoActo }).map((p) => ({ ...p, momento: p.clave as Momento }))
 }
 
 /**

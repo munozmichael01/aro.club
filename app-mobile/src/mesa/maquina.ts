@@ -155,8 +155,7 @@ export type SitioParaSeguir = {
 export function horaDelBar(d: DeServidor): string | null {
   if (!d.segundoActo) return null
   if (d.barEn && !Number.isNaN(Date.parse(d.barEn))) return d.barEn
-  const t = Date.parse(d.empiezaEn ?? '')
-  return Number.isNaN(t) ? null : new Date(t + reglas.GUION.duracionDeLaMesa * 60_000).toISOString()
+  return reglas.SEGUNDO_ACTO.barEn(d.empiezaEn)
 }
 
 /** «3 min a pie · $$»: con lo que haya, como la web. Vacío si no hay nada. */

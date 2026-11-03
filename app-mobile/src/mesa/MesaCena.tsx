@@ -46,10 +46,14 @@ export function MesaCena(p: {
   const { d, ahora, ir } = p
   const zona = d.zonaHoraria ?? null
   // La reserva dura siempre dos horas desde el inicio (Michael, 15-10): no se lee ningún cierre del servidor.
-  const pasos = Gu.pasos(d.empiezaEn, zona, d.formato)
+  const pasos = Gu.pasos(d.empiezaEn, zona, d.formato, !!d.segundoActo)
   const momento = Gu.momentoDeCena(pasos, ahora)
+  // Desde la hora del bar, lo que toca es el bar, arriba: las demás cajas empiezan plegadas (como la web).
+  const barYaAlEntrar = d.segundoActo && !!d.bar?.nombre
   const [abiertas, setAbiertas] = useState<Record<Clave, boolean>>(() =>
-    momento === 'antes' ? { gente: true, paso: false, juego: false, segundo: false } : { gente: false, paso: true, juego: false, segundo: false },
+    barYaAlEntrar
+      ? { gente: false, paso: false, juego: false, segundo: false }
+      : momento === 'antes' ? { gente: true, paso: false, juego: false, segundo: false } : { gente: false, paso: true, juego: false, segundo: false },
   )
   const poner = (k: Clave, v: boolean) => setAbiertas((a) => ({ ...a, [k]: v }))
 
@@ -88,10 +92,13 @@ export function MesaCena(p: {
   const enCursoPaso = momento === 'antes' ? null : actual
   const ahoraPaso = enCursoPaso ? pasos.filter((x) => x.en === enCursoPaso) : []
   const ultimoAhora = ahoraPaso[ahoraPaso.length - 1]
+  const segundoAhora = ahoraPaso.some((x) => x.momento === 'segundoActo')
   const resumenPaso = !pasos.length
     ? ''
     : barYa
       ? T.cena.segundo.resumenPaso
+      : momento === 'antes' && barEn
+      ? T.cena.segundo.resumenPasoAntes
       : momento === 'antes'
       ? T.cena.paso.resumenAntes(pasos.length, Gu.sinSufijo(F.horaEn(pasos[0].en, zona)), F.horaEn(pasos[pasos.length - 1].en, zona))
       : ultimoAhora?.momento === 'despedida' && sitios.length
@@ -165,17 +172,28 @@ export function MesaCena(p: {
           <View style={{ paddingHorizontal: 18, paddingBottom: 10 }}>
             <Texto style={[texto(14, 1.45), { color: C.cuerpo, paddingBottom: 6 }]}>{T.guion.bajada}</Texto>
             {pasos.map((x) => {
-              // Desde la hora del bar, lo que está pasando es el segundo acto: el resto del guion ya pasó.
-              const ahoraEs = !barYa && enCursoPaso !== null && x.en === enCursoPaso
-              const pasado = barYa || (enCursoPaso !== null && Date.parse(x.en) < Date.parse(enCursoPaso))
+              // A la misma hora, el segundo acto le gana a la despedida: ella pasa a pasado y solo él dice AHORA.
+              const deSegundo = x.momento === 'segundoActo'
+              const ahoraEs = enCursoPaso !== null && x.en === enCursoPaso && (!segundoAhora || deSegundo)
+              const pasado = enCursoPaso !== null && (Date.parse(x.en) < Date.parse(enCursoPaso) || (segundoAhora && x.en === enCursoPaso && !deSegundo))
               const enlace = x.botonJuego || null
               return (
                 <View key={x.momento} style={[e.fila, ahoraEs ? e.filaAhora : null]}>
-                  <Texto style={[e.hora, { color: ahoraEs ? C.terracota : pasado ? C.pasado : C.cuerpo }]}>{Gu.sinSufijo(x.hora)}</Texto>
+                  <Texto style={[e.hora, { color: ahoraEs || deSegundo ? C.terracota : pasado ? C.pasado : C.cuerpo }]}>{Gu.sinSufijo(x.hora)}</Texto>
                   <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
-                    {ahoraEs ? (
-                      <View style={e.ahora}>
-                        <Texto style={e.ahoraTexto}>{T.guion.ahora}</Texto>
+                    {ahoraEs || x.marca ? (
+                      <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+                        {/* «SEGUNDO ACTO» en su cápsula (entrega segundo-acto, 2): la marca viene en el paso. */}
+                        {x.marca ? (
+                          <View style={[e.capsula, { backgroundColor: C.tinta }]}>
+                            <Texto style={[e.capsulaTexto, { color: C.crema }]}>{x.marca}</Texto>
+                          </View>
+                        ) : null}
+                        {ahoraEs ? (
+                          <View style={e.ahora}>
+                            <Texto style={e.ahoraTexto}>{T.guion.ahora}</Texto>
+                          </View>
+                        ) : null}
                       </View>
                     ) : null}
                     <Texto style={[serif(ahoraEs ? 22 : 19, 1.15, -0.015), { color: pasado ? C.pasado : C.tinta }]}>{x.nombre}</Texto>
@@ -217,26 +235,6 @@ export function MesaCena(p: {
                 </View>
               )
             })}
-            {barEn && !pasos.some((x) => (x.momento as string) === 'segundoActo') ? (
-              // El último momento: a qué hora sale el bar, sin decir cuál (entrega segundo-acto, 2).
-              <View style={[e.fila, barYa ? e.filaAhora : null]}>
-                <Texto style={[e.hora, { color: C.terracota }]}>{Gu.sinSufijo(horaBar)}</Texto>
-                <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
-                  <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-                    <View style={[e.capsula, { backgroundColor: C.tinta }]}>
-                      <Texto style={[e.capsulaTexto, { color: C.crema }]}>{T.cena.segundo.marca}</Texto>
-                    </View>
-                    {barYa ? (
-                      <View style={e.ahora}>
-                        <Texto style={e.ahoraTexto}>{T.guion.ahora}</Texto>
-                      </View>
-                    ) : null}
-                  </View>
-                  <Texto style={serif(barYa ? 22 : 19, 1.15, -0.015)}>{T.cena.segundo.paso.nombre}</Texto>
-                  <Texto style={[texto(15, 1.45), { color: C.cuerpo }]}>{T.cena.segundo.paso.texto}</Texto>
-                </View>
-              </View>
-            ) : null}
           </View>
         </Desplegable>
       ) : null}

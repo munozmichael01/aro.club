@@ -86,7 +86,20 @@ type Api = {
     menor: { confirmar: { titulo: string; cuerpo: string; si: string; no: string }; cerrada: { titulo: string; cuerpo: string } }
   }
   /** «Segundo acto» (63ba982): después de la cena todas las mesas de la fecha se juntan en un bar. Solo la etiqueta; el bar se revela ese día. */
-  SEGUNDO_ACTO: { marca: string }
+  SEGUNDO_ACTO: {
+    marca: string
+    minutosDespues: number
+    barEn: (empiezaEn: string | null | undefined) => string | null
+    conHora: (texto: string, hora: string) => string
+    caja: {
+      abierta: { titulo: string; texto: string }
+      plegada: { titulo: string; texto: string }
+      ahora: { sello: string; aPie: string; texto: string; boton: string }
+      resumenPaso: string
+      resumenPasoAntes: string
+    }
+    paso: { nombre: string; texto: string }
+  }
   /** Las cuentas de Aro en redes (400f5f8): la firma de las historias y «Etiqueta a…». */
   REDES: { instagram: string; tiktok: string; arroba: string }
   /** «Estás dentro» (reglas.js, 31-10). De momento la app solo lee si un plan tiene tarjetas para historias. */
@@ -194,7 +207,7 @@ type Api = {
     seguir: { titulo: string; aPie: string; comoLlegar: string }
   }
   /** Los momentos de esta mesa con su hora puesta, en la zona de la ciudad. `[]` sin hora de inicio. */
-  pasosDeLaMesa: (empiezaEn: string | null | undefined, zona?: string | null, formato?: string | null) => PasoDeLaMesa[]
+  pasosDeLaMesa: (empiezaEn: string | null | undefined, zona?: string | null, formato?: string | null, opciones?: { segundoActo?: boolean }) => PasoDeLaMesa[]
   momentoDeLaMesa: (pasos: PasoDeLaMesa[], ahora: number) => 'antes' | 'curso' | 'terminada'
   /** El índice del primero de los momentos en curso, o -1. */
   enCursoDeLaMesa: (pasos: PasoDeLaMesa[], ahora: number) => number
@@ -202,7 +215,7 @@ type Api = {
   horaCorta: (hora: string | null | undefined) => string
 }
 
-export type PasoDeLaMesa = { clave: string; en: string; hora: string; nombre: string; texto: string; botonJuego: string }
+export type PasoDeLaMesa = { clave: string; en: string; hora: string; nombre: string; texto: string; botonJuego: string; marca?: string }
 
 /** Un campo de un método de pago, tal como lo define `payment_methods.campos`. */
 export type CampoDePago = {
