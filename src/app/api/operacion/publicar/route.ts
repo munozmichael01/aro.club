@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { abonarSinMesa, retirarAbonoSinMesa } from '@/lib/creditos'
 import { DE_MAS } from '@/lib/mesa-corta'
 import { exigirOps } from '@/lib/ops'
+import { SEGUNDO_ACTO } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
 
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
   if (!corrida) return NextResponse.json({ error: 'Esa corrida no existe.' }, { status: 404 })
   const { data: evento } = await admin
     .from('events')
-    .select('id, reveal_at, starts_at, format, booking_closes_at, seats_per_table')
+    .select('id, reveal_at, starts_at, format, booking_closes_at, seats_per_table, after_venue_id')
     .eq('id', corrida.event_id)
     .maybeSingle()
 
@@ -470,6 +471,43 @@ export async function POST(request: Request) {
     // No tumba la publicación: las mesas ya están puestas y el aviso del
     // juego es lo último que debe impedir que alguien sepa dónde cena.
     if (error) console.error('[publicar] no se encoló el juego', error)
+  }
+
+  /**
+   * El bar del segundo acto, a su hora (entrega segundo-acto, 03-11).
+   *
+   * Como el juego: la hora se sabe al publicar —`barEn`, dos horas después
+   * de la fecha— y la cola ya sabe esperar. Push, y correo solo si la push
+   * no llega (`PUSH_O_CORREO` en correos.ts). Lo que dice se lee al enviar,
+   * así que la fila no lleva nada: ni el bar ni la mesa.
+   *
+   * Leer y luego insertar, no `upsert`, por lo mismo que el juego: el índice
+   * es parcial y supabase-js no sabe usarlo de árbitro.
+   */
+  const barEn = (evento as { after_venue_id?: string | null }).after_venue_id
+    ? SEGUNDO_ACTO.barEn(evento.starts_at)
+    : null
+  if (barEn) {
+    const { data: yaTienen } = await admin
+      .from('scheduled_emails')
+      .select('profile_id')
+      .eq('event_id', corrida.event_id)
+      .eq('kind', 'segundo_acto' as never)
+    const conAviso = new Set((yaTienen ?? []).map((f) => f.profile_id))
+    const nuevas = sentados
+      .flatMap((m) => m.perfiles)
+      .filter((perfilId) => !conAviso.has(perfilId))
+      .map((perfilId) => ({
+        profile_id: perfilId,
+        kind: 'segundo_acto',
+        event_id: corrida.event_id,
+        send_at: barEn,
+        payload: {},
+      }))
+    const { error } = nuevas.length
+      ? await admin.from('scheduled_emails').insert(nuevas as never)
+      : { error: null }
+    if (error) console.error('[publicar] no se encoló el segundo acto', error)
   }
 
   // Los avisos de cambio. Van en su propio `upsert` y no con los de arriba

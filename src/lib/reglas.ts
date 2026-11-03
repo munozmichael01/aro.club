@@ -240,6 +240,25 @@ type Api = {
   REDES: { instagram: string; tiktok: string; arroba: string }
   /** El precio con el que nace una fecha nueva de ese formato. */
   precioDe: (formato: string | null | undefined) => number
+  /** «Segundo acto» (entrega segundo-acto, 03-11): el bar se dice en la mesa, a su hora. */
+  SEGUNDO_ACTO: {
+    marca: string
+    minutosDespues: number
+    barEn: (empiezaEn: string | null | undefined) => string | null
+    caja: {
+      abierta: { titulo: string; texto: string }
+      plegada: { titulo: string; texto: string }
+      ahora: { sello: string; aPie: string; texto: string; boton: string }
+      resumenPaso: string
+      resumenPasoAntes: string
+    }
+    /** `{hora}` con la hora de `horaDe`, sin «p.m..». */
+    conHora: (texto: string, hora: string | null | undefined) => string
+    paso: { nombre: string; texto: string }
+    despedida: string
+    revelacion: string
+    aviso: { titulo: string; cuerpo: string; cuerpoSinMinutos: string; boton: string }
+  }
   /** «+1 acompañante» (entrega mas-uno). Los textos, pendientes de que Michael los apruebe. */
   MAS_UNO: {
     nombre: string
@@ -357,6 +376,8 @@ export const ALTA = api.ALTA
 export const REDES = api.REDES
 /** «+1 acompañante», el mismo texto en app, web y correos. */
 export const MAS_UNO = api.MAS_UNO
+
+export const SEGUNDO_ACTO = api.SEGUNDO_ACTO
 
 export const filtrar = api.filtrar
 export const valido = api.valido

@@ -90,6 +90,8 @@ const PLANTILLA: Partial<Record<Correo, string>> = {
   mas_uno_se_bajo: '37-mas-uno.html',
   mas_uno_cancelada: '37-mas-uno.html',
   mas_uno_sin_puesto: '37-mas-uno.html',
+  // Solo sale si la push no llegó a un teléfono vivo (`PUSH_O_CORREO`).
+  segundo_acto: '38-segundo-acto.html',
 }
 
 // Las plantillas se leen del disco una vez y se quedan: son quince ficheros

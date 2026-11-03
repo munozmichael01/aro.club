@@ -510,6 +510,31 @@
              mirando, y sin un correo más en un día que ya trajo dos. -->
         
 
+        <!-- SEGUNDO ACTO, DESDE LA HORA DEL BAR (entrega segundo-acto, 4).
+             Terracota y encima de la tarjeta del restaurante: es lo que
+             toca ahora. El restaurante sigue debajo, completo, para quien
+             aún no ha salido. -->
+        <sc-if value="{{ barYa }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:26px;background:#8F4515;color:#FAF3E4;padding:20px 18px 18px;display:flex;flex-direction:column;gap:12px;margin-bottom:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <span style="display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:999px;background:#FAF3E4;color:#14342A;font:700 11.5px/1 'Inter Tight',sans-serif;letter-spacing:.07em;white-space:nowrap">{{ saMarca }}</span>
+              <span style="display:inline-flex;align-items:center;min-height:24px;padding:0 10px;border-radius:999px;background:#E39C63;color:#14342A;font:700 10.5px/1 'Inter Tight',sans-serif;letter-spacing:.14em">{{ saAhora }}</span>
+            </div>
+            <div style="font:400 34px/1.02 'Young Serif',Georgia,serif;letter-spacing:-.025em">{{ barNombre }}</div>
+            <sc-if value="{{ hayBarDireccion }}" hint-placeholder-val="{{ true }}">
+              <div style="font:400 15px/1.45 'Inter Tight',sans-serif;color:#FAF3E4">{{ barDireccion }}</div>
+            </sc-if>
+            <sc-if value="{{ hayBarAPie }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;align-items:center;gap:8px;font:600 15px/1 'Inter Tight',sans-serif"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="4.5" r="1.5"></circle><path d="M9 21l2-6 3 2v4M8 10l3-2 3 3 3 1M11 8l-1 5"></path></svg>{{ barAPie }}</div>
+            </sc-if>
+            <div style="height:1px;background:rgba(250,243,228,.25)"></div>
+            <div style="font:400 15px/1.45 'Inter Tight',sans-serif;color:#FAF3E4;text-wrap:pretty">{{ barTexto }}</div>
+            <sc-if value="{{ hayBarMapa }}" hint-placeholder-val="{{ true }}">
+              <a href="{{ barMapa }}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;min-height:50px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;text-decoration:none;margin-top:2px">{{ barBoton }}</a>
+            </sc-if>
+          </div>
+        </sc-if>
+
         <div style="border-radius:24px;background:#14342A;color:#FAF3E4;padding:18px 18px 16px">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
             <span style="{{ selloCena }}">{{ selloTexto }}</span>
@@ -533,7 +558,7 @@
                caso de cinco de los nueve sitios. -->
           <div style="margin-top:14px;border-radius:16px;overflow:hidden;background:#1B5138">
             <sc-if value="{{ hayFoto }}" hint-placeholder-val="{{ true }}">
-              <img src="{{ fotoEntrada }}" alt="{{ altFoto }}" style="display:block;width:100%;aspect-ratio:16/9;object-fit:cover;object-position:center;border:0" />
+              <img src="{{ fotoEntrada }}" alt="{{ altFoto }}" style="{{ estiloFoto }}" />
             </sc-if>
             <div style="padding:11px 13px;display:flex;flex-direction:column;gap:4px">
               <div style="font:600 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">{{ tituloAlLlegar }}</div>
@@ -585,6 +610,39 @@
               <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ textoAvisado }}</span>
               <span style="display:block;font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:3px">Ya lo saben. Ve con calma.</span>
             </span>
+          </div>
+        </sc-if>
+
+        <!-- SEGUNDO ACTO, ANTES DE LA CENA (entrega segundo-acto, 1): la caja
+             abierta, con la hora a la que sale el bar y sin decir cuál es. -->
+        <sc-if value="{{ saAntes }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:22px;background:#FFF8EA;border:1.5px solid #14342A;padding:16px 18px;display:flex;flex-direction:column;gap:10px;margin-top:12px;color:#14342A">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <span style="display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:999px;background:#14342A;color:#FAF3E4;font:700 11.5px/1 'Inter Tight',sans-serif;letter-spacing:.07em;white-space:nowrap">{{ saMarca }}</span>
+              <span style="display:flex;align-items:center;gap:6px;font:600 14px/1 'Inter Tight',sans-serif;color:#8F4515;white-space:nowrap"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8F4515" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>{{ saHora }}</span>
+            </div>
+            <div style="font:400 21px/1.12 'Young Serif',Georgia,serif;letter-spacing:-.015em;text-wrap:balance">{{ saTitulo }}</div>
+            <div style="font:400 14.5px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ saTexto }}</div>
+          </div>
+        </sc-if>
+
+        <!-- SEGUNDO ACTO, DURANTE LA CENA (entrega segundo-acto, 2): plegada a
+             su resumen, como las demás. Desplegada dice lo mismo que antes. -->
+        <sc-if value="{{ saDurante }}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius:22px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);overflow:hidden;margin-top:12px">
+            <button onClick="{{ tSegundo }}" aria-expanded="{{ oSegundoAria }}" style="display:flex;width:100%;box-sizing:border-box;align-items:center;gap:12px;padding:16px 18px;min-height:44px;background:transparent;border:0;text-align:left;cursor:pointer">
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#14342A">{{ saPlegadaTitulo }}</span>
+                <span style="display:block;font:400 13px/1.35 'Inter Tight',sans-serif;color:#33513F;margin-top:3px">{{ saPlegadaTexto }}</span>
+              </span>
+              <span style="{{ sSegundo }}">{{ fSegundo }}</span>
+            </button>
+            <sc-if value="{{ oSegundo }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 18px 16px;display:flex;flex-direction:column;gap:8px;color:#14342A">
+                <div style="font:400 18px/1.15 'Young Serif',Georgia,serif;text-wrap:balance">{{ saTitulo }}</div>
+                <div style="font:400 14.5px/1.45 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ saTexto }}</div>
+              </div>
+            </sc-if>
           </div>
         </sc-if>
 
@@ -667,6 +725,9 @@
                   <div style="display:flex;flex-direction:column;gap:5px;min-width:0">
                     <sc-if value="{{ m.ahora }}" hint-placeholder-val="{{ false }}">
                       <span style="align-self:flex-start;display:inline-flex;align-items:center;min-height:22px;padding:0 9px;border-radius:999px;background:#E39C63;color:#14342A;font:700 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em">{{ textoAhora }}</span>
+                    </sc-if>
+                    <sc-if value="{{ m.conMarca }}" hint-placeholder-val="{{ false }}">
+                      <span style="align-self:flex-start;display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:#14342A;color:#FAF3E4;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.07em;white-space:nowrap">{{ m.marca }}</span>
                     </sc-if>
                     <div style="{{ m.estiloTitulo }}">{{ m.nombre }}</div>
                     <div style="{{ m.estiloTexto }}">{{ m.texto }}</div>
@@ -2394,7 +2455,9 @@ class Component extends DCLogic {
     // El guion, las rondas y sus textos salen de `reglas.js`: los pinta esta
     // pantalla y los pinta la app, y dos copias de ocho párrafos son dos
     // guiones distintos en cuanto alguien corrija una coma.
-    const pasos = dt ? AroReglas.pasosDeLaMesa(dt.empiezaEn, dt.zonaHoraria, dt.formato || (dJ && dJ.formato)) : [];
+    // Con segundo acto el guion suma «Sale el bar» y la despedida no manda
+    // a buscar sitio (entrega segundo-acto, 03-11).
+    const pasos = dt ? AroReglas.pasosDeLaMesa(dt.empiezaEn, dt.zonaHoraria, dt.formato || (dJ && dJ.formato), { segundoActo: !!dt.segundoActo }) : [];
     const momentoCena = AroReglas.momentoDeLaMesa(pasos, ahora);
     const idxAhora = AroReglas.enCursoDeLaMesa(pasos, ahora);
     const G = AroReglas.GUION;
@@ -2408,7 +2471,10 @@ class Component extends DCLogic {
      * Nunca dos abiertas: en una columna de 440 px, dos listas abiertas
      * esconden la tercera.
      */
-    const abiertaPorDefecto = momentoCena === 'antes' ? 'gente' : 'paso';
+    // Desde la hora del bar, todas plegadas: lo que toca es la caja de
+    // encima (entrega segundo-acto, 4).
+    const conBarYa = !!(dt && dt.segundoActo && dt.bar && dt.barEn && ahora >= Date.parse(dt.barEn));
+    const abiertaPorDefecto = conBarYa ? '' : momentoCena === 'antes' ? 'gente' : 'paso';
     const cualAbierta = this.state.abierta === null ? abiertaPorDefecto : this.state.abierta;
     const alternar = (cual) => () => this.setState((s) => ({
       abierta: (s.abierta === null ? abiertaPorDefecto : s.abierta) === cual ? '' : cual
@@ -2417,6 +2483,22 @@ class Component extends DCLogic {
       + 'align-items:center;justify-content:center;font:600 18px/1 \'Inter Tight\',sans-serif;'
       + (oscura ? 'background:rgba(250,243,228,.12);color:#E39C63' : 'background:#F2E9D5;color:#14342A');
 
+
+    /**
+     * EL SEGUNDO ACTO, en sus tres estados (entrega segundo-acto, 03-11).
+     *
+     * Antes de la cena, la caja abierta bajo la tarjeta del restaurante; durante,
+     * plegada a su resumen; desde la hora del bar, terracota y ENCIMA de la
+     * tarjeta. La hora del bar la manda el servidor (`barEn`) y el bar solo
+     * viaja desde esa hora (`bar`): sin `bar`, la caja se queda en «sale aquí
+     * a las…», que es lo que promete y no algo que no aparece.
+     */
+    const SA = AroReglas.SEGUNDO_ACTO;
+    const barEn = (dt && dt.segundoActo) ? (dt.barEn || SA.barEn(dt.empiezaEn)) : null;
+    const horaBar = barEn ? (AroReglas.horaDe(barEn, dt.zonaHoraria) || '') : '';
+    const barYa = !!(barEn && dt.bar && ahora >= Date.parse(barEn));
+    const saAntes = !!barEn && !barYa && momentoCena === 'antes';
+    const saDurante = !!barEn && !barYa && momentoCena !== 'antes';
 
     const sitiosParaSeguir = ((dt && dt.paraSeguir) || []).map((s) => ({
       nombre: s.nombre,
@@ -2455,6 +2537,8 @@ class Component extends DCLogic {
         // lo que hace falta ahí es elegir temática, y eso está en la tarjeta.
         irAlJuego: () => this.setState({ abierta: 'juego' }),
         conSitios: m.clave === 'despedida' && sitiosParaSeguir.length > 0,
+        // «SEGUNDO ACTO» sobre «Sale el bar».
+        conMarca: !!m.marca, marca: m.marca || '',
         fila: 'display:grid;grid-template-columns:54px minmax(0,1fr);gap:8px;padding:14px 12px;margin:0 -12px;'
           + 'border-radius:16px;border-top:' + (esAhora ? '0' : '1px solid rgba(20,52,42,.1)')
           + ';background:' + (esAhora ? '#F2E9D5' : 'transparent'),
@@ -2841,6 +2925,31 @@ class Component extends DCLogic {
         return p.dia.charAt(0).toUpperCase() + p.dia.slice(1) + ' ' + p.numero + ' · ' + p.hora;
       })(),
 
+      // --- el segundo acto ---------------------------------------------
+      saAntes, saDurante, barYa,
+      saMarca: SA.marca, saHora: horaBar,
+      saTitulo: SA.caja.abierta.titulo,
+      saTexto: SA.conHora(SA.caja.abierta.texto, horaBar),
+      saPlegadaTitulo: SA.caja.plegada.titulo,
+      saPlegadaTexto: SA.conHora(SA.caja.plegada.texto, horaBar),
+      oSegundo: cualAbierta === 'segundo', oSegundoAria: cualAbierta === 'segundo' ? 'true' : 'false',
+      fSegundo: cualAbierta === 'segundo' ? '−' : '+', sSegundo: chevron(cualAbierta === 'segundo', false),
+      tSegundo: alternar('segundo'),
+      saAhora: SA.caja.ahora.sello,
+      barNombre: (barYa && dt.bar.nombre) || '',
+      barDireccion: (barYa && dt.bar.direccion) || '',
+      hayBarDireccion: !!(barYa && dt.bar.direccion),
+      barAPie: (barYa && dt.bar.minutosAPie != null) ? SA.caja.ahora.aPie.replace('{n}', dt.bar.minutosAPie) : '',
+      hayBarAPie: !!(barYa && dt.bar.minutosAPie != null),
+      barTexto: SA.caja.ahora.texto,
+      barBoton: SA.caja.ahora.boton,
+      barMapa: (barYa && (dt.bar.mapa || dt.bar.mapaApple)) || '',
+      hayBarMapa: !!(barYa && (dt.bar.mapa || dt.bar.mapaApple)),
+      // Desde la hora del bar la foto baja de alto: la tarjeta sigue
+      // completa, pero lo que toca ahora es la caja de encima.
+      estiloFoto: 'display:block;width:100%;object-fit:cover;object-position:center;border:0;'
+        + (barYa ? 'height:120px' : 'aspect-ratio:16/9'),
+
       hayFoto: !!(dt && dt.fotoEntrada),
       fotoEntrada: (dt && dt.fotoEntrada) || '',
       altFoto: 'La entrada de ' + ((dt && dt.restaurante) || ''),
@@ -2913,6 +3022,8 @@ class Component extends DCLogic {
       // cuándo a cuándo; durante, en qué momento va; al final, los sitios.
       resumenPaso: (() => {
         if (!pasos.length) return '';
+        if (momentoCena === 'antes' && barEn) return SA.caja.resumenPasoAntes;
+        if (pasos[idxAhora] && pasos[idxAhora].clave === 'segundoActo') return SA.caja.resumenPaso;
         if (momentoCena === 'antes') {
           return pasos.length + ' momentos · de ' + AroReglas.horaCorta(pasos[0].hora) + ' a ' + pasos[pasos.length - 1].hora;
         }

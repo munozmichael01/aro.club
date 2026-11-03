@@ -90,6 +90,31 @@ export const PANTALLAS = {
     },
     { caso: 'abierta', rutas: { '/api/mi-mesa': MESA_ABIERTA } },
     /**
+     * Segundo acto (entrega segundo-acto, 03-11), en sus tres estados: la
+     * caja abierta antes de la cena, plegada durante, y terracota encima de
+     * la tarjeta desde la hora del bar, que es cuando el servidor manda `bar`.
+     */
+    {
+      caso: 'segundo acto · antes',
+      rutas: { '/api/mi-mesa': { ...MESA_ABIERTA, segundoActo: true, barEn: en(4), bar: null } },
+    },
+    {
+      caso: 'segundo acto · durante',
+      rutas: { '/api/mi-mesa': { ...MESA_ABIERTA, empiezaEn: en(-1), segundoActo: true, barEn: en(1), bar: null } },
+    },
+    {
+      caso: 'segundo acto · el bar',
+      rutas: {
+        '/api/mi-mesa': {
+          ...MESA_ABIERTA,
+          empiezaEn: en(-2.25),
+          segundoActo: true,
+          barEn: en(-0.25),
+          bar: { nombre: 'El Patio', direccion: 'Calle Páez, Chacao', mapa: 'https://maps.google.com/?q=2,2', mapaApple: null, minutosAPie: 6 },
+        },
+      },
+    },
+    /**
      * Y el brunch con la mesa entera.
      *
      * Desde el 24-10 un brunch lleva la misma Mi mesa que una cena: foto de

@@ -1597,7 +1597,12 @@
      * los planes de mañana no ofrecemos bares (Michael, 24-10: «juego sí,
      * bares no»).
      */
-    pasosDeLaMesa: function (empiezaEn, zona, formato) {
+    /**
+     * Con `opciones.segundoActo` (entrega segundo-acto, 03-11), la despedida
+     * no manda a buscar un sitio —el bar es el sitio para seguir— y el guion
+     * suma al final el momento en que sale el bar, con su marca.
+     */
+    pasosDeLaMesa: function (empiezaEn, zona, formato, opciones) {
       var t = empiezaEn ? Date.parse(empiezaEn) : NaN
       if (!isFinite(t)) return []
 
@@ -1629,9 +1634,13 @@
         despedida: 'Si hay ganas de seguir, un café o una vuelta cerca. Si alguien te cayó bien, díselo.',
       }
 
-      return G.momentos.map(function (m) {
+      var SA = api.SEGUNDO_ACTO
+      var conBar = !!(opciones && opciones.segundoActo) && !deManana
+
+      var pasos = G.momentos.map(function (m) {
         var en = cuando(m)
         var texto = (deManana && SUYOS[m.clave]) ? SUYOS[m.clave] : m.texto
+        if (conBar && m.clave === 'despedida') texto = SA.despedida
         return {
           clave: m.clave,
           en: new Date(en).toISOString(),
@@ -1639,8 +1648,23 @@
           nombre: m.nombre,
           texto: texto.replace('{limite}', conArticulo),
           botonJuego: G.delJuego[m.clave] || '',
+          marca: '',
         }
       })
+
+      if (conBar) {
+        var bar = SA.barEn(empiezaEn)
+        pasos.push({
+          clave: 'segundoActo',
+          en: bar,
+          hora: api.horaDe(bar, zona) || '',
+          nombre: SA.paso.nombre,
+          texto: SA.paso.texto,
+          botonJuego: '',
+          marca: SA.marca,
+        })
+      }
+      return pasos
     },
 
     /**
@@ -1650,6 +1674,10 @@
     momentoDeLaMesa: function (pasos, ahora) {
       if (!pasos || !pasos.length) return 'antes'
       if (ahora < Date.parse(pasos[0].en)) return 'antes'
+      // Con segundo acto la noche sigue en el bar: Design pinta la tarjeta
+      // EN CURSO a la hora del bar, y al día siguiente Mi mesa pasa a la
+      // mesa pasada de siempre.
+      if (pasos[pasos.length - 1].clave === 'segundoActo') return 'curso'
       return ahora >= Date.parse(pasos[pasos.length - 1].en) ? 'terminada' : 'curso'
     },
 
@@ -1666,6 +1694,10 @@
         if (Date.parse(pasos[i].en) <= ahora) en = pasos[i].en
       }
       if (en == null) return -1
+      // El bar comparte hora con la despedida, y desde esa hora lo que toca
+      // es el bar: «Ahora: segundo acto», como en la entrega.
+      var ultimo = pasos[pasos.length - 1]
+      if (ultimo.clave === 'segundoActo' && ultimo.en === en) return pasos.length - 1
       for (var j = 0; j < pasos.length; j++) if (pasos[j].en === en) return j
       return -1
     },
@@ -1904,6 +1936,146 @@
           ],
         },
       ],
+
+      /**
+       * EL JUEGO EN OTRO IDIOMA, para las mesas en ese idioma.
+       *
+       * Michael, 03-11: traducido y aprobado, y «que solo sea con mesa de
+       * inglés, que no tenga nada que ver con la configuración del
+       * dispositivo». Así que se elige con el `idioma` de la FECHA
+       * (`juegoEn(idioma)`), nunca con el idioma del teléfono.
+       *
+       * Mismas rondas y temáticas, en el MISMO orden y con las mismas
+       * preguntas en la misma posición: el barajado se siembra con la mesa y
+       * la clave de la ronda, así que en una mesa todos los teléfonos sacan
+       * la misma pregunta. Por eso aquí solo va el texto; claves, colores e
+       * iconos son los del español y los pone `juegoEn`.
+       */
+      idiomas: {
+        en: {
+        "subtituloReglas": "Three rounds · the last one is optional",
+        "reglas": [
+          "One person reads out loud, from their phone.",
+          "Everyone answers, starting with whoever read.",
+          "Anyone can pass, no explanation needed.",
+          "Three rounds, from light to deeper."
+        ],
+        "final": "That's the end of the game. The rest of the night is yours.",
+        "tematicas": [
+          {
+            "nombre": "Quick and easy",
+            "linea": "To break the ice without overthinking it.",
+            "preguntas": [
+              "What do you get in your arepa?",
+              "Beach or mountains, and why?",
+              "What's your most useless talent?",
+              "What song do you put on when you need a boost?",
+              "What show or movie do you recommend to everyone?"
+            ]
+          },
+          {
+            "nombre": "Local life",
+            "linea": "Caracas and what it has to offer.",
+            "preguntas": [
+              "What's your perfect Sunday in Caracas?",
+              "What does Caracas have that you wouldn't trade for anything?",
+              "Where would you take someone who just arrived in the city?",
+              "What's the best street food you've had here?",
+              "What's the strangest thing that's happened to you in Caracas?"
+            ]
+          },
+          {
+            "nombre": "Stories",
+            "linea": "The stories that tell themselves.",
+            "preguntas": [
+              "What's the worst meal you've had on a trip?",
+              "What's the strangest gift you've ever received?",
+              "What hobby did you go all in on and drop a month later?",
+              "What was your first job, and what was odd about it?",
+              "What's the last thing that made you laugh uncontrollably?"
+            ]
+          },
+          {
+            "nombre": "What if…?",
+            "linea": "To imagine, vote and debate.",
+            "preguntas": [
+              "If you could live in any city for a year, which would it be?",
+              "Who at this table would suggest a crazy plan, and who would say yes first?",
+              "If we all went on a trip tomorrow, where would we go?",
+              "If this table started a business together, what would it be and who does what?",
+              "If you could have dinner with anyone, from any time, who would it be?"
+            ]
+          },
+          {
+            "nombre": "What drives you",
+            "linea": "A little more about you, without oversharing.",
+            "preguntas": [
+              "What are you looking forward to these days, even if it's small?",
+              "What do you do that makes you lose track of time?",
+              "What have you been saying you'll do for ages?",
+              "What's the best advice you've ever been given?",
+              "What's the most spontaneous thing you've ever done?"
+            ]
+          }
+        ],
+        "rondas": [
+          {
+            "titulo": "To get started",
+            "bajada": "Light. Anyone can answer without thinking twice.",
+            "enLaTarjeta": "Light. Then, let's eat.",
+            "cuando": "WHILE THE FOOD ARRIVES",
+            "preguntas": [
+              "What's your perfect Sunday in Caracas?",
+              "What food could you never give up?",
+              "Beach or mountains, and why?",
+              "If you could live in any city for a year, which would it be?",
+              "What song do you put on when you need a boost?",
+              "What's your most useless talent?",
+              "What show or movie do you recommend to everyone?",
+              "What did you love as a kid that you still love?",
+              "If you had tomorrow off, what's the first thing you'd do?",
+              "What do you say yes to way too easily?"
+            ]
+          },
+          {
+            "titulo": "Tell us one",
+            "bajada": "Stories, not reflections. You answer by telling something.",
+            "enLaTarjeta": "If the table is flowing on its own, skip it.",
+            "cuando": "IF THE CONVERSATION RUNS DRY",
+            "preguntas": [
+              "What's the worst meal you've had on a trip?",
+              "What's the strangest thing that's happened to you in Caracas?",
+              "What's the strangest gift you've ever received?",
+              "What hobby did you go all in on and drop a month later?",
+              "Which famous person have people told you you look like?",
+              "What dish do you make better than anyone?",
+              "What was your first job, and what was odd about it?",
+              "What's been your worst haircut?",
+              "What's the last thing that made you laugh uncontrollably?",
+              "What app do you use more than you'd like to admit?"
+            ]
+          },
+          {
+            "titulo": "If the table wants more",
+            "bajada": "More personal, and anyone can pass.",
+            "enLaTarjeta": "More personal. Anyone can pass.",
+            "cuando": "ONLY IF THE TABLE FEELS LIKE IT",
+            "preguntas": [
+              "What's the most spontaneous thing you've ever done?",
+              "What's your unpopular opinion about food?",
+              "If you could learn something overnight, what would it be?",
+              "You win the lottery: what do you do in the first 24 hours?",
+              "What's the best advice you've ever been given?",
+              "What do you do differently from everyone else?",
+              "What's the bravest thing you've ever done?",
+              "What do you wish people asked you more often?",
+              "What moment of your life would you like to live again?",
+              "Who taught you something you still use?"
+            ]
+          }
+        ]
+      },
+      },
     },
 
     /**
@@ -3187,6 +3359,77 @@
      */
     SEGUNDO_ACTO: {
       marca: 'SEGUNDO ACTO',
+
+      /**
+       * El bar sale en Mi mesa dos horas después de la hora de la fecha, la
+       * misma para todas sus mesas (entrega segundo-acto de Design, 03-11).
+       * No se adelanta si una mesa acaba antes: la hora se dice desde el
+       * mediodía y tiene que cumplirse.
+       */
+      minutosDespues: 120,
+
+      /** Cuándo sale el bar, en ISO. `null` sin hora de inicio. */
+      barEn: function (empiezaEn) {
+        var t = empiezaEn ? Date.parse(empiezaEn) : NaN
+        if (!isFinite(t)) return null
+        return new Date(t + api.SEGUNDO_ACTO.minutosDespues * 60000).toISOString()
+      },
+
+      /**
+       * La caja de Mi mesa, en sus tres estados. `{hora}` es la del bar con
+       * su «p.m.» y `{n}`, los minutos a pie desde ESTA mesa.
+       */
+      caja: {
+        abierta: {
+          titulo: 'Al terminar, todas las mesas siguen la noche en un mismo bar',
+          texto: 'El bar te lo decimos en la mesa: sale aquí a las {hora}. Si quieres seguir, sigues.',
+        },
+        plegada: {
+          titulo: 'Segundo acto',
+          texto: 'El bar sale aquí a las {hora}.',
+        },
+        ahora: {
+          sello: 'AHORA',
+          aPie: 'A {n} minutos a pie de tu mesa',
+          texto: 'Cuando terminen, ahí se juntan todas las mesas. Cada quien paga lo suyo. Si quieres seguir, sigues.',
+          boton: 'Cómo llegar al bar',
+        },
+        /** El resumen de Paso a paso plegado, desde la hora del bar. */
+        resumenPaso: 'Ahora: segundo acto',
+        /** Y antes de la cena, en vez de «8 momentos · de… a…». */
+        resumenPasoAntes: 'De la llegada al segundo acto',
+      },
+
+      /**
+       * Pone la hora en un texto de aquí. `horaDe` ya devuelve «9:00 p.m.»,
+       * con su punto: si la frase sigue con otro, sale «9:00 p.m..». El de
+       * «p.m.» hace de punto final, como en `MAS_UNO.conPunto`.
+       */
+      conHora: function (texto, hora) {
+        var h = hora || ''
+        return /\.$/.test(h) ? texto.replace('{hora}.', h).replace('{hora}', h) : texto.replace('{hora}', h)
+      },
+
+      /** El momento que suma al final de Paso a paso. */
+      paso: {
+        nombre: 'Sale el bar',
+        texto: 'Aparece arriba en Mi mesa, el de todas las mesas.',
+      },
+
+      /** La despedida en una fecha con segundo acto: el bar es el sitio para seguir. */
+      despedida: 'Si alguien te cayó bien, díselo.',
+
+      /** La línea de la revelación del mediodía, en el correo y en la push. */
+      revelacion: 'Esta fecha tiene segundo acto. El bar te lo decimos en la mesa, a las {hora}.',
+
+      /** El aviso a la hora del bar: push y, sin teléfono vivo, correo. */
+      aviso: {
+        titulo: 'El segundo acto es en {bar}',
+        cuerpo: 'A {n} minutos a pie de tu mesa. Cuando terminen, ahí siguen todas las mesas. Si quieres seguir, sigues.',
+        /** Sin minutos (un sitio sin coordenadas) la primera frase se cae entera. */
+        cuerpoSinMinutos: 'Cuando terminen, ahí siguen todas las mesas. Si quieres seguir, sigues.',
+        boton: 'Ver en Mi mesa',
+      },
     },
 
     /**

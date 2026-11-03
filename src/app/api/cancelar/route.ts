@@ -272,7 +272,7 @@ export async function POST(request: Request) {
         .delete()
         .eq('event_id', reserva.event_id)
         .eq('profile_id', viene.profile_id)
-        .in('kind', ['mesa_asignada', 'mesa_cambiada', 'recordatorio', 'juego'] as never[])
+        .in('kind', ['mesa_asignada', 'mesa_cambiada', 'recordatorio', 'juego', 'segundo_acto'] as never[])
         .is('sent_at', null)
       await encolar({ perfil: viene.profile_id }, 'mas_uno_sin_puesto', { motivo: 'cancelo', deReserva: reserva.id }, { eventoId: reserva.event_id })
     }
@@ -305,7 +305,7 @@ export async function POST(request: Request) {
     // de la mesa, y le llegaba a quien habia cancelado por la tarde: una
     // notificacion invitando a jugar en una cena a la que no va. Pasó hoy
     // con tres personas que cancelaron despues de la revelacion.
-    .in('kind', ['mesa_asignada', 'mesa_cambiada', 'recordatorio', 'juego'] as never[])
+    .in('kind', ['mesa_asignada', 'mesa_cambiada', 'recordatorio', 'juego', 'segundo_acto'] as never[])
     .is('sent_at', null)
 
   /**

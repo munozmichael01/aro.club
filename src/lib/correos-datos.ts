@@ -4,11 +4,12 @@ import type { Correo } from '@/lib/correos'
 import { firmarBaja } from '@/lib/baja-token'
 import { firmar } from '@/lib/lead-token'
 import { enlaceDeMapa } from '@/lib/mapa'
+import { minutosAPie } from '@/lib/distancia'
 import { avisoDeDosHoras, FIN_CENA } from '@/lib/ventana-mesa'
 import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { nombreDeIdioma } from '@/lib/idioma'
-import { arraigoDe, MAS_UNO, pasadoDe, DIAS_GUARDA_FOTOS, HORAS_DE_MARGEN, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
+import { arraigoDe, MAS_UNO, SEGUNDO_ACTO, pasadoDe, DIAS_GUARDA_FOTOS, HORAS_DE_MARGEN, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
@@ -893,6 +894,74 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
      */
     case 'juego':
       return { a, datos: { ...base, mesaId: (p.mesaId as string) ?? '' } }
+
+    /**
+     * El bar del segundo acto, a su hora (entrega segundo-acto, 03-11).
+     *
+     * Todo se lee al enviar, como la revelación: la fila se encola al
+     * publicar y entre medias la mesa puede cambiar de restaurante, la
+     * persona cancelar u operación quitar el bar de la fecha. Cualquiera de
+     * las tres deja la fila sin nada que decir, y se cierra.
+     *
+     * Y nunca tarde: pasada una hora de la del bar, ya no se manda. Un «ahí
+     * siguen todas las mesas» a medianoche es mandar a alguien a un bar del
+     * que ya se fueron.
+     */
+    case 'segundo_acto': {
+      if (!fila.event_id || !fila.profile_id) return { error: 'sin fecha' }
+      const { data: ev } = await admin
+        .from('events')
+        .select('starts_at, status, after_venue_id, city_slug')
+        .eq('id', fila.event_id)
+        .maybeSingle()
+      const evSA = ev as { starts_at: string; status: string; after_venue_id: string | null; city_slug: string } | null
+      if (!evSA || evSA.status === 'cancelled' || !evSA.after_venue_id) return { error: 'la fecha ya no tiene segundo acto' }
+      const barEn = SEGUNDO_ACTO.barEn(evSA.starts_at)
+      if (!barEn || Date.now() > Date.parse(barEn) + 3600_000) return { error: 'ya pasó la hora del bar' }
+
+      const { data: asiento } = await admin
+        .from('table_members')
+        .select('dinner_tables!inner(event_id, restaurant_id, restaurants(lat, lng))')
+        .eq('profile_id', fila.profile_id)
+        .eq('dinner_tables.event_id', fila.event_id)
+        .maybeSingle()
+      if (!asiento) return { error: 'ya no tiene puesto en esa fecha' }
+      const mesaSA = asiento.dinner_tables as unknown as {
+        restaurant_id: string | null
+        restaurants: { lat: number | null; lng: number | null } | null
+      }
+
+      const { data: barSA } = await admin
+        .from('restaurants')
+        .select('name, address, lat, lng')
+        .eq('id', evSA.after_venue_id)
+        .maybeSingle()
+      if (!barSA) return { error: 'el bar no existe' }
+
+      // Los minutos, como en Mi mesa: lo tecleado en la ficha del local manda.
+      const { data: tecleado } = await admin
+        .from('restaurant_after_venues')
+        .select('minutos_a_pie')
+        .eq('restaurant_id', mesaSA.restaurant_id ?? '')
+        .eq('after_id', evSA.after_venue_id)
+        .maybeSingle()
+      const minutos = tecleado?.minutos_a_pie ?? minutosAPie(mesaSA.restaurants, barSA)
+
+      const A = SEGUNDO_ACTO.aviso
+      return {
+        a,
+        datos: {
+          ...base,
+          asunto: A.titulo.replace('{bar}', barSA.name),
+          bar: barSA.name,
+          direccion: barSA.address ?? '',
+          cuerpo: minutos != null ? A.cuerpo.replace('{n}', String(minutos)) : A.cuerpoSinMinutos,
+          sello: SEGUNDO_ACTO.marca,
+          ahora: SEGUNDO_ACTO.caja.ahora.sello,
+          boton: A.boton,
+        },
+      }
+    }
 
     case 'cuenta_lista':
       return { a, datos: { ...base, correo: a } }
@@ -2840,7 +2909,7 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   // cuatro a propósito esto no puede llamarla corta.
   const { data: deLaFecha } = await admin
     .from('events')
-    .select('seats_per_table, mas_uno, reveal_at, starts_at, city_slug')
+    .select('seats_per_table, mas_uno, reveal_at, starts_at, city_slug, after_venue_id')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -2932,17 +3001,30 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
     }
   }
 
+  const zonaFecha = await zonaDeLaCiudad(admin, deLaFecha?.city_slug)
+  const conSegundoActo = !!(deLaFecha as { after_venue_id?: string | null } | null)?.after_venue_id
+
   return {
     numero,
     sitio: mesa.restaurants?.name ?? '',
     direccion,
     // El aviso de las dos horas, con las horas de ESTA fecha y la última
     // frase solo si ese local tiene sitios cerca.
+    // Con segundo acto no se ofrecen «sitios cerca»: el bar es el sitio
+    // para seguir, y Mi mesa ya no los enseña en esas fechas.
     avisoDosHoras: avisoDeDosHoras(
       deLaFecha?.starts_at,
-      await zonaDeLaCiudad(admin, deLaFecha?.city_slug),
-      (cerca ?? []).length > 0,
+      zonaFecha,
+      (cerca ?? []).length > 0 && !conSegundoActo,
     ),
+    /**
+     * «Esta fecha tiene segundo acto…» (entrega segundo-acto, 03-11). Dice
+     * la hora y NUNCA el bar: el bar sale en Mi mesa a esa hora. Vacía en
+     * una fecha sin segundo acto, y la plantilla se salta la fila.
+     */
+    segundoActo: conSegundoActo
+      ? SEGUNDO_ACTO.conHora(SEGUNDO_ACTO.revelacion, horaDe(SEGUNDO_ACTO.barEn(deLaFecha?.starts_at), zonaFecha))
+      : '',
     zona: zonas[0] ?? '',
     // El de la ficha si lo tiene; si no, uno construido, que es mejor que un
     // botón que no lleva a ningún sitio.

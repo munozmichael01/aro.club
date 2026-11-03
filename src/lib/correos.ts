@@ -280,6 +280,11 @@ export type Correo =
   | 'mas_uno_se_bajo'
   | 'mas_uno_cancelada'
   | 'mas_uno_sin_puesto'
+  /**
+   * El bar del segundo acto, a su hora (entrega segundo-acto, 03-11). Push, y
+   * correo solo si la push no llegó a ningún teléfono vivo: `PUSH_O_CORREO`.
+   */
+  | 'segundo_acto'
 
 /**
  * Los que NO llevan correo.
@@ -291,6 +296,21 @@ export type Correo =
  * y dejaría la fila viva reintentándose para siempre.
  */
 const SOLO_PUSH: ReadonlySet<string> = new Set(['juego'])
+
+/**
+ * Los que llevan push O correo, nunca los dos.
+ *
+ * La regla de la casa es que la push viaja con el correo, en la misma fila.
+ * El segundo acto la cambia a propósito: «si alguien tiene la app y el
+ * correo, recibe solo la notificación» (entrega segundo-acto, 03-11). Llega a
+ * las nueve de la noche, en mitad de la cena, y dos avisos iguales a la vez
+ * es el que enseña a apagarlos.
+ *
+ * Si la push llegó a un teléfono vivo (`q.ok`, o un `push_at` de una pasada
+ * anterior), la fila se cierra como `solo_push`. Si no —sin app, token
+ * muerto, Expo caído—, sale el correo, que es para lo que está.
+ */
+const PUSH_O_CORREO: ReadonlySet<string> = new Set(['segundo_acto'])
 
 type AQuien = { perfil: string } | { correo: string }
 
@@ -813,6 +833,7 @@ export async function despacharPendientes(
       //
       // Si falla, el correo sigue. Son dos canales del mismo aviso y que uno
       // se caiga no puede llevarse al otro por delante.
+      let pushLlego = false
       if (!fila.push_at && !fila.push_motivo) {
         const quedo = await mandarPush(
           [{
@@ -842,6 +863,7 @@ export async function despacharPendientes(
             .eq('id', fila.id)
         }
         if (q?.ok) pushes++
+        pushLlego = !!q?.ok
       }
 
 
@@ -855,6 +877,13 @@ export async function despacharPendientes(
             return `${c.titulo} · ${c.cuerpo}`
           })()
         : undefined
+
+      // Push o correo: si la push llegó, aquí termina.
+      if (PUSH_O_CORREO.has(fila.kind) && (fila.push_at || pushLlego)) {
+        if (!seco) await anotarFinal(admin, fila.id, 'solo_push')
+        else enSeco.push({ kind: fila.kind, asunto: '— solo push (tiene la app)', huecos: 0, baja: false, push: enElTelefono })
+        continue
+      }
 
       // Los de solo push terminan aquí: no hay correo que componer.
       if (SOLO_PUSH.has(fila.kind)) {

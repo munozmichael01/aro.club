@@ -61,7 +61,10 @@ export function copyDe(
     case 'mesa_asignada':
       return {
         titulo: 'Ya sabes con quién cenas',
-        cuerpo: 'Tu mesa está abierta: el sitio, la hora y los otros cinco.',
+        // Con segundo acto, su línea detrás (entrega segundo-acto, 03-11):
+        // la hora del bar, nunca el bar.
+        cuerpo: 'Tu mesa está abierta: el sitio, la hora y los otros cinco.'
+          + (t('segundoActo') ? ' ' + t('segundoActo') : ''),
         ruta: '/mesa',
       }
 
@@ -225,6 +228,13 @@ export function copyDe(
         cuerpo: 'Tu puesto está apartado. Te avisamos cuando se abra tu mesa.',
         ruta: '/cuenta',
       }
+    /**
+     * El bar del segundo acto, a su hora (entrega segundo-acto, 03-11). El
+     * texto es el del correo, que sale solo si esta no llega: los dos de
+     * `AroReglas.SEGUNDO_ACTO.aviso`.
+     */
+    case 'segundo_acto':
+      return { titulo: t('asunto'), cuerpo: t('cuerpo'), ruta: '/mesa' }
     case 'juego': {
       // La única que no tiene correo detrás. Y la única cuya `ruta` necesita
       // el id de la mesa: la app abre el juego DE ESA mesa, que es lo que

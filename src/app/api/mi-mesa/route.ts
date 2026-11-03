@@ -8,7 +8,7 @@ import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { hablaElIdioma } from '@/lib/idioma'
-import { HORAS_DE_MARGEN, esDeManana } from '@/lib/reglas'
+import { HORAS_DE_MARGEN, SEGUNDO_ACTO, esDeManana } from '@/lib/reglas'
 import { avisoDeDosHoras } from '@/lib/ventana-mesa'
 import { bloqueDeReembolso } from '@/lib/reembolso'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -340,6 +340,11 @@ export async function GET(request: Request) {
         edadMinima: evento.age_band_min ?? null,
         idioma: evento.idioma ?? null,
         segundoActo: !!evento.after_venue_id,
+        /**
+         * A qué hora sale el bar en Mi mesa (entrega segundo-acto, 03-11). Es
+         * la hora y no el bar: el bar viaja solo desde esa hora, en `bar`.
+         */
+        barEn: evento.after_venue_id ? SEGUNDO_ACTO.barEn(evento.starts_at) : null,
       }
     : {}
 
@@ -548,7 +553,12 @@ export async function GET(request: Request) {
    * coletilla de «hay sitios cerca» del aviso de las dos horas y el bloque
    * del paso a paso. Vaciándola aquí, las tres desaparecen solas.
    */
-  const paraSeguir = esDeManana(evento.format) ? [] : (seguires ?? []).map((s) => {
+  /*
+   * Y EN LAS DE SEGUNDO ACTO, TAMPOCO: el bar es el sitio para seguir, y la
+   * entrega lo dice así («la despedida no muestra "Si quieren seguir"»).
+   * Vaciándola aquí la app y la web dejan de pintarla sin decidir nada.
+   */
+  const paraSeguir = esDeManana(evento.format) || evento.after_venue_id ? [] : (seguires ?? []).map((s) => {
     const sitio = s.restaurants as unknown as {
       name: string
       address: string | null
@@ -572,6 +582,44 @@ export async function GET(request: Request) {
       mapaApple: enlaceApple(sitio),
     }
   })
+
+  /**
+   * El bar del segundo acto, solo desde su hora.
+   *
+   * Antes de `barEn` no sale de la base: «ninguna pieza dice el bar antes de
+   * la hora» (entrega segundo-acto). El corte lo hace el servidor y no la
+   * pantalla, porque lo que viaja en una respuesta ya se puede leer.
+   *
+   * Los minutos, como los de `paraSeguir`: desde el restaurante de ESTA
+   * mesa, que cambia de una mesa a otra aunque el bar sea el mismo.
+   */
+  const barEn = evento.after_venue_id ? SEGUNDO_ACTO.barEn(evento.starts_at) : null
+  let bar: {
+    nombre: string
+    direccion: string | null
+    mapa: string | null
+    mapaApple: string | null
+    minutosAPie: number | null
+  } | null = null
+  if (barEn && Date.now() >= Date.parse(barEn)) {
+    const { data: sitio } = await admin
+      .from('restaurants')
+      .select('name, address, maps_url, place_id, lat, lng')
+      .eq('id', evento.after_venue_id as string)
+      .maybeSingle()
+    if (sitio) {
+      bar = {
+        nombre: sitio.name,
+        direccion: sitio.address ?? null,
+        mapa: enlaceDeMapa(sitio) || null,
+        mapaApple: enlaceApple(sitio) || null,
+        // Lo tecleado en la ficha del local manda, como en `paraSeguir`.
+        minutosAPie:
+          (seguires ?? []).find((x) => x.after_id === evento.after_venue_id)?.minutos_a_pie
+          ?? minutosAPie(mesa.restaurants, sitio),
+      }
+    }
+  }
 
   const { data: companeros } = await admin
     .from('table_members')
@@ -783,6 +831,8 @@ export async function GET(request: Request) {
     fotoEntrada: urlDeFotoDeLocal(mesa.restaurants?.id, mesa.restaurants?.facade_photo_path),
     // Hasta tres sitios para seguir, los que operación eligió para ESE local.
     paraSeguir,
+    // El bar del segundo acto: `null` hasta `barEn` (que va en las marcas).
+    bar,
     /**
      * `cierraMesaEn` se quitó el 15-10, el mismo día que se puso.
      *
