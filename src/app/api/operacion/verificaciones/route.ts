@@ -188,7 +188,7 @@ export async function GET() {
 
   const { data: motivos } = await admin
     .from('verification_rejection_reasons')
-    .select('code, label, allows_retry, message')
+    .select('code, label, allows_retry, message, afecta')
     .order('sort_order')
 
   // Quién es cada uno de los que la vista no trae. Hoy es uno; el día que
@@ -299,6 +299,9 @@ export async function GET() {
     motivos: (motivos ?? []).map((m) => ({
       codigo: m.code,
       label: m.label,
+      // Qué foto invalida. Con una sola foto subida, el panel solo ofrece
+      // los motivos de esa foto (03-11).
+      afecta: (m as { afecta?: string }).afecta ?? 'ambas',
       permiteReintento: m.allows_retry,
       // Lo que le llegará a ella. El panel lo enseña antes de confirmar,
       // para que quien rechaza vea qué está mandando.
@@ -348,7 +351,25 @@ export async function POST(request: Request) {
   for (const v of suyas ?? []) vigentes.set(v.kind, v.created_at)
 
   // 1 · Con una sola foto no se decide. La otra puede estar subiéndose.
-  if (!vigentes.has('id_document') || !vigentes.has('selfie')) {
+  //
+  //     Salvo RECHAZAR esa foto, cuando lleva parada un cuarto de hora y el
+  //     motivo es de ella. Michael, 03-11, con la cola delante: gente que
+  //     subió una selfie donde iba la cédula y lleva días en Incompletos sin
+  //     que se le pudiera decir nada. Aprobar sigue sin poderse: aprobar con
+  //     una foto es aprobar a medias. Y el cuarto de hora es lo que impide
+  //     el fallo del 12-10, rechazar mientras la otra se está subiendo.
+  const presente = vigentes.has('id_document') ? 'id_document' : vigentes.has('selfie') ? 'selfie' : null
+  let rechazaLaUnica = false
+  if (d.accion === 'rechazar' && presente && vigentes.size === 1) {
+    const parada = Date.now() - new Date(vigentes.get(presente) as string).getTime() >= 15 * 60_000
+    const { data: m } = await admin
+      .from('verification_rejection_reasons')
+      .select('afecta')
+      .eq('code', d.motivo)
+      .maybeSingle()
+    rechazaLaUnica = parada && (m as { afecta?: string } | null)?.afecta === presente
+  }
+  if (!rechazaLaUnica && (!vigentes.has('id_document') || !vigentes.has('selfie'))) {
     const falta = !vigentes.has('selfie') ? 'la selfie' : 'la cédula'
     return NextResponse.json(
       {

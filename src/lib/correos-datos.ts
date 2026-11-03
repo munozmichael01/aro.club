@@ -1093,7 +1093,33 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           consejo: 'Contéstanos a este correo y lo miramos contigo. No hace falta que subas nada más por ahora.',
         },
       }
-      const voz = voces[caso] ?? voces.ambas
+      const voz = { ...(voces[caso] ?? voces.ambas) }
+
+      /**
+       * «Guardada, no hace falta repetirla», solo si de verdad la tenemos.
+       *
+       * Desde el 03-11 se puede rechazar la única foto de alguien que se
+       * quedó a medias (casi siempre, una selfie subida donde iba la cédula).
+       * Esa persona no tiene la otra, y decirle que está guardada es
+       * mandarla a una pantalla que se la va a pedir.
+       */
+      if (fila.profile_id && (caso === 'id_document' || caso === 'selfie' || caso === 'faltaDocumento' || caso === 'faltaSelfie')) {
+        const otra = caso === 'id_document' || caso === 'faltaDocumento' ? 'selfie' : 'id_document'
+        const { data: laOtra } = await admin
+          .from('verifications')
+          .select('id')
+          .eq('profile_id', fila.profile_id)
+          .eq('kind', otra)
+          .in('status', ['pending', 'approved'])
+          .limit(1)
+        if (!laOtra?.length) {
+          voz.laOtra = otra === 'selfie'
+            ? 'Todavía no la tenemos: te la pedimos justo después'
+            : 'Todavía no lo tenemos: te lo pedimos justo después'
+          if (caso === 'id_document') voz.anticipo = 'Hay que repetir la foto de tu documento.'
+          if (caso === 'selfie') voz.anticipo = 'Hay que repetir tu selfie.'
+        }
+      }
       const coma = trato ? `, ${trato}` : ''
       // Cuando falta una foto, el mensaje del catálogo YA dice qué hacer
       // («sube tu cédula», «hazte una de frente»). Añadirle «mándala y
