@@ -5339,7 +5339,18 @@ class Component extends DCLogic {
         // la pestaña en la que estás no se ve.
         clave: CLAVES[i] || String(i),
         activa: on ? '1' : null,
-        pick: () => { this.setState({ vista: i }); this.centrarPestana(); this.alEntrarEn(CLAVES[i]); },
+        pick: () => {
+          this.setState({ vista: i }); this.centrarPestana(); this.alEntrarEn(CLAVES[i]);
+          /**
+           * La pestaña, en la dirección. Michael, 03-11: «a veces actualiza
+           * la página y termina en otra pestaña». El panel ya leía el hash al
+           * abrir (`abrirDelHash`), pero nunca lo escribía, así que recargar
+           * volvía a Reparto. `replaceState` y no `location.hash`: no salta
+           * la página y no llena el historial de una entrada por clic.
+           * También sirve para pasar el enlace de una pestaña concreta.
+           */
+          try { window.history.replaceState(null, '', '#' + CLAVES[i]); } catch (e) {}
+        },
         btn: 'display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 15px;border-radius:999px;border:1px solid ' + (on ? '#14342A' : 'rgba(20,52,42,.18)') + ';background:' + (on ? '#14342A' : 'transparent') + ';color:' + (on ? '#FAF3E4' : '#1B5138') + ';font:' + (on ? '600' : '500') + ' 14px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 180ms ease',
         contador: 'display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:' + (on ? 'rgba(250,243,228,.22)' : 'rgba(20,52,42,.09)') + ';font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (on ? '#FAF3E4' : '#33513F') + ';font-variant-numeric:tabular-nums'
       };
