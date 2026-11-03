@@ -184,6 +184,8 @@ type Api = {
   /** «10 ref» · «10 ref c/u». */
   precioDelPlan: (fecha: FechaConMarcas) => string
   botonDelPlan: (fecha: FechaConMarcas) => string
+  /** Lo que pasa si cancelas: «Cancelas con más de 24 horas…». */
+  cancelaDelPlan: (fecha: FechaConMarcas) => string
   notaDelPlan: (fecha: FechaConMarcas & FechaConHoras, zona?: string) => string
   cubreDelPlan: (fecha: FechaConMarcas) => string
   lineaDeCierre: (inicioIso: string, zona?: string, cierreIso?: string | null, ahora?: number) => { texto: string; cerrada: boolean }

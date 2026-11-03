@@ -2555,6 +2555,17 @@
       return api.fraseDeApuntados(x, f.porMesa || f.seats_per_table, f.formato || f.format)
     },
 
+    /**
+     * Lo que pasa si cancelas, debajo del botón de la hoja. La entrega quitó
+     * la nota del precio, que era donde vivía, y no se puede perder: es lo
+     * que decide si alguien se atreve a reservar (02-11).
+     */
+    cancelaDelPlan: function (fecha) {
+      var f = fecha || {}
+      if (f.masUno || f.mas_uno) return api.MAS_UNO.dentro.cancela()
+      return 'Cancelas con más de ' + api.HORAS_DE_MARGEN + ' horas y recuperas el crédito. Tu consumo lo pagas en el sitio.'
+    },
+
     botonDelPlan: function (fecha) {
       var f = fecha || {}
       return (f.masUno || f.mas_uno) ? 'Reservar dos puestos' : 'Reservar mi puesto'

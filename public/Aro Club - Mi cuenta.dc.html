@@ -253,15 +253,8 @@
                 <div style="padding:0 clamp(15px,2vw,18px) clamp(16px,2vw,18px);animation:aro-open 260ms ease both">
                   <div style="height:1px;background:rgba(20,52,42,.12);margin-bottom:16px"></div>
 
-                  <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:11px">ELIGE LA HORA</div>
-                  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">
-                    <sc-for list="{{ ev.horas }}" as="h" hint-placeholder-count="3">
-                      <button onClick="{{ h.pick }}" style="{{ h.btn }}">
-                        <span style="{{ h.aro }}">{{ h.icono }}</span>
-                        <span style="{{ h.txt }}">{{ h.label }}</span>
-                      </button>
-                    </sc-for>
-                  </div>
+                  <!-- Sin «Elige la hora»: la hora ya va en la fila de arriba y
+                       una fecha tiene una sola (sección A, 02-11). -->
 
                   <!-- «Esta fecha» (entrega «Qué estás reservando», sección A,
                        02-11): la frase del plan y una línea por marca, con su
@@ -551,7 +544,7 @@
                 <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="{{ t.colorIcono }}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ t.iconoPlan }}"></path></svg>
               </div>
               <sc-if value="{{ t.hayMarca }}" hint-placeholder-val="{{ false }}">
-                <span style="position:absolute;left:12px;bottom:12px;display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:999px;background:#FAF3E4;color:#14342A;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;white-space:nowrap">{{ t.marca }}</span>
+                <span style="position:absolute;right:12px;top:14px;display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:999px;background:#FAF3E4;color:#14342A;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;white-space:nowrap">{{ t.marca }}</span>
               </sc-if>
               <div style="position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:8px;background:#FAF3E4;border-radius:999px;padding:7px 12px 7px 8px">
                 <div style="width:24px;height:24px;border-radius:12px;background:#14342A;display:flex;align-items:center;justify-content:center">
@@ -573,7 +566,7 @@
             <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="{{ comoUna.colorIcono }}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ comoUna.iconoPlan }}"></path></svg>
           </div>
           <sc-if value="{{ comoUna.hayMarca }}" hint-placeholder-val="{{ false }}">
-            <span style="position:absolute;left:14px;bottom:14px;display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:999px;background:#FAF3E4;color:#14342A;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;white-space:nowrap">{{ comoUna.marca }}</span>
+            <span style="position:absolute;right:14px;top:14px;display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:999px;background:#FAF3E4;color:#14342A;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.08em;white-space:nowrap">{{ comoUna.marca }}</span>
           </sc-if>
           <div style="position:absolute;left:14px;top:14px;display:flex;align-items:center;gap:8px;background:#FAF3E4;border-radius:999px;padding:8px 13px 8px 9px">
             <div style="width:26px;height:26px;border-radius:13px;background:#14342A;display:flex;align-items:center;justify-content:center">
@@ -581,7 +574,9 @@
             </div>
             <span style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#14342A">{{ comoUna.etiqueta }}</span>
           </div>
-          <div style="position:absolute;right:14px;top:14px;font:600 12px/1 'Inter Tight',sans-serif;color:#FAF3E4;background:rgba(20,52,42,.7);border-radius:999px;padding:8px 11px">{{ comoCuenta }}</div>
+          <!-- Con marca, la cápsula ocupa la esquina de arriba (B) y la
+               cuenta baja a la de abajo. -->
+          <div style="position:absolute;right:14px;{{ comoCuentaSitio }};font:600 12px/1 'Inter Tight',sans-serif;color:#FAF3E4;background:rgba(20,52,42,.7);border-radius:999px;padding:8px 11px">{{ comoCuenta }}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:9px">
           <div style="font:400 clamp(24px,6.4vw,29px)/1.04 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A;text-wrap:balance">{{ comoUna.titulo }}</div>
@@ -1557,21 +1552,6 @@ class Component extends DCLogic {
       const cerrada = !!c[7];
       const abierta = this.state.reservando === clave;
       const m = marcaDe(c[1]);
-      // La hora REAL de la fecha, una sola. Habia dos opciones por formato
-      // —"7:00 p.m." y "8:30 p.m."— pero un evento tiene una hora y nadie
-      // elige turno: era un selector que no cambiaba nada. Si algun dia hay
-      // dos turnos, seran dos fechas distintas.
-      const horasDe = [c[2].split(' · ')[1] || ''];
-      const horas = horasDe.map((label, hi) => {
-        const on = this.state.hora === hi;
-        return {
-          label, icono: on ? '✓' : '',
-          pick: () => this.setState({ hora: hi }),
-          aro: 'flex:0 0 auto;width:18px;height:18px;border-radius:999px;border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (on ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 10px/1 \'Inter Tight\',sans-serif',
-          btn: 'display:inline-flex;align-items:center;gap:9px;min-height:46px;padding:0 16px 0 12px;border-radius:999px;background:' + (on ? '#FAF3E4' : 'transparent') + ';border:1px solid ' + (on ? '#8F4515' : 'rgba(20,52,42,.18)') + ';cursor:pointer;transition:all 180ms ease',
-          txt: 'font:' + (on ? '600' : '400') + ' 15px/1.2 \'Inter Tight\',sans-serif;color:#14342A;white-space:nowrap'
-        };
-      });
       let g = semanas.find((x) => x.semana === c[0]);
       if (!g) { g = { semana: c[0], eventos: [] }; semanas.push(g); }
       /**
@@ -1671,9 +1651,7 @@ class Component extends DCLogic {
         // Por puesto («c/u» en el +1). Con créditos, en encuentros.
         precioPlan: conCredito ? (masUno ? M.puestos + ' encuentros' : '1 encuentro') : AroReglas.precioDelPlan(fecha),
         cierre: cierre.texto,
-        cancela: masUno
-          ? M.dentro.cancela()
-          : 'Cancelas con más de ' + AroReglas.HORAS_DE_MARGEN + ' horas y recuperas el crédito. Tu consumo lo pagas en el sitio.',
+        cancela: AroReglas.cancelaDelPlan(fecha),
         hayDesglose: masUno && conCredito,
         segundoActo: !!c[21],
         marcaSegundoActo: AroReglas.SEGUNDO_ACTO.marca,
@@ -1720,7 +1698,8 @@ class Component extends DCLogic {
          * cinta de los correos de Design. Sin emoji: es un dato.
          */
         estiloEdad: 'display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;background:#8F4515;font:700 11px/1 \'Inter Tight\',sans-serif;letter-spacing:.08em;color:#FAF3E4;white-space:nowrap;text-transform:uppercase',
-        tipo: c[1], cuando: c[2], zona: c[3], glifo: cerrada ? '·' : (mia ? '✓' : m[0]),
+        // «Chacao · Mesa de 4 a 8 personas», como la cabecera de la hoja.
+        tipo: c[1], cuando: c[2], zona: [c[3], AroReglas.tamanoDelPlan(fecha)].filter(Boolean).join(' · '), glifo: cerrada ? '·' : (mia ? '✓' : m[0]),
         // El brunch pinta su icono y los demás su glifo. Cuando la fecha está
         // cerrada o ya es tuya mandan el punto y el visto, que dicen más.
         esBrunch: !cerrada && !mia && c[1] === 'Brunch',
@@ -1735,9 +1714,9 @@ class Component extends DCLogic {
           // De `reglas.js`, que es donde vive esa frase desde que la pidio
           // tambien la agenda publica. Aqui estaba escrita por segunda vez
           // con el seis dentro, asi que los drinks de ocho decian seis.
-          // Los apuntados si los hay; si no, el tamaño en una línea («Mesa de
-          // 4 a 8 personas»), nunca «Una mesa es de 4 a 8 personas» (02-11).
-          : (AroReglas.pruebaSocial(n, fecha) || AroReglas.tamanoDelPlan(fecha)),
+          // Los apuntados solo si los hay; el tamaño ya va en la línea de la
+          // zona. Nunca «Una mesa es de 4 a 8 personas» (02-11).
+          : AroReglas.pruebaSocial(n, fecha),
         estadoEstilo: 'font:600 12px/1 \'Inter Tight\',sans-serif;color:' + (cerrada ? '#566A5D' : (mia ? '#1B5138' : (va ? '#1B5138' : '#8F4515'))) + ';white-space:nowrap',
         caja: 'display:flex;gap:13px;align-items:flex-start;width:100%;text-align:left;border-radius:22px;padding:clamp(15px,2vw,18px);opacity:' + (cerrada ? '.58' : '1') + ';cursor:' + (mia || cerrada ? 'default' : 'pointer') + ';background:' + (mia ? 'transparent' : (abierta ? '#F2E9D5' : '#FFFBF0')) + ';border:1px solid ' + (mia ? '#1B5138' : 'transparent'),
         icono: 'flex:0 0 auto;width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:400 15px/1 \'Inter Tight\',sans-serif;background:' + (mia ? '#1B5138' : m[2]) + ';color:' + (mia ? '#FAF3E4' : m[1]),
@@ -1747,7 +1726,6 @@ class Component extends DCLogic {
         iconoFlecha: abierta ? '×' : '→',
         envoltorio: 'border-radius:22px;overflow:hidden;background:' + (abierta ? '#F2E9D5' : 'transparent'),
         abierta,
-        horas,
         /**
          * Como funciona, con el plan y el cierre de ESTA fecha dentro.
          *
@@ -2190,6 +2168,7 @@ class Component extends DCLogic {
       comoTarjetas: comoTarjetas,
       comoUna: comoTarjetas[comoIdx] || comoTarjetas[0] || {},
       comoCuenta: CF ? CF.cuentaDe(comoIdx + 1, comoTarjetas.length || 3) : '',
+      comoCuentaSitio: (comoTarjetas[comoIdx] && comoTarjetas[comoIdx].hayMarca) ? 'bottom:14px' : 'top:14px',
       comoPuntos: comoTarjetas.map((t, i) => ({
         ir: () => this.comoIr(i),
         rotulo: t.etiqueta,
