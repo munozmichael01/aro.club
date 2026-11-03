@@ -3,7 +3,7 @@ import { Modal, PanResponder, Pressable, ScrollView, StyleSheet, View } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Path } from 'react-native-svg'
 
-import { IconoCruz, Texto, color, fuente, medida, radio, tinta } from '../diseno'
+import { HojaAbajo, IconoCruz, Texto, color, fuente, medida, radio, tinta } from '../diseno'
 import * as T from '../texto/como'
 import * as M from './maquina'
 
@@ -37,24 +37,9 @@ function Chevron({ tam, color: c, atras }: { tam: number; color: string; atras?:
  */
 export function ComoFunciona(p: { plan: M.Plan | null; abierta: boolean; todas?: boolean; alCerrar: () => void }) {
   const insets = useSafeAreaInsets()
-  const [i, setI] = useState(0)
-  const deslizar = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 24 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
-        onPanResponderRelease: (_, g) => {
-          if (g.dx < -60) setI((x) => Math.min(2, x + 1))
-          else if (g.dx > 60) setI((x) => Math.max(0, x - 1))
-        },
-      }),
-    [],
-  )
   if (!p.abierta || !p.plan) return null
   const v = M.vista(p.plan)
-  const cerrar = () => {
-    setI(0)
-    p.alCerrar()
-  }
+  const cerrar = () => p.alCerrar()
 
   if (p.todas) {
     const plan = (p.plan.formato ?? 'dinner') === 'dinner' ? 'cena' : 'plan'
@@ -94,64 +79,97 @@ export function ComoFunciona(p: { plan: M.Plan | null; abierta: boolean; todas?:
     )
   }
 
+  return (
+    <HojaAbajo alCerrar={cerrar} cabecera={(c) => <CabeceraComo alCerrar={c} />}>
+      {(c) => <CarruselComo plan={p.plan!} alTerminar={c} />}
+    </HojaAbajo>
+  )
+}
+
+/**
+ * El título de «Cómo funciona». Con `alVolver` (dentro de la hoja de
+ * reservar), una flecha para volver a la fecha en lugar de la X: así no se
+ * abre una hoja encima de otra (Michael, 03-11).
+ */
+export function CabeceraComo(p: { alCerrar?: () => void; alVolver?: () => void }) {
+  return (
+    <View style={[e.cabecera, { paddingHorizontal: 20, marginTop: 14 }]}>
+      {p.alVolver ? (
+        <Pressable onPress={p.alVolver} accessibilityRole="button" accessibilityLabel={T.volver} style={[e.cerrar, { marginRight: 10 }]}>
+          <Chevron tam={18} color={color.verdeProfundo} atras />
+        </Pressable>
+      ) : null}
+      <Texto style={{ flex: 1, fontFamily: fuente.titular, fontSize: 22, lineHeight: 31, color: color.verdeProfundo }} accessibilityRole="header">
+        {T.titulo}
+      </Texto>
+      {p.alCerrar ? (
+        <Pressable onPress={p.alCerrar} accessibilityRole="button" accessibilityLabel="Cerrar" style={e.cerrar}>
+          <IconoCruz tam={16} color={color.verdeProfundo} />
+        </Pressable>
+      ) : null}
+    </View>
+  )
+}
+
+/** El carrusel de tres tarjetas (C2 y B): deslizar de lado, puntos, flecha y «Entendido». */
+export function CarruselComo(p: { plan: M.Plan; alTerminar: () => void }) {
+  const [i, setI] = useState(0)
+  const deslizar = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 24 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+        onPanResponderRelease: (_, g) => {
+          if (g.dx < -60) setI((x) => Math.min(2, x + 1))
+          else if (g.dx > 60) setI((x) => Math.max(0, x - 1))
+        },
+      }),
+    [],
+  )
+  const v = M.vista(p.plan)
   const t = v.tarjetas[i]
   const ultima = i === v.tarjetas.length - 1
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={cerrar} statusBarTranslucent>
-      <View style={e.fondo}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={cerrar} accessibilityLabel="Cerrar" />
-        <View style={[e.hoja, { paddingBottom: insets.bottom + 26 }]} accessibilityViewIsModal {...deslizar.panHandlers}>
-          <View style={e.asa} />
-          <View style={e.cabecera}>
-            <Texto style={{ fontFamily: fuente.titular, fontSize: 22, lineHeight: 31, color: color.verdeProfundo }} accessibilityRole="header">
-              {T.titulo}
-            </Texto>
-            <Pressable onPress={cerrar} accessibilityRole="button" accessibilityLabel="Cerrar" style={e.cerrar}>
-              <IconoCruz tam={16} color={color.verdeProfundo} />
-            </Pressable>
+    <View style={{ paddingHorizontal: 20, paddingBottom: 12 }} {...deslizar.panHandlers}>
+      <View style={[e.foto, { backgroundColor: t.panel }]}>
+        <Panel t={t} />
+        <View style={[e.chip, { left: 14, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 9, paddingRight: 13 }]}>
+          <View style={e.chipIcono}>
+            <IconoTramo clave={t.clave} tam={15} color={color.crema} />
           </View>
-          <View style={[e.foto, { backgroundColor: t.panel }]}>
-            <Panel t={t} />
-            <View style={[e.chip, { left: 14, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 9, paddingRight: 13 }]}>
-              <View style={e.chipIcono}>
-                <IconoTramo clave={t.clave} tam={15} color={color.crema} />
-              </View>
-              <Texto style={[e.etiqueta, { fontFamily: fuente.textoNegrita, letterSpacing: 1.8, color: color.verdeProfundo }]}>{t.etiqueta}</Texto>
-            </View>
-            {/* Si una marca cambió esta tarjeta, su cápsula lo señala (B). La cuenta baja a la esquina de abajo. */}
-            {t.marca ? (
-              <View style={[e.chip, { right: 14, backgroundColor: color.verdeProfundo, borderWidth: 1.5, borderColor: color.crema, paddingHorizontal: 10 }]}>
-                <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 10.5, lineHeight: 14, letterSpacing: 0.7, color: color.crema }}>{t.marca}</Texto>
-              </View>
-            ) : null}
-            <View style={[e.chip, t.marca ? { top: 'auto', bottom: 14 } : null, { right: 14, backgroundColor: 'rgba(20,52,42,.7)', paddingHorizontal: 11 }]}>
-              <Texto style={{ fontFamily: fuente.textoSemi, fontSize: 12, lineHeight: 15, color: color.crema }}>{T.cuentaDe(i + 1, v.tarjetas.length)}</Texto>
-            </View>
+          <Texto style={[e.etiqueta, { fontFamily: fuente.textoNegrita, letterSpacing: 1.8, color: color.verdeProfundo }]}>{t.etiqueta}</Texto>
+        </View>
+        {/* Si una marca cambió esta tarjeta, su cápsula lo señala (B). La cuenta baja a la esquina de abajo. */}
+        {t.marca ? (
+          <View style={[e.chip, { right: 14, backgroundColor: color.verdeProfundo, borderWidth: 1.5, borderColor: color.crema, paddingHorizontal: 10 }]}>
+            <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 10.5, lineHeight: 14, letterSpacing: 0.7, color: color.crema }}>{t.marca}</Texto>
           </View>
-          {/* Alto fijo del texto: la hoja no cambia de tamaño entre tarjetas. */}
-          <View style={{ gap: 9, minHeight: 150, marginTop: 14 }}>
-            <Texto style={[e.titular, { fontSize: 29, lineHeight: 41 }]}>{t.titulo}</Texto>
-            <Texto style={{ fontSize: 16, lineHeight: 23, color: color.cuerpo }}>{t.cuerpo}</Texto>
-          </View>
-          <View style={e.puntos}>
-            {v.tarjetas.map((x, k) => (
-              <Pressable key={x.clave} onPress={() => setI(k)} accessibilityRole="button" accessibilityLabel={T.cuentaDe(k + 1, v.tarjetas.length)} hitSlop={10}>
-                <View style={[e.punto, k === i ? { width: 26, backgroundColor: color.verdeProfundo } : null]} />
-              </Pressable>
-            ))}
-          </View>
-          <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-            <Pressable onPress={() => setI(Math.max(0, i - 1))} disabled={i === 0} accessibilityRole="button" accessibilityLabel="Anterior" style={[e.atras, i === 0 && { opacity: 0.3 }]}>
-              <Chevron tam={18} color={color.verdeProfundo} atras />
-            </Pressable>
-            <Pressable onPress={() => (ultima ? cerrar() : setI(i + 1))} accessibilityRole="button" style={[e.boton, { flex: 1, backgroundColor: color.verdeProfundo }]}>
-              <Texto style={[e.textoBoton, { color: color.crema }]}>{ultima ? T.entendido : T.siguiente}</Texto>
-            </Pressable>
-          </View>
-          <Texto style={{ fontSize: 12.5, lineHeight: 18, color: color.cuerpo, textAlign: 'center', marginTop: 14 }}>{T.pie(v.miMesa)}</Texto>
+        ) : null}
+        <View style={[e.chip, t.marca ? { top: 'auto', bottom: 14 } : null, { right: 14, backgroundColor: 'rgba(20,52,42,.7)', paddingHorizontal: 11 }]}>
+          <Texto style={{ fontFamily: fuente.textoSemi, fontSize: 12, lineHeight: 15, color: color.crema }}>{T.cuentaDe(i + 1, v.tarjetas.length)}</Texto>
         </View>
       </View>
-    </Modal>
+      {/* Alto fijo del texto: la hoja no cambia de tamaño entre tarjetas. */}
+      <View style={{ gap: 9, minHeight: 150, marginTop: 14 }}>
+        <Texto style={[e.titular, { fontSize: 29, lineHeight: 41 }]}>{t.titulo}</Texto>
+        <Texto style={{ fontSize: 16, lineHeight: 23, color: color.cuerpo }}>{t.cuerpo}</Texto>
+      </View>
+      <View style={e.puntos}>
+        {v.tarjetas.map((x, k) => (
+          <Pressable key={x.clave} onPress={() => setI(k)} accessibilityRole="button" accessibilityLabel={T.cuentaDe(k + 1, v.tarjetas.length)} hitSlop={10}>
+            <View style={[e.punto, k === i ? { width: 26, backgroundColor: color.verdeProfundo } : null]} />
+          </Pressable>
+        ))}
+      </View>
+      <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+        <Pressable onPress={() => setI(Math.max(0, i - 1))} disabled={i === 0} accessibilityRole="button" accessibilityLabel="Anterior" style={[e.atras, i === 0 && { opacity: 0.3 }]}>
+          <Chevron tam={18} color={color.verdeProfundo} atras />
+        </Pressable>
+        <Pressable onPress={() => (ultima ? p.alTerminar() : setI(i + 1))} accessibilityRole="button" style={[e.boton, { flex: 1, backgroundColor: color.verdeProfundo }]}>
+          <Texto style={[e.textoBoton, { color: color.crema }]}>{ultima ? T.entendido : T.siguiente}</Texto>
+        </Pressable>
+      </View>
+      <Texto style={{ fontSize: 12.5, lineHeight: 18, color: color.cuerpo, textAlign: 'center', marginTop: 14 }}>{T.pie(v.miMesa)}</Texto>
+    </View>
   )
 }
 

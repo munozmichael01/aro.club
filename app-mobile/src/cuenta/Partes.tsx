@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { FilaComoFunciona } from '../como/Fila'
-import { AccessibilityInfo, Animated, Image, Modal, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { AccessibilityInfo, Animated, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import Svg, { Circle, Path } from 'react-native-svg'
 
 import {
   Aviso,
   Boton,
   EnlacePie,
+  HojaAbajo,
   IconoCheck,
   IconoFlecha,
   IconoPin,
@@ -26,8 +26,9 @@ import {
 import * as F from '../texto/fechas'
 import * as T from '../texto/cuenta'
 import type { Atajo, FilaAgenda, Filtro, Proximo, Tarjeta } from './maquina'
-import { AvisoCasilla, BloqueHoja, BotonConCasilla, CargoDos } from '../masuno/Partes'
+import { AvisoCasilla, BotonConCasilla, CargoDos } from '../masuno/Partes'
 import { reglas } from '../reglas'
+import { CabeceraComo, CarruselComo } from '../como/ComoFunciona'
 import { Capsulas, CuadroPlan, EstaFecha, IconoPlan } from '../plan/Marcas'
 
 /**
@@ -342,138 +343,134 @@ function FilaFecha(p: { f: FilaAgenda; alAbrir: () => void }) {
  */
 function HojaFecha(p: PropsFecha & { alCerrar: () => void }) {
   const { f } = p
-  const insets = useSafeAreaInsets()
   // +1 con créditos: «Reservar dos puestos» no aparta todavía, cambia el botón por el aviso (2A).
   const [aviso, setAviso] = useState(false)
   const [entendido, setEntendido] = useState(false)
+  // «¿Cómo funciona?» se abre DENTRO de esta hoja, no en otra encima (Michael, 03-11): cambia lo de dentro.
+  const [viendo, setViendo] = useState<'fecha' | 'como'>('fecha')
+  const como = viendo === 'como'
   const H = reglas.MAS_UNO.hoja
-  const alCerrar = useRef(p.alCerrar)
-  alCerrar.current = p.alCerrar
-  const arrastre = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => g.dy > 8 && Math.abs(g.dy) > Math.abs(g.dx),
-      onPanResponderRelease: (_, g) => {
-        if (g.dy > 70 || g.vy > 0.8) alCerrar.current()
-      },
-    }),
-  ).current
-  const nota = reglas.notaDelPlan(f.plan)
-  const cubre = reglas.cubreDelPlan(f.plan)
+  const plan = { ...f.plan, empiezaEn: f.empiezaEn, zonaHoraria: f.zonaHoraria }
   const cierre = reglas.lineaDeCierre(f.empiezaEn, f.zonaHoraria, f.cierraEn)
   const formato = (T.FORMATOS[f.formato]?.singular ?? '').toUpperCase()
 
-  return (
-    <Modal visible transparent animationType="slide" onRequestClose={p.alCerrar} statusBarTranslucent>
-      <View style={estilos.hojaFondo}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={p.alCerrar} accessibilityLabel={T.agenda.cancelar} />
-        <View style={[estilos.hojaFecha, { paddingBottom: insets.bottom + 14, marginTop: insets.top + 24 }]} accessibilityViewIsModal>
-          <View {...arrastre.panHandlers} style={{ paddingTop: 12, paddingBottom: 10, paddingHorizontal: 20 }}>
-            <View style={estilos.asa} />
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 14 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <CuadroPlan formato={f.plan.formato} />
-                <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 12, lineHeight: 15, letterSpacing: 1.4, color: color.cuerpo }}>{formato}</Texto>
-              </View>
-              <Capsulas capsulas={f.capsulas} />
-            </View>
-            <Texto style={{ fontFamily: fuente.titular, fontSize: 28, lineHeight: 40, color: color.verdeProfundo, marginTop: 6 }} accessibilityRole="header">
-              {f.cuando}
-            </Texto>
-            <Texto variante="cuerpoChico" tono="secundario" style={{ fontFamily: fuente.textoMedia }}>
-              {f.zonaYTamano}
-            </Texto>
-          </View>
-
-          <ScrollView style={{ flexGrow: 0, flexShrink: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, gap: 14 }}>
-            <EstaFecha fecha={f.plan} />
-            <View style={{ borderTopWidth: 1, borderTopColor: tinta(0.12) }}>
-              <Texto variante="cuerpoChico" tono="secundario" style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: tinta(0.12) }}>
-                {nota}
-              </Texto>
-              {/* «¿Cómo funciona?» (C1): el carrusel de ESTE plan, con lo que cambian sus marcas. */}
-              <View style={{ paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: tinta(0.12) }}>
-                <FilaComoFunciona plan={{ ...f.plan, empiezaEn: f.empiezaEn, zonaHoraria: f.zonaHoraria }} />
-              </View>
-            </View>
-            {/* +1: el bloque y el cargo en dos (entrega mas-uno, 1B). */}
-            {f.masUno ? (
-              <View style={{ gap: 12 }}>
-                <BloqueHoja />
-                {/* En ref se dice por puesto («10 ref c/u»); el total de los dos, solo en el pago (Michael, 02-11). En encuentros sí: gasta dos. */}
-                {p.conCredito ? <CargoDos uno={T.agenda.encuentros(1)} total={T.agenda.encuentros(f.creditos)} /> : null}
-                <Texto variante="nota">{H.nota}</Texto>
-              </View>
-            ) : null}
-            {/* Las zonas que reservar le suma (31-10). Como la web. */}
-            {f.zonasNuevas.length ? (
-              <View style={[estilos.zonas, { marginBottom: 0 }]}>
-                <View style={estilos.zonasIcono}>
-                  <IconoPin color={color.crema} />
-                </View>
-                <Texto variante="cuerpoChico" tono="tinta" style={{ flex: 1 }}>
-                  {T.agenda.zonasNuevas(f.zonasNuevas)}
-                </Texto>
-              </View>
-            ) : null}
-            {/* Esta cena se graba: se dice antes del botón (18-10). */}
-            {f.graba ? (
-              <View style={[estilos.graba, { marginBottom: 0 }]}>
-                <Texto variante="cuerpoChico" tono="terracota" style={{ fontFamily: fuente.textoSemi }}>
-                  {T.grabacionFecha.titulo}
-                </Texto>
-                <Texto variante="cuerpoChico" style={{ marginTop: 6 }}>
-                  {T.grabacionFecha.cuerpo}
-                </Texto>
-                {p.pidePermiso ? (
-                  <Pressable
-                    onPress={p.alPermiso}
-                    accessibilityRole="checkbox"
-                    aria-checked={p.permiso}
-                    style={[estilos.permiso, p.permiso ? { backgroundColor: color.terracota, borderColor: color.terracota } : null]}
-                  >
-                    <Texto variante="cuerpo" style={{ fontFamily: fuente.textoMedia, color: p.permiso ? '#FFF8EA' : color.verdeProfundo }}>
-                      {T.grabacionFecha.permiso(p.permiso)}
-                    </Texto>
-                  </Pressable>
-                ) : null}
-              </View>
-            ) : null}
-            {f.masUno && aviso ? <AvisoCasilla plazo={f.plazo} marcado={entendido} alMarcar={() => setEntendido((x) => !x)} /> : null}
-          </ScrollView>
-
-          {/* El pie, fijo: lo que cubre y el precio, el cierre y el botón. */}
-          <View style={estilos.hojaPie}>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
-              <Texto variante="cuerpoChico" tono="secundario" style={{ flex: 1 }}>
-                {cubre}
-              </Texto>
-              <Texto style={{ fontFamily: fuente.titular, fontSize: 22, lineHeight: 31, color: color.verdeProfundo }}>{/* Con créditos se dice en encuentros, como la web (9170ac4); sin ellos, «10 ref» o «10 ref c/u». */}
-                {p.conCredito ? T.agenda.encuentros(f.creditos) : reglas.precioDelPlan(f.plan)}
-              </Texto>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <IconoReloj />
-              <Texto variante="cuerpoChico" tono="secundario" style={{ flex: 1 }}>
-                {cierre.texto}
-              </Texto>
-            </View>
-            {/* El «no» del servidor, junto al botón. */}
-            {p.fallo ? <Aviso tono="ojo">{p.fallo}</Aviso> : null}
-            {f.masUno && aviso ? (
-              <BotonConCasilla texto={H.boton(f.creditos)} marcado={entendido} onPress={() => p.alConfirmar(true)} />
-            ) : (
-              <Boton
-                ancho
-                texto={f.masUno ? (p.conCredito ? H.boton(f.creditos) : reglas.botonDelPlan(f.plan)) : p.textoReservar(f.precio)}
-                // Sin créditos, el aviso del +1 sale en Pago (2B): allí se aparta.
-                onPress={() => (f.masUno && p.conCredito ? setAviso(true) : p.alConfirmar())}
-                apagado={cierre.cerrada || (f.graba && p.pidePermiso && !p.permiso)}
-              />
-            )}
-          </View>
+  const cabecera = como ? (
+    <CabeceraComo alVolver={() => setViendo('fecha')} />
+  ) : (
+    <View style={{ paddingBottom: 10, paddingHorizontal: 20 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <CuadroPlan formato={f.plan.formato} />
+          <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 12, lineHeight: 15, letterSpacing: 1.4, color: color.cuerpo }}>{formato}</Texto>
         </View>
+        <Capsulas capsulas={f.capsulas} />
       </View>
-    </Modal>
+      <Texto style={{ fontFamily: fuente.titular, fontSize: 28, lineHeight: 40, color: color.verdeProfundo, marginTop: 6 }} accessibilityRole="header">
+        {f.cuando}
+      </Texto>
+      <Texto variante="cuerpoChico" tono="secundario" style={{ fontFamily: fuente.textoMedia }}>
+        {f.zonaYTamano}
+      </Texto>
+    </View>
+  )
+
+  // El pie, fijo: lo que cubre y el precio, el cierre, el botón y qué pasa si cancelas.
+  const pie = como ? null : (
+    <View style={estilos.hojaPie}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
+        <Texto variante="cuerpoChico" tono="secundario" style={{ flex: 1 }}>
+          {reglas.cubreDelPlan(f.plan)}
+        </Texto>
+        {/* Con créditos se dice en encuentros, como la web (9170ac4); sin ellos, «10 ref» o «10 ref c/u». */}
+        <Texto style={{ fontFamily: fuente.titular, fontSize: 22, lineHeight: 31, color: color.verdeProfundo }}>
+          {p.conCredito ? T.agenda.encuentros(f.creditos) : reglas.precioDelPlan(f.plan)}
+        </Texto>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <IconoReloj />
+        <Texto variante="cuerpoChico" tono="secundario" style={{ flex: 1 }}>
+          {cierre.texto}
+        </Texto>
+      </View>
+      {/* El «no» del servidor, junto al botón. */}
+      {p.fallo ? <Aviso tono="ojo">{p.fallo}</Aviso> : null}
+      {f.masUno && aviso ? (
+        <BotonConCasilla texto={H.boton(f.creditos)} marcado={entendido} onPress={() => p.alConfirmar(true)} />
+      ) : (
+        <Boton
+          ancho
+          texto={f.masUno ? (p.conCredito ? H.boton(f.creditos) : reglas.botonDelPlan(f.plan)) : p.textoReservar(f.precio)}
+          // Sin créditos, el aviso del +1 sale en Pago (2B): allí se aparta.
+          onPress={() => (f.masUno && p.conCredito ? setAviso(true) : p.alConfirmar())}
+          apagado={cierre.cerrada || (f.graba && p.pidePermiso && !p.permiso)}
+        />
+      )}
+      {/* Lo que antes iba en la nota del precio (c21f168): cuándo recuperas el crédito. */}
+      <Texto variante="nota" style={{ textAlign: 'center' }}>
+        {reglas.cancelaDelPlan(f.plan)}
+      </Texto>
+    </View>
+  )
+
+  const cuerpo = como ? (
+    <ScrollView style={{ flexGrow: 0, flexShrink: 1 }}>
+      <CarruselComo plan={plan} alTerminar={() => setViendo('fecha')} />
+    </ScrollView>
+  ) : (
+    <ScrollView style={{ flexGrow: 0, flexShrink: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 12, gap: 14 }}>
+      <EstaFecha fecha={f.plan} />
+      <View>
+        <Texto variante="cuerpoChico" tono="secundario" style={{ paddingVertical: 12, borderTopWidth: 1, borderTopColor: tinta(0.12) }}>
+          {reglas.notaDelPlan(f.plan)}
+        </Texto>
+        {/* «¿Cómo funciona?» (C1): la fila ya trae sus filetes; el carrusel se abre en esta misma hoja. */}
+        <FilaComoFunciona plan={plan} alAbrir={() => setViendo('como')} />
+      </View>
+      {/* +1: lo que «Esta fecha» no dice. «Vienes con alguien» se va: repetía su línea (Michael, 03-11). */}
+      {f.masUno && p.conCredito ? <CargoDos uno={T.agenda.encuentros(1)} total={T.agenda.encuentros(f.creditos)} /> : null}
+      {f.masUno && !p.conCredito ? <Texto variante="nota">{H.nota}</Texto> : null}
+      {/* Las zonas que reservar le suma (31-10). Como la web. */}
+      {f.zonasNuevas.length ? (
+        <View style={[estilos.zonas, { marginBottom: 0 }]}>
+          <View style={estilos.zonasIcono}>
+            <IconoPin color={color.crema} />
+          </View>
+          <Texto variante="cuerpoChico" tono="tinta" style={{ flex: 1 }}>
+            {T.agenda.zonasNuevas(f.zonasNuevas)}
+          </Texto>
+        </View>
+      ) : null}
+      {/* Esta cena se graba: se dice antes del botón (18-10). */}
+      {f.graba ? (
+        <View style={[estilos.graba, { marginBottom: 0 }]}>
+          <Texto variante="cuerpoChico" tono="terracota" style={{ fontFamily: fuente.textoSemi }}>
+            {T.grabacionFecha.titulo}
+          </Texto>
+          <Texto variante="cuerpoChico" style={{ marginTop: 6 }}>
+            {T.grabacionFecha.cuerpo}
+          </Texto>
+          {p.pidePermiso ? (
+            <Pressable
+              onPress={p.alPermiso}
+              accessibilityRole="checkbox"
+              aria-checked={p.permiso}
+              style={[estilos.permiso, p.permiso ? { backgroundColor: color.terracota, borderColor: color.terracota } : null]}
+            >
+              <Texto variante="cuerpo" style={{ fontFamily: fuente.textoMedia, color: p.permiso ? '#FFF8EA' : color.verdeProfundo }}>
+                {T.grabacionFecha.permiso(p.permiso)}
+              </Texto>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+      {f.masUno && aviso ? <AvisoCasilla plazo={f.plazo} marcado={entendido} alMarcar={() => setEntendido((x) => !x)} /> : null}
+    </ScrollView>
+  )
+
+  return (
+    <HojaAbajo alCerrar={p.alCerrar} etiquetaCerrar={T.agenda.cancelar} cabecera={cabecera} pie={pie}>
+      {cuerpo}
+    </HojaAbajo>
   )
 }
 
@@ -742,9 +739,6 @@ const estilos = StyleSheet.create({
     borderWidth: 1,
     borderColor: tinta(0.2),
   },
-  hojaFondo: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(20,52,42,0.45)' },
-  hojaFecha: { backgroundColor: color.crema, borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: '100%', flexShrink: 1 },
-  asa: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: tinta(0.2) },
   hojaPie: { gap: 10, paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: tinta(0.12), backgroundColor: color.crema },
   fecha: { flexDirection: 'row', gap: 13, alignItems: 'flex-start', borderRadius: radio.tarjeta, padding: 15, borderWidth: 1 },
   fechaIcono: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },

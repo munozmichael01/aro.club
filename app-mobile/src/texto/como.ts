@@ -21,3 +21,6 @@ export const primeraVez = C.primeraVez
 export const etiquetas = C.etiquetas
 export const tarjetas = C.tarjetas
 export const tipoDe = C.tipoDe
+
+/** Casilla C (solo del celular): la flecha de volver a la fecha, para lectores de pantalla. */
+export const volver = 'Volver a la fecha'

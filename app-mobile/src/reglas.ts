@@ -143,6 +143,8 @@ type Api = {
   cubreDelPlan: (fecha: FechaPlan) => string
   /** «Cierra a medianoche, cuando empieza el sábado.» / «Cierra hoy…» / «Reservas cerradas». */
   lineaDeCierre: (inicioIso: string, zona?: string | null, cierreIso?: string | null, ahora?: number) => { texto: string; cerrada: boolean }
+  /** Qué pasa si cancelas (c21f168): HORAS_DE_MARGEN, o el del +1. */
+  cancelaDelPlan: (fecha: FechaPlan) => string
   /** La prueba social de la agenda: '' por debajo del umbral (en el +1, de dos dúos). */
   pruebaSocial: (n: number, fecha: FechaPlan) => string
   /** Cómo se nombra un plan que ya pasó (074bb28): «anoche», «cenaste», «el brunch»… */

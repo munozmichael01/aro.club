@@ -13,12 +13,13 @@ import * as M from './maquina'
  * (C1) y «Cómo funciona» en Mi mesa hasta la revelación (C3b). En Mi mesa,
  * además, se abre sola una vez con las tres juntas (C3).
  */
-export function FilaComoFunciona(p: { plan: M.Plan; enMiMesa?: boolean }) {
+/** `alAbrir`: quien la pone abre el carrusel a su manera (la hoja de reservar, dentro de sí misma). */
+export function FilaComoFunciona(p: { plan: M.Plan; enMiMesa?: boolean; alAbrir?: () => void }) {
   if (!M.tieneComoFunciona(p.plan.formato)) return null
   return <Fila {...p} />
 }
 
-function Fila({ plan, enMiMesa }: { plan: M.Plan; enMiMesa?: boolean }) {
+function Fila({ plan, enMiMesa, alAbrir }: { plan: M.Plan; enMiMesa?: boolean; alAbrir?: () => void }) {
   const [abierta, setAbierta] = useState(false)
   const [todas, setTodas] = useState(false)
   const t = enMiMesa ? T.filaMesa : T.fila
@@ -66,7 +67,7 @@ function Fila({ plan, enMiMesa }: { plan: M.Plan; enMiMesa?: boolean }) {
         </Pressable>
       ) : (
         // C1: una fila entre filetes, no una tarjeta, con el «?» en un círculo oscuro.
-        <Pressable onPress={() => (setTodas(false), setAbierta(true))} accessibilityRole="button" style={e.fila}>
+        <Pressable onPress={() => (alAbrir ? alAbrir() : (setTodas(false), setAbierta(true)))} accessibilityRole="button" style={e.fila}>
           <View style={e.circulo}>
             <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
               <Circle cx={12} cy={12} r={9} stroke={color.crema} strokeWidth={2.2} />
@@ -80,7 +81,7 @@ function Fila({ plan, enMiMesa }: { plan: M.Plan; enMiMesa?: boolean }) {
           <Chevron />
         </Pressable>
       )}
-      <ComoFunciona plan={plan} abierta={abierta} todas={todas} alCerrar={cerrar} />
+      {alAbrir ? null : <ComoFunciona plan={plan} abierta={abierta} todas={todas} alCerrar={cerrar} />}
     </>
   )
 }
