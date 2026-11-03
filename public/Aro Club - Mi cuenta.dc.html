@@ -840,6 +840,20 @@ class Component extends DCLogic {
   // lo marcó.
   componentDidMount() {
     /**
+     * «Cómo funciona» con teclado (entrega «Qué estás reservando», 02-11:
+     * «en la web, flechas a los lados y teclado»): Escape cierra, y
+     * izquierda y derecha pasan de tarjeta. Solo mientras está abierto.
+     */
+    this._teclas = (e) => {
+      if (!this.state.como) return;
+      if (e.key === 'Escape') { e.preventDefault(); this.cerrarComo(); }
+      // En la última, la flecha no cierra: eso es «Entendido».
+      else if (e.key === 'ArrowRight') { e.preventDefault(); this.comoIr(Math.min((this.state.comoIdx || 0) + 1, 2)); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); this.comoIr((this.state.comoIdx || 0) - 1); }
+    };
+    document.addEventListener('keydown', this._teclas);
+
+    /**
      * `?fecha=<id>` abre esa tarjeta y solo esa.
      *
      * Lo lleva el botón del correo de la cena con edad mínima. Sin esto, el
@@ -925,6 +939,7 @@ class Component extends DCLogic {
     clearInterval(this._t);
     clearInterval(this._espera);
     document.removeEventListener('visibilitychange', this._alVolver);
+    document.removeEventListener('keydown', this._teclas);
   }
 
   /**
