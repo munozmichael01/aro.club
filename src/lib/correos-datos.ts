@@ -515,6 +515,30 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       const falta = (p.falta as string) ?? 'perfil'
 
       /**
+       * «Te falta la selfie», solo si AL MANDAR le sigue faltando.
+       *
+       * La base sabe que algo se subió donde iba la cédula, no qué es. El
+       * 03-11, de las trece que «subieron la cédula», algunas habían subido
+       * una selfie en su lugar, y eso solo se ve en el panel. Operación las
+       * rechaza con «Falta la foto del documento», que les manda su propio
+       * correo; este, encolado horas antes, no puede salir después
+       * diciéndoles que les falta la selfie. Ni a quien la subió entre medias.
+       */
+      if (falta === 'media_foto_semana' && fila.profile_id) {
+        const { data: suyas } = await admin
+          .from('verifications')
+          .select('kind, status, created_at')
+          .eq('profile_id', fila.profile_id)
+          .neq('status', 'expired')
+          .order('created_at')
+        const ultima = new Map((suyas ?? []).map((v) => [v.kind, v.status]))
+        const cual = (p.cual as string) === 'cedula' ? 'id_document' : 'selfie'
+        const otra = cual === 'selfie' ? 'id_document' : 'selfie'
+        const sigue = !ultima.has(cual) && !!ultima.get(otra) && ultima.get(otra) !== 'rejected'
+        if (!sigue) return { error: 'ya no le falta esa foto' }
+      }
+
+      /**
        * QUÉ HAY ABIERTO Y HASTA CUÁNDO, sacado de la base y no escrito aquí.
        *
        * El aviso de verificación no decía ninguna fecha, y sin fecha no hay
