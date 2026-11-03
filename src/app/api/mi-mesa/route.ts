@@ -170,7 +170,7 @@ export async function GET(request: Request) {
 
   const { data: reservas } = await admin
     .from('bookings')
-    .select('id, event_id, permiso_grabacion, events(starts_at, reveal_at, status, format, activity, city_slug, grabacion, seats_per_table, mas_uno)')
+    .select('id, event_id, permiso_grabacion, events(starts_at, reveal_at, status, format, activity, city_slug, grabacion, seats_per_table, mas_uno, age_band_min, idioma, after_venue_id)')
     .eq('profile_id', user.id)
     .in('status', ['confirmed', 'attended'])
 
@@ -325,9 +325,23 @@ export async function GET(request: Request) {
   }
 
   const evento = reserva?.events as
-    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string; grabacion: boolean; seats_per_table: number | null; mas_uno?: boolean }
+    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string; grabacion: boolean; seats_per_table: number | null; mas_uno?: boolean; age_band_min?: number | null; idioma?: string | null; after_venue_id?: string | null }
     | null
     | undefined
+
+  /**
+   * Las marcas de la fecha, con los mismos nombres que /api/mi-cuenta: con
+   * ellas, «Cómo funciona» de Mi mesa cambia las tarjetas igual que la hoja
+   * (`AroReglas.COMO_FUNCIONA.tarjetasDe`). Lo pidió la app el 03-11: sin
+   * esto, el «Después» del segundo acto no salía en Mi mesa. Aditivo.
+   */
+  const marcas = evento
+    ? {
+        edadMinima: evento.age_band_min ?? null,
+        idioma: evento.idioma ?? null,
+        segundoActo: !!evento.after_venue_id,
+      }
+    : {}
 
   if (!reserva || !evento) {
     // Sin mesa no son todos el mismo caso, y la pantalla necesita saber
@@ -406,6 +420,7 @@ export async function GET(request: Request) {
       // Fecha +1 (Michael, 01-11): la tarjeta «Tu +1 acompañante» de quien
       // reserva, y con quién viene el acompañante. Nulos en una fecha normal.
       ...(await masUnoDeLaReserva(admin, reserva.id)),
+      ...marcas,
       eventoId: reserva.event_id,
       // Confirmada y sin haber visto «Estás dentro»: la pantalla va allí
       // antes de pintarse (entrega estas-dentro, B3).
@@ -459,6 +474,7 @@ export async function GET(request: Request) {
       // Fecha +1 (Michael, 01-11): la tarjeta «Tu +1 acompañante» de quien
       // reserva, y con quién viene el acompañante. Nulos en una fecha normal.
       ...(await masUnoDeLaReserva(admin, reserva.id)),
+      ...marcas,
       formato: evento.format,
       empiezaEn: evento.starts_at,
       zonaHoraria,
@@ -701,6 +717,7 @@ export async function GET(request: Request) {
     // Fecha +1 (Michael, 01-11): la tarjeta «Tu +1 acompañante» de quien
     // reserva, y con quién viene el acompañante. Nulos en una fecha normal.
     ...(await masUnoDeLaReserva(admin, reserva.id)),
+    ...marcas,
     // Pasada: la cena ya ocurrió, toca F11.
     fase: ahora > empiezaEn + 5 * 3600 * 1000 ? 'pasada' : 'abierta',
     // El id de la mesa y los de sus companeros: hacen falta para valorar,
