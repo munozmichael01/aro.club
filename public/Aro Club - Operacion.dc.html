@@ -7151,8 +7151,11 @@ class Component extends DCLogic {
       notaPieHistorico: 'Vino y No vino los marca operación, nunca la persona que cenó, porque de ahí salen las cenas contadas y el veto de tres meses. Pulsar la opción que ya está puesta la quita y la deja sin marcar. Las notas de la encuesta van de 1 a 4 y 4 es lo mejor. La ficha de cada persona se abre pinchando su nombre.',
 
       notaPieGente: 'Desde aquí no sale ningún correo: esta pestaña sirve para saber, no para disparar.'
-        + (St.esAdmin ? ' La exportación de leads queda anotada con quién la sacó.' : '')
-        + ' El documento, el teléfono y el correo completo se abren en la ficha de una en una, y la cédula solo desde la cola de verificaciones.',
+        // Desde el 02-11 la descarga lleva correo y teléfono enteros: decir
+        // que solo se abren en la ficha sería falso para quien es admin.
+        + (St.esAdmin
+          ? ' Las descargas quedan anotadas con quién las sacó y qué filtro llevaban. En la lista, el teléfono y el correo completo se abren en la ficha de una en una, y la cédula solo desde la cola de verificaciones.'
+          : ' El teléfono y el correo completo se abren en la ficha de una en una, y la cédula solo desde la cola de verificaciones.'),
 
       // La leyenda se compone sola: cada filtro puesto añade su trozo. Sin
       // esto, el número grande no dice de qué es.
