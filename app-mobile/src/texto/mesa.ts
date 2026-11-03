@@ -256,7 +256,7 @@ export const cena = {
     bajada: (hora: string) => reglas.SEGUNDO_ACTO.conHora(reglas.SEGUNDO_ACTO.caja.abierta.texto, hora),
     resumen: (hora: string) => reglas.SEGUNDO_ACTO.conHora(reglas.SEGUNDO_ACTO.caja.plegada.texto, hora),
     ahora: reglas.SEGUNDO_ACTO.caja.ahora.sello,
-    aPie: (n: number) => reglas.SEGUNDO_ACTO.caja.ahora.aPie.replace('{n}', String(n)),
+    aPie: (n: number) => reglas.SEGUNDO_ACTO.conMinutos(reglas.SEGUNDO_ACTO.caja.ahora.aPie, n),
     nota: reglas.SEGUNDO_ACTO.caja.ahora.texto,
     comoLlegar: reglas.SEGUNDO_ACTO.caja.ahora.boton,
     resumenPaso: reglas.SEGUNDO_ACTO.caja.resumenPaso,

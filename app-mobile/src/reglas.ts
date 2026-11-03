@@ -91,6 +91,7 @@ type Api = {
     minutosDespues: number
     barEn: (empiezaEn: string | null | undefined) => string | null
     conHora: (texto: string, hora: string) => string
+    conMinutos: (texto: string, n: number) => string
     caja: {
       abierta: { titulo: string; texto: string }
       plegada: { titulo: string; texto: string }
