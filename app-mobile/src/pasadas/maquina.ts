@@ -18,7 +18,7 @@ export type Companero = { id: string; nombre: string; inicial: string }
 export type Nuevo = { tipo: 'coincidencia' | 'cruce' | 'sinCruce'; nombres: string[] }
 
 /** Qué pasó con esa fecha. Lo que no es «fue» va en gris y sin abrirse (Michael, 31-10). */
-export type EstadoPasada = 'fue' | 'cancelada' | 'no-fue' | 'sin-mesa'
+export type EstadoPasada = 'fue' | 'cancelada' | 'cancelada-ops' | 'no-fue' | 'sin-mesa'
 
 export type Pasada = {
   /** Sin él (servidor de antes del 31-10), «fue». */
