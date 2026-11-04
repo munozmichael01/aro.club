@@ -3014,7 +3014,8 @@
           sinCruce: 'Esta vez no se cruzaron los datos',
         },
         // Las fechas en las que no hubo cena (Michael, 31-10): en gris y sin abrirse.
-        estado: { cancelada: 'CANCELASTE', 'no-fue': 'NO FUISTE', 'sin-mesa': 'NO HUBO MESA' },
+        // «LA CANCELAMOS», cuando la canceló operación (Michael, 03-11).
+        estado: { cancelada: 'CANCELASTE', 'cancelada-ops': 'LA CANCELAMOS', 'no-fue': 'NO FUISTE', 'sin-mesa': 'NO HUBO MESA' },
         vacia: { titulo: 'Aquí van a quedar tus cenas.', bajada: 'Con quién cenaste, lo que contaste y lo que se compartieron. Todo se queda aquí.', boton: 'Elegir mi primera fecha' },
         // Mis cenas en Perfil: un acceso directo a Pasadas.
         misCenas: function (n) { return n ? (n === 1 ? '1 cena' : n + ' cenas') + ' · se ven en Mi mesa, Pasadas' : 'Todavía no has cenado con Aro' },

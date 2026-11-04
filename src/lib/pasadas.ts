@@ -29,7 +29,7 @@ export type Pendiente = 'contacto' | 'encuesta' | null
  * Pasadas (Michael, 31-10: «una cancelada debe verse aquí también»), en su
  * fecha, en gris y sin abrirse: no hay mesa que enseñar.
  */
-export type EstadoPasada = 'fue' | 'cancelada' | 'no-fue' | 'sin-mesa'
+export type EstadoPasada = 'fue' | 'cancelada' | 'cancelada-ops' | 'no-fue' | 'sin-mesa'
 
 export type Pasada = {
   estado: EstadoPasada
@@ -169,22 +169,30 @@ export async function cenasPasadas(admin: Admin, yo: string): Promise<Pasada[]> 
 }
 
 /**
- * Las fechas pasadas en las que no hubo cena: canceló, no fue, o se quedó sin
- * mesa. Las que canceló operación (`cancelled_by_ops`) no van: «CANCELASTE»
- * sería falso, y no hay texto todavía para «la cancelamos nosotros».
+ * Las fechas pasadas en las que no hubo cena: canceló, la cancelamos, no fue,
+ * o se quedó sin mesa.
+ *
+ * Las que canceló operación (`cancelled_by_ops`) no iban, porque «CANCELASTE»
+ * sería falso. Desde el 03-11 van con su propio estado, `cancelada-ops`, y el
+ * texto que aprobó Michael: «LA CANCELAMOS».
+ *
+ * Y una reserva `attended` sin asiento NO va (Michael, 03-11): su mesa se
+ * despublicó o se borró, y «si no existe fue una prueba o un error». Antes
+ * caía en «NO HUBO MESA», que a quien fue le dice algo falso.
  */
 async function sinMesa(admin: Admin, yo: string, conMesa: Set<string>, ahora: number): Promise<Pasada[]> {
   const { data } = await admin
     .from('bookings')
     .select('id, status, event_id, events!inner(starts_at, format, city_slug)')
     .eq('profile_id', yo)
-    .in('status', ['cancelled_by_user', 'no_show', 'confirmed', 'attended', 'waitlisted'])
+    .in('status', ['cancelled_by_user', 'cancelled_by_ops', 'no_show', 'confirmed', 'waitlisted'])
   const filas = (data ?? [])
     .map((b) => ({ b, ev: b.events as unknown as { starts_at: string; format: string | null; city_slug: string } }))
     .filter((x) => x.ev && Date.parse(x.ev.starts_at) + FIN_CENA < ahora)
     .map((x): [typeof x, EstadoPasada | null] => [
       x,
       x.b.status === 'cancelled_by_user' ? 'cancelada'
+        : x.b.status === 'cancelled_by_ops' ? 'cancelada-ops'
         : x.b.status === 'no_show' ? 'no-fue'
         // Confirmada o en espera y sin asiento: esa vez no hubo mesa.
         : !conMesa.has(x.b.id) ? 'sin-mesa'
