@@ -150,10 +150,9 @@ export async function POST(request: Request) {
    *  · el pago, que va atado a la reserva y la reserva es la misma fila;
    *  · el crédito, porque no se ha devuelto nada ni se ha cobrado de nuevo.
    *
-   * Y las propuestas guardadas de las dos fechas se quedan viejas: la de
-   * origen la sigue enseñando y el panel ya la marca como «ya no está», y la
-   * de destino no la tiene todavía. Las dos se arreglan volviendo a repartir,
-   * que es lo que hay que hacer después de mover a alguien.
+   * De la propuesta de origen sale sola (`moverReserva`), sin chip ni
+   * tachado. En la de destino todavía no está: cae en su espera, marcada con
+   * dónde reservó, y desde ahí se sienta a mano sin repartir de nuevo.
    */
   return NextResponse.json({
     estado: 'movida',

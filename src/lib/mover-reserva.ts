@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 import { cabeEnLaFecha } from '@/lib/edad'
 import { hablaElIdioma, nombreDeIdioma } from '@/lib/idioma'
+import { sacarDeLaPropuesta } from '@/lib/reparto/sacar'
 import type { Database } from '@/lib/supabase/database.types'
 
 /**
@@ -331,6 +332,15 @@ export async function moverReserva(
     console.error('[mover-reserva]', error)
     return { ok: false, motivo: 'fallo', error: 'No pudimos moverla.' }
   }
+
+  /**
+   * Y sale de la propuesta guardada de la fecha que deja (Michael, 05-11:
+   * «no la marques como ya no está, simplemente deja de mostrarlas»). Antes
+   * se quedaba dentro, tachada, y además impedía publicar esa mesa hasta
+   * volver a repartir, que mueve a todos los demás. Lo mismo que hace cancelar.
+   * Las mesas ya publicadas no se tocan: ahí manda `table_members`.
+   */
+  await sacarDeLaPropuesta(admin, desdeEventoId, perfilId)
 
   return {
     ok: true,

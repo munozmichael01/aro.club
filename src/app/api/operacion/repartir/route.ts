@@ -359,6 +359,21 @@ export async function GET(request: Request) {
   const vivos = new Set((siguenApuntados ?? []).map((b) => b.profile_id))
 
   /**
+   * Quién SE MOVIÓ de esta fecha, para dejar de enseñarlo (Michael, 05-11).
+   *
+   * Se distingue de quien canceló por la reserva: al cancelar, la fila se
+   * queda en esta fecha con su estado; al moverla, la fila se va a la otra.
+   * Quien canceló sigue saliendo con su «ya no está», porque a esa mesa le
+   * falta alguien. Quien se movió está en otra cena y aquí no aporta nada.
+   * Hace falta para las propuestas guardadas antes de que mover la sacara.
+   */
+  const { data: conReservaAqui } = await admin
+    .from('bookings')
+    .select('profile_id')
+    .eq('event_id', evento.id)
+  const tieneReservaAqui = new Set((conReservaAqui ?? []).map((b) => b.profile_id))
+
+  /**
    * Los permisos de contenido, al leer y no al repartir.
    *
    * La propuesta guardada es de cuando alguien pulsó repartir, y el permiso
@@ -429,7 +444,7 @@ export async function GET(request: Request) {
       numero: m.table_number,
     })),
   )
-  const seGuardaronYNoEstan = enLaPropuesta.filter((id) => !vivos.has(id)).length
+  const seGuardaronYNoEstan = enLaPropuesta.filter((id) => !vivos.has(id) && tieneReservaAqui.has(id)).length
 
   /**
    * Cuánta gente no ha visto esta corrida. Y se cuenta DEL POOL, no de las
@@ -708,7 +723,7 @@ export async function GET(request: Request) {
                   } as unknown as { profileId: string; sector: string | null }
                 })
               return [...siguen, ...nuevos]
-            })().map((p) => ({
+            })().filter((p) => tieneReservaAqui.has(p.profileId)).map((p) => ({
               ...p,
               movidaDe: movidaDe.get(p.profileId) ?? null,
               // Qué contestó al «¿te podemos grabar?». `null` es que no ha

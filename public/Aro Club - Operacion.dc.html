@@ -2521,10 +2521,9 @@ class Component extends DCLogic {
    * Cambiar a alguien de fecha dentro de la misma noche.
    *
    * No es `moverPersona`: aquello retoca una propuesta, esto cambia la
-   * reserva de sitio. Por eso no hay arrastre —se elige en una lista, como
-   * una decisión— y por eso después hay que volver a repartir las dos
-   * fechas: las dos propuestas guardadas se quedan viejas en el momento en
-   * que alguien se va de una a otra.
+   * reserva de sitio. Por eso no hay arrastre: se elige en una lista, como
+   * una decisión. Sale sola de la propuesta que deja, sin tachados (05-11), y
+   * en la otra queda en la espera, marcada con dónde reservó.
    */
   cambiarDeFecha(perfilId, desdeEventoId, aEventoId, comoSeLlama, forzar) {
     const cuerpo = { perfilId: perfilId, desdeEventoId: desdeEventoId, aEventoId: aEventoId };
@@ -2547,7 +2546,7 @@ class Component extends DCLogic {
           return this.cambiarDeFecha(perfilId, desdeEventoId, aEventoId, comoSeLlama, true);
         }
         if (!r.ok) return r;
-        this.setState({ aviso: 'Movida a ' + comoSeLlama + '. Las dos fechas hay que volver a repartirlas.' });
+        this.setState({ aviso: 'Movida a ' + comoSeLlama + '. Aquí deja de salir, y allí queda en la espera con la etiqueta de dónde reservó.' });
         return this.cargarFechas().then(() => this.cargarReparto(desdeEventoId));
       });
   }
