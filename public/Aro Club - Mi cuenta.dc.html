@@ -15,6 +15,7 @@
 <script src="./support.js"></script>
 <script src="./nav.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
@@ -64,7 +65,6 @@
     .como-ancho { display:grid }
     .como-angosto { display:none }
   }
-  @keyframes aro-latido { 0%,100% { opacity:.55 } 50% { opacity:.28 } }
   @keyframes aro-open { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
   @keyframes aro-trace { from { stroke-dashoffset:96 } to { stroke-dashoffset:0 } }
   @keyframes aro-pulso { 0%,100% { opacity:.4 } 50% { opacity:1 } }
@@ -96,27 +96,71 @@
 
   <div style="flex:1;max-width:720px;width:100%;margin:0 auto;padding:clamp(24px,4.5vw,44px) clamp(16px,4vw,28px) clamp(48px,8vw,90px)">
 
+    <!-- Carga (entrega «carga», 03-11): el esqueleto con la forma real de
+         Inicio. Lo fijo se pinta («Lo que viene en Caracas», el marco de
+         cada polaroid); lo que depende de datos es hueso. No se enseña antes
+         de 0,4 s (`aro-tras-umbral`): si la cuenta llega antes, no hubo
+         espera. Los huesos son `aro-hueso` de carga.js, que es quien sabe
+         del latido y de «reducir movimiento». -->
     <sc-if value="{{ cargando }}" hint-placeholder-val="{{ false }}">
-      <div aria-busy="true" aria-live="polite" style="animation:aro-open 200ms ease both">
-        <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">Cargando tu cuenta</span>
-        <div style="{{ huesoSaludo }}"></div>
-        <div style="{{ huesoBloque }}">
-          <div style="{{ huesoSello }}"></div>
-          <div style="{{ huesoTitulo }}"></div>
-          <div style="{{ huesoTituloCorto }}"></div>
-          <div style="{{ huesoLinea }}"></div>
-          <div style="{{ huesoLinea }}"></div>
-          <div style="{{ huesoLineaCorta }}"></div>
-          <div style="{{ huesoBoton }}"></div>
+      <div aria-busy="true" aria-live="polite" class="aro-tras-umbral">
+        <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">{{ unMomento }}</span>
+        <div style="{{ esq.saludo.caja }};margin-bottom:clamp(20px,3vw,28px)"><div class="aro-hueso" style="{{ esq.saludo.hueso }}"></div></div>
+        <div style="border-radius:30px;background:#FFFBF0;padding:clamp(24px,4vw,38px)">
+          <div class="aro-hueso" style="height:32px;width:140px;border-radius:999px;margin-bottom:16px"></div>
+          <div style="{{ esq.titulo.caja }}"><div class="aro-hueso" style="{{ esq.titulo.hueso }}"></div></div>
+          <div style="{{ esq.tituloCorto.caja }}"><div class="aro-hueso" style="{{ esq.tituloCorto.hueso }}"></div></div>
+          <div style="margin-top:14px">
+            <div style="{{ esq.linea.caja }}"><div class="aro-hueso" style="{{ esq.linea.hueso }}"></div></div>
+            <div style="{{ esq.linea.caja }}"><div class="aro-hueso" style="{{ esq.linea.hueso }}"></div></div>
+            <div style="{{ esq.lineaCorta.caja }}"><div class="aro-hueso" style="{{ esq.lineaCorta.hueso }}"></div></div>
+          </div>
+          <div class="aro-hueso" style="height:52px;width:160px;border-radius:999px;margin-top:clamp(24px,3vw,32px)"></div>
+        </div>
+        <div style="margin-top:clamp(32px,4.4vw,48px)">
+          <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:12px">Lo que viene en Caracas</div>
+          <div style="display:flex;gap:12px;overflow:hidden;margin:0 -20px 20px;padding:4px 20px 10px">
+            <sc-for list="{{ esqPolas }}" as="p" hint-placeholder-count="3">
+              <div style="flex:0 0 auto;width:112px;display:flex;flex-direction:column;background:#FFFBF0;padding:6px 6px 0;border-radius:10px;border:2px solid transparent;box-sizing:border-box;box-shadow:0 10px 22px -16px rgba(20,52,42,.5);transform:rotate({{ p.giro }})">
+                <div class="aro-hueso" style="aspect-ratio:1;border-radius:5px"></div>
+                <div style="padding:10px 0 3px;display:flex;justify-content:center"><div class="aro-hueso" style="height:12px;width:56px;border-radius:6px"></div></div>
+                <div style="padding:4px 0 11px;display:flex;justify-content:center"><div class="aro-hueso" style="height:8px;width:40px;border-radius:4px"></div></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding:2px 0;margin-bottom:10px"><div class="aro-hueso" style="height:8px;width:96px;border-radius:4px"></div></div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ esqFilas }}" as="x" hint-placeholder-count="3">
+              <div style="display:flex;gap:13px;align-items:flex-start;background:#FFFBF0;border-radius:22px;padding:clamp(15px,2vw,18px);border:1px solid transparent">
+                <div class="aro-hueso" style="width:36px;height:36px;border-radius:999px;flex:none"></div>
+                <div style="flex:1;min-width:0">
+                  <div style="padding:4.5px 0"><div class="aro-hueso" style="height:11px;width:{{ x.a }};border-radius:6px"></div></div>
+                  <div style="padding:5px 0;margin-top:3px"><div class="aro-hueso" style="height:10px;width:{{ x.b }};border-radius:5px"></div></div>
+                  <div style="padding:5px 0;margin-top:2px"><div class="aro-hueso" style="height:9px;width:{{ x.c }};border-radius:5px"></div></div>
+                </div>
+                <div class="aro-hueso" style="width:34px;height:34px;border-radius:999px;flex:none;margin-top:2px"></div>
+              </div>
+            </sc-for>
+          </div>
         </div>
       </div>
     </sc-if>
 
+    <!-- No llegó la cuenta y no hay nada que enseñar: el aviso, en el sitio
+         del esqueleto. Antes, cualquier fallo —sin red, un 500— mandaba al
+         login como si no hubiera sesión. -->
+    <sc-if value="{{ hayFalloCarga }}" hint-placeholder-val="{{ false }}">
+      {{ bloqueSinRespuesta }}
+    </sc-if>
+
     <sc-if value="{{ hayDatos }}" hint-placeholder-val="{{ true }}">
-    <div style="font:400 clamp(26px,4.6vw,38px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:clamp(20px,3vw,28px)">{{ saludo }}</div>
+    <sc-if value="{{ hayFranja }}" hint-placeholder-val="{{ false }}">
+      <div style="margin:0 0 clamp(16px,2.4vw,22px)">{{ franjaSinRed }}</div>
+    </sc-if>
+    <div class="aro-entra" style="font:400 clamp(26px,4.6vw,38px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:clamp(20px,3vw,28px)">{{ saludo }}</div>
 
     <div style="{{ bloque }}">
-      <div style="animation:aro-open 420ms ease both">
+      <div class="aro-entra">
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px">
           <span style="{{ sello }}">{{ textoSello }}</span>
           <sc-if value="{{ hayReloj }}" hint-placeholder-val="{{ false }}">
@@ -184,7 +228,7 @@
     <div id="agenda" style="margin-top:clamp(32px,4.4vw,48px);scroll-margin-top:80px">
       <div style="font:400 clamp(24px,3vw,32px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.03em;color:#14342A;margin-bottom:12px">Lo que viene en Caracas</div>
 
-      <div class="carril" style="display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;scroll-padding-left:20px;scroll-snap-type:x mandatory;margin:0 -20px 20px;padding:4px 20px 10px">
+      <div class="carril aro-entra t2" style="display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;scroll-padding-left:20px;scroll-snap-type:x mandatory;margin:0 -20px 20px;padding:4px 20px 10px">
         <sc-for list="{{ filtros }}" as="f" hint-placeholder-count="5">
           <button onClick="{{ f.pick }}" aria-pressed="{{ f.marcada }}" aria-disabled="{{ f.inerte }}" style="{{ f.marco }}">
             <span style="{{ f.foto }}">
@@ -205,7 +249,7 @@
       </div>
 
       <sc-for list="{{ agenda }}" as="g" hint-placeholder-count="2">
-        <div style="margin-bottom:20px">
+        <div class="aro-entra t3" style="margin-bottom:20px">
           <div style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D;margin-bottom:10px">{{ g.semana }}</div>
           <div class="carril-fechas" style="display:flex;flex-direction:column;gap:9px">
             <sc-for list="{{ g.eventos }}" as="ev" hint-placeholder-count="3">
@@ -366,7 +410,7 @@
                     <span>{{ ev.cierre }}</span>
                   </div>
                   <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:center">
-                    <button onClick="{{ ev.confirmar }}" style="{{ ev.botonConfirmar }}">{{ ev.textoConfirmar }}</button>
+                    <button onClick="{{ ev.confirmar }}" style="{{ ev.botonConfirmar }}" aria-busy="{{ ev.bConfirmar.busy }}" aria-label="{{ ev.bConfirmar.etiqueta }}">{{ ev.bConfirmar.aro }}{{ ev.textoConfirmar }}</button>
                     <button onClick="{{ ev.abrir }}" style="{{ botonFantasmaOscuro }}">Cancelar</button>
                   </div>
                   <!-- Lo que pasa si cancelas. Vivía en la nota de debajo del
@@ -387,7 +431,7 @@
           <div style="font:500 16px/1.4 'Inter Tight',sans-serif;color:#14342A">{{ preguntaIdioma }}</div>
           <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:6px;max-width:48ch;text-wrap:pretty">{{ notaPreguntaIdioma }}</div>
           <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:14px">
-            <button onClick="{{ siHabloIdioma }}" style="{{ botonSiIdioma }}">{{ textoSiIdioma }}</button>
+            <button onClick="{{ siHabloIdioma }}" style="{{ bIdioma.estilo }}" aria-busy="{{ bIdioma.busy }}" aria-label="{{ bIdioma.etiqueta }}">{{ bIdioma.aro }}{{ textoSiIdioma }}</button>
             <button onClick="{{ noHabloIdioma }}" style="{{ botonNoIdioma }}">No</button>
           </div>
         </div>
@@ -495,7 +539,7 @@
       </button>
 
       <div style="margin-top:16px">
-        <button onClick="{{ aceptarNormas }}" style="{{ botonNormas }}">{{ textoBotonNormas }}</button>
+        <button onClick="{{ aceptarNormas }}" style="{{ bNormas.estilo }}" aria-busy="{{ bNormas.busy }}" aria-label="{{ bNormas.etiqueta }}">{{ bNormas.aro }}{{ textoBotonNormas }}</button>
       </div>
 
       <sc-if value="{{ hayFalloNormas }}" hint-placeholder-val="{{ false }}">
@@ -644,7 +688,7 @@
       </sc-for>
 
       <div style="margin-top:22px;display:flex;flex-direction:column;gap:9px">
-        <button onClick="{{ guardarPreguntas }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:54px;padding:0 24px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;cursor:pointer">{{ textoGuardarPreguntas }}</button>
+        <button onClick="{{ guardarPreguntas }}" style="{{ bPreguntas.estilo }}" aria-busy="{{ bPreguntas.busy }}" aria-label="{{ bPreguntas.etiqueta }}">{{ bPreguntas.aro }}{{ textoGuardarPreguntas }}</button>
         <button onClick="{{ cerrarPreguntas }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 24px;border-radius:999px;border:none;background:transparent;color:#566A5D;font:500 15px/1 'Inter Tight',sans-serif;cursor:pointer">Ahora no</button>
       </div>
 
@@ -828,12 +872,68 @@ class Component extends DCLogic {
       .catch(() => this.setState({ guardandoNormas: false, falloNormas: 'No pudimos guardarlo. Vuelve a intentarlo.' }));
   }
 
-  /** Vuelve a pedir la cuenta. Sin tocar nada si el servidor dice que no. */
+  /**
+   * Vuelve a pedir la cuenta. Sin tocar nada si el servidor dice que no.
+   *
+   * Si lo que falla es la red y ya hay algo en pantalla, se queda y sale la
+   * franja «Sin conexión. Esto es de las…» (entrega «carga»), con la hora
+   * de lo que se está viendo. Un error del servidor con datos en pantalla
+   * no se anuncia: lo que se ve sigue siendo lo último bueno.
+   */
   releer() {
-    fetch('/api/mi-cuenta')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) this.setState({ datos: d }); })
-      .catch(() => {});
+    return AroCarga.pedir('/api/mi-cuenta')
+      .then((r) => r.json())
+      .then((d) => { if (d) this.setState({ datos: d, datosEn: Date.now(), sinRed: false }); })
+      .catch((e) => { if (this.state.datos && AroCarga.motivoDe(e) === 'red') this.setState({ sinRed: true }); });
+  }
+
+  /**
+   * La primera carga. 401 o 404 (sin sesión, sin perfil) → a Entrar,
+   * diciendo a dónde ibas. Cualquier otro fallo —sin red, un 500— ya NO
+   * manda al login: Entrar le decía a alguien con sesión que entrara otra
+   * vez, y al volver le pasaba lo mismo. Ahora se queda aquí con «No
+   * pudimos cargar tu cuenta.» y Reintentar.
+   */
+  cargar() {
+    // `falloCarga` no se borra al empezar: mientras se reintenta, el aviso
+    // sigue y su botón lleva el aro (entrega «carga»). Se borra al llegar.
+    return AroCarga.pedir('/api/mi-cuenta')
+      .then((r) => r.json())
+      .then((datos) => {
+        // Confirmada y sin haber visto «Estás dentro»: allí, ANTES de pintar
+        // esta pantalla (B3 de la entrega estas-dentro). Solo al entrar: si
+        // la confirmación llega con la pantalla abierta, saltar de una a otra
+        // es el redirect raro que Michael vio en la app.
+        if (datos && datos.estasDentro) {
+          window.location.replace('/estas-dentro?evento=' + encodeURIComponent(datos.estasDentro));
+          return;
+        }
+        this.setState({ datos: datos, datosEn: Date.now(), sinRed: false, falloCarga: null });
+      })
+      .catch((e) => {
+        if (e && (e.status === 401 || e.status === 404)) { this.aEntrar(); return; }
+        this.setState({ falloCarga: AroCarga.motivoDe(e) });
+      });
+  }
+
+  /**
+   * Se va al login DICIENDO a donde ibas. Sin eso, quien llega desde el
+   * correo —«Ver mi reserva»— aterriza en el login y ahi se acaba el
+   * camino: entra, y el login le manda a donde el servidor decida, que
+   * puede no ser su reserva. Lo que se pierde no es un clic, es el hilo.
+   */
+  aEntrar() {
+    this.setState({ sinCuenta: true });
+    // Y DICIENDO quien es, si el correo venia en la URL. El enlace del
+    // empujon lo trae: sin eso, quien no tiene sesion —el navegador de
+    // Instagram no la guarda— aterriza aqui y la pantalla le pregunta
+    // quien es a alguien que acaba de pulsar un boton en nuestro correo.
+    var volverA = location.pathname + location.search + location.hash;
+    var correoURL = (new URLSearchParams(location.search).get('correo') || '').trim();
+    var aEntrar = new URLSearchParams({ volver: volverA });
+    if (correoURL) aEntrar.set('correo', correoURL);
+    AroReglas.campanaDe(location.search).forEach(function (par) { aEntrar.set(par[0], par[1]); });
+    window.location.href = '/entrar?' + aEntrar.toString();
   }
 
   // Como se llama cada idioma al preguntarlo. En español: lo lee quien no
@@ -885,36 +985,12 @@ class Component extends DCLogic {
     // Los seis estados los decide el servidor. La pantalla solo elige qué
     // copy enseñar: si decidiera ella, dos pantallas podrían discrepar
     // sobre en qué punto está la misma persona.
-    fetch('/api/mi-cuenta')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
-      .then((datos) => {
-        // Confirmada y sin haber visto «Estás dentro»: allí, ANTES de pintar
-        // esta pantalla (B3 de la entrega estas-dentro). Solo al entrar: si
-        // la confirmación llega con la pantalla abierta, saltar de una a otra
-        // es el redirect raro que Michael vio en la app.
-        if (datos && datos.estasDentro) {
-          window.location.replace('/estas-dentro?evento=' + encodeURIComponent(datos.estasDentro));
-          return;
-        }
-        this.setState({ datos: datos });
-      })
-      // Se va al login DICIENDO a donde ibas. Sin eso, quien llega desde el
-      // correo —«Ver mi reserva»— aterriza en el login y ahi se acaba el
-      // camino: entra, y el login le manda a donde el servidor decida, que
-      // puede no ser su reserva. Lo que se pierde no es un clic, es el hilo.
-      .catch(() => {
-        this.setState({ sinCuenta: true });
-        // Y DICIENDO quien es, si el correo venia en la URL. El enlace del
-      // empujon lo trae: sin eso, quien no tiene sesion —el navegador de
-      // Instagram no la guarda— aterriza aqui y la pantalla le pregunta
-      // quien es a alguien que acaba de pulsar un boton en nuestro correo.
-      var volverA = location.pathname + location.search + location.hash;
-      var correoURL = (new URLSearchParams(location.search).get('correo') || '').trim();
-      var aEntrar = new URLSearchParams({ volver: volverA });
-      if (correoURL) aEntrar.set('correo', correoURL);
-      AroReglas.campanaDe(location.search).forEach(function (par) { aEntrar.set(par[0], par[1]); });
-      window.location.href = '/entrar?' + aEntrar.toString();
-      });
+    this.cargar();
+    // Al volver la red, se reintenta solo: lo que falló, y nada si no falló.
+    this._red = AroCarga.alVolverLaRed(() => {
+      if (this.state.falloCarga) this.cargar();
+      else if (this.state.sinRed) this.releer();
+    });
 
     fetch('/api/mis-exclusiones')
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
@@ -936,6 +1012,7 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount() {
+    if (this._red) this._red();
     clearInterval(this._t);
     clearInterval(this._espera);
     document.removeEventListener('visibilitychange', this._alVolver);
@@ -1119,10 +1196,6 @@ class Component extends DCLogic {
       return gente + (c ? ' y se cierra el ' + c.dia : '') + '. ' + base;
     };
 
-    // Los huesos van en el verde de la marca al 9%, no en gris: un gris
-    // neutro sobre este fondo crema se ve sucio.
-    const hueso = (alto, ancho, extra) =>
-      'height:' + alto + ';width:' + ancho + ';max-width:100%;background:rgba(20,52,42,.09);animation:aro-latido 1.5s ease-in-out infinite;' + (extra || '');
 
     const d = this.state.datos;
     const base = (d && estados.find((x) => x.id === d.estado)) || estados[0];
@@ -1818,9 +1891,10 @@ class Component extends DCLogic {
           return 'Al reservar, ' + z.slice(0, -1).join(', ') + ' y ' + z[z.length - 1] + ' pasan a ser parte de tus zonas.';
         })(),
 
-        textoConfirmar: this.state.reservandoYa
-          ? 'Apuntándote'
-          : (d && d.paso === 'preguntas'
+        // El texto del botón no cambia mientras trabaja (entrega «carga»):
+        // entra el aro y el lector oye «Apartando tu puesto».
+        bConfirmar: AroCarga.boton(this, AroCarga.estado(this, 'reservandoYa:' + clave, this.state.reservandoYa && this.state.reservando === clave), '', AroCarga.texto.trabajando.apartar, { verde: true }),
+        textoConfirmar: (d && d.paso === 'preguntas'
               // Misma regla que el sello: la cifra solo si es pequeña.
               ? ((d.respuestas && d.respuestas.faltan) <= 3
                   ? (d.respuestas.faltan === 1
@@ -1844,9 +1918,9 @@ class Component extends DCLogic {
                               // Sin créditos, sin el total: va solo en el pago (02-11).
                               ? (conCredito ? M.hoja.boton(M.puestos) : AroReglas.botonDelPlan(fecha))
                               : 'Reservar mi puesto · ' + (d && d.creditos > 0 ? '1 encuentro' : precioFecha)))))),
-        botonConfirmar: (verAviso && !avisoMarcado)
+        botonConfirmar: AroCarga.estiloBoton((verAviso && !avisoMarcado)
           ? 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:rgba(20,52,42,.08);color:#9DAEA2;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:default'
-          : 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+          : 'display:inline-flex;align-items:center;min-height:50px;padding:0 22px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer', AroCarga.estado(this, 'reservandoYa:' + clave, this.state.reservandoYa && this.state.reservando === clave)),
         abrir: cerrada ? (() => {}) : (() => this.setState((s) => ({ reservando: s.reservando === clave ? null : clave, hora: 0, avisoMasUno: null, aceptaMasUno: false }))),
         // Reservar de verdad. Antes solo se marcaba en la pantalla: al
         // recargar desaparecia, y en la base no habia nada.
@@ -2030,8 +2104,8 @@ class Component extends DCLogic {
       hayPreguntaIdioma: !!this.state.idiomaQueFalta,
       preguntaIdioma: '¿Hablas ' + (NOMBRE_IDIOMA[this.state.idiomaQueFalta] || 'ese idioma') + '?',
       notaPreguntaIdioma: 'Esta mesa se habla en ' + (NOMBRE_IDIOMA[this.state.idiomaQueFalta] || 'ese idioma') + ' de principio a fin. No hace falta que sea perfecto, solo que te deje disfrutar la conversación.',
-      textoSiIdioma: this.state.guardandoIdioma ? 'Guardando…' : 'Sí, añádelo a mi perfil',
-      botonSiIdioma: 'display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;border:0;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
+      textoSiIdioma: 'Sí, añádelo a mi perfil',
+      bIdioma: AroCarga.boton(this, 'guardandoIdioma', 'display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;background:#1B5138;color:#FAF3E4;border:0;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer', AroCarga.texto.trabajando.apartar, { verde: true }),
       botonNoIdioma: 'display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;background:transparent;color:#2C4A38;border:1px solid rgba(20,52,42,.26);font:500 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
       noHabloIdioma: () => this.setState({ idiomaQueFalta: null, eventoDelIdioma: null, reservando: null }),
       siHabloIdioma: () => {
@@ -2067,15 +2141,39 @@ class Component extends DCLogic {
       esOps: !!(this.state.datos && this.state.datos.esOps),
       // Un esqueleto con la forma del bloque que viene, no un spinner: el
       // salto de una cosa a otra es lo que se nota, no la espera.
-      cargando: !this.state.datos && !this.state.sinCuenta,
-      huesoSaludo: hueso('clamp(26px,4.6vw,38px)', '7ch', 'margin-bottom:clamp(20px,3vw,28px);border-radius:10px'),
-      huesoBloque: 'border-radius:30px;background:#FFFBF0;padding:clamp(24px,4vw,38px)',
-      huesoSello: hueso('30px', '13ch', 'border-radius:999px;margin-bottom:16px'),
-      huesoTitulo: hueso('clamp(28px,4.4vw,40px)', '100%', 'margin-bottom:8px;border-radius:10px'),
-      huesoTituloCorto: hueso('clamp(28px,4.4vw,40px)', '62%', 'margin-bottom:20px;border-radius:10px'),
-      huesoLinea: hueso('15px', '100%', 'margin-bottom:9px;border-radius:6px'),
-      huesoLineaCorta: hueso('15px', '48%', 'margin-bottom:26px;border-radius:6px'),
-      huesoBoton: hueso('56px', '15ch', 'border-radius:999px'),
+      cargando: !this.state.datos && !this.state.sinCuenta && !this.state.falloCarga,
+      unMomento: AroCarga.texto.unMomento,
+      // Cada hueso mide la línea que reemplaza: mismo tamaño de letra y
+      // mismo interlineado que el texto de verdad, para que nada salte.
+      esq: {
+        saludo: AroCarga.linea('clamp(26px,4.6vw,38px)', 1.05, '7ch'),
+        titulo: AroCarga.linea('clamp(28px,4.4vw,40px)', 1.08, '100%'),
+        tituloCorto: AroCarga.linea('clamp(28px,4.4vw,40px)', 1.08, '62%'),
+        linea: AroCarga.linea('16px', 1.6, '100%'),
+        lineaCorta: AroCarga.linea('16px', 1.6, '48%'),
+      },
+      esqPolas: [{ giro: '-1.2deg' }, { giro: '1.4deg' }, { giro: '-1.6deg' }],
+      esqFilas: [{ a: '38%', b: '62%', c: '74%' }, { a: '52%', b: '58%', c: '80%' }, { a: '34%', b: '66%', c: '70%' }],
+      hayFalloCarga: !this.state.datos && !!this.state.falloCarga,
+      bloqueSinRespuesta: this.state.falloCarga ? AroCarga.sinRespuesta({
+        que: 'inicio',
+        motivo: this.state.falloCarga,
+        estado: AroCarga.estado(this, 'reintentando'),
+        alReintentar: () => {
+          this.setState({ reintentando: true });
+          this.cargar().then(() => this.setState({ reintentando: false }));
+        },
+      }) : null,
+      hayFranja: !!(this.state.datos && this.state.sinRed),
+      franjaSinRed: this.state.sinRed ? AroCarga.franja({
+        desde: this.state.datosEn,
+        redonda: true,
+        estado: AroCarga.estado(this, 'reintentandoFranja'),
+        alReintentar: () => {
+          this.setState({ reintentandoFranja: true });
+          this.releer().then(() => this.setState({ reintentandoFranja: false }));
+        },
+      }) : null,
       saludo: this.state.datos && this.state.datos.nombre
         ? 'Hola, ' + this.state.datos.nombre + '.'
         : 'Hola.',
@@ -2155,10 +2253,8 @@ class Component extends DCLogic {
       marcaNormas: 'flex:0 0 auto;width:22px;height:22px;border-radius:7px;border:1px solid ' + (this.state.aceptoNormas ? '#8F4515' : 'rgba(20,52,42,.3)') + ';background:' + (this.state.aceptoNormas ? '#A0511F' : 'transparent') + ';color:#FFF8EA;display:flex;align-items:center;justify-content:center;font:600 12px/1 \'Inter Tight\',sans-serif',
       marcaNormasTexto: this.state.aceptoNormas ? '✓' : '',
       tocarNormas: () => this.setState({ aceptoNormas: !this.state.aceptoNormas }),
-      textoBotonNormas: this.state.guardandoNormas
-        ? 'Guardando…'
-        : (this.state.aceptoNormas ? window.AroReglas.NORMAS.botonListo : window.AroReglas.NORMAS.botonFalta),
-      botonNormas: 'display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:56px;padding:0 24px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (this.state.aceptoNormas ? 'pointer' : 'not-allowed') + ';background:' + (this.state.aceptoNormas ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (this.state.aceptoNormas ? '#FAF3E4' : '#456352'),
+      textoBotonNormas: this.state.aceptoNormas ? window.AroReglas.NORMAS.botonListo : window.AroReglas.NORMAS.botonFalta,
+      bNormas: AroCarga.boton(this, 'guardandoNormas', 'display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:56px;padding:0 24px;border-radius:999px;border:none;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (this.state.aceptoNormas ? 'pointer' : 'not-allowed') + ';background:' + (this.state.aceptoNormas ? '#1B5138' : 'rgba(27,81,56,.13)') + ';color:' + (this.state.aceptoNormas ? '#FAF3E4' : '#456352'), null, { verde: true }),
       aceptarNormas: () => this.aceptarNormas(),
       hayFalloNormas: !!this.state.falloNormas,
       falloNormas: this.state.falloNormas || '',
@@ -2230,7 +2326,8 @@ class Component extends DCLogic {
       }),
       guardarPreguntas: () => this.guardarPreguntas(),
       cerrarPreguntas: () => this.cerrarPreguntas(),
-      textoGuardarPreguntas: this.state.guardandoPreguntas ? 'Guardando…' : 'Guardar',
+      textoGuardarPreguntas: 'Guardar',
+      bPreguntas: AroCarga.boton(this, 'guardandoPreguntas', 'display:inline-flex;align-items:center;justify-content:center;min-height:54px;padding:0 24px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer', null, { verde: true }),
 
     };
   }

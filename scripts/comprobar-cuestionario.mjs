@@ -400,6 +400,32 @@ if (sinIcono.length) {
   console.log(`\u2713 favicon (${pantallas.length} pantallas)`)
 }
 
+// --- la carga: quien usa `AroCarga` carga `carga.js`, y despu\u00e9s de reglas.js
+//
+// `carga.js` (entrega \u00abcarga\u00bb, 03-11) pinta el aro, los huesos y \u00abNo
+// pudimos cargar\u2026\u00bb con los tiempos y textos de `AroReglas.CARGA`. Una
+// pantalla que use `AroCarga` sin cargarlo no falla al leerla: revienta al
+// pintar, y en blanco. Y si va antes de reglas.js, no tiene tiempos.
+{
+  const malCarga = []
+  for (const f of pantallas) {
+    const t = fs.readFileSync(fileURLToPath(new URL(`../public/${f}`, import.meta.url)), 'utf8')
+    if (!/AroCarga\./.test(t)) continue
+    const iCarga = t.indexOf('<script src="./carga.js"></script>')
+    const iReglas = t.indexOf('<script src="./reglas.js"></script>')
+    if (iCarga < 0) malCarga.push(`${f}: usa AroCarga y no carga carga.js`)
+    else if (iReglas < 0 || iReglas > iCarga) malCarga.push(`${f}: carga.js va antes que reglas.js`)
+  }
+  if (malCarga.length) {
+    errores++
+    console.error('\n\u2717 la carga')
+    malCarga.forEach((m) => console.error(`    ${m}`))
+    console.error('  \u2192 la pantalla se queda en blanco al pintar')
+  } else {
+    console.log('\u2713 carga.js, en cada pantalla que lo usa y detr\u00e1s de reglas.js')
+  }
+}
+
 // --- la septima copia: el Smart App Banner de Apple --------------------
 //
 // `<meta name="apple-itunes-app">`. Solo lo ve quien entra con Safari en un
