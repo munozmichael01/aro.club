@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { mandarAviso } from '@/lib/avisos-equipo'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { tasaDelBcv } from '@/lib/tasa-bcv'
 
 /**
  * La tasa del BCV. Cuatro veces al día, y a la hora en que hay algo que pedir.
@@ -33,7 +34,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * Sin tasa no se puede cobrar en bolívares, y con la de anteayer se cobra
  * mal: en Venezuela eso no es un redondeo, es dinero.
  *
- * La fuente es `ve.dolarapi.com`, que republica la oficial del BCV. No es
+ * DESDE EL 05-11 LA FUENTE ES LA WEB DEL BCV, directa (`lib/tasa-bcv.ts`), y
+ * `ve.dolarapi.com` queda de respaldo. Lo de abajo es por qué se usaba esa:
+ *
+ * La fuente era `ve.dolarapi.com`, que republica la oficial del BCV. No es
  * el BCV directamente —su web no sirve un JSON estable y su certificado
  * falla a menudo— así que esto es una dependencia de terceros de la que
  * conviene acordarse: si un día deja de responder, NO se escribe nada y se
@@ -62,29 +66,40 @@ function hoyCaracas() {
   return new Date(Date.now() - 4 * 3600_000).toISOString().slice(0, 10)
 }
 
-async function actualizar() {
-  const admin = createAdminClient()
-
-  let datos: { promedio?: number; venta?: number; fechaActualizacion?: string }
+/**
+ * La de la fuente de respaldo, si el BCV no contesta.
+ *
+ * Devuelve también si hubo que devolverle los miles: el 05-11 esta fuente
+ * leyó «1.006,03» como 1,006. Si el valor es unas mil veces menor que el
+ * último bueno y, multiplicado por mil, cae cerca de él, es ese fallo y no
+ * una reconversión (que el dólar de la misma fuente seguía en 894 lo
+ * confirmó). Se corrige y se avisa. Se pierden los céntimos de la tasa
+ * —1.006 en vez de 1.006,03—, que en un puesto son menos de un bolívar.
+ */
+async function tasaDeRespaldo(anterior: number | null): Promise<{ valor: number; fecha: string; fuente: string } | null> {
   try {
     const r = await fetch(FUENTE, { cache: 'no-store', signal: AbortSignal.timeout(10_000) })
     if (!r.ok) throw new Error(`fuente respondió ${r.status}`)
-    datos = await r.json()
+    const datos = (await r.json()) as { promedio?: number; venta?: number; fechaActualizacion?: string }
+    let valor = Number(datos.promedio ?? datos.venta ?? 0)
+    if (!Number.isFinite(valor) || valor <= 0) return null
+    let fuente = 'dolarapi'
+    if (anterior && Math.abs(valor * 1000 - anterior) / anterior < 0.3 && Math.abs(valor - anterior) / anterior > 0.3) {
+      valor = valor * 1000
+      fuente = 'dolarapi-miles'
+    }
+    const fecha = datos.fechaActualizacion
+      ? new Date(datos.fechaActualizacion).toISOString().slice(0, 10)
+      : hoyCaracas()
+    return { valor, fecha, fuente }
   } catch (e) {
-    console.error('[tasa] la fuente no respondió', e)
-    // Sin escribir nada: se queda la última buena.
-    return NextResponse.json({ estado: 'sin-cambios', motivo: 'fuente-caida' }, { status: 502 })
+    console.error('[tasa] la fuente de respaldo no respondió', e)
+    return null
   }
+}
 
-  const valor = Number(datos.promedio ?? datos.venta ?? 0)
-
-  // Una tasa de cero o negativa no es una tasa, y una de tres cifras menos
-  // que la anterior tampoco: antes de escribir algo que va a cobrarle a
-  // gente, se comprueba que tenga sentido.
-  if (!Number.isFinite(valor) || valor <= 0) {
-    console.error('[tasa] valor sin sentido', datos)
-    return NextResponse.json({ estado: 'sin-cambios', motivo: 'valor-invalido' }, { status: 502 })
-  }
+async function actualizar() {
+  const admin = createAdminClient()
 
   const { data: ultima } = await admin
     .from('fx_rates')
@@ -94,6 +109,36 @@ async function actualizar() {
     .maybeSingle()
 
   const anterior = ultima ? Number(ultima.ves_por_ref) : null
+
+  // Primero el BCV, directo. Si no contesta, el respaldo.
+  let leida: { valor: number; fecha: string; fuente: string } | null = null
+  let motivoBcv = ''
+  try {
+    const bcv = await tasaDelBcv('euro')
+    leida = { ...bcv, fuente: 'bcv' }
+  } catch (e) {
+    motivoBcv = e instanceof Error ? (e.message + ((e as { code?: string }).code ? ` (${(e as { code?: string }).code})` : '')) : String(e)
+    console.error('[tasa] el BCV no respondió, voy al respaldo', e)
+    leida = await tasaDeRespaldo(anterior)
+  }
+
+  if (!leida) {
+    // Sin escribir nada: se queda la última buena.
+    await mandarAviso({
+      asunto: 'La tasa del BCV no se actualizó: no responde ninguna fuente',
+      titulo: 'No se pudo leer la tasa',
+      parrafos: [
+        `Ni la web del BCV (${motivoBcv || 'sin detalle'}) ni la fuente de respaldo contestaron. Se sigue cobrando con la última buena: <strong>${anterior ?? 'ninguna'}</strong> Bs por ref.`,
+        'Si pasa más de un día, hay que poner la tasa a mano.',
+      ],
+      filas: [],
+      pestana: 'pagos',
+      deRevision: false,
+    }).catch((e) => console.error('[tasa] no se pudo avisar', e))
+    return NextResponse.json({ estado: 'sin-cambios', motivo: 'fuentes-caidas', bcv: motivoBcv }, { status: 502 })
+  }
+
+  const valor = leida.valor
   const salto =
     anterior && anterior > 0 ? Math.abs(valor - anterior) / anterior : 0
 
@@ -111,9 +156,9 @@ async function actualizar() {
    * de ayer es malo; cobrar con una mil veces menor es regalar el puesto.
    */
   if (salto > 0.3) {
-    console.error(`[tasa] salto del ${Math.round(salto * 100)}% respecto a ${anterior}: NO se escribe`, datos)
+    console.error(`[tasa] salto del ${Math.round(salto * 100)}% respecto a ${anterior}: NO se escribe`, leida)
     await mandarAviso({
-      asunto: `La tasa del BCV no se actualizó: la fuente da ${valor}`,
+      asunto: `La tasa del BCV no se actualizó: ${leida.fuente === 'bcv' ? 'el BCV' : 'la fuente'} da ${valor}`,
       titulo: 'La fuente de la tasa devolvió un valor raro',
       parrafos: [
         `Hoy la fuente da <strong>${valor}</strong> Bs por ref y la última buena es <strong>${anterior}</strong>. Es un salto del ${Math.round(salto * 100)}%, y no se guardó: se sigue cobrando con la última buena.`,
@@ -128,24 +173,38 @@ async function actualizar() {
 
   // La fecha que dice la fuente, no "hoy": el BCV publica la tasa que
   // aplica a un día concreto, y guardarla con otra fecha la desplaza.
-  const fecha = datos.fechaActualizacion
-    ? new Date(datos.fechaActualizacion).toISOString().slice(0, 10)
-    : hoyCaracas()
+  const fecha = leida.fecha
 
   const { error } = await admin
     .from('fx_rates')
-    .upsert({ rate_date: fecha, ves_por_ref: valor, moneda: MONEDA, source: 'bcv' }, { onConflict: 'rate_date' })
+    .upsert({ rate_date: fecha, ves_por_ref: valor, moneda: MONEDA, source: leida.fuente }, { onConflict: 'rate_date' })
 
   if (error) {
     console.error('[tasa] no se guardó', error)
     return NextResponse.json({ estado: 'error' }, { status: 500 })
   }
 
+  // Si vino del respaldo, se guarda pero se dice: el BCV dejó de contestar
+  // y lo normal es que sea el certificado (ver `lib/tasa-bcv.ts`).
+  if (leida.fuente !== 'bcv') {
+    await mandarAviso({
+      asunto: 'La tasa salió del respaldo: el BCV no respondió',
+      titulo: 'La web del BCV no contestó',
+      parrafos: [
+        `Se guardó <strong>${valor}</strong> Bs por ref para el ${fecha}, de la fuente de respaldo${leida.fuente === 'dolarapi-miles' ? ', a la que hubo que devolverle los miles (daba ' + (valor / 1000) + ')' : ''}.`,
+        `El BCV falló con: ${motivoBcv || 'sin detalle'}. Si dice «certificate» o «UNABLE_TO_VERIFY», el BCV cambió de certificado: hay que actualizar el intermedio en src/lib/tasa-bcv.ts.`,
+      ],
+      filas: [],
+      pestana: 'pagos',
+      deRevision: false,
+    }).catch((e) => console.error('[tasa] no se pudo avisar', e))
+  }
 
   return NextResponse.json({
     estado: 'actualizada',
     fecha,
     tasa: valor,
+    fuente: leida.fuente,
     anterior,
   })
 }
