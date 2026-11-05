@@ -78,7 +78,9 @@ export function fechaLarga(iso: string | null, zona?: Zona): string {
 export function titularDeReserva(iso: string, zona?: Zona): string {
   const p = reglas.partesDe(iso, zona)
   if (!p?.dia) return ''
-  return `${mayuscula(p.dia)} ${p.numero}, ${horaEnLetra(p.horas, p.minutos)}.`
+  // «8:53 p.m.» ya termina en punto: sin él, «p.m..» (05-11).
+  const h = horaEnLetra(p.horas, p.minutos)
+  return `${mayuscula(p.dia)} ${p.numero}, ${h}${h.endsWith('.') ? '' : '.'}`
 }
 
 /** «siete y media de la noche»: vive en `reglas.js`, la misma que usan la web y los correos. */
@@ -297,4 +299,16 @@ export function piezasDePasada(iso: string | null | undefined, zona?: Zona) {
     cabecera: `${p.dia} ${p.numero} de ${p.mes}`.toUpperCase(),
     elDia: p.dia,
   }
+}
+
+/**
+ * De cuándo son los últimos datos, para la franja «Sin conexión. Esto es de
+ * las 3:40 p.m.» (entrega carga): la hora si es de hoy, y si no, el día
+ * («el lunes 2»). Lo arma `reglas.CARGA.texto.franja`.
+ */
+export function deCuandoEs(ms: number, ahora: number, zona?: Zona): string {
+  const iso = new Date(ms).toISOString()
+  const p = reglas.partesDe(iso, zona)
+  if (!p) return ''
+  return hoyISO(ms, zona) === hoyISO(ahora, zona) ? `las ${p.hora}` : `el ${p.dia} ${p.numero}`
 }

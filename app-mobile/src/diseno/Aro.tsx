@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import { AccessibilityInfo, Animated, Easing, View } from 'react-native'
+import { useEffect, useRef } from 'react'
+import { Animated, Easing, View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 
+import { useMovimientoReducido } from './movimiento'
 import { color, cremaAlfa, tinta, tiempo } from './tokens'
 
 /**
@@ -54,64 +55,70 @@ export function Marca({ tam = 22, sobreVerde, crema }: { tam?: number; sobreVerd
 }
 
 /**
- * El aro de carga: el punto terracota va delante y los demás se desvanecen
- * detrás, como una estela. Los alfas son los de la web.
+ * El aro de carga (entrega carga, 03-11): se LLENA punto a punto, como se
+ * llena una mesa. Primero el terracota, que eres tú; con los seis encendidos
+ * se apagan juntos y vuelve a empezar. Nunca se queda lleno: lleno diría que
+ * terminó, y no lo sabemos. Antes giraba con una estela.
+ *
+ * El anillo queda quieto y fino (trazo 1,5 al 20 % de la tinta); lo que se
+ * mueve es la opacidad de cada punto, de 0,16 a 1 en su turno (6, 18, 30, 42,
+ * 54 y 66 % de la vuelta), encendidos hasta el 84 % y apagados hacia el 96 %.
+ * Los puntos van en `View` encima del SVG, para que la opacidad la anime el
+ * hilo nativo: en un `Circle` de SVG no se puede.
+ *
+ * Cuatro tamaños, ni uno más: 20 (botón), 28 (dentro de un bloque), 40
+ * (pantalla) y 54 (velo). Por debajo de 20 los puntos se funden con el anillo.
+ *
+ * Con «reducir movimiento», los seis encendidos y quietos: dice «ocupado» sin
+ * moverse.
  */
-const ESTELA = [color.terracota, tinta(0.48), tinta(0.4), tinta(0.32), tinta(0.24), tinta(0.16)]
-/** La misma estela sobre verde profundo: crema que se desvanece y el punto en terracota clara. */
-const ESTELA_VERDE = [color.terracotaSobreVerde, cremaAlfa(0.62), cremaAlfa(0.5), cremaAlfa(0.38), cremaAlfa(0.26), cremaAlfa(0.16)]
+export type TamAro = 20 | 28 | 40 | 54
 
-/**
- * Gira un CONTENEDOR, nunca el propio SVG.
- *
- * En la web esto costó una tarde: Safari resolvía el `transform-origin` en
- * porcentaje de un elemento SVG contra su `viewBox` y no contra su caja, y el
- * aro orbitaba en vez de girar. En React Native una `View` gira siempre sobre
- * su centro, y se mantiene la misma regla para que la trampa no vuelva si
- * algún día esto se pinta con react-native-web.
- *
- * Con «reducir movimiento» del sistema, el aro se queda quieto: un giro
- * infinito no se puede acortar, solo parar.
- */
-export function AroCarga({ tam = 54, sobreVerde }: { tam?: number; sobreVerde?: boolean }) {
-  const giro = useRef(new Animated.Value(0)).current
-  const [quieto, setQuieto] = useState(false)
+const TURNOS = [0.06, 0.18, 0.3, 0.42, 0.54, 0.66]
+
+export function AroCarga({ tam = 54, sobreVerde }: { tam?: TamAro; sobreVerde?: boolean }) {
+  const vuelta = useRef(new Animated.Value(0)).current
+  const quieto = useMovimientoReducido()
 
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setQuieto)
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setQuieto)
-    return () => sub.remove()
-  }, [])
+    if (quieto) return
+    vuelta.setValue(0)
+    const a = Animated.loop(Animated.timing(vuelta, { toValue: 1, duration: tiempo.vueltaAro, easing: Easing.linear, useNativeDriver: true }))
+    a.start()
+    return () => a.stop()
+  }, [quieto, vuelta])
 
-  useEffect(() => {
-    if (quieto) {
-      giro.stopAnimation()
-      giro.setValue(0)
-      return
-    }
-    const vuelta = Animated.loop(
-      Animated.timing(giro, {
-        toValue: 1,
-        duration: tiempo.vueltaAro,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    )
-    vuelta.start()
-    return () => vuelta.stop()
-  }, [quieto, giro])
-
-  const rotate = giro.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] })
+  const k = tam / 24
+  const punto = 5 * k
+  const tinta_ = sobreVerde ? color.crema : color.verdeProfundo
+  const tuyo = sobreVerde ? color.terracotaSobreVerde : color.terracota
 
   return (
-    <Animated.View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={{ width: tam, height: tam, transform: [{ rotate }] }}
-    >
-      <View style={{ pointerEvents: 'none' }}>
-        <Dibujo tam={tam} anillo={sobreVerde ? cremaAlfa(0.2) : tinta(0.2)} grosor={1.5} puntos={sobreVerde ? ESTELA_VERDE : ESTELA} />
-      </View>
-    </Animated.View>
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: tam, height: tam, pointerEvents: 'none' }}>
+      <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+        <Circle cx={12} cy={12} r={8.6} stroke={sobreVerde ? cremaAlfa(0.2) : tinta(0.2)} strokeWidth={1.5} />
+      </Svg>
+      {PUNTOS.map(([cx, cy], i) => {
+        const s = TURNOS[i]
+        const opacity = quieto
+          ? 1
+          : vuelta.interpolate({ inputRange: [0, s - 0.01, s, 0.84, 0.96, 1], outputRange: [0.16, 0.16, 1, 1, 0.16, 0.16] })
+        return (
+          <Animated.View
+            key={i}
+            style={{
+              position: 'absolute',
+              left: cx * k - punto / 2,
+              top: cy * k - punto / 2,
+              width: punto,
+              height: punto,
+              borderRadius: punto / 2,
+              backgroundColor: i === 0 ? tuyo : tinta_,
+              opacity,
+            }}
+          />
+        )
+      })}
+    </View>
   )
 }

@@ -219,7 +219,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
         <Boton tipo="fantasma" texto={T.faltaVerificar.volver} onPress={() => p.ir('/cuenta')} />
       </View>
     ) : (
-      <AroCarga tam={36} />
+      <AroCarga tam={40} />
     )
   } else if (!d.verificada && (fase === 'elegir' || fase === 'datos' || fase === 'reportar')) {
     // Sin verificar no se enseña ni el primer paso: el servidor rechazaría el pago al final.
@@ -437,7 +437,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
               style={[estilos.captura, captura ? { borderStyle: 'solid', borderColor: color.verde, backgroundColor: color.cremaElevada } : null]}
             >
               <View style={[estilos.capturaIcono, { backgroundColor: captura ? color.verde : tinta(0.09) }]}>
-                {subiendo ? <AroCarga tam={18} /> : captura ? <IconoCheck color={color.crema} /> : <Texto variante="rotulo" tono="verde" style={{ fontSize: 18 }}>+</Texto>}
+                {subiendo ? <AroCarga tam={20} /> : captura ? <IconoCheck color={color.crema} /> : <Texto variante="rotulo" tono="verde" style={{ fontSize: 18 }}>+</Texto>}
               </View>
               <View style={{ flex: 1 }}>
                 <Texto variante="rotulo">{T.reporte.capturaTitulo(subiendo, !!captura)}</Texto>

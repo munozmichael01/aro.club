@@ -82,7 +82,7 @@ export function Invitacion(p: { token: string; servicio: Servicio; ir: (d: strin
   if (!d) {
     return (
       <View style={{ flex: 1, backgroundColor: color.crema, justifyContent: 'center' }}>
-        <AroCarga tam={36} />
+        <AroCarga tam={40} />
       </View>
     )
   }

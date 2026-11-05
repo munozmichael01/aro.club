@@ -11,7 +11,8 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * El Inicio con un servidor SIMULADO, para ver cada estado en el navegador:
- * /catalogo-cuenta?estado=perfil|datos|verificar|revision|reservar|porconfirmar|reservada|abierta|cargando|fallo
+ * /catalogo-cuenta?estado=perfil|datos|verificar|revision|reservar|porconfirmar|reservada|abierta|cargando|fallo|caido|lento
+ * (caido: el servidor contesta 500; lento: 1,6 s de espera, para ver el esqueleto y las tandas)
  * Catálogo de desarrollo: no se enlaza desde ningún sitio. La forma imita la
  * real (pruebas/cuenta-contra-la-api.mjs); las fechas se cuentan desde hoy.
  */
@@ -102,7 +103,9 @@ function Pantalla() {
     async cuenta() {
       if (estado === 'cargando') return new Promise(() => {})
       if (estado === 'fallo') return { ok: false, error: 'No pudimos cargar tu cuenta. Revisa tu conexión e inténtalo otra vez.' }
-      const d = simulada(estado as EstadoCuenta)
+      if (estado === 'caido') return { ok: false, error: 'Error del servidor', status: 500 }
+      if (estado === 'lento') await new Promise((ok) => setTimeout(ok, 1600))
+      const d = simulada((estado === 'lento' ? 'reservada' : estado) as EstadoCuenta)
       // ?ciudad=Valencia: vive en una ciudad que aún no abre (sin agenda ni próxima fecha).
       if (ciudad) return { ok: true, datos: { ...d, ciudad: { slug: 'x', nombre: ciudad, abierta: false }, agenda: [], proximaFecha: null } }
       // ?nuevas=1: las dos preguntas de bebida sin contestar, al reservar (18-10).

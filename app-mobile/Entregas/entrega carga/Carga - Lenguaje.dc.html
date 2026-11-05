@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F2E9D5;-webkit-font-smoothing:antialiased}
+a{color:#1B5138}a:hover{color:#8F4515}
+@keyframes huesoLatido{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes entra{from{opacity:0}to{opacity:1}}
+@keyframes aroGiro{to{transform:rotate(360deg)}}
+@keyframes aroP0{0%,5%{opacity:.16}6%,84%{opacity:1}96%,100%{opacity:.16}}
+@keyframes aroP1{0%,17%{opacity:.16}18%,84%{opacity:1}96%,100%{opacity:.16}}
+@keyframes aroP2{0%,29%{opacity:.16}30%,84%{opacity:1}96%,100%{opacity:.16}}
+@keyframes aroP3{0%,41%{opacity:.16}42%,84%{opacity:1}96%,100%{opacity:.16}}
+@keyframes aroP4{0%,53%{opacity:.16}54%,84%{opacity:1}96%,100%{opacity:.16}}
+@keyframes aroP5{0%,65%{opacity:.16}66%,84%{opacity:1}96%,100%{opacity:.16}}
+</style>
+</helmet>
+
+<div style="max-width:1480px;margin:0 auto;padding:56px 40px 120px;display:flex;flex-direction:column;gap:88px;font-family:'Inter Tight',sans-serif;color:#14342A">
+
+  <header style="display:flex;flex-direction:column;gap:18px;max-width:860px">
+    <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">ENTREGA · CÓMO SE VE LA CARGA · APP Y WEB · 03-11-2026</div>
+    <h1 style="margin:0;font:400 64px/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;text-wrap:balance">Primero lo que sabemos. Después, lo que llega.</h1>
+    <p style="margin:0;font:400 19px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Un solo lenguaje para toda espera. Si sabemos la forma, la pintamos. Si es un paso, el aro va en el botón que tocaste. Si tarda menos de lo que se nota, no enseñamos nada. Y nunca decimos algo que no sabemos.</p>
+  </header>
+
+  <section id="regla" style="display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:860px">
+      <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">01 · LA REGLA</div>
+      <h2 style="margin:0;font:400 40px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.025em">Cuándo esqueleto, cuándo el aro, cuándo nada</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+      <div style="background:#FFFBF0;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:12px">
+        <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">MENOS DE 0,4 S</div>
+        <div style="font:400 26px/1.1 'Young Serif',Georgia,serif">Nada</div>
+        <div style="font:400 15px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">No se pinta ningún indicador. Si la respuesta llega antes, para la persona no hubo espera, y un aro que aparece y se va se lee como un fallo.</div>
+      </div>
+      <div style="background:#FFFBF0;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:12px">
+        <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">SABEMOS LA FORMA</div>
+        <div style="font:400 26px/1.1 'Young Serif',Georgia,serif">Esqueleto</div>
+        <div style="font:400 15px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Inicio, Mi mesa, Pasadas, Pago, Estás dentro, Cancelar, Cambiar de fecha, la invitación del +1 y Legal. Con la forma real de cada pantalla.</div>
+      </div>
+      <div style="background:#FFFBF0;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:12px">
+        <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">ES UN PASO</div>
+        <div style="font:400 26px/1.1 'Young Serif',Georgia,serif">El aro, en el botón</div>
+        <div style="font:400 15px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Pagar, apartar, guardar, enviar, entrar. La pantalla no se tapa: la espera vive en el botón que tocaste.</div>
+      </div>
+      <div style="background:#14342A;color:#FAF3E4;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:12px">
+        <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#9CBBA6">NO SABEMOS QUÉ PINTAR</div>
+        <div style="font:400 26px/1.1 'Young Serif',Georgia,serif">El velo con el aro</div>
+        <div style="font:400 15px/1.55 'Inter Tight',sans-serif;color:#C5D8CA;text-wrap:pretty">Solo al arrancar la app y al entrar en Datos, Cuestionario y Verificación, mientras se decide a qué paso vas. Con «Un momento» debajo.</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+      <div style="border-top:1.5px solid #14342A;padding-top:14px;display:flex;flex-direction:column;gap:6px"><div style="font:700 28px/1 'Inter Tight',sans-serif;letter-spacing:-.03em">0,4 s</div><div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">Antes de eso no se enseña nada. Es el umbral para todo: esqueleto, aro y velo.</div></div>
+      <div style="border-top:1.5px solid #14342A;padding-top:14px;display:flex;flex-direction:column;gap:6px"><div style="font:700 28px/1 'Inter Tight',sans-serif;letter-spacing:-.03em">0,5 s</div><div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">Una vez a la vista, se queda al menos esto. Una espera que parpadea es peor que una espera.</div></div>
+      <div style="border-top:1.5px solid #14342A;padding-top:14px;display:flex;flex-direction:column;gap:6px"><div style="font:700 28px/1 'Inter Tight',sans-serif;letter-spacing:-.03em">8 s</div><div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">Sin respuesta, se dice lo único que sabemos: «Está tardando más de lo normal.», con «Reintentar».</div></div>
+      <div style="border-top:1.5px solid #14342A;padding-top:14px;display:flex;flex-direction:column;gap:6px"><div style="font:700 28px/1 'Inter Tight',sans-serif;letter-spacing:-.03em">Lo último que viste</div><div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">Inicio y Mi mesa ya lo enseñan al instante (03-11). Ahí no sale nada de esto: se actualiza por detrás.</div></div>
+    </div>
+  </section>
+
+  <section id="esqueletos" style="display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:900px">
+      <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">02 · ESQUELETOS</div>
+      <h2 style="margin:0;font:400 40px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.025em">La pantalla de verdad, con huecos donde van los datos</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 28px;margin-top:8px;font:400 15px/1.55 'Inter Tight',sans-serif;color:#33513F">
+        <div><span style="font-weight:600;color:#14342A">Lo fijo se pinta.</span> Títulos, pestañas, etiquetas y textos que no dependen de datos («Agenda», «para que se abra», «Con quién cenas») salen de verdad desde el primer momento.</div>
+        <div><span style="font-weight:600;color:#14342A">Cada hueso mide su línea.</span> El hueso va centrado en la caja de la línea que reemplaza, con su interlineado. Así, al llegar el texto, nada se mueve.</div>
+        <div><span style="font-weight:600;color:#14342A">Un solo latido.</span> Todos los huesos de la pantalla laten juntos, lento (1,6 s). Sin brillo que barre, sin sombras.</div>
+        <div><span style="font-weight:600;color:#14342A">Los botones, apagados.</span> Si su texto es fijo, se pinta y no responde. Si depende de datos, es un hueso con la forma de la cápsula.</div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:40px 32px;align-items:flex-start">
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font:600 14px/1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#566A5D">INICIO</div>
+        <div style="width:390px;height:844px;flex:none;background:#FAF3E4;border:10px solid #14342A;border-radius:48px;overflow:hidden;box-sizing:border-box">
+          <div style="height:44px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px"><div style="display:flex;align-items:center;gap:8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="3.4" cy="12" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#14342A"></circle></svg><span style="font:400 19px/1 'Young Serif',serif">Aro Club</span></div><span style="width:36px;height:36px;border-radius:18px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box"></span></div>
+          <div style="padding:8px 16px 0">
+            <div style="padding:9.5px 0;margin-bottom:22px"><div style="height:24px;width:150px;border-radius:7px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+            <div style="background:#FFFBF0;border-radius:30px;padding:22px">
+              <div style="height:32px;width:140px;border-radius:999px;background:rgba(20,52,42,.08);margin-bottom:16px;animation:{{ lat }}"></div>
+              <div style="padding:9.5px 0"><div style="height:24px;width:100%;border-radius:7px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+              <div style="padding:9.5px 0"><div style="height:24px;width:62%;border-radius:7px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+              <div style="margin-top:13px">
+                <div style="padding:6.5px 0"><div style="height:11px;width:100%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                <div style="padding:6.5px 0"><div style="height:11px;width:100%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                <div style="padding:6.5px 0"><div style="height:11px;width:48%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+              </div>
+              <div style="height:52px;width:160px;border-radius:999px;background:rgba(20,52,42,.08);margin-top:26px;animation:{{ lat }}"></div>
+            </div>
+            <div style="margin-top:40px;font:400 25px/36px 'Young Serif',serif;letter-spacing:-.03em;margin-bottom:12px">Agenda</div>
+            <div style="display:flex;gap:12px;padding:10px 0 16px">
+              <sc-for list="{{ polas }}" as="p" hint-placeholder-count="3">
+                <div style="width:112px;flex:none;background:#FFFBF0;padding:6px 6px 0;border-radius:10px;border:2px solid transparent;box-sizing:border-box;box-shadow:0 10px 14px rgba(20,52,42,.12);transform:rotate({{ p.giro }})">
+                  <div style="aspect-ratio:1;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+                  <div style="padding:14px 0 5.5px;display:flex;justify-content:center"><div style="height:12px;width:56px;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                  <div style="padding:6px 0 12px;display:flex;justify-content:center"><div style="height:8px;width:40px;border-radius:4px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:3px 0;margin-bottom:10px"><div style="height:8px;width:96px;border-radius:4px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ tres }}" as="x" hint-placeholder-count="3">
+                <div style="display:flex;gap:13px;align-items:flex-start;background:#FFFBF0;border-radius:22px;padding:15px;border:1px solid transparent">
+                  <div style="width:36px;height:36px;border-radius:18px;flex:none;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+                  <div style="flex:1;min-width:0">
+                    <div style="padding:4.5px 0"><div style="height:11px;width:{{ x.a }};border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                    <div style="padding:5.5px 0;margin-top:3px"><div style="height:10px;width:{{ x.b }};border-radius:5px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                    <div style="padding:5.5px 0;margin-top:2px"><div style="height:9px;width:{{ x.c }};border-radius:5px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                  </div>
+                  <div style="width:34px;height:34px;border-radius:17px;flex:none;margin-top:2px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="max-width:390px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Real: cabecera, «Agenda» y el marco de cada polaroid, con su giro. Hueso: el saludo, la tarjeta de estado, la foto y el nombre de cada filtro, y las filas.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font:600 14px/1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#566A5D">MI MESA · CERRADA</div>
+        <div style="width:390px;height:844px;flex:none;background:#FAF3E4;border:10px solid #14342A;border-radius:48px;overflow:hidden;box-sizing:border-box">
+          <div style="height:44px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px"><div style="display:flex;align-items:center;gap:8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="3.4" cy="12" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#14342A"></circle></svg><span style="font:400 19px/1 'Young Serif',serif">Aro Club</span></div><span style="width:36px;height:36px;border-radius:18px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box"></span></div>
+          <div style="padding:8px 16px 0">
+            <div style="font:400 30px/43px 'Young Serif',serif;letter-spacing:-.035em;margin-bottom:14px">Mi mesa</div>
+            <div style="display:flex;gap:8px"><span style="display:flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif">Próxima</span><span style="display:flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box;font:600 15px/1 'Inter Tight',sans-serif">Pasadas</span></div>
+            <div style="margin-top:14px">
+              <div style="height:32px;width:178px;border-radius:999px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+              <div style="margin-top:14px">
+                <div style="padding:11px 0"><div style="height:27px;width:100%;border-radius:8px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                <div style="padding:11px 0"><div style="height:27px;width:58%;border-radius:8px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+              </div>
+              <div style="margin-top:12px">
+                <div style="padding:6.5px 0"><div style="height:11px;width:100%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                <div style="padding:6.5px 0"><div style="height:11px;width:100%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                <div style="padding:6.5px 0"><div style="height:11px;width:40%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+              </div>
+              <div style="margin-top:26px;background:#FFFBF0;border-radius:22px;padding:20px">
+                <div style="padding:10px 0"><div style="height:34px;width:190px;border-radius:8px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                <div style="font:400 15px/24px 'Inter Tight',sans-serif;color:#33513F;margin-top:8px">para que se abra</div>
+                <div style="height:1px;background:rgba(20,52,42,.12);margin:18px 0"></div>
+                <div style="display:flex;gap:18px;align-items:center">
+                  <div style="padding:7.5px 0"><div style="height:17px;width:120px;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                  <div style="padding:5.5px 0"><div style="height:10px;width:110px;border-radius:5px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:16px;margin-top:14px;min-height:44px">
+                  <div style="height:52px;width:170px;border-radius:999px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+                  <span style="font:500 14px/1 'Inter Tight',sans-serif;color:#9DAEA2;text-decoration:underline">Cancelar mi puesto</span>
+                </div>
+              </div>
+              <div style="margin-top:20px">
+                <div style="padding:6.5px 0"><div style="height:11px;width:100%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                <div style="padding:6.5px 0"><div style="height:11px;width:66%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="max-width:390px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Real: «Mi mesa», las pestañas, «para que se abra» y «Cancelar mi puesto», apagado. Hueso: el sello, el titular, la cuenta atrás y la fecha.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font:600 14px/1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#566A5D">MI MESA · ABIERTA</div>
+        <div style="width:390px;height:844px;flex:none;background:#FAF3E4;border:10px solid #14342A;border-radius:48px;overflow:hidden;box-sizing:border-box">
+          <div style="height:44px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px"><div style="display:flex;align-items:center;gap:8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="3.4" cy="12" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#14342A"></circle></svg><span style="font:400 19px/1 'Young Serif',serif">Aro Club</span></div><span style="width:36px;height:36px;border-radius:18px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box"></span></div>
+          <div style="padding:8px 16px 0;display:flex;flex-direction:column;gap:12px">
+            <div style="font:400 30px/43px 'Young Serif',serif;letter-spacing:-.035em;margin-bottom:2px">Mi mesa</div>
+            <div style="display:flex;gap:8px;margin-bottom:2px"><span style="display:flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif">Próxima</span><span style="display:flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box;font:600 15px/1 'Inter Tight',sans-serif">Pasadas</span></div>
+            <div style="border-radius:24px;background:#14342A;padding:18px 18px 16px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><div style="height:26px;width:88px;border-radius:999px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div><div style="height:10px;width:120px;border-radius:5px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div></div>
+              <div style="display:flex;align-items:flex-end;gap:16px;margin-top:14px">
+                <div style="flex:none"><div style="height:8px;width:36px;border-radius:4px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div><div style="height:38px;width:62px;border-radius:8px;margin-top:8px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div></div>
+                <div style="flex:1;min-width:0;padding-bottom:3px"><div style="height:19px;width:80%;border-radius:6px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div><div style="height:10px;width:60%;border-radius:5px;margin-top:12px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div></div>
+              </div>
+              <div style="margin-top:14px;border-radius:16px;overflow:hidden;background:#1B5138">
+                <div style="height:180px;background:rgba(250,243,228,.08);animation:{{ lat }}"></div>
+                <div style="padding:11px 13px 13px;display:flex;flex-direction:column;gap:8px"><div style="font:600 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">AL LLEGAR · BUSCA ESTA ENTRADA</div><div style="height:10px;width:78%;border-radius:5px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+                <div style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;background:rgba(250,243,228,.16);color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif">Cómo llegar</div>
+                <div style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;border:1.5px solid rgba(250,243,228,.16);box-sizing:border-box;color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif">Voy tarde</div>
+              </div>
+            </div>
+            <sc-for list="{{ cajas }}" as="c" hint-placeholder-count="3">
+              <div style="border-radius:22px;background:{{ c.fondo }};color:{{ c.tinta }};border:1px solid {{ c.borde }};display:flex;align-items:center;gap:12px;padding:16px 18px">
+                <div style="flex:1;min-width:0"><div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em">{{ c.t }}</div><div style="height:9px;width:{{ c.w }};border-radius:5px;margin-top:9px;background:{{ c.hueso }};animation:{{ lat }}"></div></div>
+                <span style="flex:none;width:32px;height:32px;border-radius:999px;border:1.5px solid {{ c.borde2 }};box-sizing:border-box;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{ c.tinta }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="max-width:390px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Real: la tarjeta verde, «Al llegar», los botones apagados y los títulos de cada caja. Hueso: número, sitio, dirección, la foto y los resúmenes. Si la primera vez no sabemos la fase, va la cerrada.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font:600 14px/1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#566A5D">PASADAS</div>
+        <div style="width:390px;height:844px;flex:none;background:#FAF3E4;border:10px solid #14342A;border-radius:48px;overflow:hidden;box-sizing:border-box">
+          <div style="height:44px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px"><div style="display:flex;align-items:center;gap:8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="3.4" cy="12" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#14342A"></circle></svg><span style="font:400 19px/1 'Young Serif',serif">Aro Club</span></div><span style="width:36px;height:36px;border-radius:18px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box"></span></div>
+          <div style="padding:8px 16px 0">
+            <div style="font:400 30px/43px 'Young Serif',serif;letter-spacing:-.035em;margin-bottom:14px">Mi mesa</div>
+            <div style="display:flex;gap:8px"><span style="display:flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box;font:600 15px/1 'Inter Tight',sans-serif">Próxima</span><span style="display:flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif">Pasadas</span></div>
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ pasadas }}" as="x" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:14px;border-radius:18px;background:#FFF8EA;border:1px solid rgba(20,52,42,.1);padding:14px">
+                  <div style="width:48px;height:48px;border-radius:12px;flex:none;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+                  <div style="flex:1;min-width:0"><div style="padding:6px 0"><div style="height:14px;width:{{ x.a }};border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div><div style="padding:3.5px 0;margin-top:2px"><div style="height:10px;width:{{ x.b }};border-radius:5px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div></div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9DAEA2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="max-width:390px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Cuatro filas con la medida de una cena pasada. Sustituye al aro de 36 que hoy sale solo, debajo de las pestañas.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font:600 14px/1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#566A5D">PAGO</div>
+        <div style="width:390px;height:844px;flex:none;background:#FAF3E4;border:10px solid #14342A;border-radius:48px;overflow:hidden;box-sizing:border-box">
+          <div style="height:44px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px"><div style="display:flex;align-items:center;gap:8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="3.4" cy="12" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#14342A"></circle></svg><span style="font:400 19px/1 'Young Serif',serif">Aro Club</span></div><span style="width:36px;height:36px;border-radius:18px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box"></span></div>
+          <div style="padding:8px 16px 0">
+            <div style="padding:11px 0"><div style="height:27px;width:88%;border-radius:8px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+            <div style="padding:11px 0"><div style="height:27px;width:52%;border-radius:8px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+            <div style="margin-top:22px;background:#FFFBF0;border-radius:22px;padding:18px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="padding:7.5px 0;flex:1"><div style="height:18px;width:70%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div><div style="height:10px;width:84px;border-radius:5px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+              <div style="height:1px;background:rgba(20,52,42,.12);margin:14px 0"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:500 14px/21px 'Inter Tight',sans-serif;color:#33513F">Total</span><div style="padding:6px 0"><div style="height:20px;width:84px;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div></div>
+            </div>
+            <div style="margin-top:26px;font:500 12px/15px 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">CÓMO PAGAS</div>
+            <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ tres }}" as="x" hint-placeholder-count="3">
+                <div style="min-height:56px;border-radius:18px;border:1px solid rgba(20,52,42,.14);box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:0 16px">
+                  <div style="width:22px;height:22px;border-radius:11px;border:1.5px solid rgba(20,52,42,.2);box-sizing:border-box;flex:none"></div>
+                  <div style="height:11px;width:{{ x.b }};border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="height:52px;border-radius:999px;margin-top:24px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+          </div>
+        </div>
+        <div style="max-width:390px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Real: «Total», «Cómo pagas» y el aro de cada opción. Hueso: el titular, el plan, el monto, los métodos y el botón, porque su texto depende del método.</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font:600 14px/1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#566A5D">ESTÁS DENTRO</div>
+        <div style="width:390px;height:844px;flex:none;background:#FAF3E4;border:10px solid #14342A;border-radius:48px;overflow:hidden;box-sizing:border-box">
+          <div style="height:44px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px"><div style="display:flex;align-items:center;gap:8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="3.4" cy="12" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#14342A"></circle></svg><span style="font:400 19px/1 'Young Serif',serif">Aro Club</span></div><span style="width:36px;height:36px;border-radius:18px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box"></span></div>
+          <div style="padding:8px 16px 0">
+            <div style="font:400 34px/49px 'Young Serif',serif;letter-spacing:-.04em">Estás dentro.</div>
+            <div style="margin-top:10px">
+              <div style="padding:6.5px 0"><div style="height:11px;width:100%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+              <div style="padding:6.5px 0"><div style="height:11px;width:72%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+            </div>
+            <div style="margin-top:22px;border-radius:26px;background:#14342A;padding:20px">
+              <div style="height:8px;width:90px;border-radius:4px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div>
+              <div style="padding:7.5px 0;margin-top:10px"><div style="height:18px;width:72%;border-radius:6px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div></div>
+              <div style="padding:5.5px 0"><div style="height:10px;width:55%;border-radius:5px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div></div>
+              <div style="height:1px;background:rgba(250,243,228,.2);margin:16px 0"></div>
+              <div style="display:flex;gap:8px"><div style="height:30px;width:96px;border-radius:999px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div><div style="height:30px;width:120px;border-radius:999px;background:rgba(250,243,228,.12);animation:{{ lat }}"></div></div>
+            </div>
+            <div style="height:52px;border-radius:999px;margin-top:24px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+            <div style="display:flex;justify-content:center;margin-top:20px"><div style="height:10px;width:130px;border-radius:5px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+          </div>
+        </div>
+        <div style="max-width:390px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Real: «Estás dentro.», porque se llega con el pago ya confirmado. Hueso: la tarjeta del plan y la acción principal, que en una +1 es «Invitar a mi acompañante».</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="transicion" style="display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:860px">
+      <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">03 · DE ESQUELETO A CONTENIDO</div>
+      <h2 style="margin:0;font:400 40px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.025em">Fundido por partes, sin moverse</h2>
+      <p style="margin:0;font:400 16px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Cada bloque cambia en 180 ms, de arriba abajo, con 40 ms entre uno y otro y como mucho tres tandas. Solo cambia la opacidad: nada se desliza ni crece. Lo que llega de lo último guardado entra sin fundido.</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+      <div style="width:390px;height:844px;flex:none;background:#FAF3E4;border:10px solid #14342A;border-radius:48px;overflow:hidden;box-sizing:border-box">
+        <div style="height:44px"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px"><div style="display:flex;align-items:center;gap:8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="3.4" cy="12" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#14342A"></circle></svg><span style="font:400 19px/1 'Young Serif',serif">Aro Club</span></div><span style="width:36px;height:36px;border-radius:18px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box"></span></div>
+        <div style="padding:8px 16px 0">
+          <sc-if value="{{ esq }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="padding:9.5px 0;margin-bottom:22px"><div style="height:24px;width:150px;border-radius:7px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+              <div style="background:#FFFBF0;border-radius:30px;padding:22px">
+                <div style="height:32px;width:140px;border-radius:999px;background:rgba(20,52,42,.08);margin-bottom:16px;animation:{{ lat }}"></div>
+                <div style="padding:9.5px 0"><div style="height:24px;width:100%;border-radius:7px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                <div style="padding:9.5px 0"><div style="height:24px;width:62%;border-radius:7px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                <div style="margin-top:13px">
+                  <div style="padding:6.5px 0"><div style="height:11px;width:100%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                  <div style="padding:6.5px 0"><div style="height:11px;width:100%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                  <div style="padding:6.5px 0"><div style="height:11px;width:48%;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                </div>
+                <div style="height:52px;width:160px;border-radius:999px;background:rgba(20,52,42,.08);margin-top:26px;animation:{{ lat }}"></div>
+              </div>
+              <div style="margin-top:40px;font:400 25px/36px 'Young Serif',serif;letter-spacing:-.03em;margin-bottom:12px">Agenda</div>
+              <div style="display:flex;gap:12px;padding:10px 0 16px">
+                <sc-for list="{{ polas }}" as="p" hint-placeholder-count="3">
+                  <div style="width:112px;flex:none;background:#FFFBF0;padding:6px 6px 0;border-radius:10px;border:2px solid transparent;box-sizing:border-box;box-shadow:0 10px 14px rgba(20,52,42,.12);transform:rotate({{ p.giro }})">
+                    <div style="aspect-ratio:1;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+                    <div style="padding:14px 0 5.5px;display:flex;justify-content:center"><div style="height:12px;width:56px;border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                    <div style="padding:6px 0 12px;display:flex;justify-content:center"><div style="height:8px;width:40px;border-radius:4px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="padding:3px 0;margin-bottom:10px"><div style="height:8px;width:96px;border-radius:4px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ tres }}" as="x" hint-placeholder-count="3">
+                  <div style="display:flex;gap:13px;align-items:flex-start;background:#FFFBF0;border-radius:22px;padding:15px;border:1px solid transparent">
+                    <div style="width:36px;height:36px;border-radius:18px;flex:none;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+                    <div style="flex:1;min-width:0">
+                      <div style="padding:4.5px 0"><div style="height:11px;width:{{ x.a }};border-radius:6px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                      <div style="padding:5.5px 0;margin-top:3px"><div style="height:10px;width:{{ x.b }};border-radius:5px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                      <div style="padding:5.5px 0;margin-top:2px"><div style="height:9px;width:{{ x.c }};border-radius:5px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div></div>
+                    </div>
+                    <div style="width:34px;height:34px;border-radius:17px;flex:none;margin-top:2px;background:rgba(20,52,42,.08);animation:{{ lat }}"></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ cont }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <div style="animation:{{ f1 }}">
+                <div style="font:400 30px/43px 'Young Serif',serif;letter-spacing:-.035em;margin-bottom:22px">Hola, Ana.</div>
+                <div style="background:#FFFBF0;border-radius:30px;padding:22px">
+                  <div style="display:flex;margin-bottom:16px"><span style="display:flex;align-items:center;min-height:32px;padding:0 14px;border-radius:999px;background:#A0511F;color:#FFF8EA;font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em">TIENES PUESTO</span></div>
+                  <div style="font:400 30px/43px 'Young Serif',serif;letter-spacing:-.035em">El viernes tienes drinks.</div>
+                  <div style="font:400 15px/24px 'Inter Tight',sans-serif;color:#33513F;margin-top:13px">El bar y quiénes van, el viernes al mediodía. Hasta entonces no tienes que hacer nada: te avisamos por correo.</div>
+                  <div style="display:flex;margin-top:26px"><span style="display:flex;align-items:center;min-height:52px;padding:0 24px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif">Ver mi grupo</span></div>
+                </div>
+              </div>
+              <div style="margin-top:40px;font:400 25px/36px 'Young Serif',serif;letter-spacing:-.03em;margin-bottom:12px">Agenda</div>
+              <div style="display:flex;gap:12px;padding:10px 0 16px;animation:{{ f2 }}">
+                <sc-for list="{{ polas }}" as="p" hint-placeholder-count="3">
+                  <div style="width:112px;flex:none;background:#FFFBF0;padding:6px 6px 0;border-radius:10px;border:2px solid transparent;box-sizing:border-box;box-shadow:0 10px 14px rgba(20,52,42,.12);transform:rotate({{ p.giro }})">
+                    <div style="aspect-ratio:1;border-radius:6px;background:#DCD3BC url('{{ p.foto }}') center/cover"></div>
+                    <div style="padding-top:8px;text-align:center;font:400 16px/23px 'Young Serif',serif">{{ p.nombre }}</div>
+                    <div style="padding:3px 0 9px;text-align:center;font:500 11px/14px 'Inter Tight',sans-serif;color:#566A5D">{{ p.detalle }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="animation:{{ f3 }}">
+                <div style="font:500 11px/14px 'Inter Tight',sans-serif;letter-spacing:.14em;margin-bottom:10px">ESTA SEMANA</div>
+                <div style="display:flex;flex-direction:column;gap:9px">
+                  <sc-for list="{{ filas }}" as="r" hint-placeholder-count="3">
+                    <div style="display:flex;gap:13px;align-items:flex-start;background:#FFFBF0;border-radius:22px;padding:15px;border:1px solid transparent">
+                      <div style="width:36px;height:36px;border-radius:18px;flex:none;background:#F3E3C7;display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8F4515" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{ r.ico }}"></path></svg></div>
+                      <div style="flex:1;min-width:0">
+                        <div style="font:600 15px/20px 'Inter Tight',sans-serif">{{ r.tipo }}</div>
+                        <div style="font:400 14px/21px 'Inter Tight',sans-serif;color:#566A5D;margin-top:3px">{{ r.cuando }}</div>
+                        <div style="font:400 13px/20px 'Inter Tight',sans-serif;color:#33513F;margin-top:2px">{{ r.zona }}</div>
+                      </div>
+                      <div style="width:34px;height:34px;border-radius:17px;flex:none;margin-top:2px;background:#14342A;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;max-width:420px;padding-top:8px">
+        <button onClick="{{ repetir }}" style="align-self:flex-start;min-height:52px;padding:0 24px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer" style-hover="background:#8F4515">Repetir la carga</button>
+        <div style="font:400 15px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Simula 1,6 s de espera. Fíjate en «Agenda» y en los marcos de las polaroids: no se mueven, porque ya estaban.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid rgba(20,52,42,.14);padding-top:16px;font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">
+          <div><span style="font-weight:600;color:#14342A">Tanda 1.</span> Saludo y tarjeta de estado.</div>
+          <div><span style="font-weight:600;color:#14342A">Tanda 2.</span> Los filtros de la agenda.</div>
+          <div><span style="font-weight:600;color:#14342A">Tanda 3.</span> Las filas, todas juntas.</div>
+          <div><span style="font-weight:600;color:#14342A">Si llega a trozos.</span> Cada bloque entra cuando tiene lo suyo, sin esperar a los demás.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="aro" style="display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+      <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">04 · EL ARO</div>
+      <h2 style="margin:0;font:400 40px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.025em">Se llena punto a punto, empezando por el tuyo</h2>
+      <p style="margin:0;font:400 16px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Los seis puntos se encienden uno detrás de otro, como se llena una mesa: primero el terracota, que eres tú. Con los seis encendidos, se apagan juntos y vuelve a empezar. Nunca se queda lleno: lleno diría que terminó, y no lo sabemos. Una vuelta dura 1,5 s, como hoy. Para compararlo con el giro de hoy, cambia «Aro» en Tweaks.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px">
+      <div style="background:#FAF3E4;border:1px solid rgba(20,52,42,.12);border-radius:26px;padding:32px;display:flex;flex-direction:column;gap:28px">
+        <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">SOBRE CREMA</div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px">{{ aroC20 }}<span style="font:500 13px/1.3 'Inter Tight',sans-serif;color:#33513F;text-align:center">20<br>botón</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px">{{ aroC28 }}<span style="font:500 13px/1.3 'Inter Tight',sans-serif;color:#33513F;text-align:center">28<br>dentro de un bloque</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px">{{ aroC40 }}<span style="font:500 13px/1.3 'Inter Tight',sans-serif;color:#33513F;text-align:center">40<br>pantalla</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px">{{ aroC54 }}<span style="font:500 13px/1.3 'Inter Tight',sans-serif;color:#33513F;text-align:center">54<br>velo</span></div>
+        </div>
+        <div style="border-top:1px solid rgba(20,52,42,.12);padding-top:24px;display:flex;flex-direction:column;align-items:center;gap:20px;min-height:180px;justify-content:center">{{ aroC54b }}<span style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#566A5D">Un momento</span></div>
+      </div>
+      <div style="background:#14342A;border-radius:26px;padding:32px;display:flex;flex-direction:column;gap:28px">
+        <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#9CBBA6">SOBRE VERDE</div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px">{{ aroV20 }}<span style="font:500 13px/1.3 'Inter Tight',sans-serif;color:#C5D8CA;text-align:center">20<br>botón</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px">{{ aroV28 }}<span style="font:500 13px/1.3 'Inter Tight',sans-serif;color:#C5D8CA;text-align:center">28<br>dentro de un bloque</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px">{{ aroV40 }}<span style="font:500 13px/1.3 'Inter Tight',sans-serif;color:#C5D8CA;text-align:center">40<br>pantalla</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px">{{ aroV54 }}<span style="font:500 13px/1.3 'Inter Tight',sans-serif;color:#C5D8CA;text-align:center">54<br>velo</span></div>
+        </div>
+        <div style="border-top:1px solid rgba(250,243,228,.18);padding-top:24px;display:flex;flex-direction:column;align-items:center;gap:20px;min-height:180px;justify-content:center">{{ aroV54b }}<span style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#9CBBA6">Un momento</span></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 28px;font:400 15px/1.55 'Inter Tight',sans-serif;color:#33513F">
+      <div><span style="font-weight:600;color:#14342A">Cuatro tamaños, ni uno más.</span> Por debajo de 20 los puntos se funden con el anillo. El 36 de hoy pasa a 40.</div>
+      <div><span style="font-weight:600;color:#14342A">El anillo, quieto y fino.</span> Trazo de 1,5 al 20 % de la tinta. Lo que se mueve son los puntos.</div>
+      <div><span style="font-weight:600;color:#14342A">Sobre verde.</span> Puntos en crema y el tuyo en terracota clara #E39C63, como la marca quieta del pie.</div>
+      <div><span style="font-weight:600;color:#14342A">Solo con «Un momento».</span> En el velo y nada más. Ni «Cargando…» ni «Casi listo».</div>
+    </div>
+  </section>
+
+  <section id="botones" style="display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+      <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">05 · BOTONES QUE TRABAJAN</div>
+      <h2 style="margin:0;font:400 40px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.025em">El texto se queda. Entra el aro.</h2>
+      <p style="margin:0;font:400 16px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">El botón que tocaste sigue siendo ese botón: mismo color, mismo texto, mismo ancho. A la izquierda entra el aro de 20 y deja de responder. Un texto que cambia mueve el botón y parece otra acción; un botón apagado parece que algo falló. Toca los de abajo.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px">
+      <div style="background:#FAF3E4;border:1px solid rgba(20,52,42,.12);border-radius:26px;padding:28px;display:flex;flex-direction:column;gap:22px">
+        <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px 18px;align-items:center">
+          <span style="font:600 13px/1.3 'Inter Tight',sans-serif;color:#566A5D">Reposo</span>
+          <span style="justify-self:start;display:flex;align-items:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif">Apartar mi puesto</span>
+          <span style="font:600 13px/1.3 'Inter Tight',sans-serif;color:#566A5D">Trabajando</span>
+          <span style="justify-self:start;display:flex;align-items:center;gap:10px;min-height:52px;padding:0 24px 0 18px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif">{{ aroBtnFijo }}Apartar mi puesto</span>
+          <span style="font:600 13px/1.3 'Inter Tight',sans-serif;color:#566A5D">Listo</span>
+          <span style="justify-self:start;display:flex;align-items:center;gap:10px;min-height:52px;padding:0 24px 0 18px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Apartar mi puesto</span>
+          <span style="font:600 13px/1.3 'Inter Tight',sans-serif;color:#566A5D">No salió</span>
+          <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+            <div style="display:flex;gap:12px;align-items:flex-start;border-radius:20px;background:rgba(143,69,21,.08);padding:14px 16px"><svg width="22" height="22" viewBox="0 0 22 22" style="flex:none"><circle cx="11" cy="11" r="11" fill="#8F4515"></circle><path d="M11 6.2v6.2" stroke="#FAF3E4" stroke-width="2" stroke-linecap="round"></path><circle cx="11" cy="15.6" r="1.2" fill="#FAF3E4"></circle></svg><span style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#33513F">No pudimos apartar tu puesto. Revisa tu conexión e inténtalo otra vez.</span></div>
+            <span style="display:flex;align-items:center;min-height:52px;padding:0 24px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif">Apartar mi puesto</span>
+          </div>
+        </div>
+        <div style="border-top:1px solid rgba(20,52,42,.12);padding-top:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <button onClick="{{ tocarB }}" style="display:flex;align-items:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">
+            <sc-if value="{{ bT }}" hint-placeholder-val="{{ false }}">{{ aroBtn }}</sc-if>
+            <sc-if value="{{ bL }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+            Apartar mi puesto
+          </button>
+          <span style="font:400 14px/1.4 'Inter Tight',sans-serif;color:#566A5D">Pruébalo</span>
+        </div>
+      </div>
+      <div style="background:#14342A;border-radius:26px;padding:28px;display:flex;flex-direction:column;gap:22px">
+        <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px 18px;align-items:center">
+          <span style="font:600 13px/1.3 'Inter Tight',sans-serif;color:#9CBBA6">Reposo</span>
+          <span style="justify-self:start;display:flex;align-items:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif">Guardar y seguir</span>
+          <span style="font:600 13px/1.3 'Inter Tight',sans-serif;color:#9CBBA6">Trabajando</span>
+          <span style="justify-self:start;display:flex;align-items:center;gap:10px;min-height:52px;padding:0 24px 0 18px;border-radius:999px;background:#FAF3E4;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif">{{ aroBtnVFijo }}Guardar y seguir</span>
+          <span style="font:600 13px/1.3 'Inter Tight',sans-serif;color:#9CBBA6">Secundario</span>
+          <span style="justify-self:start;display:flex;align-items:center;gap:10px;min-height:52px;padding:0 24px 0 18px;border-radius:999px;border:1px solid rgba(250,243,228,.34);box-sizing:border-box;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif">{{ aroV20b }}Reintentar</span>
+        </div>
+        <div style="border-top:1px solid rgba(250,243,228,.18);padding-top:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <button onClick="{{ tocarV }}" style="display:flex;align-items:center;gap:10px;min-height:52px;padding:0 24px;border-radius:999px;border:none;background:#FAF3E4;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">
+            <sc-if value="{{ vT }}" hint-placeholder-val="{{ false }}">{{ aroBtnV }}</sc-if>
+            <sc-if value="{{ vL }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#14342A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+            Guardar y seguir
+          </button>
+          <span style="font:400 14px/1.4 'Inter Tight',sans-serif;color:#9CBBA6">Pruébalo</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 28px;font:400 15px/1.55 'Inter Tight',sans-serif;color:#33513F">
+      <div><span style="font-weight:600;color:#14342A">El ancho no cambia.</span> El botón reserva desde el reposo el sitio del aro: 24 px de relleno a cada lado pasan a 18 + aro + 10 a la izquierda, con el mismo ancho total.</div>
+      <div><span style="font-weight:600;color:#14342A">Listo, 0,6 s.</span> El aro pasa a un check y, en seguida, lo siguiente. Si lo siguiente es otra pantalla, no hay check: la pantalla nueva ya lo dice.</div>
+      <div><span style="font-weight:600;color:#14342A">No salió.</span> Vuelve al reposo y el aviso sale encima del botón, con qué pasó y qué hacer. Lo que escribiste sigue ahí.</div>
+      <div><span style="font-weight:600;color:#14342A">Para el lector de pantalla.</span> El botón queda «ocupado» y anuncia la acción en curso («Apartando tu puesto»). El texto visible no cambia.</div>
+    </div>
+  </section>
+
+  <section id="sinconexion" style="display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+      <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">06 · SIN CONEXIÓN O «NO PUDIMOS CARGAR»</div>
+      <h2 style="margin:0;font:400 40px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.025em">Un solo estado, con dos caras</h2>
+      <p style="margin:0;font:400 16px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Si no hay nada guardado, el esqueleto se cambia por el aviso en el mismo sitio. Si hay algo guardado, se queda en pantalla y arriba sale una franja que dice de cuándo es. En los dos, «Reintentar», y al volver la conexión se reintenta solo.</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font:600 14px/1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#566A5D">SIN NADA GUARDADO</div>
+        <div style="width:390px;height:620px;flex:none;background:#FAF3E4;border:10px solid #14342A;border-radius:48px;overflow:hidden;box-sizing:border-box">
+          <div style="height:44px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px"><div style="display:flex;align-items:center;gap:8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="3.4" cy="12" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#14342A"></circle></svg><span style="font:400 19px/1 'Young Serif',serif">Aro Club</span></div><span style="width:36px;height:36px;border-radius:18px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box"></span></div>
+          <div style="padding:8px 16px 0">
+            <div style="font:400 30px/43px 'Young Serif',serif;letter-spacing:-.035em;margin-bottom:14px">Mi mesa</div>
+            <div style="display:flex;gap:8px"><span style="display:flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif">Próxima</span><span style="display:flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box;font:600 15px/1 'Inter Tight',sans-serif">Pasadas</span></div>
+            <div style="margin-top:28px;background:#FFFBF0;border-radius:22px;padding:24px 22px;display:flex;flex-direction:column;gap:12px">
+              <div style="width:44px;height:44px;border-radius:22px;background:rgba(143,69,21,.1);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8F4515" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 16a5 5 0 0 1 6.8 0"></path><circle cx="12" cy="19.3" r="1" fill="#8F4515"></circle><path d="M3.5 3.5l17 17"></path></svg></div>
+              <div style="font:400 23px/1.25 'Young Serif',serif;letter-spacing:-.02em;margin-top:4px">No pudimos cargar tu mesa.</div>
+              <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#33513F">Revisa tu conexión e inténtalo otra vez. En cuanto vuelva, lo intentamos solos.</div>
+              <span style="align-self:flex-start;display:flex;align-items:center;min-height:52px;padding:0 24px;border-radius:999px;border:1px solid rgba(20,52,42,.22);box-sizing:border-box;color:#1B5138;font:600 15px/1 'Inter Tight',sans-serif;margin-top:6px">Reintentar</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font:600 14px/1 'Inter Tight',sans-serif;letter-spacing:.06em;color:#566A5D">CON LO ÚLTIMO QUE VISTE</div>
+        <div style="width:390px;height:620px;flex:none;background:#FAF3E4;border:10px solid #14342A;border-radius:48px;overflow:hidden;box-sizing:border-box">
+          <div style="height:44px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px"><div style="display:flex;align-items:center;gap:8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" stroke="#14342A" stroke-width="2.4"></circle><circle cx="20.6" cy="12" r="2.5" fill="#8F4515"></circle><circle cx="16.3" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="19.45" r="2.5" fill="#14342A"></circle><circle cx="3.4" cy="12" r="2.5" fill="#14342A"></circle><circle cx="7.7" cy="4.55" r="2.5" fill="#14342A"></circle><circle cx="16.3" cy="4.55" r="2.5" fill="#14342A"></circle></svg><span style="font:400 19px/1 'Young Serif',serif">Aro Club</span></div><span style="width:36px;height:36px;border-radius:18px;border:1px solid rgba(20,52,42,.2);box-sizing:border-box"></span></div>
+          <div style="display:flex;align-items:center;gap:10px;background:#F2E9D5;padding:10px 16px;border-top:1px solid rgba(20,52,42,.08);border-bottom:1px solid rgba(20,52,42,.08)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8F4515" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 16a5 5 0 0 1 6.8 0"></path><circle cx="12" cy="19.3" r="1" fill="#8F4515"></circle><path d="M3.5 3.5l17 17"></path></svg>
+            <span style="flex:1;font:500 13.5px/1.35 'Inter Tight',sans-serif;color:#14342A">Sin conexión. Esto es de las 3:40 p.m.</span>
+            <span style="display:flex;align-items:center;min-height:44px;font:600 13.5px/1 'Inter Tight',sans-serif;color:#1B5138;text-decoration:underline;text-underline-offset:3px">Reintentar</span>
+          </div>
+          <div style="padding:16px 16px 0">
+            <div style="font:400 30px/43px 'Young Serif',serif;letter-spacing:-.035em;margin-bottom:22px">Hola, Ana.</div>
+            <div style="background:#FFFBF0;border-radius:30px;padding:22px">
+              <div style="display:flex;margin-bottom:16px"><span style="display:flex;align-items:center;min-height:32px;padding:0 14px;border-radius:999px;background:#A0511F;color:#FFF8EA;font:600 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em">TIENES PUESTO</span></div>
+              <div style="font:400 30px/43px 'Young Serif',serif;letter-spacing:-.035em">El viernes tienes drinks.</div>
+              <div style="font:400 15px/24px 'Inter Tight',sans-serif;color:#33513F;margin-top:13px">El bar y quiénes van, el viernes al mediodía. Hasta entonces no tienes que hacer nada: te avisamos por correo.</div>
+              <div style="display:flex;margin-top:26px"><span style="display:flex;align-items:center;min-height:52px;padding:0 24px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif">Ver mi grupo</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:420px;padding-top:28px;font:400 15px/1.55 'Inter Tight',sans-serif;color:#33513F">
+        <div><span style="font-weight:600;color:#14342A">El título dice qué no llegó.</span> «No pudimos cargar tu mesa.», «… el pago.», «… tus cenas.». El resto es igual en todas.</div>
+        <div><span style="font-weight:600;color:#14342A">Si es cosa nuestra</span> (el servidor contesta con error), la segunda línea cambia a la que ya existe: «Es cosa nuestra, no tuya: vuelve a intentarlo en un momento.».</div>
+        <div><span style="font-weight:600;color:#14342A">La hora es la de verdad.</span> La de la última vez que llegaron datos, no la de ahora. Si es de otro día: «Esto es del lunes 2».</div>
+        <div><span style="font-weight:600;color:#14342A">Un solo texto de botón.</span> «Reintentar» en todas. Pasadas deja «Volver a intentar».</div>
+        <div><span style="font-weight:600;color:#14342A">Mientras reintenta,</span> el botón lleva el aro, como cualquier otro paso. La franja no tapa ni empuja nada que se pueda tocar.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="reducir" style="display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+      <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">07 · REDUCIR MOVIMIENTO</div>
+      <h2 style="margin:0;font:400 40px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.025em">Quieto, pero igual de claro</h2>
+      <p style="margin:0;font:400 16px/1.55 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">Con «reducir movimiento» activado nada late ni gira. La espera se sigue entendiendo por la forma y por el texto. Para ver todo el documento así, activa «Reducir movimiento» en Tweaks.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+      <div style="background:#FFFBF0;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px">
+        <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">ESQUELETO</div>
+        <div style="display:flex;flex-direction:column;gap:13px"><div style="height:11px;width:100%;border-radius:6px;background:rgba(20,52,42,.08)"></div><div style="height:11px;width:100%;border-radius:6px;background:rgba(20,52,42,.08)"></div><div style="height:11px;width:48%;border-radius:6px;background:rgba(20,52,42,.08)"></div></div>
+        <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">Los huesos quietos, al 8 % de la tinta. Sin latido.</div>
+      </div>
+      <div style="background:#FFFBF0;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px">
+        <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">ARO</div>
+        <div style="display:flex;align-items:center;gap:14px">{{ aroQ40 }}<span style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#566A5D">Un momento</span></div>
+        <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">Los seis puntos encendidos, sin moverse. En los botones, el aro quieto hace lo mismo: dice «ocupado».</div>
+      </div>
+      <div style="background:#FFFBF0;border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:16px">
+        <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#566A5D">TRANSICIÓN</div>
+        <div style="display:flex;gap:8px;align-items:center"><div style="flex:1;height:44px;border-radius:12px;background:rgba(20,52,42,.08)"></div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#566A5D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg><div style="flex:1;height:44px;border-radius:12px;background:#14342A"></div></div>
+        <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F">Se queda el fundido de 180 ms, porque cambiar la opacidad no es movimiento. Sin tandas: todo a la vez.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="code" style="display:flex;flex-direction:column;gap:24px">
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+      <div style="font:700 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#8F4515">08 · PARA CODE</div>
+      <h2 style="margin:0;font:400 40px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.025em">Qué cambia, en app, web y donde haga falta</h2>
+    </div>
+    <div style="display:flex;flex-direction:column;border-top:1.5px solid #14342A">
+      <sc-for list="{{ code }}" as="r" hint-placeholder-count="8">
+        <div style="display:grid;grid-template-columns:minmax(160px,220px) minmax(0,1fr);gap:24px;padding:18px 0;border-bottom:1px solid rgba(20,52,42,.14)">
+          <div style="font:600 15px/1.4 'Inter Tight',sans-serif">{{ r.t }}</div>
+          <div style="font:400 15px/1.6 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ r.d }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#566A5D;max-width:880px">Los textos nuevos («Está tardando más de lo normal.», «Sin conexión. Esto es de las…», «En cuanto vuelva, lo intentamos solos.», «Apartando tu puesto») los aprueba Michael. Los esqueletos de Pago y Estás dentro siguen su estructura de hoy; Code ajusta cada hueso a la medida exacta de su línea.</div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;aro&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Llenarse&quot;,&quot;Girar&quot;],&quot;default&quot;:&quot;Llenarse&quot;,&quot;tsType&quot;:&quot;'Llenarse' | 'Girar'&quot;,&quot;section&quot;:&quot;Carga&quot;},&quot;reducir&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Carga&quot;}}">
+class Component extends DCLogic {
+  state = { fase: 'contenido', b: 'reposo', v: 'reposo' };
+  componentWillUnmount() { [this.t1, this.t2, this.t3].forEach(clearTimeout); }
+  repetir = () => {
+    clearTimeout(this.t1);
+    this.setState({ fase: 'esqueleto' });
+    this.t1 = setTimeout(() => this.setState({ fase: 'contenido' }), 1600);
+  };
+  tocar = (k) => () => {
+    if (this.state[k] !== 'reposo') return;
+    this.setState({ [k]: 'trabajando' });
+    this.t2 = setTimeout(() => {
+      this.setState({ [k]: 'listo' });
+      this.t3 = setTimeout(() => this.setState({ [k]: 'reposo' }), 600);
+    }, 1800);
+  };
+  aro(t, verde, modo, quieto) {
+    const e = React.createElement;
+    const P = [[20.6, 12], [16.3, 19.45], [7.7, 19.45], [3.4, 12], [7.7, 4.55], [16.3, 4.55]];
+    const tinta = verde ? '#FAF3E4' : '#14342A';
+    const tuyo = verde ? '#E39C63' : '#8F4515';
+    const anillo = verde ? 'rgba(250,243,228,.2)' : 'rgba(20,52,42,.2)';
+    const girar = modo === 'Girar';
+    const a = verde ? [0, .62, .5, .38, .26, .16] : [0, .48, .4, .32, .24, .16];
+    const est = a.map((x, i) => i === 0 ? tuyo : (verde ? `rgba(250,243,228,${x})` : `rgba(20,52,42,${x})`));
+    const dots = P.map(([cx, cy], i) => e('circle', {
+      key: i, cx, cy, r: 2.5,
+      fill: girar ? est[i] : (i === 0 ? tuyo : tinta),
+      style: !girar && !quieto ? { animation: `aroP${i} 1500ms linear infinite`, opacity: .16 } : undefined
+    }));
+    const svg = e('svg', { width: t, height: t, viewBox: '0 0 24 24', fill: 'none', style: { display: 'block' } },
+      e('circle', { cx: 12, cy: 12, r: 8.6, stroke: anillo, strokeWidth: 1.5 }), ...dots);
+    return e('div', { 'aria-hidden': true, style: { width: t, height: t, flex: 'none', animation: girar && !quieto ? 'aroGiro 1500ms linear infinite' : 'none' } }, svg);
+  }
+  renderVals() {
+    const red = !!this.props.reducir;
+    const modo = this.props.aro ?? 'Llenarse';
+    const A = (t, v, q) => this.aro(t, v, modo, q || red);
+    const f = (d) => red ? 'entra 180ms ease-out both' : `entra 180ms ease-out ${d}ms both`;
+    const ico = {
+      copa: 'M7 4h10l-5 7-5-7zM12 11v8M8.5 20h7',
+      plato: 'M12 20a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM12 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 4v16M21 4v16',
+      taza: 'M5 9h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5V9zM16 10h1.5a2.5 2.5 0 0 1 0 5H16M8 3.5v2.5M11 3.5v2.5'
+    };
+    return {
+      lat: red ? 'none' : 'huesoLatido 1600ms ease-in-out infinite',
+      esq: this.state.fase === 'esqueleto',
+      cont: this.state.fase === 'contenido',
+      repetir: this.repetir,
+      f1: f(0), f2: f(40), f3: f(80),
+      tres: [{ a: '38%', b: '62%', c: '74%' }, { a: '52%', b: '58%', c: '80%' }, { a: '34%', b: '66%', c: '70%' }],
+      polas: [
+        { giro: '-1.2deg', foto: './ref/filtro-cenas.jpg', nombre: 'Cenas', detalle: '2 fechas' },
+        { giro: '1.4deg', foto: './ref/filtro-drinks.jpg', nombre: 'Drinks', detalle: '1 fecha' },
+        { giro: '-1.6deg', foto: './ref/filtro-brunch.jpg', nombre: 'Brunch', detalle: '1 fecha' }
+      ],
+      filas: [
+        { ico: ico.copa, tipo: 'Drinks', cuando: 'Viernes 6 · 8:00 p.m.', zona: 'Chacao · Grupo de 4 a 8 personas' },
+        { ico: ico.plato, tipo: 'Cena', cuando: 'Sábado 7 · 7:00 p.m.', zona: 'Chacao o Los Palos Grandes · Mesa de 4 a 8 personas' },
+        { ico: ico.taza, tipo: 'Brunch', cuando: 'Domingo 8 · 11:00 a.m.', zona: 'Chacao o Los Palos Grandes · Mesa de 4 a 8 personas' }
+      ],
+      cajas: [
+        { t: 'Con quién cenas', w: '58%', fondo: '#FFF8EA', tinta: '#14342A', borde: 'rgba(20,52,42,.12)', borde2: 'rgba(20,52,42,.25)', hueso: 'rgba(20,52,42,.08)' },
+        { t: 'Paso a paso', w: '64%', fondo: '#FFF8EA', tinta: '#14342A', borde: 'rgba(20,52,42,.12)', borde2: 'rgba(20,52,42,.25)', hueso: 'rgba(20,52,42,.08)' },
+        { t: 'El juego de la mesa', w: '52%', fondo: '#14342A', tinta: '#FAF3E4', borde: '#14342A', borde2: 'rgba(250,243,228,.4)', hueso: 'rgba(250,243,228,.12)' }
+      ],
+      pasadas: [{ a: '62%', b: '44%' }, { a: '54%', b: '50%' }, { a: '68%', b: '40%' }, { a: '50%', b: '46%' }],
+      aroC20: A(20, false), aroC28: A(28, false), aroC40: A(40, false), aroC54: A(54, false), aroC54b: A(54, false),
+      aroV20: A(20, true), aroV28: A(28, true), aroV40: A(40, true), aroV54: A(54, true), aroV54b: A(54, true), aroV20b: A(20, true),
+      aroBtnFijo: A(20, true), aroBtnVFijo: A(20, false),
+      aroBtn: A(20, true), aroBtnV: A(20, false),
+      aroQ40: this.aro(40, false, 'Llenarse', true),
+      bT: this.state.b === 'trabajando', bL: this.state.b === 'listo',
+      vT: this.state.v === 'trabajando', vL: this.state.v === 'listo',
+      tocarB: this.tocar('b'), tocarV: this.tocar('v'),
+      code: [
+        { t: 'Tiempos', d: 'tiempo.umbral 400 ms (antes no se enseña nada). tiempo.minimoVisible 500 ms (sustituye a veloMinimo y vale para todo). tiempo.tarda 8000 ms (sale «Está tardando más de lo normal.»). tiempo.veloTope 6000 ms se queda. tiempo.transicion 180 ms y tiempo.escalon 40 ms, hasta tres tandas. tiempo.latido 1600 ms. tiempo.vueltaAro 1500 ms se queda.' },
+        { t: '<Hueso>', d: 'Componente nuevo en diseno/. Recibe la variante tipográfica de la línea que reemplaza (cuerpo, titulo, display…) y un ancho. Pinta la caja de la línea con su interlineado real y el hueso centrado dentro, al 70-80 % del tamaño de la letra. Color: tinta(0.08) sobre crema y crema elevada; cremaAlfa(0.12) sobre verde. Todos los huesos de una pantalla comparten un solo latido de 1 a 0,5 de opacidad.' },
+        { t: 'Esqueletos', d: 'Uno por pantalla, en el mismo archivo que la pantalla y con sus mismos contenedores, para que no se desajusten: EsqueletoInicio (sustituye a Esqueleto de cuenta/Partes.tsx), EsqueletoMesaCerrada, EsqueletoMesaAbierta, EsqueletoPasadas, EsqueletoPago, EsqueletoDentro. También Cancelar, Cambiar de fecha, la invitación del +1 y Legal, con la misma regla. Lo fijo se pinta con su texto; los botones de texto fijo van apagados.' },
+        { t: 'Mi mesa sin fase', d: 'La primera vez, sin nada guardado, la fase se toma de la tarjeta de estado de Inicio si ya llegó. Si no, va el esqueleto de la cerrada.' },
+        { t: '<AroCarga>', d: 'Pasa de girar a llenarse: el anillo quieto y cada punto se enciende de 0,16 a 1 en su turno (6 %, 18 %, 30 %, 42 %, 54 % y 66 % de la vuelta), se mantienen hasta el 84 % y se apagan juntos hacia el 96 %. Tamaños permitidos: 20, 28, 40 y 54. El de 36 pasa a 40, y los de 18 y 22 pasan a 20. Con «reducir movimiento», los seis encendidos y quietos.' },
+        { t: '<Boton trabajando>', d: 'Prop nueva. Mantiene color y texto, mete AroCarga de 20 a la izquierda (relleno 18 + aro + 10, mismo ancho total), bloquea el toque, aria-busy y accessibilityLabel con la acción en curso. Desaparecen los textos que cambian («Apuntándote», «Guardando…», «Enviando…») y el aro suelto en lugar del botón. Al terminar bien, check 0,6 s si no hay cambio de pantalla.' },
+        { t: '<SinRespuesta>', d: 'Componente único. Sin datos guardados: bloque en crema elevada, icono de sin conexión, título «No pudimos cargar {qué}.», texto «Revisa tu conexión e inténtalo otra vez. En cuanto vuelva, lo intentamos solos.» y Boton secundario «Reintentar». Con datos guardados: franja en crema fría bajo la cabecera, «Sin conexión. Esto es de las {hora}.» y el enlace «Reintentar». Al volver la red, se reintenta solo. Sustituye a cada Aviso + Reintentar de hoy.' },
+        { t: '<Velo>', d: 'Se queda solo al arrancar y en Datos, Cuestionario y Verificación, con AroCarga de 54 y «Un momento». Aplica el umbral de 0,4 s antes de enseñarse.' },
+        { t: 'Web', d: 'Las mismas piezas y los mismos tiempos en las páginas .dc.html y en la web pública: esqueleto, aro, botón y estado sin respuesta. En CSS, prefers-reduced-motion hace lo mismo que en la app.' },
+        { t: 'Correos y notificaciones', d: 'No llevan carga. Lo único que les toca: nada de «Casi listo» ni promesas de tiempo que no sabemos.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

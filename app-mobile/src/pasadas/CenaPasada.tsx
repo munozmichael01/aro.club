@@ -86,7 +86,7 @@ export function CenaPasada(p: {
             <Boton tipo="secundario" texto="Volver a intentar" onPress={() => (setFallo(''), cargar())} />
           </>
         ) : (
-          <AroCarga tam={36} />
+          <AroCarga tam={40} />
         )}
       </View>
     )

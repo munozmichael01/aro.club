@@ -61,7 +61,7 @@ export function PantallaDentro(p: { servicio: Servicio; via: M.Via; evento?: str
             <Boton tipo="secundario" texto={T.sinRespuesta.reintentar} onPress={() => (setFallo(''), cargar())} />
           </>
         ) : (
-          <AroCarga tam={36} />
+          <AroCarga tam={40} />
         )}
       </View>
     )

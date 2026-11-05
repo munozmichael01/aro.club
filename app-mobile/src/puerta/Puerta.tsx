@@ -443,7 +443,7 @@ export function Puerta(p: {
         </View>
         {trabajando ? (
           <View style={{ marginTop: 16 }}>
-            <AroCarga tam={22} sobreVerde />
+            <AroCarga tam={20} sobreVerde />
           </View>
         ) : null}
         {aviso ? <AvisoAcceso texto={aviso} /> : null}

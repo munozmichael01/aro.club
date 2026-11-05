@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { FilaComoFunciona } from '../como/Fila'
-import { AccessibilityInfo, Animated, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Animated, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import Svg, { Circle, Path } from 'react-native-svg'
 
 import {
   Aviso,
   Boton,
   EnlacePie,
+  Esqueleto,
   HojaAbajo,
+  Hueso,
+  HuesoForma,
   IconoCheck,
   IconoFlecha,
   IconoPin,
@@ -21,6 +24,7 @@ import {
   radio,
   terracotaAlfa,
   tinta,
+  useMovimientoReducido,
   verdeAlfa,
 } from '../diseno'
 import * as F from '../texto/fechas'
@@ -38,20 +42,10 @@ import { Capsulas, CuadroPlan, EstaFecha, IconoPlan } from '../plan/Marcas'
 
 // --- Movimiento que respeta «reducir movimiento» ----------------------------
 
-function useReducirMovimiento() {
-  const [r, setR] = useState(false)
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setR).catch(() => {})
-    const s = AccessibilityInfo.addEventListener('reduceMotionChanged', setR)
-    return () => s.remove()
-  }, [])
-  return r
-}
-
-/** El latido de los huesos y del punto del reloj: opacidad que va y viene. */
+/** El latido del punto del reloj: opacidad que va y viene. Los huesos usan el latido compartido. */
 function useLatido(desde: number, hasta: number, ms: number) {
   const v = useRef(new Animated.Value(desde)).current
-  const quieto = useReducirMovimiento()
+  const quieto = useMovimientoReducido()
   useEffect(() => {
     if (quieto) return
     const a = Animated.loop(
@@ -70,25 +64,62 @@ function useLatido(desde: number, hasta: number, ms: number) {
 
 // --- Esqueleto --------------------------------------------------------------
 
-/** Un esqueleto con la forma del bloque que viene, no un spinner: el salto se nota más que la espera. */
-export function Esqueleto() {
-  const o = useLatido(0.55, 0.28, 1500)
-  const h = (alto: number, ancho: number | `${number}%`, extra?: object) => (
-    <Animated.View style={[{ height: alto, width: ancho, maxWidth: '100%', backgroundColor: tinta(0.09), borderRadius: 8, opacity: o }, extra]} />
-  )
+/**
+ * El esqueleto del Inicio (entrega carga, 03-11), con los mismos contenedores
+ * que la pantalla para que nada salte al llegar. Real: «Agenda» y el marco
+ * de cada polaroid, con su giro. Hueso: el saludo, la tarjeta de estado, la
+ * foto y el nombre de cada filtro, y las filas.
+ */
+export function EsqueletoInicio({ tarda }: { tarda?: ReactNode }) {
   return (
-    <View aria-busy accessibilityLabel={T.sinRespuesta.cargando}>
-      {h(34, 150, { marginBottom: 22 })}
+    <Esqueleto etiqueta={T.sinRespuesta.cargando}>
+      {tarda}
+      <Hueso variante="display" ancho={150} estilo={{ marginBottom: 22 }} />
       <View style={[estilos.bloque, { backgroundColor: color.cremaElevada }]}>
-        {h(30, 140, { borderRadius: radio.capsula, marginBottom: 16 })}
-        {h(34, '100%', { marginBottom: 8 })}
-        {h(34, '62%', { marginBottom: 20 })}
-        {h(15, '100%', { marginBottom: 9 })}
-        {h(15, '100%', { marginBottom: 9 })}
-        {h(15, '48%', { marginBottom: 26 })}
-        {h(56, 170, { borderRadius: radio.capsula })}
+        <HuesoForma alto={32} ancho={140} capsula estilo={{ marginBottom: 16 }} />
+        <Hueso variante="display" lineas={2} ultima="62%" />
+        <Hueso variante="cuerpo" lineas={3} ultima="48%" estilo={{ marginTop: 13 }} />
+        <HuesoForma alto={52} ancho={160} capsula estilo={{ marginTop: 26 }} />
       </View>
-    </View>
+      <Seccion>
+        <Texto variante="titulo" accessibilityRole="header" style={{ marginBottom: 12 }}>
+          {T.agenda.titulo}
+        </Texto>
+        <View style={[estilos.carril, { flexDirection: 'row', overflow: 'hidden' }]}>
+          <View style={[estilos.carrilDentro, { flexDirection: 'row' }]}>
+            {(['todos', 'dinner', 'drinks'] as const).map((f) => (
+              <View key={f} style={[estilos.polaroid, { width: ANCHO_POLAROID, borderColor: 'transparent', transform: [{ rotate: GIRO[f] }] }]}>
+                <HuesoForma alto={ANCHO_POLAROID - 16} curva={6} />
+                <View style={{ alignItems: 'center', paddingTop: 8 }}>
+                  <HuesoForma alto={12} ancho={56} estilo={{ marginVertical: 5.5 }} />
+                </View>
+                <View style={{ alignItems: 'center', paddingTop: 3, paddingBottom: 9 }}>
+                  <HuesoForma alto={8} ancho={40} estilo={{ marginVertical: 3 }} />
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+        <HuesoForma alto={8} ancho={96} estilo={{ marginVertical: 3, marginBottom: 13 }} />
+        <View style={{ gap: 9 }}>
+          {[
+            ['38%', '62%', '74%'],
+            ['52%', '58%', '80%'],
+            ['34%', '66%', '70%'],
+          ].map(([a, b, c], i) => (
+            <View key={i} style={[estilos.fecha, { backgroundColor: color.cremaElevada, borderColor: 'transparent' }]}>
+              <HuesoForma alto={36} redondo />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Hueso variante="rotulo" ancho={a as `${number}%`} />
+                <Hueso variante="cuerpoChico" ancho={b as `${number}%`} estilo={{ marginTop: 3 }} />
+                <Hueso variante="nota" ancho={c as `${number}%`} estilo={{ marginTop: 2 }} />
+              </View>
+              <HuesoForma alto={34} redondo estilo={{ marginTop: 2 }} />
+            </View>
+          ))}
+        </View>
+      </Seccion>
+    </Esqueleto>
   )
 }
 

@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { color, useVelo, Velo } from '../diseno'
-import { esperaParaLevantar } from '../diseno/velo-tiempo'
+import { esperaConUmbral } from '../diseno/velo-tiempo'
 import { tiempo } from '../diseno/tokens'
 import { guardarLead, leerLead } from '../sesion/lead'
 import * as T from '../texto/entrada'
@@ -22,7 +22,7 @@ type Proxima = { hay: boolean; empiezaEn?: string; cierraEn?: string; zonaHorari
 const conSuelo = async <T,>(p: Promise<T>): Promise<T> => {
   const empezo = Date.now()
   const r = await p
-  const falta = esperaParaLevantar(empezo, Date.now(), tiempo.veloMinimo)
+  const falta = esperaConUmbral(empezo, Date.now(), tiempo.umbral, tiempo.minimoVisible)
   if (falta) await new Promise((ok) => setTimeout(ok, falta))
   return r
 }

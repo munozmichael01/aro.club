@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import { usePreguntaAvisos } from '../avisos/PreguntaAvisos'
 import * as MD from '../dentro/maquina'
-import { Aviso, Boton, Texto, color, medida } from '../diseno'
+import { Aviso, Boton, Entra, FranjaSinRed, SinRespuesta, Tarda, Texto, color, medida, useTarda, useUmbral } from '../diseno'
 import * as F from '../texto/fechas'
 import * as T from '../texto/cuenta'
 import * as M from './maquina'
@@ -19,10 +19,10 @@ import * as TR from '../texto/reembolso'
 import { reglas } from '../reglas'
 import { PreguntaIdioma } from '../idioma/PreguntaIdioma'
 import * as TI from '../texto/idioma'
-import { Agenda, Atajos, Esqueleto, LoProximo, Pie, Seccion, TarjetaEstado, Valorar } from './Partes'
+import { Agenda, Atajos, EsqueletoInicio, LoProximo, Pie, Seccion, TarjetaEstado, Valorar } from './Partes'
 import type { crearServicioCuenta } from './servicio'
 import { contarFormato } from './voz'
-import { recordar, recuerdo } from '../util/recuerdo'
+import { recordar, recuerdo, recuerdoConHora } from '../util/recuerdo'
 
 type Servicio = ReturnType<typeof crearServicioCuenta>
 
@@ -48,7 +48,13 @@ export function Inicio(p: {
   const [datos, setDatos] = useState<M.MiCuenta | null>(null)
   const [mesa, setMesa] = useState<M.MiMesa | null>(null)
   const [nExcl, setNExcl] = useState<number | null>(null)
-  const [fallo, setFallo] = useState('')
+  /** No llegó la cuenta: por la red, o porque el servidor contestó con error («es cosa nuestra»). */
+  const [caida, setCaida] = useState<{ servidor: boolean } | null>(null)
+  const [reintentando, setReintentando] = useState(false)
+  /** De cuándo son los datos a la vista: la franja dice esa hora, no la de ahora. */
+  const [desde, setDesde] = useState<number | null>(null)
+  /** Lo que se pinta viene de lo último guardado: entra sin fundido (entrega carga). */
+  const deRecuerdo = useRef(false)
   const [refrescando, setRefrescando] = useState(false)
   const [filtro, setFiltro] = useState<string | null>(null)
   const [abierta, setAbierta] = useState<string | null>(null)
@@ -77,9 +83,10 @@ export function Inicio(p: {
       // Sin «Estás dentro»: el salto lo decide la respuesta de AHORA, nunca un recuerdo (null, no undefined: undefined es «servidor viejo»).
       recordar('mi-cuenta', { ...r.datos, estasDentro: null })
       setDatos(r.datos)
-      setFallo('')
+      setDesde(Date.now())
+      setCaida(null)
     } else if (r.status === 401) alEntrar.current()
-    else if (!actual.current) setFallo(r.error)
+    else setCaida({ servidor: r.status !== undefined })
     return r.ok
   }, [servicio, alEntrar])
 
@@ -107,7 +114,12 @@ export function Inicio(p: {
 
   // Lo último que se vio, al instante, mientras llega lo nuevo (03-11): el esqueleto, solo la primera vez.
   useEffect(() => {
-    recuerdo<M.MiCuenta>('mi-cuenta').then((x) => x && !actual.current && setDatos(x))
+    recuerdoConHora<M.MiCuenta>('mi-cuenta').then((x) => {
+      if (!x || actual.current) return
+      deRecuerdo.current = true
+      setDatos(x.datos)
+      setDesde(x.t)
+    })
     recuerdo<NonNullable<typeof mesa>>('mi-mesa').then((x) => x && x.mesaId && setMesa((m) => m ?? x))
   }, [])
 
@@ -231,19 +243,30 @@ export function Inicio(p: {
     await p.alSalir()
   }
 
+  const reintentar = async () => {
+    setReintentando(true)
+    await cargarTodo()
+    setReintentando(false)
+  }
+
+  // Entrega carga (03-11): nada los primeros 0,4 s; luego el esqueleto, y a los 8 s «Está tardando…».
+  const esperando = (!datos || saltaADentro) && !caida
+  const esqueleto = useUmbral(esperando)
+  const tarda = useTarda(esperando)
+
   let cuerpo
-  if (!datos || saltaADentro) {
-    cuerpo = fallo ? (
-      <View style={{ gap: 16 }}>
-        <Aviso tono="ojo">{fallo}</Aviso>
-        <Boton tipo="secundario" texto={T.sinRespuesta.reintentar} onPress={() => (setFallo(''), cargarTodo())} />
-      </View>
-    ) : (
-      <Esqueleto />
-    )
+  if (!datos || saltaADentro || esqueleto) {
+    cuerpo = caida && !esqueleto ? (
+      <SinRespuesta que={T.sinRespuesta.que} servidor={caida.servidor} alReintentar={reintentar} reintentando={reintentando} />
+    ) : esqueleto ? (
+      <EsqueletoInicio tarda={tarda ? <Tarda alReintentar={reintentar} /> : null} />
+    ) : null
   } else if (vista) {
+    // De arriba abajo en tres tandas; lo que viene de lo guardado, sin fundido.
+    const sf = deRecuerdo.current
     cuerpo = (
       <>
+        <Entra tanda={0} sinFundido={sf}>
         <Texto variante="display" style={{ marginBottom: 22 }}>
           {T.saludo(datos.nombre)}
         </Texto>
@@ -267,8 +290,10 @@ export function Inicio(p: {
             </Texto>
           </View>
         ) : null}
+        </Entra>
 
         <Seccion onLayout={(y) => (yAgenda.current = y)}>
+          <Entra tanda={1} sinFundido={sf}>
           <Agenda
             ciudadCerrada={datos?.ciudad && !datos.ciudad.abierta ? datos.ciudad.nombre : null}
             filtros={vista.filtros}
@@ -292,8 +317,10 @@ export function Inicio(p: {
             alConfirmar={confirmar}
             misCreditos={datos.creditos}
           />
+          </Entra>
         </Seccion>
 
+        <Entra tanda={2} sinFundido={sf}>
         {datos.porValorar ? (
           <Seccion arriba={32}>
             <Valorar sitio={datos.porValorar.sitio} alPulsar={() => p.ir('/mesa')} />
@@ -307,6 +334,7 @@ export function Inicio(p: {
         <Seccion>
           <Atajos atajos={vista.atajos} alPulsar={irA} />
         </Seccion>
+        </Entra>
       </>
     )
   }
@@ -320,6 +348,10 @@ export function Inicio(p: {
         alOperacion={() => p.ir('web:/operacion')}
         alSalir={salir}
       />
+      {/* Con lo último que viste: se queda en pantalla y la franja dice de cuándo es. */}
+      {datos && caida && desde ? (
+        <FranjaSinRed cuando={F.deCuandoEs(desde, Date.now())} alReintentar={reintentar} reintentando={reintentando} />
+      ) : null}
       <ScrollView
         ref={scroll}
         contentContainerStyle={[estilos.pagina, { paddingBottom: 40 }]}

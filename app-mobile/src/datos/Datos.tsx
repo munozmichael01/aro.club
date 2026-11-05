@@ -25,7 +25,7 @@ import {
   useVelo,
 } from '../diseno'
 import { tiempo } from '../diseno/tokens'
-import { esperaParaLevantar } from '../diseno/velo-tiempo'
+import { esperaConUmbral } from '../diseno/velo-tiempo'
 import { reglas } from '../reglas'
 import { borrarLead, guardarLead, leerLead, type Lead } from '../sesion/lead'
 import * as T from '../texto/datos'
@@ -58,7 +58,7 @@ type Servicio = ReturnType<typeof crearServicioDatos>
 const conSuelo = async <X,>(p: Promise<X>): Promise<X> => {
   const empezo = Date.now()
   const r = await p
-  const falta = esperaParaLevantar(empezo, Date.now(), tiempo.veloMinimo)
+  const falta = esperaConUmbral(empezo, Date.now(), tiempo.umbral, tiempo.minimoVisible)
   if (falta) await new Promise((ok) => setTimeout(ok, falta))
   return r
 }

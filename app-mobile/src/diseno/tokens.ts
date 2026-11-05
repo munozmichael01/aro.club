@@ -174,10 +174,25 @@ export const medida = {
   margenLateral: 16,
 } as const
 
-/** Tiempos, con el porqué de cada uno en `Velo.tsx` y `AroCarga.tsx`. */
+/**
+ * Tiempos de toda espera (entrega carga, 03-11). El porqué de cada uno en
+ * `Velo.tsx`, `Aro.tsx`, `Hueso.tsx` y `SinRespuesta.tsx`.
+ */
 export const tiempo = {
-  vueltaAro: 1500,
-  veloMinimo: 500,
+  /** Antes de esto no se enseña nada: ni esqueleto, ni aro, ni velo. */
+  umbral: 400,
+  /** Una vez a la vista, se queda al menos esto. Vale para todo (antes `veloMinimo`). */
+  minimoVisible: 500,
+  /** Sin respuesta: «Está tardando más de lo normal.» con «Reintentar». */
+  tarda: 8000,
   veloTope: 6000,
+  /** De esqueleto a contenido, por bloque. */
   transicion: 180,
+  /** Entre una tanda y la siguiente; como mucho tres tandas. */
+  escalon: 40,
+  /** El latido de los huesos, de 1 a 0,5 de opacidad y vuelta. */
+  latido: 1600,
+  vueltaAro: 1500,
+  /** El check del botón que terminó bien sin cambiar de pantalla. */
+  listo: 600,
 } as const

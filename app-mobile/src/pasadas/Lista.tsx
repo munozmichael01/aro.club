@@ -18,7 +18,7 @@ export function ListaPasadas(p: { d: M.DePasadas | null; fallo: string; alReinte
       </View>
     ) : (
       <View style={{ paddingTop: 24 }}>
-        <AroCarga tam={36} />
+        <AroCarga tam={40} />
       </View>
     )
   }

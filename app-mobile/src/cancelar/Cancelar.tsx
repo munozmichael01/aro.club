@@ -161,7 +161,7 @@ export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (
       </View>
     )
   } else {
-    cuerpo = <AroCarga tam={36} />
+    cuerpo = <AroCarga tam={40} />
   }
 
   return (

@@ -310,3 +310,13 @@ export function IconoCedula({ tam = 22, color }: P) {
     </Svg>
   )
 }
+
+/** Sin conexión: las ondas del wifi, tachadas (entrega carga). */
+export function IconoSinRed({ tam = 22, color, grosor = 1.9 }: P & { grosor?: number }) {
+  return (
+    <Svg width={tam} height={tam} viewBox="0 0 24 24" fill="none">
+      <Path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 16a5 5 0 0 1 6.8 0M3.5 3.5l17 17" stroke={color} strokeWidth={grosor} strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx={12} cy={19.3} r={1} fill={color} />
+    </Svg>
+  )
+}

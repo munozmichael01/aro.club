@@ -6,9 +6,9 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import { tiempo } from '../src/diseno/tokens'
-import { esperaParaLevantar } from '../src/diseno/velo-tiempo'
+import { esperaConUmbral, esperaParaLevantar } from '../src/diseno/velo-tiempo'
 
-const SUELO = tiempo.veloMinimo
+const SUELO = tiempo.minimoVisible
 
 test('el suelo es de medio segundo', () => {
   assert.equal(SUELO, 500)
@@ -31,5 +31,13 @@ test('una respuesta lenta no espera ni un milisegundo más', () => {
 })
 
 test('el tope va por encima del suelo', () => {
-  assert.ok(tiempo.veloTope > tiempo.veloMinimo)
+  assert.ok(tiempo.veloTope > tiempo.minimoVisible)
+})
+
+test('con umbral: lo que llega antes de 0,4 s nunca se vio y no espera', () => {
+  assert.equal(esperaConUmbral(0, 300, tiempo.umbral, SUELO), 0)
+})
+
+test('con umbral: lo que llega a los 0,5 s se vio desde los 0,4 y se queda hasta los 0,9', () => {
+  assert.equal(esperaConUmbral(0, 500, tiempo.umbral, SUELO), 400)
 })

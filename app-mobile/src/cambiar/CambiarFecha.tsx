@@ -166,7 +166,7 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; /
       </View>
     )
   } else {
-    cuerpo = <AroCarga tam={36} />
+    cuerpo = <AroCarga tam={40} />
   }
 
   return (

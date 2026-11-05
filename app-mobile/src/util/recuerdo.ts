@@ -32,13 +32,18 @@ export async function recordar(clave: string, datos: unknown): Promise<void> {
 }
 
 export async function recuerdo<T>(clave: string): Promise<T | null> {
+  return (await recuerdoConHora<T>(clave))?.datos ?? null
+}
+
+/** El recuerdo con la hora en que llegó: la franja «Esto es de las 3:40 p.m.» dice la de los datos, no la de ahora. */
+export async function recuerdoConHora<T>(clave: string): Promise<{ t: number; datos: T } | null> {
   const u = await quien()
   if (!u) return null
   try {
     const crudo = await AsyncStorage.getItem(`${PREFIJO}${u}.${clave}`)
     if (!crudo) return null
-    const { t, datos } = JSON.parse(crudo) as { t: number; datos: T }
-    return Date.now() - t > EDAD_MAXIMA ? null : datos
+    const x = JSON.parse(crudo) as { t: number; datos: T }
+    return Date.now() - x.t > EDAD_MAXIMA ? null : x
   } catch {
     return null
   }

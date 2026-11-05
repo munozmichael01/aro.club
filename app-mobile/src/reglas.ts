@@ -86,6 +86,22 @@ type Api = {
     menor: { confirmar: { titulo: string; cuerpo: string; si: string; no: string }; cerrada: { titulo: string; cuerpo: string } }
   }
   /** «Segundo acto» (63ba982): después de la cena todas las mesas de la fecha se juntan en un bar. Solo la etiqueta; el bar se revela ese día. */
+  /** La carga (entrega carga, 03-11). Los tiempos los copia `diseno/tokens.ts`; `pruebas/carga.test.ts` vigila que no se separen. */
+  CARGA: {
+    tiempo: {
+      umbral: number; minimoVisible: number; tarda: number; veloTope: number
+      transicion: number; escalon: number; tandas: number; latido: number; vueltaAro: number; check: number
+    }
+    aro: { tamanos: number[]; enciende: number[]; mantiene: number; apaga: number; puntoApagado: number; anillo: number; tuyoSobreVerde: string }
+    hueso: { sobreCrema: number; sobreVerde: number; alto: number[] }
+    texto: {
+      unMomento: string; tarda: string; reintentar: string; volverAIntentar: string
+      noPudimos: (que: string) => string
+      sinRed: string; esNuestro: string
+      franja: (cuando: string) => string
+      trabajando: { apartar: string }
+    }
+  }
   SEGUNDO_ACTO: {
     marca: string
     minutosDespues: number
