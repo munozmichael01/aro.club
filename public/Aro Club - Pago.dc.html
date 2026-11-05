@@ -14,6 +14,7 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
@@ -53,6 +54,55 @@
          banco, no al pulsar «Reportar mi pago». El candado vivía solo en el
          POST, así que se podía recorrer la pantalla entera y recibir el «ya
          cerró» con la transferencia hecha. -->
+    <!-- Carga (entrega «carga», 03-11): el esqueleto de Pago con su
+         estructura de hoy. Lo fijo se pinta —la bajada, «Un puesto», «Total
+         a pagar», «CÓMO PAGAS»—; los importes, la fecha y los métodos son
+         hueso. Antes, mientras llegaban los datos, se pintaba la pantalla
+         de elegir con los importes vacíos. -->
+    <sc-if value="{{ cargandoPago }}" hint-placeholder-val="{{ false }}">
+      <div aria-busy="true" aria-live="polite" class="aro-tras-umbral">
+        <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">{{ unMomento }}</span>
+        <div style="max-width:15ch;font:400 clamp(30px,6.4vw,46px)/1.02 'Young Serif',Georgia,serif">
+          <div style="{{ esq.titulo.caja }}"><div class="aro-hueso" style="{{ esq.titulo.hueso }}"></div></div>
+          <div style="{{ esq.tituloCorto.caja }}"><div class="aro-hueso" style="{{ esq.tituloCorto.hueso }}"></div></div>
+        </div>
+        <p style="{{ bajada }}">Se paga en bolívares a la tasa oficial del día. El crédito no caduca.</p>
+        <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,26px);margin-top:clamp(24px,3.4vw,32px)">
+          <div style="display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center">
+            <div style="flex:1 1 auto;{{ esq.evento.caja }}"><div class="aro-hueso" style="{{ esq.evento.hueso }}"></div></div>
+            <div style="{{ esq.detalle.caja }}"><div class="aro-hueso" style="{{ esq.detalle.hueso }}"></div></div>
+          </div>
+          <div style="height:1px;background:rgba(20,52,42,.12);margin:16px 0"></div>
+          <div style="display:flex;gap:6px 14px;align-items:center">
+            <span style="flex:1 1 auto;font:400 15px/1.5 'Inter Tight',sans-serif;color:#2C4A38">Un puesto</span>
+            <div style="{{ esq.importe.caja }}"><div class="aro-hueso" style="{{ esq.importe.hueso }}"></div></div>
+          </div>
+          <div style="display:flex;gap:6px 14px;align-items:center;margin-top:9px">
+            <div style="flex:1 1 auto;{{ esq.tasa.caja }}"><div class="aro-hueso" style="{{ esq.tasa.hueso }}"></div></div>
+            <div style="{{ esq.importe.caja }}"><div class="aro-hueso" style="{{ esq.importe.hueso }}"></div></div>
+          </div>
+          <div style="height:1px;background:rgba(20,52,42,.12);margin:16px 0"></div>
+          <div style="display:flex;gap:6px 14px;align-items:center">
+            <span style="flex:1 1 auto;font:600 16px/1.4 'Inter Tight',sans-serif;color:#14342A">Total a pagar</span>
+            <div style="{{ esq.total.caja }}"><div class="aro-hueso" style="{{ esq.total.hueso }}"></div></div>
+          </div>
+        </div>
+        <div style="font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin:clamp(26px,3.4vw,34px) 0 12px">CÓMO PAGAS</div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <sc-for list="{{ esqMetodos }}" as="x" hint-placeholder-count="2">
+            <div style="display:flex;gap:13px;align-items:center;border-radius:22px;background:#FFFBF0;padding:16px 18px;min-height:76px;box-sizing:border-box">
+              <div class="aro-hueso" style="flex:none;width:22px;height:22px;border-radius:999px"></div>
+              <div style="flex:1;min-width:0"><div style="padding:3px 0"><div class="aro-hueso" style="height:12px;width:{{ x.a }};border-radius:6px"></div></div><div style="padding:4px 0"><div class="aro-hueso" style="height:9px;width:{{ x.b }};border-radius:5px"></div></div></div>
+            </div>
+          </sc-for>
+        </div>
+        <div class="aro-hueso" style="height:56px;width:220px;border-radius:999px;margin-top:clamp(24px,3vw,30px)"></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ hayFalloCarga }}" hint-placeholder-val="{{ false }}">
+      {{ bloqueSinRespuesta }}
+    </sc-if>
+
     <sc-if value="{{ fechaCerrada }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 340ms ease both">
         <h1 style="{{ h1 }}">Esa fecha ya cerró.</h1>
@@ -64,7 +114,7 @@
     </sc-if>
 
     <sc-if value="{{ esElegir }}" hint-placeholder-val="{{ true }}">
-      <div style="animation:aro-open 340ms ease both">
+      <div class="aro-entra">
         <h1 style="{{ h1 }}">{{ tituloPago }}</h1>
         <p style="{{ bajada }}">Se paga en bolívares a la tasa oficial del día. El crédito no caduca.</p>
 
@@ -177,7 +227,7 @@
                 <div style="border-radius:20px;background:#F2E9D5;padding:16px 18px;margin-bottom:16px">
                   <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloIdioma }}</div>
                   <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:6px;max-width:52ch;text-wrap:pretty">{{ textoIdioma }}</div>
-                  <button onClick="{{ tocarSiIdioma }}" style="{{ botonSiIdioma }}">{{ textoSiIdioma }}</button>
+                  <button onClick="{{ tocarSiIdioma }}" style="{{ bIdioma.estilo }}" aria-busy="{{ bIdioma.busy }}">{{ bIdioma.aro }}{{ textoSiIdioma }}</button>
                 </div>
               </sc-if>
               <sc-if value="{{ graba }}" hint-placeholder-val="{{ false }}">
@@ -190,7 +240,7 @@
               <label for="cupon" style="display:block;font:500 12px/1 'Inter Tight',sans-serif;letter-spacing:.16em;color:#33513F;margin-bottom:10px">TU CÓDIGO</label>
               <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
                 <input id="cupon" type="text" value="{{ cupon }}" onChange="{{ onCupon }}" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false" style="{{ campoCupon }}" />
-                <button onClick="{{ aplicarCupon }}" aria-disabled="{{ inerteCupon }}" style="{{ botonCupon }}">{{ textoCupon }}</button>
+                <button onClick="{{ aplicarCupon }}" aria-disabled="{{ inerteCupon }}" style="{{ bCupon.estilo }}" aria-busy="{{ bCupon.busy }}" aria-label="{{ bCupon.etiqueta }}">{{ bCupon.aro }}{{ textoCupon }}</button>
               </div>
               <sc-if value="{{ hayFalloCupon }}" hint-placeholder-val="{{ false }}">
                 <div role="alert" style="display:flex;gap:11px;align-items:flex-start;border-radius:20px;background:rgba(110,52,15,.09);padding:13px 15px;margin-top:12px;max-width:44ch">
@@ -337,7 +387,7 @@
           <div style="border-radius:20px;background:#F2E9D5;padding:16px 18px;margin-bottom:16px">
             <div style="font:600 14px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ tituloIdioma }}</div>
             <div style="font:400 14px/1.5 'Inter Tight',sans-serif;color:#2C4A38;margin-top:6px;max-width:52ch;text-wrap:pretty">{{ textoIdioma }}</div>
-            <button onClick="{{ tocarSiIdioma }}" style="{{ botonSiIdioma }}">{{ textoSiIdioma }}</button>
+            <button onClick="{{ tocarSiIdioma }}" style="{{ bIdioma.estilo }}" aria-busy="{{ bIdioma.busy }}">{{ bIdioma.aro }}{{ textoSiIdioma }}</button>
           </div>
         </sc-if>
         <sc-if value="{{ graba }}" hint-placeholder-val="{{ false }}">
@@ -349,23 +399,13 @@
         </sc-if>
 
         <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(22px,3vw,28px)">
-          <button onClick="{{ reportar }}" aria-disabled="{{ inerteRep }}" style="{{ botonReportar }}">{{ textoReportar }}</button>
+          <button onClick="{{ reportar }}" aria-disabled="{{ inerteRep }}" style="{{ bReportar.estilo }}" aria-busy="{{ bReportar.busy }}" aria-label="{{ bReportar.etiqueta }}">{{ bReportar.aro }}{{ textoReportar }}</button>
           <button onClick="{{ volverDatos }}" style="{{ botonFantasma }}">Ver los datos otra vez</button>
         </div>
         <div style="font:400 13px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:14px;max-width:52ch;text-wrap:pretty">{{ notaRevision }}</div>
       </div>
     </sc-if>
 
-    <sc-if value="{{ esEnviando }}" hint-placeholder-val="{{ false }}">
-      <div style="animation:aro-open 320ms ease both">
-        <h1 style="{{ h1 }}">{{ tituloEnviando }}</h1>
-        <div style="display:inline-flex;align-items:center;gap:15px;border-radius:999px;border:1px solid rgba(20,52,42,.24);min-height:58px;padding:0 25px;margin-top:22px">
-          <span style="flex:0 0 auto;width:17px;height:17px;border:2px solid rgba(20,52,42,.2);border-top-color:#14342A;border-radius:999px;animation:aro-spin 800ms linear infinite"></span>
-          <span style="font:500 16px/1 'Inter Tight',sans-serif;color:#2C4A38">{{ totalTexto }} · {{ metodoElegido }}</span>
-        </div>
-        <div style="font:400 14px/1.55 'Inter Tight',sans-serif;color:#33513F;margin-top:16px;max-width:44ch">No cierres esta pantalla. Suele tardar unos segundos.</div>
-      </div>
-    </sc-if>
 
     <sc-if value="{{ esPendiente }}" hint-placeholder-val="{{ false }}">
       <div style="animation:aro-open 420ms ease both">
@@ -503,8 +543,18 @@ class Component extends DCLogic {
     // Los metodos, sus datos de cuenta y el monto salen del servidor. En el
     // codigo, encender Zelle un sabado exigiria un despliegue; y la tasa
     // escrita a mano seria cobrar mal en cuanto se mueva.
-    fetch('/api/pago?evento=' + encodeURIComponent(this._evento))
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin datos'))))
+    this.cargar();
+    this._red = AroCarga.alVolverLaRed(() => { if (this.state.falloCarga) this.cargar(); });
+  }
+
+  /**
+   * Los datos del pago. Sin sesión → a Entrar, diciendo a dónde ibas. Sin
+   * red o con un error nuestro → «No pudimos cargar el pago.» con
+   * Reintentar, y no al login (entrega «carga»).
+   */
+  cargar() {
+    return AroCarga.pedir('/api/pago?evento=' + encodeURIComponent(this._evento))
+      .then((r) => r.json())
       .then((d) => {
         // Confirmada y sin haber visto «Estás dentro»: allí, antes de pintar
         // nada. Es la primera vez que entra después de confirmarse (B3 de la
@@ -520,13 +570,17 @@ class Component extends DCLogic {
           : 0;
         const primero = (d.metodos || []).findIndex((m) => m.activo);
         this.setState({
+          falloCarga: null,
           datos: d, metodo: primero < 0 ? 0 : primero, fase: fase,
           // Quien llego invitada lo trae puesto del servidor y no teclea
           // nada: los importes de `d` ya vienen rebajados.
           descuento: this.descuentoDe(d),
         });
       })
-      .catch(() => { // Al login DICIENDO a donde ibas. Sin esto, quien llega desde un correo
+      .catch((e) => {
+      if (e && e.status === 404) { this.setState({ fallo: 'Esa fecha no existe. Vuelve a Mi cuenta y elige otra.' }); return; }
+      if (!(e && e.status === 401)) { this.setState({ falloCarga: AroCarga.motivoDe(e) }); return; }
+      // Al login DICIENDO a donde ibas. Sin esto, quien llega desde un correo
       // —«Ver mi reserva», «Sube tu cedula», «Ver mi mesa»— aterriza en el
       // login y ahi se corta el hilo: entra, y acaba en la pantalla de
       // siempre en vez de en lo que venia a ver. Son seis destinos distintos
@@ -645,7 +699,10 @@ class Component extends DCLogic {
 
   reportar() {
     if (this.state.enviando) return;
-    this.setState({ enviando: true, fallo: '', fase: 3 });
+    // Se queda en el paso de reportar con el aro en el botón (entrega
+    // «carga»): ya no salta a una pantalla de espera con un aro suelto y
+    // «suele tardar unos segundos», que es una promesa que no sabemos.
+    this.setState({ enviando: true, fallo: '' });
     fetch('/api/pago', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -692,7 +749,7 @@ class Component extends DCLogic {
       .catch(() => this.setState({ enviando: false, fase: 2, fallo: 'No pudimos registrar tu pago.' }));
   }
 
-  componentWillUnmount() { clearTimeout(this._t); }
+  componentWillUnmount() { clearTimeout(this._t); if (this._red) this._red(); }
 
   renderVals() {
     const S = this.state;
@@ -1029,10 +1086,27 @@ class Component extends DCLogic {
       // banco, ni «falta verificar». No hay pago que hacer.
       fechaCerrada: cerrada,
       botonVolver: btn('#1B5138', '#FAF3E4', 'text-decoration:none'),
-      esElegir: f === 0 && puedePagar !== false && !cerrada,
+      esElegir: f === 0 && !!S.datos && puedePagar !== false && !cerrada,
+      cargandoPago: !S.datos && !S.falloCarga && !S.fallo,
+      unMomento: AroCarga.texto.unMomento,
+      esq: {
+        titulo: AroCarga.linea('clamp(30px,6.4vw,46px)', 1.02, '100%'),
+        tituloCorto: AroCarga.linea('clamp(30px,6.4vw,46px)', 1.02, '55%'),
+        evento: AroCarga.linea('clamp(21px,2.4vw,25px)', 1.15, '60%'),
+        detalle: AroCarga.linea('14px', 1.4, '120px'),
+        importe: AroCarga.linea('15px', 1.4, '80px'),
+        tasa: AroCarga.linea('15px', 1.5, '45%'),
+        total: AroCarga.linea('clamp(24px,3vw,30px)', 1, '130px'),
+      },
+      esqMetodos: [{ a: '40%', b: '70%' }, { a: '32%', b: '60%' }],
+      hayFalloCarga: !S.datos && !!S.falloCarga,
+      bloqueSinRespuesta: S.falloCarga ? AroCarga.sinRespuesta({
+        que: 'pago', motivo: S.falloCarga,
+        estado: AroCarga.estado(this, 'reintentando'),
+        alReintentar: () => { this.setState({ reintentando: true }); this.cargar().then(() => this.setState({ reintentando: false })); },
+      }) : null,
       esDatos: f === 1 && puedePagar !== false && !cerrada,
       esReportar: f === 2 && puedePagar !== false && !cerrada,
-      esEnviando: f === 3,
       esPendiente: f === 4, esListo: f === 5, esFallo: f === 6,
       cuponPlegado: !this.state.cuponAbierto,
       cuponAbierto: !!this.state.cuponAbierto,
@@ -1040,13 +1114,15 @@ class Component extends DCLogic {
       hayFalloCupon: !!this.state.falloCupon,
       falloCupon: this.state.falloCupon,
       inerteCupon: this.state.aplicandoCupon || !this.state.cupon.trim() || !permisoOk,
-      textoCupon: this.state.aplicandoCupon
-        ? 'Aplicando'
-        : (!permisoOk ? 'Marca el permiso' : 'Aplicar'),
+      textoCupon: !permisoOk ? 'Marca el permiso' : 'Aplicar',
       campoCupon: 'flex:1 1 160px;min-width:0;min-height:54px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FAF3E4;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;letter-spacing:.06em;text-transform:uppercase;outline:none',
       botonCupon: (function (apagado) {
         return 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:54px;padding:0 24px;border-radius:999px;border:none;background:' + (apagado ? 'rgba(27,81,56,.13)' : '#1B5138') + ';color:' + (apagado ? '#456352' : '#FAF3E4') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (apagado ? 'not-allowed' : 'pointer');
       })(this.state.aplicandoCupon || !this.state.cupon.trim() || !permisoOk),
+      // Aplicando: mismo botón, el aro dentro, en el verde de siempre (no apagado).
+      bCupon: AroCarga.boton(this, 'aplicandoCupon', (function (apagado) {
+        return 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:54px;padding:0 24px;border-radius:999px;border:none;background:' + (apagado ? 'rgba(27,81,56,.13)' : '#1B5138') + ';color:' + (apagado ? '#456352' : '#FAF3E4') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (apagado ? 'not-allowed' : 'pointer');
+      })(!this.state.aplicandoCupon && (!this.state.cupon.trim() || !permisoOk)), AroCarga.texto.trabajando.cupon, { verde: true }),
       abrirCupon: () => this.setState({ cuponAbierto: true }),
       onCupon: (e) => this.setState({ cupon: String(e.target.value || '').toUpperCase().replace(/\s+/g, ''), falloCupon: '' }),
       aplicarCupon: () => this.aplicarCupon(),
@@ -1137,8 +1213,9 @@ class Component extends DCLogic {
         : 'Tu banco confirma el cobro. No hace falta que reportes nada después.',
       hayCaptura: mSel.manual,
       etiquetaCaptura: capturaObligatoria ? 'Captura del pago' : 'Captura del pago · opcional',
-      glifoCaptura: subiendo ? '·' : (conCaptura ? '✓' : '+'),
-      tituloCaptura: subiendo ? 'Subiendo la captura…' : (conCaptura ? 'Captura adjunta' : 'Adjuntar captura'),
+      // Subiendo: el aro en el círculo del icono; el texto no cambia.
+      glifoCaptura: AroCarga.estado(this, 'subiendoCaptura') === 'trabajando' ? AroCarga.aro(20) : (subiendo ? '' : (conCaptura ? '✓' : '+')),
+      tituloCaptura: conCaptura && !subiendo ? 'Captura adjunta' : 'Adjuntar captura',
       notaCaptura: subiendo
         ? 'Un momento'
         : (conCaptura
@@ -1180,10 +1257,10 @@ class Component extends DCLogic {
                 ? 'Falta ' + elQueFalta.etiqueta.toLowerCase()
                 : (faltaLetra ? 'Elige si tu documento es V o E' : 'Falta algo')))),
       botonReportar: btn(repOk ? '#1B5138' : 'rgba(20,52,42,.12)', repOk ? '#FAF3E4' : '#456352', repOk ? '' : 'cursor:not-allowed'),
+      bReportar: AroCarga.boton(this, 'enviando', btn(repOk || S.enviando ? '#1B5138' : 'rgba(20,52,42,.12)', repOk || S.enviando ? '#FAF3E4' : '#456352', repOk || S.enviando ? '' : 'cursor:not-allowed'), AroCarga.texto.trabajando.apartar, { verde: true }),
       notaRevision: mSel.manual
         ? 'Lo revisa una persona. Si algo no cuadra te escribimos, y tu puesto sigue apartado mientras tanto.'
         : 'Se cobra al confirmar. Si cancelas con margen, vuelve a tu cuenta sola.',
-      tituloEnviando: mSel.manual ? 'Enviando tu reporte.' : 'Confirmando el cobro.',
       tituloListo: cuandoEv ? 'Nos vemos el ' + DIAS[cuandoEv.getDay()].toLowerCase() + ' ' + cuandoEv.getDate() + '.' : 'Nos vemos.',
       /**
        * «A las doce del mediodía se abre todo», que en un brunch es falso.
@@ -1212,8 +1289,9 @@ class Component extends DCLogic {
       preguntaIdioma: faltaIdioma,
       tituloIdioma: '¿Hablas ' + (idiomaNombre || 'ese idioma') + '?',
       textoIdioma: 'Esta mesa se habla en ' + (idiomaNombre || 'ese idioma') + ' de principio a fin. No hace falta que sea perfecto, solo que te deje disfrutar la conversación. Si lo hablas, lo añadimos a tu perfil y sigues.',
-      textoSiIdioma: this.state.guardandoIdioma ? 'Guardando…' : 'Sí, añádelo a mi perfil',
+      textoSiIdioma: 'Sí, añádelo a mi perfil',
       botonSiIdioma: 'display:inline-flex;align-items:center;min-height:46px;margin-top:13px;padding:0 18px;border-radius:999px;cursor:pointer;font:500 15px/1 \'Inter Tight\',sans-serif;border:1px solid #1B5138;background:#1B5138;color:#FAF3E4',
+      bIdioma: AroCarga.boton(this, 'guardandoIdioma', 'display:inline-flex;align-items:center;min-height:46px;margin-top:13px;padding:0 18px;border-radius:999px;cursor:pointer;font:500 15px/1 \'Inter Tight\',sans-serif;border:1px solid #1B5138;background:#1B5138;color:#FAF3E4', null, { verde: true }),
       tocarSiIdioma: () => {
         if (this.state.guardandoIdioma) return;
         this.setState({ guardandoIdioma: true });
