@@ -123,6 +123,12 @@ export function pintar(plantilla: string, datos: Valores): string {
     escapar(valorDe(datos, clave)),
   )
 
+  // Una hora que acaba en «p.m.» seguida del punto de la frase: «a las
+  // 8:53 p.m..». Pasa con los minutos que no se dicen en letra (el
+  // recordatorio pone `{{ horaEnLetra }}.`). La web y la app lo arreglaron
+  // en su titular el 05-11; aquí se arregla para todos los correos de una vez.
+  salida = salida.replace(/\b([ap])\.m\.\./g, '$1.m.')
+
   return salida
 }
 

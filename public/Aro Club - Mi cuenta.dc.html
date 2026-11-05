@@ -1252,8 +1252,10 @@ class Component extends DCLogic {
             // las 7:30, salía como «Sábado 10, siete de la noche». Media
             // hora de diferencia en el único dato por el que alguien sale de
             // su casa, en la primera pantalla que ve al entrar.
-            return DIASEM[p.diaNumero] + ' ' + p.numero + ', ' +
-              window.AroReglas.horaEnLetra(p.horas, p.minutos) + '.';
+            // Con minutos que no se dicen en letra, `horaEnLetra` devuelve
+            // «8:53 p.m.», que ya acaba en punto: sin esto salía «p.m..».
+            const h = window.AroReglas.horaEnLetra(p.horas, p.minutos);
+            return DIASEM[p.diaNumero] + ' ' + p.numero + ', ' + h + (/\.$/.test(h) ? '' : '.');
           })()
         : (d.estado === 'reservar'
             ? tituloReservar(d)
