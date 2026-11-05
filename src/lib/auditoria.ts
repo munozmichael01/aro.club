@@ -43,6 +43,9 @@ export type Accion =
   // dia que alguien pregunte por que no ve el sabado, la respuesta tiene que
   // estar escrita en algun sitio.
   | 'edad_minima'
+  // El bar del segundo acto de una fecha, puesto o quitado desde el panel.
+  | 'segundo_acto_puesto'
+  | 'segundo_acto_quitado'
   // Mover a alguien de una fecha CERRADA: sentarlo o sacarlo. Es la unica
   // accion del panel que se salta el cierre, asi que es la que mas falta hace
   // que quede escrita y con motivo.

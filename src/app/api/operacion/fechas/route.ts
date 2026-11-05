@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { anotar } from '@/lib/auditoria'
+import { encolarAvisosDeLaCena } from '@/lib/avisos-de-la-cena'
 import { FAMILIA_DE_FORMATO, HORA_DE, MOVIMIENTO, horaBonita, partesHora } from '@/lib/formatos'
 import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -34,7 +35,7 @@ const CARACAS = 4
 /** Cuánto antes cierra: el reparto necesita el pool cerrado dos días antes. */
 // La cifra vive en `reglas.js`: la comparten el panel, el copy que la promete
 // y la app. Escrita aquí, bajarla de 48 a 24 dejaba cuatro textos mintiendo.
-import { HORAS_DE_CIERRE, PRECIO_USD, cierreDe, precioDe } from '@/lib/reglas'
+import { HORAS_DE_CIERRE, PRECIO_USD, SEGUNDO_ACTO, cierreDe, precioDe } from '@/lib/reglas'
 import { FIN_CENA } from '@/lib/ventana-mesa'
 
 import { avisarDeLaApertura } from '@/lib/avisar-apertura'
@@ -270,7 +271,7 @@ export async function GET() {
 
   const { data: eventos } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug, es_prueba, age_band_min, age_band_max, idioma, mas_uno')
+    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug, es_prueba, age_band_min, age_band_max, idioma, mas_uno, after_venue_id')
     .in('status', ['draft', 'open', 'locked', 'matched'])
     .order('starts_at', { ascending: true })
 
@@ -409,6 +410,8 @@ export async function GET() {
        * leen idénticas y no hay forma de saber cuál es cuál.
        */
       idioma: e.idioma ?? null,
+      // El bar del segundo acto, si la fecha lo tiene (`after_venue_id`).
+      barId: (e as { after_venue_id?: string | null }).after_venue_id ?? null,
       actividad: e.activity ?? null,
       apuntados: suPool.length,
       publicadas: susMesas.length,
@@ -586,8 +589,21 @@ export async function GET() {
     fechas: porVenir.length,
   }
 
+  /**
+   * Los bares a los que puede ir un segundo acto: los locales marcados
+   * `is_after_venue` y activos. Con su zona, porque el bar tiene que quedar
+   * a pie de los restaurantes de la fecha.
+   */
+  const { data: bares } = await admin
+    .from('restaurants')
+    .select('id, name, zone_slug')
+    .eq('is_after_venue', true)
+    .eq('is_active', true)
+    .order('name')
+
   return NextResponse.json({
     fechas: conAviso,
+    bares: (bares ?? []).map((b) => ({ id: b.id, nombre: b.name, zona: b.zone_slug })),
     reservasActivas,
     // Las horas por formato, para que el panel no las escriba a mano: las
     // tenía duplicadas, y moverlas aquí lo dejaba diciendo «7:00 p.m.» con la
@@ -905,6 +921,17 @@ const sitio = z.discriminatedUnion('accion', [
     edadMinima: z.number().int().min(18).max(99).nullable(),
     edadMaxima: z.number().int().min(18).max(99).nullable(),
   }),
+  /**
+   * El bar del segundo acto (Michael, 05-11: «el botón para poner el bar»).
+   *
+   * Hasta hoy se ponía a mano en la base, y por eso la cena del viernes 6 se
+   * quedó sin él mientras las del sábado lo tenían. `null` lo quita.
+   */
+  z.object({
+    accion: z.literal('bar'),
+    eventoId: z.string().uuid(),
+    barId: z.string().uuid().nullable(),
+  }),
   z.object({
     accion: z.literal('avisar'),
     eventoId: z.string().uuid(),
@@ -967,6 +994,67 @@ export async function PATCH(request: Request) {
     })
 
     return NextResponse.json({ ok: true, edadMinima: d.edadMinima, edadMaxima: d.edadMaxima })
+  }
+
+  if (d.accion === 'bar') {
+    // Un bar que no es de segundo acto no se puede poner: lo que cuenta Mi
+    // mesa a las nueve es «sigue en este bar», y tiene que serlo.
+    if (d.barId) {
+      const { data: bar } = await admin
+        .from('restaurants')
+        .select('id, is_after_venue, is_active')
+        .eq('id', d.barId)
+        .maybeSingle()
+      if (!bar || !bar.is_after_venue || !bar.is_active) {
+        return NextResponse.json({ error: 'Ese local no está marcado como bar de segundo acto.' }, { status: 400 })
+      }
+    }
+
+    // Pasada la hora del bar ya no tiene sentido ni ponerlo ni quitarlo.
+    const barEn = SEGUNDO_ACTO.barEn(evento.starts_at)
+    if (barEn && new Date(barEn).getTime() <= Date.now()) {
+      return NextResponse.json({ error: 'La hora del bar de esa fecha ya pasó.' }, { status: 409 })
+    }
+
+    const { error } = await admin
+      .from('events')
+      .update({ after_venue_id: d.barId } as never)
+      .eq('id', d.eventoId)
+
+    if (error) {
+      console.error('[fechas] no se pudo poner el bar', error)
+      return NextResponse.json({ error: 'No pudimos guardarlo.' }, { status: 500 })
+    }
+
+    /**
+     * Si las mesas ya se publicaron, el aviso del bar no se encoló al
+     * publicar (no había bar). Se encola ahora a quien ya está sentado: es la
+     * misma pieza que usa publicar, y no repite a quien ya lo tenga. Si se
+     * QUITA el bar no hace falta tocar la cola: al enviar, el aviso mira la
+     * fecha y se descarta solo («la fecha ya no tiene segundo acto»).
+     */
+    if (d.barId) {
+      const { data: mesas } = await admin.from('dinner_tables').select('id').eq('event_id', d.eventoId)
+      if (mesas?.length) {
+        const { data: miembros } = await admin
+          .from('table_members')
+          .select('table_id, profile_id')
+          .in('table_id', mesas.map((m) => m.id))
+        const porMesa = new Map<string, string[]>()
+        for (const m of miembros ?? []) {
+          if (!m.profile_id) continue
+          porMesa.set(m.table_id, [...(porMesa.get(m.table_id) ?? []), m.profile_id])
+        }
+        await encolarAvisosDeLaCena(
+          admin,
+          { id: evento.id, starts_at: evento.starts_at, after_venue_id: d.barId },
+          [...porMesa.entries()].map(([mesaId, perfiles]) => ({ mesaId, perfiles })),
+        )
+      }
+    }
+
+    await anotar(actor, d.barId ? 'segundo_acto_puesto' : 'segundo_acto_quitado', 'evento', d.eventoId, { barId: d.barId })
+    return NextResponse.json({ ok: true, barId: d.barId })
   }
 
   if (d.accion === 'avisar') {
