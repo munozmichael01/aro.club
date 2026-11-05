@@ -7,7 +7,8 @@ import type { crearServicioCambiar } from '../cambiar/servicio'
 import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
- * Cambiar de fecha con un servidor SIMULADO: /catalogo-cambiar-fecha?estado=elegir|tarde|sin-destinos|fallo
+ * Cambiar de fecha con un servidor SIMULADO: /catalogo-cambiar-fecha?estado=elegir|tarde|sin-destinos|fallo|cargando|caido|lento
+ * (la carga, entrega carga: cargando no contesta nunca, caido contesta 500, lento tarda 1,6 s)
  * Catálogo de desarrollo: no se enlaza desde ningún sitio.
  */
 const en = (h: number) => new Date(Date.now() + h * 3600_000).toISOString()
@@ -29,7 +30,12 @@ function Pantalla() {
             ],
           }
     return {
-      leer: async () => ({ ok: true, datos: { bloque, reservaId: 'r', empiezaEn: en(72), zonaHoraria: Z, formato: 'dinner', zonas: ['Las Mercedes', 'Chacao'] } }),
+      leer: async () => {
+        if (estado === 'cargando') return new Promise(() => {})
+        if (estado === 'caido') return { ok: false, error: 'Error del servidor', status: 500 }
+        if (estado === 'lento') await new Promise((ok) => setTimeout(ok, 1600))
+        return { ok: true, datos: { bloque, reservaId: 'r', empiezaEn: en(72), zonaHoraria: Z, formato: 'dinner', zonas: ['Las Mercedes', 'Chacao'] } }
+      },
       cambiar: async () => {
         await new Promise((ok) => setTimeout(ok, 600))
         return estado === 'fallo'

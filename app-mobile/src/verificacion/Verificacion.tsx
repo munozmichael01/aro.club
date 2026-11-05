@@ -350,7 +350,7 @@ export function Verificacion(p: {
         )}
         {e.subiendo ? (
           <View style={estilos.subiendo}>
-            <AroCarga tam={40} sobreVerde />
+            <AroCarga tam={28} sobreVerde />
             <Texto variante="cuerpoChico" tono="crema" style={{ marginTop: 14 }}>
               {T.captura.subiendo}
             </Texto>
@@ -383,7 +383,7 @@ export function Verificacion(p: {
       <View style={estilos.acciones}>
         {e.previa ? (
           <>
-            <Boton texto={T.usarEsta} onPress={usarEsta} disabled={e.subiendo || preparando} />
+            <Boton texto={T.usarEsta} onPress={usarEsta} trabajando={(e.subiendo || preparando) && T.captura.subiendo} />
             <Boton tipo="fantasma" texto={T.captura.repetir} onPress={() => setE(repetir)} disabled={e.subiendo} />
           </>
         ) : (

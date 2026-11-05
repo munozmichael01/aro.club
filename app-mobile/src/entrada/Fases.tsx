@@ -193,18 +193,14 @@ export function FaseQuiz(p: {
         </Texto>
       ) : null}
       <View style={estilos.acciones}>
-        {p.guardando ? (
-          <View style={estilos.enviando}>
-            <AroCarga tam={20} sobreVerde />
-          </View>
-        ) : (
-          <Boton
-            tipo="sobreVerde"
-            texto={lista ? (ultimo ? T.quiz.terminar : T.quiz.siguiente) : T.quiz.elige}
-            disabled={!lista}
-            onPress={p.onSiguiente}
-          />
-        )}
+        {/* Guardando (entrega carga): el botón se queda con su texto y el aro dentro, no el aro suelto en su lugar. */}
+        <Boton
+          tipo="sobreVerde"
+          texto={lista ? (ultimo ? T.quiz.terminar : T.quiz.siguiente) : T.quiz.elige}
+          disabled={!lista && !p.guardando}
+          trabajando={!!p.guardando}
+          onPress={p.onSiguiente}
+        />
         {e.paso > 0 && !p.guardando ? <Boton tipo="fantasmaSobreVerde" texto={T.quiz.atras} onPress={p.onAtras} /> : null}
       </View>
     </View>

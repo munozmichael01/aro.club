@@ -1,7 +1,9 @@
+import type { ReactNode } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 
-import { AroCarga, Aviso, Boton, IconoAbrir, Texto, color, fuente, terracotaAlfa, tinta } from '../diseno'
+import { Boton, Entra, Esqueleto, HuesoForma, IconoAbrir, SinRespuesta, Tarda, Texto, color, fuente, terracotaAlfa, tinta, useTarda, useUmbral } from '../diseno'
 import { reglas } from '../reglas'
+import * as T from '../texto/mesa'
 import * as M from './maquina'
 
 /**
@@ -9,19 +11,66 @@ import * as M from './maquina'
  * la más vieja. «Pendiente» con texto; lo nuevo, con el punto y una línea que
  * dice qué es. Vacía, dice qué va a guardar e invita a la agenda.
  */
-export function ListaPasadas(p: { d: M.DePasadas | null; fallo: string; alReintentar: () => void; alAbrir: (mesaId: string) => void; ir: (destino: string) => void }) {
-  if (!p.d) {
-    return p.fallo ? (
-      <View style={{ gap: 16 }}>
-        <Aviso tono="ojo">{p.fallo}</Aviso>
-        <Boton tipo="secundario" texto="Volver a intentar" onPress={p.alReintentar} />
-      </View>
-    ) : (
-      <View style={{ paddingTop: 24 }}>
-        <AroCarga tam={40} />
-      </View>
-    )
+export function ListaPasadas(p: {
+  d: M.DePasadas | null
+  /** No llegó la lista: por la red, o porque el servidor contestó con error. */
+  caida: { servidor: boolean } | null
+  reintentando?: boolean
+  alReintentar: () => void
+  alAbrir: (mesaId: string) => void
+  ir: (destino: string) => void
+}) {
+  // Entrega carga (03-11): nada los primeros 0,4 s, luego cuatro filas de hueso, y a los 8 s «Está tardando…».
+  const esperando = !p.d && !p.caida
+  const esqueleto = useUmbral(esperando)
+  const tarda = useTarda(esperando)
+  if (!p.d || esqueleto) {
+    if (p.caida && !esqueleto)
+      return (
+        <SinRespuesta
+          que={T.sinRespuesta.pasadas.que}
+          servidor={p.caida.servidor}
+          alReintentar={p.alReintentar}
+          reintentando={p.reintentando}
+          boton={reglas.CARGA.texto.volverAIntentar}
+        />
+      )
+    return esqueleto ? <EsqueletoPasadas tarda={tarda ? <Tarda alReintentar={p.alReintentar} /> : null} /> : null
   }
+  return <Entra>{<Filas d={p.d} alAbrir={p.alAbrir} ir={p.ir} />}</Entra>
+}
+
+/**
+ * Pasadas mientras llega (entrega carga): cuatro filas con la medida de una
+ * cena pasada, en lugar del aro que salía solo debajo de las pestañas.
+ */
+function EsqueletoPasadas({ tarda }: { tarda?: ReactNode }) {
+  const anchos: [`${number}%`, `${number}%`][] = [
+    ['62%', '44%'],
+    ['54%', '50%'],
+    ['68%', '40%'],
+    ['50%', '46%'],
+  ]
+  return (
+    <Esqueleto etiqueta={T.sinRespuesta.pasadas.cargando}>
+      {tarda}
+      <View style={{ gap: 10 }}>
+        {anchos.map(([a, b], i) => (
+          <View key={i} style={e.fila}>
+            <HuesoForma alto={48} ancho={48} curva={12} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <HuesoForma alto={14} ancho={a} estilo={{ marginVertical: 6 }} />
+              <HuesoForma alto={10} ancho={b} estilo={{ marginVertical: 3.5, marginTop: 5.5 }} />
+            </View>
+            <IconoAbrir tam={16} color={color.inerte} />
+          </View>
+        ))}
+      </View>
+    </Esqueleto>
+  )
+}
+
+function Filas(p: { d: M.DePasadas; alAbrir: (mesaId: string) => void; ir: (destino: string) => void }) {
 
   if (!p.d.cenas.length) {
     const v = reglas.CONTACTO.pasadas.vacia

@@ -299,7 +299,9 @@ export function Inicio(p: {
             filtros={vista.filtros}
             grupos={vista.grupos}
             abierta={abierta}
-            textoReservar={(precio, graba) => M.botonReservar(datos, reservando, precio, { graba, permiso: permiteGrabacion }).texto}
+            // Mientras aparta, el texto se queda y el aro entra en el botón (entrega carga); «Apuntándote» lo oye el lector.
+            textoReservar={(precio, graba) => M.botonReservar(datos, false, precio, { graba, permiso: permiteGrabacion }).texto}
+            reservando={reservando ? T.agenda.apuntandote : false}
             pidePermiso={datos.creditos > 0}
             permiso={permiteGrabacion}
             alPermiso={() => setPermiteGrabacion((x) => !x)}

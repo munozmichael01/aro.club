@@ -3,7 +3,7 @@ import { useCallback, useState, type ReactNode } from 'react'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { AroCarga, Aviso, Boton, IconoFlecha, Marca, Opcion, Texto, color, fuente, medida, radio } from '../diseno'
+import { Aviso, Boton, Entra, Esqueleto, Hueso, HuesoForma, IconoFlecha, Marca, Opcion, SinRespuesta, Tarda, Texto, color, fuente, medida, radio, useTarda, useUmbral } from '../diseno'
 import * as T from '../texto/cancelar'
 import { useUltimo } from '../util/useUltimo'
 import * as M from './maquina'
@@ -22,6 +22,9 @@ export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (
   const alEntrar = useUltimo(p.alEntrar)
   const [d, setD] = useState<M.DeServidor | null>(null)
   const [fallo, setFallo] = useState('')
+  /** No llegó la reserva: por la red, o el servidor contestó con error («es cosa nuestra»). */
+  const [caida, setCaida] = useState<{ servidor: boolean } | null>(null)
+  const [reintentando, setReintentando] = useState(false)
   const [motivo, setMotivo] = useState(-1)
   const [cancelando, setCancelando] = useState(false)
   const [hecho, setHecho] = useState<{ credito: M.Credito; creditos: number | null } | null>(null)
@@ -30,10 +33,21 @@ export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (
     const r = await servicio.leer(reserva)
     if (r.ok) {
       setD(r.datos)
-      setFallo('')
+      setCaida(null)
     } else if (r.status === 401) alEntrar.current()
-    else setFallo(r.error)
+    else setCaida({ servidor: r.status !== undefined })
   }, [servicio, reserva, alEntrar])
+
+  const reintentar = async () => {
+    setReintentando(true)
+    await cargar()
+    setReintentando(false)
+  }
+
+  // Entrega carga (03-11): nada los primeros 0,4 s; luego el esqueleto, y a los 8 s «Está tardando…».
+  const esperando = !d && !caida
+  const esqueleto = useUmbral(esperando)
+  const tarda = useTarda(esperando)
 
   useFocusEffect(
     useCallback(() => {
@@ -97,11 +111,11 @@ export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (
         </View>
       </View>
     )
-  } else if (d) {
+  } else if (d && !esqueleto) {
     const tarde = !d.conMargen
     const c = M.queCena(d)
     cuerpo = (
-      <View>
+      <Entra>
         <Texto variante="portada" accessibilityRole="header">
           {T.preguntar.titulo}
         </Texto>
@@ -147,21 +161,22 @@ export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (
           </View>
         ) : null}
         <View style={estilos.acciones}>
-          <Boton tipo={tarde ? 'grave' : 'primario'} texto={T.preguntar.si(cancelando)} onPress={cancelar} apagado={cancelando} />
+          <Boton tipo={tarde ? 'grave' : 'primario'} texto={T.preguntar.si} onPress={cancelar} trabajando={cancelando} />
           <Boton tipo="fantasma" texto={T.preguntar.mantener} onPress={() => p.ir('/cuenta')} />
         </View>
-      </View>
+      </Entra>
     )
-  } else if (fallo) {
+  } else if (caida && !esqueleto) {
     cuerpo = (
       <View style={{ gap: 16 }}>
-        <Aviso tono="ojo">{fallo}</Aviso>
-        <Boton tipo="secundario" texto={T.sinRespuesta.reintentar} onPress={() => (setFallo(''), cargar())} />
+        <SinRespuesta que={T.sinRespuesta.que} servidor={caida.servidor} alReintentar={reintentar} reintentando={reintentando} />
         <Boton tipo="fantasma" texto={T.sinRespuesta.volver} onPress={() => p.ir('/cuenta')} />
       </View>
     )
+  } else if (esqueleto) {
+    cuerpo = <EsqueletoCancelar tarda={tarda ? <Tarda alReintentar={reintentar} /> : null} />
   } else {
-    cuerpo = <AroCarga tam={40} />
+    cuerpo = null
   }
 
   return (
@@ -177,6 +192,53 @@ export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (
         {cuerpo}
       </ScrollView>
     </View>
+  )
+}
+
+/**
+ * El esqueleto de Cancelar (entrega carga, 03-11), con los mismos
+ * contenedores. Real: el titular, «Tu crédito», el porqué con sus motivos y
+ * los dos botones, apagados. Hueso: la bajada, la fecha, el crédito y el
+ * aviso, que dependen de si hay margen.
+ */
+function EsqueletoCancelar({ tarda }: { tarda?: ReactNode }) {
+  return (
+    <Esqueleto etiqueta={T.sinRespuesta.cargando}>
+      {tarda}
+      <Texto variante="portada" accessibilityRole="header">
+        {T.preguntar.titulo}
+      </Texto>
+      <Hueso variante="cuerpoGrande" lineas={2} ultima="70%" estilo={{ marginTop: 14 }} />
+      <View style={[estilos.caja, { marginTop: 26 }]}>
+        <View style={estilos.linea}>
+          <Hueso variante="subtitulo" ancho="60%" />
+          <Hueso variante="cuerpoChico" ancho={84} />
+        </View>
+        <View style={{ height: 1, backgroundColor: 'rgba(20,52,42,.12)', marginVertical: 16 }} />
+        <View style={estilos.linea}>
+          <Texto variante="cuerpo" style={{ flexGrow: 1 }}>
+            {T.preguntar.tuCredito}
+          </Texto>
+          <Hueso variante="rotulo" ancho={90} />
+        </View>
+      </View>
+      <HuesoForma alto={72} curva={20} estilo={{ marginTop: 14 }} />
+      <Texto variante="etiqueta" tono="cuerpo" style={{ letterSpacing: 1.9, marginTop: 30, marginBottom: 6 }}>
+        {T.preguntar.porQue}
+      </Texto>
+      <Texto variante="cuerpoChico" style={{ marginBottom: 14 }}>
+        {T.preguntar.porQueNota}
+      </Texto>
+      <View style={{ gap: 8 }}>
+        {T.preguntar.motivos.map((m) => (
+          <Opcion key={m} unica texto={m} marcada={false} apagada onPress={() => undefined} />
+        ))}
+      </View>
+      <View style={estilos.acciones}>
+        <Boton texto={T.preguntar.si} apagado disabled />
+        <Boton tipo="fantasma" texto={T.preguntar.mantener} apagado disabled />
+      </View>
+    </Esqueleto>
   )
 }
 

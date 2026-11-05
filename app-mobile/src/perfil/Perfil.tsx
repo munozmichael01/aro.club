@@ -265,7 +265,7 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
                       {x.porQue}
                     </Texto>
                   </View>
-                  {x.sePuedeQuitar ? <Boton tipo="secundario" texto={T.exclusiones.quitar(quitando === x.id)} onPress={() => quitar(x.id)} /> : null}
+                  {x.sePuedeQuitar ? <Boton tipo="secundario" texto={T.exclusiones.quitar(false)} trabajando={quitando === x.id && T.exclusiones.quitar(true)} onPress={() => quitar(x.id)} /> : null}
                 </View>
               ))}
             </View>
@@ -297,7 +297,7 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
                         </Texto>
                       ) : null}
                     </View>
-                    <Boton tipo="secundario" texto={T.sitios.quitar(quitandoSitio === x.id)} onPress={() => quitarSitio(x.id)} />
+                    <Boton tipo="secundario" texto={T.sitios.quitar(false)} trabajando={quitandoSitio === x.id && T.sitios.quitar(true)} onPress={() => quitarSitio(x.id)} />
                   </View>
                 )
               })}
@@ -425,7 +425,7 @@ export function Perfil(p: { servicio: Servicio; ir: (d: string) => void; alEntra
                 />
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginTop: 14 }}>
-                <Boton tipo="grave" texto={T.baja.confirmar(dandoDeBaja, M.puedeBaja(palabra))} onPress={darDeBaja} apagado={!M.puedeBaja(palabra) || dandoDeBaja} />
+                <Boton tipo="grave" texto={T.baja.confirmar(false, M.puedeBaja(palabra))} trabajando={dandoDeBaja && T.baja.confirmar(true, true)} onPress={darDeBaja} apagado={!M.puedeBaja(palabra)} />
                 <Boton tipo="fantasma" texto={T.baja.cancelar} onPress={() => setBaja(false)} />
               </View>
               {falloBaja ? (
@@ -576,7 +576,7 @@ function FilaCampo(p: {
             </View>
           )}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginTop: 16 }}>
-            <Boton texto={p.guardando ? T.campo.guardando : T.campo.guardar} onPress={p.alGuardar} apagado={!!falta || p.guardando} />
+            <Boton texto={T.campo.guardar} trabajando={!!p.guardando && T.campo.guardando} onPress={p.alGuardar} apagado={!!falta} />
             <Boton tipo="fantasma" texto={T.campo.cancelar} onPress={p.alAbrir} />
           </View>
           {p.fallo ? (

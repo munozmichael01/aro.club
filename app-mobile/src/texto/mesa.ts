@@ -217,6 +217,11 @@ export const reporte = {
 export const sinRespuesta = {
   cargar: 'No pudimos cargar tu mesa. Revisa tu conexión e inténtalo otra vez.',
   reintentar: 'Reintentar',
+  /** «No pudimos cargar tu mesa.» (entrega carga): el resto lo pone `reglas.CARGA`. */
+  que: 'tu mesa',
+  cargando: 'Cargando tu mesa',
+  /** Pasadas: «No pudimos cargar tus cenas.» y su botón «Volver a intentar». */
+  pasadas: { que: 'tus cenas', cargando: 'Cargando tus cenas' },
 }
 
 /**

@@ -106,14 +106,14 @@ export function useTarda(esperando: boolean) {
   return tarda
 }
 
-export function Tarda({ alReintentar }: { alReintentar: () => void }) {
+export function Tarda({ alReintentar, sobreVerde }: { alReintentar: () => void; sobreVerde?: boolean }) {
   return (
     <View accessibilityRole="alert" accessibilityLiveRegion="polite" style={estilos.tarda}>
-      <Texto variante="cuerpoChico" style={{ flex: 1 }}>
+      <Texto variante="cuerpoChico" tono={sobreVerde ? 'cuerpoSobreVerde' : 'cuerpo'} style={{ flex: 1 }}>
         {C.tarda}
       </Texto>
       <Pressable onPress={alReintentar} accessibilityRole="button" hitSlop={6} style={estilos.franjaBoton}>
-        <Texto style={estilos.enlace}>{C.reintentar}</Texto>
+        <Texto style={[estilos.enlace, sobreVerde && { color: color.crema }]}>{C.reintentar}</Texto>
       </Pressable>
     </View>
   )

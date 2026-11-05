@@ -3,7 +3,7 @@ import { useCallback, useState, type ReactNode } from 'react'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { AroCarga, Aviso, Boton, IconoFlecha, Marca, Opcion, Texto, color, fuente, medida, radio, tinta } from '../diseno'
+import { Aviso, Boton, Entra, Esqueleto, Hueso, HuesoForma, IconoFlecha, Marca, SinRespuesta, Tarda, Texto, Opcion, color, fuente, medida, radio, tinta, useTarda, useUmbral } from '../diseno'
 import * as T from '../texto/cambiar'
 import { useUltimo } from '../util/useUltimo'
 import * as M from './maquina'
@@ -22,6 +22,9 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; /
   const alEntrar = useUltimo(p.alEntrar)
   const [d, setD] = useState<Datos | null>(null)
   const [fallo, setFallo] = useState('')
+  /** No llegaron las fechas: por la red, o el servidor contestó con error («es cosa nuestra»). */
+  const [caida, setCaida] = useState<{ servidor: boolean } | null>(null)
+  const [reintentando, setReintentando] = useState(false)
   const [elegida, setElegida] = useState<string | null>(null)
   const [cambiando, setCambiando] = useState(false)
   const [hecho, setHecho] = useState<{ antes: M.Destino; ahora: M.Destino } | null>(null)
@@ -30,10 +33,21 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; /
     const r = await servicio.leer()
     if (r.ok) {
       setD(r.datos)
-      setFallo('')
+      setCaida(null)
     } else if (r.status === 401) alEntrar.current()
-    else setFallo(r.error)
+    else setCaida({ servidor: r.status !== undefined })
   }, [servicio, alEntrar])
+
+  const reintentar = async () => {
+    setReintentando(true)
+    await cargar()
+    setReintentando(false)
+  }
+
+  // Entrega carga (03-11): nada los primeros 0,4 s; luego el esqueleto, y a los 8 s «Está tardando…».
+  const esperando = !d && !caida
+  const esqueleto = useUmbral(esperando)
+  const tarda = useTarda(esperando)
 
   useFocusEffect(
     useCallback(() => {
@@ -98,11 +112,11 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; /
         </View>
       </View>
     )
-  } else if (d) {
+  } else if (d && !esqueleto) {
     const actual = M.fila(deAhora(d))
     const nota = d.bloque.puede && d.bloque.destinos.length ? null : T.noSePuede(d.bloque.puede ? 'sin-destinos' : d.bloque.motivo)
     cuerpo = (
-      <View>
+      <Entra>
         <Texto variante="portada" accessibilityRole="header">
           {T.elegir.titulo}
         </Texto>
@@ -152,21 +166,22 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; /
           </View>
         ) : null}
         <View style={estilos.acciones}>
-          {nota ? null : <Boton ancho texto={T.elegir.boton(cambiando)} onPress={cambiar} apagado={cambiando || !elegida} />}
+          {nota ? null : <Boton ancho texto={T.elegir.boton} onPress={cambiar} trabajando={cambiando} apagado={!elegida} />}
           <Boton ancho tipo="secundario" texto={T.elegir.quedarme} onPress={() => p.ir('/mesa')} />
         </View>
-      </View>
+      </Entra>
     )
-  } else if (fallo) {
+  } else if (caida && !esqueleto) {
     cuerpo = (
       <View style={{ gap: 16 }}>
-        <Aviso tono="ojo">{fallo}</Aviso>
-        <Boton tipo="secundario" texto={T.sinRespuesta.reintentar} onPress={() => (setFallo(''), cargar())} />
+        <SinRespuesta que={T.sinRespuesta.que} servidor={caida.servidor} alReintentar={reintentar} reintentando={reintentando} />
         <Boton tipo="fantasma" texto={T.sinRespuesta.volver} onPress={() => p.ir('/mesa')} />
       </View>
     )
+  } else if (esqueleto) {
+    cuerpo = <EsqueletoCambiar tarda={tarda ? <Tarda alReintentar={reintentar} /> : null} />
   } else {
-    cuerpo = <AroCarga tam={40} />
+    cuerpo = null
   }
 
   return (
@@ -182,6 +197,45 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; /
         {cuerpo}
       </ScrollView>
     </View>
+  )
+}
+
+/**
+ * El esqueleto de Cambiar de fecha (entrega carga, 03-11), con los mismos
+ * contenedores. Real: el titular, la bajada, «Tu fecha ahora», «Elige la
+ * nueva» y «Quedarme en mi fecha», apagado. Hueso: la fecha de ahora, las
+ * opciones y el botón de cambiar, que puede no salir.
+ */
+function EsqueletoCambiar({ tarda }: { tarda?: ReactNode }) {
+  return (
+    <Esqueleto etiqueta={T.sinRespuesta.cargando}>
+      {tarda}
+      <Texto variante="portada" accessibilityRole="header">
+        {T.elegir.titulo}
+      </Texto>
+      <Texto variante="cuerpoGrande" style={{ marginTop: 14 }}>
+        {T.elegir.bajada}
+      </Texto>
+      <View style={[estilos.caja, { marginTop: 26 }]}>
+        <Texto variante="etiquetaChica" tono="cuerpo" style={{ marginBottom: 10 }}>
+          {T.elegir.ahora}
+        </Texto>
+        <Hueso variante="subtitulo" ancho="64%" />
+        <Hueso variante="cuerpoChico" ancho="48%" estilo={{ marginTop: 4 }} />
+      </View>
+      <Texto variante="etiqueta" tono="cuerpo" style={{ letterSpacing: 1.9, marginTop: 30, marginBottom: 14 }}>
+        {T.elegir.nuevas}
+      </Texto>
+      <View style={{ gap: 8 }}>
+        {[0, 1].map((i) => (
+          <HuesoForma key={i} alto={medida.opcion} curva={18} />
+        ))}
+      </View>
+      <View style={estilos.acciones}>
+        <HuesoForma alto={medida.boton} capsula />
+        <Boton ancho tipo="secundario" texto={T.elegir.quedarme} apagado disabled />
+      </View>
+    </Esqueleto>
   )
 }
 

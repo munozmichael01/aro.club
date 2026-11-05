@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, View } from 'react-native'
 
 import * as CM from '../contacto/maquina'
 import { Inicial, PanelContacto } from '../contacto/Panel'
-import { AroCarga, Aviso, Boton, IconoAbrir, IconoAtras, IconoCheck, Opcion, Texto, color, fuente, medida, tinta } from '../diseno'
+import { Aviso, Boton, Entra, Esqueleto, HuesoForma, IconoAbrir, IconoAtras, IconoCheck, Opcion, SinRespuesta, Tarda, Texto, color, fuente, medida, tinta, useTarda, useUmbral } from '../diseno'
+import * as TM from '../texto/mesa'
 import * as MM from '../mesa/maquina'
 import { Pasada } from '../mesa/MiMesa'
 import type { crearServicioMesa } from '../mesa/servicio'
@@ -48,7 +49,9 @@ export function CenaPasada(p: {
 }) {
   const [mesa, setMesa] = useState<MM.DeServidor | null>(p.mesa ?? null)
   const [contacto, setContacto] = useState<CM.DeContacto | null>(null)
-  const [fallo, setFallo] = useState('')
+  /** No llegó la cena: por la red, o porque el servidor contestó con error. */
+  const [caida, setCaida] = useState<{ servidor: boolean } | null>(null)
+  const [reintentando, setReintentando] = useState(false)
   const [encuestaAbierta, setEncuestaAbierta] = useState(false)
   const { pasadas, mesaId } = p
   const alCambiar = p.alCambiar
@@ -56,7 +59,8 @@ export function CenaPasada(p: {
   const cargar = useCallback(async () => {
     const [m, c] = await Promise.all([p.mesa ? Promise.resolve(null) : pasadas.cena(mesaId), pasadas.contacto(mesaId)])
     if (m) {
-      if (!m.ok) return setFallo(m.error)
+      if (!m.ok) return setCaida({ servidor: m.status !== undefined })
+      setCaida(null)
       setMesa(m.datos)
     }
     // Sin contacto (404 o fallo) no se pinta nada de contacto: no es un error de la cena.
@@ -77,18 +81,45 @@ export function CenaPasada(p: {
     if (p.mesa) setMesa(p.mesa)
   }, [p.mesa])
 
-  if (!mesa) {
+  // Entrega carga (03-11): nada los primeros 0,4 s, luego el esqueleto de la cena, y a los 8 s «Está tardando…».
+  const esperando = !mesa && !caida
+  const esqueleto = useUmbral(esperando)
+  const tarda = useTarda(esperando)
+  const reintentar = async () => {
+    setReintentando(true)
+    await cargar()
+    setReintentando(false)
+  }
+
+  if (!mesa || esqueleto) {
+    if (caida && !esqueleto)
+      return (
+        <View style={{ paddingTop: 12 }}>
+          <SinRespuesta que={TM.sinRespuesta.pasadas.que} servidor={caida.servidor} alReintentar={reintentar} reintentando={reintentando} boton={reglas.CARGA.texto.volverAIntentar} />
+        </View>
+      )
+    if (!esqueleto) return null
+    // Real: «‹ Pasadas» y el marco de la cabecera. Hueso: lo que dice la cabecera y el bloque de debajo.
     return (
-      <View style={{ gap: 16, paddingTop: 12 }}>
-        {fallo ? (
-          <>
-            <Aviso tono="ojo">{fallo}</Aviso>
-            <Boton tipo="secundario" texto="Volver a intentar" onPress={() => (setFallo(''), cargar())} />
-          </>
-        ) : (
-          <AroCarga tam={40} />
-        )}
-      </View>
+      <Esqueleto etiqueta={TM.sinRespuesta.pasadas.cargando} estilo={{ gap: 14 }}>
+        {tarda ? <Tarda alReintentar={reintentar} /> : null}
+        {p.alVolver ? (
+          <Pressable onPress={p.alVolver} accessibilityRole="link" style={e.volver}>
+            <IconoAtras tam={18} color={color.verdeProfundo} />
+            <Texto style={[e.semi, { fontSize: 15 }]}>{T.pestanas.pasadas}</Texto>
+          </Pressable>
+        ) : null}
+        <View style={p.enProxima ? e.cabeceraClara : e.cabecera}>
+          <HuesoForma alto={8} ancho={96} sobreVerde={!p.enProxima} estilo={{ marginVertical: 3 }} />
+          <HuesoForma alto={22} ancho="70%" sobreVerde={!p.enProxima} estilo={{ marginVertical: 9 }} />
+          <HuesoForma alto={10} ancho="50%" sobreVerde={!p.enProxima} estilo={{ marginVertical: 4 }} />
+        </View>
+        <View style={e.panel}>
+          <HuesoForma alto={17} ancho="56%" estilo={{ marginVertical: 6 }} />
+          <HuesoForma alto={11} ancho="100%" estilo={{ marginVertical: 6.5 }} />
+          <HuesoForma alto={11} ancho="64%" estilo={{ marginVertical: 6.5 }} />
+        </View>
+      </Esqueleto>
     )
   }
 
@@ -106,7 +137,7 @@ export function CenaPasada(p: {
   const conCoincidencia = !!contacto?.personas.length
 
   return (
-    <View style={{ gap: 14 }}>
+    <Entra sinFundido={!!p.mesa} estilo={{ gap: 14 }}>
       {p.alVolver ? (
         <Pressable onPress={p.alVolver} accessibilityRole="link" style={e.volver}>
           <IconoAtras tam={18} color={color.verdeProfundo} />
@@ -195,7 +226,7 @@ export function CenaPasada(p: {
           <IconoAbrir tam={14} color={color.verde} />
         </Pressable>
       ) : null}
-    </View>
+    </Entra>
   )
 }
 
@@ -227,7 +258,7 @@ function PreguntaContacto(p: { titulo: string; otros: { id: string; nombre: stri
         <Boton
           texto={marcadas.length ? P.guardar : P.nadie}
           tipo={marcadas.length ? 'primario' : 'secundario'}
-          apagado={enviando}
+          trabajando={enviando}
           onPress={async () => {
             if (enviando) return
             setEnviando(true)

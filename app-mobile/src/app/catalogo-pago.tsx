@@ -10,7 +10,8 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
  * Pago con un servidor SIMULADO, para verlo en el navegador:
- * /catalogo-pago?estado=elegir|sin-verificar|pendiente|listo|fallo|prueba
+ * /catalogo-pago?estado=elegir|sin-verificar|pendiente|listo|fallo|prueba|cargando|caido|lento
+ * (la carga, entrega carga: cargando no contesta nunca, caido contesta 500, lento tarda 1,6 s)
  * La respuesta es la REAL de GET /api/pago con la cuenta del banco, con los
  * datos de la cuenta que recibe cambiados por inventados. Reportar y el
  * código «REGALO» salen bien; «ANDREA7KQ» es un descuento del 20%
@@ -38,7 +39,12 @@ function Pantalla() {
       metodos: estado === 'prueba' ? REAL.metodos.map((m) => (m.id === 'pm' ? { ...m, datosDePrueba: true } : m)) : REAL.metodos,
     }
     return {
-      cargar: async () => ({ ok: true, datos }),
+      cargar: async () => {
+        if (estado === 'cargando') return new Promise(() => {})
+        if (estado === 'caido') return { ok: false, error: 'Error del servidor', status: 500 }
+        if (estado === 'lento') await new Promise((ok) => setTimeout(ok, 1600))
+        return { ok: true, datos }
+      },
       marcarDentro: async () => (masuno ? { enlace: 'https://aro.club/m/K7Q2MabcdefghijKLMNOp', estado: 'sin-usar', nombre: null, cierraEn: null, plazo: reglas.MAS_UNO.plazo(en(32), 'America/Caracas'), mensaje: 'Te invito…' } : null),
       reportar: async (cuerpo) => (console.log('[catálogo] reportar', cuerpo), await espera(), { ok: true, datos: { estado: 'reportado' } }),
       cupon: async (_e, codigo) => {

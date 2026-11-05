@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Modal, Pressable, StyleSheet, View, type TextStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { IconoCruz, Texto, fuente } from '../diseno'
+import { AroCarga, IconoCruz, Texto, fuente, useUmbral } from '../diseno'
 import * as T from '../texto/mesa'
 import * as M from './maquina'
 
@@ -76,7 +76,8 @@ export function LineaGrabacion({ permiso, alCambiar, suelta }: { permiso: boolea
  */
 export function PreguntaGrabacion(p: {
   visible: boolean
-  guardando: boolean
+  /** Qué respuesta se está guardando: ese botón lleva el aro y el texto no cambia (entrega carga). */
+  guardando: false | 'si' | 'no'
   fallo: string
   alResponder: (permite: boolean) => void
   alCerrar: () => void
@@ -84,6 +85,8 @@ export function PreguntaGrabacion(p: {
   voz: Record<string, string>
 }) {
   const insets = useSafeAreaInsets()
+  // El aro, solo si la espera pasa de 0,4 s; el toque se bloquea al momento.
+  const aro = useUmbral(!!p.guardando)
   return (
     <Modal visible={p.visible} transparent animationType="fade" onRequestClose={p.alCerrar} statusBarTranslucent>
       <View style={e.velo}>
@@ -104,18 +107,26 @@ export function PreguntaGrabacion(p: {
             <Pressable
               onPress={() => !p.guardando && p.alResponder(true)}
               accessibilityRole="button"
-              aria-disabled={p.guardando || undefined}
-              style={({ pressed }) => [e.boton, { backgroundColor: C.tinta }, pressed && { opacity: 0.88 }]}
+              aria-disabled={!!p.guardando || undefined}
+              aria-busy={p.guardando === 'si'}
+              style={({ pressed }) => [e.boton, { backgroundColor: C.tinta }, pressed && !p.guardando && { opacity: 0.88 }]}
             >
-              <Texto style={[semi(16, 1), { color: C.crema }]}>{p.guardando ? T.grabacion.guardando : T.grabacion.si}</Texto>
+              <View style={e.botonFila}>
+                {aro && p.guardando === 'si' ? <AroCarga tam={20} sobreVerde /> : null}
+                <Texto style={[semi(16, 1), { color: C.crema }]}>{T.grabacion.si}</Texto>
+              </View>
             </Pressable>
             <Pressable
               onPress={() => !p.guardando && p.alResponder(false)}
               accessibilityRole="button"
-              aria-disabled={p.guardando || undefined}
-              style={({ pressed }) => [e.boton, e.botonNo, pressed && { backgroundColor: 'rgba(20,52,42,.06)' }]}
+              aria-disabled={!!p.guardando || undefined}
+              aria-busy={p.guardando === 'no'}
+              style={({ pressed }) => [e.boton, e.botonNo, pressed && !p.guardando && { backgroundColor: 'rgba(20,52,42,.06)' }]}
             >
-              <Texto style={[semi(16, 1), { color: C.tinta }]}>{p.guardando ? T.grabacion.guardando : T.grabacion.no}</Texto>
+              <View style={e.botonFila}>
+                {aro && p.guardando === 'no' ? <AroCarga tam={20} /> : null}
+                <Texto style={[semi(16, 1), { color: C.tinta }]}>{T.grabacion.no}</Texto>
+              </View>
             </Pressable>
           </View>
           {p.fallo ? <Texto style={[texto(13, 1.5), { color: C.terracota, marginTop: 12 }]}>{p.fallo}</Texto> : null}
@@ -134,7 +145,7 @@ export function PreguntaGrabacion(p: {
 export function useGrabacion(d: M.DeServidor, guardar: (eventoId: string, permite: boolean) => Promise<{ ok: boolean; error?: string }>) {
   const [permiso, setPermiso] = useState<boolean | null>(d.permisoGrabacion ?? null)
   const [abierta, setAbierta] = useState(false)
-  const [guardando, setGuardando] = useState(false)
+  const [guardando, setGuardando] = useState<false | 'si' | 'no'>(false)
   const [fallo, setFallo] = useState('')
   // Mi mesa sigue montada debajo del juego: la pregunta no sale encima de otra pantalla.
   const [enfocada, setEnfocada] = useState(true)
@@ -155,7 +166,7 @@ export function useGrabacion(d: M.DeServidor, guardar: (eventoId: string, permit
 
   const responder = async (permite: boolean) => {
     if (guardando || !d.eventoId) return
-    setGuardando(true)
+    setGuardando(permite ? 'si' : 'no')
     setFallo('')
     const r = await guardar(d.eventoId, permite)
     setGuardando(false)
@@ -200,6 +211,7 @@ const media = (tam: number): TextStyle => ({ fontFamily: fuente.textoMedia, font
 const semi = (tam: number, alto = 1): TextStyle => ({ fontFamily: fuente.textoSemi, fontSize: tam, lineHeight: lh(tam, alto, 1.21) })
 
 const e = StyleSheet.create({
+  botonFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   ajustes: { borderRadius: 20, backgroundColor: '#FFF1E4', borderWidth: 1, borderColor: '#E7C9AC', paddingVertical: 14, paddingHorizontal: 16 },
   entendido: { alignSelf: 'flex-start', marginTop: 10, minHeight: 38, paddingHorizontal: 15, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(20,52,42,.22)', justifyContent: 'center' },
   lineaTarjeta: {

@@ -43,7 +43,8 @@ export const cupon = {
   pregunta: '¿Tienes un código de invitación?',
   etiqueta: 'TU CÓDIGO',
   ejemplo: 'CÓDIGO',
-  aplicar: (aplicando: boolean) => (aplicando ? 'Aplicando' : 'Aplicar'),
+  // Mientras aplica, el texto se queda y entra el aro (entrega carga): ya no «Aplicando».
+  aplicar: 'Aplicar',
   nota: 'Aplica tu cupón de descuento.',
   noPudimos: 'No pudimos aplicar el código.',
   sinRed: 'No pudimos aplicar el código. Revisa tu conexión.',
@@ -101,9 +102,9 @@ export const reporte = {
   fecha: { dia: 'DÍA', mes: 'MES', anio: 'AÑO', ejemploDia: 'DD', ejemploAnio: 'AAAA' },
   fechaFutura: 'Un pago no se reporta antes de hacerlo: esa fecha todavía no ha llegado.',
   captura: (obligatoria: boolean) => (obligatoria ? 'Captura del pago' : 'Captura del pago · opcional'),
-  capturaTitulo: (subiendo: boolean, adjunta: boolean) => (subiendo ? 'Subiendo la captura…' : adjunta ? 'Captura adjunta' : 'Adjuntar captura'),
-  capturaNota: (subiendo: boolean, adjunta: boolean, obligatoria: boolean, nombre: string) =>
-    subiendo ? 'Un momento' : adjunta ? 'Toca para cambiarla' : obligatoria ? `Obligatoria para ${nombre}` : 'Acelera la revisión',
+  // Mientras sube, el texto se queda y el aro entra en el círculo (entrega carga): ya no «Subiendo la captura…».
+  capturaTitulo: (adjunta: boolean) => (adjunta ? 'Captura adjunta' : 'Adjuntar captura'),
+  capturaNota: (adjunta: boolean, obligatoria: boolean, nombre: string) => (adjunta ? 'Toca para cambiarla' : obligatoria ? `Obligatoria para ${nombre}` : 'Acelera la revisión'),
   noSubida: 'No pudimos subir la captura.',
   noSubidaRed: 'No pudimos subir la captura. Revisa tu conexión.',
   boton: (p: { ok: boolean; manual: boolean; camposOk: boolean; falta: string | null; faltaLetra: boolean }) =>
@@ -126,10 +127,11 @@ export const reporte = {
   noRegistrado: 'No pudimos registrar tu pago.',
 }
 
-export const enviando = {
-  titulo: (manual: boolean) => (manual ? 'Enviando tu reporte.' : 'Confirmando el cobro.'),
-  noCierres: 'No cierres esta pantalla. Suele tardar unos segundos.',
-}
+/**
+ * Reportar es un paso (entrega carga, 03-11): la espera vive en el botón,
+ * con el aro y «Apartando tu puesto» para el lector de pantalla. La pantalla
+ * «Enviando tu reporte.» que tapaba el formulario ya no sale.
+ */
 
 export const pendiente = {
   sello: 'PENDIENTE DE CONFIRMAR',
@@ -203,7 +205,13 @@ export const comprobante = {
 }
 
 export const sinEvento = 'Falta la fecha. Vuelve a Mi cuenta y elige una.'
-export const sinRespuesta = { cargar: 'No pudimos cargar el pago. Revisa tu conexión e inténtalo otra vez.', reintentar: 'Reintentar' }
+export const sinRespuesta = {
+  cargar: 'No pudimos cargar el pago. Revisa tu conexión e inténtalo otra vez.',
+  reintentar: 'Reintentar',
+  /** «No pudimos cargar el pago.» (entrega carga): el resto lo pone `reglas.CARGA`. */
+  que: 'el pago',
+  cargando: 'Cargando el pago',
+}
 
 /** En una fecha que se graba, con los datos ya puestos y sin el permiso (18-10), como la web. */
 export const marcaPermiso = 'Marca el permiso para seguir'

@@ -435,7 +435,7 @@ export function Cuestionario(p: {
             </Pressable>
           ) : null}
           <View style={{ flex: 1 }}>
-            <Boton texto={textoContinuar(e, preguntas, hoy)} ancho onPress={continuar} apagado={!completa} disabled={guardando && completa} />
+            <Boton texto={textoContinuar(e, preguntas, hoy)} ancho onPress={continuar} apagado={!completa} trabajando={guardando && completa} />
           </View>
         </View>
         <View style={estilos.lineaPie}>

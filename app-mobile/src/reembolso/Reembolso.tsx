@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { AroCarga, Aviso, Boton, IconoAtras, IconoCheck, Texto, color, fuente, medida, verdeAlfa } from '../diseno'
+import { Aviso, Boton, Entra, Esqueleto, Hueso, HuesoForma, IconoAtras, IconoCheck, SinRespuesta, Tarda, Texto, color, fuente, medida, useTarda, useUmbral, verdeAlfa } from '../diseno'
 import { CampoReporte } from '../pago/Pago'
 import * as P from '../pago/maquina'
 import { reglas } from '../reglas'
@@ -21,18 +21,21 @@ type Servicio = ReturnType<typeof crearServicioReembolso>
 export function Reembolso(p: { servicio: Servicio; alVolver: () => void; alEntrar: () => void }) {
   const insets = useSafeAreaInsets()
   const [r, setR] = useState<M.Reembolso | null>(null)
-  const [fallo, setFallo] = useState('')
+  /** No llegó: por la red, o el servidor contestó con error («es cosa nuestra»). */
+  const [caida, setCaida] = useState<{ servidor: boolean } | null>(null)
+  const [reintentando, setReintentando] = useState(false)
   const [rep, setRep] = useState<Record<string, string>>(P.repInicial)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   const [telefono, setTelefono] = useState<string | null>(null)
 
   const cargar = useCallback(async () => {
-    setFallo('')
     const x = await p.servicio.leer()
-    if (x.ok) setR(x.datos.reembolso ?? { puede: false, estado: null })
-    else if (x.status === 401) p.alEntrar()
-    else setFallo(x.error)
+    if (x.ok) {
+      setR(x.datos.reembolso ?? { puede: false, estado: null })
+      setCaida(null)
+    } else if (x.status === 401) p.alEntrar()
+    else setCaida({ servidor: x.status !== undefined })
   }, [p])
   useEffect(() => {
     cargar()
@@ -55,17 +58,25 @@ export function Reembolso(p: { servicio: Servicio; alVolver: () => void; alEntra
     setError(x.error)
   }
 
+  const reintentar = async () => {
+    setReintentando(true)
+    await cargar()
+    setReintentando(false)
+  }
+  // Entrega carga (03-11): nada los primeros 0,4 s; luego el esqueleto, y a los 8 s «Está tardando…».
+  const esperando = !r && !caida
+  const esqueleto = useUmbral(esperando)
+  const tarda = useTarda(esperando)
+
   const f = M.fase(r)
   let cuerpo
-  if (!r) {
-    cuerpo = fallo ? (
-      <View style={{ gap: 14 }}>
-        <Aviso tono="ojo">{fallo}</Aviso>
-        <Boton tipo="secundario" texto="Reintentar" onPress={cargar} />
-      </View>
-    ) : (
-      <AroCarga tam={28} />
-    )
+  if (!r || esqueleto) {
+    cuerpo =
+      caida && !esqueleto ? (
+        <SinRespuesta que={T.que} servidor={caida.servidor} alReintentar={reintentar} reintentando={reintentando} />
+      ) : esqueleto ? (
+        <EsqueletoReembolso tarda={tarda ? <Tarda alReintentar={reintentar} /> : null} />
+      ) : null
   } else if (f === 'pendiente' || f === 'hecho') {
     const pendiente = f === 'pendiente'
     cuerpo = (
@@ -84,7 +95,7 @@ export function Reembolso(p: { servicio: Servicio; alVolver: () => void; alEntra
   } else if (f === 'pedir') {
     const dia = r.hasta ? reglas.partesDe(r.hasta) : null
     cuerpo = (
-      <View>
+      <Entra>
         <Texto variante="titularGrande" accessibilityRole="header">
           {T.titulo}
         </Texto>
@@ -112,14 +123,14 @@ export function Reembolso(p: { servicio: Servicio; alVolver: () => void; alEntra
           </View>
         ) : null}
         <View style={{ marginTop: 20 }}>
-          <Boton ancho texto={enviando ? T.enviando : T.boton} onPress={pedir} apagado={!M.listo(rep) || enviando} />
+          <Boton ancho texto={T.boton} onPress={pedir} trabajando={enviando} apagado={!M.listo(rep)} />
         </View>
         {dia ? (
           <Texto variante="nota" style={{ marginTop: 12 }}>
             {T.hasta(`${dia.dia} ${dia.numero}`)}
           </Texto>
         ) : null}
-      </View>
+      </Entra>
     )
   } else {
     cuerpo = <Aviso tono="ojo">{T.noPudimos}</Aviso>
@@ -134,6 +145,39 @@ export function Reembolso(p: { servicio: Servicio; alVolver: () => void; alEntra
         {cuerpo}
       </ScrollView>
     </KeyboardAvoidingView>
+  )
+}
+
+/**
+ * El esqueleto del reembolso (entrega carga, 03-11), con los contenedores de
+ * «pedir», que es lo que se abre casi siempre. Real: el titular, el aviso y
+ * el botón, apagado. Hueso: la bajada con el precio, los tres campos y el
+ * monto a la tasa del día.
+ */
+function EsqueletoReembolso({ tarda }: { tarda?: ReactNode }) {
+  return (
+    <Esqueleto etiqueta={T.cargando}>
+      {tarda}
+      <Texto variante="titularGrande" accessibilityRole="header">
+        {T.titulo}
+      </Texto>
+      <Hueso variante="cuerpoGrande" lineas={2} ultima="45%" estilo={{ marginTop: 12 }} />
+      <View style={{ gap: 16, marginTop: 24 }}>
+        {[0, 1, 2].map((i) => (
+          <View key={i} style={{ gap: 8 }}>
+            <Hueso variante="etiqueta" ancho={80} />
+            <HuesoForma alto={medida.opcion} curva={16} />
+          </View>
+        ))}
+      </View>
+      <Hueso variante="cuerpo" lineas={2} ultima="55%" estilo={{ marginTop: 22 }} />
+      <Texto variante="cuerpoChico" tono="terracota" style={{ marginTop: 12 }}>
+        {T.aviso}
+      </Texto>
+      <View style={{ marginTop: 20 }}>
+        <Boton ancho texto={T.boton} apagado disabled />
+      </View>
+    </Esqueleto>
   )
 }
 

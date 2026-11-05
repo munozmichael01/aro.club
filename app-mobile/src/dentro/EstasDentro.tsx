@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle } from 'react-native-svg'
 
-import { IconoCalendario, IconoCheck, IconoCompartir, IconoCruz, IconoHistoria, IconoReloj, Texto, color, cremaAlfa, fuente, medida, radio, tinta } from '../diseno'
+import { Esqueleto, Hueso, HuesoForma, IconoCalendario, IconoCheck, IconoCompartir, IconoCruz, IconoHistoria, IconoReloj, Texto, color, cremaAlfa, fuente, medida, radio, tinta } from '../diseno'
 import type { MasUno } from '../masuno/maquina'
 import { AroDuo, InvitarTarjeta } from '../masuno/Partes'
 import { reglas } from '../reglas'
@@ -159,6 +159,48 @@ export function EstasDentro(p: {
           </View>
           {p.extra}
         </View>
+      </ScrollView>
+    </View>
+  )
+}
+
+/**
+ * El esqueleto de «Estás dentro» (entrega carga, 03-11), con los mismos
+ * contenedores que la B. Real: el cierre, el aro y «Estás dentro.», porque se
+ * llega con el puesto ya tuyo. Hueso: el sello, el plan, la caja de la
+ * revelación y la acción principal, que en una +1 es «Invitar a mi
+ * acompañante».
+ */
+export function EsqueletoDentro({ ir, tarda }: { ir: (d: string) => void; tarda?: ReactNode }) {
+  const insets = useSafeAreaInsets()
+  return (
+    <View style={{ flex: 1, backgroundColor: color.verdeProfundo, overflow: 'hidden' }}>
+      <ScrollView contentContainerStyle={[e.pagina, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 32 }]}>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Pressable onPress={() => ir('/cuenta')} accessibilityRole="button" accessibilityLabel="Cerrar" style={[e.cerrar, { backgroundColor: cremaAlfa(0.1) }]}>
+            <IconoCruz tam={16} color={color.crema} />
+          </Pressable>
+        </View>
+        <Esqueleto etiqueta={T.sinRespuesta.cargando} estilo={{ gap: 18 }}>
+          {tarda}
+          <Isotipo lleno />
+          <HuesoForma alto={26} ancho={110} capsula sobreVerde />
+          <Texto style={[e.titular, { color: color.crema, fontSize: 50, lineHeight: 72 }]} accessibilityRole="header">
+            {T.B.titulo}
+          </Texto>
+          <View style={{ gap: 6 }}>
+            <HuesoForma alto={19} ancho="80%" sobreVerde estilo={{ marginVertical: 3 }} />
+            <HuesoForma alto={11} ancho="45%" sobreVerde estilo={{ marginVertical: 4.5 }} />
+          </View>
+          <View style={[e.caja, { backgroundColor: color.verde }]}>
+            <HuesoForma alto={8} ancho={90} sobreVerde estilo={{ marginVertical: 3 }} />
+            <Hueso variante="cuerpo" lineas={2} ultima="55%" sobreVerde />
+          </View>
+          <View style={{ gap: 10, marginTop: 6 }}>
+            <HuesoForma alto={medida.toqueMinimo + 8} capsula sobreVerde />
+            <HuesoForma alto={medida.toqueMinimo + 8} capsula sobreVerde />
+          </View>
+        </Esqueleto>
       </ScrollView>
     </View>
   )

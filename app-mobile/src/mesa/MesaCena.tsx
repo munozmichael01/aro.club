@@ -3,7 +3,7 @@ import { useCallback, useState, type ReactNode } from 'react'
 import { Image, Platform, Pressable, StyleSheet, View, type TextStyle } from 'react-native'
 
 import Svg, { Path } from 'react-native-svg'
-import { IconoAPie, IconoCandado, IconoReloj, Texto, fuente } from '../diseno'
+import { HuesoForma, IconoAPie, IconoCandado, IconoReloj, Texto, fuente } from '../diseno'
 import * as G from '../juego/guardado'
 import * as J from '../juego/maquina'
 import { DuosLista } from '../masuno/Partes'
@@ -332,6 +332,72 @@ function TarjetaMesa(p: { d: M.DeServidor; momento: Gu.MomentoCena; mapa: string
       </View>
       {/* Cuánto dura la mesa (Michael, 22-10): en gris y dentro de la tarjeta, como «Al llegar». No es una alarma. */}
       {d.avisoDosHoras ? <Texto style={[texto(13, 1.5), { color: C.secundarioVerde, marginTop: 14 }]}>{d.avisoDosHoras}</Texto> : null}
+    </View>
+  )
+}
+
+// --- El esqueleto de la abierta (entrega carga, 03-11) ------------------------
+
+/**
+ * Mi mesa abierta mientras llega: con los mismos contenedores que la tarjeta
+ * de la mesa y las cajas, para que nada salte. Real: la tarjeta verde, «Al
+ * llegar», los botones apagados y los títulos de cada caja. Hueso: número,
+ * sitio, dirección, la foto y los resúmenes.
+ */
+export function EsqueletoMesaAbierta() {
+  const v = reglas.vozDe('dinner')
+  const sv = true
+  const cajas: { t: string; ancho: `${number}%`; oscura?: boolean }[] = [
+    { t: T.cena.conQuien.titulo(v), ancho: '58%' },
+    { t: T.cena.paso.titulo, ancho: '64%' },
+    { t: TJ.tarjeta.titulo, ancho: '52%', oscura: true },
+  ]
+  return (
+    <View style={{ gap: 12 }}>
+      <View style={e.mesa}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          <HuesoForma alto={26} ancho={88} capsula sobreVerde={sv} />
+          <HuesoForma alto={10} ancho={120} sobreVerde={sv} />
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 16, marginTop: 14 }}>
+          <View>
+            <HuesoForma alto={8} ancho={36} sobreVerde={sv} />
+            <HuesoForma alto={38} ancho={62} sobreVerde={sv} estilo={{ marginTop: 8 }} />
+          </View>
+          <View style={{ flex: 1, minWidth: 0, paddingBottom: 3 }}>
+            <HuesoForma alto={19} ancho="80%" sobreVerde={sv} />
+            <HuesoForma alto={10} ancho="60%" sobreVerde={sv} estilo={{ marginTop: 12 }} />
+          </View>
+        </View>
+        <View style={e.llegada}>
+          <HuesoForma alto={180} curva={0} sobreVerde={sv} />
+          <View style={{ paddingVertical: 11, paddingHorizontal: 13, gap: 8 }}>
+            <Texto style={[e.etiqueta, { fontSize: 10, color: C.acento }]}>{T.cena.alLlegarFoto}</Texto>
+            <HuesoForma alto={10} ancho="78%" sobreVerde={sv} />
+          </View>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+          <View style={[e.botonMesa, { backgroundColor: 'rgba(250,243,228,.16)' }]}>
+            <Texto style={[semi(14), { color: C.cuerpoVerde }]}>{T.abierta.comoLlegar}</Texto>
+          </View>
+          <View style={[e.botonMesa, e.botonTarde, { borderColor: 'rgba(250,243,228,.16)' }]}>
+            <Texto style={[semi(14), { color: C.cuerpoVerde }]}>{T.abierta.vozTarde}</Texto>
+          </View>
+        </View>
+      </View>
+      {cajas.map((c) => (
+        <View key={c.t} style={[e.tarjeta, c.oscura ? { backgroundColor: C.tinta, borderWidth: 0 } : null]}>
+          <View style={e.cabeza}>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Texto style={[serif(21, 1.1, -0.015), { color: c.oscura ? C.crema : C.tinta }]}>{c.t}</Texto>
+              <HuesoForma alto={9} ancho={c.ancho} sobreVerde={c.oscura} estilo={{ marginTop: 9 }} />
+            </View>
+            <View style={[e.chevron, { backgroundColor: c.oscura ? 'rgba(250,243,228,.12)' : '#F2E9D5' }]}>
+              <Texto style={[semi(18), { color: c.oscura ? C.acento : C.tinta }]}>+</Texto>
+            </View>
+          </View>
+        </View>
+      ))}
     </View>
   )
 }

@@ -21,6 +21,9 @@ import { soloDesarrollo } from '../util/soloDesarrollo'
  * +1 (01-11): ?estado=mas-uno|mas-uno-registrado|mas-uno-confirmado|mas-uno-cancelada|mas-uno-pendiente|mas-uno-dentro|mas-uno-abierta.
  * Pasadas (31-10): ?linea=contacto|encuesta (la línea de Próxima), ?pestana=pasadas[&vacia=1],
  * ?cena=c1&contacto=A|B|C|D|E|varias|varias-a|varias-m|nada (la vista de una cena, con su panel).
+ * Carga (entrega carga, 05-11): ?estado=cargando (nunca contesta: esqueleto de la cerrada y, a los 8 s,
+ * «Está tardando…»), caido (500: «Es cosa nuestra…»), lento (1,6 s y luego la abierta, con su fundido).
+ * Con ?pestana=pasadas o ?cena=c1, el mismo estado vale para la lista y para la cena.
  * Catálogo de desarrollo: no se enlaza desde ningún sitio. La forma imita la
  * real (pruebas/mesa-contra-la-api.mjs); las fechas se cuentan desde ahora.
  */
@@ -152,6 +155,9 @@ function Pantalla() {
   const servicio = useMemo((): ReturnType<typeof crearServicioMesa> => ({
     async mesa() {
       if (estado === 'fallo') return { ok: false, error: 'No pudimos cargar tu mesa. Revisa tu conexión e inténtalo otra vez.' }
+      if (estado === 'cargando') return new Promise(() => {})
+      if (estado === 'caido') return { ok: false, error: 'Error del servidor', status: 500 }
+      if (estado === 'lento') await new Promise((ok) => setTimeout(ok, 1600))
       const base = ESTADOS[estado] ?? ABIERTA
       const d: DeServidor = linea
         ? { ...base, senalPasadas: true, pendiente: { tipo: linea === 'encuesta' ? 'encuesta' : 'contacto', mesaId: 'c1', empiezaEn: en(-2 * 24 - 4), zonaHoraria: 'America/Caracas', nombres: ['Andrea'], cierraEn: cierra } }
@@ -198,11 +204,16 @@ function Pantalla() {
     const objeto = (): DeContacto => ({ mesaId: 'c1', eventoId: 'e1', cena: { empiezaEn: en(-2 * 24 - 4), zonaHoraria: 'America/Caracas', formato: 'dinner', zona: 'Chacao' }, misDatos, personas })
     return {
       async lista() {
-        await espera()
+        if (estado === 'cargando') return new Promise(() => {})
+        if (estado === 'caido') return { ok: false, error: 'Error del servidor', status: 500 }
+        if (estado === 'fallo') return { ok: false, error: 'No pudimos cargar tus cenas.' }
+        await (estado === 'lento' ? new Promise((ok) => setTimeout(ok, 1600)) : espera())
         return { ok: true, datos: vacia ? { cenas: [], linea: null, senal: false } : PASADAS }
       },
       async cena() {
-        await espera()
+        if (estado === 'cargando') return new Promise(() => {})
+        if (estado === 'caido') return { ok: false, error: 'Error del servidor', status: 500 }
+        await (estado === 'lento' ? new Promise((ok) => setTimeout(ok, 1600)) : espera())
         return { ok: true, datos: { ...ABIERTA, fase: 'pasada', empiezaEn: en(-2 * 24 - 4), restaurante: 'Cardenal', zonas: ['Chacao'], yaValoro: contacto !== 'nada' } }
       },
       async contacto() {
@@ -220,7 +231,7 @@ function Pantalla() {
         return { ok: true, datos: objeto() }
       },
     }
-  }, [contacto, vacia])
+  }, [contacto, vacia, estado])
   return (
     <MiMesa
       key={estado + (cena ?? '') + (pestana ?? '')}

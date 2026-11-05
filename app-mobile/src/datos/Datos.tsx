@@ -205,11 +205,8 @@ export function Datos(p: {
   const bajada = e.paso === PASO_CORREO ? T.correo.bajada : paso ? paso.bajada(conLead, e.nacimientoDado) : T.fin.bajada(conLead, e.puedeCuenta, cuando)
   const etiquetaPaso =
     e.paso === PASO_CORREO ? T.nav.etiquetaCorreo : e.paso < PASO_FIN ? T.nav.etiquetaPaso(pasosVisibles(e).indexOf(e.paso) + 1, pasosVisibles(e).length) : T.nav.etiquetaCompleto
-  const textoBoton = guardando
-    ? e.paso === PASO_CORREO
-      ? T.nav.unMomento
-      : T.nav.guardando
-    : v.listo
+  // Mientras guarda, el texto se queda y entra el aro (entrega carga): el que dice qué pasa es el lector de pantalla.
+  const textoBoton = v.listo
       ? e.paso === 3
         ? T.nav.terminar
         : T.nav.continuar
@@ -279,7 +276,7 @@ export function Datos(p: {
               </Texto>
             ) : null}
             <Acepto fondo="crema" marcada={acepto} alCambiar={setAcepto} alNormas={p.alNormas} />
-            <Boton texto={guardando ? T.cuenta.creando : clave.lista && !acepto ? A.falta : clave.boton} ancho disabled={!clave.lista || !acepto || guardando} onPress={crearCuenta} />
+            <Boton texto={clave.lista && !acepto ? A.falta : clave.boton} ancho disabled={!clave.lista || !acepto} trabajando={guardando && T.cuenta.creando} onPress={crearCuenta} />
             <Texto variante="nota">{clave.pista}</Texto>
             {errorCuenta ? <Aviso>{errorCuenta}</Aviso> : null}
             {/* Google y Apple: cuando exista /api/auth/nativo (PROPUESTA §g). */}
@@ -450,7 +447,7 @@ export function Datos(p: {
 
           {e.paso < PASO_FIN ? (
             <View style={estilos.acciones}>
-              <Boton texto={textoBoton} disabled={!v.listo || guardando} onPress={siguiente} />
+              <Boton texto={textoBoton} disabled={!v.listo && !guardando} trabajando={guardando && (e.paso === PASO_CORREO ? T.nav.unMomento : T.nav.guardando)} onPress={siguiente} />
               {e.paso > 0 ? <Boton tipo="fantasma" texto={T.nav.atras} onPress={() => poner({ paso: pasoAnterior(e) })} /> : null}
             </View>
           ) : null}

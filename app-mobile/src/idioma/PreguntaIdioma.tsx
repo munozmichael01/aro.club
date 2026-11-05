@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Modal, Pressable, StyleSheet, View, type TextStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { Texto, fuente } from '../diseno'
+import { AroCarga, Texto, fuente } from '../diseno'
 import { api } from '../sesion'
 import * as T from '../texto/idioma'
 
@@ -41,8 +41,17 @@ export function PreguntaIdioma(p: { idioma: string | null; alCerrar: () => void;
           </Texto>
           <Texto style={[texto(16, 1.5), { color: C.cuerpoFuerte, marginTop: 12 }]}>{T.pregunta.cuerpo}</Texto>
           <View style={{ marginTop: 18, gap: 9 }}>
-            <Pressable onPress={si} accessibilityRole="button" style={({ pressed }) => [e.boton, { backgroundColor: C.tinta }, pressed && { opacity: 0.88 }]}>
-              <Texto style={[semi(16), { color: C.crema }]}>{guardando ? T.pregunta.guardando : T.pregunta.si}</Texto>
+            {/* Guardando (entrega carga): el texto se queda y entra el aro a la izquierda. */}
+            <Pressable
+              onPress={si}
+              disabled={guardando}
+              accessibilityRole="button"
+              aria-busy={guardando}
+              accessibilityLabel={guardando ? T.pregunta.guardando : undefined}
+              style={({ pressed }) => [e.boton, { backgroundColor: C.tinta, flexDirection: 'row', gap: 10 }, pressed && !guardando && { opacity: 0.88 }]}
+            >
+              {guardando ? <AroCarga tam={20} sobreVerde /> : null}
+              <Texto style={[semi(16), { color: C.crema }]}>{T.pregunta.si}</Texto>
             </Pressable>
             <Pressable onPress={p.alCerrar} accessibilityRole="button" style={({ pressed }) => [e.boton, e.botonNo, pressed && { backgroundColor: 'rgba(20,52,42,.06)' }]}>
               <Texto style={[semi(16), { color: C.tinta }]}>{T.pregunta.no}</Texto>

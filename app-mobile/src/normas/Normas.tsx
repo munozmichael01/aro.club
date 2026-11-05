@@ -53,7 +53,7 @@ export function Normas(p: { alVolver?: () => void; aceptar?: { alAceptar: () => 
         <View style={{ marginTop: 28, gap: 16 }}>
           <Acepto fondo="crema" marcada={marcada} alCambiar={setMarcada} />
           {a.fallo ? <Aviso tono="ojo">{a.fallo}</Aviso> : null}
-          <Boton texto={a.aceptando ? T.puerta.guardando : marcada ? T.puerta.continuar : T.acepto.falta} ancho onPress={a.alAceptar} apagado={!marcada || a.aceptando} />
+          <Boton texto={marcada ? T.puerta.continuar : T.acepto.falta} ancho onPress={a.alAceptar} trabajando={!!a.aceptando && T.puerta.guardando} apagado={!marcada} />
         </View>
       ) : (
         <View style={{ marginTop: 28 }}>

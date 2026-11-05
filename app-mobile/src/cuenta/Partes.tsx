@@ -291,6 +291,8 @@ const MARCAS: Record<string, { tinta: string; fondo: string }> = {
 type PropsFecha = {
   f: FilaAgenda
   textoReservar: (precio: string) => string
+  /** Apartando: el aro en el botón, con lo que oye el lector de pantalla. */
+  reservando?: string | false
   /** `aceptaCondiciones`: la casilla del aviso de una +1 (01-11). */
   alConfirmar: (aceptaCondiciones?: boolean) => void
   /** Le alcanzan los créditos para ESTA fecha (dos en una +1). */
@@ -434,6 +436,7 @@ function HojaFecha(p: PropsFecha & { alCerrar: () => void }) {
           // Sin créditos, el aviso del +1 sale en Pago (2B): allí se aparta.
           onPress={() => (f.masUno && p.conCredito ? setAviso(true) : p.alConfirmar())}
           apagado={cierre.cerrada || (f.graba && p.pidePermiso && !p.permiso)}
+          trabajando={p.reservando}
         />
       )}
       {/* Lo que antes iba en la nota del precio (c21f168): cuándo recuperas el crédito. */}
@@ -519,6 +522,7 @@ export function Agenda(p: {
   grupos: { semana: string; filas: FilaAgenda[] }[]
   abierta: string | null
   textoReservar: (precio: string, graba: boolean) => string
+  reservando?: string | false
   fallo: string
   /** Con crédito: el permiso de grabación se pide en la tarjeta. */
   pidePermiso: boolean
@@ -585,6 +589,7 @@ export function Agenda(p: {
           key={abierta.id}
           f={abierta}
           textoReservar={(precio) => p.textoReservar(precio, abierta.graba)}
+          reservando={p.reservando}
           fallo={p.fallo}
           pidePermiso={p.pidePermiso}
           permiso={p.permiso}

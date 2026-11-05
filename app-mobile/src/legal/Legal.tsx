@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Linking, Pressable, ScrollView, StyleSheet, View, type TextStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { AroCarga, Aviso, Boton, IconoAtras, Marca, Texto, fuente } from '../diseno'
+import { Boton, Entra, Esqueleto, Hueso, HuesoForma, IconoAtras, Marca, SinRespuesta, Tarda, Texto, fuente, useTarda, useUmbral } from '../diseno'
 import * as T from '../texto/legal'
 import * as M from './maquina'
 
@@ -15,6 +15,7 @@ export function Legal(p: { doc: M.Doc | null; cargar: () => Promise<M.DeServidor
   const insets = useSafeAreaInsets()
   const [d, setD] = useState<M.DeServidor | null>(null)
   const [fallo, setFallo] = useState(false)
+  const [reintentando, setReintentando] = useState(false)
   const scroll = useRef<ScrollView>(null)
   const ys = useRef<Partial<Record<M.Doc, number>>>({})
   const colocado = useRef(false)
@@ -28,6 +29,16 @@ export function Legal(p: { doc: M.Doc | null; cargar: () => Promise<M.DeServidor
   useEffect(() => {
     leer()
   }, [leer])
+  const reintentar = async () => {
+    setReintentando(true)
+    await leer()
+    setReintentando(false)
+  }
+
+  // Entrega carga (03-11): nada los primeros 0,4 s; luego el esqueleto, y a los 8 s «Está tardando…».
+  const esperando = !d && !fallo
+  const esqueleto = useUmbral(esperando)
+  const tarda = useTarda(esperando)
 
   // Se coloca en su sección cuando ya se midió, una sola vez.
   const medida = (k: M.Doc, y: number) => {
@@ -52,20 +63,20 @@ export function Legal(p: { doc: M.Doc | null; cargar: () => Promise<M.DeServidor
     </View>
   )
 
-  if (!d) {
+  if (!d || esqueleto) {
     return (
       <View style={{ flex: 1, backgroundColor: C.crema }}>
         {cabeza}
-        <View style={e.centro}>
-          {fallo ? (
-            <View style={{ gap: 14, alignSelf: 'stretch' }}>
-              <Aviso tono="ojo">{T.noCargo}</Aviso>
-              <Boton tipo="secundario" texto={T.reintentar} onPress={leer} />
+        {fallo && !esqueleto ? (
+          // `cargar` no dice si fue la red o el servidor: la frase de la red, que es la que pide algo a la persona.
+          <View style={e.centro}>
+            <View style={{ alignSelf: 'stretch' }}>
+              <SinRespuesta que={T.que} alReintentar={reintentar} reintentando={reintentando} />
             </View>
-          ) : (
-            <AroCarga tam={28} />
-          )}
-        </View>
+          </View>
+        ) : esqueleto ? (
+          <EsqueletoLegal tarda={tarda ? <Tarda alReintentar={reintentar} /> : null} />
+        ) : null}
       </View>
     )
   }
@@ -81,6 +92,8 @@ export function Legal(p: { doc: M.Doc | null; cargar: () => Promise<M.DeServidor
           </Pressable>
         ))}
       </View>
+      {/* El fundido envuelve el ScrollView, no su contenido: las secciones miden su `y` dentro de él. */}
+      <Entra estilo={{ flex: 1 }}>
       <ScrollView ref={scroll} contentContainerStyle={[e.pagina, { paddingBottom: insets.bottom + 48 }]}>
         <Texto accessibilityRole="header" style={serif(32, 1.02, -0.035)}>
           {d.cabecera.titulo}
@@ -170,7 +183,50 @@ export function Legal(p: { doc: M.Doc | null; cargar: () => Promise<M.DeServidor
           <Texto style={[texto(14, 1.65), { color: C.nota }]}>{d.pie}</Texto>
         </View>
       </ScrollView>
+      </Entra>
     </View>
+  )
+}
+
+/**
+ * El esqueleto de Legal (entrega carga, 03-11): el índice de las tres
+ * secciones es fijo y va real; el titular, la bajada y las reglas vienen de
+ * `/api/legal` y van en hueso, con la medida de cada línea.
+ */
+function EsqueletoLegal({ tarda }: { tarda?: ReactNode }) {
+  return (
+    <>
+      <View style={e.indice}>
+        {M.DOCS.map((k) => (
+          <View key={k} style={e.pastilla}>
+            <Texto style={[media(13), { color: C.cuerpo }]}>{T.indice[k]}</Texto>
+          </View>
+        ))}
+      </View>
+      <ScrollView contentContainerStyle={e.pagina}>
+        <Esqueleto etiqueta={T.cargando}>
+          {tarda}
+          <HuesoForma alto={24} ancho="80%" estilo={{ marginVertical: 4 }} />
+          <HuesoForma alto={24} ancho="50%" estilo={{ marginVertical: 4 }} />
+          <Hueso variante="cuerpoGrande" lineas={3} ultima="60%" estilo={{ marginTop: 16 }} />
+          <View style={e.seccion}>
+            <HuesoForma alto={8} ancho={120} estilo={{ marginVertical: 3 }} />
+            <HuesoForma alto={21} ancho="70%" estilo={{ marginTop: 16, marginBottom: 4 }} />
+            <View style={{ gap: 10, marginTop: 26 }}>
+              {[0, 1, 2].map((i) => (
+                <View key={i} style={e.regla}>
+                  <HuesoForma alto={30} redondo estilo={{ marginTop: 2 }} />
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <HuesoForma alto={14} ancho="60%" estilo={{ marginVertical: 4 }} />
+                    <Hueso variante="cuerpo" lineas={2} ultima="70%" estilo={{ marginTop: 7 }} />
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        </Esqueleto>
+      </ScrollView>
+    </>
   )
 }
 

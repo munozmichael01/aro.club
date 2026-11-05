@@ -6,7 +6,8 @@ import type { crearServicioReembolso } from '../reembolso/servicio'
 import { soloDesarrollo } from '../util/soloDesarrollo'
 
 /**
- * El reembolso con un servidor simulado: /catalogo-reembolso?estado=pedir|pendiente|hecho&tasa=1
+ * El reembolso con un servidor simulado: /catalogo-reembolso?estado=pedir|pendiente|hecho|cargando|caido|lento&tasa=1
+ * (la carga, entrega carga: cargando no contesta nunca, caido contesta 500, lento tarda 1,6 s)
  * (tasa=1: el primer envío vuelve con `tasa-cambio`). Catálogo de desarrollo.
  */
 function Pantalla() {
@@ -16,7 +17,12 @@ function Pantalla() {
     const base = { puede: true, estado: null, hasta: new Date(Date.now() + 2 * 86400_000).toISOString(), precio: 10, montoBs: 9931.76, tasa: 993.176 }
     const r = estado === 'pendiente' ? { ...base, puede: false, estado: 'pendiente' } : estado === 'hecho' ? { ...base, puede: false, estado: 'reembolsado', referencia: '004512' } : base
     return {
-      leer: async () => ({ ok: true, datos: { reembolso: r } }),
+      leer: async () => {
+        if (estado === 'cargando') return new Promise(() => {})
+        if (estado === 'caido') return { ok: false, error: 'Error del servidor', status: 500 }
+        if (estado === 'lento') await new Promise((ok) => setTimeout(ok, 1600))
+        return { ok: true, datos: { reembolso: r } }
+      },
       pedir: async (c) => {
         console.log('[catálogo] reembolso', c)
         await new Promise((ok) => setTimeout(ok, 600))

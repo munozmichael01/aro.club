@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native'
 
-import { Marca, Texto, color, fuente, medida, radio, tinta } from '../diseno'
+import { AroCarga, Marca, Texto, color, fuente, medida, radio, tinta } from '../diseno'
 import * as T from '../texto/cuenta'
 
 /**
@@ -24,9 +24,18 @@ export function Cabecera(p: { esOps?: boolean; saliendo: boolean; alOperacion?: 
               </Texto>
             </Pressable>
           ) : null}
-          <Pressable onPress={p.alSalir} disabled={p.saliendo} accessibilityRole="button" style={estilos.salir}>
+          {/* Saliendo (entrega carga): el texto se queda y entra el aro; «Cerrando…» lo oye el lector. */}
+          <Pressable
+            onPress={p.alSalir}
+            disabled={p.saliendo}
+            accessibilityRole="button"
+            aria-busy={!!p.saliendo}
+            accessibilityLabel={p.saliendo ? T.nav.saliendo : undefined}
+            style={[estilos.salir, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}
+          >
+            {p.saliendo ? <AroCarga tam={20} /> : null}
             <Texto variante="cuerpoChico" tono="secundario" style={{ fontFamily: fuente.textoMedia }}>
-              {p.saliendo ? T.nav.saliendo : T.nav.salir}
+              {T.nav.salir}
             </Texto>
           </Pressable>
         </View>

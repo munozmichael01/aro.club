@@ -83,7 +83,8 @@ export function Puerta(p: {
   const [faltaCasilla, setFaltaCasilla] = useState(false)
   const [ver, setVer] = useState(false)
   const [aviso, setAviso] = useState('')
-  const [trabajando, setTrabajando] = useState(false)
+  /** Qué está trabajando: el aro va en ESE botón (entrega carga). */
+  const [trabajando, setTrabajando] = useState<false | 'menor' | 'clave' | 'apple' | 'google'>(false)
   const recuperado = useRef(false)
   const hoy = useRef(new Date()).current
 
@@ -184,7 +185,7 @@ export function Puerta(p: {
   /** «Sí, es mi fecha»: con sesión, el servidor cierra la cuenta (35ff9bc). Sin sesión no se llega aquí: la puerta local no deja seguir. */
   const cerrarMenor = async () => {
     if (trabajando) return
-    setTrabajando(true)
+    setTrabajando('menor')
     setAviso('')
     const cerrada = await servicio.cerrarMenor(M.nacimientoISO({ respuestas: {}, nacimiento: nac }, hoy))
     setTrabajando(false)
@@ -218,7 +219,7 @@ export function Puerta(p: {
 
   const conProveedor = async (x: 'apple' | 'google') => {
     if (trabajando) return
-    setTrabajando(true)
+    setTrabajando(x)
     setAviso('')
     const r = await p.conProveedor(x)
     setTrabajando(false)
@@ -232,7 +233,7 @@ export function Puerta(p: {
     if (trabajando || !reglas.valido('correo', c) || clave.length < 8 || clave !== clave2) return
     // La casilla no apaga el botón: sin marcarla, el error sale junto a ella (como la web).
     if (!acepto) return setFaltaCasilla(true)
-    setTrabajando(true)
+    setTrabajando('clave')
     setAviso('')
     const r = await servicio.crearCuenta(c, clave, T.cuenta.noCreada)
     // «Ya tiene cuenta» llega de dos formas: un 409 con ese texto literal, o
@@ -343,7 +344,7 @@ export function Puerta(p: {
             {aviso ? <AvisoAcceso texto={aviso} /> : null}
             <View style={estilos.acciones}>
               <Boton tipo="sobreVerde" texto={MC.no} onPress={() => setNac((x) => ({ ...x, anio: '' }))} />
-              <Boton tipo="fantasmaSobreVerde" texto={MC.si} apagado={trabajando} onPress={cerrarMenor} />
+              <Boton tipo="fantasmaSobreVerde" texto={MC.si} trabajando={trabajando === 'menor'} onPress={cerrarMenor} />
             </View>
           </View>
         ) : (
@@ -377,8 +378,8 @@ export function Puerta(p: {
         </Texto>
         {/* Apple y Google como iguales, y la contraseña debajo (nota de Design). */}
         <View style={{ gap: 10, marginTop: 26 }}>
-          {p.hayProveedor('apple') ? <Proveedor texto={TE.apple} logo={<LogoApple />} onPress={() => conProveedor('apple')} /> : null}
-          {p.hayProveedor('google') ? <Proveedor texto={TE.google} logo={<LogoGoogle />} onPress={() => conProveedor('google')} /> : null}
+          {p.hayProveedor('apple') ? <Proveedor texto={TE.apple} logo={<LogoApple />} trabajando={trabajando === 'apple'} onPress={() => conProveedor('apple')} /> : null}
+          {p.hayProveedor('google') ? <Proveedor texto={TE.google} logo={<LogoGoogle />} trabajando={trabajando === 'google'} onPress={() => conProveedor('google')} /> : null}
           {p.hayProveedor('apple') || p.hayProveedor('google') ? (
             <Texto variante="cuerpoChico" tono="sobreVerdeSecundario" style={{ marginTop: 4, marginHorizontal: 6 }}>
               {T.cuenta.notaProveedores(proveedores(p.hayProveedor('apple'), p.hayProveedor('google')))}
@@ -439,13 +440,8 @@ export function Puerta(p: {
           {errorClave2 ? <ErrorCampo texto={errorClave2} /> : null}
           <Acepto fondo="verde" marcada={acepto} alCambiar={(v) => (setAcepto(v), setFaltaCasilla(false))} error={faltaCasilla ? T.cuenta.marcaCasilla : undefined} />
           {/* Secundario con borde: Apple y Google ya son los botones crema, y tres primarios en la misma vista no dicen cuál toca (entrega «acceso»). */}
-          <Boton tipo="secundarioSobreVerde" ancho texto={textoClave} apagado={!listoClave || trabajando} onPress={conClave} />
+          <Boton tipo="secundarioSobreVerde" ancho texto={textoClave} apagado={!listoClave} trabajando={trabajando === 'clave'} onPress={conClave} />
         </View>
-        {trabajando ? (
-          <View style={{ marginTop: 16 }}>
-            <AroCarga tam={20} sobreVerde />
-          </View>
-        ) : null}
         {aviso ? <AvisoAcceso texto={aviso} /> : null}
         {/* «Ya tengo cuenta · Entrar» se va: lo hace el selector de arriba. */}
         <Boton tipo="fantasmaSobreVerde" texto={T.quiz.atras} onPress={() => setFase('nacimiento')} />

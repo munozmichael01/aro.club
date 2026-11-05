@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle } from 'react-native-svg'
 
-import { AroCarga, Aviso, Boton, IconoCheck, Texto, color, fuente, tinta } from '../diseno'
+import { Aviso, Boton, Entra, Esqueleto, Hueso, HuesoForma, IconoCheck, SinRespuesta, Tarda, Texto, color, fuente, tinta, useTarda, useUmbral } from '../diseno'
 import { reglas } from '../reglas'
+import * as TM from '../texto/masuno'
 import { SinSesion, type crearApi } from '../sesion/api'
 import { guardar } from '../sesion/traido'
 import { AroDuo } from './Partes'
@@ -25,9 +26,16 @@ type Yo = { nombre: string | null; verificada: boolean } | null
 
 export function crearServicioInvitacion(api: Api) {
   return {
-    async ver(token: string): Promise<{ inv: DeInvitacion | null; yo: Yo }> {
+    /**
+     * `caida`: la invitación no llegó por la red o porque el servidor falló
+     * (5xx). Sin esto, un corte se pintaba como «esta invitación ya se usó».
+     * Un 404 sí es «no existe» y va a 5C, como siempre.
+     */
+    async ver(token: string): Promise<{ inv: DeInvitacion | null; yo: Yo; caida?: { servidor: boolean } | null }> {
       const r = await api.pedir('/mas-uno?token=' + encodeURIComponent(token)).catch(() => null)
-      const inv = r?.ok ? ((await r.json().catch(() => null)) as DeInvitacion | null) : null
+      if (!r) return { inv: null, yo: null, caida: { servidor: false } }
+      if (r.status >= 500) return { inv: null, yo: null, caida: { servidor: true } }
+      const inv = r.ok ? ((await r.json().catch(() => null)) as DeInvitacion | null) : null
       let yo: Yo = null
       try {
         const c = await api.pedir('/mi-cuenta')
@@ -65,7 +73,8 @@ const NARANJA_OSCURO = '#C0662F'
 export function Invitacion(p: { token: string; servicio: Servicio; ir: (d: string) => void }) {
   const insets = useSafeAreaInsets()
   const I = reglas.MAS_UNO.invitado
-  const [d, setD] = useState<{ inv: DeInvitacion | null; yo: Yo } | null>(null)
+  const [d, setD] = useState<{ inv: DeInvitacion | null; yo: Yo; caida?: { servidor: boolean } | null } | null>(null)
+  const [reintentando, setReintentando] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [aceptada, setAceptada] = useState(false)
   const [fallo, setFallo] = useState('')
@@ -79,16 +88,33 @@ export function Invitacion(p: { token: string; servicio: Servicio; ir: (d: strin
     if (d?.inv?.estado === 'tuya' || d?.inv?.estado === 'aceptada') p.ir('/mesa')
   }, [d, p])
 
-  if (!d) {
+  const pagina = { paddingTop: insets.top + 44, paddingBottom: insets.bottom + 28 }
+  // Entrega carga (03-11): nada los primeros 0,4 s; luego el esqueleto, y a los 8 s «Está tardando…».
+  const esperando = !d
+  const esqueleto = useUmbral(esperando)
+  const tarda = useTarda(esperando)
+  const reintentar = async () => {
+    setReintentando(true)
+    setD(await p.servicio.ver(p.token))
+    setReintentando(false)
+  }
+
+  if (!d || esqueleto) {
     return (
-      <View style={{ flex: 1, backgroundColor: color.crema, justifyContent: 'center' }}>
-        <AroCarga tam={40} />
-      </View>
+      <ScrollView style={{ backgroundColor: color.crema }} contentContainerStyle={[e.pagina, pagina, { flexGrow: 1, gap: 16 }]}>
+        {esqueleto ? <EsqueletoInvitacion tarda={tarda ? <Tarda alReintentar={reintentar} /> : null} /> : null}
+      </ScrollView>
+    )
+  }
+  if (d.caida) {
+    return (
+      <ScrollView style={{ backgroundColor: color.crema }} contentContainerStyle={[e.pagina, pagina, { flexGrow: 1, justifyContent: 'center' }]}>
+        <SinRespuesta que={TM.carga.que} servidor={d.caida.servidor} alReintentar={reintentar} reintentando={reintentando} />
+      </ScrollView>
     )
   }
 
   const inv = d.inv
-  const pagina = { paddingTop: insets.top + 44, paddingBottom: insets.bottom + 28 }
 
   // 5C · Usada, cambiada, cerrada, propia o que no existe: sin culpas, con la agenda.
   if (!inv || inv.estado === 'usada' || inv.estado === 'anulada' || inv.estado === 'cerrada' || inv.estado === 'propia') {
@@ -150,6 +176,7 @@ export function Invitacion(p: { token: string; servicio: Servicio; ir: (d: strin
 
   return (
     <ScrollView style={{ backgroundColor: color.crema }} contentContainerStyle={[e.pagina, pagina, { flexGrow: 1, gap: 16 }]}>
+      <Entra estilo={{ flexGrow: 1, gap: 16 }}>
       <AroDuo tam={64} anillo={color.verdeProfundo} resto={color.verdeProfundo} naranjas={NARANJA_OSCURO} punteado={{ relleno: color.crema }} />
       <View style={e.pildora}>
         <Texto style={{ fontFamily: fuente.textoSemi, fontSize: 11, lineHeight: 14, letterSpacing: 1.54, color: color.verdeProfundo }}>{I.sello}</Texto>
@@ -190,7 +217,7 @@ export function Invitacion(p: { token: string; servicio: Servicio; ir: (d: strin
             <Boton texto={d.yo?.verificada ? reglas.MAS_UNO.invitado.agenda : reglas.MAS_UNO.acompanante.verificate('')[0]} ancho onPress={() => p.ir(d.yo?.verificada ? '/mesa' : '/verificacion')} />
           ) : (
             <>
-              <Boton texto={I.aceptar} ancho onPress={aceptar} disabled={enviando} />
+              <Boton texto={I.aceptar} ancho onPress={aceptar} trabajando={enviando} />
               <Boton tipo="fantasma" texto={I.noPuedo} ancho onPress={() => p.ir('/cuenta')} />
             </>
           )
@@ -202,7 +229,41 @@ export function Invitacion(p: { token: string; servicio: Servicio; ir: (d: strin
           </>
         )}
       </View>
+      </Entra>
     </ScrollView>
+  )
+}
+
+/**
+ * El esqueleto de la invitación del +1 (entrega carga, 03-11), con los mismos
+ * contenedores que 5A/5B. Real: el aro del dúo, el sello y «La fecha». Hueso:
+ * quién invita, la fecha, el cuerpo, los pasos y los botones, que cambian con
+ * la cuenta de quien mira.
+ */
+function EsqueletoInvitacion({ tarda }: { tarda?: ReactNode }) {
+  const I = reglas.MAS_UNO.invitado
+  return (
+    <Esqueleto etiqueta={TM.carga.cargando} estilo={{ flexGrow: 1, gap: 16 }}>
+      {tarda}
+      <AroDuo tam={64} anillo={color.verdeProfundo} resto={color.verdeProfundo} naranjas={NARANJA_OSCURO} punteado={{ relleno: color.crema }} />
+      <View style={e.pildora}>
+        <Texto style={{ fontFamily: fuente.textoSemi, fontSize: 11, lineHeight: 14, letterSpacing: 1.54, color: color.verdeProfundo }}>{I.sello}</Texto>
+      </View>
+      <View>
+        <HuesoForma alto={32} ancho="90%" estilo={{ marginVertical: 14 }} />
+        <HuesoForma alto={32} ancho="55%" estilo={{ marginVertical: 14 }} />
+      </View>
+      <View style={e.fecha}>
+        <Texto style={{ fontFamily: fuente.textoNegrita, fontSize: 11, lineHeight: 14, letterSpacing: 1.54, color: '#8F4515' }}>{I.fechaSello}</Texto>
+        <HuesoForma alto={16} ancho="62%" estilo={{ marginVertical: 7 }} />
+        <HuesoForma alto={11} ancho="48%" estilo={{ marginVertical: 4 }} />
+      </View>
+      <Hueso variante="cuerpo" lineas={3} ultima="52%" />
+      <View style={{ gap: 8, marginTop: 'auto' }}>
+        <HuesoForma alto={52} capsula />
+        <HuesoForma alto={44} ancho="50%" capsula estilo={{ alignSelf: 'center' }} />
+      </View>
+    </Esqueleto>
   )
 }
 

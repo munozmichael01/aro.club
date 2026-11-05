@@ -20,7 +20,8 @@ export const preguntar = {
   porQueNota: 'Opcional, y nos sirve de verdad: si el problema es la zona o la hora, lo arreglamos para la próxima.',
   /** El texto ES lo que se guarda (`motivo`): no cambiarlo sin hablar con el servidor. */
   motivos: ['Me surgió algo', 'La zona no me queda bien', 'La hora no me sirve', 'Ya no me apetece', 'Otra cosa'],
-  si: (cancelando: boolean) => (cancelando ? 'Cancelando…' : 'Sí, cancelar mi puesto'),
+  // Mientras cancela, el texto se queda y entra el aro (entrega carga): ya no «Cancelando…».
+  si: 'Sí, cancelar mi puesto',
   mantener: 'Mantener mi puesto',
   noPudimos: 'No pudimos cancelar.',
 }
@@ -46,4 +47,7 @@ export const sinRespuesta = {
   sinReserva: 'No tienes ninguna reserva viva.',
   reintentar: 'Reintentar',
   volver: 'Volver a mi cuenta',
+  /** «No pudimos cargar tu reserva.» (entrega carga): el resto lo pone `reglas.CARGA`. */
+  que: 'tu reserva',
+  cargando: 'Cargando tu reserva',
 }

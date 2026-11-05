@@ -22,7 +22,8 @@ export const elegir = {
   ahora: 'TU FECHA AHORA',
   nuevas: 'ELIGE LA NUEVA',
   enIngles: 'En inglés',
-  boton: (cambiando: boolean) => (cambiando ? 'Cambiando…' : 'Cambiarme a esta fecha'),
+  // Mientras cambia, el texto se queda y entra el aro (entrega carga): ya no «Cambiando…».
+  boton: 'Cambiarme a esta fecha',
   quedarme: 'Quedarme en mi fecha',
   eligeUna: 'Elige una fecha para seguir.',
 }
@@ -42,4 +43,7 @@ export const sinRespuesta = {
   cambiar: 'No pudimos cambiar tu fecha. Vuelve a intentarlo.',
   reintentar: 'Reintentar',
   volver: 'Volver',
+  /** «No pudimos cargar tus fechas.» (entrega carga): el resto lo pone `reglas.CARGA`. */
+  que: 'tus fechas',
+  cargando: 'Cargando tus fechas',
 }

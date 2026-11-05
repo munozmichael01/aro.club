@@ -5,14 +5,14 @@ import Svg, { Circle, Path } from 'react-native-svg'
 import { useUltimo } from '../util/useUltimo'
 import { useFocusEffect } from 'expo-router'
 
-import { Aviso, Boton, Ficha, IconoCheck, Opcion, Texto, color, cremaAlfa, fuente, medida, radio, tinta, verdeAlfa } from '../diseno'
+import { Aviso, Boton, Entra, Esqueleto, Ficha, FranjaSinRed, Hueso, HuesoForma, IconoCheck, Opcion, SinRespuesta, Tarda, Texto, color, cremaAlfa, fuente, medida, radio, tinta, useTarda, useUmbral, verdeAlfa } from '../diseno'
 import { Cabecera } from '../cuenta/Cabecera'
 import { FORMATOS } from '../texto/cuenta'
 import * as F from '../texto/fechas'
 import * as T from '../texto/mesa'
 import * as M from './maquina'
 import * as J from '../juego/maquina'
-import { MesaCena } from './MesaCena'
+import { EsqueletoMesaAbierta, MesaCena } from './MesaCena'
 import * as RM from '../reembolso/maquina'
 import * as TR from '../texto/reembolso'
 import { AvisoAjustes, LineaGrabacion, PreguntaGrabacion, useGrabacion } from './Avisos'
@@ -28,7 +28,8 @@ import { CenaPasada } from '../pasadas/CenaPasada'
 import { ListaPasadas, Punto } from '../pasadas/Lista'
 import * as PM from '../pasadas/maquina'
 import { ponerSenal, useSenal } from '../pasadas/senal'
-import { recordar, recuerdo } from '../util/recuerdo'
+import { recordar, recuerdo, recuerdoConHora } from '../util/recuerdo'
+import type { MiCuenta } from '../cuenta/maquina'
 import type { crearServicioPasadas } from '../pasadas/servicio'
 
 type Servicio = ReturnType<typeof crearServicioMesa>
@@ -56,7 +57,21 @@ export function MiMesa(p: {
 }) {
   const insets = useSafeAreaInsets()
   const [d, setD] = useState<M.DeServidor | null>(null)
-  const [fallo, setFallo] = useState('')
+  const dActual = useRef<M.DeServidor | null>(null)
+  dActual.current = d
+  /** No llegó la mesa: por la red, o porque el servidor contestó con error («es cosa nuestra»). */
+  const [caida, setCaida] = useState<{ servidor: boolean } | null>(null)
+  const [reintentando, setReintentando] = useState(false)
+  /** De cuándo es la mesa a la vista: la franja dice esa hora, no la de ahora. */
+  const [desde, setDesde] = useState<number | null>(null)
+  /** Lo que se pinta viene de lo último guardado: entra sin fundido (entrega carga). */
+  const deRecuerdo = useRef(false)
+  /**
+   * La primera vez, sin nada guardado, no sabemos la fase: se toma de la
+   * tarjeta de estado del Inicio si ya llegó (revelada → abierta). Si no, el
+   * esqueleto de la cerrada (entrega carga).
+   */
+  const [supuesta, setSupuesta] = useState<'cerrada' | 'abierta'>('cerrada')
   const [refrescando, setRefrescando] = useState(false)
   const [saliendo, setSaliendo] = useState(false)
   const { servicio } = p
@@ -66,7 +81,8 @@ export function MiMesa(p: {
   const [pestana, setPestana] = useState<'proxima' | 'pasadas'>(p.cena || p.pestana === 'pasadas' ? 'pasadas' : 'proxima')
   const [cenaAbierta, setCenaAbierta] = useState<string | null>(p.cena ?? null)
   const [lista, setLista] = useState<PM.DePasadas | null>(null)
-  const [falloLista, setFalloLista] = useState('')
+  const [caidaLista, setCaidaLista] = useState<{ servidor: boolean } | null>(null)
+  const [reintentandoLista, setReintentandoLista] = useState(false)
   const senal = useSenal()
   const nombreMesa = useNombreMesa()
   const scroll = useRef<ScrollView>(null)
@@ -86,10 +102,10 @@ export function MiMesa(p: {
     const r = await p.pasadas.lista()
     if (r.ok) {
       setLista(r.datos)
-      setFalloLista('')
+      setCaidaLista(null)
       ponerSenal(r.datos.senal)
     } else if (r.status === 401) alEntrar.current()
-    else setFalloLista(r.error)
+    else setCaidaLista({ servidor: r.status !== undefined })
   }, [p.pasadas, alEntrar])
 
   const cargar = useCallback(async () => {
@@ -97,10 +113,11 @@ export function MiMesa(p: {
     if (r.ok) {
       recordar('mi-mesa', r.datos)
       setD(r.datos)
-      setFallo('')
+      setDesde(Date.now())
+      setCaida(null)
       ponerSenal(r.datos.senalPasadas)
     } else if (r.status === 401) alEntrar.current()
-    else setFallo(r.error)
+    else setCaida({ servidor: r.status !== undefined })
   }, [servicio, alEntrar])
 
   useEffect(() => {
@@ -117,7 +134,17 @@ export function MiMesa(p: {
   // se abre a una hora, y quien espera vuelve a mirar.
   // Lo último que se vio, al instante, mientras llega lo nuevo (03-11). Solo si aún no hay nada.
   useEffect(() => {
-    recuerdo<M.DeServidor>('mi-mesa').then((x) => x && setD((d) => d ?? x))
+    recuerdoConHora<M.DeServidor>('mi-mesa').then((x) => {
+      if (x) {
+        // Solo si aún no llegó lo nuevo: el recuerdo nunca pisa la respuesta de ahora.
+        if (dActual.current) return
+        deRecuerdo.current = true
+        setD(x.datos)
+        setDesde(x.t)
+        return
+      }
+      recuerdo<MiCuenta>('mi-cuenta').then((c) => c?.reserva?.revelado && setSupuesta('abierta'))
+    })
   }, [])
 
   useFocusEffect(
@@ -128,17 +155,31 @@ export function MiMesa(p: {
     }, [cargar]),
   )
 
+  const reintentar = async () => {
+    setReintentando(true)
+    await cargar()
+    setReintentando(false)
+  }
+
+  // Entrega carga (03-11): nada los primeros 0,4 s; luego el esqueleto, y a los 8 s «Está tardando…».
+  const esperando = !d && !caida
+  const esqueleto = useUmbral(esperando)
+  const tarda = useTarda(esperando)
+
   let cuerpo: ReactNode
-  if (!d) {
-    cuerpo = fallo ? (
-      <View style={{ gap: 16 }}>
-        <Aviso tono="ojo">{fallo}</Aviso>
-        <Boton tipo="secundario" texto={T.sinRespuesta.reintentar} onPress={() => (setFallo(''), cargar())} />
-      </View>
-    ) : null
+  if (!d || esqueleto) {
+    cuerpo =
+      caida && !esqueleto ? (
+        <SinRespuesta que={T.sinRespuesta.que} servidor={caida.servidor} alReintentar={reintentar} reintentando={reintentando} />
+      ) : esqueleto ? (
+        <Esqueleto etiqueta={T.sinRespuesta.cargando}>
+          {tarda ? <Tarda alReintentar={reintentar} /> : null}
+          {supuesta === 'abierta' ? <EsqueletoMesaAbierta /> : <EsqueletoMesaCerrada />}
+        </Esqueleto>
+      ) : null
   } else {
     const f = M.fase(d)
-    cuerpo =
+    const fase =
       f === 'vacia' ? (
         <Vacia d={d} ir={p.ir} />
       ) : f === 'cerrada' ? (
@@ -151,6 +192,8 @@ export function MiMesa(p: {
       ) : (
         <Pasada d={d} servicio={servicio} ir={p.ir} />
       )
+    // Lo que viene de lo guardado entra sin fundido; lo nuevo, con su fundido de 180 ms.
+    cuerpo = <Entra sinFundido={deRecuerdo.current}>{fase}</Entra>
   }
 
   // Con reserva activa, lo pendiente de una cena pasada en una línea arriba (P1, P2).
@@ -197,7 +240,18 @@ export function MiMesa(p: {
         })}
       </View>
       <View style={{ marginTop: 14 }}>
-        {pestana === 'pasadas' ? <ListaPasadas d={lista} fallo={falloLista} alReintentar={cargarLista} alAbrir={abrirCena} ir={p.ir} /> : proxima}
+        {pestana === 'pasadas' ? <ListaPasadas
+            d={lista}
+            caida={caidaLista}
+            reintentando={reintentandoLista}
+            alReintentar={async () => {
+              setReintentandoLista(true)
+              await cargarLista()
+              setReintentandoLista(false)
+            }}
+            alAbrir={abrirCena}
+            ir={p.ir}
+          /> : proxima}
       </View>
     </>
   )
@@ -213,6 +267,8 @@ export function MiMesa(p: {
           await p.alSalir()
         }}
       />
+      {/* Con lo último que viste: se queda en pantalla y la franja dice de cuándo es. */}
+      {d && caida && desde ? <FranjaSinRed cuando={F.deCuandoEs(desde, Date.now(), d.zonaHoraria)} alReintentar={reintentar} reintentando={reintentando} /> : null}
       <ScrollView
         ref={scroll}
         contentContainerStyle={estilos.pagina}
@@ -491,6 +547,41 @@ function Cerrada({ d, ir, alAbrirse, servicio }: { d: M.DeServidor; ir: (d: stri
   )
 }
 
+/**
+ * Mi mesa cerrada mientras llega (entrega carga, 03-11), con los mismos
+ * contenedores que `Cerrada`. Real: «para que se abra» y «Cancelar mi
+ * puesto», apagado. Hueso: el sello, el titular, la cuenta atrás y la fecha.
+ */
+function EsqueletoMesaCerrada() {
+  return (
+    <View>
+      <HuesoForma alto={32} ancho={178} capsula />
+      <Hueso variante="portada" lineas={2} ultima="58%" estilo={{ marginTop: 14 }} />
+      <Hueso variante="cuerpoGrande" lineas={3} ultima="40%" estilo={{ marginTop: 14 }} />
+      <View style={[estilos.caja, { marginTop: 26 }]}>
+        <HuesoForma alto={34} ancho={190} estilo={{ marginVertical: 10 }} />
+        <Texto variante="cuerpo" style={{ marginTop: 8 }}>
+          {T.cerrada.paraQue}
+        </Texto>
+        <View style={{ height: 1, backgroundColor: tinta(0.12), marginVertical: 18 }} />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 18, rowGap: 6, alignItems: 'center' }}>
+          <HuesoForma alto={17} ancho={120} estilo={{ marginVertical: 7.5 }} />
+          <HuesoForma alto={10} ancho={110} estilo={{ marginVertical: 5.5 }} />
+        </View>
+        <View style={estilos.accionesFecha}>
+          <HuesoForma alto={52} ancho={170} capsula />
+          <View style={{ minHeight: medida.toqueMinimo, justifyContent: 'center' }}>
+            <Texto variante="cuerpoChico" style={{ fontFamily: fuente.textoMedia, textDecorationLine: 'underline', color: color.inerte }}>
+              {T.cancelar}
+            </Texto>
+          </View>
+        </View>
+      </View>
+      <Hueso variante="cuerpo" lineas={2} ultima="66%" estilo={{ marginTop: 20 }} />
+    </View>
+  )
+}
+
 // --- Abierta --------------------------------------------------------------------
 
 function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir: (d: string) => void }) {
@@ -549,7 +640,7 @@ function Abierta({ d, servicio, ir }: { d: M.DeServidor; servicio: Servicio; ir:
             </View>
           ) : null}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 11, alignItems: 'center', marginTop: 18 }}>
-            <Boton texto={T.tarde.avisar(mesa, avisando)} onPress={avisar} apagado={avisando} />
+            <Boton texto={T.tarde.avisar(mesa, false)} onPress={avisar} trabajando={avisando} />
             <Boton tipo="fantasma" texto={T.tarde.cancelar} onPress={() => setTardeAbierto(false)} />
           </View>
         </View>
@@ -920,7 +1011,7 @@ export function Pasada({ d, servicio, ir, sinCabecera }: { d: M.DeServidor; serv
           </View>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginTop: 28 }}>
-            <Boton texto={T.pasada.enviar(enviando, v.falto === null)} onPress={enviar} apagado={!M.puedeEnviar(v) || enviando} />
+            <Boton texto={T.pasada.enviar(false, v.falto === null)} onPress={enviar} apagado={!M.puedeEnviar(v)} trabajando={enviando} />
             <Boton tipo="fantasma" texto={saltando ? T.pasada.saltando : T.pasada.ahoraNo} onPress={saltar} />
           </View>
           {error && !reporteAbierto ? (
@@ -971,7 +1062,7 @@ export function Pasada({ d, servicio, ir, sinCabecera }: { d: M.DeServidor; serv
             <Aviso tono="ojo">{T.reporte.aviso(nombreDe(quien))}</Aviso>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center', marginTop: 18 }}>
-            <Boton tipo="grave" texto={T.reporte.boton(enviando, !!quien, motivo >= 0)} onPress={reportar} apagado={!listoReporte || enviando} />
+            <Boton tipo="grave" texto={T.reporte.boton(false, !!quien, motivo >= 0)} onPress={reportar} apagado={!listoReporte} trabajando={enviando} />
             <Boton tipo="fantasma" texto={T.reporte.cancelar} onPress={() => setReporteAbierto(false)} />
           </View>
           {error ? (

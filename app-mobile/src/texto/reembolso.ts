@@ -8,7 +8,6 @@ export const titulo = 'Te devolvemos tu plaza en bolívares'
 export const bajada = (precio: number) => `Te devolvemos los ${precio} ref de tu plaza por Pago Móvil.`
 export const monto = { antes: 'Vas a recibir ', despues: (precio: number, tasa: string) => ` (${precio} ref a la tasa de hoy, ${tasa}).` }
 export const aviso = 'Al enviarlo, el crédito sale de tu cuenta. No vas a poder usarlo para reservar. Si después quieres volver a una mesa, se paga de nuevo.'
-export const enviando = 'Enviando…'
 export const acuse = {
   titulo: 'Listo, vamos a ello',
   cuerpo: (montoBs: string, telefono: string | null) =>
@@ -22,4 +21,7 @@ export const hecho = {
 export const etiquetas = { tel: 'Teléfono', doc: 'Cédula', banco: 'Banco' }
 export const volver = 'Volver'
 export const sinRespuesta = 'No pudimos cargar tu reembolso. Revisa tu conexión e inténtalo otra vez.'
+/** «No pudimos cargar tu reembolso.» (entrega carga): el resto lo pone `reglas.CARGA`. */
+export const que = 'tu reembolso'
+export const cargando = 'Cargando tu reembolso'
 export const noPudimos = 'No pudimos registrarlo. Vuelve a intentarlo.'

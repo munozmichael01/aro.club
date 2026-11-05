@@ -11,11 +11,17 @@ import {
   Aviso,
   Boton,
   Campo,
+  Entra,
+  Esqueleto,
   Fecha,
+  Hueso,
+  HuesoForma,
   IconoCheck,
   IconoFlecha,
   Marca,
   Selector,
+  SinRespuesta,
+  Tarda,
   Texto,
   color,
   cremaAlfa,
@@ -24,6 +30,8 @@ import {
   radio,
   terracotaAlfa,
   tinta,
+  useTarda,
+  useUmbral,
 } from '../diseno'
 import { usePreguntaAvisos } from '../avisos/PreguntaAvisos'
 import { reglas, type CampoDePago } from '../reglas'
@@ -65,6 +73,11 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   const [recien, setRecien] = useState(false)
   const [metodo, setMetodo] = useState(0)
   const [fallo, setFallo] = useState(evento ? '' : T.sinEvento)
+  /** No llegó el pago: por la red, o el servidor contestó con error («es cosa nuestra»). */
+  const [caida, setCaida] = useState<{ servidor: boolean } | null>(null)
+  const [reintentando, setReintentando] = useState(false)
+  /** Reportando el pago: el aro va en el botón y el formulario se queda a la vista (entrega carga). */
+  const [reportando, setReportando] = useState(false)
   const [copiado, setCopiado] = useState(-1)
   const [rep, setRep] = useState<Record<string, string>>(M.repInicial)
   // El permiso de grabación: en una fecha que se graba, condición para apartar puesto (18-10).
@@ -95,10 +108,22 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
       setD(r.datos)
       setFase(M.faseDeServidor(r.datos, ahora()))
       setMetodo(M.metodoInicial(r.datos))
-      setFallo('')
+      setCaida(null)
     } else if (r.status === 401) alEntrar.current()
-    else setFallo(r.error)
+    else setCaida({ servidor: r.status !== undefined })
   }, [servicio, evento, alEntrar])
+
+  const reintentar = async () => {
+    setReintentando(true)
+    await cargar()
+    setReintentando(false)
+  }
+
+  // Entrega carga (03-11): nada los primeros 0,4 s; luego el esqueleto, y a los 8 s «Está tardando…».
+  const esperando = !!evento && !d && !caida
+  const esqueleto = useUmbral(esperando)
+  const tarda = useTarda(esperando)
+  const aroCaptura = useUmbral(subiendo)
 
   useFocusEffect(
     useCallback(() => {
@@ -182,10 +207,11 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   }
 
   const reportar = async () => {
-    if (!d || !m || !estado?.ok || !permisoOk || fase === 'enviando') return
+    if (!d || !m || !estado?.ok || !permisoOk || reportando) return
     setFallo('')
-    setFase('enviando')
+    setReportando(true)
     const r = await servicio.reportar(M.cuerpoReporte(d, m, rep, captura, permiteGrabacion, entendido))
+    setReportando(false)
     if (!r.ok) {
       if (M.esFechaCerrada(r)) return setFase('cerrada')
       // Se cayó el código entre medias (caducó, se agotó, no era su primera
@@ -211,16 +237,21 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
   }
 
   let cuerpo: ReactNode = null
-  if (!d || !m) {
-    cuerpo = fallo ? (
+  if (!d || !m || esqueleto) {
+    cuerpo = !evento ? (
+      // Sin fecha en el enlace no hay nada que cargar: lo dice y vuelve.
       <View style={{ gap: 16 }}>
         <Aviso tono="ojo">{fallo}</Aviso>
-        {evento ? <Boton tipo="secundario" texto={T.sinRespuesta.reintentar} onPress={() => (setFallo(''), cargar())} /> : null}
         <Boton tipo="fantasma" texto={T.faltaVerificar.volver} onPress={() => p.ir('/cuenta')} />
       </View>
-    ) : (
-      <AroCarga tam={40} />
-    )
+    ) : caida && !esqueleto ? (
+      <View style={{ gap: 16 }}>
+        <SinRespuesta que={T.sinRespuesta.que} servidor={caida.servidor} alReintentar={reintentar} reintentando={reintentando} />
+        <Boton tipo="fantasma" texto={T.faltaVerificar.volver} onPress={() => p.ir('/cuenta')} />
+      </View>
+    ) : esqueleto ? (
+      <EsqueletoPago tarda={tarda ? <Tarda alReintentar={reintentar} /> : null} />
+    ) : null
   } else if (!d.verificada && (fase === 'elegir' || fase === 'datos' || fase === 'reportar')) {
     // Sin verificar no se enseña ni el primer paso: el servidor rechazaría el pago al final.
     cuerpo = (
@@ -238,7 +269,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
     const cab = M.cabecera(d)
     const fila = M.filaDescuento(d)
     cuerpo = (
-      <View>
+      <Entra>
         <Titular>{masUno ? reglas.MAS_UNO.pago.titulo : T.elegir.titulo}</Titular>
         <Bajada>{T.elegir.bajada}</Bajada>
         <View style={[estilos.caja, { marginTop: 26 }]}>
@@ -329,7 +360,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
                     accessibilityLabel={T.cupon.etiqueta}
                   />
                 </View>
-                <Boton texto={permisoOk ? T.cupon.aplicar(aplicando) : masUno && !entendido ? reglas.MAS_UNO.aviso.falta : T.cupon.marcaPermiso} onPress={aplicarCupon} apagado={aplicando || !cupon.trim() || !permisoOk} />
+                <Boton texto={permisoOk ? T.cupon.aplicar : masUno && !entendido ? reglas.MAS_UNO.aviso.falta : T.cupon.marcaPermiso} onPress={aplicarCupon} trabajando={aplicando} apagado={!cupon.trim() || !permisoOk} />
               </View>
 
               {falloCupon ? (
@@ -354,7 +385,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
         <Texto variante="nota" style={{ marginTop: 12 }}>
           {T.elegir.cancelas}
         </Texto>
-      </View>
+      </Entra>
     )
   } else if (fase === 'datos') {
     cuerpo = (
@@ -434,15 +465,16 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
               onPress={adjuntar}
               disabled={subiendo}
               accessibilityRole="button"
+              aria-busy={subiendo}
               style={[estilos.captura, captura ? { borderStyle: 'solid', borderColor: color.verde, backgroundColor: color.cremaElevada } : null]}
             >
               <View style={[estilos.capturaIcono, { backgroundColor: captura ? color.verde : tinta(0.09) }]}>
-                {subiendo ? <AroCarga tam={20} /> : captura ? <IconoCheck color={color.crema} /> : <Texto variante="rotulo" tono="verde" style={{ fontSize: 18 }}>+</Texto>}
+                {aroCaptura ? <AroCarga tam={20} /> : captura ? <IconoCheck color={color.crema} /> : <Texto variante="rotulo" tono="verde" style={{ fontSize: 18 }}>+</Texto>}
               </View>
               <View style={{ flex: 1 }}>
-                <Texto variante="rotulo">{T.reporte.capturaTitulo(subiendo, !!captura)}</Texto>
+                <Texto variante="rotulo">{T.reporte.capturaTitulo(!!captura)}</Texto>
                 <Texto variante="nota" tono="cuerpo" style={{ marginTop: 2 }}>
-                  {T.reporte.capturaNota(subiendo, !!captura, m.capturaObligatoria, m.nombre)}
+                  {T.reporte.capturaNota(!!captura, m.capturaObligatoria, m.nombre)}
                 </Texto>
               </View>
             </Pressable>
@@ -460,26 +492,12 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
             texto={!permisoOk && estado.camposOk ? T.marcaPermiso : T.reporte.boton({ ...estado, manual: m.manual })}
             onPress={reportar}
             apagado={!estado.ok || !permisoOk}
+            trabajando={reportando ? reglas.CARGA.texto.trabajando.apartar : false}
           />
           <Boton tipo="fantasma" texto={T.reporte.verOtraVez} onPress={() => setFase('datos')} />
         </Acciones>
         <Texto variante="nota" tono="cuerpo" style={{ marginTop: 14 }}>
           {T.reporte.nota(m.manual)}
-        </Texto>
-      </View>
-    )
-  } else if (fase === 'enviando') {
-    cuerpo = (
-      <View>
-        <Titular>{T.enviando.titulo(m.manual)}</Titular>
-        <View style={estilos.capsula}>
-          <AroCarga tam={20} />
-          <Texto variante="cuerpoGrande" style={{ fontFamily: fuente.textoMedia }}>
-            {M.montoDe(d, m)} · {m.nombre}
-          </Texto>
-        </View>
-        <Texto variante="cuerpoChico" style={{ marginTop: 16 }}>
-          {T.enviando.noCierres}
         </Texto>
       </View>
     )
@@ -674,6 +692,41 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
 }
 
 // --- Piezas ---------------------------------------------------------------------
+
+/**
+ * El esqueleto de Pago (entrega carga, 03-11), con los mismos contenedores
+ * que «elegir». Real: «Total a pagar», «Cómo pagas» y el aro de cada opción.
+ * Hueso: el titular, el plan, el monto, los métodos y el botón, porque su
+ * texto depende del método.
+ */
+function EsqueletoPago({ tarda }: { tarda?: ReactNode }) {
+  return (
+    <Esqueleto etiqueta={T.sinRespuesta.cargando}>
+      {tarda}
+      <Hueso variante="portada" lineas={2} ancho="88%" ultima="52%" />
+      <View style={[estilos.caja, { marginTop: 22 }]}>
+        <Linea izquierda={<Hueso variante="subtitulo" ancho="70%" />} derecha={<Hueso variante="cuerpoChico" ancho={84} />} />
+        <Separador />
+        <Linea
+          izquierda={<Texto variante="rotulo" style={{ fontSize: 16 }}>{T.elegir.total}</Texto>}
+          derecha={<HuesoForma alto={20} ancho={84} estilo={{ marginVertical: 6 }} />}
+        />
+      </View>
+      <Texto variante="etiqueta" tono="cuerpo" style={{ letterSpacing: 1.9, marginTop: 30, marginBottom: 12 }}>
+        {T.elegir.comoPagas}
+      </Texto>
+      <View style={{ gap: 9 }}>
+        {['62%', '58%', '66%'].map((w) => (
+          <View key={w} style={[estilos.metodo, { borderColor: tinta(0.2) }]}>
+            <View style={[estilos.aro, { borderColor: tinta(0.3) }]} />
+            <Hueso variante="rotulo" ancho={w as `${number}%`} estilo={{ flex: 1 }} />
+          </View>
+        ))}
+      </View>
+      <HuesoForma alto={medida.boton} capsula estilo={{ marginTop: 26 }} />
+    </Esqueleto>
+  )
+}
 
 function Titular({ children }: { children: ReactNode }) {
   return (

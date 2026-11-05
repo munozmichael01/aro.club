@@ -69,16 +69,18 @@ function SelloAviso({ texto }: { texto: string }) {
 }
 
 /** El botón de proveedor: crema, con su logo (los colores de Google son los de su marca). */
-export function Proveedor({ texto, logo, onPress, disabled }: { texto: string; logo: ReactNode; onPress: () => void; disabled?: boolean }) {
+export function Proveedor({ texto, logo, onPress, disabled, trabajando }: { texto: string; logo: ReactNode; onPress: () => void; disabled?: boolean; trabajando?: boolean }) {
+  // Trabajando (entrega carga): el aro de 20 en el sitio del logo, mismo texto, y no responde.
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled}
+      disabled={disabled || trabajando}
       accessibilityRole="button"
+      aria-busy={!!trabajando}
       accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [estilos.proveedor, { backgroundColor: pressed ? color.terracotaSobreVerde : color.crema }, disabled && { opacity: 0.45 }]}
     >
-      {logo}
+      {trabajando ? <AroCarga tam={20} /> : logo}
       <Texto variante="rotulo" tono="tinta">
         {texto}
       </Texto>
@@ -207,7 +209,7 @@ export function Entrar(p: {
           </Texto>
         ) : null}
         <View style={{ marginTop: 22 }}>
-          <Boton tipo="sobreVerde" texto={guardando ? T.relay.guardar(true, true) : T.otroCorreo.continuar} onPress={() => guardarYSeguir(opciones[elegido])} />
+          <Boton tipo="sobreVerde" texto={T.otroCorreo.continuar} trabajando={guardando && T.relay.guardar(true, true)} onPress={() => guardarYSeguir(opciones[elegido])} />
         </View>
       </View>
     )
@@ -234,7 +236,7 @@ export function Entrar(p: {
             autoComplete="email"
             accessibilityLabel={T.relay.etiqueta}
           />
-          <Boton tipo="sobreVerde" ancho texto={T.relay.guardar(guardando, ok)} apagado={!ok || guardando} onPress={() => ok && guardarYSeguir(contacto.trim())} />
+          <Boton tipo="sobreVerde" ancho texto={T.relay.guardar(false, ok)} trabajando={guardando && T.relay.guardar(true, true)} apagado={!ok} onPress={() => ok && guardarYSeguir(contacto.trim())} />
         </View>
         {error ? (
           <Texto variante="cuerpoChico" tono="avisoSobreVerde" style={{ marginTop: 13 }}>

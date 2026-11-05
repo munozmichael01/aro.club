@@ -63,6 +63,9 @@ export const mensaje = (inv: { codigo: string; enlace: string; pct: number } | n
 export const sinRespuesta = {
   cargar: 'No pudimos cargar tu plan. Revisa la conexión y vuelve a intentarlo.',
   reintentar: 'Reintentar',
+  /** «No pudimos cargar tu plan.» (entrega carga): el resto lo pone `reglas.CARGA`. */
+  que: 'tu plan',
+  cargando: 'Cargando tu plan',
 }
 
 /** La hoja «Comparte tu plan» (C1 de «Compartir mi plan»). */

@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View, type TextStyle } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import * as C from '../cuestionario/maquina'
-import { IconoCruz, Texto, fuente } from '../diseno'
+import { AroCarga, IconoCruz, Texto, fuente } from '../diseno'
 import * as T from '../texto/cuenta'
 import * as M from './maquina'
 
@@ -97,8 +97,17 @@ export function PreguntasNuevas(p: {
           </ScrollView>
 
           <View style={e.pie}>
-            <Pressable onPress={guardar} accessibilityRole="button" style={({ pressed }) => [e.guardar, pressed && { opacity: 0.88 }]}>
-              <Texto style={[semi(16), { color: K.crema }]}>{T.preguntasNuevas.guardar(guardando)}</Texto>
+            {/* Guardando (entrega carga): el texto se queda y entra el aro a la izquierda. */}
+            <Pressable
+              onPress={guardar}
+              disabled={guardando}
+              accessibilityRole="button"
+              aria-busy={guardando}
+              accessibilityLabel={guardando ? T.preguntasNuevas.guardar(true) : undefined}
+              style={({ pressed }) => [e.guardar, { flexDirection: 'row', gap: 10 }, pressed && !guardando && { opacity: 0.88 }]}
+            >
+              {guardando ? <AroCarga tam={20} sobreVerde /> : null}
+              <Texto style={[semi(16), { color: K.crema }]}>{T.preguntasNuevas.guardar(false)}</Texto>
             </Pressable>
             <Pressable onPress={cerrar} accessibilityRole="button" style={e.ahoraNo}>
               <Texto style={[media(15), { color: K.nota }]}>{T.preguntasNuevas.ahoraNo}</Texto>
