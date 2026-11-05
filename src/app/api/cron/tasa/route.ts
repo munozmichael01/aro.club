@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { mandarAviso } from '@/lib/avisos-equipo'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -93,11 +94,37 @@ async function actualizar() {
     .maybeSingle()
 
   const anterior = ultima ? Number(ultima.ves_por_ref) : null
-  // Un salto de más del 30% en un día es raro y puede ser la fuente rota.
-  // Se escribe igual —la tasa venezolana ha dado saltos de verdad— pero se
-  // avisa, porque si es un error lo vamos a cobrar.
   const salto =
     anterior && anterior > 0 ? Math.abs(valor - anterior) / anterior : 0
+
+  /**
+   * UN SALTO DE MÁS DEL 30% NO SE ESCRIBE. Se avisa y lo decide una persona.
+   *
+   * Antes se escribía igual, con un aviso en el registro que no leía nadie.
+   * El 05-11 la fuente devolvió 1,006 para el euro —el día anterior era
+   * 999,77, y el dólar seguía en 894,89: no era una reconversión, era la
+   * fuente rota— y durante cuatro horas el puesto de 10 ref se cobró a
+   * 10,06 Bs. Una persona lo pagó así y se le confirmó.
+   *
+   * Si un día el salto es de verdad —una reconversión, una devaluación de
+   * golpe—, la tasa se pone a mano desde operación. Cobrar unas horas con la
+   * de ayer es malo; cobrar con una mil veces menor es regalar el puesto.
+   */
+  if (salto > 0.3) {
+    console.error(`[tasa] salto del ${Math.round(salto * 100)}% respecto a ${anterior}: NO se escribe`, datos)
+    await mandarAviso({
+      asunto: `La tasa del BCV no se actualizó: la fuente da ${valor}`,
+      titulo: 'La fuente de la tasa devolvió un valor raro',
+      parrafos: [
+        `Hoy la fuente da <strong>${valor}</strong> Bs por ref y la última buena es <strong>${anterior}</strong>. Es un salto del ${Math.round(salto * 100)}%, y no se guardó: se sigue cobrando con la última buena.`,
+        'Si el cambio es real, hay que poner la tasa a mano. Si no, no hay que hacer nada: en cuanto la fuente se corrija, la tasa del día entra sola.',
+      ],
+      filas: [],
+      pestana: 'pagos',
+      deRevision: false,
+    }).catch((e) => console.error('[tasa] no se pudo avisar', e))
+    return NextResponse.json({ estado: 'sin-cambios', motivo: 'salto-raro', valor, anterior }, { status: 502 })
+  }
 
   // La fecha que dice la fuente, no "hoy": el BCV publica la tasa que
   // aplica a un día concreto, y guardarla con otra fecha la desplaza.
@@ -114,16 +141,12 @@ async function actualizar() {
     return NextResponse.json({ estado: 'error' }, { status: 500 })
   }
 
-  if (salto > 0.3) {
-    console.warn(`[tasa] salto del ${Math.round(salto * 100)}% respecto a ${anterior}`)
-  }
 
   return NextResponse.json({
     estado: 'actualizada',
     fecha,
     tasa: valor,
     anterior,
-    saltoRaro: salto > 0.3,
   })
 }
 
