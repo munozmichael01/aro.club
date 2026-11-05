@@ -251,8 +251,12 @@ export async function GET(request: Request) {
          * después de abrirse la fecha, así que filtrar por cuándo se creó la
          * mesa dejaría dentro cenas viejas armadas tarde.
          */
+        //
+        // Ni las fechas de prueba (`es_prueba`), que se arman con cuentas
+        // reales para probar el reparto: el martes 20-10 salía en el panel
+        // como una cena con asistencias por marcar (Michael, 05-11).
         (d, h) => admin.from('events').select('id, starts_at, format, zone_slug, restaurant_id')
-          .gte('starts_at', DESDE_QUE_ES_REAL).order('id').range(d, h)),
+          .gte('starts_at', DESDE_QUE_ES_REAL).eq('es_prueba', false).order('id').range(d, h)),
       todasLasFilas<{ id: string; name: string; zone_slug: string | null }>(
         (d, h) => admin.from('restaurants').select('id, name, zone_slug').order('id').range(d, h)),
       todasLasFilas<{ slug: string; name: string }>(

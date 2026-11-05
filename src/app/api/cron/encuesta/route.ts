@@ -128,6 +128,8 @@ async function cerrarAsistencias(admin: ReturnType<typeof createAdminClient>, se
     .select('id')
     .lte('starts_at', limite)
     .gte('starts_at', desdeCuando)
+    // Las fechas de prueba no se cierran solas: no son cenas.
+    .eq('es_prueba', false)
 
   if (!fechas?.length) return { mesas: 0, vinieron: 0, faltaron: 0 }
 

@@ -38,6 +38,21 @@ import type { Database } from '@/lib/supabase/database.types'
  * Y si NADIE respondió, no se escribe nada. Dar por asistido a todo el mundo
  * porque nadie dijo lo contrario sería inventarse el único dato del producto
  * que tiene que ser verdad.
+ *
+ * ## Desde el 05-11: también «vino» pide dos que coincidan
+ *
+ * Michael: «el vino/no vino debería validar con un mínimo de dos personas
+ * que respondan y coincidan en la respuesta». Hasta entonces bastaba UNA
+ * respuesta en la mesa para dar por asistidos a todos los demás: la regla
+ * 2 protegía el «no vino» y dejaba suelto el «vino».
+ *
+ * Ahora, de cada persona hablan los OTROS que respondieron (ella misma no
+ * cuenta sobre sí):
+ *  - **No vino:** al menos `marcasNecesarias(otros)` la marcan ausente
+ *    (la mitad, nunca menos de dos).
+ *  - **Vino:** al menos dos de los otros respondieron sin marcarla.
+ *  - **Si no**, se queda sin decidir y la marca operación. Dos que
+ *    respondieron y no coinciden (uno la marca, otro no) no deciden nada.
  */
 
 /** Las que todavía no dicen si vino o no: son las únicas que se tocan. */
@@ -132,7 +147,8 @@ export async function cerrarAsistenciaDeMesa(
     marcas.set(s.rated_id, (marcas.get(s.rated_id) ?? 0) + 1)
   }
 
-  const hacenFalta = marcasNecesarias(respondieron)
+  /** Hace falta que coincidan al menos dos. */
+  const COINCIDEN = 2
 
   const { data: reservas } = await admin
     .from('bookings')
@@ -145,9 +161,13 @@ export async function cerrarAsistenciaDeMesa(
 
   for (const r of reservas ?? []) {
     if (!(SIN_DECIDIR as readonly string[]).includes(r.status)) continue
-    const falto = (marcas.get(r.profile_id) ?? 0) >= hacenFalta
-    if (falto) faltaron.push(r.id)
-    else vinieron.push(r.id)
+    // Los que hablan de ella son los otros que respondieron.
+    const otros = respondieron - (contestaron.has(r.profile_id) ? 1 : 0)
+    const enContra = marcas.get(r.profile_id) ?? 0
+    const aFavor = otros - enContra
+    if (enContra >= marcasNecesarias(otros)) faltaron.push(r.id)
+    else if (aFavor >= COINCIDEN) vinieron.push(r.id)
+    // Si no, sin decidir: la marca operación.
   }
 
   if (!vinieron.length && !faltaron.length) {
