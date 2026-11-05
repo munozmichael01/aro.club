@@ -2469,10 +2469,48 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       const zona = await zonaDeLaCiudad(admin, evento?.city_slug)
       const cierra = cuandoCierra(evento?.booking_closes_at, zona)
       const yaTiene = await laQueYaTiene(admin, fila.profile_id, fila.event_id, zona)
+
+      /**
+       * TODOS LOS PLANES DE ESA NOCHE QUE LE ENCAJAN, en un solo correo
+       * (Michael, 04-11).
+       *
+       * El cron manda uno por persona y noche, y antes ese uno hablaba solo
+       * de la primera fecha que le encajaba: el viernes 06-11, 28 personas
+       * que podían ir a la cena y a los drinks solo se enteraban de la cena.
+       * Ahora el cron deja en `eventos` todas las que le encajan, y aquí se
+       * leen AL ENVIAR: entre las diez y la hora de salir una puede
+       * cancelarse o cerrarse, y esa ya no se ofrece.
+       *
+       * Con una sola no cambia nada: `planes` queda vacío y la plantilla
+       * pinta lo de siempre.
+       */
+      const ids = Array.isArray(p.eventos) ? (p.eventos as string[]) : []
+      let planes: { plan: string; hora: string }[] = []
+      if (ids.length > 1) {
+        const { data: esas } = await admin
+          .from('events')
+          .select('id, starts_at, format, status, booking_closes_at')
+          .in('id', ids)
+          .order('starts_at')
+        planes = (esas ?? [])
+          .filter((e) => e.status === 'open' && Date.parse(e.booking_closes_at) > Date.now())
+          .map((e) => ({ plan: NOMBRES_DE_FORMATO[e.format ?? ''] ?? 'Plan', hora: horaTexto(e.starts_at) }))
+          .filter((x, i, xs) => xs.findIndex((y) => y.plan === x.plan && y.hora === x.hora) === i)
+        if (planes.length < 2) planes = []
+      }
+      // «cena y drinks», en minúscula porque va en mitad de la frase.
+      const variosMin = planes.length
+        ? planes.map((x) => x.plan.toLowerCase()).reduce((acc, x, i, xs) => (i === 0 ? x : acc + (i === xs.length - 1 ? ' y ' : ', ') + x), '')
+        : ''
+
       return {
         a,
         datos: {
           ...base,
+          planes,
+          varios: planes.length > 0,
+          variosMin,
+          variosTitulo: variosMin.charAt(0).toUpperCase() + variosMin.slice(1),
           zona: zonas[0] ?? '',
           // Para poder decir «ya tienes la cena del viernes 9, esta es otra».
           // Vacio si no tiene ninguna, y entonces la frase no sale.
@@ -2489,7 +2527,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           // Para la push, que no tiene sitio para la frase entera: «Otra
           // cena» o «Otros drinks», por formato. El correo ya lo dice con
           // sus propias palabras.
-          otra: OTRA[evento?.format ?? ''] ?? 'Otra fecha',
+          otra: planes.length ? 'Otra fecha' : (OTRA[evento?.format ?? ''] ?? 'Otra fecha'),
           // Y de qué plan es, como en el de apertura: con trece formatos,
           // «el domingo 25 se cierra mañana» no dice si es un brunch o una
           // cena a una hora rara.

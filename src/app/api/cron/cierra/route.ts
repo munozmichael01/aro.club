@@ -104,6 +104,8 @@ async function avisar(seco: boolean, soloEste?: string | null) {
   if (!eventos?.length) return NextResponse.json({ eventos: 0, encolados: 0, seco })
 
   let encolados = 0
+  let conVarias = 0
+  const porNoche = new Map<string, { perfil: string; eventos: string[]; zonas: string[] }>()
 
   /**
    * A quién ya se le contó ESE DÍA, y no esa fecha.
@@ -265,12 +267,13 @@ async function avisar(seco: boolean, soloEste?: string | null) {
     )
 
     /**
-     * Quien ya tiene el aviso de ESTE DÍA, venga de la fecha que venga.
+     * Quien ya tiene el aviso de ESTE DÍA de una pasada anterior, venga de la
+     * fecha que venga.
      *
-     * El conjunto se va llenando dentro del bucle y también en seco, que es
-     * lo que hace que la pasada en seco cuente lo mismo que escribiría la de
-     * verdad. Si solo se llenara al encolar, la cuenta en seco volvería a
-     * decir 1.509.
+     * Dentro de esta pasada ya no hace falta llenarlo: `porNoche` junta a cada
+     * persona una sola vez por noche, también en seco, que es lo que hace que
+     * la pasada en seco cuente lo mismo que escribiría la de verdad (sin eso
+     * llegó a decir 1.509).
      */
     if (!avisadosDelDia.has(diaDeLaCena)) avisadosDelDia.set(diaDeLaCena, new Set())
     const yaTienen = avisadosDelDia.get(diaDeLaCena)!
@@ -282,26 +285,45 @@ async function avisar(seco: boolean, soloEste?: string | null) {
       if (yaTienen.has(p.id)) continue
       if (yaLesLlegaElResumen.has(p.id)) continue
 
-      // Se apunta ANTES de encolar y también en seco: lo que hace que la
-      // segunda fecha del mismo día no vuelva a contar a esta persona.
-      yaTienen.add(p.id)
-
-      if (seco) {
-        encolados++
-        continue
-      }
-
-      const r = await encolar(
-        { perfil: p.id },
-        'cierra_pronto',
-        { zonas: abiertas },
-        { eventoId: ev.id },
-      )
-      if (r === 'encolado') encolados++
+      // No se encola aquí: se junta. La segunda fecha de la misma noche que
+      // le encaje se suma a SU correo, en vez de perderse (ver abajo).
+      const clave = `${diaDeLaCena}|${p.id}`
+      const suyo = porNoche.get(clave)
+      if (suyo) suyo.eventos.push(ev.id)
+      else porNoche.set(clave, { perfil: p.id, eventos: [ev.id], zonas: abiertas })
     }
   }
 
-  return NextResponse.json({ eventos: eventos.length, encolados, seco })
+  /**
+   * UN correo por persona y noche, con TODOS los planes que le encajan
+   * (Michael, 04-11).
+   *
+   * Ya era uno por noche, pero hablaba solo de la primera fecha que le
+   * encajaba: con dos cenas y unos drinks el viernes 06-11, 28 personas que
+   * podían ir a la cena y a los drinks solo se enteraban de la cena. Ahora
+   * el correo cuelga de la primera —es la que se mira en el índice de «uno
+   * por persona y fecha»— y lleva las demás en `eventos`, que
+   * `correos-datos` lee al enviar.
+   */
+  for (const { perfil, eventos: suyas, zonas } of porNoche.values()) {
+    if (seco) {
+      encolados++
+      if (suyas.length > 1) conVarias++
+      continue
+    }
+    const r = await encolar(
+      { perfil },
+      'cierra_pronto',
+      { zonas, eventos: suyas },
+      { eventoId: suyas[0] },
+    )
+    if (r === 'encolado') {
+      encolados++
+      if (suyas.length > 1) conVarias++
+    }
+  }
+
+  return NextResponse.json({ eventos: eventos.length, encolados, conVarias, seco })
 }
 
 /**
