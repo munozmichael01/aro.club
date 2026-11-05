@@ -14,6 +14,7 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
@@ -66,8 +67,12 @@
 
   <div style="flex:1;max-width:720px;width:100%;margin:0 auto;padding:clamp(22px,4vw,40px) clamp(16px,4vw,28px) 130px">
 
+    <sc-if value="{{ hayVelo }}" hint-placeholder-val="{{ false }}">
+      {{ veloCarga }}
+    </sc-if>
+
     <sc-if value="{{ enPreguntas }}" hint-placeholder-val="{{ true }}">
-      <div style="animation:aro-open 380ms ease both">
+      <div class="aro-entra">
         <h1 style="font:400 clamp(29px,6vw,46px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:16ch;text-wrap:balance">{{ tituloPantalla }}</h1>
         <p style="font:400 clamp(15px,1.5vw,17px)/1.55 'Inter Tight',sans-serif;color:#566A5D;max-width:44ch;margin:12px 0 0;text-wrap:pretty">{{ propositoPantalla }}</p>
 
@@ -256,7 +261,7 @@ class Component extends DCLogic {
     // sola fecha al guardarse. Igual que en la pantalla de datos.
     dia: '', mes: '', anio: '',
     // Lo que el SERVIDOR dice que falta. La pantalla ya no lo deduce.
-    faltan: null, guardando: false, falloGuardar: '', donde: '',
+    faltan: null, guardando: false, falloGuardar: '', donde: '', velo: true,
     /**
      * Si hay algo escrito en la base de esta persona.
      *
@@ -693,6 +698,12 @@ class Component extends DCLogic {
     const q = this._sesion
       ? '?correo=' + encodeURIComponent(this._sesion.correo) + '&token=' + encodeURIComponent(this._sesion.token)
       : '';
+    // El velo (entrega «carga»): mientras no se sabe en qué pantalla
+    // retomas, no se pinta ninguna. Antes se pintaba la primera y saltaba a
+    // la tuya al llegar la respuesta. No se ve antes de 0,4 s y nunca tapa
+    // más de `veloTope`.
+    this._empezo = Date.now();
+    this._tope = setTimeout(() => this.setState({ velo: false }), AroCarga.T.veloTope);
     fetch('/api/cuestionario' + q)
       // 401 y 403 son «no sabemos quién eres», y solo eso. Cualquier otro
       // fallo —un 500, la red— NO lo es: mandaba a identificarse a quien ya
@@ -759,14 +770,25 @@ class Component extends DCLogic {
         } else if (d.pantalla > 0 && !d.completado) {
           est.pantalla = d.pantalla; est.retomada = true;
         }
-        this.setState(est);
+        this.quitarVelo(est);
       })
-      .catch((e) => this.setState(e && e.message === 'sesion'
+      .catch((e) => this.quitarVelo(e && e.message === 'sesion'
         ? { sinSesion: true }
         : { falloGuardar: 'No pudimos cargar tus respuestas. Recarga la página.' }));
   }
 
-  componentWillUnmount() { clearTimeout(this._tEmpleador); }
+  /** Antes de 0,4 s el velo no se vio y se quita ya; si se vio, medio segundo como mínimo. */
+  quitarVelo(est) {
+    const T = AroCarga.T;
+    clearTimeout(this._tope);
+    const pasado = Date.now() - (this._empezo || 0);
+    const falta = pasado < T.umbral ? 0 : T.umbral + T.minimoVisible - pasado;
+    if (falta <= 0) { this.setState(Object.assign({}, est, { velo: false })); return; }
+    this.setState(est);
+    setTimeout(() => this.setState({ velo: false }), falta);
+  }
+
+  componentWillUnmount() { clearTimeout(this._tEmpleador); clearTimeout(this._tope); }
 
   /** La edad que sale de dia/mes/ano, o null si la fecha aun no esta. */
   edadDe() {
@@ -1331,8 +1353,10 @@ class Component extends DCLogic {
     const ultima = this.state.pantalla >= 4;
 
     return {
-      enPreguntas: !fin && !this.state.sinSesion,
-      enCierre: fin && !this.state.sinSesion,
+      enPreguntas: !fin && !this.state.sinSesion && !this.state.velo,
+      hayVelo: !!this.state.velo,
+      veloCarga: AroCarga.velo({ alto: '58vh' }),
+      enCierre: fin && !this.state.sinSesion && !this.state.velo,
       esSinSesion: !!this.state.sinSesion,
       barras,
       // Sin identidad no hay progreso que enseñar: «PANTALLA 1 DE 5» encima

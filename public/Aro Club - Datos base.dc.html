@@ -14,6 +14,7 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
@@ -81,20 +82,9 @@
       que vino a quitar.
     -->
     <sc-if value="{{ cargando }}" hint-placeholder-val="{{ false }}">
-      <div role="status" aria-live="polite" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;min-height:58vh;text-align:center">
-        <div class="aro-gira" aria-hidden="true">
-        <svg width="54" height="54" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="8.6" stroke="rgba(20,52,42,.2)" stroke-width="2.4"></circle>
-          <circle cx="20.6" cy="12" r="2.5" fill="#8F4515"></circle>
-          <circle cx="16.3" cy="19.45" r="2.5" fill="rgba(20,52,42,.48)"></circle>
-          <circle cx="7.7" cy="19.45" r="2.5" fill="rgba(20,52,42,.4)"></circle>
-          <circle cx="3.4" cy="12" r="2.5" fill="rgba(20,52,42,.32)"></circle>
-          <circle cx="7.7" cy="4.55" r="2.5" fill="rgba(20,52,42,.24)"></circle>
-          <circle cx="16.3" cy="4.55" r="2.5" fill="rgba(20,52,42,.16)"></circle>
-        </svg>
-        </div>
-        <span style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#566A5D">Un momento</span>
-      </div>
+      <!-- El velo de carga.js (entrega «carga», 03-11): el aro ya no gira,
+           se llena punto a punto, y no se enseña antes de 0,4 s. -->
+      {{ velo }}
     </sc-if>
 
     <sc-if value="{{ pintar }}" hint-placeholder-val="{{ true }}">
@@ -436,7 +426,7 @@ class Component extends DCLogic {
     const s = this.sesionLead();
     this._lead = (s && s.correo && s.token) ? s : null;
     // El tope del velo. Si la respuesta no llega, se pinta lo que haya.
-    this._tope = setTimeout(() => this.setState({ cargando: false }), 6000);
+    this._tope = setTimeout(() => this.setState({ cargando: false }), AroCarga.T.veloTope);
     // Y cuándo empezó, para que el velo no sea un parpadeo.
     //
     // En el teléfono, sobre datos buenos, `/api/datos-base` contesta en poco
@@ -476,11 +466,15 @@ class Component extends DCLogic {
    * rápida no se convierte en un parpadeo, y una lenta no espera de más.
    */
   quitarVelo(est) {
-    const MINIMO = 500;
+    // Los tiempos de la entrega «carga»: antes de 0,4 s el velo no llegó a
+    // verse y se quita ya; si se vio, se queda al menos medio segundo
+    // desde que apareció (no desde que empezó la espera).
+    const T = AroCarga.T;
     const pasado = Date.now() - (this._empezo || 0);
-    if (pasado >= MINIMO) { this.setState(Object.assign({}, est, { cargando: false })); return; }
+    const falta = pasado < T.umbral ? 0 : T.umbral + T.minimoVisible - pasado;
+    if (falta <= 0) { this.setState(Object.assign({}, est, { cargando: false })); return; }
     this.setState(est);
-    setTimeout(() => this.setState({ cargando: false }), MINIMO - pasado);
+    setTimeout(() => this.setState({ cargando: false }), falta);
   }
 
   /**
@@ -841,6 +835,7 @@ class Component extends DCLogic {
       etiquetaPaso: p === this.PASO_CORREO ? 'TU CORREO' : (p < 4 ? 'PASO ' + (visibles.indexOf(p) + 1) + ' DE ' + visibles.length : 'COMPLETO'),
 
       cargando: !!this.state.cargando,
+      velo: AroCarga.velo({ alto: '58vh' }),
       pintar: !this.state.cargando,
       esCorreo: p === this.PASO_CORREO && !this.state.repetido,
       correo: this.state.correo,

@@ -25,6 +25,7 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
@@ -67,6 +68,10 @@
     <!-- Dentro del navegador de una app, la cámara y el selector de ficheros
          fallan a menudo: se toca «Hacer la foto» y no pasa nada. Quien llega
          desde un post de Instagram se queda ahí y no vuelve. -->
+    <sc-if value="{{ hayVelo }}" hint-placeholder-val="{{ false }}">
+      {{ veloCarga }}
+    </sc-if>
+
     <sc-if value="{{ enApp }}" hint-placeholder-val="{{ false }}">
       <div style="border-radius:22px;background:#FFF8EA;border:1px solid rgba(143,69,21,.34);padding:clamp(16px,2.2vw,22px);margin-bottom:clamp(22px,3vw,30px);animation:aro-open 400ms ease both">
         <div style="display:flex;gap:12px;align-items:flex-start">
@@ -170,7 +175,7 @@
           </sc-if>
           <sc-if value="{{ subiendo }}" hint-placeholder-val="{{ false }}">
             <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(15,42,33,.82)">
-              <span style="width:10px;height:10px;border-radius:999px;background:#FAF3E4;animation:aro-pulso 1.2s ease-in-out infinite"></span>
+              {{ aroSubiendo }}
               <span style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#FAF3E4;margin-top:14px">Subiendo tu foto</span>
             </div>
           </sc-if>
@@ -288,7 +293,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
 class Component extends DCLogic {
-  state = { fase: 'intro', movil: true, toma: 0, tomas: {}, previas: {}, intentos: 0, repetirSolo: null, copiado: false,
+  state = { fase: 'intro', velo: true, movil: true, toma: 0, tomas: {}, previas: {}, intentos: 0, repetirSolo: null, copiado: false,
             subiendo: false, fallo: '', motivo: null,
             celdas: [], ladoQr: 0, traspaso: null,
             // null = todavía no lo sabemos. No es lo mismo que cero, y la
@@ -314,10 +319,17 @@ class Component extends DCLogic {
       this.setState({ fase: 'captura', toma: 0 });
     }
 
+    // El velo (entrega «carga»): mientras no se sabe a qué paso vas, no se
+    // pinta ninguno. Antes salía la intro y saltaba a «en revisión» o a la
+    // foto que faltaba al llegar la respuesta.
+    this._empezo = Date.now();
+    this._tope = setTimeout(() => this.setState({ velo: false }), AroCarga.T.veloTope);
+
     // Quien vuelve no repite lo que ya mando.
     fetch('/api/verificacion' + (t ? '?t=' + encodeURIComponent(t) : ''))
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesion'))))
       .then((d) => {
+        this.quitarVelo();
         if (d.estado === 'revision') { this.setState({ fase: 'revision', faltan: d.faltan, donde: d.donde }); return; }
         if (d.estado === 'rechazada') { this.setState({ fase: 'rechazo', motivo: d.motivo }); return; }
         // Antes se le expulsaba a Mi cuenta. Pero esta pantalla le prometio
@@ -339,6 +351,7 @@ class Component extends DCLogic {
         }
       })
       .catch(() => {
+        this.quitarVelo();
         if (t) { this.setState({ fase: 'captura', fallo: 'Este codigo ya caduco. Vuelve al ordenador y pide uno nuevo.' }); return; }
         // Al login DICIENDO a donde ibas. Sin esto, quien llega desde un correo
       // —«Ver mi reserva», «Sube tu cedula», «Ver mi mesa»— aterriza en el
@@ -391,7 +404,17 @@ class Component extends DCLogic {
     }, 3000);
   }
 
-  componentWillUnmount() { clearInterval(this._vig); }
+  componentWillUnmount() { clearInterval(this._vig); clearTimeout(this._tope); }
+
+  /** Antes de 0,4 s el velo no se vio y se quita ya; si se vio, medio segundo como mínimo. */
+  quitarVelo() {
+    const T = AroCarga.T;
+    clearTimeout(this._tope);
+    const pasado = Date.now() - (this._empezo || 0);
+    const falta = pasado < T.umbral ? 0 : T.umbral + T.minimoVisible - pasado;
+    if (falta <= 0) { this.setState({ velo: false }); return; }
+    setTimeout(() => this.setState({ velo: false }), falta);
+  }
 
   // La camara del telefono, sin app. `capture` la abre directamente:
   // trasera para la cedula, frontal para la selfie. Sin `capture` es el
@@ -494,6 +517,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const f = this.state.fase;
+    const v = !!this.state.velo;
     const movil = this.state.movil;
 
     const explicacion = [
@@ -597,7 +621,7 @@ class Component extends DCLogic {
     return {
       // Ni en «hecha» ni en «revisión»: ahí ya no hay nada que subir y el
       // aviso sería ruido sobre una pantalla que da buenas noticias.
-      enApp: APP !== null && (f === 'intro' || f === 'captura' || f === 'rechazo'),
+      enApp: !v && APP !== null && (f === 'intro' || f === 'captura' || f === 'rechazo'),
       tituloApp: APP
         ? 'Estás en el navegador de ' + APP
         : 'Estás en el navegador de una aplicación',
@@ -629,12 +653,14 @@ class Component extends DCLogic {
         listo();
       },
 
-      esIntro: f === 'intro',
-      esQr: f === 'qr',
-      esCaptura: f === 'captura',
-      esRevision: f === 'revision',
-      esRechazo: f === 'rechazo',
-      esHecha: f === 'hecha',
+      hayVelo: v,
+      veloCarga: AroCarga.velo({ alto: '58vh' }),
+      esIntro: !v && f === 'intro',
+      esQr: !v && f === 'qr',
+      esCaptura: !v && f === 'captura',
+      esRevision: !v && f === 'revision',
+      esRechazo: !v && f === 'rechazo',
+      esHecha: !v && f === 'hecha',
       selloVerde: 'display:inline-flex;align-items:center;min-height:36px;padding:0 15px;border-radius:999px;background:#1B5138;color:#FAF3E4;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.12em;margin-bottom:16px',
       bajadaHecha: 'Lo revisó una persona de nuestro equipo' +
         (this.state.revisadaEl ? ' el ' + this.state.revisadaEl : '') +
@@ -697,7 +723,10 @@ class Component extends DCLogic {
       capturaTitulo: c.titulo,
       capturaAyuda: c.ayuda,
       pistaVisor: c.pista,
-      textoTomar: this.state.subiendo ? 'Subiendo' : c.boton,
+      // El texto del botón no cambia mientras sube (entrega «carga»): ya lo
+      // dice el visor, con el aro en vez del punto que latía.
+      textoTomar: c.boton,
+      aroSubiendo: AroCarga.aro(40, { verde: true }),
       textoToma: c.hecho,
       notaCaptura: c.nota,
       hayToma: hecha,
