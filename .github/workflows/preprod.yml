@@ -1,0 +1,22 @@
+# Lleva a preproducción lo que llega a main.
+#
+# `preprod.aro.club` despliega la rama `preprod`, y esa rama es solo un espejo:
+# nadie trabaja en ella. Por eso se sobrescribe sin mirar. Sin este paso se
+# quedaría atrás de producción, y lo que se prueba ahí dejaría de ser lo que hay.
+name: Preproducción
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  espejo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git push --force origin HEAD:refs/heads/preprod

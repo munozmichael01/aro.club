@@ -1,9 +1,38 @@
-import { type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 
 import { updateSession } from '@/lib/supabase/middleware'
 
+/**
+ * La puerta de preproducción.
+ *
+ * `preprod.aro.club` es un dominio propio, y los dominios propios quedan fuera
+ * de la protección de Vercel: sin esto, cualquiera que lo encontrara podría
+ * darse de alta en un sitio que parece Aro de verdad.
+ *
+ * La variable solo existe en ese entorno. En producción no está y esto no hace
+ * nada, ni siquiera mirar la cabecera.
+ */
+function puertaDePreprod(request: NextRequest): NextResponse | null {
+  const clave = process.env.PREPROD_CLAVE
+  if (!clave) return null
+
+  const esperada = `Basic ${btoa(`aro:${clave}`)}`
+  if (request.headers.get('authorization') === esperada) return null
+
+  return new NextResponse('Preproducción de Aro Club', {
+    status: 401,
+    headers: { 'WWW-Authenticate': 'Basic realm="Aro preprod", charset="UTF-8"' },
+  })
+}
+
 export async function middleware(request: NextRequest) {
-  return updateSession(request)
+  const cerrada = puertaDePreprod(request)
+  if (cerrada) return cerrada
+
+  const respuesta = await updateSession(request)
+  // Que ningún buscador lo guarde, por si la puerta se abre algún día.
+  if (process.env.PREPROD_CLAVE) respuesta.headers.set('X-Robots-Tag', 'noindex, nofollow')
+  return respuesta
 }
 
 export const config = {
