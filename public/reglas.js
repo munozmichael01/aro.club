@@ -3363,8 +3363,7 @@
      *   - no sabemos qué pintar → velo con el aro de 54 y «Un momento»
      *     (solo al arrancar, Datos, Cuestionario y Verificación).
      *
-     * Los textos marcados PENDIENTE los tiene que aprobar Michael; mientras,
-     * van como los entregó Design.
+     * Los textos son los de Design, aprobados por Michael el 05-11.
      */
     CARGA: {
       tiempo: {
@@ -3412,17 +3411,16 @@
       },
       texto: {
         unMomento: 'Un momento',
-        /** PENDIENTE de Michael. */
         tarda: 'Está tardando más de lo normal.',
         reintentar: 'Reintentar',
         /** Pasadas se queda con el suyo. */
         volverAIntentar: 'Volver a intentar',
         noPudimos: function (que) { return 'No pudimos cargar ' + que + '.' },
-        /** Sin red. La segunda frase, PENDIENTE de Michael. */
+        /** Sin red. */
         sinRed: 'Revisa tu conexión e inténtalo otra vez. En cuanto vuelva, lo intentamos solos.',
         /** Error del servidor. */
         esNuestro: 'Es cosa nuestra, no tuya: vuelve a intentarlo en un momento.',
-        /** La franja con datos guardados. PENDIENTE de Michael. `cuando` es «las 3:40 p.m.» o «el lunes 2». */
+        /** La franja con datos guardados. `cuando` es «las 3:40 p.m.» o «el lunes 2». */
         franja: function (cuando) {
           var c = String(cuando || '')
           var fin = /\.$/.test(c) ? '' : '.'
@@ -3431,6 +3429,24 @@
         /** Lo que dice el botón ocupado a un lector de pantalla. El texto visible no cambia. */
         trabajando: {
           apartar: 'Apartando tu puesto',
+          cancelar: 'Cancelando tu puesto',
+          cambiar: 'Cambiando tu fecha',
+          cupon: 'Aplicando tu código',
+          aceptar: 'Aceptando la invitación',
+          reembolso: 'Enviando tu pedido',
+        },
+        /** El «qué» de «No pudimos cargar {qué}.», por pantalla. */
+        que: {
+          inicio: 'tu cuenta',
+          mesa: 'tu mesa',
+          pasadas: 'tus cenas',
+          pago: 'el pago',
+          dentro: 'tu plan',
+          cancelar: 'tu reserva',
+          cambiar: 'tus fechas',
+          masUno: 'tu invitación',
+          legal: 'el texto',
+          reembolso: 'tu reembolso',
         },
       },
     },
