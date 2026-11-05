@@ -15,6 +15,7 @@
 <script src="./support.js"></script>
 <script src="./nav.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 <script src="./compartir.js"></script>
 </head>
 <body>
@@ -91,8 +92,24 @@
 
       <sc-if value="{{ enPasadas }}" hint-placeholder-val="{{ false }}">
         <div class="aro-lista" style="display:flex;flex-direction:column;gap:12px;min-width:0">
+          <!-- Carga (entrega «carga», 03-11): cuatro filas con la medida de
+               una cena pasada, en vez del aro que giraba. -->
           <sc-if value="{{ cargandoPasadas }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;justify-content:center;padding:40px 0"><div style="width:28px;height:28px;border-radius:50%;border:3px solid rgba(20,52,42,.15);border-top-color:#14342A;animation:aro-spin 800ms linear infinite"></div></div>
+            <div aria-busy="true" aria-live="polite" class="aro-tras-umbral" style="display:flex;flex-direction:column;gap:12px">
+              <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">{{ unMomento }}</span>
+              <sc-for list="{{ esqPasadas }}" as="x" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:14px;border-radius:22px;background:#FFFBF0;padding:14px 16px;min-height:76px;box-sizing:border-box">
+                  <div class="aro-hueso" style="flex:none;width:52px;height:52px;border-radius:14px"></div>
+                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                    <div style="padding:3px 0"><div class="aro-hueso" style="height:14px;width:{{ x.a }};border-radius:6px"></div></div>
+                    <div style="padding:2px 0"><div class="aro-hueso" style="height:10px;width:{{ x.b }};border-radius:5px"></div></div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hayFalloPasadas }}" hint-placeholder-val="{{ false }}">
+            {{ bloqueFalloPasadas }}
           </sc-if>
           <sc-if value="{{ pasadasVacia }}" hint-placeholder-val="{{ false }}">
             <div style="border-radius:26px;background:#FFFBF0;padding:clamp(22px,3vw,28px);display:flex;flex-direction:column;gap:12px">
@@ -151,7 +168,7 @@
                 <sc-if value="{{ hayFalloAnterior }}" hint-placeholder-val="{{ false }}">
                   <div role="alert" style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#8F4515">{{ falloAnterior }}</div>
                 </sc-if>
-                <button onClick="{{ guardarAnterior }}" style="{{ estiloGuardarAnterior }}">{{ textoGuardarAnterior }}</button>
+                <button onClick="{{ guardarAnterior }}" style="{{ bAnterior.estilo }}" aria-busy="{{ bAnterior.busy }}">{{ bAnterior.aro }}{{ textoGuardarAnterior }}</button>
               </div>
             </sc-if>
             <sc-if value="{{ hayContacto }}" hint-placeholder-val="{{ false }}">
@@ -194,7 +211,7 @@
                         <div role="alert" style="font:500 14px/1.4 'Inter Tight',sans-serif;color:#8F4515">{{ cFallo }}</div>
                       </sc-if>
                       <div style="display:flex;flex-direction:column;gap:2px">
-                        <button onClick="{{ cCompartir }}" disabled="{{ cNoSePuede }}" style="{{ cEstiloCompartir }}">{{ cTextoCompartir }}</button>
+                        <button onClick="{{ cCompartir }}" disabled="{{ cNoSePuede }}" style="{{ bCompartir.estilo }}" aria-busy="{{ bCompartir.busy }}">{{ bCompartir.aro }}{{ cTextoCompartir }}</button>
                         <button onClick="{{ cPrefieroNo }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;border:none;background:transparent;font:600 15px/1 'Inter Tight',sans-serif;color:#14342A;text-decoration:underline;text-underline-offset:4px;cursor:pointer">{{ cTextoNo }}</button>
                         <sc-if value="{{ cUno }}" hint-placeholder-val="{{ true }}">
                           <div style="text-align:center;font:400 12.5px/1.4 'Inter Tight',sans-serif;color:#456352">{{ cNoSeEntera }}</div>
@@ -303,6 +320,67 @@
           </div>
         </sc-if>
 
+        <!-- Carga de Próxima: sin fase todavía, el esqueleto de la mesa
+             cerrada (entrega «carga»: «Si no, va el esqueleto de la
+             cerrada»). Lo fijo —«para que se abra», «Cancelar mi puesto»
+             apagado— se pinta; lo demás es hueso. No antes de 0,4 s. -->
+        <!-- Abierta: la tarjeta verde con sus huesos en crema; «AL LLEGAR»,
+             «Cómo llegar», «Voy tarde» y los títulos de las cajas, de
+             verdad y apagados. La fase la deja Mi cuenta al cargar. -->
+        <sc-if value="{{ cargandoAbierta }}" hint-placeholder-val="{{ false }}">
+          <div aria-busy="true" aria-live="polite" class="aro-tras-umbral" style="max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px">
+            <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">{{ unMomento }}</span>
+            <div style="border-radius:24px;background:#14342A;padding:18px 18px 16px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div class="aro-hueso verde" style="height:26px;width:88px;border-radius:999px"></div><div class="aro-hueso verde" style="height:10px;width:120px;border-radius:5px"></div></div>
+              <div style="display:flex;align-items:flex-end;gap:16px;margin-top:14px">
+                <div style="flex:none"><div class="aro-hueso verde" style="height:8px;width:36px;border-radius:4px"></div><div class="aro-hueso verde" style="height:38px;width:62px;border-radius:8px;margin-top:8px"></div></div>
+                <div style="flex:1;min-width:0;padding-bottom:3px"><div class="aro-hueso verde" style="height:19px;width:80%;border-radius:6px"></div><div class="aro-hueso verde" style="height:10px;width:60%;border-radius:5px;margin-top:12px"></div></div>
+              </div>
+              <div style="margin-top:14px;border-radius:16px;overflow:hidden;background:#1B5138">
+                <div style="padding:11px 13px;display:flex;flex-direction:column;gap:8px"><div style="font:600 10px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#E39C63">AL LLEGAR</div><div class="aro-hueso verde" style="height:10px;width:78%;border-radius:5px"></div></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+                <span aria-disabled="true" style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;background:rgba(250,243,228,.16);color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif">Cómo llegar</span>
+                <span aria-disabled="true" style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;border:1.5px solid rgba(250,243,228,.16);box-sizing:border-box;color:#C5D8CA;font:600 14px/1 'Inter Tight',sans-serif">Voy tarde</span>
+              </div>
+            </div>
+            <sc-for list="{{ esqCajas }}" as="c" hint-placeholder-count="2">
+              <div style="border-radius:22px;background:#FFF8EA;border:1px solid rgba(20,52,42,.12);display:flex;align-items:center;gap:12px;padding:16px 18px">
+                <div style="flex:1;min-width:0"><div style="font:400 21px/1.1 'Young Serif',Georgia,serif;letter-spacing:-.015em;color:#14342A">{{ c.t }}</div><div class="aro-hueso" style="height:9px;width:{{ c.w }};border-radius:5px;margin-top:9px"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ cargandoMesa }}" hint-placeholder-val="{{ false }}">
+          <div aria-busy="true" aria-live="polite" class="aro-tras-umbral">
+            <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">{{ unMomento }}</span>
+            <div class="aro-hueso" style="height:36px;width:178px;border-radius:999px"></div>
+            <div style="margin-top:14px;max-width:14ch;font:400 clamp(34px,8vw,50px)/1.02 'Young Serif',Georgia,serif">
+              <div style="{{ esq.titulo.caja }}"><div class="aro-hueso" style="{{ esq.titulo.hueso }}"></div></div>
+              <div style="{{ esq.tituloCorto.caja }}"><div class="aro-hueso" style="{{ esq.tituloCorto.hueso }}"></div></div>
+            </div>
+            <div style="margin-top:14px;max-width:44ch;font:400 17px/1.55 'Inter Tight',sans-serif">
+              <div style="{{ esq.bajada.caja }}"><div class="aro-hueso" style="{{ esq.bajada.hueso }}"></div></div>
+              <div style="{{ esq.bajada.caja }}"><div class="aro-hueso" style="{{ esq.bajada.hueso }}"></div></div>
+              <div style="{{ esq.bajadaCorta.caja }}"><div class="aro-hueso" style="{{ esq.bajadaCorta.hueso }}"></div></div>
+            </div>
+            <div style="border-radius:26px;background:#FFFBF0;padding:clamp(20px,3vw,28px);margin-top:clamp(24px,3.4vw,32px)">
+              <div style="{{ esq.cuenta.caja }}"><div class="aro-hueso" style="{{ esq.cuenta.hueso }}"></div></div>
+              <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F;margin-top:8px">para que se abra</div>
+              <div style="height:1px;background:rgba(20,52,42,.12);margin:18px 0"></div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center">
+                <div style="{{ esq.cena.caja }}"><div class="aro-hueso" style="{{ esq.cena.hueso }}"></div></div>
+                <div style="{{ esq.hora.caja }}"><div class="aro-hueso" style="{{ esq.hora.hueso }}"></div></div>
+              </div>
+            </div>
+            <span aria-disabled="true" style="display:inline-block;margin-top:clamp(20px,2.8vw,26px);padding:6px 0;font:500 14px/1.4 'Inter Tight',sans-serif;color:#9DAEA2;text-decoration:underline;text-underline-offset:5px">Cancelar mi puesto</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hayFalloMesa }}" hint-placeholder-val="{{ false }}">
+          {{ bloqueFalloMesa }}
+        </sc-if>
+
         <sc-if value="{{ verFases }}" hint-placeholder-val="{{ true }}">
 
     <!-- 4E · La fecha +1 que el cierre canceló porque el acompañante no se
@@ -359,7 +437,7 @@
     </sc-if>
 
     <sc-if value="{{ esCerrada }}" hint-placeholder-val="{{ false }}">
-      <div id="cerrada" style="animation:aro-open 380ms ease both">
+      <div class="aro-entra" id="cerrada">
         <div style="{{ selloEspera }}">{{ textoEspera }}</div>
         <h1 style="{{ h1 }}">{{ tituloEspera }}</h1>
         <p style="{{ bajada }}">{{ seAbreA }} se abre todo: el sitio, la dirección, tu número de mesa y {{ quienesSon }}.</p>
@@ -493,7 +571,7 @@
          genérico de abajo: lo que esta pantalla cuenta es una cena, con su
          paso a paso y su juego, y una caminata no tiene nada de eso. -->
     <sc-if value="{{ esCenaAbierta }}" hint-placeholder-val="{{ true }}">
-      <div id="cena" style="max-width:440px;margin:0 auto;animation:aro-open 460ms ease both">
+      <div class="aro-entra" id="cena" style="max-width:440px;margin:0 auto">
 
         <sc-if value="{{ hayAjustes }}" hint-placeholder-val="{{ false }}">
           <div style="border-radius:20px;background:#FFF1E4;border:1px solid #E7C9AC;padding:14px 16px;margin-bottom:12px">
@@ -597,7 +675,7 @@
               <div role="alert" style="border-radius:16px;background:rgba(110,52,15,.1);padding:14px 16px;margin-top:14px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#14342A">{{ falloTarde }}</div>
             </sc-if>
             <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:center;margin-top:18px">
-              <button onClick="{{ avisar }}" aria-disabled="{{ avisando }}" style="{{ botonPrimario }}">{{ textoAvisar }}</button>
+              <button onClick="{{ avisar }}" aria-disabled="{{ avisando }}" style="{{ bAvisar.estilo }}" aria-busy="{{ bAvisar.busy }}">{{ bAvisar.aro }}{{ textoAvisar }}</button>
               <button onClick="{{ abrirTarde }}" style="{{ botonFantasma }}">Cancelar</button>
             </div>
           </div>
@@ -814,7 +892,7 @@
     </sc-if>
 
     <sc-if value="{{ esAbiertaGenerica }}" hint-placeholder-val="{{ false }}">
-      <div id="abierta" style="animation:aro-open 460ms ease both">
+      <div class="aro-entra" id="abierta">
 
         <div style="{{ selloAbierto }}">ABIERTO</div>
 
@@ -866,7 +944,7 @@
               <div role="alert" style="border-radius:20px;background:rgba(110,52,15,.1);padding:14px 16px;margin-top:14px;font:400 14px/1.5 'Inter Tight',sans-serif;color:#14342A">{{ falloTarde }}</div>
             </sc-if>
             <div style="display:flex;flex-wrap:wrap;gap:11px;align-items:center;margin-top:18px">
-              <button onClick="{{ avisar }}" aria-disabled="{{ avisando }}" style="{{ botonPrimario }}">{{ textoAvisar }}</button>
+              <button onClick="{{ avisar }}" aria-disabled="{{ avisando }}" style="{{ bAvisar.estilo }}" aria-busy="{{ bAvisar.busy }}">{{ bAvisar.aro }}{{ textoAvisar }}</button>
               <button onClick="{{ abrirTarde }}" style="{{ botonFantasma }}">Cancelar</button>
             </div>
           </div>
@@ -950,7 +1028,7 @@
     </sc-if>
 
     <sc-if value="{{ esPasada }}" hint-placeholder-val="{{ false }}">
-      <div id="pasada" style="animation:aro-open 380ms ease both">
+      <div class="aro-entra" id="pasada">
         <div style="{{ selloEspera }}">{{ selloPasada }}</div>
         <h1 style="{{ h1 }}">¿Qué tal estuvo?</h1>
         <p style="{{ bajada }}">{{ textoAnoche }}</p>
@@ -1063,7 +1141,7 @@
             </div>
 
             <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
-              <button onClick="{{ enviarValoracion }}" aria-disabled="{{ enviarInerte }}" style="{{ botonEnviar }}">{{ textoEnviar }}</button>
+              <button onClick="{{ enviarValoracion }}" aria-disabled="{{ enviarInerte }}" style="{{ bEnviar.estilo }}" aria-busy="{{ bEnviar.busy }}">{{ bEnviar.aro }}{{ textoEnviar }}</button>
               <button onClick="{{ saltarValoracion }}" style="{{ botonFantasma }}">{{ textoSaltar }}</button>
             </div>
             <sc-if value="{{ hayErrorF11 }}" hint-placeholder-val="{{ false }}">
@@ -1127,7 +1205,7 @@
             </div>
 
             <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:18px">
-              <button onClick="{{ enviarReporte }}" aria-disabled="{{ reporteInerte }}" style="{{ botonReportar }}">{{ textoReportar }}</button>
+              <button onClick="{{ enviarReporte }}" aria-disabled="{{ reporteInerte }}" style="{{ bReportar.estilo }}" aria-busy="{{ bReportar.busy }}">{{ bReportar.aro }}{{ textoReportar }}</button>
               <button onClick="{{ abrirReporte }}" style="{{ botonFantasma }}">Cancelar</button>
             </div>
             <sc-if value="{{ hayErrorF11 }}" hint-placeholder-val="{{ false }}">
@@ -1180,8 +1258,8 @@
       </div>
       <div style="margin-top:12px;font:400 16px/1.5 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ grabaCuando }} estamos grabando contenido por la zona. Si dices que no, no te grabamos y no pasa nada: {{ grabaElPlan }} es igual.</div>
       <div style="margin-top:18px;display:flex;flex-direction:column;gap:9px">
-        <button onClick="{{ sePuedeGrabar }}" style="{{ botonGrabaSi }}">{{ textoGrabaSi }}</button>
-        <button onClick="{{ noMeGrabes }}" style="{{ botonGrabaNo }}">{{ textoGrabaNo }}</button>
+        <button onClick="{{ sePuedeGrabar }}" style="{{ bGrabaSi.estilo }}" aria-busy="{{ bGrabaSi.busy }}">{{ bGrabaSi.aro }}{{ textoGrabaSi }}</button>
+        <button onClick="{{ noMeGrabes }}" style="{{ bGrabaNo.estilo }}" aria-busy="{{ bGrabaNo.busy }}">{{ bGrabaNo.aro }}{{ textoGrabaNo }}</button>
       </div>
       <div style="margin-top:12px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">Puedes cambiarlo cuando quieras, también en {{ grabaElPlan }}.</div>
     </div>
@@ -1452,6 +1530,11 @@ class Component extends DCLogic {
     } else {
       this.cargarMesa(null, true);
     }
+    // Al volver la red, se reintenta solo lo que falló.
+    this._red = AroCarga.alVolverLaRed(() => {
+      if (this.state.falloMesa) this.cargarMesa(this.state.pestana === 'pasadas' ? this.state.cenaSel : null, this.state.pestana !== 'pasadas');
+      if (this.state.falloPasadas) this.cargarPasadas(null);
+    });
   }
 
   /**
@@ -1469,10 +1552,12 @@ class Component extends DCLogic {
       .then((r) => {
         // Una cena que no es suya, o que no ha pasado: se queda en la lista.
         if (mesa && r.status === 404) return null;
-        return r.ok ? r.json() : Promise.reject(new Error('sin sesion'));
+        if (r.ok) return r.json();
+        const e = new Error('HTTP ' + r.status); e.status = r.status; throw e;
       })
       .then((d) => {
-        if (!d) { this.setState({ cenaSel: null, datos: null }); return; }
+        if (!d) { this.setState({ cenaSel: null, datos: null, falloMesa: null }); return; }
+        if (this.state.falloMesa) this.setState({ falloMesa: null });
         // Si mientras llegaba se cambió de cena o de pestaña, esto ya no toca.
         if ((mesa || null) !== (this.state.pestana === 'pasadas' ? this.state.cenaSel : null)) return;
         // Confirmada y sin haber visto «Estás dentro»: allí, antes de pintar
@@ -1518,7 +1603,15 @@ class Component extends DCLogic {
           bloqueados: (d.yaBloqueados || []).map((id) => ids.indexOf(id)).filter((k) => k >= 0)
         });
       })
-      .catch(() => { // Al login DICIENDO a donde ibas. Sin esto, quien llega desde un correo
+      .catch((e) => {
+      // Sin red o con un error nuestro NO se va al login (entrega «carga»):
+      // se queda aquí con «No pudimos cargar tu mesa.» y Reintentar. Al
+      // login solo sin sesión (401) o sin perfil (404).
+      if (!(e && (e.status === 401 || e.status === 404))) {
+        this.setState({ falloMesa: AroCarga.motivoDe(e) });
+        return;
+      }
+      // Al login DICIENDO a donde ibas. Sin esto, quien llega desde un correo
       // —«Ver mi reserva», «Sube tu cedula», «Ver mi mesa»— aterriza en el
       // login y ahi se corta el hilo: entra, y acaba en la pantalla de
       // siempre en vez de en lo que venia a ver. Son seis destinos distintos
@@ -1536,6 +1629,7 @@ class Component extends DCLogic {
   }
   componentWillUnmount() {
     clearInterval(this._t);
+    if (this._red) this._red();
   }
 
   // --- Próxima y Pasadas (entrega mi-mesa-pasadas) ----------------------
@@ -1543,10 +1637,10 @@ class Component extends DCLogic {
   /** La lista de Pasadas. Con `abrir`, abre esa cena al llegar. */
   cargarPasadas(abrir) {
     if (!this.state.pasadas) this.setState({ cargandoPasadas: true });
-    return fetch('/api/pasadas')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin pasadas'))))
+    return AroCarga.pedir('/api/pasadas')
+      .then((r) => r.json())
       .then((p) => {
-        this.setState({ pasadas: p, cargandoPasadas: false });
+        this.setState({ pasadas: p, cargandoPasadas: false, falloPasadas: null });
         if (abrir) return this.abrirCena(abrir);
         // En escritorio la cena va a la derecha de la lista: se abre la más
         // reciente para que la columna no quede vacía. En el teléfono, la
@@ -1558,17 +1652,17 @@ class Component extends DCLogic {
           if (primera) this.abrirCena(primera.mesaId);
         }
       })
-      .catch(() => this.setState({ cargandoPasadas: false }));
+      .catch((e) => this.setState({ cargandoPasadas: false, falloPasadas: this.state.pasadas ? null : AroCarga.motivoDe(e) }));
   }
 
   irPestana(t) {
     if (t === this.state.pestana) return;
     if (t === 'pasadas') {
-      this.setState({ pestana: 'pasadas', cenaSel: null, datos: null });
+      this.setState({ pestana: 'pasadas', cenaSel: null, datos: null, falloMesa: null });
       try { history.replaceState(null, '', '/mesa?pasadas=1'); } catch (e) { /* sin historial */ }
       this.cargarPasadas(null);
     } else {
-      this.setState({ pestana: 'proxima', cenaSel: null, seguir: null, datos: null });
+      this.setState({ pestana: 'proxima', cenaSel: null, seguir: null, datos: null, falloMesa: null });
       try { history.replaceState(null, '', '/mesa'); } catch (e) { /* sin historial */ }
       this.cargarMesa(null, false);
     }
@@ -1576,7 +1670,7 @@ class Component extends DCLogic {
 
   /** Abre una cena de Pasadas: su Mi mesa pasada y su «Seguir en contacto». */
   abrirCena(mesaId) {
-    this.setState({ pestana: 'pasadas', cenaSel: mesaId, datos: null, seguir: null, editandoSeguir: false, falloSeguir: null, marcadosSeguir: {}, marcasAnterior: {}, falloAnterior: '' });
+    this.setState({ pestana: 'pasadas', cenaSel: mesaId, datos: null, falloMesa: null, seguir: null, editandoSeguir: false, falloSeguir: null, marcadosSeguir: {}, marcasAnterior: {}, falloAnterior: '' });
     try { history.replaceState(null, '', '/mesa?cena=' + encodeURIComponent(mesaId)); } catch (e) { /* sin historial */ }
     try { window.scrollTo(0, 0); } catch (e) { /* sin scroll */ }
     this.cargarMesa(mesaId, false);
@@ -1921,7 +2015,7 @@ class Component extends DCLogic {
   responderGrabacion(permite) {
     const d = this.state.datos;
     if (!d || !d.eventoId || this.state.guardandoGrabacion) return;
-    this.setState({ guardandoGrabacion: true });
+    this.setState({ guardandoGrabacion: true, grabaElegida: permite });
     fetch('/api/grabacion', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2207,12 +2301,17 @@ class Component extends DCLogic {
 
       // --- «¿Te podemos grabar?» ----------------------------------------
       preguntaGrabacion: !!this.state.preguntaGrabacion,
-      textoGrabaSi: this.state.guardandoGrabacion ? 'Guardando…' : 'Sí, pueden',
-      textoGrabaNo: this.state.guardandoGrabacion ? 'Guardando…' : 'No, gracias',
+      textoGrabaSi: 'Sí, pueden',
+      textoGrabaNo: 'No, gracias',
       botonGrabaSi: 'min-height:54px;border:0;border-radius:999px;background:#14342A;color:#FAF3E4;'
         + 'font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (this.state.guardandoGrabacion ? 'wait' : 'pointer'),
       botonGrabaNo: 'min-height:54px;border:1px solid rgba(20,52,42,.25);border-radius:999px;background:transparent;'
         + 'color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:' + (this.state.guardandoGrabacion ? 'wait' : 'pointer'),
+      // El aro va en el botón que se tocó; el otro, quieto.
+      bGrabaSi: AroCarga.boton(this, AroCarga.estado(this, 'grabaSi', this.state.guardandoGrabacion && this.state.grabaElegida === true),
+        'min-height:54px;border:0;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer', null, { verde: true }),
+      bGrabaNo: AroCarga.boton(this, AroCarga.estado(this, 'grabaNo', this.state.guardandoGrabacion && this.state.grabaElegida === false),
+        'min-height:54px;border:1px solid rgba(20,52,42,.25);border-radius:999px;background:transparent;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer'),
       sePuedeGrabar: () => this.responderGrabacion(true),
       noMeGrabes: () => this.responderGrabacion(false),
       // Cerrar sin elegir no guarda nada: se queda sin contestar, que no es
@@ -2356,6 +2455,8 @@ class Component extends DCLogic {
 
     const f = this.state.fase;
     const fases = ['CERRADA', 'ABIERTA', 'PASADA'];
+    let faseVista = null;
+    if (!this.state.datos) { try { faseVista = window.sessionStorage.getItem('aro-fase-mesa'); } catch (e) { /* sin almacenamiento */ } }
 
     const dt = this.state.datos;
     const cf = dt && dt.cambiarFecha;
@@ -2831,6 +2932,39 @@ class Component extends DCLogic {
       claseMarco: 'aro-ancho' + (enPasadas ? ' aro-amplio' : ''),
       claseGrid: enPasadas ? 'aro-grid-pasadas ' + (cenaSel ? 'aro-con-cena' : 'aro-sin-cena') : '',
       cargandoPasadas: enPasadas && !!this.state.cargandoPasadas,
+      unMomento: AroCarga.texto.unMomento,
+      esqPasadas: [{ a: '62%', b: '44%' }, { a: '54%', b: '50%' }, { a: '68%', b: '40%' }, { a: '50%', b: '46%' }],
+      // Pasadas deja su «Volver a intentar» (entrega «carga»).
+      hayFalloPasadas: enPasadas && !PS && !!this.state.falloPasadas && !this.state.cargandoPasadas,
+      bloqueFalloPasadas: this.state.falloPasadas ? AroCarga.sinRespuesta({
+        que: 'pasadas', motivo: this.state.falloPasadas, textoBoton: AroCarga.texto.volverAIntentar,
+        estado: AroCarga.estado(this, 'reintentandoPasadas'),
+        alReintentar: () => { this.setState({ reintentandoPasadas: true }); this.cargarPasadas(null).then(() => this.setState({ reintentandoPasadas: false })); },
+      }) : null,
+      // Próxima sin fase todavía: el esqueleto de la cerrada.
+      // «Mi mesa sin fase» (entrega «carga»): la fase la deja Mi cuenta al
+      // cargar (sessionStorage `aro-fase-mesa`); sin ella, la cerrada.
+      cargandoMesa: !enPasadas && !dt && !this.state.falloMesa && faseVista !== 'abierta',
+      cargandoAbierta: !enPasadas && !dt && !this.state.falloMesa && faseVista === 'abierta',
+      esqCajas: [{ t: 'Con quién cenas', w: '58%' }, { t: 'Paso a paso', w: '64%' }],
+      esq: {
+        titulo: AroCarga.linea('clamp(34px,8vw,50px)', 1.02, '100%'),
+        tituloCorto: AroCarga.linea('clamp(34px,8vw,50px)', 1.02, '58%'),
+        bajada: AroCarga.linea('17px', 1.55, '100%'),
+        bajadaCorta: AroCarga.linea('17px', 1.55, '40%'),
+        cuenta: AroCarga.linea('clamp(38px,10vw,54px)', 1, '190px'),
+        cena: AroCarga.linea('clamp(20px,2.4vw,24px)', 1.15, '120px'),
+        hora: AroCarga.linea('14px', 1.4, '110px'),
+      },
+      hayFalloMesa: !dt && !!this.state.falloMesa && (!enPasadas || !!cenaSel),
+      bloqueFalloMesa: this.state.falloMesa ? AroCarga.sinRespuesta({
+        que: 'mesa', motivo: this.state.falloMesa,
+        estado: AroCarga.estado(this, 'reintentandoMesa'),
+        alReintentar: () => {
+          this.setState({ reintentandoMesa: true });
+          this.cargarMesa(enPasadas ? cenaSel : null, !enPasadas).then(() => this.setState({ reintentandoMesa: false }));
+        },
+      }) : null,
       pasadasVacia: enPasadas && !!PS && !cenas.length,
       vaciaTitulo: CT.pasadas.vacia.titulo, vaciaBajada: CT.pasadas.vacia.bajada, vaciaBoton: CT.pasadas.vacia.boton,
       filasPasadas: enPasadas ? filasPasadas : [],
@@ -2856,8 +2990,8 @@ class Component extends DCLogic {
         };
       }),
       hayFalloAnterior: !!this.state.falloAnterior, falloAnterior: this.state.falloAnterior,
-      textoGuardarAnterior: this.state.guardandoAnterior ? 'Guardando…'
-        : Object.keys(this.state.marcasAnterior).some((k) => this.state.marcasAnterior[k]) ? CT.cena.preguntaAnterior.guardar : CT.cena.preguntaAnterior.nadie,
+      bAnterior: AroCarga.boton(this, 'guardandoAnterior', 'display:flex;align-items:center;justify-content:center;min-height:52px;border:none;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;margin-top:4px', null, { verde: true }),
+      textoGuardarAnterior: Object.keys(this.state.marcasAnterior).some((k) => this.state.marcasAnterior[k]) ? CT.cena.preguntaAnterior.guardar : CT.cena.preguntaAnterior.nadie,
       estiloGuardarAnterior: 'display:flex;align-items:center;justify-content:center;min-height:52px;border:none;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;margin-top:4px',
       guardarAnterior: () => { if (laCena) this.guardarAnterior(laCena.mesaId, Object.keys(this.state.marcasAnterior).filter((k) => this.state.marcasAnterior[k])); },
       // Las fases de siempre: en Próxima, y en Pasadas solo con una cena abierta.
@@ -3206,7 +3340,7 @@ class Component extends DCLogic {
       // hacer. Lo que hay es dónde y a qué hora se ve la gente.
       selloReserva: esMesa ? 'Reserva a tu nombre' : 'Punto de encuentro',
       notaTarde: 'Se lo decimos a' + (esMesa ? ' la mesa' : 'l grupo') + '. Nadie se queda mirando la puerta.',
-      textoAvisar: this.state.avisando ? 'Avisando…' : ('Avisar a' + (esMesa ? ' la mesa' : 'l grupo')),
+      textoAvisar: 'Avisar a' + (esMesa ? ' la mesa' : 'l grupo'),
       notaCompaneros: 'Todos con identidad verificada. No hay fotos ni apellidos: eso lo cuenta cada quien '
         + (esMesa ? 'en la mesa' : 'sobre la marcha') + ' si quiere.',
       notaBloquear: 'Opcional. No se le avisa a nadie, y no es una queja: si nadie te chocó, déjalo así. Solo deja de salir en ' + VOZ.tu + 's ' + VOZ.unidades + '.',
@@ -3308,9 +3442,7 @@ class Component extends DCLogic {
         : 'Entra en cómo armamos tu próxima mesa.',
       // Ya no exige una respuesta concreta: los cuatro bloques son
       // opcionales. Lo unico que no vale es mandarla entera en blanco.
-      textoEnviar: this.state.enviando
-        ? 'Enviando…'
-        : (this.state.faltaron === null ? 'Dinos si faltó alguien' : 'Enviar'),
+      textoEnviar: this.state.faltaron === null ? 'Dinos si faltó alguien' : 'Enviar',
       // El aspecto sale de LO MISMO que decide si el botón hace algo.
       //
       // Miraba `this.state.valor`, que en esta pantalla no existe —se llama
@@ -3334,6 +3466,10 @@ class Component extends DCLogic {
       reporteInerte: listoReporte ? null : 'true',
       botonPrimarioSuelto: btn('#14342A', '#FAF3E4', 'none', 'margin-top:16px'),
       botonReportar: btn(listoReporte ? '#6E340F' : 'rgba(20,52,42,.12)', listoReporte ? '#FFF8EA' : '#2C4A38', 'none', listoReporte ? '' : 'cursor:not-allowed'),
+      // Los botones que trabajan (entrega «carga»): mismo texto, el aro dentro.
+      bReportar: AroCarga.boton(this, AroCarga.estado(this, 'enviandoReporte', this.state.enviando && !!this.state.reporte), btn(listoReporte ? '#6E340F' : 'rgba(20,52,42,.12)', listoReporte ? '#FFF8EA' : '#2C4A38', 'none', listoReporte ? '' : 'cursor:not-allowed'), null, { verde: true }),
+      bEnviar: AroCarga.boton(this, AroCarga.estado(this, 'enviandoValoracion', this.state.enviando && !this.state.reporte),
+        btn(this.puedeEnviar() ? '#14342A' : 'rgba(20,52,42,.12)', this.puedeEnviar() ? '#FAF3E4' : '#2C4A38', 'none', this.puedeEnviar() ? '' : 'cursor:not-allowed'), null, { verde: true }),
       enviarValoracion: () => this.guardarValoracion(),
       reporteAbierto: this.state.reporte,
       reportado: this.state.reportado,
@@ -3348,7 +3484,7 @@ class Component extends DCLogic {
       // El motivo viaja como texto: es lo que lee la persona de operacion,
       // y un codigo la obligaria a traducirlo con una tabla al lado.
       enviarReporte: () => { if (listoReporte) this.guardarReporte(motivos[this.state.motivo].label); },
-      textoReportar: this.state.enviando ? 'Enviando…' : (listoReporte ? 'Enviar el reporte' : (this.state.quien < 0 ? 'Elige sobre quién' : 'Elige qué pasó')),
+      textoReportar: listoReporte ? 'Enviar el reporte' : (this.state.quien < 0 ? 'Elige sobre quién' : 'Elige qué pasó'),
       errorF11: this.state.errorF11,
       hayErrorF11: !!this.state.errorF11,
 
@@ -3419,6 +3555,7 @@ class Component extends DCLogic {
       selloAbierto: 'display:inline-flex;align-items:center;min-height:38px;padding:0 17px;border-radius:999px;background:#6E340F;color:#FFF8EA;font:600 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.16em',
       pastillaClara: 'display:inline-flex;align-items:center;min-height:38px;padding:0 15px;border-radius:999px;border:1px solid rgba(250,243,228,.3);font:500 14px/1 \'Inter Tight\',sans-serif;color:#FAF3E4',
       botonPrimario: btn('#14342A', '#FAF3E4', 'none'),
+      bAvisar: AroCarga.boton(this, 'avisando', btn('#14342A', '#FAF3E4', 'none'), null, { verde: true }),
       botonBorde: btn('transparent', '#14342A', '1px solid rgba(20,52,42,.26)'),
       botonBordeSuelto: btn('transparent', '#14342A', '1px solid rgba(20,52,42,.26)', 'margin-top:16px'),
       botonFantasma: btn('transparent', '#33513F', 'none', 'font-weight:500;padding:0 10px;text-decoration:underline;text-underline-offset:6px')
@@ -3623,7 +3760,8 @@ class Component extends DCLogic {
       cHayFallo: !!S.falloSeguir, cFallo: S.falloSeguir ? S.falloSeguir.texto : '',
       cNoSePuede: noSePuede,
       cEstiloCompartir: 'display:flex;align-items:center;justify-content:center;min-height:56px;border:none;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 17px/1 \'Inter Tight\',sans-serif;cursor:' + (noSePuede ? 'default' : 'pointer') + ';opacity:' + (noSePuede ? '.5' : '1'),
-      cTextoCompartir: S.guardandoSeguir ? 'Guardando…' : varios ? C.A.compartirCon(marcadas.map((x) => x.nombre), aQuienes.length) : C.A.compartir,
+      bCompartir: AroCarga.boton(this, 'guardandoSeguir', 'display:flex;align-items:center;justify-content:center;min-height:56px;border:none;border-radius:999px;background:#14342A;color:#FAF3E4;font:600 17px/1 \'Inter Tight\',sans-serif;cursor:' + (noSePuede ? 'default' : 'pointer') + ';opacity:' + (noSePuede ? '.5' : '1'), null, { verde: true }),
+      cTextoCompartir: varios ? C.A.compartirCon(marcadas.map((x) => x.nombre), aQuienes.length) : C.A.compartir,
       cCompartir: () => { if (!noSePuede) compartir(marcadas.map((x) => x.id), varios ? aQuienes.filter((x) => !on(x)).map((x) => x.id) : undefined); },
       cTextoNo: varios ? C.A.prefieroNoNadie : C.A.prefieroNo,
       cPrefieroNo: () => this.accionSeguir({ accion: 'no', con: (varios ? aQuienes : p0 ? [p0] : []).map((x) => x.id) }),

@@ -909,6 +909,10 @@ class Component extends DCLogic {
           return;
         }
         this.setState({ datos: datos, datosEn: Date.now(), sinRed: false, falloCarga: null });
+        // Para el esqueleto de Mi mesa (entrega «carga», «Mi mesa sin
+        // fase»): si la tarjeta de Inicio ya dice que la mesa está abierta,
+        // Mi mesa pinta el esqueleto de la abierta y no el de la cerrada.
+        try { window.sessionStorage.setItem('aro-fase-mesa', datos && datos.estado === 'abierta' ? 'abierta' : 'cerrada'); } catch (e) { /* sin almacenamiento */ }
       })
       .catch((e) => {
         if (e && (e.status === 401 || e.status === 404)) { this.aEntrar(); return; }
