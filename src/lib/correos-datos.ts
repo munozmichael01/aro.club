@@ -142,6 +142,14 @@ function fraseDeCierre(iso: string | null | undefined, zona: string): string {
   return hora ? `${cuando} a las ${hora}` : cuando
 }
 
+/** «la cena», «los drinks», «el brunch»: el plan como se dice en el asunto de «Se cierra». */
+function elPlanDelAsunto(formato: string | null | undefined): string {
+  if (formato === 'drinks') return 'los drinks'
+  if (formato === 'coffee') return 'el coffee'
+  if (formato === 'walk') return 'la caminata'
+  return vozDe(formato ?? null).elPlan
+}
+
 function cuandoCierra(iso: string | null | undefined, zona: string, ahora = Date.now()): string {
   const cierre = partesDe(alFilo(iso, zona), zona)
   if (!cierre) return 'pronto'
@@ -2485,7 +2493,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
        * pinta lo de siempre.
        */
       const ids = Array.isArray(p.eventos) ? (p.eventos as string[]) : []
-      let planes: { plan: string; hora: string }[] = []
+      let planes: { plan: string; hora: string; elPlan: string }[] = []
       if (ids.length > 1) {
         const { data: esas } = await admin
           .from('events')
@@ -2494,7 +2502,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
           .order('starts_at')
         planes = (esas ?? [])
           .filter((e) => e.status === 'open' && Date.parse(e.booking_closes_at) > Date.now())
-          .map((e) => ({ plan: NOMBRES_DE_FORMATO[e.format ?? ''] ?? 'Plan', hora: horaTexto(e.starts_at) }))
+          .map((e) => ({ plan: NOMBRES_DE_FORMATO[e.format ?? ''] ?? 'Plan', hora: horaTexto(e.starts_at), elPlan: elPlanDelAsunto(e.format) }))
           .filter((x, i, xs) => xs.findIndex((y) => y.plan === x.plan && y.hora === x.hora) === i)
         if (planes.length < 2) planes = []
       }
@@ -2503,10 +2511,32 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         ? planes.map((x) => x.plan.toLowerCase()).reduce((acc, x, i, xs) => (i === 0 ? x : acc + (i === xs.length - 1 ? ' y ' : ', ') + x), '')
         : ''
 
+      /**
+       * EL ASUNTO (Michael, 05-11): «No te quedes sin plan: la cena del
+       * sábado se cierra hoy a medianoche». Sin « · Aro Club»: el remitente ya
+       * lo dice. La hora sale de la fecha y no va escrita: el brunch del
+       * domingo cierra a las 5:00 p.m., no a medianoche.
+       */
+      const elCierre = partesDe(evento?.booking_closes_at, zona)
+      const aLaHora = !elCierre ? ''
+        : elCierre.horas === 0 && elCierre.minutos === 0 ? ' a medianoche'
+        : elCierre.horas === 12 && elCierre.minutos === 0 ? ' a mediodía'
+        : ` a las ${elCierre.hora}`
+      const losPlanes = planes.length
+        ? [...new Set(planes.map((x) => x.elPlan))]
+        : [elPlanDelAsunto(evento?.format)]
+      const enPlural = losPlanes.length > 1 || losPlanes[0].startsWith('los ')
+      const elDia = partesDe(evento?.starts_at, zona)?.dia
+      const asuntoCierre = losPlanes.reduce((acc, x, i, xs) => (i === 0 ? x : acc + (i === xs.length - 1 ? ' y ' : ', ') + x), '')
+        + (elDia ? ` del ${elDia}` : '')
+        + (enPlural ? ' se cierran ' : ' se cierra ')
+        + cierra + aLaHora
+
       return {
         a,
         datos: {
           ...base,
+          asuntoCierre,
           planes,
           varios: planes.length > 0,
           variosMin,
