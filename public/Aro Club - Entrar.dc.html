@@ -14,6 +14,7 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
@@ -134,7 +135,7 @@
                 <input type="{{ tipoClave }}" placeholder="Tu contraseña" value="{{ clave }}" onChange="{{ onClave }}" onKeyDown="{{ onKey }}" autocomplete="current-password" aria-label="Tu contraseña" style="{{ campoClave }}" />
                 <button onClick="{{ verClave }}" aria-label="Mostrar u ocultar la contraseña" style="{{ botonVer }}">{{ textoVer }}</button>
               </div>
-              <button onClick="{{ entrar }}" aria-disabled="{{ inerte }}" style="{{ botonEntrar }}">{{ textoEntrar }}</button>
+              <button onClick="{{ entrar }}" aria-disabled="{{ inerte }}" style="{{ bEntrar.estilo }}" aria-busy="{{ bEntrar.busy }}" aria-label="{{ bEntrar.etiqueta }}">{{ bEntrar.aro }}{{ textoEntrar }}</button>
             </div>
 
             <sc-if value="{{ hayError }}" hint-placeholder-val="{{ false }}">
@@ -197,15 +198,6 @@
           </div>
         </sc-if>
 
-        <sc-if value="{{ esEntrando }}" hint-placeholder-val="{{ false }}">
-          <div style="animation:aro-open 320ms ease both">
-            <h1 style="{{ h1 }}">Entrando.</h1>
-            <div style="display:inline-flex;align-items:center;gap:15px;border-radius:999px;border:1px solid rgba(250,243,228,.3);min-height:58px;padding:0 25px;max-width:100%;margin-top:22px">
-              <span style="flex:0 0 auto;width:17px;height:17px;border:2px solid rgba(250,243,228,.24);border-top-color:#FAF3E4;border-radius:999px;animation:aro-spin 800ms linear infinite"></span>
-              <span style="font:500 16px/1 'Inter Tight',sans-serif;color:#C5D8CA;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ correoMostrado }}</span>
-            </div>
-          </div>
-        </sc-if>
       </div>
 
       <div style="position:relative;width:100%;aspect-ratio:4/5;max-height:min(58vh,470px);border-radius:28px;overflow:hidden;background:#0F2820;background-image:url('fotos/cenas.jpg');background-size:cover;background-position:center;filter:grayscale(.24) contrast(1.16) saturate(.74) brightness(.9)"></div>
@@ -269,7 +261,10 @@ class Component extends DCLogic {
       this.setState({ error: 'Escribe tu correo y tu contraseña.' });
       return;
     }
-    this.setState({ fase: 'entrando', error: '' });
+    // Se queda en el formulario con el aro en «Entrar» (entrega «carga»):
+    // ya no salta a una pantalla «Entrando.» con un aro suelto.
+    if (this.state.entrando) return;
+    this.setState({ entrando: true, error: '' });
     fetch('/api/entrar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -282,9 +277,9 @@ class Component extends DCLogic {
       // El mismo error exista o no la cuenta, y con la pista que apunta al
       // selector de arriba. Decir «esa cuenta no existe» contaría quién está
       // registrado a cualquiera que pruebe correos.
-      this.setState({ fase: 'correo', error: j.error || 'Ese correo y esa contraseña no coinciden. Si es tu primera vez, toca Crear cuenta arriba.' });
+      this.setState({ entrando: false, fase: 'correo', error: j.error || 'Ese correo y esa contraseña no coinciden. Si es tu primera vez, toca Crear cuenta arriba.' });
     })).catch(() => this.setState({
-      fase: 'correo', error: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
+      entrando: false, fase: 'correo', error: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.'
     }));
   };
 
@@ -314,7 +309,7 @@ class Component extends DCLogic {
 
   renderVals() {
     const f = this.state.fase;
-    const fases = ['inicio', 'correo', 'recuperar', 'otroCorreo', 'relay', 'entrando'];
+    const fases = ['inicio', 'correo', 'recuperar', 'otroCorreo', 'relay'];
     const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:58px;padding:0 26px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
     const campoBase = 'width:100%;min-height:58px;padding:0 22px;border-radius:999px;border:1px solid rgba(250,243,228,.32);background:rgba(250,243,228,.06);color:#FAF3E4;font:400 17px/1 \'Inter Tight\',sans-serif;outline:none';
 
@@ -349,7 +344,7 @@ class Component extends DCLogic {
 
     return {
       esInicio: f === 'inicio', esCorreo: f === 'correo', esRecuperar: f === 'recuperar',
-      esOtroCorreo: f === 'otroCorreo', esRelay: f === 'relay', esEntrando: f === 'entrando',
+      esOtroCorreo: f === 'otroCorreo', esRelay: f === 'relay',
       correoRegistro, correoEntrada,
 
       h1: 'font:400 clamp(32px,6vw,52px)/1.02 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#FAF3E4;margin:0;max-width:15ch;text-wrap:balance',
@@ -399,6 +394,7 @@ class Component extends DCLogic {
       inerte: listo ? null : 'true',
       textoEntrar: listo ? 'Entrar' : 'Escribe correo y contraseña',
       botonEntrar: btn(listo ? '#FAF3E4' : 'rgba(250,243,228,.14)', listo ? '#14342A' : '#C5D8CA', 'none', listo ? '' : 'cursor:not-allowed'),
+      bEntrar: AroCarga.boton(this, 'entrando', btn(listo ? '#FAF3E4' : 'rgba(250,243,228,.14)', listo ? '#14342A' : '#C5D8CA', 'none', listo ? '' : 'cursor:not-allowed'), 'Entrando'),
       error: this.state.error,
       hayError: !!this.state.error,
 

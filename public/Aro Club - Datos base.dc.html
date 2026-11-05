@@ -369,7 +369,7 @@
 
     <sc-if value="{{ hayNav }}" hint-placeholder-val="{{ true }}">
       <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
-        <button onClick="{{ siguiente }}" aria-disabled="{{ inerte }}" style="{{ botonSiguiente }}">{{ textoSiguiente }}</button>
+        <button onClick="{{ siguiente }}" aria-disabled="{{ inerte }}" style="{{ bSiguiente.estilo }}" aria-busy="{{ bSiguiente.busy }}">{{ bSiguiente.aro }}{{ textoSiguiente }}</button>
         <sc-if value="{{ puedeAtras }}" hint-placeholder-val="{{ false }}">
           <button onClick="{{ atras }}" style="{{ botonFantasma }}">Atrás</button>
         </sc-if>
@@ -635,7 +635,15 @@ class Component extends DCLogic {
 
   telLimpio() { return (this.state.telefono || '').replace(/\D/g, ''); }
 
+  /** Los botones que trabajan (entrega «carga»): el estilo de siempre, el aro dentro y el texto quieto. */
   renderVals() {
+    const v = this.valoresBase();
+    return Object.assign(v, {
+      bSiguiente: AroCarga.boton(this, 'guardando', v.botonSiguiente, null, { verde: true }),
+    });
+  }
+
+  valoresBase() {
     const p = this.state.paso;
     const edad = this.edad();
     // El dia de la proxima cena, o nada. Nunca uno escrito a mano.
@@ -1073,9 +1081,7 @@ class Component extends DCLogic {
       eyebrow: 'font:500 12px/1 \'Inter Tight\',sans-serif;letter-spacing:.16em;color:#8F4515;margin-bottom:13px',
       h1: 'font:400 clamp(30px,6.4vw,44px)/1.04 \'Young Serif\',Georgia,serif;letter-spacing:-.035em;color:#14342A;margin:0;max-width:16ch;text-wrap:balance',
 
-      textoSiguiente: this.state.guardando
-        ? (p === this.PASO_CORREO ? 'Un momento' : 'Guardando')
-        : (q.listo ? (p === 3 ? 'Terminar' : 'Continuar') : (q.falla || 'Falta este dato')),
+      textoSiguiente: q.listo || this.state.guardando ? (p === 3 ? 'Terminar' : 'Continuar') : (q.falla || 'Falta este dato'),
       inerte: q.listo ? null : 'true',
       botonSiguiente: btn(q.listo ? '#14342A' : 'rgba(20,52,42,.12)', q.listo ? '#FAF3E4' : '#2C4A38', q.listo ? '' : 'cursor:not-allowed'),
       // Del paso 4 al resumen se pasa GUARDANDO. Antes avanzaba solo, asi

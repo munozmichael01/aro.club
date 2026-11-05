@@ -13,6 +13,8 @@
 <script src="./gtm.js"></script>
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
+<script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
@@ -56,7 +58,7 @@
           <div style="{{ bandaFallo }}">{{ fallo }}</div>
         </sc-if>
 
-        <button onClick="{{ guardar }}" aria-disabled="{{ inerte }}" style="{{ boton }}">{{ textoBoton }}</button>
+        <button onClick="{{ guardar }}" aria-disabled="{{ inerte }}" style="{{ bGuardar.estilo }}" aria-busy="{{ bGuardar.busy }}">{{ bGuardar.aro }}{{ textoBoton }}</button>
       </div>
     </sc-if>
 
@@ -114,7 +116,15 @@ class Component extends DCLogic {
       .catch(function () { this.setState({ enviando: false, fallo: 'No se pudo. Vuelve a intentarlo.' }); }.bind(this));
   }
 
+  /** Los botones que trabajan (entrega «carga»): el estilo de siempre, el aro dentro y el texto quieto. */
   renderVals() {
+    const v = this.valoresBase();
+    return Object.assign(v, {
+      bGuardar: AroCarga.boton(this, 'enviando', v.boton),
+    });
+  }
+
+  valoresBase() {
     var s = this.state;
     var larga = String(s.clave).length >= 8;
     var listo = larga && !s.enviando;
@@ -135,7 +145,7 @@ class Component extends DCLogic {
       hayFallo: !!s.fallo,
       fallo: s.fallo,
       inerte: listo ? null : 'true',
-      textoBoton: s.enviando ? 'Guardando…' : (larga ? 'Guardar y entrar' : 'Al menos ocho caracteres'),
+      textoBoton: larga || s.enviando ? 'Guardar y entrar' : 'Al menos ocho caracteres',
       guardar: this.guardar.bind(this),
 
       pagina: 'min-height:100vh;background:#14342A;display:flex;align-items:center;justify-content:center;padding:clamp(20px,5vw,48px)',

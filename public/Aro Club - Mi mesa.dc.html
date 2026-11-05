@@ -1142,7 +1142,7 @@
 
             <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
               <button onClick="{{ enviarValoracion }}" aria-disabled="{{ enviarInerte }}" style="{{ bEnviar.estilo }}" aria-busy="{{ bEnviar.busy }}">{{ bEnviar.aro }}{{ textoEnviar }}</button>
-              <button onClick="{{ saltarValoracion }}" style="{{ botonFantasma }}">{{ textoSaltar }}</button>
+              <button onClick="{{ saltarValoracion }}" style="{{ bSaltar.estilo }}" aria-busy="{{ bSaltar.busy }}">{{ bSaltar.aro }}{{ textoSaltar }}</button>
             </div>
             <sc-if value="{{ hayErrorF11 }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;gap:11px;align-items:flex-start;border-radius:22px;background:rgba(143,69,21,.1);padding:14px 16px;margin-top:14px">
@@ -1429,7 +1429,7 @@
         <div style="font:400 26px/1.08 'Young Serif',Georgia,serif;letter-spacing:-.02em;color:#14342A">{{ muCambioTitulo }}</div>
         <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ muCambioCuerpo }}</div>
         <div style="display:flex;gap:10px;align-items:flex-start;border-radius:16px;background:rgba(143,69,21,.08);padding:12px 14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8F4515" stroke-width="2" stroke-linecap="round" style="flex:none;margin-top:1px" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span style="font:400 14px/1.45 'Inter Tight',sans-serif;color:#14342A;text-wrap:pretty">{{ muCambioPlazo }}</span></div>
-        <button onClick="{{ muCambiarSi }}" style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;border:none;background:#6E340F;color:#FFF8EA;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">{{ muCambioSi }}</button>
+        <button onClick="{{ muCambiarSi }}" style="{{ muBCambio.estilo }}" aria-busy="{{ muBCambio.busy }}">{{ muBCambio.aro }}{{ muCambioSi }}</button>
         <button onClick="{{ muCambiarNo }}" style="display:flex;align-items:center;justify-content:center;min-height:48px;border:none;background:none;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">{{ muCambioNo }}</button>
       </div>
     </div>
@@ -3432,7 +3432,7 @@ class Component extends DCLogic {
       sinContar: !this.state.contado,
       contado: this.state.contado,
       saltarValoracion: () => this.saltarValoracion(),
-      textoSaltar: this.state.saltando ? 'Un momento' : 'Ahora no',
+      textoSaltar: 'Ahora no',
       haySitioNoGuardado: !!this.state.avisoSitio,
       avisoSitio: this.state.avisoSitio,
       resumenValoracion: this.state.bloqueados.length
@@ -3556,6 +3556,7 @@ class Component extends DCLogic {
       pastillaClara: 'display:inline-flex;align-items:center;min-height:38px;padding:0 15px;border-radius:999px;border:1px solid rgba(250,243,228,.3);font:500 14px/1 \'Inter Tight\',sans-serif;color:#FAF3E4',
       botonPrimario: btn('#14342A', '#FAF3E4', 'none'),
       bAvisar: AroCarga.boton(this, 'avisando', btn('#14342A', '#FAF3E4', 'none'), null, { verde: true }),
+      bSaltar: AroCarga.boton(this, 'saltando', btn('transparent', '#33513F', 'none', 'font-weight:500;padding:0 10px;text-decoration:underline;text-underline-offset:6px')),
       botonBorde: btn('transparent', '#14342A', '1px solid rgba(20,52,42,.26)'),
       botonBordeSuelto: btn('transparent', '#14342A', '1px solid rgba(20,52,42,.26)', 'margin-top:16px'),
       botonFantasma: btn('transparent', '#33513F', 'none', 'font-weight:500;padding:0 10px;text-decoration:underline;text-underline-offset:6px')
@@ -3639,7 +3640,8 @@ class Component extends DCLogic {
       muCambioTitulo: M.tarjeta.cambio.titulo,
       muCambioCuerpo: M.tarjeta.cambio.cuerpo(estado === 'sin-usar' ? null : (mu && mu.nombre)),
       muCambioPlazo: mu ? M.tarjeta.cambio.plazo(mu.plazo) : '',
-      muCambioSi: this.state.muCambiando ? 'Cambiando' : M.tarjeta.cambio.si,
+      muCambioSi: M.tarjeta.cambio.si,
+      muBCambio: AroCarga.boton(this, 'muCambiando', 'display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;border:none;background:#6E340F;color:#FFF8EA;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer', null, { verde: true }),
       muCambioNo: M.tarjeta.cambio.no,
       muCambiarNo: () => this.setState({ muCambio: false }),
       muCambiarSi: () => {

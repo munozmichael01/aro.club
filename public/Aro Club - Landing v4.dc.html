@@ -8,6 +8,7 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 <script src="./cabecera.js"></script>
 <!--
   IMPORTANTE: esto va en el <head> DE VERDAD, no en el <helmet>.
@@ -644,7 +645,7 @@
           </sc-for>
         </div>
         <sc-if value="{{ hayCiudad }}" hint-placeholder-val="{{ false }}">
-          <button onClick="{{ avisarDeCiudad }}" disabled="{{ ciudadGuardada }}" style="{{ botonCiudad }}">{{ textoCiudad }}</button>
+          <button onClick="{{ avisarDeCiudad }}" disabled="{{ ciudadGuardada }}" style="{{ bCiudad.estilo }}" aria-busy="{{ bCiudad.busy }}">{{ bCiudad.aro }}{{ textoCiudad }}</button>
         </sc-if>
       </div>
     </div>
@@ -1023,7 +1024,15 @@ class Component extends DCLogic {
     });
   }
 
+  /** Los botones que trabajan (entrega «carga»): el estilo de siempre, el aro dentro y el texto quieto. */
   renderVals() {
+    const v = this.valoresBase();
+    return Object.assign(v, {
+      bCiudad: AroCarga.boton(this, 'ciudadGuardando', v.botonCiudad),
+    });
+  }
+
+  valoresBase() {
     // una sola fuente: hoy Caracas, mañana la ciudad de quien lee
     const CIUDAD = 'Caracas';
     const wiki = (f) => 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(f) + '?width=800';
@@ -1255,9 +1264,7 @@ class Component extends DCLogic {
       ciudadGuardada: this.state.ciudadGuardada ? 'true' : null,
       textoCiudad: this.state.ciudadGuardada
         ? 'Anotado. Te escribimos cuando abra.'
-        : (this.state.ciudadGuardando
-          ? 'Guardando…'
-          : (this.state.ciudadFallo || 'Avísame cuando abra ahí')),
+        : (this.state.ciudadFallo && !this.state.ciudadGuardando ? this.state.ciudadFallo : 'Avísame cuando abra ahí'),
       botonCiudad: 'display:inline-flex;align-items:center;min-height:56px;padding:0 28px;border-radius:999px;border:1px solid '
         + (this.state.ciudadGuardada ? 'transparent' : 'rgba(20,52,42,.24)')
         + ';background:' + (this.state.ciudadGuardada ? 'rgba(27,81,56,.1)' : 'transparent')

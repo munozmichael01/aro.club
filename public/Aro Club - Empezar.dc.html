@@ -14,6 +14,7 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
@@ -70,10 +71,10 @@
 
       <div style="min-width:0">
 
+        <!-- Carga (entrega «carga», 03-11): mientras no se sabe en qué paso
+             del alta estás, el velo de carga.js; no antes de 0,4 s. -->
         <sc-if value="{{ esCargando }}" hint-placeholder-val="{{ false }}">
-          <div style="display:inline-flex;align-items:center;gap:15px;min-height:58px">
-            <span style="flex:0 0 auto;width:17px;height:17px;border:2px solid rgba(250,243,228,.24);border-top-color:#FAF3E4;border-radius:999px;animation:aro-spin 800ms linear infinite"></span>
-          </div>
+          {{ veloCarga }}
         </sc-if>
 
         <!-- El selector de la entrega «acceso». Sale mientras no hay cuenta:
@@ -119,7 +120,7 @@
               <div role="alert" style="{{ avisoCaja }}">{{ fallo }}</div>
             </sc-if>
 
-            <button onClick="{{ seguirNacimiento }}" style="{{ botonNacimiento }}">{{ textoNacimiento }}</button>
+            <button onClick="{{ seguirNacimiento }}" style="{{ bNacimiento.estilo }}" aria-busy="{{ bNacimiento.busy }}">{{ bNacimiento.aro }}{{ textoNacimiento }}</button>
           </div>
         </sc-if>
 
@@ -193,19 +194,16 @@
               </span>
             </button>
 
-            <button onClick="{{ crear }}" style="{{ botonCrear }}">{{ textoCrear }}</button>
+            <button onClick="{{ crear }}" style="{{ bCrear.estilo }}" aria-busy="{{ bCrear.busy }}">{{ bCrear.aro }}{{ textoCrear }}</button>
             <button onClick="{{ atrasNacimiento }}" style="{{ botonAtras }}">Atrás</button>
           </div>
         </sc-if>
 
+        <!-- Al terminar, mientras el embudo dice a dónde vas. Crear la cuenta
+             y mandar la fecha ya no pasan por aquí: llevan el aro en su
+             botón (entrega «carga»). -->
         <sc-if value="{{ esEspera }}" hint-placeholder-val="{{ false }}">
-          <div style="animation:aro-open 320ms ease both">
-            <h1 style="{{ h1 }}">{{ tituloEspera }}</h1>
-            <div style="display:inline-flex;align-items:center;gap:15px;border-radius:999px;border:1px solid rgba(250,243,228,.3);min-height:58px;padding:0 25px;max-width:100%;margin-top:22px">
-              <span style="flex:0 0 auto;width:17px;height:17px;border:2px solid rgba(250,243,228,.24);border-top-color:#FAF3E4;border-radius:999px;animation:aro-spin 800ms linear infinite"></span>
-              <span style="font:500 16px/1 'Inter Tight',sans-serif;color:#C5D8CA;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ textoEspera }}</span>
-            </div>
-          </div>
+          {{ veloCarga }}
         </sc-if>
 
         <!-- Las normas, para quien vuelve de Google: la casilla que con
@@ -233,7 +231,7 @@
             <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
               <div role="alert" style="{{ avisoCaja }}">{{ fallo }}</div>
             </sc-if>
-            <button onClick="{{ aceptarNormas }}" style="{{ botonNormas }}">{{ textoNormas }}</button>
+            <button onClick="{{ aceptarNormas }}" style="{{ bNormas.estilo }}" aria-busy="{{ bNormas.busy }}">{{ bNormas.aro }}{{ textoNormas }}</button>
           </div>
         </sc-if>
 
@@ -271,7 +269,7 @@
                 <div role="alert" style="{{ avisoCaja }}">{{ fallo }}</div>
               </sc-if>
               <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:clamp(26px,3.2vw,36px)">
-                <button onClick="{{ siguiente }}" style="{{ botonSiguiente }}">{{ textoSiguiente }}</button>
+                <button onClick="{{ siguiente }}" style="{{ bSiguiente.estilo }}" aria-busy="{{ bSiguiente.busy }}">{{ bSiguiente.aro }}{{ textoSiguiente }}</button>
                 <sc-if value="{{ puedeAtras }}" hint-placeholder-val="{{ false }}">
                   <button onClick="{{ atras }}" style="{{ botonAtras }}">Atrás</button>
                 </sc-if>
@@ -502,12 +500,15 @@ class Component extends DCLogic {
    * tecleado no cierra la cuenta de un adulto.
    */
   mandarFecha(valor, confirma) {
-    this.setState({ fase: 'espera', espera: 'fecha', fallo: '' });
+    // Se queda en su pantalla con el aro en el botón (entrega «carga»).
+    if (this.state.mandando) return;
+    this.setState({ mandando: true, fallo: '' });
     const cuerpo = { clave: 'nacimiento', valor: valor };
     if (confirma) cuerpo.confirmaMenor = true;
     fetch('/api/cuestionario', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo)
     }).then((r) => r.json().catch(() => ({})).then((j) => ({ r, j }))).then(({ r, j }) => {
+      this.setState({ mandando: false });
       if (r.status === 409 && j.motivo === 'menor-confirmar') { this.setState({ fase: 'menorConfirmar' }); return; }
       if (r.status === 403 && j.motivo === 'menor') {
         this.guardarFecha('');
@@ -522,7 +523,7 @@ class Component extends DCLogic {
       this.respuestas.nacimiento = valor;
       this.guardarFecha('');
       this.continuar();
-    }).catch(() => this.setState({ fase: 'nacimiento', fallo: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.' }));
+    }).catch(() => this.setState({ mandando: false, fase: 'nacimiento', fallo: 'No pudimos conectar. Revisa tu conexión e inténtalo otra vez.' }));
   }
 
   edad() {
@@ -569,7 +570,9 @@ class Component extends DCLogic {
     if (!listo) { this.setState({ intento: true }); return; }
     if (this.state.guardando) return;
     const correo = this.state.correo.trim().toLowerCase();
-    this.setState({ guardando: true, aviso: '', avisoEnlace: '', fase: 'espera', espera: 'cuenta' });
+    // Se queda en «Crea tu cuenta» con el aro en el botón (entrega «carga»):
+    // ya no salta a «Creando tu cuenta.» con un aro suelto.
+    this.setState({ guardando: true, aviso: '', avisoEnlace: '' });
     fetch('/api/cuenta', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ correo: correo, clave: this.state.clave, origen: 'empezar' })
@@ -657,7 +660,23 @@ class Component extends DCLogic {
     }));
   }
 
+  /**
+   * Los botones que trabajan (entrega «carga»): el estilo de siempre, el
+   * aro dentro y el texto quieto. Se montan sobre lo que ya calcula
+   * `valores()`, para no repetir cada estilo.
+   */
   renderVals() {
+    const v = this.valoresBase();
+    const st = this.state;
+    return Object.assign(v, {
+      bNacimiento: AroCarga.boton(this, 'mandando', v.botonNacimiento),
+      bCrear: AroCarga.boton(this, AroCarga.estado(this, 'creando', st.guardando && st.fase === 'cuenta'), v.botonCrear, null, { verde: true }),
+      bNormas: AroCarga.boton(this, AroCarga.estado(this, 'normas', st.guardando && st.fase === 'normas'), v.botonNormas),
+      bSiguiente: AroCarga.boton(this, AroCarga.estado(this, 'siguiente', st.guardando && st.fase === 'pregunta'), v.botonSiguiente),
+    });
+  }
+
+  valoresBase() {
     const f = this.state.fase;
     const R = window.AroReglas;
     const btn = (fondo, color, borde, extra) => 'display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:58px;padding:0 26px;border-radius:999px;background:' + fondo + ';color:' + color + ';border:' + borde + ';font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer;transition:all 200ms ease;' + (extra || '');
@@ -832,8 +851,7 @@ class Component extends DCLogic {
       atrasNacimiento: () => this.setState({ fase: 'nacimiento', aviso: '', avisoEnlace: '' }),
 
       // espera
-      tituloEspera: st.espera === 'cuenta' ? 'Creando tu cuenta.' : (st.espera === 'fecha' ? 'Un momento.' : 'Seguimos.'),
-      textoEspera: st.espera === 'cuenta' ? st.correo.trim() : 'Guardando',
+      veloCarga: AroCarga.velo({ verde: true, alto: '40vh' }),
 
       // normas
       cintaNormas: N.cinta, tituloNormas: N.titulo, bajadaNormas: N.bajada,
@@ -842,7 +860,7 @@ class Component extends DCLogic {
       aceptarNormas: this.aceptarNormas,
       botonNormas: btn(st.casilla ? '#FAF3E4' : 'rgba(250,243,228,.16)', st.casilla ? '#14342A' : '#C5D8CA', 'none',
         'width:100%;min-height:56px;margin-top:18px' + (st.casilla ? '' : ';cursor:not-allowed')),
-      textoNormas: st.guardando ? 'Guardando' : (st.casilla ? 'Continuar' : 'Marca la casilla para seguir'),
+      textoNormas: st.casilla || st.guardando ? 'Continuar' : 'Marca la casilla para seguir',
 
       // preguntas
       progreso: pasos.map((_, i) => ({
@@ -856,7 +874,7 @@ class Component extends DCLogic {
       hayQuizNota: esCiudad && this.ciudadCerrada(),
       quizNotaTitulo: cerrada.titulo, quizNotaBajada: cerrada.bajada,
       botonSiguiente: btn(completa ? '#FAF3E4' : 'rgba(250,243,228,.14)', completa ? '#14342A' : '#C5D8CA', 'none', completa ? '' : 'cursor:not-allowed'),
-      textoSiguiente: st.guardando ? 'Guardando' : (completa ? (ultimo ? 'Terminar' : 'Siguiente') : 'Elige para seguir'),
+      textoSiguiente: completa ? (ultimo ? 'Terminar' : 'Siguiente') : 'Elige para seguir',
       puedeAtras: paso > 0,
       atras: () => this.setState({ paso: Math.max(0, paso - 1), fallo: '' }),
       siguiente: () => {

@@ -15,6 +15,7 @@
 <script src="./support.js"></script>
 <script src="./nav.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
@@ -167,7 +168,7 @@
                 <span style="display:block;font:400 14px/1.45 'Inter Tight',sans-serif;color:#566A5D;margin-top:3px">{{ x.porQue }}</span>
               </span>
               <sc-if value="{{ x.sePuedeQuitar }}" hint-placeholder-val="{{ true }}">
-                <button onClick="{{ x.quitar }}" style="{{ x.botonQuitar }}">{{ x.textoQuitar }}</button>
+                <button onClick="{{ x.quitar }}" style="{{ x.botonQuitar }};gap:8px">{{ x.aroQuitar }}{{ x.textoQuitar }}</button>
               </sc-if>
             </div>
           </sc-for>
@@ -196,7 +197,7 @@
                 <span style="display:block;font:600 15px/1.35 'Inter Tight',sans-serif;color:#14342A">{{ s.nombre }}</span>
                 <span style="display:block;font:400 14px/1.45 'Inter Tight',sans-serif;color:#566A5D;margin-top:3px">{{ s.desde }}</span>
               </span>
-              <button onClick="{{ s.quitar }}" style="{{ s.botonQuitar }}">{{ s.textoQuitar }}</button>
+              <button onClick="{{ s.quitar }}" style="{{ s.botonQuitar }};gap:8px">{{ s.aroQuitar }}{{ s.textoQuitar }}</button>
             </div>
           </sc-for>
         </div>
@@ -333,7 +334,7 @@
           </sc-if>
 
           <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:14px">
-            <button onClick="{{ confirmarBaja }}" aria-disabled="{{ bajaInerte }}" style="{{ botonConfirmarBaja }}">{{ textoConfirmarBaja }}</button>
+            <button onClick="{{ confirmarBaja }}" aria-disabled="{{ bajaInerte }}" style="{{ bBaja.estilo }}" aria-busy="{{ bBaja.busy }}">{{ bBaja.aro }}{{ textoConfirmarBaja }}</button>
             <button onClick="{{ abrirBaja }}" style="{{ botonFantasma }}">Cancelar</button>
           </div>
         </div>
@@ -684,7 +685,15 @@ class Component extends DCLogic {
     this.copiar(inv.enlace, 'enlace');
   }
 
+  /** Los botones que trabajan (entrega «carga»): el estilo de siempre, el aro dentro y el texto quieto. */
   renderVals() {
+    const v = this.valoresBase();
+    return Object.assign(v, {
+      bBaja: AroCarga.boton(this, 'guardando', v.botonConfirmarBaja, null, { verde: true }),
+    });
+  }
+
+  valoresBase() {
     // Antes vivian en el estado con indices escritos a mano.
     const R = this.valores();
     const S = this.state;
@@ -923,7 +932,8 @@ class Component extends DCLogic {
         nombre: s.nombre,
         desde: d ? 'Lo marcaste el ' + AroReglas.partesDe(s.desde, AroReglas.ZONA).numero + ' de ' + AroReglas.partesDe(s.desde, AroReglas.ZONA).mes : '',
         contenedor: 'display:flex;gap:14px;align-items:center;min-height:66px;padding:14px clamp(16px,2.4vw,22px)' + (i < listaSitios.length - 1 ? ';border-bottom:1px solid rgba(20,52,42,.1)' : ''),
-        textoQuitar: yendo ? 'Quitando…' : 'Quitar',
+        textoQuitar: 'Quitar',
+        aroQuitar: AroCarga.enBoton(AroCarga.estado(this, 'quitarSitio:' + s.id, yendo)),
         botonQuitar: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#1B5138;font:500 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
         quitar: () => this.quitarSitio(s.id)
       };
@@ -939,7 +949,8 @@ class Component extends DCLogic {
         porQue: x.porQue,
         sePuedeQuitar: !!x.sePuedeQuitar,
         contenedor: 'display:flex;gap:14px;align-items:center;min-height:66px;padding:14px clamp(16px,2.4vw,22px)' + (i < listaExcl.length - 1 ? ';border-bottom:1px solid rgba(20,52,42,.1)' : ''),
-        textoQuitar: quitando ? 'Quitando…' : 'Quitar',
+        textoQuitar: 'Quitar',
+        aroQuitar: AroCarga.enBoton(AroCarga.estado(this, 'quitar:' + x.id, quitando)),
         botonQuitar: 'flex:0 0 auto;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(20,52,42,.2);background:transparent;color:#1B5138;font:500 14px/1 \'Inter Tight\',sans-serif;cursor:pointer',
         quitar: () => this.quitarExclusion(x.id)
       };
@@ -970,7 +981,7 @@ class Component extends DCLogic {
       botonBaja: 'display:inline-flex;align-items:center;min-height:48px;padding:0 20px;border-radius:999px;margin-top:14px;background:transparent;border:1px solid rgba(143,69,21,.44);color:#8F4515;font:600 15px/1 \'Inter Tight\',sans-serif;cursor:pointer',
       campoBaja: 'width:100%;max-width:220px;min-height:52px;padding:0 18px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#14342A;font:600 16px/1 \'Inter Tight\',sans-serif;letter-spacing:.1em;outline:none',
       bajaInerte: puedeBaja && !this.state.guardando ? null : 'true',
-      textoConfirmarBaja: this.state.guardando ? 'Dando de baja…' : (puedeBaja ? 'Darme de baja' : 'Escribe BAJA'),
+      textoConfirmarBaja: puedeBaja || this.state.guardando ? 'Darme de baja' : 'Escribe BAJA',
       botonConfirmarBaja: 'display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:999px;border:none;background:' + (puedeBaja ? '#6E340F' : 'rgba(20,52,42,.12)') + ';color:' + (puedeBaja ? '#FFF8EA' : '#456352') + ';font:600 15px/1 \'Inter Tight\',sans-serif;cursor:' + (puedeBaja ? 'pointer' : 'not-allowed'),
       confirmarBaja: () => {
         if (!puedeBaja || this.state.guardando) return;
