@@ -8,6 +8,7 @@ import * as T from '../texto/cambiar'
 import { useUltimo } from '../util/useUltimo'
 import * as M from './maquina'
 import type { Datos, crearServicioCambiar } from './servicio'
+import { reglas } from '../reglas'
 
 type Servicio = ReturnType<typeof crearServicioCambiar>
 
@@ -166,7 +167,7 @@ export function CambiarFecha(p: { servicio: Servicio; ir: (d: string) => void; /
           </View>
         ) : null}
         <View style={estilos.acciones}>
-          {nota ? null : <Boton ancho texto={T.elegir.boton} onPress={cambiar} trabajando={cambiando} apagado={!elegida} />}
+          {nota ? null : <Boton ancho texto={T.elegir.boton} onPress={cambiar} trabajando={cambiando && reglas.CARGA.texto.trabajando.cambiar} apagado={!elegida} />}
           <Boton ancho tipo="secundario" texto={T.elegir.quedarme} onPress={() => p.ir('/mesa')} />
         </View>
       </Entra>

@@ -44,6 +44,6 @@ export const sinRespuesta = {
   reintentar: 'Reintentar',
   volver: 'Volver',
   /** «No pudimos cargar tus fechas.» (entrega carga): el resto lo pone `reglas.CARGA`. */
-  que: 'tus fechas',
+  que: reglas.CARGA.texto.que.cambiar,
   cargando: 'Cargando tus fechas',
 }

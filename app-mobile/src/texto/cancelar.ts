@@ -1,3 +1,4 @@
+import { reglas } from '../reglas'
 /**
  * El texto de Cancelar, copiado de `Cancelar.dc.html` (casilla B de
  * TEXTO-tres-superficies). La fecha, de `texto/fechas.ts`.
@@ -48,6 +49,6 @@ export const sinRespuesta = {
   reintentar: 'Reintentar',
   volver: 'Volver a mi cuenta',
   /** «No pudimos cargar tu reserva.» (entrega carga): el resto lo pone `reglas.CARGA`. */
-  que: 'tu reserva',
+  que: reglas.CARGA.texto.que.cancelar,
   cargando: 'Cargando tu reserva',
 }

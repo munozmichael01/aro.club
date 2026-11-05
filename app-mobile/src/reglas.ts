@@ -99,7 +99,8 @@ type Api = {
       noPudimos: (que: string) => string
       sinRed: string; esNuestro: string
       franja: (cuando: string) => string
-      trabajando: { apartar: string }
+      trabajando: { apartar: string; cancelar: string; cambiar: string; cupon: string; aceptar: string; reembolso: string }
+      que: Record<'inicio' | 'mesa' | 'pasadas' | 'pago' | 'dentro' | 'cancelar' | 'cambiar' | 'masUno' | 'legal' | 'reembolso', string>
     }
   }
   SEGUNDO_ACTO: {

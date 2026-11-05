@@ -8,6 +8,7 @@ import * as T from '../texto/cancelar'
 import { useUltimo } from '../util/useUltimo'
 import * as M from './maquina'
 import type { crearServicioCancelar } from './servicio'
+import { reglas } from '../reglas'
 
 type Servicio = ReturnType<typeof crearServicioCancelar>
 
@@ -161,7 +162,7 @@ export function Cancelar(p: { reserva?: string | null; servicio: Servicio; ir: (
           </View>
         ) : null}
         <View style={estilos.acciones}>
-          <Boton tipo={tarde ? 'grave' : 'primario'} texto={T.preguntar.si} onPress={cancelar} trabajando={cancelando} />
+          <Boton tipo={tarde ? 'grave' : 'primario'} texto={T.preguntar.si} onPress={cancelar} trabajando={cancelando && reglas.CARGA.texto.trabajando.cancelar} />
           <Boton tipo="fantasma" texto={T.preguntar.mantener} onPress={() => p.ir('/cuenta')} />
         </View>
       </Entra>

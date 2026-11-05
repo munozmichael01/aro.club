@@ -64,7 +64,7 @@ export const sinRespuesta = {
   cargar: 'No pudimos cargar tu plan. Revisa la conexión y vuelve a intentarlo.',
   reintentar: 'Reintentar',
   /** «No pudimos cargar tu plan.» (entrega carga): el resto lo pone `reglas.CARGA`. */
-  que: 'tu plan',
+  que: reglas.CARGA.texto.que.dentro,
   cargando: 'Cargando tu plan',
 }
 

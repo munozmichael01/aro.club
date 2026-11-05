@@ -265,7 +265,7 @@ export const sinRespuesta = {
   reintentar: 'Reintentar',
   cargando: 'Cargando tu cuenta',
   /** «No pudimos cargar tu cuenta.» (entrega carga): el resto lo pone `reglas.CARGA`. */
-  que: 'tu cuenta',
+  que: reglas.CARGA.texto.que.inicio,
 }
 
 /** El aviso de preguntas nuevas al reservar (18-10), palabra por palabra de la web. */

@@ -123,7 +123,7 @@ export function Reembolso(p: { servicio: Servicio; alVolver: () => void; alEntra
           </View>
         ) : null}
         <View style={{ marginTop: 20 }}>
-          <Boton ancho texto={T.boton} onPress={pedir} trabajando={enviando} apagado={!M.listo(rep)} />
+          <Boton ancho texto={T.boton} onPress={pedir} trabajando={enviando && reglas.CARGA.texto.trabajando.reembolso} apagado={!M.listo(rep)} />
         </View>
         {dia ? (
           <Texto variante="nota" style={{ marginTop: 12 }}>

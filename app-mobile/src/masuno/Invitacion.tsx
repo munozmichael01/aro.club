@@ -217,7 +217,7 @@ export function Invitacion(p: { token: string; servicio: Servicio; ir: (d: strin
             <Boton texto={d.yo?.verificada ? reglas.MAS_UNO.invitado.agenda : reglas.MAS_UNO.acompanante.verificate('')[0]} ancho onPress={() => p.ir(d.yo?.verificada ? '/mesa' : '/verificacion')} />
           ) : (
             <>
-              <Boton texto={I.aceptar} ancho onPress={aceptar} trabajando={enviando} />
+              <Boton texto={I.aceptar} ancho onPress={aceptar} trabajando={enviando && reglas.CARGA.texto.trabajando.aceptar} />
               <Boton tipo="fantasma" texto={I.noPuedo} ancho onPress={() => p.ir('/cuenta')} />
             </>
           )

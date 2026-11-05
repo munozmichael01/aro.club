@@ -1,3 +1,4 @@
+import { reglas } from '../reglas'
 /**
  * Pedir el reembolso de un crédito por lista de espera (Michael, 21-10).
  * Copy aprobado, literal de `docs/handoff/PROPUESTA-reembolsos.md`.
@@ -22,6 +23,6 @@ export const etiquetas = { tel: 'Teléfono', doc: 'Cédula', banco: 'Banco' }
 export const volver = 'Volver'
 export const sinRespuesta = 'No pudimos cargar tu reembolso. Revisa tu conexión e inténtalo otra vez.'
 /** «No pudimos cargar tu reembolso.» (entrega carga): el resto lo pone `reglas.CARGA`. */
-export const que = 'tu reembolso'
+export const que = reglas.CARGA.texto.que.reembolso
 export const cargando = 'Cargando tu reembolso'
 export const noPudimos = 'No pudimos registrarlo. Vuelve a intentarlo.'

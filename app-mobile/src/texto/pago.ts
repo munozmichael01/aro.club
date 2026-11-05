@@ -1,3 +1,4 @@
+import { reglas } from '../reglas'
 /**
  * El texto de Pago, copiado de `Pago.dc.html` (casilla B de
  * TEXTO-tres-superficies). Métodos, datos de cuenta, montos y tasa vienen
@@ -209,7 +210,7 @@ export const sinRespuesta = {
   cargar: 'No pudimos cargar el pago. Revisa tu conexión e inténtalo otra vez.',
   reintentar: 'Reintentar',
   /** «No pudimos cargar el pago.» (entrega carga): el resto lo pone `reglas.CARGA`. */
-  que: 'el pago',
+  que: reglas.CARGA.texto.que.pago,
   cargando: 'Cargando el pago',
 }
 

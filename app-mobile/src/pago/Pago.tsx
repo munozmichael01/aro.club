@@ -360,7 +360,7 @@ export function Pago(p: { evento: string | null; servicio: Servicio; ir: (d: str
                     accessibilityLabel={T.cupon.etiqueta}
                   />
                 </View>
-                <Boton texto={permisoOk ? T.cupon.aplicar : masUno && !entendido ? reglas.MAS_UNO.aviso.falta : T.cupon.marcaPermiso} onPress={aplicarCupon} trabajando={aplicando} apagado={!cupon.trim() || !permisoOk} />
+                <Boton texto={permisoOk ? T.cupon.aplicar : masUno && !entendido ? reglas.MAS_UNO.aviso.falta : T.cupon.marcaPermiso} onPress={aplicarCupon} trabajando={aplicando && reglas.CARGA.texto.trabajando.cupon} apagado={!cupon.trim() || !permisoOk} />
               </View>
 
               {falloCupon ? (
