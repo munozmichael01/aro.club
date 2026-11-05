@@ -426,6 +426,37 @@ if (sinIcono.length) {
   }
 }
 
+// --- el respaldo de carga.js: la copia de AroReglas.CARGA que usa si reglas.js
+// no llega. Una copia que se separa es el fallo de siempre, aquí con una razón
+// para existir (sin ella, un corte de red tumba la pantalla): por eso se vigila.
+{
+  const { default: vm } = await import('node:vm')
+  const fuente = fs.readFileSync(fileURLToPath(new URL('../public/carga.js', import.meta.url)), 'utf8')
+  const ventana = { AroReglas: { CARGA: reglas.CARGA } }
+  const documento = { head: { appendChild() {} }, createElement: () => ({}), getElementById: () => null, readyState: 'complete', addEventListener() {} }
+  vm.runInNewContext(fuente, { window: ventana, document: documento })
+  const r = ventana.AroCarga.respaldo
+  const c = reglas.CARGA
+  const claves = (x) => JSON.stringify(x, Object.keys(x).sort())
+  const iguales =
+    JSON.stringify(r.tiempo) === JSON.stringify(c.tiempo) &&
+    JSON.stringify(r.aro) === JSON.stringify(c.aro) &&
+    JSON.stringify(r.hueso) === JSON.stringify(c.hueso) &&
+    claves(r.texto) === claves(c.texto) &&
+    JSON.stringify(r.texto.trabajando) === JSON.stringify(c.texto.trabajando) &&
+    JSON.stringify(r.texto.que) === JSON.stringify(c.texto.que) &&
+    r.texto.noPudimos('x') === c.texto.noPudimos('x') &&
+    r.texto.franja('las 3:40 p.m.') === c.texto.franja('las 3:40 p.m.') &&
+    r.texto.franja('el lunes 2') === c.texto.franja('el lunes 2')
+  if (!iguales) {
+    errores++
+    console.error('\n\u2717 el respaldo de carga.js no coincide con AroReglas.CARGA')
+    console.error('  \u2192 si reglas.js no llega, la carga dice y tarda otra cosa')
+  } else {
+    console.log('\u2713 el respaldo de carga.js, igual que AroReglas.CARGA')
+  }
+}
+
 // --- la septima copia: el Smart App Banner de Apple --------------------
 //
 // `<meta name="apple-itunes-app">`. Solo lo ve quien entra con Safari en un

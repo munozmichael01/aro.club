@@ -4,7 +4,8 @@
  * Las mismas piezas que la app —el aro que se llena, los huesos, el botón
  * que trabaja y «No pudimos cargar…»— y los mismos tiempos y textos, que
  * viven en `AroReglas.CARGA` (reglas.js) para que no diverjan. Esta pieza
- * solo los pinta. Se carga DESPUÉS de reglas.js.
+ * solo los pinta. Se carga DESPUÉS de reglas.js, y si reglas.js no llegó
+ * sigue funcionando con su respaldo.
  *
  * La regla, que es de Design y no se reabre aquí:
  *   - menos de 0,4 s → nada;
@@ -22,11 +23,56 @@
   if (typeof window === 'undefined') return;
   if (window.AroCarga) return;
 
-  var C = (window.AroReglas && window.AroReglas.CARGA) || null;
+  /**
+   * Si `reglas.js` no llegó (05-11: una vez, en /cuenta, probablemente un
+   * corte de red), esto NO puede tumbar la pantalla. Aquí había un `throw`:
+   * sin `AroCarga`, cada pantalla reventaba al pintar, y por una pieza que
+   * solo decide cómo se ve una espera.
+   *
+   * Así que dos cosas:
+   *  - Se reintenta `reglas.js` una vez. `document.write` a propósito: es la
+   *    única forma de que siga siendo síncrono, y las pantallas lo usan justo
+   *    después de este fichero. Solo mientras la página aún se está leyendo.
+   *  - Mientras tanto, los valores de RESPALDO. Son una copia de
+   *    `AroReglas.CARGA` y `comprobar-cuestionario.mjs` falla si se separan.
+   */
+  var RESPALDO = {
+    tiempo: { umbral: 400, minimoVisible: 500, tarda: 8000, veloTope: 6000, transicion: 180, escalon: 40, tandas: 3, latido: 1600, vueltaAro: 1500, check: 600 },
+    aro: { tamanos: [20, 28, 40, 54], enciende: [0.06, 0.18, 0.30, 0.42, 0.54, 0.66], mantiene: 0.84, apaga: 0.96, puntoApagado: 0.16, anillo: 0.2, tuyoSobreVerde: '#E39C63' },
+    hueso: { sobreCrema: 0.08, sobreVerde: 0.12, alto: [0.7, 0.8] },
+    texto: {
+      unMomento: 'Un momento',
+      tarda: 'Está tardando más de lo normal.',
+      reintentar: 'Reintentar',
+      volverAIntentar: 'Volver a intentar',
+      noPudimos: function (que) { return 'No pudimos cargar ' + que + '.'; },
+      sinRed: 'Revisa tu conexión e inténtalo otra vez. En cuanto vuelva, lo intentamos solos.',
+      esNuestro: 'Es cosa nuestra, no tuya: vuelve a intentarlo en un momento.',
+      franja: function (cuando) {
+        var c = String(cuando || '');
+        var fin = /\.$/.test(c) ? '' : '.';
+        return (/^el /.test(c) ? 'Sin conexión. Esto es d' : 'Sin conexión. Esto es de ') + c + fin;
+      },
+      trabajando: {
+        apartar: 'Apartando tu puesto',
+        cancelar: 'Cancelando tu puesto',
+        cambiar: 'Cambiando tu fecha',
+        cupon: 'Aplicando tu código',
+        aceptar: 'Aceptando la invitación',
+        reembolso: 'Enviando tu pedido',
+      },
+      que: {
+        inicio: 'tu cuenta', mesa: 'tu mesa', pasadas: 'tus cenas', pago: 'el pago', dentro: 'tu plan',
+        cancelar: 'tu reserva', cambiar: 'tus fechas', masUno: 'tu invitación', legal: 'el texto', reembolso: 'tu reembolso',
+      },
+    },
+  };
+  var C = window.AroReglas && window.AroReglas.CARGA;
   if (!C) {
-    // Sin reglas.js no hay tiempos ni textos: mejor fallar alto que pintar
-    // un aro con números inventados.
-    throw new Error('carga.js necesita reglas.js cargado antes');
+    C = RESPALDO;
+    if (!window.AroReglas && document.readyState === 'loading') {
+      document.write('<script src="./reglas.js"><\/script>');
+    }
   }
   var T = C.tiempo;
   var X = C.texto;
@@ -392,6 +438,7 @@
   };
 
   window.AroCarga = {
+    respaldo: RESPALDO,
     T: T,
     linea: linea,
     hueso: hueso,
