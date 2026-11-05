@@ -14,6 +14,7 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
@@ -59,8 +60,12 @@
       </div>
     </sc-if>
 
+    <sc-if value="{{ hayFalloCarga }}" hint-placeholder-val="{{ false }}">
+      {{ bloqueSinRespuesta }}
+    </sc-if>
+
     <sc-if value="{{ esFormulario }}" hint-placeholder-val="{{ true }}">
-      <div style="animation:aro-open 340ms ease both">
+      <div class="aro-entra">
         <h1 style="{{ h1 }}">Te devolvemos tu plaza en bolívares</h1>
         <p style="{{ bajada }}">Te devolvemos los {{ precio }} de tu plaza por Pago Móvil.</p>
 
@@ -116,7 +121,7 @@
         </sc-if>
 
         <div style="display:flex;flex-wrap:wrap;gap:13px;align-items:center;margin-top:clamp(26px,3.4vw,34px)">
-          <button onClick="{{ pedir }}" style="{{ botonPedir }}">{{ textoPedir }}</button>
+          <button onClick="{{ pedir }}" style="{{ bPedir.estilo }}" aria-busy="{{ bPedir.busy }}" aria-label="{{ bPedir.etiqueta }}">{{ bPedir.aro }}{{ textoPedir }}</button>
           <a href="/cuenta" style="{{ botonFantasma }}">Mejor me quedo el crédito</a>
         </div>
 
@@ -165,10 +170,25 @@ class Component extends DCLogic {
             enviando: false, fallo: '', hecho: null };
 
   componentDidMount() {
-    fetch('/api/mi-cuenta')
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('sin sesión'))))
-      .then((d) => this.setState({ datos: d }))
-      .catch(() => { window.location.href = '/entrar'; });
+    this.cargar();
+    this._red = AroCarga.alVolverLaRed(() => { if (this.state.falloCarga) this.cargar(); });
+  }
+
+  componentWillUnmount() { if (this._red) this._red(); }
+
+  /**
+   * Sin sesión → a Entrar. Sin red o con un error nuestro ya no (entrega
+   * «carga»): «No pudimos cargar tu reembolso.» con Reintentar. Mientras
+   * llega, el formulario se ve con huesos donde van el importe y la tasa.
+   */
+  cargar() {
+    return AroCarga.pedir('/api/mi-cuenta')
+      .then((r) => r.json())
+      .then((d) => this.setState({ datos: d, falloCarga: null }))
+      .catch((e) => {
+        if (e && (e.status === 401 || e.status === 404)) { window.location.href = '/entrar?volver=' + encodeURIComponent(location.pathname + location.search); return; }
+        this.setState({ falloCarga: AroCarga.motivoDe(e) });
+      });
   }
 
   pedir() {
@@ -264,7 +284,13 @@ class Component extends DCLogic {
        * nada. Los números aparecen cuando llegan, y si resulta que no puede
        * pedirlo, entonces cambia a decírselo.
        */
-      esFormulario: !St.hecho && (d === null || !!r.puede),
+      esFormulario: !St.hecho && !St.falloCarga && (d === null || !!r.puede),
+      hayFalloCarga: d === null && !!St.falloCarga,
+      bloqueSinRespuesta: St.falloCarga ? AroCarga.sinRespuesta({
+        que: 'reembolso', motivo: St.falloCarga,
+        estado: AroCarga.estado(this, 'reintentando'),
+        alReintentar: () => { this.setState({ reintentando: true }); this.cargar().then(() => this.setState({ reintentando: false })); },
+      }) : null,
       esHecho: !!St.hecho,
       noPuede: d !== null && !St.hecho && !r.puede,
 
@@ -277,9 +303,10 @@ class Component extends DCLogic {
           ? 'Tenemos tu solicitud de ' + bs(r.montoBs) + ' y te la mandamos en un día hábil. Te avisamos en cuanto salga.'
           : 'El dinero solo se puede pedir cuando te quedas sin mesa y tu crédito vuelve, y dentro de los tres días siguientes. Si crees que no es tu caso, escríbenos a hola@aro.club.'),
 
-      precio: (r.precio != null ? r.precio : 10) + ' ref',
-      montoBs: bs(r.montoBs),
-      comoSale: r.precio != null && r.tasa != null
+      // Mientras llega: huesos donde van el precio, el importe y la tasa.
+      precio: d === null ? AroCarga.hueso('4ch') : (r.precio != null ? r.precio : 10) + ' ref',
+      montoBs: d === null ? AroCarga.hueso('7ch', '0.8em', { radio: 8 }) : bs(r.montoBs),
+      comoSale: d === null ? AroCarga.hueso('60%') : r.precio != null && r.tasa != null
         ? r.precio + ' ref a la tasa de hoy, ' + Number(r.tasa).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
         : '',
       hastaCuando: elDia
@@ -300,7 +327,8 @@ class Component extends DCLogic {
       // Y no se puede pulsar hasta saber que se puede: entre el primer
       // fotograma y la respuesta no hay ni monto que prometer.
       pedir: () => { if (d && r.puede) this.pedir(); },
-      textoPedir: St.enviando ? 'Un momento…' : 'Pedir el reembolso',
+      textoPedir: 'Pedir el reembolso',
+      bPedir: AroCarga.boton(this, 'enviando', btn(!d ? 'rgba(27,81,56,.5)' : '#1B5138', '#FAF3E4', 'none'), AroCarga.texto.trabajando.reembolso, { verde: true }),
       botonPedir: btn(St.enviando || !d ? 'rgba(27,81,56,.5)' : '#1B5138', '#FAF3E4', 'none'),
       botonFantasma: btn('transparent', '#2C4A38', '1px solid rgba(20,52,42,.25)'),
       botonVolver: btn('#1B5138', '#FAF3E4', 'none'),

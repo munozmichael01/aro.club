@@ -15,6 +15,7 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 <script src="./compartir.js"></script>
 </head>
 <body>
@@ -59,21 +60,40 @@
 
   <div style="position:relative;max-width:484px;margin:0 auto;padding:max(16px, env(safe-area-inset-top)) 22px calc(40px + env(safe-area-inset-bottom))">
 
+    <!-- Carga (entrega «carga», 03-11): el esqueleto de «Estás dentro»
+         sobre verde, con los huesos en crema. Lo fijo —cerrar, el isotipo,
+         los botones— se pinta; los botones, apagados. No antes de 0,4 s. -->
     <sc-if value="{{ cargando }}" hint-placeholder-val="{{ false }}">
-      <div style="min-height:80vh;display:flex;align-items:center;justify-content:center">
-        <div style="width:32px;height:32px;border-radius:50%;border:3px solid rgba(250,243,228,.18);border-top-color:#E39C63;animation:aro-spin 800ms linear infinite"></div>
+      <div aria-busy="true" aria-live="polite" class="aro-tras-umbral" style="display:flex;flex-direction:column;gap:18px">
+        <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">{{ unMomento }}</span>
+        <div style="display:flex;justify-content:flex-end">
+          <a href="/cuenta" aria-label="Cerrar" style="width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;background:rgba(250,243,228,.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+        </div>
+        <svg viewBox="0 0 240 240" width="64" height="64" aria-hidden="true" style="display:block"><circle cx="120" cy="120" r="86" fill="none" stroke="#FAF3E4" stroke-width="20"></circle><circle cx="206" cy="120" r="25" fill="#E39C63"></circle><circle cx="163" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="194.5" r="25" fill="#FAF3E4"></circle><circle cx="34" cy="120" r="25" fill="#FAF3E4"></circle><circle cx="77" cy="45.5" r="25" fill="#FAF3E4"></circle><circle cx="163" cy="45.5" r="25" fill="#FAF3E4"></circle></svg>
+        <div class="aro-hueso verde" style="height:26px;width:120px;border-radius:999px"></div>
+        <div style="{{ esq.titulo.caja }}"><div class="aro-hueso verde" style="{{ esq.titulo.hueso }}"></div></div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="{{ esq.plan.caja }}"><div class="aro-hueso verde" style="{{ esq.plan.hueso }}"></div></div>
+          <div style="{{ esq.zona.caja }}"><div class="aro-hueso verde" style="{{ esq.zona.hueso }}"></div></div>
+        </div>
+        <div style="border-radius:20px;background:#1B5138;padding:16px 18px;display:flex;flex-direction:column;gap:7px">
+          <div class="aro-hueso verde" style="height:8px;width:120px;border-radius:4px;margin:2px 0"></div>
+          <div style="{{ esq.revela.caja }}"><div class="aro-hueso verde" style="{{ esq.revela.hueso }}"></div></div>
+          <div style="{{ esq.revelaCorta.caja }}"><div class="aro-hueso verde" style="{{ esq.revelaCorta.hueso }}"></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+          <span aria-disabled="true" style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;background:rgba(227,156,99,.35);color:#14342A;font:600 15px/1 'Inter Tight',sans-serif">{{ textoCompartir }}</span>
+          <span aria-disabled="true" style="display:flex;align-items:center;justify-content:center;min-height:52px;border-radius:999px;background:rgba(250,243,228,.16);color:#C5D8CA;font:600 15px/1 'Inter Tight',sans-serif">{{ textoCalendario }}</span>
+        </div>
       </div>
     </sc-if>
 
     <sc-if value="{{ hayFallo }}" hint-placeholder-val="{{ false }}">
-      <div style="min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center">
-        <div style="font:400 15px/1.5 'Inter Tight',sans-serif;color:#C5D8CA;max-width:32ch">{{ fallo }}</div>
-        <button onClick="{{ reintentar }}" style="min-height:48px;padding:0 24px;border-radius:999px;border:1.5px solid rgba(250,243,228,.5);background:transparent;color:#FAF3E4;font:600 15px/1 'Inter Tight',sans-serif;cursor:pointer">Reintentar</button>
-      </div>
+      <div style="padding-top:64px">{{ bloqueSinRespuesta }}</div>
     </sc-if>
 
     <sc-if value="{{ listo }}" hint-placeholder-val="{{ true }}">
-      <div style="display:flex;flex-direction:column;gap:18px;animation:aro-open 420ms ease both">
+      <div class="aro-entra" style="display:flex;flex-direction:column;gap:18px">
         <div style="display:flex;justify-content:flex-end">
           <a href="/cuenta" aria-label="Cerrar" style="width:44px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;background:rgba(250,243,228,.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FAF3E4" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
         </div>
@@ -222,9 +242,11 @@ class Component extends DCLogic {
     this._alVolver = () => { if (!document.hidden && this.pendiente()) this.cargar(); };
     document.addEventListener('visibilitychange', this._alVolver);
     this._espera = setInterval(() => { if (!document.hidden && this.pendiente()) this.cargar(); }, 20000);
+    this._red = AroCarga.alVolverLaRed(() => { if (this.state.fallo && !this.state.datos) this.cargar(); });
   }
 
   componentWillUnmount() {
+    if (this._red) this._red();
     clearInterval(this._espera);
     document.removeEventListener('visibilitychange', this._alVolver);
   }
@@ -235,19 +257,20 @@ class Component extends DCLogic {
   }
 
   cargar() {
-    fetch('/api/estas-dentro' + (this._evento ? '?evento=' + encodeURIComponent(this._evento) : ''))
+    return fetch('/api/estas-dentro' + (this._evento ? '?evento=' + encodeURIComponent(this._evento) : ''))
       .then((r) => {
         if (r.status === 401) {
           window.location.replace('/entrar?volver=' + encodeURIComponent(location.pathname + location.search));
           return null;
         }
-        return r.ok ? r.json() : Promise.reject(new Error('sin datos'));
+        if (r.ok) return r.json();
+        const e = new Error('HTTP ' + r.status); e.status = r.status; throw e;
       })
       .then((d) => {
         if (!d) return;
         // Sin reserva viva no hay nada que celebrar.
         if (!d.reserva) { window.location.replace('/cuenta'); return; }
-        this.setState({ datos: d, fallo: '' });
+        this.setState({ datos: d, fallo: null });
         try {
           this.setState({ enCalendario: localStorage.getItem('calendario:' + d.reserva.id) === '1' });
         } catch (e) { /* sin almacenamiento: se queda en «Añadir» */ }
@@ -262,9 +285,9 @@ class Component extends DCLogic {
           }).catch(() => { /* si falla, se volverá a abrir una vez más: no es grave */ });
         }
       })
-      .catch(() => {
+      .catch((e) => {
         // Si ya estaba pintada, un fallo al volver a mirar no la tapa.
-        if (!this.state.datos) this.setState({ fallo: 'No pudimos cargar tu plan. Revisa la conexión y vuelve a intentarlo.' });
+        if (!this.state.datos) this.setState({ fallo: AroCarga.motivoDe(e) });
       });
   }
 
@@ -381,7 +404,21 @@ class Component extends DCLogic {
       cancela: d && d.vienesCon ? M.acompanante.cancela(d.vienesCon) : (esMasUno ? M.dentro.cancela() : v.cancela),
       cargando: !d && !S.fallo,
       hayFallo: !d && !!S.fallo,
-      fallo: S.fallo,
+      unMomento: AroCarga.texto.unMomento,
+      esq: {
+        titulo: AroCarga.linea('52px', 1, '70%'),
+        plan: AroCarga.linea('19px', 1.3, '85%'),
+        zona: AroCarga.linea('15px', 1.35, '50%'),
+        revela: AroCarga.linea('15px', 1.45, '100%'),
+        revelaCorta: AroCarga.linea('15px', 1.45, '60%'),
+      },
+      // «No pudimos cargar tu plan.» (entrega «carga»), con Reintentar y,
+      // al volver la red, solo.
+      bloqueSinRespuesta: S.fallo ? AroCarga.sinRespuesta({
+        que: 'dentro', motivo: S.fallo,
+        estado: AroCarga.estado(this, 'reintentando'),
+        alReintentar: () => { this.setState({ reintentando: true }); this.cargar().then(() => this.setState({ reintentando: false })); },
+      }) : null,
       listo: !!d,
       v,
       titulo: D.titulo,
@@ -401,7 +438,7 @@ class Component extends DCLogic {
       comprobante,
       compartir: () => { if (d) AroCompartir.abrir({ evento: d.reserva.eventoId }); },
       calendario: () => this.abrirCalendario(),
-      reintentar: () => { this.setState({ fallo: '' }); this.cargar(); }
+      reintentar: () => this.cargar()
     };
   }
 }

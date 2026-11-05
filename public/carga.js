@@ -377,9 +377,24 @@
     };
   };
 
+  /**
+   * Un hueso suelto, para meterlo donde iría un dato dentro de un texto que
+   * ya está pintado (el importe de un recibo, por ejemplo). `ancho` y `alto`
+   * en CSS; `alto` por defecto, el 75 % de la letra que lo rodea.
+   */
+  var hueso = function (ancho, alto, op) {
+    op = op || {};
+    return e('span', {
+      className: 'aro-hueso' + (op.verde ? ' verde' : ''),
+      'aria-hidden': 'true',
+      style: { display: 'inline-block', verticalAlign: 'middle', width: ancho, height: alto || '0.75em', borderRadius: op.radio || 6 },
+    });
+  };
+
   window.AroCarga = {
     T: T,
     linea: linea,
+    hueso: hueso,
     texto: X,
     aro: aro,
     check: check,

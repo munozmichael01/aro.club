@@ -15,6 +15,7 @@
 <script src="./vendor.js"></script>
 <script src="./support.js"></script>
 <script src="./reglas.js"></script>
+<script src="./carga.js"></script>
 </head>
 <body>
 <noscript><div style="max-width:34rem;margin:14vh auto;padding:0 24px;font:400 17px/1.6 system-ui,sans-serif;color:#14342A"><p style="font:700 26px/1.2 Georgia,serif;margin:0 0 12px">Esta pantalla necesita JavaScript.</p><p style="margin:0 0 12px">Aro Club no funciona con JavaScript desactivado. Actívalo y recarga, o escríbenos a <a href="mailto:hola@aro.club" style="color:#1B5138">hola@aro.club</a> y lo resolvemos por ahí.</p></div></noscript>
@@ -47,17 +48,40 @@
 <div style="min-height:100vh;background:#FAF3E4;font-family:'Inter Tight',sans-serif">
   <div style="max-width:440px;margin:0 auto;padding:clamp(28px,6vw,48px) 16px 56px;box-sizing:border-box">
 
+    <!-- Carga (entrega «carga», 03-11): la invitación con huesos donde va
+         lo de quien te invita. Lo fijo —el isotipo, el sello, «la fecha»—
+         se pinta. No antes de 0,4 s. -->
     <sc-if value="{{ cargando }}" hint-placeholder-val="{{ false }}">
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div style="width:60px;height:60px;border-radius:30px;background:rgba(20,52,42,.08)"></div>
-        <div style="height:40px;border-radius:14px;background:rgba(20,52,42,.08)"></div>
-        <div style="height:120px;border-radius:22px;background:rgba(20,52,42,.06)"></div>
+      <div aria-busy="true" aria-live="polite" class="aro-tras-umbral" style="display:flex;flex-direction:column;gap:16px">
+        <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">{{ unMomento }}</span>
+        <svg viewBox="0 0 240 240" width="60" height="60" aria-hidden="true"><circle cx="120" cy="120" r="86" fill="none" stroke="#14342A" stroke-width="20"></circle><circle cx="206" cy="120" r="25" fill="#C0662F"></circle><circle cx="163" cy="194.5" r="23" fill="#FAF3E4" stroke="#C0662F" stroke-width="8" stroke-dasharray="12 9"></circle><circle cx="77" cy="194.5" r="25" fill="#14342A"></circle><circle cx="34" cy="120" r="25" fill="#14342A"></circle><circle cx="77" cy="45.5" r="25" fill="#14342A"></circle><circle cx="163" cy="45.5" r="25" fill="#14342A"></circle></svg>
+        <span style="align-self:flex-start;display:inline-flex;align-items:center;min-height:26px;padding:0 11px;border-radius:999px;background:rgba(192,102,47,.14);color:#8F4515;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em">{{ sello }}</span>
+        <div style="font:400 clamp(36px,9vw,46px)/1.02 'Young Serif',Georgia,serif">
+          <div style="{{ esq.titulo.caja }}"><div class="aro-hueso" style="{{ esq.titulo.hueso }}"></div></div>
+          <div style="{{ esq.tituloCorto.caja }}"><div class="aro-hueso" style="{{ esq.tituloCorto.hueso }}"></div></div>
+        </div>
+        <div style="border-radius:22px;background:#FFFBF0;border:1px solid rgba(20,52,42,.1);padding:18px;display:flex;flex-direction:column;gap:6px">
+          <div style="font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em;color:#8F4515">{{ fechaSello }}</div>
+          <div style="{{ esq.fecha.caja }}"><div class="aro-hueso" style="{{ esq.fecha.hueso }}"></div></div>
+          <div style="{{ esq.donde.caja }}"><div class="aro-hueso" style="{{ esq.donde.hueso }}"></div></div>
+        </div>
+        <div>
+          <div style="{{ esq.cuerpo.caja }}"><div class="aro-hueso" style="{{ esq.cuerpo.hueso }}"></div></div>
+          <div style="{{ esq.cuerpoCorto.caja }}"><div class="aro-hueso" style="{{ esq.cuerpoCorto.hueso }}"></div></div>
+        </div>
+        <div class="aro-hueso" style="height:54px;border-radius:999px;margin-top:4px"></div>
       </div>
+    </sc-if>
+    <!-- No se pudo leer la invitación: antes la pantalla se quedaba en
+         blanco, porque el aviso de fallo vivía dentro de la invitación que
+         no había llegado. -->
+    <sc-if value="{{ hayFalloCarga }}" hint-placeholder-val="{{ false }}">
+      {{ bloqueSinRespuesta }}
     </sc-if>
 
     <!-- 5A, 5B y W1: la invitación vale. -->
     <sc-if value="{{ valida }}" hint-placeholder-val="{{ true }}">
-      <div style="display:flex;flex-direction:column;gap:16px;animation:aro-open 380ms ease both">
+      <div class="aro-entra" style="display:flex;flex-direction:column;gap:16px">
         <svg viewBox="0 0 240 240" width="60" height="60" aria-hidden="true"><circle cx="120" cy="120" r="86" fill="none" stroke="#14342A" stroke-width="20"></circle><circle cx="206" cy="120" r="25" fill="#C0662F"></circle><circle cx="163" cy="194.5" r="23" fill="#FAF3E4" stroke="#C0662F" stroke-width="8" stroke-dasharray="12 9"></circle><circle cx="77" cy="194.5" r="25" fill="#14342A"></circle><circle cx="34" cy="120" r="25" fill="#14342A"></circle><circle cx="77" cy="45.5" r="25" fill="#14342A"></circle><circle cx="163" cy="45.5" r="25" fill="#14342A"></circle></svg>
         <span style="align-self:flex-start;display:inline-flex;align-items:center;min-height:26px;padding:0 11px;border-radius:999px;background:rgba(192,102,47,.14);color:#8F4515;font:700 11px/1 'Inter Tight',sans-serif;letter-spacing:.14em">{{ sello }}</span>
         <h1 style="margin:0;font:400 clamp(36px,9vw,46px)/1.02 'Young Serif',Georgia,serif;letter-spacing:-.03em;text-wrap:balance">{{ titulo }}</h1>
@@ -98,7 +122,7 @@
             <div style="font:400 13.5px/1.5 'Inter Tight',sans-serif;color:#566A5D;text-wrap:pretty">{{ notaWeb }}</div>
           </sc-if>
           <sc-if value="{{ puedeAceptar }}" hint-placeholder-val="{{ false }}">
-            <button onClick="{{ aceptar }}" style="display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 16px/1 'Inter Tight',sans-serif;cursor:pointer">{{ textoAceptar }}</button>
+            <button onClick="{{ aceptar }}" style="{{ bAceptar.estilo }}" aria-busy="{{ bAceptar.busy }}" aria-label="{{ bAceptar.etiqueta }}">{{ bAceptar.aro }}{{ textoAceptar }}</button>
             <a href="/agenda" style="display:flex;align-items:center;justify-content:center;min-height:44px;color:#14342A;font:600 15px/1 'Inter Tight',sans-serif">{{ textoNoPuedo }}</a>
           </sc-if>
           <sc-if value="{{ hayIrA }}" hint-placeholder-val="{{ false }}">
@@ -110,7 +134,7 @@
 
     <!-- 5C · Ya no vale: se usó, se cambió, cerró o es tuya. Sin culpas y con salida. -->
     <sc-if value="{{ noVale }}" hint-placeholder-val="{{ false }}">
-      <div style="display:flex;flex-direction:column;gap:16px;align-items:flex-start;animation:aro-open 380ms ease both">
+      <div class="aro-entra" style="display:flex;flex-direction:column;gap:16px;align-items:flex-start">
         <svg viewBox="0 0 240 240" width="80" height="80" aria-hidden="true"><circle cx="120" cy="120" r="86" fill="none" stroke="#1B5138" stroke-width="22"></circle><circle cx="206" cy="120" r="25" fill="#C0662F"></circle><circle cx="163" cy="194.5" r="25" fill="#1B5138"></circle><circle cx="77" cy="194.5" r="25" fill="#1B5138"></circle><circle cx="34" cy="120" r="25" fill="#1B5138"></circle><circle cx="77" cy="45.5" r="25" fill="#1B5138"></circle><circle cx="163" cy="45.5" r="25" fill="#1B5138"></circle></svg>
         <h1 style="margin:0;font:400 clamp(32px,8vw,40px)/1.05 'Young Serif',Georgia,serif;letter-spacing:-.025em;text-wrap:balance">{{ tituloNoVale }}</h1>
         <div style="font:400 16px/1.55 'Inter Tight',sans-serif;color:#2C4A38;text-wrap:pretty">{{ lineaNoVale }}</div>
@@ -134,18 +158,28 @@ class Component extends DCLogic {
     this._token = t;
     if (!t) { this.setState({ noExiste: true }); return; }
     this.cargar();
+    this._red = AroCarga.alVolverLaRed(() => { if (this.state.falloCarga) this.cargar(); });
   }
 
+  componentWillUnmount() { if (this._red) this._red(); }
+
   cargar() {
-    fetch('/api/mas-uno?token=' + encodeURIComponent(this._token))
-      .then((r) => (r.status === 404 ? null : r.json()))
+    return fetch('/api/mas-uno?token=' + encodeURIComponent(this._token))
+      .then((r) => {
+        if (r.status === 404) return null;
+        if (r.ok) return r.json();
+        const e = new Error('HTTP ' + r.status); e.status = r.status; throw e;
+      })
       .then((d) => {
         if (!d) { this.setState({ noExiste: true }); return; }
         // Ya es suya: su puesto está en Mi mesa.
         if (d.estado === 'tuya') { window.location.replace('/mesa'); return; }
-        this.setState({ datos: d });
+        this.setState({ datos: d, falloCarga: null });
       })
-      .catch(() => this.setState({ fallo: 'No pudimos abrir la invitación. Revisa la conexión y vuelve a intentarlo.' }));
+      .catch((e) => {
+        if (this.state.datos) this.setState({ fallo: 'No pudimos abrir la invitación. Revisa la conexión y vuelve a intentarlo.' });
+        else this.setState({ falloCarga: AroCarga.motivoDe(e) });
+      });
   }
 
   aceptar() {
@@ -206,7 +240,22 @@ class Component extends DCLogic {
     }[estado];
 
     return {
-      cargando: !d && !S.noExiste && !S.fallo,
+      cargando: !d && !S.noExiste && !S.fallo && !S.falloCarga,
+      unMomento: AroCarga.texto.unMomento,
+      esq: {
+        titulo: AroCarga.linea('clamp(36px,9vw,46px)', 1.02, '100%'),
+        tituloCorto: AroCarga.linea('clamp(36px,9vw,46px)', 1.02, '60%'),
+        fecha: AroCarga.linea('24px', 1.1, '70%'),
+        donde: AroCarga.linea('14.5px', 1.45, '85%'),
+        cuerpo: AroCarga.linea('16px', 1.55, '100%'),
+        cuerpoCorto: AroCarga.linea('16px', 1.55, '70%'),
+      },
+      hayFalloCarga: !d && !S.noExiste && !!S.falloCarga,
+      bloqueSinRespuesta: S.falloCarga ? AroCarga.sinRespuesta({
+        que: 'masUno', motivo: S.falloCarga,
+        estado: AroCarga.estado(this, 'reintentando'),
+        alReintentar: () => { this.setState({ reintentando: true }); this.cargar().then(() => this.setState({ reintentando: false })); },
+      }) : null,
       valida,
       sello: I.sello,
       titulo: I.titulo(d && d.invita),
@@ -226,7 +275,8 @@ class Component extends DCLogic {
       enlaceEntrar: '/entrar?volver=' + volver,
       notaWeb: d ? I.notaWeb(d.plazo) : '',
       puedeAceptar: valida && !!yo && !aceptada,
-      textoAceptar: S.aceptando ? 'Aceptando' : I.aceptar,
+      textoAceptar: I.aceptar,
+      bAceptar: AroCarga.boton(this, 'aceptando', 'display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:999px;border:none;background:#1B5138;color:#FAF3E4;font:600 16px/1 \'Inter Tight\',sans-serif;cursor:pointer', AroCarga.texto.trabajando.aceptar, { verde: true }),
       aceptar: () => this.aceptar(),
       textoNoPuedo: I.noPuedo,
       hayAceptada: valida && !!yo && aceptada,
