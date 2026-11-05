@@ -5,6 +5,7 @@ import { exigirOps } from '@/lib/ops'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { anotar } from '@/lib/auditoria'
 import { encolar } from '@/lib/correos'
+import { enTrozos } from '@/lib/en-trozos'
 import { masUnoEnLaCola, reclamarPuesto } from '@/lib/mas-uno'
 
 /**
@@ -186,6 +187,31 @@ export async function GET() {
    */
   const masUnoDe = await masUnoEnLaCola(admin, ids)
 
+  /**
+   * A quién de Incompletos ya le pedimos la foto que falta, y cuándo.
+   *
+   * «Falta la selfie» con solo la cédula subida no rechaza ninguna foto —la
+   * cédula está bien, lo que no hay es la otra—, así que la tarjeta no
+   * cambia de grupo. Sin esto no habría forma de saber que ya se le
+   * escribió, y se le volvería a pedir.
+   */
+  const pedidas = await enTrozos<{ profile_id: string | null; created_at: string; payload: unknown }>(
+    ids,
+    (t) => admin
+      .from('scheduled_emails')
+      .select('profile_id, created_at, payload')
+      .eq('kind', 'verificacion_rechazada')
+      .in('profile_id', t),
+    'a quién ya le pedimos la foto',
+  )
+  const pedidaA = new Map<string, { motivo: string; el: string }>()
+  for (const f of pedidas) {
+    const motivo = (f.payload as { motivo?: string } | null)?.motivo
+    if (!f.profile_id || (motivo !== 'falta-selfie' && motivo !== 'falta-cedula')) continue
+    const previa = pedidaA.get(f.profile_id)
+    if (!previa || f.created_at > previa.el) pedidaA.set(f.profile_id, { motivo, el: f.created_at })
+  }
+
   const { data: motivos } = await admin
     .from('verification_rejection_reasons')
     .select('code, label, allows_retry, message, afecta')
@@ -268,6 +294,12 @@ export async function GET() {
         // Qué foto falta, si falta. Dicho desde lo que hay, no desde lo que
         // suponemos: `incompleta` sin rechazo es que nunca llegó.
         falta: doc && self ? null : !self ? 'selfie' : 'id_document',
+        // Si ya le pedimos la que falta, desde que subió la que hay.
+        pedida: (() => {
+          const p = pedidaA.get(id)
+          const desde = deLaVista?.espera_desde ?? doc?.created_at ?? self?.created_at ?? null
+          return p && (!desde || p.el >= desde) ? p : null
+        })(),
         vistoHasta: ultimaFoto.get(id) ?? null,
         // Entró por el enlace de un +1 y su puesto depende de esta
         // verificación: va primero, con el cierre a la vista.
@@ -367,7 +399,16 @@ export async function POST(request: Request) {
       .select('afecta')
       .eq('code', d.motivo)
       .maybeSingle()
-    rechazaLaUnica = parada && (m as { afecta?: string } | null)?.afecta === presente
+    /**
+     * O pedir la que FALTA (Michael, 05-11): con solo la cédula, «Falta la
+     * selfie». No rechaza nada —la cédula está bien y se queda pendiente—:
+     * el `update` de abajo no encuentra ninguna selfie que marcar, y lo que
+     * sale es el correo que se la pide. Simétrico con «Falta la foto del
+     * documento» para quien solo subió la selfie.
+     */
+    const faltaLaOtra = (d.motivo === 'falta-selfie' && presente === 'id_document')
+      || (d.motivo === 'falta-cedula' && presente === 'selfie')
+    rechazaLaUnica = parada && ((m as { afecta?: string } | null)?.afecta === presente || faltaLaOtra)
   }
   if (!rechazaLaUnica && (!vigentes.has('id_document') || !vigentes.has('selfie'))) {
     const falta = !vigentes.has('selfie') ? 'la selfie' : 'la cédula'

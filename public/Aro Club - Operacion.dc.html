@@ -5848,6 +5848,8 @@ class Component extends DCLogic {
           ? (c.falta === 'selfie'
             ? 'Falta la selfie. Subió la cédula ' + desdeHace(c.esperaDesde) + ' y no volvió.'
             : 'Falta la cédula. Subió la selfie ' + desdeHace(c.esperaDesde) + ' y no volvió.')
+            // Ya se la pedimos: la tarjeta no cambia de grupo, así que se dice aquí.
+            + (c.pedida ? ' Se la pedimos ' + desdeHace(c.pedida.el) + '.' : '')
           : (c.falta === 'selfie' ? 'Subiendo… falta la selfie' : 'Subiendo… falta la cédula'),
 
         // Lo que le rechazamos, dicho con el motivo del catálogo y no con
@@ -5907,8 +5909,11 @@ class Component extends DCLogic {
             btn: 'display:flex;align-items:center;gap:11px;width:100%;min-height:52px;padding:9px 15px 9px 12px;border-radius:20px;background:' + (on ? '#F2E9D5' : 'transparent') + ';border:1px solid ' + (on ? '#6E340F' : 'rgba(20,52,42,.16)') + ';cursor:pointer;transition:all 180ms ease',
             txt: 'display:block;font:' + (on ? '600' : '500') + ' 14px/1.3 \'Inter Tight\',sans-serif;color:#14342A',
             pieEstilo: 'display:block;font:400 12px/1.4 \'Inter Tight\',sans-serif;color:' + (m[2] ? '#33513F' : '#8F4515') + ';margin-top:2px',
-            // Con una sola foto, solo los motivos de ESA foto.
-            vale: c.estado !== 'incompleta' || m[4] === (c.falta === 'selfie' ? 'id_document' : 'selfie')
+            // Con una sola foto, los motivos de ESA foto y el que pide la
+            // que falta: con solo la cédula, «Falta la selfie» (05-11).
+            vale: c.estado !== 'incompleta'
+              || m[4] === (c.falta === 'selfie' ? 'id_document' : 'selfie')
+              || m[3] === (c.falta === 'selfie' ? 'falta-selfie' : 'falta-cedula')
           };
         }).filter((x) => x.vale),
         hayVista: mSel >= 0,
