@@ -3353,6 +3353,89 @@
     },
 
     /**
+     * Cómo se ve la carga, en la app y en la web (entrega «carga», 03-11).
+     *
+     * Los tiempos y los textos, aquí y no en cada lado: la app los tenía en
+     * `diseno/tokens.ts` y la web en ninguna parte. La regla:
+     *   - menos de `umbral` → nada;
+     *   - sabemos la forma → esqueleto;
+     *   - es un paso → el aro de 20 dentro del botón tocado, sin cambiar su texto;
+     *   - no sabemos qué pintar → velo con el aro de 54 y «Un momento»
+     *     (solo al arrancar, Datos, Cuestionario y Verificación).
+     *
+     * Los textos marcados PENDIENTE los tiene que aprobar Michael; mientras,
+     * van como los entregó Design.
+     */
+    CARGA: {
+      tiempo: {
+        /** Antes de esto no se enseña ningún indicador. */
+        umbral: 400,
+        /** Lo que dura como mínimo lo que ya se enseñó (sustituye a `veloMinimo`). */
+        minimoVisible: 500,
+        /** Desde aquí, «Está tardando más de lo normal.» con «Reintentar». */
+        tarda: 8000,
+        /** El velo nunca tapa más que esto. */
+        veloTope: 6000,
+        /** De esqueleto a contenido: cada bloque, solo opacidad. */
+        transicion: 180,
+        /** Entre un bloque y el siguiente, de arriba abajo… */
+        escalon: 40,
+        /** …en un máximo de tantas tandas. */
+        tandas: 3,
+        /** El latido de los huesos, de 1 a 0,5 de opacidad, uno por pantalla. */
+        latido: 1600,
+        /** Una vuelta del aro, que ya no gira: se llena. */
+        vueltaAro: 1500,
+        /** El check del botón al terminar bien, si no hay cambio de pantalla. */
+        check: 600,
+      },
+      aro: {
+        /** Los únicos tamaños. El de 36 pasa a 40, y los de 18 y 22 a 20. */
+        tamanos: [20, 28, 40, 54],
+        /** Cuándo se enciende cada punto, en fracción de la vuelta, empezando por el terracota. */
+        enciende: [0.06, 0.18, 0.30, 0.42, 0.54, 0.66],
+        /** Se mantienen hasta aquí y se apagan juntos hacia `apaga`. Nunca se queda lleno. */
+        mantiene: 0.84,
+        apaga: 0.96,
+        /** Opacidad de un punto apagado y del anillo (trazo 1,5). */
+        puntoApagado: 0.16,
+        anillo: 0.2,
+        /** Sobre verde: los puntos en crema y el tuyo en este. */
+        tuyoSobreVerde: '#E39C63',
+      },
+      hueso: {
+        /** Opacidad de la tinta sobre crema; sobre verde, la del crema. */
+        sobreCrema: 0.08,
+        sobreVerde: 0.12,
+        /** El hueso, centrado en la caja de su línea, a esta fracción del tamaño de la letra. */
+        alto: [0.7, 0.8],
+      },
+      texto: {
+        unMomento: 'Un momento',
+        /** PENDIENTE de Michael. */
+        tarda: 'Está tardando más de lo normal.',
+        reintentar: 'Reintentar',
+        /** Pasadas se queda con el suyo. */
+        volverAIntentar: 'Volver a intentar',
+        noPudimos: function (que) { return 'No pudimos cargar ' + que + '.' },
+        /** Sin red. La segunda frase, PENDIENTE de Michael. */
+        sinRed: 'Revisa tu conexión e inténtalo otra vez. En cuanto vuelva, lo intentamos solos.',
+        /** Error del servidor. */
+        esNuestro: 'Es cosa nuestra, no tuya: vuelve a intentarlo en un momento.',
+        /** La franja con datos guardados. PENDIENTE de Michael. `cuando` es «las 3:40 p.m.» o «el lunes 2». */
+        franja: function (cuando) {
+          var c = String(cuando || '')
+          var fin = /\.$/.test(c) ? '' : '.'
+          return (/^el /.test(c) ? 'Sin conexión. Esto es d' : 'Sin conexión. Esto es de ') + c + fin
+        },
+        /** Lo que dice el botón ocupado a un lector de pantalla. El texto visible no cambia. */
+        trabajando: {
+          apartar: 'Apartando tu puesto',
+        },
+      },
+    },
+
+    /**
      * «Segundo acto»: después de la cena, quien quiera sigue con las otras
      * mesas de la fecha en un mismo bar (Michael, 01-11; opcional, 03-11). Es de la FECHA —el bar va en
      * `events.after_venue_id`— y por ahora solo se enseña la etiqueta, junto

@@ -241,6 +241,21 @@ type Api = {
   /** El precio con el que nace una fecha nueva de ese formato. */
   precioDe: (formato: string | null | undefined) => number
   /** «Segundo acto» (entrega segundo-acto, 03-11): el bar se dice en la mesa, a su hora. */
+  CARGA: {
+    tiempo: {
+      umbral: number; minimoVisible: number; tarda: number; veloTope: number
+      transicion: number; escalon: number; tandas: number; latido: number; vueltaAro: number; check: number
+    }
+    aro: { tamanos: number[]; enciende: number[]; mantiene: number; apaga: number; puntoApagado: number; anillo: number; tuyoSobreVerde: string }
+    hueso: { sobreCrema: number; sobreVerde: number; alto: number[] }
+    texto: {
+      unMomento: string; tarda: string; reintentar: string; volverAIntentar: string
+      noPudimos: (que: string) => string
+      sinRed: string; esNuestro: string
+      franja: (cuando: string) => string
+      trabajando: { apartar: string }
+    }
+  }
   SEGUNDO_ACTO: {
     marca: string
     minutosDespues: number
@@ -379,6 +394,7 @@ export const REDES = api.REDES
 export const MAS_UNO = api.MAS_UNO
 
 export const SEGUNDO_ACTO = api.SEGUNDO_ACTO
+export const CARGA = api.CARGA
 
 export const filtrar = api.filtrar
 export const valido = api.valido
