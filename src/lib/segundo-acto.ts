@@ -36,3 +36,36 @@ export async function fechasConSegundoActo(admin: Admin, ids: string[]): Promise
   if (error) console.error('[segundo acto] no se pudieron leer las fechas', error)
   return new Set((data ?? []).map((f) => f.event_id))
 }
+
+/**
+ * Lo mismo, para una persona: quien ya tiene mesa en una fecha no mira si alguna
+ * zona tiene bar, sino si la tiene la SUYA. Sin esto, Inicio le ponía la marca a
+ * quien cena en una zona sin bar mientras Mi mesa le enseñaba sus bares cercanos.
+ */
+export async function fechasConSegundoActoPara(
+  admin: Admin,
+  perfilId: string,
+  ids: string[],
+): Promise<Set<string>> {
+  if (!ids.length) return new Set()
+  const [{ data: bares, error: e1 }, { data: asientos, error: e2 }] = await Promise.all([
+    admin.from('event_second_acts').select('event_id, zone_slug').in('event_id', ids),
+    admin
+      .from('table_members')
+      .select('dinner_tables!inner(event_id, restaurants!dinner_tables_restaurant_id_fkey(zone_slug))')
+      .eq('profile_id', perfilId)
+      .in('dinner_tables.event_id', ids),
+  ])
+  if (e1 || e2) console.error('[segundo acto] no se pudo leer la fecha de la persona', e1 ?? e2)
+
+  const conBar = new Set((bares ?? []).map((b) => b.event_id))
+  const barDeZona = new Set((bares ?? []).map((b) => `${b.event_id}|${b.zone_slug}`))
+  for (const a of asientos ?? []) {
+    const mesa = a.dinner_tables as unknown as {
+      event_id: string
+      restaurants: { zone_slug: string | null } | null
+    }
+    if (!barDeZona.has(`${mesa.event_id}|${mesa.restaurants?.zone_slug ?? ''}`)) conBar.delete(mesa.event_id)
+  }
+  return conBar
+}

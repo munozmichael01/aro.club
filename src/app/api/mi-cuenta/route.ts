@@ -17,7 +17,7 @@ import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
 
 import { ciudadDe } from '@/lib/ciudades'
 import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
-import { fechasConSegundoActo } from '@/lib/segundo-acto'
+import { fechasConSegundoActoPara } from '@/lib/segundo-acto'
 
 /**
  * El estado de Mi cuenta, derivado del servidor.
@@ -372,7 +372,7 @@ export async function GET() {
    * reservarla. Lo que cambia es que ahora la puerta pregunta en vez de
    * cerrarse.
    */
-  const conBar = await fechasConSegundoActo(admin, (fechas ?? []).map((x) => x.id))
+  const conBar = await fechasConSegundoActoPara(admin, user.id, (fechas ?? []).map((x) => x.id))
   const fechasVisibles = (fechas ?? []).filter(
     (f) => cabeEnLaFecha(perfil.birthdate, f) || mias.has(f.id),
   )
