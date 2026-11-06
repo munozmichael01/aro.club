@@ -1609,6 +1609,12 @@
       var MIN = 60000
       var G = api.GUION
       var fin = t + G.duracionDeLaMesa * MIN
+      // Con segundo acto la mesa se despide a la hora del bar, no a la de
+      // irse: el bar comparte hora con la despedida (`enCursoDeLaMesa` cuenta
+      // con eso) y sale antes de que se acaben las dos horas de la mesa.
+      if (opciones && opciones.segundoActo && !api.esDeManana(formato)) {
+        fin = Date.parse(api.SEGUNDO_ACTO.barEn(empiezaEn))
+      }
 
       var cuando = function (m) {
         return (m.desde === 'cierre' ? fin : t) + m.min * MIN
@@ -3461,12 +3467,13 @@
       marca: 'SEGUNDO ACTO',
 
       /**
-       * El bar sale en Mi mesa dos horas después de la hora de la fecha, la
-       * misma para todas sus mesas (entrega segundo-acto de Design, 03-11).
-       * No se adelanta si una mesa acaba antes: la hora se dice desde el
-       * mediodía y tiene que cumplirse.
+       * El bar sale en Mi mesa una hora y tres cuartos después de la hora de
+       * la fecha, la misma para todas sus mesas: las 8:45 en una cena de las 7
+       * (Michael, 06-11: «a las 9 es muy tarde»; la entrega de Design decía dos
+       * horas). No se adelanta si una mesa acaba antes: la hora se dice desde
+       * el mediodía y tiene que cumplirse.
        */
-      minutosDespues: 120,
+      minutosDespues: 105,
 
       /** Cuándo sale el bar, en ISO. `null` sin hora de inicio. */
       barEn: function (empiezaEn) {
@@ -3491,7 +3498,7 @@
         ahora: {
           sello: 'AHORA',
           aPie: 'A {n} minutos a pie de tu mesa',
-          texto: 'Cuando terminen, ahí se juntan todas las mesas. Cada quien paga lo suyo. Si quieres seguir, sigues.',
+          texto: 'Cuando terminen, ahí se juntan todas las mesas. Pregunta por la reserva de Aro. Cada quien paga lo suyo. Si quieres seguir, sigues.',
           boton: 'Cómo llegar al bar',
         },
         /** El resumen de Paso a paso plegado, desde la hora del bar. */
@@ -3533,9 +3540,9 @@
       /** El aviso a la hora del bar: push y correo. */
       aviso: {
         titulo: 'El segundo acto es en {bar}',
-        cuerpo: 'A {n} minutos a pie de tu mesa. Cuando terminen, ahí siguen todas las mesas. Si quieres seguir, sigues.',
+        cuerpo: 'A {n} minutos a pie de tu mesa. Cuando terminen, ahí siguen todas las mesas. Pregunta por la reserva de Aro. Si quieres seguir, sigues.',
         /** Sin minutos (un sitio sin coordenadas) la primera frase se cae entera. */
-        cuerpoSinMinutos: 'Cuando terminen, ahí siguen todas las mesas. Si quieres seguir, sigues.',
+        cuerpoSinMinutos: 'Cuando terminen, ahí siguen todas las mesas. Pregunta por la reserva de Aro. Si quieres seguir, sigues.',
         boton: 'Ver en Mi mesa',
       },
     },
