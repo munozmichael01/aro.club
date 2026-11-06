@@ -321,13 +321,13 @@ export async function GET(request: Request) {
    * y sin crédito, y es lógico que creyera que se lo habíamos devuelto. Esta
    * ficha se usa para decidir sobre personas: dice lo que ocurrió o no dice nada.
    */
-  const { data: movimientos } = await admin
+  const { data: delLibro } = await admin
     .from('credit_ledger')
-    .select('booking_id, delta, reason, created_at')
+    .select('booking_id, reason, created_at')
     .in('booking_id', (reservas ?? []).map((r) => r.id))
 
   const notaDeCancelacion = (reservaId: string, empiezaEn: string, canceladaEn: string | null) => {
-    const suyos = (movimientos ?? []).filter((m) => m.booking_id === reservaId)
+    const suyos = (delLibro ?? []).filter((m) => m.booking_id === reservaId)
     const llevabaCredito = suyos.some((m) => m.reason === 'event_charge')
     const volvio = suyos.some(
       (m) => m.reason === 'refund' && (!canceladaEn || Date.parse(m.created_at) >= Date.parse(canceladaEn)),
