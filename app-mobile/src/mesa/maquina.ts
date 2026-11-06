@@ -74,7 +74,7 @@ export type DeServidor = {
   edadMinima?: number | null
   idioma?: string | null
   segundoActo?: boolean
-  /** Segundo acto (entrega 03-11): a qué hora sale el bar en Mi mesa. Sin él, dos horas después de la cena. */
+  /** Segundo acto (entrega 03-11): a qué hora sale el bar en Mi mesa. Sin él, `SEGUNDO_ACTO.minutosDespues` después de la fecha (105 desde el 06-11). */
   barEn?: string | null
   /** El bar: el servidor lo manda solo desde `barEn`. Antes no viaja, para que nadie se salte la cena. */
   bar?: (SitioParaSeguir & { direccion?: string | null }) | null
@@ -148,8 +148,8 @@ export type SitioParaSeguir = {
 }
 
 /**
- * La hora del bar del segundo acto: la que mande el servidor, o la de la cena
- * más la duración de la mesa (dos horas, la misma para todas las mesas de la
+ * La hora del bar del segundo acto: la que mande el servidor, o la de la fecha
+ * más `SEGUNDO_ACTO.minutosDespues` (la misma para todas las mesas de la
  * fecha). Null si la fecha no tiene segundo acto.
  */
 export function horaDelBar(d: DeServidor): string | null {

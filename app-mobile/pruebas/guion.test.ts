@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import { DURACION_POR_DEFECTO, enCurso, momentoDeCena, pasos, sinSufijo } from '../src/mesa/guion'
+import { reglas } from '../src/reglas'
 
 const EMPIEZA = '2026-10-16T23:30:00Z' // 7:30 p.m. en Caracas
 const ZONA = 'America/Caracas'
@@ -43,4 +44,12 @@ test('el momento de la cena: antes, en curso y terminada desde la despedida', ()
   assert.equal(momentoDeCena(p, Date.parse(hora(p, 'despedida'))), 'terminada')
   assert.equal(sinSufijo('7:30 p.m.'), '7:30')
   assert.equal(sinSufijo('12:05 a.m.'), '12:05')
+})
+
+test('con segundo acto, la despedida y el bar comparten hora: las 8:45 en una cena de las 7 (06-11)', () => {
+  const pasos = reglas.pasosDeLaMesa('2026-11-07T23:00:00.000Z', 'America/Caracas', 'cena', { segundoActo: true })
+  const hora = (clave: string) => pasos.find((p) => p.clave === clave)?.hora
+  assert.equal(hora('segundoActo'), '8:45 p.m.')
+  assert.equal(pasos[pasos.length - 2].hora, '8:45 p.m.')
+  assert.equal(pasos[pasos.length - 3].hora, '8:15 p.m.')
 })
