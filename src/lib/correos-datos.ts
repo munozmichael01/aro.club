@@ -10,6 +10,7 @@ import { SITIO } from '@/lib/remitente'
 import { urlDeFotoDeLocal } from '@/lib/foto-local'
 import { nombreDeIdioma } from '@/lib/idioma'
 import { arraigoDe, MAS_UNO, SEGUNDO_ACTO, pasadoDe, DIAS_GUARDA_FOTOS, HORAS_DE_MARGEN, HORAS_DE_CIERRE, HORAS_EN_LETRA, NOMBRES_DE_FORMATO, ZONA_POR_DEFECTO, diaDe, horaDe, horaEnLetraDe, partesDe, precioTexto, revelaDe, textoCierre, vozDe } from '@/lib/reglas'
+import { barPorZona, fechasConSegundoActo } from '@/lib/segundo-acto'
 import { cabeEnLaFecha } from '@/lib/edad'
 import { fraseDeTamano } from '@/lib/mesa-corta'
 import { DIAS_DE_PLAZO } from '@/lib/reembolso'
@@ -935,30 +936,35 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
       if (!fila.event_id || !fila.profile_id) return { error: 'sin fecha' }
       const { data: ev } = await admin
         .from('events')
-        .select('starts_at, status, after_venue_id, city_slug')
+        .select('starts_at, status, city_slug')
         .eq('id', fila.event_id)
         .maybeSingle()
-      const evSA = ev as { starts_at: string; status: string; after_venue_id: string | null; city_slug: string } | null
-      if (!evSA || evSA.status === 'cancelled' || !evSA.after_venue_id) return { error: 'la fecha ya no tiene segundo acto' }
+      const evSA = ev as { starts_at: string; status: string; city_slug: string } | null
+      if (!evSA || evSA.status === 'cancelled') return { error: 'la fecha ya no tiene segundo acto' }
       const barEn = SEGUNDO_ACTO.barEn(evSA.starts_at)
       if (!barEn || Date.now() > Date.parse(barEn) + 3600_000) return { error: 'ya pasó la hora del bar' }
 
       const { data: asiento } = await admin
         .from('table_members')
-        .select('dinner_tables!inner(event_id, restaurant_id, restaurants(lat, lng))')
+        .select('dinner_tables!inner(event_id, restaurant_id, restaurants(lat, lng, zone_slug))')
         .eq('profile_id', fila.profile_id)
         .eq('dinner_tables.event_id', fila.event_id)
         .maybeSingle()
       if (!asiento) return { error: 'ya no tiene puesto en esa fecha' }
       const mesaSA = asiento.dinner_tables as unknown as {
         restaurant_id: string | null
-        restaurants: { lat: number | null; lng: number | null } | null
+        restaurants: { lat: number | null; lng: number | null; zone_slug: string | null } | null
       }
+
+      // El bar es el de la zona de SU mesa. Si la movieron a otra zona, o le
+      // quitaron el bar a esa, el aviso se descarta aquí.
+      const barDeSuZona = (await barPorZona(admin, fila.event_id)).get(mesaSA.restaurants?.zone_slug ?? '')
+      if (!barDeSuZona) return { error: 'la fecha ya no tiene segundo acto' }
 
       const { data: barSA } = await admin
         .from('restaurants')
         .select('name, address, lat, lng')
-        .eq('id', evSA.after_venue_id)
+        .eq('id', barDeSuZona)
         .maybeSingle()
       if (!barSA) return { error: 'el bar no existe' }
 
@@ -967,7 +973,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         .from('restaurant_after_venues')
         .select('minutos_a_pie')
         .eq('restaurant_id', mesaSA.restaurant_id ?? '')
-        .eq('after_id', evSA.after_venue_id)
+        .eq('after_id', barDeSuZona)
         .maybeSingle()
       const minutos = tecleado?.minutos_a_pie ?? minutosAPie(mesaSA.restaurants, barSA, { sinTope: true })
 
@@ -1737,11 +1743,12 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
         if (!lista.length) return []
         const { data: evs } = await admin
           .from('events')
-          .select('id, format, starts_at, booking_closes_at, price_usd, city_slug, status, age_band_min, age_band_max, idioma, mas_uno, after_venue_id')
+          .select('id, format, starts_at, booking_closes_at, price_usd, city_slug, status, age_band_min, age_band_max, idioma, mas_uno')
           .in('id', lista)
           .eq('status', 'open')
           .order('starts_at')
 
+        const conBar = await fechasConSegundoActo(admin, (evs ?? []).map((e) => e.id))
         const salida = []
         for (const ev of evs ?? []) {
           const zonaDeEv = await zonaDeLaCiudad(admin, ev.city_slug)
@@ -1807,7 +1814,7 @@ async function armar(fila: FilaDeCola): Promise<Preparado> {
                     ? `Solo para ${ev.age_band_min}-${ev.age_band_max}`
                     : ev.age_band_min != null ? `Solo para +${ev.age_band_min}` : '',
                   // Opcional, y que se note (Michael, 03-11).
-                  ev.after_venue_id ? 'Al terminar, quien quiera sigue en un bar' : '',
+                  conBar.has(ev.id) ? 'Al terminar, quien quiera sigue en un bar' : '',
                 ].filter(Boolean).join(' · '),
             /**
              * Y hasta cuándo se puede apartar puesto, cuando es inminente.
@@ -2993,7 +3000,7 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   // cuatro a propósito esto no puede llamarla corta.
   const { data: deLaFecha } = await admin
     .from('events')
-    .select('seats_per_table, mas_uno, reveal_at, starts_at, city_slug, after_venue_id')
+    .select('seats_per_table, mas_uno, reveal_at, starts_at, city_slug')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -3086,7 +3093,8 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   }
 
   const zonaFecha = await zonaDeLaCiudad(admin, deLaFecha?.city_slug)
-  const conSegundoActo = !!(deLaFecha as { after_venue_id?: string | null } | null)?.after_venue_id
+  // El de la zona de ESTA mesa: otra zona de la misma fecha puede no tenerlo.
+  const conSegundoActo = (await barPorZona(admin, eventoId)).has(mesa.restaurants?.zone_slug ?? '')
 
   return {
     numero,

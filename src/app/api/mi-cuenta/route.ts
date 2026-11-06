@@ -17,6 +17,7 @@ import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
 
 import { ciudadDe } from '@/lib/ciudades'
 import { claveDeMesa, mesasUnicas } from '@/lib/mesa-unica'
+import { fechasConSegundoActo } from '@/lib/segundo-acto'
 
 /**
  * El estado de Mi cuenta, derivado del servidor.
@@ -294,7 +295,7 @@ export async function GET() {
   // gente.
   const { data: fechas } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, reveal_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, seats_per_table, created_at, grabacion, grabacion_requerida, idioma, mas_uno, after_venue_id')
+    .select('id, format, starts_at, booking_closes_at, reveal_at, credit_cost, city_slug, status, age_band_min, age_band_max, price_usd, seats_per_table, created_at, grabacion, grabacion_requerida, idioma, mas_uno')
     // Las de prueba no son de nadie más que de quien las creó.
     .eq('es_prueba', false)
     // TODAS las que no han pasado, cerradas o no. Antes solo `open` y
@@ -371,6 +372,7 @@ export async function GET() {
    * reservarla. Lo que cambia es que ahora la puerta pregunta en vez de
    * cerrarse.
    */
+  const conBar = await fechasConSegundoActo(admin, (fechas ?? []).map((x) => x.id))
   const fechasVisibles = (fechas ?? []).filter(
     (f) => cabeEnLaFecha(perfil.birthdate, f) || mias.has(f.id),
   )
@@ -687,7 +689,7 @@ export async function GET() {
       masUno: !!(f as { mas_uno?: boolean }).mas_uno,
       // Segundo acto (Michael, 01-11): solo la etiqueta. Nunca el bar, que se
       // revela ese día.
-      segundoActo: !!(f as { after_venue_id?: string | null }).after_venue_id,
+      segundoActo: conBar.has(f.id),
       // Cerrada: se ve, se cuenta, y no se puede apuntar nadie. No decimos
       // «agotada» porque no lo está: aquí no hay cupo, las mesas se arman con
       // quien haya. Decir agotada sería lo primero que contamos que no es

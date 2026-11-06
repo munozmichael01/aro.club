@@ -6,6 +6,7 @@ import { NOMBRES_DE_FORMATO } from '@/lib/reglas'
 import { puestosPorFecha } from '@/lib/mas-uno'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { zonasDeCiudades } from '@/lib/zona-ciudad'
+import { fechasConSegundoActo } from '@/lib/segundo-acto'
 
 /**
  * La agenda pública: qué fechas hay abiertas, para quien todavía no es nadie.
@@ -63,7 +64,7 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
   const { data: fechas } = await admin
     .from('events')
     .select(
-      'id, format, starts_at, booking_closes_at, reveal_at, created_at, city_slug, price_usd, seats_per_table, age_band_min, age_band_max, idioma, mas_uno, after_venue_id',
+      'id, format, starts_at, booking_closes_at, reveal_at, created_at, city_slug, price_usd, seats_per_table, age_band_min, age_band_max, idioma, mas_uno',
     )
     .eq('status', 'open')
     // Nunca una de prueba, aunque alguien la deje en `open` por error.
@@ -87,6 +88,8 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
     admin.from('event_venues').select('event_id, zone_slug, zones(name)').in('event_id', ids.length ? ids : vacio),
     zonasDeCiudades((fechas ?? []).map((f) => f.city_slug)),
   ])
+
+  const conBar = await fechasConSegundoActo(admin, ids)
 
   // Puestos, no reservas: en una fecha +1 cada reserva son dos.
   const cuenta = puestosPorFecha(apuntados ?? [], new Set((fechas ?? []).filter((f) => f.mas_uno).map((f) => f.id)))
@@ -123,7 +126,7 @@ export async function fechasAbiertas(): Promise<FechaDeAgenda[]> {
     idioma: f.idioma ?? null,
     etiquetaIdioma: etiquetaDeIdioma(f.idioma),
     masUno: !!f.mas_uno,
-    segundoActo: !!f.after_venue_id,
+    segundoActo: conBar.has(f.id),
   }))
 }
 

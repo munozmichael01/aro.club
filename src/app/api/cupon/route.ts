@@ -346,6 +346,7 @@ export async function POST(request: Request) {
     bookingId,
     paymentId: pago.id,
     usados: cupon.usados,
+    repetible: cupon.repetible,
   })
 
   await anotarPagoDeEvento(user.id, bookingId, evento.credit_cost ?? 1, 'coupon')

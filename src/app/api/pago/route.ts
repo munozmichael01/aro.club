@@ -832,6 +832,7 @@ export async function POST(request: Request) {
       bookingId,
       paymentId: pagoCreado?.id ?? null,
       usados: cupon.usados,
+      repetible: cupon.repetible,
     })
   }
 

@@ -1216,16 +1216,18 @@
                        en la base y por eso la cena del viernes 6 se quedó sin
                        él mientras las del sábado lo tenían. -->
                   <sc-if value="{{ verPuedeBar }}" hint-placeholder-val="{{ true }}">
-                    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;border-radius:22px;background:#FAF3E4;padding:16px 18px">
-                      <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F">SEGUNDO ACTO</span>
-                      <select value="{{ verBarElegido }}" onChange="{{ onVerBar }}" aria-label="Bar del segundo acto de esta fecha" style="{{ campoBarVer }}">
-                        <sc-for list="{{ verBares }}" as="b" hint-placeholder-count="3">
-                          <option value="{{ b.id }}">{{ b.nombre }}</option>
-                        </sc-for>
-                      </select>
-                      <button onClick="{{ guardarBar }}" style="{{ botonEdadesVer }}">Guardar bar</button>
-                      <span style="flex:1;min-width:220px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ notaBarVer }}</span>
-                    </div>
+                    <sc-for list="{{ verBarZonas }}" as="z" hint-placeholder-count="2">
+                      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;border-radius:22px;background:#FAF3E4;padding:16px 18px">
+                        <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F">SEGUNDO ACTO · {{ z.zona }}</span>
+                        <select value="{{ z.elegido }}" onChange="{{ z.onBar }}" aria-label="Bar del segundo acto de esta zona" style="{{ campoBarVer }}">
+                          <sc-for list="{{ z.bares }}" as="b" hint-placeholder-count="3">
+                            <option value="{{ b.id }}">{{ b.nombre }}</option>
+                          </sc-for>
+                        </select>
+                        <button onClick="{{ z.guardar }}" style="{{ botonEdadesVer }}">Guardar bar</button>
+                        <span style="flex:1;min-width:220px;font:400 13px/1.5 'Inter Tight',sans-serif;color:#33513F;text-wrap:pretty">{{ z.nota }}</span>
+                      </div>
+                    </sc-for>
                   </sc-if>
 
                   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px">
@@ -2968,16 +2970,16 @@ class Component extends DCLogic {
       .then((r) => { if (r.ok) this.cargarFechas && this.cargarFechas(); });
   }
 
-  /** Poner o quitar el bar del segundo acto. Recarga: lo guardado lo dice el servidor. */
-  ponerBar(eventoId, barId) {
+  /** Poner o quitar el bar de una zona de la fecha. Recarga: lo guardado lo dice el servidor. */
+  ponerBar(eventoId, zona, zonaNombre, barId) {
     if (!eventoId) return;
     const bar = (this.state.bares || []).find((b) => b.id === barId);
     const dice = bar
-      ? 'Esta fecha tendrá segundo acto en ' + bar.nombre + '. Quien ya está apuntado lo verá en su reserva y le llegará el aviso del bar.'
-      : 'Esta fecha se queda sin segundo acto.';
+      ? 'Las mesas de ' + zonaNombre + ' tendrán segundo acto en ' + bar.nombre + '. Quien ya está sentado en esa zona verá el bar y le llegará el aviso.'
+      : 'Las mesas de ' + zonaNombre + ' se quedan sin segundo acto y vuelven a sus bares cercanos.';
     if (!window.confirm(dice + ' ¿Lo guardo?')) return;
-    this.mandar('/api/operacion/fechas', { accion: 'bar', eventoId: eventoId, barId: barId }, 'PATCH')
-      .then((r) => { if (r.ok) { this.setState({ barVerId: null }); this.cargarFechas && this.cargarFechas(); } });
+    this.mandar('/api/operacion/fechas', { accion: 'bar', eventoId: eventoId, zona: zona, barId: barId }, 'PATCH')
+      .then((r) => { if (r.ok) { this.setState({ barVerClave: null }); this.cargarFechas && this.cargarFechas(); } });
   }
 
   /** Abrir o cerrar una fecha. Recarga: el estado lo decide el servidor. */
@@ -7659,23 +7661,31 @@ class Component extends DCLogic {
                 : (cruda.edadMinima != null ? 'los de ' + cruda.edadMinima + ' en adelante' : 'los de hasta ' + cruda.edadMaxima))
               + '. Quien ya estaba apuntado sigue apuntado, quepa o no.',
           /**
-           * El bar del segundo acto. Mismo patrón que las edades: el borrador
-           * lleva el id de su fecha, y lo guardado manda mientras no se toque.
+           * El bar del segundo acto, uno por zona (Michael, 06-11): es para los
+           * restaurantes cercanos de esa zona, no para toda la fecha. Mismo
+           * patrón que las edades: el borrador lleva su fecha y su zona, y lo
+           * guardado manda mientras no se toque.
            */
           verPuedeBar: (f.fam || '') !== 'movimiento' && !cruda.pasada,
-          verBares: [{ id: '', nombre: 'Sin segundo acto' }].concat((St.bares || []).map((b) => ({
-            id: b.id, nombre: b.nombre + (b.zona ? ' · ' + b.zona.replace(/-/g, ' ').replace(/(^|\s)\S/g, (c) => c.toUpperCase()) : ''),
-          }))),
-          verBarElegido: St.barVerId === cruda.id ? St.barVer : (cruda.barId || ''),
-          onVerBar: (e) => this.setState({ barVerId: cruda.id, barVer: e.target.value }),
+          verBarZonas: zonasUnicas(f.zonas).map((z) => {
+            const clave = cruda.id + '|' + z[2];
+            const guardado = (cruda.barPorZona || {})[z[2]] || '';
+            const elegido = St.barVerClave === clave ? St.barVer : guardado;
+            const suyos = (St.bares || []).filter((b) => b.zona === z[2]);
+            return {
+              zona: z[0],
+              elegido: elegido,
+              bares: [{ id: '', nombre: 'Sin segundo acto' }].concat(suyos.map((b) => ({ id: b.id, nombre: b.nombre }))),
+              onBar: (e) => this.setState({ barVerClave: clave, barVer: e.target.value }),
+              guardar: () => this.ponerBar(cruda.id, z[2], z[0], elegido || null),
+              nota: !suyos.length
+                ? 'Esta zona no tiene bares de segundo acto. Se marcan en Locales, en «¿Para qué sirve el sitio?».'
+                : guardado
+                  ? 'Hora y tres cuartos después de la hora de la cena, Mi mesa enseña el bar a las mesas de esta zona y les llega el aviso. Las demás zonas siguen con sus bares cercanos.'
+                  : 'Sin bar, las mesas de esta zona ven los bares cercanos de su restaurante.',
+            };
+          }),
           campoBarVer: 'flex:0 1 auto;min-width:0;max-width:100%;min-height:46px;padding:0 14px;border-radius:999px;border:1px solid rgba(20,52,42,.22);background:#FFFBF0;color:#1B5138;font:400 15px/1 \'Inter Tight\',sans-serif',
-          notaBarVer: cruda.barId
-            ? 'Dos horas después de la hora de la cena, Mi mesa enseña el bar y les llega el aviso con los minutos a pie desde su restaurante. Si las mesas ya están publicadas, el aviso se programa al guardar.'
-            : 'Sin bar, la fecha termina en la mesa. Al poner uno, la fecha lleva la marca SEGUNDO ACTO en la agenda y a las dos horas les llega el bar.',
-          guardarBar: () => {
-            const elegido = St.barVerId === cruda.id ? St.barVer : (cruda.barId || '');
-            this.ponerBar(cruda.id, elegido || null);
-          },
           guardarEdades: () => {
             const min = (St.edadVerId === cruda.id ? St.edadVerMin : (cruda.edadMinima == null ? '' : String(cruda.edadMinima))) || '';
             const max = (St.edadVerId === cruda.id ? St.edadVerMax : (cruda.edadMaxima == null ? '' : String(cruda.edadMaxima))) || '';

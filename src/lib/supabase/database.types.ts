@@ -709,6 +709,7 @@ export type Database = {
           id: string
           payment_id: string | null
           profile_id: string
+          repetible: boolean
         }
         Insert: {
           booking_id?: string | null
@@ -717,6 +718,7 @@ export type Database = {
           id?: string
           payment_id?: string | null
           profile_id: string
+          repetible?: boolean
         }
         Update: {
           booking_id?: string | null
@@ -725,6 +727,7 @@ export type Database = {
           id?: string
           payment_id?: string | null
           profile_id?: string
+          repetible?: boolean
         }
         Relationships: [
           {
@@ -796,6 +799,7 @@ export type Database = {
           event_id: string | null
           max_usos: number | null
           nota: string | null
+          repetible: boolean
           usados: number
         }
         Insert: {
@@ -808,6 +812,7 @@ export type Database = {
           event_id?: string | null
           max_usos?: number | null
           nota?: string | null
+          repetible?: boolean
           usados?: number
         }
         Update: {
@@ -820,6 +825,7 @@ export type Database = {
           event_id?: string | null
           max_usos?: number | null
           nota?: string | null
+          repetible?: boolean
           usados?: number
         }
         Relationships: [
@@ -1150,6 +1156,63 @@ export type Database = {
           ip_huella?: string
         }
         Relationships: []
+      }
+      event_second_acts: {
+        Row: {
+          bar_id: string
+          created_at: string
+          event_id: string
+          zone_slug: string
+        }
+        Insert: {
+          bar_id: string
+          created_at?: string
+          event_id: string
+          zone_slug: string
+        }
+        Update: {
+          bar_id?: string
+          created_at?: string
+          event_id?: string
+          zone_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_second_acts_bar_id_fkey"
+            columns: ["bar_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_second_acts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_second_acts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_fechas_publicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_second_acts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "v_matching_signal"
+            referencedColumns: ["event_id"]
+          },
+          {
+            foreignKeyName: "event_second_acts_zone_slug_fkey"
+            columns: ["zone_slug"]
+            isOneToOne: false
+            referencedRelation: "zones"
+            referencedColumns: ["slug"]
+          },
+        ]
       }
       event_venues: {
         Row: {
@@ -3194,6 +3257,7 @@ export type Database = {
           cuisines: string[]
           deactivated_at: string | null
           deactivated_by: string | null
+          es_segundo_acto: boolean
           facade_photo_path: string | null
           fixed_menu_usd: number | null
           formats: Database["public"]["Enums"]["event_format_t"][]
@@ -3230,6 +3294,7 @@ export type Database = {
           cuisines?: string[]
           deactivated_at?: string | null
           deactivated_by?: string | null
+          es_segundo_acto?: boolean
           facade_photo_path?: string | null
           fixed_menu_usd?: number | null
           formats?: Database["public"]["Enums"]["event_format_t"][]
@@ -3266,6 +3331,7 @@ export type Database = {
           cuisines?: string[]
           deactivated_at?: string | null
           deactivated_by?: string | null
+          es_segundo_acto?: boolean
           facade_photo_path?: string | null
           fixed_menu_usd?: number | null
           formats?: Database["public"]["Enums"]["event_format_t"][]
@@ -4577,6 +4643,7 @@ export type Database = {
         | "mas_uno_se_bajo"
         | "mas_uno_cancelada"
         | "mas_uno_sin_puesto"
+        | "segundo_acto"
       event_format_t:
         | "dinner"
         | "foodie_dinner"
@@ -4839,6 +4906,7 @@ export const Constants = {
         "mas_uno_se_bajo",
         "mas_uno_cancelada",
         "mas_uno_sin_puesto",
+        "segundo_acto",
       ],
       event_format_t: [
         "dinner",

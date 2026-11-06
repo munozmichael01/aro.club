@@ -271,12 +271,22 @@ export async function GET() {
 
   const { data: eventos } = await admin
     .from('events')
-    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug, es_prueba, age_band_min, age_band_max, idioma, mas_uno, after_venue_id')
+    .select('id, format, starts_at, booking_closes_at, reveal_at, status, seats_per_table, price_usd, activity, city_slug, es_prueba, age_band_min, age_band_max, idioma, mas_uno')
     .in('status', ['draft', 'open', 'locked', 'matched'])
     .order('starts_at', { ascending: true })
 
   const ids = (eventos ?? []).map((e) => e.id)
   const vacio = ['00000000-0000-0000-0000-000000000000']
+
+  // El bar de cada zona de cada fecha.
+  const { data: segundosActos } = await admin
+    .from('event_second_acts')
+    .select('event_id, zone_slug, bar_id')
+    .in('event_id', ids.length ? ids : vacio)
+  const baresDeFecha = new Map<string, Record<string, string>>()
+  for (const s of segundosActos ?? []) {
+    baresDeFecha.set(s.event_id, { ...baresDeFecha.get(s.event_id), [s.zone_slug]: s.bar_id })
+  }
 
   // Qué fechas ya se contaron.
   //
@@ -410,8 +420,8 @@ export async function GET() {
        * leen idénticas y no hay forma de saber cuál es cuál.
        */
       idioma: e.idioma ?? null,
-      // El bar del segundo acto, si la fecha lo tiene (`after_venue_id`).
-      barId: (e as { after_venue_id?: string | null }).after_venue_id ?? null,
+      // El bar del segundo acto de cada zona que lo tiene.
+      barPorZona: baresDeFecha.get(e.id) ?? {},
       actividad: e.activity ?? null,
       apuntados: suPool.length,
       publicadas: susMesas.length,
@@ -591,13 +601,13 @@ export async function GET() {
 
   /**
    * Los bares a los que puede ir un segundo acto: los locales marcados
-   * `is_after_venue` y activos. Con su zona, porque el bar tiene que quedar
-   * a pie de los restaurantes de la fecha.
+   * «Segundo acto» y activos, que NO son los «Bares cercanos». Con su zona,
+   * porque cada zona de la fecha elige entre los suyos.
    */
   const { data: bares } = await admin
     .from('restaurants')
     .select('id, name, zone_slug')
-    .eq('is_after_venue', true)
+    .eq('es_segundo_acto', true)
     .eq('is_active', true)
     .order('name')
 
@@ -930,6 +940,7 @@ const sitio = z.discriminatedUnion('accion', [
   z.object({
     accion: z.literal('bar'),
     eventoId: z.string().uuid(),
+    zona: z.string().min(1),
     barId: z.string().uuid().nullable(),
   }),
   z.object({
@@ -997,16 +1008,19 @@ export async function PATCH(request: Request) {
   }
 
   if (d.accion === 'bar') {
-    // Un bar que no es de segundo acto no se puede poner: lo que cuenta Mi
-    // mesa a las nueve es «sigue en este bar», y tiene que serlo.
+    // Un bar que no es de segundo acto, o que está en otra zona, no se puede
+    // poner: lo que cuenta Mi mesa a esa hora es «sigue en este bar», a pie.
     if (d.barId) {
       const { data: bar } = await admin
         .from('restaurants')
-        .select('id, is_after_venue, is_active')
+        .select('id, es_segundo_acto, is_active, zone_slug')
         .eq('id', d.barId)
         .maybeSingle()
-      if (!bar || !bar.is_after_venue || !bar.is_active) {
+      if (!bar || !bar.es_segundo_acto || !bar.is_active) {
         return NextResponse.json({ error: 'Ese local no está marcado como bar de segundo acto.' }, { status: 400 })
+      }
+      if (bar.zone_slug !== d.zona) {
+        return NextResponse.json({ error: 'Ese bar está en otra zona.' }, { status: 400 })
       }
     }
 
@@ -1016,10 +1030,15 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'La hora del bar de esa fecha ya pasó.' }, { status: 409 })
     }
 
-    const { error } = await admin
-      .from('events')
-      .update({ after_venue_id: d.barId } as never)
-      .eq('id', d.eventoId)
+    const { error } = d.barId
+      ? await admin
+          .from('event_second_acts')
+          .upsert({ event_id: d.eventoId, zone_slug: d.zona, bar_id: d.barId })
+      : await admin
+          .from('event_second_acts')
+          .delete()
+          .eq('event_id', d.eventoId)
+          .eq('zone_slug', d.zona)
 
     if (error) {
       console.error('[fechas] no se pudo poner el bar', error)
@@ -1029,9 +1048,9 @@ export async function PATCH(request: Request) {
     /**
      * Si las mesas ya se publicaron, el aviso del bar no se encoló al
      * publicar (no había bar). Se encola ahora a quien ya está sentado: es la
-     * misma pieza que usa publicar, y no repite a quien ya lo tenga. Si se
-     * QUITA el bar no hace falta tocar la cola: al enviar, el aviso mira la
-     * fecha y se descarta solo («la fecha ya no tiene segundo acto»).
+     * misma pieza que usa publicar, que solo avisa a las zonas con bar y no
+     * repite a quien ya lo tenga. Si se QUITA el bar no hace falta tocar la
+     * cola: al enviar, el aviso mira la zona y se descarta solo.
      */
     if (d.barId) {
       const { data: mesas } = await admin.from('dinner_tables').select('id').eq('event_id', d.eventoId)
@@ -1047,14 +1066,14 @@ export async function PATCH(request: Request) {
         }
         await encolarAvisosDeLaCena(
           admin,
-          { id: evento.id, starts_at: evento.starts_at, after_venue_id: d.barId },
+          { id: evento.id, starts_at: evento.starts_at },
           [...porMesa.entries()].map(([mesaId, perfiles]) => ({ mesaId, perfiles })),
         )
       }
     }
 
-    await anotar(actor, d.barId ? 'segundo_acto_puesto' : 'segundo_acto_quitado', 'evento', d.eventoId, { barId: d.barId })
-    return NextResponse.json({ ok: true, barId: d.barId })
+    await anotar(actor, d.barId ? 'segundo_acto_puesto' : 'segundo_acto_quitado', 'evento', d.eventoId, { barId: d.barId, zona: d.zona })
+    return NextResponse.json({ ok: true, barId: d.barId, zona: d.zona })
   }
 
   if (d.accion === 'avisar') {

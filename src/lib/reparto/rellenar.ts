@@ -72,7 +72,7 @@ export async function rellenarHueco(
 
   const { data: evento } = await admin
     .from('events')
-    .select('reveal_at, starts_at, seats_per_table, format, after_venue_id')
+    .select('reveal_at, starts_at, seats_per_table, format')
     .eq('id', eventoId)
     .maybeSingle()
 
@@ -186,7 +186,7 @@ export async function rellenarHueco(
   // y su línea del segundo acto se arma al enviar, como para los demás.
   await encolarAvisosDeLaCena(
     admin,
-    { id: eventoId, starts_at: evento.starts_at, after_venue_id: evento.after_venue_id },
+    { id: eventoId, starts_at: evento.starts_at },
     [{ mesaId: tableId, perfiles: [elegido.profileId] }],
   )
 

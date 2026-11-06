@@ -141,6 +141,7 @@ for (const formato of ['dinner', 'drinks', 'brunch']) {
   if (!molde) { console.error('sin molde para', formato); continue }
 
   const { data: zonas } = await real.from('event_venues').select('zone_slug, restaurant_id, max_tables').eq('event_id', molde.id)
+  const { data: bares } = await real.from('event_second_acts').select('zone_slug, bar_id').eq('event_id', molde.id)
 
   const base = new Date(molde.starts_at).getTime()
   const semanasHasta = Math.max(1, Math.ceil((Date.now() - base) / (7 * DIA)))
@@ -173,6 +174,10 @@ for (const formato of ['dinner', 'drinks', 'brunch']) {
     if (zonas?.length) {
       const { error: e2 } = await pre.from('event_venues').insert(zonas.map((z) => ({ ...z, event_id: nueva.id })))
       if (e2) throw new Error(`event_venues: ${e2.message}`)
+    }
+    if (bares?.length) {
+      const { error: e3 } = await pre.from('event_second_acts').insert(bares.map((b) => ({ ...b, event_id: nueva.id })))
+      if (e3) throw new Error(`event_second_acts: ${e3.message}`)
     }
     abiertas++
   }

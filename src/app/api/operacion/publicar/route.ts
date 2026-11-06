@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   if (!corrida) return NextResponse.json({ error: 'Esa corrida no existe.' }, { status: 404 })
   const { data: evento } = await admin
     .from('events')
-    .select('id, reveal_at, starts_at, format, booking_closes_at, seats_per_table, after_venue_id')
+    .select('id, reveal_at, starts_at, format, booking_closes_at, seats_per_table')
     .eq('id', corrida.event_id)
     .maybeSingle()
 

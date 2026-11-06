@@ -15,6 +15,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { zonaDeCiudad } from '@/lib/zona-ciudad'
 import { createClient } from '@/lib/supabase/server'
 import { FIN_CENA, sePuedeValorar } from '@/lib/ventana-mesa'
+import { barPorZona } from '@/lib/segundo-acto'
 import { claveDeMesa, claveDeNumero, mesasUnicas, numeroQueSeDice } from '@/lib/mesa-unica'
 import { duosDeLaMesa, invitacionPendienteDe, masUnoCanceladoDe, masUnoDeLaReserva, ordenarPorDuos } from '@/lib/mas-uno'
 
@@ -170,7 +171,7 @@ export async function GET(request: Request) {
 
   const { data: reservas } = await admin
     .from('bookings')
-    .select('id, event_id, permiso_grabacion, events(starts_at, reveal_at, status, format, activity, city_slug, grabacion, seats_per_table, mas_uno, age_band_min, idioma, after_venue_id)')
+    .select('id, event_id, permiso_grabacion, events(starts_at, reveal_at, status, format, activity, city_slug, grabacion, seats_per_table, mas_uno, age_band_min, idioma)')
     .eq('profile_id', user.id)
     .in('status', ['confirmed', 'attended'])
 
@@ -325,7 +326,7 @@ export async function GET(request: Request) {
   }
 
   const evento = reserva?.events as
-    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string; grabacion: boolean; seats_per_table: number | null; mas_uno?: boolean; age_band_min?: number | null; idioma?: string | null; after_venue_id?: string | null }
+    | { starts_at: string; reveal_at: string; status: string; format: string; activity: unknown; city_slug: string; grabacion: boolean; seats_per_table: number | null; mas_uno?: boolean; age_band_min?: number | null; idioma?: string | null }
     | null
     | undefined
 
@@ -335,16 +336,19 @@ export async function GET(request: Request) {
    * (`AroReglas.COMO_FUNCIONA.tarjetasDe`). Lo pidió la app el 03-11: sin
    * esto, el «Después» del segundo acto no salía en Mi mesa. Aditivo.
    */
+  const baresDeLaFecha = reserva ? await barPorZona(admin, reserva.event_id) : new Map<string, string>()
   const marcas = evento
     ? {
         edadMinima: evento.age_band_min ?? null,
         idioma: evento.idioma ?? null,
-        segundoActo: !!evento.after_venue_id,
+        // Antes de tener mesa no se sabe la zona: basta con que alguna tenga bar.
+        // Con mesa, esto lo pisa el de su zona (más abajo).
+        segundoActo: baresDeLaFecha.size > 0,
         /**
          * A qué hora sale el bar en Mi mesa (entrega segundo-acto, 03-11). Es
          * la hora y no el bar: el bar viaja solo desde esa hora, en `bar`.
          */
-        barEn: evento.after_venue_id ? SEGUNDO_ACTO.barEn(evento.starts_at) : null,
+        barEn: baresDeLaFecha.size > 0 ? SEGUNDO_ACTO.barEn(evento.starts_at) : null,
       }
     : {}
 
@@ -443,7 +447,7 @@ export async function GET(request: Request) {
 
   const { data: miembro } = await admin
     .from('table_members')
-    .select('table_id, sentado_en, dinner_tables(table_number, event_id, restaurant_id, grabacion, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, place_id, facade_photo_path, lat, lng))')
+    .select('table_id, sentado_en, dinner_tables(table_number, event_id, restaurant_id, grabacion, restaurants!dinner_tables_restaurant_id_fkey(id, name, address, maps_url, place_id, facade_photo_path, lat, lng, zone_slug))')
     .eq('profile_id', user.id)
     .eq('booking_id', reserva.id)
     .maybeSingle()
@@ -499,6 +503,7 @@ export async function GET(request: Request) {
       id: string
       name: string
       address: string
+      zone_slug: string | null
       maps_url: string | null
       facade_photo_path: string | null
       lat: number | null
@@ -558,7 +563,8 @@ export async function GET(request: Request) {
    * entrega lo dice así («la despedida no muestra "Si quieren seguir"»).
    * Vaciándola aquí la app y la web dejan de pintarla sin decidir nada.
    */
-  const paraSeguir = esDeManana(evento.format) || evento.after_venue_id ? [] : (seguires ?? []).map((s) => {
+  const barDeSuZona = baresDeLaFecha.get(mesa.restaurants?.zone_slug ?? '') ?? null
+  const paraSeguir = esDeManana(evento.format) || barDeSuZona ? [] : (seguires ?? []).map((s) => {
     const sitio = s.restaurants as unknown as {
       name: string
       address: string | null
@@ -593,7 +599,7 @@ export async function GET(request: Request) {
    * Los minutos, como los de `paraSeguir`: desde el restaurante de ESTA
    * mesa, que cambia de una mesa a otra aunque el bar sea el mismo.
    */
-  const barEn = evento.after_venue_id ? SEGUNDO_ACTO.barEn(evento.starts_at) : null
+  const barEn = barDeSuZona ? SEGUNDO_ACTO.barEn(evento.starts_at) : null
   let bar: {
     nombre: string
     direccion: string | null
@@ -605,7 +611,7 @@ export async function GET(request: Request) {
     const { data: sitio } = await admin
       .from('restaurants')
       .select('name, address, maps_url, place_id, lat, lng')
-      .eq('id', evento.after_venue_id as string)
+      .eq('id', barDeSuZona as string)
       .maybeSingle()
     if (sitio) {
       bar = {
@@ -615,7 +621,7 @@ export async function GET(request: Request) {
         mapaApple: enlaceApple(sitio) || null,
         // Lo tecleado en la ficha del local manda, como en `paraSeguir`.
         minutosAPie:
-          (seguires ?? []).find((x) => x.after_id === evento.after_venue_id)?.minutos_a_pie
+          (seguires ?? []).find((x) => x.after_id === barDeSuZona)?.minutos_a_pie
           // Sin el tope de media hora: el bar no es «un sitio cerca» que se
           // ofrece, es a donde va toda la fecha, y los minutos salen siempre.
           ?? minutosAPie(mesa.restaurants, sitio, { sinTope: true }),
@@ -768,6 +774,9 @@ export async function GET(request: Request) {
     // reserva, y con quién viene el acompañante. Nulos en una fecha normal.
     ...(await masUnoDeLaReserva(admin, reserva.id)),
     ...marcas,
+    // Ya hay mesa: manda el bar de SU zona, no el de la fecha.
+    segundoActo: !!barDeSuZona,
+    barEn,
     // Pasada: la cena ya ocurrió, toca F11.
     fase: ahora > empiezaEn + 5 * 3600 * 1000 ? 'pasada' : 'abierta',
     // El id de la mesa y los de sus companeros: hacen falta para valorar,

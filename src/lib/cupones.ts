@@ -49,6 +49,8 @@ export type Vale = {
   code: string
   pct: number
   usados: number
+  /** La misma persona puede volver a usarlo. Casi ninguno: ver la migración del 06-11. */
+  repetible: boolean
   /** De quién es el código, cuando es de referido. `null` en los de operación. */
   deQuien: string | null
   /** Con qué nombre se enseña: «Código de Andrea · −20%». */
@@ -99,7 +101,7 @@ export async function cuponParaPagar(
 
   const { data: cupon } = await admin
     .from('coupons')
-    .select('code, descuento_pct, max_usos, usados, caduca_at, event_id, activo, creado_por')
+    .select('code, descuento_pct, max_usos, usados, caduca_at, event_id, activo, creado_por, repetible')
     .eq('code', code)
     .maybeSingle()
 
@@ -129,7 +131,7 @@ export async function cuponParaPagar(
     .eq('profile_id', perfilId)
 
   const suyos = yaCanjeo ?? []
-  if (suyos.some((r) => r.code === code)) {
+  if (!cupon.repetible && suyos.some((r) => r.code === code)) {
     return { no: { error: 'Ya usaste ese código.', motivo: 'ya-usado', status: 409 } }
   }
 
@@ -234,6 +236,7 @@ export async function cuponParaPagar(
       code: cupon.code,
       pct: cupon.descuento_pct,
       usados: cupon.usados,
+      repetible: cupon.repetible,
       deQuien: deReferido,
       nombre,
     },
@@ -256,6 +259,7 @@ export async function anotarCanje(
     bookingId: string
     paymentId: string | null
     usados: number
+    repetible: boolean
   },
 ): Promise<void> {
   const { error } = await admin.from('coupon_redemptions').insert({
@@ -263,6 +267,7 @@ export async function anotarCanje(
     profile_id: datos.perfilId,
     booking_id: datos.bookingId,
     payment_id: datos.paymentId,
+    repetible: datos.repetible,
   })
 
   if (error) {

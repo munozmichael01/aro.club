@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { SEGUNDO_ACTO } from '@/lib/reglas'
+import { barPorZona } from '@/lib/segundo-acto'
 import type { createAdminClient } from '@/lib/supabase/admin'
 
 type Admin = ReturnType<typeof createAdminClient>
@@ -36,13 +37,27 @@ export type Sentados = { mesaId: string; perfiles: string[] }[]
 
 export async function encolarAvisosDeLaCena(
   admin: Admin,
-  evento: { id: string; starts_at: string; after_venue_id?: string | null },
+  evento: { id: string; starts_at: string },
   sentados: Sentados,
 ): Promise<void> {
   const vigente = (iso: string) => Date.now() < Date.parse(iso) + MARGEN_MS
 
   const alJuego = new Date(Date.parse(evento.starts_at) + 20 * 60_000).toISOString()
-  const barEn = evento.after_venue_id ? SEGUNDO_ACTO.barEn(evento.starts_at) : null
+  const bares = await barPorZona(admin, evento.id)
+  const barEn = bares.size ? SEGUNDO_ACTO.barEn(evento.starts_at) : null
+
+  // El aviso del bar es solo para las mesas de una zona que tiene bar.
+  const conBar = new Set<string>()
+  if (barEn) {
+    const { data: mesas } = await admin
+      .from('dinner_tables')
+      .select('id, restaurants!dinner_tables_restaurant_id_fkey(zone_slug)')
+      .in('id', sentados.map((s) => s.mesaId))
+    for (const m of mesas ?? []) {
+      const zona = (m.restaurants as unknown as { zone_slug: string | null } | null)?.zone_slug
+      if (zona && bares.has(zona)) conBar.add(m.id)
+    }
+  }
 
   const tipos: { kind: 'juego' | 'segundo_acto'; sendAt: string }[] = []
   if (vigente(alJuego)) tipos.push({ kind: 'juego', sendAt: alJuego })
@@ -60,7 +75,7 @@ export async function encolarAvisosDeLaCena(
     }
 
     const conAviso = new Set((yaTienen ?? []).map((f) => f.profile_id))
-    const nuevas = sentados.flatMap((m) =>
+    const nuevas = sentados.filter((m) => kind === 'juego' || conBar.has(m.mesaId)).flatMap((m) =>
       m.perfiles
         .filter((perfilId) => !conAviso.has(perfilId))
         .map((perfilId) => ({

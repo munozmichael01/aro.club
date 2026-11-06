@@ -46,7 +46,7 @@ const alta = z.object({
    */
   contacto: z.string().trim().max(120).optional(),
   telefono: z.string().trim().max(32).optional(),
-  familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch', 'cercanos'])).min(1),
+  familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch', 'cercanos', 'segundoacto'])).min(1),
   /**
    * El aforo y el ruido, OBLIGATORIOS salvo para un bar cercano.
    *
@@ -120,7 +120,7 @@ const alta = z.object({
   // Lo que se perdona es SOLO para el bar cercano. Un restaurante sin aforo
   // no se puede repartir y uno sin ruido medido no se puede ofrecer: que el
   // alta los deje pasar sería dar de alta un local que nace sin poder usarse.
-  if (d.familias.length === 1 && d.familias[0] === 'cercanos') return
+  if (d.familias.every((f) => f === 'cercanos' || f === 'segundoacto')) return
   if (d.aforo == null) ctx.addIssue({ code: 'custom', path: ['aforo'], message: 'Falta el aforo.' })
   if (d.ruido == null) ctx.addIssue({ code: 'custom', path: ['ruido'], message: 'Falta medir el ruido.' })
 })
@@ -192,7 +192,7 @@ const cambio = z.discriminatedUnion('accion', [
       'gasto', 'tramo',
       // La migración que las creó dice que `has_parking` «solo se hace
       // editable en la ficha». Nunca se hizo, y las cinco de al lado tampoco.
-      'estacionamiento', 'terraza', 'accesible', 'divide', 'segundoActo',
+      'estacionamiento', 'terraza', 'accesible', 'divide', 'cercano',
       'ultimaEntrada', 'notas',
     ]),
     valor: z.union([
@@ -210,7 +210,7 @@ const cambio = z.discriminatedUnion('accion', [
   z.object({
     accion: z.literal('familias'),
     id: z.string().uuid(),
-    familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch', 'cercanos'])).min(1),
+    familias: z.array(z.enum(['cenas', 'drinks', 'movimiento', 'coffee', 'brunch', 'cercanos', 'segundoacto'])).min(1),
   }),
   /**
    * Los sitios para seguir de ESE local (entrega 20).
@@ -260,6 +260,7 @@ function loQueFalta(l: {
   facade_photo_path: string | null
   maps_url: string | null
   is_after_venue?: boolean | null
+  es_segundo_acto?: boolean | null
   formats?: string[] | null
 }) {
   const falta: string[] = []
@@ -297,7 +298,7 @@ function loQueFalta(l: {
    * de una fecha de drinks. El papel que perdona es «solo para seguir»; en
    * cuanto tiene un formato de fecha, se le pide todo.
    */
-  if (l.is_after_venue && !((l.formats ?? []) as string[]).length) return falta
+  if ((l.is_after_venue || l.es_segundo_acto) && !((l.formats ?? []) as string[]).length) return falta
 
   if (!l.noise_level) falta.push('medir el ruido')
   if (!l.contact_name || !l.contact_phone) falta.push('un contacto')
@@ -313,7 +314,7 @@ export async function GET() {
 
   const { data: locales, error } = await admin
     .from('restaurants')
-    .select('id, name, zone_slug, address, maps_url, facade_photo_path, contact_name, contact_phone, fixed_menu_usd, avg_check_usd, budget_tier, commission_pct, noise_level, max_tables, is_active, formats, created_at, metro_nearby, metro_minutes, table_shape, open_days, cuisines, has_parking, has_terrace, is_accessible, splits_bill, is_after_venue, last_seating, safety_notes')
+    .select('id, name, zone_slug, address, maps_url, facade_photo_path, contact_name, contact_phone, fixed_menu_usd, avg_check_usd, budget_tier, commission_pct, noise_level, max_tables, is_active, formats, created_at, metro_nearby, metro_minutes, table_shape, open_days, cuisines, has_parking, has_terrace, is_accessible, splits_bill, is_after_venue, es_segundo_acto, last_seating, safety_notes')
     .order('name')
 
   if (error) {
@@ -425,6 +426,7 @@ export async function GET() {
     // Y el papel, que no sale de `formats`: un bar de segundo acto puede no
     // tener ningún formato y aun así ser algo.
     if ((l as { is_after_venue?: boolean | null }).is_after_venue) familias.push('cercanos')
+    if ((l as { es_segundo_acto?: boolean | null }).es_segundo_acto) familias.push('segundoacto')
     const falta = loQueFalta(l)
     return {
       id: l.id,
@@ -477,7 +479,7 @@ export async function GET() {
       terraza: (l as { has_terrace?: boolean | null }).has_terrace ?? null,
       accesible: (l as { is_accessible?: boolean | null }).is_accessible ?? null,
       divide: (l as { splits_bill?: boolean | null }).splits_bill ?? null,
-      segundoActo: (l as { is_after_venue?: boolean }).is_after_venue ?? false,
+      esCercano: (l as { is_after_venue?: boolean }).is_after_venue ?? false,
       // Sin los segundos. La columna es `time` y devuelve «22:30:00»; el campo
       // de la ficha pide «22:30» y lo valida así, de modo que al reeditarla
       // sin tocar nada se rechazaba lo que la propia pantalla acababa de
@@ -700,14 +702,16 @@ export async function POST(request: Request) {
 
   // «Bares cercanos» es un papel, no un formato: lo mismo que al editarlo.
   const cercanos = d.familias.includes('cercanos')
+  const segundoActo = d.familias.includes('segundoacto')
   const formatos = [
-    ...new Set(d.familias.filter((f) => f !== 'cercanos').flatMap((f) => FORMATOS_DE_FAMILIA[f] ?? [])),
+    ...new Set(d.familias.flatMap((f) => FORMATOS_DE_FAMILIA[f] ?? [])),
   ]
 
   const { data, error } = await admin
     .from('restaurants')
     .insert({
       ...(cercanos ? { is_after_venue: true } : {}),
+      ...(segundoActo ? { es_segundo_acto: true } : {}),
       name: d.nombre.trim(),
       zone_slug: d.zona,
       address: d.direccion?.trim() || '',
@@ -776,7 +780,7 @@ export async function PATCH(request: Request) {
     .from('restaurants')
     // `is_after_venue` entra aquí porque `loQueFalta` lo mira: sin él, un
     // bar de segundo acto seguiría sin poder activarse.
-    .select('id, noise_level, address, contact_name, contact_phone, facade_photo_path, maps_url, is_after_venue, budget_tier, formats')
+    .select('id, noise_level, address, contact_name, contact_phone, facade_photo_path, maps_url, is_after_venue, es_segundo_acto, budget_tier, formats')
     .eq('id', d.id)
     .maybeSingle()
 
@@ -861,12 +865,13 @@ export async function PATCH(request: Request) {
      * pedirle al local.
      */
     const cercanos = d.familias.includes('cercanos')
+    const segundoActo = d.familias.includes('segundoacto')
     const formatos = [
-      ...new Set(d.familias.filter((x) => x !== 'cercanos').flatMap((x) => FORMATOS_DE_FAMILIA[x] ?? [])),
+      ...new Set(d.familias.flatMap((x) => FORMATOS_DE_FAMILIA[x] ?? [])),
     ]
     const { error } = await admin
       .from('restaurants')
-      .update({ formats: formatos as never, is_after_venue: cercanos } as never)
+      .update({ formats: formatos as never, is_after_venue: cercanos, es_segundo_acto: segundoActo } as never)
       .eq('id', d.id)
 
     if (error) {
@@ -996,13 +1001,13 @@ export async function PATCH(request: Request) {
     terraza: 'has_terrace',
     accesible: 'is_accessible',
     divide: 'splits_bill',
-    segundoActo: 'is_after_venue',
+    cercano: 'is_after_venue',
     ultimaEntrada: 'last_seating',
     notas: 'safety_notes',
   }
 
   /** Las que son sí o no. Se guardan tal cual, sin pasar por el texto. */
-  const SI_O_NO = new Set(['estacionamiento', 'terraza', 'accesible', 'divide', 'segundoActo'])
+  const SI_O_NO = new Set(['estacionamiento', 'terraza', 'accesible', 'divide', 'cercano'])
 
   // Los días son una lista, no un valor suelto: se validan aparte y salen por
   // su propio camino antes de que el resto los trate como texto.
@@ -1078,7 +1083,7 @@ export async function PATCH(request: Request) {
     if (valor !== null && typeof valor !== 'boolean') {
       return NextResponse.json({ error: 'Eso es sí o no.' }, { status: 400 })
     }
-    if (valor === null && (d.campo === 'estacionamiento' || d.campo === 'segundoActo')) {
+    if (valor === null && (d.campo === 'estacionamiento' || d.campo === 'cercano')) {
       valor = false
     }
   } else if (NUMERICOS.has(d.campo)) {

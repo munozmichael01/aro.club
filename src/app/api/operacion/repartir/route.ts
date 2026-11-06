@@ -221,6 +221,7 @@ export async function GET(request: Request) {
     .from('restaurants')
     .select('id, name, zone_slug, open_days, is_active, formats, commission_pct')
     .or('is_after_venue.is.null,is_after_venue.eq.false')
+    .eq('es_segundo_acto', false)
     .order('name')
 
   // El día de la semana EN CARACAS. Una cena del viernes a las 7:30 p.m. es
