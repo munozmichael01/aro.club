@@ -114,3 +114,6 @@ docs/**/*.png
 docs/**/*.mp4
 docs/**/*.MP4
 docs/**/*.mov
+
+# Guía de preproducción: lleva el enlace y las claves.
+/.preprod-guia.md

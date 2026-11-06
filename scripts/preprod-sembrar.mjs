@@ -29,7 +29,8 @@ const PRE = leer('.env.preprod.local')
 if (!REAL.NEXT_PUBLIC_SUPABASE_URL.includes('qdydmklrbsdemzvjsldo')) {
   throw new Error('.env.local no apunta a producción: no sé de dónde estoy leyendo.')
 }
-if (!PRE.NEXT_PUBLIC_SUPABASE_URL.includes('svpcxkhsrpjxyyzlghcq')) {
+// La referencia cambia cada vez que se enciende: la anota `preprod.mjs`.
+if (!PRE.PREPROD_REF || !PRE.NEXT_PUBLIC_SUPABASE_URL?.includes(PRE.PREPROD_REF) || PRE.NEXT_PUBLIC_SUPABASE_URL.includes('qdydmklrbsdemzvjsldo')) {
   throw new Error('.env.preprod.local no apunta a preproducción: no escribo.')
 }
 
@@ -74,7 +75,16 @@ for (const [tabla, llave] of [
 await copiar('cities')
 await copiar('zones')
 await copiar('products')
-await copiar('payment_methods')
+// La cuenta de verdad no sale de producción. Quien prueba el pago ve estos
+// datos y los puede copiar: con los reales, un ensayo acabaría en un pago real.
+await copiar('payment_methods', {
+  alCopiar: (m) => ({
+    ...m,
+    datos_cuenta: m.datos_cuenta && Object.fromEntries(
+      Object.keys(m.datos_cuenta).map((k) => [k, typeof m.datos_cuenta[k] === 'boolean' ? m.datos_cuenta[k] : 'PRUEBA, NO PAGAR']),
+    ),
+  }),
+})
 await copiar('verification_rejection_reasons')
 await copiar('questionnaire_versions')
 await copiar('questions')
