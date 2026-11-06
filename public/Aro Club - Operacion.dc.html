@@ -7661,8 +7661,8 @@ class Component extends DCLogic {
                 : (cruda.edadMinima != null ? 'los de ' + cruda.edadMinima + ' en adelante' : 'los de hasta ' + cruda.edadMaxima))
               + '. Quien ya estaba apuntado sigue apuntado, quepa o no.',
           /**
-           * El bar del segundo acto, uno por zona (Michael, 06-11): es para los
-           * restaurantes cercanos de esa zona, no para toda la fecha. Mismo
+           * El bar del segundo acto, por fecha y zona a la vez (Michael, 06-11):
+           * cada zona de ESTA fecha tiene el suyo o ninguno. Mismo
            * patrón que las edades: el borrador lleva su fecha y su zona, y lo
            * guardado manda mientras no se toque.
            */

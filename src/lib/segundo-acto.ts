@@ -7,10 +7,12 @@ type Admin = ReturnType<typeof createAdminClient>
 /**
  * Qué bar le toca a cada zona de una fecha.
  *
- * El segundo acto es de una zona, no de la fecha (Michael, 06-11): quien cena en
- * Los Palos Grandes no sigue en un bar de Chacao. Toda pregunta sobre «¿esta mesa
- * tiene bar?» pasa por la zona de su restaurante, y una zona sin bar se queda con
- * los bares cercanos de ese restaurante.
+ * El segundo acto se decide por fecha Y zona a la vez (Michael, 06-11): abrir una
+ * fecha en una zona no le da bar, y otra cena del mismo día en esa zona puede no
+ * tenerlo. Quien cena en Los Palos Grandes no sigue en un bar de Chacao. Toda
+ * pregunta sobre «¿esta mesa tiene bar?» pasa por su fecha y la zona de su
+ * restaurante. Sin bar en esa fecha y zona, salen sus bares cercanos: un segundo
+ * acto es lo único que los pisa en una cena.
  */
 export async function barPorZona(admin: Admin, eventoId: string): Promise<Map<string, string>> {
   const { data, error } = await admin
