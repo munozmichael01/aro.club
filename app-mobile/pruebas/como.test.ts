@@ -45,7 +45,7 @@ test('drinks y café ya tienen sus tarjetas, y una marca cambia solo la suya (en
   const drinks = M.vista({ formato: 'drinks', empiezaEn: '2026-11-07T00:00:00Z', zonaHoraria: Z })
   assert.equal(drinks.tarjetas[0].titulo, 'Llega a la barra y pregunta por el grupo de Aro')
   const acto = M.vista({ formato: 'dinner', empiezaEn: '2026-11-07T23:00:00Z', zonaHoraria: Z, edadMinima: 45, segundoActo: true })
-  assert.deepEqual(acto.tarjetas.map((t) => t.marca), ['', '', 'SEGUNDO ACTO'])
+  assert.deepEqual(acto.tarjetas.map((t) => t.marca), ['', '', 'AFTER'])
   const uno = M.vista({ formato: 'dinner', empiezaEn: '2026-11-07T23:00:00Z', zonaHoraria: Z, masUno: true, idioma: 'en' })
   assert.deepEqual(uno.tarjetas.map((t) => t.marca), ['+1 ACOMPAÑANTE', '+1 · EN INGLÉS', ''])
 })

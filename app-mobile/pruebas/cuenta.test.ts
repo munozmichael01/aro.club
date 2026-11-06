@@ -198,7 +198,7 @@ test('la edad va en su cápsula, con las demás marcas, y el tamaño con la zona
   const base = { id: 'x', formato: 'dinner', empiezaEn: '2026-10-17T23:30:00Z', cierraEn: null, creditos: 1, zonas: ['Chacao'], apuntados: 0, cerrada: false, mia: false, zonaHoraria: 'America/Caracas' }
   const [g] = M.agenda([{ ...base, edadMinima: 40, segundoActo: true }], null, Date.parse('2026-10-13T12:00:00Z'))
   assert.equal(g.filas[0].tipo, 'Cenas')
-  assert.deepEqual(g.filas[0].capsulas.map((c) => c.texto), ['+40', 'SEGUNDO ACTO'])
+  assert.deepEqual(g.filas[0].capsulas.map((c) => c.texto), ['+40', 'AFTER'])
   assert.equal(g.filas[0].zonaYTamano, 'Chacao · Mesa de 4 a 8 personas')
   // Sin apuntados no hay prueba social: «Una mesa es de 4 a 8 personas» ya no sale (02-11).
   assert.equal(g.filas[0].conPrueba, false)
