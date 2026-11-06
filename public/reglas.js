@@ -2470,18 +2470,18 @@
         },
         // OPCIONAL, y que se note (Michael, 03-11): «todas las mesas siguen»
         // sonaba a que había que ir.
-        que: 'Al terminar, quien quiera sigue con las otras mesas en un bar',
+        que: 'Al terminar, quien quiera sigue con las otras mesas de la zona en un bar',
         /**
          * El bar se dice al terminar la cena, en la mesa (Michael, 03-11). Al
          * mediodía, con el sitio, solo que esa fecha tiene segundo acto.
          */
         hoja: 'Es opcional: si te provoca seguir, el bar te lo decimos en la mesa.',
-        web: 'Al terminar, quien quiera sigue la noche con las otras mesas en un mismo bar.',
+        web: 'Al terminar, quien quiera sigue la noche con las otras mesas de la zona en un mismo bar.',
         tarjetas: {
           despues: function () {
             return {
               titulo: 'Cada quien paga lo suyo, y quien quiera sigue en un bar',
-              cuerpo: 'Al terminar, quien quiera sigue la noche con las otras mesas en un mismo bar. Es opcional: el bar te lo decimos en la mesa.',
+              cuerpo: 'Al terminar, quien quiera sigue la noche con las otras mesas de la zona en un mismo bar. Es opcional: el bar te lo decimos en la mesa.',
               iconoPlan: api.ICONOS_PLAN.drinks,
             }
           },
@@ -2588,7 +2588,7 @@
       if (tiene('masUno')) t += ' ' + G.relativo + ' vienes con alguien' + (tiene('edad') ? ', ' + desde : '')
       else t += tiene('edad') ? ' ' + desde : ' con gente que no conoces'
 
-      if (tiene('segundoActo')) return t + ', y al terminar, quien quiera sigue la noche en un bar con las otras mesas.'
+      if (tiene('segundoActo')) return t + ', y al terminar, quien quiera sigue la noche en un bar con las otras mesas de la zona.'
       if (tiene('masUno')) return t + ', y toda la mesa llega de dos en dos.'
       return t + ', ' + G.cola + '.'
     },
@@ -3488,7 +3488,7 @@
        */
       caja: {
         abierta: {
-          titulo: 'Al terminar, todas las mesas siguen la noche en un mismo bar',
+          titulo: 'Al terminar, todas las mesas de la zona siguen la noche en un mismo bar',
           texto: 'El bar te lo decimos en la mesa: sale aquí a las {hora}. Si quieres seguir, sigues.',
         },
         plegada: {
@@ -3498,7 +3498,7 @@
         ahora: {
           sello: 'AHORA',
           aPie: 'A {n} minutos a pie de tu mesa',
-          texto: 'Cuando terminen, ahí se juntan todas las mesas. Pregunta por la reserva de Aro. Cada quien paga lo suyo. Si quieres seguir, sigues.',
+          texto: 'Cuando terminen, ahí se juntan todas las mesas de la zona. Pregunta por la reserva de Aro. Cada quien paga lo suyo. Si quieres seguir, sigues.',
           boton: 'Cómo llegar al bar',
         },
         /** El resumen de Paso a paso plegado, desde la hora del bar. */
@@ -3528,7 +3528,7 @@
       /** El momento que suma al final de Paso a paso. */
       paso: {
         nombre: 'Sale el bar',
-        texto: 'Aparece arriba en Mi mesa, el de todas las mesas.',
+        texto: 'Aparece arriba en Mi mesa, el de todas las mesas de la zona.',
       },
 
       /** La despedida en una fecha con segundo acto: el bar es el sitio para seguir. */
@@ -3540,9 +3540,9 @@
       /** El aviso a la hora del bar: push y correo. */
       aviso: {
         titulo: 'El after es en {bar}',
-        cuerpo: 'A {n} minutos a pie de tu mesa. Cuando terminen, ahí siguen todas las mesas. Pregunta por la reserva de Aro. Si quieres seguir, sigues.',
+        cuerpo: 'A {n} minutos a pie de tu mesa. Cuando terminen, ahí siguen todas las mesas de la zona. Pregunta por la reserva de Aro. Si quieres seguir, sigues.',
         /** Sin minutos (un sitio sin coordenadas) la primera frase se cae entera. */
-        cuerpoSinMinutos: 'Cuando terminen, ahí siguen todas las mesas. Pregunta por la reserva de Aro. Si quieres seguir, sigues.',
+        cuerpoSinMinutos: 'Cuando terminen, ahí siguen todas las mesas de la zona. Pregunta por la reserva de Aro. Si quieres seguir, sigues.',
         boton: 'Ver en Mi mesa',
       },
     },
