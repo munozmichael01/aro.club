@@ -1017,7 +1017,7 @@ export async function PATCH(request: Request) {
         .eq('id', d.barId)
         .maybeSingle()
       if (!bar || !bar.es_segundo_acto || !bar.is_active) {
-        return NextResponse.json({ error: 'Ese local no está marcado como bar de segundo acto.' }, { status: 400 })
+        return NextResponse.json({ error: 'Ese local no está marcado como bar de after.' }, { status: 400 })
       }
       if (bar.zone_slug !== d.zona) {
         return NextResponse.json({ error: 'Ese bar está en otra zona.' }, { status: 400 })

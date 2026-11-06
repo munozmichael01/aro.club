@@ -1218,8 +1218,8 @@
                   <sc-if value="{{ verPuedeBar }}" hint-placeholder-val="{{ true }}">
                     <sc-for list="{{ verBarZonas }}" as="z" hint-placeholder-count="2">
                       <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;border-radius:22px;background:#FAF3E4;padding:16px 18px">
-                        <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F">SEGUNDO ACTO · {{ z.zona }}</span>
-                        <select value="{{ z.elegido }}" onChange="{{ z.onBar }}" aria-label="Bar del segundo acto de esta zona" style="{{ campoBarVer }}">
+                        <span style="font:500 11px/1 'Inter Tight',sans-serif;letter-spacing:.12em;color:#33513F">AFTER · {{ z.zona }}</span>
+                        <select value="{{ z.elegido }}" onChange="{{ z.onBar }}" aria-label="Bar del after de esta zona" style="{{ campoBarVer }}">
                           <sc-for list="{{ z.bares }}" as="b" hint-placeholder-count="3">
                             <option value="{{ b.id }}">{{ b.nombre }}</option>
                           </sc-for>
@@ -2975,8 +2975,8 @@ class Component extends DCLogic {
     if (!eventoId) return;
     const bar = (this.state.bares || []).find((b) => b.id === barId);
     const dice = bar
-      ? 'Las mesas de ' + zonaNombre + ' tendrán segundo acto en ' + bar.nombre + '. Quien ya está sentado en esa zona verá el bar y le llegará el aviso.'
-      : 'Las mesas de ' + zonaNombre + ' se quedan sin segundo acto y vuelven a sus bares cercanos.';
+      ? 'Las mesas de ' + zonaNombre + ' tendrán after en ' + bar.nombre + '. Quien ya está sentado en esa zona verá el bar y le llegará el aviso.'
+      : 'Las mesas de ' + zonaNombre + ' se quedan sin after y vuelven a sus bares cercanos.';
     if (!window.confirm(dice + ' ¿Lo guardo?')) return;
     this.mandar('/api/operacion/fechas', { accion: 'bar', eventoId: eventoId, zona: zona, barId: barId }, 'PATCH')
       .then((r) => { if (r.ok) { this.setState({ barVerClave: null }); this.cargarFechas && this.cargarFechas(); } });
@@ -7675,11 +7675,11 @@ class Component extends DCLogic {
             return {
               zona: z[0],
               elegido: elegido,
-              bares: [{ id: '', nombre: 'Sin segundo acto' }].concat(suyos.map((b) => ({ id: b.id, nombre: b.nombre }))),
+              bares: [{ id: '', nombre: 'Sin after' }].concat(suyos.map((b) => ({ id: b.id, nombre: b.nombre }))),
               onBar: (e) => this.setState({ barVerClave: clave, barVer: e.target.value }),
               guardar: () => this.ponerBar(cruda.id, z[2], z[0], elegido || null),
               nota: !suyos.length
-                ? 'Esta zona no tiene bares de segundo acto. Se marcan en Locales, en «¿Para qué sirve el sitio?».'
+                ? 'Esta zona no tiene bares de after. Se marcan en Locales, en «¿Para qué sirve el sitio?».'
                 : guardado
                   ? 'Hora y tres cuartos después de la hora de la cena, Mi mesa enseña el bar a las mesas de esta zona y les llega el aviso. Las demás zonas siguen con sus bares cercanos.'
                   : 'Sin bar, las mesas de esta zona ven los bares cercanos de su restaurante.',

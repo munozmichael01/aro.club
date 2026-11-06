@@ -757,7 +757,7 @@ class Component extends DCLogic {
     // puntuales para beber, directo a ese plan; estos son para seguir, no es
     // el mismo plan». Estaban mezclados en Drinks, así que un bar de seguir
     // era candidato a ser la sede de una fecha.
-    const FAMILIAS = [['cenas', 'Cenas'], ['drinks', 'Drinks'], ['movimiento', 'Movimiento'], ['coffee', 'Coffee'], ['brunch', 'Brunch'], ['cercanos', 'Bares cercanos'], ['segundoacto', 'Segundo acto']];
+    const FAMILIAS = [['cenas', 'Cenas'], ['drinks', 'Drinks'], ['movimiento', 'Movimiento'], ['coffee', 'Coffee'], ['brunch', 'Brunch'], ['cercanos', 'Bares cercanos'], ['segundoacto', 'After']];
     const nombreFamilia = (c) => (FAMILIAS.find((f) => f[0] === c) || [c, c])[1];
     // 1-3, como en la base. El numero no sale a pantalla: solo su etiqueta.
     const RUIDO = [
@@ -1072,8 +1072,8 @@ class Component extends DCLogic {
       etiqueta: 'Si quieren seguir', valor: '', pista: '',
       hayPista: true,
       ayuda: candidatosSeguir.length
-        ? 'Hasta tres sitios cerca, para la despedida. Salen de los que están marcados como segundo acto.'
-        : 'Ningún sitio está marcado como «segundo acto» todavía: márcalos en su propia ficha y aparecerán aquí.',
+        ? 'Hasta tres sitios cerca, para la despedida. Salen de los que están marcados como «Bares cercanos».'
+        : 'Ningún sitio está marcado como «Bares cercanos» todavía: márcalos en su propia ficha y aparecerán aquí.',
       esTexto: false, esOpciones: true, campo: campoEstilo,
       opciones: candidatosSeguir.map((c) => {
         const puestos = (a.paraSeguir || []);

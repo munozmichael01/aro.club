@@ -2463,7 +2463,7 @@
       },
       segundoActo: {
         capsula: {
-          texto: 'SEGUNDO ACTO', corto: 'SEGUNDO ACTO',
+          texto: 'AFTER', corto: 'AFTER',
           icono: 'M4 4h8l-1 6a3 3 0 0 1-6 0L4 4zM8 13v5M5 18h6M14 12h7M18 9l3 3-3 3',
           fondo: '#14342A', color: '#FAF3E4', borde: '#14342A',
           sobreVerde: { fondo: '#FAF3E4', color: '#14342A', borde: '#FAF3E4' },
@@ -3464,7 +3464,7 @@
      * al tipo, como «+45»; el bar se revela ese día.
      */
     SEGUNDO_ACTO: {
-      marca: 'SEGUNDO ACTO',
+      marca: 'AFTER',
 
       /**
        * El bar sale en Mi mesa una hora y tres cuartos después de la hora de
@@ -3492,7 +3492,7 @@
           texto: 'El bar te lo decimos en la mesa: sale aquí a las {hora}. Si quieres seguir, sigues.',
         },
         plegada: {
-          titulo: 'Segundo acto',
+          titulo: 'El after',
           texto: 'El bar sale aquí a las {hora}.',
         },
         ahora: {
@@ -3502,9 +3502,9 @@
           boton: 'Cómo llegar al bar',
         },
         /** El resumen de Paso a paso plegado, desde la hora del bar. */
-        resumenPaso: 'Ahora: segundo acto',
+        resumenPaso: 'Ahora: el after',
         /** Y antes de la cena, en vez de «8 momentos · de… a…». */
-        resumenPasoAntes: 'De la llegada al segundo acto',
+        resumenPasoAntes: 'De la llegada al after',
       },
 
       /**
@@ -3535,11 +3535,11 @@
       despedida: 'Si alguien te cayó bien, díselo.',
 
       /** La línea de la revelación del mediodía, en el correo y en la push. */
-      revelacion: 'Esta fecha tiene segundo acto. El bar te lo decimos en la mesa, a las {hora}.',
+      revelacion: 'Esta fecha tiene after. El bar te lo decimos en la mesa, a las {hora}.',
 
       /** El aviso a la hora del bar: push y correo. */
       aviso: {
-        titulo: 'El segundo acto es en {bar}',
+        titulo: 'El after es en {bar}',
         cuerpo: 'A {n} minutos a pie de tu mesa. Cuando terminen, ahí siguen todas las mesas. Pregunta por la reserva de Aro. Si quieres seguir, sigues.',
         /** Sin minutos (un sitio sin coordenadas) la primera frase se cae entera. */
         cuerpoSinMinutos: 'Cuando terminen, ahí siguen todas las mesas. Pregunta por la reserva de Aro. Si quieres seguir, sigues.',
