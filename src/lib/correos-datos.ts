@@ -3097,6 +3097,9 @@ async function laMesaDe(admin: Admin, eventoId: string, perfilId: string | null)
   const conSegundoActo = (await barPorZona(admin, eventoId)).has(mesa.restaurants?.zone_slug ?? '')
 
   return {
+    // Quien entra en una mesa horas después de la revelación no lee «Son las
+    // doce» a las dos de la tarde (Michael, 06-11).
+    entroTarde: !!deLaFecha?.reveal_at && Date.now() > Date.parse(deLaFecha.reveal_at) + 30 * 60_000,
     numero,
     sitio: mesa.restaurants?.name ?? '',
     direccion,

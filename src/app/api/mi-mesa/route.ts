@@ -657,9 +657,33 @@ export async function GET(request: Request) {
     .limit(1)
 
   const primerAsiento = primeros?.[0]?.sentado_en ?? null
+
+  const MARGEN_PUBLICACION = 15 * 60_000
+  /**
+   * Se sentó después de contarle la mesa a la gente. Eso son dos casos, y hasta
+   * el 06-11 la pantalla los trataba igual: a quien acababa de ENTRAR le decía
+   * «Te cambiamos de mesa», y era la primera mesa que tenía. Lo que los separa
+   * es si recibió el correo de cambio.
+   */
+  const seSentoDespues =
+    !!evento.reveal_at && !!miembro.sentado_en && !!primerAsiento
+    && new Date(miembro.sentado_en as string) > new Date(evento.reveal_at)
+    && new Date(miembro.sentado_en as string).getTime()
+      > new Date(primerAsiento).getTime() + MARGEN_PUBLICACION
+  const { count: cambiosDeMesa } = seSentoDespues
+    ? await admin
+        .from('scheduled_emails')
+        .select('id', { count: 'exact', head: true })
+        .eq('profile_id', user.id)
+        .eq('event_id', mesa.event_id)
+        .eq('kind', 'mesa_cambiada' as never)
+    : { count: 0 }
+  const laMovimos = seSentoDespues && (cambiosDeMesa ?? 0) > 0
+  // Acaba de entrar: la mesa que ve es la primera que le contamos, así que para
+  // ella no hay nada que haya cambiado.
+  const recienEntro = seSentoDespues && !laMovimos
   // En una fecha +1, quién viene con quién (perfil → perfil). Vacío si no.
   const duos = await duosDeLaMesa(admin, miembro.table_id)
-  const MARGEN_PUBLICACION = 15 * 60_000
 
   const { data: traits } = await admin
     .from('profile_traits')
@@ -978,7 +1002,7 @@ export async function GET(request: Request) {
        * payload en qué mesa estaba. Eso es exactamente «a quién le dijimos
        * que se sentaba aquí».
        */
-      alguienCancelo: seCayoAlguienDeAqui,
+      alguienCancelo: seCayoAlguienDeAqui && !recienEntro,
       // Cuántos se sientan de verdad, contándose a sí misma.
       sonCuantos: (companeros ?? []).length + 1,
       // Y cuántos caben, que es lo que hace que «cinco» signifique algo.
@@ -994,12 +1018,8 @@ export async function GET(request: Request) {
        * se sentó aquí después de la revelación, es que la movimos. Su correo
        * ya se lo dijo; esto es lo que ve al entrar.
        */
-      teMovimos:
-        !!evento.reveal_at && !!miembro.sentado_en && !!primerAsiento
-        && new Date(miembro.sentado_en as string) > new Date(evento.reveal_at)
-        && new Date(miembro.sentado_en as string).getTime()
-          > new Date(primerAsiento).getTime() + MARGEN_PUBLICACION,
-      seSumoAlguien: (companeros ?? []).some(
+      teMovimos: laMovimos,
+      seSumoAlguien: !recienEntro && (companeros ?? []).some(
         (c) =>
           !!evento.reveal_at && !!c.sentado_en && !!primerAsiento
           && new Date(c.sentado_en as string) > new Date(evento.reveal_at)
