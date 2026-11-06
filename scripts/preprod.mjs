@@ -234,7 +234,7 @@ nadie real. Todo lo que hagas aquí es de prueba y se borra al apagarla.
 1. Abre este enlace una vez en cada navegador (deja una cookie):
    ${WEB}/?x-vercel-protection-bypass=${e.PREPROD_BYPASS}&x-vercel-set-bypass-cookie=true
 2. El navegador pide usuario y clave. Usuario: \`aro\`. Clave: \`${e.PREPROD_CLAVE}\`
-3. Panel de operación, en ${WEB}/operacion. Entra con correo y contraseña:
+3. Tu usuario admin, para aprobar verificaciones y pagos. Panel de operación, en ${WEB}/operacion. Entra con correo y contraseña:
    ${e.ANALISTA_CORREO} / ${e.ANALISTA_CLAVE}
 
 ## Primero de todo: GTM
@@ -248,7 +248,8 @@ ensucia los datos reales.
 
 Alta en /empezar → datos y cuestionario → /verificacion (vale cualquier foto) →
 apruébala en el panel, pestaña Verificaciones → /agenda → pago con Pago Móvil →
-«Ya pagué, lo reporto» con una referencia inventada → /estas-dentro.
+«Ya pagué, lo reporto» con una referencia inventada → /estas-dentro → confírmalo
+en el panel, pestaña Pagos («Confirmar pago»).
 
 Los datos bancarios que se ven son falsos: no hay que pagar nada.
 
