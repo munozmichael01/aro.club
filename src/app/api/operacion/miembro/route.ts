@@ -4,7 +4,7 @@ import { resumenDeRespuesta } from '@/lib/encuesta'
 import { diaCompleto, diaSuelto, diaYMes, mesYAno } from '@/lib/fechas'
 import { leerCatalogo } from '@/lib/questionnaire/catalogo'
 import { exigirOps } from '@/lib/ops'
-import { DIAS_GUARDA_FOTOS, ZONA_POR_DEFECTO, partesDe } from '@/lib/reglas'
+import { DIAS_GUARDA_FOTOS, HORAS_DE_MARGEN, ZONA_POR_DEFECTO, partesDe } from '@/lib/reglas'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -208,7 +208,7 @@ export async function GET(request: Request) {
   // --- historial --------------------------------------------------------
   const { data: reservas } = await admin
     .from('bookings')
-    .select('id, status, event_id, events(starts_at, zone_slug)')
+    .select('id, status, event_id, cancelled_at, events(starts_at, zone_slug)')
     .eq('profile_id', id)
     .order('created_at', { ascending: false })
 
@@ -313,6 +313,40 @@ export async function GET(request: Request) {
     return null
   }
 
+  /**
+   * Lo que pasó con el crédito de ESTA cancelación, leído del libro.
+   *
+   * Decía para todas «El crédito se devolvió si avisó con más de 24 h», sin
+   * mirar nada: Michael lo leyó en la ficha de alguien que canceló a siete horas
+   * y sin crédito, y es lógico que creyera que se lo habíamos devuelto. Esta
+   * ficha se usa para decidir sobre personas: dice lo que ocurrió o no dice nada.
+   */
+  const { data: movimientos } = await admin
+    .from('credit_ledger')
+    .select('booking_id, delta, reason, created_at')
+    .in('booking_id', (reservas ?? []).map((r) => r.id))
+
+  const notaDeCancelacion = (reservaId: string, empiezaEn: string, canceladaEn: string | null) => {
+    const suyos = (movimientos ?? []).filter((m) => m.booking_id === reservaId)
+    const llevabaCredito = suyos.some((m) => m.reason === 'event_charge')
+    const volvio = suyos.some(
+      (m) => m.reason === 'refund' && (!canceladaEn || Date.parse(m.created_at) >= Date.parse(canceladaEn)),
+    )
+    const horas = canceladaEn ? (Date.parse(empiezaEn) - Date.parse(canceladaEn)) / 3_600_000 : null
+    const cuando = horas == null
+      ? 'Canceló.'
+      : horas < 0
+        ? 'Canceló después de la hora.'
+        : horas < 1
+          ? 'Canceló con menos de 1 hora.'
+          : `Canceló con ${Math.round(horas)} ${Math.round(horas) === 1 ? 'hora' : 'horas'}.`
+    if (volvio) return `${cuando} El crédito volvió.`
+    if (!llevabaCredito) return `${cuando} Esa reserva no llevaba crédito.`
+    return horas != null && horas < HORAS_DE_MARGEN
+      ? `${cuando} El crédito se perdió.`
+      : `${cuando} El crédito no ha vuelto.`
+  }
+
   const historial = (reservas ?? [])
     .map((r) => {
       const ev = r.events as unknown as { starts_at: string; zone_slug: string | null }
@@ -335,7 +369,7 @@ export async function GET(request: Request) {
       const nota = cual === 'Apuntada'
         ? 'Todavía no ha ocurrido.'
         : r.status === 'cancelled_by_user'
-        ? 'Canceló. El crédito se devolvió si avisó con más de 24 h.'
+        ? notaDeCancelacion(r.id, ev.starts_at, r.cancelled_at)
         : !mesa
           ? 'No llegó a tener mesa.'
           : !val
